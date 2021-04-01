@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "objkt_amount": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "objkt_id": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "xtz_per_objkt": {
+      "type": "string",
+      "$comment": "mutez"
+    }
+  },
+  "required": [
+    "objkt_amount",
+    "objkt_id",
+    "xtz_per_objkt"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

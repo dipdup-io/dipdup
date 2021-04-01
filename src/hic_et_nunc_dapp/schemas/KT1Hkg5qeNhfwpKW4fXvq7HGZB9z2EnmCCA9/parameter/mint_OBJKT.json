@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "amount": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "metadata": {
+      "type": "string",
+      "$comment": "bytes"
+    },
+    "royalties": {
+      "type": "string",
+      "$comment": "nat"
+    }
+  },
+  "required": [
+    "address",
+    "amount",
+    "metadata",
+    "royalties"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "string",
+        "$comment": "nat"
+      },
+      "to_": {
+        "type": "string",
+        "$comment": "address"
+      }
+    },
+    "required": [
+      "amount",
+      "to_"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+  },
+  "$comment": "list"
+}

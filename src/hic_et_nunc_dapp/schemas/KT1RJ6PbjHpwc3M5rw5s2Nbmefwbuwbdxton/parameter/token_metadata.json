@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "token_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "$comment": "nat"
+      },
+      "$comment": "list"
+    },
+    "handler": {
+      "type": "string",
+      "$comment": "lambda"
+    }
+  },
+  "required": [
+    "token_ids",
+    "handler"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

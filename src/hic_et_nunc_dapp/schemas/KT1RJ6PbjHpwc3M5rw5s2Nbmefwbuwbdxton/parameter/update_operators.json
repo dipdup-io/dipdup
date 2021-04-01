@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "array",
+  "items": {
+    "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "add_operator": {
+            "type": "object",
+            "properties": {
+              "owner": {
+                "type": "string",
+                "$comment": "address"
+              },
+              "operator": {
+                "type": "string",
+                "$comment": "address"
+              },
+              "token_id": {
+                "type": "string",
+                "$comment": "nat"
+              }
+            },
+            "required": [
+              "owner",
+              "operator",
+              "token_id"
+            ],
+            "additionalProperties": false,
+            "$comment": "pair"
+          }
+        },
+        "required": [
+          "add_operator"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "remove_operator": {
+            "type": "object",
+            "properties": {
+              "owner": {
+                "type": "string",
+                "$comment": "address"
+              },
+              "operator": {
+                "type": "string",
+                "$comment": "address"
+              },
+              "token_id": {
+                "type": "string",
+                "$comment": "nat"
+              }
+            },
+            "required": [
+              "owner",
+              "operator",
+              "token_id"
+            ],
+            "additionalProperties": false,
+            "$comment": "pair"
+          }
+        },
+        "required": [
+          "remove_operator"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "$comment": "or"
+  },
+  "$comment": "list"
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "requests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "$comment": "address"
+          },
+          "token_id": {
+            "type": "string",
+            "$comment": "nat"
+          }
+        },
+        "required": [
+          "owner",
+          "token_id"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      },
+      "$comment": "list"
+    },
+    "callback": {
+      "type": "string",
+      "$comment": "contract"
+    }
+  },
+  "required": [
+    "requests",
+    "callback"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

@@ -1,0 +1,12 @@
+dist/
+docs/
+examples/
+assets/
+.pytest_cache
+.ipynb_checkpoints
+*.egg-info
+scripts
+tests
+*.ipynb
+*.json
+*.zip
