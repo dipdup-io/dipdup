@@ -2,58 +2,57 @@ spec_version: 0.0.1
 package: hic_et_nunc_dapp
 
 database:
-  driver: postgres
-  host: db
-  port: 5432
-  user: pytezos_dapps
-  database: pytezos_dapps
-  password: changeme
+  path: /home/droserasprout/git/pytezos/db.sqlite3
 
 contracts:
-  HEN_minter:
+  HEN_objkts:
     network: mainnet
     address: KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
-  HEN_objkts: 
+  HEN_minter:
     network: mainnet
     address: KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton
 
 datasources:
   tzkt_mainnet:
-    type: tzkt
-    network:
-    url: https://api.tzkt.io
+    tzkt:
+      network: mainnet
+      url: https://api.tzkt.io
 
 indexes:
   operations_mainnet:
-    type: operation
-    datasource: tzkt_mainnet
-    contract: HEN_minter
-    first_block: 1000000
-    handlers:
-    - callback: on_mint
-      pattern:
-        - destination: HEN_minter
-          entrypoint: mint_OBJKT
-          parameter_type: MintObjkt
-        - destination: HEN_objkts
-          entrypoint: mint
-          parameter_type: Mint
+    operation:
+      datasource: tzkt_mainnet
+      contract: HEN_objkts
+      first_block: 0
+      handlers:
+
+        - callback: on_mint
+          pattern:
+            - destination: HEN_objkts
+              entrypoint: mint_OBJKT
+            - destination: HEN_minter
+              entrypoint: mint
+
+        - callback: on_transfer
+          pattern:
+            - destination: HEN_minter
+              entrypoint: transfer
 
   bigmaps_mainnet:
-    type: bigmapdiff
-    datasource: tzkt_mainnet
-    contract: HEN_objkts
-    handlers:
-      - callback: on_token
-        pattern:
-        - name: ledger
-          entry_type: LedgerEntry
-        - name: token_metadata
-          entry_type: TokenMetadataEntry
+    bigmapdiff:
+      datasource: tzkt_mainnet
+      contract: HEN_objkts
+      handlers:
+        - callback: on_token
+          pattern:
+            - name: ledger
+              entry_type: LedgerEntry
+            - name: token_metadata
+              entry_type: TokenMetadataEntry
 
   blocks_mainnet:
-   type: block
-    datasource: tzkt_mainnet
-    handlers:
-      - callback: on_block
-        pattern:
+    block:
+      datasource: tzkt_mainnet
+      handlers:
+        - callback: on_block
+          pattern:

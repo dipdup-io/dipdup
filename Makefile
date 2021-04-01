@@ -27,7 +27,7 @@ mypy:
 lint: isort black pylint mypy
 
 test:
-	poetry run pytest --cov-report=term-missing --cov=pytezos --cov=pytezos_dapps --cov-report=xml -v tests
+	poetry run pytest --cov-report=term-missing --cov=pytezos_dapps --cov-report=xml -v tests
 
 cover:
 	poetry run diff-cover coverage.xml

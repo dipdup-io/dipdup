@@ -2,7 +2,7 @@ import json
 from os.path import dirname, join
 from unittest import TestCase
 
-from pytezos_dapps.connectors.tzkt.connector import TzktDatasource
+from pytezos_dapps.datasources.tzkt.datasource import TzktDatasource
 
 
 class TzktConnectorTest(TestCase):

@@ -12,11 +12,12 @@ import click
 from jinja2 import Template
 from tortoise import Tortoise
 
+import pytezos_dapps.codegen as codegen
 from pytezos_dapps import __version__
 from pytezos_dapps.config import LoggingConfig, OperationIndexConfig, PytezosDappConfig
 from pytezos_dapps.datasources.tzkt.datasource import TzktDatasource
 from pytezos_dapps.models import State
-import pytezos_dapps.codegen as codegen
+
 _logger = logging.getLogger(__name__)
 
 

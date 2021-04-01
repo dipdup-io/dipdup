@@ -1,17 +1,20 @@
-from contextlib import suppress
 import logging
-from os import mkdir
 import os
-from os.path import dirname, exists, join
 import subprocess
+from contextlib import suppress
+from os import mkdir
+from os.path import dirname, exists, join
 
 from jinja2 import Template
+
 from pytezos_dapps.config import PytezosDappConfig
 
 _logger = logging.getLogger(__name__)
 
+
 def fetch_schemas():
     ...
+
 
 def generate_types(config: PytezosDappConfig):
     schemas_path = join(config.package_path, 'schemas')
@@ -55,6 +58,7 @@ def generate_types(config: PytezosDappConfig):
                 ],
                 check=True,
             )
+
 
 def generate_handlers(config: PytezosDappConfig):
 
