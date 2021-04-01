@@ -12,6 +12,16 @@ from pytezos_dapps.config import PytezosDappConfig
 _logger = logging.getLogger(__name__)
 
 
+def create_package(config: PytezosDappConfig):
+    try:
+        config.package_path
+    except ImportError:
+        package_path = join(os.getcwd(), config.package)
+        mkdir(package_path)
+        with open(join(package_path, '__init__.py'), 'w'):
+            pass
+
+
 def fetch_schemas():
     ...
 

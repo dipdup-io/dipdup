@@ -109,6 +109,7 @@ async def init(_ctx, config: str, logging_config: str):
         path = join(dirname(__file__), 'configs', config)
         _config = PytezosDappConfig.load(path)
 
+    codegen.create_package(_config)
     codegen.fetch_schemas()
     codegen.generate_types(_config)
     codegen.generate_handlers(_config)
