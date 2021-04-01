@@ -17,6 +17,12 @@ def generate_types(config: PytezosDappConfig):
     schemas_path = join(config.package_path, 'schemas')
     types_path = join(config.package_path, 'types')
 
+    _logger.info('Creating `types` package')
+    with suppress(FileExistsError):
+        mkdir(types_path)
+        with open(join(types_path, '__init__.py'), 'w'):
+            pass
+
     for root, dirs, files in os.walk(schemas_path):
         types_root = root.replace(schemas_path, types_path)
 
@@ -56,7 +62,7 @@ def generate_handlers(config: PytezosDappConfig):
     with open(join(dirname(__file__), 'handler.py.j2')) as file:
         template = Template(file.read())
 
-    _logger.info('Creating handlers package')
+    _logger.info('Creating `handlers` package')
     handlers_path = join(config.package_path, 'handlers')
     with suppress(FileExistsError):
         mkdir(handlers_path)

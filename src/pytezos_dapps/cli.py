@@ -87,12 +87,12 @@ async def run(_ctx, config: str, logging_config: str) -> None:
         await Tortoise.close_connections()
 
 
-@cli.command(help='Generate types')
+@cli.command(help='Initialize new dapp')
 @click.option('--config', '-c', type=str, help='Path to the dapp YAML config', default='config.yml')
 @click.option('--logging-config', '-l', type=str, help='Path to the logging YAML config', default='logging.yml')
 @click.pass_context
 @click_async
-async def generate_types(_ctx, config: str, logging_config: str):
+async def init(_ctx, config: str, logging_config: str):
     try:
         path = join(os.getcwd(), logging_config)
         LoggingConfig.load(path).apply()
@@ -108,28 +108,6 @@ async def generate_types(_ctx, config: str, logging_config: str):
         path = join(dirname(__file__), 'configs', config)
         _config = PytezosDappConfig.load(path)
 
+    codegen.fetch_schemas()
     codegen.generate_types(_config)
-
-
-@cli.command(help='Generate handlers')
-@click.option('--config', '-c', type=str, help='Path to the dapp YAML config', default='config.yml')
-@click.option('--logging-config', '-l', type=str, help='Path to the logging YAML config', default='logging.yml')
-@click.pass_context
-@click_async
-async def generate_handlers(_ctx, config: str, logging_config: str) -> None:
-    try:
-        path = join(os.getcwd(), logging_config)
-        LoggingConfig.load(path).apply()
-    except FileNotFoundError:
-        path = join(dirname(__file__), 'configs', logging_config)
-        LoggingConfig.load(path).apply()
-
-    _logger.info('Loading config')
-    try:
-        path = join(os.getcwd(), config)
-        _config = PytezosDappConfig.load(path)
-    except FileNotFoundError:
-        path = join(dirname(__file__), 'configs', config)
-        _config = PytezosDappConfig.load(path)
-
     codegen.generate_handlers(_config)
