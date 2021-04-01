@@ -39,13 +39,8 @@ class TzktDatasourceConfig:
 
 @dataclass(kw_only=True)
 class OperationHandlerPatternConfig:
-    contract: str
+    destination: str
     entrypoint: str
-    parameter_type: str
-
-    sender: Optional[str] = None
-    source: Optional[str] = None
-    destination: Optional[str] = None
 
     def __attrs_post_init__(self):
         self._parameter_type_cls = None
@@ -149,20 +144,14 @@ class PytezosDappConfig:
     def __attrs_post_init__(self):
         self._logger = logging.getLogger(__name__)
         for indexes_config in self.indexes.values():
-            # FIXME: Other IndexConfig classes
-            index_config = indexes_config.operation
-            if index_config is None:
-                continue
-            index_config.contract = self.contracts[index_config.contract].address
-            for handler in index_config.handlers:
-                for pattern in handler.pattern:
-                    pattern.contract = self.contracts[pattern.contract].address
-                    if pattern.source:
-                        pattern.source = self.contracts[pattern.source].address
-                    if pattern.destination:
+            if indexes_config.operation:
+                index_config = indexes_config.operation
+                if index_config is None:
+                    continue
+                index_config.contract = self.contracts[index_config.contract].address
+                for handler in index_config.handlers:
+                    for pattern in handler.pattern:
                         pattern.destination = self.contracts[pattern.destination].address
-                    if pattern.sender:
-                        pattern.sender = self.contracts[pattern.sender].address
 
     @classmethod
     def load(
@@ -196,11 +185,12 @@ class PytezosDappConfig:
                 handler.callback_fn = callback_fn
 
                 for pattern in handler.pattern:
-                    self._logger.info('Registering parameter type `%s`', pattern.parameter_type)
+                    self._logger.info('Registering parameter type for entrypoint`%s`', pattern.entrypoint)
                     parameter_type_module = importlib.import_module(
-                        f'{self.package}.types.{pattern.contract}.parameter.{pattern.entrypoint}'
+                        f'{self.package}.types.{pattern.destination}.parameter.{pattern.entrypoint}'
                     )
-                    parameter_type_cls = getattr(parameter_type_module, pattern.parameter_type)
+                    parameter_type = pattern.entrypoint.title().replace('_', '')
+                    parameter_type_cls = getattr(parameter_type_module, parameter_type)
                     pattern.parameter_type_cls = parameter_type_cls
 
 

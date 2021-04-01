@@ -32,11 +32,7 @@ class OperationCache:
         self._logger.debug('operation: %s, %s', operation.entrypoint, operation.target_address)
         if pattern_config.entrypoint != operation.entrypoint:
             return False
-        if pattern_config.sender and pattern_config.sender != operation.sender_address:
-            return False
-        if pattern_config.source and pattern_config.source != operation.initiator_address:
-            return False
-        if pattern_config.destination and pattern_config.destination != operation.target_address:
+        if pattern_config.destination != operation.target_address:
             return False
         self._logger.debug('Match!')
         return True

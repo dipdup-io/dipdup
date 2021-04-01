@@ -6,7 +6,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class MintOBJKT(BaseModel):
+class MintObjkt(BaseModel):
     address: str
     amount: str
     metadata: str

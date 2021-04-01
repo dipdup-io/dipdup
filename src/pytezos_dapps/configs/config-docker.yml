@@ -33,21 +33,15 @@ indexes:
 
         - callback: on_mint
           pattern:
-            - contract: HEN_objkts
-              destination: HEN_objkts
+            - destination: HEN_objkts
               entrypoint: mint_OBJKT
-              parameter_type: MintOBJKT
-            - contract: HEN_minter
-              destination: HEN_minter
+            - destination: HEN_minter
               entrypoint: mint
-              parameter_type: Mint
 
         - callback: on_transfer
           pattern:
-            - contract: HEN_minter
-              sender: HEN_objkts
+            - destination: HEN_minter
               entrypoint: transfer
-              parameter_type: Transfer
 
   bigmaps_mainnet:
     bigmapdiff:

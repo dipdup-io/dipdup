@@ -113,6 +113,7 @@ async def generate_types(ctx, path: str):
             if not file.endswith('.json'):
                 continue
             entrypoint_name = file[:-5]
+            entrypoint_name_titled = entrypoint_name.title().replace('_', '')
 
             input_path = join(root, file)
             output_path = join(root.replace(schemas_dir, types_dir), file.replace('.json', '.py'))
@@ -124,7 +125,7 @@ async def generate_types(ctx, path: str):
                     '--output',
                     output_path,
                     '--class-name',
-                    entrypoint_name,
+                    entrypoint_name_titled,
                     '--disable-timestamp',
                 ],
                 check=True,
