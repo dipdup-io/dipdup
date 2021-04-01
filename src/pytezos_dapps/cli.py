@@ -16,7 +16,7 @@ from pytezos_dapps import __version__
 from pytezos_dapps.config import LoggingConfig, OperationIndexConfig, PytezosDappConfig
 from pytezos_dapps.datasources.tzkt.datasource import TzktDatasource
 from pytezos_dapps.models import State
-
+import pytezos_dapps.codegen as codegen
 _logger = logging.getLogger(__name__)
 
 
@@ -88,49 +88,27 @@ async def run(_ctx, config: str, logging_config: str) -> None:
 
 
 @cli.command(help='Generate types')
-@click.option('--path', '-p', type=str, help='Path to the dapp root')
+@click.option('--config', '-c', type=str, help='Path to the dapp YAML config', default='config.yml')
+@click.option('--logging-config', '-l', type=str, help='Path to the logging YAML config', default='logging.yml')
 @click.pass_context
 @click_async
-async def generate_types(ctx, path: str):
-    logging.basicConfig()
+async def generate_types(_ctx, config: str, logging_config: str):
+    try:
+        path = join(os.getcwd(), logging_config)
+        LoggingConfig.load(path).apply()
+    except FileNotFoundError:
+        path = join(dirname(__file__), 'configs', logging_config)
+        LoggingConfig.load(path).apply()
 
-    # TODO: Fetching schemas from TzKT
-    _logger.info('Fetching JSON schemas')
-    schemas_dir = join(path, 'schemas')
+    _logger.info('Loading config')
+    try:
+        path = join(os.getcwd(), config)
+        _config = PytezosDappConfig.load(path)
+    except FileNotFoundError:
+        path = join(dirname(__file__), 'configs', config)
+        _config = PytezosDappConfig.load(path)
 
-    _logger.info('Removing existing types')
-    types_dir = join(path, 'types')
-    with suppress(FileNotFoundError):
-        shutil.rmtree(types_dir)
-    os.mkdir(types_dir)
-
-    for root, dirs, files in os.walk(schemas_dir):
-        for dir in dirs:
-            dir_path = join(root.replace(schemas_dir, types_dir), dir)
-            os.mkdir(dir_path)
-            with open(join(dir_path, '__init__.py'), 'w'):
-                pass
-        for file in files:
-            if not file.endswith('.json'):
-                continue
-            entrypoint_name = file[:-5]
-            entrypoint_name_titled = entrypoint_name.title().replace('_', '')
-
-            input_path = join(root, file)
-            output_path = join(root.replace(schemas_dir, types_dir), file.replace('.json', '.py'))
-            subprocess.run(
-                [
-                    'datamodel-codegen',
-                    '--input',
-                    input_path,
-                    '--output',
-                    output_path,
-                    '--class-name',
-                    entrypoint_name_titled,
-                    '--disable-timestamp',
-                ],
-                check=True,
-            )
+    codegen.generate_types(_config)
 
 
 @cli.command(help='Generate handlers')
@@ -154,22 +132,4 @@ async def generate_handlers(_ctx, config: str, logging_config: str) -> None:
         path = join(dirname(__file__), 'configs', config)
         _config = PytezosDappConfig.load(path)
 
-    print(_config.package_path)
-
-    with open(join(dirname(__file__), 'handler.py.j2')) as file:
-        template = Template(file.read())
-
-    handlers_path = join(_config.package_path, 'handlers')
-    os.mkdir(handlers_path)
-
-    for index in _config.indexes.values():
-        if not index.operation:
-            continue
-        for handler in index.operation.handlers:
-            res = template.render(
-                package=_config.package,
-                handler=handler.callback,
-                patterns=handler.pattern,
-            )
-            with open(join(handlers_path, f'{handler.callback}.py'), 'w') as file:
-                file.write(res)
+    codegen.generate_handlers(_config)
