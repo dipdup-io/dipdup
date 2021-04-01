@@ -9,6 +9,7 @@ from os.path import dirname, join
 from typing import cast
 
 import click
+from jinja2 import Template
 from tortoise import Tortoise
 
 from pytezos_dapps import __version__
@@ -36,7 +37,7 @@ async def cli(*_args, **_kwargs):
 
 
 @cli.command(help='Run pytezos dapp')
-@click.option('--config', '-c', type=str, help='Path to the dapp YAML config', default='config.yml')
+@click.option('--config', '-c', type=str, help='Path to the dapp YAML config')
 @click.option('--logging-config', '-l', type=str, help='Path to the logging YAML config', default='logging.yml')
 @click.pass_context
 @click_async
@@ -132,5 +133,43 @@ async def generate_types(ctx, path: str):
             )
 
 
-async def purge():
-    ...
+@cli.command(help='Generate handlers')
+@click.option('--config', '-c', type=str, help='Path to the dapp YAML config', default='config.yml')
+@click.option('--logging-config', '-l', type=str, help='Path to the logging YAML config', default='logging.yml')
+@click.pass_context
+@click_async
+async def generate_handlers(_ctx, config: str, logging_config: str) -> None:
+    try:
+        path = join(os.getcwd(), logging_config)
+        LoggingConfig.load(path).apply()
+    except FileNotFoundError:
+        path = join(dirname(__file__), 'configs', logging_config)
+        LoggingConfig.load(path).apply()
+
+    _logger.info('Loading config')
+    try:
+        path = join(os.getcwd(), config)
+        _config = PytezosDappConfig.load(path)
+    except FileNotFoundError:
+        path = join(dirname(__file__), 'configs', config)
+        _config = PytezosDappConfig.load(path)
+
+    print(_config.package_path)
+
+    with open(join(dirname(__file__), 'handler.py.j2')) as file:
+        template = Template(file.read())
+
+    handlers_path = join(_config.package_path, 'handlers')
+    os.mkdir(handlers_path)
+
+    for index in _config.indexes.values():
+        if not index.operation:
+            continue
+        for handler in index.operation.handlers:
+            res = template.render(
+                package=_config.package,
+                handler=handler.callback,
+                patterns=handler.pattern,
+            )
+            with open(join(handlers_path, f'{handler.callback}.py'), 'w') as file:
+                file.write(res)

@@ -1,0 +1,13 @@
+from pytezos_dapps.models import HandlerContext
+
+from {{ package }}.models import *
+{% for pattern in patterns %}
+from {{ package }}.types.{{ pattern.destination }}.parameter.{{ pattern.entrypoint }} import {{ pattern.entrypoint.title().replace('_', '') }}
+{%- endfor %}
+
+async def {{ handler }}(
+{%- for pattern in patterns %}
+    {{ pattern.entrypoint }}: HandlerContext[{{ pattern.entrypoint.title().replace('_', '') }}],
+{%- endfor %}
+) -> None:
+    ...

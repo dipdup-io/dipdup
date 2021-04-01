@@ -1,6 +1,7 @@
 import importlib
 import logging.config
 import os
+from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from attr import dataclass
@@ -153,6 +154,11 @@ class PytezosDappConfig:
                     for pattern in handler.pattern:
                         pattern.destination = self.contracts[pattern.destination].address
 
+    @property
+    def package_path(self) -> str:
+        package = importlib.import_module(self.package)
+        return dirname(package.__file__)
+
     @classmethod
     def load(
         cls,
@@ -174,24 +180,24 @@ class PytezosDappConfig:
         self._logger.info('Setting up handlers and types for package `%s`', self.package)
 
         for indexes_config in self.indexes.values():
-            # FIXME: Handle other index types
-            index_config = indexes_config.operation
-            if not index_config:
-                continue
-            for handler in index_config.handlers:
-                self._logger.info('Registering handler callback`%s`', handler.callback)
-                handler_module = importlib.import_module(f'{self.package}.handlers.{handler.callback}')
-                callback_fn = getattr(handler_module, handler.callback)
-                handler.callback_fn = callback_fn
+            if indexes_config.operation:
+                index_config = indexes_config.operation
+                if not index_config:
+                    continue
+                for handler in index_config.handlers:
+                    self._logger.info('Registering handler callback `%s`', handler.callback)
+                    handler_module = importlib.import_module(f'{self.package}.handlers.{handler.callback}')
+                    callback_fn = getattr(handler_module, handler.callback)
+                    handler.callback_fn = callback_fn
 
-                for pattern in handler.pattern:
-                    self._logger.info('Registering parameter type for entrypoint`%s`', pattern.entrypoint)
-                    parameter_type_module = importlib.import_module(
-                        f'{self.package}.types.{pattern.destination}.parameter.{pattern.entrypoint}'
-                    )
-                    parameter_type = pattern.entrypoint.title().replace('_', '')
-                    parameter_type_cls = getattr(parameter_type_module, parameter_type)
-                    pattern.parameter_type_cls = parameter_type_cls
+                    for pattern in handler.pattern:
+                        self._logger.info('Registering parameter type for entrypoint `%s`', pattern.entrypoint)
+                        parameter_type_module = importlib.import_module(
+                            f'{self.package}.types.{pattern.destination}.parameter.{pattern.entrypoint}'
+                        )
+                        parameter_type = pattern.entrypoint.title().replace('_', '')
+                        parameter_type_cls = getattr(parameter_type_module, parameter_type)
+                        pattern.parameter_type_cls = parameter_type_cls
 
 
 @dataclass(kw_only=True)
