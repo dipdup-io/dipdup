@@ -70,14 +70,22 @@ async def run(_ctx, config: str, logging_config: str) -> None:
 
         state, _ = await State.get_or_create(dapp=_config.package)
 
-        _logger.info('Creating datasource')
-        # FIXME:
-        datasource_config = list(_config.datasources.values())[0].tzkt
-        index_config = cast(OperationIndexConfig, list(_config.indexes.values())[0].operation)
-        datasource = TzktDatasource(datasource_config.url, index_config, state)
 
-        _logger.info('Starting datasource')
-        await datasource.start()
+        datasources = []
+
+        for index_name, index_config in _config.indexes.items():
+            _logger.info('Processing index `%s`', index_name)
+            if not index_config.operation:
+                raise NotImplementedError('Only operation indexes are supported')
+
+            datasource_config = _config.datasources[index_config.operation.datasource]
+            _logger.info('Creating datasource `%s`', index_config.operation.datasource)
+            datasource = TzktDatasource(datasource_config.url, index_config, state)
+            datasources.append(datasource)
+
+        _logger.info('Starting datasources')
+        datasource_run_tasks = [asyncio.create_task(d.start()) for d in datasources]
+        await asyncio.gather(datasource_run_tasks)
 
     finally:
         await Tortoise.close_connections()
