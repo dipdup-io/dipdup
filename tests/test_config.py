@@ -16,9 +16,9 @@ class ConfigTest(TestCase):
         config.initialize()
 
         self.assertIsInstance(config, PytezosDappConfig)
-        # self.assertEqual(
-        #     config.contracts['HEN_minter'],
-        #     config.handlers[0].operations[0].destination
-        # )
-        # self.assertIsInstance(config.handlers[0].handler_callable, Callable)
-        # self.assertIsInstance(config.handlers[0].operations[0].parameters_type, Type)
+        self.assertEqual(
+            config.contracts['HEN_objkts'].address,
+            config.indexes['operations_mainnet'].operation.handlers[0].pattern[0].destination
+        )
+        self.assertIsInstance(config.indexes['operations_mainnet'].operation.handlers[0].callback_fn, Callable)
+        self.assertIsInstance(config.indexes['operations_mainnet'].operation.handlers[0].pattern[0].parameter_type_cls, Type)
