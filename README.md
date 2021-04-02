@@ -163,6 +163,35 @@ $ docker-compose build
 $ docker-compose up dipdup
 ```
 
+## Optional: configure logging
+
+You may want to tune logging to get notifications on errors or enable debug messages. Specify path to Python logging config in YAML format at `--logging-config` argument. Default config to start with:
+
+```yml
+  version: 1
+  disable_existing_loggers: false
+  formatters:
+    brief:
+      format: "%(levelname)-8s %(name)-35s %(message)s"
+  handlers:
+    console:
+      level: INFO
+      formatter: brief
+      class: logging.StreamHandler
+      stream : ext://sys.stdout
+  loggers:
+    SignalRCoreClient:
+      formatter: brief
+    dipdup.datasources.tzkt.datasource:
+      level: INFO
+    dipdup.datasources.tzkt.cache:
+      level: INFO
+  root:
+    level: INFO
+    handlers:
+      - console
+```
+
 ## Contribution
 
 To set up development environment you need to install [poetry](https://python-poetry.org/docs/#installation) package manager. Then run one of the following commands at project's root:
