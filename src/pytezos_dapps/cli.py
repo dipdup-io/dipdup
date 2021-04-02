@@ -14,7 +14,7 @@ from tortoise import Tortoise
 
 import pytezos_dapps.codegen as codegen
 from pytezos_dapps import __version__
-from pytezos_dapps.config import LoggingConfig, OperationIndexConfig, PytezosDappConfig
+from pytezos_dapps.config import LoggingConfig, OperationIndexConfig, DipDupConfig
 from pytezos_dapps.datasources.tzkt.datasource import TzktDatasource
 from pytezos_dapps.models import State
 
@@ -53,10 +53,10 @@ async def run(_ctx, config: str, logging_config: str) -> None:
     _logger.info('Loading config')
     try:
         path = join(os.getcwd(), config)
-        _config = PytezosDappConfig.load(path)
+        _config = DipDupConfig.load(path)
     except FileNotFoundError:
         path = join(dirname(__file__), 'configs', config)
-        _config = PytezosDappConfig.load(path)
+        _config = DipDupConfig.load(path)
 
     _config.initialize()
 
@@ -104,10 +104,10 @@ async def init(_ctx, config: str, logging_config: str):
     _logger.info('Loading config')
     try:
         path = join(os.getcwd(), config)
-        _config = PytezosDappConfig.load(path)
+        _config = DipDupConfig.load(path)
     except FileNotFoundError:
         path = join(dirname(__file__), 'configs', config)
-        _config = PytezosDappConfig.load(path)
+        _config = DipDupConfig.load(path)
 
     codegen.create_package(_config)
     codegen.fetch_schemas()

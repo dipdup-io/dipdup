@@ -7,12 +7,12 @@ from os.path import dirname, exists, join
 
 from jinja2 import Template
 
-from pytezos_dapps.config import PytezosDappConfig
+from pytezos_dapps.config import DipDupConfig
 
 _logger = logging.getLogger(__name__)
 
 
-def create_package(config: PytezosDappConfig):
+def create_package(config: DipDupConfig):
     try:
         config.package_path
     except ImportError:
@@ -26,7 +26,7 @@ def fetch_schemas():
     ...
 
 
-def generate_types(config: PytezosDappConfig):
+def generate_types(config: DipDupConfig):
     schemas_path = join(config.package_path, 'schemas')
     types_path = join(config.package_path, 'types')
 
@@ -70,7 +70,7 @@ def generate_types(config: PytezosDappConfig):
             )
 
 
-def generate_handlers(config: PytezosDappConfig):
+def generate_handlers(config: DipDupConfig):
 
     _logger.info('Loading handler template')
     with open(join(dirname(__file__), 'handler.py.j2')) as file:

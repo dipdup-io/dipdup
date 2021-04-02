@@ -11,6 +11,12 @@ from ruamel.yaml import YAML
 
 @dataclass(kw_only=True)
 class SqliteDatabaseConfig:
+    """
+    SQLite connection config
+
+    :param path: Path to .sqlite3 file, leave default for in-memory database
+    """
+
     path: str = ':memory:'
 
     @property
@@ -20,6 +26,16 @@ class SqliteDatabaseConfig:
 
 @dataclass(kw_only=True)
 class DatabaseConfig:
+    """Database connection config
+
+    :param driver: One of postgres/mysql (asyncpg and aiomysql libs must be installed respectively)
+    :param host: Host
+    :param port: Port
+    :param user: User
+    :param password: Password
+    :param database: Schema name
+    """
+
     driver: str
     host: str
     port: int
@@ -34,12 +50,25 @@ class DatabaseConfig:
 
 @dataclass(kw_only=True)
 class TzktDatasourceConfig:
+    """TzKT datasource config
+
+    :param url: Base API url
+    :param network: Corresponding network alias, only for sanity checks
+    """
+
     url: str
-    network: str
+    network: Optional[str] = None
 
 
 @dataclass(kw_only=True)
 class OperationHandlerPatternConfig:
+    """Operation handler pattern config
+
+    :param destination: Alias of the contract to match
+    :param entrypoint: Contract entrypoint
+    :
+    """
+
     destination: str
     entrypoint: str
 
@@ -59,6 +88,12 @@ class OperationHandlerPatternConfig:
 
 @dataclass(kw_only=True)
 class OperationHandlerConfig:
+    """Operation handler config
+
+    :param callback: Name of method in `hanflers` package
+    :param pattern: Filters to match operations in group
+    """
+
     callback: str
     pattern: List[OperationHandlerPatternConfig]
 
@@ -78,9 +113,19 @@ class OperationHandlerConfig:
 
 @dataclass(kw_only=True)
 class OperationIndexConfig:
+    """Operation index config
+
+    :param datasource: Alias of datasource in `datasources` block
+    :param contract: Alias of contract to fetch operations for
+    :param first_block: First block to process
+    :param last_block: Last block to process
+    :param handlers: List of indexer handlers
+    """
+
     datasource: str
     contract: str
     first_block: int = 0
+    last_block: int = 0
     handlers: List[OperationHandlerConfig]
 
 
@@ -117,6 +162,12 @@ class BlockIndexConfig:
 
 @dataclass(kw_only=True)
 class ContractConfig:
+    """Contract config
+
+    :param network: Corresponding network alias, only for sanity checks
+    :param address: Contract address
+    """
+
     network: Optional[str] = None
     address: str
 
@@ -134,7 +185,17 @@ class IndexesConfig:
 
 
 @dataclass(kw_only=True)
-class PytezosDappConfig:
+class DipDupConfig:
+    """Main dapp config
+
+    :param spec_version: Version of specification, always 0.0.1 for now
+    :param package: Name of dapp python package, existing or not
+    :param database: Database config
+    :param contracts: Mapping of contract aliases and contract configs
+    :param datasources: Mapping of datasource aliases and datasource configs
+    :param indexes: Mapping of index aliases and index configs
+    """
+
     spec_version: str
     package: str
     database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig()
@@ -165,7 +226,7 @@ class PytezosDappConfig:
         filename: str,
         cls_override: Optional[Type] = None,
         converter_override: Optional[Converter] = None,
-    ) -> 'PytezosDappConfig':
+    ) -> 'DipDupConfig':
 
         current_workdir = os.path.join(os.getcwd())
         filename = os.path.join(current_workdir, filename)
