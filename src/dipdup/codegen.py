@@ -23,7 +23,7 @@ def create_package(config: DipDupConfig):
 
     models_path = join(package_path, 'models.py')
     if not exists(models_path):
-        with open(join(dirname(__file__), 'models.py.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'models.py.j2')) as file:
             template = Template(file.read())
         models_code = template.render()
         with open(models_path, 'w') as file:
@@ -81,7 +81,7 @@ def generate_types(config: DipDupConfig):
 def generate_handlers(config: DipDupConfig):
 
     _logger.info('Loading handler template')
-    with open(join(dirname(__file__), 'handler.py.j2')) as file:
+    with open(join(dirname(__file__), 'templates', 'handler.py.j2')) as file:
         template = Template(file.read())
 
     _logger.info('Creating `handlers` package')
