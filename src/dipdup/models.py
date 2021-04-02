@@ -12,10 +12,16 @@ class State(Model):
     dapp = fields.CharField(128)
     level = fields.IntField(default=0)
 
+    class Meta:
+        table = 'states'
+
 
 class Transaction(Model):
     id = fields.IntField(pk=True)
     block = fields.CharField(58)
+
+    class Meta:
+        table = 'transactions'
 
 
 @dataclass(kw_only=True)

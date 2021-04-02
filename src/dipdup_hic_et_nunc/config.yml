@@ -2,7 +2,7 @@ spec_version: 0.0.1
 package: dipdup_hic_et_nunc
 
 database:
-  path: /home/droserasprout/git/pytezos/db.sqlite3
+  path: db.sqlite3
 
 contracts:
   HEN_objkts:
@@ -37,22 +37,3 @@ indexes:
           pattern:
             - destination: HEN_minter
               entrypoint: transfer
-
-  bigmaps_mainnet:
-    bigmapdiff:
-      datasource: tzkt_mainnet
-      contract: HEN_objkts
-      handlers:
-        - callback: on_token
-          pattern:
-            - name: ledger
-              entry_type: LedgerEntry
-            - name: token_metadata
-              entry_type: TokenMetadataEntry
-
-  blocks_mainnet:
-    block:
-      datasource: tzkt_mainnet
-      handlers:
-        - callback: on_block
-          pattern:

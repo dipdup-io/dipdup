@@ -18,6 +18,20 @@ yarl = ">=1.0,<2.0"
 speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
+name = "aiomysql"
+version = "0.0.21"
+description = "MySQL driver for asyncio."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+PyMySQL = ">=0.9,<=0.9.3"
+
+[package.extras]
+sa = ["sqlalchemy (>=1.0)"]
+
+[[package]]
 name = "aiosqlite"
 version = "0.16.1"
 description = "asyncio bridge to the standard sqlite3 module"
@@ -633,6 +647,17 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "pymysql"
+version = "0.9.3"
+description = "Pure Python MySQL Driver"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+rsa = ["cryptography"]
+
+[[package]]
 name = "pypika-tortoise"
 version = "0.1.0"
 description = "Forked from pypika and streamline just for tortoise-orm"
@@ -936,7 +961,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "b3f2e9fc600be71180d230bf99de21febae56646fd41fbeca89f204f00c8eae8"
+content-hash = "09543db6ecb9a4fa822cc4823189fd3e1602651a8d562b5910306a0083ab7686"
 
 [metadata.files]
 aiohttp = [
@@ -977,6 +1002,10 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0-cp39-cp39-win32.whl", hash = "sha256:932bb1ea39a54e9ea27fc9232163059a0b8855256f4052e776357ad9add6f1c9"},
     {file = "aiohttp-3.7.4.post0-cp39-cp39-win_amd64.whl", hash = "sha256:02f46fc0e3c5ac58b80d4d56eb0a7c7d97fcef69ace9326289fb9f1955e65cfe"},
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
+]
+aiomysql = [
+    {file = "aiomysql-0.0.21-py3-none-any.whl", hash = "sha256:a81a97da3dd732635926a8ea6adbbf2d1345799680bf61b5f89e730bcec88cc5"},
+    {file = "aiomysql-0.0.21.tar.gz", hash = "sha256:811569c0db118dd2685f0878f5cebf17a11e89a995fa14261d5fa0254113842c"},
 ]
 aiosqlite = [
     {file = "aiosqlite-0.16.1-py3-none-any.whl", hash = "sha256:1df802815bb1e08a26c06d5ea9df589bcb8eec56e5f3378103b0f9b223c6703c"},
@@ -1411,6 +1440,10 @@ pylint = [
 pylint-exit = [
     {file = "pylint-exit-1.2.0.zip", hash = "sha256:b6ad02884c01c5560a5275079fe5a6c792afff90ecccf0c02513e1547ee280b0"},
     {file = "pylint_exit-1.2.0-py2.py3-none-any.whl", hash = "sha256:65c9e7856e9058705a92d7c45628d604b2a4b8ee2b3c18a7303be77f9ed87cbe"},
+]
+pymysql = [
+    {file = "PyMySQL-0.9.3-py2.py3-none-any.whl", hash = "sha256:3943fbbbc1e902f41daf7f9165519f140c4451c179380677e6a848587042561a"},
+    {file = "PyMySQL-0.9.3.tar.gz", hash = "sha256:d8c059dcd81dedb85a9f034d5e22dcb4442c0b201908bede99e306d65ea7c8e7"},
 ]
 pypika-tortoise = [
     {file = "pypika-tortoise-0.1.0.tar.gz", hash = "sha256:7176e98ff0cf7c311d4ba58f28f1755956265dee2f9781e65e1304a67a3e5aa5"},

@@ -51,12 +51,7 @@ async def run(_ctx, config: str, logging_config: str) -> None:
         LoggingConfig.load(path).apply()
 
     _logger.info('Loading config')
-    try:
-        path = join(os.getcwd(), config)
-        _config = DipDupConfig.load(path)
-    except FileNotFoundError:
-        path = join(dirname(__file__), 'configs', config)
-        _config = DipDupConfig.load(path)
+    _config = DipDupConfig.load(config)
 
     _config.initialize()
 

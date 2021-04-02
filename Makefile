@@ -5,6 +5,7 @@
 DEV ?= 1
 
 all: install lint test cover
+lint: isort black pylint mypy
 
 debug:
 	pip install . --force --no-deps
@@ -24,8 +25,6 @@ pylint:
 mypy:
 	poetry run mypy src
 
-lint: isort black pylint mypy
-
 test:
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -v tests
 
@@ -34,6 +33,9 @@ cover:
 
 build:
 	poetry build
+
+image:
+	docker build . -t dipdup
 
 release-patch:
 	bumpversion patch

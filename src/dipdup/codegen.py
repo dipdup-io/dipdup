@@ -21,6 +21,14 @@ def create_package(config: DipDupConfig):
         with open(join(package_path, '__init__.py'), 'w'):
             pass
 
+    models_path = join(package_path, 'models.py')
+    if not exists(models_path):
+        with open(join(dirname(__file__), 'models.py.j2')) as file:
+            template = Template(file.read())
+        models_code = template.render()
+        with open(models_path, 'w') as file:
+            file.write(models_code)
+
 
 def fetch_schemas():
     ...

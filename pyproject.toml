@@ -1,33 +1,47 @@
 [tool.poetry]
 name = "dipdup"
-description = ""
-authors = []
+description = "Python SDK for developing indexers of Tezos smart contracts inspired by The Graph"
 version = "0.0.0"
+license = "MIT"
+authors = [
+    "Lev Gorodetskiy <github@droserasprout.space>",
+    "Michael Zaikin <mz@baking-bad.org>"
+]
+readme = "README.md"
+repository = "https://github.com/dipdup-net/dipdup-py"
+homepage = "https://pytezos.org"
+keywords = ['tezos', 'blockchain', 'sdk', 'michelson', 'indexers', 'tzkt', 'cryptocurrencies', 'smart-contracts']
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 packages = [
     { include = "dipdup", from = "src" },
 ]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-tortoise-orm = "^0.17.1"
+aiohttp = "^3.7.4"
+aiomysql = "^0.0.21"
 asyncpg = "^0.22.0"
 cattrs-extras = "^0.1.1"
-"ruamel.yaml" = "^0.17.2"
-aiohttp = "^3.7.4"
 datamodel-code-generator = "^0.10.0"
+"ruamel.yaml" = "^0.17.2"
 signalrcore = {git = "https://github.com/droserasprout/signalrcore", rev = "async"}
+tortoise-orm = "^0.17.1"
 websockets = "^8.1"
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.0"
-pytest-cov = "^2.4"
+black = "^20.8b1"
 bump2version = "^1.0.1"
-pylint = "^2.7.2"
-pylint-exit = "^1.2.0"
+diff-cover = "^5.0.1"
 isort = "^5.7.0"
 mypy = "^0.812"
-diff-cover = "^5.0.1"
-black = "^20.8b1"
+pylint = "^2.7.2"
+pylint-exit = "^1.2.0"
+pytest = "^3.0"
+pytest-cov = "^2.4"
 
 [tool.poetry.scripts]
 dipdup = 'dipdup.cli:cli'
