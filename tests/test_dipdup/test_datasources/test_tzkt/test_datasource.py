@@ -2,7 +2,7 @@ import json
 from functools import partial
 from os.path import dirname, join
 from unittest import IsolatedAsyncioTestCase, TestCase
-from unittest.mock import AsyncMock, call
+from unittest.mock import AsyncMock, call, patch, MagicMock
 
 from dipdup.config import OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -68,3 +68,25 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             ]
         )
         self.assertEqual(2, len(client.handlers))
+
+    async def test_on_fetch_operations(self):
+        self.datasource._subscriptions = {self.index_config.contract: ['transaction']}
+        with open(join(dirname(__file__), 'operations.json')) as file:
+            operations_message = json.load(file)
+            del operations_message['state']
+        stripped_operations_message = operations_message['data']
+
+        on_operation_message_mock = AsyncMock()
+        get_mock = MagicMock()
+        get_mock.return_value.__aenter__.return_value.json.return_value = stripped_operations_message
+
+        self.datasource.on_operation_message = on_operation_message_mock
+
+        with patch('aiohttp.ClientSession.get', get_mock):
+            await self.datasource.fetch_operations(1337)
+
+        on_operation_message_mock.assert_awaited_with(
+            address=self.index_config.contract,
+            message=[operations_message],
+            sync=True,
+        )
