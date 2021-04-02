@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "pytezos-dapps"
+name = "dipdup"
 description = ""
 authors = []
 version = "0.0.0"
 packages = [
-    { include = "pytezos_dapps", from = "src" },
+    { include = "dipdup", from = "src" },
 ]
 
 [tool.poetry.dependencies]
@@ -30,7 +30,7 @@ diff-cover = "^5.0.1"
 black = "^20.8b1"
 
 [tool.poetry.scripts]
-pytezos = 'pytezos.cli.cli:cli'
+dipdup = 'dipdup.cli:cli'
 
 [tool.isort]
 line_length = 140
