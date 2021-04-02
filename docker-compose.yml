@@ -2,7 +2,7 @@ version: "3.8"
 services:
   dipdup:
     build: .
-    command: ["run", "-c", "config.yml"]
+    command: ["-c", "config.yml", "run"]
     depends_on:
       - db
     volumes:

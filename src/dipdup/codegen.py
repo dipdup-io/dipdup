@@ -14,7 +14,7 @@ _logger = logging.getLogger(__name__)
 
 def create_package(config: DipDupConfig):
     try:
-        config.package_path
+        package_path = config.package_path
     except ImportError:
         package_path = join(os.getcwd(), config.package)
         mkdir(package_path)

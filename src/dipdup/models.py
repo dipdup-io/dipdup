@@ -1,5 +1,4 @@
 from datetime import datetime
-from symbol import parameters
 from typing import Any, Generic, Optional, TypeVar
 
 from attr import dataclass
