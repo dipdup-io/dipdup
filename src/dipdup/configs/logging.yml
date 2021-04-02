@@ -12,9 +12,9 @@
   loggers:
     SignalRCoreClient:
       formatter: brief
-    pytezos_dapps.datasources.tzkt.datasource:
+    dipdup.datasources.tzkt.datasource:
       level: INFO
-    pytezos_dapps.datasources.tzkt.cache:
+    dipdup.datasources.tzkt.cache:
       level: INFO
   root:
     level: INFO

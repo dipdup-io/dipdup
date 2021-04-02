@@ -3,8 +3,8 @@ from collections import namedtuple
 from copy import copy
 from typing import Awaitable, Callable, Dict, List
 
-from pytezos_dapps.config import OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
-from pytezos_dapps.models import OperationData
+from dipdup.config import OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
+from dipdup.models import OperationData
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 

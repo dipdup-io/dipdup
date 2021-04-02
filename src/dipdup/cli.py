@@ -12,11 +12,11 @@ import click
 from jinja2 import Template
 from tortoise import Tortoise
 
-import pytezos_dapps.codegen as codegen
-from pytezos_dapps import __version__
-from pytezos_dapps.config import LoggingConfig, OperationIndexConfig, DipDupConfig
-from pytezos_dapps.datasources.tzkt.datasource import TzktDatasource
-from pytezos_dapps.models import State
+import dipdup.codegen as codegen
+from dipdup import __version__
+from dipdup.config import DipDupConfig, LoggingConfig, OperationIndexConfig
+from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.models import State
 
 _logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ async def run(_ctx, config: str, logging_config: str) -> None:
             db_url=_config.database.connection_string,
             modules={
                 'models': [f'{_config.package}.models'],
-                'int_models': ['pytezos_dapps.models'],
+                'int_models': ['dipdup.models'],
             },
         )
         await Tortoise.generate_schemas()

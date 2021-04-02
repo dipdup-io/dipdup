@@ -1,5 +1,5 @@
 spec_version: 0.0.1
-package: hic_et_nunc_dapp
+package: dipdup_hic_et_nunc
 
 database:
   path: /home/droserasprout/git/pytezos/db.sqlite3

@@ -10,10 +10,10 @@ from signalrcore.hub_connection_builder import HubConnectionBuilder  # type: ign
 from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise.transactions import in_transaction
 
-from pytezos_dapps.config import OperationHandlerConfig, OperationIndexConfig
-from pytezos_dapps.datasources.tzkt.cache import OperationCache
-from pytezos_dapps.datasources.tzkt.enums import TzktMessageType
-from pytezos_dapps.models import HandlerContext, OperationData, State, Transaction
+from dipdup.config import OperationHandlerConfig, OperationIndexConfig
+from dipdup.datasources.tzkt.cache import OperationCache
+from dipdup.datasources.tzkt.enums import TzktMessageType
+from dipdup.models import HandlerContext, OperationData, State, Transaction
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
 TZKT_HTTP_REQUEST_SLEEP = 1

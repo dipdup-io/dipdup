@@ -2,8 +2,8 @@ import json
 from os.path import dirname, join
 from unittest import TestCase
 
-from pytezos_dapps.datasources.tzkt.datasource import TzktDatasource
-from pytezos_dapps.models import OperationData
+from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.models import OperationData
 
 
 class TzktDatasourceTest(TestCase):

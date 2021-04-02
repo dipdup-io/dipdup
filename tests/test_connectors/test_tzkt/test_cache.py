@@ -2,10 +2,10 @@ import json
 from os.path import dirname, join
 from unittest import TestCase, IsolatedAsyncioTestCase
 
-from pytezos_dapps.config import PytezosDappConfig, OperationIndexConfig
-from pytezos_dapps.datasources.tzkt.cache import OperationCache, OperationGroup
-from pytezos_dapps.datasources.tzkt.datasource import TzktDatasource
-from pytezos_dapps.models import OperationData
+from dipdup.config import DipDupConfig, OperationIndexConfig
+from dipdup.datasources.tzkt.cache import OperationCache, OperationGroup
+from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.models import OperationData
 
 
 class TzktDatasourceTest(IsolatedAsyncioTestCase):

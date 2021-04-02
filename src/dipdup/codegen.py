@@ -7,7 +7,7 @@ from os.path import dirname, exists, join
 
 from jinja2 import Template
 
-from pytezos_dapps.config import DipDupConfig
+from dipdup.config import DipDupConfig
 
 _logger = logging.getLogger(__name__)
 

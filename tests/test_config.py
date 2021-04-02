@@ -2,9 +2,9 @@ import json
 from os.path import dirname, join
 from typing import Callable, Type
 from unittest import TestCase
-from pytezos_dapps.config import PytezosDappConfig
+from dipdup.config import DipDupConfig
 
-from pytezos_dapps.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 
 class ConfigTest(TestCase):
@@ -12,10 +12,10 @@ class ConfigTest(TestCase):
         self.path = join(dirname(__file__), 'config.yml')
 
     def test_load_initialize(self):
-        config = PytezosDappConfig.load(self.path)
+        config = DipDupConfig.load(self.path)
         config.initialize()
 
-        self.assertIsInstance(config, PytezosDappConfig)
+        self.assertIsInstance(config, DipDupConfig)
         self.assertEqual(
             config.contracts['HEN_objkts'].address,
             config.indexes['operations_mainnet'].operation.handlers[0].pattern[0].destination
