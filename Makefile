@@ -14,16 +14,16 @@ install:
 	poetry install `if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
 
 isort:
-	poetry run isort src
+	poetry run isort src tests
 
 black:
-	poetry run black src
+	poetry run black src tests
 
 pylint:
-	poetry run pylint src || poetry run pylint-exit $$?
+	poetry run pylint src tests || poetry run pylint-exit $$?
 
 mypy:
-	poetry run mypy src
+	poetry run mypy src tests
 
 test:
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -v tests
