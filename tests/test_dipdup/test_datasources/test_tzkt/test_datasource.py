@@ -1,15 +1,21 @@
 import json
-from functools import partial
 from os.path import dirname, join
-from unittest import IsolatedAsyncioTestCase, TestCase
-from unittest.mock import AsyncMock, call, patch, MagicMock
+from unittest import IsolatedAsyncioTestCase
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
+from pydantic import BaseModel
+from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
+from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
+from tortoise import Tortoise
 
 from dipdup.config import OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
-from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
-
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import OperationData, State
-from signalrcore.transport.websockets.connection import ConnectionState
+from dipdup.models import HandlerContext, OperationData, State, Transaction
+
+
+class Collect(BaseModel):
+    objkt_amount: str
+    swap_id: str
 
 
 class TzktDatasourceTest(IsolatedAsyncioTestCase):
@@ -21,10 +27,11 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             handlers=[
                 OperationHandlerConfig(
                     callback='',
-                    pattern=[OperationHandlerPatternConfig(destination='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW', entrypoint='hDAO_batch')],
+                    pattern=[OperationHandlerPatternConfig(destination='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9', entrypoint='collect')],
                 )
             ],
         )
+        self.index_config.handlers[0].pattern[0].parameter_type_cls = Collect
         self.datasource = TzktDatasource('tzkt.test', self.index_config, self.state)
 
     async def test_convert_operation(self):
@@ -90,3 +97,59 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             message=[operations_message],
             sync=True,
         )
+
+    async def test_on_operation_message(self):
+        with open(join(dirname(__file__), 'operations.json')) as file:
+            operations_message = json.load(file)
+        operation = TzktDatasource.convert_operation(operations_message['data'][-2])
+
+        on_operation_match_mock = AsyncMock()
+        self.datasource.on_operation_match = on_operation_match_mock
+
+        try:
+            await Tortoise.init(
+                db_url='sqlite://:memory:',
+                modules={
+                    'int_models': ['dipdup.models'],
+                },
+            )
+            await Tortoise.generate_schemas()
+
+            await self.datasource.on_operation_message([operations_message], self.index_config.contract, sync=True)
+
+            on_operation_match_mock.assert_awaited_with(
+                self.index_config.handlers[0],
+                [operation],
+            )
+
+        finally:
+            await Tortoise.close_connections()
+
+    async def test_on_operation_match(self):
+        with open(join(dirname(__file__), 'operations.json')) as file:
+            operations_message = json.load(file)
+        operation = TzktDatasource.convert_operation(operations_message['data'][0])
+
+        try:
+            await Tortoise.init(
+                db_url='sqlite://:memory:',
+                modules={
+                    'int_models': ['dipdup.models'],
+                },
+            )
+            await Tortoise.generate_schemas()
+
+            callback_mock = AsyncMock()
+
+            self.index_config.handlers[0].callback_fn = callback_mock
+
+            self.datasource._synchronized.set()
+            await self.datasource.on_operation_match(self.index_config.handlers[0], [operation])
+
+            call_arg = callback_mock.await_args[0][0]
+            self.assertIsInstance(call_arg, HandlerContext)
+            self.assertIsInstance(call_arg.parameter, Collect)
+            self.assertIsInstance(call_arg.data, OperationData)
+            self.assertIsInstance(call_arg.transaction, Transaction)
+        finally:
+            await Tortoise.close_connections()
