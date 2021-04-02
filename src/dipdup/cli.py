@@ -77,15 +77,16 @@ async def run(_ctx, config: str, logging_config: str) -> None:
             _logger.info('Processing index `%s`', index_name)
             if not index_config.operation:
                 raise NotImplementedError('Only operation indexes are supported')
+            index_config = index_config.operation
 
-            datasource_config = _config.datasources[index_config.operation.datasource]
-            _logger.info('Creating datasource `%s`', index_config.operation.datasource)
+            datasource_config = _config.datasources[index_config.datasource].tzkt
+            _logger.info('Creating datasource `%s`', index_config.datasource)
             datasource = TzktDatasource(datasource_config.url, index_config, state)
             datasources.append(datasource)
 
         _logger.info('Starting datasources')
         datasource_run_tasks = [asyncio.create_task(d.start()) for d in datasources]
-        await asyncio.gather(datasource_run_tasks)
+        await asyncio.gather(*datasource_run_tasks)
 
     finally:
         await Tortoise.close_connections()
