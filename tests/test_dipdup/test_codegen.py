@@ -1,10 +1,8 @@
-import json
-from os import rmdir
 from os.path import dirname, join
 from shutil import rmtree
 from unittest import TestCase
-from dipdup import codegen
 
+from dipdup import codegen
 from dipdup.config import DipDupConfig
 
 
@@ -20,6 +18,8 @@ class CodegenTest(TestCase):
             codegen.fetch_schemas()
             codegen.generate_types(self.config)
             codegen.generate_handlers(self.config)
-        finally:
+        except Exception:
             rmtree('tmp_test_dipdup')
-            ...
+            raise
+        else:
+            rmtree('tmp_test_dipdup')

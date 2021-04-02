@@ -102,10 +102,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         fetch_operations_mock = AsyncMock()
         self.datasource.fetch_operations = fetch_operations_mock
 
-        await self.datasource.on_operation_message(
-            [{'type': 0, 'state': 123}],
-            self.index_config.contract
-        )
+        await self.datasource.on_operation_message([{'type': 0, 'state': 123}], self.index_config.contract)
         fetch_operations_mock.assert_awaited_with(123)
 
     async def test_on_operation_message_data(self):
