@@ -1,9 +1,11 @@
+import json
 import logging
 import os
 import subprocess
 from contextlib import suppress
 from os import mkdir
 from os.path import dirname, exists, join
+from typing import Any, Dict
 
 from jinja2 import Template
 
@@ -12,7 +14,7 @@ from dipdup.config import DipDupConfig
 _logger = logging.getLogger(__name__)
 
 
-def create_package(config: DipDupConfig):
+async def create_package(config: DipDupConfig):
     try:
         package_path = config.package_path
     except ImportError:
@@ -29,12 +31,36 @@ def create_package(config: DipDupConfig):
         with open(models_path, 'w') as file:
             file.write(models_code)
 
+async def _fetch_schemas(address: str) -> Dict[str, Any]:
+    raise NotImplementedError
 
-def fetch_schemas():
-    ...
+async def fetch_schemas(config: DipDupConfig):
+    _logger.info('Creating `schemas` package')
+    schemas_path = join(config.package_path, 'schemas')
+    with suppress(FileExistsError):
+        mkdir(schemas_path)
+
+    for contract_name, contract in config.contracts.items():
+        _logger.info('Fetching schemas for contract `%s`', contract_name)
+        address_schemas_path = join(schemas_path, contract.address)
+        with suppress(FileExistsError):
+            mkdir(address_schemas_path)
+
+        parameter_schemas_path = join(address_schemas_path, 'parameter')
+        with suppress(FileExistsError):
+            mkdir(parameter_schemas_path)
+
+        address_schemas_json = await _fetch_schemas(contract.address)
+        for entrypoint_json in address_schemas_json['entrypoints']:
+            entrypoint = entrypoint_json['name']
+            entrypoint_schema = entrypoint_json['parameterSchema']
+            entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
+            if not exists(entrypoint_schema_path):
+                with open(entrypoint_schema_path, 'w') as file:
+                    file.write(json.dumps(entrypoint_schema, indent=4))
 
 
-def generate_types(config: DipDupConfig):
+async def generate_types(config: DipDupConfig):
     schemas_path = join(config.package_path, 'schemas')
     types_path = join(config.package_path, 'types')
 
@@ -78,7 +104,7 @@ def generate_types(config: DipDupConfig):
             )
 
 
-def generate_handlers(config: DipDupConfig):
+async def generate_handlers(config: DipDupConfig):
 
     _logger.info('Loading handler template')
     with open(join(dirname(__file__), 'templates', 'handler.py.j2')) as file:
