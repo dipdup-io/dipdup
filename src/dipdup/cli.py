@@ -70,18 +70,17 @@ async def run(_ctx, config: str, logging_config: str) -> None:
 
         state, _ = await State.get_or_create(dapp=_config.package)
 
-
         datasources = []
 
         for index_name, index_config in _config.indexes.items():
             _logger.info('Processing index `%s`', index_name)
             if not index_config.operation:
                 raise NotImplementedError('Only operation indexes are supported')
-            index_config = index_config.operation
+            operation_index_config = index_config.operation
 
-            datasource_config = _config.datasources[index_config.datasource].tzkt
-            _logger.info('Creating datasource `%s`', index_config.datasource)
-            datasource = TzktDatasource(datasource_config.url, index_config, state)
+            datasource_config = _config.datasources[operation_index_config.datasource].tzkt
+            _logger.info('Creating datasource `%s`', operation_index_config.datasource)
+            datasource = TzktDatasource(datasource_config.url, operation_index_config, state)
             datasources.append(datasource)
 
         _logger.info('Starting datasources')
