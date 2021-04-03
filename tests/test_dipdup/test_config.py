@@ -8,7 +8,7 @@ from dipdup.config import DipDupConfig
 
 class ConfigTest(TestCase):
     def setUp(self):
-        self.path = join(dirname(__file__), 'config.yml')
+        self.path = join(dirname(__file__), 'dipdup.yml')
 
     def test_load_initialize(self):
         config = DipDupConfig.load(self.path)

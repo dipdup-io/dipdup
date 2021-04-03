@@ -10,7 +10,7 @@ from dipdup.config import DipDupConfig
 
 class CodegenTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.config_path = join(dirname(__file__), 'config.yml')
+        self.config_path = join(dirname(__file__), 'dipdup.yml')
         self.config = DipDupConfig.load(self.config_path)
         self.config.package = 'tmp_test_dipdup'
         schemas_response_path = join(dirname(__file__), 'test_datasources', 'test_tzkt', 'jsonschema.json')

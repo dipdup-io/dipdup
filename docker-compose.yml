@@ -2,11 +2,11 @@ version: "3.8"
 services:
   dipdup:
     build: .
-    command: ["-c", "config.yml", "run"]
+    command: ["-c", "dipdup.yml", "run"]
     depends_on:
       - db
     volumes:
-      - ./src/dipdup_hic_et_nunc/config-docker.yml:/home/dipdup/config.yml
+      - ./src/dipdup_hic_et_nunc/dupdup-docker.yml:/home/dipdup/dipdup.yml
 
   db:
     image: postgres
