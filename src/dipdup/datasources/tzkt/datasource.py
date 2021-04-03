@@ -20,10 +20,15 @@ TZKT_HTTP_REQUEST_SLEEP = 1
 
 
 class TzktDatasource:
-    def __init__(self, url: str, index_config: OperationIndexConfig, state: State):
+    def __init__(
+        self,
+        url: str,
+        operation_index_configs: List[OperationIndexConfig],
+        state: State,
+    ):
         super().__init__()
         self._url = url
-        self._index_config = index_config
+        self._operation_index_configs = {config.contract: config for config in operation_index_configs}
         self._state = state
         self._synchronized = asyncio.Event()
         self._callback_lock = asyncio.Lock()
@@ -31,7 +36,7 @@ class TzktDatasource:
         self._subscriptions: Dict[str, List[str]] = {}
         self._subscriptions_registered: List[Tuple[str, str]] = []
         self._client: Optional[BaseHubConnection] = None
-        self._cache = OperationCache(index_config, self._state.level)
+        self._caches = {config.contract: OperationCache(config, self._state.level) for config in operation_index_configs}
 
     def _get_client(self) -> BaseHubConnection:
         if self._client is None:
@@ -54,7 +59,8 @@ class TzktDatasource:
 
     async def start(self):
         self._logger.info('Starting datasource')
-        await self.add_subscription(self._index_config.contract)
+        for config in self._operation_index_configs.values():
+            await self.add_subscription(config.contract)
 
         self._logger.info('Starting websocket client')
         await self._get_client().start()
@@ -187,10 +193,10 @@ class TzktDatasource:
                         operation = self.convert_operation(operation_json)
                         if operation.type != 'transaction':
                             continue
-                        await self._cache.add(operation)
+                        await self._caches[address].add(operation)
 
                     async with in_transaction():
-                        last_level = await self._cache.process(self.on_operation_match)
+                        last_level = await self._caches[address].process(self.on_operation_match)
                         self._state.level = last_level  # type: ignore
                         await self._state.save()
 

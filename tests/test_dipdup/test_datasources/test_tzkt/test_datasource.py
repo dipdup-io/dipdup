@@ -32,7 +32,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             ],
         )
         self.index_config.handlers[0].pattern[0].parameter_type_cls = Collect
-        self.datasource = TzktDatasource('tzkt.test', self.index_config, self.state)
+        self.datasource = TzktDatasource('tzkt.test', [self.index_config], self.state)
 
     async def test_convert_operation(self):
         with open(join(dirname(__file__), 'operations.json')) as file:

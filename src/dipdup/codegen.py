@@ -31,8 +31,10 @@ async def create_package(config: DipDupConfig):
         with open(models_path, 'w') as file:
             file.write(models_code)
 
+
 async def _fetch_schemas(address: str) -> Dict[str, Any]:
     raise NotImplementedError
+
 
 async def fetch_schemas(config: DipDupConfig):
     _logger.info('Creating `schemas` package')
