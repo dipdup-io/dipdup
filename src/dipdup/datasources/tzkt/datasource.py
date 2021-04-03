@@ -209,9 +209,14 @@ class TzktDatasource:
         if address not in self._subscriptions:
             self._subscriptions[address] = types
 
-    async def on_operation_match(self, handler_config: OperationHandlerConfig, operations: List[OperationData]):
+    async def on_operation_match(
+        self,
+        handler_config: OperationHandlerConfig,
+        matched_operations: List[OperationData],
+        operations: List[OperationData],
+    ):
         args = []
-        for pattern_config, operation in zip(handler_config.pattern, operations):
+        for pattern_config, operation in zip(handler_config.pattern, matched_operations):
             transaction, _ = await Transaction.get_or_create(id=operation.id, block=operation.block)
 
             parameter_type = pattern_config.parameter_type_cls
@@ -224,7 +229,7 @@ class TzktDatasource:
             )
             args.append(context)
 
-        await handler_config.callback_fn(*args)
+        await handler_config.callback_fn(*args, operations)
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:

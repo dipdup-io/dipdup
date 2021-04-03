@@ -51,8 +51,6 @@ async def cli(ctx, config: str, logging_config: str):
     _logger.info('Loading config')
     _config = DipDupConfig.load(config)
 
-    _config.initialize()
-
     ctx.obj = CLIContext(
         config=_config,
         logging_config=_logging_config,
@@ -64,6 +62,7 @@ async def cli(ctx, config: str, logging_config: str):
 @click_async
 async def run(ctx) -> None:
     config: DipDupConfig = ctx.obj.config
+    config.initialize()
 
     try:
         _logger.info('Initializing database')
@@ -125,7 +124,7 @@ async def run(ctx) -> None:
 async def init(ctx):
     config: DipDupConfig = ctx.obj.config
 
-    codegen.create_package(config)
-    codegen.fetch_schemas(config)
-    codegen.generate_types(config)
-    codegen.generate_handlers(config)
+    await codegen.create_package(config)
+    # await codegen.fetch_schemas(config)
+    await codegen.generate_types(config)
+    await codegen.generate_handlers(config)

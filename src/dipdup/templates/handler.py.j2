@@ -1,4 +1,5 @@
-from dipdup.models import HandlerContext
+from typing import List
+from dipdup.models import HandlerContext, OperationData
 
 from {{ package }}.models import *
 {% for pattern in patterns %}
@@ -9,5 +10,6 @@ async def {{ handler }}(
 {%- for pattern in patterns %}
     {{ pattern.entrypoint }}: HandlerContext[{{ pattern.entrypoint.title().replace('_', '') }}],
 {%- endfor %}
+    operations: List[OperationData],
 ) -> None:
     ...

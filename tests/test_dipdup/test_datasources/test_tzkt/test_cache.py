@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from os.path import dirname, join
 from unittest.async_case import IsolatedAsyncioTestCase  # type: ignore
-from unittest.mock import AsyncMock  # type: ignore
+from unittest.mock import ANY, AsyncMock  # type: ignore
 
 from dateutil.tz import tzutc
 
@@ -90,4 +90,5 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                     parameter="{'entrypoint': 'hDAO_batch', 'value': [{'to_': 'tz1YRG68NdqtAcsFEwTUw6FsSsiBb5kagEDo', 'amount': '500000'}, {'to_': 'tz1ZsNvZKUveN7FjRhMHTm9NiAUNAmrwdFKV', 'amount': '500000'}, {'to_': 'tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw', 'amount': '25000'}]}",
                 )
             ],
+            ANY,
         )

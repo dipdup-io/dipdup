@@ -1,7 +1,7 @@
 import json
 from os.path import dirname, join
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
 
 from pydantic import BaseModel
 from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -108,6 +108,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
     async def test_on_operation_message_data(self):
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
+        operations = [TzktDatasource.convert_operation(op) for op in operations_message['data']]
         operation = TzktDatasource.convert_operation(operations_message['data'][-2])
 
         on_operation_match_mock = AsyncMock()
@@ -127,6 +128,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             on_operation_match_mock.assert_awaited_with(
                 self.index_config.handlers[0],
                 [operation],
+                ANY,
             )
 
         finally:
@@ -135,7 +137,8 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
     async def test_on_operation_match(self):
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
-        operation = TzktDatasource.convert_operation(operations_message['data'][0])
+        operations = [TzktDatasource.convert_operation(op) for op in operations_message['data']]
+        matched_operation = operations[0]
 
         try:
             await Tortoise.init(
@@ -151,12 +154,15 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.index_config.handlers[0].callback_fn = callback_mock
 
             self.datasource._synchronized.set()
-            await self.datasource.on_operation_match(self.index_config.handlers[0], [operation])
+            await self.datasource.on_operation_match(self.index_config.handlers[0], [matched_operation], operations)
 
             call_arg = callback_mock.await_args[0][0]
             self.assertIsInstance(call_arg, HandlerContext)
             self.assertIsInstance(call_arg.parameter, Collect)
             self.assertIsInstance(call_arg.data, OperationData)
             self.assertIsInstance(call_arg.transaction, Transaction)
+            self.assertIsInstance(callback_mock.await_args[0][1], list)
+            self.assertIsInstance(callback_mock.await_args[0][1][0], OperationData)
+
         finally:
             await Tortoise.close_connections()

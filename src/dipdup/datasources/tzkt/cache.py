@@ -39,7 +39,7 @@ class OperationCache:
 
     async def process(
         self,
-        callback: Callable[[OperationHandlerConfig, List[OperationData]], Awaitable[None]],
+        callback: Callable[[OperationHandlerConfig, List[OperationData], List[OperationData]], Awaitable[None]],
     ) -> int:
         keys = list(self._operations.keys())
         self._logger.info('Matching %s operation groups', len(keys))
@@ -55,7 +55,7 @@ class OperationCache:
 
                 if len(matched_operations) == len(handler_config.pattern):
                     self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                    await callback(handler_config, matched_operations)
+                    await callback(handler_config, matched_operations, operations)
                     if key in self._operations:
                         del self._operations[key]
 
