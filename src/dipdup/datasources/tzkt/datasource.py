@@ -24,19 +24,18 @@ class TzktDatasource:
         self,
         url: str,
         operation_index_configs: List[OperationIndexConfig],
-        state: State,
     ):
         super().__init__()
         self._url = url
         self._operation_index_configs = {config.contract: config for config in operation_index_configs}
-        self._state = state
         self._synchronized = asyncio.Event()
         self._callback_lock = asyncio.Lock()
         self._logger = logging.getLogger(__name__)
         self._subscriptions: Dict[str, List[str]] = {}
         self._subscriptions_registered: List[Tuple[str, str]] = []
+        self._sync_events = {config.state.index_name: asyncio.Event() for config in operation_index_configs}
         self._client: Optional[BaseHubConnection] = None
-        self._caches = {config.contract: OperationCache(config, self._state.level) for config in operation_index_configs}
+        self._caches = {config.contract: OperationCache(config, config.state.level) for config in operation_index_configs}
 
     def _get_client(self) -> BaseHubConnection:
         if self._client is None:
@@ -129,24 +128,26 @@ class TzktDatasource:
                 sync=True,
             )
 
-        level = self._state.level or 0
-        if level == last_level:
-            self._synchronized.set()
-            return
-
         self._logger.info('Fetching operations prior to level %s', last_level)
-        for address in self._subscriptions:
+        for index_config in self._operation_index_configs.values():
+
+            sync_event = self._sync_events[index_config.state.index_name]
+            level = index_config.state.level or 0
+            if level == last_level:
+                sync_event.set()
+                continue
+
             operations = []
             offset = 0
 
             while True:
-                fetched_operations = await self._fetch_operations(address, offset, level, last_level)
+                fetched_operations = await self._fetch_operations(index_config.contract, offset, level, last_level)
                 operations += fetched_operations
 
                 while True:
                     for i in range(len(operations) - 1):
                         if operations[i]['level'] != operations[i + 1]['level']:
-                            await _process_operations(address, operations[: i + 1])
+                            await _process_operations(index_config.contract, operations[: i + 1])
                             operations = operations[i + 1 :]
                             break
                     else:
@@ -160,7 +161,9 @@ class TzktDatasource:
                 await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
 
             if operations:
-                await _process_operations(address, operations)
+                await _process_operations(index_config.contract, operations)
+
+            sync_event.set()
 
         self._logger.info('Synchronization finished')
         self._synchronized.set()
@@ -173,18 +176,20 @@ class TzktDatasource:
     ) -> None:
         self._logger.info('Got operation message on %s', address)
         self._logger.debug('%s', message)
+        index_config = self._operation_index_configs[address]
         for item in message:
             message_type = TzktMessageType(item['type'])
 
             if message_type == TzktMessageType.STATE:
                 level = item['state']
-                self._logger.info('Got state message, current level %s, index level %s', level, self._state.level)
+                self._logger.info('Got state message, current level %s, index level %s', level, index_config.state.level)
                 await self.fetch_operations(level)
 
             elif message_type == TzktMessageType.DATA:
-                if not sync and not self._synchronized.is_set():
+                sync_event = self._sync_events[index_config.state.index_name]
+                if not sync and not sync_event.is_set():
                     self._logger.info('Waiting until synchronization is complete')
-                    await self._synchronized.wait()
+                    await sync_event.wait()
                     self._logger.info('Synchronization is complete, processing websocket message')
 
                 self._logger.info('Acquiring callback lock')
@@ -197,8 +202,8 @@ class TzktDatasource:
 
                     async with in_transaction():
                         last_level = await self._caches[address].process(self.on_operation_match)
-                        self._state.level = last_level  # type: ignore
-                        await self._state.save()
+                        index_config.state.level = last_level  # type: ignore
+                        await index_config.state.save()
 
             else:
                 self._logger.warning('%s is not supported', message_type)

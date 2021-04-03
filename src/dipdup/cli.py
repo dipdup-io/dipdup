@@ -62,7 +62,6 @@ async def cli(ctx, config: str, logging_config: str):
 @click_async
 async def run(ctx) -> None:
     config: DipDupConfig = ctx.obj.config
-    config.initialize()
 
     try:
         _logger.info('Initializing database')
@@ -75,9 +74,9 @@ async def run(ctx) -> None:
         )
         await Tortoise.generate_schemas()
 
-        _logger.info('Fetching indexer state for dapp `%s`', config.package)
+        await config.initialize()
 
-        state, _ = await State.get_or_create(dapp=config.package)
+        _logger.info('Fetching indexer state for dapp `%s`', config.package)
 
         datasource_operation_index_configs: Dict[str, List[OperationIndexConfig]] = {
             datasource_name: [] for datasource_name in config.datasources
@@ -104,7 +103,6 @@ async def run(ctx) -> None:
                 datasource = TzktDatasource(
                     url=datasource_config.tzkt.url,
                     operation_index_configs=operation_index_configs,
-                    state=state,
                 )
                 datasources.append(datasource)
             else:

@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Any, Generic, Optional, TypeVar
 
 from attr import dataclass
@@ -7,12 +8,20 @@ from tortoise import Model, fields
 ParameterType = TypeVar('ParameterType')
 
 
+class IndexType(Enum):
+    operation = 'operation'
+    bigmapdiff = 'bigmapdiff'
+    block = 'block'
+
+
 class State(Model):
-    dapp = fields.CharField(128)
+    index_name = fields.CharField(256)
+    index_type = fields.CharEnumField(IndexType)
+    hash = fields.CharField(256)
     level = fields.IntField(default=0)
 
     class Meta:
-        table = 'states'
+        table = 'dipdup_state'
 
 
 @dataclass(kw_only=True)

@@ -1,12 +1,20 @@
+import hashlib
 import importlib
+import json
 import logging.config
 import os
+import sys
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from attr import dataclass
 from cattrs_extras.converter import Converter
 from ruamel.yaml import YAML
+from tortoise import Model, Tortoise
+
+from dipdup.models import IndexType, State
+
+converter = Converter()
 
 
 @dataclass(kw_only=True)
@@ -90,7 +98,7 @@ class OperationHandlerPatternConfig:
 class OperationHandlerConfig:
     """Operation handler config
 
-    :param callback: Name of method in `hanflers` package
+    :param callback: Name of method in `handlers` package
     :param pattern: Filters to match operations in group
     """
 
@@ -127,6 +135,26 @@ class OperationIndexConfig:
     first_block: int = 0
     last_block: int = 0
     handlers: List[OperationHandlerConfig]
+
+    def __attrs_post_init__(self):
+        self._state = None
+
+    def hash(self) -> str:
+        return hashlib.sha256(
+            json.dumps(
+                converter.unstructure(self),
+            ).encode(),
+        ).hexdigest()
+
+    @property
+    def state(self):
+        if not self._state:
+            raise Exception('Config is not initialized')
+        return self._state
+
+    @state.setter
+    def state(self, value: State):
+        self._state = value
 
 
 @dataclass(kw_only=True)
@@ -230,21 +258,40 @@ class DipDupConfig:
 
         current_workdir = os.path.join(os.getcwd())
         filename = os.path.join(current_workdir, filename)
-        converter = converter_override or Converter()
+        _converter = converter_override or converter
 
         with open(filename) as file:
             raw_config = YAML(typ='base').load(file.read())
-        config = converter.structure(raw_config, cls_override or cls)
+        config = _converter.structure(raw_config, cls_override or cls)
         return config
 
-    def initialize(self) -> None:
+    async def initialize(self) -> None:
         self._logger.info('Setting up handlers and types for package `%s`', self.package)
 
-        for indexes_config in self.indexes.values():
+        for index_name, indexes_config in self.indexes.items():
             if indexes_config.operation:
+                self._logger.info('Getting state for index `%s`', index_name)
                 index_config = indexes_config.operation
-                if not index_config:
-                    continue
+                index_hash = index_config.hash()
+                state = await State.get_or_none(
+                    index_name=index_name,
+                    index_type=IndexType.operation,
+                )
+                if state is None:
+                    state = State(
+                        index_name=index_name,
+                        index_type=IndexType.operation,
+                        hash=index_hash,
+                    )
+                    await state.save()
+
+                elif state.hash != index_hash:
+                    self._logger.warning('Config hash mismatch, reindexing')
+                    await Tortoise._drop_databases()
+                    os.execl(sys.executable, sys.executable, *sys.argv)
+
+                index_config.state = state
+
                 for handler in index_config.handlers:
                     self._logger.info('Registering handler callback `%s`', handler.callback)
                     handler_module = importlib.import_module(f'{self.package}.handlers.{handler.callback}')

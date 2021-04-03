@@ -1,18 +1,31 @@
-import json
 from os.path import dirname, join
 from typing import Callable, Type
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
+
+from tortoise import Tortoise
 
 from dipdup.config import DipDupConfig
 
 
-class ConfigTest(TestCase):
-    def setUp(self):
+class ConfigTest(IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
         self.path = join(dirname(__file__), 'dipdup.yml')
 
-    def test_load_initialize(self):
+    async def test_load_initialize(self):
         config = DipDupConfig.load(self.path)
-        config.initialize()
+
+        try:
+            await Tortoise.init(
+                db_url=config.database.connection_string,
+                modules={
+                    'int_models': ['dipdup.models'],
+                },
+            )
+            await Tortoise.generate_schemas()
+
+            await config.initialize()
+        finally:
+            await Tortoise.close_connections()
 
         self.assertIsInstance(config, DipDupConfig)
         self.assertEqual(

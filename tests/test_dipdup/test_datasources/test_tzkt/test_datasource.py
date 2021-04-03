@@ -10,7 +10,7 @@ from tortoise import Tortoise
 
 from dipdup.config import OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import HandlerContext, OperationData, State
+from dipdup.models import HandlerContext, IndexType, OperationData, State
 
 
 class Collect(BaseModel):
@@ -20,7 +20,6 @@ class Collect(BaseModel):
 
 class TzktDatasourceTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.state = State(dapp='test')
         self.index_config = OperationIndexConfig(
             datasource='tzkt',
             contract='KT1lalala',
@@ -31,8 +30,9 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 )
             ],
         )
+        self.index_config.state = State(index_name='test', index_type=IndexType.operation, hash='')
         self.index_config.handlers[0].pattern[0].parameter_type_cls = Collect
-        self.datasource = TzktDatasource('tzkt.test', [self.index_config], self.state)
+        self.datasource = TzktDatasource('tzkt.test', [self.index_config])
 
     async def test_convert_operation(self):
         with open(join(dirname(__file__), 'operations.json')) as file:
