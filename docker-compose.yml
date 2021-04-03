@@ -6,7 +6,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./src/dipdup_hic_et_nunc/dupdup-docker.yml:/home/dipdup/dipdup.yml
+      - ./src/dipdup_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
 
   db:
     image: postgres
