@@ -10,4 +10,3 @@ class Token(Model):
     token_id = fields.IntField()
     token_info = fields.CharField(255)
     holder = fields.ForeignKeyField('models.Address', 'tokens')
-    transaction = fields.ForeignKeyField('int_models.Transaction', 'tokens')

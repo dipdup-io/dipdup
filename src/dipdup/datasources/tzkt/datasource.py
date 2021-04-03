@@ -13,7 +13,7 @@ from tortoise.transactions import in_transaction
 from dipdup.config import OperationHandlerConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import HandlerContext, OperationData, State, Transaction
+from dipdup.models import HandlerContext, OperationData, State
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
 TZKT_HTTP_REQUEST_SLEEP = 1
@@ -217,14 +217,12 @@ class TzktDatasource:
     ):
         args = []
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
-            transaction, _ = await Transaction.get_or_create(id=operation.id, block=operation.block)
 
             parameter_type = pattern_config.parameter_type_cls
             parameter = parameter_type.parse_obj(operation.parameter_json)
 
             context = HandlerContext(
                 data=operation,
-                transaction=transaction,
                 parameter=parameter,
             )
             args.append(context)

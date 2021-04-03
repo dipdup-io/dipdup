@@ -10,7 +10,7 @@ from tortoise import Tortoise
 
 from dipdup.config import OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import HandlerContext, OperationData, State, Transaction
+from dipdup.models import HandlerContext, OperationData, State
 
 
 class Collect(BaseModel):
@@ -160,7 +160,6 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertIsInstance(call_arg, HandlerContext)
             self.assertIsInstance(call_arg.parameter, Collect)
             self.assertIsInstance(call_arg.data, OperationData)
-            self.assertIsInstance(call_arg.transaction, Transaction)
             self.assertIsInstance(callback_mock.await_args[0][1], list)
             self.assertIsInstance(callback_mock.await_args[0][1][0], OperationData)
 

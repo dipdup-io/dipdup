@@ -116,9 +116,7 @@ class Token(Model):
     token_id = fields.IntField()
     token_info = fields.CharField(255)
     holder = fields.ForeignKeyField('models.Address', 'tokens')
-    transaction = fields.ForeignKeyField('int_models.Transaction', 'tokens')
 ```
-Pay attention to the optional `transaction` relation. It refers to internal Dipdup model and will be useful if you decide to implement rollback later.
 
 ### Write event handlers
 

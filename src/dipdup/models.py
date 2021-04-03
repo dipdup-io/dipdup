@@ -15,14 +15,6 @@ class State(Model):
         table = 'states'
 
 
-class Transaction(Model):
-    id = fields.IntField(pk=True)
-    block = fields.CharField(58)
-
-    class Meta:
-        table = 'transactions'
-
-
 @dataclass(kw_only=True)
 class OperationData:
     type: str
@@ -56,5 +48,4 @@ class OperationData:
 @dataclass(kw_only=True)
 class HandlerContext(Generic[ParameterType]):
     data: OperationData
-    transaction: Transaction
     parameter: ParameterType
