@@ -12,6 +12,7 @@ class IndexType(Enum):
     operation = 'operation'
     bigmapdiff = 'bigmapdiff'
     block = 'block'
+    schema = 'schema'
 
 
 class State(Model):

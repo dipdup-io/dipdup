@@ -16,7 +16,7 @@ class ConfigTest(IsolatedAsyncioTestCase):
 
         try:
             await Tortoise.init(
-                db_url=config.database.connection_string,
+                db_url='sqlite://:memory:',
                 modules={
                     'int_models': ['dipdup.models'],
                 },

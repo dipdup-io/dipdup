@@ -161,7 +161,15 @@ $ docker-compose build
 $ docker-compose up dipdup
 ```
 
-## Optional: configure logging
+### Atomicity and persistency
+
+Here's a few important things to keep in mind while running your indexer:
+
+* Do not rename existing indexes in config file without cleaning up database first, didpup won't handle this renaming automatically and will consider renamed index as a new one.
+* Make sure that database you're connecting to is used by dipdup exclusively. When index configuration or models will change the whole database will be dropped and indexing will start from scratch.
+* Multiple indexes pointing to different contracts must not reuse the same models because synchronization is performed by index first and then by block.
+
+### Optional: configure logging
 
 You may want to tune logging to get notifications on errors or enable debug messages. Specify path to Python logging config in YAML format at `--logging-config` argument. Default config to start with:
 

@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import logging
 import os
+import sys
 from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
@@ -8,12 +10,14 @@ from typing import Dict, List
 
 import click
 from tortoise import Tortoise
+from tortoise.exceptions import OperationalError
+from tortoise.utils import get_schema_sql
 
 import dipdup.codegen as codegen
 from dipdup import __version__
 from dipdup.config import DipDupConfig, LoggingConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import State
+from dipdup.models import IndexType, State
 
 _logger = logging.getLogger(__name__)
 
@@ -72,7 +76,24 @@ async def run(ctx) -> None:
                 'int_models': ['dipdup.models'],
             },
         )
-        await Tortoise.generate_schemas()
+
+        for connection_name, connection in Tortoise._connections.items():
+            schema_sql = get_schema_sql(connection, False)
+            schema_hash = hashlib.sha256(schema_sql.encode()).hexdigest()
+
+            try:
+                schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
+            except OperationalError:
+                schema_state = None
+
+            if schema_state is None:
+                await Tortoise.generate_schemas()
+                schema_state = State(index_type=IndexType.schema, index_name=connection_name, hash=schema_hash)
+                await schema_state.save()
+            elif schema_state.hash != schema_hash:
+                _logger.warning('Schema hash mismatch, reindexing')
+                await Tortoise._drop_databases()
+                os.execl(sys.executable, sys.executable, *sys.argv)
 
         await config.initialize()
 
