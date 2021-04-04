@@ -14,6 +14,8 @@ from tortoise import Model, Tortoise
 
 from dipdup.models import IndexType, State
 
+ROLLBACK_HANDLER = 'on_rollback'
+
 converter = Converter()
 
 
@@ -137,7 +139,8 @@ class OperationIndexConfig:
     handlers: List[OperationHandlerConfig]
 
     def __attrs_post_init__(self):
-        self._state = None
+        self._state: Optional[State] = None
+        self._rollback_fn: Optional[Callable] = None
 
     def hash(self) -> str:
         return hashlib.sha256(
@@ -155,6 +158,16 @@ class OperationIndexConfig:
     @state.setter
     def state(self, value: State):
         self._state = value
+
+    @property
+    def rollback_fn(self) -> Callable:
+        if not self._rollback_fn:
+            raise Exception('Config is not initialized')
+        return self._rollback_fn
+
+    @rollback_fn.setter
+    def rollback_fn(self, value: Callable) -> None:
+        self._rollback_fn = value
 
 
 @dataclass(kw_only=True)
@@ -268,10 +281,13 @@ class DipDupConfig:
     async def initialize(self) -> None:
         self._logger.info('Setting up handlers and types for package `%s`', self.package)
 
+        rollback_fn = getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
+
         for index_name, indexes_config in self.indexes.items():
             if indexes_config.operation:
                 self._logger.info('Getting state for index `%s`', index_name)
                 index_config = indexes_config.operation
+                index_config.rollback_fn = rollback_fn
                 index_hash = index_config.hash()
                 state = await State.get_or_none(
                     index_name=index_name,

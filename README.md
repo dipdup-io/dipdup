@@ -168,6 +168,7 @@ Here's a few important things to keep in mind while running your indexer:
 * Do not rename existing indexes in config file without cleaning up database first, didpup won't handle this renaming automatically and will consider renamed index as a new one.
 * Make sure that database you're connecting to is used by dipdup exclusively. When index configuration or models will change the whole database will be dropped and indexing will start from scratch.
 * Multiple indexes pointing to different contracts must not reuse the same models because synchronization is performed by index first and then by block.
+* Reorg messages signal about chain reorganizations, when some blocks, including all operations, are rolled back in favor of blocks with higher weight. Chain reorgs happen quite often, so it's not something you can ignore. You have to handle such messages correctly, otherwise you will likely accumulate duplicate data or, worse, invalid data. By default Dipdup will start indexing from scratch on such messages. To implement your own rollback logic edit generated `on_rollback` handler.
 
 ### Optional: configure logging
 

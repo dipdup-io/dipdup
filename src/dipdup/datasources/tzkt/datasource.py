@@ -1,6 +1,8 @@
 import asyncio
+import importlib
 import logging
 from functools import partial
+from socket import fromfd
 from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
@@ -10,7 +12,7 @@ from signalrcore.hub_connection_builder import HubConnectionBuilder  # type: ign
 from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise.transactions import in_transaction
 
-from dipdup.config import OperationHandlerConfig, OperationIndexConfig
+from dipdup.config import ROLLBACK_HANDLER, OperationHandlerConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import HandlerContext, OperationData, State
@@ -204,6 +206,12 @@ class TzktDatasource:
                         last_level = await self._caches[address].process(self.on_operation_match)
                         index_config.state.level = last_level  # type: ignore
                         await index_config.state.save()
+
+            elif message_type == TzktMessageType.REORG:
+                self._logger.info(f'Got reorg message, calling `{ROLLBACK_HANDLER}` handler')
+                from_level = self._operation_index_configs[address].state.level
+                to_level = item['state']
+                await self._operation_index_configs[address].rollback_fn(from_level, to_level)
 
             else:
                 self._logger.warning('%s is not supported', message_type)

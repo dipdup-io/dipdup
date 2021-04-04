@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from jinja2 import Template
 
-from dipdup.config import DipDupConfig
+from dipdup.config import ROLLBACK_HANDLER, DipDupConfig
 
 _logger = logging.getLogger(__name__)
 
@@ -108,9 +108,11 @@ async def generate_types(config: DipDupConfig):
 
 async def generate_handlers(config: DipDupConfig):
 
-    _logger.info('Loading handler template')
+    _logger.info('Loading handler templates')
     with open(join(dirname(__file__), 'templates', 'handler.py.j2')) as file:
         template = Template(file.read())
+    with open(join(dirname(__file__), 'templates', f'{ROLLBACK_HANDLER}.py.j2')) as file:
+        rollback_template = Template(file.read())
 
     _logger.info('Creating `handlers` package')
     handlers_path = join(config.package_path, 'handlers')
@@ -118,6 +120,13 @@ async def generate_handlers(config: DipDupConfig):
         mkdir(handlers_path)
         with open(join(handlers_path, '__init__.py'), 'w'):
             pass
+
+    _logger.info('Generating handler `%s`', ROLLBACK_HANDLER)
+    handler_code = rollback_template.render()
+    handler_path = join(handlers_path, f'{ROLLBACK_HANDLER}.py')
+    if not exists(handler_path):
+        with open(handler_path, 'w') as file:
+            file.write(handler_code)
 
     for index in config.indexes.values():
         if not index.operation:
