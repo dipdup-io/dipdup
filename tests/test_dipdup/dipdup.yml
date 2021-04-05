@@ -1,0 +1,58 @@
+spec_version: 0.0.1
+package: dipdup_hic_et_nunc
+
+database:
+  path: /home/droserasprout/git/pytezos/db.sqlite3
+
+contracts:
+  HEN_objkts:
+    network: mainnet
+    address: KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
+  HEN_minter:
+    network: mainnet
+    address: KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton
+
+datasources:
+  tzkt_mainnet:
+    tzkt:
+      network: mainnet
+      url: https://staging.api.tzkt.io
+
+indexes:
+  operations_mainnet:
+    operation:
+      datasource: tzkt_mainnet
+      contract: HEN_objkts
+      first_block: 0
+      handlers:
+
+        - callback: on_mint
+          pattern:
+            - destination: HEN_objkts
+              entrypoint: mint_OBJKT
+            - destination: HEN_minter
+              entrypoint: mint
+
+        - callback: on_transfer
+          pattern:
+            - destination: HEN_minter
+              entrypoint: transfer
+
+  bigmaps_mainnet:
+    bigmapdiff:
+      datasource: tzkt_mainnet
+      contract: HEN_objkts
+      handlers:
+        - callback: on_token
+          pattern:
+            - name: ledger
+              entry_type: LedgerEntry
+            - name: token_metadata
+              entry_type: TokenMetadataEntry
+
+  blocks_mainnet:
+    block:
+      datasource: tzkt_mainnet
+      handlers:
+        - callback: on_block
+          pattern:

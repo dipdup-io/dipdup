@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  dipdup:
+    build: .
+    command: ["-c", "dipdup.yml", "run"]
+    depends_on:
+      - db
+    volumes:
+      - ./src/dipdup_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: dipdup
+      POSTGRES_DB: dipdup
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - db:/var/lib/postgres/data
+
+  graphql-engine:
+    image: hasura/graphql-engine:v1.3.3
+    ports:
+    - 8080:8080
+    depends_on:
+    - db
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://dipdup:changeme@db:5432/dipdup
+      ## enable the console served by server
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
+      ## enable debugging mode. It is recommended to disable this in production
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      ## uncomment next line to set an admin secret
+      # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+volumes:
+  db:
