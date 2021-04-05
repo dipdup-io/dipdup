@@ -11,7 +11,7 @@ from attr import dataclass
 from cattrs_extras.converter import Converter
 from ruamel.yaml import YAML
 from tortoise import Model, Tortoise
-
+from os import environ as env
 from dipdup.models import IndexType, State
 
 ROLLBACK_HANDLER = 'on_rollback'
@@ -53,9 +53,14 @@ class DatabaseConfig:
     password: str = ''
     database: str
 
+    def __attrs_post_init__(self):
+        if not self.password:
+            self.password = env.get('DIPDUP_DATABASE_PASSWORD', '')
+
     @property
     def connection_string(self):
         return f'{self.driver}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
+
 
 
 @dataclass(kw_only=True)

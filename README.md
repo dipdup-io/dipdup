@@ -158,10 +158,12 @@ Use `docker-compose.yml` included in this repo if you prefer to run dipdup in Do
 
 ```shell
 $ docker-compose build
+$ cp secrets.env.example secrets.env
+$ # edit `secrets.env` file, change credentials
 $ docker-compose up dipdup
 ```
 
-Don't forget to update default credentials before using this example.
+Note that can use `DIPDUP_DATABASE_PASSWORD` environment variable to avoid storing database password in `dipdup.yml`.
 
 ### Atomicity and persistency
 

@@ -7,7 +7,6 @@ database:
   port: 5432
   user: dipdup
   database: dipdup
-  password: changeme
 
 contracts:
   HEN_objkts:
