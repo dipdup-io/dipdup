@@ -161,14 +161,32 @@ $ docker-compose build
 $ docker-compose up dipdup
 ```
 
+Don't forget to update default credentials before using this example.
+
 ### Atomicity and persistency
 
 Here's a few important things to keep in mind while running your indexer:
 
+* __WARNING!__ Make sure that database you're connecting to is used by dipdup exclusively. When index configuration or models will change the whole database will be dropped and indexing will start from scratch.
 * Do not rename existing indexes in config file without cleaning up database first, didpup won't handle this renaming automatically and will consider renamed index as a new one.
-* Make sure that database you're connecting to is used by dipdup exclusively. When index configuration or models will change the whole database will be dropped and indexing will start from scratch.
 * Multiple indexes pointing to different contracts must not reuse the same models because synchronization is performed by index first and then by block.
 * Reorg messages signal about chain reorganizations, when some blocks, including all operations, are rolled back in favor of blocks with higher weight. Chain reorgs happen quite often, so it's not something you can ignore. You have to handle such messages correctly, otherwise you will likely accumulate duplicate data or, worse, invalid data. By default Dipdup will start indexing from scratch on such messages. To implement your own rollback logic edit generated `on_rollback` handler.
+
+### Optional: configure Hasura GraphQL Engine
+
+`init` command generates Hasura metadata JSON in the package root. You can use `configure-graphql` command to apply it to the running GraphQL Engine instance:
+
+```shell
+$ dipdup -c config.yml configure-graphql --url http://127.0.0.1:8080 --admin-secret changeme
+```
+
+Or if using included `docker-compose.yml` example:
+
+```shell
+$ docker-compose up -d graphql-engine
+$ docker-compose up configure-graphql
+```
+
 
 ### Optional: configure logging
 
