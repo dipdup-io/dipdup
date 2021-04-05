@@ -43,8 +43,10 @@ class CodegenTest(IsolatedAsyncioTestCase):
             await codegen.fetch_schemas(self.config)
             await codegen.generate_types(self.config)
             await codegen.generate_handlers(self.config)
+            await codegen.generate_hasura_metadata(self.config)
 
             import_submodules(self.config.package)
+
         except Exception:
             rmtree('tmp_test_dipdup')
             raise
