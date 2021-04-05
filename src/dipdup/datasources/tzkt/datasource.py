@@ -170,6 +170,16 @@ class TzktDatasource:
         self._logger.info('Synchronization finished')
         self._synchronized.set()
 
+    async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
+        self._logger.info('Fetching jsonschemas for address `%s', address)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url=f'{self._url}/v1/contracts/{address}/interface',
+            ) as resp:
+                jsonschemas = await resp.json()
+        self._logger.debug(jsonschemas)
+        return jsonschemas
+
     async def on_operation_message(
         self,
         message: List[Dict[str, Any]],

@@ -21,7 +21,7 @@ datasources:
   tzkt_mainnet:
     tzkt:
       network: mainnet
-      url: https://api.tzkt.io
+      url: https://staging.api.tzkt.io
 
 indexes:
   operations_mainnet:

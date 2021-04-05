@@ -10,6 +10,7 @@ from typing import Any, Dict
 from jinja2 import Template
 
 from dipdup.config import ROLLBACK_HANDLER, DipDupConfig
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 _logger = logging.getLogger(__name__)
 
@@ -32,15 +33,19 @@ async def create_package(config: DipDupConfig):
             file.write(models_code)
 
 
-async def _fetch_schemas(address: str) -> Dict[str, Any]:
-    raise NotImplementedError
-
-
 async def fetch_schemas(config: DipDupConfig):
     _logger.info('Creating `schemas` package')
     schemas_path = join(config.package_path, 'schemas')
     with suppress(FileExistsError):
         mkdir(schemas_path)
+
+    _logger.info('Creating datasource')
+    # FIXME: Hardcode
+    datasource_config = list(config.datasources.values())[0].tzkt
+    datasource = TzktDatasource(
+        url=datasource_config.url,
+        operation_index_configs=[],
+    )
 
     for contract_name, contract in config.contracts.items():
         _logger.info('Fetching schemas for contract `%s`', contract_name)
@@ -52,7 +57,7 @@ async def fetch_schemas(config: DipDupConfig):
         with suppress(FileExistsError):
             mkdir(parameter_schemas_path)
 
-        address_schemas_json = await _fetch_schemas(contract.address)
+        address_schemas_json = await datasource.fetch_jsonschemas(contract.address)
         for entrypoint_json in address_schemas_json['entrypoints']:
             entrypoint = entrypoint_json['name']
             entrypoint_schema = entrypoint_json['parameterSchema']

@@ -19,7 +19,10 @@ class CodegenTest(IsolatedAsyncioTestCase):
 
     async def test_codegen(self):
         try:
-            with patch('dipdup.codegen._fetch_schemas', AsyncMock(return_value=self.fetch_schemas_mock)):
+            with patch(
+                'dipdup.datasources.tzkt.datasource.TzktDatasource.fetch_jsonschemas',
+                AsyncMock(return_value=self.fetch_schemas_mock),
+            ):
                 await codegen.create_package(self.config)
                 await codegen.fetch_schemas(self.config)
                 await codegen.generate_types(self.config)

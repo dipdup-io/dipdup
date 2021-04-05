@@ -144,6 +144,6 @@ async def init(ctx):
     config: DipDupConfig = ctx.obj.config
 
     await codegen.create_package(config)
-    # await codegen.fetch_schemas(config)
+    await codegen.fetch_schemas(config)
     await codegen.generate_types(config)
     await codegen.generate_handlers(config)
