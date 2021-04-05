@@ -33,6 +33,14 @@ services:
       HASURA_GRAPHQL_DEV_MODE: "true"
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       ## uncomment next line to set an admin secret
-      # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+      HASURA_GRAPHQL_ADMIN_SECRET: changeme
+  
+  configure-graphql:
+    build: .
+    command: ["-c", "dipdup.yml", "configure-graphql", "--url", "http://graphql-engine:8080", "--admin-secret", "changeme"]
+    depends_on:
+      - graphql-engine
+    volumes:
+      - ./src/dipdup_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
 volumes:
   db:

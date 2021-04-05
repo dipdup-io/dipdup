@@ -1,12 +1,8 @@
 import importlib
-import json
-import os
 import pkgutil
-import sys
 from os.path import dirname, join
 from shutil import rmtree
-from unittest import IsolatedAsyncioTestCase, TestCase
-from unittest.mock import AsyncMock, patch
+from unittest import IsolatedAsyncioTestCase
 
 from dipdup import codegen
 from dipdup.config import DipDupConfig
