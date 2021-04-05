@@ -6,6 +6,7 @@ import subprocess
 from contextlib import suppress
 from os import mkdir
 from os.path import dirname, exists, join
+from typing import List
 
 from jinja2 import Template
 from tortoise import Model, fields
@@ -174,6 +175,17 @@ def _format_object_relationship(table: str, column: str):
     }
 
 
+def _format_select_permissions(columns: List[str]):
+    return {
+        "role": "user",
+        "permission": {
+            "columns": columns,
+            "filter": {},
+            "allow_aggregations": True,
+        },
+    }
+
+
 def _format_table(name: str):
     return {
         "table": {
@@ -182,6 +194,7 @@ def _format_table(name: str):
         },
         "object_relationships": [],
         "array_relationships": [],
+        "select_permissions": [],
     }
 
 
@@ -193,6 +206,7 @@ def _format_metadata(tables):
 
 
 async def generate_hasura_metadata(config: DipDupConfig):
+    _logger.info('Generating Hasura metadata')
     metadata_tables = {}
     model_tables = {}
     models = importlib.import_module(f'{config.package}.models')
@@ -210,12 +224,16 @@ async def generate_hasura_metadata(config: DipDupConfig):
     for attr in dir(models):
         model = getattr(models, attr)
         if isinstance(model, type) and issubclass(model, Model) and model != Model:
+            table_name = model_tables[f'models.{model.__name__}']
+
+            metadata_tables[table_name]['select_permissions'].append(
+                _format_select_permissions(list(model._meta.db_fields)),
+            )
 
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
                     if not isinstance(field.related_name, str):
                         raise Exception(f'`related_name` of `{field}` must be set')
-                    table_name = model_tables[f'models.{model.__name__}']
                     related_table_name = model_tables[field.model_name]
                     metadata_tables[table_name]['object_relationships'].append(
                         _format_object_relationship(

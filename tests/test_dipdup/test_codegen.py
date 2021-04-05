@@ -43,8 +43,8 @@ class CodegenTest(IsolatedAsyncioTestCase):
 
             import_submodules(self.config.package)
 
-        except Exception:
+        except Exception as exc:
             rmtree('tmp_test_dipdup')
-            raise
+            raise exc
         else:
             rmtree('tmp_test_dipdup')

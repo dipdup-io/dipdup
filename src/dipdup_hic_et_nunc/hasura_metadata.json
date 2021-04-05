@@ -20,6 +20,18 @@
                         }
                     }
                 }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "address"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
             ]
         },
         {
@@ -35,7 +47,21 @@
                     }
                 }
             ],
-            "array_relationships": []
+            "array_relationships": [],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "token_id",
+                            "token_info",
+                            "id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
         }
     ]
 }
