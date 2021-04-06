@@ -4,15 +4,16 @@ import json
 import logging.config
 import os
 import sys
+from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
-from pydantic import BaseModel
 
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from tortoise import Tortoise
-from os import environ as env
+from typing_extensions import Literal
+
 from dipdup.models import IndexType, State
 
 ROLLBACK_HANDLER = 'on_rollback'
@@ -61,7 +62,6 @@ class DatabaseConfig:
         return f'{self.driver}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
 
 
-
 @dataclass
 class TzktDatasourceConfig:
     """TzKT datasource config
@@ -70,6 +70,7 @@ class TzktDatasourceConfig:
     :param network: Corresponding network alias, only for sanity checks
     """
 
+    kind: Literal['tzkt']
     url: str
     network: Optional[str] = None
 
@@ -136,6 +137,7 @@ class OperationIndexConfig:
     :param handlers: List of indexer handlers
     """
 
+    kind: Literal["operation"]
     datasource: str
     contract: str
     handlers: List[OperationHandlerConfig]
@@ -148,7 +150,9 @@ class OperationIndexConfig:
 
     def hash(self) -> str:
         return hashlib.sha256(
-            json.dumps(self, default=pydantic_encoder,
+            json.dumps(
+                self,
+                default=pydantic_encoder,
             ).encode(),
         ).hexdigest()
 
@@ -187,6 +191,7 @@ class BigmapdiffHandlerConfig:
 
 @dataclass
 class BigmapdiffIndexConfig:
+    kind: Literal['bigmapdiff']
     datasource: str
     contract: str
     handlers: List[BigmapdiffHandlerConfig]
@@ -200,6 +205,7 @@ class BlockHandlerConfig:
 
 @dataclass
 class BlockIndexConfig:
+    kind: Literal['block']
     datasource: str
     handlers: List[BlockHandlerConfig]
 
@@ -217,18 +223,6 @@ class ContractConfig:
 
 
 @dataclass
-class DatasourcesConfig:
-    tzkt: TzktDatasourceConfig
-
-
-@dataclass
-class IndexesConfig:
-    operation: Optional[OperationIndexConfig] = None
-    bigmapdiff: Optional[BigmapdiffIndexConfig] = None
-    block: Optional[BlockIndexConfig] = None
-
-
-@dataclass
 class DipDupConfig:
     """Main dapp config
 
@@ -243,15 +237,14 @@ class DipDupConfig:
     spec_version: str
     package: str
     contracts: Dict[str, ContractConfig]
-    datasources: Dict[str, DatasourcesConfig]
-    indexes: Dict[str, IndexesConfig]
+    datasources: Dict[str, Union[TzktDatasourceConfig]]
+    indexes: Dict[str, Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]]
     database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig()
 
     def __post_init_post_parse__(self):
         self._logger = logging.getLogger(__name__)
-        for indexes_config in self.indexes.values():
-            if indexes_config.operation:
-                index_config = indexes_config.operation
+        for index_config in self.indexes.values():
+            if isinstance(index_config, OperationIndexConfig):
                 if index_config is None:
                     continue
                 index_config.contract = self.contracts[index_config.contract].address
@@ -283,10 +276,9 @@ class DipDupConfig:
 
         rollback_fn = getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
 
-        for index_name, indexes_config in self.indexes.items():
-            if indexes_config.operation:
+        for index_name, index_config in self.indexes.items():
+            if isinstance(index_config, OperationIndexConfig):
                 self._logger.info('Getting state for index `%s`', index_name)
-                index_config = indexes_config.operation
                 index_config.rollback_fn = rollback_fn
                 index_hash = index_config.hash()
                 state = await State.get_or_none(

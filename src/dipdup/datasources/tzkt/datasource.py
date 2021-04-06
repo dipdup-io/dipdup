@@ -1,8 +1,6 @@
 import asyncio
-import importlib
 import logging
 from functools import partial
-from socket import fromfd
 from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
@@ -217,7 +215,7 @@ class TzktDatasource:
                         await index_config.state.save()
 
             elif message_type == TzktMessageType.REORG:
-                self._logger.info(f'Got reorg message, calling `{ROLLBACK_HANDLER}` handler')
+                self._logger.info(f'Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
                 from_level = self._operation_index_configs[address].state.level
                 to_level = item['state']
                 await self._operation_index_configs[address].rollback_fn(from_level, to_level)

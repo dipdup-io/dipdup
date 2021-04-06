@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from jinja2 import Template
 
-from dipdup.config import ROLLBACK_HANDLER, DipDupConfig
+from dipdup.config import ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 _logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ async def fetch_schemas(config: DipDupConfig):
 
     _logger.info('Creating datasource')
     # FIXME: Hardcode
-    datasource_config = list(config.datasources.values())[0].tzkt
+    datasource_config = list(config.datasources.values())[0]
     datasource = TzktDatasource(
         url=datasource_config.url,
         operation_index_configs=[],
@@ -134,9 +134,9 @@ async def generate_handlers(config: DipDupConfig):
             file.write(handler_code)
 
     for index in config.indexes.values():
-        if not index.operation:
+        if not isinstance(index, OperationIndexConfig):
             continue
-        for handler in index.operation.handlers:
+        for handler in index.handlers:
             _logger.info('Generating handler `%s`', handler.callback)
             handler_code = template.render(
                 package=config.package,

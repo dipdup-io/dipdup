@@ -21,6 +21,7 @@ class Collect(BaseModel):
 class TzktDatasourceTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.index_config = OperationIndexConfig(
+            kind='operation',
             datasource='tzkt',
             contract='KT1lalala',
             handlers=[
