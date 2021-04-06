@@ -1,10 +1,8 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from os.path import dirname, join
 from unittest.async_case import IsolatedAsyncioTestCase  # type: ignore
 from unittest.mock import ANY, AsyncMock  # type: ignore
-
-from dateutil.tz import tzutc
 
 from dipdup.config import OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache, OperationGroup
@@ -15,6 +13,7 @@ from dipdup.models import OperationData
 class TzktDatasourceTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.config = OperationIndexConfig(
+            kind='operation',
             datasource='',
             contract='',
             handlers=[
@@ -56,39 +55,6 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 callback='',
                 pattern=[OperationHandlerPatternConfig(destination='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW', entrypoint='hDAO_batch')],
             ),
-            [
-                OperationData(
-                    type='transaction',
-                    id=44184277,
-                    level=1405375,
-                    timestamp=datetime(2021, 3, 29, 5, 51, 44, tzinfo=tzutc()),
-                    block='BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H',
-                    hash='opDvkDvtCoKhefWZSz7nQ46tUYxyScqa5Ex5HbiLsbEn2BiKMis',
-                    counter=8895059,
-                    initiator_address='tz1YRG68NdqtAcsFEwTUw6FsSsiBb5kagEDo',
-                    sender_address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9',
-                    sender_alias='Hic et nunc Minter',
-                    nonce=8,
-                    gas_limit=0,
-                    gas_used=29590,
-                    storage_limit=0,
-                    storage_used=0,
-                    baker_fee=0,
-                    storage_fee=0,
-                    allocation_fee=0,
-                    target_alias='hDAO',
-                    target_address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW',
-                    amount=0,
-                    entrypoint='hDAO_batch',
-                    parameter_json=[
-                        {'to_': 'tz1YRG68NdqtAcsFEwTUw6FsSsiBb5kagEDo', 'amount': '500000'},
-                        {'to_': 'tz1ZsNvZKUveN7FjRhMHTm9NiAUNAmrwdFKV', 'amount': '500000'},
-                        {'to_': 'tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw', 'amount': '25000'},
-                    ],
-                    status='applied',
-                    has_internals=False,
-                    parameter="{'entrypoint': 'hDAO_batch', 'value': [{'to_': 'tz1YRG68NdqtAcsFEwTUw6FsSsiBb5kagEDo', 'amount': '500000'}, {'to_': 'tz1ZsNvZKUveN7FjRhMHTm9NiAUNAmrwdFKV', 'amount': '500000'}, {'to_': 'tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw', 'amount': '25000'}]}",
-                )
-            ],
+            [ANY],
             ANY,
         )

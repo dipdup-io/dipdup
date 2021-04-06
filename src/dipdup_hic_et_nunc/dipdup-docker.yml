@@ -18,26 +18,26 @@ contracts:
 
 datasources:
   tzkt_mainnet:
-    tzkt:
-      network: mainnet
-      url: https://staging.api.tzkt.io
+    kind: tzkt
+    network: mainnet
+    url: https://staging.api.tzkt.io
 
 indexes:
   operations_mainnet:
-    operation:
-      datasource: tzkt_mainnet
-      contract: HEN_objkts
-      first_block: 0
-      handlers:
+    kind: operation
+    datasource: tzkt_mainnet
+    contract: HEN_objkts
+    first_block: 0
+    handlers:
 
-        - callback: on_mint
-          pattern:
-            - destination: HEN_objkts
-              entrypoint: mint_OBJKT
-            - destination: HEN_minter
-              entrypoint: mint
+      - callback: on_mint
+        pattern:
+          - destination: HEN_objkts
+            entrypoint: mint_OBJKT
+          - destination: HEN_minter
+            entrypoint: mint
 
-        - callback: on_transfer
-          pattern:
-            - destination: HEN_minter
-              entrypoint: transfer
+      - callback: on_transfer
+        pattern:
+          - destination: HEN_minter
+            entrypoint: transfer

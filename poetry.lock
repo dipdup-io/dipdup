@@ -147,38 +147,6 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
-name = "cattrs"
-version = "1.4.0"
-description = "Composable complex class support for attrs and dataclasses."
-category = "main"
-optional = false
-python-versions = "~=3.7"
-
-[package.dependencies]
-attrs = ">=20.1.0"
-
-[package.extras]
-dev = ["bumpversion", "wheel", "watchdog", "flake8", "tox", "coverage", "sphinx", "pytest", "pytest-benchmark", "hypothesis", "pendulum", "isort", "black"]
-
-[[package]]
-name = "cattrs-extras"
-version = "0.1.1"
-description = "Advanced converters for cattrs"
-category = "main"
-optional = false
-python-versions = ">=3.7,<4.0"
-
-[package.dependencies]
-cattrs = ">=1.0.0,<2.0.0"
-dateutils = ">=0.6.12,<0.7.0"
-pytimeparse = ">=1.1.8,<2.0.0"
-typing-extensions = ">=3.7.4,<4.0.0"
-typing-inspect = ">=0.6.0,<0.7.0"
-
-[package.extras]
-tortoise = ["tortoise-orm (>=0.16.20,<0.17.0)"]
-
-[[package]]
 name = "certifi"
 version = "2020.12.5"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -253,18 +221,6 @@ http = ["httpx"]
 setup = ["pytest-runner", "setuptools-scm"]
 test = ["pytest (>=4.6)", "pytest-benchmark", "pytest-cov", "pytest-mock", "mypy", "isort", "freezegun"]
 wheel = ["wheel", "twine"]
-
-[[package]]
-name = "dateutils"
-version = "0.6.12"
-description = "Various utilities for working with date and datetime objects"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-python-dateutil = "*"
-pytz = "*"
 
 [[package]]
 name = "diff-cover"
@@ -690,25 +646,6 @@ pytest = ">=3.6"
 testing = ["fields", "hunter", "process-tests (==2.0.2)", "six", "pytest-xdist", "virtualenv"]
 
 [[package]]
-name = "python-dateutil"
-version = "2.8.1"
-description = "Extensions to the standard Python datetime module"
-category = "main"
-optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
-
-[package.dependencies]
-six = ">=1.5"
-
-[[package]]
-name = "pytimeparse"
-version = "1.1.8"
-description = "Time expression parser"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "pytz"
 version = "2020.5"
 description = "World timezone definitions, modern and historical"
@@ -855,18 +792,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "typing-inspect"
-version = "0.6.0"
-description = "Runtime inspection utilities for typing module."
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-mypy-extensions = ">=0.3.0"
-typing-extensions = ">=3.7.4"
-
-[[package]]
 name = "urllib3"
 version = "1.26.4"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -921,7 +846,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "5032f7c8fd59bb57ef6086cb72b469e68c6664926a98cb4bdcad523847e87ac9"
+content-hash = "eb3c95b70604f858b7ae0ac81b75a3b5a44480fae30bde4de41b52296c29e66f"
 
 [metadata.files]
 aiohttp = [
@@ -1019,14 +944,6 @@ bump2version = [
     {file = "bump2version-1.0.1-py2.py3-none-any.whl", hash = "sha256:37f927ea17cde7ae2d7baf832f8e80ce3777624554a653006c9144f8017fe410"},
     {file = "bump2version-1.0.1.tar.gz", hash = "sha256:762cb2bfad61f4ec8e2bdf452c7c267416f8c70dd9ecb1653fd0bbb01fa936e6"},
 ]
-cattrs = [
-    {file = "cattrs-1.4.0-py3-none-any.whl", hash = "sha256:7f73af7f0424ef734178a42dd4e608a30bc18d24baee2ba9a46115967c8e01cb"},
-    {file = "cattrs-1.4.0.tar.gz", hash = "sha256:3e95495dc7504108427f1b69d63360ef9d04b6e7d3305b351835549a8c05f4bc"},
-]
-cattrs-extras = [
-    {file = "cattrs-extras-0.1.1.tar.gz", hash = "sha256:1b3a129bb044884acfade9d27061014cd40a5efafa63556588d687070459ef90"},
-    {file = "cattrs_extras-0.1.1-py3-none-any.whl", hash = "sha256:8c6a70325590df6924bd2ef442b492fb9d754e16addb3a4214fba1e665281562"},
-]
 certifi = [
     {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},
     {file = "certifi-2020.12.5.tar.gz", hash = "sha256:1a4995114262bffbc2413b159f2a1a480c969de6e6eb13ee966d470af86af59c"},
@@ -1100,10 +1017,6 @@ coverage = [
 datamodel-code-generator = [
     {file = "datamodel-code-generator-0.10.1.tar.gz", hash = "sha256:9cc3da933d7172ca42b24b53f05650468d247bd893f0b4a825b1b9d604639e0a"},
     {file = "datamodel_code_generator-0.10.1-py3-none-any.whl", hash = "sha256:b7fbd1dfb46a962f6ffd80936e0f9406335c86b66ad3d8f83cf2252db35763cd"},
-]
-dateutils = [
-    {file = "dateutils-0.6.12-py2.py3-none-any.whl", hash = "sha256:f33b6ab430fa4166e7e9cb8b21ee9f6c9843c48df1a964466f52c79b2a8d53b3"},
-    {file = "dateutils-0.6.12.tar.gz", hash = "sha256:03dd90bcb21541bd4eb4b013637e4f1b5f944881c46cc6e4b67a6059e370e3f1"},
 ]
 diff-cover = [
     {file = "diff_cover-5.0.1-py3-none-any.whl", hash = "sha256:1953185a930f6c973d7ea752989246e7bf6d3181b73e925437664a47e39c63ff"},
@@ -1420,14 +1333,6 @@ pytest-cov = [
     {file = "pytest-cov-2.9.0.tar.gz", hash = "sha256:b6a814b8ed6247bd81ff47f038511b57fe1ce7f4cc25b9106f1a4b106f1d9322"},
     {file = "pytest_cov-2.9.0-py2.py3-none-any.whl", hash = "sha256:c87dfd8465d865655a8213859f1b4749b43448b5fae465cb981e16d52a811424"},
 ]
-python-dateutil = [
-    {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
-    {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
-]
-pytimeparse = [
-    {file = "pytimeparse-1.1.8-py2.py3-none-any.whl", hash = "sha256:04b7be6cc8bd9f5647a6325444926c3ac34ee6bc7e69da4367ba282f076036bd"},
-    {file = "pytimeparse-1.1.8.tar.gz", hash = "sha256:e86136477be924d7e670646a98561957e8ca7308d44841e21f5ddea757556a0a"},
-]
 pytz = [
     {file = "pytz-2020.5-py2.py3-none-any.whl", hash = "sha256:16962c5fb8db4a8f63a26646d8886e9d769b6c511543557bc84e9569fb9a9cb4"},
     {file = "pytz-2020.5.tar.gz", hash = "sha256:180befebb1927b16f6b57101720075a984c019ac16b1b7575673bea42c6c3da5"},
@@ -1600,11 +1505,6 @@ typing-extensions = [
     {file = "typing_extensions-3.7.4.3-py2-none-any.whl", hash = "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"},
     {file = "typing_extensions-3.7.4.3-py3-none-any.whl", hash = "sha256:7cb407020f00f7bfc3cb3e7881628838e69d8f3fcab2f64742a5e76b2f841918"},
     {file = "typing_extensions-3.7.4.3.tar.gz", hash = "sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c"},
-]
-typing-inspect = [
-    {file = "typing_inspect-0.6.0-py2-none-any.whl", hash = "sha256:de08f50a22955ddec353876df7b2545994d6df08a2f45d54ac8c05e530372ca0"},
-    {file = "typing_inspect-0.6.0-py3-none-any.whl", hash = "sha256:3b98390df4d999a28cf5b35d8b333425af5da2ece8a4ea9e98f71e7591347b4f"},
-    {file = "typing_inspect-0.6.0.tar.gz", hash = "sha256:8f1b1dd25908dbfd81d3bebc218011531e7ab614ba6e5bf7826d887c834afab7"},
 ]
 urllib3 = [
     {file = "urllib3-1.26.4-py2.py3-none-any.whl", hash = "sha256:2f4da4594db7e1e110a944bb1b551fdf4e6c136ad42e4234131391e21eb5b0df"},

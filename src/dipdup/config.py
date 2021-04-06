@@ -8,19 +8,18 @@ from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
-from attr import dataclass
-from cattrs_extras.converter import Converter
+from pydantic.dataclasses import dataclass
+from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from tortoise import Tortoise
+from typing_extensions import Literal
 
 from dipdup.models import IndexType, State
 
 ROLLBACK_HANDLER = 'on_rollback'
 
-converter = Converter()
 
-
-@dataclass(kw_only=True)
+@dataclass
 class SqliteDatabaseConfig:
     """
     SQLite connection config
@@ -35,7 +34,7 @@ class SqliteDatabaseConfig:
         return f'sqlite://{self.path}'
 
 
-@dataclass(kw_only=True)
+@dataclass
 class DatabaseConfig:
     """Database connection config
 
@@ -51,10 +50,10 @@ class DatabaseConfig:
     host: str
     port: int
     user: str
-    password: str = ''
     database: str
+    password: str = ''
 
-    def __attrs_post_init__(self):
+    def __post_init_post_parse__(self):
         if not self.password:
             self.password = env.get('DIPDUP_DATABASE_PASSWORD', '')
 
@@ -63,7 +62,7 @@ class DatabaseConfig:
         return f'{self.driver}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
 
 
-@dataclass(kw_only=True)
+@dataclass
 class TzktDatasourceConfig:
     """TzKT datasource config
 
@@ -71,11 +70,12 @@ class TzktDatasourceConfig:
     :param network: Corresponding network alias, only for sanity checks
     """
 
+    kind: Literal['tzkt']
     url: str
     network: Optional[str] = None
 
 
-@dataclass(kw_only=True)
+@dataclass
 class OperationHandlerPatternConfig:
     """Operation handler pattern config
 
@@ -87,7 +87,7 @@ class OperationHandlerPatternConfig:
     destination: str
     entrypoint: str
 
-    def __attrs_post_init__(self):
+    def __post_init_post_parse__(self):
         self._parameter_type_cls = None
 
     @property
@@ -101,7 +101,7 @@ class OperationHandlerPatternConfig:
         self._parameter_type_cls = typ
 
 
-@dataclass(kw_only=True)
+@dataclass
 class OperationHandlerConfig:
     """Operation handler config
 
@@ -112,7 +112,7 @@ class OperationHandlerConfig:
     callback: str
     pattern: List[OperationHandlerPatternConfig]
 
-    def __attrs_post_init__(self):
+    def __post_init_post_parse__(self):
         self._callback_fn = None
 
     @property
@@ -126,7 +126,7 @@ class OperationHandlerConfig:
         self._callback_fn = fn
 
 
-@dataclass(kw_only=True)
+@dataclass
 class OperationIndexConfig:
     """Operation index config
 
@@ -137,20 +137,22 @@ class OperationIndexConfig:
     :param handlers: List of indexer handlers
     """
 
+    kind: Literal["operation"]
     datasource: str
     contract: str
+    handlers: List[OperationHandlerConfig]
     first_block: int = 0
     last_block: int = 0
-    handlers: List[OperationHandlerConfig]
 
-    def __attrs_post_init__(self):
+    def __post_init_post_parse__(self):
         self._state: Optional[State] = None
         self._rollback_fn: Optional[Callable] = None
 
     def hash(self) -> str:
         return hashlib.sha256(
             json.dumps(
-                converter.unstructure(self),
+                self,
+                default=pydantic_encoder,
             ).encode(),
         ).hexdigest()
 
@@ -175,38 +177,40 @@ class OperationIndexConfig:
         self._rollback_fn = value
 
 
-@dataclass(kw_only=True)
+@dataclass
 class BigmapdiffHandlerPatternConfig:
     name: str
     entry_type: str
 
 
-@dataclass(kw_only=True)
+@dataclass
 class BigmapdiffHandlerConfig:
     callback: str
     pattern: List[BigmapdiffHandlerPatternConfig]
 
 
-@dataclass(kw_only=True)
+@dataclass
 class BigmapdiffIndexConfig:
+    kind: Literal['bigmapdiff']
     datasource: str
     contract: str
     handlers: List[BigmapdiffHandlerConfig]
 
 
-@dataclass(kw_only=True)
+@dataclass
 class BlockHandlerConfig:
     callback: str
-    pattern: None = None
+    pattern = None
 
 
-@dataclass(kw_only=True)
+@dataclass
 class BlockIndexConfig:
+    kind: Literal['block']
     datasource: str
     handlers: List[BlockHandlerConfig]
 
 
-@dataclass(kw_only=True)
+@dataclass
 class ContractConfig:
     """Contract config
 
@@ -214,23 +218,11 @@ class ContractConfig:
     :param address: Contract address
     """
 
-    network: Optional[str] = None
     address: str
+    network: Optional[str] = None
 
 
-@dataclass(kw_only=True)
-class DatasourcesConfig:
-    tzkt: TzktDatasourceConfig
-
-
-@dataclass(kw_only=True)
-class IndexesConfig:
-    operation: Optional[OperationIndexConfig] = None
-    bigmapdiff: Optional[BigmapdiffIndexConfig] = None
-    block: Optional[BlockIndexConfig] = None
-
-
-@dataclass(kw_only=True)
+@dataclass
 class DipDupConfig:
     """Main dapp config
 
@@ -244,16 +236,15 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig()
     contracts: Dict[str, ContractConfig]
-    datasources: Dict[str, DatasourcesConfig]
-    indexes: Dict[str, IndexesConfig]
+    datasources: Dict[str, Union[TzktDatasourceConfig]]
+    indexes: Dict[str, Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]]
+    database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig()
 
-    def __attrs_post_init__(self):
+    def __post_init_post_parse__(self):
         self._logger = logging.getLogger(__name__)
-        for indexes_config in self.indexes.values():
-            if indexes_config.operation:
-                index_config = indexes_config.operation
+        for index_config in self.indexes.values():
+            if isinstance(index_config, OperationIndexConfig):
                 if index_config is None:
                     continue
                 index_config.contract = self.contracts[index_config.contract].address
@@ -270,17 +261,14 @@ class DipDupConfig:
     def load(
         cls,
         filename: str,
-        cls_override: Optional[Type] = None,
-        converter_override: Optional[Converter] = None,
     ) -> 'DipDupConfig':
 
         current_workdir = os.path.join(os.getcwd())
         filename = os.path.join(current_workdir, filename)
-        _converter = converter_override or converter
 
         with open(filename) as file:
             raw_config = YAML(typ='base').load(file.read())
-        config = _converter.structure(raw_config, cls_override or cls)
+        config = cls(**raw_config)
         return config
 
     async def initialize(self) -> None:
@@ -288,10 +276,9 @@ class DipDupConfig:
 
         rollback_fn = getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
 
-        for index_name, indexes_config in self.indexes.items():
-            if indexes_config.operation:
+        for index_name, index_config in self.indexes.items():
+            if isinstance(index_config, OperationIndexConfig):
                 self._logger.info('Getting state for index `%s`', index_name)
-                index_config = indexes_config.operation
                 index_config.rollback_fn = rollback_fn
                 index_hash = index_config.hash()
                 state = await State.get_or_none(
@@ -329,7 +316,7 @@ class DipDupConfig:
                         pattern.parameter_type_cls = parameter_type_cls
 
 
-@dataclass(kw_only=True)
+@dataclass
 class LoggingConfig:
     config: Dict[str, Any]
 

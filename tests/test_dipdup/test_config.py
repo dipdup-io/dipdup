@@ -30,7 +30,7 @@ class ConfigTest(IsolatedAsyncioTestCase):
         self.assertIsInstance(config, DipDupConfig)
         self.assertEqual(
             config.contracts['HEN_objkts'].address,
-            config.indexes['operations_mainnet'].operation.handlers[0].pattern[0].destination,
+            config.indexes['operations_mainnet'].handlers[0].pattern[0].destination,
         )
-        self.assertIsInstance(config.indexes['operations_mainnet'].operation.handlers[0].callback_fn, Callable)
-        self.assertIsInstance(config.indexes['operations_mainnet'].operation.handlers[0].pattern[0].parameter_type_cls, Type)
+        self.assertIsInstance(config.indexes['operations_mainnet'].handlers[0].callback_fn, Callable)
+        self.assertIsInstance(config.indexes['operations_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)

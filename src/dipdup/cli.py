@@ -17,7 +17,7 @@ from tortoise.utils import get_schema_sql
 
 import dipdup.codegen as codegen
 from dipdup import __version__
-from dipdup.config import DipDupConfig, LoggingConfig, OperationIndexConfig
+from dipdup.config import DipDupConfig, LoggingConfig, OperationIndexConfig, TzktDatasourceConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import IndexType, State
 
@@ -108,10 +108,9 @@ async def run(ctx) -> None:
 
         for index_name, index_config in config.indexes.items():
             _logger.info('Processing index `%s`', index_name)
-            if not index_config.operation:
+            if not isinstance(index_config, OperationIndexConfig):
                 raise NotImplementedError('Only operation indexes are supported')
-            operation_index_config = index_config.operation
-            datasource_operation_index_configs[operation_index_config.datasource].append(operation_index_config)
+            datasource_operation_index_configs[index_config.datasource].append(index_config)
 
         for datasource_name, operation_index_configs in datasource_operation_index_configs.items():
             if not operation_index_configs:
@@ -122,9 +121,9 @@ async def run(ctx) -> None:
                 _logger.warning('Using more than one operation index. Be careful, indexing is not atomic.')
 
             datasource_config = config.datasources[datasource_name]
-            if datasource_config.tzkt:
+            if isinstance(datasource_config, TzktDatasourceConfig):
                 datasource = TzktDatasource(
-                    url=datasource_config.tzkt.url,
+                    url=datasource_config.url,
                     operation_index_configs=operation_index_configs,
                 )
                 datasources.append(datasource)
