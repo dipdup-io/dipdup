@@ -1,8 +1,8 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Dict, Generic, Optional, TypeVar
 
-from attr import dataclass
+from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 
 ParameterType = TypeVar('ParameterType')
@@ -25,7 +25,7 @@ class State(Model):
         table = 'dipdup_state'
 
 
-@dataclass(kw_only=True)
+@dataclass
 class OperationData:
     type: str
     id: int
@@ -34,10 +34,7 @@ class OperationData:
     block: str
     hash: str
     counter: int
-    initiator_address: Optional[str] = None
     sender_address: str
-    sender_alias: Optional[str] = None
-    nonce: Optional[int] = None
     gas_limit: int
     gas_used: int
     storage_limit: int
@@ -45,17 +42,20 @@ class OperationData:
     baker_fee: int
     storage_fee: int
     allocation_fee: int
-    target_alias: Optional[str] = None
     target_address: str
     amount: int
-    entrypoint: Optional[str] = None
-    parameter_json: Optional[Any] = None
     status: str
     has_internals: bool
+    sender_alias: Optional[str] = None
+    nonce: Optional[int] = None
+    target_alias: Optional[str] = None
+    entrypoint: Optional[str] = None
+    parameter_json: Optional[Any] = None
+    initiator_address: Optional[str] = None
     parameter: Optional[str] = None
 
 
-@dataclass(kw_only=True)
+@dataclass
 class HandlerContext(Generic[ParameterType]):
     data: OperationData
     parameter: ParameterType

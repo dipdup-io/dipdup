@@ -25,12 +25,12 @@ python = "^3.8"
 aiohttp = "^3.7.4"
 aiomysql = "^0.0.21"
 asyncpg = "^0.22.0"
-cattrs-extras = "^0.1.1"
 datamodel-code-generator = "^0.10.0"
 "ruamel.yaml" = "^0.17.2"
 signalrcore = {git = "https://github.com/droserasprout/signalrcore", rev = "async"}
 tortoise-orm = "^0.17.1"
 websockets = "^8.1"
+pydantic = "^1.8.1"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"

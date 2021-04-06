@@ -6,7 +6,6 @@ from socket import fromfd
 from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
-from cattrs_extras.converter import Converter
 from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from signalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
 from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
@@ -254,19 +253,31 @@ class TzktDatasource:
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
-        operation_json['initiator_address'] = operation_json.get('initiator', {}).get('address')
-        operation_json['sender_address'] = operation_json['sender']['address']
-        operation_json['sender_alias'] = operation_json['sender'].get('alias')
-        operation_json['gas_limit'] = operation_json['gasLimit']
-        operation_json['gas_used'] = operation_json['gasUsed']
-        operation_json['storage_limit'] = operation_json['storageLimit']
-        operation_json['storage_used'] = operation_json['storageUsed']
-        operation_json['baker_fee'] = operation_json['bakerFee']
-        operation_json['storage_fee'] = operation_json['storageFee']
-        operation_json['allocation_fee'] = operation_json['allocationFee']
-        operation_json['target_alias'] = operation_json['target'].get('alias')
-        operation_json['target_address'] = operation_json['target']['address']
-        operation_json['entrypoint'] = operation_json.get('parameter', {}).get('entrypoint')
-        operation_json['parameter_json'] = operation_json.get('parameter', {}).get('value')
-        operation_json['has_internals'] = operation_json['hasInternals']
-        return Converter().structure(operation_json, OperationData)
+        return OperationData(
+            type=operation_json['type'],
+            id=operation_json['id'],
+            level=operation_json['level'],
+            timestamp=operation_json['timestamp'],
+            block=operation_json['block'],
+            hash=operation_json['hash'],
+            counter=operation_json['counter'],
+            sender_address=operation_json['sender']['address'],
+            gas_limit=operation_json['gasLimit'],
+            gas_used=operation_json['gasUsed'],
+            storage_limit=operation_json['storageLimit'],
+            storage_used=operation_json['storageUsed'],
+            baker_fee=operation_json['bakerFee'],
+            storage_fee=operation_json['storageFee'],
+            allocation_fee=operation_json['allocationFee'],
+            target_address=operation_json['target']['address'],
+            amount=operation_json['amount'],
+            status=operation_json['status'],
+            has_internals=operation_json['hasInternals'],
+            sender_alias=operation_json['sender'].get('alias'),
+            nonce=operation_json.get('nonce'),
+            target_alias=operation_json['target'].get('alias'),
+            entrypoint=operation_json.get('parameter', {}).get('entrypoint'),
+            parameter_json=operation_json.get('parameter', {}).get('value'),
+            initiator_address=operation_json.get('initiator', {}).get('address'),
+            parameter=operation_json.get('parameters'),
+        )
