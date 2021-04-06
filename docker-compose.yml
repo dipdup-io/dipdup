@@ -30,5 +30,11 @@ services:
     restart: always
     env_file: secrets.env
 
+  configure-graphql:
+    <<: *x-dipdup
+    command: ["-c", "dipdup.yml", "configure-graphql", "--url", "http://graphql-engine:8080", "--admin-secret", "changeme"]
+    depends_on:
+      - graphql-engine
+  
 volumes:
   db:

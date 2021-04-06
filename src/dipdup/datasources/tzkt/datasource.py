@@ -28,7 +28,7 @@ class TzktDatasource:
         operation_index_configs: List[OperationIndexConfig],
     ):
         super().__init__()
-        self._url = url
+        self._url = url.rstrip('/')
         self._operation_index_configs = {config.contract: config for config in operation_index_configs}
         self._synchronized = asyncio.Event()
         self._callback_lock = asyncio.Lock()

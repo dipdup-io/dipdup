@@ -1,3 +1,4 @@
+import importlib
 import json
 import logging
 import os
@@ -5,9 +6,10 @@ import subprocess
 from contextlib import suppress
 from os import mkdir
 from os.path import dirname, exists, join
-from typing import Any, Dict
+from typing import List
 
 from jinja2 import Template
+from tortoise import Model, fields
 
 from dipdup.config import ROLLBACK_HANDLER, DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -18,7 +20,7 @@ _logger = logging.getLogger(__name__)
 async def create_package(config: DipDupConfig):
     try:
         package_path = config.package_path
-    except ImportError:
+    except (ImportError, ModuleNotFoundError):
         package_path = join(os.getcwd(), config.package)
         mkdir(package_path)
         with open(join(package_path, '__init__.py'), 'w'):
@@ -147,3 +149,108 @@ async def generate_handlers(config: DipDupConfig):
             if not exists(handler_path):
                 with open(handler_path, 'w') as file:
                     file.write(handler_code)
+
+
+def _format_array_relationship(related_name: str, table: str, column: str):
+    return {
+        "name": related_name,
+        "using": {
+            "foreign_key_constraint_on": {
+                "column": column,
+                "table": {
+                    "schema": "public",
+                    "name": table,
+                },
+            },
+        },
+    }
+
+
+def _format_object_relationship(table: str, column: str):
+    return {
+        "name": table,
+        "using": {
+            "foreign_key_constraint_on": column,
+        },
+    }
+
+
+def _format_select_permissions(columns: List[str]):
+    return {
+        "role": "user",
+        "permission": {
+            "columns": columns,
+            "filter": {},
+            "allow_aggregations": True,
+        },
+    }
+
+
+def _format_table(name: str):
+    return {
+        "table": {
+            "schema": "public",
+            "name": name,
+        },
+        "object_relationships": [],
+        "array_relationships": [],
+        "select_permissions": [],
+    }
+
+
+def _format_metadata(tables):
+    return {
+        "version": 2,
+        "tables": tables,
+    }
+
+
+async def generate_hasura_metadata(config: DipDupConfig):
+    _logger.info('Generating Hasura metadata')
+    metadata_tables = {}
+    model_tables = {}
+    models = importlib.import_module(f'{config.package}.models')
+
+    for attr in dir(models):
+        model = getattr(models, attr)
+        if isinstance(model, type) and issubclass(model, Model) and model != Model:
+
+            table_name = model._meta.db_table or model.__name__.lower()
+            model_tables[f'models.{model.__name__}'] = table_name
+
+            table = _format_table(table_name)
+            metadata_tables[table_name] = table
+
+    for attr in dir(models):
+        model = getattr(models, attr)
+        if isinstance(model, type) and issubclass(model, Model) and model != Model:
+            table_name = model_tables[f'models.{model.__name__}']
+
+            metadata_tables[table_name]['select_permissions'].append(
+                _format_select_permissions(list(model._meta.db_fields)),
+            )
+
+            for field in model._meta.fields_map.values():
+                if isinstance(field, fields.relational.ForeignKeyFieldInstance):
+                    if not isinstance(field.related_name, str):
+                        raise Exception(f'`related_name` of `{field}` must be set')
+                    related_table_name = model_tables[field.model_name]
+                    metadata_tables[table_name]['object_relationships'].append(
+                        _format_object_relationship(
+                            table=model_tables[field.model_name],
+                            column=field.model_field_name + '_id',
+                        )
+                    )
+                    metadata_tables[related_table_name]['array_relationships'].append(
+                        _format_array_relationship(
+                            related_name=field.related_name,
+                            table=table_name,
+                            column=field.model_field_name + '_id',
+                        )
+                    )
+
+    metadata = _format_metadata(tables=list(metadata_tables.values()))
+
+    metadata_path = join(config.package_path, 'hasura_metadata.json')
+    with open(metadata_path, 'w') as file:
+        json.dump(metadata, file, indent=4)
