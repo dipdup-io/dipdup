@@ -4,14 +4,15 @@ import json
 import logging.config
 import os
 import sys
+from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from attr import dataclass
 from cattrs_extras.converter import Converter
 from ruamel.yaml import YAML
-from tortoise import Model, Tortoise
-from os import environ as env
+from tortoise import Tortoise
+
 from dipdup.models import IndexType, State
 
 ROLLBACK_HANDLER = 'on_rollback'
@@ -60,7 +61,6 @@ class DatabaseConfig:
     @property
     def connection_string(self):
         return f'{self.driver}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
-
 
 
 @dataclass(kw_only=True)

@@ -20,7 +20,7 @@ _logger = logging.getLogger(__name__)
 async def create_package(config: DipDupConfig):
     try:
         package_path = config.package_path
-    except ImportError:
+    except (ImportError, ModuleNotFoundError):
         package_path = join(os.getcwd(), config.package)
         mkdir(package_path)
         with open(join(package_path, '__init__.py'), 'w'):
