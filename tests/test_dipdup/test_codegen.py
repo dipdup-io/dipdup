@@ -1,12 +1,8 @@
 import importlib
-import json
-import os
 import pkgutil
-import sys
 from os.path import dirname, join
 from shutil import rmtree
-from unittest import IsolatedAsyncioTestCase, TestCase
-from unittest.mock import AsyncMock, patch
+from unittest import IsolatedAsyncioTestCase
 
 from dipdup import codegen
 from dipdup.config import DipDupConfig
@@ -43,10 +39,12 @@ class CodegenTest(IsolatedAsyncioTestCase):
             await codegen.fetch_schemas(self.config)
             await codegen.generate_types(self.config)
             await codegen.generate_handlers(self.config)
+            await codegen.generate_hasura_metadata(self.config)
 
             import_submodules(self.config.package)
-        except Exception:
+
+        except Exception as exc:
             rmtree('tmp_test_dipdup')
-            raise
+            raise exc
         else:
             rmtree('tmp_test_dipdup')

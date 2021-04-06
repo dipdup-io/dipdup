@@ -1,0 +1,67 @@
+{
+    "version": 2,
+    "tables": [
+        {
+            "table": {
+                "schema": "public",
+                "name": "address"
+            },
+            "object_relationships": [],
+            "array_relationships": [
+                {
+                    "name": "tokens",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "holder_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "token"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "address"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "token"
+            },
+            "object_relationships": [
+                {
+                    "name": "address",
+                    "using": {
+                        "foreign_key_constraint_on": "holder_id"
+                    }
+                }
+            ],
+            "array_relationships": [],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "token_id",
+                            "token_info",
+                            "id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        }
+    ]
+}

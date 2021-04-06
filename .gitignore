@@ -144,3 +144,5 @@ cython_debug/
 *sqlite3*
 
 .noseids
+
+secrets.env

@@ -1,13 +1,15 @@
 import asyncio
 import hashlib
+import json
 import logging
 import os
 import sys
 from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
-from typing import Dict, List
+from typing import Dict, List, Optional
 
+import aiohttp
 import click
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
@@ -146,3 +148,35 @@ async def init(ctx):
     await codegen.fetch_schemas(config)
     await codegen.generate_types(config)
     await codegen.generate_handlers(config)
+    await codegen.generate_hasura_metadata(config)
+
+
+@cli.command(help='Configure Hasura GraphQL Engine')
+@click.option('--url', type=str, help='Hasura GraphQL Engine URL', default='http://127.0.0.1:8080')
+@click.option('--admin-secret', type=str, help='Hasura GraphQL Engine admin secret', default=None)
+@click.pass_context
+@click_async
+async def configure_graphql(ctx, url: str, admin_secret: Optional[str]):
+    config: DipDupConfig = ctx.obj.config
+
+    url = url.rstrip("/")
+    hasura_metadata_path = join(config.package_path, 'hasura_metadata.json')
+    with open(hasura_metadata_path) as file:
+        hasura_metadata = json.load(file)
+    headers = {}
+    if admin_secret:
+        headers['X-Hasura-Admin-Secret'] = admin_secret
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            url=f'{url}/v1/query',
+            data=json.dumps(
+                {
+                    "type": "replace_metadata",
+                    "args": hasura_metadata,
+                },
+            ),
+            headers=headers,
+        ) as resp:
+            result = await resp.json()
+            if not result.get('message') == 'success':
+                raise Exception(result)
