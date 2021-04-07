@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Optional
 from dipdup.models import HandlerContext, OperationData
 
 from {{ package }}.models import *
@@ -11,5 +11,6 @@ async def {{ handler }}(
     {{ pattern.entrypoint }}: HandlerContext[{{ pattern.entrypoint.title().replace('_', '') }}],
 {%- endfor %}
     operations: List[OperationData],
+    template_values: Optional[Dict[str, str]] = None,
 ) -> None:
     ...

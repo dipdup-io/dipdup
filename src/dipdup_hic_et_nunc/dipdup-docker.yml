@@ -2,7 +2,7 @@ spec_version: 0.0.1
 package: dipdup_hic_et_nunc
 
 database:
-  driver: postgres
+  kind: postgres
   host: db
   port: 5432
   user: dipdup
@@ -10,10 +10,8 @@ database:
   password: ${POSTGRES_PASSWORD:-changeme}
 
 contracts:
-  HEN_objkts:
-    address: ${HEN_OBJKTS:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
-  HEN_minter:
-    address: ${HEN_MINTER:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
+  HEN_objkts: ${HEN_OBJKTS:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
+  HEN_minter: ${HEN_MINTER:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
 
 datasources:
   tzkt_mainnet:

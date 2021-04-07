@@ -50,14 +50,15 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
 
         await self.cache.process(callback_mock)
 
+        self.assertIsInstance(callback_mock.await_args[0][0], OperationIndexConfig)
         self.assertEqual(
-            callback_mock.await_args[0][0],
+            callback_mock.await_args[0][1],
             OperationHandlerConfig(
                 callback='',
                 pattern=[OperationHandlerPatternConfig(destination='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW', entrypoint='hDAO_batch')],
             ),
         )
-        self.assertIsInstance(callback_mock.await_args[0][1], list)
-        self.assertIsInstance(callback_mock.await_args[0][1][0], OperationData)
         self.assertIsInstance(callback_mock.await_args[0][2], list)
         self.assertIsInstance(callback_mock.await_args[0][2][0], OperationData)
+        self.assertIsInstance(callback_mock.await_args[0][3], list)
+        self.assertIsInstance(callback_mock.await_args[0][3][0], OperationData)

@@ -2,6 +2,7 @@ spec_version: 0.0.1
 package: dipdup_hic_et_nunc
 
 database:
+  kind: sqlite
   path: db.sqlite3
 
 contracts:

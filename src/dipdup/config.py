@@ -29,11 +29,12 @@ class SqliteDatabaseConfig:
     :param path: Path to .sqlite3 file, leave default for in-memory database
     """
 
+    kind: Literal['sqlite']
     path: str = ':memory:'
 
     @property
     def connection_string(self):
-        return f'sqlite://{self.path}'
+        return f'{self.kind}://{self.path}'
 
 
 @dataclass
@@ -48,7 +49,7 @@ class DatabaseConfig:
     :param database: Schema name
     """
 
-    driver: str
+    kind: Union[Literal['postgres'], Literal['mysql']]
     host: str
     port: int
     user: str
@@ -57,7 +58,7 @@ class DatabaseConfig:
 
     @property
     def connection_string(self):
-        return f'{self.driver}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
+        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
 
 
 @dataclass
@@ -144,6 +145,7 @@ class OperationIndexConfig:
     def __post_init_post_parse__(self):
         self._state: Optional[State] = None
         self._rollback_fn: Optional[Callable] = None
+        self._template_values: Dict[str, str] = None
 
     def hash(self) -> str:
         return hashlib.sha256(
@@ -172,6 +174,14 @@ class OperationIndexConfig:
     @rollback_fn.setter
     def rollback_fn(self, value: Callable) -> None:
         self._rollback_fn = value
+
+    @property
+    def template_values(self) -> Optional[Dict[str, str]]:
+        return self._template_values
+
+    @template_values.setter
+    def template_values(self, value: Dict[str, str]) -> None:
+        self._template_values = value
 
 
 @dataclass
@@ -235,7 +245,7 @@ class DipDupConfig:
     datasources: Dict[str, Union[TzktDatasourceConfig]]
     indexes: Dict[str, IndexConfigT]
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
-    database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig()
+    database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
 
     def __post_init_post_parse__(self):
         self._logger = logging.getLogger(__name__)
@@ -248,6 +258,7 @@ class DipDupConfig:
                     raw_template = re.sub(value_regex, value, raw_template)
                 json_template = json.loads(raw_template)
                 self.indexes[index_name] = template.__class__(**json_template)
+                self.indexes[index_name].template_values = index_config.values
 
         for index_config in self.indexes.values():
             if isinstance(index_config, OperationIndexConfig):

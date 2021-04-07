@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Optional
 
 from dipdup.models import HandlerContext, OperationData
 from dipdup_quipuswap.models import *
@@ -10,5 +10,6 @@ async def on_fa20_tez_to_token(
     tezToTokenPayment: HandlerContext[Teztotokenpayment],
     transfer: HandlerContext[Transfer],
     operations: List[OperationData],
+    template_values: Optional[Dict[str, str]] = None,
 ) -> None:
     ...

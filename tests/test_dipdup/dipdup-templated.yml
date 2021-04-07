@@ -2,6 +2,7 @@ spec_version: 0.0.1
 package: dipdup_quipuswap
 
 database:
+  kind: sqlite
   path: db.sqlite3
 
 contracts:
