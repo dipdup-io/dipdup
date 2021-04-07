@@ -182,6 +182,45 @@ $ # edit `secrets.env` file, change credentials
 $ docker-compose up dipdup
 ```
 
+### Index templates
+
+Sometimes you need to run multiple indexes with similar configs whose only difference is contract addresses. In this case you can use index templates like this:
+
+```yaml
+templates:
+  trades:
+    kind: operation
+    datasource: tzkt_staging
+    contract: < dex >
+    handlers:
+      - callback: on_fa12_token_to_tez
+        pattern:
+          - destination: < dex >
+            entrypoint: tokenToTezPayment
+          - destination: < token >
+            entrypoint: transfer
+      - callback: on_fa20_tez_to_token
+        pattern:
+          - destination: < dex >
+            entrypoint: tezToTokenPayment
+          - destination: < token >
+            entrypoint: transfer
+
+indexes:
+  trades_fa12:
+    template: trades
+    values:
+      dex: FA12_dex
+      token: FA12_token
+
+  trades_fa20:
+    template: trades
+    values:
+      dex: FA20_dex
+      token: FA20_token
+```
+
+
 ### Optional: configure Hasura GraphQL Engine
 
 `init` command generates Hasura metadata JSON in the package root. You can use `configure-graphql` command to apply it to the running GraphQL Engine instance:
