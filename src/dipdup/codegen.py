@@ -51,7 +51,7 @@ async def fetch_schemas(config: DipDupConfig):
 
     for contract_name, contract in config.contracts.items():
         _logger.info('Fetching schemas for contract `%s`', contract_name)
-        address_schemas_path = join(schemas_path, contract.address)
+        address_schemas_path = join(schemas_path, contract)
         with suppress(FileExistsError):
             mkdir(address_schemas_path)
 
@@ -59,7 +59,7 @@ async def fetch_schemas(config: DipDupConfig):
         with suppress(FileExistsError):
             mkdir(parameter_schemas_path)
 
-        address_schemas_json = await datasource.fetch_jsonschemas(contract.address)
+        address_schemas_json = await datasource.fetch_jsonschemas(contract)
         for entrypoint_json in address_schemas_json['entrypoints']:
             entrypoint = entrypoint_json['name']
             entrypoint_schema = entrypoint_json['parameterSchema']

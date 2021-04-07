@@ -1,0 +1,53 @@
+spec_version: 0.0.1
+package: quipuswap
+
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+contracts:
+  FA12_dex: ${FA12_DEX:-KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2}
+  FA12_token: ${FA12_TOKEN:-KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV}
+  FA20_dex: ${FA20_DEX:-KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph}
+  FA20_token: ${FA20_TOKEN:-KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW}
+
+datasources:
+  tzkt_staging:
+    kind: tzkt
+    url: ${TZKT_URL:-https://staging.api.tzkt.io}
+
+parameters:
+  network: ${NETWORK:-mainnet}
+  symbol: ${SYMBOL:-kUSD}
+
+templates:
+  trades:
+    kind: operation
+    datasource: tzkt
+    contract: {{ dex }}
+    handlers:
+      - callback: on_fa12_token_to_tez
+        pattern:
+          - destination: {{ dex }}
+            entrypoint: tokenToTezPayment
+          - destination: {{ token }}
+            entrypoint: transfer
+      - callback: on_fa12_tez_to_token
+        pattern:
+          - destination: {{ dex }}
+            entrypoint: tezToTokenPayment
+          - destination: {{ token }}
+            entrypoint: transfer
+
+indexes:
+  trades_fa12:
+    template: trades
+    values:
+      dex: FA12_dex
+      token: FA12_token
+
+  trades_fa12:
+    template: trades
+    values:
+      dex: FA20_dex
+      token: FA20_token

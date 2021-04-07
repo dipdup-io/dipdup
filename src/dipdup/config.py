@@ -208,17 +208,6 @@ class BlockIndexConfig:
 
 
 @dataclass
-class ContractConfig:
-    """Contract config
-
-    :param network: Corresponding network alias, only for sanity checks
-    :param address: Contract address
-    """
-
-    address: str
-
-
-@dataclass
 class DipDupConfig:
     """Main dapp config
 
@@ -232,7 +221,7 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    contracts: Dict[str, ContractConfig]
+    contracts: Dict[str, str]
     datasources: Dict[str, Union[TzktDatasourceConfig]]
     indexes: Dict[str, Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]]
     database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig()
@@ -243,10 +232,10 @@ class DipDupConfig:
             if isinstance(index_config, OperationIndexConfig):
                 if index_config is None:
                     continue
-                index_config.contract = self.contracts[index_config.contract].address
+                index_config.contract = self.contracts[index_config.contract]
                 for handler in index_config.handlers:
                     for pattern in handler.pattern:
-                        pattern.destination = self.contracts[pattern.destination].address
+                        pattern.destination = self.contracts[pattern.destination]
 
     @property
     def package_path(self) -> str:
