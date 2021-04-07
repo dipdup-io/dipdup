@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "nat": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "map": {
+            "type": "object",
+            "propertyNames": {
+                "type": "string",
+                "$comment": "string"
+            },
+            "additionalProperties": {
+                "type": "string",
+                "$comment": "bytes"
+            },
+            "$comment": "map"
+        }
+    },
+    "required": [
+        "nat",
+        "map"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}

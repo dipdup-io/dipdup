@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "string": {
+            "type": "string",
+            "$comment": "string"
+        },
+        "bytes": {
+            "type": "string",
+            "$comment": "bytes"
+        }
+    },
+    "required": [
+        "string",
+        "bytes"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}

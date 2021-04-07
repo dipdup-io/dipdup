@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "unit": {
+            "type": "object",
+            "additionalProperties": false,
+            "$comment": "unit"
+        },
+        "contract": {
+            "type": "string",
+            "$comment": "contract"
+        }
+    },
+    "required": [
+        "unit",
+        "contract"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}

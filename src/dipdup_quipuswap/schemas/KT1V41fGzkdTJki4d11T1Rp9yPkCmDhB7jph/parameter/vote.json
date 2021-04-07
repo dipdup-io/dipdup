@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "candidate": {
+            "type": "string",
+            "$comment": "key_hash"
+        },
+        "value": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "voter": {
+            "type": "string",
+            "$comment": "address"
+        }
+    },
+    "required": [
+        "candidate",
+        "value",
+        "voter"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}

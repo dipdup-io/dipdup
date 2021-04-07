@@ -16,6 +16,7 @@ from tortoise import Tortoise
 from typing_extensions import Literal
 
 from dipdup.models import IndexType, State
+from pydantic.json import pydantic_encoder
 
 ROLLBACK_HANDLER = 'on_rollback'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
@@ -206,6 +207,14 @@ class BlockIndexConfig:
     datasource: str
     handlers: List[BlockHandlerConfig]
 
+@dataclass
+class IndexTemplateConfig:
+    template: str
+    values: Dict[str, str]
+
+
+IndexConfigT = Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig, IndexTemplateConfig]
+IndexConfigTemplateT = Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]
 
 @dataclass
 class DipDupConfig:
@@ -223,11 +232,22 @@ class DipDupConfig:
     package: str
     contracts: Dict[str, str]
     datasources: Dict[str, Union[TzktDatasourceConfig]]
-    indexes: Dict[str, Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]]
+    indexes: Dict[str, IndexConfigT]
+    templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig()
 
     def __post_init_post_parse__(self):
         self._logger = logging.getLogger(__name__)
+        for index_name, index_config in self.indexes.items():
+            if isinstance(index_config, IndexTemplateConfig):
+                template = self.templates[index_config.template]
+                raw_template = json.dumps(template, default=pydantic_encoder)
+                for key, value in index_config.values.items():
+                    value_regex = r'<[ ]*' + key + r'[ ]*>'
+                    raw_template = re.sub(value_regex, value, raw_template)
+                json_template = json.loads(raw_template)
+                self.indexes[index_name] = template.__class__(**json_template)
+
         for index_config in self.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
                 if index_config is None:
@@ -260,7 +280,9 @@ class DipDupConfig:
             placeholder = '${' + variable + ':-' + default_value + '}'
             raw_config = raw_config.replace(placeholder, value or default_value)
 
+        print(raw_config)
         json_config = YAML(typ='base').load(raw_config)
+        print(json_config)
         config = cls(**json_config)
         return config
 
