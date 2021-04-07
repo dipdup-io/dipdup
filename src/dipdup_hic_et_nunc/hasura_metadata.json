@@ -53,8 +53,8 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "token_id",
                             "token_info",
+                            "token_id",
                             "id"
                         ],
                         "filter": {},

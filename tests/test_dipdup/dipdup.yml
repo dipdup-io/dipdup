@@ -6,17 +6,14 @@ database:
 
 contracts:
   HEN_objkts:
-    network: mainnet
-    address: KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
+    address: ${HEN_OBJKTS:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
   HEN_minter:
-    network: mainnet
-    address: KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton
+    address: ${HEN_MINTER:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
 
 datasources:
   tzkt_mainnet:
     kind: tzkt
-    network: mainnet
-    url: https://staging.api.tzkt.io
+    url: ${TZKT_URL:-https://staging.api.tzkt.io}
 
 indexes:
   operations_mainnet:

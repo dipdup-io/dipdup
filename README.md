@@ -31,17 +31,14 @@ database:
 
 contracts:
   HEN_objkts:
-    network: mainnet
-    address: KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
+    address: ${HEN_OBJKTS:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
   HEN_minter:
-    network: mainnet
-    address: KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton
+    address: ${HEN_MINTER:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
 
 datasources:
   tzkt_mainnet:
     kind: tzkt
-    network: mainnet
-    url: https://staging.api.tzkt.io
+    url: ${TZKT_URL:-https://staging.api.tzkt.io}
 
 indexes:
   operations_mainnet:
@@ -168,6 +165,12 @@ Now everything is ready to run your indexer:
 $ dipdup -c config.yml run
 ```
 
+Parameters wrapped with `${VARIABLE:-default_value}` in config could be set from corresponding environment variables. For example if you want to use another TzKT instance:
+
+```shell
+$ TZKT_URL=https://api.tzkt.io dipdup -c config.yml run
+```
+
 You can interrupt indexing at any moment, it will start from last processed block next time you run your app again.
 
 Use `docker-compose.yml` included in this repo if you prefer to run dipdup in Docker:
@@ -178,8 +181,6 @@ $ cp secrets.env.example secrets.env
 $ # edit `secrets.env` file, change credentials
 $ docker-compose up dipdup
 ```
-
-Note that can use `DIPDUP_DATABASE_PASSWORD` environment variable to avoid storing database password in `dipdup.yml`.
 
 ### Optional: configure Hasura GraphQL Engine
 
