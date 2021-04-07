@@ -3,6 +3,7 @@ import importlib
 import json
 import logging.config
 import os
+import re
 import sys
 from os import environ as env
 from os.path import dirname
@@ -17,6 +18,7 @@ from typing_extensions import Literal
 from dipdup.models import IndexType, State
 
 ROLLBACK_HANDLER = 'on_rollback'
+ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
 
 @dataclass
@@ -53,10 +55,6 @@ class DatabaseConfig:
     database: str
     password: str = ''
 
-    def __post_init_post_parse__(self):
-        if not self.password:
-            self.password = env.get('DIPDUP_DATABASE_PASSWORD', '')
-
     @property
     def connection_string(self):
         return f'{self.driver}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
@@ -72,7 +70,6 @@ class TzktDatasourceConfig:
 
     kind: Literal['tzkt']
     url: str
-    network: Optional[str] = None
 
 
 @dataclass
@@ -219,7 +216,6 @@ class ContractConfig:
     """
 
     address: str
-    network: Optional[str] = None
 
 
 @dataclass
@@ -267,8 +263,16 @@ class DipDupConfig:
         filename = os.path.join(current_workdir, filename)
 
         with open(filename) as file:
-            raw_config = YAML(typ='base').load(file.read())
-        config = cls(**raw_config)
+            raw_config = file.read()
+
+        for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
+            variable, default_value = match.group(1), match.group(2)
+            value = env.get(variable)
+            placeholder = '${' + variable + ':-' + default_value + '}'
+            raw_config = raw_config.replace(placeholder, value or default_value)
+
+        json_config = YAML(typ='base').load(raw_config)
+        config = cls(**json_config)
         return config
 
     async def initialize(self) -> None:
