@@ -1,5 +1,6 @@
 import importlib
 import pkgutil
+import sys
 from os.path import dirname, join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
@@ -35,12 +36,16 @@ class CodegenTest(IsolatedAsyncioTestCase):
                 config = DipDupConfig.load(config_path)
                 config.package = 'tmp_test_dipdup'
 
+                if config.package in sys.modules:
+                    del sys.modules[config.package]
+
                 try:
                     await codegen.create_package(config)
                     await codegen.fetch_schemas(config)
                     await codegen.generate_types(config)
                     await codegen.generate_handlers(config)
                     await codegen.generate_hasura_metadata(config)
+                    await codegen.cleanup(config)
 
                     import_submodules(config.package)
 

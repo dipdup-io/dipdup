@@ -11,4 +11,4 @@ async def on_mint(
     mint: HandlerContext[Mint],
     operations: List[OperationData],
 ) -> None:
-    await Address.get_or_create(address=mint.parameter.address)
+    ...
