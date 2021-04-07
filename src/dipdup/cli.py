@@ -149,6 +149,7 @@ async def init(ctx):
     await codegen.generate_types(config)
     await codegen.generate_handlers(config)
     await codegen.generate_hasura_metadata(config)
+    await codegen.cleanup(config)
 
 
 @cli.command(help='Configure Hasura GraphQL Engine')

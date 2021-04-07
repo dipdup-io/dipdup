@@ -1,5 +1,6 @@
 import importlib
 import pkgutil
+import sys
 from os.path import dirname, join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
@@ -28,23 +29,28 @@ def import_submodules(package, recursive=True):
 
 
 class CodegenTest(IsolatedAsyncioTestCase):
-    async def asyncSetUp(self):
-        self.config_path = join(dirname(__file__), 'dipdup.yml')
-        self.config = DipDupConfig.load(self.config_path)
-        self.config.package = 'tmp_test_dipdup'
-
     async def test_codegen(self):
-        try:
-            await codegen.create_package(self.config)
-            await codegen.fetch_schemas(self.config)
-            await codegen.generate_types(self.config)
-            await codegen.generate_handlers(self.config)
-            await codegen.generate_hasura_metadata(self.config)
+        for name in ['dipdup.yml', 'dipdup-templated.yml']:
+            with self.subTest():
+                config_path = join(dirname(__file__), name)
+                config = DipDupConfig.load(config_path)
+                config.package = 'tmp_test_dipdup'
 
-            import_submodules(self.config.package)
+                if config.package in sys.modules:
+                    del sys.modules[config.package]
 
-        except Exception as exc:
-            rmtree('tmp_test_dipdup')
-            raise exc
-        else:
-            rmtree('tmp_test_dipdup')
+                try:
+                    await codegen.create_package(config)
+                    await codegen.fetch_schemas(config)
+                    await codegen.generate_types(config)
+                    await codegen.generate_handlers(config)
+                    await codegen.generate_hasura_metadata(config)
+                    await codegen.cleanup(config)
+
+                    import_submodules(config.package)
+
+                except Exception as exc:
+                    rmtree('tmp_test_dipdup')
+                    raise exc
+                else:
+                    rmtree('tmp_test_dipdup')

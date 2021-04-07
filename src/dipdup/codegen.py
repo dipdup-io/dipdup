@@ -6,7 +6,8 @@ import subprocess
 from contextlib import suppress
 from os import mkdir
 from os.path import dirname, exists, join
-from typing import List
+from shutil import rmtree
+from typing import List, Tuple
 
 from jinja2 import Template
 from tortoise import Model, fields
@@ -51,7 +52,7 @@ async def fetch_schemas(config: DipDupConfig):
 
     for contract_name, contract in config.contracts.items():
         _logger.info('Fetching schemas for contract `%s`', contract_name)
-        address_schemas_path = join(schemas_path, contract.address)
+        address_schemas_path = join(schemas_path, contract)
         with suppress(FileExistsError):
             mkdir(address_schemas_path)
 
@@ -59,7 +60,7 @@ async def fetch_schemas(config: DipDupConfig):
         with suppress(FileExistsError):
             mkdir(parameter_schemas_path)
 
-        address_schemas_json = await datasource.fetch_jsonschemas(contract.address)
+        address_schemas_json = await datasource.fetch_jsonschemas(contract)
         for entrypoint_json in address_schemas_json['entrypoints']:
             entrypoint = entrypoint_json['name']
             entrypoint_schema = entrypoint_json['parameterSchema']
@@ -79,6 +80,14 @@ async def generate_types(config: DipDupConfig):
         with open(join(types_path, '__init__.py'), 'w'):
             pass
 
+    _logger.info('Determining required types')
+    required_types: List[Tuple[str, str, str]] = []
+    for index_config in config.indexes.values():
+        if isinstance(index_config, OperationIndexConfig):
+            for handler_config in index_config.handlers:
+                for pattern_config in handler_config.pattern:
+                    required_types.append((pattern_config.destination, 'parameter', pattern_config.entrypoint))
+
     for root, dirs, files in os.walk(schemas_path):
         types_root = root.replace(schemas_path, types_path)
 
@@ -94,6 +103,13 @@ async def generate_types(config: DipDupConfig):
                 continue
             entrypoint_name = file[:-5]
             entrypoint_name_titled = entrypoint_name.title().replace('_', '')
+
+            type_type = types_root.split('/')[-1]
+            contract = types_root.split('/')[-2]
+
+            key = (contract, type_type, entrypoint_name)
+            if key not in required_types:
+                continue
 
             input_path = join(root, file)
             output_path = join(types_root, f'{entrypoint_name}.py')
@@ -254,3 +270,9 @@ async def generate_hasura_metadata(config: DipDupConfig):
     metadata_path = join(config.package_path, 'hasura_metadata.json')
     with open(metadata_path, 'w') as file:
         json.dump(metadata, file, indent=4)
+
+
+async def cleanup(config: DipDupConfig):
+    _logger.info('Cleaning up')
+    schemas_path = join(config.package_path, 'schemas')
+    rmtree(schemas_path)

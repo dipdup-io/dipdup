@@ -231,6 +231,7 @@ class TzktDatasource:
 
     async def on_operation_match(
         self,
+        index_config: OperationIndexConfig,
         handler_config: OperationHandlerConfig,
         matched_operations: List[OperationData],
         operations: List[OperationData],
@@ -247,7 +248,7 @@ class TzktDatasource:
             )
             args.append(context)
 
-        await handler_config.callback_fn(*args, operations)
+        await handler_config.callback_fn(*args, operations, index_config.template_values)
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:

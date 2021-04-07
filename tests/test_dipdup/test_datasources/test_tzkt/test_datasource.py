@@ -127,6 +127,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             await self.datasource.on_operation_message([operations_message], self.index_config.contract, sync=True)
 
             on_operation_match_mock.assert_awaited_with(
+                self.index_config,
                 self.index_config.handlers[0],
                 [operation],
                 ANY,
@@ -155,7 +156,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.index_config.handlers[0].callback_fn = callback_mock
 
             self.datasource._synchronized.set()
-            await self.datasource.on_operation_match(self.index_config.handlers[0], [matched_operation], operations)
+            await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)
 
             call_arg = callback_mock.await_args[0][0]
             self.assertIsInstance(call_arg, HandlerContext)

@@ -1,0 +1,25 @@
+{
+    "version": 2,
+    "tables": [
+        {
+            "table": {
+                "schema": "public",
+                "name": "example_models"
+            },
+            "object_relationships": [],
+            "array_relationships": [],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        }
+    ]
+}
