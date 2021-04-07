@@ -20,6 +20,8 @@ from dipdup.models import IndexType, State
 ROLLBACK_HANDLER = 'on_rollback'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
+sys.path.append(os.getcwd())
+
 
 @dataclass
 class SqliteDatabaseConfig:
