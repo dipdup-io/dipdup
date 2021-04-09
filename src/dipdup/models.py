@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generic, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
@@ -56,6 +56,12 @@ class OperationData:
 
 
 @dataclass
-class HandlerContext(Generic[ParameterType]):
+class OperationContext(Generic[ParameterType]):
     data: OperationData
     parameter: ParameterType
+
+
+@dataclass
+class HandlerContext:
+    operations: List[OperationData]
+    template_values: Optional[Dict[str, str]]
