@@ -53,9 +53,9 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "id",
+                            "token_info",
                             "token_id",
-                            "token_info"
+                            "id"
                         ],
                         "filter": {},
                         "allow_aggregations": true
