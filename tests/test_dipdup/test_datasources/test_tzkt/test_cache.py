@@ -4,7 +4,7 @@ from os.path import dirname, join
 from unittest.async_case import IsolatedAsyncioTestCase  # type: ignore
 from unittest.mock import ANY, AsyncMock  # type: ignore
 
-from dipdup.config import OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig, ContractConfig
+from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache, OperationGroup
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import OperationData
@@ -19,8 +19,11 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             handlers=[
                 OperationHandlerConfig(
                     callback='',
-                    pattern=[OperationHandlerPatternConfig(
-                        destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'), entrypoint='hDAO_batch')],
+                    pattern=[
+                        OperationHandlerPatternConfig(
+                            destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'), entrypoint='hDAO_batch'
+                        )
+                    ],
                 )
             ],
         )
@@ -56,8 +59,11 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             callback_mock.await_args[0][1],
             OperationHandlerConfig(
                 callback='',
-                pattern=[OperationHandlerPatternConfig(
-                    destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'), entrypoint='hDAO_batch')],
+                pattern=[
+                    OperationHandlerPatternConfig(
+                        destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'), entrypoint='hDAO_batch'
+                    )
+                ],
             ),
         )
         self.assertIsInstance(callback_mock.await_args[0][2], list)

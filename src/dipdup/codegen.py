@@ -13,7 +13,7 @@ from typing import List, Tuple
 from jinja2 import Template
 from tortoise import Model, fields
 
-from dipdup.config import ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig, ContractConfig
+from dipdup.config import ROLLBACK_HANDLER, ContractConfig, DipDupConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 _logger = logging.getLogger(__name__)

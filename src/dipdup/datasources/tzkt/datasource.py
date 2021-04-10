@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import aiohttp
 from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -12,7 +12,7 @@ from tortoise.transactions import in_transaction
 from dipdup.config import ROLLBACK_HANDLER, OperationHandlerConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import HandlerContext, OperationData, State
+from dipdup.models import HandlerContext, OperationContext, OperationData, State
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
 TZKT_HTTP_REQUEST_SLEEP = 1
@@ -240,19 +240,23 @@ class TzktDatasource:
         matched_operations: List[OperationData],
         operations: List[OperationData],
     ):
-        args = []
+        handler_context = HandlerContext(
+            operations=operations,
+            template_values=index_config.template_values,
+        )
+        args: List[Union[OperationContext, HandlerContext]] = [handler_context]
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
 
             parameter_type = pattern_config.parameter_type_cls
             parameter = parameter_type.parse_obj(operation.parameter_json)
 
-            context = HandlerContext(
+            operation_context = OperationContext(
                 data=operation,
                 parameter=parameter,
             )
-            args.append(context)
+            args.append(operation_context)
 
-        await handler_config.callback_fn(*args, operations, index_config.template_values)
+        await handler_config.callback_fn(*args)
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:

@@ -62,6 +62,7 @@ class DatabaseConfig:
     def connection_string(self):
         return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
 
+
 @dataclass
 class ContractConfig:
     """Contract config
