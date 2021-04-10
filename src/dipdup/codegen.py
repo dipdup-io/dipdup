@@ -56,11 +56,23 @@ async def fetch_schemas(config: DipDupConfig):
         with suppress(FileExistsError):
             mkdir(address_schemas_path)
 
+        storage_schema_path = join(address_schemas_path, 'storage.json')
+
         parameter_schemas_path = join(address_schemas_path, 'parameter')
         with suppress(FileExistsError):
             mkdir(parameter_schemas_path)
 
+        bigmap_schemas_path = join(address_schemas_path, 'bigmap')
+        with suppress(FileExistsError):
+            mkdir(bigmap_schemas_path)
+
         address_schemas_json = await datasource.fetch_jsonschemas(contract)
+
+        storage_schema = address_schemas_json['storageSchema']
+        if not exists(storage_schema_path):
+            with open(storage_schema_path, 'w') as file:
+                file.write(json.dumps(storage_schema, indent=4))
+
         for entrypoint_json in address_schemas_json['entrypoints']:
             entrypoint = entrypoint_json['name']
             entrypoint_schema = entrypoint_json['parameterSchema']
@@ -69,6 +81,19 @@ async def fetch_schemas(config: DipDupConfig):
                 with open(entrypoint_schema_path, 'w') as file:
                     file.write(json.dumps(entrypoint_schema, indent=4))
 
+        for bigmap_json in address_schemas_json['bigMaps']:
+            bigmap = bigmap_json['name']
+            key_schema = bigmap_json['keySchema']
+            key_schema_path = join(bigmap_schemas_path, f'{bigmap}.key.json')
+            if not exists(key_schema_path):
+                with open(key_schema_path, 'w') as file:
+                    file.write(json.dumps(key_schema, indent=4))
+
+            value_schema = bigmap_json['valueSchema']
+            value_schema_path = join(bigmap_schemas_path, f'{bigmap}.value.json')
+            if not exists(value_schema_path):
+                with open(value_schema_path, 'w') as file:
+                    file.write(json.dumps(value_schema, indent=4))
 
 async def generate_types(config: DipDupConfig):
     schemas_path = join(config.package_path, 'schemas')
