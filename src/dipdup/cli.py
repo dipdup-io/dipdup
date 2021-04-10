@@ -100,18 +100,13 @@ async def run(ctx) -> None:
         await config.initialize()
 
         _logger.info('Fetching indexer state for dapp `%s`', config.package)
-        datasources: Dict[TzktDatasourceConfig, TzktDatasource] = {}
+        datasources: Dict[str, TzktDatasource] = {}
 
         for index_name, index_config in config.indexes.items():
             _logger.info('Processing index `%s`', index_name)
-            if not isinstance(index_config, OperationIndexConfig):
-                raise NotImplementedError('Only operation indexes are supported')
-            if not isinstance(index_config.datasource, TzktDatasourceConfig):
-                raise NotImplementedError('Only TzKT datasource is supported')
-
             if index_config.datasource not in datasources:
-                datasources[index_config.datasource] = TzktDatasource(index_config.datasource.url)
-
+                base_url = config.datasources[index_config.datasource].url
+                datasources[index_config.datasource] = TzktDatasource(base_url)
             datasources[index_config.datasource].add_index(index_config)
 
         _logger.info('Starting datasources')

@@ -6,14 +6,18 @@ database:
   path: db.sqlite3
 
 contracts:
-  FA12_dex: 
-    address: ${FA12_DEX:-KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2}
-  FA12_token: 
-    address: ${FA12_TOKEN:-KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV}
-  FA20_dex: 
-    address: ${FA20_DEX:-KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph}
-  FA20_token: 
-    address: ${FA20_TOKEN:-KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW}
+  kusd_dex:
+    address: ${KUSD_DEX:-KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2}
+    typename: fa12_dex
+  kusd_token:
+    address: ${KUSD_TOKEN:-KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV}
+    typename: fa12_token
+  tzbtc_dex:
+    address: KT1N1wwNPqT5jGhM91GQ2ae5uY8UzFaXHMJS
+    typename: fa12_dex
+  tzbtc_token:
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: fa12_token
 
 datasources:
   tzkt_staging:
@@ -21,33 +25,34 @@ datasources:
     url: ${TZKT_URL:-https://staging.api.tzkt.io}
 
 templates:
-  trades:
+  trades_fa12:
     kind: operation
     datasource: tzkt_staging
-    contract: < dex >
+    contract: <dex>
     handlers:
       - callback: on_fa12_token_to_tez
         pattern:
-          - destination: < dex >
+          - destination: <dex>
             entrypoint: tokenToTezPayment
-          - destination: < token >
+          - destination: <token>
             entrypoint: transfer
-      - callback: on_fa20_tez_to_token
+      - callback: on_fa12_tez_to_token
         pattern:
-          - destination: < dex >
+          - destination: <dex>
             entrypoint: tezToTokenPayment
-          - destination: < token >
+          - destination: <token>
             entrypoint: transfer
 
 indexes:
-  trades_fa12:
-    template: trades
+  trades_kusd:
+    template: trades_fa12
     values:
-      dex: FA12_dex
-      token: FA12_token
-
-  trades_fa20:
-    template: trades
+      dex: kusd_dex
+      token: kusd_token
+      symbol: kUSD
+  trades_tzbtc:
+    template: trades_fa12
     values:
-      dex: FA20_dex
-      token: FA20_token
+      dex: tzbtc_dex
+      token: tzbtc_token
+      symbol: tzBTC

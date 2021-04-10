@@ -9,7 +9,7 @@ from signalrcore.hub_connection_builder import HubConnectionBuilder  # type: ign
 from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise.transactions import in_transaction
 
-from dipdup.config import ROLLBACK_HANDLER, OperationHandlerConfig, OperationIndexConfig
+from dipdup.config import ROLLBACK_HANDLER, ContractConfig, OperationHandlerConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import HandlerContext, OperationContext, OperationData, State

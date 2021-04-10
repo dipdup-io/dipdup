@@ -30,7 +30,7 @@ def import_submodules(package, recursive=True):
 
 class CodegenTest(IsolatedAsyncioTestCase):
     async def test_codegen(self):
-        for name in ['dipdup.yml', 'dipdup-templated.yml', 'dipdup-embed.yml']:
+        for name in ['dipdup.yml', 'dipdup-templated.yml']:
             with self.subTest():
                 config_path = join(dirname(__file__), name)
                 config = DipDupConfig.load(config_path)

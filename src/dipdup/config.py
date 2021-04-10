@@ -5,6 +5,7 @@ import logging.config
 import os
 import re
 import sys
+from collections import defaultdict
 from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
@@ -21,6 +22,10 @@ ROLLBACK_HANDLER = 'on_rollback'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
 sys.path.append(os.getcwd())
+
+
+def normalize_entrypoint(value: str) -> str:
+    return ''.join(map(lambda x: x[0].upper() + x[1:], value.split('_')))
 
 
 @dataclass
@@ -133,7 +138,7 @@ class OperationHandlerConfig:
     """
 
     callback: str
-    pattern: List[OperationHandlerPatternConfig]
+    pattern: Optional[List[OperationHandlerPatternConfig]] = None
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
@@ -266,9 +271,9 @@ class DipDupConfig:
 
     spec_version: str
     package: str
+    contracts: Dict[str, ContractConfig]
+    datasources: Dict[str, Union[TzktDatasourceConfig]]
     indexes: Dict[str, IndexConfigT]
-    contracts: Optional[Dict[str, ContractConfig]] = None
-    datasources: Optional[Dict[str, Union[TzktDatasourceConfig]]] = None
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
 
@@ -285,20 +290,34 @@ class DipDupConfig:
                 self.indexes[index_name] = template.__class__(**json_template)
                 self.indexes[index_name].template_values = index_config.values
 
+        callback_patterns: Dict[str, List[List[OperationHandlerPatternConfig]]] = defaultdict(list)
+
         for index_config in self.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
-                if index_config is None:
-                    continue
                 if isinstance(index_config.datasource, str):
                     index_config.datasource = self.datasources[index_config.datasource]
                 if isinstance(index_config.contract, str):
                     index_config.contract = self.contracts[index_config.contract]
+
                 for handler in index_config.handlers:
-                    for pattern in handler.pattern:
-                        if isinstance(pattern.destination, str):
-                            pattern.destination = self.contracts[pattern.destination]
-                # TODO: check that if a single callback used in multiple indexes
-                #  --- all contracts have the same typename (obligatory)
+                    if isinstance(handler.pattern, list):
+                        callback_patterns[handler.callback].append(handler.pattern)
+                        for pattern in handler.pattern:
+                            if isinstance(pattern.destination, str):
+                                pattern.destination = self.contracts[pattern.destination]
+            else:
+                raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+        for callback, patterns in callback_patterns.items():
+            if len(patterns) > 1:
+
+                def get_pattern_type(pattern: List[OperationHandlerPatternConfig]):
+                    return '::'.join(map(lambda x: x.destination.module_name, pattern))
+
+                pattern_types = list(map(get_pattern_type, patterns))
+                if any(map(lambda x: x != pattern_types[0], pattern_types)):
+                    raise ValueError(f'Callback `{callback}` used multiple times with different signatures. '
+                                     f'Make sure you have specified contract typenames')
 
     @property
     def package_path(self) -> str:
@@ -367,8 +386,7 @@ class DipDupConfig:
                         parameter_type_module = importlib.import_module(
                             f'{self.package}.types.{pattern.destination.module_name}.parameter.{pattern.entrypoint}'
                         )
-                        parameter_type = pattern.entrypoint.title().replace('_', '')
-                        parameter_type_cls = getattr(parameter_type_module, parameter_type)
+                        parameter_type_cls = getattr(parameter_type_module, normalize_entrypoint(pattern.entrypoint))
                         pattern.parameter_type_cls = parameter_type_cls
 
 
