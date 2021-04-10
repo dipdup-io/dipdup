@@ -57,8 +57,15 @@ class TzktDatasource:
 
     async def start(self):
         self._logger.info('Starting datasource')
-        for config in self._operation_index_configs.values():
-            await self.add_subscription(config.contract)
+        for operation_index_config in self._operation_index_configs.values():
+            await self.add_subscription(operation_index_config.contract)
+
+            latest_block = await self.get_latest_block()
+            current_level = latest_block['level']
+            state_level = operation_index_config.state.level
+
+            if current_level != state_level:
+                await self.fetch_operations(state_level)
 
         self._logger.info('Starting websocket client')
         await self._get_client().start()
@@ -284,3 +291,17 @@ class TzktDatasource:
             initiator_address=operation_json.get('initiator', {}).get('address'),
             parameter=operation_json.get('parameters'),
         )
+
+    async def get_latest_block(self) -> Dict[str, Any]:
+        self._logger.info('Fetching latest block')
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url=f'{self._url}/v1/blocks',
+                params={
+                    "limit": 1,
+                    "sort.desc": "id",
+                },
+            ) as resp:
+                blocks = await resp.json()
+        self._logger.debug(blocks)
+        return blocks[0]
