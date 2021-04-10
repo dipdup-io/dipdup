@@ -1,12 +1,12 @@
 from typing import Dict, List, Optional
-
 from dipdup.models import HandlerContext, OperationData
+
 from dipdup_quipuswap.models import *
-from dipdup_quipuswap.types.KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2.parameter.tezToTokenPayment import Teztotokenpayment
-from dipdup_quipuswap.types.KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV.parameter.transfer import Transfer
 
+from dipdup_quipuswap.types.KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph.parameter.tezToTokenPayment import Teztotokenpayment
+from dipdup_quipuswap.types.KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW.parameter.transfer import Transfer
 
-async def on_fa20_tez_to_token(
+async def on_fa2_tez_to_token(
     tezToTokenPayment: HandlerContext[Teztotokenpayment],
     transfer: HandlerContext[Transfer],
     operations: List[OperationData],

@@ -1,0 +1,29 @@
+spec_version: 0.0.1
+package: dipdup_hic_et_nunc
+
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+indexes:
+  operations_mainnet:
+    kind: operation
+    datasource:
+      kind: tzkt
+      url: https://staging.api.tzkt.io
+    contract:
+      address: KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
+    handlers:
+      - callback: on_mint
+        pattern:
+          - destination:
+              address: KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
+            entrypoint: mint_OBJKT
+          - destination:
+              address: KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton
+            entrypoint: mint
+      - callback: on_transfer
+        pattern:
+          - destination:
+              address: KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton
+            entrypoint: transfer

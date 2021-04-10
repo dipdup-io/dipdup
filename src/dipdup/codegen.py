@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import subprocess
+from collections import defaultdict
 from contextlib import suppress
 from os import mkdir
 from os.path import dirname, exists, join
@@ -12,7 +13,7 @@ from typing import List, Tuple
 from jinja2 import Template
 from tortoise import Model, fields
 
-from dipdup.config import ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig
+from dipdup.config import ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig, ContractConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 _logger = logging.getLogger(__name__)
@@ -42,32 +43,42 @@ async def fetch_schemas(config: DipDupConfig):
     with suppress(FileExistsError):
         mkdir(schemas_path)
 
-    _logger.info('Creating datasource')
-    # FIXME: Hardcode
-    datasource_config = list(config.datasources.values())[0]
-    datasource = TzktDatasource(
-        url=datasource_config.url,
-        operation_index_configs=[],
-    )
+    for index_name, index_config in config.indexes.items():
+        if index_config.kind != 'operation':
+            raise NotImplementedError(f'Only operation index kind is supported')
+        if index_config.datasource.kind != 'tzkt':
+            raise NotImplementedError(f'Only tzkt datasource kind is supported')
 
-    for contract_name, contract in config.contracts.items():
-        _logger.info('Fetching schemas for contract `%s`', contract_name)
-        address_schemas_path = join(schemas_path, contract)
-        with suppress(FileExistsError):
-            mkdir(address_schemas_path)
+        datasource = TzktDatasource(index_config.datasource.url)
+        contracts: List[ContractConfig] = [index_config.contract]
+        for handler in index_config.handlers:
+            for item in handler.pattern:
+                contracts.append(item.destination)
 
-        parameter_schemas_path = join(address_schemas_path, 'parameter')
-        with suppress(FileExistsError):
-            mkdir(parameter_schemas_path)
+        for contract in set(contracts):
+            _logger.info('Fetching schemas for contract `%s`', contract.address)
+            contract_schemas_path = join(schemas_path, contract.module_name)
+            with suppress(FileExistsError):
+                mkdir(contract_schemas_path)
 
-        address_schemas_json = await datasource.fetch_jsonschemas(contract)
-        for entrypoint_json in address_schemas_json['entrypoints']:
-            entrypoint = entrypoint_json['name']
-            entrypoint_schema = entrypoint_json['parameterSchema']
-            entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
-            if not exists(entrypoint_schema_path):
-                with open(entrypoint_schema_path, 'w') as file:
-                    file.write(json.dumps(entrypoint_schema, indent=4))
+            parameter_schemas_path = join(contract_schemas_path, 'parameter')
+            with suppress(FileExistsError):
+                mkdir(parameter_schemas_path)
+
+            address_schemas_json = await datasource.fetch_jsonschemas(contract.address)
+            for entrypoint_json in address_schemas_json['entrypoints']:
+                entrypoint = entrypoint_json['name']
+                entrypoint_schema = entrypoint_json['parameterSchema']
+                entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
+                if not exists(entrypoint_schema_path):
+                    with open(entrypoint_schema_path, 'w') as file:
+                        file.write(json.dumps(entrypoint_schema, indent=4))
+
+                elif contract.typename is not None:
+                    with open(entrypoint_schema_path, 'r') as file:
+                        existing_schema = json.loads(file.read())
+                    if entrypoint_schema != existing_schema:
+                        raise ValueError(f'Contract "{contract.address}" falsely claims to be a "{contract.typename}"')
 
 
 async def generate_types(config: DipDupConfig):
@@ -86,7 +97,8 @@ async def generate_types(config: DipDupConfig):
         if isinstance(index_config, OperationIndexConfig):
             for handler_config in index_config.handlers:
                 for pattern_config in handler_config.pattern:
-                    required_types.append((pattern_config.destination, 'parameter', pattern_config.entrypoint))
+                    module_name = pattern_config.destination.module_name
+                    required_types.append((module_name, 'parameter', pattern_config.entrypoint))
 
     for root, dirs, files in os.walk(schemas_path):
         types_root = root.replace(schemas_path, types_path)

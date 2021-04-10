@@ -6,8 +6,10 @@ database:
   path: db.sqlite3
 
 contracts:
-  HEN_objkts: ${HEN_OBJKTS:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
-  HEN_minter: ${HEN_MINTER:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
+  HEN_objkts: 
+    address: ${HEN_OBJKTS:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
+  HEN_minter: 
+    address: ${HEN_MINTER:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
 
 datasources:
   tzkt_mainnet:

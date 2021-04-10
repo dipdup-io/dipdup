@@ -6,10 +6,14 @@ database:
   path: db.sqlite3
 
 contracts:
-  FA12_dex: ${FA12_DEX:-KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2}
-  FA12_token: ${FA12_TOKEN:-KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV}
-  FA20_dex: ${FA20_DEX:-KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph}
-  FA20_token: ${FA20_TOKEN:-KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW}
+  FA12_dex: 
+    address: ${FA12_DEX:-KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2}
+  FA12_token: 
+    address: ${FA12_TOKEN:-KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV}
+  FA20_dex: 
+    address: ${FA20_DEX:-KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph}
+  FA20_token: 
+    address: ${FA20_TOKEN:-KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW}
 
 datasources:
   tzkt_staging:

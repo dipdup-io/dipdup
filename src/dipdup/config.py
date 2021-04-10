@@ -62,6 +62,25 @@ class DatabaseConfig:
     def connection_string(self):
         return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
 
+@dataclass
+class ContractConfig:
+    """Contract config
+
+    :param network: Corresponding network alias, only for sanity checks
+    :param address: Contract address
+    :param typename: User-defined alias for the contract script
+    """
+
+    address: str
+    typename: Optional[str] = None
+
+    def __hash__(self):
+        return hash(f'{self.address}{self.typename or ""}')
+
+    @property
+    def module_name(self) -> str:
+        return self.typename if self.typename is not None else self.address
+
 
 @dataclass
 class TzktDatasourceConfig:
@@ -74,6 +93,9 @@ class TzktDatasourceConfig:
     kind: Literal['tzkt']
     url: str
 
+    def __hash__(self):
+        return hash(self.url)
+
 
 @dataclass
 class OperationHandlerPatternConfig:
@@ -84,7 +106,7 @@ class OperationHandlerPatternConfig:
     :
     """
 
-    destination: str
+    destination: Union[str, ContractConfig]
     entrypoint: str
 
     def __post_init_post_parse__(self):
@@ -138,8 +160,8 @@ class OperationIndexConfig:
     """
 
     kind: Literal["operation"]
-    datasource: str
-    contract: str
+    datasource: Union[str, TzktDatasourceConfig]
+    contract: Union[str, ContractConfig]
     handlers: List[OperationHandlerConfig]
     first_block: int = 0
     last_block: int = 0
@@ -201,8 +223,8 @@ class BigmapdiffHandlerConfig:
 @dataclass
 class BigmapdiffIndexConfig:
     kind: Literal['bigmapdiff']
-    datasource: str
-    contract: str
+    datasource: Union[str, TzktDatasourceConfig]
+    contract: Union[str, ContractConfig]
     handlers: List[BigmapdiffHandlerConfig]
 
 
@@ -215,7 +237,7 @@ class BlockHandlerConfig:
 @dataclass
 class BlockIndexConfig:
     kind: Literal['block']
-    datasource: str
+    datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BlockHandlerConfig]
 
 
@@ -243,9 +265,9 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    contracts: Dict[str, str]
-    datasources: Dict[str, Union[TzktDatasourceConfig]]
     indexes: Dict[str, IndexConfigT]
+    contracts: Optional[Dict[str, ContractConfig]] = None
+    datasources: Optional[Dict[str, Union[TzktDatasourceConfig]]] = None
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
 
@@ -266,10 +288,16 @@ class DipDupConfig:
             if isinstance(index_config, OperationIndexConfig):
                 if index_config is None:
                     continue
-                index_config.contract = self.contracts[index_config.contract]
+                if isinstance(index_config.datasource, str):
+                    index_config.datasource = self.datasources[index_config.datasource]
+                if isinstance(index_config.contract, str):
+                    index_config.contract = self.contracts[index_config.contract]
                 for handler in index_config.handlers:
                     for pattern in handler.pattern:
-                        pattern.destination = self.contracts[pattern.destination]
+                        if isinstance(pattern.destination, str):
+                            pattern.destination = self.contracts[pattern.destination]
+                # TODO: check that if a single callback used in multiple indexes
+                #  --- all contracts have the same typename (obligatory)
 
     @property
     def package_path(self) -> str:
@@ -336,7 +364,7 @@ class DipDupConfig:
                     for pattern in handler.pattern:
                         self._logger.info('Registering parameter type for entrypoint `%s`', pattern.entrypoint)
                         parameter_type_module = importlib.import_module(
-                            f'{self.package}.types.{pattern.destination}.parameter.{pattern.entrypoint}'
+                            f'{self.package}.types.{pattern.destination.module_name}.parameter.{pattern.entrypoint}'
                         )
                         parameter_type = pattern.entrypoint.title().replace('_', '')
                         parameter_type_cls = getattr(parameter_type_module, parameter_type)

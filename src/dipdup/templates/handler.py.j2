@@ -3,7 +3,7 @@ from dipdup.models import HandlerContext, OperationData
 
 from {{ package }}.models import *
 {% for pattern in patterns %}
-from {{ package }}.types.{{ pattern.destination }}.parameter.{{ pattern.entrypoint }} import {{ pattern.entrypoint.title().replace('_', '') }}
+from {{ package }}.types.{{ pattern.destination.module_name }}.parameter.{{ pattern.entrypoint }} import {{ pattern.entrypoint.title().replace('_', '') }}
 {%- endfor %}
 
 async def {{ handler }}(

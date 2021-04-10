@@ -19,22 +19,26 @@ TZKT_HTTP_REQUEST_SLEEP = 1
 
 
 class TzktDatasource:
-    def __init__(
-        self,
-        url: str,
-        operation_index_configs: List[OperationIndexConfig],
-    ):
+    def __init__(self, url: str):
         super().__init__()
         self._url = url.rstrip('/')
-        self._operation_index_configs = {config.contract: config for config in operation_index_configs}
+        self._operation_index_configs: Dict[str, OperationIndexConfig] = {}
         self._synchronized = asyncio.Event()
         self._callback_lock = asyncio.Lock()
         self._logger = logging.getLogger(__name__)
         self._subscriptions: Dict[str, List[str]] = {}
         self._subscriptions_registered: List[Tuple[str, str]] = []
-        self._sync_events = {config.state.index_name: asyncio.Event() for config in operation_index_configs}
+        self._sync_events: Dict[str, asyncio.Event] = {}
         self._client: Optional[BaseHubConnection] = None
-        self._caches = {config.contract: OperationCache(config, config.state.level) for config in operation_index_configs}
+        self._caches: Dict[str, OperationCache] = {}
+
+    def add_index(self, config: OperationIndexConfig):
+        self._logger.info(f'Adding index "{config.state.index_name}"')
+        self._operation_index_configs[config.contract.address] = config
+        self._sync_events[config.state.index_name] = asyncio.Event()
+        self._caches[config.contract.address] = OperationCache(config, config.state.level)
+        if len(self._operation_index_configs) > 1:
+            _logger.warning('Using more than one operation index. Be careful, indexing is not atomic.')
 
     def _get_client(self) -> BaseHubConnection:
         if self._client is None:
@@ -58,7 +62,7 @@ class TzktDatasource:
     async def start(self):
         self._logger.info('Starting datasource')
         for config in self._operation_index_configs.values():
-            await self.add_subscription(config.contract)
+            await self.add_subscription(config.contract.address)
 
         self._logger.info('Starting websocket client')
         await self._get_client().start()
@@ -140,13 +144,13 @@ class TzktDatasource:
             offset = 0
 
             while True:
-                fetched_operations = await self._fetch_operations(index_config.contract, offset, level, last_level)
+                fetched_operations = await self._fetch_operations(index_config.contract.address, offset, level, last_level)
                 operations += fetched_operations
 
                 while True:
                     for i in range(len(operations) - 1):
                         if operations[i]['level'] != operations[i + 1]['level']:
-                            await _process_operations(index_config.contract, operations[: i + 1])
+                            await _process_operations(index_config.contract.address, operations[: i + 1])
                             operations = operations[i + 1 :]
                             break
                     else:
@@ -160,7 +164,7 @@ class TzktDatasource:
                 await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
 
             if operations:
-                await _process_operations(index_config.contract, operations)
+                await _process_operations(index_config.contract.address, operations)
 
             sync_event.set()
 

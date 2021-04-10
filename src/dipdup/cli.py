@@ -100,38 +100,22 @@ async def run(ctx) -> None:
         await config.initialize()
 
         _logger.info('Fetching indexer state for dapp `%s`', config.package)
-
-        datasource_operation_index_configs: Dict[str, List[OperationIndexConfig]] = {
-            datasource_name: [] for datasource_name in config.datasources
-        }
-        datasources = []
+        datasources: Dict[TzktDatasourceConfig, TzktDatasource] = {}
 
         for index_name, index_config in config.indexes.items():
             _logger.info('Processing index `%s`', index_name)
             if not isinstance(index_config, OperationIndexConfig):
                 raise NotImplementedError('Only operation indexes are supported')
-            datasource_operation_index_configs[index_config.datasource].append(index_config)
+            if not isinstance(index_config.datasource, TzktDatasourceConfig):
+                raise NotImplementedError('Only TzKT datasource is supported')
 
-        for datasource_name, operation_index_configs in datasource_operation_index_configs.items():
-            if not operation_index_configs:
-                continue
+            if index_config.datasource not in datasources:
+                datasources[index_config.datasource] = TzktDatasource(index_config.datasource.url)
 
-            _logger.info('Creating datasource `%s`', datasource_name)
-            if len(operation_index_configs) > 1:
-                _logger.warning('Using more than one operation index. Be careful, indexing is not atomic.')
-
-            datasource_config = config.datasources[datasource_name]
-            if isinstance(datasource_config, TzktDatasourceConfig):
-                datasource = TzktDatasource(
-                    url=datasource_config.url,
-                    operation_index_configs=operation_index_configs,
-                )
-                datasources.append(datasource)
-            else:
-                raise NotImplementedError
+            datasources[index_config.datasource].add_index(index_config)
 
         _logger.info('Starting datasources')
-        datasource_run_tasks = [asyncio.create_task(d.start()) for d in datasources]
+        datasource_run_tasks = [asyncio.create_task(d.start()) for d in datasources.values()]
         await asyncio.gather(*datasource_run_tasks)
 
     finally:
