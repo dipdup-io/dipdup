@@ -2,6 +2,7 @@ import importlib
 import json
 import logging
 import os
+import re
 import subprocess
 from collections import defaultdict
 from contextlib import suppress
@@ -17,6 +18,11 @@ from dipdup.config import ROLLBACK_HANDLER, ContractConfig, DipDupConfig, Operat
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 _logger = logging.getLogger(__name__)
+
+
+def camel_to_snake(name):
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 
 async def create_package(config: DipDupConfig):
@@ -151,7 +157,11 @@ async def generate_handlers(config: DipDupConfig):
             for handler in index.handlers:
                 _logger.info('Generating handler `%s`', handler.callback)
                 handler_code = template.render(
-                    package=config.package, handler=handler.callback, patterns=handler.pattern, normalize_entrypoint=normalize_entrypoint
+                    package=config.package,
+                    handler=handler.callback,
+                    patterns=handler.pattern,
+                    normalize_entrypoint=normalize_entrypoint,
+                    camel_to_snake=camel_to_snake,
                 )
                 handler_path = join(handlers_path, f'{handler.callback}.py')
                 if not exists(handler_path):

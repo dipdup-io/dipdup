@@ -9,7 +9,7 @@ from {{ package }}.types.{{ pattern.destination.module_name }}.parameter.{{ patt
 async def {{ handler }}(
     ctx: HandlerContext,
 {%- for pattern in patterns %}
-    {{ pattern.entrypoint.lower() }}: OperationContext[{{ normalize_entrypoint(pattern.entrypoint) }}],
+    {{ camel_to_snake(pattern.entrypoint) }}: OperationContext[{{ normalize_entrypoint(pattern.entrypoint) }}],
 {%- endfor %}
 ) -> None:
     ...
