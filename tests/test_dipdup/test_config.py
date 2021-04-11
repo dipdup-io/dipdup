@@ -22,7 +22,6 @@ class ConfigTest(IsolatedAsyncioTestCase):
                 },
             )
             await Tortoise.generate_schemas()
-
             await config.initialize()
         finally:
             await Tortoise.close_connections()

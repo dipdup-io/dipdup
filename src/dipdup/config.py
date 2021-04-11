@@ -119,6 +119,11 @@ class OperationHandlerPatternConfig:
         self._parameter_type_cls = None
 
     @property
+    def contract_config(self) -> ContractConfig:
+        assert isinstance(self.destination, ContractConfig)
+        return self.destination
+
+    @property
     def parameter_type_cls(self) -> Type:
         if self._parameter_type_cls is None:
             raise Exception('Parameter type is not registered')
@@ -138,7 +143,7 @@ class OperationHandlerConfig:
     """
 
     callback: str
-    pattern: Optional[List[OperationHandlerPatternConfig]] = None
+    pattern: List[OperationHandlerPatternConfig]
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
@@ -184,6 +189,16 @@ class OperationIndexConfig:
                 default=pydantic_encoder,
             ).encode(),
         ).hexdigest()
+
+    @property
+    def tzkt_config(self) -> TzktDatasourceConfig:
+        assert isinstance(self.datasource, TzktDatasourceConfig)
+        return self.datasource
+
+    @property
+    def contract_config(self) -> ContractConfig:
+        assert isinstance(self.contract, ContractConfig)
+        return self.contract
 
     @property
     def state(self):
@@ -233,6 +248,11 @@ class BigmapdiffIndexConfig:
     contract: Union[str, ContractConfig]
     handlers: List[BigmapdiffHandlerConfig]
 
+    @property
+    def tzkt_config(self) -> TzktDatasourceConfig:
+        assert isinstance(self.datasource, TzktDatasourceConfig)
+        return self.datasource
+
 
 @dataclass
 class BlockHandlerConfig:
@@ -245,6 +265,11 @@ class BlockIndexConfig:
     kind: Literal['block']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BlockHandlerConfig]
+
+    @property
+    def tzkt_config(self) -> TzktDatasourceConfig:
+        assert isinstance(self.datasource, TzktDatasourceConfig)
+        return self.datasource
 
 
 @dataclass
@@ -312,12 +337,14 @@ class DipDupConfig:
             if len(patterns) > 1:
 
                 def get_pattern_type(pattern: List[OperationHandlerPatternConfig]):
-                    return '::'.join(map(lambda x: x.destination.module_name, pattern))
+                    return '::'.join(map(lambda x: x.contract_config.module_name, pattern))
 
                 pattern_types = list(map(get_pattern_type, patterns))
                 if any(map(lambda x: x != pattern_types[0], pattern_types)):
-                    raise ValueError(f'Callback `{callback}` used multiple times with different signatures. '
-                                     f'Make sure you have specified contract typenames')
+                    raise ValueError(
+                        f'Callback `{callback}` used multiple times with different signatures. '
+                        f'Make sure you have specified contract typenames'
+                    )
 
     @property
     def package_path(self) -> str:
@@ -384,7 +411,7 @@ class DipDupConfig:
                     for pattern in handler.pattern:
                         self._logger.info('Registering parameter type for entrypoint `%s`', pattern.entrypoint)
                         parameter_type_module = importlib.import_module(
-                            f'{self.package}.types.{pattern.destination.module_name}.parameter.{pattern.entrypoint}'
+                            f'{self.package}.types.{pattern.contract_config.module_name}.parameter.{pattern.entrypoint}'
                         )
                         parameter_type_cls = getattr(parameter_type_module, normalize_entrypoint(pattern.entrypoint))
                         pattern.parameter_type_cls = parameter_type_cls

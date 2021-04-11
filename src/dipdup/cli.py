@@ -17,7 +17,7 @@ from tortoise.utils import get_schema_sql
 
 import dipdup.codegen as codegen
 from dipdup import __version__
-from dipdup.config import DipDupConfig, LoggingConfig, OperationIndexConfig, TzktDatasourceConfig
+from dipdup.config import DipDupConfig, IndexTemplateConfig, LoggingConfig, OperationIndexConfig, TzktDatasourceConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import IndexType, State
 
@@ -100,14 +100,17 @@ async def run(ctx) -> None:
         await config.initialize()
 
         _logger.info('Fetching indexer state for dapp `%s`', config.package)
-        datasources: Dict[str, TzktDatasource] = {}
+        datasources: Dict[TzktDatasourceConfig, TzktDatasource] = {}
 
         for index_name, index_config in config.indexes.items():
+            assert not isinstance(index_config, IndexTemplateConfig)
             _logger.info('Processing index `%s`', index_name)
-            if index_config.datasource not in datasources:
-                base_url = config.datasources[index_config.datasource].url
-                datasources[index_config.datasource] = TzktDatasource(base_url)
-            datasources[index_config.datasource].add_index(index_config)
+            if isinstance(index_config.datasource, TzktDatasourceConfig):
+                if index_config.tzkt_config not in datasources:
+                    datasources[index_config.tzkt_config] = TzktDatasource(index_config.tzkt_config.url)
+                datasources[index_config.tzkt_config].add_index(index_config)
+            else:
+                raise NotImplementedError(f'Datasource `{index_config.datasource}` is not supported')
 
         _logger.info('Starting datasources')
         datasource_run_tasks = [asyncio.create_task(d.start()) for d in datasources.values()]

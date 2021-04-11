@@ -9,7 +9,15 @@ from signalrcore.hub_connection_builder import HubConnectionBuilder  # type: ign
 from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise.transactions import in_transaction
 
-from dipdup.config import ROLLBACK_HANDLER, ContractConfig, OperationHandlerConfig, OperationIndexConfig
+from dipdup.config import (
+    ROLLBACK_HANDLER,
+    BigmapdiffIndexConfig,
+    BlockIndexConfig,
+    ContractConfig,
+    IndexTemplateConfig,
+    OperationHandlerConfig,
+    OperationIndexConfig,
+)
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import HandlerContext, OperationContext, OperationData, State
@@ -32,13 +40,16 @@ class TzktDatasource:
         self._client: Optional[BaseHubConnection] = None
         self._caches: Dict[str, OperationCache] = {}
 
-    def add_index(self, config: OperationIndexConfig):
-        self._logger.info(f'Adding index "{config.state.index_name}"')
-        self._operation_index_configs[config.contract.address] = config
-        self._sync_events[config.state.index_name] = asyncio.Event()
-        self._caches[config.contract.address] = OperationCache(config, config.state.level)
-        if len(self._operation_index_configs) > 1:
-            _logger.warning('Using more than one operation index. Be careful, indexing is not atomic.')
+    def add_index(self, config: Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]):
+        if isinstance(config, OperationIndexConfig):
+            self._logger.info(f'Adding index "{config.state.index_name}"')
+            self._operation_index_configs[config.contract_config.address] = config
+            self._sync_events[config.state.index_name] = asyncio.Event()
+            self._caches[config.contract_config.address] = OperationCache(config, config.state.level)
+            if len(self._operation_index_configs) > 1:
+                self._logger.warning('Using more than one operation index. Be careful, indexing is not atomic.')
+        else:
+            raise NotImplementedError(f'Index kind `{config.kind}` is not supported')
 
     def _get_client(self) -> BaseHubConnection:
         if self._client is None:
@@ -62,7 +73,7 @@ class TzktDatasource:
     async def start(self):
         self._logger.info('Starting datasource')
         for config in self._operation_index_configs.values():
-            await self.add_subscription(config.contract.address)
+            await self.add_subscription(config.contract_config.address)
 
         self._logger.info('Starting websocket client')
         await self._get_client().start()
@@ -144,13 +155,13 @@ class TzktDatasource:
             offset = 0
 
             while True:
-                fetched_operations = await self._fetch_operations(index_config.contract.address, offset, level, last_level)
+                fetched_operations = await self._fetch_operations(index_config.contract_config.address, offset, level, last_level)
                 operations += fetched_operations
 
                 while True:
                     for i in range(len(operations) - 1):
                         if operations[i]['level'] != operations[i + 1]['level']:
-                            await _process_operations(index_config.contract.address, operations[: i + 1])
+                            await _process_operations(index_config.contract_config.address, operations[: i + 1])
                             operations = operations[i + 1 :]
                             break
                     else:
@@ -164,7 +175,7 @@ class TzktDatasource:
                 await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
 
             if operations:
-                await _process_operations(index_config.contract.address, operations)
+                await _process_operations(index_config.contract_config.address, operations)
 
             sync_event.set()
 

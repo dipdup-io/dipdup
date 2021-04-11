@@ -28,11 +28,11 @@ class OperationCache:
         self._operations[key].append(operation)
 
     def match_operation(self, pattern_config: OperationHandlerPatternConfig, operation: OperationData) -> bool:
-        self._logger.debug('pattern: %s, %s', pattern_config.entrypoint, pattern_config.destination.address)
+        self._logger.debug('pattern: %s, %s', pattern_config.entrypoint, pattern_config.contract_config.address)
         self._logger.debug('operation: %s, %s', operation.entrypoint, operation.target_address)
         if pattern_config.entrypoint != operation.entrypoint:
             return False
-        if pattern_config.destination.address != operation.target_address:
+        if pattern_config.contract_config.address != operation.target_address:
             return False
         self._logger.debug('Match!')
         return True

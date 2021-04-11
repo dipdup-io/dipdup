@@ -6,9 +6,9 @@ import subprocess
 from collections import defaultdict
 from contextlib import suppress
 from os import mkdir
-from os.path import dirname, exists, join, basename, splitext
+from os.path import basename, dirname, exists, join, splitext
 from shutil import rmtree
-from typing import List, Tuple, Set
+from typing import Any, Dict, List, Set, Tuple
 
 from jinja2 import Template
 from tortoise import Model, fields
@@ -43,24 +43,22 @@ async def fetch_schemas(config: DipDupConfig):
     with suppress(FileExistsError):
         mkdir(schemas_path)
 
-    schemas_cache: Dict[str, str] = {}
+    schemas_cache: Dict[str, Dict[str, Any]] = {}
 
     for index_name, index_config in config.indexes.items():
         if isinstance(index_config, OperationIndexConfig):
-            datasource = TzktDatasource(index_config.datasource.url)
+            datasource = TzktDatasource(index_config.tzkt_config.url)
             for handler in index_config.handlers:
-                if handler.pattern is None:
-                    continue
-
                 for item in handler.pattern:
-                    if item.destination.address in schemas_cache:
-                        address_schemas_json = schemas_cache[item.destination.address]
+                    contract = item.contract_config
+                    if item.contract_config.address in schemas_cache:
+                        address_schemas_json = schemas_cache[contract.address]
                     else:
-                        _logger.info('Fetching schemas for contract `%s`', item.destination.address)
-                        address_schemas_json = await datasource.fetch_jsonschemas(item.destination.address)
-                        schemas_cache[item.destination.address] = address_schemas_json
+                        _logger.info('Fetching schemas for contract `%s`', contract.address)
+                        address_schemas_json = await datasource.fetch_jsonschemas(contract.address)
+                        schemas_cache[contract.address] = address_schemas_json
 
-                    contract_schemas_path = join(schemas_path, item.destination.module_name)
+                    contract_schemas_path = join(schemas_path, contract.module_name)
                     with suppress(FileExistsError):
                         mkdir(contract_schemas_path)
 
@@ -69,21 +67,18 @@ async def fetch_schemas(config: DipDupConfig):
                         mkdir(parameter_schemas_path)
 
                     entrypoint_schema = next(
-                        ep['parameterSchema']
-                        for ep in address_schemas_json['entrypoints']
-                        if ep['name'] == item.entrypoint
+                        ep['parameterSchema'] for ep in address_schemas_json['entrypoints'] if ep['name'] == item.entrypoint
                     )
                     entrypoint_schema_path = join(parameter_schemas_path, f'{item.entrypoint}.json')
 
                     if not exists(entrypoint_schema_path):
                         with open(entrypoint_schema_path, 'w') as file:
                             file.write(json.dumps(entrypoint_schema, indent=4))
-                    elif item.destination.typename is not None:
+                    elif contract.typename is not None:
                         with open(entrypoint_schema_path, 'r') as file:
                             existing_schema = json.loads(file.read())
                         if entrypoint_schema != existing_schema:
-                            raise ValueError(
-                                f'Contract "{item.destination.address}" falsely claims to be a "{item.destination.typename}"')
+                            raise ValueError(f'Contract "{contract.address}" falsely claims to be a "{contract.typename}"')
 
 
 async def generate_types(config: DipDupConfig):
@@ -124,7 +119,7 @@ async def generate_types(config: DipDupConfig):
                     '--class-name',
                     normalize_entrypoint(name),
                     '--disable-timestamp',
-                    '--use-default'
+                    '--use-default',
                 ],
                 check=True,
             )
@@ -155,10 +150,9 @@ async def generate_handlers(config: DipDupConfig):
         if isinstance(index, OperationIndexConfig):
             for handler in index.handlers:
                 _logger.info('Generating handler `%s`', handler.callback)
-                handler_code = template.render(package=config.package,
-                                               handler=handler.callback,
-                                               patterns=handler.pattern,
-                                               normalize_entrypoint=normalize_entrypoint)
+                handler_code = template.render(
+                    package=config.package, handler=handler.callback, patterns=handler.pattern, normalize_entrypoint=normalize_entrypoint
+                )
                 handler_path = join(handlers_path, f'{handler.callback}.py')
                 if not exists(handler_path):
                     with open(handler_path, 'w') as file:
