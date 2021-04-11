@@ -2,27 +2,20 @@ import importlib
 import json
 import logging
 import os
-import re
 import subprocess
-from collections import defaultdict
 from contextlib import suppress
 from os import mkdir
 from os.path import basename, dirname, exists, join, splitext
 from shutil import rmtree
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List
 
 from jinja2 import Template
 from tortoise import Model, fields
 
-from dipdup.config import ROLLBACK_HANDLER, ContractConfig, DipDupConfig, OperationIndexConfig, normalize_entrypoint
+from dipdup.config import ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig, camel_to_snake, snake_to_camel
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 _logger = logging.getLogger(__name__)
-
-
-def camel_to_snake(name):
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 
 async def create_package(config: DipDupConfig):
@@ -113,7 +106,7 @@ async def generate_types(config: DipDupConfig):
                 continue
 
             input_path = join(root, file)
-            output_path = join(types_root, f'{name}.py')
+            output_path = join(types_root, f'{camel_to_snake(name)}.py')
             _logger.info('Generating parameter type for `%s`', name)
             subprocess.run(
                 [
@@ -123,7 +116,7 @@ async def generate_types(config: DipDupConfig):
                     '--output',
                     output_path,
                     '--class-name',
-                    normalize_entrypoint(name),
+                    snake_to_camel(name),
                     '--disable-timestamp',
                     '--use-default',
                 ],
@@ -160,7 +153,7 @@ async def generate_handlers(config: DipDupConfig):
                     package=config.package,
                     handler=handler.callback,
                     patterns=handler.pattern,
-                    normalize_entrypoint=normalize_entrypoint,
+                    snake_to_camel=snake_to_camel,
                     camel_to_snake=camel_to_snake,
                 )
                 handler_path = join(handlers_path, f'{handler.callback}.py')

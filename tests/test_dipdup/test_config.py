@@ -1,4 +1,3 @@
-import sys
 from os.path import dirname, join
 from typing import Callable, Type
 from unittest import IsolatedAsyncioTestCase
@@ -6,8 +5,6 @@ from unittest import IsolatedAsyncioTestCase
 from tortoise import Tortoise
 
 from dipdup.config import DipDupConfig
-
-sys.path.append(dirname(__file__))
 
 
 class ConfigTest(IsolatedAsyncioTestCase):
@@ -31,8 +28,8 @@ class ConfigTest(IsolatedAsyncioTestCase):
 
         self.assertIsInstance(config, DipDupConfig)
         self.assertEqual(
-            config.contracts['HEN_objkts'],
-            config.indexes['operations_mainnet'].handlers[0].pattern[0].destination,
+            config.contracts['HEN_minter'],
+            config.indexes['hen_mainnet'].handlers[0].pattern[0].destination,
         )
-        self.assertIsInstance(config.indexes['operations_mainnet'].handlers[0].callback_fn, Callable)
-        self.assertIsInstance(config.indexes['operations_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)
+        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].callback_fn, Callable)
+        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)

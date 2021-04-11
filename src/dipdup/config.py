@@ -24,8 +24,13 @@ ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 sys.path.append(os.getcwd())
 
 
-def normalize_entrypoint(value: str) -> str:
+def snake_to_camel(value: str) -> str:
     return ''.join(map(lambda x: x[0].upper() + x[1:], value.split('_')))
+
+
+def camel_to_snake(name):
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 
 @dataclass
@@ -411,9 +416,13 @@ class DipDupConfig:
                     for pattern in handler.pattern:
                         self._logger.info('Registering parameter type for entrypoint `%s`', pattern.entrypoint)
                         parameter_type_module = importlib.import_module(
-                            f'{self.package}.types.{pattern.contract_config.module_name}.parameter.{pattern.entrypoint}'
+                            f'{self.package}'
+                            f'.types'
+                            f'.{pattern.contract_config.module_name}'
+                            f'.parameter'
+                            f'.{camel_to_snake(pattern.entrypoint)}'
                         )
-                        parameter_type_cls = getattr(parameter_type_module, normalize_entrypoint(pattern.entrypoint))
+                        parameter_type_cls = getattr(parameter_type_module, snake_to_camel(pattern.entrypoint))
                         pattern.parameter_type_cls = parameter_type_cls
 
 

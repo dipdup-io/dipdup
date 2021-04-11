@@ -1,5 +1,4 @@
 import json
-from datetime import datetime, timezone
 from os.path import dirname, join
 from unittest.async_case import IsolatedAsyncioTestCase  # type: ignore
 from unittest.mock import ANY, AsyncMock  # type: ignore
