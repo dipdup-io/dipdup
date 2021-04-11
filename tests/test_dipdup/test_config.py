@@ -1,3 +1,4 @@
+import sys
 from os.path import dirname, join
 from typing import Callable, Type
 from unittest import IsolatedAsyncioTestCase
@@ -5,6 +6,8 @@ from unittest import IsolatedAsyncioTestCase
 from tortoise import Tortoise
 
 from dipdup.config import DipDupConfig
+
+sys.path.append(dirname(__file__))
 
 
 class ConfigTest(IsolatedAsyncioTestCase):
