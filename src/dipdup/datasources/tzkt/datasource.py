@@ -102,7 +102,7 @@ class TzktDatasource:
             latest_block = await self.get_latest_block()
             current_level = latest_block['level']
             state_level = operation_index_config.state.level
-
+            print(current_level, state_level)
             if current_level != state_level:
                 await self.fetch_operations(state_level)
 
@@ -182,9 +182,6 @@ class TzktDatasource:
 
             sync_event = self._sync_events[index_config.state.index_name]
             level = index_config.state.level or 0
-            if level == last_level:
-                sync_event.set()
-                continue
 
             operations = []
             offset = 0
