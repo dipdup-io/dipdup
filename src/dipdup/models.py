@@ -27,11 +27,11 @@ class State(Model):
 
 @dataclass
 class OperationData:
-    type: str
+    # FIXME:
+    type: Optional[str]
     id: int
     level: int
     timestamp: datetime
-    block: str
     hash: str
     counter: int
     sender_address: str
@@ -46,6 +46,7 @@ class OperationData:
     amount: int
     status: str
     has_internals: bool
+    block: Optional[str] = None
     sender_alias: Optional[str] = None
     nonce: Optional[int] = None
     target_alias: Optional[str] = None
@@ -53,12 +54,14 @@ class OperationData:
     parameter_json: Optional[Any] = None
     initiator_address: Optional[str] = None
     parameter: Optional[str] = None
+    storage: Optional[Dict[str, Any]] = None
 
 
 @dataclass
 class OperationContext(Generic[ParameterType]):
     data: OperationData
     parameter: ParameterType
+    storage: Optional[Any] = None
 
 
 @dataclass

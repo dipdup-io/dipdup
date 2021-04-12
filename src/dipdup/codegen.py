@@ -61,6 +61,13 @@ async def fetch_schemas(config: DipDupConfig):
                     with suppress(FileExistsError):
                         mkdir(contract_schemas_path)
 
+                    storage_schema_path = join(contract_schemas_path, 'storage.json')
+
+                    storage_schema = address_schemas_json['storageSchema']
+                    if not exists(storage_schema_path):
+                        with open(storage_schema_path, 'w') as file:
+                            file.write(json.dumps(storage_schema, indent=4))
+
                     parameter_schemas_path = join(contract_schemas_path, 'parameter')
                     with suppress(FileExistsError):
                         mkdir(parameter_schemas_path)
