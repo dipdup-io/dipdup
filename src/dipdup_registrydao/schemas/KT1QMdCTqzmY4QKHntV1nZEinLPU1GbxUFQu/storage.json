@@ -1,0 +1,583 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "ledger": {
+            "oneOf": [
+                {
+                    "type": "integer",
+                    "$comment": "int"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "key": {
+                                "type": "object",
+                                "properties": {
+                                    "address": {
+                                        "type": "string",
+                                        "$comment": "address"
+                                    },
+                                    "nat": {
+                                        "type": "string",
+                                        "$comment": "nat"
+                                    }
+                                },
+                                "required": [
+                                    "address",
+                                    "nat"
+                                ],
+                                "additionalProperties": false,
+                                "$comment": "pair"
+                            },
+                            "value": {
+                                "type": "string",
+                                "$comment": "nat"
+                            }
+                        },
+                        "required": [
+                            "key",
+                            "value"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            ],
+            "$comment": "big_map"
+        },
+        "operators": {
+            "oneOf": [
+                {
+                    "type": "integer",
+                    "$comment": "int"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "key": {
+                                "type": "object",
+                                "properties": {
+                                    "owner": {
+                                        "type": "string",
+                                        "$comment": "address"
+                                    },
+                                    "operator": {
+                                        "type": "string",
+                                        "$comment": "address"
+                                    }
+                                },
+                                "required": [
+                                    "owner",
+                                    "operator"
+                                ],
+                                "additionalProperties": false,
+                                "$comment": "pair"
+                            },
+                            "value": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "$comment": "unit"
+                            }
+                        },
+                        "required": [
+                            "key",
+                            "value"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            ],
+            "$comment": "big_map"
+        },
+        "token_address": {
+            "type": "string",
+            "$comment": "address"
+        },
+        "admin": {
+            "type": "string",
+            "$comment": "address"
+        },
+        "pending_owner": {
+            "type": "string",
+            "$comment": "address"
+        },
+        "migration_status": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "notInMigration": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "$comment": "unit"
+                        }
+                    },
+                    "required": [
+                        "notInMigration"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "migratingTo": {
+                            "type": "string",
+                            "$comment": "address"
+                        }
+                    },
+                    "required": [
+                        "migratingTo"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "migratedTo": {
+                            "type": "string",
+                            "$comment": "address"
+                        }
+                    },
+                    "required": [
+                        "migratedTo"
+                    ],
+                    "additionalProperties": false
+                }
+            ],
+            "$comment": "or"
+        },
+        "voting_period": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "quorum_threshold": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "extra": {
+            "type": "object",
+            "properties": {
+                "registry": {
+                    "oneOf": [
+                        {
+                            "type": "integer",
+                            "$comment": "int"
+                        },
+                        {
+                            "type": "object",
+                            "propertyNames": {
+                                "type": "string",
+                                "$comment": "bytes"
+                            },
+                            "additionalProperties": {
+                                "type": "object",
+                                "properties": {
+                                    "value": {
+                                        "oneOf": [
+                                            {
+                                                "type": "string",
+                                                "$comment": "bytes"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "$comment": "option"
+                                    },
+                                    "affected_proposal_key": {
+                                        "type": "string",
+                                        "$comment": "bytes"
+                                    },
+                                    "last_updated": {
+                                        "type": "string",
+                                        "$comment": "timestamp"
+                                    }
+                                },
+                                "required": [
+                                    "value",
+                                    "affected_proposal_key",
+                                    "last_updated"
+                                ],
+                                "additionalProperties": false,
+                                "$comment": "pair"
+                            }
+                        }
+                    ],
+                    "$comment": "big_map"
+                },
+                "proposal_receivers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "$comment": "address"
+                    },
+                    "$comment": "set"
+                },
+                "frozen_scale_value": {
+                    "type": "string",
+                    "$comment": "nat"
+                },
+                "frozen_extra_value": {
+                    "type": "string",
+                    "$comment": "nat"
+                },
+                "slash_scale_value": {
+                    "type": "string",
+                    "$comment": "nat"
+                },
+                "slash_division_value": {
+                    "type": "string",
+                    "$comment": "nat"
+                },
+                "max_proposal_size": {
+                    "type": "string",
+                    "$comment": "nat"
+                }
+            },
+            "required": [
+                "registry",
+                "proposal_receivers",
+                "frozen_scale_value",
+                "frozen_extra_value",
+                "slash_scale_value",
+                "slash_division_value",
+                "max_proposal_size"
+            ],
+            "additionalProperties": false,
+            "$comment": "pair"
+        },
+        "proposals": {
+            "oneOf": [
+                {
+                    "type": "integer",
+                    "$comment": "int"
+                },
+                {
+                    "type": "object",
+                    "propertyNames": {
+                        "type": "string",
+                        "$comment": "bytes"
+                    },
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "upvotes": {
+                                "type": "string",
+                                "$comment": "nat"
+                            },
+                            "downvotes": {
+                                "type": "string",
+                                "$comment": "nat"
+                            },
+                            "start_date": {
+                                "type": "string",
+                                "$comment": "timestamp"
+                            },
+                            "metadata": {
+                                "oneOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "proposal_type_0": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "agora_post_id": {
+                                                        "type": "string",
+                                                        "$comment": "nat"
+                                                    },
+                                                    "diff": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "key": {
+                                                                    "type": "string",
+                                                                    "$comment": "bytes"
+                                                                },
+                                                                "new_value": {
+                                                                    "oneOf": [
+                                                                        {
+                                                                            "type": "string",
+                                                                            "$comment": "bytes"
+                                                                        },
+                                                                        {
+                                                                            "type": "null"
+                                                                        }
+                                                                    ],
+                                                                    "$comment": "option"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "key",
+                                                                "new_value"
+                                                            ],
+                                                            "additionalProperties": false,
+                                                            "$comment": "pair"
+                                                        },
+                                                        "$comment": "list"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "agora_post_id",
+                                                    "diff"
+                                                ],
+                                                "additionalProperties": false,
+                                                "$comment": "pair"
+                                            }
+                                        },
+                                        "required": [
+                                            "proposal_type_0"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "proposal_type_1": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "frozen_scale_value": {
+                                                        "oneOf": [
+                                                            {
+                                                                "type": "string",
+                                                                "$comment": "nat"
+                                                            },
+                                                            {
+                                                                "type": "null"
+                                                            }
+                                                        ],
+                                                        "$comment": "option"
+                                                    },
+                                                    "frozen_extra_value": {
+                                                        "oneOf": [
+                                                            {
+                                                                "type": "string",
+                                                                "$comment": "nat"
+                                                            },
+                                                            {
+                                                                "type": "null"
+                                                            }
+                                                        ],
+                                                        "$comment": "option"
+                                                    },
+                                                    "slash_scale_value": {
+                                                        "oneOf": [
+                                                            {
+                                                                "type": "string",
+                                                                "$comment": "nat"
+                                                            },
+                                                            {
+                                                                "type": "null"
+                                                            }
+                                                        ],
+                                                        "$comment": "option"
+                                                    },
+                                                    "slash_division_value": {
+                                                        "oneOf": [
+                                                            {
+                                                                "type": "string",
+                                                                "$comment": "nat"
+                                                            },
+                                                            {
+                                                                "type": "null"
+                                                            }
+                                                        ],
+                                                        "$comment": "option"
+                                                    },
+                                                    "max_proposal_size": {
+                                                        "oneOf": [
+                                                            {
+                                                                "type": "string",
+                                                                "$comment": "nat"
+                                                            },
+                                                            {
+                                                                "type": "null"
+                                                            }
+                                                        ],
+                                                        "$comment": "option"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "frozen_scale_value",
+                                                    "frozen_extra_value",
+                                                    "slash_scale_value",
+                                                    "slash_division_value",
+                                                    "max_proposal_size"
+                                                ],
+                                                "additionalProperties": false,
+                                                "$comment": "pair"
+                                            }
+                                        },
+                                        "required": [
+                                            "proposal_type_1"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "receivers_0": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string",
+                                                    "$comment": "address"
+                                                },
+                                                "$comment": "list"
+                                            }
+                                        },
+                                        "required": [
+                                            "receivers_0"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "receivers_1": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string",
+                                                    "$comment": "address"
+                                                },
+                                                "$comment": "list"
+                                            }
+                                        },
+                                        "required": [
+                                            "receivers_1"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                ],
+                                "$comment": "or"
+                            },
+                            "proposer": {
+                                "type": "string",
+                                "$comment": "address"
+                            },
+                            "proposer_frozen_token": {
+                                "type": "string",
+                                "$comment": "nat"
+                            },
+                            "voters": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "address": {
+                                            "type": "string",
+                                            "$comment": "address"
+                                        },
+                                        "nat": {
+                                            "type": "string",
+                                            "$comment": "nat"
+                                        }
+                                    },
+                                    "required": [
+                                        "address",
+                                        "nat"
+                                    ],
+                                    "additionalProperties": false,
+                                    "$comment": "pair"
+                                },
+                                "$comment": "list"
+                            }
+                        },
+                        "required": [
+                            "upvotes",
+                            "downvotes",
+                            "start_date",
+                            "metadata",
+                            "proposer",
+                            "proposer_frozen_token",
+                            "voters"
+                        ],
+                        "additionalProperties": false,
+                        "$comment": "pair"
+                    }
+                }
+            ],
+            "$comment": "big_map"
+        },
+        "proposal_key_list_sort_by_date": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "string",
+                        "$comment": "timestamp"
+                    },
+                    "bytes": {
+                        "type": "string",
+                        "$comment": "bytes"
+                    }
+                },
+                "required": [
+                    "timestamp",
+                    "bytes"
+                ],
+                "additionalProperties": false,
+                "$comment": "pair"
+            },
+            "$comment": "set"
+        },
+        "permits_counter": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "metadata": {
+            "oneOf": [
+                {
+                    "type": "integer",
+                    "$comment": "int"
+                },
+                {
+                    "type": "object",
+                    "propertyNames": {
+                        "type": "string",
+                        "$comment": "string"
+                    },
+                    "additionalProperties": {
+                        "type": "string",
+                        "$comment": "bytes"
+                    }
+                }
+            ],
+            "$comment": "big_map"
+        },
+        "total_supply": {
+            "type": "object",
+            "propertyNames": {
+                "type": "string",
+                "$comment": "nat"
+            },
+            "additionalProperties": {
+                "type": "string",
+                "$comment": "nat"
+            },
+            "$comment": "map"
+        }
+    },
+    "required": [
+        "ledger",
+        "operators",
+        "token_address",
+        "admin",
+        "pending_owner",
+        "migration_status",
+        "voting_period",
+        "quorum_threshold",
+        "extra",
+        "proposals",
+        "proposal_key_list_sort_by_date",
+        "permits_counter",
+        "metadata",
+        "total_supply"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}

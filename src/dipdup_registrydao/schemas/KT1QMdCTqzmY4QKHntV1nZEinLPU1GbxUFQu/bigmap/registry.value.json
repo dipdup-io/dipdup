@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "value": {
+            "oneOf": [
+                {
+                    "type": "string",
+                    "$comment": "bytes"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "$comment": "option"
+        },
+        "affected_proposal_key": {
+            "type": "string",
+            "$comment": "bytes"
+        },
+        "last_updated": {
+            "type": "string",
+            "$comment": "timestamp"
+        }
+    },
+    "required": [
+        "value",
+        "affected_proposal_key",
+        "last_updated"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}

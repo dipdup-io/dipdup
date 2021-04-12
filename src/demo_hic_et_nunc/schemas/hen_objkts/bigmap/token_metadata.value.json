@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "token_id": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "token_info": {
+            "type": "object",
+            "propertyNames": {
+                "type": "string",
+                "$comment": "string"
+            },
+            "additionalProperties": {
+                "type": "string",
+                "$comment": "bytes"
+            },
+            "$comment": "map"
+        }
+    },
+    "required": [
+        "token_id",
+        "token_info"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}

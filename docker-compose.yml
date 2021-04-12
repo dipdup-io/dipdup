@@ -5,7 +5,7 @@ x-dipdup: &x-dipdup
   depends_on:
     - db
   volumes:
-    - ./src/dipdup_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
+    - ./src/demo_hic_et_nunc/dipdup.yml:/home/dipdup/dipdup.yml
   env_file: secrets.env
 
 services:

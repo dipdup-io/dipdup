@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "viewParam": {
+            "type": "object",
+            "additionalProperties": false,
+            "$comment": "unit"
+        },
+        "viewCallbackTo": {
+            "type": "string",
+            "$comment": "contract"
+        }
+    },
+    "required": [
+        "viewParam",
+        "viewCallbackTo"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}

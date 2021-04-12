@@ -1,13 +1,17 @@
 spec_version: 0.0.1
-package: dipdup_hic_et_nunc
+package: demo_hic_et_nunc
 
 database:
   kind: sqlite
   path: db.sqlite3
 
 contracts:
-  HEN_objkts: ${HEN_OBJKTS:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
-  HEN_minter: ${HEN_MINTER:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
+  HEN_objkts: 
+    address: ${HEN_OBJKTS:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
+    typename: hen_objkts
+  HEN_minter:
+    address: ${HEN_MINTER:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
+    typename: hen_minter
 
 datasources:
   tzkt_mainnet:
@@ -15,21 +19,26 @@ datasources:
     url: ${TZKT_URL:-https://staging.api.tzkt.io}
 
 indexes:
-  operations_mainnet:
+  hen_mainnet:
     kind: operation
     datasource: tzkt_mainnet
-    contract: HEN_objkts
-    first_block: 0
+    contract: HEN_minter
     handlers:
-
       - callback: on_mint
         pattern:
-          - destination: HEN_objkts
-            entrypoint: mint_OBJKT
           - destination: HEN_minter
+            entrypoint: mint_OBJKT
+          - destination: HEN_objkts
             entrypoint: mint
-
-      - callback: on_transfer
+      - callback: on_swap
         pattern:
           - destination: HEN_minter
-            entrypoint: transfer
+            entrypoint: swap
+      - callback: on_cancel_swap
+        pattern:
+          - destination: HEN_minter
+            entrypoint: cancel_swap
+      - callback: on_collect
+        pattern:
+          - destination: HEN_minter
+            entrypoint: collect

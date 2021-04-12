@@ -1,0 +1,237 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "upvotes": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "downvotes": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "start_date": {
+            "type": "string",
+            "$comment": "timestamp"
+        },
+        "metadata": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "proposal_type_0": {
+                            "type": "object",
+                            "properties": {
+                                "agora_post_id": {
+                                    "type": "string",
+                                    "$comment": "nat"
+                                },
+                                "diff": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "key": {
+                                                "type": "string",
+                                                "$comment": "bytes"
+                                            },
+                                            "new_value": {
+                                                "oneOf": [
+                                                    {
+                                                        "type": "string",
+                                                        "$comment": "bytes"
+                                                    },
+                                                    {
+                                                        "type": "null"
+                                                    }
+                                                ],
+                                                "$comment": "option"
+                                            }
+                                        },
+                                        "required": [
+                                            "key",
+                                            "new_value"
+                                        ],
+                                        "additionalProperties": false,
+                                        "$comment": "pair"
+                                    },
+                                    "$comment": "list"
+                                }
+                            },
+                            "required": [
+                                "agora_post_id",
+                                "diff"
+                            ],
+                            "additionalProperties": false,
+                            "$comment": "pair"
+                        }
+                    },
+                    "required": [
+                        "proposal_type_0"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "proposal_type_1": {
+                            "type": "object",
+                            "properties": {
+                                "frozen_scale_value": {
+                                    "oneOf": [
+                                        {
+                                            "type": "string",
+                                            "$comment": "nat"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ],
+                                    "$comment": "option"
+                                },
+                                "frozen_extra_value": {
+                                    "oneOf": [
+                                        {
+                                            "type": "string",
+                                            "$comment": "nat"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ],
+                                    "$comment": "option"
+                                },
+                                "slash_scale_value": {
+                                    "oneOf": [
+                                        {
+                                            "type": "string",
+                                            "$comment": "nat"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ],
+                                    "$comment": "option"
+                                },
+                                "slash_division_value": {
+                                    "oneOf": [
+                                        {
+                                            "type": "string",
+                                            "$comment": "nat"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ],
+                                    "$comment": "option"
+                                },
+                                "max_proposal_size": {
+                                    "oneOf": [
+                                        {
+                                            "type": "string",
+                                            "$comment": "nat"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ],
+                                    "$comment": "option"
+                                }
+                            },
+                            "required": [
+                                "frozen_scale_value",
+                                "frozen_extra_value",
+                                "slash_scale_value",
+                                "slash_division_value",
+                                "max_proposal_size"
+                            ],
+                            "additionalProperties": false,
+                            "$comment": "pair"
+                        }
+                    },
+                    "required": [
+                        "proposal_type_1"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "receivers_0": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "$comment": "address"
+                            },
+                            "$comment": "list"
+                        }
+                    },
+                    "required": [
+                        "receivers_0"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "receivers_1": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "$comment": "address"
+                            },
+                            "$comment": "list"
+                        }
+                    },
+                    "required": [
+                        "receivers_1"
+                    ],
+                    "additionalProperties": false
+                }
+            ],
+            "$comment": "or"
+        },
+        "proposer": {
+            "type": "string",
+            "$comment": "address"
+        },
+        "proposer_frozen_token": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "voters": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "address": {
+                        "type": "string",
+                        "$comment": "address"
+                    },
+                    "nat": {
+                        "type": "string",
+                        "$comment": "nat"
+                    }
+                },
+                "required": [
+                    "address",
+                    "nat"
+                ],
+                "additionalProperties": false,
+                "$comment": "pair"
+            },
+            "$comment": "list"
+        }
+    },
+    "required": [
+        "upvotes",
+        "downvotes",
+        "start_date",
+        "metadata",
+        "proposer",
+        "proposer_frozen_token",
+        "voters"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}
