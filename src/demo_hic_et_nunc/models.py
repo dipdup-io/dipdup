@@ -5,10 +5,12 @@ from tortoise import Model, fields
 # on mint token, holder
 # on_swap new, cancel_swap, collect
 
+
 class SwapStatus(IntEnum):
     ACTIVE = 0
     FINISHED = 1
     CANCELED = 2
+
 
 class Holder(Model):
     address = fields.CharField(58, pk=True)
