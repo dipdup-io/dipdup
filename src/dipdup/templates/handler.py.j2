@@ -1,15 +1,15 @@
 from dipdup.models import HandlerContext, OperationContext
 
 from {{ package }}.models import *
-
 {% for pattern in patterns %}
-from {{ package }}.types.{{ pattern.destination }}.parameter.{{ pattern.entrypoint }} import {{ pattern.entrypoint.title().replace('_', '') }}
+from {{ package }}.types.{{ pattern.destination.module_name }}.parameter.{{ camel_to_snake(pattern.entrypoint) }} import {{ snake_to_camel(pattern.entrypoint) }}
 {%- endfor %}
+
 
 async def {{ handler }}(
     ctx: HandlerContext,
 {%- for pattern in patterns %}
-    {{ pattern.entrypoint }}: OperationContext[{{ pattern.entrypoint.title().replace('_', '') }}],
+    {{ camel_to_snake(pattern.entrypoint) }}: OperationContext[{{ snake_to_camel(pattern.entrypoint) }}],
 {%- endfor %}
 ) -> None:
     ...
