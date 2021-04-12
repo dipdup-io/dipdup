@@ -27,7 +27,7 @@ aiomysql = "^0.0.21"
 asyncpg = "^0.22.0"
 datamodel-code-generator = "^0.10.0"
 "ruamel.yaml" = "^0.17.2"
-signalrcore = {git = "https://github.com/dipdup-net/signalrcore", rev = "async"}
+aiosignalrcore = {git = "https://github.com/dipdup-net/aio-signalrcore", rev = "main"}
 tortoise-orm = "^0.17.1"
 websockets = "^8.1"
 pydantic = "^1.8.1"
