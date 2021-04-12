@@ -57,9 +57,17 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         client = self.datasource._get_client()
         client.start = AsyncMock()
 
-        await self.datasource.start()
+        fetch_operations_mock = AsyncMock()
+        self.datasource.fetch_operations = fetch_operations_mock
 
-        self.assertEqual({self.index_config.contract.address: ['transaction']}, self.datasource._subscriptions)
+        get_mock = MagicMock()
+        get_mock.return_value.__aenter__.return_value.json.return_value = [{'level': 1337}]
+
+        with patch('aiohttp.ClientSession.get', get_mock):
+            await self.datasource.start()
+
+        fetch_operations_mock.assert_awaited_with(0)
+        self.assertEqual({self.index_config.contract: ['transaction']}, self.datasource._subscriptions)
         client.start.assert_awaited()
 
     async def test_on_connect_subscribe_to_operations(self):
