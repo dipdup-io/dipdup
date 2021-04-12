@@ -150,26 +150,8 @@ class Storage(BaseModel):
     metadata: Dict[str, Metadata]
     total_supply: Dict[str, TotalSupply]
 
-class DiffItem(BaseModel):
-    key: str
-    new_value: Optional[str]
-
-
-class ProposalType0(BaseModel):
-    agora_post_id: str
-    diff: List[DiffItem]
-
-
 class ProposalMetadatum(BaseModel):
     proposal_type_0: ProposalType0
-
-
-class ProposalType1(BaseModel):
-    frozen_scale_value: Optional[str]
-    frozen_extra_value: Optional[str]
-    slash_scale_value: Optional[str]
-    slash_division_value: Optional[str]
-    max_proposal_size: Optional[str]
 
 
 class ProposalMetadatum1(BaseModel):
@@ -383,7 +365,8 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertIsInstance(callback_mock.await_args[0][1].storage, Storage)
             self.assertIsInstance(callback_mock.await_args[0][1].storage.ledger, list)
             self.assertIsInstance(
-                callback_mock.await_args[0][1].storage.proposals['e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9'], Proposals
+                callback_mock.await_args[0][1].storage.proposals['e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9'],
+                Proposals,
             )
 
         finally:
