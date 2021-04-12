@@ -76,8 +76,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         client.send = send_mock
         client.transport.state = ConnectionState.connected
         self.datasource._subscriptions = {
-            self.index_config.contract.address: ['transaction'],
-            'some_contract': ['transaction'],
+            self.index_config.contract: ['transaction'],
         }
 
         await self.datasource.on_connect()
@@ -85,10 +84,9 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         send_mock.assert_has_awaits(
             [
                 call('SubscribeToOperations', [{'address': self.index_config.contract.address, 'types': 'transaction'}]),
-                call('SubscribeToOperations', [{'address': 'some_contract', 'types': 'transaction'}]),
             ]
         )
-        self.assertEqual(2, len(client.handlers))
+        self.assertEqual(1, len(client.handlers))
 
     async def test_on_fetch_operations(self):
         self.datasource._subscriptions = {self.index_config.contract.address: ['transaction']}

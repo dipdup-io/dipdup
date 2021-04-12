@@ -132,7 +132,7 @@ async def generate_types(config: DipDupConfig):
 
             input_path = join(root, file)
             output_path = join(types_root, f'{camel_to_snake(name)}.py')
-            _logger.info('Generating parameter type for `%s`', name)
+            _logger.info('Generating type for %s `%s`', root.split('/')[-1], name)
             subprocess.run(
                 [
                     'datamodel-codegen',

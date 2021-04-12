@@ -1,0 +1,34 @@
+spec_version: 0.0.1
+package: demo_registrydao
+
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+contracts:
+  registry:
+    address: KT1QMdCTqzmY4QKHntV1nZEinLPU1GbxUFQu
+    typename: registry
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: ${TZKT_URL:-https://staging.api.edo2net.tzkt.io}
+
+templates:
+
+  registry_dao:
+    kind: operation
+    datasource: tzkt
+    contract: <contract>
+    handlers:
+      - callback: on_propose
+        pattern:
+          - destination: <contract>
+            entrypoint: propose
+
+indexes:
+  registry:
+    template: registry_dao
+    values:
+      contract: registry

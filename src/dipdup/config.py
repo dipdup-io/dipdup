@@ -149,6 +149,7 @@ class OperationHandlerPatternConfig:
     def storage_type_cls(self, typ: Type) -> None:
         self._storage_type_cls = typ
 
+
 @dataclass
 class OperationHandlerConfig:
     """Operation handler config
@@ -436,13 +437,11 @@ class DipDupConfig:
                         pattern.parameter_type_cls = parameter_type_cls
 
                         storage_type_module = importlib.import_module(
-                            f'{self.package}'
-                            f'.types'
-                            f'.{pattern.contract_config.module_name}'
-                            f'.storage'
+                            f'{self.package}' f'.types' f'.{pattern.contract_config.module_name}' f'.storage'
                         )
                         storage_type_cls = getattr(storage_type_module, 'Storage')
                         pattern.storage_type_cls = storage_type_cls
+
 
 @dataclass
 class LoggingConfig:
