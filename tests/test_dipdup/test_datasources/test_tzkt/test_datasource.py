@@ -1,9 +1,10 @@
 import json
 from os.path import dirname, join
+from typing import Any, Dict, List, Optional, Union
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise import Tortoise
@@ -11,6 +12,117 @@ from tortoise import Tortoise
 from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import HandlerContext, IndexType, OperationContext, OperationData, State
+
+
+class MigrationStatu(BaseModel):
+    notInMigration: Dict[str, Any]
+
+
+class MigrationStatu1(BaseModel):
+    migratingTo: str
+
+
+class MigrationStatu2(BaseModel):
+    migratedTo: str
+
+
+class RegistryItem(BaseModel):
+    pass
+
+    class Config:
+        extra = Extra.allow
+
+
+class ExtraModel(BaseModel):
+    registry: Union[int, RegistryItem]
+    proposal_receivers: List[str]
+    frozen_scale_value: str
+    frozen_extra_value: str
+    slash_scale_value: str
+    slash_division_value: str
+    max_proposal_size: str
+
+
+class Proposal(BaseModel):
+    pass
+
+    class Config:
+        extra = Extra.allow
+
+
+class ProposalKeyListSortByDateItem(BaseModel):
+    timestamp: str
+    bytes: str
+
+
+class Metadatum(BaseModel):
+    pass
+
+    class Config:
+        extra = Extra.allow
+
+
+class TotalSupply(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    __root__: str
+
+
+class Storage(BaseModel):
+    ledger: Union[int, List[Any]]
+    operators: Union[int, List[Any]]
+    token_address: str
+    admin: str
+    pending_owner: str
+    migration_status: Union[MigrationStatu, MigrationStatu1, MigrationStatu2]
+    voting_period: str
+    quorum_threshold: str
+    extra: ExtraModel
+    proposals: Union[int, Proposal]
+    proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
+    permits_counter: str
+    metadata: Union[int, Metadatum]
+    total_supply: Dict[str, TotalSupply]
+
+
+class DiffItem(BaseModel):
+    key: str
+    new_value: Optional[str]
+
+
+class ProposalType0(BaseModel):
+    agora_post_id: str
+    diff: List[DiffItem]
+
+
+class ProposalMetadatum(BaseModel):
+    proposal_type_0: ProposalType0
+
+
+class ProposalType1(BaseModel):
+    frozen_scale_value: Optional[str]
+    frozen_extra_value: Optional[str]
+    slash_scale_value: Optional[str]
+    slash_division_value: Optional[str]
+    max_proposal_size: Optional[str]
+
+
+class ProposalMetadatum1(BaseModel):
+    proposal_type_1: ProposalType1
+
+
+class ProposalMetadatum2(BaseModel):
+    receivers_0: List[str]
+
+
+class ProposalMetadatum3(BaseModel):
+    receivers_1: List[str]
+
+
+class Propose(BaseModel):
+    frozen_token: str
+    proposal_metadata: Union[ProposalMetadatum, ProposalMetadatum1, ProposalMetadatum2, ProposalMetadatum3]
 
 
 class Collect(BaseModel):
@@ -175,6 +287,40 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertIsInstance(callback_mock.await_args[0][1], OperationContext)
             self.assertIsInstance(callback_mock.await_args[0][1].parameter, Collect)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)
+
+        finally:
+            await Tortoise.close_connections()
+
+    async def test_on_operation_match_with_storage(self):
+        with open(join(dirname(__file__), 'operations-storage.json')) as file:
+            operations_message = json.load(file)
+        self.index_config.handlers[0].pattern[0].parameter_type_cls = Propose
+
+        operations = [TzktDatasource.convert_operation(op) for op in operations_message['data']]
+        matched_operation = operations[0]
+
+        try:
+            await Tortoise.init(
+                db_url='sqlite://:memory:',
+                modules={
+                    'int_models': ['dipdup.models'],
+                },
+            )
+            await Tortoise.generate_schemas()
+
+            callback_mock = AsyncMock()
+
+            self.index_config.handlers[0].callback_fn = callback_mock
+            self.index_config.handlers[0].pattern[0].storage_type_cls = Storage
+
+            self.datasource._synchronized.set()
+            await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)
+
+            self.assertIsInstance(callback_mock.await_args[0][1].storage, Storage)
+            self.assertIsInstance(callback_mock.await_args[0][1].storage.ledger, list)
+            self.assertIsInstance(
+                callback_mock.await_args[0][1].storage.proposals.e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9, dict
+            )
 
         finally:
             await Tortoise.close_connections()

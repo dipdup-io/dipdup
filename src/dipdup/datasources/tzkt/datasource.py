@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -234,6 +235,7 @@ class TzktDatasource:
     ) -> None:
         self._logger.info('Got operation message on %s', address)
         self._logger.debug('%s', message)
+        print(json.dumps(message))
         index_config = self._operation_index_configs[address]
         for item in message:
             message_type = TzktMessageType(item['type'])
