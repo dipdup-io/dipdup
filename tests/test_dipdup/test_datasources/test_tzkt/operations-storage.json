@@ -1,0 +1,140 @@
+{
+    "type": 1,
+    "data": [
+        {
+            "type": null,
+            "id": 1380398,
+            "level": 110408,
+            "timestamp": "2021-03-23T15:48:41Z",
+            "hash": "oon18UdUrsyFK5F1seSf7RnhTWciKJoJSPcbrqXZYxiitGcxeJD",
+            "counter": 69209,
+            "initiator": null,
+            "sender": {
+                "address": "tz1RKPcdraL3D3SQitGbvUZmBoqefepxRW1x"
+            },
+            "nonce": null,
+            "gasLimit": 91663,
+            "gasUsed": 91563,
+            "storageLimit": 192,
+            "storageUsed": 192,
+            "bakerFee": 9499,
+            "storageFee": 48000,
+            "allocationFee": 0,
+            "target": {
+                "address": "KT1QMdCTqzmY4QKHntV1nZEinLPU1GbxUFQu"
+            },
+            "amount": 0,
+            "parameter": {
+                "entrypoint": "propose",
+                "value": {
+                    "frozen_token": "10",
+                    "proposal_metadata": {
+                        "proposal_type_0": {
+                            "diff": [
+                                {
+                                    "key": "",
+                                    "new_value": "6672"
+                                }
+                            ],
+                            "agora_post_id": "0"
+                        }
+                    }
+                }
+            },
+            "storage": {
+                "admin": "tz1RKPcdraL3D3SQitGbvUZmBoqefepxRW1x",
+                "extra": {
+                    "registry": 36370,
+                    "max_proposal_size": "2500",
+                    "slash_scale_value": "50",
+                    "frozen_extra_value": "10",
+                    "frozen_scale_value": "0",
+                    "proposal_receivers": [],
+                    "slash_division_value": "100"
+                },
+                "ledger": 36368,
+                "metadata": 36372,
+                "operators": 36369,
+                "proposals": 36371,
+                "total_supply": {
+                    "0": "9990",
+                    "1": "10"
+                },
+                "pending_owner": "tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6",
+                "token_address": "tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6",
+                "voting_period": "300",
+                "permits_counter": "0",
+                "migration_status": {
+                    "notInMigration": {}
+                },
+                "quorum_threshold": "500",
+                "proposal_key_list_sort_by_date": [
+                    {
+                        "bytes": "e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9",
+                        "timestamp": "2021-03-23T15:48:41Z"
+                    }
+                ]
+            },
+            "status": "applied",
+            "errors": null,
+            "hasInternals": false,
+            "parameters": "{\"entrypoint\":\"propose\",\"value\":{\"prim\":\"Pair\",\"args\":[{\"int\":\"10\"},{\"prim\":\"Left\",\"args\":[{\"prim\":\"Pair\",\"args\":[{\"int\":\"0\"},[{\"prim\":\"Pair\",\"args\":[{\"bytes\":\"\"},{\"prim\":\"Some\",\"args\":[{\"bytes\":\"6672\"}]}]}]]}]}]}}",
+            "bigmaps": [
+                {
+                    "bigmap": 36371,
+                    "path": "proposals",
+                    "action": "add_key",
+                    "key": {
+                        "hash": "exprtrENeWqsFnt4E4mFvnonvhrhU3jKTuaFXiufCK45XwdgnP7D6p",
+                        "key": "e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9",
+                        "value": {
+                            "voters": [],
+                            "upvotes": "0",
+                            "metadata": {
+                                "proposal_type_0": {
+                                    "diff": [
+                                        {
+                                            "key": "",
+                                            "new_value": "6672"
+                                        }
+                                    ],
+                                    "agora_post_id": "0"
+                                }
+                            },
+                            "proposer": "tz1RKPcdraL3D3SQitGbvUZmBoqefepxRW1x",
+                            "downvotes": "0",
+                            "start_date": "2021-03-23T15:48:41Z",
+                            "proposer_frozen_token": "10"
+                        }
+                    }
+                },
+                {
+                    "bigmap": 36368,
+                    "path": "ledger",
+                    "action": "update_key",
+                    "key": {
+                        "hash": "expruVX2dr7XzPeZwyNsKwVcf88r2FfUrTNHewFZWkDtfPyoHkzrdf",
+                        "key": {
+                            "nat": "0",
+                            "address": "tz1RKPcdraL3D3SQitGbvUZmBoqefepxRW1x"
+                        },
+                        "value": "9990"
+                    }
+                },
+                {
+                    "bigmap": 36368,
+                    "path": "ledger",
+                    "action": "update_key",
+                    "key": {
+                        "hash": "exprtjvuiPChDAAipwbGtmwZDA8JcEQ6y4pu2qTy93fpPJFtDkZFap",
+                        "key": {
+                            "nat": "1",
+                            "address": "tz1RKPcdraL3D3SQitGbvUZmBoqefepxRW1x"
+                        },
+                        "value": "10"
+                    }
+                }
+            ]
+        }
+    ]
+}

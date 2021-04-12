@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -6,24 +7,46 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import aiohttp
 from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from signalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
+from signalrcore.messages.completion_message import CompletionMessage  # type: ignore
 from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise.transactions import in_transaction
 
-from dipdup.config import (
-    ROLLBACK_HANDLER,
-    BigmapdiffIndexConfig,
-    BlockIndexConfig,
-    ContractConfig,
-    IndexTemplateConfig,
-    OperationHandlerConfig,
-    OperationIndexConfig,
-)
+from dipdup.config import ROLLBACK_HANDLER, BigmapdiffIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import HandlerContext, OperationContext, OperationData, State
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
 TZKT_HTTP_REQUEST_SLEEP = 1
+OPERATION_FIELDS = (
+    "type",
+    "id",
+    "level",
+    "timestamp",
+    # "block",
+    "hash",
+    "counter",
+    "initiator",
+    "sender",
+    "nonce",
+    "gasLimit",
+    "gasUsed",
+    "storageLimit",
+    "storageUsed",
+    "bakerFee",
+    "storageFee",
+    "allocationFee",
+    "target",
+    "amount",
+    "parameter",
+    "storage",
+    "status",
+    "errors",
+    "hasInternals",
+    # "quote",
+    "parameters",
+    "bigmaps,",
+)
 
 
 class TzktDatasource:
@@ -67,6 +90,7 @@ class TzktDatasource:
                 )
             ).build()
             self._client.on_open(self.on_connect)
+            self._client.on_error(self.on_error)
 
         return self._client
 
@@ -90,8 +114,11 @@ class TzktDatasource:
 
     async def on_connect(self):
         self._logger.info('Connected to server')
-        for address, subscriptions in self._subscriptions.items():
-            await self.subscribe_to_operations(address, subscriptions)
+        for contract, subscriptions in self._subscriptions.items():
+            await self.subscribe_to_operations(contract.address, subscriptions)
+
+    def on_error(self, message: CompletionMessage):
+        raise Exception(message.error)
 
     async def subscribe_to_operations(self, address: str, types: List[str]) -> None:
         self._logger.info('Subscribing to %s, %s', address, types)
@@ -128,6 +155,7 @@ class TzktDatasource:
                     "limit": TZKT_HTTP_REQUEST_LIMIT,
                     "level.gt": first_level,
                     "level.le": last_level,
+                    "select": ','.join(OPERATION_FIELDS),
                 },
             ) as resp:
                 operations = await resp.json()
@@ -268,9 +296,16 @@ class TzktDatasource:
             parameter_type = pattern_config.parameter_type_cls
             parameter = parameter_type.parse_obj(operation.parameter_json)
 
+            if operation.storage:
+                storage_type = pattern_config.storage_type_cls
+                storage = operation.get_merged_storage(storage_type)
+            else:
+                storage = None
+
             operation_context = OperationContext(
                 data=operation,
                 parameter=parameter,
+                storage=storage,
             )
             args.append(operation_context)
 
@@ -279,11 +314,12 @@ class TzktDatasource:
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
         return OperationData(
-            type=operation_json['type'],
+            # FIXME: type is null
+            type=operation_json['type'] or 'transaction',
             id=operation_json['id'],
             level=operation_json['level'],
             timestamp=operation_json['timestamp'],
-            block=operation_json['block'],
+            block=operation_json.get('block'),
             hash=operation_json['hash'],
             counter=operation_json['counter'],
             sender_address=operation_json['sender']['address'],
@@ -301,10 +337,12 @@ class TzktDatasource:
             sender_alias=operation_json['sender'].get('alias'),
             nonce=operation_json.get('nonce'),
             target_alias=operation_json['target'].get('alias'),
-            entrypoint=operation_json.get('parameter', {}).get('entrypoint'),
-            parameter_json=operation_json.get('parameter', {}).get('value'),
-            initiator_address=operation_json.get('initiator', {}).get('address'),
+            entrypoint=operation_json['parameter']['entrypoint'] if operation_json.get('parameter') else None,
+            parameter_json=operation_json['parameter']['value'] if operation_json.get('parameter') else None,
+            initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
             parameter=operation_json.get('parameters'),
+            storage=operation_json.get('storage'),
+            bigmaps=operation_json.get('bigmaps'),
         )
 
     async def get_latest_block(self) -> Dict[str, Any]:

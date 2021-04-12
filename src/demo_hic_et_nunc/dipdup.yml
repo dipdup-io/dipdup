@@ -2,12 +2,8 @@ spec_version: 0.0.1
 package: demo_hic_et_nunc
 
 database:
-  kind: postgres
-  host: db
-  port: 5432
-  user: dipdup
-  database: dipdup
-  password: ${POSTGRES_PASSWORD:-changeme}
+  kind: sqlite
+  path: db.sqlite3
 
 contracts:
   HEN_objkts: 

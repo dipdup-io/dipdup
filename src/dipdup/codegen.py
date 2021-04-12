@@ -18,6 +18,12 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 _logger = logging.getLogger(__name__)
 
 
+def preprocess_storage_schema(storage_schema: Dict[str, Any]):
+    for property in storage_schema['properties']:
+        if storage_schema['properties'][property].get('$comment') == 'big_map':
+            storage_schema['properties'][property] = storage_schema['properties'][property]['oneOf'][1]
+
+
 async def create_package(config: DipDupConfig):
     try:
         package_path = config.package_path
@@ -60,6 +66,14 @@ async def fetch_schemas(config: DipDupConfig):
                     contract_schemas_path = join(schemas_path, contract.module_name)
                     with suppress(FileExistsError):
                         mkdir(contract_schemas_path)
+
+                    storage_schema_path = join(contract_schemas_path, 'storage.json')
+
+                    storage_schema = address_schemas_json['storageSchema']
+                    preprocess_storage_schema(storage_schema)
+                    if not exists(storage_schema_path):
+                        with open(storage_schema_path, 'w') as file:
+                            file.write(json.dumps(storage_schema, indent=4))
 
                     parameter_schemas_path = join(contract_schemas_path, 'parameter')
                     with suppress(FileExistsError):
@@ -107,7 +121,7 @@ async def generate_types(config: DipDupConfig):
 
             input_path = join(root, file)
             output_path = join(types_root, f'{camel_to_snake(name)}.py')
-            _logger.info('Generating parameter type for `%s`', name)
+            _logger.info('Generating type `%s`', name)
             subprocess.run(
                 [
                     'datamodel-codegen',

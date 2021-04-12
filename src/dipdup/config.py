@@ -122,6 +122,7 @@ class OperationHandlerPatternConfig:
 
     def __post_init_post_parse__(self):
         self._parameter_type_cls = None
+        self._storage_type_cls = None
 
     @property
     def contract_config(self) -> ContractConfig:
@@ -137,6 +138,16 @@ class OperationHandlerPatternConfig:
     @parameter_type_cls.setter
     def parameter_type_cls(self, typ: Type) -> None:
         self._parameter_type_cls = typ
+
+    @property
+    def storage_type_cls(self) -> Type:
+        if self._storage_type_cls is None:
+            raise Exception('Storage type is not registered')
+        return self._storage_type_cls
+
+    @storage_type_cls.setter
+    def storage_type_cls(self, typ: Type) -> None:
+        self._storage_type_cls = typ
 
 
 @dataclass
@@ -424,6 +435,12 @@ class DipDupConfig:
                         )
                         parameter_type_cls = getattr(parameter_type_module, snake_to_camel(pattern.entrypoint))
                         pattern.parameter_type_cls = parameter_type_cls
+
+                        storage_type_module = importlib.import_module(
+                            f'{self.package}' f'.types' f'.{pattern.contract_config.module_name}' f'.storage'
+                        )
+                        storage_type_cls = getattr(storage_type_module, 'Storage')
+                        pattern.storage_type_cls = storage_type_cls
 
 
 @dataclass
