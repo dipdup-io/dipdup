@@ -104,7 +104,7 @@ class TzktDatasource:
             state_level = operation_index_config.state.level
             print(current_level, state_level)
             if current_level != state_level:
-                await self.fetch_operations(state_level, initial=True)
+                await self.fetch_operations(current_level, initial=True)
 
         self._logger.info('Starting websocket client')
         await self._get_client().start()
