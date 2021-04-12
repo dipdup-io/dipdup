@@ -5,6 +5,7 @@ import logging.config
 import os
 import re
 import sys
+from collections import defaultdict
 from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
@@ -19,6 +20,17 @@ from dipdup.models import IndexType, State
 
 ROLLBACK_HANDLER = 'on_rollback'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
+
+sys.path.append(os.getcwd())
+
+
+def snake_to_camel(value: str) -> str:
+    return ''.join(map(lambda x: x[0].upper() + x[1:], value.split('_')))
+
+
+def camel_to_snake(name):
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 
 @dataclass
@@ -62,6 +74,26 @@ class DatabaseConfig:
 
 
 @dataclass
+class ContractConfig:
+    """Contract config
+
+    :param network: Corresponding network alias, only for sanity checks
+    :param address: Contract address
+    :param typename: User-defined alias for the contract script
+    """
+
+    address: str
+    typename: Optional[str] = None
+
+    def __hash__(self):
+        return hash(f'{self.address}{self.typename or ""}')
+
+    @property
+    def module_name(self) -> str:
+        return self.typename if self.typename is not None else self.address
+
+
+@dataclass
 class TzktDatasourceConfig:
     """TzKT datasource config
 
@@ -71,6 +103,9 @@ class TzktDatasourceConfig:
 
     kind: Literal['tzkt']
     url: str
+
+    def __hash__(self):
+        return hash(self.url)
 
 
 @dataclass
@@ -82,11 +117,16 @@ class OperationHandlerPatternConfig:
     :
     """
 
-    destination: str
+    destination: Union[str, ContractConfig]
     entrypoint: str
 
     def __post_init_post_parse__(self):
         self._parameter_type_cls = None
+
+    @property
+    def contract_config(self) -> ContractConfig:
+        assert isinstance(self.destination, ContractConfig)
+        return self.destination
 
     @property
     def parameter_type_cls(self) -> Type:
@@ -136,8 +176,8 @@ class OperationIndexConfig:
     """
 
     kind: Literal["operation"]
-    datasource: str
-    contract: str
+    datasource: Union[str, TzktDatasourceConfig]
+    contract: Union[str, ContractConfig]
     handlers: List[OperationHandlerConfig]
     first_block: int = 0
     last_block: int = 0
@@ -154,6 +194,16 @@ class OperationIndexConfig:
                 default=pydantic_encoder,
             ).encode(),
         ).hexdigest()
+
+    @property
+    def tzkt_config(self) -> TzktDatasourceConfig:
+        assert isinstance(self.datasource, TzktDatasourceConfig)
+        return self.datasource
+
+    @property
+    def contract_config(self) -> ContractConfig:
+        assert isinstance(self.contract, ContractConfig)
+        return self.contract
 
     @property
     def state(self):
@@ -199,9 +249,14 @@ class BigmapdiffHandlerConfig:
 @dataclass
 class BigmapdiffIndexConfig:
     kind: Literal['bigmapdiff']
-    datasource: str
-    contract: str
+    datasource: Union[str, TzktDatasourceConfig]
+    contract: Union[str, ContractConfig]
     handlers: List[BigmapdiffHandlerConfig]
+
+    @property
+    def tzkt_config(self) -> TzktDatasourceConfig:
+        assert isinstance(self.datasource, TzktDatasourceConfig)
+        return self.datasource
 
 
 @dataclass
@@ -213,8 +268,13 @@ class BlockHandlerConfig:
 @dataclass
 class BlockIndexConfig:
     kind: Literal['block']
-    datasource: str
+    datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BlockHandlerConfig]
+
+    @property
+    def tzkt_config(self) -> TzktDatasourceConfig:
+        assert isinstance(self.datasource, TzktDatasourceConfig)
+        return self.datasource
 
 
 @dataclass
@@ -241,7 +301,7 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    contracts: Dict[str, str]
+    contracts: Dict[str, ContractConfig]
     datasources: Dict[str, Union[TzktDatasourceConfig]]
     indexes: Dict[str, IndexConfigT]
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
@@ -260,14 +320,36 @@ class DipDupConfig:
                 self.indexes[index_name] = template.__class__(**json_template)
                 self.indexes[index_name].template_values = index_config.values
 
+        callback_patterns: Dict[str, List[List[OperationHandlerPatternConfig]]] = defaultdict(list)
+
         for index_config in self.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
-                if index_config is None:
-                    continue
-                index_config.contract = self.contracts[index_config.contract]
+                if isinstance(index_config.datasource, str):
+                    index_config.datasource = self.datasources[index_config.datasource]
+                if isinstance(index_config.contract, str):
+                    index_config.contract = self.contracts[index_config.contract]
+
                 for handler in index_config.handlers:
-                    for pattern in handler.pattern:
-                        pattern.destination = self.contracts[pattern.destination]
+                    if isinstance(handler.pattern, list):
+                        callback_patterns[handler.callback].append(handler.pattern)
+                        for pattern in handler.pattern:
+                            if isinstance(pattern.destination, str):
+                                pattern.destination = self.contracts[pattern.destination]
+            else:
+                raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+        for callback, patterns in callback_patterns.items():
+            if len(patterns) > 1:
+
+                def get_pattern_type(pattern: List[OperationHandlerPatternConfig]):
+                    return '::'.join(map(lambda x: x.contract_config.module_name, pattern))
+
+                pattern_types = list(map(get_pattern_type, patterns))
+                if any(map(lambda x: x != pattern_types[0], pattern_types)):
+                    raise ValueError(
+                        f'Callback `{callback}` used multiple times with different signatures. '
+                        f'Make sure you have specified contract typenames'
+                    )
 
     @property
     def package_path(self) -> str:
@@ -334,10 +416,13 @@ class DipDupConfig:
                     for pattern in handler.pattern:
                         self._logger.info('Registering parameter type for entrypoint `%s`', pattern.entrypoint)
                         parameter_type_module = importlib.import_module(
-                            f'{self.package}.types.{pattern.destination}.parameter.{pattern.entrypoint}'
+                            f'{self.package}'
+                            f'.types'
+                            f'.{pattern.contract_config.module_name}'
+                            f'.parameter'
+                            f'.{camel_to_snake(pattern.entrypoint)}'
                         )
-                        parameter_type = pattern.entrypoint.title().replace('_', '')
-                        parameter_type_cls = getattr(parameter_type_module, parameter_type)
+                        parameter_type_cls = getattr(parameter_type_module, snake_to_camel(pattern.entrypoint))
                         pattern.parameter_type_cls = parameter_type_cls
 
 

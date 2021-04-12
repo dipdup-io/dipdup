@@ -22,15 +22,14 @@ class ConfigTest(IsolatedAsyncioTestCase):
                 },
             )
             await Tortoise.generate_schemas()
-
             await config.initialize()
         finally:
             await Tortoise.close_connections()
 
         self.assertIsInstance(config, DipDupConfig)
         self.assertEqual(
-            config.contracts['HEN_objkts'],
-            config.indexes['operations_mainnet'].handlers[0].pattern[0].destination,
+            config.contracts['HEN_minter'],
+            config.indexes['hen_mainnet'].handlers[0].pattern[0].destination,
         )
-        self.assertIsInstance(config.indexes['operations_mainnet'].handlers[0].callback_fn, Callable)
-        self.assertIsInstance(config.indexes['operations_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)
+        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].callback_fn, Callable)
+        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)
