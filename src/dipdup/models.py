@@ -1,4 +1,5 @@
 import logging
+from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum
@@ -85,12 +86,13 @@ class OperationData:
         storage = deepcopy(self.storage)
         for key, field in storage_type.__fields__.items():
             if field.type_ != int and isinstance(storage[key], int):
-                if 'key' in field.type_.__fields__:
-                    storage[key] = []
-                else:
-                    storage[key] = {}
+                with suppress(AttributeError):
+                    if 'key' in field.type_.__fields__:
+                        storage[key] = []
+                    else:
+                        storage[key] = {}
 
-                self._merge_bigmapdiffs(storage, key)
+                    self._merge_bigmapdiffs(storage, key)
 
         return storage_type.parse_obj(storage)
 

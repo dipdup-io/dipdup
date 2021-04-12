@@ -5,10 +5,10 @@ from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import aiohttp
-from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
-from signalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
-from signalrcore.messages.completion_message import CompletionMessage  # type: ignore
-from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
+from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
+from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
+from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
+from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise.transactions import in_transaction
 
 from dipdup.config import ROLLBACK_HANDLER, BigmapdiffIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
@@ -102,9 +102,8 @@ class TzktDatasource:
             latest_block = await self.get_latest_block()
             current_level = latest_block['level']
             state_level = operation_index_config.state.level
-
             if current_level != state_level:
-                await self.fetch_operations(state_level)
+                await self.fetch_operations(current_level, initial=True)
 
         self._logger.info('Starting websocket client')
         await self._get_client().start()
@@ -163,7 +162,7 @@ class TzktDatasource:
         self._logger.debug(operations)
         return operations
 
-    async def fetch_operations(self, last_level: int) -> None:
+    async def fetch_operations(self, last_level: int, initial: bool = False) -> None:
         async def _process_operations(address, operations):
             self._logger.info('Processing %s operations of level %s', len(operations), operations[0]['level'])
             await self.on_operation_message(
@@ -182,9 +181,6 @@ class TzktDatasource:
 
             sync_event = self._sync_events[index_config.state.index_name]
             level = index_config.state.level or 0
-            if level == last_level:
-                sync_event.set()
-                continue
 
             operations = []
             offset = 0
@@ -212,10 +208,12 @@ class TzktDatasource:
             if operations:
                 await _process_operations(index_config.contract_config.address, operations)
 
-            sync_event.set()
+            if not initial:
+                sync_event.set()
 
-        self._logger.info('Synchronization finished')
-        self._synchronized.set()
+        if not initial:
+            self._logger.info('Synchronization finished')
+            self._synchronized.set()
 
     async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
         self._logger.info('Fetching jsonschemas for address `%s', address)
@@ -256,6 +254,8 @@ class TzktDatasource:
                     for operation_json in item['data']:
                         operation = self.convert_operation(operation_json)
                         if operation.type != 'transaction':
+                            continue
+                        if operation.status != 'applied':
                             continue
                         await self._caches[address].add(operation)
 

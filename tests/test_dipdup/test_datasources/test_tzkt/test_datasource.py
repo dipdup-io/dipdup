@@ -4,9 +4,9 @@ from typing import Any, Dict, List, Optional, Union
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
 
+from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
+from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from pydantic import BaseModel, Extra
-from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
-from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise import Tortoise
 
 from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
@@ -150,6 +150,7 @@ class Storage(BaseModel):
     metadata: Dict[str, Metadata]
     total_supply: Dict[str, TotalSupply]
 
+
 class ProposalMetadatum(BaseModel):
     proposal_type_0: ProposalType0
 
@@ -224,7 +225,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         with patch('aiohttp.ClientSession.get', get_mock):
             await self.datasource.start()
 
-        fetch_operations_mock.assert_awaited_with(0)
+        fetch_operations_mock.assert_awaited_with(1337, initial=True)
         self.assertEqual({self.index_config.contract: ['transaction']}, self.datasource._subscriptions)
         client.start.assert_awaited()
 
