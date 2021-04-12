@@ -1,5 +1,5 @@
-from contextlib import suppress
 import logging
+from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum

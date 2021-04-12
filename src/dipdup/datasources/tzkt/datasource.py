@@ -5,10 +5,10 @@ from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import aiohttp
-from signalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
-from signalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
-from signalrcore.messages.completion_message import CompletionMessage  # type: ignore
-from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
+from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
+from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
+from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
+from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise.transactions import in_transaction
 
 from dipdup.config import ROLLBACK_HANDLER, BigmapdiffIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
