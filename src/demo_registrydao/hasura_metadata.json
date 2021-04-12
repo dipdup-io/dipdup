@@ -67,11 +67,11 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "start_date",
+                            "id",
                             "metadata",
                             "upvotes",
-                            "downvotes",
-                            "id"
+                            "start_date",
+                            "downvotes"
                         ],
                         "filter": {},
                         "allow_aggregations": true

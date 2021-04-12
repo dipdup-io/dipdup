@@ -102,11 +102,11 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "id",
-                            "level",
                             "amount",
                             "timestamp",
-                            "amount_left"
+                            "level",
+                            "amount_left",
+                            "id"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -133,10 +133,10 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "id",
-                            "timestamp",
+                            "supply",
                             "level",
-                            "supply"
+                            "timestamp",
+                            "id"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -175,10 +175,10 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "id",
-                            "timestamp",
                             "level",
-                            "amount"
+                            "amount",
+                            "timestamp",
+                            "id"
                         ],
                         "filter": {},
                         "allow_aggregations": true
