@@ -1,0 +1,190 @@
+{
+    "version": 2,
+    "tables": [
+        {
+            "table": {
+                "schema": "public",
+                "name": "holder"
+            },
+            "object_relationships": [],
+            "array_relationships": [
+                {
+                    "name": "swaps",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "creator_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "swap"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "tokens",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "creator_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "token"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "sales",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "seller_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "trade"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "purchases",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "buyer_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "trade"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "address"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "swap"
+            },
+            "object_relationships": [
+                {
+                    "name": "holder",
+                    "using": {
+                        "foreign_key_constraint_on": "creator_id"
+                    }
+                }
+            ],
+            "array_relationships": [
+                {
+                    "name": "trades",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "swap_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "trade"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "id",
+                            "level",
+                            "amount_left",
+                            "amount",
+                            "timestamp"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "token"
+            },
+            "object_relationships": [
+                {
+                    "name": "holder",
+                    "using": {
+                        "foreign_key_constraint_on": "creator_id"
+                    }
+                }
+            ],
+            "array_relationships": [],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "id",
+                            "timestamp",
+                            "supply",
+                            "level"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "trade"
+            },
+            "object_relationships": [
+                {
+                    "name": "swap",
+                    "using": {
+                        "foreign_key_constraint_on": "swap_id"
+                    }
+                },
+                {
+                    "name": "holder",
+                    "using": {
+                        "foreign_key_constraint_on": "seller_id"
+                    }
+                },
+                {
+                    "name": "holder",
+                    "using": {
+                        "foreign_key_constraint_on": "buyer_id"
+                    }
+                }
+            ],
+            "array_relationships": [],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "id",
+                            "amount",
+                            "timestamp",
+                            "level"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        }
+    ]
+}

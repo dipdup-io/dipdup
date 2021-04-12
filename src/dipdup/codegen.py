@@ -86,16 +86,17 @@ async def fetch_schemas(config: DipDupConfig):
                     for bigmap_json in address_schemas_json['bigMaps']:
                         bigmap = bigmap_json['name']
                         key_schema = bigmap_json['keySchema']
-                        key_schema_path = join(bigmap_schemas_path, f'{bigmap}.key.json')
+                        key_schema_path = join(bigmap_schemas_path, f'{bigmap}_key.json')
                         if not exists(key_schema_path):
                             with open(key_schema_path, 'w') as file:
                                 file.write(json.dumps(key_schema, indent=4))
 
                         value_schema = bigmap_json['valueSchema']
-                        value_schema_path = join(bigmap_schemas_path, f'{bigmap}.value.json')
+                        value_schema_path = join(bigmap_schemas_path, f'{bigmap}_value.json')
                         if not exists(value_schema_path):
                             with open(value_schema_path, 'w') as file:
                                 file.write(json.dumps(value_schema, indent=4))
+
 
 async def generate_types(config: DipDupConfig):
     schemas_path = join(config.package_path, 'schemas')
