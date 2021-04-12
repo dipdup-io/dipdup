@@ -18,6 +18,12 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 _logger = logging.getLogger(__name__)
 
 
+def preprocess_storage_schema(storage_schema: Dict[str, Any]):
+    for property in storage_schema['properties']:
+        if storage_schema['properties'][property].get('$comment') == 'big_map':
+            storage_schema['properties'][property] = storage_schema['properties'][property]['oneOf'][1]
+
+
 async def create_package(config: DipDupConfig):
     try:
         package_path = config.package_path
@@ -64,6 +70,7 @@ async def fetch_schemas(config: DipDupConfig):
                     storage_schema_path = join(contract_schemas_path, 'storage.json')
 
                     storage_schema = address_schemas_json['storageSchema']
+                    preprocess_storage_schema(storage_schema)
                     if not exists(storage_schema_path):
                         with open(storage_schema_path, 'w') as file:
                             file.write(json.dumps(storage_schema, indent=4))
@@ -85,6 +92,7 @@ async def fetch_schemas(config: DipDupConfig):
                             existing_schema = json.loads(file.read())
                         if entrypoint_schema != existing_schema:
                             raise ValueError(f'Contract "{contract.address}" falsely claims to be a "{contract.typename}"')
+
 
 async def generate_types(config: DipDupConfig):
     schemas_path = join(config.package_path, 'schemas')

@@ -14,6 +14,26 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import HandlerContext, IndexType, OperationContext, OperationData, State
 
 
+class Key(BaseModel):
+    address: str
+    nat: str
+
+
+class LedgerItem(BaseModel):
+    key: Key
+    value: str
+
+
+class Key1(BaseModel):
+    owner: str
+    operator: str
+
+
+class Operator(BaseModel):
+    key: Key1
+    value: Dict[str, Any]
+
+
 class MigrationStatu(BaseModel):
     notInMigration: Dict[str, Any]
 
@@ -43,11 +63,56 @@ class ExtraModel(BaseModel):
     max_proposal_size: str
 
 
-class Proposal(BaseModel):
-    pass
+class DiffItem(BaseModel):
+    key: str
+    new_value: Optional[str]
 
+
+class ProposalType0(BaseModel):
+    agora_post_id: str
+    diff: List[DiffItem]
+
+
+class Metadatum(BaseModel):
+    proposal_type_0: ProposalType0
+
+
+class ProposalType1(BaseModel):
+    frozen_scale_value: Optional[str]
+    frozen_extra_value: Optional[str]
+    slash_scale_value: Optional[str]
+    slash_division_value: Optional[str]
+    max_proposal_size: Optional[str]
+
+
+class Metadatum1(BaseModel):
+    proposal_type_1: ProposalType1
+
+
+class Metadatum2(BaseModel):
+    receivers_0: List[str]
+
+
+class Metadatum3(BaseModel):
+    receivers_1: List[str]
+
+
+class Voter(BaseModel):
+    address: str
+    nat: str
+
+
+class Proposals(BaseModel):
     class Config:
         extra = Extra.allow
+
+    upvotes: str
+    downvotes: str
+    start_date: str
+    metadata: Union[Metadatum, Metadatum1, Metadatum2, Metadatum3]
+    proposer: str
+    proposer_frozen_token: str
+    voters: List[Voter]
 
 
 class ProposalKeyListSortByDateItem(BaseModel):
@@ -55,11 +120,11 @@ class ProposalKeyListSortByDateItem(BaseModel):
     bytes: str
 
 
-class Metadatum(BaseModel):
-    pass
-
+class Metadata(BaseModel):
     class Config:
         extra = Extra.allow
+
+    __root__: str
 
 
 class TotalSupply(BaseModel):
@@ -70,8 +135,8 @@ class TotalSupply(BaseModel):
 
 
 class Storage(BaseModel):
-    ledger: Union[int, List[Any]]
-    operators: Union[int, List[Any]]
+    ledger: List[LedgerItem]
+    operators: List[Operator]
     token_address: str
     admin: str
     pending_owner: str
@@ -79,12 +144,11 @@ class Storage(BaseModel):
     voting_period: str
     quorum_threshold: str
     extra: ExtraModel
-    proposals: Union[int, Proposal]
+    proposals: Dict[str, Proposals]
     proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
     permits_counter: str
-    metadata: Union[int, Metadatum]
+    metadata: Dict[str, Metadata]
     total_supply: Dict[str, TotalSupply]
-
 
 class DiffItem(BaseModel):
     key: str
@@ -319,7 +383,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertIsInstance(callback_mock.await_args[0][1].storage, Storage)
             self.assertIsInstance(callback_mock.await_args[0][1].storage.ledger, list)
             self.assertIsInstance(
-                callback_mock.await_args[0][1].storage.proposals.e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9, dict
+                callback_mock.await_args[0][1].storage.proposals['e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9'], Proposals
             )
 
         finally:

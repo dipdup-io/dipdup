@@ -2,7 +2,7 @@ import logging
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, get_args
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, get_args, get_origin
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
@@ -84,9 +84,8 @@ class OperationData:
 
         storage = deepcopy(self.storage)
         for key, field in storage_type.__fields__.items():
-            type_args = get_args(field.type_)
-            if len(type_args) == 2 and type_args[0] == int:
-                if type_args[1] == List[Any]:
+            if field.type_ != int and isinstance(storage[key], int):
+                if 'key' in field.type_.__fields__:
                     storage[key] = []
                 else:
                     storage[key] = {}

@@ -26,8 +26,8 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "balance",
-                            "address"
+                            "address",
+                            "balance"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -68,10 +68,10 @@
                     "permission": {
                         "columns": [
                             "id",
-                            "metadata",
-                            "upvotes",
                             "start_date",
-                            "downvotes"
+                            "downvotes",
+                            "metadata",
+                            "upvotes"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -98,8 +98,8 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "amount",
-                            "id"
+                            "id",
+                            "amount"
                         ],
                         "filter": {},
                         "allow_aggregations": true
