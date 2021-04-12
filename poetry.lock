@@ -37,19 +37,16 @@ version = "0.0.0"
 description = "Async fork of Python SignalR Core client(json and messagepack), with invocation auth and two way streaming. Compatible with azure / serverless functions. Also with automatic reconnect and manually reconnect."
 category = "main"
 optional = false
-python-versions = "^3.7"
-develop = false
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-msgpack = "==1.0.2"
+msgpack = "1.0.2"
 requests = ">=2.22.0"
-websockets = "^8.1"
+websockets = ">=8.1,<9.0"
 
 [package.source]
-type = "git"
-url = "https://github.com/dipdup-net/aio-signalrcore"
-reference = "main"
-resolved_reference = "6caa80df7f83d48ab5493ae458e3fdb8fb499f6e"
+type = "file"
+url = "aiosignalrcore-0.0.0-py3-none-any.whl"
 
 [[package]]
 name = "aiosqlite"
@@ -835,7 +832,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "faa35b33870006936af8377fc138fe649edf93d7969e56fb17148f5f299dd17b"
+content-hash = "7744a9ddd2ee1de3cdb6d075f2dd603a8b45b67fcabad95988d8010605cd37c1"
 
 [metadata.files]
 aiohttp = [
@@ -881,7 +878,9 @@ aiomysql = [
     {file = "aiomysql-0.0.21-py3-none-any.whl", hash = "sha256:a81a97da3dd732635926a8ea6adbbf2d1345799680bf61b5f89e730bcec88cc5"},
     {file = "aiomysql-0.0.21.tar.gz", hash = "sha256:811569c0db118dd2685f0878f5cebf17a11e89a995fa14261d5fa0254113842c"},
 ]
-aiosignalrcore = []
+aiosignalrcore = [
+    {file = "aiosignalrcore-0.0.0-py3-none-any.whl", hash = "sha256:d53967397a640552b28f235f6196725bd5ea791ea2cb6b06072420e30e59edce"},
+]
 aiosqlite = [
     {file = "aiosqlite-0.16.1-py3-none-any.whl", hash = "sha256:1df802815bb1e08a26c06d5ea9df589bcb8eec56e5f3378103b0f9b223c6703c"},
     {file = "aiosqlite-0.16.1.tar.gz", hash = "sha256:2e915463164efa65b60fd1901aceca829b6090082f03082618afca6fb9c8fdf7"},
