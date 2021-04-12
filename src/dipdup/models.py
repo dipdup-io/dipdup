@@ -1,12 +1,18 @@
+from copy import deepcopy
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+import logging
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing_inspect import get_args
 
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 
 ParameterType = TypeVar('ParameterType')
+StorageType = TypeVar('StorageType')
 
+
+_logger = logging.getLogger(__name__)
 
 class IndexType(Enum):
     operation = 'operation'
@@ -55,7 +61,35 @@ class OperationData:
     initiator_address: Optional[str] = None
     parameter: Optional[str] = None
     storage: Optional[Dict[str, Any]] = None
+    bigmaps: Optional[List[Dict[str, Any]]] = None
 
+    def _merge_bigmapdiff(self, storage_dict: Dict[str, Any], bigmap_name: str, bigmap_id: int) -> None:
+        bigmapdiffs = [bm for bm in self.bigmaps if bm['path'] == bigmap_name]
+        for diff in bigmapdiffs:
+            if diff['action'] in ('add_key', 'update_key'):
+                key = diff['key']['key']
+                if isinstance(key, dict):
+                    storage_dict[bigmap_name].append({'key': key, 'value': diff['key']['value']})
+                elif isinstance(key, str):
+                    storage_dict[bigmap_name][key] = diff['key']['value']
+
+    def get_merged_storage(self, storage_type: Type[StorageType]) -> StorageType:
+        if self.storage is None or self.bigmaps is None:
+            raise Exception()
+
+        storage = deepcopy(self.storage)
+        for key, field in storage_type.__fields__.items():
+            type_args = get_args(field.type_)
+            if len(type_args) == 2 and type_args[0] == int:
+                if type_args[1] == List[Any]:
+                    storage[key] = []
+                else:
+                    storage[key] = {}
+
+                self._merge_bigmapdiff(storage, key, storage[key])
+
+        print(storage)
+        return storage_type.parse_obj(storage)
 
 @dataclass
 class OperationContext(Generic[ParameterType]):

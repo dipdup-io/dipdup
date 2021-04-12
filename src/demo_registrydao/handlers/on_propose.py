@@ -9,5 +9,4 @@ async def on_propose(
     ctx: HandlerContext,
     propose: OperationContext[Propose],
 ) -> None:
-    print(ctx)
-    print(propose)
+    print(propose.storage)

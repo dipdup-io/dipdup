@@ -52,6 +52,7 @@ OPERATION_FIELDS = (
     "hasInternals",
     # "quote",
     "parameters",
+    "bigmaps,"
 )
 
 
@@ -304,7 +305,7 @@ class TzktDatasource:
 
             if operation.storage:
                 storage_type = pattern_config.storage_type_cls
-                storage = storage_type.parse_obj(operation.storage)
+                storage = operation.get_merged_storage(storage_type)
             else:
                 storage = None
 
@@ -348,6 +349,7 @@ class TzktDatasource:
             initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
             parameter=operation_json.get('parameters'),
             storage=operation_json.get('storage'),
+            bigmaps=operation_json.get('bigmaps'),
         )
 
     async def get_latest_block(self) -> Dict[str, Any]:
