@@ -104,7 +104,7 @@ class TzktDatasource:
             state_level = operation_index_config.state.level
             print(current_level, state_level)
             if current_level != state_level:
-                await self.fetch_operations(state_level)
+                await self.fetch_operations(state_level, initial=True)
 
         self._logger.info('Starting websocket client')
         await self._get_client().start()
@@ -163,7 +163,7 @@ class TzktDatasource:
         self._logger.debug(operations)
         return operations
 
-    async def fetch_operations(self, last_level: int) -> None:
+    async def fetch_operations(self, last_level: int, initial: bool = False) -> None:
         async def _process_operations(address, operations):
             self._logger.info('Processing %s operations of level %s', len(operations), operations[0]['level'])
             await self.on_operation_message(
@@ -209,10 +209,12 @@ class TzktDatasource:
             if operations:
                 await _process_operations(index_config.contract_config.address, operations)
 
-            sync_event.set()
+            if not initial:
+                sync_event.set()
 
-        self._logger.info('Synchronization finished')
-        self._synchronized.set()
+        if not initial:
+            self._logger.info('Synchronization finished')
+            self._synchronized.set()
 
     async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
         self._logger.info('Fetching jsonschemas for address `%s', address)

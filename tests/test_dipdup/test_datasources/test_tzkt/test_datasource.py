@@ -225,7 +225,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         with patch('aiohttp.ClientSession.get', get_mock):
             await self.datasource.start()
 
-        fetch_operations_mock.assert_awaited_with(0)
+        fetch_operations_mock.assert_awaited_with(0, initial=True)
         self.assertEqual({self.index_config.contract: ['transaction']}, self.datasource._subscriptions)
         client.start.assert_awaited()
 

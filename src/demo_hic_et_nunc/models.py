@@ -1,5 +1,7 @@
 from enum import Enum, IntEnum
+
 from tortoise import Model, fields
+
 # on mint token, holder
 # on_swap new, cancel_swap, collect
 
