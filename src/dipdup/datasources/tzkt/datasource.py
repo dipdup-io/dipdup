@@ -257,7 +257,7 @@ class TzktDatasource:
                         operation = self.convert_operation(operation_json)
                         if operation.type != 'transaction':
                             continue
-                        if operation.status == 'backtracked':
+                        if operation.status != 'applied':
                             continue
                         await self._caches[address].add(operation)
 
