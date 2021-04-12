@@ -1,18 +1,19 @@
+import logging
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum
-import logging
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
-from typing_inspect import get_args
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, get_args
 
+from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 
 ParameterType = TypeVar('ParameterType')
-StorageType = TypeVar('StorageType')
+StorageType = TypeVar('StorageType', bound=BaseModel)
 
 
 _logger = logging.getLogger(__name__)
+
 
 class IndexType(Enum):
     operation = 'operation'
@@ -63,7 +64,9 @@ class OperationData:
     storage: Optional[Dict[str, Any]] = None
     bigmaps: Optional[List[Dict[str, Any]]] = None
 
-    def _merge_bigmapdiff(self, storage_dict: Dict[str, Any], bigmap_name: str, bigmap_id: int) -> None:
+    def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str) -> None:
+        if self.bigmaps is None:
+            raise Exception('`bigaps` field missing')
         bigmapdiffs = [bm for bm in self.bigmaps if bm['path'] == bigmap_name]
         for diff in bigmapdiffs:
             if diff['action'] in ('add_key', 'update_key'):
@@ -74,8 +77,10 @@ class OperationData:
                     storage_dict[bigmap_name][key] = diff['key']['value']
 
     def get_merged_storage(self, storage_type: Type[StorageType]) -> StorageType:
-        if self.storage is None or self.bigmaps is None:
-            raise Exception()
+        if self.storage is None:
+            raise Exception('`storage` field missing')
+        if self.bigmaps is None:
+            return storage_type.parse_obj(self.storage)
 
         storage = deepcopy(self.storage)
         for key, field in storage_type.__fields__.items():
@@ -86,10 +91,10 @@ class OperationData:
                 else:
                     storage[key] = {}
 
-                self._merge_bigmapdiff(storage, key, storage[key])
+                self._merge_bigmapdiffs(storage, key)
 
-        print(storage)
         return storage_type.parse_obj(storage)
+
 
 @dataclass
 class OperationContext(Generic[ParameterType]):

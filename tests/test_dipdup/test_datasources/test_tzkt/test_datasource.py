@@ -163,8 +163,10 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             await Tortoise.generate_schemas()
 
             callback_mock = AsyncMock()
+            storage_type_mock = MagicMock()
 
             self.index_config.handlers[0].callback_fn = callback_mock
+            self.index_config.handlers[0].pattern[0].storage_type_cls = storage_type_mock
 
             self.datasource._synchronized.set()
             await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)

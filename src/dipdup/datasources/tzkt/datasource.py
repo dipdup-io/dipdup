@@ -10,15 +10,7 @@ from signalrcore.messages.completion_message import CompletionMessage  # type: i
 from signalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise.transactions import in_transaction
 
-from dipdup.config import (
-    ROLLBACK_HANDLER,
-    BigmapdiffIndexConfig,
-    BlockIndexConfig,
-    ContractConfig,
-    IndexTemplateConfig,
-    OperationHandlerConfig,
-    OperationIndexConfig,
-)
+from dipdup.config import ROLLBACK_HANDLER, BigmapdiffIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import HandlerContext, OperationContext, OperationData, State
@@ -52,7 +44,7 @@ OPERATION_FIELDS = (
     "hasInternals",
     # "quote",
     "parameters",
-    "bigmaps,"
+    "bigmaps,",
 )
 
 
