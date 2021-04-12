@@ -93,9 +93,11 @@ async def run(ctx) -> None:
                 schema_state = State(index_type=IndexType.schema, index_name=connection_name, hash=schema_hash)
                 await schema_state.save()
             elif schema_state.hash != schema_hash:
-                _logger.warning('Schema hash mismatch, reindexing')
-                await Tortoise._drop_databases()
-                os.execl(sys.executable, sys.executable, *sys.argv)
+                pass
+                # FIXME: Hash mismatch every time
+                # _logger.warning('Schema hash mismatch, consider reindexing')
+                # await Tortoise._drop_databases()
+                # os.execl(sys.executable, sys.executable, *sys.argv)
 
         await config.initialize()
 
