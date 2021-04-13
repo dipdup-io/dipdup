@@ -1,4 +1,4 @@
-from demo_quipuswap.models import *
+import demo_quipuswap.models as models
 from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer
 from demo_quipuswap.types.quipu_fa12.parameter.tez_to_token_payment import TezToTokenPayment
 from dipdup.models import HandlerContext, OperationContext
