@@ -35,7 +35,7 @@ class State(Model):
 
 @dataclass
 class OperationData:
-    # FIXME:
+    # FIXME: Bug in TzKT, shouldn't be optional
     type: Optional[str]
     id: int
     level: int
@@ -67,7 +67,7 @@ class OperationData:
 
     def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str) -> None:
         if self.bigmaps is None:
-            raise Exception('`bigaps` field missing')
+            raise Exception('`bigmaps` field missing')
         bigmapdiffs = [bm for bm in self.bigmaps if bm['path'] == bigmap_name]
         for diff in bigmapdiffs:
             if diff['action'] in ('add_key', 'update_key'):
@@ -80,19 +80,17 @@ class OperationData:
     def get_merged_storage(self, storage_type: Type[StorageType]) -> StorageType:
         if self.storage is None:
             raise Exception('`storage` field missing')
-        if self.bigmaps is None:
-            return storage_type.parse_obj(self.storage)
 
         storage = deepcopy(self.storage)
         for key, field in storage_type.__fields__.items():
-            if field.type_ != int and isinstance(storage[key], int):
-                with suppress(AttributeError):
-                    if 'key' in field.type_.__fields__:
-                        storage[key] = []
-                    else:
-                        storage[key] = {}
+            if field.type_ not in (int, bool) and isinstance(storage[key], int):
+                if hasattr(field.type_, '__fields__') and 'key' in field.type_.__fields__:
+                    storage[key] = []
+                else:
+                    storage[key] = {}
 
-                    self._merge_bigmapdiffs(storage, key)
+            if self.bigmaps is not None:
+                self._merge_bigmapdiffs(storage, key)
 
         return storage_type.parse_obj(storage)
 
