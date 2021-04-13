@@ -52,10 +52,14 @@ templates:
         pattern:
           - destination: <dex_contract>
             entrypoint: investLiquidity
+          - destination: <token_contract>
+            entrypoint: transfer
       - callback: on_fa12_divest_liquidity
         pattern:
           - destination: <dex_contract>
             entrypoint: divestLiquidity
+          - destination: <token_contract>
+            entrypoint: transfer
 
   quipuswap_fa2:
     kind: operation
@@ -78,10 +82,14 @@ templates:
         pattern:
           - destination: <dex_contract>
             entrypoint: investLiquidity
+          - destination: <token_contract>
+            entrypoint: transfer
       - callback: on_fa20_divest_liquidity
         pattern:
           - destination: <dex_contract>
             entrypoint: divestLiquidity
+          - destination: <token_contract>
+            entrypoint: transfer
 
 indexes:
   kusd_mainnet:

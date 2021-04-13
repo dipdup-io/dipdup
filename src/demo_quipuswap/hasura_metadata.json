@@ -38,8 +38,8 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "symbol",
-                            "id"
+                            "id",
+                            "symbol"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -72,9 +72,9 @@
                     "role": "user",
                     "permission": {
                         "columns": [
+                            "tez_qty",
                             "id",
-                            "token_qty",
-                            "tez_qty"
+                            "token_qty"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -107,12 +107,12 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "quantity",
-                            "timestamp",
-                            "price",
                             "slippage",
+                            "quantity",
                             "level",
+                            "price",
                             "side",
+                            "timestamp",
                             "id"
                         ],
                         "filter": {},
