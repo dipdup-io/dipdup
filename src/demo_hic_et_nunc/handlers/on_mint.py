@@ -17,5 +17,4 @@ async def on_mint(
         level=mint.data.level,
         timestamp=mint.data.timestamp,
     )
-    print(token.__dict__)
     await token.save()
