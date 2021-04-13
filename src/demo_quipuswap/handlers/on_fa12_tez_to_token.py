@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 import demo_quipuswap.models as models
 from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer
 from demo_quipuswap.types.quipu_fa12.parameter.tez_to_token_payment import TezToTokenPayment
@@ -10,6 +11,9 @@ async def on_fa12_tez_to_token(
     tez_to_token_payment: OperationContext[TezToTokenPayment],
     transfer: OperationContext[Transfer],
 ) -> None:
+    if ctx.template_values is None:
+        raise Exception('This index must be templated')
+
     decimals = int(ctx.template_values['decimals'])
     trader, _ = await models.Trader.get_or_create(address=transfer.parameter.to)
     instrument, _ = await models.Instrument.get_or_create(symbol=ctx.template_values['symbol'])
