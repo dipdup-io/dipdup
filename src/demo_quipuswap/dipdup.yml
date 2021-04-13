@@ -90,13 +90,15 @@ indexes:
       dex_contract: kusd_dex_mainnet
       token_contract: kusd_token_mainnet
       symbol: kUSD
+      decimals: 18
 
-  tzbtc_mainnet:
-    template: quipuswap_fa12
-    values:
-      dex_contract: tzbtc_dex_mainnet
-      token_contract: tzbtc_token_mainnet
-      symbol: tzBTC
+  # tzbtc_mainnet:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: tzbtc_dex_mainnet
+  #     token_contract: tzbtc_token_mainnet
+  #     symbol: tzBTC
+  #     decimals: 8
 
   hdao_mainnet:
     template: quipuswap_fa2
@@ -104,3 +106,4 @@ indexes:
       dex_contract: hdao_dex_mainnet
       token_contract: hdao_token_mainnet
       symbol: hDAO
+      decimals: 6

@@ -1,3 +1,4 @@
+from decimal import Decimal
 import demo_quipuswap.models as models
 from demo_quipuswap.types.fa2_token.parameter.transfer import Transfer
 from demo_quipuswap.types.quipu_fa2.parameter.token_to_tez_payment import TokenToTezPayment
@@ -9,12 +10,14 @@ async def on_fa2_token_to_tez(
     token_to_tez_payment: OperationContext[TokenToTezPayment],
     transfer: OperationContext[Transfer],
 ) -> None:
+    decimals = int(ctx.template_values['decimals'])
     trader, _ = await models.Trader.get_or_create(address=transfer.parameter.__root__[0].from_)
     instrument, _ = await models.Instrument.get_or_create(symbol=ctx.template_values['symbol'])
 
-    min_tez_quantity = int(token_to_tez_payment.parameter.min_out)
-    token_quantity = int(token_to_tez_payment.parameter.amount)
-    tez_quantity = int(ctx.operations[1].amount)
+    min_tez_quantity = Decimal(token_to_tez_payment.parameter.min_out) / (10 ** decimals)
+    token_quantity = Decimal(token_to_tez_payment.parameter.amount) / (10 ** decimals)
+    transaction = next(op for op in ctx.operations if op.amount)
+    tez_quantity = Decimal(transaction.amount) / (10 ** 6)
     trade = models.Trade(
         instrument=instrument,
         trader=trader,
