@@ -1,4 +1,4 @@
-from demo_quipuswap.models import *
+import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa2.parameter.divest_liquidity import DivestLiquidity
 from dipdup.models import HandlerContext, OperationContext
 

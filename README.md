@@ -18,6 +18,12 @@ $ pip install dipdup
 
 ## Creating indexer
 
+If you want to see dipdup in action before diving into details you can run a demo project and use it as reference:
+
+```shell
+$ dipdup -c src/demo_hic_et_nunc/dipdup.yml run
+```
+
 ### Write configuration file
 
 Create a new YAML file and adapt the following example to your needs:
