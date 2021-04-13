@@ -1,0 +1,170 @@
+{
+    "version": 2,
+    "tables": [
+        {
+            "table": {
+                "schema": "public",
+                "name": "instrument"
+            },
+            "object_relationships": [],
+            "array_relationships": [
+                {
+                    "name": "positions",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "instrument_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "position"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "trades",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "instrument_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "trade"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "symbol",
+                            "id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "position"
+            },
+            "object_relationships": [
+                {
+                    "name": "instrument",
+                    "using": {
+                        "foreign_key_constraint_on": "instrument_id"
+                    }
+                },
+                {
+                    "name": "trader",
+                    "using": {
+                        "foreign_key_constraint_on": "trader_id"
+                    }
+                }
+            ],
+            "array_relationships": [],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "tez_qty",
+                            "token_qty",
+                            "id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "trade"
+            },
+            "object_relationships": [
+                {
+                    "name": "instrument",
+                    "using": {
+                        "foreign_key_constraint_on": "instrument_id"
+                    }
+                },
+                {
+                    "name": "trader",
+                    "using": {
+                        "foreign_key_constraint_on": "trader_id"
+                    }
+                }
+            ],
+            "array_relationships": [],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "slippage",
+                            "side",
+                            "level",
+                            "timestamp",
+                            "id",
+                            "quantity",
+                            "price"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "trader"
+            },
+            "object_relationships": [],
+            "array_relationships": [
+                {
+                    "name": "positions",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "trader_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "position"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "trades",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "trader_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "trade"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "address"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        }
+    ]
+}
