@@ -3,30 +3,34 @@
 
 from __future__ import annotations
 
-from typing import Union
+from typing import Dict
 
 from pydantic import BaseModel, Extra
 
 
-class Metadatum(BaseModel):
-    pass
-
+class Metadata(BaseModel):
     class Config:
         extra = Extra.allow
 
+    __root__: str
 
-class Royalty(BaseModel):
-    pass
 
+class Royalties(BaseModel):
     class Config:
         extra = Extra.allow
 
+    issuer: str
+    royalties: str
 
-class Swap(BaseModel):
-    pass
 
+class Swaps(BaseModel):
     class Config:
         extra = Extra.allow
+
+    issuer: str
+    objkt_amount: str
+    objkt_id: str
+    xtz_per_objkt: str
 
 
 class Storage(BaseModel):
@@ -35,10 +39,10 @@ class Storage(BaseModel):
     hdao: str
     locked: bool
     manager: str
-    metadata: Union[int, Metadatum]
+    metadata: Dict[str, Metadata]
     objkt: str
     objkt_id: str
-    royalties: Union[int, Royalty]
+    royalties: Dict[str, Royalties]
     size: str
     swap_id: str
-    swaps: Union[int, Swap]
+    swaps: Dict[str, Swaps]
