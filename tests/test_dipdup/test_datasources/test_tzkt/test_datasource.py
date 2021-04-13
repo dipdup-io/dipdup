@@ -323,6 +323,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
 
             callback_mock = AsyncMock()
             storage_type_mock = MagicMock()
+            storage_type_mock.__fields__ = MagicMock()
 
             self.index_config.handlers[0].callback_fn = callback_mock
             self.index_config.handlers[0].pattern[0].storage_type_cls = storage_type_mock

@@ -1,9 +1,8 @@
 import logging
-from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, get_args, get_origin
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
@@ -82,7 +81,11 @@ class OperationData:
             raise Exception('`storage` field missing')
 
         storage = deepcopy(self.storage)
+        _logger.debug('Merging storage')
+        _logger.debug('Before: %s', storage)
         for key, field in storage_type.__fields__.items():
+            # NOTE: TzKT could return bigmaps as object or as array of key-value objects. We need to guess this from storage.
+            # TODO: This code should be a part of datasource module.
             if field.type_ not in (int, bool) and isinstance(storage[key], int):
                 if hasattr(field.type_, '__fields__') and 'key' in field.type_.__fields__:
                     storage[key] = []
@@ -92,6 +95,7 @@ class OperationData:
             if self.bigmaps is not None:
                 self._merge_bigmapdiffs(storage, key)
 
+        _logger.debug('After: %s', storage)
         return storage_type.parse_obj(storage)
 
 
