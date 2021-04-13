@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dipdup"
 description = "Python SDK for developing indexers of Tezos smart contracts inspired by The Graph"
-version = "0.0.0"
+version = "0.1.0"
 license = "MIT"
 authors = [
     "Lev Gorodetskiy <github@droserasprout.space>",
@@ -28,9 +28,8 @@ asyncpg = "^0.22.0"
 datamodel-code-generator = "^0.10.0"
 "ruamel.yaml" = "^0.17.2"
 tortoise-orm = "^0.17.1"
-websockets = "^8.1"
 pydantic = "^1.8.1"
-aiosignalrcore = {path = "aiosignalrcore-0.0.0-py3-none-any.whl"}
+aiosignalrcore = "^0.9.2"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"

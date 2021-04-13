@@ -38,8 +38,8 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "id",
-                            "symbol"
+                            "symbol",
+                            "id"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -107,13 +107,13 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "timestamp",
                             "quantity",
-                            "id",
-                            "side",
+                            "timestamp",
+                            "price",
                             "slippage",
                             "level",
-                            "price"
+                            "side",
+                            "id"
                         ],
                         "filter": {},
                         "allow_aggregations": true
