@@ -6,6 +6,7 @@ from unittest import IsolatedAsyncioTestCase
 
 import demo_hic_et_nunc.models
 import demo_quipuswap.models
+import demo_tzcolors.models
 from dipdup.utils import tortoise_wrapper
 
 
@@ -57,3 +58,17 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(73, traders)
             self.assertEqual(94, trades)
             self.assertEqual(56, positions)
+
+    async def test_tzcolors(self):
+        self.run_dipdup('tzcolors.yml')
+
+        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzcolors.models'):
+            addresses = await demo_tzcolors.models.Address.filter().count()
+            tokens = await demo_tzcolors.models.Token.filter().count()
+            auctions = await demo_tzcolors.models.Auction.filter().count()
+            bids = await demo_tzcolors.models.Bid.filter().count()
+
+            self.assertEqual(9, addresses)
+            self.assertEqual(14, tokens)
+            self.assertEqual(14, auctions)
+            self.assertEqual(44, bids)
