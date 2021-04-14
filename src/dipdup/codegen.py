@@ -19,9 +19,13 @@ _logger = logging.getLogger(__name__)
 
 
 def preprocess_storage_schema(storage_schema: Dict[str, Any]):
-    for property in storage_schema['properties']:
-        if storage_schema['properties'][property].get('$comment') == 'big_map':
-            storage_schema['properties'][property] = storage_schema['properties'][property]['oneOf'][1]
+    if 'properties' in storage_schema:
+        for property in storage_schema['properties']:
+            if storage_schema['properties'][property].get('$comment') == 'big_map':
+                storage_schema['properties'][property] = storage_schema['properties'][property]['oneOf'][1]
+    elif 'oneOf' in storage_schema:
+        if storage_schema.get('$comment') == 'big_map':
+            storage_schema = storage_schema['oneOf'][1]
 
 
 async def create_package(config: DipDupConfig):

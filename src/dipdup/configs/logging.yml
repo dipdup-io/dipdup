@@ -16,6 +16,10 @@
       level: INFO
     dipdup.datasources.tzkt.cache:
       level: INFO
+    aiosqlite:
+      level: INFO
+    db_client:
+      level: INFO
   root:
     level: INFO
     handlers:
