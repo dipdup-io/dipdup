@@ -326,6 +326,11 @@ class TzktDatasource:
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
+        storage = operation_json.get('storage')
+        # FIXME: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
+        if not isinstance(storage, (Dict, type(None))):
+            storage = {}
+
         return OperationData(
             # FIXME: type is null
             type=operation_json['type'] or 'transaction',
@@ -354,7 +359,7 @@ class TzktDatasource:
             parameter_json=operation_json['parameter']['value'] if operation_json.get('parameter') else None,
             initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
             parameter=operation_json.get('parameters'),
-            storage=operation_json.get('storage'),
+            storage=storage,
             bigmaps=operation_json.get('bigmaps'),
         )
 
