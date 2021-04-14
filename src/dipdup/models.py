@@ -90,11 +90,7 @@ class OperationData:
                 # NOTE: TzKT could return bigmaps as object or as array of key-value objects. We need to guess this from storage.
                 # TODO: This code should be a part of datasource module.
                 if field.type_ not in (int, bool) and isinstance(storage[key], int):
-                    if (
-                        hasattr(field.type_, '__fields__') and
-                        'key' in field.type_.__fields__ and
-                        'value' in field.type_.__fields__
-                    ):
+                    if hasattr(field.type_, '__fields__') and 'key' in field.type_.__fields__ and 'value' in field.type_.__fields__:
                         storage[key] = []
                         self._merge_bigmapdiffs(storage, key, array=True)
                     else:

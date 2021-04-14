@@ -4,24 +4,158 @@
         {
             "table": {
                 "schema": "public",
-                "name": "auctions"
+                "name": "addresses"
             },
             "object_relationships": [],
+            "array_relationships": [
+                {
+                    "name": "winning_auctions",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "bidder_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "auctions"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "created_auctions",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "seller_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "auctions"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "bids",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "bidder_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "bid"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "tokens",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "holder_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "tokens"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "address"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "auctions"
+            },
+            "object_relationships": [
+                {
+                    "name": "tokens",
+                    "using": {
+                        "foreign_key_constraint_on": "token_id"
+                    }
+                },
+                {
+                    "name": "addresses",
+                    "using": {
+                        "foreign_key_constraint_on": "bidder_id"
+                    }
+                },
+                {
+                    "name": "addresses",
+                    "using": {
+                        "foreign_key_constraint_on": "seller_id"
+                    }
+                }
+            ],
+            "array_relationships": [
+                {
+                    "name": "bids",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "auction_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "bid"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "end_timestamp",
+                            "level",
+                            "bid_amount",
+                            "timestamp",
+                            "id",
+                            "status"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "bid"
+            },
+            "object_relationships": [
+                {
+                    "name": "auctions",
+                    "using": {
+                        "foreign_key_constraint_on": "auction_id"
+                    }
+                },
+                {
+                    "name": "addresses",
+                    "using": {
+                        "foreign_key_constraint_on": "bidder_id"
+                    }
+                }
+            ],
             "array_relationships": [],
             "select_permissions": [
                 {
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "id",
-                            "end_timestamp",
-                            "token_amount",
-                            "level",
                             "timestamp",
                             "bid_amount",
-                            "seller",
-                            "token_address",
-                            "token_id"
+                            "id",
+                            "level"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -34,17 +168,37 @@
                 "schema": "public",
                 "name": "tokens"
             },
-            "object_relationships": [],
-            "array_relationships": [],
+            "object_relationships": [
+                {
+                    "name": "addresses",
+                    "using": {
+                        "foreign_key_constraint_on": "holder_id"
+                    }
+                }
+            ],
+            "array_relationships": [
+                {
+                    "name": "auctions",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "token_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "auctions"
+                            }
+                        }
+                    }
+                }
+            ],
             "select_permissions": [
                 {
                     "role": "user",
                     "permission": {
                         "columns": [
+                            "level",
+                            "timestamp",
                             "id",
                             "amount",
-                            "timestamp",
-                            "level",
                             "address"
                         ],
                         "filter": {},

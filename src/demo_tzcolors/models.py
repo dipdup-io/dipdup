@@ -1,8 +1,18 @@
+from enum import IntEnum
+
 from tortoise import Model, fields
+
+
+class AuctionStatus(IntEnum):
+    ACTIVE = 0
+    FINISHED = 1
 
 
 class Address(Model):
     address = fields.CharField(59, pk=True)
+
+    class Meta:
+        table = 'addresses'
 
 
 class Token(Model):
@@ -19,13 +29,12 @@ class Token(Model):
 
 class Auction(Model):
     id = fields.IntField(pk=True)
-    token_address = fields.CharField(59)
-    token_id = fields.IntField()
-    token_amount = fields.IntField()
+    token = fields.ForeignKeyField('models.Token', 'auctions')
     bid_amount = fields.IntField()
     bidder = fields.ForeignKeyField('models.Address', 'winning_auctions')
     seller = fields.ForeignKeyField('models.Address', 'created_auctions')
     end_timestamp = fields.DatetimeField()
+    status = fields.IntEnumField(AuctionStatus)
     level = fields.IntField()
     timestamp = fields.DatetimeField()
 
@@ -35,7 +44,8 @@ class Auction(Model):
 
 class Bid(Model):
     id = fields.IntField(pk=True)
-    token_id = fields.IntField()
+    auction = fields.ForeignKeyField('models.Auction', 'bids')
+    bid_amount = fields.IntField()
     bidder = fields.ForeignKeyField('models.Address', 'bids')
     level = fields.IntField()
     timestamp = fields.DatetimeField()
