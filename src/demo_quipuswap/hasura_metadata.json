@@ -4,9 +4,61 @@
         {
             "table": {
                 "schema": "public",
+                "name": "instrument"
+            },
+            "object_relationships": [],
+            "array_relationships": [
+                {
+                    "name": "positions",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "instrument_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "position"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "trades",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "instrument_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "trade"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "id",
+                            "symbol"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
                 "name": "position"
             },
             "object_relationships": [
+                {
+                    "name": "instrument",
+                    "using": {
+                        "foreign_key_constraint_on": "instrument_id"
+                    }
+                },
                 {
                     "name": "trader",
                     "using": {
@@ -20,10 +72,9 @@
                     "role": "user",
                     "permission": {
                         "columns": [
+                            "tez_qty",
                             "id",
-                            "symbol",
-                            "token_qty",
-                            "tez_qty"
+                            "token_qty"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -38,6 +89,12 @@
             },
             "object_relationships": [
                 {
+                    "name": "instrument",
+                    "using": {
+                        "foreign_key_constraint_on": "instrument_id"
+                    }
+                },
+                {
                     "name": "trader",
                     "using": {
                         "foreign_key_constraint_on": "trader_id"
@@ -50,14 +107,13 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "side",
-                            "symbol",
                             "slippage",
-                            "id",
-                            "px",
-                            "qty",
+                            "quantity",
+                            "level",
+                            "price",
+                            "side",
                             "timestamp",
-                            "level"
+                            "id"
                         ],
                         "filter": {},
                         "allow_aggregations": true
