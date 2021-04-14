@@ -4,7 +4,7 @@
         {
             "table": {
                 "schema": "public",
-                "name": "example_models"
+                "name": "auctions"
             },
             "object_relationships": [],
             "array_relationships": [],
@@ -13,7 +13,39 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "id"
+                            "id",
+                            "end_timestamp",
+                            "token_amount",
+                            "level",
+                            "timestamp",
+                            "bid_amount",
+                            "seller",
+                            "token_address",
+                            "token_id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "tokens"
+            },
+            "object_relationships": [],
+            "array_relationships": [],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "id",
+                            "amount",
+                            "timestamp",
+                            "level",
+                            "address"
                         ],
                         "filter": {},
                         "allow_aggregations": true

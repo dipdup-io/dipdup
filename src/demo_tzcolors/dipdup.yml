@@ -20,7 +20,7 @@ datasources:
 
 templates:
 
-  tzcolors:
+  tzcolors_minter:
     kind: operation
     datasource: <datasource>
     contract: <minter>
@@ -32,9 +32,26 @@ templates:
           - destination: <auction>
             entrypoint: create_auction
 
+  tzcolors_auction:
+    kind: operation
+    datasource: <datasource>
+    contract: <auction>
+    handlers:
+      - callback: on_create_auction
+        pattern:
+          - destination: <auction>
+            entrypoint: create_auction
+
 indexes:
-  tzcolors_mainnet:
-    template: tzcolors
+  tzcolors_minter:
+    template: tzcolors_minter
+    values:
+      datasource: tzkt_staging
+      minter: tzcolors_minter
+      auction: tzcolors_auction
+
+  tzcolors_auction:
+    template: tzcolors_auction
     values:
       datasource: tzkt_staging
       minter: tzcolors_minter

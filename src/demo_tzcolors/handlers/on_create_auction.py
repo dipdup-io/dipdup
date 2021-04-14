@@ -2,27 +2,19 @@ from dipdup.models import HandlerContext, OperationContext
 
 import demo_tzcolors.models as models
 
-from demo_tzcolors.types.tzcolors_minter.parameter.initial_auction import InitialAuction
 from demo_tzcolors.types.tzcolors_auction.parameter.create_auction import CreateAuction
 
 
-async def on_initial_auction(
+async def on_create_auction(
     ctx: HandlerContext,
-    initial_auction: OperationContext[InitialAuction],
     create_auction: OperationContext[CreateAuction],
 ) -> None:
 
     holder, _ = await models.Address.get_or_create(address=create_auction.parameter.token_address)
 
-    token = models.Token(
+    token = await models.Token.filter(
         id=create_auction.parameter.token_id,
-        address=create_auction.parameter.token_address,
-        amount=create_auction.parameter.token_amount,
-        holder=holder,
-        level=create_auction.data.level,
-        timestamp=create_auction.data.timestamp,
-    )
-    await token.save()
+    ).get()
 
     auction = models.Auction(
         id=create_auction.parameter.auction_id,
