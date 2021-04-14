@@ -13,13 +13,15 @@
     SignalRCoreClient:
       formatter: brief
     dipdup.datasources.tzkt.datasource:
-      level: INFO
+      level: DEBUG
     dipdup.datasources.tzkt.cache:
-      level: INFO
+      level: DEBUG
     aiosqlite:
-      level: INFO
+      level: DEBUG
     db_client:
-      level: INFO
+      level: DEBUG
+    dipdup.models:
+      level: DEBUG
   root:
     level: DEBUG
     handlers:
