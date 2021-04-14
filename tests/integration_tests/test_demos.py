@@ -17,7 +17,17 @@ class DemosTest(IsolatedAsyncioTestCase):
         rmtree('/tmp/dipdup')
 
     async def test_hic_et_nunc(self):
-        result = subprocess.run(['dipdup', '-c', join(dirname(__file__), 'hic_et_nunc.yml'), 'run'], cwd='/tmp/dipdup')
+        result = subprocess.run(
+            [
+                'dipdup',
+                '-l',
+                'warning.yml',
+                '-c',
+                join(dirname(__file__), 'hic_et_nunc.yml'),
+                'run',
+            ],
+            cwd='/tmp/dipdup',
+        )
         result.check_returncode()
 
         try:

@@ -3,7 +3,7 @@ package: demo_hic_et_nunc
 
 database:
   kind: sqlite
-  path: hic_et_nunc.sqlite3
+  path: db.sqlite3
 
 contracts:
   HEN_objkts: 
