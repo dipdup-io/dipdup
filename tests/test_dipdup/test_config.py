@@ -5,6 +5,7 @@ from unittest import IsolatedAsyncioTestCase
 from tortoise import Tortoise
 
 from dipdup.config import DipDupConfig
+from dipdup.utils import tortoise_wrapper
 
 
 class ConfigTest(IsolatedAsyncioTestCase):
@@ -14,17 +15,9 @@ class ConfigTest(IsolatedAsyncioTestCase):
     async def test_load_initialize(self):
         config = DipDupConfig.load(self.path)
 
-        try:
-            await Tortoise.init(
-                db_url='sqlite://:memory:',
-                modules={
-                    'int_models': ['dipdup.models'],
-                },
-            )
+        async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
             await config.initialize()
-        finally:
-            await Tortoise.close_connections()
 
         self.assertIsInstance(config, DipDupConfig)
         self.assertEqual(
