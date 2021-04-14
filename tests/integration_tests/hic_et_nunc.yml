@@ -42,3 +42,5 @@ indexes:
         pattern:
           - destination: HEN_minter
             entrypoint: collect
+    first_block: 1365000
+    last_block: 1366000

@@ -408,6 +408,7 @@ class DipDupConfig:
                         index_name=index_name,
                         index_type=IndexType.operation,
                         hash=index_hash,
+                        level=index_config.first_block - 1,
                     )
                     await state.save()
 

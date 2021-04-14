@@ -109,17 +109,24 @@ class TzktDatasource:
 
     async def start(self):
         self._logger.info('Starting datasource')
+        rest_only = False
         for operation_index_config in self._operation_index_configs.values():
-            await self.add_subscription(operation_index_config.contract)
 
+            if operation_index_config.last_block:
+                await self.fetch_operations(operation_index_config.last_block, initial=True)
+                rest_only = True
+                continue
+
+            await self.add_subscription(operation_index_config.contract)
             latest_block = await self.get_latest_block()
             current_level = latest_block['level']
             state_level = operation_index_config.state.level
             if current_level != state_level:
                 await self.fetch_operations(current_level, initial=True)
 
-        self._logger.info('Starting websocket client')
-        await self._get_client().start()
+        if not rest_only:
+            self._logger.info('Starting websocket client')
+            await self._get_client().start()
 
     async def stop(self):
         ...
@@ -193,7 +200,7 @@ class TzktDatasource:
         for index_config in self._operation_index_configs.values():
 
             sync_event = self._sync_events[index_config.state.index_name]
-            level = index_config.state.level or 0
+            level = index_config.state.level
 
             operations = []
             offset = 0
