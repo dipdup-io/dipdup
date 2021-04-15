@@ -319,6 +319,12 @@ IndexConfigTemplateT = Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockI
 
 
 @dataclass
+class HasuraConfig:
+    url: str
+    admin_secret: Optional[str] = None
+
+
+@dataclass
 class DipDupConfig:
     """Main dapp config
 
@@ -337,6 +343,7 @@ class DipDupConfig:
     indexes: Dict[str, IndexConfigT]
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
+    hasura: Optional[HasuraConfig] = None
 
     def __post_init_post_parse__(self):
         _logger.info('Substituting index templates')
