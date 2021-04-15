@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 import demo_quipuswap.models as models
 from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer
 from demo_quipuswap.types.quipu_fa12.parameter.invest_liquidity import InvestLiquidity
