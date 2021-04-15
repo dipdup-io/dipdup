@@ -1,0 +1,25 @@
+name: Publish
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Nodejs and yarn
+      uses: actions/setup-node@v1
+      with:
+        node-version: '11.x'
+    - name: Install dependencies
+      run: npm i
+    - name: Build static files
+      run: npm run build      
+    - name: Deploy to GH Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
