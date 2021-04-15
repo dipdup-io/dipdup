@@ -1,7 +1,6 @@
 # Table of contents
 
-* [Overview](README.md)
-* [Installation](installation.md)
+* [Quick start](README.md)
 * [Code generation](codegen.md)
 * [Execution](execution.md)
 * [API engines](api-engines.md)
