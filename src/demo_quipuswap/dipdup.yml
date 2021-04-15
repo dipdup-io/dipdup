@@ -1,6 +1,10 @@
 spec_version: 0.0.1
 package: demo_quipuswap
 
+hasura:
+  url: http://127.0.0.1:8080
+  admin_secret: changeme
+
 database:
   kind: sqlite
   path: quipuswap.sqlite3

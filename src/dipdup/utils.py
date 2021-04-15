@@ -25,12 +25,13 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None):
 @asynccontextmanager
 async def http_request(method: str, **kwargs):
     async with aiohttp.ClientSession() as session:
+        headers = {
+            **kwargs.pop('headers', {}),
+            'User-Agent': f'dupdup/{__version__}',
+        }
         async with getattr(session, method)(
             skip_auto_headers={'User-Agent'},
-            headers={
-                **kwargs.get('headers', {}),
-                'User-Agent': f'dupdup/{__version__}',
-            },
+            headers=headers,
             **kwargs,
         ) as response:
             yield response

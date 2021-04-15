@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import suppress
 import hashlib
 import json
 import logging
@@ -8,6 +9,7 @@ from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
 from typing import Dict
+from aiohttp import ClientConnectorError, ClientOSError
 
 import click
 from tortoise import Tortoise
@@ -138,10 +140,25 @@ async def configure_graphql(ctx):
     if config.hasura is None:
         raise ConfigurationError('`hasura` config section missing')
 
+    _logger.info('Loading metadata file')
     url = config.hasura.url.rstrip("/")
     hasura_metadata_path = join(config.package_path, 'hasura_metadata.json')
     with open(hasura_metadata_path) as file:
         hasura_metadata = json.load(file)
+
+    _logger.info('Waiting for Hasura instance to be healthy')
+    for _ in range(60):
+        with suppress(ClientConnectorError, ClientOSError):
+            async with http_request(
+                'get',
+                url=f'{url}/healthz'
+            ) as response:
+                if response.status == 200:
+                    break
+        await asyncio.sleep(1)
+    else:
+        raise Exception('Hasura instance not responding for 60 seconds')
+
     headers = {}
     if config.hasura.admin_secret:
         headers['X-Hasura-Admin-Secret'] = config.hasura.admin_secret
