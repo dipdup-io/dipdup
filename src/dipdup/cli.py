@@ -79,25 +79,25 @@ async def run(ctx) -> None:
             },
         )
 
-        for connection_name, connection in Tortoise._connections.items():
-            schema_sql = get_schema_sql(connection, False)
-            schema_hash = hashlib.sha256(schema_sql.encode()).hexdigest()
+        connection_name, connection = next(iter(Tortoise._connections.items()))
+        schema_sql = get_schema_sql(connection, False)
+        # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
+        processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
+        schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
-            try:
-                schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
-            except OperationalError:
-                schema_state = None
+        try:
+            schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
+        except OperationalError:
+            schema_state = None
 
-            if schema_state is None:
-                await Tortoise.generate_schemas()
-                schema_state = State(index_type=IndexType.schema, index_name=connection_name, hash=schema_hash)
-                await schema_state.save()
-            elif schema_state.hash != schema_hash:
-                pass
-                # FIXME: Hash mismatch every time
-                # _logger.warning('Schema hash mismatch, consider reindexing')
-                # await Tortoise._drop_databases()
-                # os.execl(sys.executable, sys.executable, *sys.argv)
+        if schema_state is None:
+            await Tortoise.generate_schemas()
+            schema_state = State(index_type=IndexType.schema, index_name=connection_name, hash=schema_hash)
+            await schema_state.save()
+        elif schema_state.hash != schema_hash:
+            _logger.warning('Schema hash mismatch, reindexing')
+            await Tortoise._drop_databases()
+            os.execl(sys.executable, sys.executable, *sys.argv)
 
         await config.initialize()
 
