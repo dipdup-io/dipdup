@@ -24,6 +24,8 @@ If you want to see dipdup in action before diving into details you can run a dem
 $ dipdup -c src/demo_hic_et_nunc/dipdup.yml run
 ```
 
+Examples in this guide are simplified Hic Et Nunc demo.
+
 ### Write configuration file
 
 Create a new YAML file and adapt the following example to your needs:
@@ -62,6 +64,8 @@ indexes:
           - destination: HEN_objkts
             entrypoint: mint
 ```
+
+Each handler in index config matches an operation group based on operations' entrypoints and destination addresses in pattern. Matched operation groups will be passed to handlers you define.
 
 ### Initialize project structure
 
@@ -179,6 +183,8 @@ $ # edit `secrets.env` file, change credentials
 $ docker-compose up dipdup
 ```
 
+For debugging purposes you can index specific block range only and skip realtime indexing. To do this set `first_block` and `last_block` fields in index config.
+
 ### Index templates
 
 Sometimes you need to run multiple indexes with similar configs whose only difference is contract addresses. In this case you can use index templates like this:
@@ -217,6 +223,7 @@ indexes:
       token: FA20_token
 ```
 
+Template values mapping could be accessed from within handlers at `ctx.template_values`.
 
 ### Optional: configure Hasura GraphQL Engine
 
@@ -265,7 +272,8 @@ You may want to tune logging to get notifications on errors or enable debug mess
 
 ## Contribution
 
-To set up development environment you need to install [poetry](https://python-poetry.org/docs/#installation) package manager. Then run one of the following commands at project's root:
+To set up development environment you need to install [poetry](https://python-poetry.org/docs/#installation) package manager and GNU Make. Then run one of the following commands at project's root:
+
 ```shell
 $ # install project dependencies
 $ make install
