@@ -183,7 +183,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         self.index_config = OperationIndexConfig(
             kind='operation',
             datasource='tzkt',
-            contract=ContractConfig(address='KT1lalala'),
+            contract=ContractConfig(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
             handlers=[
                 OperationHandlerConfig(
                     callback='',
