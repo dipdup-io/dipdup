@@ -3,7 +3,7 @@ package: demo_quipuswap
 
 database:
   kind: sqlite
-  path: quipuswap.sqlite3
+  path: db.sqlite3
 
 contracts:
   kusd_dex_mainnet:
@@ -60,6 +60,8 @@ templates:
             entrypoint: divestLiquidity
           - destination: <token_contract>
             entrypoint: transfer
+    first_block: 1407528
+    last_block: 1408934
 
   quipuswap_fa2:
     kind: operation
@@ -90,6 +92,8 @@ templates:
             entrypoint: divestLiquidity
           - destination: <token_contract>
             entrypoint: transfer
+    first_block: 1407528
+    last_block: 1407728
 
 indexes:
   kusd_mainnet:

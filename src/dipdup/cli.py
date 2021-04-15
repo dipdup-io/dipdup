@@ -20,6 +20,7 @@ from dipdup import __version__
 from dipdup.config import DipDupConfig, IndexTemplateConfig, LoggingConfig, OperationIndexConfig, TzktDatasourceConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import IndexType, State
+from dipdup.utils import tortoise_wrapper
 
 _logger = logging.getLogger(__name__)
 
@@ -69,15 +70,10 @@ async def cli(ctx, config: str, logging_config: str):
 async def run(ctx) -> None:
     config: DipDupConfig = ctx.obj.config
 
-    try:
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+    async with tortoise_wrapper(url, models):
         _logger.info('Initializing database')
-        await Tortoise.init(
-            db_url=config.database.connection_string,
-            modules={
-                'models': [f'{config.package}.models'],
-                'int_models': ['dipdup.models'],
-            },
-        )
 
         connection_name, connection = next(iter(Tortoise._connections.items()))
         schema_sql = get_schema_sql(connection, False)
@@ -117,9 +113,6 @@ async def run(ctx) -> None:
         _logger.info('Starting datasources')
         datasource_run_tasks = [asyncio.create_task(d.start()) for d in datasources.values()]
         await asyncio.gather(*datasource_run_tasks)
-
-    finally:
-        await Tortoise.close_connections()
 
 
 @cli.command(help='Initialize new dipdap')

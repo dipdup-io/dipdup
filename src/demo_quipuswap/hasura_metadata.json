@@ -72,8 +72,8 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "tez_qty",
                             "id",
+                            "tez_qty",
                             "token_qty"
                         ],
                         "filter": {},
@@ -107,13 +107,13 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "slippage",
-                            "quantity",
-                            "level",
-                            "price",
                             "side",
+                            "level",
+                            "slippage",
+                            "price",
+                            "id",
                             "timestamp",
-                            "id"
+                            "quantity"
                         ],
                         "filter": {},
                         "allow_aggregations": true
