@@ -4,6 +4,7 @@
 * [Code generation](codegen.md)
 * [Execution](execution.md)
 * [API engines](api-engines.md)
+* [Logging](logging.md)
 * [Command-line reference](command-line.md)
 
 ## Config file reference <a id="configuration-file-reference"></a>
