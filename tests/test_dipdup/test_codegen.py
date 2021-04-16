@@ -44,7 +44,6 @@ class CodegenTest(IsolatedAsyncioTestCase):
                     await codegen.fetch_schemas(config)
                     await codegen.generate_types(config)
                     await codegen.generate_handlers(config)
-                    await codegen.generate_hasura_metadata(config)
                     await codegen.cleanup(config)
 
                     import_submodules(config.package)

@@ -1,7 +1,5 @@
 import asyncio
-from contextlib import suppress
 import hashlib
-import json
 import logging
 import os
 import sys
@@ -9,7 +7,6 @@ from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
 from typing import Dict
-from aiohttp import ClientConnectorError, ClientOSError
 
 import click
 from tortoise import Tortoise
@@ -20,10 +17,9 @@ import dipdup.codegen as codegen
 from dipdup import __version__
 from dipdup.config import DipDupConfig, IndexTemplateConfig, LoggingConfig, TzktDatasourceConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import configure_hasura
 from dipdup.models import IndexType, State
-from dipdup.utils import http_request, tortoise_wrapper
+from dipdup.utils import tortoise_wrapper
 
 _logger = logging.getLogger(__name__)
 
@@ -133,5 +129,4 @@ async def init(ctx):
     await codegen.fetch_schemas(config)
     await codegen.generate_types(config)
     await codegen.generate_handlers(config)
-    await codegen.generate_hasura_metadata(config)
     await codegen.cleanup(config)

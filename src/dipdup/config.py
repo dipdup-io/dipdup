@@ -10,7 +10,6 @@ from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 from urllib.parse import urlparse
-from genson import SchemaNode
 
 from pydantic import Field, validator
 from pydantic.dataclasses import dataclass

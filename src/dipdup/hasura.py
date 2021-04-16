@@ -1,15 +1,123 @@
 import asyncio
-from contextlib import suppress
+import importlib
 import json
 import logging
+from contextlib import suppress
 from os.path import join
+from typing import List
+
 from aiohttp import ClientConnectorError, ClientOSError
-from dipdup.config import DipDupConfig
+from tortoise import Model, fields
+
+from dipdup.config import DipDupConfig, PostgresDatabaseConfig, camel_to_snake
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import http_request
 
-
 _logger = logging.getLogger(__name__)
+
+
+def _format_array_relationship(related_name: str, table: str, column: str, schema: str = 'public'):
+    return {
+        "name": related_name,
+        "using": {
+            "foreign_key_constraint_on": {
+                "column": column,
+                "table": {
+                    "schema": schema,
+                    "name": table,
+                },
+            },
+        },
+    }
+
+
+def _format_object_relationship(name: str, column: str):
+    return {
+        "name": name,
+        "using": {
+            "foreign_key_constraint_on": column,
+        },
+    }
+
+
+def _format_select_permissions(columns: List[str]):
+    return {
+        "role": "user",
+        "permission": {
+            "columns": columns,
+            "filter": {},
+            "allow_aggregations": True,
+        },
+    }
+
+
+def _format_table(name: str, schema: str = 'public'):
+    return {
+        "table": {
+            "schema": schema,
+            "name": name,
+        },
+        "object_relationships": [],
+        "array_relationships": [],
+        "select_permissions": [],
+    }
+
+
+def _format_metadata(tables):
+    return {
+        "version": 2,
+        "tables": tables,
+    }
+
+
+async def generate_hasura_metadata(config: DipDupConfig):
+    _logger.info('Generating Hasura metadata')
+    metadata_tables = {}
+    model_tables = {}
+    models = importlib.import_module(f'{config.package}.models')
+
+    for attr in dir(models):
+        model = getattr(models, attr)
+        if isinstance(model, type) and issubclass(model, Model) and model != Model:
+
+            table_name = model._meta.db_table or camel_to_snake(model.__name__)
+            model_tables[f'models.{model.__name__}'] = table_name
+
+            table = _format_table(
+                name=table_name, schema=config.database.schema_name if isinstance(config.database, PostgresDatabaseConfig) else 'public'
+            )
+            metadata_tables[table_name] = table
+
+    for attr in dir(models):
+        model = getattr(models, attr)
+        if isinstance(model, type) and issubclass(model, Model) and model != Model:
+            table_name = model_tables[f'models.{model.__name__}']
+
+            metadata_tables[table_name]['select_permissions'].append(
+                _format_select_permissions(list(model._meta.db_fields)),
+            )
+
+            for field in model._meta.fields_map.values():
+                if isinstance(field, fields.relational.ForeignKeyFieldInstance):
+                    if not isinstance(field.related_name, str):
+                        raise Exception(f'`related_name` of `{field}` must be set')
+                    related_table_name = model_tables[field.model_name]
+                    metadata_tables[table_name]['object_relationships'].append(
+                        _format_object_relationship(
+                            name=field.model_field_name,
+                            column=field.model_field_name + '_id',
+                        )
+                    )
+                    metadata_tables[related_table_name]['array_relationships'].append(
+                        _format_array_relationship(
+                            related_name=field.related_name,
+                            table=table_name,
+                            column=field.model_field_name + '_id',
+                            schema=config.database.schema_name if isinstance(config.database, PostgresDatabaseConfig) else 'public',
+                        )
+                    )
+
+    return _format_metadata(tables=list(metadata_tables.values()))
 
 
 async def configure_hasura(config: DipDupConfig):
@@ -17,11 +125,10 @@ async def configure_hasura(config: DipDupConfig):
     if config.hasura is None:
         raise ConfigurationError('`hasura` config section missing')
 
-    _logger.info('Loading metadata file')
+    _logger.info('Configuring Hasura')
+
     url = config.hasura.url.rstrip("/")
-    hasura_metadata_path = join(config.package_path, 'hasura_metadata.json')
-    with open(hasura_metadata_path) as file:
-        hasura_metadata = json.load(file)
+    hasura_metadata = await generate_hasura_metadata(config)
 
     _logger.info('Waiting for Hasura instance to be healthy')
     for _ in range(60):
