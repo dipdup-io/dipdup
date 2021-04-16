@@ -21,6 +21,7 @@ from dipdup import __version__
 from dipdup.config import DipDupConfig, IndexTemplateConfig, LoggingConfig, TzktDatasourceConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
+from dipdup.hasura import configure_hasura
 from dipdup.models import IndexType, State
 from dipdup.utils import http_request, tortoise_wrapper
 
@@ -113,8 +114,13 @@ async def run(ctx) -> None:
                 raise NotImplementedError(f'Datasource `{index_config.datasource}` is not supported')
 
         _logger.info('Starting datasources')
-        datasource_run_tasks = [asyncio.create_task(d.start()) for d in datasources.values()]
-        await asyncio.gather(*datasource_run_tasks)
+        run_tasks = [asyncio.create_task(d.start()) for d in datasources.values()]
+
+        if config.hasura:
+            hasura_task = asyncio.create_task(configure_hasura(config))
+            run_tasks.append(hasura_task)
+
+        await asyncio.gather(*run_tasks)
 
 
 @cli.command(help='Initialize new dipdap')
@@ -129,50 +135,3 @@ async def init(ctx):
     await codegen.generate_handlers(config)
     await codegen.generate_hasura_metadata(config)
     await codegen.cleanup(config)
-
-
-@cli.command(help='Configure Hasura GraphQL Engine')
-@click.pass_context
-@click_async
-async def configure_graphql(ctx):
-    config: DipDupConfig = ctx.obj.config
-
-    if config.hasura is None:
-        raise ConfigurationError('`hasura` config section missing')
-
-    _logger.info('Loading metadata file')
-    url = config.hasura.url.rstrip("/")
-    hasura_metadata_path = join(config.package_path, 'hasura_metadata.json')
-    with open(hasura_metadata_path) as file:
-        hasura_metadata = json.load(file)
-
-    _logger.info('Waiting for Hasura instance to be healthy')
-    for _ in range(60):
-        with suppress(ClientConnectorError, ClientOSError):
-            async with http_request(
-                'get',
-                url=f'{url}/healthz'
-            ) as response:
-                if response.status == 200:
-                    break
-        await asyncio.sleep(1)
-    else:
-        raise Exception('Hasura instance not responding for 60 seconds')
-
-    headers = {}
-    if config.hasura.admin_secret:
-        headers['X-Hasura-Admin-Secret'] = config.hasura.admin_secret
-    async with http_request(
-        'post',
-        url=f'{url}/v1/query',
-        data=json.dumps(
-            {
-                "type": "replace_metadata",
-                "args": hasura_metadata,
-            },
-        ),
-        headers=headers,
-    ) as response:
-        result = await response.json()
-        if not result.get('message') == 'success':
-            raise Exception(result)

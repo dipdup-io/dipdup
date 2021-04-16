@@ -5,7 +5,7 @@ x-dipdup: &x-dipdup
   depends_on:
     - db
   volumes:
-    - ./src/demo_hic_et_nunc/dipdup.yml:/home/dipdup/dipdup.yml
+    - ./src/demo_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
   env_file: secrets.env
 
 services:
@@ -21,7 +21,7 @@ services:
       - db:/var/lib/postgres/data
     env_file: secrets.env
 
-  graphql-engine:
+  hasura:
     image: hasura/graphql-engine:v1.3.3
     ports:
     - 8080:8080
@@ -29,12 +29,6 @@ services:
     - db
     restart: always
     env_file: secrets.env
-
-  configure-graphql:
-    <<: *x-dipdup
-    command: ["-c", "dipdup.yml", "configure-graphql", "--url", "http://graphql-engine:8080", "--admin-secret", "changeme"]
-    depends_on:
-      - graphql-engine
   
 volumes:
   db:
