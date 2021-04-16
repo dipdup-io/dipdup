@@ -108,12 +108,12 @@
                     "permission": {
                         "columns": [
                             "side",
-                            "level",
+                            "quantity",
                             "slippage",
-                            "price",
+                            "level",
                             "id",
-                            "timestamp",
-                            "quantity"
+                            "price",
+                            "timestamp"
                         ],
                         "filter": {},
                         "allow_aggregations": true

@@ -77,19 +77,19 @@
             },
             "object_relationships": [
                 {
-                    "name": "tokens",
+                    "name": "token",
                     "using": {
                         "foreign_key_constraint_on": "token_id"
                     }
                 },
                 {
-                    "name": "addresses",
+                    "name": "bidder",
                     "using": {
                         "foreign_key_constraint_on": "bidder_id"
                     }
                 },
                 {
-                    "name": "addresses",
+                    "name": "seller",
                     "using": {
                         "foreign_key_constraint_on": "seller_id"
                     }
@@ -114,12 +114,12 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "end_timestamp",
-                            "level",
-                            "bid_amount",
-                            "timestamp",
                             "id",
-                            "status"
+                            "timestamp",
+                            "end_timestamp",
+                            "bid_amount",
+                            "status",
+                            "level"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -134,13 +134,13 @@
             },
             "object_relationships": [
                 {
-                    "name": "auctions",
+                    "name": "auction",
                     "using": {
                         "foreign_key_constraint_on": "auction_id"
                     }
                 },
                 {
-                    "name": "addresses",
+                    "name": "bidder",
                     "using": {
                         "foreign_key_constraint_on": "bidder_id"
                     }
@@ -153,9 +153,9 @@
                     "permission": {
                         "columns": [
                             "timestamp",
+                            "level",
                             "bid_amount",
-                            "id",
-                            "level"
+                            "id"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -170,7 +170,7 @@
             },
             "object_relationships": [
                 {
-                    "name": "addresses",
+                    "name": "holder",
                     "using": {
                         "foreign_key_constraint_on": "holder_id"
                     }
@@ -195,11 +195,11 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "level",
-                            "timestamp",
-                            "id",
                             "amount",
-                            "address"
+                            "address",
+                            "id",
+                            "timestamp",
+                            "level"
                         ],
                         "filter": {},
                         "allow_aggregations": true

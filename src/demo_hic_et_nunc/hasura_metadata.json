@@ -77,7 +77,7 @@
             },
             "object_relationships": [
                 {
-                    "name": "holder",
+                    "name": "creator",
                     "using": {
                         "foreign_key_constraint_on": "creator_id"
                     }
@@ -103,12 +103,12 @@
                     "permission": {
                         "columns": [
                             "timestamp",
-                            "level",
-                            "price",
-                            "id",
                             "amount_left",
+                            "status",
+                            "price",
+                            "level",
                             "amount",
-                            "status"
+                            "id"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -123,7 +123,7 @@
             },
             "object_relationships": [
                 {
-                    "name": "holder",
+                    "name": "creator",
                     "using": {
                         "foreign_key_constraint_on": "creator_id"
                     }
@@ -159,13 +159,13 @@
                     }
                 },
                 {
-                    "name": "holder",
+                    "name": "seller",
                     "using": {
                         "foreign_key_constraint_on": "seller_id"
                     }
                 },
                 {
-                    "name": "holder",
+                    "name": "buyer",
                     "using": {
                         "foreign_key_constraint_on": "buyer_id"
                     }
@@ -177,9 +177,9 @@
                     "role": "user",
                     "permission": {
                         "columns": [
+                            "timestamp",
                             "amount",
                             "id",
-                            "timestamp",
                             "level"
                         ],
                         "filter": {},

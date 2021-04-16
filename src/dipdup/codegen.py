@@ -195,9 +195,9 @@ def _format_array_relationship(related_name: str, table: str, column: str):
     }
 
 
-def _format_object_relationship(table: str, column: str):
+def _format_object_relationship(name: str, column: str):
     return {
-        "name": table,
+        "name": name,
         "using": {
             "foreign_key_constraint_on": column,
         },
@@ -244,7 +244,7 @@ async def generate_hasura_metadata(config: DipDupConfig):
         model = getattr(models, attr)
         if isinstance(model, type) and issubclass(model, Model) and model != Model:
 
-            table_name = model._meta.db_table or model.__name__.lower()
+            table_name = model._meta.db_table or camel_to_snake(model.__name__)
             model_tables[f'models.{model.__name__}'] = table_name
 
             table = _format_table(table_name)
@@ -266,7 +266,7 @@ async def generate_hasura_metadata(config: DipDupConfig):
                     related_table_name = model_tables[field.model_name]
                     metadata_tables[table_name]['object_relationships'].append(
                         _format_object_relationship(
-                            table=model_tables[field.model_name],
+                            name=field.model_field_name,
                             column=field.model_field_name + '_id',
                         )
                     )
