@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 from jinja2 import Template
 from tortoise import Model, fields
 
-from dipdup.config import ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig, camel_to_snake, snake_to_camel
+from dipdup.config import PostgresDatabaseConfig, ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig, camel_to_snake, snake_to_camel
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 _logger = logging.getLogger(__name__)
@@ -180,14 +180,14 @@ async def generate_handlers(config: DipDupConfig):
                         file.write(handler_code)
 
 
-def _format_array_relationship(related_name: str, table: str, column: str):
+def _format_array_relationship(related_name: str, table: str, column: str, schema: str = 'public'):
     return {
         "name": related_name,
         "using": {
             "foreign_key_constraint_on": {
                 "column": column,
                 "table": {
-                    "schema": "public",
+                    "schema": schema,
                     "name": table,
                 },
             },
@@ -215,10 +215,10 @@ def _format_select_permissions(columns: List[str]):
     }
 
 
-def _format_table(name: str):
+def _format_table(name: str, schema: str = 'public'):
     return {
         "table": {
-            "schema": "public",
+            "schema": schema,
             "name": name,
         },
         "object_relationships": [],
@@ -247,7 +247,10 @@ async def generate_hasura_metadata(config: DipDupConfig):
             table_name = model._meta.db_table or camel_to_snake(model.__name__)
             model_tables[f'models.{model.__name__}'] = table_name
 
-            table = _format_table(table_name)
+            table = _format_table(
+                name=table_name,
+                schema=config.database.schema_name if isinstance(config.database, PostgresDatabaseConfig) else 'public'
+            )
             metadata_tables[table_name] = table
 
     for attr in dir(models):
@@ -275,6 +278,7 @@ async def generate_hasura_metadata(config: DipDupConfig):
                             related_name=field.related_name,
                             table=table_name,
                             column=field.model_field_name + '_id',
+                            schema=config.database.schema_name if isinstance(config.database, PostgresDatabaseConfig) else 'public'
                         )
                     )
 

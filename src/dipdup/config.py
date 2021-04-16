@@ -10,8 +10,9 @@ from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 from urllib.parse import urlparse
+from genson import SchemaNode
 
-from pydantic import validator
+from pydantic import Field, validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
@@ -54,10 +55,9 @@ class SqliteDatabaseConfig:
 
 
 @dataclass
-class DatabaseConfig:
-    """Database connection config
+class MySQLDatabaseConfig:
+    """MySQL database connection config
 
-    :param driver: One of postgres/mysql (asyncpg and aiomysql libs must be installed respectively)
     :param host: Host
     :param port: Port
     :param user: User
@@ -65,7 +65,7 @@ class DatabaseConfig:
     :param database: Schema name
     """
 
-    kind: Union[Literal['postgres'], Literal['mysql']]
+    kind: Literal['mysql']
     host: str
     port: int
     user: str
@@ -75,6 +75,30 @@ class DatabaseConfig:
     @property
     def connection_string(self):
         return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
+
+
+@dataclass
+class PostgresDatabaseConfig:
+    """Postgres database connection config
+
+    :param host: Host
+    :param port: Port
+    :param user: User
+    :param password: Password
+    :param database: Schema name
+    """
+
+    kind: Literal['postgres']
+    host: str
+    port: int
+    user: str
+    database: str
+    schema_name: str = 'public'
+    password: str = ''
+
+    @property
+    def connection_string(self):
+        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}'
 
 
 @dataclass
@@ -342,7 +366,7 @@ class DipDupConfig:
     datasources: Dict[str, Union[TzktDatasourceConfig]]
     indexes: Dict[str, IndexConfigT]
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
-    database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
+    database: Union[SqliteDatabaseConfig, MySQLDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     hasura: Optional[HasuraConfig] = None
 
     def __post_init_post_parse__(self):

@@ -114,12 +114,12 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "id",
-                            "timestamp",
-                            "end_timestamp",
                             "bid_amount",
                             "status",
-                            "level"
+                            "id",
+                            "timestamp",
+                            "level",
+                            "end_timestamp"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -152,10 +152,10 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "timestamp",
+                            "id",
                             "level",
-                            "bid_amount",
-                            "id"
+                            "timestamp",
+                            "bid_amount"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -195,8 +195,8 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "amount",
                             "address",
+                            "amount",
                             "id",
                             "timestamp",
                             "level"
