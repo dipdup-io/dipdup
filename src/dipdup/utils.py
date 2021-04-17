@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import sys
@@ -25,10 +26,16 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None):
         modules = {'int_models': ['dipdup.models']}
         if models:
             modules['models'] = [models]
-        await Tortoise.init(
-            db_url=url,
-            modules=modules,  # type: ignore
-        )
+        for _ in range(60):
+            try:
+                await Tortoise.init(
+                    db_url=url,
+                    modules=modules,  # type: ignore
+                )
+            except ConnectionRefusedError:
+                await asyncio.sleep(1)
+            else:
+                break
         yield
     finally:
         await Tortoise.close_connections()

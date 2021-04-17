@@ -8,6 +8,7 @@ database:
   user: dipdup
   password: changeme
   database: dipdup
+  schema_name: hic_et_nunc
 
 hasura:
   url: http://hasura:8080

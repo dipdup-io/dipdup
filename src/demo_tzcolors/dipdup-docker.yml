@@ -8,6 +8,7 @@ database:
   user: dipdup
   password: changeme
   database: dipdup
+  schema_name: tzcolors
 
 hasura:
   url: http://hasura:8080

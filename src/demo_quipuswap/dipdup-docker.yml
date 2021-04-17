@@ -8,6 +8,7 @@ database:
   user: dipdup
   password: changeme
   database: dipdup
+  schema_name: quipuswap
 
 hasura:
   url: http://hasura:8080

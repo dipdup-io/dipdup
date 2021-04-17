@@ -40,6 +40,6 @@ class Trade(Model):
     swap = fields.ForeignKeyField('models.Swap', 'trades')
     seller = fields.ForeignKeyField('models.Holder', 'sales')
     buyer = fields.ForeignKeyField('models.Holder', 'purchases')
-    amount = fields.IntField()
+    amount = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()

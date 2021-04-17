@@ -13,6 +13,8 @@ services:
     <<: *x-dipdup
     restart: always
     command: ["-c", "dipdup.yml", "run"]
+    depends_on:
+      - db
 
   db:
     image: postgres
@@ -20,6 +22,11 @@ services:
     volumes:
       - db:/var/lib/postgres/data
     env_file: secrets.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   hasura:
     image: hasura/graphql-engine:v1.3.3

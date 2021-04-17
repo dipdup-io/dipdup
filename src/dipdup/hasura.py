@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+from importlib.metadata import metadata
 import json
 import logging
 from contextlib import suppress
@@ -150,10 +151,31 @@ async def configure_hasura(config: DipDupConfig):
         _logger.error('Hasura instance not responding for 60 seconds')
         return
 
-    _logger.info('Sending replace metadata request')
     headers = {}
     if config.hasura.admin_secret:
         headers['X-Hasura-Admin-Secret'] = config.hasura.admin_secret
+
+    _logger.info('Fetching existing metadata')
+    async with http_request(
+        'post',
+        url=f'{url}/v1/query',
+        data=json.dumps(
+            {
+                "type": "export_metadata",
+                "args": hasura_metadata,
+            },
+        ),
+        headers=headers,
+    ) as response:
+        existing_hasura_metadata = await response.json()
+
+    _logger.info('Merging existing metadata')
+    hasura_metadata_tables = [table['table'] for table in hasura_metadata['tables']]
+    for table in existing_hasura_metadata['tables']:
+        if table['table'] not in hasura_metadata_tables:
+            hasura_metadata['tables'].append(table)
+
+    _logger.info('Sending replace metadata request')
     async with http_request(
         'post',
         url=f'{url}/v1/query',

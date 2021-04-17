@@ -15,7 +15,7 @@ from tortoise.utils import get_schema_sql
 
 import dipdup.codegen as codegen
 from dipdup import __version__
-from dipdup.config import DipDupConfig, IndexTemplateConfig, LoggingConfig, TzktDatasourceConfig
+from dipdup.config import DipDupConfig, IndexTemplateConfig, LoggingConfig, PostgresDatabaseConfig, TzktDatasourceConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.hasura import configure_hasura
 from dipdup.models import IndexType, State
@@ -76,6 +76,11 @@ async def run(ctx) -> None:
 
         connection_name, connection = next(iter(Tortoise._connections.items()))
         schema_sql = get_schema_sql(connection, False)
+
+        if isinstance(config.database, PostgresDatabaseConfig) and config.database.schema_name:
+            await Tortoise._connections['default'].execute_script("CREATE SCHEMA IF NOT EXISTS {}".format(config.database.schema_name))
+            await Tortoise._connections['default'].execute_script("SET search_path TO {}".format(config.database.schema_name))
+
         # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
