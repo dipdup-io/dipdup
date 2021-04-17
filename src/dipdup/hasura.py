@@ -1,9 +1,9 @@
 import asyncio
 import importlib
-from importlib.metadata import metadata
 import json
 import logging
 from contextlib import suppress
+from importlib.metadata import metadata
 from typing import Any, Dict, List
 
 from aiohttp import ClientConnectorError, ClientOSError
