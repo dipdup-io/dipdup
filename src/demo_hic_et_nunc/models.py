@@ -19,7 +19,7 @@ class Holder(Model):
 class Token(Model):
     id = fields.BigIntField(pk=True)
     creator = fields.ForeignKeyField('models.Holder', 'tokens')
-    supply = fields.IntField()
+    supply = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
@@ -27,9 +27,9 @@ class Token(Model):
 class Swap(Model):
     id = fields.BigIntField(pk=True)
     creator = fields.ForeignKeyField('models.Holder', 'swaps')
-    price = fields.IntField()
-    amount = fields.IntField()
-    amount_left = fields.IntField()
+    price = fields.BigIntField()
+    amount = fields.BigIntField()
+    amount_left = fields.BigIntField()
     level = fields.BigIntField()
     status = fields.IntEnumField(SwapStatus)
     timestamp = fields.DatetimeField()

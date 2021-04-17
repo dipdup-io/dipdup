@@ -16,10 +16,10 @@ class Address(Model):
 
 
 class Token(Model):
-    id = fields.IntField(pk=True)
+    id = fields.BigIntField(pk=True)
     address = fields.CharField(59)
-    amount = fields.IntField()
-    level = fields.IntField()
+    amount = fields.BigIntField()
+    level = fields.BigIntField()
     timestamp = fields.DatetimeField()
     holder = fields.ForeignKeyField('models.Address', 'tokens')
 
@@ -28,14 +28,14 @@ class Token(Model):
 
 
 class Auction(Model):
-    id = fields.IntField(pk=True)
+    id = fields.BigIntField(pk=True)
     token = fields.ForeignKeyField('models.Token', 'auctions')
-    bid_amount = fields.IntField()
+    bid_amount = fields.BigIntField()
     bidder = fields.ForeignKeyField('models.Address', 'winning_auctions')
     seller = fields.ForeignKeyField('models.Address', 'created_auctions')
     end_timestamp = fields.DatetimeField()
     status = fields.IntEnumField(AuctionStatus)
-    level = fields.IntField()
+    level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
     class Meta:
@@ -43,9 +43,9 @@ class Auction(Model):
 
 
 class Bid(Model):
-    id = fields.IntField(pk=True)
+    id = fields.BigIntField(pk=True)
     auction = fields.ForeignKeyField('models.Auction', 'bids')
-    bid_amount = fields.IntField()
+    bid_amount = fields.BigIntField()
     bidder = fields.ForeignKeyField('models.Address', 'bids')
-    level = fields.IntField()
+    level = fields.BigIntField()
     timestamp = fields.DatetimeField()
