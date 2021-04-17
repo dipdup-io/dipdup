@@ -1,8 +1,6 @@
 import logging
-import os
-import sys
 
-from tortoise import Tortoise
+from dipdup.utils import reindex
 
 _logger = logging.getLogger(__name__)
 
@@ -12,5 +10,4 @@ async def on_rollback(
     to_level: int,
 ) -> None:
     _logger.warning('Rollback event received, reindexing')
-    await Tortoise._drop_databases()
-    os.execl(sys.executable, sys.executable, *sys.argv)
+    await reindex()

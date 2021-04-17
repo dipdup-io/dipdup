@@ -4,10 +4,9 @@ from unittest import IsolatedAsyncioTestCase
 
 from tortoise import Tortoise
 
-from dipdup.config import DipDupConfig
-from dipdup.utils import tortoise_wrapper
 from dipdup.config import ContractConfig, DipDupConfig, TzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.utils import tortoise_wrapper
 
 
 class ConfigTest(IsolatedAsyncioTestCase):

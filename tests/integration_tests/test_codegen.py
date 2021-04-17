@@ -30,8 +30,8 @@ def import_submodules(package, recursive=True):
 
 class CodegenTest(IsolatedAsyncioTestCase):
     async def test_codegen(self):
-        for name in ['dipdup.yml', 'dipdup-templated.yml']:
-            with self.subTest():
+        for name in ['hic_et_nunc.yml', 'quipuswap.yml', 'tzcolors.yml']:
+            with self.subTest(name):
                 config_path = join(dirname(__file__), name)
                 config = DipDupConfig.load(config_path)
                 config.package = 'tmp_test_dipdup'
@@ -44,7 +44,6 @@ class CodegenTest(IsolatedAsyncioTestCase):
                     await codegen.fetch_schemas(config)
                     await codegen.generate_types(config)
                     await codegen.generate_handlers(config)
-                    await codegen.generate_hasura_metadata(config)
                     await codegen.cleanup(config)
 
                     import_submodules(config.package)
