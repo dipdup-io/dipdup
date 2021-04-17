@@ -52,7 +52,7 @@ def _format_select_permissions(columns: List[str]) -> Dict[str, Any]:
     return {
         "role": "user",
         "permission": {
-            "columns": columns,
+            "columns": sorted(columns),
             "filter": {},
             "allow_aggregations": True,
         },
