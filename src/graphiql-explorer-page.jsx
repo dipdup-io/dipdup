@@ -4,10 +4,11 @@ import { buildClientSchema, getIntrospectionQuery, parse } from "graphql";
 import GraphiQL from "graphiql";
 import GraphiQLExplorer from "graphiql-explorer";
 import "graphiql/graphiql.css";
+import "./static/css/app.css"
 
 const fetcher = params => {
   return fetch(
-    `https://sandbox.dipdup.net/graphql`,
+    `https://demo.dipdup.net/v1/graphql`,
     {
       method: 'post',
       headers: {
