@@ -16,7 +16,7 @@ pip install dipdup
 {% endtab %}
 {% endtabs %}
 
-Check the installed dipdup version:
+Check that DipDup CLI has been successfully installed:
 
 ```text
 dipdup --version
@@ -24,7 +24,7 @@ dipdup --version
 
 ## Write config file
 
-Make new git repository and create `dipdup.yml` file in it. Here are the two obligatory fields your configuration has to start with:
+Create `dipdup.yml` file in your project. Here are the two required fields your configuration has to start with:
 
 ```yaml
 spec_version: 0.0.1
@@ -33,7 +33,7 @@ package: atomex
 
 ### Database connection
 
-DipDup supports 
+In this tutorial we will use the simplest DB engine supported — SQLite:
 
 ```yaml
 database:
@@ -41,9 +41,9 @@ database:
   path: atomex.sqlite3
 ```
 
-
-
 ### Contract address
+
+We will work with a single-contract dapp, and only with it's mainnet deployment:
 
 ```yaml
 contracts:
@@ -53,6 +53,8 @@ contracts:
 ```
 
 ### Data provider
+
+
 
 ```yaml
 datasources:
