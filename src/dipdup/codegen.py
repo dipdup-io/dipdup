@@ -1,4 +1,3 @@
-import importlib
 import json
 import logging
 import os
@@ -7,13 +6,13 @@ from contextlib import suppress
 from os import mkdir
 from os.path import basename, dirname, exists, join, splitext
 from shutil import rmtree
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from jinja2 import Template
-from tortoise import Model, fields
 
-from dipdup.config import ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig, PostgresDatabaseConfig, camel_to_snake, snake_to_camel
+from dipdup.config import ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.utils import camel_to_snake, snake_to_camel
 
 _logger = logging.getLogger(__name__)
 

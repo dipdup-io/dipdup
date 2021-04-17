@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -7,6 +8,15 @@ import aiohttp
 from tortoise import Tortoise
 
 from dipdup import __version__
+
+
+def snake_to_camel(value: str) -> str:
+    return ''.join(map(lambda x: x[0].upper() + x[1:], value.split('_')))
+
+
+def camel_to_snake(name):
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 
 @asynccontextmanager

@@ -11,31 +11,21 @@ from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 from urllib.parse import urlparse
 
-from pydantic import Field, validator
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
-from tortoise import Tortoise
 from typing_extensions import Literal
 
 from dipdup.exceptions import ConfigurationError
 from dipdup.models import IndexType, State
-from dipdup.utils import reindex
+from dipdup.utils import camel_to_snake, reindex, snake_to_camel
 
 ROLLBACK_HANDLER = 'on_rollback'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
 sys.path.append(os.getcwd())
 _logger = logging.getLogger(__name__)
-
-
-def snake_to_camel(value: str) -> str:
-    return ''.join(map(lambda x: x[0].upper() + x[1:], value.split('_')))
-
-
-def camel_to_snake(name):
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 
 @dataclass
@@ -50,7 +40,7 @@ class SqliteDatabaseConfig:
     path: str = ':memory:'
 
     @property
-    def connection_string(self):
+    def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
 
 
@@ -73,7 +63,7 @@ class MySQLDatabaseConfig:
     password: str = ''
 
     @property
-    def connection_string(self):
+    def connection_string(self) -> str:
         return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
 
 
@@ -98,7 +88,7 @@ class PostgresDatabaseConfig:
     password: str = ''
 
     @property
-    def connection_string(self):
+    def connection_string(self) -> str:
         return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}'
 
 
@@ -156,7 +146,6 @@ class OperationHandlerPatternConfig:
 
     :param destination: Alias of the contract to match
     :param entrypoint: Contract entrypoint
-    :
     """
 
     destination: Union[str, ContractConfig]
@@ -348,6 +337,13 @@ class HasuraConfig:
     url: str
     admin_secret: Optional[str] = None
 
+    @validator('url')
+    def valid_url(cls, v):
+        parsed_url = urlparse(v)
+        if not (parsed_url.scheme and parsed_url.netloc):
+            raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
+        return v
+
 
 @dataclass
 class DipDupConfig:
@@ -355,10 +351,12 @@ class DipDupConfig:
 
     :param spec_version: Version of specification, always 0.0.1 for now
     :param package: Name of dapp python package, existing or not
-    :param database: Database config
     :param contracts: Mapping of contract aliases and contract configs
     :param datasources: Mapping of datasource aliases and datasource configs
     :param indexes: Mapping of index aliases and index configs
+    :param templates: Mapping of template aliases and index templates
+    :param database: Database config
+    :param hasura: Hasura config
     """
 
     spec_version: str
