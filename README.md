@@ -227,19 +227,21 @@ Template values mapping could be accessed from within handlers at `ctx.template_
 
 ### Optional: configure Hasura GraphQL Engine
 
-`init` command generates Hasura metadata JSON in the package root. You can use `configure-graphql` command to apply it to the running GraphQL Engine instance:
+When using PostgreSQL as a storage solution you can use Hasura integration to get GraphQL API out-of-the-box. Add the following section to your config, Hasura will be configured automatically when you run your indexer.
 
-```shell
-$ dipdup -c config.yml configure-graphql --url http://127.0.0.1:8080 --admin-secret changeme
+```yaml
+hasura:
+  url: http://hasura:8080
+  admin_secret: changeme
 ```
 
-Or if using included `docker-compose.yml` example:
+When using included docker-compose example make sure you run Hasura first:
 
 ```shell
-$ docker-compose up -d graphql-engine
-$ docker-compose up configure-graphql
+$ docker-compose up -d hasura
 ```
 
+Then run your indexer and navigate to `127.0.0.1:8080`.
 
 ### Optional: configure logging
 
