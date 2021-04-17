@@ -65,7 +65,7 @@ class TzktDatasource:
 
     def add_index(self, config: Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]):
         if isinstance(config, OperationIndexConfig):
-            self._logger.info(f'Adding index "{config.state.index_name}"')
+            self._logger.info('Adding index `%s`', config.state.index_name)
             self._operation_index_configs[config.contract_config.address] = config
             self._sync_events[config.state.index_name] = asyncio.Event()
             self._caches[config.contract_config.address] = OperationCache(config, config.state.level)
@@ -272,7 +272,7 @@ class TzktDatasource:
                         await index_config.state.save()
 
             elif message_type == TzktMessageType.REORG:
-                self._logger.info(f'Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
+                self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
                 from_level = self._operation_index_configs[address].state.level
                 to_level = item['state']
                 await self._operation_index_configs[address].rollback_fn(from_level, to_level)

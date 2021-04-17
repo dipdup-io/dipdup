@@ -20,6 +20,7 @@ from typing_extensions import Literal
 
 from dipdup.exceptions import ConfigurationError
 from dipdup.models import IndexType, State
+from dipdup.utils import reindex
 
 ROLLBACK_HANDLER = 'on_rollback'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
@@ -61,7 +62,7 @@ class MySQLDatabaseConfig:
     :param port: Port
     :param user: User
     :param password: Password
-    :param database: Schema name
+    :param database: Database name
     """
 
     kind: Literal['mysql']
@@ -84,7 +85,8 @@ class PostgresDatabaseConfig:
     :param port: Port
     :param user: User
     :param password: Password
-    :param database: Schema name
+    :param database: Database name
+    :param schema_name: Schema name
     """
 
     kind: Literal['postgres']
@@ -468,8 +470,7 @@ class DipDupConfig:
 
                 elif state.hash != index_hash:
                     _logger.warning('Config hash mismatch, reindexing')
-                    await Tortoise._drop_databases()
-                    os.execl(sys.executable, sys.executable, *sys.argv)
+                    await reindex()
 
                 index_config.state = state
 

@@ -1,3 +1,5 @@
+import os
+import sys
 from contextlib import asynccontextmanager
 from typing import Optional
 
@@ -35,3 +37,8 @@ async def http_request(method: str, **kwargs):
             **kwargs,
         ) as response:
             yield response
+
+
+async def reindex():
+    await Tortoise._drop_databases()  # pylint: disable=protected-access
+    os.execl(sys.executable, sys.executable, *sys.argv)

@@ -19,7 +19,7 @@ from dipdup.config import DipDupConfig, IndexTemplateConfig, LoggingConfig, Tzkt
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.hasura import configure_hasura
 from dipdup.models import IndexType, State
-from dipdup.utils import tortoise_wrapper
+from dipdup.utils import reindex, tortoise_wrapper
 
 _logger = logging.getLogger(__name__)
 
@@ -91,8 +91,7 @@ async def run(ctx) -> None:
             await schema_state.save()
         elif schema_state.hash != schema_hash:
             _logger.warning('Schema hash mismatch, reindexing')
-            await Tortoise._drop_databases()
-            os.execl(sys.executable, sys.executable, *sys.argv)
+            await reindex()
 
         await config.initialize()
 

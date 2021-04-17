@@ -3,8 +3,7 @@ import importlib
 import json
 import logging
 from contextlib import suppress
-from os.path import join
-from typing import List
+from typing import Any, Dict, List
 
 from aiohttp import ClientConnectorError, ClientOSError
 from tortoise import Model, fields
@@ -16,7 +15,16 @@ from dipdup.utils import http_request
 _logger = logging.getLogger(__name__)
 
 
-def _format_array_relationship(related_name: str, table: str, column: str, schema: str = 'public'):
+def _is_model_class(obj) -> bool:
+    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model
+
+
+def _format_array_relationship(
+    related_name: str,
+    table: str,
+    column: str,
+    schema: str = 'public',
+) -> Dict[str, Any]:
     return {
         "name": related_name,
         "using": {
@@ -31,7 +39,7 @@ def _format_array_relationship(related_name: str, table: str, column: str, schem
     }
 
 
-def _format_object_relationship(name: str, column: str):
+def _format_object_relationship(name: str, column: str) -> Dict[str, Any]:
     return {
         "name": name,
         "using": {
@@ -40,7 +48,7 @@ def _format_object_relationship(name: str, column: str):
     }
 
 
-def _format_select_permissions(columns: List[str]):
+def _format_select_permissions(columns: List[str]) -> Dict[str, Any]:
     return {
         "role": "user",
         "permission": {
@@ -51,7 +59,7 @@ def _format_select_permissions(columns: List[str]):
     }
 
 
-def _format_table(name: str, schema: str = 'public'):
+def _format_table(name: str, schema: str = 'public') -> Dict[str, Any]:
     return {
         "table": {
             "schema": schema,
@@ -63,14 +71,14 @@ def _format_table(name: str, schema: str = 'public'):
     }
 
 
-def _format_metadata(tables):
+def _format_metadata(tables: List[Dict[str, Any]]) -> Dict[str, Any]:
     return {
         "version": 2,
         "tables": tables,
     }
 
 
-async def generate_hasura_metadata(config: DipDupConfig):
+async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
     _logger.info('Generating Hasura metadata')
     metadata_tables = {}
     model_tables = {}
@@ -78,19 +86,20 @@ async def generate_hasura_metadata(config: DipDupConfig):
 
     for attr in dir(models):
         model = getattr(models, attr)
-        if isinstance(model, type) and issubclass(model, Model) and model != Model:
+        if _is_model_class(model):
 
-            table_name = model._meta.db_table or camel_to_snake(model.__name__)
+            table_name = model._meta.db_table or camel_to_snake(model.__name__)  # pylint: disable=protected-access
             model_tables[f'models.{model.__name__}'] = table_name
 
             table = _format_table(
-                name=table_name, schema=config.database.schema_name if isinstance(config.database, PostgresDatabaseConfig) else 'public'
+                name=table_name,
+                schema=config.database.schema_name if isinstance(config.database, PostgresDatabaseConfig) else 'public',
             )
             metadata_tables[table_name] = table
 
     for attr in dir(models):
         model = getattr(models, attr)
-        if isinstance(model, type) and issubclass(model, Model) and model != Model:
+        if _is_model_class(model):
             table_name = model_tables[f'models.{model.__name__}']
 
             metadata_tables[table_name]['select_permissions'].append(
