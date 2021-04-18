@@ -178,9 +178,8 @@ Use `docker-compose.yml` included in this repo if you prefer to run dipdup in Do
 
 ```shell
 $ docker-compose build
-$ cp secrets.env.example secrets.env
-$ # edit `secrets.env` file, change credentials
-$ docker-compose up dipdup
+$ # example target, edit volumes section to change dipdup config
+$ docker-compose up hic_et_nunc
 ```
 
 For debugging purposes you can index specific block range only and skip realtime indexing. To do this set `first_block` and `last_block` fields in index config.

@@ -10,3 +10,5 @@ tests
 *.ipynb
 *.json
 *.zip
+docker-compose.yml
+Dockerfile
