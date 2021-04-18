@@ -1,0 +1,52 @@
+spec_version: 0.0.1
+package: demo_tezos_domains
+
+database:
+  kind: sqlite
+  path: tezos_domains.sqlite3
+
+contracts:
+  edo_tld_registrar_buy:
+    address: KT19SXU8zDaWyiE3WSJgGRJ2xKSsNpFWJoe7
+    typename: tld_registrar_buy
+
+  edo_name_registry:
+    address: KT1JJbWfW8CHUY95hG9iq2CEMma1RiKhMHDR
+    typename: name_registry
+
+  edo_tld_registrar:
+    address: KT1A84aNsVCG7EsZyKHSyqZacVVSN1zcQzS7
+    typename: tld_registrar
+
+datasources:
+  tzkt_staging_edo:
+    kind: tzkt
+    url: ${TZKT_URL:-https://staging.api.edo2net.tzkt.io}
+
+templates:
+
+  tezos_domains:
+    kind: operation
+    datasource: <datasource>
+    contracts:
+    - <tld_registrar_buy>
+    - <tld_registrar>
+    handlers:
+      - callback: on_buy
+        pattern:
+          - destination: <tld_registrar_buy>
+            entrypoint: buy
+          - destination: <tld_registrar>
+            entrypoint: execute
+          - destination: <name_registry>
+            entrypoint: execute
+
+indexes:
+
+  tezos_domains_edo:
+    template: tezos_domains
+    values:
+      datasource: tzkt_staging_edo
+      name_registry: edo_name_registry
+      tld_registrar: edo_tld_registrar
+      tld_registrar_buy: edo_tld_registrar_buy
