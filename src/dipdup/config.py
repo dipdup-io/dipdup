@@ -8,7 +8,7 @@ import sys
 from collections import defaultdict
 from os import environ as env
 from os.path import dirname
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import validator
@@ -219,7 +219,7 @@ class OperationIndexConfig:
 
     kind: Literal["operation"]
     datasource: Union[str, TzktDatasourceConfig]
-    contract: Union[str, ContractConfig]
+    contracts: List[Union[str, ContractConfig]]
     handlers: List[OperationHandlerConfig]
     first_block: int = 0
     last_block: int = 0
@@ -244,9 +244,11 @@ class OperationIndexConfig:
         return self.datasource
 
     @property
-    def contract_config(self) -> ContractConfig:
-        assert isinstance(self.contract, ContractConfig)
-        return self.contract
+    def contract_configs(self) -> List[ContractConfig]:
+        for contract in self.contracts:
+            if not isinstance(contract, ContractConfig):
+                raise RuntimeError('Config is not initialized')
+        return cast(List[ContractConfig], self.contracts)
 
     @property
     def state(self):
@@ -293,7 +295,7 @@ class BigmapdiffHandlerConfig:
 class BigmapdiffIndexConfig:
     kind: Literal['bigmapdiff']
     datasource: Union[str, TzktDatasourceConfig]
-    contract: Union[str, ContractConfig]
+    contracts: List[Union[str, ContractConfig]]
     handlers: List[BigmapdiffHandlerConfig]
 
     @property
@@ -388,8 +390,10 @@ class DipDupConfig:
             if isinstance(index_config, OperationIndexConfig):
                 if isinstance(index_config.datasource, str):
                     index_config.datasource = self.datasources[index_config.datasource]
-                if isinstance(index_config.contract, str):
-                    index_config.contract = self.contracts[index_config.contract]
+
+                for i, contract in enumerate(index_config.contracts):
+                    if isinstance(contract, str):
+                        index_config.contracts[i] = self.contracts[contract]
 
                 for handler in index_config.handlers:
                     if isinstance(handler.pattern, list):

@@ -29,7 +29,8 @@ templates:
   registry_dao:
     kind: operation
     datasource: tzkt
-    contract: <contract>
+    contracts:
+      - <contract>
     handlers:
       - callback: on_propose
         pattern:

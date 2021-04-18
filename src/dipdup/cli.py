@@ -2,7 +2,6 @@ import asyncio
 import hashlib
 import logging
 import os
-import sys
 from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
@@ -63,7 +62,7 @@ async def cli(ctx, config: str, logging_config: str):
     )
 
 
-@cli.command(help='Run dipdap')
+@cli.command(help='Run existing dipdup project')
 @click.pass_context
 @click_async
 async def run(ctx) -> None:
@@ -109,7 +108,7 @@ async def run(ctx) -> None:
             if isinstance(index_config.datasource, TzktDatasourceConfig):
                 if index_config.tzkt_config not in datasources:
                     datasources[index_config.tzkt_config] = TzktDatasource(index_config.tzkt_config.url)
-                datasources[index_config.tzkt_config].add_index(index_config)
+                datasources[index_config.tzkt_config].add_index(index_name, index_config)
             else:
                 raise NotImplementedError(f'Datasource `{index_config.datasource}` is not supported')
 
@@ -123,7 +122,7 @@ async def run(ctx) -> None:
         await asyncio.gather(*run_tasks)
 
 
-@cli.command(help='Initialize new dipdap')
+@cli.command(help='Initialize new dipdup project')
 @click.pass_context
 @click_async
 async def init(ctx):

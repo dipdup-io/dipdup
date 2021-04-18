@@ -34,7 +34,8 @@ templates:
   quipuswap_fa12:
     kind: operation
     datasource: tzkt_staging_mainnet
-    contract: <dex_contract>
+    contracts:
+      - <dex_contract>
     handlers:
       - callback: on_fa12_token_to_tez
         pattern:
@@ -64,7 +65,8 @@ templates:
   quipuswap_fa2:
     kind: operation
     datasource: tzkt_staging_mainnet
-    contract: <dex_contract>
+    contracts:
+      - <dex_contract>
     handlers:
       - callback: on_fa2_token_to_tez
         pattern:

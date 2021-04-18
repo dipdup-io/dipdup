@@ -183,7 +183,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         self.index_config = OperationIndexConfig(
             kind='operation',
             datasource='tzkt',
-            contract=ContractConfig(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
+            contracts=[ContractConfig(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9')],
             handlers=[
                 OperationHandlerConfig(
                     callback='',
@@ -198,7 +198,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         self.index_config.state = State(index_name='test', index_type=IndexType.operation, hash='')
         self.index_config.handlers[0].pattern[0].parameter_type_cls = Collect
         self.datasource = TzktDatasource('tzkt.test')
-        self.datasource.add_index(self.index_config)
+        self.datasource.add_index('test', self.index_config)
 
     async def test_convert_operation(self):
         with open(join(dirname(__file__), 'operations.json')) as file:
@@ -227,7 +227,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             await self.datasource.start()
 
         fetch_operations_mock.assert_awaited_with(1337, initial=True)
-        self.assertEqual({self.index_config.contract: ['transaction']}, self.datasource._subscriptions)
+        self.assertEqual({self.index_config.contracts[0].address: ['transaction']}, self.datasource._subscriptions)
         client.start.assert_awaited()
 
     async def test_on_connect_subscribe_to_operations(self):
@@ -236,20 +236,20 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         client.send = send_mock
         client.transport.state = ConnectionState.connected
         self.datasource._subscriptions = {
-            self.index_config.contract: ['transaction'],
+            self.index_config.contracts[0].address: ['transaction'],
         }
 
         await self.datasource.on_connect()
 
         send_mock.assert_has_awaits(
             [
-                call('SubscribeToOperations', [{'address': self.index_config.contract.address, 'types': 'transaction'}]),
+                call('SubscribeToOperations', [{'address': self.index_config.contracts[0].address, 'types': 'transaction'}]),
             ]
         )
         self.assertEqual(1, len(client.handlers))
 
     async def test_on_fetch_operations(self):
-        self.datasource._subscriptions = {self.index_config.contract.address: ['transaction']}
+        self.datasource._subscriptions = {self.index_config.contracts[0].address: ['transaction']}
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
             del operations_message['state']
@@ -265,7 +265,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             await self.datasource.fetch_operations(1337)
 
         on_operation_message_mock.assert_awaited_with(
-            address=self.index_config.contract.address,
+            index_config=self.index_config,
             message=[operations_message],
             sync=True,
         )
@@ -274,7 +274,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         fetch_operations_mock = AsyncMock()
         self.datasource.fetch_operations = fetch_operations_mock
 
-        await self.datasource.on_operation_message([{'type': 0, 'state': 123}], self.index_config.contract.address)
+        await self.datasource.on_operation_message([{'type': 0, 'state': 123}], self.index_config)
         fetch_operations_mock.assert_awaited_with(123)
 
     async def test_on_operation_message_data(self):
@@ -289,7 +289,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
 
-            await self.datasource.on_operation_message([operations_message], self.index_config.contract.address, sync=True)
+            await self.datasource.on_operation_message([operations_message], self.index_config, sync=True)
 
             on_operation_match_mock.assert_awaited_with(
                 self.index_config,
