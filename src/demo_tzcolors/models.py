@@ -9,7 +9,7 @@ class AuctionStatus(IntEnum):
 
 
 class Address(Model):
-    address = fields.CharField(59, pk=True)
+    address = fields.CharField(36, pk=True)
 
     class Meta:
         table = 'addresses'
@@ -17,7 +17,7 @@ class Address(Model):
 
 class Token(Model):
     id = fields.BigIntField(pk=True)
-    address = fields.CharField(59)
+    address = fields.CharField(36)
     amount = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()

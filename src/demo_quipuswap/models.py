@@ -9,7 +9,7 @@ class TradeSide(IntEnum):
 
 
 class Trader(Model):
-    address = fields.CharField(58, pk=True)
+    address = fields.CharField(36, pk=True)
 
 
 class Instrument(Model):

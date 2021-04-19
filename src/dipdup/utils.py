@@ -7,6 +7,8 @@ from typing import Optional
 
 import aiohttp
 from tortoise import Tortoise
+from tortoise.backends.asyncpg.client import AsyncpgDBClient
+from tortoise.transactions import in_transaction
 
 from dipdup import __version__
 
@@ -57,5 +59,19 @@ async def http_request(method: str, **kwargs):
 
 
 async def reindex():
-    await Tortoise._drop_databases()  # pylint: disable=protected-access
+    if isinstance(Tortoise._connections['default'], AsyncpgDBClient):
+        async with in_transaction() as conn:
+            await conn.execute_script(
+                '''
+                DO $$ DECLARE
+                    r RECORD;
+                BEGIN
+                    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
+                        EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+                    END LOOP;
+                END $$;
+                '''
+            )
+    else:
+        await Tortoise._drop_databases()
     os.execl(sys.executable, sys.executable, *sys.argv)

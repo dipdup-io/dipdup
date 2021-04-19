@@ -35,7 +35,7 @@ services:
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
 
   db:
-    image: postgres
+    image: postgres:13
     restart: always
     volumes:
       - db:/var/lib/postgres/data
@@ -62,6 +62,7 @@ services:
       - HASURA_GRAPHQL_DEV_MODE=true
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
       - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+      - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
   
 volumes:
   db:

@@ -2,7 +2,7 @@ from tortoise import Model, fields
 
 
 class Address(Model):
-    address = fields.CharField(58, pk=True)
+    address = fields.CharField(36, pk=True)
     balance = fields.IntField()
 
     class Meta:
