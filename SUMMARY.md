@@ -1,19 +1,17 @@
 # Table of contents
 
 * [Quick start](README.md)
-* [Code generation](codegen.md)
-* [Execution](execution.md)
-* [API engines](api-engines.md)
-* [Logging](logging.md)
-* [Command-line reference](command-line.md)
-
-## Config file reference <a id="configuration-file-reference"></a>
-
-* [Get started](configuration-file-reference/get-started.md)
-* [Database](configuration-file-reference/database.md)
-* [Contracts](configuration-file-reference/contracts.md)
-* [Datasources](configuration-file-reference/datasources.md)
-* [Indexes](configuration-file-reference/indexes/README.md)
-  * [Operation](configuration-file-reference/indexes/operation.md)
-* [Templates](configuration-file-reference/templates.md)
+* [Config file reference](config-file-reference/README.md)
+  * [database](config-file-reference/database.md)
+  * [contracts](config-file-reference/contracts.md)
+  * [datasources](config-file-reference/datasources.md)
+  * [indexes](config-file-reference/indexes.md)
+  * [templates](config-file-reference/templates.md)
+  * [hasura](config-file-reference/hasura.md)
+* [Command-line reference](command-line/README.md)
+  * [dipdup init](command-line/dipdup-init.md)
+  * [dipdup run](command-line/dipdup-run.md)
+* [Deploying](deploying/README.md)
+  * [Hasura](deploying/hasura/README.md)
+    * [Docker](deploying/hasura/docker.md)
 

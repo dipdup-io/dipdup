@@ -54,7 +54,7 @@ contracts:
 
 ### Data provider
 
-
+DipDup currently supports only [TzKT ](http://api.tzkt.io/)data provider.
 
 ```yaml
 datasources:
@@ -64,6 +64,8 @@ datasources:
 ```
 
 ### Index patterns
+
+We want to
 
 ```yaml
 indexes:
@@ -80,10 +82,6 @@ indexes:
         pattern:
           - destination: atomex_mainnet
             entrypoint: redeem
-      - callback: on_refund
-        pattern:
-          - destination: atomex_mainnet
-            entrypoint: refund
 ```
 
 ## Generate types
@@ -96,11 +94,19 @@ dipdup init
 
 ## Define data models
 
+{% tabs %}
+{% tab title="Python" %}
 
+{% endtab %}
+{% endtabs %}
 
 ## Implement handlers
 
+{% tabs %}
+{% tab title="Python" %}
 
+{% endtab %}
+{% endtabs %}
 
 ## Run your indexer
 
