@@ -79,12 +79,12 @@
             "errors": null,
             "hasInternals": false,
             "parameters": "{\"entrypoint\":\"propose\",\"value\":{\"prim\":\"Pair\",\"args\":[{\"int\":\"10\"},{\"prim\":\"Left\",\"args\":[{\"prim\":\"Pair\",\"args\":[{\"int\":\"0\"},[{\"prim\":\"Pair\",\"args\":[{\"bytes\":\"\"},{\"prim\":\"Some\",\"args\":[{\"bytes\":\"6672\"}]}]}]]}]}]}}",
-            "bigmaps": [
+            "diffs": [
                 {
                     "bigmap": 36371,
                     "path": "proposals",
                     "action": "add_key",
-                    "key": {
+                    "content": {
                         "hash": "exprtrENeWqsFnt4E4mFvnonvhrhU3jKTuaFXiufCK45XwdgnP7D6p",
                         "key": "e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9",
                         "value": {
@@ -112,7 +112,7 @@
                     "bigmap": 36368,
                     "path": "ledger",
                     "action": "update_key",
-                    "key": {
+                    "content": {
                         "hash": "expruVX2dr7XzPeZwyNsKwVcf88r2FfUrTNHewFZWkDtfPyoHkzrdf",
                         "key": {
                             "nat": "0",
@@ -125,7 +125,7 @@
                     "bigmap": 36368,
                     "path": "ledger",
                     "action": "update_key",
-                    "key": {
+                    "content": {
                         "hash": "exprtjvuiPChDAAipwbGtmwZDA8JcEQ6y4pu2qTy93fpPJFtDkZFap",
                         "key": {
                             "nat": "1",

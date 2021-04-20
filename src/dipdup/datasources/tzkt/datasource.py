@@ -45,7 +45,7 @@ OPERATION_FIELDS = (
     "hasInternals",
     # "quote",
     "parameters",
-    "bigmaps,",
+    "diffs,",
 )
 
 OperationIndexName = str
@@ -386,7 +386,7 @@ class TzktDatasource:
             initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
             parameter=operation_json.get('parameters'),
             storage=storage,
-            bigmaps=operation_json.get('bigmaps'),
+            diffs=operation_json.get('diffs'),
         )
 
     async def get_latest_block(self) -> Dict[str, Any]:

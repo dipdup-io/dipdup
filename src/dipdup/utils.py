@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import re
 import sys
@@ -7,8 +8,12 @@ from typing import Optional
 
 import aiohttp
 from tortoise import Tortoise
+from tortoise.backends.asyncpg.client import AsyncpgDBClient
+from tortoise.transactions import in_transaction
 
 from dipdup import __version__
+
+_logger = logging.getLogger(__name__)
 
 
 def snake_to_camel(value: str) -> str:
@@ -53,9 +58,25 @@ async def http_request(method: str, **kwargs):
             headers=headers,
             **kwargs,
         ) as response:
+            request_string = kwargs['url'] + '?' + '&'.join([f'{key}={value}' for key, value in kwargs.get('params', {}).items()])
+            _logger.debug('Calling `%s`', request_string)
             yield response
 
 
 async def reindex():
-    await Tortoise._drop_databases()  # pylint: disable=protected-access
+    if isinstance(Tortoise._connections['default'], AsyncpgDBClient):
+        async with in_transaction() as conn:
+            await conn.execute_script(
+                '''
+                DO $$ DECLARE
+                    r RECORD;
+                BEGIN
+                    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
+                        EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+                    END LOOP;
+                END $$;
+                '''
+            )
+    else:
+        await Tortoise._drop_databases()
     os.execl(sys.executable, sys.executable, *sys.argv)
