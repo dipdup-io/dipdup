@@ -9,7 +9,7 @@ async def on_bid(
     bid: OperationContext[Bid],
     registrar_execute: OperationContext[RegistrarExecute],
 ) -> None:
-
+    assert registrar_execute.storage
     bidder, _ = await models.Address.get_or_create(address=bid.data.sender_address)
     label = bid.parameter.label
     ownership_period = registrar_execute.storage.store.auctions[label].ownership_period

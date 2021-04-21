@@ -65,7 +65,7 @@ async def fetch_schemas(config: DipDupConfig):
                     storage_schema = address_schemas_json['storageSchema']
                     if not exists(storage_schema_path):
                         with open(storage_schema_path, 'w') as file:
-                            file.write(json.dumps(storage_schema, indent=4))
+                            file.write(json.dumps(storage_schema, indent=4, sort_keys=True))
 
                     parameter_schemas_path = join(contract_schemas_path, 'parameter')
                     with suppress(FileExistsError):
@@ -78,12 +78,14 @@ async def fetch_schemas(config: DipDupConfig):
 
                     if not exists(entrypoint_schema_path):
                         with open(entrypoint_schema_path, 'w') as file:
-                            file.write(json.dumps(entrypoint_schema, indent=4))
+                            file.write(json.dumps(entrypoint_schema, indent=4, sort_keys=True))
                     elif contract.typename is not None:
                         with open(entrypoint_schema_path, 'r') as file:
                             existing_schema = json.loads(file.read())
                         if entrypoint_schema != existing_schema:
-                            raise ValueError(f'Contract "{contract.address}" falsely claims to be a "{contract.typename}"')
+                            # FIXME: Different field order counts as different schema
+                            # raise ValueError(f'Contract "{contract.address}" falsely claims to be a "{contract.typename}"')
+                            _logger.warning('Contract "%s" falsely claims to be a "%s"', contract.address, contract.typename)
 
 
 async def generate_types(config: DipDupConfig):

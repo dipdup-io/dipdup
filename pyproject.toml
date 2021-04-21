@@ -29,8 +29,8 @@ asyncpg = "^0.22.0"
 tortoise-orm = "^0.17.1"
 pydantic = "^1.8.1"
 aiosignalrcore = "^0.9.2"
-datamodel-code-generator = {git = "https://github.com/koxudaxi/datamodel-code-generator.git"}
 typing-inspect = "^0.6.0"
+datamodel-code-generator = "^0.11.0"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
