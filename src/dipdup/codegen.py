@@ -73,7 +73,7 @@ async def fetch_schemas(config: DipDupConfig):
                     storage_schema_path = join(contract_schemas_path, 'storage.json')
 
                     storage_schema = address_schemas_json['storageSchema']
-                    preprocess_storage_schema(storage_schema)
+                    # preprocess_storage_schema(storage_schema)
                     if not exists(storage_schema_path):
                         with open(storage_schema_path, 'w') as file:
                             file.write(json.dumps(storage_schema, indent=4))

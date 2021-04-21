@@ -5,79 +5,35 @@ from __future__ import annotations
 
 from typing import Dict, List, Union
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 
 
-class Actions(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
-class Auction(BaseModel):
-    pass
-
-    class Config:
-        extra = Extra.allow
+class Auctions(BaseModel):
+    ends_at: str
+    last_bid: str
+    last_bidder: str
+    ownership_period: str
 
 
-class BidderBalance(BaseModel):
-    pass
-
-    class Config:
-        extra = Extra.allow
-
-
-class Commitment(BaseModel):
-    pass
-
-    class Config:
-        extra = Extra.allow
-
-
-class Config(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
-class Datum(BaseModel):
-    pass
-
-    class Config:
-        extra = Extra.allow
-
-
-class Metadatum(BaseModel):
-    pass
-
-    class Config:
-        extra = Extra.allow
-
-
-class Record(BaseModel):
-    pass
-
-    class Config:
-        extra = Extra.allow
+class Records(BaseModel):
+    expiry: str
+    internal_data: Dict[str, str]
 
 
 class Store(BaseModel):
-    auctions: Union[int, Auction]
-    bidder_balances: Union[int, BidderBalance]
-    commitments: Union[int, Commitment]
-    config: Dict[str, Config]
-    data: Union[int, Datum]
-    metadata: Union[int, Metadatum]
+    auctions: Union[int, Dict[str, Auctions]]
+    bidder_balances: Union[int, Dict[str, str]]
+    commitments: Union[int, Dict[str, str]]
+    config: Dict[str, str]
+    data: Union[int, Dict[str, str]]
+    metadata: Union[int, Dict[str, str]]
     name_registry: str
     owner: str
-    records: Union[int, Record]
+    records: Union[int, Dict[str, Records]]
     tld: str
 
 
 class Storage(BaseModel):
-    actions: Dict[str, Actions]
+    actions: Union[int, Dict[str, str]]
     store: Store
     trusted_senders: List[str]

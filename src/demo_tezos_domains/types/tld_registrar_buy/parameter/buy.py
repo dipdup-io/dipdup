@@ -5,14 +5,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
-from pydantic import BaseModel, Extra
-
-
-class Data(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
+from pydantic import BaseModel
 
 
 class Buy(BaseModel):
@@ -20,5 +13,5 @@ class Buy(BaseModel):
     duration: str
     owner: str
     address: Optional[str]
-    data: Dict[str, Data]
+    data: Dict[str, str]
     nonce: str
