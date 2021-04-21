@@ -21,7 +21,7 @@ async def on_buy(
     name = bytearray.fromhex(buy.parameter.label).decode()
     record = list(registry_execute.storage.store.records.keys())[0]
     qualname = bytearray.fromhex(record).decode()
-    expires_at = getattr(registry_execute.storage.store.expiry_map, record)
+    expires_at = registry_execute.storage.store.expiry_map[record]
     token = list(registry_execute.storage.store.tzip12_tokens.keys())[0]
     domain = models.Domain(
         label=buy.parameter.label,

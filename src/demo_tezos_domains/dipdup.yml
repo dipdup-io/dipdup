@@ -9,13 +9,27 @@ contracts:
   edo_tld_registrar_buy:
     address: KT19SXU8zDaWyiE3WSJgGRJ2xKSsNpFWJoe7
     typename: tld_registrar_buy
-
+  edo_tld_registrar_bid:
+    address: KT1VqYtb17QiyBseTshwEAoowyy6FYDHniX1
+    typename: tld_registrar_bid
   edo_name_registry:
     address: KT1JJbWfW8CHUY95hG9iq2CEMma1RiKhMHDR
     typename: name_registry
-
   edo_tld_registrar:
     address: KT1A84aNsVCG7EsZyKHSyqZacVVSN1zcQzS7
+    typename: tld_registrar
+
+  mainnet_tld_registrar_buy:
+    address: KT191reDVKrLxU9rjTSxg53wRqj6zh8pnHgr
+    typename: tld_registrar_buy
+  mainnet_tld_registrar_bid:
+    address: KT1CaSP4dn8wasbMsfdtGiCPgYFW7bvnPRRT
+    typename: tld_registrar_bid
+  mainnet_name_registry:
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
+    typename: name_registry
+  mainnet_tld_registrar:
+    address: KT1Mqx5meQbhufngJnUAGEGpa4ZRxhPSiCgB
     typename: tld_registrar
 
 datasources:
@@ -23,15 +37,27 @@ datasources:
     kind: tzkt
     url: ${TZKT_URL:-https://staging.api.edo2net.tzkt.io}
 
+  tzkt_staging_mainnet:
+    kind: tzkt
+    url: ${TZKT_URL:-https://staging.api.tzkt.io}
+
 templates:
 
   tezos_domains:
     kind: operation
     datasource: <datasource>
     contracts:
+    - <tld_registrar_bid>
     - <tld_registrar_buy>
     - <tld_registrar>
     handlers:
+      - callback: on_bid
+        pattern:
+          - destination: <tld_registrar_bid>
+            entrypoint: bid
+          - destination: <tld_registrar>
+            entrypoint: execute
+
       - callback: on_buy
         pattern:
           - destination: <tld_registrar_buy>
@@ -50,3 +76,13 @@ indexes:
       name_registry: edo_name_registry
       tld_registrar: edo_tld_registrar
       tld_registrar_buy: edo_tld_registrar_buy
+      tld_registrar_bid: edo_tld_registrar_bid
+
+  tezos_domains_mainned:
+    template: tezos_domains
+    values:
+      datasource: tzkt_staging_mainnet
+      name_registry: mainnet_name_registry
+      tld_registrar: mainnet_tld_registrar
+      tld_registrar_buy: mainnet_tld_registrar_buy
+      tld_registrar_bid: mainnet_tld_registrar_bid
