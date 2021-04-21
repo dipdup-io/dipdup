@@ -2,11 +2,12 @@ import logging
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, get_origin
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
+from typing_inspect import get_args  # type: ignore
 
 ParameterType = TypeVar('ParameterType')
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -93,7 +94,8 @@ class OperationData:
             # NOTE: TzKT could return bigmaps as object or as array of key-value objects. We need to guess this from storage.
             # TODO: This code should be a part of datasource module.
             if field.type_ not in (int, bool) and isinstance(storage[key], int):
-                if hasattr(field.type_, '__fields__') and 'key' in field.type_.__fields__ and 'value' in field.type_.__fields__:
+                _logger.debug(field.type_)
+                if get_origin(get_args(field.type_)[1]) == list:
                     storage[key] = []
                     if self.diffs:
                         self._merge_bigmapdiffs(storage, bigmap_name, array=True)

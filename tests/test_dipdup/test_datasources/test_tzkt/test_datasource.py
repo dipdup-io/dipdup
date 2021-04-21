@@ -1,181 +1,19 @@
 import json
 from os.path import dirname, join
-from typing import Any, Dict, List, Optional, Union
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
-from pydantic import BaseModel, Extra
 from tortoise import Tortoise
 
+from demo_hic_et_nunc.types.hen_minter.parameter.collect import Collect
+from demo_registrydao.types.registry.parameter.propose import Propose
+from demo_registrydao.types.registry.storage import Proposals, Storage
 from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import HandlerContext, IndexType, OperationContext, OperationData, State
 from dipdup.utils import tortoise_wrapper
-
-
-class Key(BaseModel):
-    address: str
-    nat: str
-
-
-class LedgerItem(BaseModel):
-    key: Key
-    value: str
-
-
-class Key1(BaseModel):
-    owner: str
-    operator: str
-
-
-class Operator(BaseModel):
-    key: Key1
-    value: Dict[str, Any]
-
-
-class MigrationStatu(BaseModel):
-    notInMigration: Dict[str, Any]
-
-
-class MigrationStatu1(BaseModel):
-    migratingTo: str
-
-
-class MigrationStatu2(BaseModel):
-    migratedTo: str
-
-
-class RegistryItem(BaseModel):
-    pass
-
-    class Config:
-        extra = Extra.allow
-
-
-class ExtraModel(BaseModel):
-    registry: Union[int, RegistryItem]
-    proposal_receivers: List[str]
-    frozen_scale_value: str
-    frozen_extra_value: str
-    slash_scale_value: str
-    slash_division_value: str
-    max_proposal_size: str
-
-
-class DiffItem(BaseModel):
-    key: str
-    new_value: Optional[str]
-
-
-class ProposalType0(BaseModel):
-    agora_post_id: str
-    diff: List[DiffItem]
-
-
-class Metadatum(BaseModel):
-    proposal_type_0: ProposalType0
-
-
-class ProposalType1(BaseModel):
-    frozen_scale_value: Optional[str]
-    frozen_extra_value: Optional[str]
-    slash_scale_value: Optional[str]
-    slash_division_value: Optional[str]
-    max_proposal_size: Optional[str]
-
-
-class Metadatum1(BaseModel):
-    proposal_type_1: ProposalType1
-
-
-class Metadatum2(BaseModel):
-    receivers_0: List[str]
-
-
-class Metadatum3(BaseModel):
-    receivers_1: List[str]
-
-
-class Voter(BaseModel):
-    address: str
-    nat: str
-
-
-class Proposals(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    upvotes: str
-    downvotes: str
-    start_date: str
-    metadata: Union[Metadatum, Metadatum1, Metadatum2, Metadatum3]
-    proposer: str
-    proposer_frozen_token: str
-    voters: List[Voter]
-
-
-class ProposalKeyListSortByDateItem(BaseModel):
-    timestamp: str
-    bytes: str
-
-
-class Metadata(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
-class TotalSupply(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
-class Storage(BaseModel):
-    ledger: List[LedgerItem]
-    operators: List[Operator]
-    token_address: str
-    admin: str
-    pending_owner: str
-    migration_status: Union[MigrationStatu, MigrationStatu1, MigrationStatu2]
-    voting_period: str
-    quorum_threshold: str
-    extra: ExtraModel
-    proposals: Dict[str, Proposals]
-    proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
-    permits_counter: str
-    metadata: Dict[str, Metadata]
-    total_supply: Dict[str, TotalSupply]
-
-
-class ProposalMetadatum(BaseModel):
-    proposal_type_0: ProposalType0
-
-
-class ProposalMetadatum1(BaseModel):
-    proposal_type_1: ProposalType1
-
-
-class ProposalMetadatum2(BaseModel):
-    receivers_0: List[str]
-
-
-class ProposalMetadatum3(BaseModel):
-    receivers_1: List[str]
-
-
-class Propose(BaseModel):
-    frozen_token: str
-    proposal_metadata: Union[ProposalMetadatum, ProposalMetadatum1, ProposalMetadatum2, ProposalMetadatum3]
-
-
-class Collect(BaseModel):
-    objkt_amount: str
-    swap_id: str
 
 
 class TzktDatasourceTest(IsolatedAsyncioTestCase):

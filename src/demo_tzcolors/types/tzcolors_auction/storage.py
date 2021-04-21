@@ -3,17 +3,20 @@
 
 from __future__ import annotations
 
-from typing import Union
+from typing import Dict, Union
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 
 
-class StorageItem(BaseModel):
-    pass
-
-    class Config:
-        extra = Extra.allow
+class Storage1(BaseModel):
+    token_address: str
+    token_id: str
+    token_amount: str
+    end_timestamp: str
+    seller: str
+    bid_amount: str
+    bidder: str
 
 
 class Storage(BaseModel):
-    __root__: Union[int, StorageItem]
+    __root__: Union[int, Dict[str, Storage1]]
