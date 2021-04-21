@@ -82,13 +82,13 @@ class OperationData:
     def _process_storage(self, storage_type: Type[StorageType], storage: Dict, prefix: str = None):
         for key, field in storage_type.__fields__.items():
 
-            bigmap_name = key if prefix is None else '.'.join([prefix, key])
-
             if key == '__root__':
                 continue
 
             if field.alias:
                 key = field.alias
+
+            bigmap_name = key if prefix is None else '.'.join([prefix, key])
 
             # NOTE: TzKT could return bigmaps as object or as array of key-value objects. We need to guess this from storage.
             # TODO: This code should be a part of datasource module.
