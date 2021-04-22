@@ -1,9 +1,7 @@
-from dipdup.models import HandlerContext, OperationContext
-
 import demo_tezos_domains.models as models
-
-from demo_tezos_domains.types.name_registry_update_record.parameter.update_record import UpdateRecord
 from demo_tezos_domains.types.name_registry.parameter.execute import Execute
+from demo_tezos_domains.types.name_registry_update_record.parameter.update_record import UpdateRecord
+from dipdup.models import HandlerContext, OperationContext
 
 
 async def on_update_registry(
