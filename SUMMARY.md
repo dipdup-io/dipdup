@@ -2,6 +2,8 @@
 
 * [Quick start](README.md)
 * [Config file reference](config-file-reference/README.md)
+  * [spec\_version](config-file-reference/spec_version.md)
+  * [package](config-file-reference/package.md)
   * [database](config-file-reference/database.md)
   * [contracts](config-file-reference/contracts.md)
   * [datasources](config-file-reference/datasources.md)
@@ -11,7 +13,7 @@
 * [Command-line reference](command-line/README.md)
   * [dipdup init](command-line/dipdup-init.md)
   * [dipdup run](command-line/dipdup-run.md)
-* [Deploying](deploying/README.md)
-  * [Hasura](deploying/hasura/README.md)
-    * [Docker](deploying/hasura/docker.md)
+* [Deployment](deployment/README.md)
+  * [Hasura](deployment/hasura/README.md)
+    * [Docker](deployment/hasura/docker.md)
 
