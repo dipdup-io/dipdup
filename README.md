@@ -55,7 +55,8 @@ indexes:
   hen_mainnet:
     kind: operation
     datasource: tzkt_mainnet
-    contract: HEN_minter
+    contracts:
+      - HEN_minter
     handlers:
       - callback: on_mint
         pattern:
@@ -193,19 +194,20 @@ templates:
   trades:
     kind: operation
     datasource: tzkt_staging
-    contract: < dex >
+    contracts:
+      - <dex>
     handlers:
       - callback: on_fa12_token_to_tez
         pattern:
-          - destination: < dex >
+          - destination: <dex>
             entrypoint: tokenToTezPayment
-          - destination: < token >
+          - destination: <token>
             entrypoint: transfer
       - callback: on_fa20_tez_to_token
         pattern:
-          - destination: < dex >
+          - destination: <dex>
             entrypoint: tezToTokenPayment
-          - destination: < token >
+          - destination: <token>
             entrypoint: transfer
 
 indexes:
