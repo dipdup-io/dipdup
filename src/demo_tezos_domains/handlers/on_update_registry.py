@@ -11,10 +11,14 @@ async def on_update_registry(
     update_record: OperationContext[UpdateRecord],
     execute: OperationContext[Execute],
 ) -> None:
-    label = update_record.parameter.name
-    domain = await models.Domain.filter(label=label).get()
-    address, _ = await models.Address.get_or_create(address=update_record.parameter.address)
-    owner, _ = await models.Address.get_or_create(address=update_record.parameter.owner)
-    domain.address = address
-    domain.owner = owner
-    await domain.save()
+    try:
+        label = update_record.parameter.name
+        domain = await models.Domain.filter(label=label).get()
+        address, _ = await models.Address.get_or_create(address=update_record.parameter.address)
+        owner, _ = await models.Address.get_or_create(address=update_record.parameter.owner)
+        domain.address = address
+        domain.owner = owner
+        await domain.save()
+    # FIXME: Object does not exist, some entrypoints are not covered
+    except Exception as exc:
+        print(exc)

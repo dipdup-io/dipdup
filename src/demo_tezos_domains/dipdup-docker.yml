@@ -83,13 +83,17 @@ templates:
           - destination: <name_registry>
             entrypoint: execute
 
-      # TODO: Process `admin_update` entrypoint calls to include domains registered during sunrise period
-      # - callback: on_update_registry
-      #   pattern:
-      #     - destination: <name_registry_update_record>
-      #       entrypoint: update_record
-      #     - destination: <name_registry>
-      #       entrypoint: execute
+      - callback: on_admin_update
+        pattern:
+          - destination: <name_registry>
+            entrypoint: admin_update
+
+      - callback: on_update_registry
+        pattern:
+          - destination: <name_registry_update_record>
+            entrypoint: update_record
+          - destination: <name_registry>
+            entrypoint: execute
 
 indexes:
 

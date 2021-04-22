@@ -33,5 +33,5 @@ class Domain(Model):
     address = fields.ForeignKeyField('models.Address', 'pointed_domains', null=True)
     owner = fields.ForeignKeyField('models.Address', 'owned_domains')
     parent = fields.ForeignKeyField('models.Domain', 'subdomains', null=True)
-    expires_at = fields.DatetimeField()
-    token = fields.IntField()
+    expires_at = fields.DatetimeField(null=True)
+    token = fields.IntField(null=True)
