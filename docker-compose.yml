@@ -63,6 +63,20 @@ services:
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
       - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
-  
+
+  postgrest:
+    image: postgrest/postgrest
+    ports:
+      - 127.0.0.1:3000:3000
+    links:
+      - db:db
+    environment:
+      PGRST_DB_URI: postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
+      PGRST_DB_SCHEMA: hic_et_nunc,quipuswap,tzcolors
+      PGRST_DB_ANON_ROLE: dipdup
+      PGRST_SERVER_PROXY_URI: http://127.0.0.1:3000
+    depends_on:
+      - db
+
 volumes:
   db:
