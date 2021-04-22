@@ -12,6 +12,9 @@ contracts:
   edo_tld_registrar_bid:
     address: KT1VqYtb17QiyBseTshwEAoowyy6FYDHniX1
     typename: tld_registrar_bid
+  edo_name_registry_update_record:
+    address: KT1FpHyP8vUd7p2aq7DLRccUVPixoGVB4fJE
+    typename: name_registry_update_record
   edo_name_registry:
     address: KT1JJbWfW8CHUY95hG9iq2CEMma1RiKhMHDR
     typename: name_registry
@@ -25,6 +28,9 @@ contracts:
   mainnet_tld_registrar_bid:
     address: KT1CaSP4dn8wasbMsfdtGiCPgYFW7bvnPRRT
     typename: tld_registrar_bid
+  mainnet_name_registry_update_record:
+    address: KT1H1MqmUM4aK9i1833EBmYCCEfkbt6ZdSBc
+    typename: name_registry_update_record
   mainnet_name_registry:
     address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
     typename: name_registry
@@ -50,6 +56,7 @@ templates:
     - <tld_registrar_bid>
     - <tld_registrar_buy>
     - <tld_registrar>
+    - <name_registry_update_record>
     handlers:
       - callback: on_bid
         pattern:
@@ -67,6 +74,13 @@ templates:
           - destination: <name_registry>
             entrypoint: execute
 
+      # - callback: on_update_registry
+      #   pattern:
+      #     - destination: <name_registry_update_record>
+      #       entrypoint: update_record
+      #     - destination: <name_registry>
+      #       entrypoint: execute
+
 indexes:
 
   tezos_domains_edo:
@@ -77,8 +91,9 @@ indexes:
       tld_registrar: edo_tld_registrar
       tld_registrar_buy: edo_tld_registrar_buy
       tld_registrar_bid: edo_tld_registrar_bid
+      name_registry_update_record: edo_name_registry_update_record
 
-  tezos_domains_mainned:
+  tezos_domains_mainnet:
     template: tezos_domains
     values:
       datasource: tzkt_staging_mainnet
@@ -86,3 +101,4 @@ indexes:
       tld_registrar: mainnet_tld_registrar
       tld_registrar_buy: mainnet_tld_registrar_buy
       tld_registrar_bid: mainnet_tld_registrar_bid
+      name_registry_update_record: mainnet_name_registry_update_record
