@@ -23,4 +23,5 @@ USER dipdup
 
 WORKDIR /home/dipdup/
 EXPOSE 8888
-ENTRYPOINT [ "python", "-m", "dipdup"]
+ENTRYPOINT ["python", "-m", "dipdup"]
+CMD ["-c", "dipdup.yml", "run"]

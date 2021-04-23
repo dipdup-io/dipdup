@@ -17,7 +17,7 @@ async def on_execute(
         record_name = bytes.fromhex(name).decode()
         domain_name = bytes.fromhex(item.expiry_key).decode()
 
-        if item.level == 2:
+        if item.level == "2":
             assert domain_name == record_name
             expiration_dt = storage.store.expiry_map[name]
             domain = models.Domain(

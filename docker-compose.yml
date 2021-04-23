@@ -1,40 +1,68 @@
 version: "3.8"
 
-x-dipdup: &x-dipdup
-  build: .
-  depends_on:
-    - db
-  volumes:
-    - ./src/demo_hic_et_nunc/dipdup.yml:/home/dipdup/dipdup.yml
-  env_file: secrets.env
-
 services:
-  dipdup:
-    <<: *x-dipdup
+  hic_et_nunc:
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - ./src/demo_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
     restart: always
-    command: ["-c", "dipdup.yml", "run"]
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+
+  # quipuswap:
+  #   build: .
+  #   depends_on:
+  #     - db
+  #   volumes:
+  #     - ./src/demo_quipuswap/dipdup-docker.yml:/home/dipdup/dipdup.yml
+  #   restart: always
+  #   environment:
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+  #     - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+
+  tzcolors:
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - ./src/demo_tzcolors/dipdup-docker.yml:/home/dipdup/dipdup.yml
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
 
   db:
-    image: postgres
+    image: postgres:13
     restart: always
     volumes:
       - db:/var/lib/postgres/data
-    env_file: secrets.env
+    environment: 
+      - POSTGRES_USER=dipdup
+      - POSTGRES_DB=dipdup
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  graphql-engine:
+  hasura:
     image: hasura/graphql-engine:v1.3.3
     ports:
-    - 8080:8080
+      - 127.0.0.1:8080:8080
     depends_on:
-    - db
+      - db
     restart: always
-    env_file: secrets.env
-
-  configure-graphql:
-    <<: *x-dipdup
-    command: ["-c", "dipdup.yml", "configure-graphql", "--url", "http://graphql-engine:8080", "--admin-secret", "changeme"]
-    depends_on:
-      - graphql-engine
+    environment:
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=true
+      - HASURA_GRAPHQL_DEV_MODE=true
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
+      - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+      - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
   
 volumes:
   db:

@@ -5,7 +5,7 @@
       format: "%(levelname)-8s %(name)-35s %(message)s"
   handlers:
     console:
-      level: DEBUG
+      level: WARNING
       formatter: brief
       class: logging.StreamHandler
       stream : ext://sys.stdout
@@ -13,16 +13,14 @@
     SignalRCoreClient:
       formatter: brief
     dipdup.datasources.tzkt.datasource:
-      level: DEBUG
+      level: INFO
     dipdup.datasources.tzkt.cache:
-      level: DEBUG
+      level: INFO
     aiosqlite:
-      level: DEBUG
+      level: INFO
     db_client:
-      level: DEBUG
-    dipdup.models:
-      level: DEBUG
+      level: INFO
   root:
-    level: DEBUG
+    level: WARNING
     handlers:
       - console

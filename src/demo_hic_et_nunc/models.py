@@ -13,13 +13,13 @@ class SwapStatus(IntEnum):
 
 
 class Holder(Model):
-    address = fields.CharField(58, pk=True)
+    address = fields.CharField(36, pk=True)
 
 
 class Token(Model):
     id = fields.BigIntField(pk=True)
     creator = fields.ForeignKeyField('models.Holder', 'tokens')
-    supply = fields.IntField()
+    supply = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
@@ -27,9 +27,9 @@ class Token(Model):
 class Swap(Model):
     id = fields.BigIntField(pk=True)
     creator = fields.ForeignKeyField('models.Holder', 'swaps')
-    price = fields.IntField()
-    amount = fields.IntField()
-    amount_left = fields.IntField()
+    price = fields.BigIntField()
+    amount = fields.BigIntField()
+    amount_left = fields.BigIntField()
     level = fields.BigIntField()
     status = fields.IntEnumField(SwapStatus)
     timestamp = fields.DatetimeField()
@@ -40,6 +40,6 @@ class Trade(Model):
     swap = fields.ForeignKeyField('models.Swap', 'trades')
     seller = fields.ForeignKeyField('models.Holder', 'sales')
     buyer = fields.ForeignKeyField('models.Holder', 'purchases')
-    amount = fields.IntField()
+    amount = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()

@@ -1,10 +1,8 @@
 import asyncio
 import logging
-from contextlib import asynccontextmanager
 from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import aiohttp
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
 from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
@@ -15,7 +13,8 @@ from dipdup import __version__
 from dipdup.config import ROLLBACK_HANDLER, BigmapdiffIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import HandlerContext, OperationContext, OperationData, State
+from dipdup.models import HandlerContext, OperationContext, OperationData
+from dipdup.utils import http_request
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
 TZKT_HTTP_REQUEST_SLEEP = 1
@@ -46,20 +45,8 @@ OPERATION_FIELDS = (
     "hasInternals",
     # "quote",
     "parameters",
-    "bigmaps,",
+    "diffs,",
 )
-
-
-@asynccontextmanager
-async def tzkt_get():
-    async with aiohttp.ClientSession() as session:
-        yield partial(
-            session.get,
-            skip_auto_headers={'User-Agent'},
-            headers={
-                'User-Agent': f'dupdup/{__version__}',
-            },
-        )
 
 
 class TzktDatasource:
@@ -78,7 +65,7 @@ class TzktDatasource:
 
     def add_index(self, config: Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]):
         if isinstance(config, OperationIndexConfig):
-            self._logger.info(f'Adding index "{config.state.index_name}"')
+            self._logger.info('Adding index `%s`', config.state.index_name)
             self._operation_index_configs[config.contract_config.address] = config
             self._sync_events[config.state.index_name] = asyncio.Event()
             self._caches[config.contract_config.address] = OperationCache(config, config.state.level)
@@ -109,17 +96,24 @@ class TzktDatasource:
 
     async def start(self):
         self._logger.info('Starting datasource')
+        rest_only = False
         for operation_index_config in self._operation_index_configs.values():
-            await self.add_subscription(operation_index_config.contract)
 
+            if operation_index_config.last_block:
+                await self.fetch_operations(operation_index_config.last_block, initial=True)
+                rest_only = True
+                continue
+
+            await self.add_subscription(operation_index_config.contract)
             latest_block = await self.get_latest_block()
             current_level = latest_block['level']
             state_level = operation_index_config.state.level
             if current_level != state_level:
                 await self.fetch_operations(current_level, initial=True)
 
-        self._logger.info('Starting websocket client')
-        await self._get_client().start()
+        if not rest_only:
+            self._logger.info('Starting websocket client')
+            await self._get_client().start()
 
     async def stop(self):
         ...
@@ -158,19 +152,20 @@ class TzktDatasource:
 
     async def _fetch_operations(self, address: str, offset: int, first_level: int, last_level: int) -> List[Dict[str, Any]]:
         self._logger.info('Fetching levels %s-%s with offset %s', first_level, last_level, offset)
-        async with tzkt_get() as get:
-            async with get(
-                url=f'{self._url}/v1/operations/transactions',
-                params={
-                    "anyof.sender.target.initiator": address,
-                    "offset": offset,
-                    "limit": TZKT_HTTP_REQUEST_LIMIT,
-                    "level.gt": first_level,
-                    "level.le": last_level,
-                    "select": ','.join(OPERATION_FIELDS),
-                },
-            ) as resp:
-                operations = await resp.json()
+        async with http_request(
+            'get',
+            url=f'{self._url}/v1/operations/transactions',
+            params={
+                "anyof.sender.target.initiator": address,
+                "offset": offset,
+                "limit": TZKT_HTTP_REQUEST_LIMIT,
+                "level.gt": first_level,
+                "level.le": last_level,
+                "select": ','.join(OPERATION_FIELDS),
+                "status": "applied",
+            },
+        ) as resp:
+            operations = await resp.json()
         self._logger.info('%s operations fetched', len(operations))
         self._logger.debug(operations)
         return operations
@@ -193,7 +188,7 @@ class TzktDatasource:
         for index_config in self._operation_index_configs.values():
 
             sync_event = self._sync_events[index_config.state.index_name]
-            level = index_config.state.level or 0
+            level = index_config.state.level
 
             operations = []
             offset = 0
@@ -230,11 +225,11 @@ class TzktDatasource:
 
     async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
         self._logger.info('Fetching jsonschemas for address `%s', address)
-        async with tzkt_get() as get:
-            async with get(
-                url=f'{self._url}/v1/contracts/{address}/interface',
-            ) as resp:
-                jsonschemas = await resp.json()
+        async with http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{address}/interface',
+        ) as response:
+            jsonschemas = await response.json()
         self._logger.debug(jsonschemas)
         return jsonschemas
 
@@ -268,8 +263,6 @@ class TzktDatasource:
                         operation = self.convert_operation(operation_json)
                         if operation.type != 'transaction':
                             continue
-                        if operation.status != 'applied':
-                            continue
                         await self._caches[address].add(operation)
 
                     async with in_transaction():
@@ -278,7 +271,7 @@ class TzktDatasource:
                         await index_config.state.save()
 
             elif message_type == TzktMessageType.REORG:
-                self._logger.info(f'Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
+                self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
                 from_level = self._operation_index_configs[address].state.level
                 to_level = item['state']
                 await self._operation_index_configs[address].rollback_fn(from_level, to_level)
@@ -360,19 +353,19 @@ class TzktDatasource:
             initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
             parameter=operation_json.get('parameters'),
             storage=storage,
-            bigmaps=operation_json.get('bigmaps'),
+            diffs=operation_json.get('diffs'),
         )
 
     async def get_latest_block(self) -> Dict[str, Any]:
         self._logger.info('Fetching latest block')
-        async with tzkt_get() as get:
-            async with get(
-                url=f'{self._url}/v1/blocks',
-                params={
-                    "limit": 1,
-                    "sort.desc": "id",
-                },
-            ) as resp:
-                blocks = await resp.json()
+        async with http_request(
+            'get',
+            url=f'{self._url}/v1/blocks',
+            params={
+                "limit": 1,
+                "sort.desc": "id",
+            },
+        ) as resp:
+            blocks = await resp.json()
         self._logger.debug(blocks)
         return blocks[0]

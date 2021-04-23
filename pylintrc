@@ -10,4 +10,6 @@ disable=
     too-many-locals,
     too-many-public-methods,
     too-few-public-methods,
-    bad-mcs-classmethod-argument
+    bad-mcs-classmethod-argument,
+    unused-argument,
+    no-name-in-module

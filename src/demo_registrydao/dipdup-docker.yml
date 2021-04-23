@@ -1,9 +1,18 @@
-spec_version: 0.1
+spec_version: 0.0.1
 package: demo_registrydao
 
 database:
-  kind: sqlite
-  path: registrydao.sqlite3
+  kind: postgres
+  host: db
+  port: 5432
+  user: dipdup
+  password: changeme
+  database: dipdup
+  schema_name: registrydao
+
+hasura:
+  url: http://hasura:8080
+  admin_secret: changeme
 
 contracts:
   registry:

@@ -4,7 +4,9 @@ from unittest import IsolatedAsyncioTestCase
 
 from tortoise import Tortoise
 
-from dipdup.config import DipDupConfig
+from dipdup.config import ContractConfig, DipDupConfig, TzktDatasourceConfig
+from dipdup.exceptions import ConfigurationError
+from dipdup.utils import tortoise_wrapper
 
 
 class ConfigTest(IsolatedAsyncioTestCase):
@@ -14,17 +16,9 @@ class ConfigTest(IsolatedAsyncioTestCase):
     async def test_load_initialize(self):
         config = DipDupConfig.load(self.path)
 
-        try:
-            await Tortoise.init(
-                db_url='sqlite://:memory:',
-                modules={
-                    'int_models': ['dipdup.models'],
-                },
-            )
+        async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
             await config.initialize()
-        finally:
-            await Tortoise.close_connections()
 
         self.assertIsInstance(config, DipDupConfig)
         self.assertEqual(
@@ -33,3 +27,11 @@ class ConfigTest(IsolatedAsyncioTestCase):
         )
         self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].callback_fn, Callable)
         self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)
+
+    async def test_validators(self):
+        with self.assertRaises(ConfigurationError):
+            ContractConfig(address='KT1lalala')
+        with self.assertRaises(ConfigurationError):
+            ContractConfig(address='lalalalalalalalalalalalalalalalalala')
+        with self.assertRaises(ConfigurationError):
+            TzktDatasourceConfig(kind='tzkt', url='not_an_url')

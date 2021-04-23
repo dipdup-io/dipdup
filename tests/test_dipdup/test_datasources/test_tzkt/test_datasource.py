@@ -12,6 +12,7 @@ from tortoise import Tortoise
 from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import HandlerContext, IndexType, OperationContext, OperationData, State
+from dipdup.utils import tortoise_wrapper
 
 
 class Key(BaseModel):
@@ -182,7 +183,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         self.index_config = OperationIndexConfig(
             kind='operation',
             datasource='tzkt',
-            contract=ContractConfig(address='KT1lalala'),
+            contract=ContractConfig(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
             handlers=[
                 OperationHandlerConfig(
                     callback='',
@@ -285,13 +286,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         on_operation_match_mock = AsyncMock()
         self.datasource.on_operation_match = on_operation_match_mock
 
-        try:
-            await Tortoise.init(
-                db_url='sqlite://:memory:',
-                modules={
-                    'int_models': ['dipdup.models'],
-                },
-            )
+        async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
 
             await self.datasource.on_operation_message([operations_message], self.index_config.contract.address, sync=True)
@@ -303,22 +298,13 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 ANY,
             )
 
-        finally:
-            await Tortoise.close_connections()
-
     async def test_on_operation_match(self):
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
         operations = [TzktDatasource.convert_operation(op) for op in operations_message['data']]
         matched_operation = operations[0]
 
-        try:
-            await Tortoise.init(
-                db_url='sqlite://:memory:',
-                modules={
-                    'int_models': ['dipdup.models'],
-                },
-            )
+        async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
 
             callback_mock = AsyncMock()
@@ -336,9 +322,6 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertIsInstance(callback_mock.await_args[0][1].parameter, Collect)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)
 
-        finally:
-            await Tortoise.close_connections()
-
     async def test_on_operation_match_with_storage(self):
         with open(join(dirname(__file__), 'operations-storage.json')) as file:
             operations_message = json.load(file)
@@ -347,13 +330,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         operations = [TzktDatasource.convert_operation(op) for op in operations_message['data']]
         matched_operation = operations[0]
 
-        try:
-            await Tortoise.init(
-                db_url='sqlite://:memory:',
-                modules={
-                    'int_models': ['dipdup.models'],
-                },
-            )
+        async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
 
             callback_mock = AsyncMock()
@@ -370,6 +347,3 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 callback_mock.await_args[0][1].storage.proposals['e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9'],
                 Proposals,
             )
-
-        finally:
-            await Tortoise.close_connections()

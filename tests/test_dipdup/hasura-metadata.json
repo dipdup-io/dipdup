@@ -77,7 +77,7 @@
             },
             "object_relationships": [
                 {
-                    "name": "holder",
+                    "name": "creator",
                     "using": {
                         "foreign_key_constraint_on": "creator_id"
                     }
@@ -102,13 +102,13 @@
                     "role": "user",
                     "permission": {
                         "columns": [
-                            "amount_left",
-                            "price",
                             "amount",
+                            "amount_left",
                             "id",
-                            "timestamp",
+                            "level",
+                            "price",
                             "status",
-                            "level"
+                            "timestamp"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -123,7 +123,7 @@
             },
             "object_relationships": [
                 {
-                    "name": "holder",
+                    "name": "creator",
                     "using": {
                         "foreign_key_constraint_on": "creator_id"
                     }
@@ -136,9 +136,9 @@
                     "permission": {
                         "columns": [
                             "id",
+                            "level",
                             "supply",
-                            "timestamp",
-                            "level"
+                            "timestamp"
                         ],
                         "filter": {},
                         "allow_aggregations": true
@@ -159,13 +159,13 @@
                     }
                 },
                 {
-                    "name": "holder",
+                    "name": "seller",
                     "using": {
                         "foreign_key_constraint_on": "seller_id"
                     }
                 },
                 {
-                    "name": "holder",
+                    "name": "buyer",
                     "using": {
                         "foreign_key_constraint_on": "buyer_id"
                     }
@@ -177,10 +177,10 @@
                     "role": "user",
                     "permission": {
                         "columns": [
+                            "amount",
                             "id",
-                            "timestamp",
                             "level",
-                            "amount"
+                            "timestamp"
                         ],
                         "filter": {},
                         "allow_aggregations": true

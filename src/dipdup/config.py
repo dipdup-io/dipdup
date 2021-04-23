@@ -9,28 +9,23 @@ from collections import defaultdict
 from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union
+from urllib.parse import urlparse
 
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
-from tortoise import Tortoise
 from typing_extensions import Literal
 
+from dipdup.exceptions import ConfigurationError
 from dipdup.models import IndexType, State
+from dipdup.utils import camel_to_snake, reindex, snake_to_camel
 
 ROLLBACK_HANDLER = 'on_rollback'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
 sys.path.append(os.getcwd())
-
-
-def snake_to_camel(value: str) -> str:
-    return ''.join(map(lambda x: x[0].upper() + x[1:], value.split('_')))
-
-
-def camel_to_snake(name):
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -45,23 +40,22 @@ class SqliteDatabaseConfig:
     path: str = ':memory:'
 
     @property
-    def connection_string(self):
+    def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
 
 
 @dataclass
-class DatabaseConfig:
-    """Database connection config
+class MySQLDatabaseConfig:
+    """MySQL database connection config
 
-    :param driver: One of postgres/mysql (asyncpg and aiomysql libs must be installed respectively)
     :param host: Host
     :param port: Port
     :param user: User
     :param password: Password
-    :param database: Schema name
+    :param database: Database name
     """
 
-    kind: Union[Literal['postgres'], Literal['mysql']]
+    kind: Literal['mysql']
     host: str
     port: int
     user: str
@@ -69,8 +63,33 @@ class DatabaseConfig:
     password: str = ''
 
     @property
-    def connection_string(self):
+    def connection_string(self) -> str:
         return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
+
+
+@dataclass
+class PostgresDatabaseConfig:
+    """Postgres database connection config
+
+    :param host: Host
+    :param port: Port
+    :param user: User
+    :param password: Password
+    :param database: Database name
+    :param schema_name: Schema name
+    """
+
+    kind: Literal['postgres']
+    host: str
+    port: int
+    user: str
+    database: str
+    schema_name: str = 'public'
+    password: str = ''
+
+    @property
+    def connection_string(self) -> str:
+        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}'
 
 
 @dataclass
@@ -92,6 +111,12 @@ class ContractConfig:
     def module_name(self) -> str:
         return self.typename if self.typename is not None else self.address
 
+    @validator('address')
+    def valid_address(cls, v):
+        if not v.startswith('KT1') or len(v) != 36:
+            raise ConfigurationError(f'`{v}` is not a valid contract address')
+        return v
+
 
 @dataclass
 class TzktDatasourceConfig:
@@ -107,6 +132,13 @@ class TzktDatasourceConfig:
     def __hash__(self):
         return hash(self.url)
 
+    @validator('url')
+    def valid_url(cls, v):
+        parsed_url = urlparse(v)
+        if not (parsed_url.scheme and parsed_url.netloc):
+            raise ConfigurationError(f'`{v}` is not a valid datasource URL')
+        return v
+
 
 @dataclass
 class OperationHandlerPatternConfig:
@@ -114,7 +146,6 @@ class OperationHandlerPatternConfig:
 
     :param destination: Alias of the contract to match
     :param entrypoint: Contract entrypoint
-    :
     """
 
     destination: Union[str, ContractConfig]
@@ -167,7 +198,7 @@ class OperationHandlerConfig:
     @property
     def callback_fn(self) -> Callable:
         if self._callback_fn is None:
-            raise Exception('Handler callable is not registered')
+            raise RuntimeError('Config is not initialized')
         return self._callback_fn
 
     @callback_fn.setter
@@ -208,7 +239,8 @@ class OperationIndexConfig:
 
     @property
     def tzkt_config(self) -> TzktDatasourceConfig:
-        assert isinstance(self.datasource, TzktDatasourceConfig)
+        if not isinstance(self.datasource, TzktDatasourceConfig):
+            raise RuntimeError('Config is not initialized')
         return self.datasource
 
     @property
@@ -219,7 +251,7 @@ class OperationIndexConfig:
     @property
     def state(self):
         if not self._state:
-            raise Exception('Config is not initialized')
+            raise RuntimeError('Config is not initialized')
         return self._state
 
     @state.setter
@@ -229,7 +261,7 @@ class OperationIndexConfig:
     @property
     def rollback_fn(self) -> Callable:
         if not self._rollback_fn:
-            raise Exception('Config is not initialized')
+            raise RuntimeError('Config is not initialized')
         return self._rollback_fn
 
     @rollback_fn.setter
@@ -266,7 +298,8 @@ class BigmapdiffIndexConfig:
 
     @property
     def tzkt_config(self) -> TzktDatasourceConfig:
-        assert isinstance(self.datasource, TzktDatasourceConfig)
+        if not isinstance(self.datasource, TzktDatasourceConfig):
+            raise RuntimeError('Config is not initialized')
         return self.datasource
 
 
@@ -284,7 +317,8 @@ class BlockIndexConfig:
 
     @property
     def tzkt_config(self) -> TzktDatasourceConfig:
-        assert isinstance(self.datasource, TzktDatasourceConfig)
+        if not isinstance(self.datasource, TzktDatasourceConfig):
+            raise RuntimeError('Config is not initialized')
         return self.datasource
 
 
@@ -299,15 +333,30 @@ IndexConfigTemplateT = Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockI
 
 
 @dataclass
+class HasuraConfig:
+    url: str
+    admin_secret: Optional[str] = None
+
+    @validator('url')
+    def valid_url(cls, v):
+        parsed_url = urlparse(v)
+        if not (parsed_url.scheme and parsed_url.netloc):
+            raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
+        return v
+
+
+@dataclass
 class DipDupConfig:
     """Main dapp config
 
     :param spec_version: Version of specification
     :param package: Name of dapp python package, existing or not
-    :param database: Database config
     :param contracts: Mapping of contract aliases and contract configs
     :param datasources: Mapping of datasource aliases and datasource configs
     :param indexes: Mapping of index aliases and index configs
+    :param templates: Mapping of template aliases and index templates
+    :param database: Database config
+    :param hasura: Hasura config
     """
 
     spec_version: str
@@ -316,10 +365,11 @@ class DipDupConfig:
     datasources: Dict[str, Union[TzktDatasourceConfig]]
     indexes: Dict[str, IndexConfigT]
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
-    database: Union[SqliteDatabaseConfig, DatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
+    database: Union[SqliteDatabaseConfig, MySQLDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
+    hasura: Optional[HasuraConfig] = None
 
     def __post_init_post_parse__(self):
-        self._logger = logging.getLogger(__name__)
+        _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
             if isinstance(index_config, IndexTemplateConfig):
                 template = self.templates[index_config.template]
@@ -333,6 +383,7 @@ class DipDupConfig:
 
         callback_patterns: Dict[str, List[List[OperationHandlerPatternConfig]]] = defaultdict(list)
 
+        _logger.info('Substituting contracts and datasources')
         for index_config in self.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
                 if isinstance(index_config.datasource, str):
@@ -349,6 +400,7 @@ class DipDupConfig:
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
+        _logger.info('Verifying callback uniqueness')
         for callback, patterns in callback_patterns.items():
             if len(patterns) > 1:
 
@@ -376,9 +428,11 @@ class DipDupConfig:
         current_workdir = os.path.join(os.getcwd())
         filename = os.path.join(current_workdir, filename)
 
+        _logger.info('Loading config from %s', filename)
         with open(filename) as file:
             raw_config = file.read()
 
+        _logger.info('Substituting environment variables')
         for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
             variable, default_value = match.group(1), match.group(2)
             value = env.get(variable)
@@ -390,13 +444,13 @@ class DipDupConfig:
         return config
 
     async def initialize(self) -> None:
-        self._logger.info('Setting up handlers and types for package `%s`', self.package)
+        _logger.info('Setting up handlers and types for package `%s`', self.package)
 
         rollback_fn = getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
 
         for index_name, index_config in self.indexes.items():
             if isinstance(index_config, OperationIndexConfig):
-                self._logger.info('Getting state for index `%s`', index_name)
+                _logger.info('Getting state for index `%s`', index_name)
                 index_config.rollback_fn = rollback_fn
                 index_hash = index_config.hash()
                 state = await State.get_or_none(
@@ -408,24 +462,24 @@ class DipDupConfig:
                         index_name=index_name,
                         index_type=IndexType.operation,
                         hash=index_hash,
+                        level=index_config.first_block - 1,
                     )
                     await state.save()
 
                 elif state.hash != index_hash:
-                    self._logger.warning('Config hash mismatch, reindexing')
-                    await Tortoise._drop_databases()
-                    os.execl(sys.executable, sys.executable, *sys.argv)
+                    _logger.warning('Config hash mismatch, reindexing')
+                    await reindex()
 
                 index_config.state = state
 
                 for handler in index_config.handlers:
-                    self._logger.info('Registering handler callback `%s`', handler.callback)
+                    _logger.info('Registering handler callback `%s`', handler.callback)
                     handler_module = importlib.import_module(f'{self.package}.handlers.{handler.callback}')
                     callback_fn = getattr(handler_module, handler.callback)
                     handler.callback_fn = callback_fn
 
                     for pattern in handler.pattern:
-                        self._logger.info('Registering parameter type for entrypoint `%s`', pattern.entrypoint)
+                        _logger.info('Registering parameter type for entrypoint `%s`', pattern.entrypoint)
                         parameter_type_module = importlib.import_module(
                             f'{self.package}'
                             f'.types'
@@ -436,6 +490,7 @@ class DipDupConfig:
                         parameter_type_cls = getattr(parameter_type_module, snake_to_camel(pattern.entrypoint))
                         pattern.parameter_type_cls = parameter_type_cls
 
+                        _logger.info('Registering storage type')
                         storage_type_module = importlib.import_module(
                             f'{self.package}' f'.types' f'.{pattern.contract_config.module_name}' f'.storage'
                         )

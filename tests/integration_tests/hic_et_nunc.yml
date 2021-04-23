@@ -1,9 +1,9 @@
-spec_version: 0.1
+spec_version: 0.0.1
 package: demo_hic_et_nunc
 
 database:
   kind: sqlite
-  path: hic_et_nunc.sqlite3
+  path: db.sqlite3
 
 contracts:
   HEN_objkts: 
@@ -42,3 +42,5 @@ indexes:
         pattern:
           - destination: HEN_minter
             entrypoint: collect
+    first_block: 1365000
+    last_block: 1366000
