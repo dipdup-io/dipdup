@@ -18,17 +18,19 @@ async def on_fa12_token_to_tez(
     symbol = ctx.template_values['symbol']
     trader = token_to_tez_payment.data.sender_address
 
-    min_tez_quantity = Decimal(token_to_tez_payment.parameter.min_out)
+    min_tez_quantity = Decimal(token_to_tez_payment.parameter.min_out) / (10 ** 6)
     token_quantity = Decimal(token_to_tez_payment.parameter.amount) / (10 ** decimals)
     transaction = next(op for op in ctx.operations if op.amount)
     tez_quantity = Decimal(transaction.amount) / (10 ** 6)
+    assert min_tez_quantity <= tez_quantity, token_to_tez_payment.data.hash
+
     trade = models.Trade(
         symbol=symbol,
         trader=trader,
         side=models.TradeSide.SELL,
         quantity=token_quantity,
         price=token_quantity / tez_quantity,
-        slippage=1 - (min_tez_quantity / tez_quantity),
+        slippage=(1 - (min_tez_quantity / tez_quantity)).quantize(Decimal('0.000001')),
         level=transfer.data.level,
         timestamp=transfer.data.timestamp,
     )

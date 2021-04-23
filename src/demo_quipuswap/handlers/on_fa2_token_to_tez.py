@@ -22,6 +22,8 @@ async def on_fa2_token_to_tez(
     token_quantity = Decimal(token_to_tez_payment.parameter.amount) / (10 ** decimals)
     transaction = next(op for op in ctx.operations if op.amount)
     tez_quantity = Decimal(transaction.amount) / (10 ** 6)
+    assert min_tez_quantity <= tez_quantity, token_to_tez_payment.data.hash
+
     trade = models.Trade(
         symbol=symbol,
         trader=trader,
