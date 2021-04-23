@@ -162,6 +162,7 @@ class TzktDatasource:
                 "level.gt": first_level,
                 "level.le": last_level,
                 "select": ','.join(OPERATION_FIELDS),
+                "status": "applied",
             },
         ) as resp:
             operations = await resp.json()
@@ -261,8 +262,6 @@ class TzktDatasource:
                     for operation_json in item['data']:
                         operation = self.convert_operation(operation_json)
                         if operation.type != 'transaction':
-                            continue
-                        if operation.status != 'applied':
                             continue
                         await self._caches[address].add(operation)
 
