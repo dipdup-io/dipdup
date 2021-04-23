@@ -187,4 +187,4 @@ async def generate_handlers(config: DipDupConfig):
 async def cleanup(config: DipDupConfig):
     _logger.info('Cleaning up')
     schemas_path = join(config.package_path, 'schemas')
-    #rmtree(schemas_path)
+    rmtree(schemas_path)

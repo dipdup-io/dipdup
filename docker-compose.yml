@@ -1,38 +1,38 @@
 version: "3.8"
 
 services:
-#  hic_et_nunc:
-#    build: .
-#    depends_on:
-#      - db
-#    volumes:
-#      - ./src/demo_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
-#    restart: always
-#    environment:
-#      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-#      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+  hic_et_nunc:
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - ./src/demo_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
 
-  # quipuswap:
-  #   build: .
-  #   depends_on:
-  #     - db
-  #   volumes:
-  #     - ./src/demo_quipuswap/dipdup-docker.yml:/home/dipdup/dipdup.yml
-  #   restart: always
-  #   environment:
-  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-  #     - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+  quipuswap:
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - ./src/demo_quipuswap/dipdup-docker.yml:/home/dipdup/dipdup.yml
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
 
-#  tzcolors:
-#    build: .
-#    depends_on:
-#      - db
-#    volumes:
-#      - ./src/demo_tzcolors/dipdup-docker.yml:/home/dipdup/dipdup.yml
-#    restart: always
-#    environment:
-#      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-#      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+  tzcolors:
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - ./src/demo_tzcolors/dipdup-docker.yml:/home/dipdup/dipdup.yml
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
 
   domains:
     build: .
