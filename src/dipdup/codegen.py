@@ -17,14 +17,13 @@ from dipdup.utils import camel_to_snake, snake_to_camel
 _logger = logging.getLogger(__name__)
 
 
-def preprocess_storage_schema(storage_schema: Dict[str, Any]):
-    if 'properties' in storage_schema:
-        for property in storage_schema['properties']:
-            if storage_schema['properties'][property].get('$comment') == 'big_map':
-                storage_schema['properties'][property] = storage_schema['properties'][property]['oneOf'][1]
-    elif 'oneOf' in storage_schema:
-        if storage_schema.get('$comment') == 'big_map':
-            storage_schema = storage_schema['oneOf'][1]
+def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
+    if 'properties' in schema:
+        return {**schema, 'properties': {prop: resolve_big_maps(sub_schema) for prop, sub_schema in schema['properties'].items()}}
+    elif schema.get('$comment') == 'big_map':
+        return schema['oneOf'][1]
+    else:
+        return schema
 
 
 async def create_package(config: DipDupConfig):
@@ -72,11 +71,11 @@ async def fetch_schemas(config: DipDupConfig):
 
                     storage_schema_path = join(contract_schemas_path, 'storage.json')
 
-                    storage_schema = address_schemas_json['storageSchema']
-                    preprocess_storage_schema(storage_schema)
+                    storage_schema = resolve_big_maps(address_schemas_json['storageSchema'])
                     if not exists(storage_schema_path):
                         with open(storage_schema_path, 'w') as file:
                             file.write(json.dumps(storage_schema, indent=4))
+                    # TODO: check contract.typename
 
                     parameter_schemas_path = join(contract_schemas_path, 'parameter')
                     with suppress(FileExistsError):

@@ -5,44 +5,17 @@ from __future__ import annotations
 
 from typing import Dict
 
-from pydantic import BaseModel, Extra
-
-
-class Approvals(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
+from pydantic import BaseModel
 
 
 class Balances(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    approvals: Dict[str, Approvals]
+    approvals: Dict[str, str]
     balance: str
 
 
-class Metadata(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
-class Map(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
 class TokenMetadata(BaseModel):
-    class Config:
-        extra = Extra.allow
-
     nat: str
-    map: Dict[str, Map]
+    map: Dict[str, str]
 
 
 class Storage(BaseModel):
@@ -50,7 +23,7 @@ class Storage(BaseModel):
     balances: Dict[str, Balances]
     debtCeiling: str
     governorContractAddress: str
-    metadata: Dict[str, Metadata]
+    metadata: Dict[str, str]
     paused: bool
     token_metadata: Dict[str, TokenMetadata]
     totalSupply: str

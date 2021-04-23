@@ -1,0 +1,43 @@
+spec_version: 0.1
+package: demo_tezos_domains
+
+database:
+  kind: postgres
+  host: db
+  port: 5432
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD:-changeme}
+  database: ${POSTGRES_DB:-dipdup}
+  schema_name: domains
+
+contracts:
+  edo_name_registry:
+    address: KT1JJbWfW8CHUY95hG9iq2CEMma1RiKhMHDR
+    typename: name_registry
+
+datasources:
+  tzkt_staging_edo:
+    kind: tzkt
+    url: https://staging.api.edo2net.tzkt.io
+
+templates:
+  tezos_domains:
+    kind: operation
+    datasource: <datasource>
+    contract: <name_registry>
+    handlers:
+      - callback: on_admin_update
+        pattern:
+          - destination: <name_registry>
+            entrypoint: admin_update
+      - callback: on_execute
+        pattern:
+          - destination: <name_registry>
+            entrypoint: execute
+
+indexes:
+  tezos_domains_edo:
+    template: tezos_domains
+    values:
+      datasource: tzkt_staging_edo
+      name_registry: edo_name_registry

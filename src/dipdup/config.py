@@ -349,7 +349,7 @@ class HasuraConfig:
 class DipDupConfig:
     """Main dapp config
 
-    :param spec_version: Version of specification, always 0.0.1 for now
+    :param spec_version: Version of specification
     :param package: Name of dapp python package, existing or not
     :param contracts: Mapping of contract aliases and contract configs
     :param datasources: Mapping of datasource aliases and datasource configs
