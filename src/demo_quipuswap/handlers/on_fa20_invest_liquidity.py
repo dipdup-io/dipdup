@@ -35,6 +35,6 @@ async def on_fa20_invest_liquidity(
     assert share_px > 0, invest_liquidity.data.hash
 
     position.avg_share_px = (position.shares_qty * position.avg_share_px + value) / new_shares_qty
-    position.shares_qty = new_shares_qty
+    position.shares_qty = new_shares_qty  # type: ignore
 
     await position.save()

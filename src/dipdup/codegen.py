@@ -19,13 +19,7 @@ _logger = logging.getLogger(__name__)
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
     if 'properties' in schema:
-        return {
-            **schema,
-            'properties': {
-                prop: resolve_big_maps(sub_schema)
-                for prop, sub_schema in schema['properties'].items()
-            }
-        }
+        return {**schema, 'properties': {prop: resolve_big_maps(sub_schema) for prop, sub_schema in schema['properties'].items()}}
     elif schema.get('$comment') == 'big_map':
         return schema['oneOf'][1]
     else:

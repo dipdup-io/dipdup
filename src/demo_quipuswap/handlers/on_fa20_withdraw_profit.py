@@ -1,9 +1,8 @@
 from decimal import Decimal
-from dipdup.models import HandlerContext, OperationContext
 
 import demo_quipuswap.models as models
-
 from demo_quipuswap.types.quipu_fa2.parameter.withdraw_profit import WithdrawProfit
+from dipdup.models import HandlerContext, OperationContext
 
 
 async def on_fa20_withdraw_profit(
@@ -20,6 +19,6 @@ async def on_fa20_withdraw_profit(
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
     transaction = next(op for op in ctx.operations if op.amount)
 
-    position.realized_pl += Decimal(transaction.amount) / (10 ** 6)
+    position.realized_pl += Decimal(transaction.amount) / (10 ** 6)  # type: ignore
 
     await position.save()
