@@ -12,9 +12,9 @@ async def on_admin_update(
         label = list(admin_update.storage.store.records.keys())[0]
         record = admin_update.storage.store.records[label]
         address = None
-        if record['address']:
-            address, _ = await models.Address.get_or_create(address=record['address'])
-        owner, _ = await models.Address.get_or_create(address=record['owner'])
+        if record.address:
+            address, _ = await models.Address.get_or_create(address=record.address)
+        owner, _ = await models.Address.get_or_create(address=record.owner)
         qualname = bytearray.fromhex(label).decode()
         name = qualname.split('.')[0]
         domain = models.Domain(

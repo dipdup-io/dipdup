@@ -15,6 +15,9 @@ contracts:
   edo_name_registry_update_record:
     address: KT1FpHyP8vUd7p2aq7DLRccUVPixoGVB4fJE
     typename: name_registry_update_record
+  edo_name_registry_set_child_record:
+    address: KT1Mq1zd986PxK4C2y9S7UaJkhTBbY15AU32
+    typename: name_registry_set_child_record
   edo_name_registry:
     address: KT1JJbWfW8CHUY95hG9iq2CEMma1RiKhMHDR
     typename: name_registry
@@ -31,6 +34,9 @@ contracts:
   mainnet_name_registry_update_record:
     address: KT1H1MqmUM4aK9i1833EBmYCCEfkbt6ZdSBc
     typename: name_registry_update_record
+  mainnet_name_registry_set_child_record:
+    address: KT1QHLk1EMUA8BPH3FvRUeUmbTspmAhb7kpd
+    typename: name_registry_set_child_record
   mainnet_name_registry:
     address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
     typename: name_registry
@@ -57,7 +63,14 @@ templates:
     - <tld_registrar_buy>
     - <tld_registrar>
     - <name_registry_update_record>
+    - <name_registry_set_child_record>
+    - <name_registry>
     handlers:
+      # - callback: on_execute
+      #   pattern:
+      #     - destination: <name_registry>
+      #       entrypoint: execute
+
       - callback: on_bid
         pattern:
           - destination: <tld_registrar_bid>
@@ -79,15 +92,21 @@ templates:
           - destination: <name_registry>
             entrypoint: admin_update
 
-      - callback: on_update_registry
+      - callback: on_update_record
         pattern:
           - destination: <name_registry_update_record>
             entrypoint: update_record
           - destination: <name_registry>
             entrypoint: execute
 
-indexes:
+      - callback: on_set_child_record
+        pattern:
+          - destination: <name_registry_set_child_record>
+            entrypoint: set_child_record
+          - destination: <name_registry>
+            entrypoint: execute
 
+indexes:
   tezos_domains_edo:
     template: tezos_domains
     values:
@@ -97,6 +116,7 @@ indexes:
       tld_registrar_buy: edo_tld_registrar_buy
       tld_registrar_bid: edo_tld_registrar_bid
       name_registry_update_record: edo_name_registry_update_record
+      name_registry_set_child_record: edo_name_registry_set_child_record
 
   tezos_domains_mainnet:
     template: tezos_domains
@@ -107,3 +127,4 @@ indexes:
       tld_registrar_buy: mainnet_tld_registrar_buy
       tld_registrar_bid: mainnet_tld_registrar_bid
       name_registry_update_record: mainnet_name_registry_update_record
+      name_registry_set_child_record: mainnet_name_registry_set_child_record
