@@ -1,16 +1,16 @@
 version: "3.8"
 
 services:
-  hic_et_nunc:
-    build: .
-    depends_on:
-      - db
-    volumes:
-      - ./src/demo_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
-    restart: always
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+#  hic_et_nunc:
+#    build: .
+#    depends_on:
+#      - db
+#    volumes:
+#      - ./src/demo_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
+#    restart: always
+#    environment:
+#      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+#      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
 
   # quipuswap:
   #   build: .
@@ -23,12 +23,23 @@ services:
   #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
   #     - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
 
-  tzcolors:
+#  tzcolors:
+#    build: .
+#    depends_on:
+#      - db
+#    volumes:
+#      - ./src/demo_tzcolors/dipdup-docker.yml:/home/dipdup/dipdup.yml
+#    restart: always
+#    environment:
+#      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+#      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+
+  domains:
     build: .
     depends_on:
       - db
     volumes:
-      - ./src/demo_tzcolors/dipdup-docker.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_tezos_domains/dipdup-docker.yml:/home/dipdup/dipdup.yml
     restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -36,6 +47,8 @@ services:
 
   db:
     image: postgres:13
+    ports:
+      - 127.0.0.1:6423:5432
     restart: always
     volumes:
       - db:/var/lib/postgres/data

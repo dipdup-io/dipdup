@@ -32,7 +32,7 @@ Create a new YAML file and adapt the following example to your needs:
 
 ```yaml
 spec_version: 0.1
-package: dipdup_hic_et_nunc
+package: demo_hic_et_nunc
 
 database:
   kind: sqlite

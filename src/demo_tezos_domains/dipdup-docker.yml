@@ -2,8 +2,13 @@ spec_version: 0.1
 package: demo_tezos_domains
 
 database:
-  kind: sqlite
-  path: tezos_domains.sqlite3
+  kind: postgres
+  host: db
+  port: 5432
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD:-changeme}
+  database: ${POSTGRES_DB:-dipdup}
+  schema_name: domains
 
 contracts:
   edo_name_registry:
@@ -13,7 +18,7 @@ contracts:
 datasources:
   tzkt_staging_edo:
     kind: tzkt
-    url: ${TZKT_URL:-https://staging.api.edo2net.tzkt.io}
+    url: https://staging.api.edo2net.tzkt.io
 
 templates:
   tezos_domains:
