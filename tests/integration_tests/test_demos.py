@@ -49,13 +49,8 @@ class DemosTest(IsolatedAsyncioTestCase):
         self.run_dipdup('quipuswap.yml')
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_quipuswap.models'):
-            instruments = await demo_quipuswap.models.Instrument.filter().count()
-            traders = await demo_quipuswap.models.Trader.filter().count()
             trades = await demo_quipuswap.models.Trade.filter().count()
             positions = await demo_quipuswap.models.Position.filter().count()
-
-            self.assertEqual(2, instruments)
-            self.assertEqual(73, traders)
             self.assertEqual(94, trades)
             self.assertEqual(56, positions)
 

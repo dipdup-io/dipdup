@@ -204,7 +204,7 @@ toml = ["toml"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.11.0"
+version = "0.11.1"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
@@ -840,7 +840,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "667b02feb85b0ac19a69e3fa69e20b15014d0455beea6d047383ab9186ad0d9a"
+content-hash = "24b115a39908bade37b0a95c4f7ecc4e795b8936b384df75d408d857d3c98e22"
 
 [metadata.files]
 aiohttp = [
@@ -1013,8 +1013,8 @@ coverage = [
     {file = "coverage-5.5.tar.gz", hash = "sha256:ebe78fe9a0e874362175b02371bdfbee64d8edc42a044253ddf4ee7d3c15212c"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.11.0.tar.gz", hash = "sha256:263a7016e74a4900c3cf1fdde1c21d98b87300b67a96f5f24ffe7479b9648071"},
-    {file = "datamodel_code_generator-0.11.0-py3-none-any.whl", hash = "sha256:7e93818345ca45579361d6fd789b952fb85c7c0ac71f440a7a0e4b85bc5a667b"},
+    {file = "datamodel-code-generator-0.11.1.tar.gz", hash = "sha256:74606826a38313265945384dabb35a1e474df628fcdd61ad93c3bcb30c040caa"},
+    {file = "datamodel_code_generator-0.11.1-py3-none-any.whl", hash = "sha256:741d5d772c8efcc72a5442902319ebd835cd04567e28411e6ab022bb7b3ca0d0"},
 ]
 diff-cover = [
     {file = "diff_cover-5.0.1-py3-none-any.whl", hash = "sha256:1953185a930f6c973d7ea752989246e7bf6d3181b73e925437664a47e39c63ff"},

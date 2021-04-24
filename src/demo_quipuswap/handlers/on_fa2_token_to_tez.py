@@ -15,20 +15,22 @@ async def on_fa2_token_to_tez(
         raise Exception('This index must be templated')
 
     decimals = int(ctx.template_values['decimals'])
-    trader, _ = await models.Trader.get_or_create(address=transfer.parameter.__root__[0].from_)
-    instrument, _ = await models.Instrument.get_or_create(symbol=ctx.template_values['symbol'])
+    symbol = ctx.template_values['symbol']
+    trader = token_to_tez_payment.data.sender_address
 
     min_tez_quantity = Decimal(token_to_tez_payment.parameter.min_out) / (10 ** decimals)
     token_quantity = Decimal(token_to_tez_payment.parameter.amount) / (10 ** decimals)
     transaction = next(op for op in ctx.operations if op.amount)
     tez_quantity = Decimal(transaction.amount) / (10 ** 6)
+    assert min_tez_quantity <= tez_quantity, token_to_tez_payment.data.hash
+
     trade = models.Trade(
-        instrument=instrument,
+        symbol=symbol,
         trader=trader,
         side=models.TradeSide.SELL,
         quantity=token_quantity,
         price=token_quantity / tez_quantity,
-        slippage=((min_tez_quantity / tez_quantity) - 1) * 100,
+        slippage=1 - (min_tez_quantity / tez_quantity),
         level=transfer.data.level,
         timestamp=transfer.data.timestamp,
     )

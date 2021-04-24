@@ -9,9 +9,9 @@ from pydantic import BaseModel
 
 
 class Tx(BaseModel):
+    amount: str
     to_: str
     token_id: str
-    amount: str
 
 
 class TransferItem(BaseModel):

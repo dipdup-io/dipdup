@@ -1,4 +1,4 @@
-spec_version: 0.0.1
+spec_version: 0.1
 package: demo_quipuswap
 
 database:
@@ -61,6 +61,10 @@ templates:
             entrypoint: divestLiquidity
           - destination: <token_contract>
             entrypoint: transfer
+      - callback: on_fa12_withdraw_profit
+        pattern:
+          - destination: <dex_contract>
+            entrypoint: withdrawProfit
 
   quipuswap_fa2:
     kind: operation
@@ -92,6 +96,10 @@ templates:
             entrypoint: divestLiquidity
           - destination: <token_contract>
             entrypoint: transfer
+      - callback: on_fa20_withdraw_profit
+        pattern:
+          - destination: <dex_contract>
+            entrypoint: withdrawProfit
 
 indexes:
   kusd_mainnet:

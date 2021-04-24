@@ -31,7 +31,7 @@ Examples in this guide are simplified Hic Et Nunc demo.
 Create a new YAML file and adapt the following example to your needs:
 
 ```yaml
-spec_version: 0.0.1
+spec_version: 0.1
 package: demo_hic_et_nunc
 
 database:

@@ -15,19 +15,21 @@ async def on_fa12_tez_to_token(
         raise Exception('This index must be templated')
 
     decimals = int(ctx.template_values['decimals'])
-    trader, _ = await models.Trader.get_or_create(address=transfer.parameter.to)
-    instrument, _ = await models.Instrument.get_or_create(symbol=ctx.template_values['symbol'])
+    symbol = ctx.template_values['symbol']
+    trader = tez_to_token_payment.data.sender_address
 
     min_token_quantity = Decimal(tez_to_token_payment.parameter.min_out) / (10 ** decimals)
     token_quantity = Decimal(transfer.parameter.value) / (10 ** decimals)
     tez_quantity = Decimal(tez_to_token_payment.data.amount) / (10 ** 6)
+    assert min_token_quantity <= token_quantity, tez_to_token_payment.data.hash
+
     trade = models.Trade(
-        instrument=instrument,
+        symbol=symbol,
         trader=trader,
         side=models.TradeSide.BUY,
         quantity=token_quantity,
         price=token_quantity / tez_quantity,
-        slippage=((min_token_quantity / token_quantity) - 1) * 100,
+        slippage=(1 - (min_token_quantity / token_quantity)).quantize(Decimal('0.000001')),
         level=transfer.data.level,
         timestamp=transfer.data.timestamp,
     )

@@ -169,6 +169,7 @@ class TzktDatasource:
                 "level.gt": first_level,
                 "level.le": last_level,
                 "select": ','.join(OPERATION_FIELDS),
+                "status": "applied",
             },
         ) as resp:
             operations = await resp.json()
@@ -183,6 +184,7 @@ class TzktDatasource:
                 "level.gt": first_level,
                 "level.le": last_level,
                 "select": ','.join(OPERATION_FIELDS),
+                "status": "applied",
             },
         ) as resp:
             target_operations = await resp.json()
@@ -294,9 +296,7 @@ class TzktDatasource:
                         operation = self.convert_operation(operation_json)
                         if operation.type != 'transaction':
                             continue
-                        if operation.status != 'applied':
-                            continue
-                        await cache.add(operation)
+                        await self._caches[index_name].add(operation)
 
                     async with in_transaction():
                         last_level = await cache.process(self.on_operation_match)

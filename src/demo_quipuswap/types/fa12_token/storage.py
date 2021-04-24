@@ -14,8 +14,8 @@ class Balances(BaseModel):
 
 
 class TokenMetadata(BaseModel):
-    nat: str
     map: Dict[str, str]
+    nat: str
 
 
 class Storage(BaseModel):

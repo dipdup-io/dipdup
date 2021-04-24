@@ -19,8 +19,8 @@ class LedgerItem(BaseModel):
 
 
 class Key1(BaseModel):
-    owner: str
     operator: str
+    owner: str
     token_id: str
 
 

@@ -125,10 +125,10 @@ class OperationData:
 
 
 @dataclass
-class OperationContext(Generic[ParameterType]):
+class OperationContext(Generic[ParameterType]):  # TODO: Add StorageType
     data: OperationData
     parameter: ParameterType
-    storage: Optional[Any] = None
+    storage: Any  # TODO: StorageType
 
 
 @dataclass
