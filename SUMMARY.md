@@ -1,14 +1,15 @@
 # Table of contents
 
 * [Quick start](README.md)
+* [Core concepts](core-concepts.md)
 * [Config file reference](config-file-reference/README.md)
   * [spec\_version](config-file-reference/spec_version.md)
   * [package](config-file-reference/package.md)
-  * [database](config-file-reference/database.md)
   * [contracts](config-file-reference/contracts.md)
   * [datasources](config-file-reference/datasources.md)
   * [indexes](config-file-reference/indexes.md)
   * [templates](config-file-reference/templates.md)
+  * [database](config-file-reference/database.md)
   * [hasura](config-file-reference/hasura.md)
   * [mempool](config-file-reference/mempool.md)
   * [metadata](config-file-reference/metadata.md)
