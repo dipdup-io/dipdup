@@ -1,2 +1,6 @@
+---
+description: Indexes block
+---
+
 # indexes
 

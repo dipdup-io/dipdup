@@ -1,2 +1,6 @@
+---
+description: Inventory block
+---
+
 # datasources
 

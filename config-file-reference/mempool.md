@@ -1,2 +1,6 @@
+---
+description: Plugins block
+---
+
 # mempool
 
