@@ -6,6 +6,14 @@ description: Plugins block
 
 This is an optional section used by the [mempool](https://github.com/dipdup-net/mempool) indexer plugin. It uses [`contracts`](contracts.md) and [`datasources`](datasources.md) aliases as well as the [`database`](database.md) connection.
 
+Mempool configuration has two sections: `settings` and `indexers` \(required\).
+
+{% page-ref page="../advanced/mempool-plugin.md" %}
+
+## Settings
+
+This section is optional so are all the setting keys.
+
 ```yaml
 mempool:
   settings:
@@ -15,21 +23,8 @@ mempool:
     mempool_request_interval_seconds: 10
     rpc_timeout_seconds: 10
   indexers:
-    mainnet:
-      filters:
-        kinds:
-          - transaction
-        accounts:
-          - myaccount
-      datasources:
-          tzkt: tzkt_mainnet
-          rpc: 
-            - node_mainnet
+    ...
 ```
-
-{% page-ref page="../advanced/mempool-plugin.md" %}
-
-## Settings
 
 #### keep\_operations\_seconds
 
@@ -53,25 +48,67 @@ Tezos node request timeout. Default value is **10 seconds**.
 
 ## Indexers
 
-This section is used to create custom mempool indexers. You can create 1 indexer per network. Network is the primary key of indexer. For example:
+You can index several networks at once, or index different nodes independently. Indexer names are not standardized, but for clarity it's better to stick with some meaningful keys:
 
 ```yaml
- indexers:
-    mainnet:
-    edonet:
-    florencenet:
-    
+ mempool:
+   settings:
+     ...
+   indexers:
+     mainnet:
+       filters:
+         kinds:
+           - transaction
+         accounts:
+           - contract_alias
+       datasources:
+         tzkt: tzkt_staging_mainnet
+         rpc: 
+           - node_mainnet
+     edonet:
+     florencenet: 
 ```
 
-Every indexer has 2 settings: `filters` and `datasources`.
+Each indexer object has two keys: `filters` and `datasources` \(required\).
 
-`filters` is the your filtration rules.
+### Filters
 
-* `kinds` - array of mempool operation's kinds. It may be any of `activate_account`, `ballot`, `delegation`, `double_baking_evidence`, `double_endorsement_evidence`, `endorsement`, `origination`, `proposal`, `reveal`, `seed_nonce_revelation`, `transaction` Default: `transaction`.
-* `accounts` - array of tezos tz and KT addresses which will be used for filtering by source, destination and etc.
+An optional section specifying which mempool operations should be indexed. By default all transactions will be indexed.
 
-`datasources` is section for setting URLs of tezos nodes and TzKT.
+#### kinds
 
-* `tzkt` - TzKT url
-* `rpc` - array of tezos nodes URL.
+Array of operations kinds, default value is `transaction` \(single item\).  
+The complete list of values allowed:
+
+* `activate_account`
+* `ballot`
+* `delegation*`
+* `double_baking_evidence`
+* `double_endorsement_evidence`
+* `endorsement`
+* `origination*`
+* `proposal`
+* `reveal*`
+* `seed_nonce_revelation`
+* `transaction*`
+
+`*`  — manager operations.
+
+#### accounts
+
+Array of [contract](contracts.md) aliases used to filter operations by source or destination.   
+**NOTE**: applied to manager operations only.
+
+### Datasources
+
+Mempool plugin is tightly coupled with [TzKT](datasources.md#tzkt) and [Tezos node](datasources.md#tezos-node) providers.
+
+#### tzkt
+
+An alias pointing to a [datasource](datasources.md) of kind `tzkt` is expected.
+
+#### rpc
+
+An array of aliases pointing to [datasources](datasources.md) of kind `tezos-node`  
+Polling multiple nodes allows to detect more refused operations and makes indexing more robust in general.
 
