@@ -18,5 +18,5 @@
   * [dipdup run](command-line/dipdup-run.md)
 * [Deployment](deployment/README.md)
   * [Hasura](deployment/hasura/README.md)
-    * [Docker](deployment/hasura/docker.md)
+    * [Docker-compose](deployment/hasura/docker-compose.md)
 
