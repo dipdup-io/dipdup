@@ -10,6 +10,8 @@
   * [indexes](config-file-reference/indexes.md)
   * [templates](config-file-reference/templates.md)
   * [hasura](config-file-reference/hasura.md)
+  * [mempool](config-file-reference/mempool.md)
+  * [metadata](config-file-reference/metadata.md)
 * [Command-line reference](command-line/README.md)
   * [dipdup init](command-line/dipdup-init.md)
   * [dipdup run](command-line/dipdup-run.md)
