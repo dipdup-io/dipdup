@@ -1,7 +1,3 @@
----
-description: Deployment block
----
-
 # database
 
 DipDup supports several database engines for development and production. The obligatory field `kind` specifies which engine has to be used:

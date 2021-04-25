@@ -1,6 +1,2 @@
----
-description: Indexes block
----
-
 # templates
 
