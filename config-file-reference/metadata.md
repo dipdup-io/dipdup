@@ -42,7 +42,34 @@ If DipDup fails to get a response from IPFS gateway or HTTP server, it will try 
 
 ## Indexers
 
+You can index several networks at once, or go with a single one. Indexer names are not standardized, but for clarity it's better to stick with some meaningful keys:
 
+```yaml
+metadata:
+  settings:
+    ...
+  indexers:
+    mainnet:
+      filters:
+        accounts:
+          - contract_alias
+      datasources:
+        tzkt: tzkt_staging_mainnet
+```
 
+Each indexer object has two keys: `filters` and `datasources` \(required\).
 
+### Filters
+
+#### accounts
+
+Array of [contract](contracts.md) aliases used to filter Big\_map updates by the owner contract address.
+
+### Datasources
+
+Metadata plugin is tightly coupled with [TzKT](datasources.md#tzkt) provider.
+
+#### tzkt
+
+An alias pointing to a [datasource](datasources.md) of kind `tzkt` is expected.
 

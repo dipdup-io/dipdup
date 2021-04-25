@@ -1,5 +1,5 @@
 ---
-description: Header block
+description: Header blockGenerates type classes and handler templates
 ---
 
 # package

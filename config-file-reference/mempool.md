@@ -96,7 +96,7 @@ The complete list of values allowed:
 
 #### accounts
 
-Array of [contract](contracts.md) aliases used to filter operations by source or destination.   
+Array of [contract](contracts.md) aliases used to filter operations by source or destination.  
 **NOTE**: applied to manager operations only.
 
 ### Datasources
