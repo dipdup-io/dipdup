@@ -14,7 +14,7 @@ class ConfigTest(IsolatedAsyncioTestCase):
         self.path = join(dirname(__file__), 'dipdup.yml')
 
     async def test_load_initialize(self):
-        config = DipDupConfig.load(self.path)
+        config = DipDupConfig.load([self.path])
 
         async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
