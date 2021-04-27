@@ -42,13 +42,6 @@ class OperationData:
     hash: str
     counter: int
     sender_address: str
-    gas_limit: int
-    gas_used: int
-    storage_limit: int
-    storage_used: int
-    baker_fee: int
-    storage_fee: int
-    allocation_fee: int
     target_address: str
     amount: int
     status: str
