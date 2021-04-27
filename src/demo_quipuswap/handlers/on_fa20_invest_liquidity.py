@@ -5,11 +5,11 @@ from demo_quipuswap.types.fa2_token.parameter.transfer import Transfer as Transf
 from demo_quipuswap.types.fa2_token.storage import Storage as Fa2TokenStorage
 from demo_quipuswap.types.quipu_fa2.parameter.invest_liquidity import InvestLiquidity as InvestLiquidityParameter
 from demo_quipuswap.types.quipu_fa2.storage import Storage as QuipuFa2Storage
-from dipdup.models import HandlerContext, OperationContext
+from dipdup.models import OperationHandlerContext, OperationContext
 
 
 async def on_fa20_invest_liquidity(
-    ctx: HandlerContext,
+    ctx: OperationHandlerContext,
     invest_liquidity: OperationContext[InvestLiquidityParameter, QuipuFa2Storage],
     transfer: OperationContext[TransferParameter, Fa2TokenStorage],
 ) -> None:

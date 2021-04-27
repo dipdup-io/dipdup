@@ -9,8 +9,10 @@ from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 from typing_inspect import get_args  # type: ignore
 
-ParameterType = TypeVar('ParameterType')
+ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
+KeyType = TypeVar('KeyType', bound=BaseModel)
+ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
 _logger = logging.getLogger(__name__)
@@ -123,12 +125,40 @@ class OperationContext(Generic[ParameterType, StorageType]):
     parameter: ParameterType
     storage: StorageType
 
-@dataclass
-class BigMapContext:
-    ...
+
+class BigMapAction(Enum):
+    ADD = 'add_key'
+    UPDATE = 'update_key'
+    REMOVE = 'remove_key'
 
 
 @dataclass
-class HandlerContext:
+class BigMapContext(Generic[KeyType, ValueType]):
+    action: BigMapAction
+    key: KeyType
+    value: Optional[ValueType]
+
+
+@dataclass
+class BigMapData:
+    id: int
+    level: int
+    # operation_id: int
+    timestamp: datetime
+    bigmap: int
+    contract_address: str
+    path: str
+    action: str
+    key: Optional[str] = None
+    value: Optional[str] = None
+
+
+@dataclass
+class OperationHandlerContext:
     operations: List[OperationData]
+    template_values: Optional[Dict[str, str]]
+
+
+@dataclass
+class BigMapHandlerContext:
     template_values: Optional[Dict[str, str]]

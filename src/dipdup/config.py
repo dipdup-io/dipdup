@@ -284,6 +284,11 @@ class BigMapHandlerPatternConfig:
     contract: Union[str, ContractConfig]
     path: str
 
+    @property
+    def contract_config(self) -> ContractConfig:
+        assert isinstance(self.contract, ContractConfig)
+        return self.contract
+
 
 @dataclass
 class BigMapHandlerConfig:
@@ -395,11 +400,21 @@ class DipDupConfig:
                         index_config.contracts[i] = self.contracts[contract]
 
                 for handler in index_config.handlers:
-                    if isinstance(handler.pattern, list):
-                        callback_patterns[handler.callback].append(handler.pattern)
-                        for pattern in handler.pattern:
-                            if isinstance(pattern.destination, str):
-                                pattern.destination = self.contracts[pattern.destination]
+                    callback_patterns[handler.callback].append(handler.pattern)
+                    for pattern in handler.pattern:
+                        if isinstance(pattern.destination, str):
+                            pattern.destination = self.contracts[pattern.destination]
+            
+            elif isinstance(index_config, BigMapIndexConfig):
+                if isinstance(index_config.datasource, str):
+                    index_config.datasource = self.datasources[index_config.datasource]
+
+                for handler in index_config.handlers:
+                    callback_patterns[handler.callback].append(handler.pattern)
+                    for pattern in handler.pattern:
+                        if isinstance(pattern.contract, str):
+                            pattern.contract = self.contracts[pattern.contract]
+
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 

@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from jinja2 import Template
 
-from dipdup.config import BigMapIndexConfig, ContractConfig, ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig, TzktDatasourceConfig
+from dipdup.config import BigMapIndexConfig, ContractConfig, IndexTemplateConfig, OperationHandlerConfig, ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig, TzktDatasourceConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.utils import camel_to_snake, snake_to_camel
 
@@ -66,9 +66,9 @@ async def fetch_schemas(config: DipDupConfig):
 
     for index_name, index_config in config.indexes.items():
         if isinstance(index_config, OperationIndexConfig):
-            for handler_config in index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    contract_config = pattern_config.contract_config
+            for operation_handler_config in index_config.handlers:
+                for operation_pattern_config in operation_handler_config.pattern:
+                    contract_config = operation_pattern_config.contract_config
                     contract_schemas = await schemas_cache.get(index_config.datasource_config, contract_config)
 
                     contract_schemas_path = join(schemas_path, contract_config.module_name)
@@ -87,9 +87,9 @@ async def fetch_schemas(config: DipDupConfig):
                         mkdir(parameter_schemas_path)
 
                     entrypoint_schema = next(
-                        ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == pattern_config.entrypoint
+                        ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == operation_pattern_config.entrypoint
                     )
-                    entrypoint_schema_path = join(parameter_schemas_path, f'{pattern_config.entrypoint}.json')
+                    entrypoint_schema_path = join(parameter_schemas_path, f'{operation_pattern_config.entrypoint}.json')
 
                     if not exists(entrypoint_schema_path):
                         with open(entrypoint_schema_path, 'w') as file:
@@ -103,10 +103,39 @@ async def fetch_schemas(config: DipDupConfig):
                             _logger.warning('Contract "%s" falsely claims to be a "%s"', contract_config.address, contract_config.typename)
 
         elif isinstance(index_config, BigMapIndexConfig):
-            datasource = TzktDatasource(index_config.datasource_config.url)
-            for handler_config in index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    contract_config = pattern_config.contract_config
+            for big_map_handler_config in index_config.handlers:
+                for big_map_pattern_config in big_map_handler_config.pattern:
+                    contract_config = big_map_pattern_config.contract_config
+
+                    contract_schemas = await schemas_cache.get(index_config.datasource_config, contract_config)
+
+                    contract_schemas_path = join(schemas_path, contract_config.module_name)
+                    with suppress(FileExistsError):
+                        mkdir(contract_schemas_path)
+
+                    big_map_schemas_path = join(contract_schemas_path, 'big_map')
+                    with suppress(FileExistsError):
+                        mkdir(big_map_schemas_path)
+
+                    big_map_schema = next(
+                        ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_pattern_config.path
+                    )
+                    big_map_key_schema = big_map_schema['keySchema']
+                    big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_pattern_config.path}.key.json')
+
+                    if not exists(big_map_key_schema_path):
+                        with open(big_map_key_schema_path, 'w') as file:
+                            file.write(json.dumps(big_map_key_schema, indent=4))
+
+                    big_map_value_schema = big_map_schema['valueSchema']
+                    big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_pattern_config.path}.value.json')
+
+                    if not exists(big_map_value_schema_path):
+                        with open(big_map_value_schema_path, 'w') as file:
+                            file.write(json.dumps(big_map_value_schema, indent=4))
+
+        elif isinstance(index_config, IndexTemplateConfig):
+            raise RuntimeError('Config is not initialized')
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -160,6 +189,8 @@ async def generate_handlers(config: DipDupConfig):
     _logger.info('Loading handler templates')
     with open(join(dirname(__file__), 'templates', 'operation_handler.py.j2')) as file:
         operation_handler_template = Template(file.read())
+    with open(join(dirname(__file__), 'templates', 'big_map_handler.py.j2')) as file:
+        big_map_handler_template = Template(file.read())
     with open(join(dirname(__file__), 'templates', f'{ROLLBACK_HANDLER}.py.j2')) as file:
         rollback_template = Template(file.read())
 
@@ -196,17 +227,19 @@ async def generate_handlers(config: DipDupConfig):
         elif isinstance(index_config, BigMapIndexConfig):
             for handler in index_config.handlers:
                 _logger.info('Generating handler `%s`', handler.callback)
-                # handler_code = operation_handler_template.render(
-                #     package=config.package,
-                #     handler=handler.callback,
-                #     patterns=handler.pattern,
-                #     snake_to_camel=snake_to_camel,
-                #     camel_to_snake=camel_to_snake,
-                # )
-                # handler_path = join(handlers_path, f'{handler.callback}.py')
-                # if not exists(handler_path):
-                #     with open(handler_path, 'w') as file:
-                #         file.write(handler_code)
+                for pattern_config in handler.pattern:
+                    pattern_config.path = pattern_config.path.replace('.', '_')
+                handler_code = big_map_handler_template.render(
+                    package=config.package,
+                    handler=handler.callback,
+                    patterns=handler.pattern,
+                    snake_to_camel=snake_to_camel,
+                    camel_to_snake=camel_to_snake,
+                )
+                handler_path = join(handlers_path, f'{handler.callback}.py')
+                if not exists(handler_path):
+                    with open(handler_path, 'w') as file:
+                        file.write(handler_code)
         
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

@@ -10,10 +10,10 @@ from aiosignalrcore.transport.websockets.connection import ConnectionState  # ty
 from tortoise.transactions import in_transaction
 
 from dipdup import __version__
-from dipdup.config import ROLLBACK_HANDLER, BigmapdiffIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
+from dipdup.config import ROLLBACK_HANDLER, BigMapIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import HandlerContext, OperationContext, OperationData
+from dipdup.models import OperationHandlerContext, OperationContext, OperationData
 from dipdup.utils import http_request
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
@@ -66,7 +66,7 @@ class TzktDatasource:
         self._client: Optional[BaseHubConnection] = None
         self._caches: Dict[OperationIndexName, OperationCache] = {}
 
-    def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]):
+    def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
         if isinstance(index_config, OperationIndexConfig):
             self._logger.info('Adding index `%s`', index_name)
             self._operation_index_by_name[index_name] = index_config
@@ -324,11 +324,11 @@ class TzktDatasource:
         matched_operations: List[OperationData],
         operations: List[OperationData],
     ):
-        handler_context = HandlerContext(
+        handler_context = OperationHandlerContext(
             operations=operations,
             template_values=index_config.template_values,
         )
-        args: List[Union[OperationContext, HandlerContext]] = [handler_context]
+        args: List[Union[OperationContext, OperationHandlerContext]] = [handler_context]
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
 
             parameter_type = pattern_config.parameter_type_cls

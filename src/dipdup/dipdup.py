@@ -42,9 +42,9 @@ class DipDup:
                 assert not isinstance(index_config, IndexTemplateConfig)
                 self._logger.info('Processing index `%s`', index_name)
                 if isinstance(index_config.datasource, TzktDatasourceConfig):
-                    if index_config.tzkt_config not in datasources:
-                        datasources[index_config.tzkt_config] = TzktDatasource(index_config.tzkt_config.url)
-                    datasources[index_config.tzkt_config].add_index(index_name, index_config)
+                    if index_config.datasource_config not in datasources:
+                        datasources[index_config.datasource_config] = TzktDatasource(index_config.datasource_config.url)
+                    datasources[index_config.datasource_config].add_index(index_name, index_config)
                 else:
                     raise NotImplementedError(f'Datasource `{index_config.datasource}` is not supported')
 

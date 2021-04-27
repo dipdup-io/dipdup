@@ -1,0 +1,33 @@
+spec_version: 0.1
+package: demo_tezos_domains_big_map
+
+database:
+  kind: sqlite
+  path: tezos_domains_big_map.sqlite3
+
+contracts:
+  edo_name_registry:
+    address: KT1JJbWfW8CHUY95hG9iq2CEMma1RiKhMHDR
+    typename: name_registry
+
+datasources:
+  tzkt_staging_edo:
+    kind: tzkt
+    url: ${TZKT_URL:-https://staging.api.edo2net.tzkt.io}
+
+templates:
+  tezos_domains_big_map:
+    kind: big_map
+    datasource: <datasource>
+    handlers:
+      - callback: on_update
+        pattern:
+          - contract: <name_registry>
+            path: store.records
+
+indexes:
+  tezos_domains_big_map_edo:
+    template: tezos_domains_big_map
+    values:
+      datasource: tzkt_staging_edo
+      name_registry: edo_name_registry

@@ -5,11 +5,11 @@ from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer as Trans
 from demo_quipuswap.types.fa12_token.storage import Storage as Fa12TokenStorage
 from demo_quipuswap.types.quipu_fa12.parameter.tez_to_token_payment import TezToTokenPayment as TezToTokenPaymentParameter
 from demo_quipuswap.types.quipu_fa12.storage import Storage as QuipuFa12Storage
-from dipdup.models import HandlerContext, OperationContext
+from dipdup.models import OperationHandlerContext, OperationContext
 
 
 async def on_fa12_tez_to_token(
-    ctx: HandlerContext,
+    ctx: OperationHandlerContext,
     tez_to_token_payment: OperationContext[TezToTokenPaymentParameter, QuipuFa12Storage],
     transfer: OperationContext[TransferParameter, Fa12TokenStorage],
 ) -> None:

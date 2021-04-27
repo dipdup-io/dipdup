@@ -1,16 +1,17 @@
-from dipdup.models import HandlerContext, OperationContext
+from dipdup.models import OperationHandlerContext, BigMapContext
 
 import {{ package }}.models as models
 {% for pattern in patterns %}
-from {{ package }}.types.{{ pattern.destination.module_name }}.parameter.{{ camel_to_snake(pattern.entrypoint) }} import {{ snake_to_camel(pattern.entrypoint) }} as {{ snake_to_camel(pattern.entrypoint) }}Parameter
-from {{ package }}.types.{{ pattern.destination.module_name }}.storage import Storage as {{ snake_to_camel(pattern.destination.module_name) }}Storage
+from {{ package }}.types.{{ pattern.contract.module_name }}.big_map.{{ camel_to_snake(pattern.path) }}_key import {{ snake_to_camel(pattern.path) }}Key
+from {{ package }}.types.{{ pattern.contract.module_name }}.big_map.{{ camel_to_snake(pattern.path) }}_value import {{ snake_to_camel(pattern.path) }}Value
 {%- endfor %}
 
 
 async def {{ handler }}(
-    ctx: HandlerContext,
+    ctx: BigMapHandlerContext,
 {%- for pattern in patterns %}
-    {{ camel_to_snake(pattern.entrypoint) }}: OperationContext[{{ snake_to_camel(pattern.entrypoint) }}Parameter, {{ snake_to_camel(pattern.destination.module_name) }}Storage],
+    {{ camel_to_snake(pattern.path) }}: BigMapContext[{{ snake_to_camel(pattern.path) }}Key, {{ snake_to_camel(pattern.path) }}Value],
 {%- endfor %}
 ) -> None:
     ...
+    
