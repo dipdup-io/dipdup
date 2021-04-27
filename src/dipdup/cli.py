@@ -6,7 +6,7 @@ import sys
 from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
-from typing import Dict
+from typing import Dict, List
 
 import click
 from tortoise import Tortoise
@@ -40,11 +40,11 @@ class CLIContext:
 
 @click.group()
 @click.version_option(__version__)
-@click.option('--config', '-c', type=str, help='Path to dipdup YAML config', default='dipdup.yml')
+@click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default='dipdup.yml')
 @click.option('--logging-config', '-l', type=str, help='Path to logging YAML config', default='logging.yml')
 @click.pass_context
 @click_async
-async def cli(ctx, config: str, logging_config: str):
+async def cli(ctx, config: List[str], logging_config: str):
     try:
         path = join(os.getcwd(), logging_config)
         _logging_config = LoggingConfig.load(path)

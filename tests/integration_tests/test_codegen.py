@@ -33,7 +33,7 @@ class CodegenTest(IsolatedAsyncioTestCase):
         for name in ['hic_et_nunc.yml', 'quipuswap.yml', 'tzcolors.yml']:
             with self.subTest(name):
                 config_path = join(dirname(__file__), name)
-                config = DipDupConfig.load(config_path)
+                config = DipDupConfig.load([config_path])
                 config.package = 'tmp_test_dipdup'
 
                 if config.package in sys.modules:
