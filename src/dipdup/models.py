@@ -42,17 +42,11 @@ class OperationData:
     hash: str
     counter: int
     sender_address: str
-    gas_limit: int
-    gas_used: int
-    storage_limit: int
-    storage_used: int
-    baker_fee: int
-    storage_fee: int
-    allocation_fee: int
     target_address: str
     amount: int
     status: str
     has_internals: bool
+    storage: Dict[str, Any]
     block: Optional[str] = None
     sender_alias: Optional[str] = None
     nonce: Optional[int] = None
@@ -61,7 +55,6 @@ class OperationData:
     parameter_json: Optional[Any] = None
     initiator_address: Optional[str] = None
     parameter: Optional[str] = None
-    storage: Optional[Dict[str, Any]] = None
     diffs: Optional[List[Dict[str, Any]]] = None
 
     def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str, array: bool) -> None:
@@ -123,10 +116,10 @@ class OperationData:
 
 
 @dataclass
-class OperationContext(Generic[ParameterType]):  # TODO: Add StorageType
+class OperationContext(Generic[ParameterType, StorageType]):
     data: OperationData
     parameter: ParameterType
-    storage: Any  # TODO: StorageType
+    storage: StorageType
 
 
 @dataclass

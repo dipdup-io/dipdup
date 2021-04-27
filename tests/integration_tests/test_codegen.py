@@ -5,8 +5,8 @@ from os.path import dirname, join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
 
-from dipdup import codegen
 from dipdup.config import DipDupConfig
+from dipdup.dipdup import DipDup
 
 
 # NOTE: https://gist.github.com/breeze1990/0253cb96ce04c00cb7a67feb2221e95e
@@ -40,11 +40,8 @@ class CodegenTest(IsolatedAsyncioTestCase):
                     del sys.modules[config.package]
 
                 try:
-                    await codegen.create_package(config)
-                    await codegen.fetch_schemas(config)
-                    await codegen.generate_types(config)
-                    await codegen.generate_handlers(config)
-                    await codegen.cleanup(config)
+                    dipdup = DipDup(config)
+                    await dipdup.init()
 
                     import_submodules(config.package)
 

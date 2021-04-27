@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 
 
 class Key(BaseModel):
@@ -40,15 +40,14 @@ class MigrationStatu2(BaseModel):
     migratedTo: str
 
 
-class RegistryItem(BaseModel):
-    pass
+class Registry(BaseModel):
+    value: Optional[str]
+    affected_proposal_key: str
+    last_updated: str
 
-    class Config:
-        extra = Extra.allow
 
-
-class ExtraModel(BaseModel):
-    registry: Union[int, RegistryItem]
+class Extra(BaseModel):
+    registry: Dict[str, Registry]
     proposal_receivers: List[str]
     frozen_scale_value: str
     frozen_extra_value: str
@@ -97,9 +96,6 @@ class Voter(BaseModel):
 
 
 class Proposals(BaseModel):
-    class Config:
-        extra = Extra.allow
-
     upvotes: str
     downvotes: str
     start_date: str
@@ -114,20 +110,6 @@ class ProposalKeyListSortByDateItem(BaseModel):
     bytes: str
 
 
-class Metadata(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
-class TotalSupply(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
 class Storage(BaseModel):
     ledger: List[LedgerItem]
     operators: List[Operator]
@@ -137,9 +119,9 @@ class Storage(BaseModel):
     migration_status: Union[MigrationStatu, MigrationStatu1, MigrationStatu2]
     voting_period: str
     quorum_threshold: str
-    extra: ExtraModel
+    extra: Extra
     proposals: Dict[str, Proposals]
     proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
     permits_counter: str
-    metadata: Dict[str, Metadata]
-    total_supply: Dict[str, TotalSupply]
+    metadata: Dict[str, str]
+    total_supply: Dict[str, str]

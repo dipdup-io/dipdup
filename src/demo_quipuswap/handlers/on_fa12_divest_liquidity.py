@@ -1,23 +1,22 @@
 from decimal import Decimal
-from typing import cast
 
 import demo_quipuswap.models as models
-from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer
-from demo_quipuswap.types.quipu_fa12.parameter.divest_liquidity import DivestLiquidity
-from demo_quipuswap.types.quipu_fa12.storage import Storage as QuipuFA12Storage
+from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer as TransferParameter
+from demo_quipuswap.types.fa12_token.storage import Storage as Fa12TokenStorage
+from demo_quipuswap.types.quipu_fa12.parameter.divest_liquidity import DivestLiquidity as DivestLiquidityParameter
+from demo_quipuswap.types.quipu_fa12.storage import Storage as QuipuFa12Storage
 from dipdup.models import HandlerContext, OperationContext
 
 
 async def on_fa12_divest_liquidity(
     ctx: HandlerContext,
-    divest_liquidity: OperationContext[DivestLiquidity],
-    transfer: OperationContext[Transfer],
+    divest_liquidity: OperationContext[DivestLiquidityParameter, QuipuFa12Storage],
+    transfer: OperationContext[TransferParameter, Fa12TokenStorage],
 ) -> None:
-
     if ctx.template_values is None:
         raise Exception('This index must be templated')
 
-    storage = cast(QuipuFA12Storage, divest_liquidity.storage)  # FIXME: remove
+    storage = divest_liquidity.storage
 
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']

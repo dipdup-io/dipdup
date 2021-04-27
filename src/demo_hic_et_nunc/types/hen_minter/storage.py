@@ -5,28 +5,15 @@ from __future__ import annotations
 
 from typing import Dict
 
-from pydantic import BaseModel, Extra
-
-
-class Metadata(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
+from pydantic import BaseModel
 
 
 class Royalties(BaseModel):
-    class Config:
-        extra = Extra.allow
-
     issuer: str
     royalties: str
 
 
 class Swaps(BaseModel):
-    class Config:
-        extra = Extra.allow
-
     issuer: str
     objkt_amount: str
     objkt_id: str
@@ -39,7 +26,7 @@ class Storage(BaseModel):
     hdao: str
     locked: bool
     manager: str
-    metadata: Dict[str, Metadata]
+    metadata: Dict[str, str]
     objkt: str
     objkt_id: str
     royalties: Dict[str, Royalties]
