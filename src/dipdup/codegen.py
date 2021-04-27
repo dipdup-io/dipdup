@@ -38,15 +38,6 @@ class SchemasCache:
         return self._schemas[datasource_config][contract_config.address]
 
 
-def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
-    if 'properties' in schema:
-        return {**schema, 'properties': {prop: resolve_big_maps(sub_schema) for prop, sub_schema in schema['properties'].items()}}
-    elif schema.get('$comment') == 'big_map':
-        return schema['oneOf'][1]
-    else:
-        return schema
-
-
 async def create_package(config: DipDupConfig):
     try:
         package_path = config.package_path
@@ -86,11 +77,10 @@ async def fetch_schemas(config: DipDupConfig):
 
                     storage_schema_path = join(contract_schemas_path, 'storage.json')
 
-                    storage_schema = resolve_big_maps(contract_schemas['storageSchema'])
+                    storage_schema = contract_schemas['storageSchema']
                     if not exists(storage_schema_path):
                         with open(storage_schema_path, 'w') as file:
-                            file.write(json.dumps(storage_schema, indent=4))
-                    # TODO: check contract.typename
+                            file.write(json.dumps(storage_schema, indent=4, sort_keys=True))
 
                     parameter_schemas_path = join(contract_schemas_path, 'parameter')
                     with suppress(FileExistsError):
@@ -108,7 +98,9 @@ async def fetch_schemas(config: DipDupConfig):
                         with open(entrypoint_schema_path, 'r') as file:
                             existing_schema = json.loads(file.read())
                         if entrypoint_schema != existing_schema:
-                            raise ValueError(f'Contract "{contract_config.address}" falsely claims to be a "{contract_config.typename}"')
+                            # FIXME: Different field order counts as different schema
+                            # raise ValueError(f'Contract "{contract.address}" falsely claims to be a "{contract.typename}"')
+                            _logger.warning('Contract "%s" falsely claims to be a "%s"', contract_config.address, contract_config.typename)
 
         elif isinstance(index_config, BigMapIndexConfig):
             datasource = TzktDatasource(index_config.datasource_config.url)

@@ -5,7 +5,23 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
+
+
+class Registry(BaseModel):
+    affected_proposal_key: str
+    last_updated: str
+    value: Optional[str]
+
+
+class Extra(BaseModel):
+    frozen_extra_value: str
+    frozen_scale_value: str
+    max_proposal_size: str
+    proposal_receivers: List[str]
+    registry: Union[int, Dict[str, Registry]]
+    slash_division_value: str
+    slash_scale_value: str
 
 
 class Key(BaseModel):
@@ -16,16 +32,6 @@ class Key(BaseModel):
 class LedgerItem(BaseModel):
     key: Key
     value: str
-
-
-class Key1(BaseModel):
-    owner: str
-    operator: str
-
-
-class Operator(BaseModel):
-    key: Key1
-    value: Dict[str, Any]
 
 
 class MigrationStatu(BaseModel):
@@ -40,21 +46,19 @@ class MigrationStatu2(BaseModel):
     migratedTo: str
 
 
-class RegistryItem(BaseModel):
-    pass
-
-    class Config:
-        extra = Extra.allow
+class Key1(BaseModel):
+    operator: str
+    owner: str
 
 
-class ExtraModel(BaseModel):
-    registry: Union[int, RegistryItem]
-    proposal_receivers: List[str]
-    frozen_scale_value: str
-    frozen_extra_value: str
-    slash_scale_value: str
-    slash_division_value: str
-    max_proposal_size: str
+class Operator(BaseModel):
+    key: Key1
+    value: Dict[str, Any]
+
+
+class ProposalKeyListSortByDateItem(BaseModel):
+    bytes: str
+    timestamp: str
 
 
 class DiffItem(BaseModel):
@@ -72,11 +76,11 @@ class Metadatum(BaseModel):
 
 
 class ProposalType1(BaseModel):
-    frozen_scale_value: Optional[str]
     frozen_extra_value: Optional[str]
-    slash_scale_value: Optional[str]
-    slash_division_value: Optional[str]
+    frozen_scale_value: Optional[str]
     max_proposal_size: Optional[str]
+    slash_division_value: Optional[str]
+    slash_scale_value: Optional[str]
 
 
 class Metadatum1(BaseModel):
@@ -97,49 +101,27 @@ class Voter(BaseModel):
 
 
 class Proposals(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    upvotes: str
     downvotes: str
-    start_date: str
     metadata: Union[Metadatum, Metadatum1, Metadatum2, Metadatum3]
     proposer: str
     proposer_frozen_token: str
+    start_date: str
+    upvotes: str
     voters: List[Voter]
 
 
-class ProposalKeyListSortByDateItem(BaseModel):
-    timestamp: str
-    bytes: str
-
-
-class Metadata(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
-class TotalSupply(BaseModel):
-    class Config:
-        extra = Extra.allow
-
-    __root__: str
-
-
 class Storage(BaseModel):
-    ledger: List[LedgerItem]
-    operators: List[Operator]
-    token_address: str
     admin: str
-    pending_owner: str
+    extra: Extra
+    ledger: Union[int, List[LedgerItem]]
+    metadata: Union[int, Dict[str, str]]
     migration_status: Union[MigrationStatu, MigrationStatu1, MigrationStatu2]
-    voting_period: str
-    quorum_threshold: str
-    extra: ExtraModel
-    proposals: Dict[str, Proposals]
-    proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
+    operators: Union[int, List[Operator]]
+    pending_owner: str
     permits_counter: str
-    metadata: Dict[str, Metadata]
-    total_supply: Dict[str, TotalSupply]
+    proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
+    proposals: Union[int, Dict[str, Proposals]]
+    quorum_threshold: str
+    token_address: str
+    total_supply: Dict[str, str]
+    voting_period: str

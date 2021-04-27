@@ -23,7 +23,8 @@ templates:
   tzcolors_auction:
     kind: operation
     datasource: <datasource>
-    contract: <auction>
+    contracts:
+      - <auction>
     handlers:
       - callback: on_create_auction
         pattern:

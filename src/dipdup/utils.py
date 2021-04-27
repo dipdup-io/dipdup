@@ -51,7 +51,7 @@ async def http_request(method: str, **kwargs):
     async with aiohttp.ClientSession() as session:
         headers = {
             **kwargs.pop('headers', {}),
-            'User-Agent': f'dupdup/{__version__}',
+            'User-Agent': f'dipdup/{__version__}',
         }
         async with getattr(session, method)(
             skip_auto_headers={'User-Agent'},

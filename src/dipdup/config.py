@@ -8,7 +8,7 @@ import sys
 from collections import defaultdict
 from os import environ as env
 from os.path import dirname
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import validator
@@ -219,7 +219,7 @@ class OperationIndexConfig:
 
     kind: Literal["operation"]
     datasource: Union[str, TzktDatasourceConfig]
-    contract: Union[str, ContractConfig]
+    contracts: List[Union[str, ContractConfig]]
     handlers: List[OperationHandlerConfig]
     first_block: int = 0
     last_block: int = 0
@@ -244,9 +244,11 @@ class OperationIndexConfig:
         return self.datasource
 
     @property
-    def contract_config(self) -> ContractConfig:
-        assert isinstance(self.contract, ContractConfig)
-        return self.contract
+    def contract_configs(self) -> List[ContractConfig]:
+        for contract in self.contracts:
+            if not isinstance(contract, ContractConfig):
+                raise RuntimeError('Config is not initialized')
+        return cast(List[ContractConfig], self.contracts)
 
     @property
     def state(self):
@@ -387,8 +389,10 @@ class DipDupConfig:
             if isinstance(index_config, OperationIndexConfig):
                 if isinstance(index_config.datasource, str):
                     index_config.datasource = self.datasources[index_config.datasource]
-                if isinstance(index_config.contract, str):
-                    index_config.contract = self.contracts[index_config.contract]
+
+                for i, contract in enumerate(index_config.contracts):
+                    if isinstance(contract, str):
+                        index_config.contracts[i] = self.contracts[contract]
 
                 for handler in index_config.handlers:
                     if isinstance(handler.pattern, list):
@@ -421,24 +425,31 @@ class DipDupConfig:
     @classmethod
     def load(
         cls,
-        filename: str,
+        filenames: List[str],
     ) -> 'DipDupConfig':
 
         current_workdir = os.path.join(os.getcwd())
-        filename = os.path.join(current_workdir, filename)
 
-        _logger.info('Loading config from %s', filename)
-        with open(filename) as file:
-            raw_config = file.read()
+        json_config: Dict[str, Any] = {}
+        for filename in filenames:
+            filename = os.path.join(current_workdir, filename)
 
-        _logger.info('Substituting environment variables')
-        for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-            variable, default_value = match.group(1), match.group(2)
-            value = env.get(variable)
-            placeholder = '${' + variable + ':-' + default_value + '}'
-            raw_config = raw_config.replace(placeholder, value or default_value)
+            _logger.info('Loading config from %s', filename)
+            with open(filename) as file:
+                raw_config = file.read()
 
-        json_config = YAML(typ='base').load(raw_config)
+            _logger.info('Substituting environment variables')
+            for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
+                variable, default_value = match.group(1), match.group(2)
+                value = env.get(variable)
+                placeholder = '${' + variable + ':-' + default_value + '}'
+                raw_config = raw_config.replace(placeholder, value or default_value)
+
+            json_config = {
+                **json_config,
+                **YAML(typ='base').load(raw_config),
+            }
+
         config = cls(**json_config)
         return config
 

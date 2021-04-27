@@ -2,14 +2,15 @@ from dipdup.models import HandlerContext, OperationContext
 
 import {{ package }}.models as models
 {% for pattern in patterns %}
-from {{ package }}.types.{{ pattern.destination.module_name }}.parameter.{{ camel_to_snake(pattern.entrypoint) }} import {{ snake_to_camel(pattern.entrypoint) }}
+from {{ package }}.types.{{ pattern.destination.module_name }}.parameter.{{ camel_to_snake(pattern.entrypoint) }} import {{ snake_to_camel(pattern.entrypoint) }} as {{ snake_to_camel(pattern.entrypoint) }}Parameter
+from {{ package }}.types.{{ pattern.destination.module_name }}.storage import Storage as {{ snake_to_camel(pattern.destination.module_name) }}Storage
 {%- endfor %}
 
 
 async def {{ handler }}(
     ctx: HandlerContext,
 {%- for pattern in patterns %}
-    {{ camel_to_snake(pattern.entrypoint) }}: OperationContext[{{ snake_to_camel(pattern.entrypoint) }}],
+    {{ camel_to_snake(pattern.entrypoint) }}: OperationContext[{{ snake_to_camel(pattern.entrypoint) }}Parameter, {{ snake_to_camel(pattern.destination.module_name) }}Storage],
 {%- endfor %}
 ) -> None:
     ...

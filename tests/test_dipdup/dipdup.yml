@@ -22,7 +22,8 @@ indexes:
   hen_mainnet:
     kind: operation
     datasource: tzkt_mainnet
-    contract: HEN_minter
+    contracts:
+      - HEN_minter
     handlers:
       - callback: on_mint
         pattern:

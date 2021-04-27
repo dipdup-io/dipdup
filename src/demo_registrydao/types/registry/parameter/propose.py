@@ -23,11 +23,11 @@ class ProposalMetadatum(BaseModel):
 
 
 class ProposalType1(BaseModel):
-    frozen_scale_value: Optional[str]
     frozen_extra_value: Optional[str]
-    slash_scale_value: Optional[str]
-    slash_division_value: Optional[str]
+    frozen_scale_value: Optional[str]
     max_proposal_size: Optional[str]
+    slash_division_value: Optional[str]
+    slash_scale_value: Optional[str]
 
 
 class ProposalMetadatum1(BaseModel):

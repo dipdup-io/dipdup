@@ -1,23 +1,23 @@
 from decimal import Decimal
-from typing import cast
 
 import demo_quipuswap.models as models
-from demo_quipuswap.types.fa2_token.parameter.transfer import Transfer
-from demo_quipuswap.types.quipu_fa2.parameter.invest_liquidity import InvestLiquidity
-from demo_quipuswap.types.quipu_fa2.storage import Storage as QuipuFA20Storage
+from demo_quipuswap.types.fa2_token.parameter.transfer import Transfer as TransferParameter
+from demo_quipuswap.types.fa2_token.storage import Storage as Fa2TokenStorage
+from demo_quipuswap.types.quipu_fa2.parameter.invest_liquidity import InvestLiquidity as InvestLiquidityParameter
+from demo_quipuswap.types.quipu_fa2.storage import Storage as QuipuFa2Storage
 from dipdup.models import HandlerContext, OperationContext
 
 
 async def on_fa20_invest_liquidity(
     ctx: HandlerContext,
-    invest_liquidity: OperationContext[InvestLiquidity],
-    transfer: OperationContext[Transfer],
+    invest_liquidity: OperationContext[InvestLiquidityParameter, QuipuFa2Storage],
+    transfer: OperationContext[TransferParameter, Fa2TokenStorage],
 ) -> None:
 
     if ctx.template_values is None:
         raise Exception('This index must be templated')
 
-    storage = cast(QuipuFA20Storage, invest_liquidity.storage)  # FIXME: remove
+    storage = invest_liquidity.storage
 
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']
@@ -27,7 +27,7 @@ async def on_fa20_invest_liquidity(
 
     tez_qty = Decimal(invest_liquidity.data.amount) / (10 ** 6)
     token_qty = Decimal(transfer.parameter.__root__[0].txs[0].amount) / (10 ** decimals)
-    new_shares_qty = int(storage.storage.ledger[trader].balance) + int(storage.storage.ledger[trader].frozen_balance)
+    new_shares_qty = int(storage.storage.ledger[trader].balance) + int(storage.storage.ledger[trader].frozen_balance)  # type: ignore
 
     price = (Decimal(storage.storage.tez_pool) / (10 ** 6)) / (Decimal(storage.storage.token_pool) / (10 ** decimals))
     value = tez_qty + price * token_qty

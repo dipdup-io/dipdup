@@ -19,7 +19,8 @@ templates:
   tezos_domains:
     kind: operation
     datasource: <datasource>
-    contract: <name_registry>
+    contracts:
+      - <name_registry>
     handlers:
       - callback: on_admin_update
         pattern:
