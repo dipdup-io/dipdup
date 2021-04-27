@@ -16,7 +16,7 @@ DipDup stores a hash of the SQL version of the DB schema and checks for changes 
 
 ## Recovering from state
 
-DipDup applies all updates atomically block by block. In case of emergency shut down, it can safely recover later and continue from the level he ended. 
+DipDup applies all updates atomically block by block. In case of emergency shut down, it can safely recover later and continue from the level he ended. DipDup state is stored in the database per index and can be used by API consumer to determine current indexer head.
 
 ## Hasura setup
 
