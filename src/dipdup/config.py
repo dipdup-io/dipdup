@@ -348,6 +348,8 @@ class BlockIndexConfig(IndexConfig):
     kind: Literal['block']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BlockHandlerConfig]
+    first_block: int = 0
+    last_block: int = 0
 
 
 @dataclass
@@ -491,7 +493,7 @@ class DipDupConfig:
         config = cls(**json_config)
         return config
 
-    async def _initialize_index_state(self, index_name: str, index_config: IndexConfig):
+    async def _initialize_index_state(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
         rollback_fn = getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
         _logger.info('Getting state for index `%s`', index_name)
         index_config.rollback_fn = rollback_fn

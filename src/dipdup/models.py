@@ -20,7 +20,7 @@ _logger = logging.getLogger(__name__)
 
 class IndexType(Enum):
     operation = 'operation'
-    bigmapdiff = 'bigmapdiff'
+    big_map = 'big_map'
     block = 'block'
     schema = 'schema'
 
