@@ -1,6 +1,3 @@
-spec_version: 0.0.1
-package: demo_hic_et_nunc
-
 database:
   kind: postgres
   host: db
@@ -13,42 +10,3 @@ database:
 hasura:
   url: http://hasura:8080
   admin_secret: ${ADMIN_SECRET:-changeme}
-
-contracts:
-  HEN_objkts: 
-    address: ${HEN_OBJKTS:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
-    typename: hen_objkts
-  HEN_minter: 
-    address: ${HEN_MINTER:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
-    typename: hen_minter
-
-datasources:
-  tzkt_mainnet:
-    kind: tzkt
-    url: ${TZKT_URL:-https://staging.api.tzkt.io}
-
-indexes:
-  hen_mainnet:
-    kind: operation
-    datasource: tzkt_mainnet
-    contracts:
-      - HEN_minter
-    handlers:
-      - callback: on_mint
-        pattern:
-          - destination: HEN_minter
-            entrypoint: mint_OBJKT
-          - destination: HEN_objkts
-            entrypoint: mint
-      - callback: on_swap
-        pattern:
-          - destination: HEN_minter
-            entrypoint: swap
-      - callback: on_cancel_swap
-        pattern:
-          - destination: HEN_minter
-            entrypoint: cancel_swap
-      - callback: on_collect
-        pattern:
-          - destination: HEN_minter
-            entrypoint: collect

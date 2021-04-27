@@ -6,7 +6,9 @@ services:
     depends_on:
       - db
     volumes:
-      - ./src/demo_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_hic_et_nunc/dipdup.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
+    command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
     restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -17,7 +19,9 @@ services:
     depends_on:
       - db
     volumes:
-      - ./src/demo_quipuswap/dipdup-docker.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_quipuswap/dipdup.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_quipuswap/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
+    command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
     restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -28,18 +32,22 @@ services:
     depends_on:
       - db
     volumes:
-      - ./src/demo_tzcolors/dipdup-docker.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_tzcolors/dipdup.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_tzcolors/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
+    command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
     restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
 
-  domains:
+  tezos_domains:
     build: .
     depends_on:
       - db
     volumes:
-      - ./src/demo_tezos_domains/dipdup-docker.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_tezos_domains/dipdup.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_tezos_domains/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
+    command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
     restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}

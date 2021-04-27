@@ -1,44 +1,12 @@
-spec_version: 0.0.1
-package: demo_registrydao
-
 database:
   kind: postgres
   host: db
   port: 5432
-  user: dipdup
-  password: changeme
-  database: dipdup
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD:-changeme}
+  database: ${POSTGRES_DB:-dipdup}
   schema_name: registrydao
 
 hasura:
   url: http://hasura:8080
-  admin_secret: changeme
-
-contracts:
-  registry:
-    address: KT1QMdCTqzmY4QKHntV1nZEinLPU1GbxUFQu
-    typename: registry
-
-datasources:
-  tzkt:
-    kind: tzkt
-    url: ${TZKT_URL:-https://staging.api.edo2net.tzkt.io}
-
-templates:
-
-  registry_dao:
-    kind: operation
-    datasource: tzkt
-    contracts:
-      - <contract>
-    handlers:
-      - callback: on_propose
-        pattern:
-          - destination: <contract>
-            entrypoint: propose
-
-indexes:
-  registry:
-    template: registry_dao
-    values:
-      contract: registry
+  admin_secret: ${ADMIN_SECRET:-changeme}

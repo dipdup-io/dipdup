@@ -426,24 +426,31 @@ class DipDupConfig:
     @classmethod
     def load(
         cls,
-        filename: str,
+        filenames: List[str],
     ) -> 'DipDupConfig':
 
         current_workdir = os.path.join(os.getcwd())
-        filename = os.path.join(current_workdir, filename)
 
-        _logger.info('Loading config from %s', filename)
-        with open(filename) as file:
-            raw_config = file.read()
+        json_config: Dict[str, Any] = {}
+        for filename in filenames:
+            filename = os.path.join(current_workdir, filename)
 
-        _logger.info('Substituting environment variables')
-        for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-            variable, default_value = match.group(1), match.group(2)
-            value = env.get(variable)
-            placeholder = '${' + variable + ':-' + default_value + '}'
-            raw_config = raw_config.replace(placeholder, value or default_value)
+            _logger.info('Loading config from %s', filename)
+            with open(filename) as file:
+                raw_config = file.read()
 
-        json_config = YAML(typ='base').load(raw_config)
+            _logger.info('Substituting environment variables')
+            for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
+                variable, default_value = match.group(1), match.group(2)
+                value = env.get(variable)
+                placeholder = '${' + variable + ':-' + default_value + '}'
+                raw_config = raw_config.replace(placeholder, value or default_value)
+
+            json_config = {
+                **json_config,
+                **YAML(typ='base').load(raw_config),
+            }
+
         config = cls(**json_config)
         return config
 

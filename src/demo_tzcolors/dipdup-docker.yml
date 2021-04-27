@@ -1,58 +1,12 @@
-spec_version: 0.0.1
-package: demo_tzcolors
-
 database:
   kind: postgres
   host: db
   port: 5432
-  user: dipdup
-  password: changeme
-  database: dipdup
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD:-changeme}
+  database: ${POSTGRES_DB:-dipdup}
   schema_name: tzcolors
 
 hasura:
   url: http://hasura:8080
-  admin_secret: changeme
-
-contracts:
-  tzcolors_minter:
-    address: KT1FyaDqiMQWg7Exo7VUiXAgZbd2kCzo3d4s
-    typename: tzcolors_minter
-  tzcolors_auction:
-    address: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
-    typename: tzcolors_auction
-
-datasources:
-  tzkt_staging:
-    kind: tzkt
-    url: ${TZKT_URL:-https://staging.api.tzkt.io}
-
-templates:
-
-  tzcolors_auction:
-    kind: operation
-    datasource: <datasource>
-    contracts:
-      - <auction>
-    handlers:
-      - callback: on_create_auction
-        pattern:
-          - destination: <auction>
-            entrypoint: create_auction
-      - callback: on_bid
-        pattern:
-          - destination: <auction>
-            entrypoint: bid
-      - callback: on_withdraw
-        pattern:
-          - destination: <auction>
-            entrypoint: withdraw
-
-indexes:
-
-  tzcolors_auction:
-    template: tzcolors_auction
-    values:
-      datasource: tzkt_staging
-      minter: tzcolors_minter
-      auction: tzcolors_auction
+  admin_secret: ${ADMIN_SECRET:-changeme}
