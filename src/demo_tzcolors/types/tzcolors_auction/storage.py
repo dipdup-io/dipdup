@@ -3,17 +3,11 @@
 
 from __future__ import annotations
 
-from typing import Union
-
 from pydantic import BaseModel, Extra
 
 
-class StorageItem(BaseModel):
+class Storage(BaseModel):
     pass
 
     class Config:
         extra = Extra.allow
-
-
-class Storage(BaseModel):
-    __root__: Union[int, StorageItem]

@@ -302,11 +302,8 @@ class TzktDatasource:
             parameter_type = pattern_config.parameter_type_cls
             parameter = parameter_type.parse_obj(operation.parameter_json)
 
-            if operation.storage:
-                storage_type = pattern_config.storage_type_cls
-                storage = operation.get_merged_storage(storage_type)
-            else:
-                storage = None
+            storage_type = pattern_config.storage_type_cls
+            storage = operation.get_merged_storage(storage_type)
 
             operation_context = OperationContext(
                 data=operation,
@@ -321,7 +318,7 @@ class TzktDatasource:
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
         storage = operation_json.get('storage')
         # FIXME: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
-        if not isinstance(storage, (Dict, type(None))):
+        if not isinstance(storage, Dict):
             storage = {}
 
         return OperationData(
