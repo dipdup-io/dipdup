@@ -29,22 +29,21 @@ OPERATION_FIELDS = (
     "initiator",
     "sender",
     "nonce",
-    "gasLimit",
-    "gasUsed",
-    "storageLimit",
-    "storageUsed",
-    "bakerFee",
-    "storageFee",
-    "allocationFee",
+    # "gasLimit",
+    # "gasUsed",
+    # "storageLimit",
+    # "storageUsed",
+    # "bakerFee",
+    # "storageFee",
+    # "allocationFee",
     "target",
     "amount",
     "parameter",
     "storage",
     "status",
-    "errors",
+    # "errors",
     "hasInternals",
     # "quote",
-    "parameters",
     "diffs,",
 )
 
@@ -335,11 +334,8 @@ class TzktDatasource:
             parameter_type = pattern_config.parameter_type_cls
             parameter = parameter_type.parse_obj(operation.parameter_json)
 
-            if operation.storage:
-                storage_type = pattern_config.storage_type_cls
-                storage = operation.get_merged_storage(storage_type)
-            else:
-                storage = None
+            storage_type = pattern_config.storage_type_cls
+            storage = operation.get_merged_storage(storage_type)
 
             operation_context = OperationContext(
                 data=operation,
@@ -354,7 +350,7 @@ class TzktDatasource:
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
         storage = operation_json.get('storage')
         # FIXME: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
-        if not isinstance(storage, (Dict, type(None))):
+        if not isinstance(storage, Dict):
             storage = {}
 
         return OperationData(
@@ -367,13 +363,6 @@ class TzktDatasource:
             hash=operation_json['hash'],
             counter=operation_json['counter'],
             sender_address=operation_json['sender']['address'],
-            gas_limit=operation_json['gasLimit'],
-            gas_used=operation_json['gasUsed'],
-            storage_limit=operation_json['storageLimit'],
-            storage_used=operation_json['storageUsed'],
-            baker_fee=operation_json['bakerFee'],
-            storage_fee=operation_json['storageFee'],
-            allocation_fee=operation_json['allocationFee'],
             target_address=operation_json['target']['address'],
             amount=operation_json['amount'],
             status=operation_json['status'],

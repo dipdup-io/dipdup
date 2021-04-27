@@ -1,13 +1,14 @@
 from decimal import Decimal
 
 import demo_quipuswap.models as models
-from demo_quipuswap.types.quipu_fa12.parameter.withdraw_profit import WithdrawProfit
+from demo_quipuswap.types.quipu_fa12.parameter.withdraw_profit import WithdrawProfit as WithdrawProfitParameter
+from demo_quipuswap.types.quipu_fa12.storage import Storage as QuipuFa12Storage
 from dipdup.models import HandlerContext, OperationContext
 
 
 async def on_fa12_withdraw_profit(
     ctx: HandlerContext,
-    withdraw_profit: OperationContext[WithdrawProfit],
+    withdraw_profit: OperationContext[WithdrawProfitParameter, QuipuFa12Storage],
 ) -> None:
 
     if ctx.template_values is None:

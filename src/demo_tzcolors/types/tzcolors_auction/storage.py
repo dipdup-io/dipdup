@@ -9,13 +9,13 @@ from pydantic import BaseModel
 
 
 class Storage1(BaseModel):
-    token_address: str
-    token_id: str
-    token_amount: str
-    end_timestamp: str
-    seller: str
     bid_amount: str
     bidder: str
+    end_timestamp: str
+    seller: str
+    token_address: str
+    token_amount: str
+    token_id: str
 
 
 class Storage(BaseModel):
