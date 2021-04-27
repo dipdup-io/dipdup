@@ -107,9 +107,9 @@ async def run(ctx) -> None:
             assert not isinstance(index_config, IndexTemplateConfig)
             _logger.info('Processing index `%s`', index_name)
             if isinstance(index_config.datasource, TzktDatasourceConfig):
-                if index_config.tzkt_config not in datasources:
-                    datasources[index_config.tzkt_config] = TzktDatasource(index_config.tzkt_config.url)
-                datasources[index_config.tzkt_config].add_index(index_config)
+                if index_config.datasource_config not in datasources:
+                    datasources[index_config.datasource_config] = TzktDatasource(index_config.datasource_config.url)
+                datasources[index_config.datasource_config].add_index(index_config)
             else:
                 raise NotImplementedError(f'Datasource `{index_config.datasource}` is not supported')
 

@@ -238,7 +238,7 @@ class OperationIndexConfig:
         ).hexdigest()
 
     @property
-    def tzkt_config(self) -> TzktDatasourceConfig:
+    def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise RuntimeError('Config is not initialized')
         return self.datasource
@@ -278,26 +278,25 @@ class OperationIndexConfig:
 
 
 @dataclass
-class BigmapdiffHandlerPatternConfig:
-    name: str
-    entry_type: str
-
-
-@dataclass
-class BigmapdiffHandlerConfig:
-    callback: str
-    pattern: List[BigmapdiffHandlerPatternConfig]
-
-
-@dataclass
-class BigmapdiffIndexConfig:
-    kind: Literal['bigmapdiff']
-    datasource: Union[str, TzktDatasourceConfig]
+class BigMapHandlerPatternConfig:
     contract: Union[str, ContractConfig]
-    handlers: List[BigmapdiffHandlerConfig]
+    path: str
+
+
+@dataclass
+class BigMapHandlerConfig:
+    callback: str
+    pattern: List[BigMapHandlerPatternConfig]
+
+
+@dataclass
+class BigMapIndexConfig:
+    kind: Literal['big_map']
+    datasource: Union[str, TzktDatasourceConfig]
+    handlers: List[BigMapHandlerConfig]
 
     @property
-    def tzkt_config(self) -> TzktDatasourceConfig:
+    def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise RuntimeError('Config is not initialized')
         return self.datasource
@@ -316,7 +315,7 @@ class BlockIndexConfig:
     handlers: List[BlockHandlerConfig]
 
     @property
-    def tzkt_config(self) -> TzktDatasourceConfig:
+    def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise RuntimeError('Config is not initialized')
         return self.datasource
@@ -328,8 +327,8 @@ class IndexTemplateConfig:
     values: Dict[str, str]
 
 
-IndexConfigT = Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig, IndexTemplateConfig]
-IndexConfigTemplateT = Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]
+IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, IndexTemplateConfig]
+IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
 
 
 @dataclass

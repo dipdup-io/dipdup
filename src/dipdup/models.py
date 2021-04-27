@@ -128,6 +128,10 @@ class OperationContext(Generic[ParameterType]):  # TODO: Add StorageType
     parameter: ParameterType
     storage: Any  # TODO: StorageType
 
+@dataclass
+class BigMapContext:
+    ...
+
 
 @dataclass
 class HandlerContext:

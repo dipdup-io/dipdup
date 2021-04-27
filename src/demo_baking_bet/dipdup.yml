@@ -1,0 +1,54 @@
+spec_version: 0.0.1
+package: demo_baking_bet
+
+database:
+  kind: sqlite
+  path: baking_bet.sqlite3
+
+contracts:
+  baking_bet_florence:
+    address: KT1WYNq8qtTyo31pU7zRM94GKsTrbULuvKrh
+    typename: baking_bet
+
+datasources:
+  tzkt_florence:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.florencenet.tzkt.io/}
+
+templates:
+  baking_bet:
+    kind: operation
+    datasource: <datasource>
+    contract: <contract>
+    handlers:
+      - callback: on_new_event
+        pattern:
+          - destination: <contract>
+            entrypoint: newEvent
+
+      - callback: on_bet
+        pattern:
+          - destination: <contract>
+            entrypoint: bet
+      
+      - callback: on_measurement
+        pattern:
+          - destination: <contract>
+            entrypoint: startMeasurementCallback
+
+      - callback: on_close
+        pattern:
+          - destination: <contract>
+            entrypoint: closeCallback
+      
+      - callback: on_withdraw
+        pattern:
+          - destination: <contract>
+            entrypoint: withdraw
+
+indexes:
+  baking_bet_florence:
+    template: baking_bet
+    values:
+      datasource: tzkt_florence
+      contract: baking_bet_florence
