@@ -10,7 +10,16 @@ from typing import Any, Dict
 
 from jinja2 import Template
 
-from dipdup.config import BigMapIndexConfig, ContractConfig, IndexTemplateConfig, OperationHandlerConfig, ROLLBACK_HANDLER, DipDupConfig, OperationIndexConfig, TzktDatasourceConfig
+from dipdup.config import (
+    ROLLBACK_HANDLER,
+    BigMapIndexConfig,
+    ContractConfig,
+    DipDupConfig,
+    IndexTemplateConfig,
+    OperationHandlerConfig,
+    OperationIndexConfig,
+    TzktDatasourceConfig,
+)
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.utils import camel_to_snake, snake_to_camel
 
@@ -117,9 +126,7 @@ async def fetch_schemas(config: DipDupConfig):
                     with suppress(FileExistsError):
                         mkdir(big_map_schemas_path)
 
-                    big_map_schema = next(
-                        ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_pattern_config.path
-                    )
+                    big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_pattern_config.path)
                     big_map_key_schema = big_map_schema['keySchema']
                     big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_pattern_config.path}.key.json')
 
@@ -240,11 +247,9 @@ async def generate_handlers(config: DipDupConfig):
                 if not exists(handler_path):
                     with open(handler_path, 'w') as file:
                         file.write(handler_code)
-        
+
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
-
-
 
 
 async def cleanup(config: DipDupConfig):

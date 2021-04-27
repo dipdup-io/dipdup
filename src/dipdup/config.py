@@ -6,12 +6,13 @@ import os
 import re
 import sys
 from collections import defaultdict
+from dataclasses import field
 from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union, cast
 from urllib.parse import urlparse
 
-from pydantic import validator
+from pydantic import Field, validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
@@ -163,7 +164,7 @@ class OperationHandlerPatternConfig:
     @property
     def parameter_type_cls(self) -> Type:
         if self._parameter_type_cls is None:
-            raise Exception('Parameter type is not registered')
+            raise RuntimeError('Config is not initialized')
         return self._parameter_type_cls
 
     @parameter_type_cls.setter
@@ -173,7 +174,7 @@ class OperationHandlerPatternConfig:
     @property
     def storage_type_cls(self) -> Type:
         if self._storage_type_cls is None:
-            raise Exception('Storage type is not registered')
+            raise RuntimeError('Config is not initialized')
         return self._storage_type_cls
 
     @storage_type_cls.setter
@@ -182,15 +183,8 @@ class OperationHandlerPatternConfig:
 
 
 @dataclass
-class OperationHandlerConfig:
-    """Operation handler config
-
-    :param callback: Name of method in `handlers` package
-    :param pattern: Filters to match operations in group
-    """
-
+class HandlerConfig:
     callback: str
-    pattern: List[OperationHandlerPatternConfig]
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
@@ -207,22 +201,19 @@ class OperationHandlerConfig:
 
 
 @dataclass
-class OperationIndexConfig:
-    """Operation index config
+class OperationHandlerConfig(HandlerConfig):
+    """Operation handler config
 
-    :param datasource: Alias of datasource in `datasources` block
-    :param contract: Alias of contract to fetch operations for
-    :param first_block: First block to process
-    :param last_block: Last block to process
-    :param handlers: List of indexer handlers
+    :param callback: Name of method in `handlers` package
+    :param pattern: Filters to match operations in group
     """
 
-    kind: Literal["operation"]
+    pattern: List[OperationHandlerPatternConfig]
+
+
+@dataclass
+class IndexConfig:
     datasource: Union[str, TzktDatasourceConfig]
-    contracts: List[Union[str, ContractConfig]]
-    handlers: List[OperationHandlerConfig]
-    first_block: int = 0
-    last_block: int = 0
 
     def __post_init_post_parse__(self):
         self._state: Optional[State] = None
@@ -242,13 +233,6 @@ class OperationIndexConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise RuntimeError('Config is not initialized')
         return self.datasource
-
-    @property
-    def contract_configs(self) -> List[ContractConfig]:
-        for contract in self.contracts:
-            if not isinstance(contract, ContractConfig):
-                raise RuntimeError('Config is not initialized')
-        return cast(List[ContractConfig], self.contracts)
 
     @property
     def state(self):
@@ -280,56 +264,95 @@ class OperationIndexConfig:
 
 
 @dataclass
+class OperationIndexConfig(IndexConfig):
+    """Operation index config
+
+    :param datasource: Alias of datasource in `datasources` block
+    :param contract: Alias of contract to fetch operations for
+    :param first_block: First block to process
+    :param last_block: Last block to process
+    :param handlers: List of indexer handlers
+    """
+
+    kind: Literal["operation"]
+    contracts: List[Union[str, ContractConfig]]
+    handlers: List[OperationHandlerConfig]
+    first_block: int = 0
+    last_block: int = 0
+
+    @property
+    def contract_configs(self) -> List[ContractConfig]:
+        for contract in self.contracts:
+            if not isinstance(contract, ContractConfig):
+                raise RuntimeError('Config is not initialized')
+        return cast(List[ContractConfig], self.contracts)
+
+
+@dataclass
 class BigMapHandlerPatternConfig:
     contract: Union[str, ContractConfig]
     path: str
 
+    def __post_init_post_parse__(self):
+        self._key_type_cls = None
+        self._value_type_cls = None
+
     @property
     def contract_config(self) -> ContractConfig:
-        assert isinstance(self.contract, ContractConfig)
+        if not isinstance(self.contract, ContractConfig):
+            raise RuntimeError('Config is not initialized')
         return self.contract
+
+    @property
+    def key_type_cls(self) -> Type:
+        if self._key_type_cls is None:
+            raise RuntimeError('Config is not initialized')
+        return self._key_type_cls
+
+    @key_type_cls.setter
+    def key_type_cls(self, typ: Type) -> None:
+        self._key_type_cls = typ
+
+    @property
+    def value_type_cls(self) -> Type:
+        if self._value_type_cls is None:
+            raise RuntimeError('Config is not initialized')
+        return self._value_type_cls
+
+    @value_type_cls.setter
+    def value_type_cls(self, typ: Type) -> None:
+        self._value_type_cls = typ
 
 
 @dataclass
-class BigMapHandlerConfig:
-    callback: str
+class BigMapHandlerConfig(HandlerConfig):
     pattern: List[BigMapHandlerPatternConfig]
 
 
 @dataclass
-class BigMapIndexConfig:
+class BigMapIndexConfig(IndexConfig):
     kind: Literal['big_map']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BigMapHandlerConfig]
-
-    @property
-    def datasource_config(self) -> TzktDatasourceConfig:
-        if not isinstance(self.datasource, TzktDatasourceConfig):
-            raise RuntimeError('Config is not initialized')
-        return self.datasource
+    first_block: int = 0
+    last_block: int = 0
 
 
 @dataclass
-class BlockHandlerConfig:
-    callback: str
+class BlockHandlerConfig(HandlerConfig):
     pattern = None
 
 
 @dataclass
-class BlockIndexConfig:
+class BlockIndexConfig(IndexConfig):
     kind: Literal['block']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BlockHandlerConfig]
 
-    @property
-    def datasource_config(self) -> TzktDatasourceConfig:
-        if not isinstance(self.datasource, TzktDatasourceConfig):
-            raise RuntimeError('Config is not initialized')
-        return self.datasource
-
 
 @dataclass
 class IndexTemplateConfig:
+    kind = 'template'
     template: str
     values: Dict[str, str]
 
@@ -404,7 +427,7 @@ class DipDupConfig:
                     for pattern in handler.pattern:
                         if isinstance(pattern.destination, str):
                             pattern.destination = self.contracts[pattern.destination]
-            
+
             elif isinstance(index_config, BigMapIndexConfig):
                 if isinstance(index_config.datasource, str):
                     index_config.datasource = self.datasources[index_config.datasource]
@@ -468,59 +491,98 @@ class DipDupConfig:
         config = cls(**json_config)
         return config
 
+    async def _initialize_index_state(self, index_name: str, index_config: IndexConfig):
+        rollback_fn = getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
+        _logger.info('Getting state for index `%s`', index_name)
+        index_config.rollback_fn = rollback_fn
+        index_hash = index_config.hash()
+        state = await State.get_or_none(
+            index_name=index_name,
+            index_type=IndexType.operation,
+        )
+        if state is None:
+            state = State(
+                index_name=index_name,
+                index_type=IndexType.operation,
+                hash=index_hash,
+                level=index_config.first_block - 1,
+            )
+            await state.save()
+
+        elif state.hash != index_hash:
+            _logger.warning('Config hash mismatch, reindexing')
+            await reindex()
+
+        index_config.state = state
+
+    async def _initialize_handler_callback(self, handler_config: HandlerConfig) -> None:
+        _logger.info('Registering handler callback `%s`', handler_config.callback)
+        handler_module = importlib.import_module(f'{self.package}.handlers.{handler_config.callback}')
+        callback_fn = getattr(handler_module, handler_config.callback)
+        handler_config.callback_fn = callback_fn
+
     async def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)
 
-        rollback_fn = getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
-
         for index_name, index_config in self.indexes.items():
+
+            if isinstance(index_config, IndexTemplateConfig):
+                raise RuntimeError('Config is not initialized')
+
+            await self._initialize_index_state(index_name, index_config)
+
             if isinstance(index_config, OperationIndexConfig):
-                _logger.info('Getting state for index `%s`', index_name)
-                index_config.rollback_fn = rollback_fn
-                index_hash = index_config.hash()
-                state = await State.get_or_none(
-                    index_name=index_name,
-                    index_type=IndexType.operation,
-                )
-                if state is None:
-                    state = State(
-                        index_name=index_name,
-                        index_type=IndexType.operation,
-                        hash=index_hash,
-                        level=index_config.first_block - 1,
-                    )
-                    await state.save()
 
-                elif state.hash != index_hash:
-                    _logger.warning('Config hash mismatch, reindexing')
-                    await reindex()
+                for operation_handler_config in index_config.handlers:
+                    await self._initialize_handler_callback(operation_handler_config)
 
-                index_config.state = state
-
-                for handler in index_config.handlers:
-                    _logger.info('Registering handler callback `%s`', handler.callback)
-                    handler_module = importlib.import_module(f'{self.package}.handlers.{handler.callback}')
-                    callback_fn = getattr(handler_module, handler.callback)
-                    handler.callback_fn = callback_fn
-
-                    for pattern in handler.pattern:
-                        _logger.info('Registering parameter type for entrypoint `%s`', pattern.entrypoint)
+                    for operation_pattern_config in operation_handler_config.pattern:
+                        _logger.info('Registering parameter type for entrypoint `%s`', operation_pattern_config.entrypoint)
                         parameter_type_module = importlib.import_module(
                             f'{self.package}'
                             f'.types'
-                            f'.{pattern.contract_config.module_name}'
+                            f'.{operation_pattern_config.contract_config.module_name}'
                             f'.parameter'
-                            f'.{camel_to_snake(pattern.entrypoint)}'
+                            f'.{camel_to_snake(operation_pattern_config.entrypoint)}'
                         )
-                        parameter_type_cls = getattr(parameter_type_module, snake_to_camel(pattern.entrypoint))
-                        pattern.parameter_type_cls = parameter_type_cls
+                        parameter_type_cls = getattr(parameter_type_module, snake_to_camel(operation_pattern_config.entrypoint))
+                        operation_pattern_config.parameter_type_cls = parameter_type_cls
 
                         _logger.info('Registering storage type')
                         storage_type_module = importlib.import_module(
-                            f'{self.package}' f'.types' f'.{pattern.contract_config.module_name}' f'.storage'
+                            f'{self.package}.types.{operation_pattern_config.contract_config.module_name}.storage'
                         )
                         storage_type_cls = getattr(storage_type_module, 'Storage')
-                        pattern.storage_type_cls = storage_type_cls
+                        operation_pattern_config.storage_type_cls = storage_type_cls
+
+            elif isinstance(index_config, BigMapIndexConfig):
+                for big_map_handler_config in index_config.handlers:
+                    await self._initialize_handler_callback(big_map_handler_config)
+
+                    for big_map_pattern_config in big_map_handler_config.pattern:
+                        _logger.info('Registering big map types for path `%s`', big_map_pattern_config.path)
+                        key_type_module = importlib.import_module(
+                            f'{self.package}'
+                            f'.types'
+                            f'.{big_map_pattern_config.contract_config.module_name}'
+                            f'.big_map'
+                            f'.{camel_to_snake(big_map_pattern_config.path)}.key'
+                        )
+                        key_type_cls = getattr(key_type_module, snake_to_camel(big_map_pattern_config.path))
+                        big_map_pattern_config.key_type_cls = key_type_cls
+
+                        value_type_module = importlib.import_module(
+                            f'{self.package}'
+                            f'.types'
+                            f'.{big_map_pattern_config.contract_config.module_name}'
+                            f'.big_map'
+                            f'.{camel_to_snake(big_map_pattern_config.path)}.value'
+                        )
+                        value_type_cls = getattr(value_type_module, snake_to_camel(big_map_pattern_config.path))
+                        big_map_pattern_config.value_type_cls = value_type_cls
+
+            else:
+                raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
 
 @dataclass

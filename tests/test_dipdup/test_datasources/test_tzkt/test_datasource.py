@@ -12,7 +12,7 @@ from demo_registrydao.types.registry.parameter.propose import Propose
 from demo_registrydao.types.registry.storage import Proposals, Storage
 from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import HandlerContext, IndexType, OperationContext, OperationData, State
+from dipdup.models import IndexType, OperationContext, OperationData, OperationHandlerContext, State
 from dipdup.utils import tortoise_wrapper
 
 
@@ -155,7 +155,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.datasource._synchronized.set()
             await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)
 
-            self.assertIsInstance(callback_mock.await_args[0][0], HandlerContext)
+            self.assertIsInstance(callback_mock.await_args[0][0], OperationHandlerContext)
             self.assertIsInstance(callback_mock.await_args[0][1], OperationContext)
             self.assertIsInstance(callback_mock.await_args[0][1].parameter, Collect)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)

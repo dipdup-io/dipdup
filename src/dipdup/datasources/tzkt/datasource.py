@@ -13,7 +13,7 @@ from dipdup import __version__
 from dipdup.config import ROLLBACK_HANDLER, BigMapIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import OperationHandlerContext, OperationContext, OperationData
+from dipdup.models import OperationContext, OperationData, OperationHandlerContext
 from dipdup.utils import http_request
 
 TZKT_HTTP_REQUEST_LIMIT = 10000

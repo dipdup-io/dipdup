@@ -3,7 +3,7 @@ from demo_hic_et_nunc.types.hen_minter.parameter.mint_objkt import MintOBJKT as 
 from demo_hic_et_nunc.types.hen_minter.storage import Storage as HenMinterStorage
 from demo_hic_et_nunc.types.hen_objkts.parameter.mint import Mint as MintParameter
 from demo_hic_et_nunc.types.hen_objkts.storage import Storage as HenObjktsStorage
-from dipdup.models import OperationHandlerContext, OperationContext
+from dipdup.models import OperationContext, OperationHandlerContext
 
 
 async def on_mint(

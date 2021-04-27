@@ -5,7 +5,7 @@ from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer as Trans
 from demo_quipuswap.types.fa12_token.storage import Storage as Fa12TokenStorage
 from demo_quipuswap.types.quipu_fa12.parameter.divest_liquidity import DivestLiquidity as DivestLiquidityParameter
 from demo_quipuswap.types.quipu_fa12.storage import Storage as QuipuFa12Storage
-from dipdup.models import OperationHandlerContext, OperationContext
+from dipdup.models import OperationContext, OperationHandlerContext
 
 
 async def on_fa12_divest_liquidity(
