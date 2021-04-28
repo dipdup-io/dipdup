@@ -59,15 +59,13 @@ class TzktDatasource:
         self._url = url.rstrip('/')
         self._logger = logging.getLogger(__name__)
         self._operation_index_by_name: Dict[IndexName, OperationIndexConfig] = {}
-        self._operation_index_by_address: Dict[Address, OperationIndexConfig] = {}
         self._big_map_index_by_name: Dict[IndexName, BigMapIndexConfig] = {}
         self._big_map_index_by_address: Dict[Address, BigMapIndexConfig] = {}
         self._callback_lock = asyncio.Lock()
         self._operation_subscriptions: Dict[Address, List[OperationType]] = {}
-        self._operation_subscriptions_registered: List[Tuple[Address, OperationType]] = []
         self._big_map_subscriptions: Dict[Address, List[Path]] = {}
-        self._big_map_subscriptions_registered: List[Tuple[Address, Path]] = []
         self._operations_synchronized = asyncio.Event()
+        self._big_maps_synchronized = asyncio.Event()
         self._client: Optional[BaseHubConnection] = None
         self._operation_cache = OperationCache()
 
@@ -114,8 +112,8 @@ class TzktDatasource:
             ).build()
             self._client.on_open(self.on_connect)
             self._client.on_error(self.on_error)
-            self._client.on('operations', self.on_operation_message),
-            # self._client.on('bigmaps', self.on_big_map_message),
+            self._client.on('operations', self.on_operation_message)
+            # self._client.on('bigmaps', self.on_big_map_message)
 
         return self._client
 
@@ -240,7 +238,7 @@ class TzktDatasource:
         return operations
 
     async def fetch_operations(self, last_level: int, initial: bool = False) -> None:
-        async def _process_level_operations(operations):
+        async def _process_level_operations(operations) -> None:
             self._logger.info('Processing %s operations of level %s', len(operations), operations[0]['level'])
             await self.on_operation_message(
                 message=[
@@ -283,6 +281,10 @@ class TzktDatasource:
 
             if operations:
                 await _process_level_operations(operations)
+
+            # index_config.state.level = self._operation_cache.level
+            # await index_config.state.save()
+            # await self._operation_cache.reset()
 
         if not initial:
             self._operations_synchronized.set()

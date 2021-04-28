@@ -52,7 +52,10 @@ class OperationCache:
     async def process(
         self,
         callback: Callable[[OperationIndexConfig, OperationHandlerConfig, List[OperationData], List[OperationData]], Awaitable[None]],
-    ) -> None:
+    ) -> int:
+        if self._level is None:
+            raise RuntimeError('Add operations to cache before processing')
+
         keys = list(self._operations.keys())
         self._logger.info('Matching %s operation groups', len(keys))
         for key, operations in copy(self._operations).items():
@@ -69,6 +72,10 @@ class OperationCache:
                     if len(matched_operations) == len(handler_config.pattern):
                         self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
                         await callback(index_config, handler_config, matched_operations, operations)
+
+                        index_config.state.level = self._level
+                        await index_config.state.save()
+
                         if key in self._operations:
                             del self._operations[key]
 
@@ -77,16 +84,12 @@ class OperationCache:
         self._logger.info('Current level: %s', self._level)
         self._operations = {}
 
-        for index_config in self._indexes.values():
-            index_config.state.level = self._level
-            await index_config.state.save()
-
+        level = self._level
         self._level = None
+        return level
 
     @property
-    def level(self) -> int:
-        if self._level is None:
-            raise Exception
+    def level(self) -> Optional[int]:
         return self._level
 
 
