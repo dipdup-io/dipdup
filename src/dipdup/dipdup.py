@@ -39,7 +39,9 @@ class DipDup:
             datasources: Dict[TzktDatasourceConfig, TzktDatasource] = {}
 
             for index_name, index_config in self._config.indexes.items():
-                assert not isinstance(index_config, IndexTemplateConfig)
+                if isinstance(index_config, IndexTemplateConfig):
+                    raise RuntimeError('Config is not initialized')
+
                 self._logger.info('Processing index `%s`', index_name)
                 if isinstance(index_config.datasource, TzktDatasourceConfig):
                     if index_config.datasource_config not in datasources:

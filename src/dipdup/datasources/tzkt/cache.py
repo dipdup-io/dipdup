@@ -67,3 +67,7 @@ class OperationCache:
 
     async def stop(self):
         self._stopped = True
+
+
+class BigMapCache:
+    ...

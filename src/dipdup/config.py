@@ -19,7 +19,7 @@ from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup.exceptions import ConfigurationError
-from dipdup.models import IndexType, State
+from dipdup.models import State
 from dipdup.utils import camel_to_snake, reindex, snake_to_camel
 
 ROLLBACK_HANDLER = 'on_rollback'
@@ -493,19 +493,21 @@ class DipDupConfig:
         config = cls(**json_config)
         return config
 
-    async def _initialize_index_state(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
+    async def _initialize_index_state(
+        self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
+    ):
         rollback_fn = getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
         _logger.info('Getting state for index `%s`', index_name)
         index_config.rollback_fn = rollback_fn
         index_hash = index_config.hash()
         state = await State.get_or_none(
             index_name=index_name,
-            index_type=IndexType.operation,
+            index_type=index_config.kind,
         )
         if state is None:
             state = State(
                 index_name=index_name,
-                index_type=IndexType.operation,
+                index_type=index_config.kind,
                 hash=index_hash,
                 level=index_config.first_block - 1,
             )

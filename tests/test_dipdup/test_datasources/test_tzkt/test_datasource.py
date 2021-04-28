@@ -65,7 +65,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             await self.datasource.start()
 
         fetch_operations_mock.assert_awaited_with(1337, initial=True)
-        self.assertEqual({self.index_config.contracts[0].address: ['transaction']}, self.datasource._subscriptions)
+        self.assertEqual({self.index_config.contracts[0].address: ['transaction']}, self.datasource._operation_subscriptions)
         client.start.assert_awaited()
 
     async def test_on_connect_subscribe_to_operations(self):
@@ -73,7 +73,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         client = self.datasource._get_client()
         client.send = send_mock
         client.transport.state = ConnectionState.connected
-        self.datasource._subscriptions = {
+        self.datasource._operation_subscriptions = {
             self.index_config.contracts[0].address: ['transaction'],
         }
 
@@ -87,7 +87,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         self.assertEqual(1, len(client.handlers))
 
     async def test_on_fetch_operations(self):
-        self.datasource._subscriptions = {self.index_config.contracts[0].address: ['transaction']}
+        self.datasource._operation_subscriptions = {self.index_config.contracts[0].address: ['transaction']}
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
             del operations_message['state']
@@ -152,7 +152,6 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.index_config.handlers[0].callback_fn = callback_mock
             self.index_config.handlers[0].pattern[0].storage_type_cls = storage_type_mock
 
-            self.datasource._synchronized.set()
             await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)
 
             self.assertIsInstance(callback_mock.await_args[0][0], OperationHandlerContext)
@@ -176,7 +175,6 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.index_config.handlers[0].callback_fn = callback_mock
             self.index_config.handlers[0].pattern[0].storage_type_cls = Storage
 
-            self.datasource._synchronized.set()
             await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)
 
             self.assertIsInstance(callback_mock.await_args[0][1].storage, Storage)
