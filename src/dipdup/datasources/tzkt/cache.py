@@ -60,7 +60,11 @@ class OperationCache:
         self._logger.info('Matching %s operation groups', len(keys))
         for key, operations in copy(self._operations).items():
             self._logger.debug('Processing %s', key)
+            matched = False
+
             for index_config in self._indexes.values():
+                if matched:
+                    break
                 for handler_config in index_config.handlers:
                     matched_operations = []
                     for pattern_config in handler_config.pattern:
@@ -71,13 +75,14 @@ class OperationCache:
 
                     if len(matched_operations) == len(handler_config.pattern):
                         self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
+                        matched = True
                         await callback(index_config, handler_config, matched_operations, operations)
 
                         index_config.state.level = self._level
                         await index_config.state.save()
 
-                        if key in self._operations:
-                            del self._operations[key]
+                        del self._operations[key]
+                        break
 
         keys_left = self._operations.keys()
         self._logger.info('%s operation groups unmatched', len(keys_left))
