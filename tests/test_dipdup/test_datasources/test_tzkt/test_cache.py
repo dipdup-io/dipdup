@@ -26,7 +26,8 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 )
             ],
         )
-        self.cache = OperationCache(self.config, 0)
+        self.cache = OperationCache()
+        await self.cache.add_index(self.config)
 
     async def test_add(self):
         with open(join(dirname(__file__), 'operations.json')) as file:

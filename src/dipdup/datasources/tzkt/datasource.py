@@ -67,20 +67,15 @@ class TzktDatasource:
         self._operation_subscriptions_registered: List[Tuple[Address, OperationType]] = []
         self._big_map_subscriptions: Dict[Address, List[Path]] = {}
         self._big_map_subscriptions_registered: List[Tuple[Address, Path]] = []
-        self._sync_events: Dict[IndexName, asyncio.Event] = {}
+        self._operations_synchronized = asyncio.Event()
         self._client: Optional[BaseHubConnection] = None
-        self._caches: Dict[IndexName, OperationCache] = {}
+        self._operation_cache = OperationCache()
 
-    def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
+    async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
         self._logger.info('Adding index `%s`', index_name)
         if isinstance(index_config, OperationIndexConfig):
             self._operation_index_by_name[index_name] = index_config
-            for contract in index_config.contract_configs:
-                if contract.address in self._operation_index_by_address:
-                    raise RuntimeError(f'Address `{contract.address}` used in multiple indexes')
-                self._operation_index_by_address[contract.address] = index_config
-            self._sync_events[index_name] = asyncio.Event()
-            self._caches[index_name] = OperationCache(index_config, index_config.state.level)
+            await self._operation_cache.add_index(index_config)
 
         elif isinstance(index_config, BigMapIndexConfig):
             self._big_map_index_by_name[index_name] = index_config
@@ -96,7 +91,7 @@ class TzktDatasource:
                     raise RuntimeError(f'Address `{address}` used in multiple indexes')
                 self._big_map_index_by_address[address] = index_config
 
-            self._sync_events[index_name] = asyncio.Event()
+            # self._sync_events[index_name] = asyncio.Event()
             # self._caches[index_name] = OperationCache(index_config, index_config.state.level)
 
         else:
@@ -119,6 +114,8 @@ class TzktDatasource:
             ).build()
             self._client.on_open(self.on_connect)
             self._client.on_error(self.on_error)
+            self._client.on('operations', self.on_operation_message),
+            # self._client.on('bigmaps', self.on_big_map_message),
 
         return self._client
 
@@ -182,14 +179,6 @@ class TzktDatasource:
     async def subscribe_to_operations(self, address: str, types: List[str]) -> None:
         self._logger.info('Subscribing to %s, %s', address, types)
 
-        key = ('operations', address)
-        if key not in self._operation_subscriptions_registered:
-            self._operation_subscriptions_registered.append(key)
-            self._get_client().on(
-                'operations',
-                partial(self.on_operation_message, index_config=self._operation_index_by_address[address]),
-            )
-
         while self._get_client().transport.state != ConnectionState.connected:
             await asyncio.sleep(0.1)
 
@@ -251,10 +240,9 @@ class TzktDatasource:
         return operations
 
     async def fetch_operations(self, last_level: int, initial: bool = False) -> None:
-        async def _process_operations(index_config, operations):
+        async def _process_level_operations(operations):
             self._logger.info('Processing %s operations of level %s', len(operations), operations[0]['level'])
             await self.on_operation_message(
-                index_config=index_config,
                 message=[
                     {
                         'type': TzktMessageType.DATA.value,
@@ -267,7 +255,6 @@ class TzktDatasource:
         self._logger.info('Fetching operations prior to level %s', last_level)
         for index_config in self._operation_index_by_name.values():
 
-            sync_event = self._sync_events[index_config.state.index_name]
             level = index_config.state.level
 
             operations = []
@@ -281,7 +268,7 @@ class TzktDatasource:
                 while True:
                     for i in range(len(operations) - 1):
                         if operations[i]['level'] != operations[i + 1]['level']:
-                            await _process_operations(index_config, operations[: i + 1])
+                            await _process_level_operations(operations[: i + 1])
                             operations = operations[i + 1 :]
                             break
                     else:
@@ -295,10 +282,10 @@ class TzktDatasource:
                 await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
 
             if operations:
-                await _process_operations(index_config, operations)
+                await _process_level_operations(operations)
 
-            if not initial:
-                sync_event.set()
+        if not initial:
+            self._operations_synchronized.set()
 
     async def _fetch_big_maps(
         self, addresses: List[Address], paths: List[Path], offset: int, first_level: int, last_level: int
@@ -340,7 +327,6 @@ class TzktDatasource:
         self._logger.info('Fetching big map updates prior to level %s', last_level)
         for index_config in self._big_map_index_by_name.values():
 
-            sync_event = self._sync_events[index_config.state.index_name]
             level = index_config.state.level
 
             big_maps = []
@@ -374,8 +360,8 @@ class TzktDatasource:
             if big_maps:
                 await _process_big_maps(index_config, big_maps)
 
-            if not initial:
-                sync_event.set()
+        # if not initial:
+        #     sync_event.set()
 
     async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
         self._logger.info('Fetching jsonschemas for address `%s', address)
@@ -390,27 +376,23 @@ class TzktDatasource:
     async def on_operation_message(
         self,
         message: List[Dict[str, Any]],
-        index_config: OperationIndexConfig,
         sync=False,
     ) -> None:
-        index_name = index_config.state.index_name
-        self._logger.info('Got operation message on %s', index_name)
+        self._logger.info('Got operation message')
         self._logger.debug('%s', message)
-        index_config = self._operation_index_by_name[index_name]
-        cache = self._caches[index_name]
+
         for item in message:
             message_type = TzktMessageType(item['type'])
 
             if message_type == TzktMessageType.STATE:
                 level = item['state']
-                self._logger.info('Got state message, current level %s, index level %s', level, index_config.state.level)
+                self._logger.info('Got state message, current level %s, index level %s', level, self._operation_cache.level)
                 await self.fetch_operations(level)
 
             elif message_type == TzktMessageType.DATA:
-                sync_event = self._sync_events[index_name]
-                if not sync and not sync_event.is_set():
+                if not sync and not self._operations_synchronized.is_set():
                     self._logger.info('Waiting until synchronization is complete')
-                    await sync_event.wait()
+                    await self._operations_synchronized.wait()
                     self._logger.info('Synchronization is complete, processing websocket message')
 
                 self._logger.info('Acquiring callback lock')
@@ -419,18 +401,18 @@ class TzktDatasource:
                         operation = self.convert_operation(operation_json)
                         if operation.type != 'transaction':
                             continue
-                        await self._caches[index_name].add(operation)
+                        if operation.status != 'applied':
+                            continue
+                        await self._operation_cache.add(operation)
 
                     async with in_transaction():
-                        last_level = await cache.process(self.on_operation_match)
-                        index_config.state.level = last_level  # type: ignore
-                        await index_config.state.save()
+                        await self._operation_cache.process(self.on_operation_match)
 
-            elif message_type == TzktMessageType.REORG:
-                self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
-                from_level = index_config.state.level
-                to_level = item['state']
-                await index_config.rollback_fn(from_level, to_level)
+            # elif message_type == TzktMessageType.REORG:
+            #     self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
+            #     from_level = index_config.state.level
+            #     to_level = item['state']
+            #     await index_config.rollback_fn(from_level, to_level)
 
             else:
                 self._logger.warning('%s is not supported', message_type)
