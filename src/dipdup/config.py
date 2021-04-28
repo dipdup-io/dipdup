@@ -570,9 +570,9 @@ class DipDupConfig:
                             f'.types'
                             f'.{big_map_pattern_config.contract_config.module_name}'
                             f'.big_map'
-                            f'.{camel_to_snake(big_map_pattern_config.path)}.key'
+                            f'.{camel_to_snake(big_map_pattern_config.path)}_key'
                         )
-                        key_type_cls = getattr(key_type_module, snake_to_camel(big_map_pattern_config.path))
+                        key_type_cls = getattr(key_type_module, snake_to_camel(big_map_pattern_config.path + '_key'))
                         big_map_pattern_config.key_type_cls = key_type_cls
 
                         value_type_module = importlib.import_module(
@@ -580,9 +580,9 @@ class DipDupConfig:
                             f'.types'
                             f'.{big_map_pattern_config.contract_config.module_name}'
                             f'.big_map'
-                            f'.{camel_to_snake(big_map_pattern_config.path)}.value'
+                            f'.{camel_to_snake(big_map_pattern_config.path)}_value'
                         )
-                        value_type_cls = getattr(value_type_module, snake_to_camel(big_map_pattern_config.path))
+                        value_type_cls = getattr(value_type_module, snake_to_camel(big_map_pattern_config.path + '_value'))
                         big_map_pattern_config.value_type_cls = value_type_cls
 
             else:

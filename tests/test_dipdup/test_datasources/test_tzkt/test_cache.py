@@ -14,7 +14,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         self.config = OperationIndexConfig(
             kind='operation',
             datasource='',
-            contracts=[''],
+            contracts=[ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW')],
             handlers=[
                 OperationHandlerConfig(
                     callback='',

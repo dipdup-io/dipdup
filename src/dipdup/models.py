@@ -143,14 +143,14 @@ class BigMapContext(Generic[KeyType, ValueType]):
 class BigMapData:
     id: int
     level: int
-    # operation_id: int
+    operation_id: int
     timestamp: datetime
     bigmap: int
     contract_address: str
     path: str
     action: str
-    key: Optional[str] = None
-    value: Optional[str] = None
+    key: Optional[Any] = None
+    value: Optional[Any] = None
 
 
 @dataclass

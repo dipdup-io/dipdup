@@ -84,7 +84,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 call('SubscribeToOperations', [{'address': self.index_config.contracts[0].address, 'types': 'transaction'}]),
             ]
         )
-        self.assertEqual(1, len(client.handlers))
+        self.assertEqual(2, len(client.handlers))
 
     async def test_on_fetch_operations(self):
         self.datasource._operation_subscriptions = {self.index_config.contracts[0].address: ['transaction']}

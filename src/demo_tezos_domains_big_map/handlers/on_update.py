@@ -8,4 +8,5 @@ async def on_update(
     ctx: BigMapHandlerContext,
     store_records: BigMapContext[StoreRecordsKey, StoreRecordsValue],
 ) -> None:
-    ...
+    print(store_records)
+    quit()

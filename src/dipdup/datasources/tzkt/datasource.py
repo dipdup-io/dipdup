@@ -10,10 +10,25 @@ from aiosignalrcore.transport.websockets.connection import ConnectionState  # ty
 from tortoise.transactions import in_transaction
 
 from dipdup import __version__
-from dipdup.config import ROLLBACK_HANDLER, BigMapIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
-from dipdup.datasources.tzkt.cache import OperationCache
+from dipdup.config import (
+    ROLLBACK_HANDLER,
+    BigMapHandlerConfig,
+    BigMapIndexConfig,
+    BlockIndexConfig,
+    OperationHandlerConfig,
+    OperationIndexConfig,
+)
+from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import OperationContext, OperationData, OperationHandlerContext
+from dipdup.models import (
+    BigMapAction,
+    BigMapContext,
+    BigMapData,
+    BigMapHandlerContext,
+    OperationContext,
+    OperationData,
+    OperationHandlerContext,
+)
 from dipdup.utils import http_request
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
@@ -68,6 +83,7 @@ class TzktDatasource:
         self._big_maps_synchronized = asyncio.Event()
         self._client: Optional[BaseHubConnection] = None
         self._operation_cache = OperationCache()
+        self._big_map_cache = BigMapCache()
 
     async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
         self._logger.info('Adding index `%s`', index_name)
@@ -77,20 +93,7 @@ class TzktDatasource:
 
         elif isinstance(index_config, BigMapIndexConfig):
             self._big_map_index_by_name[index_name] = index_config
-
-            addresses, paths = set(), set()
-            for handler_config in index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    addresses.add(pattern_config.contract_config.address)
-                    paths.add(pattern_config.path)
-
-            for address in addresses:
-                if address in self._big_map_index_by_address:
-                    raise RuntimeError(f'Address `{address}` used in multiple indexes')
-                self._big_map_index_by_address[address] = index_config
-
-            # self._sync_events[index_name] = asyncio.Event()
-            # self._caches[index_name] = OperationCache(index_config, index_config.state.level)
+            await self._big_map_cache.add_index(index_config)
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -113,7 +116,7 @@ class TzktDatasource:
             self._client.on_open(self.on_connect)
             self._client.on_error(self.on_error)
             self._client.on('operations', self.on_operation_message)
-            # self._client.on('bigmaps', self.on_big_map_message)
+            self._client.on('bigmaps', self.on_big_map_message)
 
         return self._client
 
@@ -282,10 +285,6 @@ class TzktDatasource:
             if operations:
                 await _process_level_operations(operations)
 
-            # index_config.state.level = self._operation_cache.level
-            # await index_config.state.save()
-            # await self._operation_cache.reset()
-
         if not initial:
             self._operations_synchronized.set()
 
@@ -313,10 +312,9 @@ class TzktDatasource:
         return big_maps
 
     async def fetch_big_maps(self, last_level: int, initial: bool = False) -> None:
-        async def _process_big_maps(index_config, big_maps):
+        async def _process_level_big_maps(big_maps):
             self._logger.info('Processing %s big map updates of level %s', len(big_maps), big_maps[0]['level'])
             await self.on_big_map_message(
-                index_config=index_config,
                 message=[
                     {
                         'type': TzktMessageType.DATA.value,
@@ -346,7 +344,7 @@ class TzktDatasource:
                 while True:
                     for i in range(len(big_maps) - 1):
                         if big_maps[i]['level'] != big_maps[i + 1]['level']:
-                            await _process_big_maps(index_config, big_maps[: i + 1])
+                            await _process_level_big_maps(big_maps[: i + 1])
                             big_maps = big_maps[i + 1 :]
                             break
                     else:
@@ -360,10 +358,10 @@ class TzktDatasource:
                 await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
 
             if big_maps:
-                await _process_big_maps(index_config, big_maps)
+                await _process_level_big_maps(big_maps)
 
-        # if not initial:
-        #     sync_event.set()
+        if not initial:
+            self._big_maps_synchronized.set()
 
     async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
         self._logger.info('Fetching jsonschemas for address `%s', address)
@@ -419,6 +417,46 @@ class TzktDatasource:
             else:
                 self._logger.warning('%s is not supported', message_type)
 
+    async def on_big_map_message(
+        self,
+        message: List[Dict[str, Any]],
+        sync=False,
+    ) -> None:
+        self._logger.info('Got big map message')
+        self._logger.debug('%s', message)
+
+        for item in message:
+            message_type = TzktMessageType(item['type'])
+
+            if message_type == TzktMessageType.STATE:
+                level = item['state']
+                self._logger.info('Got state message, current level %s, index level %s', level, self._operation_cache.level)
+                await self.fetch_big_maps(level)
+
+            elif message_type == TzktMessageType.DATA:
+                if not sync and not self._big_maps_synchronized.is_set():
+                    self._logger.info('Waiting until synchronization is complete')
+                    await self._big_maps_synchronized.wait()
+                    self._logger.info('Synchronization is complete, processing websocket message')
+
+                self._logger.info('Acquiring callback lock')
+                async with self._callback_lock:
+                    for big_map_json in item['data']:
+                        big_map = self.convert_big_map(big_map_json)
+                        await self._big_map_cache.add(big_map)
+
+                    async with in_transaction():
+                        await self._big_map_cache.process(self.on_big_map_match)
+
+            # elif message_type == TzktMessageType.REORG:
+            #     self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
+            #     from_level = index_config.state.level
+            #     to_level = item['state']
+            #     await index_config.rollback_fn(from_level, to_level)
+
+            else:
+                self._logger.warning('%s is not supported', message_type)
+
     async def add_operation_subscription(self, address: str, types: Optional[List[str]] = None) -> None:
         if types is None:
             types = ['transaction']
@@ -441,7 +479,7 @@ class TzktDatasource:
             operations=operations,
             template_values=index_config.template_values,
         )
-        args: List[Union[OperationContext, OperationHandlerContext]] = [handler_context]
+        args: List[Union[OperationHandlerContext, OperationContext]] = [handler_context]
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
 
             parameter_type = pattern_config.parameter_type_cls
@@ -456,6 +494,46 @@ class TzktDatasource:
                 storage=storage,
             )
             args.append(operation_context)
+
+        await handler_config.callback_fn(*args)
+
+    async def on_big_map_match(
+        self,
+        index_config: BigMapIndexConfig,
+        handler_config: BigMapHandlerConfig,
+        matched_big_maps: List[List[BigMapData]],
+    ):
+        handler_context = BigMapHandlerContext(
+            template_values=index_config.template_values,
+        )
+        args: List[Union[BigMapHandlerContext, List[BigMapContext]]] = [handler_context]
+        for matched_big_map_group, pattern_config in zip(matched_big_maps, handler_config.pattern):
+            big_map_contexts = []
+            for big_map in matched_big_map_group:
+
+                try:
+                    action = BigMapAction(big_map.action)
+                except ValueError:
+                    continue
+
+                key_type = pattern_config.key_type_cls
+                key = key_type.parse_obj(big_map.key)
+
+                if action == BigMapAction.REMOVE:
+                    value = None
+                else:
+                    value_type = pattern_config.value_type_cls
+                    value = value_type.parse_obj(big_map.value)
+
+                big_map_context = BigMapContext(  # type: ignore
+                    action=action,
+                    key=key,
+                    value=value,
+                )
+
+                big_map_contexts.append(big_map_context)
+
+            args.append(big_map_contexts)
 
         await handler_config.callback_fn(*args)
 
@@ -489,6 +567,22 @@ class TzktDatasource:
             parameter=operation_json.get('parameters'),
             storage=storage,
             diffs=operation_json.get('diffs'),
+        )
+
+    @classmethod
+    def convert_big_map(cls, big_map_json: Dict[str, Any]) -> BigMapData:
+        return BigMapData(
+            id=big_map_json['id'],
+            level=big_map_json['level'],
+            # FIXME: operation_id field in API
+            operation_id=big_map_json['level'],
+            timestamp=big_map_json['timestamp'],
+            bigmap=big_map_json['bigmap'],
+            contract_address=big_map_json['contract']['address'],
+            path=big_map_json['path'],
+            action=big_map_json['action'],
+            key=big_map_json.get('content', {}).get('key'),
+            value=big_map_json.get('content', {}).get('value'),
         )
 
     async def get_latest_block(self) -> Dict[str, Any]:
