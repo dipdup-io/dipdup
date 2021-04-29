@@ -536,14 +536,18 @@ class DipDupConfig:
                             f'.parameter'
                             f'.{camel_to_snake(operation_pattern_config.entrypoint)}'
                         )
-                        parameter_type_cls = getattr(parameter_type_module, snake_to_camel(operation_pattern_config.entrypoint))
+                        parameter_type_cls = getattr(
+                            parameter_type_module, snake_to_camel(operation_pattern_config.entrypoint) + 'Parameter'
+                        )
                         operation_pattern_config.parameter_type_cls = parameter_type_cls
 
                         _logger.info('Registering storage type')
                         storage_type_module = importlib.import_module(
                             f'{self.package}.types.{operation_pattern_config.contract_config.module_name}.storage'
                         )
-                        storage_type_cls = getattr(storage_type_module, 'Storage')
+                        storage_type_cls = getattr(
+                            storage_type_module, snake_to_camel(operation_pattern_config.contract_config.module_name) + 'Storage'
+                        )
                         operation_pattern_config.storage_type_cls = storage_type_cls
 
             elif isinstance(index_config, BigMapIndexConfig):

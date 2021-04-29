@@ -1,6 +1,6 @@
 import demo_hic_et_nunc.models as models
-from demo_hic_et_nunc.types.hen_minter.parameter.swap import Swap as SwapParameter
-from demo_hic_et_nunc.types.hen_minter.storage import Storage as HenMinterStorage
+from demo_hic_et_nunc.types.hen_minter.parameter.swap import SwapParameter
+from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
 from dipdup.models import OperationContext, OperationHandlerContext
 
 

@@ -110,7 +110,7 @@ class Proposals(BaseModel):
     voters: List[Voter]
 
 
-class Storage(BaseModel):
+class RegistryStorage(BaseModel):
     admin: str
     extra: Extra
     ledger: Union[int, List[LedgerItem]]

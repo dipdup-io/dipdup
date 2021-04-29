@@ -20,7 +20,7 @@ class Swaps(BaseModel):
     xtz_per_objkt: str
 
 
-class Storage(BaseModel):
+class HenMinterStorage(BaseModel):
     curate: str
     genesis: str
     hdao: str

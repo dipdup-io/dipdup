@@ -35,7 +35,7 @@ class Store(BaseModel):
     tzip12_tokens: Union[int, Dict[str, str]]
 
 
-class Storage(BaseModel):
+class NameRegistryStorage(BaseModel):
     actions: Union[int, Dict[str, str]]
     store: Store
     trusted_senders: List[str]

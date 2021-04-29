@@ -9,15 +9,15 @@ from pydantic import BaseModel
 
 
 class Tx(BaseModel):
-    amount: str
     to_: str
     token_id: str
+    amount: str
 
 
-class TransferItem(BaseModel):
+class TransferParameterItem(BaseModel):
     from_: str
     txs: List[Tx]
 
 
-class Transfer(BaseModel):
-    __root__: List[TransferItem]
+class TransferParameter(BaseModel):
+    __root__: List[TransferParameterItem]

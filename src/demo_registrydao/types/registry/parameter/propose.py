@@ -23,11 +23,11 @@ class ProposalMetadatum(BaseModel):
 
 
 class ProposalType1(BaseModel):
-    frozen_extra_value: Optional[str]
     frozen_scale_value: Optional[str]
-    max_proposal_size: Optional[str]
-    slash_division_value: Optional[str]
+    frozen_extra_value: Optional[str]
     slash_scale_value: Optional[str]
+    slash_division_value: Optional[str]
+    max_proposal_size: Optional[str]
 
 
 class ProposalMetadatum1(BaseModel):
@@ -42,6 +42,6 @@ class ProposalMetadatum3(BaseModel):
     receivers_1: List[str]
 
 
-class Propose(BaseModel):
+class ProposeParameter(BaseModel):
     frozen_token: str
     proposal_metadata: Union[ProposalMetadatum, ProposalMetadatum1, ProposalMetadatum2, ProposalMetadatum3]

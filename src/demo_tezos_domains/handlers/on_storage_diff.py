@@ -1,7 +1,7 @@
 import logging
 
 import demo_tezos_domains.models as models
-from demo_tezos_domains.types.name_registry.storage import Storage as NameRegistryStorage
+from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 
 _logger = logging.getLogger(__name__)
 

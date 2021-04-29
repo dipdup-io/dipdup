@@ -1,10 +1,10 @@
 from decimal import Decimal
 
 import demo_quipuswap.models as models
-from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer as TransferParameter
-from demo_quipuswap.types.fa12_token.storage import Storage as Fa12TokenStorage
-from demo_quipuswap.types.quipu_fa12.parameter.divest_liquidity import DivestLiquidity as DivestLiquidityParameter
-from demo_quipuswap.types.quipu_fa12.storage import Storage as QuipuFa12Storage
+from demo_quipuswap.types.fa12_token.parameter.transfer import TransferParameter
+from demo_quipuswap.types.fa12_token.storage import Fa12TokenStorage
+from demo_quipuswap.types.quipu_fa12.parameter.divest_liquidity import DivestLiquidityParameter
+from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
 from dipdup.models import OperationContext, OperationHandlerContext
 
 

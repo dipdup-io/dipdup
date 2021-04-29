@@ -8,7 +8,7 @@ from typing import Dict, Union
 from pydantic import BaseModel
 
 
-class Storage1(BaseModel):
+class TzcolorsAuctionStorage1(BaseModel):
     bid_amount: str
     bidder: str
     end_timestamp: str
@@ -18,5 +18,5 @@ class Storage1(BaseModel):
     token_id: str
 
 
-class Storage(BaseModel):
-    __root__: Union[int, Dict[str, Storage1]]
+class TzcolorsAuctionStorage(BaseModel):
+    __root__: Union[int, Dict[str, TzcolorsAuctionStorage1]]

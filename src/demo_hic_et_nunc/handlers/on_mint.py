@@ -1,8 +1,8 @@
 import demo_hic_et_nunc.models as models
-from demo_hic_et_nunc.types.hen_minter.parameter.mint_objkt import MintOBJKT as MintOBJKTParameter
-from demo_hic_et_nunc.types.hen_minter.storage import Storage as HenMinterStorage
-from demo_hic_et_nunc.types.hen_objkts.parameter.mint import Mint as MintParameter
-from demo_hic_et_nunc.types.hen_objkts.storage import Storage as HenObjktsStorage
+from demo_hic_et_nunc.types.hen_minter.parameter.mint_objkt import MintOBJKTParameter
+from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
+from demo_hic_et_nunc.types.hen_objkts.parameter.mint import MintParameter
+from demo_hic_et_nunc.types.hen_objkts.storage import HenObjktsStorage
 from dipdup.models import OperationContext, OperationHandlerContext
 
 

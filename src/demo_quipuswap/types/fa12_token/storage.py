@@ -18,7 +18,7 @@ class TokenMetadata(BaseModel):
     nat: str
 
 
-class Storage(BaseModel):
+class Fa12TokenStorage(BaseModel):
     administrator: str
     balances: Union[int, Dict[str, Balances]]
     debtCeiling: str

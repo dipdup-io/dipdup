@@ -175,6 +175,12 @@ async def generate_types(config: DipDupConfig):
 
             input_path = join(root, file)
             output_path = join(types_root, f'{camel_to_snake(name)}.py')
+
+            if name == 'storage':
+                name = '_'.join([root.split('/')[-1], name])
+            if root.split('/')[-1] == 'parameter':
+                name += '_parameter'
+
             _logger.info('Generating type `%s`', name)
             subprocess.run(
                 [

@@ -34,7 +34,7 @@ class TokenMetadata(BaseModel):
     token_info: Dict[str, str]
 
 
-class Storage(BaseModel):
+class HenObjktsStorage(BaseModel):
     administrator: str
     all_tokens: str
     ledger: Union[int, List[LedgerItem]]

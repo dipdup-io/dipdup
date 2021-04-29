@@ -8,7 +8,7 @@ from typing import Dict
 from pydantic import BaseModel
 
 
-class Mint(BaseModel):
+class MintParameter(BaseModel):
     address: str
     amount: str
     token_id: str

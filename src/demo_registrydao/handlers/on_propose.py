@@ -1,6 +1,6 @@
 import demo_registrydao.models as models
-from demo_registrydao.types.registry.parameter.propose import Propose as ProposeParameter
-from demo_registrydao.types.registry.storage import Storage as RegistryStorage
+from demo_registrydao.types.registry.parameter.propose import ProposeParameter
+from demo_registrydao.types.registry.storage import RegistryStorage
 from dipdup.models import OperationContext, OperationHandlerContext
 
 

@@ -6,7 +6,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class Swap(BaseModel):
+class SwapParameter(BaseModel):
     objkt_amount: str
     objkt_id: str
     xtz_per_objkt: str

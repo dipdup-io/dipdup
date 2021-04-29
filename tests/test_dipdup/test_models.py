@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from demo_tezos_domains.types.name_registry.storage import Storage
+from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.models import OperationData
 
 
@@ -86,5 +86,5 @@ class ModelsTest(TestCase):
             status='',
             has_internals=False,
         )
-        merged_storage = OperationData.get_merged_storage(operation_data, Storage)
+        merged_storage = OperationData.get_merged_storage(operation_data, NameRegistryStorage)
         self.assertTrue('6672657175656e742d616e616c7973742e65646f' in merged_storage.store.records)

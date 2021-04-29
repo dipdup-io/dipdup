@@ -1,6 +1,6 @@
 import demo_tzcolors.models as models
-from demo_tzcolors.types.tzcolors_auction.parameter.withdraw import Withdraw as WithdrawParameter
-from demo_tzcolors.types.tzcolors_auction.storage import Storage as TzcolorsAuctionStorage
+from demo_tzcolors.types.tzcolors_auction.parameter.withdraw import WithdrawParameter
+from demo_tzcolors.types.tzcolors_auction.storage import TzcolorsAuctionStorage
 from dipdup.models import OperationContext, OperationHandlerContext
 
 

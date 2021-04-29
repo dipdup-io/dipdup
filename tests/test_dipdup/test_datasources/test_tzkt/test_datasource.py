@@ -7,9 +7,9 @@ from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ig
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise import Tortoise
 
-from demo_hic_et_nunc.types.hen_minter.parameter.collect import Collect
-from demo_registrydao.types.registry.parameter.propose import Propose
-from demo_registrydao.types.registry.storage import Proposals, Storage
+from demo_hic_et_nunc.types.hen_minter.parameter.collect import CollectParameter
+from demo_registrydao.types.registry.parameter.propose import ProposeParameter
+from demo_registrydao.types.registry.storage import Proposals, RegistryStorage
 from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import IndexType, OperationContext, OperationData, OperationHandlerContext, State
@@ -34,7 +34,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             ],
         )
         self.index_config.state = State(index_name='test', index_type=IndexType.operation, hash='')
-        self.index_config.handlers[0].pattern[0].parameter_type_cls = Collect
+        self.index_config.handlers[0].pattern[0].parameter_type_cls = CollectParameter
         self.datasource = TzktDatasource('tzkt.test')
         await self.datasource.add_index('test', self.index_config)
 
@@ -155,13 +155,13 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
 
             self.assertIsInstance(callback_mock.await_args[0][0], OperationHandlerContext)
             self.assertIsInstance(callback_mock.await_args[0][1], OperationContext)
-            self.assertIsInstance(callback_mock.await_args[0][1].parameter, Collect)
+            self.assertIsInstance(callback_mock.await_args[0][1].parameter, CollectParameter)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)
 
     async def test_on_operation_match_with_storage(self):
         with open(join(dirname(__file__), 'operations-storage.json')) as file:
             operations_message = json.load(file)
-        self.index_config.handlers[0].pattern[0].parameter_type_cls = Propose
+        self.index_config.handlers[0].pattern[0].parameter_type_cls = ProposeParameter
 
         operations = [TzktDatasource.convert_operation(op) for op in operations_message['data']]
         matched_operation = operations[0]
@@ -172,11 +172,11 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             callback_mock = AsyncMock()
 
             self.index_config.handlers[0].callback_fn = callback_mock
-            self.index_config.handlers[0].pattern[0].storage_type_cls = Storage
+            self.index_config.handlers[0].pattern[0].storage_type_cls = RegistryStorage
 
             await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)
 
-            self.assertIsInstance(callback_mock.await_args[0][1].storage, Storage)
+            self.assertIsInstance(callback_mock.await_args[0][1].storage, RegistryStorage)
             self.assertIsInstance(callback_mock.await_args[0][1].storage.ledger, list)
             self.assertIsInstance(
                 callback_mock.await_args[0][1].storage.proposals['e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9'],

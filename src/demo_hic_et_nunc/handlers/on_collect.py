@@ -1,6 +1,6 @@
 import demo_hic_et_nunc.models as models
-from demo_hic_et_nunc.types.hen_minter.parameter.collect import Collect as CollectParameter
-from demo_hic_et_nunc.types.hen_minter.storage import Storage as HenMinterStorage
+from demo_hic_et_nunc.types.hen_minter.parameter.collect import CollectParameter
+from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
 from dipdup.models import OperationContext, OperationHandlerContext
 
 

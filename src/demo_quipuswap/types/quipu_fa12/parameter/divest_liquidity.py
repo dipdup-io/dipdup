@@ -6,7 +6,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class DivestLiquidity(BaseModel):
+class DivestLiquidityParameter(BaseModel):
     min_tez: str
     min_tokens: str
     shares: str
