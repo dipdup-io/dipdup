@@ -2,12 +2,11 @@ import logging
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, get_origin
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
-from typing_inspect import get_args  # type: ignore
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -90,7 +89,7 @@ class OperationData:
             # TODO: This code should be a part of datasource module.
             if field.type_ not in (int, bool) and isinstance(storage[key], int):
                 _logger.debug(field.type_)
-                if get_origin(get_args(field.type_)[1]) == list:
+                if hasattr(field.type_, '__fields__') and 'key' in field.type_.__fields__ and 'value' in field.type_.__fields__:
                     storage[key] = []
                     if self.diffs:
                         self._merge_bigmapdiffs(storage, bigmap_name, array=True)

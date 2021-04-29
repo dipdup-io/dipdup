@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 from pydantic import BaseModel
 
@@ -37,8 +37,8 @@ class TokenMetadata(BaseModel):
 class HenObjktsStorage(BaseModel):
     administrator: str
     all_tokens: str
-    ledger: Union[int, List[LedgerItem]]
-    metadata: Union[int, Dict[str, str]]
-    operators: Union[int, List[Operator]]
+    ledger: List[LedgerItem]
+    metadata: Dict[str, str]
+    operators: List[Operator]
     paused: bool
-    token_metadata: Union[int, Dict[str, TokenMetadata]]
+    token_metadata: Dict[str, TokenMetadata]

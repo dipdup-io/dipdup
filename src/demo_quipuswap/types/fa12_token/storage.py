@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Union
+from typing import Dict
 
 from pydantic import BaseModel
 
@@ -20,10 +20,10 @@ class TokenMetadata(BaseModel):
 
 class Fa12TokenStorage(BaseModel):
     administrator: str
-    balances: Union[int, Dict[str, Balances]]
+    balances: Dict[str, Balances]
     debtCeiling: str
     governorContractAddress: str
-    metadata: Union[int, Dict[str, str]]
+    metadata: Dict[str, str]
     paused: bool
-    token_metadata: Union[int, Dict[str, TokenMetadata]]
+    token_metadata: Dict[str, TokenMetadata]
     totalSupply: str

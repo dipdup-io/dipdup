@@ -3,20 +3,11 @@
 
 from __future__ import annotations
 
-from typing import Dict, Union
-
-from pydantic import BaseModel
-
-
-class TzcolorsAuctionStorage1(BaseModel):
-    bid_amount: str
-    bidder: str
-    end_timestamp: str
-    seller: str
-    token_address: str
-    token_amount: str
-    token_id: str
+from pydantic import BaseModel, Extra
 
 
 class TzcolorsAuctionStorage(BaseModel):
-    __root__: Union[int, Dict[str, TzcolorsAuctionStorage1]]
+    pass
+
+    class Config:
+        extra = Extra.allow

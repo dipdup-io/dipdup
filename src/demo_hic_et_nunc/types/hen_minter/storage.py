@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Union
+from typing import Dict
 
 from pydantic import BaseModel
 
@@ -26,10 +26,10 @@ class HenMinterStorage(BaseModel):
     hdao: str
     locked: bool
     manager: str
-    metadata: Union[int, Dict[str, str]]
+    metadata: Dict[str, str]
     objkt: str
     objkt_id: str
-    royalties: Union[int, Dict[str, Royalties]]
+    royalties: Dict[str, Royalties]
     size: str
     swap_id: str
-    swaps: Union[int, Dict[str, Swaps]]
+    swaps: Dict[str, Swaps]

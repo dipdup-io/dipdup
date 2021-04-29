@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 from pydantic import BaseModel
 
@@ -32,7 +32,7 @@ class Storage(BaseModel):
     invariant: str
     last_update_time: str
     last_veto: str
-    ledger: Union[int, Dict[str, Ledger]]
+    ledger: Dict[str, Ledger]
     period_finish: str
     reward: str
     reward_paid: str
@@ -44,15 +44,15 @@ class Storage(BaseModel):
     total_reward: str
     total_supply: str
     total_votes: str
-    user_rewards: Union[int, Dict[str, UserRewards]]
+    user_rewards: Dict[str, UserRewards]
     veto: str
-    vetos: Union[int, Dict[str, str]]
-    voters: Union[int, Dict[str, Voters]]
-    votes: Union[int, Dict[str, str]]
+    vetos: Dict[str, str]
+    voters: Dict[str, Voters]
+    votes: Dict[str, str]
 
 
 class QuipuFa12Storage(BaseModel):
-    dex_lambdas: Union[int, Dict[str, str]]
-    metadata: Union[int, Dict[str, str]]
+    dex_lambdas: Dict[str, str]
+    metadata: Dict[str, str]
     storage: Storage
-    token_lambdas: Union[int, Dict[str, str]]
+    token_lambdas: Dict[str, str]

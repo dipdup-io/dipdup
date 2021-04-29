@@ -19,7 +19,7 @@ class Extra(BaseModel):
     frozen_scale_value: str
     max_proposal_size: str
     proposal_receivers: List[str]
-    registry: Union[int, Dict[str, Registry]]
+    registry: Dict[str, Registry]
     slash_division_value: str
     slash_scale_value: str
 
@@ -113,14 +113,14 @@ class Proposals(BaseModel):
 class RegistryStorage(BaseModel):
     admin: str
     extra: Extra
-    ledger: Union[int, List[LedgerItem]]
-    metadata: Union[int, Dict[str, str]]
+    ledger: List[LedgerItem]
+    metadata: Dict[str, str]
     migration_status: Union[MigrationStatu, MigrationStatu1, MigrationStatu2]
-    operators: Union[int, List[Operator]]
+    operators: List[Operator]
     pending_owner: str
     permits_counter: str
     proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
-    proposals: Union[int, Dict[str, Proposals]]
+    proposals: Dict[str, Proposals]
     quorum_threshold: str
     token_address: str
     total_supply: Dict[str, str]

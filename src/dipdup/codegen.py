@@ -26,6 +26,18 @@ from dipdup.utils import camel_to_snake, snake_to_camel
 _logger = logging.getLogger(__name__)
 
 
+def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
+    if 'properties' in schema:
+        return {
+            **schema,
+            'properties': {prop: resolve_big_maps(sub_schema) for prop, sub_schema in schema['properties'].items()},
+        }
+    elif schema.get('$comment') == 'big_map':
+        return schema['oneOf'][1]
+    else:
+        return schema
+
+
 class SchemasCache:
     def __init__(self) -> None:
         self._logger = logging.getLogger(f'{__name__}.{self.__class__.__qualname__}')
@@ -86,7 +98,7 @@ async def fetch_schemas(config: DipDupConfig):
 
                     storage_schema_path = join(contract_schemas_path, 'storage.json')
 
-                    storage_schema = contract_schemas['storageSchema']
+                    storage_schema = resolve_big_maps(contract_schemas['storageSchema'])
                     if not exists(storage_schema_path):
                         with open(storage_schema_path, 'w') as file:
                             file.write(json.dumps(storage_schema, indent=4, sort_keys=True))
