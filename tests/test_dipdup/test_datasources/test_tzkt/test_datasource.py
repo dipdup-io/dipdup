@@ -103,7 +103,6 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             await self.datasource.fetch_operations(1337)
 
         on_operation_message_mock.assert_awaited_with(
-            index_config=self.index_config,
             message=[operations_message],
             sync=True,
         )
@@ -127,7 +126,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
 
-            await self.datasource.on_operation_message([operations_message], self.index_config, sync=True)
+            await self.datasource.on_operation_message([operations_message], sync=True)
 
             on_operation_match_mock.assert_awaited_with(
                 self.index_config,
