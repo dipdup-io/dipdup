@@ -598,6 +598,7 @@ class TzktDatasource:
         block = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/head',
+            skip_cache=True,
         )
         self._logger.debug(block)
         return block

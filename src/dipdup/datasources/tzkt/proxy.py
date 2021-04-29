@@ -12,8 +12,8 @@ class TzktRequestProxy:
         self._logger = logging.getLogger(__name__)
         self._cache = FileCache('dipdup', flag='cs') if cache else None
 
-    async def http_request(self, method: str, **kwargs):
-        if self._cache is not None:
+    async def http_request(self, method: str, skip_cache: bool = False, **kwargs):
+        if self._cache is not None and not skip_cache:
             key = hashlib.sha256(pickle.dumps([method, kwargs])).hexdigest()
             try:
                 return self._cache[key]
