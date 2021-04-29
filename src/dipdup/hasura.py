@@ -148,9 +148,8 @@ async def configure_hasura(config: DipDupConfig):
     _logger.info('Waiting for Hasura instance to be healthy')
     for _ in range(60):
         with suppress(ClientConnectorError, ClientOSError):
-            async with http_request('get', url=f'{url}/healthz') as response:
-                if response.status == 200:
-                    break
+            await http_request('get', url=f'{url}/healthz')
+            break
         await asyncio.sleep(1)
     else:
         _logger.error('Hasura instance not responding for 60 seconds')
@@ -161,7 +160,7 @@ async def configure_hasura(config: DipDupConfig):
         headers['X-Hasura-Admin-Secret'] = config.hasura.admin_secret
 
     _logger.info('Fetching existing metadata')
-    async with http_request(
+    existing_hasura_metadata = await http_request(
         'post',
         url=f'{url}/v1/query',
         data=json.dumps(
@@ -171,8 +170,7 @@ async def configure_hasura(config: DipDupConfig):
             },
         ),
         headers=headers,
-    ) as response:
-        existing_hasura_metadata = await response.json()
+    )
 
     _logger.info('Merging existing metadata')
     hasura_metadata_tables = [table['table'] for table in hasura_metadata['tables']]
@@ -181,7 +179,7 @@ async def configure_hasura(config: DipDupConfig):
             hasura_metadata['tables'].append(table)
 
     _logger.info('Sending replace metadata request')
-    async with http_request(
+    result = await http_request(
         'post',
         url=f'{url}/v1/query',
         data=json.dumps(
@@ -191,7 +189,6 @@ async def configure_hasura(config: DipDupConfig):
             },
         ),
         headers=headers,
-    ) as response:
-        result = await response.json()
-        if not result.get('message') == 'success':
-            _logger.error('Can\'t configure Hasura instance: %s', result)
+    )
+    if not result.get('message') == 'success':
+        _logger.error('Can\'t configure Hasura instance: %s', result)
