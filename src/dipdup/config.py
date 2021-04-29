@@ -217,7 +217,6 @@ class IndexConfig:
 
     def __post_init_post_parse__(self):
         self._state: Optional[State] = None
-        self._rollback_fn: Optional[Callable] = None
         self._template_values: Dict[str, str] = None
 
     def hash(self) -> str:
@@ -243,16 +242,6 @@ class IndexConfig:
     @state.setter
     def state(self, value: State):
         self._state = value
-
-    @property
-    def rollback_fn(self) -> Callable:
-        if not self._rollback_fn:
-            raise RuntimeError('Config is not initialized')
-        return self._rollback_fn
-
-    @rollback_fn.setter
-    def rollback_fn(self, value: Callable) -> None:
-        self._rollback_fn = value
 
     @property
     def template_values(self) -> Optional[Dict[str, str]]:
@@ -496,9 +485,7 @@ class DipDupConfig:
     async def _initialize_index_state(
         self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
     ):
-        rollback_fn = getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
         _logger.info('Getting state for index `%s`', index_name)
-        index_config.rollback_fn = rollback_fn
         index_hash = index_config.hash()
         state = await State.get_or_none(
             index_name=index_name,

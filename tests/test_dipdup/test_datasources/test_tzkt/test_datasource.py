@@ -59,7 +59,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         self.datasource.fetch_operations = fetch_operations_mock
 
         get_mock = MagicMock()
-        get_mock.return_value.__aenter__.return_value.json.return_value = [{'level': 1337}]
+        get_mock.return_value.__aenter__.return_value.json.return_value = {'level': 1337}
 
         with patch('aiohttp.ClientSession.get', get_mock):
             await self.datasource.start()

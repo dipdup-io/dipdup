@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple, Union
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
@@ -84,6 +84,7 @@ class TzktDatasource:
         self._client: Optional[BaseHubConnection] = None
         self._operation_cache = OperationCache()
         self._big_map_cache = BigMapCache()
+        self._rollback_fn: Optional[Callable[[int, int], Awaitable[None]]] = None
 
     async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
         self._logger.info('Adding index `%s`', index_name)
@@ -97,6 +98,9 @@ class TzktDatasource:
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+    async def set_rollback_fn(self, fn: Callable[[int, int], Awaitable[None]]) -> None:
+        self._rollback_fn = fn
 
     def _get_client(self) -> BaseHubConnection:
         if self._client is None:
@@ -408,11 +412,14 @@ class TzktDatasource:
                     async with in_transaction():
                         await self._operation_cache.process(self.on_operation_match)
 
-            # elif message_type == TzktMessageType.REORG:
-            #     self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
-            #     from_level = index_config.state.level
-            #     to_level = item['state']
-            #     await index_config.rollback_fn(from_level, to_level)
+            elif message_type == TzktMessageType.REORG:
+                if self._rollback_fn is None:
+                    raise RuntimeError('rollback_fn is not set')
+                self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
+                # NOTE: It doesn't matter which index to get
+                from_level = list(self._operation_index_by_name.values())[0].state.level
+                to_level = item['state']
+                await self._rollback_fn(from_level, to_level)
 
             else:
                 self._logger.warning('%s is not supported', message_type)
@@ -448,11 +455,14 @@ class TzktDatasource:
                     async with in_transaction():
                         await self._big_map_cache.process(self.on_big_map_match)
 
-            # elif message_type == TzktMessageType.REORG:
-            #     self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
-            #     from_level = index_config.state.level
-            #     to_level = item['state']
-            #     await index_config.rollback_fn(from_level, to_level)
+            elif message_type == TzktMessageType.REORG:
+                if self._rollback_fn is None:
+                    raise RuntimeError('rollback_fn is not set')
+                self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
+                # NOTE: It doesn't matter which index to get
+                from_level = list(self._big_map_index_by_name.values())[0].state.level
+                to_level = item['state']
+                await self._rollback_fn(from_level, to_level)
 
             else:
                 self._logger.warning('%s is not supported', message_type)
