@@ -50,7 +50,7 @@ class SchemasCache:
         contract_config: ContractConfig,
     ) -> Dict[str, Any]:
         if datasource_config not in self._datasources:
-            self._datasources[datasource_config] = TzktDatasource(datasource_config.url)
+            self._datasources[datasource_config] = TzktDatasource(datasource_config.url, True)
             self._schemas[datasource_config] = {}
         if contract_config.address not in self._schemas[datasource_config]:
             self._logger.info('Fetching schemas for contract `%s`', contract_config.address)

@@ -35,7 +35,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         )
         self.index_config.state = State(index_name='test', index_type=IndexType.operation, hash='')
         self.index_config.handlers[0].pattern[0].parameter_type_cls = CollectParameter
-        self.datasource = TzktDatasource('tzkt.test')
+        self.datasource = TzktDatasource('tzkt.test', True)
         await self.datasource.add_index('test', self.index_config)
 
     async def test_convert_operation(self):

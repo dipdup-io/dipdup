@@ -278,6 +278,17 @@ dnspython = ">=1.15.0"
 idna = ">=2.0.0"
 
 [[package]]
+name = "fcache"
+version = "0.4.7"
+description = "a dictionary-like, file-based cache module for Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+appdirs = "*"
+
+[[package]]
 name = "genson"
 version = "1.2.2"
 description = "GenSON is a powerful, user-friendly JSON Schema generator."
@@ -825,7 +836,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "ea4bb57e61832c732eedbc39857942e763f61663bda64bc7fab32e40c92a87e5"
+content-hash = "3d24c82dee8e14f062e1d1ef0a386a7678c18219cafb5002463ec73d5fa28d99"
 
 [metadata.files]
 aiohttp = [
@@ -1012,6 +1023,10 @@ dnspython = [
 email-validator = [
     {file = "email-validator-1.1.2.tar.gz", hash = "sha256:1a13bd6050d1db4475f13e444e169b6fe872434922d38968c67cea9568cce2f0"},
     {file = "email_validator-1.1.2-py2.py3-none-any.whl", hash = "sha256:094b1d1c60d790649989d38d34f69e1ef07792366277a2cf88684d03495d018f"},
+]
+fcache = [
+    {file = "fcache-0.4.7-py2.py3-none-any.whl", hash = "sha256:36c2aab0ee6e0eccd69ff2b8da4f508f0464d94856c9469c22ba386a0c5e2ba4"},
+    {file = "fcache-0.4.7.tar.gz", hash = "sha256:a7d14a72e9b5dbf232184a70caf9ff39820583b7a42bc64424cd7d9487c63d86"},
 ]
 genson = [
     {file = "genson-1.2.2.tar.gz", hash = "sha256:8caf69aa10af7aee0e1a1351d1d06801f4696e005f06cedef438635384346a16"},

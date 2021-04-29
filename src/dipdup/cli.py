@@ -7,6 +7,7 @@ from os.path import dirname, join
 from typing import List
 
 import click
+from fcache.cache import FileCache  # type: ignore
 
 from dipdup import __version__
 from dipdup.config import DipDupConfig, LoggingConfig
@@ -70,3 +71,10 @@ async def init(ctx):
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
     await dipdup.init()
+
+
+@cli.command(help='Clear development request cache')
+@click.pass_context
+@click_async
+async def clear_cache(ctx):
+    FileCache('dipdup', flag='cs').clear()

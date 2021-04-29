@@ -10,7 +10,14 @@ from tortoise.utils import get_schema_sql
 
 import dipdup.codegen as codegen
 from dipdup import __version__
-from dipdup.config import ROLLBACK_HANDLER, DipDupConfig, IndexTemplateConfig, PostgresDatabaseConfig, TzktDatasourceConfig
+from dipdup.config import (
+    ROLLBACK_HANDLER,
+    DipDupConfig,
+    IndexTemplateConfig,
+    PostgresDatabaseConfig,
+    SqliteDatabaseConfig,
+    TzktDatasourceConfig,
+)
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.hasura import configure_hasura
 from dipdup.models import IndexType, State
@@ -31,6 +38,7 @@ class DipDup:
 
     async def run(self) -> None:
         url = self._config.database.connection_string
+        cache = isinstance(self._config.database, SqliteDatabaseConfig)
         models = f'{self._config.package}.models'
         rollback_fn = getattr(importlib.import_module(f'{self._config.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
 
@@ -48,7 +56,7 @@ class DipDup:
                 self._logger.info('Processing index `%s`', index_name)
                 if isinstance(index_config.datasource, TzktDatasourceConfig):
                     if index_config.datasource_config not in datasources:
-                        datasources[index_config.datasource_config] = TzktDatasource(index_config.datasource_config.url)
+                        datasources[index_config.datasource_config] = TzktDatasource(index_config.datasource_config.url, cache)
                         datasources[index_config.datasource_config].set_rollback_fn(rollback_fn)
                     await datasources[index_config.datasource_config].add_index(index_name, index_config)
                 else:

@@ -46,7 +46,6 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None):
         await Tortoise.close_connections()
 
 
-@asynccontextmanager
 async def http_request(method: str, **kwargs):
     async with aiohttp.ClientSession() as session:
         headers = {
@@ -60,7 +59,7 @@ async def http_request(method: str, **kwargs):
         ) as response:
             request_string = kwargs['url'] + '?' + '&'.join([f'{key}={value}' for key, value in kwargs.get('params', {}).items()])
             _logger.debug('Calling `%s`', request_string)
-            yield response
+            return await response.json()
 
 
 async def reindex():

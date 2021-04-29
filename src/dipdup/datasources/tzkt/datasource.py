@@ -20,6 +20,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
+from dipdup.datasources.tzkt.proxy import TzktRequestProxy
 from dipdup.models import (
     BigMapAction,
     BigMapContext,
@@ -69,7 +70,7 @@ OperationType = str
 
 
 class TzktDatasource:
-    def __init__(self, url: str):
+    def __init__(self, url: str, cache: bool):
         super().__init__()
         self._url = url.rstrip('/')
         self._logger = logging.getLogger(__name__)
@@ -85,6 +86,7 @@ class TzktDatasource:
         self._operation_cache = OperationCache()
         self._big_map_cache = BigMapCache()
         self._rollback_fn: Optional[Callable[[int, int], Awaitable[None]]] = None
+        self._proxy = TzktRequestProxy(cache)
 
     async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
         self._logger.info('Adding index `%s`', index_name)
@@ -203,7 +205,7 @@ class TzktDatasource:
     async def _fetch_operations(self, addresses: List[str], offset: int, first_level: int, last_level: int) -> List[Dict[str, Any]]:
         self._logger.info('Fetching levels %s-%s with offset %s', first_level, last_level, offset)
 
-        async with http_request(
+        operations = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/operations/transactions',
             params={
@@ -215,10 +217,9 @@ class TzktDatasource:
                 "select": ','.join(OPERATION_FIELDS),
                 "status": "applied",
             },
-        ) as resp:
-            operations = await resp.json()
+        )
 
-        async with http_request(
+        target_operations = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/operations/transactions',
             params={
@@ -230,8 +231,7 @@ class TzktDatasource:
                 "select": ','.join(OPERATION_FIELDS),
                 "status": "applied",
             },
-        ) as resp:
-            target_operations = await resp.json()
+        )
 
         sender_operation_keys = {op['id'] for op in operations}
         for op in target_operations:
@@ -297,7 +297,7 @@ class TzktDatasource:
     ) -> List[Dict[str, Any]]:
         self._logger.info('Fetching levels %s-%s with offset %s', first_level, last_level, offset)
 
-        async with http_request(
+        big_maps = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/bigmaps/updates',
             params={
@@ -308,8 +308,7 @@ class TzktDatasource:
                 "level.gt": first_level,
                 "level.le": last_level,
             },
-        ) as resp:
-            big_maps = await resp.json()
+        )
 
         self._logger.info('%s big map updates fetched', len(big_maps))
         self._logger.debug(big_maps)
@@ -369,11 +368,10 @@ class TzktDatasource:
 
     async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
         self._logger.info('Fetching jsonschemas for address `%s', address)
-        async with http_request(
+        jsonschemas = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/contracts/{address}/interface',
-        ) as response:
-            jsonschemas = await response.json()
+        )
         self._logger.debug(jsonschemas)
         return jsonschemas
 
@@ -597,10 +595,9 @@ class TzktDatasource:
 
     async def get_latest_block(self) -> Dict[str, Any]:
         self._logger.info('Fetching latest block')
-        async with http_request(
+        block = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/head',
-        ) as resp:
-            block = await resp.json()
+        )
         self._logger.debug(block)
         return block
