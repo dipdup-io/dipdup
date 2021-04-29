@@ -1,11 +1,11 @@
 import demo_tzcolors.models as models
-from demo_tzcolors.types.tzcolors_auction.parameter.create_auction import CreateAuction as CreateAuctionParameter
-from demo_tzcolors.types.tzcolors_auction.storage import Storage as TzcolorsAuctionStorage
-from dipdup.models import HandlerContext, OperationContext
+from demo_tzcolors.types.tzcolors_auction.parameter.create_auction import CreateAuctionParameter
+from demo_tzcolors.types.tzcolors_auction.storage import TzcolorsAuctionStorage
+from dipdup.models import OperationContext, OperationHandlerContext
 
 
 async def on_create_auction(
-    ctx: HandlerContext,
+    ctx: OperationHandlerContext,
     create_auction: OperationContext[CreateAuctionParameter, TzcolorsAuctionStorage],
 ) -> None:
 

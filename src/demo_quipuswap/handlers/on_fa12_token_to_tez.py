@@ -1,15 +1,15 @@
 from decimal import Decimal
 
 import demo_quipuswap.models as models
-from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer as TransferParameter
-from demo_quipuswap.types.fa12_token.storage import Storage as Fa12TokenStorage
-from demo_quipuswap.types.quipu_fa12.parameter.token_to_tez_payment import TokenToTezPayment as TokenToTezPaymentParameter
-from demo_quipuswap.types.quipu_fa12.storage import Storage as QuipuFa12Storage
-from dipdup.models import HandlerContext, OperationContext
+from demo_quipuswap.types.fa12_token.parameter.transfer import TransferParameter
+from demo_quipuswap.types.fa12_token.storage import Fa12TokenStorage
+from demo_quipuswap.types.quipu_fa12.parameter.token_to_tez_payment import TokenToTezPaymentParameter
+from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
+from dipdup.models import OperationContext, OperationHandlerContext
 
 
 async def on_fa12_token_to_tez(
-    ctx: HandlerContext,
+    ctx: OperationHandlerContext,
     token_to_tez_payment: OperationContext[TokenToTezPaymentParameter, QuipuFa12Storage],
     transfer: OperationContext[TransferParameter, Fa12TokenStorage],
 ) -> None:

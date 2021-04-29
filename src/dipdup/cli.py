@@ -54,7 +54,7 @@ async def cli(ctx, config: List[str], logging_config: str):
     )
 
 
-@cli.command(help='Run dipdap')
+@cli.command(help='Run existing dipdup project')
 @click.pass_context
 @click_async
 async def run(ctx) -> None:
@@ -63,7 +63,7 @@ async def run(ctx) -> None:
     await dipdup.run()
 
 
-@cli.command(help='Initialize new dipdap')
+@cli.command(help='Initialize new dipdup project')
 @click.pass_context
 @click_async
 async def init(ctx):

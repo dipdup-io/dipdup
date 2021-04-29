@@ -6,5 +6,5 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class CancelSwap(BaseModel):
+class CancelSwapParameter(BaseModel):
     __root__: str

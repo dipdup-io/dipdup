@@ -6,5 +6,5 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class Withdraw(BaseModel):
+class WithdrawParameter(BaseModel):
     __root__: str

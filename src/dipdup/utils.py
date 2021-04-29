@@ -17,11 +17,11 @@ _logger = logging.getLogger(__name__)
 
 
 def snake_to_camel(value: str) -> str:
-    return ''.join(map(lambda x: x[0].upper() + x[1:], value.split('_')))
+    return ''.join(map(lambda x: x[0].upper() + x[1:], value.replace('.', '_').split('_')))
 
 
 def camel_to_snake(name):
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name.replace('.', '_'))
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 
@@ -51,7 +51,7 @@ async def http_request(method: str, **kwargs):
     async with aiohttp.ClientSession() as session:
         headers = {
             **kwargs.pop('headers', {}),
-            'User-Agent': f'dupdup/{__version__}',
+            'User-Agent': f'dipdup/{__version__}',
         }
         async with getattr(session, method)(
             skip_auto_headers={'User-Agent'},

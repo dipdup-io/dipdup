@@ -42,6 +42,6 @@ class ProposalMetadatum3(BaseModel):
     receivers_1: List[str]
 
 
-class Propose(BaseModel):
+class ProposeParameter(BaseModel):
     frozen_token: str
     proposal_metadata: Union[ProposalMetadatum, ProposalMetadatum1, ProposalMetadatum2, ProposalMetadatum3]

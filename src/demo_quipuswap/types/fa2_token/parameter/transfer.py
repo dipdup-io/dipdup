@@ -14,10 +14,10 @@ class Tx(BaseModel):
     amount: str
 
 
-class TransferItem(BaseModel):
+class TransferParameterItem(BaseModel):
     from_: str
     txs: List[Tx]
 
 
-class Transfer(BaseModel):
-    __root__: List[TransferItem]
+class TransferParameter(BaseModel):
+    __root__: List[TransferParameterItem]

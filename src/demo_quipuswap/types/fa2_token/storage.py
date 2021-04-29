@@ -19,8 +19,8 @@ class LedgerItem(BaseModel):
 
 
 class Key1(BaseModel):
-    owner: str
     operator: str
+    owner: str
     token_id: str
 
 
@@ -34,7 +34,7 @@ class TokenMetadata(BaseModel):
     token_info: Dict[str, str]
 
 
-class Storage(BaseModel):
+class Fa2TokenStorage(BaseModel):
     administrator: str
     all_tokens: str
     ledger: List[LedgerItem]

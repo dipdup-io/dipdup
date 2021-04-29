@@ -6,7 +6,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class TokenToTezPayment(BaseModel):
+class TokenToTezPaymentParameter(BaseModel):
     amount: str
     min_out: str
     receiver: str

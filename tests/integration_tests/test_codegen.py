@@ -44,7 +44,6 @@ class CodegenTest(IsolatedAsyncioTestCase):
                     await dipdup.init()
 
                     import_submodules(config.package)
-
                 except Exception as exc:
                     rmtree('tmp_test_dipdup')
                     raise exc

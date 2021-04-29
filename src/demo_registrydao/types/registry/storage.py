@@ -8,6 +8,22 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel
 
 
+class Registry(BaseModel):
+    affected_proposal_key: str
+    last_updated: str
+    value: Optional[str]
+
+
+class Extra(BaseModel):
+    frozen_extra_value: str
+    frozen_scale_value: str
+    max_proposal_size: str
+    proposal_receivers: List[str]
+    registry: Dict[str, Registry]
+    slash_division_value: str
+    slash_scale_value: str
+
+
 class Key(BaseModel):
     address: str
     nat: str
@@ -16,16 +32,6 @@ class Key(BaseModel):
 class LedgerItem(BaseModel):
     key: Key
     value: str
-
-
-class Key1(BaseModel):
-    owner: str
-    operator: str
-
-
-class Operator(BaseModel):
-    key: Key1
-    value: Dict[str, Any]
 
 
 class MigrationStatu(BaseModel):
@@ -40,20 +46,19 @@ class MigrationStatu2(BaseModel):
     migratedTo: str
 
 
-class Registry(BaseModel):
-    value: Optional[str]
-    affected_proposal_key: str
-    last_updated: str
+class Key1(BaseModel):
+    operator: str
+    owner: str
 
 
-class Extra(BaseModel):
-    registry: Dict[str, Registry]
-    proposal_receivers: List[str]
-    frozen_scale_value: str
-    frozen_extra_value: str
-    slash_scale_value: str
-    slash_division_value: str
-    max_proposal_size: str
+class Operator(BaseModel):
+    key: Key1
+    value: Dict[str, Any]
+
+
+class ProposalKeyListSortByDateItem(BaseModel):
+    bytes: str
+    timestamp: str
 
 
 class DiffItem(BaseModel):
@@ -71,11 +76,11 @@ class Metadatum(BaseModel):
 
 
 class ProposalType1(BaseModel):
-    frozen_scale_value: Optional[str]
     frozen_extra_value: Optional[str]
-    slash_scale_value: Optional[str]
-    slash_division_value: Optional[str]
+    frozen_scale_value: Optional[str]
     max_proposal_size: Optional[str]
+    slash_division_value: Optional[str]
+    slash_scale_value: Optional[str]
 
 
 class Metadatum1(BaseModel):
@@ -96,32 +101,27 @@ class Voter(BaseModel):
 
 
 class Proposals(BaseModel):
-    upvotes: str
     downvotes: str
-    start_date: str
     metadata: Union[Metadatum, Metadatum1, Metadatum2, Metadatum3]
     proposer: str
     proposer_frozen_token: str
+    start_date: str
+    upvotes: str
     voters: List[Voter]
 
 
-class ProposalKeyListSortByDateItem(BaseModel):
-    timestamp: str
-    bytes: str
-
-
-class Storage(BaseModel):
-    ledger: List[LedgerItem]
-    operators: List[Operator]
-    token_address: str
+class RegistryStorage(BaseModel):
     admin: str
-    pending_owner: str
-    migration_status: Union[MigrationStatu, MigrationStatu1, MigrationStatu2]
-    voting_period: str
-    quorum_threshold: str
     extra: Extra
-    proposals: Dict[str, Proposals]
-    proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
-    permits_counter: str
+    ledger: List[LedgerItem]
     metadata: Dict[str, str]
+    migration_status: Union[MigrationStatu, MigrationStatu1, MigrationStatu2]
+    operators: List[Operator]
+    pending_owner: str
+    permits_counter: str
+    proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
+    proposals: Dict[str, Proposals]
+    quorum_threshold: str
+    token_address: str
     total_supply: Dict[str, str]
+    voting_period: str

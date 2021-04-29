@@ -35,7 +35,7 @@ class Store(BaseModel):
     tzip12_tokens: Dict[str, str]
 
 
-class Storage(BaseModel):
+class NameRegistryStorage(BaseModel):
     actions: Dict[str, str]
     store: Store
     trusted_senders: List[str]

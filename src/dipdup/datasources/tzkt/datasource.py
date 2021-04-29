@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple, Union
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
@@ -10,10 +10,25 @@ from aiosignalrcore.transport.websockets.connection import ConnectionState  # ty
 from tortoise.transactions import in_transaction
 
 from dipdup import __version__
-from dipdup.config import ROLLBACK_HANDLER, BigmapdiffIndexConfig, BlockIndexConfig, OperationHandlerConfig, OperationIndexConfig
-from dipdup.datasources.tzkt.cache import OperationCache
+from dipdup.config import (
+    ROLLBACK_HANDLER,
+    BigMapHandlerConfig,
+    BigMapIndexConfig,
+    BlockIndexConfig,
+    OperationHandlerConfig,
+    OperationIndexConfig,
+)
+from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import HandlerContext, OperationContext, OperationData
+from dipdup.models import (
+    BigMapAction,
+    BigMapContext,
+    BigMapData,
+    BigMapHandlerContext,
+    OperationContext,
+    OperationData,
+    OperationHandlerContext,
+)
 from dipdup.utils import http_request
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
@@ -47,31 +62,45 @@ OPERATION_FIELDS = (
     "diffs,",
 )
 
+IndexName = str
+Address = str
+Path = str
+OperationType = str
+
 
 class TzktDatasource:
     def __init__(self, url: str):
         super().__init__()
         self._url = url.rstrip('/')
-        self._operation_index_configs: Dict[str, OperationIndexConfig] = {}
-        self._synchronized = asyncio.Event()
-        self._callback_lock = asyncio.Lock()
         self._logger = logging.getLogger(__name__)
-        self._subscriptions: Dict[str, List[str]] = {}
-        self._subscriptions_registered: List[Tuple[str, str]] = []
-        self._sync_events: Dict[str, asyncio.Event] = {}
+        self._operation_index_by_name: Dict[IndexName, OperationIndexConfig] = {}
+        self._big_map_index_by_name: Dict[IndexName, BigMapIndexConfig] = {}
+        self._big_map_index_by_address: Dict[Address, BigMapIndexConfig] = {}
+        self._callback_lock = asyncio.Lock()
+        self._operation_subscriptions: Dict[Address, List[OperationType]] = {}
+        self._big_map_subscriptions: Dict[Address, List[Path]] = {}
+        self._operations_synchronized = asyncio.Event()
+        self._big_maps_synchronized = asyncio.Event()
         self._client: Optional[BaseHubConnection] = None
-        self._caches: Dict[str, OperationCache] = {}
+        self._operation_cache = OperationCache()
+        self._big_map_cache = BigMapCache()
+        self._rollback_fn: Optional[Callable[[int, int], Awaitable[None]]] = None
 
-    def add_index(self, config: Union[OperationIndexConfig, BigmapdiffIndexConfig, BlockIndexConfig]):
-        if isinstance(config, OperationIndexConfig):
-            self._logger.info('Adding index `%s`', config.state.index_name)
-            self._operation_index_configs[config.contract_config.address] = config
-            self._sync_events[config.state.index_name] = asyncio.Event()
-            self._caches[config.contract_config.address] = OperationCache(config, config.state.level)
-            if len(self._operation_index_configs) > 1:
-                self._logger.warning('Using more than one operation index. Be careful, indexing is not atomic.')
+    async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
+        self._logger.info('Adding index `%s`', index_name)
+        if isinstance(index_config, OperationIndexConfig):
+            self._operation_index_by_name[index_name] = index_config
+            await self._operation_cache.add_index(index_config)
+
+        elif isinstance(index_config, BigMapIndexConfig):
+            self._big_map_index_by_name[index_name] = index_config
+            await self._big_map_cache.add_index(index_config)
+
         else:
-            raise NotImplementedError(f'Index kind `{config.kind}` is not supported')
+            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+    def set_rollback_fn(self, fn: Callable[[int, int], Awaitable[None]]) -> None:
+        self._rollback_fn = fn
 
     def _get_client(self) -> BaseHubConnection:
         if self._client is None:
@@ -90,25 +119,49 @@ class TzktDatasource:
             ).build()
             self._client.on_open(self.on_connect)
             self._client.on_error(self.on_error)
+            self._client.on('operations', self.on_operation_message)
+            self._client.on('bigmaps', self.on_big_map_message)
 
         return self._client
 
     async def start(self):
         self._logger.info('Starting datasource')
         rest_only = False
-        for operation_index_config in self._operation_index_configs.values():
+
+        self._logger.info('Initial synchronizing operation indexes')
+        for operation_index_config in self._operation_index_by_name.values():
 
             if operation_index_config.last_block:
                 await self.fetch_operations(operation_index_config.last_block, initial=True)
                 rest_only = True
                 continue
 
-            await self.add_subscription(operation_index_config.contract)
+            for contract in operation_index_config.contracts:
+                await self.add_operation_subscription(contract.address)
+
             latest_block = await self.get_latest_block()
             current_level = latest_block['level']
             state_level = operation_index_config.state.level
             if current_level != state_level:
                 await self.fetch_operations(current_level, initial=True)
+
+        self._logger.info('Initial synchronizing big map indexes')
+        for big_map_index_config in self._big_map_index_by_name.values():
+
+            if big_map_index_config.last_block:
+                await self.fetch_big_maps(big_map_index_config.last_block, initial=True)
+                rest_only = True
+                continue
+
+            for handler_config in big_map_index_config.handlers:
+                for pattern_config in handler_config.pattern:
+                    await self.add_big_map_subscription(pattern_config.contract_config.address, pattern_config.path)
+
+            latest_block = await self.get_latest_block()
+            current_level = latest_block['level']
+            state_level = big_map_index_config.state.level
+            if current_level != state_level:
+                await self.fetch_big_maps(current_level, initial=True)
 
         if not rest_only:
             self._logger.info('Starting websocket client')
@@ -119,22 +172,17 @@ class TzktDatasource:
 
     async def on_connect(self):
         self._logger.info('Connected to server')
-        for contract, subscriptions in self._subscriptions.items():
-            await self.subscribe_to_operations(contract.address, subscriptions)
+        for address, types in self._operation_subscriptions.items():
+            await self.subscribe_to_operations(address, types)
+        for address, paths in self._big_map_subscriptions.items():
+            for path in paths:
+                await self.subscribe_to_big_maps(address, paths)
 
     def on_error(self, message: CompletionMessage):
         raise Exception(message.error)
 
     async def subscribe_to_operations(self, address: str, types: List[str]) -> None:
         self._logger.info('Subscribing to %s, %s', address, types)
-
-        key = ('operations', address)
-        if key not in self._subscriptions_registered:
-            self._subscriptions_registered.append(key)
-            self._get_client().on(
-                'operations',
-                partial(self.on_operation_message, address=address),
-            )
 
         while self._get_client().transport.state != ConnectionState.connected:
             await asyncio.sleep(0.1)
@@ -149,13 +197,17 @@ class TzktDatasource:
             ],
         )
 
-    async def _fetch_operations(self, address: str, offset: int, first_level: int, last_level: int) -> List[Dict[str, Any]]:
+    async def subscribe_to_big_maps(self, address: Address, path: Path) -> None:
+        self._logger.info('Subscribing to %s, %s', address, path)
+
+    async def _fetch_operations(self, addresses: List[str], offset: int, first_level: int, last_level: int) -> List[Dict[str, Any]]:
         self._logger.info('Fetching levels %s-%s with offset %s', first_level, last_level, offset)
+
         async with http_request(
             'get',
             url=f'{self._url}/v1/operations/transactions',
             params={
-                "anyof.sender.target.initiator": address,
+                "sender.in": ','.join(addresses),
                 "offset": offset,
                 "limit": TZKT_HTTP_REQUEST_LIMIT,
                 "level.gt": first_level,
@@ -165,15 +217,37 @@ class TzktDatasource:
             },
         ) as resp:
             operations = await resp.json()
+
+        async with http_request(
+            'get',
+            url=f'{self._url}/v1/operations/transactions',
+            params={
+                "target.in": ','.join(addresses),
+                "offset": offset,
+                "limit": TZKT_HTTP_REQUEST_LIMIT,
+                "level.gt": first_level,
+                "level.le": last_level,
+                "select": ','.join(OPERATION_FIELDS),
+                "status": "applied",
+            },
+        ) as resp:
+            target_operations = await resp.json()
+
+        sender_operation_keys = {op['id'] for op in operations}
+        for op in target_operations:
+            if op['id'] not in sender_operation_keys:
+                operations.append(op)
+
+        operations = sorted(operations, key=lambda op: op['id'])
+
         self._logger.info('%s operations fetched', len(operations))
         self._logger.debug(operations)
         return operations
 
     async def fetch_operations(self, last_level: int, initial: bool = False) -> None:
-        async def _process_operations(address, operations):
+        async def _process_level_operations(operations) -> None:
             self._logger.info('Processing %s operations of level %s', len(operations), operations[0]['level'])
             await self.on_operation_message(
-                address=address,
                 message=[
                     {
                         'type': TzktMessageType.DATA.value,
@@ -184,22 +258,22 @@ class TzktDatasource:
             )
 
         self._logger.info('Fetching operations prior to level %s', last_level)
-        for index_config in self._operation_index_configs.values():
+        for index_config in self._operation_index_by_name.values():
 
-            sync_event = self._sync_events[index_config.state.index_name]
             level = index_config.state.level
 
             operations = []
             offset = 0
+            addresses = [c.address for c in index_config.contract_configs]
 
             while True:
-                fetched_operations = await self._fetch_operations(index_config.contract_config.address, offset, level, last_level)
+                fetched_operations = await self._fetch_operations(addresses, offset, level, last_level)
                 operations += fetched_operations
 
                 while True:
                     for i in range(len(operations) - 1):
                         if operations[i]['level'] != operations[i + 1]['level']:
-                            await _process_operations(index_config.contract_config.address, operations[: i + 1])
+                            await _process_level_operations(operations[: i + 1])
                             operations = operations[i + 1 :]
                             break
                     else:
@@ -213,14 +287,85 @@ class TzktDatasource:
                 await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
 
             if operations:
-                await _process_operations(index_config.contract_config.address, operations)
-
-            if not initial:
-                sync_event.set()
+                await _process_level_operations(operations)
 
         if not initial:
-            self._logger.info('Synchronization finished')
-            self._synchronized.set()
+            self._operations_synchronized.set()
+
+    async def _fetch_big_maps(
+        self, addresses: List[Address], paths: List[Path], offset: int, first_level: int, last_level: int
+    ) -> List[Dict[str, Any]]:
+        self._logger.info('Fetching levels %s-%s with offset %s', first_level, last_level, offset)
+
+        async with http_request(
+            'get',
+            url=f'{self._url}/v1/bigmaps/updates',
+            params={
+                "contract.in": ",".join(addresses),
+                "paths.in": ",".join(paths),
+                "offset": offset,
+                "limit": TZKT_HTTP_REQUEST_LIMIT,
+                "level.gt": first_level,
+                "level.le": last_level,
+            },
+        ) as resp:
+            big_maps = await resp.json()
+
+        self._logger.info('%s big map updates fetched', len(big_maps))
+        self._logger.debug(big_maps)
+        return big_maps
+
+    async def fetch_big_maps(self, last_level: int, initial: bool = False) -> None:
+        async def _process_level_big_maps(big_maps):
+            self._logger.info('Processing %s big map updates of level %s', len(big_maps), big_maps[0]['level'])
+            await self.on_big_map_message(
+                message=[
+                    {
+                        'type': TzktMessageType.DATA.value,
+                        'data': big_maps,
+                    },
+                ],
+                sync=True,
+            )
+
+        self._logger.info('Fetching big map updates prior to level %s', last_level)
+        for index_config in self._big_map_index_by_name.values():
+
+            level = index_config.state.level
+
+            big_maps = []
+            offset = 0
+            addresses, paths = set(), set()
+            for handler_config in index_config.handlers:
+                for pattern_config in handler_config.pattern:
+                    addresses.add(pattern_config.contract_config.address)
+                    paths.add(pattern_config.path)
+
+            while True:
+                fetched_big_maps = await self._fetch_big_maps(list(addresses), list(paths), offset, level, last_level)
+                big_maps += fetched_big_maps
+
+                while True:
+                    for i in range(len(big_maps) - 1):
+                        if big_maps[i]['level'] != big_maps[i + 1]['level']:
+                            await _process_level_big_maps(big_maps[: i + 1])
+                            big_maps = big_maps[i + 1 :]
+                            break
+                    else:
+                        break
+
+                if len(fetched_big_maps) < TZKT_HTTP_REQUEST_LIMIT:
+                    break
+
+                offset += TZKT_HTTP_REQUEST_LIMIT
+                self._logger.info('Sleeping %s seconds before fetching next batch', TZKT_HTTP_REQUEST_SLEEP)
+                await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
+
+            if big_maps:
+                await _process_level_big_maps(big_maps)
+
+        if not initial:
+            self._big_maps_synchronized.set()
 
     async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
         self._logger.info('Fetching jsonschemas for address `%s', address)
@@ -235,25 +380,23 @@ class TzktDatasource:
     async def on_operation_message(
         self,
         message: List[Dict[str, Any]],
-        address: str,
         sync=False,
     ) -> None:
-        self._logger.info('Got operation message on %s', address)
+        self._logger.info('Got operation message')
         self._logger.debug('%s', message)
-        index_config = self._operation_index_configs[address]
+
         for item in message:
             message_type = TzktMessageType(item['type'])
 
             if message_type == TzktMessageType.STATE:
                 level = item['state']
-                self._logger.info('Got state message, current level %s, index level %s', level, index_config.state.level)
+                self._logger.info('Got state message, current level %s, index level %s', level, self._operation_cache.level)
                 await self.fetch_operations(level)
 
             elif message_type == TzktMessageType.DATA:
-                sync_event = self._sync_events[index_config.state.index_name]
-                if not sync and not sync_event.is_set():
+                if not sync and not self._operations_synchronized.is_set():
                     self._logger.info('Waiting until synchronization is complete')
-                    await sync_event.wait()
+                    await self._operations_synchronized.wait()
                     self._logger.info('Synchronization is complete, processing websocket message')
 
                 self._logger.info('Acquiring callback lock')
@@ -262,27 +405,78 @@ class TzktDatasource:
                         operation = self.convert_operation(operation_json)
                         if operation.type != 'transaction':
                             continue
-                        await self._caches[address].add(operation)
+                        if operation.status != 'applied':
+                            continue
+                        await self._operation_cache.add(operation)
 
                     async with in_transaction():
-                        last_level = await self._caches[address].process(self.on_operation_match)
-                        index_config.state.level = last_level  # type: ignore
-                        await index_config.state.save()
+                        await self._operation_cache.process(self.on_operation_match)
 
             elif message_type == TzktMessageType.REORG:
+                if self._rollback_fn is None:
+                    raise RuntimeError('rollback_fn is not set')
                 self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
-                from_level = self._operation_index_configs[address].state.level
+                # NOTE: It doesn't matter which index to get
+                from_level = list(self._operation_index_by_name.values())[0].state.level
                 to_level = item['state']
-                await self._operation_index_configs[address].rollback_fn(from_level, to_level)
+                await self._rollback_fn(from_level, to_level)
 
             else:
                 self._logger.warning('%s is not supported', message_type)
 
-    async def add_subscription(self, address: str, types: Optional[List[str]] = None) -> None:
+    async def on_big_map_message(
+        self,
+        message: List[Dict[str, Any]],
+        sync=False,
+    ) -> None:
+        self._logger.info('Got big map message')
+        self._logger.debug('%s', message)
+
+        for item in message:
+            message_type = TzktMessageType(item['type'])
+
+            if message_type == TzktMessageType.STATE:
+                level = item['state']
+                self._logger.info('Got state message, current level %s, index level %s', level, self._operation_cache.level)
+                await self.fetch_big_maps(level)
+
+            elif message_type == TzktMessageType.DATA:
+                if not sync and not self._big_maps_synchronized.is_set():
+                    self._logger.info('Waiting until synchronization is complete')
+                    await self._big_maps_synchronized.wait()
+                    self._logger.info('Synchronization is complete, processing websocket message')
+
+                self._logger.info('Acquiring callback lock')
+                async with self._callback_lock:
+                    for big_map_json in item['data']:
+                        big_map = self.convert_big_map(big_map_json)
+                        await self._big_map_cache.add(big_map)
+
+                    async with in_transaction():
+                        await self._big_map_cache.process(self.on_big_map_match)
+
+            elif message_type == TzktMessageType.REORG:
+                if self._rollback_fn is None:
+                    raise RuntimeError('rollback_fn is not set')
+                self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
+                # NOTE: It doesn't matter which index to get
+                from_level = list(self._big_map_index_by_name.values())[0].state.level
+                to_level = item['state']
+                await self._rollback_fn(from_level, to_level)
+
+            else:
+                self._logger.warning('%s is not supported', message_type)
+
+    async def add_operation_subscription(self, address: str, types: Optional[List[str]] = None) -> None:
         if types is None:
             types = ['transaction']
-        if address not in self._subscriptions:
-            self._subscriptions[address] = types
+        if address not in self._operation_subscriptions:
+            self._operation_subscriptions[address] = types
+
+    async def add_big_map_subscription(self, address: str, path: str) -> None:
+        if address not in self._big_map_subscriptions:
+            self._big_map_subscriptions[address] = []
+        self._big_map_subscriptions[address].append('path')
 
     async def on_operation_match(
         self,
@@ -291,11 +485,11 @@ class TzktDatasource:
         matched_operations: List[OperationData],
         operations: List[OperationData],
     ):
-        handler_context = HandlerContext(
+        handler_context = OperationHandlerContext(
             operations=operations,
             template_values=index_config.template_values,
         )
-        args: List[Union[OperationContext, HandlerContext]] = [handler_context]
+        args: List[Union[OperationHandlerContext, OperationContext]] = [handler_context]
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
 
             parameter_type = pattern_config.parameter_type_cls
@@ -310,6 +504,46 @@ class TzktDatasource:
                 storage=storage,
             )
             args.append(operation_context)
+
+        await handler_config.callback_fn(*args)
+
+    async def on_big_map_match(
+        self,
+        index_config: BigMapIndexConfig,
+        handler_config: BigMapHandlerConfig,
+        matched_big_maps: List[List[BigMapData]],
+    ):
+        handler_context = BigMapHandlerContext(
+            template_values=index_config.template_values,
+        )
+        args: List[Union[BigMapHandlerContext, List[BigMapContext]]] = [handler_context]
+        for matched_big_map_group, pattern_config in zip(matched_big_maps, handler_config.pattern):
+            big_map_contexts = []
+            for big_map in matched_big_map_group:
+
+                try:
+                    action = BigMapAction(big_map.action)
+                except ValueError:
+                    continue
+
+                key_type = pattern_config.key_type_cls
+                key = key_type.parse_obj(big_map.key)
+
+                if action == BigMapAction.REMOVE:
+                    value = None
+                else:
+                    value_type = pattern_config.value_type_cls
+                    value = value_type.parse_obj(big_map.value)
+
+                big_map_context = BigMapContext(  # type: ignore
+                    action=action,
+                    key=key,
+                    value=value,
+                )
+
+                big_map_contexts.append(big_map_context)
+
+            args.append(big_map_contexts)
 
         await handler_config.callback_fn(*args)
 
@@ -345,16 +579,28 @@ class TzktDatasource:
             diffs=operation_json.get('diffs'),
         )
 
+    @classmethod
+    def convert_big_map(cls, big_map_json: Dict[str, Any]) -> BigMapData:
+        return BigMapData(
+            id=big_map_json['id'],
+            level=big_map_json['level'],
+            # FIXME: operation_id field in API
+            operation_id=big_map_json['level'],
+            timestamp=big_map_json['timestamp'],
+            bigmap=big_map_json['bigmap'],
+            contract_address=big_map_json['contract']['address'],
+            path=big_map_json['path'],
+            action=big_map_json['action'],
+            key=big_map_json.get('content', {}).get('key'),
+            value=big_map_json.get('content', {}).get('value'),
+        )
+
     async def get_latest_block(self) -> Dict[str, Any]:
         self._logger.info('Fetching latest block')
         async with http_request(
             'get',
-            url=f'{self._url}/v1/blocks',
-            params={
-                "limit": 1,
-                "sort.desc": "id",
-            },
+            url=f'{self._url}/v1/head',
         ) as resp:
-            blocks = await resp.json()
-        self._logger.debug(blocks)
-        return blocks[0]
+            block = await resp.json()
+        self._logger.debug(block)
+        return block

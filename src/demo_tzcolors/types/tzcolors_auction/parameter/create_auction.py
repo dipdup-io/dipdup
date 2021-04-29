@@ -6,7 +6,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class CreateAuction(BaseModel):
+class CreateAuctionParameter(BaseModel):
     auction_id: str
     bid_amount: str
     end_timestamp: str

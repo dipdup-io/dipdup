@@ -6,6 +6,6 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class Collect(BaseModel):
+class CollectParameter(BaseModel):
     objkt_amount: str
     swap_id: str

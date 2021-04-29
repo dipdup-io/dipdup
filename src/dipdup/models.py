@@ -8,8 +8,10 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 
-ParameterType = TypeVar('ParameterType')
+ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
+KeyType = TypeVar('KeyType', bound=BaseModel)
+ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
 _logger = logging.getLogger(__name__)
@@ -17,7 +19,7 @@ _logger = logging.getLogger(__name__)
 
 class IndexType(Enum):
     operation = 'operation'
-    bigmapdiff = 'bigmapdiff'
+    big_map = 'big_map'
     block = 'block'
     schema = 'schema'
 
@@ -86,6 +88,7 @@ class OperationData:
             # NOTE: TzKT could return bigmaps as object or as array of key-value objects. We need to guess this from storage.
             # TODO: This code should be a part of datasource module.
             if field.type_ not in (int, bool) and isinstance(storage[key], int):
+                _logger.debug(field.type_)
                 if hasattr(field.type_, '__fields__') and 'key' in field.type_.__fields__ and 'value' in field.type_.__fields__:
                     storage[key] = []
                     if self.diffs:
@@ -122,7 +125,39 @@ class OperationContext(Generic[ParameterType, StorageType]):
     storage: StorageType
 
 
+class BigMapAction(Enum):
+    ADD = 'add_key'
+    UPDATE = 'update_key'
+    REMOVE = 'remove_key'
+
+
 @dataclass
-class HandlerContext:
+class BigMapContext(Generic[KeyType, ValueType]):
+    action: BigMapAction
+    key: KeyType
+    value: Optional[ValueType]
+
+
+@dataclass
+class BigMapData:
+    id: int
+    level: int
+    operation_id: int
+    timestamp: datetime
+    bigmap: int
+    contract_address: str
+    path: str
+    action: str
+    key: Optional[Any] = None
+    value: Optional[Any] = None
+
+
+@dataclass
+class OperationHandlerContext:
     operations: List[OperationData]
+    template_values: Optional[Dict[str, str]]
+
+
+@dataclass
+class BigMapHandlerContext:
     template_values: Optional[Dict[str, str]]

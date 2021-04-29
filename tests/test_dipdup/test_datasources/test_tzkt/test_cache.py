@@ -1,20 +1,20 @@
 import json
 from os.path import dirname, join
 from unittest.async_case import IsolatedAsyncioTestCase  # type: ignore
-from unittest.mock import ANY, AsyncMock  # type: ignore
+from unittest.mock import ANY, AsyncMock, MagicMock  # type: ignore
 
 from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache, OperationGroup
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import OperationData
+from dipdup.models import OperationData, State
 
 
-class TzktDatasourceTest(IsolatedAsyncioTestCase):
+class TzktOperationCacheTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.config = OperationIndexConfig(
+        self.index_config = OperationIndexConfig(
             kind='operation',
             datasource='',
-            contract='',
+            contracts=[ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW')],
             handlers=[
                 OperationHandlerConfig(
                     callback='',
@@ -26,7 +26,10 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 )
             ],
         )
-        self.cache = OperationCache(self.config, 0)
+        self.index_config.state = MagicMock()
+        self.index_config.state.save = AsyncMock()
+        self.cache = OperationCache()
+        await self.cache.add_index(self.index_config)
 
     async def test_add(self):
         with open(join(dirname(__file__), 'operations.json')) as file:

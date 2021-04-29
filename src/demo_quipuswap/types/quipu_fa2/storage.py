@@ -26,7 +26,7 @@ class Voters(BaseModel):
     vote: str
 
 
-class Storage1(BaseModel):
+class Storage(BaseModel):
     current_candidate: Optional[str]
     current_delegated: Optional[str]
     invariant: str
@@ -52,8 +52,8 @@ class Storage1(BaseModel):
     votes: Dict[str, str]
 
 
-class Storage(BaseModel):
+class QuipuFa2Storage(BaseModel):
     dex_lambdas: Dict[str, str]
     metadata: Dict[str, str]
-    storage: Storage1
+    storage: Storage
     token_lambdas: Dict[str, str]

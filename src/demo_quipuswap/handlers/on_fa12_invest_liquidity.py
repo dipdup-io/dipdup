@@ -1,15 +1,15 @@
 from decimal import Decimal
 
 import demo_quipuswap.models as models
-from demo_quipuswap.types.fa12_token.parameter.transfer import Transfer as TransferParameter
-from demo_quipuswap.types.fa12_token.storage import Storage as Fa12TokenStorage
-from demo_quipuswap.types.quipu_fa12.parameter.invest_liquidity import InvestLiquidity as InvestLiquidityParameter
-from demo_quipuswap.types.quipu_fa12.storage import Storage as QuipuFa12Storage
-from dipdup.models import HandlerContext, OperationContext
+from demo_quipuswap.types.fa12_token.parameter.transfer import TransferParameter
+from demo_quipuswap.types.fa12_token.storage import Fa12TokenStorage
+from demo_quipuswap.types.quipu_fa12.parameter.invest_liquidity import InvestLiquidityParameter
+from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
+from dipdup.models import OperationContext, OperationHandlerContext
 
 
 async def on_fa12_invest_liquidity(
-    ctx: HandlerContext,
+    ctx: OperationHandlerContext,
     invest_liquidity: OperationContext[InvestLiquidityParameter, QuipuFa12Storage],
     transfer: OperationContext[TransferParameter, Fa12TokenStorage],
 ) -> None:
@@ -26,7 +26,7 @@ async def on_fa12_invest_liquidity(
 
     tez_qty = Decimal(invest_liquidity.data.amount) / (10 ** 6)
     token_qty = Decimal(transfer.parameter.value) / (10 ** decimals)
-    new_shares_qty = int(storage.storage.ledger[trader].balance) + int(storage.storage.ledger[trader].frozen_balance)
+    new_shares_qty = int(storage.storage.ledger[trader].balance) + int(storage.storage.ledger[trader].frozen_balance)  # type: ignore
 
     price = (Decimal(storage.storage.tez_pool) / (10 ** 6)) / (Decimal(storage.storage.token_pool) / (10 ** decimals))
     value = tez_qty + price * token_qty

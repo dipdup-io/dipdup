@@ -14,11 +14,11 @@ class Balances(BaseModel):
 
 
 class TokenMetadata(BaseModel):
-    nat: str
     map: Dict[str, str]
+    nat: str
 
 
-class Storage(BaseModel):
+class Fa12TokenStorage(BaseModel):
     administrator: str
     balances: Dict[str, Balances]
     debtCeiling: str

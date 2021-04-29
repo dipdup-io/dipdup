@@ -6,7 +6,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Extra
 
 
-class Storage(BaseModel):
+class TzcolorsAuctionStorage(BaseModel):
     pass
 
     class Config:

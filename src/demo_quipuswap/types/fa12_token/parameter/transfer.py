@@ -6,7 +6,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
-class Transfer(BaseModel):
+class TransferParameter(BaseModel):
     from_: str = Field(..., alias='from')
     to: str
     value: str

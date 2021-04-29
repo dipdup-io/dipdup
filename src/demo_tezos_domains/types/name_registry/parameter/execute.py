@@ -6,7 +6,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class Execute(BaseModel):
+class ExecuteParameter(BaseModel):
     action_name: str
     original_sender: str
     payload: str

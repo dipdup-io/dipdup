@@ -1,0 +1,19 @@
+from typing import List
+
+from dipdup.models import BigMapHandlerContext, BigMapContext
+
+import {{ package }}.models as models
+{% for pattern in patterns %}
+from {{ package }}.types.{{ pattern.contract.module_name }}.big_map.{{ camel_to_snake(pattern.path) }}_key import {{ snake_to_camel(pattern.path) }}Key
+from {{ package }}.types.{{ pattern.contract.module_name }}.big_map.{{ camel_to_snake(pattern.path) }}_value import {{ snake_to_camel(pattern.path) }}Value
+{%- endfor %}
+
+
+async def {{ handler }}(
+    ctx: BigMapHandlerContext,
+{%- for pattern in patterns %}
+    {{ camel_to_snake(pattern.path) }}: List[BigMapContext[{{ snake_to_camel(pattern.path) }}Key, {{ snake_to_camel(pattern.path) }}Value]],
+{%- endfor %}
+) -> None:
+    ...
+    
