@@ -99,7 +99,7 @@ class TzktDatasource:
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-    async def set_rollback_fn(self, fn: Callable[[int, int], Awaitable[None]]) -> None:
+    def set_rollback_fn(self, fn: Callable[[int, int], Awaitable[None]]) -> None:
         self._rollback_fn = fn
 
     def _get_client(self) -> BaseHubConnection:
