@@ -20,11 +20,11 @@ Make new folder named `dipdup_demo` cd in and create a configuration file `dipdu
 
 ```yaml
 spec_version: 0.1
-package: dipdup_demo
+package: demo_tzbtc
 
 database:
   kind: sqlite
-  path: demo.sqlite3
+  path: demo_tzbtc.sqlite3
   
 contracts:
   tzbtc_mainnet:
@@ -73,7 +73,7 @@ dipdup_demo/
 │   └── on_rollback.py
 └── types
     └── tzbtc
-        ├── storage
+        ├── storage.py
         └── parameter
             └── transfer.py
             └── mint.py
@@ -101,8 +101,8 @@ from tortoise import Model, fields
 
 class Holder(Model):
     address = fields.CharField(max_length=36, pk=True)
-    balance = fields.DecimalField(decimal_places=6, max_digits=20, default=0)
-    volume = fields.DecimalField(decimal_places=6, max_digits=20, default=0)
+    balance = fields.DecimalField(decimal_places=8, max_digits=20, default=0)
+    volume = fields.DecimalField(decimal_places=8, max_digits=20, default=0)
     tx_count = fields.BigIntField(default=0)
     last_seen = fields.DateTimeField(null=True)
 ```
