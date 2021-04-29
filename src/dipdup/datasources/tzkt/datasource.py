@@ -589,12 +589,8 @@ class TzktDatasource:
         self._logger.info('Fetching latest block')
         async with http_request(
             'get',
-            url=f'{self._url}/v1/blocks',
-            params={
-                "limit": 1,
-                "sort.desc": "id",
-            },
+            url=f'{self._url}/v1/head',
         ) as resp:
-            blocks = await resp.json()
-        self._logger.debug(blocks)
-        return blocks[0]
+            block = await resp.json()
+        self._logger.debug(block)
+        return block
