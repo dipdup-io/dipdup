@@ -1,9 +1,9 @@
 spec_version: 0.1
-package: demo_tezos_domains_big_map
+package: demo_tezos_domains
 
 database:
   kind: sqlite
-  path: tezos_domains_big_map.sqlite3
+  path: db.sqlite3
 
 contracts:
   edo_name_registry:
@@ -16,20 +16,25 @@ datasources:
     url: ${TZKT_URL:-https://staging.api.edo2net.tzkt.io}
 
 templates:
-  tezos_domains_big_map:
-    kind: big_map
+  tezos_domains:
+    kind: operation
     datasource: <datasource>
+    contracts:
+      - <name_registry>
     handlers:
-      - callback: on_update
+      - callback: on_admin_update
         pattern:
-          - contract: <name_registry>
-            path: store.records
-          - contract: <name_registry>
-            path: store.expiry_map
+          - destination: <name_registry>
+            entrypoint: admin_update
+      - callback: on_execute
+        pattern:
+          - destination: <name_registry>
+            entrypoint: execute
+    last_block: 55363
 
 indexes:
-  tezos_domains_big_map_edo:
-    template: tezos_domains_big_map
+  tezos_domains_edo:
+    template: tezos_domains
     values:
       datasource: tzkt_staging_edo
       name_registry: edo_name_registry

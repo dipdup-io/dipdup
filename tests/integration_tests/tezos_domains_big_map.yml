@@ -3,7 +3,7 @@ package: demo_tezos_domains_big_map
 
 database:
   kind: sqlite
-  path: tezos_domains_big_map.sqlite3
+  path: db.sqlite3
 
 contracts:
   edo_name_registry:
@@ -26,6 +26,7 @@ templates:
             path: store.records
           - contract: <name_registry>
             path: store.expiry_map
+    last_block: 55363
 
 indexes:
   tezos_domains_big_map_edo:
