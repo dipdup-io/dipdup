@@ -389,6 +389,9 @@ class DipDupConfig:
     hasura: Optional[HasuraConfig] = None
 
     def __post_init_post_parse__(self):
+        if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
+            raise ConfigurationError('SQLite DB engine is not supported by Hasura')
+
         _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
             if isinstance(index_config, IndexTemplateConfig):
