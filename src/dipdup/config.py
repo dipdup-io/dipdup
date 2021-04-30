@@ -395,7 +395,10 @@ class DipDupConfig:
         _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
             if isinstance(index_config, IndexTemplateConfig):
-                template = self.templates[index_config.template]
+                try:
+                    template = self.templates[index_config.template]
+                except KeyError as e:
+                    raise ConfigurationError(f'Template `{index_config.template}` not found in `templates` config section') from e
                 raw_template = json.dumps(template, default=pydantic_encoder)
                 for key, value in index_config.values.items():
                     value_regex = r'<[ ]*' + key + r'[ ]*>'
@@ -410,17 +413,26 @@ class DipDupConfig:
         for index_config in self.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
                 if isinstance(index_config.datasource, str):
-                    index_config.datasource = self.datasources[index_config.datasource]
+                    try:
+                        index_config.datasource = self.datasources[index_config.datasource]
+                    except KeyError as e:
+                        raise ConfigurationError(f'Datasource `{index_config.datasource}` not found in `datasources` config section') from e
 
                 for i, contract in enumerate(index_config.contracts):
                     if isinstance(contract, str):
-                        index_config.contracts[i] = self.contracts[contract]
+                        try:
+                            index_config.contracts[i] = self.contracts[contract]
+                        except KeyError as e:
+                            raise ConfigurationError(f'Contract `{contract}` not found in `contracts` config section') from e
 
                 for handler in index_config.handlers:
                     callback_patterns[handler.callback].append(handler.pattern)
                     for pattern in handler.pattern:
                         if isinstance(pattern.destination, str):
-                            pattern.destination = self.contracts[pattern.destination]
+                            try:
+                                pattern.destination = self.contracts[pattern.destination]
+                            except KeyError as e:
+                                raise ConfigurationError(f'Contract `{pattern.destination}` not found in `contracts` config section') from e
 
             elif isinstance(index_config, BigMapIndexConfig):
                 if isinstance(index_config.datasource, str):
@@ -430,7 +442,10 @@ class DipDupConfig:
                     callback_patterns[handler.callback].append(handler.pattern)
                     for pattern in handler.pattern:
                         if isinstance(pattern.contract, str):
-                            pattern.contract = self.contracts[pattern.contract]
+                            try:
+                                pattern.contract = self.contracts[pattern.contract]
+                            except KeyError as e:
+                                raise ConfigurationError(f'Contract `{pattern.contract}` not found in `contracts` config section') from e
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -474,6 +489,8 @@ class DipDupConfig:
             for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
                 variable, default_value = match.group(1), match.group(2)
                 value = env.get(variable)
+                if not default_value and not value:
+                    raise ConfigurationError(f'Environment variable `{variable}` is not set')
                 placeholder = '${' + variable + ':-' + default_value + '}'
                 raw_config = raw_config.replace(placeholder, value or default_value)
 

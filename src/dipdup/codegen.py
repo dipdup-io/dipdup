@@ -21,6 +21,7 @@ from dipdup.config import (
     TzktDatasourceConfig,
 )
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.exceptions import ConfigurationError
 from dipdup.utils import camel_to_snake, snake_to_camel
 
 _logger = logging.getLogger(__name__)
@@ -107,9 +108,17 @@ async def fetch_schemas(config: DipDupConfig):
                     with suppress(FileExistsError):
                         mkdir(parameter_schemas_path)
 
-                    entrypoint_schema = next(
-                        ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == operation_pattern_config.entrypoint
-                    )
+                    try:
+                        entrypoint_schema = next(
+                            ep['parameterSchema']
+                            for ep in contract_schemas['entrypoints']
+                            if ep['name'] == operation_pattern_config.entrypoint
+                        )
+                    except StopIteration as e:
+                        raise ConfigurationError(
+                            f'Contract `{contract_config.address}` has no entrypoint `{operation_pattern_config.entrypoint}`'
+                        ) from e
+
                     entrypoint_schema_path = join(parameter_schemas_path, f'{operation_pattern_config.entrypoint}.json')
 
                     if not exists(entrypoint_schema_path):
