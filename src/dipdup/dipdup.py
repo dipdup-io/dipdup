@@ -19,6 +19,7 @@ from dipdup.config import (
     TzktDatasourceConfig,
 )
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import configure_hasura
 from dipdup.models import IndexType, State
 from dipdup.utils import reindex, tortoise_wrapper
@@ -40,7 +41,11 @@ class DipDup:
         url = self._config.database.connection_string
         cache = isinstance(self._config.database, SqliteDatabaseConfig)
         models = f'{self._config.package}.models'
-        rollback_fn = getattr(importlib.import_module(f'{self._config.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
+
+        try:
+            rollback_fn = getattr(importlib.import_module(f'{self._config.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
+        except ModuleNotFoundError as e:
+            raise ConfigurationError(f'Package `{self._config.package}` not found. Have you forgot to call `init`?') from e
 
         async with tortoise_wrapper(url, models):
             await self.initialize_database()
