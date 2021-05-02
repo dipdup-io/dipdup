@@ -32,11 +32,3 @@ field: ${ENV_VAR:-default_value}
 
 You can use environment variables throughout the configuration file except for the property names \(keys\).
 
-## Multiple config files
-
-DipDup allows you to customize configuration for a specific environment or a workflow. It works pretty much the same as in Docker Compose, but only for the top level sections \(i.e. you cannot override just a single nested property, you need to provide the entire new section\). In order to merge several DipDup files use `-c` command line option multiple times:
-
-```text
-dipdup -c dipdup.yml -c dipdup.prod.yml run
-```
-

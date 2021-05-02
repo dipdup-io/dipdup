@@ -1,3 +1,7 @@
+---
+description: Deployment block
+---
+
 # database
 
 DipDup supports several database engines for development and production. The obligatory field `kind` specifies which engine has to be used:
@@ -15,6 +19,10 @@ database:
   kind: sqlite
   path: db.sqlite3
 ```
+
+{% hint style="info" %}
+NOTE: while it's sometimes convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines.
+{% endhint %}
 
 ### PostgreSQL
 
