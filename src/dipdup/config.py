@@ -7,6 +7,7 @@ import re
 import sys
 from collections import defaultdict
 from dataclasses import field
+from enum import Enum
 from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union, cast
@@ -27,6 +28,11 @@ ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
 sys.path.append(os.getcwd())
 _logger = logging.getLogger(__name__)
+
+
+class OperationType(Enum):
+    transaction = 'transaction'
+    origination = 'origination'
 
 
 @dataclass
@@ -142,13 +148,14 @@ class TzktDatasourceConfig:
 
 
 @dataclass
-class OperationHandlerPatternConfig:
+class OperationHandlerTransactionPatternConfig:
     """Operation handler pattern config
 
     :param destination: Alias of the contract to match
     :param entrypoint: Contract entrypoint
     """
 
+    type: Literal['transaction']
     destination: Union[str, ContractConfig]
     entrypoint: str
 
@@ -162,7 +169,7 @@ class OperationHandlerPatternConfig:
         return self.destination
 
     @property
-    def parameter_type_cls(self) -> Type:
+    def parameter_type_cls(self) -> Optional[Type]:
         if self._parameter_type_cls is None:
             raise RuntimeError('Config is not initialized')
         return self._parameter_type_cls
@@ -180,6 +187,54 @@ class OperationHandlerPatternConfig:
     @storage_type_cls.setter
     def storage_type_cls(self, typ: Type) -> None:
         self._storage_type_cls = typ
+
+    def get_handler_imports(self, package: str) -> str:
+        return '\n'.join(
+            [
+                f'from {package}.types.{self.contract_config.module_name}.parameter.{camel_to_snake(self.entrypoint)} import {snake_to_camel(self.entrypoint)}Parameter',
+                f'from {package}.types.{self.contract_config.module_name}.storage import {snake_to_camel(self.contract_config.module_name)}Storage',
+            ]
+        )
+
+    def get_handler_argument(self) -> str:
+        return f'{camel_to_snake(self.entrypoint)}: TransactionContext[{snake_to_camel(self.entrypoint)}Parameter, {snake_to_camel(self.contract_config.module_name)}Storage],'
+
+
+@dataclass
+class OperationHandlerOriginationPatternConfig:
+    type: Literal['origination']
+    originated_contract: Union[str, ContractConfig]
+
+    def __post_init_post_parse__(self):
+        self._storage_type_cls = None
+
+    @property
+    def parameter_type_cls(self) -> Optional[Type]:
+        return None
+
+    @property
+    def contract_config(self) -> ContractConfig:
+        assert isinstance(self.originated_contract, ContractConfig)
+        return self.originated_contract
+
+    @property
+    def storage_type_cls(self) -> Type:
+        if self._storage_type_cls is None:
+            raise RuntimeError('Config is not initialized')
+        return self._storage_type_cls
+
+    @storage_type_cls.setter
+    def storage_type_cls(self, typ: Type) -> None:
+        self._storage_type_cls = typ
+
+    def get_handler_imports(self, package: str) -> str:
+        return f'from {package}.types.{self.contract_config.module_name}.storage import {snake_to_camel(self.contract_config.module_name)}Storage'
+
+    def get_handler_argument(self) -> str:
+        return f'{self.contract_config.module_name}_origination: OriginationContext[{snake_to_camel(self.contract_config.module_name)}Storage],'
+
+
+OperationHandlerPatternConfig = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
 @dataclass
@@ -266,6 +321,7 @@ class OperationIndexConfig(IndexConfig):
     kind: Literal["operation"]
     contracts: List[Union[str, ContractConfig]]
     handlers: List[OperationHandlerConfig]
+    types: Optional[List[OperationType]] = None
     first_block: int = 0
     last_block: int = 0
 
@@ -425,14 +481,25 @@ class DipDupConfig:
                         except KeyError as e:
                             raise ConfigurationError(f'Contract `{contract}` not found in `contracts` config section') from e
 
-                for handler in index_config.handlers:
-                    callback_patterns[handler.callback].append(handler.pattern)
-                    for pattern in handler.pattern:
-                        if isinstance(pattern.destination, str):
-                            try:
-                                pattern.destination = self.contracts[pattern.destination]
-                            except KeyError as e:
-                                raise ConfigurationError(f'Contract `{pattern.destination}` not found in `contracts` config section') from e
+                for handler_config in index_config.handlers:
+                    callback_patterns[handler_config.callback].append(handler_config.pattern)
+                    for pattern_config in handler_config.pattern:
+                        if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                            if isinstance(pattern_config.destination, str):
+                                try:
+                                    pattern_config.destination = self.contracts[pattern_config.destination]
+                                except KeyError as e:
+                                    raise ConfigurationError(
+                                        f'Contract `{pattern_config.destination}` not found in `contracts` config section'
+                                    ) from e
+                        elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                            if isinstance(pattern_config.originated_contract, str):
+                                try:
+                                    pattern_config.originated_contract = self.contracts[pattern_config.originated_contract]
+                                except KeyError as e:
+                                    raise ConfigurationError(
+                                        f'Contract `{pattern_config.originated_contract}` not found in `contracts` config section'
+                                    ) from e
 
             elif isinstance(index_config, BigMapIndexConfig):
                 if isinstance(index_config.datasource, str):
@@ -548,18 +615,19 @@ class DipDupConfig:
                     await self._initialize_handler_callback(operation_handler_config)
 
                     for operation_pattern_config in operation_handler_config.pattern:
-                        _logger.info('Registering parameter type for entrypoint `%s`', operation_pattern_config.entrypoint)
-                        parameter_type_module = importlib.import_module(
-                            f'{self.package}'
-                            f'.types'
-                            f'.{operation_pattern_config.contract_config.module_name}'
-                            f'.parameter'
-                            f'.{camel_to_snake(operation_pattern_config.entrypoint)}'
-                        )
-                        parameter_type_cls = getattr(
-                            parameter_type_module, snake_to_camel(operation_pattern_config.entrypoint) + 'Parameter'
-                        )
-                        operation_pattern_config.parameter_type_cls = parameter_type_cls
+                        if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
+                            _logger.info('Registering parameter type for entrypoint `%s`', operation_pattern_config.entrypoint)
+                            parameter_type_module = importlib.import_module(
+                                f'{self.package}'
+                                f'.types'
+                                f'.{operation_pattern_config.contract_config.module_name}'
+                                f'.parameter'
+                                f'.{camel_to_snake(operation_pattern_config.entrypoint)}'
+                            )
+                            parameter_type_cls = getattr(
+                                parameter_type_module, snake_to_camel(operation_pattern_config.entrypoint) + 'Parameter'
+                            )
+                            operation_pattern_config.parameter_type_cls = parameter_type_cls
 
                         _logger.info('Registering storage type')
                         storage_type_module = importlib.import_module(

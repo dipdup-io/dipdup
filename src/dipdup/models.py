@@ -36,18 +36,17 @@ class State(Model):
 
 @dataclass
 class OperationData:
-    # FIXME: Bug in TzKT, shouldn't be optional
-    type: Optional[str]
+    type: str
     id: int
     level: int
     timestamp: datetime
     hash: str
     counter: int
     sender_address: str
-    target_address: str
-    amount: int
+    target_address: Optional[str]
+    amount: Optional[int]
     status: str
-    has_internals: bool
+    has_internals: Optional[bool]
     storage: Dict[str, Any]
     block: Optional[str] = None
     sender_alias: Optional[str] = None
@@ -56,7 +55,7 @@ class OperationData:
     entrypoint: Optional[str] = None
     parameter_json: Optional[Any] = None
     initiator_address: Optional[str] = None
-    parameter: Optional[str] = None
+    originated_contract_address: Optional[str] = None
     diffs: Optional[List[Dict[str, Any]]] = None
 
     def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str, array: bool) -> None:
@@ -119,9 +118,15 @@ class OperationData:
 
 
 @dataclass
-class OperationContext(Generic[ParameterType, StorageType]):
+class TransactionContext(Generic[ParameterType, StorageType]):
     data: OperationData
     parameter: ParameterType
+    storage: StorageType
+
+
+@dataclass
+class OriginationContext(Generic[StorageType]):
+    data: OperationData
     storage: StorageType
 
 

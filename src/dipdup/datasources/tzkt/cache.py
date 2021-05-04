@@ -8,7 +8,9 @@ from dipdup.config import (
     BigMapHandlerPatternConfig,
     BigMapIndexConfig,
     OperationHandlerConfig,
+    OperationHandlerOriginationPatternConfig,
     OperationHandlerPatternConfig,
+    OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
 )
 from dipdup.models import BigMapData, OperationData
@@ -48,14 +50,16 @@ class OperationCache:
         self._operations[key].append(operation)
 
     def match_operation(self, pattern_config: OperationHandlerPatternConfig, operation: OperationData) -> bool:
-        self._logger.debug('pattern: %s, %s', pattern_config.entrypoint, pattern_config.contract_config.address)
-        self._logger.debug('operation: %s, %s', operation.entrypoint, operation.target_address)
-        if pattern_config.entrypoint != operation.entrypoint:
-            return False
-        if pattern_config.contract_config.address != operation.target_address:
-            return False
-        self._logger.debug('Match!')
-        return True
+        if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+            return all(
+                [
+                    pattern_config.entrypoint == operation.entrypoint,
+                    pattern_config.contract_config.address == operation.target_address,
+                ]
+            )
+        if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+            return pattern_config.contract_config.address == operation.originated_contract_address
+        raise NotImplementedError
 
     async def process(
         self,

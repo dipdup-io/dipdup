@@ -3,7 +3,7 @@ from os.path import dirname, join
 from unittest.async_case import IsolatedAsyncioTestCase  # type: ignore
 from unittest.mock import ANY, AsyncMock, MagicMock  # type: ignore
 
-from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
+from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerTransactionPatternConfig, OperationIndexConfig
 from dipdup.datasources.tzkt.cache import OperationCache, OperationGroup
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import OperationData, State
@@ -19,8 +19,10 @@ class TzktOperationCacheTest(IsolatedAsyncioTestCase):
                 OperationHandlerConfig(
                     callback='',
                     pattern=[
-                        OperationHandlerPatternConfig(
-                            destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'), entrypoint='hDAO_batch'
+                        OperationHandlerTransactionPatternConfig(
+                            type='transaction',
+                            destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'),
+                            entrypoint='hDAO_batch',
                         )
                     ],
                 )
@@ -62,8 +64,9 @@ class TzktOperationCacheTest(IsolatedAsyncioTestCase):
             OperationHandlerConfig(
                 callback='',
                 pattern=[
-                    OperationHandlerPatternConfig(
-                        destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'), entrypoint='hDAO_batch'
+                    OperationHandlerTransactionPatternConfig(
+                        type='transaction',
+                        destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'), entrypoint='hDAO_batch',
                     )
                 ],
             ),

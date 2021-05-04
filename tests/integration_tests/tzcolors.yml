@@ -28,15 +28,18 @@ templates:
     handlers:
       - callback: on_create_auction
         pattern:
-          - destination: <auction>
+          - type: transaction
+            destination: <auction>
             entrypoint: create_auction
       - callback: on_bid
         pattern:
-          - destination: <auction>
+          - type: transaction
+            destination: <auction>
             entrypoint: bid
       - callback: on_withdraw
         pattern:
-          - destination: <auction>
+          - type: transaction
+            destination: <auction>
             entrypoint: withdraw
     first_block: 1335654
     last_block: 1340654

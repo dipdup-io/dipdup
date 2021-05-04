@@ -13,6 +13,7 @@ from dipdup.utils import tortoise_wrapper
 
 
 class DemosTest(IsolatedAsyncioTestCase):
+    # TODO: store cache in xdg_cache_home, keep databases and logs after last run
     def setUp(self):
         mkdir('/tmp/dipdup')
 

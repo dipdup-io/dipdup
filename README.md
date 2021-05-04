@@ -60,9 +60,11 @@ indexes:
     handlers:
       - callback: on_mint
         pattern:
-          - destination: HEN_minter
+          - type: transaction
+            destination: HEN_minter
             entrypoint: mint_OBJKT
-          - destination: HEN_objkts
+          - type: transaction
+            destination: HEN_objkts
             entrypoint: mint
 ```
 
@@ -131,13 +133,13 @@ from demo_hic_et_nunc.types.hen_minter.parameter.mint_objkt import MintOBJKTPara
 from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
 from demo_hic_et_nunc.types.hen_objkts.parameter.mint import MintParameter
 from demo_hic_et_nunc.types.hen_objkts.storage import HenObjktsStorage
-from dipdup.models import OperationContext, OperationHandlerContext
+from dipdup.models import TransactionContext, OperationHandlerContext
 
 
 async def on_mint(
     ctx: OperationHandlerContext,
-    mint_objkt: OperationContext[MintOBJKTParameter, HenMinterStorage],
-    mint: OperationContext[MintParameter, HenObjktsStorage],
+    mint_objkt: TransactionContext[MintOBJKTParameter, HenMinterStorage],
+    mint: TransactionContext[MintParameter, HenObjktsStorage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=mint.parameter.address)
     token = models.Token(
@@ -201,15 +203,19 @@ templates:
     handlers:
       - callback: on_fa12_token_to_tez
         pattern:
-          - destination: <dex>
+          - type: transaction
+            destination: <dex>
             entrypoint: tokenToTezPayment
-          - destination: <token>
+          - type: transaction
+            destination: <token>
             entrypoint: transfer
       - callback: on_fa20_tez_to_token
         pattern:
-          - destination: <dex>
+          - type: transaction
+            destination: <dex>
             entrypoint: tezToTokenPayment
-          - destination: <token>
+          - type: transaction
+            destination: <token>
             entrypoint: transfer
 
 indexes:

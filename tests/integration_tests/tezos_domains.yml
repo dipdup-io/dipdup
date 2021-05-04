@@ -24,11 +24,13 @@ templates:
     handlers:
       - callback: on_admin_update
         pattern:
-          - destination: <name_registry>
+          - type: transaction
+            destination: <name_registry>
             entrypoint: admin_update
       - callback: on_execute
         pattern:
-          - destination: <name_registry>
+          - type: transaction
+            destination: <name_registry>
             entrypoint: execute
     last_block: 55363
 

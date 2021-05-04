@@ -27,21 +27,26 @@ indexes:
     handlers:
       - callback: on_mint
         pattern:
-          - destination: HEN_minter
+          - type: transaction
+            destination: HEN_minter
             entrypoint: mint_OBJKT
-          - destination: HEN_objkts
+          - type: transaction
+            destination: HEN_objkts
             entrypoint: mint
       - callback: on_swap
         pattern:
-          - destination: HEN_minter
+          - type: transaction
+            destination: HEN_minter
             entrypoint: swap
       - callback: on_cancel_swap
         pattern:
-          - destination: HEN_minter
+          - type: transaction
+            destination: HEN_minter
             entrypoint: cancel_swap
       - callback: on_collect
         pattern:
-          - destination: HEN_minter
+          - type: transaction
+            destination: HEN_minter
             entrypoint: collect
     first_block: 1365000
     last_block: 1366000

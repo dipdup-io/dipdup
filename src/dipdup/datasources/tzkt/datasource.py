@@ -1,7 +1,9 @@
 import asyncio
 import logging
+from collections import ChainMap
 from functools import partial
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple, Union
+from webbrowser import Opera
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
@@ -16,7 +18,10 @@ from dipdup.config import (
     BigMapIndexConfig,
     BlockIndexConfig,
     OperationHandlerConfig,
+    OperationHandlerOriginationPatternConfig,
+    OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
+    OperationType,
 )
 from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
@@ -26,9 +31,10 @@ from dipdup.models import (
     BigMapContext,
     BigMapData,
     BigMapHandlerContext,
-    OperationContext,
     OperationData,
     OperationHandlerContext,
+    OriginationContext,
+    TransactionContext,
 )
 from dipdup.utils import http_request
 
@@ -60,13 +66,13 @@ OPERATION_FIELDS = (
     # "errors",
     "hasInternals",
     # "quote",
-    "diffs,",
+    "diffs",
+    "originatedContract",
 )
 
 IndexName = str
 Address = str
 Path = str
-OperationType = str
 
 
 class TzktDatasource:
@@ -130,6 +136,10 @@ class TzktDatasource:
         self._logger.info('Starting datasource')
         rest_only = False
 
+        for operation_index_config in self._operation_index_by_name.values():
+            for contract in operation_index_config.contracts:
+                await self.add_operation_subscription(contract.address, operation_index_config.types)
+
         self._logger.info('Initial synchronizing operation indexes')
         for operation_index_config in self._operation_index_by_name.values():
 
@@ -137,9 +147,6 @@ class TzktDatasource:
                 await self.fetch_operations(operation_index_config.last_block, initial=True)
                 rest_only = True
                 continue
-
-            for contract in operation_index_config.contracts:
-                await self.add_operation_subscription(contract.address)
 
             latest_block = await self.get_latest_block()
             current_level = latest_block['level']
@@ -183,7 +190,7 @@ class TzktDatasource:
     def on_error(self, message: CompletionMessage):
         raise Exception(message.error)
 
-    async def subscribe_to_operations(self, address: str, types: List[str]) -> None:
+    async def subscribe_to_operations(self, address: str, types: List[OperationType]) -> None:
         self._logger.info('Subscribing to %s, %s', address, types)
 
         while self._get_client().transport.state != ConnectionState.connected:
@@ -194,7 +201,7 @@ class TzktDatasource:
             [
                 {
                     'address': address,
-                    'types': ','.join(types),
+                    'types': ','.join([t.value for t in types]),
                 }
             ],
         )
@@ -203,46 +210,91 @@ class TzktDatasource:
         self._logger.info('Subscribing to %s, %s', address, path)
 
     async def _fetch_operations(self, addresses: List[str], offset: int, first_level: int, last_level: int) -> List[Dict[str, Any]]:
-        self._logger.info('Fetching levels %s-%s with offset %s', first_level, last_level, offset)
+        self._logger.info('Fetching operations of %s on levels %s-%s with offset %s', addresses, first_level, last_level, offset)
 
-        operations = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/operations/transactions',
-            params={
-                "sender.in": ','.join(addresses),
-                "offset": offset,
-                "limit": TZKT_HTTP_REQUEST_LIMIT,
-                "level.gt": first_level,
-                "level.le": last_level,
-                "select": ','.join(OPERATION_FIELDS),
-                "status": "applied",
-            },
+        origination_addresses = [
+            address
+            for address, types in self._operation_subscriptions.items()
+            if address in addresses and OperationType.origination in types
+        ]
+        if origination_addresses:
+            self._logger.debug('Fetching originations of %s', origination_addresses)
+            originations = await self._proxy.http_request(
+                'get',
+                url=f'{self._url}/v1/operations/originations',
+                params={
+                    "originatedContract.in": ','.join(origination_addresses),
+                    "offset": offset,
+                    "limit": TZKT_HTTP_REQUEST_LIMIT,
+                    "level.gt": first_level,
+                    "level.le": last_level,
+                    "select": ','.join(OPERATION_FIELDS),
+                    "status": "applied",
+                },
+            )
+            # NOTE: Bug in TzKT, type may be empty
+            for op in originations:
+                op['type'] = 'origination'
+            self._logger.debug('Got %s', len(originations))
+        else:
+            originations = []
+
+        self._logger.debug(self._operation_subscriptions)
+        transaction_addresses = [
+            address
+            for address, types in self._operation_subscriptions.items()
+            if address in addresses and OperationType.transaction in types
+        ]
+
+        if transaction_addresses:
+            self._logger.debug('Fetching transactions of %s', originations)
+            sender_transactions = await self._proxy.http_request(
+                'get',
+                url=f'{self._url}/v1/operations/transactions',
+                params={
+                    "sender.in": ','.join(transaction_addresses),
+                    "offset": offset,
+                    "limit": TZKT_HTTP_REQUEST_LIMIT,
+                    "level.gt": first_level,
+                    "level.le": last_level,
+                    "select": ','.join(OPERATION_FIELDS),
+                    "status": "applied",
+                },
+            )
+            target_transactions = await self._proxy.http_request(
+                'get',
+                url=f'{self._url}/v1/operations/transactions',
+                params={
+                    "target.in": ','.join(transaction_addresses),
+                    "offset": offset,
+                    "limit": TZKT_HTTP_REQUEST_LIMIT,
+                    "level.gt": first_level,
+                    "level.le": last_level,
+                    "select": ','.join(OPERATION_FIELDS),
+                    "status": "applied",
+                },
+            )
+            # NOTE: Bug in TzKT, type may be empty
+            for op in sender_transactions:
+                op['type'] = 'transaction'
+            for op in target_transactions:
+                op['type'] = 'transaction'
+            self._logger.debug('Got %s, %s', len(sender_transactions), len(target_transactions))
+        else:
+            sender_transactions = []
+            target_transactions = []
+
+        operations = ChainMap(
+            {op['id']: op for op in originations},
+            {op['id']: op for op in sender_transactions},
+            {op['id']: op for op in target_transactions},
         )
 
-        target_operations = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/operations/transactions',
-            params={
-                "target.in": ','.join(addresses),
-                "offset": offset,
-                "limit": TZKT_HTTP_REQUEST_LIMIT,
-                "level.gt": first_level,
-                "level.le": last_level,
-                "select": ','.join(OPERATION_FIELDS),
-                "status": "applied",
-            },
-        )
+        sorted_operations = sorted(list(operations.values()), key=lambda x: x['id'])
 
-        sender_operation_keys = {op['id'] for op in operations}
-        for op in target_operations:
-            if op['id'] not in sender_operation_keys:
-                operations.append(op)
-
-        operations = sorted(operations, key=lambda op: op['id'])
-
-        self._logger.info('%s operations fetched', len(operations))
-        self._logger.debug(operations)
-        return operations
+        self._logger.info('%s operations fetched', len(sorted_operations))
+        self._logger.debug(sorted_operations)
+        return sorted_operations
 
     async def fetch_operations(self, last_level: int, initial: bool = False) -> None:
         async def _process_level_operations(operations) -> None:
@@ -401,8 +453,6 @@ class TzktDatasource:
                 async with self._callback_lock:
                     for operation_json in item['data']:
                         operation = self.convert_operation(operation_json)
-                        if operation.type != 'transaction':
-                            continue
                         if operation.status != 'applied':
                             continue
                         await self._operation_cache.add(operation)
@@ -465,9 +515,9 @@ class TzktDatasource:
             else:
                 self._logger.warning('%s is not supported', message_type)
 
-    async def add_operation_subscription(self, address: str, types: Optional[List[str]] = None) -> None:
+    async def add_operation_subscription(self, address: str, types: Optional[List[OperationType]] = None) -> None:
         if types is None:
-            types = ['transaction']
+            types = [OperationType.transaction]
         if address not in self._operation_subscriptions:
             self._operation_subscriptions[address] = types
 
@@ -487,21 +537,35 @@ class TzktDatasource:
             operations=operations,
             template_values=index_config.template_values,
         )
-        args: List[Union[OperationHandlerContext, OperationContext]] = [handler_context]
+        args: List[Union[OperationHandlerContext, TransactionContext, OriginationContext]] = [handler_context]
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
 
-            parameter_type = pattern_config.parameter_type_cls
-            parameter = parameter_type.parse_obj(operation.parameter_json)
+            if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                parameter_type = pattern_config.parameter_type_cls
+                parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
 
-            storage_type = pattern_config.storage_type_cls
-            storage = operation.get_merged_storage(storage_type)
+                storage_type = pattern_config.storage_type_cls
+                storage = operation.get_merged_storage(storage_type)
 
-            operation_context = OperationContext(
-                data=operation,
-                parameter=parameter,
-                storage=storage,
-            )
-            args.append(operation_context)
+                transaction_context = TransactionContext(
+                    data=operation,
+                    parameter=parameter,
+                    storage=storage,
+                )
+                args.append(transaction_context)
+
+            elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                storage_type = pattern_config.storage_type_cls
+                storage = operation.get_merged_storage(storage_type)
+
+                origination_context = OriginationContext(
+                    data=operation,
+                    storage=storage,
+                )
+                args.append(origination_context)
+
+            else:
+                raise NotImplementedError
 
         await handler_config.callback_fn(*args)
 
@@ -548,31 +612,32 @@ class TzktDatasource:
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
         storage = operation_json.get('storage')
-        # FIXME: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
+        # FIXME: Plain storage, has issues in codegen: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
         if not isinstance(storage, Dict):
             storage = {}
 
         return OperationData(
-            # FIXME: type is null
-            type=operation_json['type'] or 'transaction',
+            type=operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
             timestamp=operation_json['timestamp'],
             block=operation_json.get('block'),
             hash=operation_json['hash'],
             counter=operation_json['counter'],
-            sender_address=operation_json['sender']['address'],
-            target_address=operation_json['target']['address'],
+            sender_address=operation_json['sender']['address'] if operation_json.get('sender') else None,
+            target_address=operation_json['target']['address'] if operation_json.get('target') else None,
             amount=operation_json['amount'],
             status=operation_json['status'],
             has_internals=operation_json['hasInternals'],
             sender_alias=operation_json['sender'].get('alias'),
             nonce=operation_json.get('nonce'),
-            target_alias=operation_json['target'].get('alias'),
+            target_alias=operation_json['target'].get('alias') if operation_json.get('target') else None,
             entrypoint=operation_json['parameter']['entrypoint'] if operation_json.get('parameter') else None,
             parameter_json=operation_json['parameter']['value'] if operation_json.get('parameter') else None,
             initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
-            parameter=operation_json.get('parameters'),
+            originated_contract_address=operation_json['originatedContract']['address']
+            if operation_json.get('originatedContract')
+            else None,
             storage=storage,
             diffs=operation_json.get('diffs'),
         )

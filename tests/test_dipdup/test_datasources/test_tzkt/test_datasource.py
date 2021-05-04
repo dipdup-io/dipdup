@@ -10,9 +10,9 @@ from tortoise import Tortoise
 from demo_hic_et_nunc.types.hen_minter.parameter.collect import CollectParameter
 from demo_registrydao.types.registry.parameter.propose import ProposeParameter
 from demo_registrydao.types.registry.storage import Proposals, RegistryStorage
-from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerPatternConfig, OperationIndexConfig
+from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerTransactionPatternConfig, OperationIndexConfig, OperationType
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import IndexType, OperationContext, OperationData, OperationHandlerContext, State
+from dipdup.models import IndexType, OperationData, OperationHandlerContext, State, TransactionContext
 from dipdup.utils import tortoise_wrapper
 
 
@@ -26,8 +26,10 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 OperationHandlerConfig(
                     callback='',
                     pattern=[
-                        OperationHandlerPatternConfig(
-                            destination=ContractConfig(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'), entrypoint='collect'
+                        OperationHandlerTransactionPatternConfig(
+                            type='transaction',
+                            destination=ContractConfig(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
+                            entrypoint='collect',
                         )
                     ],
                 )
@@ -65,7 +67,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             await self.datasource.start()
 
         fetch_operations_mock.assert_awaited_with(1337, initial=True)
-        self.assertEqual({self.index_config.contracts[0].address: ['transaction']}, self.datasource._operation_subscriptions)
+        self.assertEqual({self.index_config.contracts[0].address: [OperationType.transaction]}, self.datasource._operation_subscriptions)
         client.start.assert_awaited()
 
     async def test_on_connect_subscribe_to_operations(self):
@@ -74,7 +76,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         client.send = send_mock
         client.transport.state = ConnectionState.connected
         self.datasource._operation_subscriptions = {
-            self.index_config.contracts[0].address: ['transaction'],
+            self.index_config.contracts[0].address: [OperationType.transaction],
         }
 
         await self.datasource.on_connect()
@@ -87,10 +89,12 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         self.assertEqual(2, len(client.handlers))
 
     async def test_on_fetch_operations(self):
-        self.datasource._operation_subscriptions = {self.index_config.contracts[0].address: ['transaction']}
+        self.datasource._operation_subscriptions = {self.index_config.contracts[0].address: [OperationType.transaction]}
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
             del operations_message['state']
+        for op in operations_message['data']:
+            op['type'] = 'transaction'
         stripped_operations_message = operations_message['data']
 
         on_operation_message_mock = AsyncMock()
@@ -154,7 +158,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)
 
             self.assertIsInstance(callback_mock.await_args[0][0], OperationHandlerContext)
-            self.assertIsInstance(callback_mock.await_args[0][1], OperationContext)
+            self.assertIsInstance(callback_mock.await_args[0][1], TransactionContext)
             self.assertIsInstance(callback_mock.await_args[0][1].parameter, CollectParameter)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)
 
@@ -163,6 +167,8 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             operations_message = json.load(file)
         self.index_config.handlers[0].pattern[0].parameter_type_cls = ProposeParameter
 
+        for op in operations_message['data']:
+            op['type'] = 'transaction'
         operations = [TzktDatasource.convert_operation(op) for op in operations_message['data']]
         matched_operation = operations[0]
 

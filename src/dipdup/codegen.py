@@ -17,6 +17,7 @@ from dipdup.config import (
     DipDupConfig,
     IndexTemplateConfig,
     OperationHandlerConfig,
+    OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
     TzktDatasourceConfig,
 )
@@ -104,6 +105,9 @@ async def fetch_schemas(config: DipDupConfig):
                         with open(storage_schema_path, 'w') as file:
                             file.write(json.dumps(storage_schema, indent=4, sort_keys=True))
 
+                    if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
+                        continue
+
                     parameter_schemas_path = join(contract_schemas_path, 'parameter')
                     with suppress(FileExistsError):
                         mkdir(parameter_schemas_path)
@@ -128,8 +132,6 @@ async def fetch_schemas(config: DipDupConfig):
                         with open(entrypoint_schema_path, 'r') as file:
                             existing_schema = json.loads(file.read())
                         if entrypoint_schema != existing_schema:
-                            # FIXME: Different field order counts as different schema
-                            # raise ValueError(f'Contract "{contract.address}" falsely claims to be a "{contract.typename}"')
                             _logger.warning('Contract "%s" falsely claims to be a "%s"', contract_config.address, contract_config.typename)
 
         elif isinstance(index_config, BigMapIndexConfig):
