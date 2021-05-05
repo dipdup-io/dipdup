@@ -26,7 +26,7 @@ async def on_fa20_invest_liquidity(
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
 
     tez_qty = Decimal(invest_liquidity.data.amount) / (10 ** 6)
-    token_qty = Decimal(transfer.parameter.__root__[0].txs[0].amount) / (10 ** decimals)
+    token_qty = sum(Decimal(tx.amount) for tx in transfer.parameter.__root__[0].txs) / (10 ** decimals)
     new_shares_qty = int(storage.storage.ledger[trader].balance) + int(storage.storage.ledger[trader].frozen_balance)  # type: ignore
 
     price = (Decimal(storage.storage.tez_pool) / (10 ** 6)) / (Decimal(storage.storage.token_pool) / (10 ** decimals))
