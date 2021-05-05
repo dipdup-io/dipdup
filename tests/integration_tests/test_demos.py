@@ -1,9 +1,10 @@
+from contextlib import suppress
 import subprocess
 from os import mkdir
 from os.path import dirname, join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
-
+from tortoise.transactions import in_transaction
 import demo_hic_et_nunc.models
 import demo_quipuswap.models
 import demo_tezos_domains.models
@@ -15,17 +16,16 @@ from dipdup.utils import tortoise_wrapper
 class DemosTest(IsolatedAsyncioTestCase):
     # TODO: store cache in xdg_cache_home, keep databases and logs after last run
     def setUp(self):
+        with suppress(FileNotFoundError):
+            rmtree('/tmp/dipdup')
         mkdir('/tmp/dipdup')
-
-    def tearDown(self):
-        rmtree('/tmp/dipdup')
 
     def run_dipdup(self, config: str):
         subprocess.run(
             [
                 'dipdup',
                 '-l',
-                'debug.yml',
+                'warning.yml',
                 '-c',
                 join(dirname(__file__), config),
                 'run',
@@ -54,8 +54,11 @@ class DemosTest(IsolatedAsyncioTestCase):
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_quipuswap.models'):
             trades = await demo_quipuswap.models.Trade.filter().count()
             positions = await demo_quipuswap.models.Position.filter().count()
-            self.assertEqual(94, trades)
-            self.assertEqual(56, positions)
+            async with in_transaction() as conn:
+                symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
+            self.assertEqual(2, symbols)
+            self.assertEqual(93, trades)
+            self.assertEqual(54, positions)
 
     async def test_tzcolors(self):
         self.run_dipdup('tzcolors.yml')

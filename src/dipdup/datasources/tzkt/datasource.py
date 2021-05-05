@@ -1,10 +1,7 @@
 import asyncio
 from enum import Enum
 import logging
-from collections import ChainMap
-from functools import partial
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple, Union
-from webbrowser import Opera
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
@@ -37,7 +34,6 @@ from dipdup.models import (
     OriginationContext,
     TransactionContext,
 )
-from dipdup.utils import http_request
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
 TZKT_HTTP_REQUEST_SLEEP = 1
@@ -296,18 +292,16 @@ class TzktDatasource:
                 await self.add_operation_subscription(contract.address, operation_index_config.types)
 
         self._logger.info('Initial synchronizing operation indexes')
-        for operation_index_config in self._operation_index_by_name.values():
-
+        latest_block = await self.get_latest_block()
+        for index_config_name, operation_index_config in self._operation_index_by_name.items():
+            self._logger.info('Synchronizing `%s`', index_config_name)
             if operation_index_config.last_block:
-                await self.fetch_operations(operation_index_config.last_block, initial=True)
-                rest_only = True
-                continue
+                current_level = operation_index_config.last_block
+                rest_only=True
+            else:
+                current_level = latest_block['level']
 
-            latest_block = await self.get_latest_block()
-            current_level = latest_block['level']
-            state_level = operation_index_config.state.level
-            if current_level != state_level:
-                await self.fetch_operations(current_level, initial=True)
+            await self.fetch_operations(operation_index_config, current_level)
 
         self._logger.info('Initial synchronizing big map indexes')
         for big_map_index_config in self._big_map_index_by_name.values():
@@ -364,35 +358,32 @@ class TzktDatasource:
     async def subscribe_to_big_maps(self, address: Address, path: Path) -> None:
         self._logger.info('Subscribing to %s, %s', address, path)
 
-    async def fetch_operations(self, last_level: int, initial: bool = False) -> None:
+    async def fetch_operations(self, index_config: OperationIndexConfig, last_level: int) -> None:
         self._logger.info('Fetching operations prior to level %s', last_level)
-        for index_config in self._operation_index_by_name.values():
-            first_level = index_config.state.level
-            addresses = [c.address for c in index_config.contract_configs]
 
-            fetcher = OperationFetcher(
-                url=self._url,
-                proxy=self._proxy,
-                first_level=first_level,
-                last_level=last_level,
-                addresses=addresses,
-                operation_subscriptions=self._operation_subscriptions
+        first_level = index_config.state.level
+        addresses = [c.address for c in index_config.contract_configs]
+
+        fetcher = OperationFetcher(
+            url=self._url,
+            proxy=self._proxy,
+            first_level=first_level,
+            last_level=last_level,
+            addresses=addresses,
+            operation_subscriptions=self._operation_subscriptions
+        )
+
+        async for level, operations in fetcher.fetch_operations_by_level():
+            self._logger.info('Processing %s operations of level %s', len(operations), level)
+            await self.on_operation_message(
+                message=[
+                    {
+                        'type': TzktMessageType.DATA.value,
+                        'data': operations,
+                    },
+                ],
+                sync=True,
             )
-
-            async for level, operations in fetcher.fetch_operations_by_level():
-                self._logger.info('Processing %s operations of level %s', len(operations), level)
-                await self.on_operation_message(
-                    message=[
-                        {
-                            'type': TzktMessageType.DATA.value,
-                            'data': operations,
-                        },
-                    ],
-                    sync=True,
-                )
-
-        if not initial:
-            self._operations_synchronized.set()
 
     async def _fetch_big_maps(
         self, addresses: List[Address], paths: List[Path], offset: int, first_level: int, last_level: int
@@ -489,9 +480,12 @@ class TzktDatasource:
             message_type = TzktMessageType(item['type'])
 
             if message_type == TzktMessageType.STATE:
-                level = item['state']
-                self._logger.info('Got state message, current level %s, index level %s', level, self._operation_cache.level)
-                await self.fetch_operations(level)
+                last_level = item['state']
+                for index_config in self._operation_index_by_name.values():
+                    first_level = index_config.state.level
+                    self._logger.info('Got state message, current level %s, index level %s', last_level, first_level)
+                    await self.fetch_operations(index_config, last_level)
+                self._operations_synchronized.set()
 
             elif message_type == TzktMessageType.DATA:
                 if not sync and not self._operations_synchronized.is_set():

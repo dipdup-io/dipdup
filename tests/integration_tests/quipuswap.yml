@@ -111,7 +111,7 @@ templates:
             destination: <token_contract>
             entrypoint: transfer
     first_block: 1407528
-    last_block: 1407728
+    last_block: 1408928
 
 indexes:
   kusd_mainnet:
