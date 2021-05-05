@@ -72,7 +72,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         with patch('aiohttp.ClientSession.get', get_mock):
             await self.datasource.start()
 
-        fetch_operations_mock.assert_awaited_with(1337, initial=True)
+        fetch_operations_mock.assert_awaited_with(self.index_config, 1337)
         self.assertEqual({self.index_config.contracts[0].address: [OperationType.transaction]}, self.datasource._operation_subscriptions)
         client.start.assert_awaited()
 
@@ -99,18 +99,17 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
             del operations_message['state']
-        for op in operations_message['data']:
-            op['type'] = 'transaction'
+
         stripped_operations_message = operations_message['data']
 
         on_operation_message_mock = AsyncMock()
         get_mock = MagicMock()
-        get_mock.return_value.__aenter__.return_value.json.return_value = stripped_operations_message
+        get_mock.return_value.__aenter__.return_value.json.side_effect = stripped_operations_message
 
         self.datasource.on_operation_message = on_operation_message_mock
 
         with patch('aiohttp.ClientSession.get', get_mock):
-            await self.datasource.fetch_operations(1337)
+            await self.datasource.fetch_operations(self.index_config, 99999)
 
         on_operation_message_mock.assert_awaited_with(
             message=[operations_message],
@@ -122,7 +121,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         self.datasource.fetch_operations = fetch_operations_mock
 
         await self.datasource.on_operation_message([{'type': 0, 'state': 123}], self.index_config)
-        fetch_operations_mock.assert_awaited_with(123)
+        fetch_operations_mock.assert_awaited_with(self.index_config, 123)
 
     async def test_on_operation_message_data(self):
         with open(join(dirname(__file__), 'operations.json')) as file:

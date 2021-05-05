@@ -1,6 +1,6 @@
 import asyncio
-from enum import Enum
 import logging
+from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -93,14 +93,10 @@ class OperationFetcher:
         self._first_level = first_level
         self._last_level = last_level
         self._origination_addresses = [
-            address
-            for address, types in operation_subscriptions.items()
-            if address in addresses and OperationType.origination in types
+            address for address, types in operation_subscriptions.items() if address in addresses and OperationType.origination in types
         ]
         self._transaction_addresses = [
-            address
-            for address, types in operation_subscriptions.items()
-            if address in addresses and OperationType.transaction in types
+            address for address, types in operation_subscriptions.items() if address in addresses and OperationType.transaction in types
         ]
         self._logger = logging.getLogger(__name__)
         self._head: int = 0
@@ -208,9 +204,15 @@ class OperationFetcher:
             self._fetched[type_] = False
 
         while True:
-            await self._fetch_originations()
-            await self._fetch_transactions('target')
-            await self._fetch_transactions('sender')
+            min_head = sorted(self._heads.items(), key=lambda x: x[1])[0][0]
+            if min_head == OperationFetcherChannel.originations:
+                await self._fetch_originations()
+            elif min_head == OperationFetcherChannel.target_transactions:
+                await self._fetch_transactions('target')
+            elif min_head == OperationFetcherChannel.sender_transactions:
+                await self._fetch_transactions('sender')
+            else:
+                raise RuntimeError
 
             head = min(self._heads.values())
             while self._head <= head:
@@ -297,7 +299,7 @@ class TzktDatasource:
             self._logger.info('Synchronizing `%s`', index_config_name)
             if operation_index_config.last_block:
                 current_level = operation_index_config.last_block
-                rest_only=True
+                rest_only = True
             else:
                 current_level = latest_block['level']
 
@@ -370,7 +372,7 @@ class TzktDatasource:
             first_level=first_level,
             last_level=last_level,
             addresses=addresses,
-            operation_subscriptions=self._operation_subscriptions
+            operation_subscriptions=self._operation_subscriptions,
         )
 
         async for level, operations in fetcher.fetch_operations_by_level():

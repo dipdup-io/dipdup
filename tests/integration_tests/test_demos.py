@@ -1,10 +1,12 @@
-from contextlib import suppress
 import subprocess
+from contextlib import suppress
 from os import mkdir
 from os.path import dirname, join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
+
 from tortoise.transactions import in_transaction
+
 import demo_hic_et_nunc.models
 import demo_quipuswap.models
 import demo_tezos_domains.models
