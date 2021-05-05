@@ -104,12 +104,12 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
 
         on_operation_message_mock = AsyncMock()
         get_mock = MagicMock()
-        get_mock.return_value.__aenter__.return_value.json.side_effect = stripped_operations_message
+        get_mock.return_value.__aenter__.return_value.json.return_value = stripped_operations_message
 
         self.datasource.on_operation_message = on_operation_message_mock
 
         with patch('aiohttp.ClientSession.get', get_mock):
-            await self.datasource.fetch_operations(self.index_config, 99999)
+            await self.datasource.fetch_operations(self.index_config, 9999999)
 
         on_operation_message_mock.assert_awaited_with(
             message=[operations_message],
