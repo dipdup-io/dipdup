@@ -36,36 +36,32 @@ from dipdup.models import (
 )
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
-TZKT_HTTP_REQUEST_SLEEP = 1
 OPERATION_FIELDS = (
     "type",
     "id",
     "level",
     "timestamp",
-    # "block",
     "hash",
     "counter",
-    "initiator",
     "sender",
     "nonce",
-    # "gasLimit",
-    # "gasUsed",
-    # "storageLimit",
-    # "storageUsed",
-    # "bakerFee",
-    # "storageFee",
-    # "allocationFee",
     "target",
     "amount",
-    "parameter",
     "storage",
     "status",
-    # "errors",
     "hasInternals",
-    # "quote",
     "diffs",
+)
+ORIGINATION_OPERATION_FIELDS = (
+    *OPERATION_FIELDS,
     "originatedContract",
 )
+TRANSACTION_OPERATION_FIELDS = (
+    *OPERATION_FIELDS,
+    "parameter",
+    "hasInternals",
+)
+
 
 IndexName = str
 Address = str
@@ -130,13 +126,13 @@ class OperationFetcher:
                 "limit": TZKT_HTTP_REQUEST_LIMIT,
                 "level.gt": self._first_level,
                 "level.le": self._last_level,
-                "select": ','.join(OPERATION_FIELDS),
+                "select": ','.join(ORIGINATION_OPERATION_FIELDS),
                 "status": "applied",
             },
         )
 
         for op in originations:
-            # NOTE: Bug in TzKT, type may be empty
+            # NOTE: type needs to be set manually when requesting operations by specific type
             op['type'] = 'origination'
             level = op['level']
             if level not in self._operations:
@@ -171,13 +167,13 @@ class OperationFetcher:
                 "limit": TZKT_HTTP_REQUEST_LIMIT,
                 "level.gt": self._first_level,
                 "level.le": self._last_level,
-                "select": ','.join(OPERATION_FIELDS),
+                "select": ','.join(TRANSACTION_OPERATION_FIELDS),
                 "status": "applied",
             },
         )
 
         for op in transactions:
-            # NOTE: Bug in TzKT, type may be empty
+            # NOTE: type needs to be set manually when requesting operations by specific type
             op['type'] = 'transaction'
             level = op['level']
             if level not in self._operations:
@@ -449,8 +445,6 @@ class TzktDatasource:
                 break
 
             offset += TZKT_HTTP_REQUEST_LIMIT
-            self._logger.info('Sleeping %s seconds before fetching next batch', TZKT_HTTP_REQUEST_SLEEP)
-            await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
 
         if big_maps:
             await _process_level_big_maps(big_maps)
@@ -677,7 +671,6 @@ class TzktDatasource:
             target_alias=operation_json['target'].get('alias') if operation_json.get('target') else None,
             entrypoint=operation_json['parameter']['entrypoint'] if operation_json.get('parameter') else None,
             parameter_json=operation_json['parameter']['value'] if operation_json.get('parameter') else None,
-            initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
             originated_contract_address=operation_json['originatedContract']['address']
             if operation_json.get('originatedContract')
             else None,

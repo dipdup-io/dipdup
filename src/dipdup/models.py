@@ -54,7 +54,6 @@ class OperationData:
     target_alias: Optional[str] = None
     entrypoint: Optional[str] = None
     parameter_json: Optional[Any] = None
-    initiator_address: Optional[str] = None
     originated_contract_address: Optional[str] = None
     diffs: Optional[List[Dict[str, Any]]] = None
 

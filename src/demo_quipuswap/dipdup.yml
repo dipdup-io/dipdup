@@ -42,7 +42,8 @@ templates:
           - type: transaction
             destination: <dex_contract>
             entrypoint: tokenToTezPayment
-          - destination: <token_contract>
+          - type: transaction
+            destination: <token_contract>
             entrypoint: transfer
       - callback: on_fa12_tez_to_token
         pattern:

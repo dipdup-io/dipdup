@@ -57,9 +57,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opGZHyGpDt6c8x2mKexrhc8btiMkuyF1EHeL3hQvaNtTxsyzUGu",
             "counter": 7057537,
-            "initiator": {
-                "address": "tz1ZfxjoBeGkRG7zLgyH6gnYVNAL9KQwRnCB"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -87,9 +84,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opGZHyGpDt6c8x2mKexrhc8btiMkuyF1EHeL3hQvaNtTxsyzUGu",
             "counter": 7057537,
-            "initiator": {
-                "address": "tz1ZfxjoBeGkRG7zLgyH6gnYVNAL9KQwRnCB"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -117,9 +111,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opGZHyGpDt6c8x2mKexrhc8btiMkuyF1EHeL3hQvaNtTxsyzUGu",
             "counter": 7057537,
-            "initiator": {
-                "address": "tz1ZfxjoBeGkRG7zLgyH6gnYVNAL9KQwRnCB"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -147,9 +138,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opGZHyGpDt6c8x2mKexrhc8btiMkuyF1EHeL3hQvaNtTxsyzUGu",
             "counter": 7057537,
-            "initiator": {
-                "address": "tz1ZfxjoBeGkRG7zLgyH6gnYVNAL9KQwRnCB"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -205,9 +193,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opGZHyGpDt6c8x2mKexrhc8btiMkuyF1EHeL3hQvaNtTxsyzUGu",
             "counter": 7057537,
-            "initiator": {
-                "address": "tz1ZfxjoBeGkRG7zLgyH6gnYVNAL9KQwRnCB"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -310,10 +295,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opDvkDvtCoKhefWZSz7nQ46tUYxyScqa5Ex5HbiLsbEn2BiKMis",
             "counter": 8895059,
-            "initiator": {
-                "alias": "Django Bits",
-                "address": "tz1YRG68NdqtAcsFEwTUw6FsSsiBb5kagEDo"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -342,10 +323,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opDvkDvtCoKhefWZSz7nQ46tUYxyScqa5Ex5HbiLsbEn2BiKMis",
             "counter": 8895059,
-            "initiator": {
-                "alias": "Django Bits",
-                "address": "tz1YRG68NdqtAcsFEwTUw6FsSsiBb5kagEDo"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -373,10 +350,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opDvkDvtCoKhefWZSz7nQ46tUYxyScqa5Ex5HbiLsbEn2BiKMis",
             "counter": 8895059,
-            "initiator": {
-                "alias": "Django Bits",
-                "address": "tz1YRG68NdqtAcsFEwTUw6FsSsiBb5kagEDo"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -405,10 +378,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opDvkDvtCoKhefWZSz7nQ46tUYxyScqa5Ex5HbiLsbEn2BiKMis",
             "counter": 8895059,
-            "initiator": {
-                "alias": "Django Bits",
-                "address": "tz1YRG68NdqtAcsFEwTUw6FsSsiBb5kagEDo"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -464,10 +433,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opDvkDvtCoKhefWZSz7nQ46tUYxyScqa5Ex5HbiLsbEn2BiKMis",
             "counter": 8895059,
-            "initiator": {
-                "alias": "Django Bits",
-                "address": "tz1YRG68NdqtAcsFEwTUw6FsSsiBb5kagEDo"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -566,9 +531,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "ooXs2CrjtpPNGf6GLdW5i3rw7Vd3cvUiC4DTfWKiU9KgckPYb4S",
             "counter": 11987839,
-            "initiator": {
-                "address": "tz1SGLEydAbC5ZqQY2NDPNFsFQ63w4XidaYk"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
@@ -670,9 +632,6 @@
             "block": "BMZunRxN8A3tsNHhEFtN2Yb5ArX7Ls8KGbGTy1svoPbLNQRDA8H",
             "hash": "opNB2Hggf3617i9A4TLzZ8QkWd2P4JwzRVzGex9EkueCHJLG4Mk",
             "counter": 12123298,
-            "initiator": {
-                "address": "tz1QzteR6agXmyGwrGvvXAqZmoRr75ANLHJ4"
-            },
             "sender": {
                 "alias": "Hic et nunc Minter",
                 "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
