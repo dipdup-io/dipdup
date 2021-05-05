@@ -293,8 +293,14 @@ class TzktDatasource:
             for contract in operation_index_config.contracts:
                 await self.add_operation_subscription(contract.address, operation_index_config.types)
 
-        self._logger.info('Initial synchronizing operation indexes')
+        for big_map_index_config in self._big_map_index_by_name.values():
+            for handler_config in big_map_index_config.handlers:
+                for pattern_config in handler_config.pattern:
+                    await self.add_big_map_subscription(pattern_config.contract_config.address, pattern_config.path)
+
         latest_block = await self.get_latest_block()
+
+        self._logger.info('Initial synchronizing operation indexes')
         for index_config_name, operation_index_config in self._operation_index_by_name.items():
             self._logger.info('Synchronizing `%s`', index_config_name)
             if operation_index_config.last_block:
@@ -306,22 +312,15 @@ class TzktDatasource:
             await self.fetch_operations(operation_index_config, current_level)
 
         self._logger.info('Initial synchronizing big map indexes')
-        for big_map_index_config in self._big_map_index_by_name.values():
-
+        for index_config_name, big_map_index_config in self._big_map_index_by_name.items():
+            self._logger.info('Synchronizing `%s`', index_config_name)
             if big_map_index_config.last_block:
-                await self.fetch_big_maps(big_map_index_config.last_block, initial=True)
+                current_level = big_map_index_config.last_block
                 rest_only = True
-                continue
+            else:
+                current_level = latest_block['level']
 
-            for handler_config in big_map_index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    await self.add_big_map_subscription(pattern_config.contract_config.address, pattern_config.path)
-
-            latest_block = await self.get_latest_block()
-            current_level = latest_block['level']
-            state_level = big_map_index_config.state.level
-            if current_level != state_level:
-                await self.fetch_big_maps(current_level, initial=True)
+            await self.fetch_big_maps(big_map_index_config, current_level)
 
         if not rest_only:
             self._logger.info('Starting websocket client')
@@ -409,7 +408,7 @@ class TzktDatasource:
         self._logger.debug(big_maps)
         return big_maps
 
-    async def fetch_big_maps(self, last_level: int, initial: bool = False) -> None:
+    async def fetch_big_maps(self, index_config: BigMapIndexConfig, last_level: int) -> None:
         async def _process_level_big_maps(big_maps):
             self._logger.info('Processing %s big map updates of level %s', len(big_maps), big_maps[0]['level'])
             await self.on_big_map_message(
@@ -423,43 +422,38 @@ class TzktDatasource:
             )
 
         self._logger.info('Fetching big map updates prior to level %s', last_level)
-        for index_config in self._big_map_index_by_name.values():
+        level = index_config.state.level
 
-            level = index_config.state.level
+        big_maps = []
+        offset = 0
+        addresses, paths = set(), set()
+        for handler_config in index_config.handlers:
+            for pattern_config in handler_config.pattern:
+                addresses.add(pattern_config.contract_config.address)
+                paths.add(pattern_config.path)
 
-            big_maps = []
-            offset = 0
-            addresses, paths = set(), set()
-            for handler_config in index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    addresses.add(pattern_config.contract_config.address)
-                    paths.add(pattern_config.path)
+        while True:
+            fetched_big_maps = await self._fetch_big_maps(list(addresses), list(paths), offset, level, last_level)
+            big_maps += fetched_big_maps
 
             while True:
-                fetched_big_maps = await self._fetch_big_maps(list(addresses), list(paths), offset, level, last_level)
-                big_maps += fetched_big_maps
-
-                while True:
-                    for i in range(len(big_maps) - 1):
-                        if big_maps[i]['level'] != big_maps[i + 1]['level']:
-                            await _process_level_big_maps(big_maps[: i + 1])
-                            big_maps = big_maps[i + 1 :]
-                            break
-                    else:
+                for i in range(len(big_maps) - 1):
+                    if big_maps[i]['level'] != big_maps[i + 1]['level']:
+                        await _process_level_big_maps(big_maps[: i + 1])
+                        big_maps = big_maps[i + 1 :]
                         break
-
-                if len(fetched_big_maps) < TZKT_HTTP_REQUEST_LIMIT:
+                else:
                     break
 
-                offset += TZKT_HTTP_REQUEST_LIMIT
-                self._logger.info('Sleeping %s seconds before fetching next batch', TZKT_HTTP_REQUEST_SLEEP)
-                await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
+            if len(fetched_big_maps) < TZKT_HTTP_REQUEST_LIMIT:
+                break
 
-            if big_maps:
-                await _process_level_big_maps(big_maps)
+            offset += TZKT_HTTP_REQUEST_LIMIT
+            self._logger.info('Sleeping %s seconds before fetching next batch', TZKT_HTTP_REQUEST_SLEEP)
+            await asyncio.sleep(TZKT_HTTP_REQUEST_SLEEP)
 
-        if not initial:
-            self._big_maps_synchronized.set()
+        if big_maps:
+            await _process_level_big_maps(big_maps)
 
     async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
         self._logger.info('Fetching jsonschemas for address `%s', address)
@@ -530,9 +524,12 @@ class TzktDatasource:
             message_type = TzktMessageType(item['type'])
 
             if message_type == TzktMessageType.STATE:
-                level = item['state']
-                self._logger.info('Got state message, current level %s, index level %s', level, self._operation_cache.level)
-                await self.fetch_big_maps(level)
+                last_level = item['state']
+                for index_config in self._big_map_index_by_name.values():
+                    first_level = self._operation_cache.level
+                    self._logger.info('Got state message, current level %s, index level %s', first_level, first_level)
+                    await self.fetch_big_maps(index_config, last_level)
+                self._big_maps_synchronized.set()
 
             elif message_type == TzktMessageType.DATA:
                 if not sync and not self._big_maps_synchronized.is_set():
