@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 import logging
 from collections import ChainMap
 from functools import partial
@@ -73,6 +74,160 @@ OPERATION_FIELDS = (
 IndexName = str
 Address = str
 Path = str
+
+
+class OperationFetcherChannel(Enum):
+    sender_transactions = 'sender_transactions'
+    target_transactions = 'target_transactions'
+    originations = 'originations'
+
+
+class OperationFetcher:
+    def __init__(
+        self,
+        url: str,
+        proxy: TzktRequestProxy,
+        first_level: int,
+        last_level: int,
+        addresses: List[str],
+        operation_subscriptions: Dict[Address, List[OperationType]],
+    ) -> None:
+        self._url = url
+        self._proxy = proxy
+        self._first_level = first_level
+        self._last_level = last_level
+        self._origination_addresses = [
+            address
+            for address, types in operation_subscriptions.items()
+            if address in addresses and OperationType.origination in types
+        ]
+        self._transaction_addresses = [
+            address
+            for address, types in operation_subscriptions.items()
+            if address in addresses and OperationType.transaction in types
+        ]
+        self._logger = logging.getLogger(__name__)
+        self._head: int = 0
+        self._heads: Dict[OperationFetcherChannel, int] = {}
+        self._offsets: Dict[OperationFetcherChannel, int] = {}
+        self._fetched: Dict[OperationFetcherChannel, bool] = {}
+        self._operations: Dict[int, List[Dict[str, Any]]] = {}
+
+    def _get_head(self, operations: List[Dict[str, Any]]):
+        for i in range(len(operations) - 1)[::-1]:
+            if operations[i]['level'] != operations[i + 1]['level']:
+                return operations[i]['level']
+        return operations[0]['level']
+
+    async def _fetch_originations(self) -> None:
+        key = OperationFetcherChannel.originations
+        if not self._origination_addresses:
+            self._fetched[key] = True
+            self._heads[key] = self._last_level
+        if self._fetched[key]:
+            return
+
+        self._logger.debug('Fetching originations of %s', self._origination_addresses)
+
+        originations = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/operations/originations',
+            params={
+                "originatedContract.in": ','.join(self._origination_addresses),
+                "offset": self._offsets[key],
+                "limit": TZKT_HTTP_REQUEST_LIMIT,
+                "level.gt": self._first_level,
+                "level.le": self._last_level,
+                "select": ','.join(OPERATION_FIELDS),
+                "status": "applied",
+            },
+        )
+
+        for op in originations:
+            # NOTE: Bug in TzKT, type may be empty
+            op['type'] = 'origination'
+            level = op['level']
+            if level not in self._operations:
+                self._operations[level] = []
+            self._operations[level].append(op)
+
+        self._logger.debug('Got %s', len(originations))
+
+        if len(originations) < TZKT_HTTP_REQUEST_LIMIT:
+            self._fetched[key] = True
+            self._heads[key] = self._last_level
+        else:
+            self._offsets[key] += TZKT_HTTP_REQUEST_LIMIT
+            self._heads[key] = self._get_head(originations)
+
+    async def _fetch_transactions(self, field: str):
+        key = getattr(OperationFetcherChannel, field + '_transactions')
+        if not self._transaction_addresses:
+            self._fetched[key] = True
+            self._heads[key] = self._last_level
+        if self._fetched[key]:
+            return
+
+        self._logger.debug('Fetching %s transactions of %s', field, self._transaction_addresses)
+
+        transactions = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/operations/transactions',
+            params={
+                f"{field}.in": ','.join(self._transaction_addresses),
+                "offset": self._offsets[key],
+                "limit": TZKT_HTTP_REQUEST_LIMIT,
+                "level.gt": self._first_level,
+                "level.le": self._last_level,
+                "select": ','.join(OPERATION_FIELDS),
+                "status": "applied",
+            },
+        )
+
+        for op in transactions:
+            # NOTE: Bug in TzKT, type may be empty
+            op['type'] = 'transaction'
+            level = op['level']
+            if level not in self._operations:
+                self._operations[level] = []
+            self._operations[level].append(op)
+
+        self._logger.debug('Got %s', len(transactions))
+
+        if len(transactions) < TZKT_HTTP_REQUEST_LIMIT:
+            self._fetched[key] = True
+            self._heads[key] = self._last_level
+        else:
+            self._offsets[key] += TZKT_HTTP_REQUEST_LIMIT
+            self._heads[key] = self._get_head(transactions)
+
+    async def fetch_operations_by_level(self):
+        for type_ in (
+            OperationFetcherChannel.sender_transactions,
+            OperationFetcherChannel.target_transactions,
+            OperationFetcherChannel.originations,
+        ):
+            self._heads[type_] = 0
+            self._offsets[type_] = 0
+            self._fetched[type_] = False
+
+        while True:
+            await self._fetch_originations()
+            await self._fetch_transactions('target')
+            await self._fetch_transactions('sender')
+
+            head = min(self._heads.values())
+            while self._head <= head:
+                if self._head in self._operations:
+                    operations = self._operations.pop(self._head)
+                    operations = sorted(list(({op['id']: op for op in operations}).values()), key=lambda op: op['id'])
+                    yield self._head, operations
+                self._head += 1
+
+            if all(list(self._fetched.values())):
+                break
+
+        assert not self._operations
 
 
 class TzktDatasource:
@@ -209,143 +364,32 @@ class TzktDatasource:
     async def subscribe_to_big_maps(self, address: Address, path: Path) -> None:
         self._logger.info('Subscribing to %s, %s', address, path)
 
-    async def _fetch_operations(self, addresses: List[str], first_level: int, last_level: int) -> List[Dict[str, Any]]:
-        self._logger.info('Fetching operations of %s on levels %s-%s', addresses, first_level, last_level)
-        operations = []
-
-        origination_addresses = [
-            address
-            for address, types in self._operation_subscriptions.items()
-            if address in addresses and OperationType.origination in types
-        ]
-        if origination_addresses:
-            self._logger.debug('Fetching originations of %s', origination_addresses)
-            offset = 0
-            while True:
-                originations = await self._proxy.http_request(
-                    'get',
-                    url=f'{self._url}/v1/operations/originations',
-                    params={
-                        "originatedContract.in": ','.join(origination_addresses),
-                        "offset": offset,
-                        "limit": TZKT_HTTP_REQUEST_LIMIT,
-                        "level.gt": first_level,
-                        "level.le": last_level,
-                        "select": ','.join(OPERATION_FIELDS),
-                        "status": "applied",
-                    },
-                )
-
-                # NOTE: Bug in TzKT, type may be empty
-                for op in originations:
-                    op['type'] = 'origination'
-                operations += originations
-
-                self._logger.debug('Got %s', len(originations))
-
-                if len(originations) < TZKT_HTTP_REQUEST_LIMIT:
-                    break
-                offset += TZKT_HTTP_REQUEST_LIMIT
-
-        self._logger.debug(self._operation_subscriptions)
-        transaction_addresses = [
-            address
-            for address, types in self._operation_subscriptions.items()
-            if address in addresses and OperationType.transaction in types
-        ]
-
-        if transaction_addresses:
-            self._logger.debug('Fetching sender transactions of %s', transaction_addresses)
-            offset = 0
-            while True:
-                sender_transactions = await self._proxy.http_request(
-                    'get',
-                    url=f'{self._url}/v1/operations/transactions',
-                    params={
-                        "sender.in": ','.join(transaction_addresses),
-                        "offset": offset,
-                        "limit": TZKT_HTTP_REQUEST_LIMIT,
-                        "level.gt": first_level,
-                        "level.le": last_level,
-                        "select": ','.join(OPERATION_FIELDS),
-                        "status": "applied",
-                    },
-                )
-
-                # NOTE: Bug in TzKT, type may be empty
-                for op in sender_transactions:
-                    op['type'] = 'transaction'
-                operations += sender_transactions
-
-                self._logger.debug('Got %s', len(sender_transactions))
-
-                if len(sender_transactions) < TZKT_HTTP_REQUEST_LIMIT:
-                    break
-                offset += TZKT_HTTP_REQUEST_LIMIT
-
-            self._logger.debug('Fetching target transactions of %s', transaction_addresses)
-            offset = 0
-            while True:
-                target_transactions = await self._proxy.http_request(
-                    'get',
-                    url=f'{self._url}/v1/operations/transactions',
-                    params={
-                        "target.in": ','.join(transaction_addresses),
-                        "offset": offset,
-                        "limit": TZKT_HTTP_REQUEST_LIMIT,
-                        "level.gt": first_level,
-                        "level.le": last_level,
-                        "select": ','.join(OPERATION_FIELDS),
-                        "status": "applied",
-                    },
-                )
-                # NOTE: Bug in TzKT, type may be empty
-                for op in target_transactions:
-                    op['type'] = 'transaction'
-                operations += target_transactions
-
-                self._logger.debug('Got %s', len(target_transactions))
-
-                if len(target_transactions) < TZKT_HTTP_REQUEST_LIMIT:
-                    break
-                offset += TZKT_HTTP_REQUEST_LIMIT
-
-        self._logger.info('%s operations fetched', len(operations))
-        self._logger.debug(operations)
-        return operations
-
     async def fetch_operations(self, last_level: int, initial: bool = False) -> None:
-        async def _process_level_operations(operations) -> None:
-            self._logger.info('Processing %s operations of level %s', len(operations), operations[0]['level'])
-            await self.on_operation_message(
-                message=[
-                    {
-                        'type': TzktMessageType.DATA.value,
-                        'data': operations,
-                    },
-                ],
-                sync=True,
+        self._logger.info('Fetching operations prior to level %s', last_level)
+        for index_config in self._operation_index_by_name.values():
+            first_level = index_config.state.level
+            addresses = [c.address for c in index_config.contract_configs]
+
+            fetcher = OperationFetcher(
+                url=self._url,
+                proxy=self._proxy,
+                first_level=first_level,
+                last_level=last_level,
+                addresses=addresses,
+                operation_subscriptions=self._operation_subscriptions
             )
 
-        self._logger.info('Fetching operations prior to level %s', last_level)
-        operations = []
-        for index_config in self._operation_index_by_name.values():
-            level = index_config.state.level
-            addresses = [c.address for c in index_config.contract_configs]
-            operations += await self._fetch_operations(addresses, level, last_level)
-
-        operations = sorted(list(({op['id']: op for op in operations}).values()), key=lambda op: op['id'])
-
-        while True:
-            for i in range(len(operations) - 1):
-                if operations[i]['level'] != operations[i + 1]['level']:
-                    await _process_level_operations(operations[: i + 1])
-                    operations = operations[i + 1 :]
-                    break
-            else:
-                break
-        if operations:
-            await _process_level_operations(operations)
+            async for level, operations in fetcher.fetch_operations_by_level():
+                self._logger.info('Processing %s operations of level %s', len(operations), level)
+                await self.on_operation_message(
+                    message=[
+                        {
+                            'type': TzktMessageType.DATA.value,
+                            'data': operations,
+                        },
+                    ],
+                    sync=True,
+                )
 
         if not initial:
             self._operations_synchronized.set()

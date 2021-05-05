@@ -10,7 +10,13 @@ from tortoise import Tortoise
 from demo_hic_et_nunc.types.hen_minter.parameter.collect import CollectParameter
 from demo_registrydao.types.registry.parameter.propose import ProposeParameter
 from demo_registrydao.types.registry.storage import Proposals, RegistryStorage
-from dipdup.config import ContractConfig, OperationHandlerConfig, OperationHandlerTransactionPatternConfig, OperationIndexConfig, OperationType
+from dipdup.config import (
+    ContractConfig,
+    OperationHandlerConfig,
+    OperationHandlerTransactionPatternConfig,
+    OperationIndexConfig,
+    OperationType,
+)
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import IndexType, OperationData, OperationHandlerContext, State, TransactionContext
 from dipdup.utils import tortoise_wrapper

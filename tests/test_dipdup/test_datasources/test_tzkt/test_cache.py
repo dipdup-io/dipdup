@@ -66,7 +66,8 @@ class TzktOperationCacheTest(IsolatedAsyncioTestCase):
                 pattern=[
                     OperationHandlerTransactionPatternConfig(
                         type='transaction',
-                        destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'), entrypoint='hDAO_batch',
+                        destination=ContractConfig(address='KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW'),
+                        entrypoint='hDAO_batch',
                     )
                 ],
             ),
