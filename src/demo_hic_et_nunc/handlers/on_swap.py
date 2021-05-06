@@ -1,12 +1,12 @@
 import demo_hic_et_nunc.models as models
 from demo_hic_et_nunc.types.hen_minter.parameter.swap import SwapParameter
 from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
-from dipdup.models import OperationContext, OperationHandlerContext
+from dipdup.models import OperationHandlerContext, TransactionContext
 
 
 async def on_swap(
     ctx: OperationHandlerContext,
-    swap: OperationContext[SwapParameter, HenMinterStorage],
+    swap: TransactionContext[SwapParameter, HenMinterStorage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=swap.data.sender_address)
     swap_model = models.Swap(

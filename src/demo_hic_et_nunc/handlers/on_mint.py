@@ -3,13 +3,13 @@ from demo_hic_et_nunc.types.hen_minter.parameter.mint_objkt import MintOBJKTPara
 from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
 from demo_hic_et_nunc.types.hen_objkts.parameter.mint import MintParameter
 from demo_hic_et_nunc.types.hen_objkts.storage import HenObjktsStorage
-from dipdup.models import OperationContext, OperationHandlerContext
+from dipdup.models import OperationHandlerContext, TransactionContext
 
 
 async def on_mint(
     ctx: OperationHandlerContext,
-    mint_objkt: OperationContext[MintOBJKTParameter, HenMinterStorage],
-    mint: OperationContext[MintParameter, HenObjktsStorage],
+    mint_objkt: TransactionContext[MintOBJKTParameter, HenMinterStorage],
+    mint: TransactionContext[MintParameter, HenObjktsStorage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=mint.parameter.address)
     token = models.Token(

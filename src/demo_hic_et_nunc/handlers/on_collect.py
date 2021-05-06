@@ -1,12 +1,12 @@
 import demo_hic_et_nunc.models as models
 from demo_hic_et_nunc.types.hen_minter.parameter.collect import CollectParameter
 from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
-from dipdup.models import OperationContext, OperationHandlerContext
+from dipdup.models import OperationHandlerContext, TransactionContext
 
 
 async def on_collect(
     ctx: OperationHandlerContext,
-    collect: OperationContext[CollectParameter, HenMinterStorage],
+    collect: TransactionContext[CollectParameter, HenMinterStorage],
 ) -> None:
     swap = await models.Swap.filter(id=collect.parameter.swap_id).get()
     seller = await swap.creator

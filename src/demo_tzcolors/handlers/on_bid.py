@@ -1,12 +1,12 @@
 import demo_tzcolors.models as models
 from demo_tzcolors.types.tzcolors_auction.parameter.bid import BidParameter
 from demo_tzcolors.types.tzcolors_auction.storage import TzcolorsAuctionStorage
-from dipdup.models import OperationContext, OperationHandlerContext
+from dipdup.models import OperationHandlerContext, TransactionContext
 
 
 async def on_bid(
     ctx: OperationHandlerContext,
-    bid: OperationContext[BidParameter, TzcolorsAuctionStorage],
+    bid: TransactionContext[BidParameter, TzcolorsAuctionStorage],
 ) -> None:
     auction = await models.Auction.filter(
         id=bid.parameter.__root__,

@@ -5,13 +5,13 @@ from demo_quipuswap.types.fa2_token.parameter.transfer import TransferParameter
 from demo_quipuswap.types.fa2_token.storage import Fa2TokenStorage
 from demo_quipuswap.types.quipu_fa2.parameter.invest_liquidity import InvestLiquidityParameter
 from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
-from dipdup.models import OperationContext, OperationHandlerContext
+from dipdup.models import OperationHandlerContext, TransactionContext
 
 
 async def on_fa20_invest_liquidity(
     ctx: OperationHandlerContext,
-    invest_liquidity: OperationContext[InvestLiquidityParameter, QuipuFa2Storage],
-    transfer: OperationContext[TransferParameter, Fa2TokenStorage],
+    invest_liquidity: TransactionContext[InvestLiquidityParameter, QuipuFa2Storage],
+    transfer: TransactionContext[TransferParameter, Fa2TokenStorage],
 ) -> None:
 
     if ctx.template_values is None:
@@ -25,6 +25,7 @@ async def on_fa20_invest_liquidity(
 
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
 
+    assert invest_liquidity.data.amount is not None
     tez_qty = Decimal(invest_liquidity.data.amount) / (10 ** 6)
     token_qty = sum(Decimal(tx.amount) for tx in transfer.parameter.__root__[0].txs) / (10 ** decimals)
     new_shares_qty = int(storage.storage.ledger[trader].balance) + int(storage.storage.ledger[trader].frozen_balance)  # type: ignore

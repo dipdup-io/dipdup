@@ -74,7 +74,7 @@ class ModelsTest(TestCase):
         operation_data = OperationData(
             storage=storage,
             diffs=diffs,
-            type=None,
+            type='transaction',
             id=0,
             level=0,
             timestamp=0,

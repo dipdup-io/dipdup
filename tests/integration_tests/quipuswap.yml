@@ -1,4 +1,4 @@
-spec_version: 0.0.1
+spec_version: 0.1
 package: demo_quipuswap
 
 database:
@@ -39,27 +39,35 @@ templates:
     handlers:
       - callback: on_fa12_token_to_tez
         pattern:
-          - destination: <dex_contract>
+          - type: transaction
+            destination: <dex_contract>
             entrypoint: tokenToTezPayment
-          - destination: <token_contract>
+          - type: transaction
+            destination: <token_contract>
             entrypoint: transfer
       - callback: on_fa12_tez_to_token
         pattern:
-          - destination: <dex_contract>
+          - type: transaction
+            destination: <dex_contract>
             entrypoint: tezToTokenPayment
-          - destination: <token_contract>
+          - type: transaction
+            destination: <token_contract>
             entrypoint: transfer
       - callback: on_fa12_invest_liquidity
         pattern:
-          - destination: <dex_contract>
+          - type: transaction
+            destination: <dex_contract>
             entrypoint: investLiquidity
-          - destination: <token_contract>
+          - type: transaction
+            destination: <token_contract>
             entrypoint: transfer
       - callback: on_fa12_divest_liquidity
         pattern:
-          - destination: <dex_contract>
+          - type: transaction
+            destination: <dex_contract>
             entrypoint: divestLiquidity
-          - destination: <token_contract>
+          - type: transaction
+            destination: <token_contract>
             entrypoint: transfer
     first_block: 1407528
     last_block: 1408934
@@ -72,30 +80,38 @@ templates:
     handlers:
       - callback: on_fa2_token_to_tez
         pattern:
-          - destination: <dex_contract>
+          - type: transaction
+            destination: <dex_contract>
             entrypoint: tokenToTezPayment
-          - destination: <token_contract>
+          - type: transaction
+            destination: <token_contract>
             entrypoint: transfer
       - callback: on_fa2_tez_to_token
         pattern:
-          - destination: <dex_contract>
+          - type: transaction
+            destination: <dex_contract>
             entrypoint: tezToTokenPayment
-          - destination: <token_contract>
+          - type: transaction
+            destination: <token_contract>
             entrypoint: transfer
       - callback: on_fa20_invest_liquidity
         pattern:
-          - destination: <dex_contract>
+          - type: transaction
+            destination: <dex_contract>
             entrypoint: investLiquidity
-          - destination: <token_contract>
+          - type: transaction
+            destination: <token_contract>
             entrypoint: transfer
       - callback: on_fa20_divest_liquidity
         pattern:
-          - destination: <dex_contract>
+          - type: transaction
+            destination: <dex_contract>
             entrypoint: divestLiquidity
-          - destination: <token_contract>
+          - type: transaction
+            destination: <token_contract>
             entrypoint: transfer
     first_block: 1407528
-    last_block: 1407728
+    last_block: 1408928
 
 indexes:
   kusd_mainnet:
