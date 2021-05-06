@@ -17,6 +17,7 @@ from dipdup.config import (
     DipDupConfig,
     IndexTemplateConfig,
     OperationHandlerConfig,
+    OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
     TzktDatasourceConfig,
@@ -91,7 +92,17 @@ async def fetch_schemas(config: DipDupConfig):
         if isinstance(index_config, OperationIndexConfig):
             for operation_handler_config in index_config.handlers:
                 for operation_pattern_config in operation_handler_config.pattern:
-                    contract_config = operation_pattern_config.contract_config
+
+                    if (
+                        isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig)
+                        and operation_pattern_config.entrypoint
+                    ):
+                        contract_config = operation_pattern_config.destination_contract_config
+                    elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
+                        contract_config = operation_pattern_config.contract_config
+                    else:
+                        continue
+
                     contract_schemas = await schemas_cache.get(index_config.datasource_config, contract_config)
 
                     contract_schemas_path = join(schemas_path, contract_config.module_name)

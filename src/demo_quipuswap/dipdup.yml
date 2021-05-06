@@ -74,6 +74,9 @@ templates:
           - type: transaction
             destination: <dex_contract>
             entrypoint: withdrawProfit
+          - type: transaction
+            source: <dex_contract>
+            optional: True
 
   quipuswap_fa2:
     kind: operation
@@ -118,6 +121,9 @@ templates:
           - type: transaction
             destination: <dex_contract>
             entrypoint: withdrawProfit
+          - type: transaction
+            source: <dex_contract>
+            optional: True
 
 indexes:
   kusd_mainnet:

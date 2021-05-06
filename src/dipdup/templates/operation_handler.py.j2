@@ -1,4 +1,6 @@
-from dipdup.models import OperationHandlerContext, TransactionContext, OriginationContext
+from typing import Optional
+
+from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 import {{ package }}.models as models
 {% for pattern in patterns %}
