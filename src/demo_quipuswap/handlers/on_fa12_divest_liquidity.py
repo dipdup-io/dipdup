@@ -35,6 +35,7 @@ async def on_fa12_divest_liquidity(
         price = tez_pool / token_pool
     else:
         last_trade = await models.Trade.filter(symbol=symbol).order_by('-id').first()
+        assert last_trade
         price = last_trade.price
     share_px = (tez_qty + price * token_qty) / shares_qty
 
