@@ -29,7 +29,14 @@ async def on_fa12_divest_liquidity(
     token_qty = Decimal(transfer.parameter.value) / (10 ** decimals)
     shares_qty = int(divest_liquidity.parameter.shares)
 
-    price = (Decimal(storage.storage.tez_pool) / (10 ** 6)) / (Decimal(storage.storage.token_pool) / (10 ** decimals))
+    tez_pool = Decimal(storage.storage.tez_pool) / (10 ** 6)
+    token_pool = Decimal(storage.storage.token_pool) / (10 ** decimals)
+    if tez_pool and token_pool:
+        price = tez_pool / token_pool
+    else:
+        last_trade = await models.Trade.filter(symbol=symbol).order_by('-id').first()
+        assert last_trade
+        price = last_trade.price
     share_px = (tez_qty + price * token_qty) / shares_qty
 
     position.realized_pl += shares_qty * (share_px - position.avg_share_px)
