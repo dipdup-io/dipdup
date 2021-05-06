@@ -154,7 +154,7 @@ class OperationHandlerTransactionPatternConfig:
     :param entrypoint: Contract entrypoint
     """
 
-    type: Literal['transaction']
+    type: Literal['transaction'] = 'transaction'
     source: Optional[Union[str, ContractConfig]] = None
     destination: Optional[Union[str, ContractConfig]] = None
     entrypoint: Optional[str] = None
@@ -245,8 +245,8 @@ class OperationHandlerTransactionPatternConfig:
 
 @dataclass
 class OperationHandlerOriginationPatternConfig:
-    type: Literal['origination']
     originated_contract: Union[str, ContractConfig]
+    type: Literal['origination'] = 'origination'
     optional: bool = False
 
     def __post_init_post_parse__(self):
