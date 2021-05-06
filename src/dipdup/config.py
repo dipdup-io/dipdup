@@ -6,14 +6,13 @@ import os
 import re
 import sys
 from collections import defaultdict
-from dataclasses import field
 from enum import Enum
 from os import environ as env
 from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Type, Union, cast
 from urllib.parse import urlparse
 
-from pydantic import Field, validator
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
@@ -158,6 +157,7 @@ class OperationHandlerTransactionPatternConfig:
     type: Literal['transaction']
     destination: Union[str, ContractConfig]
     entrypoint: str
+    optional: bool = False
 
     def __post_init_post_parse__(self):
         self._parameter_type_cls = None
@@ -197,6 +197,8 @@ class OperationHandlerTransactionPatternConfig:
         )
 
     def get_handler_argument(self) -> str:
+        if self.optional:
+            return f'{camel_to_snake(self.entrypoint)}: Optional[TransactionContext[{snake_to_camel(self.entrypoint)}Parameter, {snake_to_camel(self.contract_config.module_name)}Storage]],'
         return f'{camel_to_snake(self.entrypoint)}: TransactionContext[{snake_to_camel(self.entrypoint)}Parameter, {snake_to_camel(self.contract_config.module_name)}Storage],'
 
 
@@ -204,6 +206,7 @@ class OperationHandlerTransactionPatternConfig:
 class OperationHandlerOriginationPatternConfig:
     type: Literal['origination']
     originated_contract: Union[str, ContractConfig]
+    optional: bool = False
 
     def __post_init_post_parse__(self):
         self._storage_type_cls = None
@@ -231,6 +234,8 @@ class OperationHandlerOriginationPatternConfig:
         return f'from {package}.types.{self.contract_config.module_name}.storage import {snake_to_camel(self.contract_config.module_name)}Storage'
 
     def get_handler_argument(self) -> str:
+        if self.optional:
+            return f'{self.contract_config.module_name}_origination: Optional[OriginationContext[{snake_to_camel(self.contract_config.module_name)}Storage]],'
         return f'{self.contract_config.module_name}_origination: OriginationContext[{snake_to_camel(self.contract_config.module_name)}Storage],'
 
 

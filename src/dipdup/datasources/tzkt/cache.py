@@ -63,41 +63,66 @@ class OperationCache:
 
     async def process(
         self,
-        callback: Callable[[OperationIndexConfig, OperationHandlerConfig, List[OperationData], List[OperationData]], Awaitable[None]],
+        callback: Callable[
+            [OperationIndexConfig, OperationHandlerConfig, List[Optional[OperationData]], List[OperationData]],
+            Awaitable[None],
+        ],
     ) -> int:
+        async def on_match(
+            key: OperationGroup,
+            index_config: OperationIndexConfig,
+            handler_config: OperationHandlerConfig,
+            matched_operations: List[Optional[OperationData]],
+            operations: List[OperationData],
+        ) -> None:
+            self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
+            await callback(index_config, handler_config, matched_operations, operations)
+
+            index_config.state.level = self._level
+            await index_config.state.save()
+
         if self._level is None:
             raise RuntimeError('Add operations to cache before processing')
 
         keys = list(self._operations.keys())
         self._logger.info('Matching %s operation groups', len(keys))
-        for key, operations in copy(self._operations).items():
-            self._logger.debug('Processing %s', key)
+        for key, operations in self._operations.items():
+            self._logger.debug('Matching %s', key)
             matched = False
 
             for index_config in self._indexes.values():
+                for handler_config in index_config.handlers:
+                    operation_idx = 0
+                    pattern_idx = 0
+                    matched_operations: List[Optional[OperationData]] = []
+
+                    while operation_idx < len(operations):
+                        pattern_config = handler_config.pattern[pattern_idx]
+                        matched = self.match_operation(pattern_config, operations[operation_idx])
+                        if matched:
+                            matched_operations.append(operations[operation_idx])
+                            pattern_idx += 1
+                            operation_idx += 1
+                        elif pattern_config.optional:
+                            matched_operations.append(None)
+                            pattern_idx += 1
+                        else:
+                            operation_idx += 1
+
+                        if pattern_idx == len(handler_config.pattern):
+                            await on_match(key, index_config, handler_config, matched_operations, operations)
+                            matched = True
+                            matched_operations = []
+                            pattern_idx = 0
+
+                    if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
+                        await on_match(key, index_config, handler_config, matched_operations, operations)
+                        matched = True
+
+                # NOTE: Only one index could match as addresses do not intersect between indexes (checked on config initialization)
                 if matched:
                     break
-                for handler_config in index_config.handlers:
-                    matched_operations = []
-                    for pattern_config in handler_config.pattern:
-                        for operation in operations:
-                            operation_matched = self.match_operation(pattern_config, operation)
-                            if operation_matched:
-                                matched_operations.append(operation)
 
-                    if len(matched_operations) == len(handler_config.pattern):
-                        self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                        matched = True
-                        await callback(index_config, handler_config, matched_operations, operations)
-
-                        index_config.state.level = self._level
-                        await index_config.state.save()
-
-                        del self._operations[key]
-                        break
-
-        keys_left = self._operations.keys()
-        self._logger.info('%s operation groups unmatched', len(keys_left))
         self._logger.info('Current level: %s', self._level)
         self._operations = {}
 

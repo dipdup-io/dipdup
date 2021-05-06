@@ -567,17 +567,19 @@ class TzktDatasource:
         self,
         index_config: OperationIndexConfig,
         handler_config: OperationHandlerConfig,
-        matched_operations: List[OperationData],
+        matched_operations: List[Optional[OperationData]],
         operations: List[OperationData],
     ):
         handler_context = OperationHandlerContext(
             operations=operations,
             template_values=index_config.template_values,
         )
-        args: List[Union[OperationHandlerContext, TransactionContext, OriginationContext]] = [handler_context]
+        args: List[Optional[Union[OperationHandlerContext, TransactionContext, OriginationContext]]] = [handler_context]
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
+            if operation is None:
+                args.append(None)
 
-            if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+            elif isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                 parameter_type = pattern_config.parameter_type_cls
                 parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
 
