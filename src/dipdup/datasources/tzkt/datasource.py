@@ -574,12 +574,16 @@ class TzktDatasource:
             operations=operations,
             template_values=index_config.template_values,
         )
-        args: List[Optional[Union[OperationHandlerContext, TransactionContext, OriginationContext]]] = [handler_context]
+        args: List[Optional[Union[OperationHandlerContext, TransactionContext, OriginationContext, OperationData]]] = [handler_context]
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
             if operation is None:
                 args.append(None)
 
             elif isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                if not pattern_config.entrypoint:
+                    args.append(operation)
+                    continue
+
                 parameter_type = pattern_config.parameter_type_cls
                 parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
 

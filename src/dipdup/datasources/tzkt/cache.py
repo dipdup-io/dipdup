@@ -51,12 +51,13 @@ class OperationCache:
 
     def match_operation(self, pattern_config: OperationHandlerPatternConfig, operation: OperationData) -> bool:
         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-            return all(
-                [
-                    pattern_config.entrypoint == operation.entrypoint,
-                    pattern_config.contract_config.address == operation.target_address,
-                ]
-            )
+            if pattern_config.entrypoint != operation.entrypoint:
+                return False
+            if pattern_config.destination and pattern_config.destination_contract_config.address != operation.target_address:
+                return False
+            if pattern_config.source and pattern_config.source_contract_config.address != operation.sender_address:
+                return False
+            return True
         if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
             return pattern_config.contract_config.address == operation.originated_contract_address
         raise NotImplementedError

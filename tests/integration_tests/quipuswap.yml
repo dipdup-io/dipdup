@@ -69,6 +69,14 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
+      - callback: on_fa12_withdraw_profit
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: withdrawProfit
+          - type: transaction
+            source: <dex_contract>
+            optional: True
     first_block: 1407528
     last_block: 1408934
 
@@ -110,6 +118,14 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
+      - callback: on_fa20_withdraw_profit
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: withdrawProfit
+          - type: transaction
+            source: <dex_contract>
+            optional: True
     first_block: 1407528
     last_block: 1408928
 
