@@ -35,6 +35,7 @@ class DipDup:
 
     async def init(self) -> None:
         await codegen.create_package(self._config)
+        await codegen.resolve_dynamic_templates(self._config)
         await codegen.fetch_schemas(self._config)
         await codegen.generate_types(self._config)
         await codegen.generate_handlers(self._config)
@@ -89,7 +90,7 @@ class DipDup:
 
             # NOTE: We need to initialize config one more time to process generated indexes
             if has_dynamic_templates:
-                self._config.__post_init_post_parse__()
+                self._config.pre_initialize()
                 await self._config.initialize()
 
             for index_name, index_config in self._config.indexes.items():

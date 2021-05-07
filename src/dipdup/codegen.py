@@ -81,7 +81,18 @@ async def create_package(config: DipDupConfig):
             file.write(models_code)
 
 
-async def fetch_schemas(config: DipDupConfig):
+async def resolve_dynamic_templates(config: DipDupConfig) -> None:
+    for index_name, index_config in config.indexes.items():
+        if isinstance(index_config, DynamicTemplateConfig):
+            config.indexes[index_name] = StaticTemplateConfig(
+                template=index_config.template,
+                values=dict(contract=cast(str, index_config.similar_to)),
+            )
+            config.pre_initialize()
+            index_config = config.indexes[index_name]
+
+
+async def fetch_schemas(config: DipDupConfig) -> None:
     _logger.info('Creating `schemas` package')
     schemas_path = join(config.package_path, 'schemas')
     with suppress(FileExistsError):
@@ -89,15 +100,7 @@ async def fetch_schemas(config: DipDupConfig):
 
     schemas_cache = SchemasCache()
 
-    for index_name, index_config in config.indexes.items():
-        # TODO: Move to separate function
-        if isinstance(index_config, DynamicTemplateConfig):
-            config.indexes[index_name] = StaticTemplateConfig(
-                template=index_config.template,
-                values=dict(contract=cast(str, index_config.similar_to)),
-            )
-            config.__post_init_post_parse__()
-            index_config = config.indexes[index_name]
+    for index_config in config.indexes.values():
 
         if isinstance(index_config, OperationIndexConfig):
             for operation_handler_config in index_config.handlers:
