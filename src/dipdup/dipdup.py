@@ -2,7 +2,8 @@ import asyncio
 import hashlib
 import importlib
 import logging
-from typing import Dict
+from copy import copy
+from typing import Dict, cast
 
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
@@ -12,10 +13,12 @@ import dipdup.codegen as codegen
 from dipdup import __version__
 from dipdup.config import (
     ROLLBACK_HANDLER,
+    ContractConfig,
     DipDupConfig,
-    IndexTemplateConfig,
+    DynamicTemplateConfig,
     PostgresDatabaseConfig,
     SqliteDatabaseConfig,
+    StaticTemplateConfig,
     TzktDatasourceConfig,
 )
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -54,9 +57,46 @@ class DipDup:
 
             datasources: Dict[TzktDatasourceConfig, TzktDatasource] = {}
 
+            self._logger.info('Processing dynamic templates')
+            has_dynamic_templates = False
+            for index_name, index_config in copy(self._config.indexes).items():
+                if isinstance(index_config, DynamicTemplateConfig):
+                    if not self._config.templates:
+                        raise ConfigurationError('`templates` section is missing')
+                    has_dynamic_templates = True
+                    template = self._config.templates[index_config.template]
+                    # NOTE: Datasource and other fields are str as we haven't initialized DynamicTemplateConfigs yet
+                    datasource_config = self._config.datasources[cast(str, template.datasource)]
+                    if datasource_config not in datasources:
+                        datasources[datasource_config] = TzktDatasource(datasource_config.url, cache)
+                        datasources[datasource_config].set_rollback_fn(rollback_fn)
+                        # TODO: Add contract subscription
+                        # datasources[datasource_config].add_contract_subscription()
+
+                    contract_config = self._config.contracts[cast(str, index_config.similar_to)]
+                    similar_contracts = await datasources[datasource_config].get_similar_contracts(contract_config.address)
+                    for contract_address in similar_contracts:
+                        self._config.contracts[contract_address] = ContractConfig(
+                            address=contract_address,
+                            typename=contract_config.typename,
+                        )
+
+                        generated_index_name = f'{index_name}_{contract_address}'
+                        template_config = StaticTemplateConfig(template=index_config.template, values=dict(contract=contract_address))
+                        self._config.indexes[generated_index_name] = template_config
+
+                    del self._config.indexes[index_name]
+
+            # NOTE: We need to initialize config one more time to process generated indexes
+            if has_dynamic_templates:
+                self._config.__post_init_post_parse__()
+                await self._config.initialize()
+
             for index_name, index_config in self._config.indexes.items():
-                if isinstance(index_config, IndexTemplateConfig):
+                if isinstance(index_config, StaticTemplateConfig):
                     raise RuntimeError('Config is not initialized')
+                if isinstance(index_config, DynamicTemplateConfig):
+                    raise RuntimeError('Dynamic templates must be resolved before this step')
 
                 self._logger.info('Processing index `%s`', index_name)
                 if isinstance(index_config.datasource, TzktDatasourceConfig):

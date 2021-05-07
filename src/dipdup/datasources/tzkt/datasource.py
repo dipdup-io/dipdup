@@ -15,6 +15,7 @@ from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
     BlockIndexConfig,
+    ContractConfig,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
@@ -709,3 +710,6 @@ class TzktDatasource:
         )
         self._logger.debug(block)
         return block
+
+    async def get_similar_contracts(self, address: Address, strict: bool = False) -> List[Address]:
+        return ['KT1CUmBuq87XKeDs1UcmaonWC3aeygmXVpsk', 'KT1R8AZn5KG7mkbnJ5bzMuUw2isL8tMYkDVD']

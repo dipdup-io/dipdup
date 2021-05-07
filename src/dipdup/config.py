@@ -258,7 +258,8 @@ class OperationHandlerOriginationPatternConfig:
 
     @property
     def contract_config(self) -> ContractConfig:
-        assert isinstance(self.originated_contract, ContractConfig)
+        if not isinstance(self.originated_contract, ContractConfig):
+            raise RuntimeError('Config is not initialized')
         return self.originated_contract
 
     @property
@@ -448,13 +449,27 @@ class BlockIndexConfig(IndexConfig):
 
 
 @dataclass
-class IndexTemplateConfig:
+class StaticTemplateConfig:
     kind = 'template'
     template: str
     values: Dict[str, str]
 
 
-IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, IndexTemplateConfig]
+@dataclass
+class DynamicTemplateConfig:
+    kind = 'dynamic'
+    template: str
+    similar_to: Union[str, ContractConfig]
+    strict: bool = False
+
+    @property
+    def contract_config(self) -> ContractConfig:
+        if not isinstance(self.similar_to, ContractConfig):
+            raise RuntimeError('Config is not initialized')
+        return self.similar_to
+
+
+IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, StaticTemplateConfig, DynamicTemplateConfig]
 IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
 
 
@@ -500,7 +515,8 @@ class DipDupConfig:
 
         _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
-            if isinstance(index_config, IndexTemplateConfig):
+            # NOTE: Dynamic templates will be resolved later in dipdup module
+            if isinstance(index_config, StaticTemplateConfig):
                 try:
                     template = self.templates[index_config.template]
                 except KeyError as e:
@@ -575,6 +591,9 @@ class DipDupConfig:
                                 pattern.contract = self.contracts[pattern.contract]
                             except KeyError as e:
                                 raise ConfigurationError(f'Contract `{pattern.contract}` not found in `contracts` config section') from e
+
+            elif isinstance(index_config, DynamicTemplateConfig):
+                ...
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -672,8 +691,11 @@ class DipDupConfig:
 
         for index_name, index_config in self.indexes.items():
 
-            if isinstance(index_config, IndexTemplateConfig):
+            if isinstance(index_config, StaticTemplateConfig):
                 raise RuntimeError('Config is not initialized')
+            if isinstance(index_config, DynamicTemplateConfig):
+                # NOTE: Dynamic templates will be resolved into static ones later in dipdup module
+                continue
 
             await self._initialize_index_state(index_name, index_config)
 
@@ -700,7 +722,7 @@ class DipDupConfig:
                             )
                             operation_pattern_config.parameter_type_cls = parameter_type_cls
 
-                            _logger.info('Registering storage type')
+                            _logger.info('Registering transaction storage type')
                             storage_type_module = importlib.import_module(
                                 f'{self.package}.types.{operation_pattern_config.destination_contract_config.module_name}.storage'
                             )
@@ -710,8 +732,8 @@ class DipDupConfig:
                             )
                             operation_pattern_config.storage_type_cls = storage_type_cls
 
-                        elif isinstance(operation_handler_config, OperationHandlerOriginationPatternConfig):
-                            _logger.info('Registering storage type')
+                        elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
+                            _logger.info('Registering origination storage type')
                             storage_type_module = importlib.import_module(
                                 f'{self.package}.types.{operation_pattern_config.contract_config.module_name}.storage'
                             )
