@@ -1,3 +1,7 @@
+---
+description: Header block
+---
+
 # spec\_version
 
 DipDup specification version is used to determine the compatibility of the toolkit and configuration file format and/or features.

@@ -21,7 +21,7 @@ database:
 ```
 
 {% hint style="info" %}
-NOTE: while it's sometimes convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines.
+**NOTE**: while it's sometimes convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines.
 {% endhint %}
 
 ### PostgreSQL
