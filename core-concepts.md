@@ -1,6 +1,6 @@
 # Core concepts
 
-DipDup is a tool that abstracts developer from the indexing and API creation workflow and let him focus on the business logic only. It also applies selective indexing techniques to ensure fast initial sync phase and the most efficient use of public API endpoints.
+DipDup is a tool that abstracts developer from the indexing and data serving workflow and let him focus on the business logic only. It also applies selective indexing techniques to ensure fast initial sync phase and the most efficient use of public API endpoints.
 
 DipDup is heavily inspired by [The Graph](https://thegraph.com/) Protocol but there are several important differences:
 
