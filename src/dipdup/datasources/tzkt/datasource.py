@@ -712,4 +712,11 @@ class TzktDatasource:
         return block
 
     async def get_similar_contracts(self, address: Address, strict: bool = False) -> List[Address]:
-        return ['KT1CUmBuq87XKeDs1UcmaonWC3aeygmXVpsk', 'KT1R8AZn5KG7mkbnJ5bzMuUw2isL8tMYkDVD']
+        entrypoint = 'same' if strict else 'similar'
+        self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
+
+        contracts = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{address}/{entrypoint}?select=address',
+        )
+        return contracts
