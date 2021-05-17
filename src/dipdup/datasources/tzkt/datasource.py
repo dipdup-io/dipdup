@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
@@ -18,12 +18,16 @@ from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
     BlockIndexConfig,
+    ContractConfig,
+    DipDupConfig,
     IndexConfigTemplateT,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
     OperationType,
+    StaticTemplateConfig,
+    TzktDatasourceConfig,
 )
 from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
@@ -78,6 +82,7 @@ class ContractSubscription:
     code_hash: str
     strict: bool
     template: IndexConfigTemplateT
+    contract_config: ContractConfig
 
 
 class OperationFetcherChannel(Enum):
@@ -387,10 +392,10 @@ class TzktDatasource:
     async def subscribe_to_big_maps(self, address: Address, path: Path) -> None:
         self._logger.info('Subscribing to %s, %s', address, path)
 
-    async def add_contract_subscription(self, address: Address, template: IndexConfigTemplateT, strict: bool) -> None:
+    async def add_contract_subscription(self, contract_config: ContractConfig, template: IndexConfigTemplateT, strict: bool) -> None:
         contract = await self._proxy.http_request(
             'get',
-            url=f'{self._url}/v1/contracts/{address}',
+            url=f'{self._url}/v1/contracts/{contract_config.address}',
             params={
                 "select": "typeHash,codeHash",
             },
@@ -401,6 +406,7 @@ class TzktDatasource:
                 code_hash=contract['codeHash'],
                 strict=strict,
                 template=template,
+                contract_config=contract_config,
             )
         )
 
@@ -541,17 +547,16 @@ class TzktDatasource:
 
                         if operation.originated_contract_address:
                             for contract_subscription in self._contract_subscriptions:
-                                # FIXME: Add new index without restarting app
                                 if (
                                     contract_subscription.strict is True
                                     and contract_subscription.code_hash == operation.originated_contract_code_hash
                                 ):
-                                    os.execl(sys.executable, sys.executable, *sys.argv)
+                                    await self.on_contract_match(contract_subscription, operation.originated_contract_address)
                                 if (
                                     contract_subscription.strict is False
                                     and contract_subscription.type_hash == operation.originated_contract_type_hash
                                 ):
-                                    os.execl(sys.executable, sys.executable, *sys.argv)
+                                    await self.on_contract_match(contract_subscription, operation.originated_contract_address)
 
                         await self._operation_cache.add(operation)
 
@@ -716,6 +721,23 @@ class TzktDatasource:
 
         await handler_config.callback_fn(*args)
 
+    async def on_contract_match(self, contract_subscription: ContractSubscription, address: Address) -> None:
+        # FIXME: Summons tainted souls into the realm of the living
+        datasource_name = cast(str, contract_subscription.template.datasource)
+        temp_config = DipDupConfig(
+            spec_version='',
+            package='',
+            contracts=dict(contract=contract_subscription.contract_config),
+            datasources={datasource_name: TzktDatasourceConfig(kind='tzkt', url=self._url)},
+            indexes=dict(template=StaticTemplateConfig(template='template', values=dict(contract=address))),
+            templates=dict(template=contract_subscription.template),
+        )
+        temp_config.pre_initialize()
+        await temp_config.initialize()
+        index_name, index_config = list(temp_config.indexes.items())[0]
+        await self.add_index(index_name, cast(IndexConfigTemplateT, index_config))
+        await self.on_connect()
+
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
         storage = operation_json.get('storage')
@@ -790,6 +812,6 @@ class TzktDatasource:
             params=dict(
                 select='address',
                 limit=TZKT_HTTP_REQUEST_LIMIT,
-            )
+            ),
         )
         return contracts

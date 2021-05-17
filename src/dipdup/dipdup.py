@@ -73,7 +73,7 @@ class DipDup:
                         datasources[datasource_config].set_rollback_fn(rollback_fn)
 
                     contract_config = self._config.contracts[cast(str, index_config.similar_to)]
-                    await datasources[datasource_config].add_contract_subscription(contract_config.address, template, index_config.strict)
+                    await datasources[datasource_config].add_contract_subscription(contract_config, template, index_config.strict)
                     similar_contracts = await datasources[datasource_config].get_similar_contracts(contract_config.address)
                     for contract_address in similar_contracts:
                         self._config.contracts[contract_address] = ContractConfig(
