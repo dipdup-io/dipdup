@@ -82,6 +82,7 @@ class ContractSubscription:
     code_hash: str
     strict: bool
     template: IndexConfigTemplateT
+    template_name: str
     contract_config: ContractConfig
 
 
@@ -395,7 +396,13 @@ class TzktDatasource:
     async def subscribe_to_big_maps(self, address: Address, path: Path) -> None:
         self._logger.info('Subscribing to %s, %s', address, path)
 
-    async def add_contract_subscription(self, contract_config: ContractConfig, template: IndexConfigTemplateT, strict: bool) -> None:
+    async def add_contract_subscription(
+        self,
+        contract_config: ContractConfig,
+        template_name: str,
+        template: IndexConfigTemplateT,
+        strict: bool,
+    ) -> None:
         contract = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/contracts/{contract_config.address}',
@@ -409,6 +416,7 @@ class TzktDatasource:
                 code_hash=contract['codeHash'],
                 strict=strict,
                 template=template,
+                template_name=template_name,
                 contract_config=contract_config,
             )
         )
@@ -732,7 +740,14 @@ class TzktDatasource:
             package=cast(str, self._package),
             contracts=dict(contract=contract_subscription.contract_config),
             datasources={datasource_name: TzktDatasourceConfig(kind='tzkt', url=self._url)},
-            indexes=dict(template=StaticTemplateConfig(template='template', values=dict(contract='contract'))),
+            indexes={
+                f'{contract_subscription.template_name}_{address}': StaticTemplateConfig(
+                    template='template',
+                    values=dict(
+                        contract='contract',
+                    ),
+                )
+            },
             templates=dict(template=contract_subscription.template),
         )
         temp_config.pre_initialize()
