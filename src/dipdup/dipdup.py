@@ -71,6 +71,7 @@ class DipDup:
                     if datasource_config not in datasources:
                         datasources[datasource_config] = TzktDatasource(datasource_config.url, cache)
                         datasources[datasource_config].set_rollback_fn(rollback_fn)
+                        datasources[datasource_config].set_package(self._config.package)
 
                     contract_config = self._config.contracts[cast(str, index_config.similar_to)]
                     await datasources[datasource_config].add_contract_subscription(contract_config, template, index_config.strict)
@@ -103,6 +104,7 @@ class DipDup:
                     if index_config.datasource_config not in datasources:
                         datasources[index_config.datasource_config] = TzktDatasource(index_config.datasource_config.url, cache)
                         datasources[index_config.datasource_config].set_rollback_fn(rollback_fn)
+                        datasources[datasource_config].set_package(self._config.package)
                     await datasources[index_config.datasource_config].add_index(index_name, index_config)
                 else:
                     raise NotImplementedError(f'Datasource `{index_config.datasource}` is not supported')

@@ -259,6 +259,7 @@ class TzktDatasource:
         self._operation_cache = OperationCache()
         self._big_map_cache = BigMapCache()
         self._rollback_fn: Optional[Callable[[int, int], Awaitable[None]]] = None
+        self._package: Optional[str] = None
         self._proxy = TzktRequestProxy(cache)
 
     async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
@@ -276,6 +277,9 @@ class TzktDatasource:
 
     def set_rollback_fn(self, fn: Callable[[int, int], Awaitable[None]]) -> None:
         self._rollback_fn = fn
+
+    def set_package(self, package: str) -> None:
+        self._package = package
 
     def _get_client(self) -> BaseHubConnection:
         if self._client is None:
@@ -382,7 +386,6 @@ class TzktDatasource:
             'SubscribeToOperations',
             [
                 {
-                    'address': '',
                     'types': 'origination',
                 }
             ],
@@ -725,11 +728,11 @@ class TzktDatasource:
         # FIXME: Summons tainted souls into the realm of the living
         datasource_name = cast(str, contract_subscription.template.datasource)
         temp_config = DipDupConfig(
-            spec_version='',
-            package='',
+            spec_version='0.1',
+            package=cast(str, self._package),
             contracts=dict(contract=contract_subscription.contract_config),
             datasources={datasource_name: TzktDatasourceConfig(kind='tzkt', url=self._url)},
-            indexes=dict(template=StaticTemplateConfig(template='template', values=dict(contract=address))),
+            indexes=dict(template=StaticTemplateConfig(template='template', values=dict(contract='contract'))),
             templates=dict(template=contract_subscription.template),
         )
         temp_config.pre_initialize()
