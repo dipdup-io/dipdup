@@ -36,19 +36,3 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: false
-    - name: telegram notification
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        message: |
-          Pytezos ${{ env.RELEASE_VERSION }} has been released 🎉
-          More info at https://github.com/baking-bad/pytezos/releases/tag/${{ env.RELEASE_VERSION }}
-    - name: slack notification
-      uses: Ilshidur/action-slack@master
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-      with:
-        args: |
-          Pytezos ${{ env.RELEASE_VERSION }} has been released 🎉
-          More info at https://github.com/baking-bad/pytezos/releases/tag/${{ env.RELEASE_VERSION }}
