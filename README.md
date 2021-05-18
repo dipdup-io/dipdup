@@ -40,7 +40,8 @@ indexes:
   tzbtc_holders_mainnet:
     kind: operation
     datasource: tzkt_staging
-    contract: tzbtc_mainnet
+    contracts: 
+      - tzbtc_mainnet
     handlers:
       - callback: on_transfer
         pattern:
@@ -118,23 +119,58 @@ class Holder(Model):
 `on_transfer.py`
 
 ```python
-from dipdup_demo.types.tzbtc.parameter.transfer import Transfer
-import dipdup_demo.models as models
-from dipdup.models import HandlerContext, OperationContext
+from typing import Optional
+from decimal import Decimal
+
+from dipdup.models import OperationData, OperationHandlerContext, 
+    OriginationContext, TransactionContext
+
+import demo_tzbtc.models as models
+
+from demo_tzbtc.types.tzbtc.parameter.transfer import TransferParameter
+from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
+from demo_tzbtc.handlers.on_balance_update import on_balance_update
 
 
 async def on_transfer(
-    ctx: HandlerContext, 
-    transfer: OperationContext[Transfer]
+    ctx: OperationHandlerContext,
+    transfer: TransactionContext[TransferParameter, TzbtcStorage],
 ) -> None:
-    
-    sender = await 
-    
+    if transfer.parameter.from_ == transfer.parameter.to:
+        return
+    amount = Decimal(transfer.parameter.value) / (10 ** 8)
+    await on_balance_update(address=transfer.parameter.from_,
+                            balance_update=-amount,
+                            timestamp=transfer.data.timestamp)
+    await on_balance_update(address=transfer.parameter.to,
+                            balance_update=amount,
+                            timestamp=transfer.data.timestamp)
 ```
 
 `on_mint.py`
 
 ```python
+from typing import Optional
+from decimal import Decimal
+
+from dipdup.models import OperationData, OperationHandlerContext, 
+    OriginationContext, TransactionContext
+
+import demo_tzbtc.models as models
+
+from demo_tzbtc.types.tzbtc.parameter.mint import MintParameter
+from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
+from demo_tzbtc.handlers.on_balance_update import on_balance_update
+
+
+async def on_mint(
+    ctx: OperationHandlerContext,
+    mint: TransactionContext[MintParameter, TzbtcStorage],
+) -> None:
+    amount = Decimal(mint.parameter.value) / (10 ** 8)
+    await on_balance_update(address=mint.parameter.to,
+                            balance_update=amount,
+                            timestamp=mint.data.timestamp)
 
 ```
 {% endtab %}
