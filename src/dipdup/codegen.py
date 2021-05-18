@@ -6,7 +6,7 @@ from contextlib import suppress
 from os import mkdir
 from os.path import basename, dirname, exists, join, splitext
 from shutil import rmtree
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from jinja2 import Template
 
@@ -15,11 +15,12 @@ from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
     DipDupConfig,
-    IndexTemplateConfig,
+    DynamicTemplateConfig,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
+    StaticTemplateConfig,
     TzktDatasourceConfig,
 )
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -80,7 +81,18 @@ async def create_package(config: DipDupConfig):
             file.write(models_code)
 
 
-async def fetch_schemas(config: DipDupConfig):
+async def resolve_dynamic_templates(config: DipDupConfig) -> None:
+    for index_name, index_config in config.indexes.items():
+        if isinstance(index_config, DynamicTemplateConfig):
+            config.indexes[index_name] = StaticTemplateConfig(
+                template=index_config.template,
+                values=dict(contract=cast(str, index_config.similar_to)),
+            )
+            config.pre_initialize()
+            index_config = config.indexes[index_name]
+
+
+async def fetch_schemas(config: DipDupConfig) -> None:
     _logger.info('Creating `schemas` package')
     schemas_path = join(config.package_path, 'schemas')
     with suppress(FileExistsError):
@@ -88,7 +100,8 @@ async def fetch_schemas(config: DipDupConfig):
 
     schemas_cache = SchemasCache()
 
-    for index_name, index_config in config.indexes.items():
+    for index_config in config.indexes.values():
+
         if isinstance(index_config, OperationIndexConfig):
             for operation_handler_config in index_config.handlers:
                 for operation_pattern_config in operation_handler_config.pattern:
@@ -160,7 +173,12 @@ async def fetch_schemas(config: DipDupConfig):
                     with suppress(FileExistsError):
                         mkdir(big_map_schemas_path)
 
-                    big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_pattern_config.path)
+                    try:
+                        big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_pattern_config.path)
+                    except StopIteration as e:
+                        raise ConfigurationError(
+                            f'Contract `{contract_config.address}` has no big map path `{big_map_pattern_config.path}`'
+                        ) from e
                     big_map_key_schema = big_map_schema['keySchema']
                     big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_pattern_config.path}.key.json')
 
@@ -175,7 +193,7 @@ async def fetch_schemas(config: DipDupConfig):
                         with open(big_map_value_schema_path, 'w') as file:
                             file.write(json.dumps(big_map_value_schema, indent=4))
 
-        elif isinstance(index_config, IndexTemplateConfig):
+        elif isinstance(index_config, StaticTemplateConfig):
             raise RuntimeError('Config is not initialized')
 
         else:

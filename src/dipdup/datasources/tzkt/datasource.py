@@ -1,12 +1,15 @@
 import asyncio
 import logging
+import os
+import sys
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
 from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
+from pydantic.dataclasses import dataclass
 from tortoise.transactions import in_transaction
 
 from dipdup import __version__
@@ -15,11 +18,16 @@ from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
     BlockIndexConfig,
+    ContractConfig,
+    DipDupConfig,
+    IndexConfigTemplateT,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
     OperationType,
+    StaticTemplateConfig,
+    TzktDatasourceConfig,
 )
 from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
@@ -66,6 +74,16 @@ TRANSACTION_OPERATION_FIELDS = (
 IndexName = str
 Address = str
 Path = str
+
+
+@dataclass
+class ContractSubscription:
+    type_hash: str
+    code_hash: str
+    strict: bool
+    template: IndexConfigTemplateT
+    template_name: str
+    contract_config: ContractConfig
 
 
 class OperationFetcherChannel(Enum):
@@ -234,6 +252,7 @@ class TzktDatasource:
         self._big_map_index_by_address: Dict[Address, BigMapIndexConfig] = {}
         self._callback_lock = asyncio.Lock()
         self._operation_subscriptions: Dict[Address, List[OperationType]] = {}
+        self._contract_subscriptions: List[ContractSubscription] = []
         self._big_map_subscriptions: Dict[Address, List[Path]] = {}
         self._operations_synchronized = asyncio.Event()
         self._big_maps_synchronized = asyncio.Event()
@@ -241,6 +260,7 @@ class TzktDatasource:
         self._operation_cache = OperationCache()
         self._big_map_cache = BigMapCache()
         self._rollback_fn: Optional[Callable[[int, int], Awaitable[None]]] = None
+        self._package: Optional[str] = None
         self._proxy = TzktRequestProxy(cache)
 
     async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
@@ -258,6 +278,9 @@ class TzktDatasource:
 
     def set_rollback_fn(self, fn: Callable[[int, int], Awaitable[None]]) -> None:
         self._rollback_fn = fn
+
+    def set_package(self, package: str) -> None:
+        self._package = package
 
     def _get_client(self) -> BaseHubConnection:
         if self._client is None:
@@ -331,6 +354,8 @@ class TzktDatasource:
             await self.subscribe_to_operations(address, types)
         for address, paths in self._big_map_subscriptions.items():
             await self.subscribe_to_big_maps(address, paths)
+        if self._contract_subscriptions:
+            await self.subscribe_to_originations()
 
     def on_error(self, message: CompletionMessage):
         raise Exception(message.error)
@@ -351,6 +376,21 @@ class TzktDatasource:
             ],
         )
 
+    async def subscribe_to_originations(self) -> None:
+        self._logger.info('Subscribing to originations')
+
+        while self._get_client().transport.state != ConnectionState.connected:
+            await asyncio.sleep(0.1)
+
+        await self._get_client().send(
+            'SubscribeToOperations',
+            [
+                {
+                    'types': 'origination',
+                }
+            ],
+        )
+
     async def subscribe_to_big_maps(self, address: Address, paths: List[Path]) -> None:
         self._logger.info('Subscribing to big map updates of %s, %s', address, paths)
 
@@ -367,6 +407,31 @@ class TzktDatasource:
                     }
                 ],
             )
+
+    async def add_contract_subscription(
+        self,
+        contract_config: ContractConfig,
+        template_name: str,
+        template: IndexConfigTemplateT,
+        strict: bool,
+    ) -> None:
+        contract = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{contract_config.address}',
+            params={
+                "select": "typeHash,codeHash",
+            },
+        )
+        self._contract_subscriptions.append(
+            ContractSubscription(
+                type_hash=contract['typeHash'],
+                code_hash=contract['codeHash'],
+                strict=strict,
+                template=template,
+                template_name=template_name,
+                contract_config=contract_config,
+            )
+        )
 
     async def fetch_operations(self, index_config: OperationIndexConfig, last_level: int) -> None:
         self._logger.info('Fetching operations prior to level %s', last_level)
@@ -502,6 +567,20 @@ class TzktDatasource:
                         operation = self.convert_operation(operation_json)
                         if operation.status != 'applied':
                             continue
+
+                        if operation.originated_contract_address:
+                            for contract_subscription in self._contract_subscriptions:
+                                if (
+                                    contract_subscription.strict is True
+                                    and contract_subscription.code_hash == operation.originated_contract_code_hash
+                                ):
+                                    await self.on_contract_match(contract_subscription, operation.originated_contract_address)
+                                if (
+                                    contract_subscription.strict is False
+                                    and contract_subscription.type_hash == operation.originated_contract_type_hash
+                                ):
+                                    await self.on_contract_match(contract_subscription, operation.originated_contract_address)
+
                         await self._operation_cache.add(operation)
 
                     async with in_transaction():
@@ -665,6 +744,30 @@ class TzktDatasource:
 
         await handler_config.callback_fn(*args)
 
+    async def on_contract_match(self, contract_subscription: ContractSubscription, address: Address) -> None:
+        # FIXME: Summons tainted souls into the realm of the living
+        datasource_name = cast(str, contract_subscription.template.datasource)
+        temp_config = DipDupConfig(
+            spec_version='0.1',
+            package=cast(str, self._package),
+            contracts=dict(contract=contract_subscription.contract_config),
+            datasources={datasource_name: TzktDatasourceConfig(kind='tzkt', url=self._url)},
+            indexes={
+                f'{contract_subscription.template_name}_{address}': StaticTemplateConfig(
+                    template='template',
+                    values=dict(
+                        contract='contract',
+                    ),
+                )
+            },
+            templates=dict(template=contract_subscription.template),
+        )
+        temp_config.pre_initialize()
+        await temp_config.initialize()
+        index_name, index_config = list(temp_config.indexes.items())[0]
+        await self.add_index(index_name, cast(IndexConfigTemplateT, index_config))
+        await self.on_connect()
+
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
         storage = operation_json.get('storage')
@@ -691,6 +794,12 @@ class TzktDatasource:
             entrypoint=operation_json['parameter']['entrypoint'] if operation_json.get('parameter') else None,
             parameter_json=operation_json['parameter']['value'] if operation_json.get('parameter') else None,
             originated_contract_address=operation_json['originatedContract']['address']
+            if operation_json.get('originatedContract')
+            else None,
+            originated_contract_type_hash=operation_json['originatedContract']['typeHash']
+            if operation_json.get('originatedContract')
+            else None,
+            originated_contract_code_hash=operation_json['originatedContract']['codeHash']
             if operation_json.get('originatedContract')
             else None,
             storage=storage,
@@ -722,3 +831,17 @@ class TzktDatasource:
         )
         self._logger.debug(block)
         return block
+
+    async def get_similar_contracts(self, address: Address, strict: bool = False) -> List[Address]:
+        entrypoint = 'same' if strict else 'similar'
+        self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
+
+        contracts = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{address}/{entrypoint}?select=address',
+            params=dict(
+                select='address',
+                limit=TZKT_HTTP_REQUEST_LIMIT,
+            ),
+        )
+        return contracts

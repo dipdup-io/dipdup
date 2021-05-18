@@ -9,7 +9,7 @@ from dipdup.config import (
     BigMapIndexConfig,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
-    OperationHandlerPatternConfig,
+    OperationHandlerPatternConfigT,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
 )
@@ -49,7 +49,7 @@ class OperationCache:
             self._operations[key] = []
         self._operations[key].append(operation)
 
-    def match_operation(self, pattern_config: OperationHandlerPatternConfig, operation: OperationData) -> bool:
+    def match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
             if pattern_config.entrypoint != operation.entrypoint:
                 return False

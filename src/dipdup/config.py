@@ -9,7 +9,7 @@ from collections import defaultdict
 from enum import Enum
 from os import environ as env
 from os.path import dirname
-from typing import Any, Callable, Dict, List, Optional, Type, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import validator
@@ -258,7 +258,8 @@ class OperationHandlerOriginationPatternConfig:
 
     @property
     def contract_config(self) -> ContractConfig:
-        assert isinstance(self.originated_contract, ContractConfig)
+        if not isinstance(self.originated_contract, ContractConfig):
+            raise RuntimeError('Config is not initialized')
         return self.originated_contract
 
     @property
@@ -284,9 +285,6 @@ class OperationHandlerOriginationPatternConfig:
         return f'{module_name}_origination: OriginationContext[{storage_cls}],'
 
 
-OperationHandlerPatternConfig = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
-
-
 @dataclass
 class HandlerConfig:
     callback: str
@@ -305,6 +303,9 @@ class HandlerConfig:
         self._callback_fn = fn
 
 
+OperationHandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
+
+
 @dataclass
 class OperationHandlerConfig(HandlerConfig):
     """Operation handler config
@@ -313,7 +314,7 @@ class OperationHandlerConfig(HandlerConfig):
     :param pattern: Filters to match operations in group
     """
 
-    pattern: List[OperationHandlerPatternConfig]
+    pattern: List[OperationHandlerPatternConfigT]
 
 
 @dataclass
@@ -448,14 +449,31 @@ class BlockIndexConfig(IndexConfig):
 
 
 @dataclass
-class IndexTemplateConfig:
+class StaticTemplateConfig:
     kind = 'template'
     template: str
     values: Dict[str, str]
 
 
-IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, IndexTemplateConfig]
+@dataclass
+class DynamicTemplateConfig:
+    kind = 'dynamic'
+    template: str
+    similar_to: Union[str, ContractConfig]
+    strict: bool = False
+
+    @property
+    def contract_config(self) -> ContractConfig:
+        if not isinstance(self.similar_to, ContractConfig):
+            raise RuntimeError('Config is not initialized')
+        return self.similar_to
+
+
+IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, StaticTemplateConfig, DynamicTemplateConfig]
 IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
+HandlerPatternConfigT = Union[
+    OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig, BigMapHandlerPatternConfig
+]
 
 
 @dataclass
@@ -495,12 +513,20 @@ class DipDupConfig:
     hasura: Optional[HasuraConfig] = None
 
     def __post_init_post_parse__(self):
+        self.validate()
+        self.pre_initialize()
+
+    def validate(self) -> None:
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
 
+    def pre_initialize(self) -> None:
         _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
-            if isinstance(index_config, IndexTemplateConfig):
+            # NOTE: Dynamic templates will be resolved later in dipdup module
+            if isinstance(index_config, StaticTemplateConfig):
+                if not self.templates:
+                    raise ConfigurationError('`templates` section is missing')
                 try:
                     template = self.templates[index_config.template]
                 except KeyError as e:
@@ -510,10 +536,11 @@ class DipDupConfig:
                     value_regex = r'<[ ]*' + key + r'[ ]*>'
                     raw_template = re.sub(value_regex, value, raw_template)
                 json_template = json.loads(raw_template)
-                self.indexes[index_name] = template.__class__(**json_template)
-                self.indexes[index_name].template_values = index_config.values
+                new_index_config = template.__class__(**json_template)
+                new_index_config.template_values = index_config.values
+                self.indexes[index_name] = new_index_config
 
-        callback_patterns: Dict[str, List[List[OperationHandlerPatternConfig]]] = defaultdict(list)
+        callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
 
         _logger.info('Substituting contracts and datasources')
         for index_config in self.indexes.values():
@@ -579,6 +606,10 @@ class DipDupConfig:
                             except KeyError as e:
                                 raise ConfigurationError(f'Contract `{pattern.contract}` not found in `contracts` config section') from e
 
+            # NOTE: Dynamic templates will be resolved later in dipdup module
+            elif isinstance(index_config, DynamicTemplateConfig):
+                continue
+
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -586,13 +617,14 @@ class DipDupConfig:
         for callback, patterns in callback_patterns.items():
             if len(patterns) > 1:
 
-                def get_pattern_type(pattern: List[OperationHandlerPatternConfig]):
+                def get_pattern_type(pattern: Sequence[HandlerPatternConfigT]) -> str:
                     module_names = []
                     for pattern_config in pattern:
                         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig) and pattern_config.entrypoint:
                             module_names.append(pattern_config.destination_contract_config.module_name)
                         elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                             module_names.append(pattern_config.contract_config.module_name)
+                        # TODO: Check BigMapHandlerPatternConfig
                     return '::'.join(module_names)
 
                 pattern_types = list(map(get_pattern_type, patterns))
@@ -675,8 +707,11 @@ class DipDupConfig:
 
         for index_name, index_config in self.indexes.items():
 
-            if isinstance(index_config, IndexTemplateConfig):
+            if isinstance(index_config, StaticTemplateConfig):
                 raise RuntimeError('Config is not initialized')
+            # NOTE: Dynamic templates will be resolved later in dipdup module
+            if isinstance(index_config, DynamicTemplateConfig):
+                continue
 
             await self._initialize_index_state(index_name, index_config)
 
@@ -703,7 +738,7 @@ class DipDupConfig:
                             )
                             operation_pattern_config.parameter_type_cls = parameter_type_cls
 
-                            _logger.info('Registering storage type')
+                            _logger.info('Registering transaction storage type')
                             storage_type_module = importlib.import_module(
                                 f'{self.package}.types.{operation_pattern_config.destination_contract_config.module_name}.storage'
                             )
@@ -713,8 +748,8 @@ class DipDupConfig:
                             )
                             operation_pattern_config.storage_type_cls = storage_type_cls
 
-                        elif isinstance(operation_handler_config, OperationHandlerOriginationPatternConfig):
-                            _logger.info('Registering storage type')
+                        elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
+                            _logger.info('Registering origination storage type')
                             storage_type_module = importlib.import_module(
                                 f'{self.package}.types.{operation_pattern_config.contract_config.module_name}.storage'
                             )
