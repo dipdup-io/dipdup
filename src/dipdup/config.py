@@ -592,7 +592,10 @@ class DipDupConfig:
 
             elif isinstance(index_config, BigMapIndexConfig):
                 if isinstance(index_config.datasource, str):
-                    index_config.datasource = self.datasources[index_config.datasource]
+                    try:
+                        index_config.datasource = self.datasources[index_config.datasource]
+                    except KeyError as e:
+                        raise ConfigurationError(f'Datasource `{index_config.datasource}` not found in `datasources` config section') from e
 
                 for handler in index_config.handlers:
                     callback_patterns[handler.callback].append(handler.pattern)
