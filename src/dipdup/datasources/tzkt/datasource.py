@@ -330,8 +330,7 @@ class TzktDatasource:
         for address, types in self._operation_subscriptions.items():
             await self.subscribe_to_operations(address, types)
         for address, paths in self._big_map_subscriptions.items():
-            for path in paths:
-                await self.subscribe_to_big_maps(address, paths)
+            await self.subscribe_to_big_maps(address, paths)
 
     def on_error(self, message: CompletionMessage):
         raise Exception(message.error)
@@ -352,8 +351,22 @@ class TzktDatasource:
             ],
         )
 
-    async def subscribe_to_big_maps(self, address: Address, path: Path) -> None:
-        self._logger.info('Subscribing to %s, %s', address, path)
+    async def subscribe_to_big_maps(self, address: Address, paths: List[Path]) -> None:
+        self._logger.info('Subscribing to big map updates of %s, %s', address, paths)
+
+        while self._get_client().transport.state != ConnectionState.connected:
+            await asyncio.sleep(0.1)
+
+        for path in paths:
+            await self._get_client().send(
+                'SubscribeToBigMaps',
+                [
+                    {
+                        'address': address,
+                        'path': path,
+                    }
+                ],
+            )
 
     async def fetch_operations(self, index_config: OperationIndexConfig, last_level: int) -> None:
         self._logger.info('Fetching operations prior to level %s', last_level)
@@ -561,7 +574,7 @@ class TzktDatasource:
     async def add_big_map_subscription(self, address: str, path: str) -> None:
         if address not in self._big_map_subscriptions:
             self._big_map_subscriptions[address] = []
-        self._big_map_subscriptions[address].append('path')
+        self._big_map_subscriptions[address].append(path)
 
     async def on_operation_match(
         self,
