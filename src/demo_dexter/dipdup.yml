@@ -1,0 +1,68 @@
+spec_version: 0.1
+package: demo_dexter
+
+database:
+  kind: sqlite
+  path: dexter.sqlite3
+
+contracts:
+  tzbtc_dex_mainnet:
+    address: KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N
+    typename: dexter_fa12
+  tzbtc_token_mainnet:
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: fa12_token
+
+datasources:
+  tzkt_staging_mainnet:
+    kind: tzkt
+    url: https://staging.api.tzkt.io
+
+templates:
+  dexter_fa12:
+    kind: operation
+    datasource: tzkt_staging_mainnet
+    contracts:
+      - <dex_contract>
+    handlers:
+      - callback: on_fa12_token_to_xtz
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tokenToXtz
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_xtz_to_token
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: xtzToToken
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_add_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: addLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_remove_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: removeLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+
+indexes:
+  tzbtc_mainnet:
+    template: dexter_fa12
+    values:
+      dex_contract: tzbtc_dex_mainnet
+      token_contract: tzbtc_token_mainnet
+      symbol: tzBTC
+      decimals: 8
