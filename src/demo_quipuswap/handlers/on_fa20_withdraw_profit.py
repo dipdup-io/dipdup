@@ -16,7 +16,7 @@ async def on_fa20_withdraw_profit(
     if ctx.template_values is None:
         raise Exception('This index must be templated')
 
-    symbol = ctx.template_values['symbol']
+    symbol, _ = await models.Symbol.get_or_create(symbol=ctx.template_values['symbol'])
     trader, _ = await models.Trader.get_or_create(address=withdraw_profit.data.sender_address)
 
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)

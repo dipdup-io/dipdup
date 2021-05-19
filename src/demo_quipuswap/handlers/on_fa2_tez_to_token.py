@@ -17,7 +17,7 @@ async def on_fa2_tez_to_token(
         raise Exception('This index must be templated')
 
     decimals = int(ctx.template_values['decimals'])
-    symbol = ctx.template_values['symbol']
+    symbol, _ = await models.Symbol.get_or_create(symbol=ctx.template_values['symbol'])
     trader, _ = await models.Trader.get_or_create(address=tez_to_token_payment.data.sender_address)
 
     min_token_quantity = Decimal(tez_to_token_payment.parameter.min_out) / (10 ** decimals)

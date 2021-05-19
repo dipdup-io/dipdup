@@ -18,7 +18,7 @@ async def on_fa12_xtz_to_token(
         raise Exception('This index must be templated')
 
     decimals = int(ctx.template_values['decimals'])
-    symbol = ctx.template_values['symbol']
+    symbol, _ = await models.Symbol.get_or_create(symbol=ctx.template_values['symbol'])
     trader, _ = await models.Trader.get_or_create(address=xtz_to_token.data.sender_address)
 
     min_token_quantity = Decimal(xtz_to_token.parameter.minTokensBought) / (10 ** decimals)
