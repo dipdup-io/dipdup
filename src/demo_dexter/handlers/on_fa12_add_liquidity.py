@@ -1,14 +1,12 @@
 from decimal import Decimal
 from typing import Optional
 
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
-
 import demo_dexter.models as models
-
 from demo_dexter.types.dexter_fa12.parameter.add_liquidity import AddLiquidityParameter
 from demo_dexter.types.dexter_fa12.storage import DexterFa12Storage
 from demo_dexter.types.fa12_token.parameter.transfer import TransferParameter
 from demo_dexter.types.fa12_token.storage import Fa12TokenStorage
+from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 
 async def on_fa12_add_liquidity(
@@ -23,14 +21,14 @@ async def on_fa12_add_liquidity(
 
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']
-    trader = add_liquidity.data.sender_address
+    trader, _ = await models.Trader.get_or_create(address=add_liquidity.data.sender_address)
 
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
 
     assert add_liquidity.data.amount is not None
     tez_qty = Decimal(add_liquidity.data.amount) / (10 ** 6)
     token_qty = Decimal(transfer.parameter.value) / (10 ** decimals)
-    new_shares_qty = int(storage.accounts[trader].balance)
+    new_shares_qty = int(storage.accounts[trader.address].balance)
 
     price = (Decimal(storage.xtzPool) / (10 ** 6)) / (Decimal(storage.tokenPool) / (10 ** decimals))
     value = tez_qty + price * token_qty

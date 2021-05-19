@@ -1,14 +1,12 @@
 from decimal import Decimal
 from typing import Optional
 
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
-
 import demo_dexter.models as models
-
 from demo_dexter.types.dexter_fa12.parameter.token_to_xtz import TokenToXtzParameter
 from demo_dexter.types.dexter_fa12.storage import DexterFa12Storage
 from demo_dexter.types.fa12_token.parameter.transfer import TransferParameter
 from demo_dexter.types.fa12_token.storage import Fa12TokenStorage
+from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 
 async def on_fa12_token_to_xtz(
@@ -21,7 +19,7 @@ async def on_fa12_token_to_xtz(
 
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']
-    trader = token_to_xtz.data.sender_address
+    trader, _ = await models.Trader.get_or_create(address=token_to_xtz.data.sender_address)
 
     min_tez_quantity = Decimal(token_to_xtz.parameter.minXtzBought) / (10 ** 6)
     token_quantity = Decimal(token_to_xtz.parameter.tokensSold) / (10 ** decimals)
@@ -41,3 +39,7 @@ async def on_fa12_token_to_xtz(
         timestamp=transfer.data.timestamp,
     )
     await trade.save()
+
+    trader.trades_qty += 1  # type: ignore
+    trader.trades_amount += tez_quantity  # type: ignore
+    await trader.save()

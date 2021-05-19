@@ -20,7 +20,7 @@ async def on_fa12_divest_liquidity(
 
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']
-    trader = divest_liquidity.data.sender_address
+    trader, _ = await models.Trader.get_or_create(address=divest_liquidity.data.sender_address)
 
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
     transaction = next(op for op in ctx.operations if op.amount)

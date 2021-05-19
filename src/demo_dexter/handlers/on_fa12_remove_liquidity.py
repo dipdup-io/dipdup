@@ -1,14 +1,12 @@
 from decimal import Decimal
 from typing import Optional
 
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
-
 import demo_dexter.models as models
-
 from demo_dexter.types.dexter_fa12.parameter.remove_liquidity import RemoveLiquidityParameter
 from demo_dexter.types.dexter_fa12.storage import DexterFa12Storage
 from demo_dexter.types.fa12_token.parameter.transfer import TransferParameter
 from demo_dexter.types.fa12_token.storage import Fa12TokenStorage
+from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 
 async def on_fa12_remove_liquidity(
@@ -23,7 +21,7 @@ async def on_fa12_remove_liquidity(
 
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']
-    trader = remove_liquidity.data.sender_address
+    trader, _ = await models.Trader.get_or_create(address=remove_liquidity.data.sender_address)
 
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
     transaction = next(op for op in ctx.operations if op.amount)

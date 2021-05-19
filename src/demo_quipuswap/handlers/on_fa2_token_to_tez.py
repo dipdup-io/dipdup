@@ -18,7 +18,7 @@ async def on_fa2_token_to_tez(
 
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']
-    trader = token_to_tez_payment.data.sender_address
+    trader, _ = await models.Trader.get_or_create(address=token_to_tez_payment.data.sender_address)
 
     min_tez_quantity = Decimal(token_to_tez_payment.parameter.min_out) / (10 ** decimals)
     token_quantity = Decimal(token_to_tez_payment.parameter.amount) / (10 ** decimals)
@@ -38,3 +38,7 @@ async def on_fa2_token_to_tez(
         timestamp=transfer.data.timestamp,
     )
     await trade.save()
+
+    trader.trades_qty += 1  # type: ignore
+    trader.trades_amount += tez_quantity  # type: ignore
+    await trader.save()
