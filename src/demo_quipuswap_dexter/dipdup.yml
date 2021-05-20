@@ -27,6 +27,10 @@ contracts:
   dexter_tzbtc_dex_mainnet:
     address: KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N
     typename: dexter_fa12
+  dexter_kusd_dex_mainnet:
+    address: KT1AbYeDbjjcAnV1QK7EZUUdqku77CdkTuv6
+    typename: dexter_fa12
+
 
 datasources:
   tzkt_staging_mainnet:
@@ -173,7 +177,7 @@ indexes:
     values:
       dex_contract: quipuswap_kusd_dex_mainnet
       token_contract: kusd_token_mainnet
-      symbol: kUSD
+      symbol: quipuswap_kUSD
       decimals: 18
 
   # tzbtc_mainnet:
@@ -189,13 +193,21 @@ indexes:
     values:
       dex_contract: quipuswap_hdao_dex_mainnet
       token_contract: hdao_token_mainnet
-      symbol: hDAO
+      symbol: quipuswap_hDAO
       decimals: 6
 
-  dexter_tzbtc_mainnet:
+  # dexter_tzbtc_mainnet:
+  #   template: dexter_fa12
+  #   values:
+  #     dex_contract: dexter_tzbtc_dex_mainnet
+  #     token_contract: tzbtc_token_mainnet
+  #     symbol: dexter_tzBTC
+  #     decimals: 8
+
+  dexter_kusd_mainnet:
     template: dexter_fa12
     values:
-      dex_contract: dexter_tzbtc_dex_mainnet
-      token_contract: tzbtc_token_mainnet
-      symbol: tzBTC
-      decimals: 8
+      dex_contract: dexter_kusd_dex_mainnet
+      token_contract: kusd_token_mainnet
+      symbol: dexter_kUSD
+      decimals: 18
