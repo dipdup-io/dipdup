@@ -23,6 +23,7 @@ from dipdup.models import State
 from dipdup.utils import camel_to_snake, reindex, snake_to_camel
 
 ROLLBACK_HANDLER = 'on_rollback'
+BLOCK_HANDLER = 'on_block'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
 sys.path.append(os.getcwd())

@@ -43,7 +43,8 @@ AS $$
                 trade_7d.token_total_7d,
                 trade_7d.xtz_total_7d,
                 trade_1m.token_total_1m,
-                trade_1m.xtz_total_1m
+                trade_1m.xtz_total_1m,
+                NOW() as updated_at
             FROM trade_24h
             JOIN trade_7d ON trade_24h.symbol = trade_7d.symbol
             JOIN trade_1m ON trade_24h.symbol = trade_1m.symbol;

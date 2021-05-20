@@ -30,6 +30,12 @@ contracts:
   dexter_kusd_dex_mainnet:
     address: KT1AbYeDbjjcAnV1QK7EZUUdqku77CdkTuv6
     typename: dexter_fa12
+  quipuswap_ethtz_dex_mainnet:
+    address: KT1Evsp2yA19Whm24khvFPcwimK6UaAJu8Zo
+    typename: quipu_fa12
+  ethtz_token_mainnet:
+    address: KT19at7rQUvyjxnZ2fBv7D9zc8rkyG7gAoU8
+    typename: fa12_token
 
 
 datasources:
@@ -195,6 +201,14 @@ indexes:
       token_contract: hdao_token_mainnet
       symbol: quipuswap_hDAO
       decimals: 6
+
+  quipuswap_ethtz_mainnet:
+    template: quipuswap_fa12
+    values:
+      dex_contract: quipuswap_ethtz_dex_mainnet
+      token_contract: ethtz_token_mainnet
+      symbol: quipuswap_ETHtz
+      decimals: 18
 
   # dexter_tzbtc_mainnet:
   #   template: dexter_fa12
