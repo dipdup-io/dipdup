@@ -15,7 +15,7 @@ class Symbol(Model):
 class Trader(Model):
     address = fields.CharField(36, pk=True)
     trades_qty = fields.IntField(default=0)
-    trades_amount = fields.DecimalField(10, 6, default=0)
+    trades_amount = fields.DecimalField(decimal_places=6, max_digits=20, default=0)
 
 
 class Trade(Model):

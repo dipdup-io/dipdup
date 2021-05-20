@@ -1,9 +1,9 @@
 from decimal import Decimal
 from typing import Optional
 
-import demo_quipuswap.models as models
-from demo_quipuswap.types.quipu_fa12.parameter.withdraw_profit import WithdrawProfitParameter
-from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
+import demo_quipuswap_dexter.models as models
+from demo_quipuswap_dexter.types.quipu_fa12.parameter.withdraw_profit import WithdrawProfitParameter
+from demo_quipuswap_dexter.types.quipu_fa12.storage import QuipuFa12Storage
 from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 

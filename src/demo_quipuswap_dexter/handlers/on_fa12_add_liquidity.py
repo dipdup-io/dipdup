@@ -1,11 +1,11 @@
 from decimal import Decimal
 from typing import Optional
 
-import demo_dexter.models as models
-from demo_dexter.types.dexter_fa12.parameter.add_liquidity import AddLiquidityParameter
-from demo_dexter.types.dexter_fa12.storage import DexterFa12Storage
-from demo_dexter.types.fa12_token.parameter.transfer import TransferParameter
-from demo_dexter.types.fa12_token.storage import Fa12TokenStorage
+import demo_quipuswap_dexter.models as models
+from demo_quipuswap_dexter.types.dexter_fa12.parameter.add_liquidity import AddLiquidityParameter
+from demo_quipuswap_dexter.types.dexter_fa12.storage import DexterFa12Storage
+from demo_quipuswap_dexter.types.fa12_token.parameter.transfer import TransferParameter
+from demo_quipuswap_dexter.types.fa12_token.storage import Fa12TokenStorage
 from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 

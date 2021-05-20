@@ -1,13 +1,17 @@
 import asyncio
+from genericpath import exists
 import hashlib
 import importlib
 import logging
 from copy import copy
+from os.path import join
+from posix import listdir
 from typing import Dict, cast
 
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.utils import get_schema_sql
+from tortoise.transactions import in_transaction
 
 import dipdup.codegen as codegen
 from dipdup import __version__
@@ -146,3 +150,22 @@ class DipDup:
         elif schema_state.hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await reindex()
+
+        sql_path = join(self._config.package_path, 'sql')
+        if not exists(sql_path):
+            return
+        if not isinstance(self._config.database, PostgresDatabaseConfig):
+            self._logger.warning('Injecting raw SQL supported on PostgreSQL only')
+            return
+
+        for filename in listdir(sql_path):
+            if not filename.endswith('.sql'):
+                continue
+
+            with open(join(sql_path, filename)) as file:
+                sql = file.read()
+
+            self._logger.info('Applying raw SQL from `%s`', filename)
+
+            async with in_transaction() as conn:
+                await conn.execute_query(sql)

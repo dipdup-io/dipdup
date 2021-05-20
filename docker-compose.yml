@@ -14,13 +14,13 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
 
-  quipuswap:
+  quipuswap_dexter:
     build: .
     depends_on:
       - db
     volumes:
-      - ./src/demo_quipuswap/dipdup.yml:/home/dipdup/dipdup.yml
-      - ./src/demo_quipuswap/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
+      - ./src/demo_quipuswap_dexter/dipdup.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_quipuswap_dexter/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
     command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
     restart: always
     environment:

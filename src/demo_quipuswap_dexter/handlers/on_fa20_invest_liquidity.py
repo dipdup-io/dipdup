@@ -1,18 +1,19 @@
 from decimal import Decimal
 
-import demo_quipuswap.models as models
-from demo_quipuswap.types.fa12_token.parameter.transfer import TransferParameter
-from demo_quipuswap.types.fa12_token.storage import Fa12TokenStorage
-from demo_quipuswap.types.quipu_fa12.parameter.invest_liquidity import InvestLiquidityParameter
-from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
+import demo_quipuswap_dexter.models as models
+from demo_quipuswap_dexter.types.fa2_token.parameter.transfer import TransferParameter
+from demo_quipuswap_dexter.types.fa2_token.storage import Fa2TokenStorage
+from demo_quipuswap_dexter.types.quipu_fa2.parameter.invest_liquidity import InvestLiquidityParameter
+from demo_quipuswap_dexter.types.quipu_fa2.storage import QuipuFa2Storage
 from dipdup.models import OperationHandlerContext, TransactionContext
 
 
-async def on_fa12_invest_liquidity(
+async def on_fa20_invest_liquidity(
     ctx: OperationHandlerContext,
-    invest_liquidity: TransactionContext[InvestLiquidityParameter, QuipuFa12Storage],
-    transfer: TransactionContext[TransferParameter, Fa12TokenStorage],
+    invest_liquidity: TransactionContext[InvestLiquidityParameter, QuipuFa2Storage],
+    transfer: TransactionContext[TransferParameter, Fa2TokenStorage],
 ) -> None:
+
     if ctx.template_values is None:
         raise Exception('This index must be templated')
 
@@ -26,8 +27,8 @@ async def on_fa12_invest_liquidity(
 
     assert invest_liquidity.data.amount is not None
     tez_qty = Decimal(invest_liquidity.data.amount) / (10 ** 6)
-    token_qty = Decimal(transfer.parameter.value) / (10 ** decimals)
-    new_shares_qty = int(storage.storage.ledger[trader].balance) + int(storage.storage.ledger[trader].frozen_balance)  # type: ignore
+    token_qty = sum(Decimal(tx.amount) for tx in transfer.parameter.__root__[0].txs) / (10 ** decimals)
+    new_shares_qty = int(storage.storage.ledger[trader.address].balance) + int(storage.storage.ledger[trader.address].frozen_balance)  # type: ignore
 
     price = (Decimal(storage.storage.tez_pool) / (10 ** 6)) / (Decimal(storage.storage.token_pool) / (10 ** decimals))
     value = tez_qty + price * token_qty

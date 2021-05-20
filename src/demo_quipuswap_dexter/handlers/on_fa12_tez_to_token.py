@@ -1,17 +1,17 @@
 from decimal import Decimal
 
-import demo_quipuswap.models as models
-from demo_quipuswap.types.fa2_token.parameter.transfer import TransferParameter
-from demo_quipuswap.types.fa2_token.storage import Fa2TokenStorage
-from demo_quipuswap.types.quipu_fa2.parameter.tez_to_token_payment import TezToTokenPaymentParameter
-from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
+import demo_quipuswap_dexter.models as models
+from demo_quipuswap_dexter.types.fa12_token.parameter.transfer import TransferParameter
+from demo_quipuswap_dexter.types.fa12_token.storage import Fa12TokenStorage
+from demo_quipuswap_dexter.types.quipu_fa12.parameter.tez_to_token_payment import TezToTokenPaymentParameter
+from demo_quipuswap_dexter.types.quipu_fa12.storage import QuipuFa12Storage
 from dipdup.models import OperationHandlerContext, TransactionContext
 
 
-async def on_fa2_tez_to_token(
+async def on_fa12_tez_to_token(
     ctx: OperationHandlerContext,
-    tez_to_token_payment: TransactionContext[TezToTokenPaymentParameter, QuipuFa2Storage],
-    transfer: TransactionContext[TransferParameter, Fa2TokenStorage],
+    tez_to_token_payment: TransactionContext[TezToTokenPaymentParameter, QuipuFa12Storage],
+    transfer: TransactionContext[TransferParameter, Fa12TokenStorage],
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')
@@ -21,8 +21,8 @@ async def on_fa2_tez_to_token(
     trader, _ = await models.Trader.get_or_create(address=tez_to_token_payment.data.sender_address)
 
     min_token_quantity = Decimal(tez_to_token_payment.parameter.min_out) / (10 ** decimals)
+    token_quantity = Decimal(transfer.parameter.value) / (10 ** decimals)
     assert tez_to_token_payment.data.amount is not None
-    token_quantity = sum(Decimal(tx.amount) for tx in transfer.parameter.__root__[0].txs) / (10 ** decimals)
     tez_quantity = Decimal(tez_to_token_payment.data.amount) / (10 ** 6)
     assert min_token_quantity <= token_quantity, tez_to_token_payment.data.hash
 
@@ -32,7 +32,7 @@ async def on_fa2_tez_to_token(
         side=models.TradeSide.BUY,
         quantity=token_quantity,
         price=token_quantity / tez_quantity,
-        slippage=1 - (min_token_quantity / token_quantity),
+        slippage=(1 - (min_token_quantity / token_quantity)).quantize(Decimal('0.000001')),
         level=transfer.data.level,
         timestamp=transfer.data.timestamp,
     )

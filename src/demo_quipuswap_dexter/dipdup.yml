@@ -1,15 +1,15 @@
 spec_version: 0.1
-package: demo_quipuswap
+package: demo_quipuswap_dexter
 
 database:
   kind: sqlite
-  path: quipuswap.sqlite3
+  path: quipuswap_dexter.sqlite3
 
 contracts:
-  kusd_dex_mainnet:
+  quipuswap_kusd_dex_mainnet:
     address: KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2
     typename: quipu_fa12
-  tzbtc_dex_mainnet:
+  quipuswap_tzbtc_dex_mainnet:
     address: KT1N1wwNPqT5jGhM91GQ2ae5uY8UzFaXHMJS
     typename: quipu_fa12
   kusd_token_mainnet:
@@ -18,12 +18,15 @@ contracts:
   tzbtc_token_mainnet:
     address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
     typename: fa12_token
-  hdao_dex_mainnet:
+  quipuswap_hdao_dex_mainnet:
     address: KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph
     typename: quipu_fa2
   hdao_token_mainnet:
     address: KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW
     typename: fa2_token
+  dexter_tzbtc_dex_mainnet:
+    address: KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N
+    typename: dexter_fa12
 
 datasources:
   tzkt_staging_mainnet:
@@ -125,11 +128,50 @@ templates:
             source: <dex_contract>
             optional: True
 
+  dexter_fa12:
+    kind: operation
+    datasource: tzkt_staging_mainnet
+    contracts:
+      - <dex_contract>
+    handlers:
+      - callback: on_fa12_token_to_xtz
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tokenToXtz
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_xtz_to_token
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: xtzToToken
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_add_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: addLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_remove_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: removeLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+
 indexes:
-  kusd_mainnet:
+  quipuswap_kusd_mainnet:
     template: quipuswap_fa12
     values:
-      dex_contract: kusd_dex_mainnet
+      dex_contract: quipuswap_kusd_dex_mainnet
       token_contract: kusd_token_mainnet
       symbol: kUSD
       decimals: 18
@@ -137,15 +179,23 @@ indexes:
   # tzbtc_mainnet:
   #   template: quipuswap_fa12
   #   values:
-  #     dex_contract: tzbtc_dex_mainnet
+  #     dex_contract: quipuswap_tzbtc_dex_mainnet
   #     token_contract: tzbtc_token_mainnet
   #     symbol: tzBTC
   #     decimals: 8
 
-  hdao_mainnet:
+  quipuswap_hdao_mainnet:
     template: quipuswap_fa2
     values:
-      dex_contract: hdao_dex_mainnet
+      dex_contract: quipuswap_hdao_dex_mainnet
       token_contract: hdao_token_mainnet
       symbol: hDAO
       decimals: 6
+
+  dexter_tzbtc_mainnet:
+    template: dexter_fa12
+    values:
+      dex_contract: dexter_tzbtc_dex_mainnet
+      token_contract: tzbtc_token_mainnet
+      symbol: tzBTC
+      decimals: 8
