@@ -1,3 +1,4 @@
+from asyncio.log import logger
 import hashlib
 import importlib
 import json
@@ -630,9 +631,10 @@ class DipDupConfig:
 
                 pattern_types = list(map(get_pattern_type, patterns))
                 if any(map(lambda x: x != pattern_types[0], pattern_types)):
-                    raise ValueError(
-                        f'Callback `{callback}` used multiple times with different signatures. '
-                        f'Make sure you have specified contract typenames'
+                    logger.warning(
+                        'Callback `%s` used multiple times with different signatures. '
+                        'Make sure you have specified contract typenames',
+                        callback
                     )
 
     @property

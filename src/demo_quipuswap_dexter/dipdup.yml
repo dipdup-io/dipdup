@@ -17,7 +17,7 @@ contracts:
     typename: fa12_token
   tzbtc_token_mainnet:
     address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
-    typename: fa12_token
+    typename: fa12_token_tzbtc
   quipuswap_hdao_dex_mainnet:
     address: KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph
     typename: quipu_fa2
@@ -32,10 +32,10 @@ contracts:
     typename: dexter_fa12
   quipuswap_ethtz_dex_mainnet:
     address: KT1Evsp2yA19Whm24khvFPcwimK6UaAJu8Zo
-    typename: quipu_fa12
+    typename: quipu_fa12_ethtz
   ethtz_token_mainnet:
     address: KT19at7rQUvyjxnZ2fBv7D9zc8rkyG7gAoU8
-    typename: fa12_token
+    typename: fa12_token_ethtz
 
 
 datasources:
@@ -186,13 +186,13 @@ indexes:
       symbol: quipuswap_kUSD
       decimals: 18
 
-  # tzbtc_mainnet:
-  #   template: quipuswap_fa12
-  #   values:
-  #     dex_contract: quipuswap_tzbtc_dex_mainnet
-  #     token_contract: tzbtc_token_mainnet
-  #     symbol: tzBTC
-  #     decimals: 8
+  tzbtc_mainnet:
+    template: quipuswap_fa12
+    values:
+      dex_contract: quipuswap_tzbtc_dex_mainnet
+      token_contract: tzbtc_token_mainnet
+      symbol: tzBTC
+      decimals: 8
 
   quipuswap_hdao_mainnet:
     template: quipuswap_fa2
@@ -210,13 +210,13 @@ indexes:
       symbol: quipuswap_ETHtz
       decimals: 18
 
-  # dexter_tzbtc_mainnet:
-  #   template: dexter_fa12
-  #   values:
-  #     dex_contract: dexter_tzbtc_dex_mainnet
-  #     token_contract: tzbtc_token_mainnet
-  #     symbol: dexter_tzBTC
-  #     decimals: 8
+  dexter_tzbtc_mainnet:
+    template: dexter_fa12
+    values:
+      dex_contract: dexter_tzbtc_dex_mainnet
+      token_contract: tzbtc_token_mainnet
+      symbol: dexter_tzBTC
+      decimals: 8
 
   dexter_kusd_mainnet:
     template: dexter_fa12

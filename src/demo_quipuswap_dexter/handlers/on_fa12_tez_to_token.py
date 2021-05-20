@@ -1,4 +1,5 @@
 from decimal import Decimal
+from demo_quipuswap_dexter.handlers.types import Fa12TokenStorageT, QuipuFa12StorageT, TransferParameterT
 from demo_quipuswap_dexter.handlers.utils import update_totals
 
 import demo_quipuswap_dexter.models as models
@@ -11,8 +12,8 @@ from dipdup.models import OperationHandlerContext, TransactionContext
 
 async def on_fa12_tez_to_token(
     ctx: OperationHandlerContext,
-    tez_to_token_payment: TransactionContext[TezToTokenPaymentParameter, QuipuFa12Storage],
-    transfer: TransactionContext[TransferParameter, Fa12TokenStorage],
+    tez_to_token_payment: TransactionContext[TezToTokenPaymentParameter, QuipuFa12StorageT],
+    transfer: TransactionContext[TransferParameterT, Fa12TokenStorageT],
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')

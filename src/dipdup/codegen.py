@@ -116,6 +116,7 @@ async def fetch_schemas(config: DipDupConfig) -> None:
                     else:
                         continue
 
+                    _logger.debug(contract_config)
                     contract_schemas = await schemas_cache.get(index_config.datasource_config, contract_config)
 
                     contract_schemas_path = join(schemas_path, contract_config.module_name)
@@ -234,20 +235,19 @@ async def generate_types(config: DipDupConfig):
                 name += '_parameter'
 
             _logger.info('Generating type `%s`', name)
-            subprocess.run(
-                [
-                    'datamodel-codegen',
-                    '--input',
-                    input_path,
-                    '--output',
-                    output_path,
-                    '--class-name',
-                    snake_to_camel(name),
-                    '--disable-timestamp',
-                    '--use-default',
-                ],
-                check=True,
-            )
+            args = [
+                'datamodel-codegen',
+                '--input',
+                input_path,
+                '--output',
+                output_path,
+                '--class-name',
+                snake_to_camel(name),
+                '--disable-timestamp',
+                '--use-default',
+            ]
+            _logger.debug(' '.join(args))
+            subprocess.run(args, check=True)
 
 
 async def generate_handlers(config: DipDupConfig):

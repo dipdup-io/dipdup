@@ -1,5 +1,6 @@
 from decimal import Decimal
 from typing import Optional
+from demo_quipuswap_dexter.handlers.types import QuipuFa12StorageT
 
 import demo_quipuswap_dexter.models as models
 from demo_quipuswap_dexter.types.quipu_fa12.parameter.withdraw_profit import WithdrawProfitParameter
@@ -9,7 +10,7 @@ from dipdup.models import OperationData, OperationHandlerContext, OriginationCon
 
 async def on_fa12_withdraw_profit(
     ctx: OperationHandlerContext,
-    withdraw_profit: TransactionContext[WithdrawProfitParameter, QuipuFa12Storage],
+    withdraw_profit: TransactionContext[WithdrawProfitParameter, QuipuFa12StorageT],
     transaction_0: Optional[OperationData],
 ) -> None:
     if ctx.template_values is None:
