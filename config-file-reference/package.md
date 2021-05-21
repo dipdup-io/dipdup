@@ -1,5 +1,5 @@
 ---
-description: Header blockGenerates type classes and handler templates
+description: Header block
 ---
 
 # package
@@ -43,4 +43,6 @@ my_module_name/
 ```
 
 You don't have to create this hierarchy yourself — all the folders and most of the files are generated automatically by the CLI.
+
+`*` — is the according file extension \(_py_, _ts_, etc\)
 
