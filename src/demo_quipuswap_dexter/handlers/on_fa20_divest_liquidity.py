@@ -44,6 +44,7 @@ async def on_fa20_divest_liquidity(
         share_px = 0
 
     position.realized_pl += shares_qty * (share_px - position.avg_share_px)
+    print(position.shares_qty, shares_qty)
     position.shares_qty -= shares_qty  # type: ignore
     assert position.shares_qty >= 0, divest_liquidity.data.hash
 

@@ -32,6 +32,7 @@ async def on_fa20_invest_liquidity(
 
     price = (Decimal(storage.storage.tez_pool) / (10 ** 6)) / (Decimal(storage.storage.token_pool) / (10 ** decimals))
     value = tez_qty + price * token_qty
+    print(new_shares_qty, position.shares_qty)
     share_px = value / (new_shares_qty - position.shares_qty)
     assert share_px > 0, invest_liquidity.data.hash
 

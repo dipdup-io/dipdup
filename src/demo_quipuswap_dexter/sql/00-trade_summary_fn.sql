@@ -37,7 +37,7 @@ AS $$
         DROP TABLE IF EXISTS trade_total;
         CREATE TABLE trade_total AS
             SELECT
-                trade_24h.symbol AS symbol,
+                trade_1m.symbol AS symbol,
                 trade_24h.token_total_24h,
                 trade_24h.xtz_total_24h,
                 trade_7d.token_total_7d,
@@ -45,9 +45,8 @@ AS $$
                 trade_1m.token_total_1m,
                 trade_1m.xtz_total_1m,
                 NOW() as updated_at
-            FROM trade_24h
-            JOIN trade_7d ON trade_24h.symbol = trade_7d.symbol
-            JOIN trade_1m ON trade_24h.symbol = trade_1m.symbol;
-
+            FROM trade_1m
+            JOIN trade_7d ON trade_1m.symbol = trade_7d.symbol
+            JOIN trade_24h ON trade_24h.symbol = trade_1m.symbol;
     END;
 $$;

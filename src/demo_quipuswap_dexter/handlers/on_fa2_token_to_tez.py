@@ -20,11 +20,13 @@ async def on_fa2_token_to_tez(
     symbol, _ = await models.Symbol.get_or_create(symbol=ctx.template_values['symbol'])
     trader, _ = await models.Trader.get_or_create(address=token_to_tez_payment.data.sender_address)
 
-    min_tez_quantity = Decimal(token_to_tez_payment.parameter.min_out) / (10 ** decimals)
+    min_tez_quantity = Decimal(token_to_tez_payment.parameter.min_out) / (10 ** 6)
+    print(min_tez_quantity)
     token_quantity = Decimal(token_to_tez_payment.parameter.amount) / (10 ** decimals)
     transaction = next(op for op in ctx.operations if op.amount)
     assert transaction.amount is not None
     tez_quantity = Decimal(transaction.amount) / (10 ** 6)
+    print(tez_quantity)
     assert min_tez_quantity <= tez_quantity, token_to_tez_payment.data.hash
 
     trade = models.Trade(

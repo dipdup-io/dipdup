@@ -1,0 +1,818 @@
+contracts:
+  token_tzBTC:
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: token_tzBTC
+  dexter_fa12_tzBTC:
+    address: KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N
+    typename: dexter_fa12_tzBTC
+  token_kUSD:
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: token_kUSD
+  token_HEH:
+    address: KT1G1cCRNBgQ48mVDjopHjEmTN5Sbtar8nn9
+    typename: token_HEH
+  quipuswap_fa12_HEH:
+    address: KT1BgezWwHBxA9NrczwK9x3zfgFnUkc7JJ4b
+    typename: quipuswap_fa12_HEH
+  token_FEM:
+    address: KT1WHhATGLXFyhmZcK9k7NWo8nw53nDiBzWQ
+    typename: token_FEM
+  quipuswap_fa12_FEM:
+    address: KT1LtDLC8HYRi2E9vyb41AoYcmxT7N2QmpM7
+    typename: quipuswap_fa12_FEM
+  token_TSV:
+    address: KT1B5LL3GRQL3uLbqwy3C8FL8H7CWj74EbnA
+    typename: token_TSV
+  quipuswap_fa12_TSV:
+    address: KT1Unphw5yMDcUNAtKpynxWPPLKDegAZQtzb
+    typename: quipuswap_fa12_TSV
+  token_SWAP:
+    address: KT1Q3oMXVxL12Rz4GCwztu8wXBTfWWAM4r5t
+    typename: token_SWAP
+  quipuswap_fa12_SWAP:
+    address: KT1SArJcuCSKPzA2NBgR8QbXgD3acfDREBV5
+    typename: quipuswap_fa12_SWAP
+  token_QLkUSD:
+    address: KT1AxaBxkFLCUi3f8rdDAAxBKHfzY8LfKDRA
+    typename: token_QLkUSD
+  quipuswap_fa12_QLkUSD:
+    address: KT1WtFb1mTsFRd1n1nAYMdrE2Ud9XREz5hjK
+    typename: quipuswap_fa12_QLkUSD
+  token_ETHtz:
+    address: KT19at7rQUvyjxnZ2fBv7D9zc8rkyG7gAoU8
+    typename: token_ETHtz
+  quipuswap_fa12_ETHtz:
+    address: KT1Evsp2yA19Whm24khvFPcwimK6UaAJu8Zo
+    typename: quipuswap_fa12_ETHtz
+  token_USDtz:
+    address: KT1LN4LPSqTMS7Sd2CJw4bbDGRkMv2t68Fy9
+    typename: token_USDtz
+  quipuswap_fa12_USDtz:
+    address: KT1WxgZ1ZSfMgmsSDDcUn8Xn577HwnQ7e1Lb
+    typename: quipuswap_fa12_USDtz
+  token_STKR:
+    address: KT1AEfeckNbdEYwaMKkytBwPJPycz7jdSGea
+    typename: token_STKR
+  quipuswap_fa12_STKR:
+    address: KT1BMEEPX7MWzwwadW3NCSZe9XGmFJ7rs7Dr
+    typename: quipuswap_fa12_STKR
+  quipuswap_fa12_tzBTC:
+    address: KT1WBLrLE2vG8SedBqiSJFm4VVAZZBytJYHc
+    typename: quipuswap_fa12_tzBTC
+  quipuswap_fa12_kUSD:
+    address: KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6
+    typename: quipuswap_fa12_kUSD
+  token_wXTZ:
+    address: KT1VYsVfmobT7rsMVivvZ4J8i3bPiqz12NaH
+    typename: token_wXTZ
+  quipuswap_fa12_wXTZ:
+    address: KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT
+    typename: quipuswap_fa12_wXTZ
+  token_ptai:
+    address: KT1AyVdjSZffJtiMkdwwztEK7ePVyTogzogr
+    typename: token_ptai
+  quipuswap_fa2_ptai:
+    address: KT1TtpMxWwAR41b8f8k4ujqjd8YoWvYDR5tN
+    typename: quipuswap_fa2_ptai
+  token_HUNC:
+    address: KT1Vbrnm5HHc1j6ePoxJWyY92cxgVLkMUi9Y
+    typename: token_HUNC
+  quipuswap_fa2_HUNC:
+    address: KT1Ji39TrkVBd6L2SL7H4u9yvA1sPuSygthq
+    typename: quipuswap_fa2_HUNC
+  token_GHST:
+    address: KT1GMM54j7d8chfEitzUNJ2rrsA9Rs1zGBmK
+    typename: token_GHST
+  quipuswap_fa2_GHST:
+    address: KT1X6MJFtzypK6yuMXzg4KQ9FJAccH8PazKz
+    typename: quipuswap_fa2_GHST
+  token_wTaco:
+    address: KT1WtCq6FuL2kYTK1x7AkmpPjb8wEJZTUwvX
+    typename: token_wTaco
+  quipuswap_fa2_wTaco:
+    address: KT1G1ap6QA8GkVTRhzFEUrjakuaYmnczfhgt
+    typename: quipuswap_fa2_wTaco
+  token_FARM:
+    address: KT1CnuKyaAuYBAwJf9g5LobtxRZsF2KCD3o6
+    typename: token_FARM
+  quipuswap_fa2_FARM:
+    address: KT1NF5vZdWjYQcb8Uq9SkgTrLgc9P23AraX7
+    typename: quipuswap_fa2_FARM
+  token_FKB:
+    address: KT1E6C7WkwG8GWnPBBJJDMADrYuuYaK7ddmM
+    typename: token_FKB
+  quipuswap_fa2_FKB:
+    address: KT1MEJ7TUrphCY6tQ9LmyuyreZ5SRA1uU4xC
+    typename: quipuswap_fa2_FKB
+  token_BDVXP:
+    address: KT1T1PeeRDbsKDYM2nX8JjJ1kkAhHh5FnjgC
+    typename: token_BDVXP
+  quipuswap_fa2_BDVXP:
+    address: KT1C755xS3TLH4HEWaCJvWuoHTcytTBdEjgS
+    typename: quipuswap_fa2_BDVXP
+  token_sVote:
+    address: KT1Qf46j2x37sAN4t2MKRQRVt9gc4FZ5duMs
+    typename: token_sVote
+  quipuswap_fa2_sVote:
+    address: KT1VcUfNTWM8565RNLnwzmJRVHUNbZBKUtcj
+    typename: quipuswap_fa2_sVote
+  token_BISA:
+    address: KT1BRXzrMA8qHp9RkZmftV1YLCTdNrEXXBvu
+    typename: token_BISA
+  quipuswap_fa2_BISA:
+    address: KT1MrzcYWmMbPf3ftyKKH5RaMUVhQSXpZXjP
+    typename: quipuswap_fa2_BISA
+  token_Bezos:
+    address: KT1J4m9nxZQSKDwRNahAL1fziuwW9o5hb8Tb
+    typename: token_Bezos
+  quipuswap_fa2_Bezos:
+    address: KT1UM7LbQuZ5e26RgJ97aRLJ3ymmBUq8zjmB
+    typename: quipuswap_fa2_Bezos
+  token_CRUNCH:
+    address: KT1BHCumksALJQJ8q8to2EPigPW6qpyTr7Ng
+    typename: token_CRUNCH
+  quipuswap_fa2_CRUNCH:
+    address: KT1RRgK6eXvCWCiEGWhRZCSVGzhDzwXEEjS4
+    typename: quipuswap_fa2_CRUNCH
+  token_MIL:
+    address: KT1JWJSB6wkAEm3TGk9WUFHWNstBTKvuXsMC
+    typename: token_MIL
+  quipuswap_fa2_MIL:
+    address: KT1LZqFas2GEUe5z5CFkL9Wqq6tZFzQbopm8
+    typename: quipuswap_fa2_MIL
+  token_chunc:
+    address: KT1ELJHUaJsDk9cvXcKESMKW9sXFNrRLohxG
+    typename: token_chunc
+  quipuswap_fa2_chunc:
+    address: KT1LXkyMvjuTk2ugEA7UsRmEWHautLH147ez
+    typename: quipuswap_fa2_chunc
+  token_TACOS:
+    address: KT1TxyzQh7AqVHjjnPAAakuBwiCaWvVLp2pT
+    typename: token_TACOS
+  quipuswap_fa2_TACOS:
+    address: KT1ERtmznJQj4JpX7q6dN3JLJXaDTnZkD7e4
+    typename: quipuswap_fa2_TACOS
+  token_tChicken:
+    address: KT1QoDjTpkG9jmAMwrPCsaRR78xHDcRKydBp
+    typename: token_tChicken
+  quipuswap_fa2_tChicken:
+    address: KT1JzZtBeHDBS9XyEqUc9nZhsqcfeNLxVV1T
+    typename: quipuswap_fa2_tChicken
+  token_Chunk:
+    address: KT1Az4udnGnJTaGfU4X3oYqKoJ2tQUMBDPSt
+    typename: token_Chunk
+  quipuswap_fa2_Chunk:
+    address: KT1DiGxvRshVMn2p1KRfew6fnP9hpHT212MX
+    typename: quipuswap_fa2_Chunk
+  token_boofs:
+    address: KT18cH4erroRjVTyV3k8UzTpjey8m1NjFYae
+    typename: token_boofs
+  quipuswap_fa2_boofs:
+    address: KT1F2uvnfdN6GYKhhCDfb1kt5h9TaeXAbVeh
+    typename: quipuswap_fa2_boofs
+  token_RTT:
+    address: KT1JG7MKVa2Pba2Q2VwB2TZLY9ZTKh9csC1E
+    typename: token_RTT
+  quipuswap_fa2_RTT:
+    address: KT1QoKSXVnvytnkbMLu8Nqh9vH9qPdtvxR6K
+    typename: quipuswap_fa2_RTT
+  token_BEEF:
+    address: KT1M2Ws52krJrwJi1ZFsmVfazBiafWYKZTvd
+    typename: token_BEEF
+  quipuswap_fa2_BEEF:
+    address: KT1BtmMAnmTGHAA9ZV8xPzuwZu4ibL7f5qb3
+    typename: quipuswap_fa2_BEEF
+  token_BRR:
+    address: KT1UHNDNjrCAAiRbzZrtQF9qHSHVMYeJyX1y
+    typename: token_BRR
+  quipuswap_fa2_BRR:
+    address: KT1PmH3JCEo65koqSGGUArKSpbKMN8dJ3BPZ
+    typename: quipuswap_fa2_BRR
+  token_FLAME:
+    address: KT1Wa8yqRBpFCusJWgcQyjhRz7hUQAmFxW7j
+    typename: token_FLAME
+  quipuswap_fa2_FLAME:
+    address: KT1Q93ftAUzvfMGPwC78nX8eouL1VzmHPd4d
+    typename: quipuswap_fa2_FLAME
+  token_F15H:
+    address: KT1GorbQ7ZKetuCRQZrpgDq3QW1KAtqhzytk
+    typename: token_F15H
+  quipuswap_fa2_F15H:
+    address: KT1CNEgfKrGWtYdWAGG3cyZAUcFFpotmAme9
+    typename: quipuswap_fa2_F15H
+  token_TITz:
+    address: KT1AGhcM4GAEo2obsFjuEERcGkURdDFUW86h
+    typename: token_TITz
+  quipuswap_fa2_TITz:
+    address: KT1BNRefGboWR4p2SFwDDTosjnPKPL9hVk3q
+    typename: quipuswap_fa2_TITz
+  token_HSK:
+    address: KT1ACFCHun5GvukxDQq3KpMPXLr9QgnqvFvd
+    typename: token_HSK
+  quipuswap_fa2_HSK:
+    address: KT19HJTgEqnmi1cYyq8z2WFtyNTECodfixmj
+    typename: quipuswap_fa2_HSK
+  token_CUU:
+    address: KT18jLqWNnbYeA2593macdnbc6tkaaudH5fh
+    typename: token_CUU
+  quipuswap_fa2_CUU:
+    address: KT1W1hafYEzQkQLXyRPTxMeG3UaoUSsW7wNR
+    typename: quipuswap_fa2_CUU
+  token_SEB:
+    address: KT1981tPmXh4KrUQKZpQKb55kREX7QGJcF3E
+    typename: token_SEB
+  quipuswap_fa2_SEB:
+    address: KT1S4WyNiYPoYheihysddNh5hojNFdiVBwZL
+    typename: quipuswap_fa2_SEB
+  token_WEED:
+    address: KT1KEsRsSMvSkgZ9CwYy5fPA1e4j3TEpuiKK
+    typename: token_WEED
+  quipuswap_fa2_WEED:
+    address: KT1TYjt5eLHRx3nQpSfaR94oQ6vehu24vvSQ
+    typename: quipuswap_fa2_WEED
+  token_gDAO:
+    address: KT1HU2eCMzZhSHUpuBQjaN3L6un77iQvbZgy
+    typename: token_gDAO
+  quipuswap_fa2_gDAO:
+    address: KT198myhugqAVvtNbYgN4sBKMFRYBvprcKHf
+    typename: quipuswap_fa2_gDAO
+  token_BEEz:
+    address: KT1GAWT8469ueGEyzWyEgXtJJetgQEeZFnE2
+    typename: token_BEEz
+  quipuswap_fa2_BEEz:
+    address: KT1A4tYKJDJHrLonvp4qkJpZz5fkoWcAxMxW
+    typename: quipuswap_fa2_BEEz
+  token_DONTz:
+    address: KT1T9kFJD5fKAT4LAZWjYBCaWNbD7cw1CUju
+    typename: token_DONTz
+  quipuswap_fa2_DONTz:
+    address: KT1FaPEfr2hGTR1d4tN9VikubuSVS1CuuMJX
+    typename: quipuswap_fa2_DONTz
+  token_rugDao:
+    address: KT1EZ5Kerx82fxsvPSnMKsnvPp7Yue9oHNRY
+    typename: token_rugDao
+  quipuswap_fa2_rugDao:
+    address: KT1D3tdqrEkcwKkhJso5jmrJiyiaNVWtYiFJ
+    typename: quipuswap_fa2_rugDao
+  token_tDAO:
+    address: KT1Cjx8hYwzaCAke6rLWoZBLp8w89VeAduAR
+    typename: token_tDAO
+  quipuswap_fa2_tDAO:
+    address: KT1X6dAh8fwQMkWC9yh4yuvkJaS5NjqY4NvW
+    typename: quipuswap_fa2_tDAO
+  token_CVZA:
+    address: KT1BCzAq3PrTKPsEBKuoTGZdwX6rN6WE8rJj
+    typename: token_CVZA
+  quipuswap_fa2_CVZA:
+    address: KT1F3BqwEAoa2koYX4Hz7zJ8xfGSxxAGVT8t
+    typename: quipuswap_fa2_CVZA
+  token_NOLA:
+    address: KT1SrP7phqe9meFbMF4Z2YsSq3XuLU1mw9BM
+    typename: token_NOLA
+  quipuswap_fa2_NOLA:
+    address: KT1Fm5fS6VhFyE9wgopXcoQ3Nyb5awLY2sQH
+    typename: quipuswap_fa2_NOLA
+  token_BART:
+    address: KT1T3Ly4RkMehwNpC4iWr86EV5D155bTRvce
+    typename: token_BART
+  quipuswap_fa2_BART:
+    address: KT1WJVYEjLRirPQDSWqfggjqFGn14y9hiCBL
+    typename: quipuswap_fa2_BART
+  token_SOIL:
+    address: KT1TtaMcoSx5cZrvaVBWsFoeZ1L15cxo5AEy
+    typename: token_SOIL
+  quipuswap_fa2_SOIL:
+    address: KT1NXdxJkCiPkhwPvaT9CytFowuUoNcwGM1p
+    typename: quipuswap_fa2_SOIL
+  token_TTT:
+    address: KT1TsUFkH4pa48wmrGRmFpFW13nxHbP4xEKN
+    typename: token_TTT
+  quipuswap_fa2_TTT:
+    address: KT1WYoYSdHNmNJf9pHWPoHJWDA3bid1NP9SJ
+    typename: quipuswap_fa2_TTT
+  token_BDoge:
+    address: KT1EMarewvdmyV42FDgGuhUhTKxrjutQWEBA
+    typename: token_BDoge
+  quipuswap_fa2_BDoge:
+    address: KT1Th57AbgJmiZWDny6Ewqd2sx5qSxJwu8ry
+    typename: quipuswap_fa2_BDoge
+  token_MEL:
+    address: KT19mgJ3sCytBWXzZ1xgkZ7UMZS4HPKyGNo7
+    typename: token_MEL
+  quipuswap_fa2_MEL:
+    address: KT1BsDKTXBiYck85fJnoDzedyKKNtMuC9B9h
+    typename: quipuswap_fa2_MEL
+  token_RITA:
+    address: KT1Soa1U1fYRQEgg9No3Xvqxuv46kUZFFdJ6
+    typename: token_RITA
+  quipuswap_fa2_RITA:
+    address: KT1L98jqwZtKUZbcPNxb3pTY7b2WXUGEzn8G
+    typename: quipuswap_fa2_RITA
+  token_WRAP:
+    address: KT1LRboPna9yQY9BrjtQYDS1DVxhKESK4VVd
+    typename: token_WRAP
+  quipuswap_fa2_WRAP:
+    address: KT1FG63hhFtMEEEtmBSX2vuFmP87t9E7Ab4t
+    typename: quipuswap_fa2_WRAP
+  token_GUTS:
+    address: KT1Nbc9cmx19qFrYYFpkiDoojVYL8UZJYVcj
+    typename: token_GUTS
+  quipuswap_fa2_GUTS:
+    address: KT1WYQj3HEt3sxdsV4dMLA8RKzUnYAzXgguS
+    typename: quipuswap_fa2_GUTS
+  token_bDAO:
+    address: KT1GUNKmkrgtMQjJp3XxcmCj6HZBhkUmMbge
+    typename: token_bDAO
+  quipuswap_fa2_bDAO:
+    address: KT1DssMzoSr8fnUUq1WxeSuHfLG4gzS7pgge
+    typename: quipuswap_fa2_bDAO
+  token_SHTz:
+    address: KT19oivKN2qzeWgCs886BbttSVYtkcJHRtuQ
+    typename: token_SHTz
+  quipuswap_fa2_SHTz:
+    address: KT1G7Z14RJLKbfu96Hc22bwNL67aykunAGyH
+    typename: quipuswap_fa2_SHTz
+  token_BAN:
+    address: KT1AhSVv4Se1j3Hf5Y6a56vBV44zNzjP91D2
+    typename: token_BAN
+  quipuswap_fa2_BAN:
+    address: KT1Sd8jvepChHEHo63owNfjnqgzJEkUWSj9q
+    typename: quipuswap_fa2_BAN
+  token_USDS:
+    address: KT1REEb5VxWRjcHm5GzDMwErMmNFftsE5Gpf
+    typename: token_USDS
+  quipuswap_fa2_USDS:
+    address: KT1KFszq8UFCcWxnXuhZPUyHT9FK3gjmSKm6
+    typename: quipuswap_fa2_USDS
+  token_hDAO:
+    address: KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW
+    typename: token_hDAO
+  quipuswap_fa2_hDAO:
+    address: KT1QxLqukyfohPV5kPkw97Rs6cw1DDDvYgbB
+    typename: quipuswap_fa2_hDAO
+  token_TCZ:
+    address: KT1GGxCNiJ7yaBAH4hAw5AHXbP3PSmAiy3wK
+    typename: token_TCZ
+  quipuswap_fa2_TCZ:
+    address: KT1VfiExduEkrpM4TbsnAw9QV1VURqaRFGKs
+    typename: quipuswap_fa2_TCZ
+  token_tCow:
+    address: KT1LVnyY5cSCVpFMGXzqVsWNiSkJYA8w1rZk
+    typename: token_tCow
+  quipuswap_fa2_tCow:
+    address: KT1XQZxsG4pMgcN7q7Nu3XFihsb9mEvqBmAT
+    typename: quipuswap_fa2_tCow
+  token_TZS:
+    address: KT1XRxmUFNcbzGTwQPvNPa5FuuM43uEunp8K
+    typename: token_TZS
+  quipuswap_fa2_TZS:
+    address: KT1A834QfnWremTQ4tc63s8NKbHzLJVszgxc
+    typename: quipuswap_fa2_TZS
+  token_T42:
+    address: KT1EpihM8tQSBwqYB6NtCT8N67pq8rKwoD93
+    typename: token_T42
+  quipuswap_fa2_T42:
+    address: KT1M5H8qkJEzhdC3ZxZ78bSxgmcddrcusbry
+    typename: quipuswap_fa2_T42
+indexes:
+  # dexter_fa12_tzBTC:
+  #   template: dexter_fa12
+  #   values:
+  #     dex_contract: dexter_fa12_tzBTC
+  #     token_contract: token_tzBTC
+  #     symbol: dexter_fa12_tzBTC
+  #     decimals: 8
+  # quipuswap_fa12_HEH:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_HEH
+  #     token_contract: token_HEH
+  #     symbol: quipuswap_fa12_HEH
+  #     decimals: 6
+  quipuswap_fa12_FEM:
+    template: quipuswap_fa12
+    values:
+      dex_contract: quipuswap_fa12_FEM
+      token_contract: token_FEM
+      symbol: quipuswap_fa12_FEM
+      decimals: 0
+  # quipuswap_fa12_TSV:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_TSV
+  #     token_contract: token_TSV
+  #     symbol: quipuswap_fa12_TSV
+  #     decimals: 0
+  quipuswap_fa12_SWAP:
+    template: quipuswap_fa12
+    values:
+      dex_contract: quipuswap_fa12_SWAP
+      token_contract: token_SWAP
+      symbol: quipuswap_fa12_SWAP
+      decimals: 0
+  # quipuswap_fa12_QLkUSD:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_QLkUSD
+  #     token_contract: token_QLkUSD
+  #     symbol: quipuswap_fa12_QLkUSD
+  #     decimals: 36
+  # quipuswap_fa12_ETHtz:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_ETHtz
+  #     token_contract: token_ETHtz
+  #     symbol: quipuswap_fa12_ETHtz
+  #     decimals: 18
+  # quipuswap_fa12_USDtz:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_USDtz
+  #     token_contract: token_USDtz
+  #     symbol: quipuswap_fa12_USDtz
+  #     decimals: 6
+  # quipuswap_fa12_STKR:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_STKR
+  #     token_contract: token_STKR
+  #     symbol: quipuswap_fa12_STKR
+  #     decimals: 18
+  # quipuswap_fa12_tzBTC:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_tzBTC
+  #     token_contract: token_tzBTC
+  #     symbol: quipuswap_fa12_tzBTC
+  #     decimals: 8
+  # quipuswap_fa12_kUSD:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_kUSD
+  #     token_contract: token_kUSD
+  #     symbol: quipuswap_fa12_kUSD
+  #     decimals: 18
+  quipuswap_fa12_wXTZ:
+    template: quipuswap_fa12
+    values:
+      dex_contract: quipuswap_fa12_wXTZ
+      token_contract: token_wXTZ
+      symbol: quipuswap_fa12_wXTZ
+      decimals: 6
+  quipuswap_fa2_ptai:
+    template: quipuswap_fa2
+    values:
+      dex_contract: quipuswap_fa2_ptai
+      token_contract: token_ptai
+      symbol: quipuswap_fa2_ptai
+      decimals: 4
+  quipuswap_fa2_HUNC:
+    template: quipuswap_fa2
+    values:
+      dex_contract: quipuswap_fa2_HUNC
+      token_contract: token_HUNC
+      symbol: quipuswap_fa2_HUNC
+      decimals: 2
+  quipuswap_fa2_GHST:
+    template: quipuswap_fa2
+    values:
+      dex_contract: quipuswap_fa2_GHST
+      token_contract: token_GHST
+      symbol: quipuswap_fa2_GHST
+      decimals: 6
+  quipuswap_fa2_wTaco:
+    template: quipuswap_fa2
+    values:
+      dex_contract: quipuswap_fa2_wTaco
+      token_contract: token_wTaco
+      symbol: quipuswap_fa2_wTaco
+      decimals: 0
+  quipuswap_fa2_FARM:
+    template: quipuswap_fa2
+    values:
+      dex_contract: quipuswap_fa2_FARM
+      token_contract: token_FARM
+      symbol: quipuswap_fa2_FARM
+      decimals: 4
+  quipuswap_fa2_FKB:
+    template: quipuswap_fa2
+    values:
+      dex_contract: quipuswap_fa2_FKB
+      token_contract: token_FKB
+      symbol: quipuswap_fa2_FKB
+      decimals: 8
+  quipuswap_fa2_BDVXP:
+    template: quipuswap_fa2
+    values:
+      dex_contract: quipuswap_fa2_BDVXP
+      token_contract: token_BDVXP
+      symbol: quipuswap_fa2_BDVXP
+      decimals: 6
+  # quipuswap_fa2_sVote:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_sVote
+  #     token_contract: token_sVote
+  #     symbol: quipuswap_fa2_sVote
+  #     decimals: 0
+  # quipuswap_fa2_BISA:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_BISA
+  #     token_contract: token_BISA
+  #     symbol: quipuswap_fa2_BISA
+  #     decimals: 3
+  # quipuswap_fa2_Bezos:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_Bezos
+  #     token_contract: token_Bezos
+  #     symbol: quipuswap_fa2_Bezos
+  #     decimals: 7
+  # quipuswap_fa2_CRUNCH:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_CRUNCH
+  #     token_contract: token_CRUNCH
+  #     symbol: quipuswap_fa2_CRUNCH
+  #     decimals: 8
+  # quipuswap_fa2_MIL:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_MIL
+  #     token_contract: token_MIL
+  #     symbol: quipuswap_fa2_MIL
+  #     decimals: 2
+  # quipuswap_fa2_chunc:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_chunc
+  #     token_contract: token_chunc
+  #     symbol: quipuswap_fa2_chunc
+  #     decimals: 7
+  # quipuswap_fa2_TACOS:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_TACOS
+  #     token_contract: token_TACOS
+  #     symbol: quipuswap_fa2_TACOS
+  #     decimals: 2
+  # quipuswap_fa2_tChicken:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_tChicken
+  #     token_contract: token_tChicken
+  #     symbol: quipuswap_fa2_tChicken
+  #     decimals: 6
+  # quipuswap_fa2_Chunk:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_Chunk
+  #     token_contract: token_Chunk
+  #     symbol: quipuswap_fa2_Chunk
+  #     decimals: 8
+  # quipuswap_fa2_boofs:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_boofs
+  #     token_contract: token_boofs
+  #     symbol: quipuswap_fa2_boofs
+  #     decimals: 2
+  # quipuswap_fa2_RTT:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_RTT
+  #     token_contract: token_RTT
+  #     symbol: quipuswap_fa2_RTT
+  #     decimals: 2
+  # quipuswap_fa2_BEEF:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_BEEF
+  #     token_contract: token_BEEF
+  #     symbol: quipuswap_fa2_BEEF
+  #     decimals: 6
+  # quipuswap_fa2_BRR:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_BRR
+  #     token_contract: token_BRR
+  #     symbol: quipuswap_fa2_BRR
+  #     decimals: 6
+  # quipuswap_fa2_FLAME:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_FLAME
+  #     token_contract: token_FLAME
+  #     symbol: quipuswap_fa2_FLAME
+  #     decimals: 6
+  # quipuswap_fa2_F15H:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_F15H
+  #     token_contract: token_F15H
+  #     symbol: quipuswap_fa2_F15H
+  #     decimals: 2
+  # quipuswap_fa2_TITz:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_TITz
+  #     token_contract: token_TITz
+  #     symbol: quipuswap_fa2_TITz
+  #     decimals: 2
+  # quipuswap_fa2_HSK:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_HSK
+  #     token_contract: token_HSK
+  #     symbol: quipuswap_fa2_HSK
+  #     decimals: 2
+  # quipuswap_fa2_CUU:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_CUU
+  #     token_contract: token_CUU
+  #     symbol: quipuswap_fa2_CUU
+  #     decimals: 2
+  # quipuswap_fa2_SEB:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_SEB
+  #     token_contract: token_SEB
+  #     symbol: quipuswap_fa2_SEB
+  #     decimals: 2
+  # quipuswap_fa2_WEED:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_WEED
+  #     token_contract: token_WEED
+  #     symbol: quipuswap_fa2_WEED
+  #     decimals: 8
+  # quipuswap_fa2_gDAO:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_gDAO
+  #     token_contract: token_gDAO
+  #     symbol: quipuswap_fa2_gDAO
+  #     decimals: 6
+  # quipuswap_fa2_BEEz:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_BEEz
+  #     token_contract: token_BEEz
+  #     symbol: quipuswap_fa2_BEEz
+  #     decimals: 2
+  # quipuswap_fa2_DONTz:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_DONTz
+  #     token_contract: token_DONTz
+  #     symbol: quipuswap_fa2_DONTz
+  #     decimals: 2
+  # quipuswap_fa2_rugDao:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_rugDao
+  #     token_contract: token_rugDao
+  #     symbol: quipuswap_fa2_rugDao
+  #     decimals: 2
+  # quipuswap_fa2_tDAO:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_tDAO
+  #     token_contract: token_tDAO
+  #     symbol: quipuswap_fa2_tDAO
+  #     decimals: 4
+  # quipuswap_fa2_CVZA:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_CVZA
+  #     token_contract: token_CVZA
+  #     symbol: quipuswap_fa2_CVZA
+  #     decimals: 8
+  # quipuswap_fa2_NOLA:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_NOLA
+  #     token_contract: token_NOLA
+  #     symbol: quipuswap_fa2_NOLA
+  #     decimals: 6
+  # quipuswap_fa2_BART:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_BART
+  #     token_contract: token_BART
+  #     symbol: quipuswap_fa2_BART
+  #     decimals: 9
+  # quipuswap_fa2_SOIL:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_SOIL
+  #     token_contract: token_SOIL
+  #     symbol: quipuswap_fa2_SOIL
+  #     decimals: 4
+  # quipuswap_fa2_TTT:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_TTT
+  #     token_contract: token_TTT
+  #     symbol: quipuswap_fa2_TTT
+  #     decimals: 8
+  # quipuswap_fa2_BDoge:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_BDoge
+  #     token_contract: token_BDoge
+  #     symbol: quipuswap_fa2_BDoge
+  #     decimals: 4
+  # quipuswap_fa2_MEL:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_MEL
+  #     token_contract: token_MEL
+  #     symbol: quipuswap_fa2_MEL
+  #     decimals: 6
+  # quipuswap_fa2_RITA:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_RITA
+  #     token_contract: token_RITA
+  #     symbol: quipuswap_fa2_RITA
+  #     decimals: 6
+  # quipuswap_fa2_WRAP:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_WRAP
+  #     token_contract: token_WRAP
+  #     symbol: quipuswap_fa2_WRAP
+  #     decimals: 8
+  # quipuswap_fa2_GUTS:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_GUTS
+  #     token_contract: token_GUTS
+  #     symbol: quipuswap_fa2_GUTS
+  #     decimals: 0
+  # quipuswap_fa2_bDAO:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_bDAO
+  #     token_contract: token_bDAO
+  #     symbol: quipuswap_fa2_bDAO
+  #     decimals: 6
+  # quipuswap_fa2_SHTz:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_SHTz
+  #     token_contract: token_SHTz
+  #     symbol: quipuswap_fa2_SHTz
+  #     decimals: 2
+  # quipuswap_fa2_BAN:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_BAN
+  #     token_contract: token_BAN
+  #     symbol: quipuswap_fa2_BAN
+  #     decimals: 2
+  # quipuswap_fa2_USDS:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_USDS
+  #     token_contract: token_USDS
+  #     symbol: quipuswap_fa2_USDS
+  #     decimals: 6
+  # quipuswap_fa2_hDAO:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_hDAO
+  #     token_contract: token_hDAO
+  #     symbol: quipuswap_fa2_hDAO
+  #     decimals: 6
+  # quipuswap_fa2_TCZ:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_TCZ
+  #     token_contract: token_TCZ
+  #     symbol: quipuswap_fa2_TCZ
+  #     decimals: 18
+  # quipuswap_fa2_tCow:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_tCow
+  #     token_contract: token_tCow
+  #     symbol: quipuswap_fa2_tCow
+  #     decimals: 2
+  # quipuswap_fa2_TZS:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_TZS
+  #     token_contract: token_TZS
+  #     symbol: quipuswap_fa2_TZS
+  #     decimals: 0
+  # quipuswap_fa2_T42:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_T42
+  #     token_contract: token_T42
+  #     symbol: quipuswap_fa2_T42
+  #     decimals: 0

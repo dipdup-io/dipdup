@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "type": "object",
+    "properties": {
+        "min_out": {
+            "type": "string",
+            "$comment": "nat"
+        },
+        "receiver": {
+            "type": "string",
+            "$comment": "address"
+        }
+    },
+    "required": [
+        "min_out",
+        "receiver"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+}

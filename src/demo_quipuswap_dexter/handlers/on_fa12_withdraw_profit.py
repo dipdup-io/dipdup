@@ -11,7 +11,7 @@ from dipdup.models import OperationData, OperationHandlerContext, OriginationCon
 async def on_fa12_withdraw_profit(
     ctx: OperationHandlerContext,
     withdraw_profit: TransactionContext[WithdrawProfitParameter, QuipuFa12StorageT],
-    transaction_0: Optional[OperationData],
+    transaction_0: Optional[OperationData] = None,
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')
