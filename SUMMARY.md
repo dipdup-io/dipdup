@@ -25,6 +25,5 @@
   * [Chain reorgs](advanced/chain-reorgs.md)
   * [Mempool plugin](advanced/mempool-plugin.md)
   * [Metadata plugin](advanced/metadata-plugin.md)
-  * [Logging](advanced/logging.md)
 * [Examples](examples.md)
 
