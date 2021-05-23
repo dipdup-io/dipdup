@@ -20,7 +20,11 @@ dipdup --version
 
 ## Custom config name
 
+By default DipDup is looking for a file named `dipdup.yml` in the current working directory. You can override that by explicitly telling where to find the config \(one or many\):
 
+```text
+dipdup -c path/to/config.yml -c path/to/override/config.yml COMMAND
+```
 
 ## Advanced Python logging
 

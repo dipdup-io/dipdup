@@ -22,7 +22,6 @@
 * [Deployment](deployment/README.md)
   * [Docker compose](deployment/docker-compose.md)
 * [Advanced](advanced/README.md)
-  * [Chain reorgs](advanced/chain-reorgs.md)
   * [Mempool plugin](advanced/mempool-plugin.md)
   * [Metadata plugin](advanced/metadata-plugin.md)
 * [Examples](examples.md)
