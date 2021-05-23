@@ -96,6 +96,8 @@ If you use index templates your callback methods will be reused for potentially 
 
 There is a special handler DipDup generates for all indexes. It tells DipDip how to handle chain reorgs, which is a purely application-specific logic especially if there are stateful entities. The default implementation does nothing if rollback size is 1 block and full reindexing otherwise.
 
+{% page-ref page="../advanced/chain-reorgs.md" %}
+
 ## Models
 
 In addition to types and handlers, DipDup also generates `models` file on the top level of the package that will contain all the database models. Models file name and location are restricted by the framework and cannot be changed.
