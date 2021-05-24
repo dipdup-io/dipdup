@@ -1,0 +1,137 @@
+{
+    "$comment": "pair",
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "additionalProperties": false,
+    "properties": {
+        "ledger": {
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "key": {
+                        "$comment": "pair",
+                        "additionalProperties": false,
+                        "properties": {
+                            "address": {
+                                "$comment": "address",
+                                "type": "string"
+                            },
+                            "nat": {
+                                "$comment": "nat",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "address",
+                            "nat"
+                        ],
+                        "type": "object"
+                    },
+                    "value": {
+                        "$comment": "nat",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "key",
+                    "value"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "metadata": {
+            "additionalProperties": {
+                "$comment": "bytes",
+                "type": "string"
+            },
+            "propertyNames": {
+                "$comment": "string",
+                "type": "string"
+            },
+            "type": "object"
+        },
+        "operators": {
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "key": {
+                        "$comment": "pair",
+                        "additionalProperties": false,
+                        "properties": {
+                            "address_0": {
+                                "$comment": "address",
+                                "type": "string"
+                            },
+                            "address_1": {
+                                "$comment": "address",
+                                "type": "string"
+                            },
+                            "nat": {
+                                "$comment": "nat",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "address_0",
+                            "address_1",
+                            "nat"
+                        ],
+                        "type": "object"
+                    },
+                    "value": {
+                        "$comment": "unit",
+                        "additionalProperties": false,
+                        "type": "object"
+                    }
+                },
+                "required": [
+                    "key",
+                    "value"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "token_metadata": {
+            "additionalProperties": {
+                "$comment": "pair",
+                "additionalProperties": false,
+                "properties": {
+                    "token_id": {
+                        "$comment": "nat",
+                        "type": "string"
+                    },
+                    "token_info": {
+                        "$comment": "map",
+                        "additionalProperties": {
+                            "$comment": "bytes",
+                            "type": "string"
+                        },
+                        "propertyNames": {
+                            "$comment": "string",
+                            "type": "string"
+                        },
+                        "type": "object"
+                    }
+                },
+                "required": [
+                    "token_id",
+                    "token_info"
+                ],
+                "type": "object"
+            },
+            "propertyNames": {
+                "$comment": "nat",
+                "type": "string"
+            },
+            "type": "object"
+        }
+    },
+    "required": [
+        "ledger",
+        "metadata",
+        "operators",
+        "token_metadata"
+    ],
+    "type": "object"
+}

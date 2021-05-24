@@ -16,6 +16,8 @@ from tortoise.transactions import in_transaction
 import dipdup.codegen as codegen
 from dipdup import __version__
 from dipdup.config import (
+    BcdDatasourceConfig,
+    DatasourceConfigT,
     ROLLBACK_HANDLER,
     ContractConfig,
     DipDupConfig,
@@ -25,6 +27,8 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
+from dipdup.datasources import DatasourceT
+from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import configure_hasura
@@ -36,6 +40,7 @@ class DipDup:
     def __init__(self, config: DipDupConfig) -> None:
         self._logger = logging.getLogger(__name__)
         self._config = config
+        self._datasources: Dict[str, DatasourceT] = {}
 
     async def init(self) -> None:
         await codegen.create_package(self._config)
@@ -45,9 +50,28 @@ class DipDup:
         await codegen.generate_handlers(self._config)
         await codegen.cleanup(self._config)
 
+    async def configure(self) -> None:
+        config_module = importlib.import_module(f'{self._config.package}.config')
+        config_handler = getattr(config_module, 'configure')
+        await config_handler(self._config)
+        # NOTE: We need to resolve freshly created references
+        self._config.pre_initialize()
+
+    def create_datasources(self) -> None:
+        for name, datasource_config in self._config.datasources.items():
+            if name in self._datasources:
+                continue
+
+            if isinstance(datasource_config, TzktDatasourceConfig):
+                self._datasources[name] = TzktDatasource(datasource_config.url, self._config.tzkt_cache)
+            elif isinstance(datasource_config, BcdDatasourceConfig):
+                self._datasources[name] = BcdDatasource()
+            else:
+                raise NotImplementedError 
+
+
     async def run(self) -> None:
         url = self._config.database.connection_string
-        cache = isinstance(self._config.database, SqliteDatabaseConfig)
         models = f'{self._config.package}.models'
 
         try:
@@ -58,9 +82,13 @@ class DipDup:
         async with tortoise_wrapper(url, models):
             await self.initialize_database()
 
+            if not self._config.indexes:
+                self._logger.info('No indexes in config, implying dynamic configuration')
+                await self.configure()
+
             await self._config.initialize()
 
-            datasources: Dict[TzktDatasourceConfig, TzktDatasource] = {}
+            datasources: Dict[DatasourceConfigT, TzktDatasource] = {}
 
             self._logger.info('Processing dynamic templates')
             has_dynamic_templates = False
@@ -73,7 +101,7 @@ class DipDup:
                     # NOTE: Datasource and other fields are str as we haven't initialized DynamicTemplateConfigs yet
                     datasource_config = self._config.datasources[cast(str, template.datasource)]
                     if datasource_config not in datasources:
-                        datasources[datasource_config] = TzktDatasource(datasource_config.url, cache)
+                        datasources[datasource_config] = 
                         datasources[datasource_config].set_rollback_fn(rollback_fn)
                         datasources[datasource_config].set_package(self._config.package)
 

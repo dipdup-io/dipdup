@@ -131,7 +131,6 @@ class TzktDatasourceConfig:
     """TzKT datasource config
 
     :param url: Base API url
-    :param network: Corresponding network alias, only for sanity checks
     """
 
     kind: Literal['tzkt']
@@ -147,6 +146,29 @@ class TzktDatasourceConfig:
             raise ConfigurationError(f'`{v}` is not a valid datasource URL')
         return v
 
+
+@dataclass
+class BcdDatasourceConfig:
+    """BCD datasource config
+
+    :param url: Base API url
+    """
+
+    kind: Literal['bcd']
+    url: str
+
+    def __hash__(self):
+        return hash(self.url)
+
+    @validator('url')
+    def valid_url(cls, v):
+        parsed_url = urlparse(v)
+        if not (parsed_url.scheme and parsed_url.netloc):
+            raise ConfigurationError(f'`{v}` is not a valid datasource URL')
+        return v
+
+
+DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig]
 
 @dataclass
 class OperationHandlerTransactionPatternConfig:
@@ -508,7 +530,7 @@ class DipDupConfig:
     spec_version: str
     package: str
     contracts: Dict[str, ContractConfig]
-    datasources: Dict[str, Union[TzktDatasourceConfig]]
+    datasources: Dict[str, Union[TzktDatasourceConfig, BcdDatasourceConfig]]
     indexes: Dict[str, IndexConfigT]
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, MySQLDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
@@ -549,7 +571,10 @@ class DipDupConfig:
             if isinstance(index_config, OperationIndexConfig):
                 if isinstance(index_config.datasource, str):
                     try:
-                        index_config.datasource = self.datasources[index_config.datasource]
+                        datasource = self.datasources[index_config.datasource]
+                        if not isinstance(datasource, TzktDatasourceConfig):
+                            raise ConfigurationError('`datasource` field must refer to TzKT datasource')
+                        index_config.datasource = datasource
                     except KeyError as e:
                         raise ConfigurationError(f'Datasource `{index_config.datasource}` not found in `datasources` config section') from e
 
@@ -595,7 +620,10 @@ class DipDupConfig:
             elif isinstance(index_config, BigMapIndexConfig):
                 if isinstance(index_config.datasource, str):
                     try:
-                        index_config.datasource = self.datasources[index_config.datasource]
+                        datasource = self.datasources[index_config.datasource]
+                        if not isinstance(datasource, TzktDatasourceConfig):
+                            raise ConfigurationError('`datasource` field must refer to TzKT datasource')
+                        index_config.datasource = datasource
                     except KeyError as e:
                         raise ConfigurationError(f'Datasource `{index_config.datasource}` not found in `datasources` config section') from e
 
@@ -641,6 +669,10 @@ class DipDupConfig:
     def package_path(self) -> str:
         package = importlib.import_module(self.package)
         return dirname(package.__file__)
+
+    @property
+    def tzkt_cache(self) -> bool:
+        return isinstance(self.database, SqliteDatabaseConfig)
 
     @classmethod
     def load(

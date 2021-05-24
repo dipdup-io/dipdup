@@ -28,9 +28,11 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
+from dipdup.datasources import Address, IndexName, Path
 from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.datasources.tzkt.proxy import TzktRequestProxy
+from dipdup.datasources.proxy import DatasourceRequestProxy
+from dipdup.exceptions import ConfigurationError
 from dipdup.models import (
     BigMapAction,
     BigMapContext,
@@ -68,11 +70,6 @@ TRANSACTION_OPERATION_FIELDS = (
     "parameter",
     "hasInternals",
 )
-
-
-IndexName = str
-Address = str
-Path = str
 
 
 @dataclass
@@ -114,7 +111,7 @@ class OperationFetcher:
     def __init__(
         self,
         url: str,
-        proxy: TzktRequestProxy,
+        proxy: DatasourceRequestProxy,
         first_level: int,
         last_level: int,
         addresses: List[str],
@@ -262,7 +259,6 @@ class OperationFetcher:
 
 class TzktDatasource:
     def __init__(self, url: str, cache: bool):
-        super().__init__()
         self._url = url.rstrip('/')
         self._logger = logging.getLogger(__name__)
         self._operation_index_by_name: Dict[IndexName, OperationIndexConfig] = {}
@@ -279,7 +275,7 @@ class TzktDatasource:
         self._big_map_cache = BigMapCache()
         self._rollback_fn: Optional[Callable[[int, int], Awaitable[None]]] = None
         self._package: Optional[str] = None
-        self._proxy = TzktRequestProxy(cache)
+        self._proxy = DatasourceRequestProxy(cache)
         self._callback_executor = CallbackExecutor()
 
     async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
@@ -676,8 +672,9 @@ class TzktDatasource:
     async def add_operation_subscription(self, address: str, types: Optional[List[OperationType]] = None) -> None:
         if types is None:
             types = [OperationType.transaction]
-        if address not in self._operation_subscriptions:
-            self._operation_subscriptions[address] = types
+        if address in self._operation_subscriptions:
+            raise ConfigurationError(f'Address `{address}` is already used in operation index')
+        self._operation_subscriptions[address] = types
 
     async def add_big_map_subscription(self, address: str, path: str) -> None:
         if address not in self._big_map_subscriptions:
@@ -867,10 +864,26 @@ class TzktDatasource:
 
         contracts = await self._proxy.http_request(
             'get',
-            url=f'{self._url}/v1/contracts/{address}/{entrypoint}?select=address',
+            url=f'{self._url}/v1/contracts/{address}/{entrypoint}',
             params=dict(
                 select='address',
                 limit=TZKT_HTTP_REQUEST_LIMIT,
             ),
         )
         return contracts
+
+    async def get_originated_contracts(self, address: Address) -> List[Address]:
+        contracts = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/accounts/{address}/contracts',
+            params=dict(
+                limit=TZKT_HTTP_REQUEST_LIMIT,
+            )
+        )
+        return [c['address'] for c in contracts]
+
+    async def get_contract_storage(self, address: Address) -> Dict[str, Any]:
+        return await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{address}/storage'
+        )
