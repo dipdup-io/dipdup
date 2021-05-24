@@ -1,9 +1,8 @@
 import asyncio
 import logging
-import os
-import sys
+from collections import deque
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Awaitable, Callable, Deque, Dict, List, Optional, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
@@ -90,6 +89,25 @@ class OperationFetcherChannel(Enum):
     sender_transactions = 'sender_transactions'
     target_transactions = 'target_transactions'
     originations = 'originations'
+
+
+class CallbackExecutor:
+    def __init__(self) -> None:
+        self._queue: Deque[Awaitable] = deque()
+
+    def submit(self, fn, *args, **kwargs):
+        self._queue.append(fn(*args, **kwargs))
+
+    async def run(self):
+        while True:
+            await asyncio.sleep(0.1)
+            try:
+                coro = self._queue.popleft()
+                await coro
+            except IndexError:
+                pass
+            except asyncio.CancelledError:
+                return
 
 
 class OperationFetcher:
@@ -262,6 +280,7 @@ class TzktDatasource:
         self._rollback_fn: Optional[Callable[[int, int], Awaitable[None]]] = None
         self._package: Optional[str] = None
         self._proxy = TzktRequestProxy(cache)
+        self._callback_executor = CallbackExecutor()
 
     async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
         self._logger.info('Adding index `%s`', index_name)
@@ -297,10 +316,17 @@ class TzktDatasource:
                     }
                 )
             ).build()
+
+            async def operation_callback(*args, **kwargs) -> None:
+                self._callback_executor.submit(self.on_operation_message, *args, **kwargs)
+
+            async def big_map_callback(*args, **kwargs) -> None:
+                self._callback_executor.submit(self.on_big_map_message, *args, **kwargs)
+
             self._client.on_open(self.on_connect)
             self._client.on_error(self.on_error)
-            self._client.on('operations', self.on_operation_message)
-            self._client.on('bigmaps', self.on_big_map_message)
+            self._client.on('operations', operation_callback)
+            self._client.on('bigmaps', big_map_callback)
 
         return self._client
 
@@ -343,7 +369,10 @@ class TzktDatasource:
 
         if not rest_only:
             self._logger.info('Starting websocket client')
-            await self._get_client().start()
+            await asyncio.gather(
+                self._get_client().start(),
+                self._callback_executor.run(),
+            )
 
     async def stop(self):
         ...
