@@ -34,9 +34,13 @@ from <package>.types.<typename>.storage import TypeNameStorage
 from <package>.types.<typename>.parameter.<entry_point> import (
     EntryPointParameter
 )
+from <package>.types.<typename>.big_map.<path>_key import PathKey
+from <package>.types.name_registry.big_map.<path>_value import PathValue
 ```
 
-where `typename` is defined in the contract inventory, and `entrypoint` is specified in the handler pattern. **NOTE** the "Storage" and "Parameter" affixes.
+where `typename` is defined in the contract inventory, `entrypoint` is specified in the handler pattern, and `path` is in the according Big map handler.
+
+**NOTE** the "Storage" and "Parameter" affixes.
 {% endtab %}
 {% endtabs %}
 
@@ -58,7 +62,7 @@ DipDup generates a separate file with handler method stub for each callback in e
 
 {% tabs %}
 {% tab title="Python" %}
-Callback method signature is the following:
+Callback method signature is the following \(_transaction_ case\):
 
 ```python
 from <package>.types.<typename>.parameter.<entry_point_1> import (
@@ -71,9 +75,9 @@ from <package>.types.<typename>.storage import TypeNameStorage
 
 
 async def callback(
-    ctx: HandlerContext,
-    entry_point_1: OperationContext[EntryPoint1Parameter, TypeNameStorage],
-    entry_point_n: OperationContext[EntryPointNParameter, TypeNameStorage]
+    ctx: OperationHandlerContext,
+    entry_point_1: TransactionContext[EntryPoint1Parameter, TypeNameStorage],
+    entry_point_n: TransactionContext[EntryPointNParameter, TypeNameStorage]
 ) -> None:
     ...
 ```
@@ -81,8 +85,37 @@ async def callback(
 where:
 
 *  `entry_point_1 ... entry_point_n` are items from the according handler pattern.
-* `ctx: HandlerContext` contains all the operations \(both external and internal\) matched in a particular operation group content.
-* `OperationContext` contains transaction amount, parameter, and storage \(all typed\).
+* `ctx: OperationHandlerContext` contains all the operations \(both external and internal\) matched in a particular operation group content.
+* `TransactionContext` contains transaction amount, parameter, and storage **\(typed\)**.
+
+For the _origination_ case the handler signature will look similar:
+
+```python
+from <package>.types.<typename>.storage import TypeNameStorage
+
+
+async def on_origination(
+    ctx: OperationHandlerContext,
+    origination: OriginationContext[TypeNameStorage],
+)
+```
+
+where `OriginationContext` contains origination script, initial storage **\(typed\)**, amount, delegate, etc.
+
+_Big map_ update handler will look like the following:
+
+```python
+from <package>.types.<typename>.big_map.<path>_key import PathKey
+from <package>.types.name_registry.big_map.<path>_value import PathValue
+
+
+async def on_update(
+    ctx: BigMapHandlerContext,
+    update: BigMapContext[PathKey, PathValue],
+)
+```
+
+where `BigMapContext` contains action \(allocate, update, or remove\), updated key, and nullable value **\(typed\).**
 
 **NOTE** that you can safely change argument names \(e.g. in case of collisions\).
 {% endtab %}
@@ -95,8 +128,6 @@ If you use index templates your callback methods will be reused for potentially 
 ### Rollback
 
 There is a special handler DipDup generates for all indexes. It tells DipDip how to handle chain reorgs, which is a purely application-specific logic especially if there are stateful entities. The default implementation does nothing if rollback size is 1 block and full reindexing otherwise.
-
-{% page-ref page="../advanced/chain-reorgs.md" %}
 
 ## Models
 

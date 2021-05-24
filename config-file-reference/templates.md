@@ -10,6 +10,7 @@ Templates allows you to reuse index configuration, e.g. for different networks \
 templates:
   my_template:
     kind: operation
+    datasource: <datasource>
     contracts:
       - <contract1>
     handlers:
