@@ -8,7 +8,7 @@ import "./static/css/app.css"
 
 const fetcher = params => {
   return fetch(
-    `https://demo.dipdup.net/v1/graphql`,
+    `https://api.dipdup.net/metadata/graphql`,
     {
       method: 'post',
       headers: {
