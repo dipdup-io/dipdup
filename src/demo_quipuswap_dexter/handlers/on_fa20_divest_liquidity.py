@@ -40,8 +40,7 @@ async def on_fa20_divest_liquidity(
         last_trade = await models.Trade.filter(symbol=symbol).order_by('-id').first()
         assert last_trade
         price = last_trade.price
-        shares_qty = 0
-        share_px = 0
+        share_px = (tez_qty + price * token_qty) / shares_qty
 
     position.realized_pl += shares_qty * (share_px - position.avg_share_px)
     print(position.shares_qty, shares_qty)

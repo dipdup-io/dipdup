@@ -389,13 +389,13 @@ indexes:
   #     token_contract: token_HEH
   #     symbol: quipuswap_fa12_HEH
   #     decimals: 6
-  quipuswap_fa12_FEM:
-    template: quipuswap_fa12
-    values:
-      dex_contract: quipuswap_fa12_FEM
-      token_contract: token_FEM
-      symbol: quipuswap_fa12_FEM
-      decimals: 0
+  # quipuswap_fa12_FEM:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_FEM
+  #     token_contract: token_FEM
+  #     symbol: quipuswap_fa12_FEM
+  #     decimals: 0
   # quipuswap_fa12_TSV:
   #   template: quipuswap_fa12
   #   values:
@@ -403,13 +403,13 @@ indexes:
   #     token_contract: token_TSV
   #     symbol: quipuswap_fa12_TSV
   #     decimals: 0
-  quipuswap_fa12_SWAP:
-    template: quipuswap_fa12
-    values:
-      dex_contract: quipuswap_fa12_SWAP
-      token_contract: token_SWAP
-      symbol: quipuswap_fa12_SWAP
-      decimals: 0
+  # quipuswap_fa12_SWAP:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_SWAP
+  #     token_contract: token_SWAP
+  #     symbol: quipuswap_fa12_SWAP
+  #     decimals: 0
   # quipuswap_fa12_QLkUSD:
   #   template: quipuswap_fa12
   #   values:
@@ -452,55 +452,55 @@ indexes:
   #     token_contract: token_kUSD
   #     symbol: quipuswap_fa12_kUSD
   #     decimals: 18
-  quipuswap_fa12_wXTZ:
-    template: quipuswap_fa12
-    values:
-      dex_contract: quipuswap_fa12_wXTZ
-      token_contract: token_wXTZ
-      symbol: quipuswap_fa12_wXTZ
-      decimals: 6
-  quipuswap_fa2_ptai:
-    template: quipuswap_fa2
-    values:
-      dex_contract: quipuswap_fa2_ptai
-      token_contract: token_ptai
-      symbol: quipuswap_fa2_ptai
-      decimals: 4
-  quipuswap_fa2_HUNC:
-    template: quipuswap_fa2
-    values:
-      dex_contract: quipuswap_fa2_HUNC
-      token_contract: token_HUNC
-      symbol: quipuswap_fa2_HUNC
-      decimals: 2
-  quipuswap_fa2_GHST:
-    template: quipuswap_fa2
-    values:
-      dex_contract: quipuswap_fa2_GHST
-      token_contract: token_GHST
-      symbol: quipuswap_fa2_GHST
-      decimals: 6
-  quipuswap_fa2_wTaco:
-    template: quipuswap_fa2
-    values:
-      dex_contract: quipuswap_fa2_wTaco
-      token_contract: token_wTaco
-      symbol: quipuswap_fa2_wTaco
-      decimals: 0
-  quipuswap_fa2_FARM:
-    template: quipuswap_fa2
-    values:
-      dex_contract: quipuswap_fa2_FARM
-      token_contract: token_FARM
-      symbol: quipuswap_fa2_FARM
-      decimals: 4
-  quipuswap_fa2_FKB:
-    template: quipuswap_fa2
-    values:
-      dex_contract: quipuswap_fa2_FKB
-      token_contract: token_FKB
-      symbol: quipuswap_fa2_FKB
-      decimals: 8
+  # quipuswap_fa12_wXTZ:
+  #   template: quipuswap_fa12
+  #   values:
+  #     dex_contract: quipuswap_fa12_wXTZ
+  #     token_contract: token_wXTZ
+  #     symbol: quipuswap_fa12_wXTZ
+  #     decimals: 6
+  # quipuswap_fa2_ptai:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_ptai
+  #     token_contract: token_ptai
+  #     symbol: quipuswap_fa2_ptai
+  #     decimals: 4
+  # quipuswap_fa2_HUNC:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_HUNC
+  #     token_contract: token_HUNC
+  #     symbol: quipuswap_fa2_HUNC
+  #     decimals: 2
+  # quipuswap_fa2_GHST:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_GHST
+  #     token_contract: token_GHST
+  #     symbol: quipuswap_fa2_GHST
+  #     decimals: 6
+  # quipuswap_fa2_wTaco:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_wTaco
+  #     token_contract: token_wTaco
+  #     symbol: quipuswap_fa2_wTaco
+  #     decimals: 0
+  # quipuswap_fa2_FARM:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_FARM
+  #     token_contract: token_FARM
+  #     symbol: quipuswap_fa2_FARM
+  #     decimals: 4
+  # quipuswap_fa2_FKB:
+  #   template: quipuswap_fa2
+  #   values:
+  #     dex_contract: quipuswap_fa2_FKB
+  #     token_contract: token_FKB
+  #     symbol: quipuswap_fa2_FKB
+  #     decimals: 8
   quipuswap_fa2_BDVXP:
     template: quipuswap_fa2
     values:
