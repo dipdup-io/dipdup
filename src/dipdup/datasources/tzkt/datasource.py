@@ -100,11 +100,12 @@ class CallbackExecutor:
 
     async def run(self):
         while True:
+            await asyncio.sleep(0.1)
             try:
                 coro = self._queue.popleft()
                 await coro
             except IndexError:
-                await asyncio.sleep(0.1)
+                pass
             except asyncio.CancelledError:
                 return
 
@@ -369,8 +370,8 @@ class TzktDatasource:
         if not rest_only:
             self._logger.info('Starting websocket client')
             await asyncio.gather(
-                await self._get_client().start(),
-                await self._callback_executor.run(),
+                self._get_client().start(),
+                self._callback_executor.run(),
             )
 
     async def stop(self):
