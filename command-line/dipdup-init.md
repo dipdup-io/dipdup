@@ -58,7 +58,7 @@ DipDup generates a separate file with handler method stub for each callback in e
 
 {% tabs %}
 {% tab title="Python" %}
-Callback method signature is the following \(_transaction_ case\):
+Callback method signature is the following:
 
 ```python
 from <package>.types.<typename>.parameter.<entry_point_1> import (
@@ -71,9 +71,9 @@ from <package>.types.<typename>.storage import TypeNameStorage
 
 
 async def callback(
-    ctx: OperationHandlerContext,
-    entry_point_1: TransactionContext[EntryPoint1Parameter, TypeNameStorage],
-    entry_point_n: TransactionContext[EntryPointNParameter, TypeNameStorage]
+    ctx: HandlerContext,
+    entry_point_1: OperationContext[EntryPoint1Parameter, TypeNameStorage],
+    entry_point_n: OperationContext[EntryPointNParameter, TypeNameStorage]
 ) -> None:
     ...
 ```
@@ -81,22 +81,10 @@ async def callback(
 where:
 
 *  `entry_point_1 ... entry_point_n` are items from the according handler pattern.
-* `ctx: OperationHandlerContext` contains all the operations \(both external and internal\) matched in a particular operation group content.
-* `TransactionContext` contains transaction amount, parameter, and storage \(all typed\).
+* `ctx: HandlerContext` contains all the operations \(both external and internal\) matched in a particular operation group content.
+* `OperationContext` contains transaction amount, parameter, and storage \(all typed\).
 
 **NOTE** that you can safely change argument names \(e.g. in case of collisions\).
-
-For the _origination_ case the handler signature will look similar:
-
-```python
-from <package>.types.<typename>.storage import TypeNameStorage
-
-
-async def on_origination(
-    ctx: OperationHandlerContext,
-    origination: OriginationContext[TypeNameStorage],
-)
-```
 {% endtab %}
 {% endtabs %}
 
@@ -107,6 +95,8 @@ If you use index templates your callback methods will be reused for potentially 
 ### Rollback
 
 There is a special handler DipDup generates for all indexes. It tells DipDip how to handle chain reorgs, which is a purely application-specific logic especially if there are stateful entities. The default implementation does nothing if rollback size is 1 block and full reindexing otherwise.
+
+{% page-ref page="../advanced/chain-reorgs.md" %}
 
 ## Models
 
