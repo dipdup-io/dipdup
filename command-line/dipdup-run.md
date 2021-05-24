@@ -20,6 +20,15 @@ DipDup applies all updates atomically block by block. In case of emergency shut 
 
 ## Hasura setup
 
+If [hasura](../config-file-reference/hasura.md) section is present in configuration file, DipDup will do basic setup:
+
+* Ensure all tables are tracked by Hasura engine
+* Enable public access to the GraphQL endpoint
+
+## SQL scripts
+
+DipDup will execute all the scripts from the `%project_root%/sql` after the database initialization and before any indexing istarted.
+
 
 
 {% page-ref page="../config-file-reference/hasura.md" %}
