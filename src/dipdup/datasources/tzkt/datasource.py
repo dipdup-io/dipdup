@@ -2,6 +2,7 @@ import asyncio
 import logging
 from collections import deque
 from enum import Enum
+from operator import index
 from typing import Any, Awaitable, Callable, Deque, Dict, List, Optional, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -28,11 +29,9 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
-from dipdup.datasources import Address, IndexName, Path
 from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.datasources.proxy import DatasourceRequestProxy
-from dipdup.exceptions import ConfigurationError
 from dipdup.models import (
     BigMapAction,
     BigMapContext,
@@ -71,6 +70,9 @@ TRANSACTION_OPERATION_FIELDS = (
     "hasInternals",
 )
 
+IndexName = str
+Address = str
+Path = str
 
 @dataclass
 class ContractSubscription:
@@ -277,9 +279,11 @@ class TzktDatasource:
         self._package: Optional[str] = None
         self._proxy = DatasourceRequestProxy(cache)
         self._callback_executor = CallbackExecutor()
+        self._synched_indexes: List[str] = []
 
-    async def add_index(self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]):
+    async def add_index(self, index_name: str, index_config: IndexConfigTemplateT):
         self._logger.info('Adding index `%s`', index_name)
+
         if isinstance(index_config, OperationIndexConfig):
             self._operation_index_by_name[index_name] = index_config
             await self._operation_cache.add_index(index_config)
@@ -326,42 +330,56 @@ class TzktDatasource:
 
         return self._client
 
-    async def start(self):
-        self._logger.info('Starting datasource')
-        rest_only = False
-
+    async def add_subscriptions(self) -> None:
+        # NOTE: Safe to call multiple times
         for operation_index_config in self._operation_index_by_name.values():
             for contract in operation_index_config.contracts:
-                await self.add_operation_subscription(contract.address, operation_index_config.types)
+                await self.add_operation_subscription(cast(ContractConfig, contract).address, operation_index_config.types)
 
         for big_map_index_config in self._big_map_index_by_name.values():
             for handler_config in big_map_index_config.handlers:
                 for pattern_config in handler_config.pattern:
                     await self.add_big_map_subscription(pattern_config.contract_config.address, pattern_config.path)
 
+    async def fetch_index(self, index_name: str, index_config: IndexConfigTemplateT, level: int) -> None:
+        if index_name in self._synched_indexes:
+            return
+        self._logger.info('Synchronizing `%s`', index_name)
+        if isinstance(index_config, OperationIndexConfig):
+            await self.fetch_operations(index_config, level)
+        elif isinstance(index_config, BigMapIndexConfig):
+            await self.fetch_big_maps(index_config, level)
+        else:
+            raise NotImplementedError
+        self._synched_indexes.append(index_name)
+
+    async def run(self):
+        self._logger.info('Starting datasource')
+        rest_only = False
+
+        await self.add_subscriptions()
+
         latest_block = await self.get_latest_block()
 
         self._logger.info('Initial synchronizing operation indexes')
         for index_config_name, operation_index_config in self._operation_index_by_name.items():
-            self._logger.info('Synchronizing `%s`', index_config_name)
             if operation_index_config.last_block:
                 current_level = operation_index_config.last_block
                 rest_only = True
             else:
                 current_level = latest_block['level']
 
-            await self.fetch_operations(operation_index_config, current_level)
+            await self.fetch_index(index_config_name, operation_index_config, current_level)
 
         self._logger.info('Initial synchronizing big map indexes')
         for index_config_name, big_map_index_config in self._big_map_index_by_name.items():
-            self._logger.info('Synchronizing `%s`', index_config_name)
             if big_map_index_config.last_block:
                 current_level = big_map_index_config.last_block
                 rest_only = True
             else:
                 current_level = latest_block['level']
 
-            await self.fetch_big_maps(big_map_index_config, current_level)
+            await self.fetch_index(index_config_name, big_map_index_config, current_level)
 
         if not rest_only:
             self._logger.info('Starting websocket client')
@@ -672,14 +690,14 @@ class TzktDatasource:
     async def add_operation_subscription(self, address: str, types: Optional[List[OperationType]] = None) -> None:
         if types is None:
             types = [OperationType.transaction]
-        if address in self._operation_subscriptions:
-            raise ConfigurationError(f'Address `{address}` is already used in operation index')
-        self._operation_subscriptions[address] = types
+        if address not in self._operation_subscriptions:
+            self._operation_subscriptions[address] = types
 
     async def add_big_map_subscription(self, address: str, path: str) -> None:
         if address not in self._big_map_subscriptions:
             self._big_map_subscriptions[address] = []
-        self._big_map_subscriptions[address].append(path)
+        if path not in self._big_map_subscriptions[address]:
+            self._big_map_subscriptions[address].append(path)
 
     async def on_operation_match(
         self,

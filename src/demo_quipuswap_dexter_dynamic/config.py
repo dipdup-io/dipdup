@@ -1,23 +1,19 @@
-from dipdup.config import DipDupConfig
+from pydantic import BaseModel
+from dipdup.config import ContractConfig, DipDupConfig, StaticTemplateConfig
 
-from dataclasses import dataclass
-import os
-from typing import Dict, List
-import requests
-import json
-from ruamel.yaml import YAML
+from typing import Dict, List, cast
 
 from dipdup.datasources import DatasourceT
+from dipdup.datasources.bcd.datasource import BcdDatasource
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 
-@dataclass
-class Factory:
+class Factory(BaseModel):
     address: str
     template: str
 
 
-@dataclass
-class DEX:
+class DEX(BaseModel):
     address: str
     token_address: str
     symbol: str
@@ -25,35 +21,30 @@ class DEX:
     template: str
 
 
-FACTORIES = [
-    Factory('KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD', 'quipuswap_fa12'),
-    Factory('KT1SwH9P1Tx8a58Mm6qBExQFTcy2rwZyZiXS', 'quipuswap_fa2'),
-]
-
-DEXES = [
-    DEX('KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N', 'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn', 'tzBTC', 8, 'dexter_fa12'),
-]
-
-
 async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -> None:
-    dexes: List[DEX] = [*DEXES]
+    assert config.configuration
+    args = config.configuration.args
+    tzkt = cast(TzktDatasource, datasources[args['tzkt']])
+    bcd = cast(BcdDatasource, datasources[args['bcd']])
 
-    for factory in FACTORIES:
+    dexes: List[DEX] = [DEX.parse_obj(d) for d in args['dexes']]
+    factories: List[Factory] = [Factory.parse_obj(f) for f in args['factories']]
+
+    for factory in factories:
         print(f'Processing factory {factory.address}')
 
-        originated_contracts = requests.get(GET_ORIGINATED_CONTRACTS.format(factory.address)).json()
-        originated_contracts_addresses = [c['address'] for c in originated_contracts]
+        originated_contracts = await tzkt.get_originated_contracts(factory.address)
 
-        for dex_address in originated_contracts_addresses:
+        for dex_address in originated_contracts:
             print(f'Processing DEX {dex_address}')
 
-            storage = requests.get(GET_STORAGE.format(dex_address)).json()
+            storage = await tzkt.get_contract_storage(dex_address)
 
             token_address = storage['storage']['token_address']
 
-            tokens = requests.get(GET_TOKENS.format(token_address)).json()
+            tokens = await bcd.get_tokens(token_address)
 
-            if len(tokens) > 1:
+            if tokens and len(tokens) > 1:
                 continue
 
             if tokens:
@@ -67,37 +58,42 @@ async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -
                     continue
 
             dexes.append(
-                DEX(dex_address, token_address, symbol, decimals, factory.template)
+                DEX(
+                    address=dex_address,
+                    token_address=token_address,
+                    symbol=symbol,
+                    decimals=decimals,
+                    template=factory.template,
+                )
             )
-
-    indexes = {}
-    contracts = {}
 
     for dex in dexes:
 
         token_contract_name = f'token_{dex.symbol}'
-        if token_contract_name not in contracts:
-            token_contract_config = {
-                'address': dex.token_address,
-                'typename': token_contract_name,
-            }
-            contracts[token_contract_name] = token_contract_config
+        if token_contract_name not in config.contracts:
+            token_contract_config = ContractConfig(
+                address=dex.token_address,
+                typename=token_contract_name,
+            )
+            config.contracts[token_contract_name] = token_contract_config
 
         dex_contract_name = dex.template + '_' + dex.symbol
-        dex_contract_config = {
-            'address': dex.address,
-            'typename': dex_contract_name,
-        }
-        contracts[dex_contract_name] = dex_contract_config
+        if dex_contract_name not in config.contracts:
+            dex_contract_config = ContractConfig(
+                address=dex.address,
+                typename=dex_contract_name,
+            )
+            config.contracts[dex_contract_name] = dex_contract_config
 
         index_name = dex_contract_name
-        index_config = {
-            'template': dex.template,
-            'values': {
-                'dex_contract': dex_contract_name,
-                'token_contract': token_contract_name,
-                'symbol': dex_contract_name,
-                'decimals': dex.decimals,
-            }
-        }
-        indexes[index_name] = index_config
+        if index_name not in config.indexes:
+            index_config = StaticTemplateConfig(
+                template=dex.template,
+                values=dict(
+                    dex_contract=dex_contract_name,
+                    token_contract=token_contract_name,
+                    symbol=dex_contract_name,
+                    decimals=str(dex.decimals),
+                )
+            )
+            config.indexes[index_name] = index_config

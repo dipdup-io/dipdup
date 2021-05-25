@@ -1,5 +1,5 @@
 spec_version: 0.1
-package: demo_quipuswap_dexter
+package: demo_quipuswap_dexter_dynamic
 
 database:
   kind: sqlite
@@ -9,6 +9,28 @@ datasources:
   tzkt_staging_mainnet:
     kind: tzkt
     url: https://staging.api.tzkt.io
+
+  bcd_mainnet:
+    kind: bcd
+    url: https://api.better-call.dev
+    network: mainnet
+
+configuration:
+  interval: 60
+  args:
+    tzkt: tzkt_staging_mainnet
+    bcd:  bcd_mainnet
+    factories:
+      - address: KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD
+        template: quipuswap_fa12
+      - address: KT1SwH9P1Tx8a58Mm6qBExQFTcy2rwZyZiXS
+        template: quipuswap_fa2
+    dexes:
+      - address: KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N
+        token_address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+        symbol: tzBTC
+        decimals: 8
+        template: dexter_fa12
 
 templates:
   quipuswap_fa12:

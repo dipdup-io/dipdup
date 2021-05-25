@@ -195,7 +195,7 @@ async def fetch_schemas(config: DipDupConfig) -> None:
                             file.write(json.dumps(big_map_value_schema, indent=4))
 
         elif isinstance(index_config, StaticTemplateConfig):
-            raise RuntimeError('Config is not initialized')
+            raise RuntimeError('Config is not pre-initialized')
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
