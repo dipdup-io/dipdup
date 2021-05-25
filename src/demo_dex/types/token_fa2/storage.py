@@ -35,10 +35,12 @@ class TokenMetadata(BaseModel):
 
 
 class TokenFa2Storage(BaseModel):
-    administrator: str
     all_tokens: str
     ledger: List[LedgerItem]
     metadata: Dict[str, str]
     operators: List[Operator]
     paused: bool
     token_metadata: Dict[str, TokenMetadata]
+
+    class Config:
+        extras = 'ignore'

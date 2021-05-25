@@ -74,6 +74,7 @@ IndexName = str
 Address = str
 Path = str
 
+
 @dataclass
 class ContractSubscription:
     type_hash: str
@@ -896,12 +897,9 @@ class TzktDatasource:
             url=f'{self._url}/v1/accounts/{address}/contracts',
             params=dict(
                 limit=TZKT_HTTP_REQUEST_LIMIT,
-            )
+            ),
         )
-        return [c['address'] for c in contracts]
+        return [c['address'] for c in contracts][:3]
 
     async def get_contract_storage(self, address: Address) -> Dict[str, Any]:
-        return await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/contracts/{address}/storage'
-        )
+        return await self._proxy.http_request('get', url=f'{self._url}/v1/contracts/{address}/storage')

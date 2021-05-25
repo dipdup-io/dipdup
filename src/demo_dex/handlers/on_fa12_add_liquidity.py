@@ -1,6 +1,5 @@
 from decimal import Decimal
 from typing import Optional
-from demo_dex.handlers.types import TokenFa12StorageT, TransferParameterT
 
 import demo_dex.models as models
 from demo_dex.types.dexter_fa12.parameter.add_liquidity import AddLiquidityParameter
@@ -13,7 +12,7 @@ from dipdup.models import OperationData, OperationHandlerContext, OriginationCon
 async def on_fa12_add_liquidity(
     ctx: OperationHandlerContext,
     add_liquidity: TransactionContext[AddLiquidityParameter, DexterFa12Storage],
-    transfer: TransactionContext[TransferParameterT, TokenFa12StorageT],
+    transfer: TransactionContext[TransferParameter, TokenFa12Storage],
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')

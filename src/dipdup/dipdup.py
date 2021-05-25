@@ -109,9 +109,7 @@ class DipDup:
                     raise ConfigurationError('Dynamic ')
 
                 contract_config = self._config.contracts[cast(str, index_config.similar_to)]
-                await datasource.add_contract_subscription(
-                    contract_config, index_name, template, index_config.strict
-                )
+                await datasource.add_contract_subscription(contract_config, index_name, template, index_config.strict)
                 similar_contracts = await self._datasources[template.datasource].get_similar_contracts(contract_config.address)
                 for contract_address in similar_contracts:
                     self._config.contracts[contract_address] = ContractConfig(
@@ -124,7 +122,6 @@ class DipDup:
                     self._config.indexes[generated_index_name] = template_config
 
                 del self._config.indexes[index_name]
-
 
     async def spawn_indexes(self, runtime=False) -> None:
         for index_name, index_config in self._config.indexes.items():

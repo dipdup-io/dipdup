@@ -18,7 +18,7 @@ class TokenMetadata(BaseModel):
     nat: str
 
 
-class TokenFa12Storage(BaseModel):
+class Fa12TokenStorage(BaseModel):
     administrator: str
     balances: Dict[str, Balances]
     debtCeiling: str

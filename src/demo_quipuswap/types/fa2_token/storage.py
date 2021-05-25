@@ -34,7 +34,7 @@ class TokenMetadata(BaseModel):
     token_info: Dict[str, str]
 
 
-class TokenFa2Storage(BaseModel):
+class Fa2TokenStorage(BaseModel):
     administrator: str
     all_tokens: str
     ledger: List[LedgerItem]

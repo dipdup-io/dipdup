@@ -52,7 +52,7 @@ class Storage(BaseModel):
     votes: Dict[str, str]
 
 
-class QuipuswapFa2Storage(BaseModel):
+class QuipuFa2Storage(BaseModel):
     dex_lambdas: Dict[str, str]
     metadata: Dict[str, str]
     storage: Storage

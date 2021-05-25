@@ -50,7 +50,7 @@ templates:
         pattern:
           - type: origination
             originated_contract: <dex_contract>
-      - callback: on_token_fa12_to_tez
+      - callback: on_fa12_token_to_tez
         pattern:
           - type: transaction
             destination: <dex_contract>
@@ -104,7 +104,7 @@ templates:
         pattern:
           - type: origination
             originated_contract: <dex_contract>
-      - callback: on_token_fa2_to_tez
+      - callback: on_fa2_token_to_tez
         pattern:
           - type: transaction
             destination: <dex_contract>
@@ -158,7 +158,7 @@ templates:
         pattern:
           - type: origination
             originated_contract: <dex_contract>
-      - callback: on_token_fa12_to_xtz
+      - callback: on_fa12_token_to_xtz
         pattern:
           - type: transaction
             destination: <dex_contract>

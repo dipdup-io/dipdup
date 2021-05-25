@@ -171,6 +171,7 @@ class BcdDatasourceConfig:
 
 DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig]
 
+
 @dataclass
 class OperationHandlerTransactionPatternConfig:
     """Operation handler pattern config
@@ -676,9 +677,8 @@ class DipDupConfig:
                 pattern_types = list(map(get_pattern_type, patterns))
                 if any(map(lambda x: x != pattern_types[0], pattern_types)):
                     logger.warning(
-                        'Callback `%s` used multiple times with different signatures. '
-                        'Make sure you have specified contract typenames',
-                        callback
+                        'Callback `%s` used multiple times with different signatures. ' 'Make sure you have specified contract typenames',
+                        callback,
                     )
 
     @property
@@ -833,7 +833,6 @@ class DipDupConfig:
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
-
 
     async def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)

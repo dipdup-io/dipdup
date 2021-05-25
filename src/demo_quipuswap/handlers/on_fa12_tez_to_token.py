@@ -1,17 +1,17 @@
 from decimal import Decimal
 
 import demo_quipuswap.models as models
-from demo_quipuswap.types.token_fa12.parameter.transfer import TransferParameter
-from demo_quipuswap.types.token_fa12.storage import TokenFa12Storage
-from demo_quipuswap.types.quipuswap_fa12.parameter.tez_to_token_payment import TezToTokenPaymentParameter
-from demo_quipuswap.types.quipuswap_fa12.storage import QuipuswapFa12Storage
+from demo_quipuswap.types.fa12_token.parameter.transfer import TransferParameter
+from demo_quipuswap.types.fa12_token.storage import Fa12TokenStorage
+from demo_quipuswap.types.quipu_fa12.parameter.tez_to_token_payment import TezToTokenPaymentParameter
+from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
 from dipdup.models import OperationHandlerContext, TransactionContext
 
 
 async def on_fa12_tez_to_token(
     ctx: OperationHandlerContext,
-    tez_to_token_payment: TransactionContext[TezToTokenPaymentParameter, QuipuswapFa12Storage],
-    transfer: TransactionContext[TransferParameter, TokenFa12Storage],
+    tez_to_token_payment: TransactionContext[TezToTokenPaymentParameter, QuipuFa12Storage],
+    transfer: TransactionContext[TransferParameter, Fa12TokenStorage],
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')

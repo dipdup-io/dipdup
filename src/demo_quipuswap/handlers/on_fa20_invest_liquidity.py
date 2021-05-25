@@ -1,17 +1,17 @@
 from decimal import Decimal
 
 import demo_quipuswap.models as models
-from demo_quipuswap.types.token_fa2.parameter.transfer import TransferParameter
-from demo_quipuswap.types.token_fa2.storage import TokenFa2Storage
-from demo_quipuswap.types.quipuswap_fa2.parameter.invest_liquidity import InvestLiquidityParameter
-from demo_quipuswap.types.quipuswap_fa2.storage import QuipuswapFa2Storage
+from demo_quipuswap.types.fa2_token.parameter.transfer import TransferParameter
+from demo_quipuswap.types.fa2_token.storage import Fa2TokenStorage
+from demo_quipuswap.types.quipu_fa2.parameter.invest_liquidity import InvestLiquidityParameter
+from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
 from dipdup.models import OperationHandlerContext, TransactionContext
 
 
 async def on_fa20_invest_liquidity(
     ctx: OperationHandlerContext,
-    invest_liquidity: TransactionContext[InvestLiquidityParameter, QuipuswapFa2Storage],
-    transfer: TransactionContext[TransferParameter, TokenFa2Storage],
+    invest_liquidity: TransactionContext[InvestLiquidityParameter, QuipuFa2Storage],
+    transfer: TransactionContext[TransferParameter, Fa2TokenStorage],
 ) -> None:
 
     if ctx.template_values is None:

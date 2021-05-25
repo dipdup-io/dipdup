@@ -8,7 +8,7 @@ from demo_dex.types.quipuswap_fa2.storage import QuipuswapFa2Storage
 from dipdup.models import OperationHandlerContext, TransactionContext
 
 
-async def on_token_fa2_to_tez(
+async def on_fa2_token_to_tez(
     ctx: OperationHandlerContext,
     token_to_tez_payment: TransactionContext[TokenToTezPaymentParameter, QuipuswapFa2Storage],
     transfer: TransactionContext[TransferParameter, TokenFa2Storage],

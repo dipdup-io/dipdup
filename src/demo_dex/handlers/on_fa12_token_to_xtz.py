@@ -9,7 +9,7 @@ from demo_dex.types.token_fa12.storage import TokenFa12Storage
 from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 
-async def on_token_fa12_to_xtz(
+async def on_fa12_token_to_xtz(
     ctx: OperationHandlerContext,
     token_to_xtz: TransactionContext[TokenToXtzParameter, DexterFa12Storage],
     transfer: TransactionContext[TransferParameter, TokenFa12Storage],

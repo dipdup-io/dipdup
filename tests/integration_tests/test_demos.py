@@ -8,7 +8,7 @@ from unittest import IsolatedAsyncioTestCase
 from tortoise.transactions import in_transaction
 
 import demo_hic_et_nunc.models
-import demo_quipuswap_dexter.models
+import demo_dex.models
 import demo_tezos_domains.models
 import demo_tezos_domains_big_map.models
 import demo_tzcolors.models
@@ -53,9 +53,9 @@ class DemosTest(IsolatedAsyncioTestCase):
     async def test_quipuswap(self):
         self.run_dipdup('quipuswap.yml')
 
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_quipuswap_dexter.models'):
-            trades = await demo_quipuswap_dexter.models.Trade.filter().count()
-            positions = await demo_quipuswap_dexter.models.Position.filter().count()
+        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_dex.models'):
+            trades = await demo_dex.models.Trade.filter().count()
+            positions = await demo_dex.models.Position.filter().count()
             async with in_transaction() as conn:
                 symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
             self.assertEqual(2, symbols)

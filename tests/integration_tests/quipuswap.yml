@@ -8,22 +8,22 @@ database:
 contracts:
   kusd_dex_mainnet:
     address: KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2
-    typename: quipu_fa12
+    typename: quipuswap_fa12
   tzbtc_dex_mainnet:
     address: KT1N1wwNPqT5jGhM91GQ2ae5uY8UzFaXHMJS
-    typename: quipu_fa12
+    typename: quipuswap_fa12
   kusd_token_mainnet:
     address: KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV
-    typename: fa12_token
+    typename: token_fa12
   tzbtc_token_mainnet:
     address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
-    typename: fa12_token
+    typename: token_fa12
   hdao_dex_mainnet:
     address: KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph
-    typename: quipu_fa2
+    typename: quipuswap_fa2
   hdao_token_mainnet:
     address: KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW
-    typename: fa2_token
+    typename: token_fa2
 
 datasources:
   tzkt_staging_mainnet:

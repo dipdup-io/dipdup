@@ -102,6 +102,6 @@ async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -
                     token_contract=token_contract_name,
                     symbol=dex_contract_name,
                     decimals=str(dex.decimals),
-                )
+                ),
             )
             config.indexes[index_name] = index_config
