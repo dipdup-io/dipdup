@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from symbol import factor
 from typing import Dict, List, cast
 
 from pydantic import BaseModel

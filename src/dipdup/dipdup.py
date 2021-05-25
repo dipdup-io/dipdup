@@ -45,8 +45,10 @@ class DipDup:
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
         self._spawned_indexes: List[str] = []
 
-    async def init(self) -> None:
+    async def init(self, dynamic: bool) -> None:
         await codegen.create_package(self._config)
+        if dynamic:
+            await codegen.create_config_module(self._config)
         await codegen.resolve_dynamic_templates(self._config)
         await codegen.fetch_schemas(self._config)
         await codegen.generate_types(self._config)

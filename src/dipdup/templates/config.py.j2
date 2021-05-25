@@ -1,0 +1,8 @@
+from typing import Dict
+
+from dipdup.config import DipDupConfig
+from dipdup.datasources import DatasourceT
+
+
+async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -> None:
+    ...

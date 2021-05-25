@@ -63,7 +63,7 @@ class SchemasCache:
         return self._schemas[datasource_config][contract_config.address]
 
 
-async def create_package(config: DipDupConfig):
+async def create_package(config: DipDupConfig) -> None:
     try:
         package_path = config.package_path
     except (ImportError, ModuleNotFoundError):
@@ -79,6 +79,18 @@ async def create_package(config: DipDupConfig):
         models_code = template.render()
         with open(models_path, 'w') as file:
             file.write(models_code)
+
+
+async def create_config_module(config: DipDupConfig) -> None:
+    package_path = config.package_path
+    config_path = join(package_path, 'config.py')
+
+    if not exists(config_path):
+        with open(join(dirname(__file__), 'templates', 'config.py.j2')) as file:
+            template = Template(file.read())
+        config_code = template.render()
+        with open(config_path, 'w') as file:
+            file.write(config_code)
 
 
 async def resolve_dynamic_templates(config: DipDupConfig) -> None:
@@ -201,7 +213,7 @@ async def fetch_schemas(config: DipDupConfig) -> None:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
 
-async def generate_types(config: DipDupConfig):
+async def generate_types(config: DipDupConfig) -> None:
     schemas_path = join(config.package_path, 'schemas')
     types_path = join(config.package_path, 'types')
 
@@ -250,7 +262,7 @@ async def generate_types(config: DipDupConfig):
             subprocess.run(args, check=True)
 
 
-async def generate_handlers(config: DipDupConfig):
+async def generate_handlers(config: DipDupConfig) -> None:
     _logger.info('Loading handler templates')
     with open(join(dirname(__file__), 'templates', 'operation_handler.py.j2')) as file:
         operation_handler_template = Template(file.read())
@@ -310,7 +322,7 @@ async def generate_handlers(config: DipDupConfig):
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
 
-async def cleanup(config: DipDupConfig):
+async def cleanup(config: DipDupConfig) -> None:
     _logger.info('Cleaning up')
     schemas_path = join(config.package_path, 'schemas')
     rmtree(schemas_path)

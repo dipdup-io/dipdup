@@ -64,14 +64,14 @@ async def run(ctx) -> None:
     await dipdup.run()
 
 
-# TODO: Init with dynamic configuration
 @cli.command(help='Initialize new dipdup project')
+@click.option('-d', '--dynamic', help='Enable dynamic configuration')
 @click.pass_context
 @click_async
-async def init(ctx):
+async def init(ctx, dynamic: bool):
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init()
+    await dipdup.init(dynamic)
 
 
 # TODO: Init single contract/typename
