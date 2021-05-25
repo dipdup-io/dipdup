@@ -140,6 +140,7 @@ class DipDup:
             if datasource not in resync_datasources:
                 resync_datasources.append(datasource)
 
+            # NOTE: Actual subscription will be performed after resync
             await datasource.add_index(index_name, index_config)
 
             self._spawned_indexes.append(index_name)
