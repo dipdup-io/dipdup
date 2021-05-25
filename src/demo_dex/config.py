@@ -3,11 +3,8 @@ from symbol import factor
 from typing import Dict, List, cast
 
 from pydantic import BaseModel
-
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
-
-
 
 from dipdup.config import ContractConfig, DipDupConfig, StaticTemplateConfig
 from dipdup.datasources import DatasourceT

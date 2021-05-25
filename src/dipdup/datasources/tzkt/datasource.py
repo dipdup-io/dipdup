@@ -2,8 +2,6 @@ import asyncio
 import logging
 from collections import deque
 from enum import Enum
-from operator import index
-import random
 from typing import Any, Awaitable, Callable, Deque, Dict, List, Optional, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
