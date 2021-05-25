@@ -20,6 +20,7 @@ configuration:
   args:
     tzkt: tzkt_staging_mainnet
     bcd: bcd_mainnet
+    update_totals_interval: 60
     factories:
       - address: KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD
         exchange: quipuswap

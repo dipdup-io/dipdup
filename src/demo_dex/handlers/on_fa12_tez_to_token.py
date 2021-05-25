@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 import demo_dex.models as models
-from demo_dex.handlers.utils import update_totals
 from demo_dex.types.quipuswap_fa12.parameter.tez_to_token_payment import TezToTokenPaymentParameter
 from demo_dex.types.quipuswap_fa12.storage import QuipuswapFa12Storage
 from demo_dex.types.token_fa12.parameter.transfer import TransferParameter
@@ -16,8 +15,6 @@ async def on_fa12_tez_to_token(
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')
-
-    await update_totals()
 
     decimals = int(ctx.template_values['decimals'])
     symbol, _ = await models.Symbol.get_or_create(symbol=ctx.template_values['symbol'])
