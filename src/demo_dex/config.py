@@ -76,6 +76,14 @@ async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -
 
         token_contract_typename = f'token_{dex.standard}'
         token_contract_name = f'{token_contract_typename}_{dex.symbol}'
+
+        dex_contract_typename = f'{dex.exchange}_{dex.standard}'
+        dex_contract_name = f'{dex_contract_typename}_{dex.symbol}'
+
+        index_name = dex_contract_name
+        if index_name in args.get('skip', []):
+            continue
+
         if token_contract_name not in config.contracts:
             token_contract_config = ContractConfig(
                 address=dex.token_address,
@@ -83,8 +91,6 @@ async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -
             )
             config.contracts[token_contract_name] = token_contract_config
 
-        dex_contract_typename = f'{dex.exchange}_{dex.standard}'
-        dex_contract_name = f'{dex_contract_typename}_{dex.symbol}'
         if dex_contract_name not in config.contracts:
             dex_contract_config = ContractConfig(
                 address=dex.address,
@@ -92,7 +98,6 @@ async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -
             )
             config.contracts[dex_contract_name] = dex_contract_config
 
-        index_name = dex_contract_name
         if index_name not in config.indexes:
             template = f'{dex.exchange}_{dex.standard}'
             index_config = StaticTemplateConfig(

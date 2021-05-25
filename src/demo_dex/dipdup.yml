@@ -3,7 +3,7 @@ package: demo_dex
 
 database:
   kind: sqlite
-  path: quipuswap_dexter.sqlite3
+  path: dex.sqlite3
 
 datasources:
   tzkt_staging_mainnet:
@@ -35,6 +35,23 @@ configuration:
         token_address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
         symbol: tzBTC
         decimals: 8
+    skip:
+      # FIXME: shares_qty
+      - quipuswap_fa12_TSV
+      - quipuswap_fa12_SWAP
+      - quipuswap_fa12_kUSD
+      - quipuswap_fa2_wTaco
+      - quipuswap_fa2_FARM
+      - quipuswap_fa2_BDVXP
+      - quipuswap_fa2_Bezos
+      - quipuswap_fa2_CRUNCH
+      - quipuswap_fa2_FLAME
+      - quipuswap_fa2_HSK
+      - quipuswap_fa2_CUU
+      - quipuswap_fa2_SEB
+      - quipuswap_fa2_tDAO
+      - quipuswap_fa2_BART
+      - quipuswap_fa2_SOIL
 
 templates:
   quipuswap_fa12:
@@ -120,7 +137,7 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
-      - callback: on_fa20_invest_liquidity
+      - callback: on_fa2_invest_liquidity
         pattern:
           - type: transaction
             destination: <dex_contract>
@@ -128,7 +145,7 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
-      - callback: on_fa20_divest_liquidity
+      - callback: on_fa2_divest_liquidity
         pattern:
           - type: transaction
             destination: <dex_contract>
@@ -136,7 +153,7 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
-      - callback: on_fa20_withdraw_profit
+      - callback: on_fa2_withdraw_profit
         pattern:
           - type: transaction
             destination: <dex_contract>

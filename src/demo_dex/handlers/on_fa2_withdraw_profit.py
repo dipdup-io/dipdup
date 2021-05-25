@@ -7,7 +7,7 @@ from demo_dex.types.quipuswap_fa2.storage import QuipuswapFa2Storage
 from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 
-async def on_fa20_withdraw_profit(
+async def on_fa2_withdraw_profit(
     ctx: OperationHandlerContext,
     withdraw_profit: TransactionContext[WithdrawProfitParameter, QuipuswapFa2Storage],
     transaction_0: Optional[OperationData] = None,

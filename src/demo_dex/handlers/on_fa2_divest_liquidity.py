@@ -8,7 +8,7 @@ from demo_dex.types.quipuswap_fa2.storage import QuipuswapFa2Storage
 from dipdup.models import OperationHandlerContext, TransactionContext
 
 
-async def on_fa20_divest_liquidity(
+async def on_fa2_divest_liquidity(
     ctx: OperationHandlerContext,
     divest_liquidity: TransactionContext[DivestLiquidityParameter, QuipuswapFa2Storage],
     transfer: TransactionContext[TransferParameter, TokenFa2Storage],
@@ -38,13 +38,18 @@ async def on_fa20_divest_liquidity(
         share_px = (tez_qty + price * token_qty) / shares_qty
     else:
         last_trade = await models.Trade.filter(symbol=symbol).order_by('-id').first()
-        assert last_trade
-        price = last_trade.price
-        share_px = (tez_qty + price * token_qty) / shares_qty
 
-    position.realized_pl += shares_qty * (share_px - position.avg_share_px)
-    print(position.shares_qty, shares_qty)
-    position.shares_qty -= shares_qty  # type: ignore
-    assert position.shares_qty >= 0, divest_liquidity.data.hash
+        if last_trade:
+            price = last_trade.price
+            share_px = (tez_qty + price * token_qty) / shares_qty
+
+            position.realized_pl += shares_qty * (share_px - position.avg_share_px)
+            print(position.shares_qty, shares_qty)
+            position.shares_qty -= shares_qty  # type: ignore
+            assert position.shares_qty >= 0, divest_liquidity.data.hash
+        else:
+            # NOTE: MEL token
+            position.realized_pl = 0
+            position.shares_qty = 0
 
     await position.save()

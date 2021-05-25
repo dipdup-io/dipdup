@@ -5,7 +5,7 @@ database:
   user: ${POSTGRES_USER:-dipdup}
   password: ${POSTGRES_PASSWORD:-changeme}
   database: ${POSTGRES_DB:-dipdup}
-  schema_name: quipuswap_dexter
+  schema_name: dex
 
 hasura:
   url: http://hasura:8080

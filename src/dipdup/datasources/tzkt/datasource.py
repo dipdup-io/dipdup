@@ -888,6 +888,7 @@ class TzktDatasource:
                 select='address',
                 limit=TZKT_HTTP_REQUEST_LIMIT,
             ),
+            skip_cache=True,
         )
         return contracts
 
@@ -898,8 +899,9 @@ class TzktDatasource:
             params=dict(
                 limit=TZKT_HTTP_REQUEST_LIMIT,
             ),
+            skip_cache=True,
         )
-        return [c['address'] for c in contracts][:3]
+        return [c['address'] for c in contracts]
 
     async def get_contract_storage(self, address: Address) -> Dict[str, Any]:
         return await self._proxy.http_request('get', url=f'{self._url}/v1/contracts/{address}/storage')

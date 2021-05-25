@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class Ledger(BaseModel):
@@ -29,7 +29,6 @@ class Voters(BaseModel):
 class Storage(BaseModel):
     current_candidate: Optional[str]
     current_delegated: Optional[str]
-    invariant: str
     last_update_time: str
     last_veto: str
     ledger: Dict[str, Ledger]

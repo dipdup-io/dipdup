@@ -29,7 +29,6 @@ class Voters(BaseModel):
 class Storage(BaseModel):
     current_candidate: Optional[str]
     current_delegated: Optional[str]
-    invariant: str
     last_update_time: str
     last_veto: str
     ledger: Dict[str, Ledger]

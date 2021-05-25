@@ -1,4 +1,3 @@
-from asyncio.log import logger
 import hashlib
 import importlib
 import json
@@ -577,7 +576,10 @@ class DipDupConfig:
                 new_index_config.template_values = index_config.values
                 self.indexes[index_name] = new_index_config
 
-    def pre_initialize_index(self, index_config: IndexConfigT) -> None:
+    def pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
+        if index_name in self._pre_initialized:
+            return
+
         if isinstance(index_config, OperationIndexConfig):
             if isinstance(index_config.datasource, str):
                 try:
@@ -653,12 +655,12 @@ class DipDupConfig:
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
+        self._pre_initialized.append(index_name)
+
     def pre_initialize(self) -> None:
         self.resolve_static_templates()
         for index_name, index_config in self.indexes.items():
-            if index_name not in self._pre_initialized:
-                self.pre_initialize_index(index_config)
-                self._pre_initialized.append(index_name)
+            self.pre_initialize_index(index_name, index_config)
 
         _logger.info('Verifying callback uniqueness')
         for callback, patterns in self._callback_patterns.items():
@@ -676,8 +678,8 @@ class DipDupConfig:
 
                 pattern_types = list(map(get_pattern_type, patterns))
                 if any(map(lambda x: x != pattern_types[0], pattern_types)):
-                    logger.warning(
-                        'Callback `%s` used multiple times with different signatures. ' 'Make sure you have specified contract typenames',
+                    _logger.warning(
+                        'Callback `%s` used multiple times with different signatures. Make sure you have specified contract typenames',
                         callback,
                     )
 
@@ -754,6 +756,9 @@ class DipDupConfig:
         handler_config.callback_fn = callback_fn
 
     async def initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
+        if index_name in self._initialized:
+            return
+
         if isinstance(index_config, StaticTemplateConfig):
             raise RuntimeError('Config is not pre-initialized')
         # NOTE: Dynamic templates will be resolved later in dipdup module
@@ -833,6 +838,8 @@ class DipDupConfig:
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+        self._initialized.append(index_name)
 
     async def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)
