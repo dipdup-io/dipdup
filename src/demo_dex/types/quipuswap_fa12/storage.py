@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 
 
 class Ledger(BaseModel):

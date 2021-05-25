@@ -1,10 +1,10 @@
 from decimal import Decimal
 
 import demo_dex.models as models
-from demo_dex.types.token_fa2.parameter.transfer import TransferParameter
-from demo_dex.types.token_fa2.storage import TokenFa2Storage
 from demo_dex.types.quipuswap_fa2.parameter.divest_liquidity import DivestLiquidityParameter
 from demo_dex.types.quipuswap_fa2.storage import QuipuswapFa2Storage
+from demo_dex.types.token_fa2.parameter.transfer import TransferParameter
+from demo_dex.types.token_fa2.storage import TokenFa2Storage
 from dipdup.models import OperationHandlerContext, TransactionContext
 
 
@@ -49,7 +49,7 @@ async def on_fa2_divest_liquidity(
             assert position.shares_qty >= 0, divest_liquidity.data.hash
         else:
             # NOTE: MEL token
-            position.realized_pl = 0
-            position.shares_qty = 0
+            position.realized_pl = 0  # type: ignore
+            position.shares_qty = 0  # type: ignore
 
     await position.save()

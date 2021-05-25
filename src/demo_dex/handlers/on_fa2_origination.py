@@ -1,10 +1,8 @@
 from typing import Optional
 
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
-
 import demo_dex.models as models
-
 from demo_dex.types.quipuswap_fa2.storage import QuipuswapFa2Storage
+from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 
 async def on_fa2_origination(

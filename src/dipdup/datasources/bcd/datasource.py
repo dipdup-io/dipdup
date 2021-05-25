@@ -6,14 +6,17 @@ from dipdup.datasources.tzkt.datasource import Address
 
 
 class BcdDatasource:
-    def __init__(self, url: str, network: str, cache: bool):
+    def __init__(self, url: str, network: str, cache: bool) -> None:
         super().__init__()
         self._url = url.rstrip('/')
         self._network = network
         self._logger = logging.getLogger(__name__)
         self._proxy = DatasourceRequestProxy(cache)
 
-    async def run(self):
+    async def run(self) -> None:
+        pass
+
+    async def resync(self) -> None:
         pass
 
     async def get_tokens(self, address: Address) -> List[Dict[str, Any]]:

@@ -1,8 +1,8 @@
 from decimal import Decimal
 from typing import Optional
-from demo_dex.handlers.utils import update_totals
 
 import demo_dex.models as models
+from demo_dex.handlers.utils import update_totals
 from demo_dex.types.dexter_fa12.parameter.xtz_to_token import XtzToTokenParameter
 from demo_dex.types.dexter_fa12.storage import DexterFa12Storage
 from demo_dex.types.token_fa12.parameter.transfer import TransferParameter

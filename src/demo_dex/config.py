@@ -1,9 +1,9 @@
 from symbol import factor
-from pydantic import BaseModel
-from dipdup.config import ContractConfig, DipDupConfig, StaticTemplateConfig
-
 from typing import Dict, List, cast
 
+from pydantic import BaseModel
+
+from dipdup.config import ContractConfig, DipDupConfig, StaticTemplateConfig
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource

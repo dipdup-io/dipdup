@@ -1,11 +1,9 @@
 from typing import Optional, Union
-from demo_dex.types.dexter_fa12.storage import DexterFa12Storage
-
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 import demo_dex.models as models
-
+from demo_dex.types.dexter_fa12.storage import DexterFa12Storage
 from demo_dex.types.quipuswap_fa12.storage import QuipuswapFa12Storage
+from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 
 
 async def on_fa12_origination(

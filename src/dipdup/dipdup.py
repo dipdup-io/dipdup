@@ -1,5 +1,4 @@
 import asyncio
-from genericpath import exists
 import hashlib
 import importlib
 import logging
@@ -8,21 +7,22 @@ from os.path import join
 from posix import listdir
 from typing import Dict, List, cast
 
+from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
-from tortoise.utils import get_schema_sql
 from tortoise.transactions import in_transaction
+from tortoise.utils import get_schema_sql
 
 import dipdup.codegen as codegen
 from dipdup import __version__
 from dipdup.config import (
-    BcdDatasourceConfig,
-    DatasourceConfigT,
-    IndexConfigTemplateT,
     ROLLBACK_HANDLER,
+    BcdDatasourceConfig,
     ContractConfig,
+    DatasourceConfigT,
     DipDupConfig,
     DynamicTemplateConfig,
+    IndexConfigTemplateT,
     PostgresDatabaseConfig,
     SqliteDatabaseConfig,
     StaticTemplateConfig,
@@ -53,7 +53,7 @@ class DipDup:
         await codegen.generate_handlers(self._config)
         await codegen.cleanup(self._config)
 
-    async def configure(self) -> None:
+    async def configure(self, runtime=False) -> None:
         if not self._datasources:
             raise RuntimeError('Call `create_datasources` first')
 
@@ -63,6 +63,8 @@ class DipDup:
 
         self._config.pre_initialize()
         await self._config.initialize()
+
+        await self.spawn_indexes(runtime)
 
     async def create_datasources(self) -> None:
         datasource: DatasourceT
@@ -124,6 +126,7 @@ class DipDup:
                 del self._config.indexes[index_name]
 
     async def spawn_indexes(self, runtime=False) -> None:
+        resync_datasources = []
         for index_name, index_config in self._config.indexes.items():
             if index_name in self._spawned_indexes:
                 continue
@@ -134,15 +137,21 @@ class DipDup:
 
             self._logger.info('Processing index `%s`', index_name)
             datasource = cast(TzktDatasource, self._datasources_by_config[index_config.datasource_config])
+            if datasource not in resync_datasources:
+                resync_datasources.append(datasource)
 
             await datasource.add_index(index_name, index_config)
 
             self._spawned_indexes.append(index_name)
 
+        if runtime:
+            for datasource in resync_datasources:
+                await datasource.resync()
+
     async def configuration_loop(self, interval: int):
         while True:
             await asyncio.sleep(interval)
-            await self.configure()
+            await self.configure(runtime=True)
 
     async def run(self) -> None:
         url = self._config.database.connection_string

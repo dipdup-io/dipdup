@@ -3,6 +3,7 @@ import logging
 from collections import deque
 from enum import Enum
 from operator import index
+import random
 from typing import Any, Awaitable, Callable, Deque, Dict, List, Optional, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -17,7 +18,6 @@ from dipdup.config import (
     ROLLBACK_HANDLER,
     BigMapHandlerConfig,
     BigMapIndexConfig,
-    BlockIndexConfig,
     ContractConfig,
     DipDupConfig,
     IndexConfigTemplateT,
@@ -29,9 +29,9 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
+from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.models import (
     BigMapAction,
     BigMapContext,
@@ -266,7 +266,6 @@ class TzktDatasource:
         self._logger = logging.getLogger(__name__)
         self._operation_index_by_name: Dict[IndexName, OperationIndexConfig] = {}
         self._big_map_index_by_name: Dict[IndexName, BigMapIndexConfig] = {}
-        self._big_map_index_by_address: Dict[Address, BigMapIndexConfig] = {}
         self._callback_lock = asyncio.Lock()
         self._operation_subscriptions: Dict[Address, List[OperationType]] = {}
         self._contract_subscriptions: List[ContractSubscription] = []
@@ -347,8 +346,6 @@ class TzktDatasource:
                     await self.add_big_map_subscription(pattern_config.contract_config.address, pattern_config.path)
 
     async def fetch_index(self, index_name: str, index_config: IndexConfigTemplateT, level: int) -> None:
-        if index_name in self._synched_indexes:
-            return
         self._logger.info('Synchronizing `%s`', index_name)
         if isinstance(index_config, OperationIndexConfig):
             await self.fetch_operations(index_config, level)
@@ -356,7 +353,6 @@ class TzktDatasource:
             await self.fetch_big_maps(index_config, level)
         else:
             raise NotImplementedError
-        self._synched_indexes.append(index_name)
 
     async def run(self):
         self._logger.info('Starting datasource')
@@ -921,3 +917,8 @@ class TzktDatasource:
 
     async def get_contract_storage(self, address: Address) -> Dict[str, Any]:
         return await self._proxy.http_request('get', url=f'{self._url}/v1/contracts/{address}/storage')
+
+    async def resync(self) -> None:
+        self._operations_synchronized.clear()
+        self._big_maps_synchronized.clear()
+        await self.on_connect()

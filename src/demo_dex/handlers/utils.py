@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-from tortoise.transactions import in_transaction
+
 from tortoise.exceptions import OperationalError
+from tortoise.transactions import in_transaction
 
 
 async def update_totals():
