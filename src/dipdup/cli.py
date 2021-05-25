@@ -64,6 +64,7 @@ async def run(ctx) -> None:
     await dipdup.run()
 
 
+# TODO: Init with dynamic configuration
 @cli.command(help='Initialize new dipdup project')
 @click.pass_context
 @click_async
@@ -72,6 +73,7 @@ async def init(ctx):
     dipdup = DipDup(config)
     await dipdup.init()
 
+# TODO: Init single contract/typename
 
 @cli.command(help='Clear development request cache')
 @click.pass_context

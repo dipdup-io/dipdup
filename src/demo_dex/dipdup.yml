@@ -1,0 +1,192 @@
+spec_version: 0.1
+package: demo_dex
+
+database:
+  kind: sqlite
+  path: quipuswap_dexter.sqlite3
+
+datasources:
+  tzkt_staging_mainnet:
+    kind: tzkt
+    url: https://staging.api.tzkt.io
+
+  bcd_mainnet:
+    kind: bcd
+    url: https://api.better-call.dev
+    network: mainnet
+
+configuration:
+  interval: 60
+  args:
+    tzkt: tzkt_staging_mainnet
+    bcd: bcd_mainnet
+    factories:
+      - address: KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD
+        exchange: quipuswap
+        standard: fa12
+      - address: KT1SwH9P1Tx8a58Mm6qBExQFTcy2rwZyZiXS
+        exchange: quipuswap
+        standard: fa2
+    dexes:
+      - address: KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N
+        exchange: dexter
+        standard: fa12
+
+        token_address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+        symbol: tzBTC
+        decimals: 8
+
+templates:
+  quipuswap_fa12:
+    kind: operation
+    datasource: tzkt_staging_mainnet
+    contracts:
+      - <dex_contract>
+    types:
+      - transaction
+      - origination
+    handlers:
+      - callback: on_fa12_origination
+        pattern:
+          - type: origination
+            originated_contract: <dex_contract>
+      - callback: on_token_fa12_to_tez
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tokenToTezPayment
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_tez_to_token
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tezToTokenPayment
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_invest_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: investLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_divest_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: divestLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_withdraw_profit
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: withdrawProfit
+          - type: transaction
+            source: <dex_contract>
+            optional: True
+
+  quipuswap_fa2:
+    kind: operation
+    datasource: tzkt_staging_mainnet
+    contracts:
+      - <dex_contract>
+    types:
+      - transaction
+      - origination
+    handlers:
+      - callback: on_fa2_origination
+        pattern:
+          - type: origination
+            originated_contract: <dex_contract>
+      - callback: on_token_fa2_to_tez
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tokenToTezPayment
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa2_tez_to_token
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tezToTokenPayment
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa20_invest_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: investLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa20_divest_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: divestLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa20_withdraw_profit
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: withdrawProfit
+          - type: transaction
+            source: <dex_contract>
+            optional: True
+
+  dexter_fa12:
+    kind: operation
+    datasource: tzkt_staging_mainnet
+    contracts:
+      - <dex_contract>
+    types:
+      - transaction
+      - origination
+    handlers:
+      - callback: on_fa12_origination
+        pattern:
+          - type: origination
+            originated_contract: <dex_contract>
+      - callback: on_token_fa12_to_xtz
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tokenToXtz
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_xtz_to_token
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: xtzToToken
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_add_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: addLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_remove_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: removeLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
