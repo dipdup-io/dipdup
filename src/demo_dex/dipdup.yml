@@ -36,7 +36,7 @@ configuration:
         symbol: tzBTC
         decimals: 8
     skip:
-      # FIXME: shares_qty
+      # FIXME: position.shares_qty mismatch
       - quipuswap_fa12_TSV
       - quipuswap_fa12_SWAP
       - quipuswap_fa12_kUSD
@@ -52,6 +52,15 @@ configuration:
       - quipuswap_fa2_tDAO
       - quipuswap_fa2_BART
       - quipuswap_fa2_SOIL
+      - quipuswap_fa2_GUTS
+      - quipuswap_fa2_bDAO
+      - quipuswap_fa2_hDAO
+      - quipuswap_fa2_TCZ
+      - quipuswap_fa2_tCow
+      - quipuswap_fa2_TZS
+
+      # FIXME: Contract address differs, zero division
+      - quipuswap_fa2_WRAP
 
 templates:
   quipuswap_fa12:

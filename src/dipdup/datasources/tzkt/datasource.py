@@ -331,6 +331,10 @@ class TzktDatasource:
 
         return self._client
 
+    async def set_state_level(self, index_config: IndexConfigTemplateT, level: int) -> None:
+        index_config.state.level = level
+        await index_config.state.save()
+
     async def add_subscriptions(self) -> None:
         # NOTE: Safe to call multiple times
         for operation_index_config in self._operation_index_by_name.values():
@@ -478,9 +482,12 @@ class TzktDatasource:
         )
 
     async def fetch_operations(self, index_config: OperationIndexConfig, last_level: int) -> None:
-        self._logger.info('Fetching operations prior to level %s', last_level)
-
         first_level = index_config.state.level
+        if first_level == last_level:
+            return
+
+        self._logger.info('Fetching operations from level %s to %s', first_level, last_level)
+
         addresses = [c.address for c in index_config.contract_configs]
 
         fetcher = OperationFetcher(
@@ -503,6 +510,9 @@ class TzktDatasource:
                 ],
                 sync=True,
             )
+
+        # NOTE: State level is not updated when there's no operations between first_level and last_level
+        await self.set_state_level(index_config, last_level)
 
     async def _fetch_big_maps(
         self, addresses: List[Address], paths: List[Path], offset: int, first_level: int, last_level: int
@@ -539,8 +549,11 @@ class TzktDatasource:
                 sync=True,
             )
 
-        self._logger.info('Fetching big map updates prior to level %s', last_level)
-        level = index_config.state.level
+        first_level = index_config.state.level
+        if first_level == last_level:
+            return
+
+        self._logger.info('Fetching big map updates from level %s to %s', first_level, last_level)
 
         big_maps = []
         offset = 0
@@ -551,7 +564,7 @@ class TzktDatasource:
                 paths.add(pattern_config.path)
 
         while True:
-            fetched_big_maps = await self._fetch_big_maps(list(addresses), list(paths), offset, level, last_level)
+            fetched_big_maps = await self._fetch_big_maps(list(addresses), list(paths), offset, first_level, last_level)
             big_maps += fetched_big_maps
 
             while True:
@@ -570,6 +583,9 @@ class TzktDatasource:
 
         if big_maps:
             await _process_level_big_maps(big_maps)
+
+        # NOTE: State level is not updated when there's no operations between first_level and last_level
+        await self.set_state_level(index_config, last_level)
 
     async def fetch_jsonschemas(self, address: str) -> Dict[str, Any]:
         self._logger.info('Fetching jsonschemas for address `%s', address)
