@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 
+from dipdup.exceptions import ConfigurationError
+
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
@@ -87,8 +89,14 @@ class OperationData:
 
             # NOTE: TzKT could return bigmaps as object or as array of key-value objects. We need to guess this from storage.
             # TODO: This code should be a part of datasource module.
-            if field.type_ not in (int, bool) and isinstance(storage[key], int):
-                _logger.debug(field.type_)
+            try:
+                value = storage[key]
+            except KeyError as e:
+                if not field.required:
+                    continue
+                raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists') from e
+
+            if field.type_ not in (int, bool) and isinstance(value, int):
                 if hasattr(field.type_, '__fields__') and 'key' in field.type_.__fields__ and 'value' in field.type_.__fields__:
                     storage[key] = []
                     if self.diffs:
