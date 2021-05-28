@@ -1,3 +1,4 @@
+from contextlib import suppress
 from datetime import datetime, timedelta
 from typing import Dict, List, cast
 
@@ -27,19 +28,16 @@ class DEX(BaseModel):
     decimals: int
 
 
-async def update_totals(interval: int):
+async def update_totals(interval: int) -> None:
     async with in_transaction() as conn:
-        try:
-            updated_at = (await conn.execute_query('SELECT updated_at FROM trade_total LIMIT 1'))[0][0]
+        with suppress(OperationalError):
+            updated_at = datetime.utcfromtimestamp((await conn.execute_query('SELECT updated_at FROM trade_total LIMIT 1'))[0])
             if datetime.now() - updated_at < timedelta(seconds=interval):
                 return
-        except OperationalError:
-            pass
 
-        try:
+    async with in_transaction() as conn:
+        with suppress(OperationalError):
             await conn.execute_query('CALL trade_summary()')
-        except OperationalError:
-            pass
 
 
 async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -> None:
@@ -48,7 +46,7 @@ async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -
     tzkt = cast(TzktDatasource, datasources[args['tzkt']])
     bcd = cast(BcdDatasource, datasources[args['bcd']])
 
-    await update_totals(args['update_totals_interval'])
+    await update_totals(int(args['update_totals_interval']))
 
     dexes: List[DEX] = [DEX.parse_obj(d) for d in args['dexes']]
     factories: List[Factory] = [Factory.parse_obj(f) for f in args['factories']]

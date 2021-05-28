@@ -1,6 +1,20 @@
 version: "3.8"
 
 services:
+
+  dex:
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - ./src/demo_dex/dipdup.yml:/home/dipdup/dipdup.yml
+      - ./src/demo_dex/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
+    command: ["-l", "debug.yml", "-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+
   hic_et_nunc:
     build: .
     depends_on:

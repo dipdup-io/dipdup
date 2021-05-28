@@ -110,7 +110,7 @@ class DipDup:
                 # NOTE: Datasource and other fields are str as we haven't initialized DynamicTemplateConfigs yet
                 datasource = self._datasources[cast(str, template.datasource)]
                 if not isinstance(datasource, TzktDatasource):
-                    raise ConfigurationError('Dynamic ')
+                    raise ConfigurationError('`datasource` field must refer to TzKT datasource')
 
                 contract_config = self._config.contracts[cast(str, index_config.similar_to)]
                 await datasource.add_contract_subscription(contract_config, index_name, template, index_config.strict)
