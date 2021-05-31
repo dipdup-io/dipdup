@@ -119,6 +119,7 @@ class ContractConfig:
 
     @validator('address')
     def valid_address(cls, v):
+        # NOTE: Wallet addresses are allowed for debugging purposes (source field). Do we need a separate section?
         if not (v.startswith('KT1') or v.startswith('tz1')) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v

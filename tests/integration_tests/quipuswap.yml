@@ -102,7 +102,7 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
-      - callback: on_fa20_invest_liquidity
+      - callback: on_fa2_invest_liquidity
         pattern:
           - type: transaction
             destination: <dex_contract>
@@ -110,7 +110,7 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
-      - callback: on_fa20_divest_liquidity
+      - callback: on_fa2_divest_liquidity
         pattern:
           - type: transaction
             destination: <dex_contract>
@@ -118,7 +118,7 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
-      - callback: on_fa20_withdraw_profit
+      - callback: on_fa2_withdraw_profit
         pattern:
           - type: transaction
             destination: <dex_contract>
