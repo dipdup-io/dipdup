@@ -27,9 +27,9 @@ class Voters(BaseModel):
 
 
 class Storage(BaseModel):
+    baker_validator: str
     current_candidate: Optional[str]
     current_delegated: Optional[str]
-    invariant: str
     last_update_time: str
     last_veto: str
     ledger: Dict[str, Ledger]

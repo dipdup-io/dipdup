@@ -97,6 +97,8 @@ class OperationCache:
                     pattern_idx = 0
                     matched_operations: List[Optional[OperationData]] = []
 
+                    # TODO: Ensure complex cases work, for ex. required argument after optional one
+                    # TODO: Add None to matched_operations where applicable
                     while operation_idx < len(operations):
                         pattern_config = handler_config.pattern[pattern_idx]
                         matched = self.match_operation(pattern_config, operations[operation_idx])
