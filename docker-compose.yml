@@ -9,7 +9,7 @@ services:
     volumes:
       - ./src/demo_dex/dipdup.yml:/home/dipdup/dipdup.yml
       - ./src/demo_dex/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
-    command: ["-l", "debug.yml", "-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
+    command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
     restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
