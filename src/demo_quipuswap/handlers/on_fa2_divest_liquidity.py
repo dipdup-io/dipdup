@@ -33,15 +33,13 @@ async def on_fa2_divest_liquidity(
 
     tez_pool = Decimal(storage.storage.tez_pool) / (10 ** 6)
     token_pool = Decimal(storage.storage.token_pool) / (10 ** decimals)
-    if tez_pool and token_pool:
-        price = tez_pool / token_pool
-        share_px = (tez_qty + price * token_qty) / shares_qty
-    else:
-        last_trade = await models.Trade.filter(symbol=symbol).order_by('-id').first()
-        assert last_trade
-        price = last_trade.price
-        shares_qty = 0
-        share_px = 0
+
+    # NOTE: Empty pools mean exchange is not initialized yet 
+    if not tez_pool and not token_pool:
+        return
+
+    price = tez_pool / token_pool
+    share_px = (tez_qty + price * token_qty) / shares_qty
 
     position.realized_pl += shares_qty * (share_px - position.avg_share_px)
     position.shares_qty -= shares_qty  # type: ignore
