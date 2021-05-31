@@ -32,7 +32,7 @@ class CLIContext:
 
 @click.group()
 @click.version_option(__version__)
-@click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default='dipdup.yml')
+@click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--logging-config', '-l', type=str, help='Path to logging YAML config', default='logging.yml')
 @click.pass_context
 @click_async

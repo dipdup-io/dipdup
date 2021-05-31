@@ -8,7 +8,7 @@ from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
 from dipdup.models import OperationHandlerContext, TransactionContext
 
 
-async def on_fa20_divest_liquidity(
+async def on_fa2_divest_liquidity(
     ctx: OperationHandlerContext,
     divest_liquidity: TransactionContext[DivestLiquidityParameter, QuipuFa2Storage],
     transfer: TransactionContext[TransferParameter, Fa2TokenStorage],
