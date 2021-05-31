@@ -1,5 +1,6 @@
 from contextlib import suppress
 from datetime import datetime, timedelta
+import logging
 from typing import Dict, List, cast
 
 from pydantic import BaseModel
@@ -10,6 +11,8 @@ from dipdup.config import ContractConfig, DipDupConfig, StaticTemplateConfig
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+
+_logger = logging.getLogger(__name__)
 
 
 class Factory(BaseModel):
@@ -43,6 +46,8 @@ async def update_totals(interval: int) -> None:
 async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -> None:
     assert config.configuration
     args = config.configuration.args
+    include = args.get('include', [])
+    exclude = args.get('exclude', [])
     tzkt = cast(TzktDatasource, datasources[args['tzkt']])
     bcd = cast(BcdDatasource, datasources[args['bcd']])
 
@@ -52,12 +57,12 @@ async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -
     factories: List[Factory] = [Factory.parse_obj(f) for f in args['factories']]
 
     for factory in factories:
-        print(f'Processing factory {factory.address}')
+        _logger.info('Processing factory %s', factory.address)
 
         originated_contracts = await tzkt.get_originated_contracts(factory.address)
 
         for dex_address in originated_contracts:
-            print(f'Processing DEX {dex_address}')
+            _logger.info('Processing DEX %s', dex_address)
 
             storage = await tzkt.get_contract_storage(dex_address)
 
@@ -98,7 +103,7 @@ async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -
         dex_contract_name = f'{dex_contract_typename}_{dex.symbol}'
 
         index_name = dex_contract_name
-        if index_name in args.get('skip', []):
+        if (include and index_name not in include) or index_name in exclude:
             continue
 
         if token_contract_name not in config.contracts:
