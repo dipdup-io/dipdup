@@ -235,11 +235,11 @@ class OperationHandlerTransactionPatternConfig:
             parameter_cls = f'{snake_to_camel(self.entrypoint)}Parameter'
             storage_cls = f'{snake_to_camel(module_name)}Storage'
             if self.optional:
-                return f'{entrypoint}: Optional[TransactionContext[{parameter_cls}, {storage_cls}]],'
+                return f'{entrypoint}: Optional[TransactionContext[{parameter_cls}, {storage_cls}]] = None,'
             return f'{entrypoint}: TransactionContext[{parameter_cls}, {storage_cls}],'
         else:
             if self.optional:
-                return f'transaction_{self._transaction_id}: Optional[OperationData],'
+                return f'transaction_{self._transaction_id}: Optional[OperationData] = None,'
             return f'transaction_{self._transaction_id}: OperationData,'
 
 
@@ -281,7 +281,7 @@ class OperationHandlerOriginationPatternConfig:
         module_name = self.contract_config.module_name
         storage_cls = f'{snake_to_camel(module_name)}Storage'
         if self.optional:
-            return f'{module_name}_origination: Optional[OriginationContext[{storage_cls}]],'
+            return f'{module_name}_origination: Optional[OriginationContext[{storage_cls}]] = None,'
         return f'{module_name}_origination: OriginationContext[{storage_cls}],'
 
 
