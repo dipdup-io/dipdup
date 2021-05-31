@@ -49,7 +49,7 @@ class CodegenTest(IsolatedAsyncioTestCase):
 
                 try:
                     dipdup = DipDup(config)
-                    await dipdup.init()
+                    await dipdup.init(False)
 
                     import_submodules(config.package)
                 except Exception as exc:
