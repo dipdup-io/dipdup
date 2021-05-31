@@ -119,7 +119,7 @@ class ContractConfig:
 
     @validator('address')
     def valid_address(cls, v):
-        if not v.startswith('KT1') or len(v) != 36:
+        if not (v.startswith('KT1') or v.startswith('tz1')) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
 

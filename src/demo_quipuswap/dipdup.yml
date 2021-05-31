@@ -18,6 +18,8 @@ contracts:
   hdao_token_mainnet:
     address: KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW
     typename: fa2_token
+  fa12_fail:
+    address: tz1RJf644pa7QAZqKzrPQGiYQPyubXarC4cv
 
 datasources:
   tzkt_staging_mainnet:
@@ -34,6 +36,7 @@ templates:
       - callback: on_fa12_token_to_tez
         pattern:
           - type: transaction
+            source: fa12_fail
             destination: <dex_contract>
             entrypoint: tokenToTezPayment
           - type: transaction
@@ -42,6 +45,7 @@ templates:
       - callback: on_fa12_tez_to_token
         pattern:
           - type: transaction
+            source: fa12_fail
             destination: <dex_contract>
             entrypoint: tezToTokenPayment
           - type: transaction
@@ -50,6 +54,7 @@ templates:
       - callback: on_fa12_invest_liquidity
         pattern:
           - type: transaction
+            source: fa12_fail
             destination: <dex_contract>
             entrypoint: investLiquidity
           - type: transaction
@@ -58,6 +63,7 @@ templates:
       - callback: on_fa12_divest_liquidity
         pattern:
           - type: transaction
+            source: fa12_fail
             destination: <dex_contract>
             entrypoint: divestLiquidity
           - type: transaction
@@ -66,6 +72,7 @@ templates:
       - callback: on_fa12_withdraw_profit
         pattern:
           - type: transaction
+            source: fa12_fail
             destination: <dex_contract>
             entrypoint: withdrawProfit
           - type: transaction
