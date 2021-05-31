@@ -59,8 +59,8 @@ class DemosTest(IsolatedAsyncioTestCase):
             async with in_transaction() as conn:
                 symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
             self.assertEqual(2, symbols)
-            self.assertEqual(93, trades)
-            self.assertEqual(54, positions)
+            self.assertEqual(835, trades)
+            self.assertEqual(214, positions)
 
     async def test_tzcolors(self):
         self.run_dipdup('tzcolors.yml')
