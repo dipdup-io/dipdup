@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod, abstractproperty
 import hashlib
 import importlib
 import json
@@ -12,14 +13,14 @@ from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
 from urllib.parse import urlparse
 
-from pydantic import Field, validator
+from pydantic import BaseModel, Field, validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup.exceptions import ConfigurationError
-from dipdup.models import State
+from dipdup.models import State, TemporaryState
 from dipdup.utils import camel_to_snake, reindex, snake_to_camel
 
 ROLLBACK_HANDLER = 'on_rollback'
@@ -28,6 +29,13 @@ ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
 sys.path.append(os.getcwd())
 _logger = logging.getLogger(__name__)
+
+class NoState:
+    def __bool__(self):
+        return False
+
+
+StateT = Union[State, TemporaryState]
 
 
 class OperationType(Enum):
@@ -111,6 +119,10 @@ class ContractConfig:
     address: str
     typename: Optional[str] = None
 
+    def __post_init_post_parse__(self) -> None:
+        self._code_hash: Optional[str] = None
+        self._type_hash: Optional[str] = None
+
     def __hash__(self):
         return hash(f'{self.address}{self.typename or ""}')
 
@@ -125,6 +137,18 @@ class ContractConfig:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
 
+    async def _fetch_hashes(self) -> None:
+        ...
+
+    async def get_code_hash(self) -> str:
+        if self._code_hash is None:
+            await self._fetch_hashes()
+        return cast(str, self._code_hash)
+
+    async def get_type_hash(self) -> str:
+        if self._type_hash is None:
+            await self._fetch_hashes()
+        return cast(str, self._type_hash)
 
 @dataclass
 class TzktDatasourceConfig:
@@ -173,7 +197,114 @@ DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig]
 
 
 @dataclass
-class OperationHandlerTransactionPatternConfig:
+class PatternConfig(ABC):
+    """Base for pattern config classes containing methods required for codegen"""
+    @abstractmethod
+    def get_handler_imports(self, package: str) -> str:
+        ...
+
+    @abstractmethod
+    def get_handler_argument(self) -> str:
+        ...
+
+    @classmethod
+    def format_storage_import(cls, package: str, module_name: str) -> str:
+        storage_cls = f'{snake_to_camel(module_name)}Storage'
+        return f'from {package}.types.{module_name}.storage import {storage_cls}'
+
+    @classmethod
+    def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> str:
+        parameter_cls = f'{snake_to_camel(entrypoint)}Parameter'
+        return f'from {package}.types.{module_name}.parameter.{entrypoint} import {parameter_cls}'
+
+    @classmethod
+    def format_origination_argument(cls, module_name: str, optional: bool) -> str:
+        storage_cls = f'{snake_to_camel(module_name)}Storage'
+        if optional:
+            return f'{module_name}_origination: Optional[OriginationContext[{storage_cls}]] = None,'
+        return f'{module_name}_origination: OriginationContext[{storage_cls}],'
+
+    @classmethod
+    def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> str:
+        parameter_cls = f'{snake_to_camel(entrypoint)}Parameter'
+        storage_cls = f'{snake_to_camel(module_name)}Storage'
+        if optional:
+            return f'{entrypoint}: Optional[TransactionContext[{parameter_cls}, {storage_cls}]] = None,'
+        return f'{entrypoint}: TransactionContext[{parameter_cls}, {storage_cls}],'
+
+    @classmethod
+    def format_empty_operation_argument(cls, transaction_id: int, optional: bool) -> str:
+        if optional:
+            return f'transaction_{transaction_id}: Optional[OperationData] = None,'
+        return f'transaction_{transaction_id}: OperationData,'
+
+
+@dataclass
+class StorageTypeMixin:
+    """`storage_type_cls` field"""
+    def __post_init_post_parse__(self):
+        self._storage_type_cls = None
+
+    @property
+    def storage_type_cls(self) -> Type:
+        if self._storage_type_cls is None:
+            raise RuntimeError('Config is not initialized')
+        return self._storage_type_cls
+
+    @storage_type_cls.setter
+    def storage_type_cls(self, typ: Type) -> None:
+        self._storage_type_cls = typ
+
+    def initialize_storage_cls(self, package: str, module_name: str) -> None:
+        _logger.info('Registering `%s` storage type', module_name)
+        storage_type_module = importlib.import_module(f'{package}.types.{module_name}.storage')
+        storage_type_cls = getattr(storage_type_module, snake_to_camel(module_name) + 'Storage',)
+        self.storage_type_cls = storage_type_cls
+
+
+
+@dataclass
+class ParameterTypeMixin:
+    """`parameter_type_cls` field"""
+    def __post_init_post_parse__(self):
+        self._parameter_type_cls = None
+
+    @property
+    def parameter_type_cls(self) -> Type:
+        if self._parameter_type_cls is None:
+            raise RuntimeError('Config is not initialized')
+        return self._parameter_type_cls
+
+    @parameter_type_cls.setter
+    def parameter_type_cls(self, typ: Type) -> None:
+        self._parameter_type_cls = typ
+
+    def initialize_parameter_cls(self, package: str, module_name: str, entrypoint: str) -> None:
+        _logger.info('Registering parameter type for entrypoint `%s`', entrypoint)
+        parameter_type_module = importlib.import_module(f'{package}.types.{module_name}.parameter.{camel_to_snake(entrypoint)}')
+        parameter_type_cls = getattr(parameter_type_module, snake_to_camel(entrypoint) + 'Parameter')
+        self.parameter_type_cls = parameter_type_cls
+
+
+@dataclass
+class TransactionIdMixin:
+    """`transaction_id` field"""
+    def __post_init_post_parse__(self):
+        self._transaction_id = None
+
+    @property
+    def transaction_id(self) -> int:
+        if self._transaction_id is None:
+            raise RuntimeError('Config is not initialized')
+        return self._transaction_id
+
+    @transaction_id.setter
+    def transaction_id(self, id_: int) -> None:
+        self._transaction_id = id_
+
+
+@dataclass
+class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, ParameterTypeMixin, TransactionIdMixin):
     """Operation handler pattern config
 
     :param destination: Alias of the contract to match
@@ -187,11 +318,28 @@ class OperationHandlerTransactionPatternConfig:
     optional: bool = False
 
     def __post_init_post_parse__(self):
+        super().__post_init_post_parse__()
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
-        self._parameter_type_cls = None
-        self._storage_type_cls = None
-        self._transaction_id = None
+
+    def get_handler_imports(self, package: str) -> str:
+        if not self.entrypoint:
+            return ''
+
+        module_name = self.destination_contract_config.module_name
+        result = [
+            self.format_parameter_import(package, module_name, self.entrypoint),
+            self.format_storage_import(package, module_name),
+        ]
+        return '\n'.join(result)
+
+    def get_handler_argument(self) -> str:
+        if not self.entrypoint:
+            return self.format_empty_operation_argument(self.transaction_id, self.optional)
+
+        module_name = self.destination_contract_config.module_name
+        return self.format_operation_argument(module_name, self.entrypoint, self.optional)
+
 
     @property
     def source_contract_config(self) -> ContractConfig:
@@ -205,110 +353,53 @@ class OperationHandlerTransactionPatternConfig:
             raise RuntimeError('Config is not initialized')
         return self.destination
 
-    @property
-    def parameter_type_cls(self) -> Optional[Type]:
-        if not self.entrypoint:
-            raise RuntimeError('entrypoint is empty')
-        if self._parameter_type_cls is None:
-            raise RuntimeError('Config is not initialized')
-        return self._parameter_type_cls
-
-    @parameter_type_cls.setter
-    def parameter_type_cls(self, typ: Type) -> None:
-        self._parameter_type_cls = typ
-
-    @property
-    def storage_type_cls(self) -> Type:
-        if not self.entrypoint:
-            raise RuntimeError('entrypoint is empty')
-        if self._storage_type_cls is None:
-            raise RuntimeError('Config is not initialized')
-        return self._storage_type_cls
-
-    @storage_type_cls.setter
-    def storage_type_cls(self, typ: Type) -> None:
-        self._storage_type_cls = typ
-
-    @property
-    def transaction_id(self) -> int:
-        if self._transaction_id is None:
-            raise RuntimeError('Config is not initialized')
-        return self._transaction_id
-
-    @transaction_id.setter
-    def transaction_id(self, id_: int) -> None:
-        self._transaction_id = id_
-
-    def get_handler_imports(self, package: str) -> str:
-        if self.entrypoint:
-            module_name = self.destination_contract_config.module_name
-            entrypoint = camel_to_snake(self.entrypoint)
-            parameter_cls = f'{snake_to_camel(self.entrypoint)}Parameter'
-            storage_cls = f'{snake_to_camel(module_name)}Storage'
-            return '\n'.join(
-                [
-                    f'from {package}.types.{module_name}.parameter.{entrypoint} import {parameter_cls}',
-                    f'from {package}.types.{module_name}.storage import {storage_cls}',
-                ]
-            )
-        else:
-            return ''
-
-    def get_handler_argument(self) -> str:
-        if self.entrypoint:
-            module_name = self.destination_contract_config.module_name
-            entrypoint = camel_to_snake(self.entrypoint)
-            parameter_cls = f'{snake_to_camel(self.entrypoint)}Parameter'
-            storage_cls = f'{snake_to_camel(module_name)}Storage'
-            if self.optional:
-                return f'{entrypoint}: Optional[TransactionContext[{parameter_cls}, {storage_cls}]] = None,'
-            return f'{entrypoint}: TransactionContext[{parameter_cls}, {storage_cls}],'
-        else:
-            if self.optional:
-                return f'transaction_{self._transaction_id}: Optional[OperationData] = None,'
-            return f'transaction_{self._transaction_id}: OperationData,'
 
 
 @dataclass
-class OperationHandlerOriginationPatternConfig:
-    originated_contract: Union[str, ContractConfig]
+class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
+    source: Optional[Union[str, ContractConfig]] = None
+    similar_to: Optional[Union[str, ContractConfig]] = None
+    originated_contract: Optional[Union[str, ContractConfig]] = None
     type: Literal['origination'] = 'origination'
     optional: bool = False
 
-    def __post_init_post_parse__(self):
-        self._storage_type_cls = None
+    def get_handler_imports(self, package: str) -> str:
+        result = []
+        if self.source:
+            module_name = self.source_contract_config.module_name
+            result.append(self.format_storage_import(package, module_name))
+        if self.similar_to:
+            module_name = self.similar_to_contract_config.module_name
+            result.append(self.format_storage_import(package, module_name))
+        return '\n'.join(result)
+
+    def get_handler_argument(self) -> str:
+        return self.format_origination_argument(self.module_name, self.optional)
 
     @property
-    def parameter_type_cls(self) -> Optional[Type]:
-        return None
+    def module_name(self) -> str:
+        return self.contract_config.module_name
 
     @property
     def contract_config(self) -> ContractConfig:
-        if not isinstance(self.originated_contract, ContractConfig):
-            raise RuntimeError('Config is not initialized')
-        return self.originated_contract
+        if self.similar_to:
+            return self.similar_to_contract_config
+        elif self.source:
+            return self.source_contract_config
+        else:
+            raise RuntimeError
 
     @property
-    def storage_type_cls(self) -> Type:
-        if self._storage_type_cls is None:
+    def source_contract_config(self) -> ContractConfig:
+        if not isinstance(self.source, ContractConfig):
             raise RuntimeError('Config is not initialized')
-        return self._storage_type_cls
+        return self.source
 
-    @storage_type_cls.setter
-    def storage_type_cls(self, typ: Type) -> None:
-        self._storage_type_cls = typ
-
-    def get_handler_imports(self, package: str) -> str:
-        module_name = self.contract_config.module_name
-        storage_cls = f'{snake_to_camel(module_name)}Storage'
-        return f'from {package}.types.{module_name}.storage import {storage_cls}'
-
-    def get_handler_argument(self) -> str:
-        module_name = self.contract_config.module_name
-        storage_cls = f'{snake_to_camel(module_name)}Storage'
-        if self.optional:
-            return f'{module_name}_origination: Optional[OriginationContext[{storage_cls}]] = None,'
-        return f'{module_name}_origination: OriginationContext[{storage_cls}],'
+    @property
+    def similar_to_contract_config(self) -> ContractConfig:
+        if not isinstance(self.similar_to, ContractConfig):
+            raise RuntimeError('Config is not initialized')
+        return self.similar_to
 
 
 @dataclass
@@ -344,12 +435,41 @@ class OperationHandlerConfig(HandlerConfig):
 
 
 @dataclass
-class IndexConfig:
+class TemplateValuesMixin:
+    def __post_init_post_parse__(self):
+        self._template_values: Dict[str, str] = None
+
+    @property
+    def template_values(self) -> Optional[Dict[str, str]]:
+        return self._template_values
+
+    @template_values.setter
+    def template_values(self, value: Dict[str, str]) -> None:
+        self._template_values = value
+
+
+class StateMixin:
+    def __post_init_post_parse__(self):
+        self._state: Optional[StateT] = None
+
+    @property
+    def state(self) -> StateT:
+        if not self._state:
+            raise RuntimeError('Config is not initialized')
+        return self._state
+
+    @state.setter
+    def state(self, value: StateT) -> None:
+        self._state = value
+
+
+@dataclass
+class IndexConfig(TemplateValuesMixin, StateMixin):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self):
-        self._state: Optional[State] = None
-        self._template_values: Dict[str, str] = None
+        super(TemplateValuesMixin, self).__post_init_post_parse__()
+        super(StateMixin, self).__post_init_post_parse__()
 
     def hash(self) -> str:
         return hashlib.sha256(
@@ -364,24 +484,6 @@ class IndexConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise RuntimeError('Config is not initialized')
         return self.datasource
-
-    @property
-    def state(self):
-        if not self._state:
-            raise RuntimeError('Config is not initialized')
-        return self._state
-
-    @state.setter
-    def state(self, value: State):
-        self._state = value
-
-    @property
-    def template_values(self) -> Optional[Dict[str, str]]:
-        return self._template_values
-
-    @template_values.setter
-    def template_values(self, value: Dict[str, str]) -> None:
-        self._template_values = value
 
 
 @dataclass
@@ -399,6 +501,8 @@ class OperationIndexConfig(IndexConfig):
     contracts: List[Union[str, ContractConfig]]
     handlers: List[OperationHandlerConfig]
     types: Optional[List[OperationType]] = None
+
+    stateless: bool = False
     first_block: int = 0
     last_block: int = 0
 
@@ -410,6 +514,7 @@ class OperationIndexConfig(IndexConfig):
         return cast(List[ContractConfig], self.contracts)
 
 
+# FIXME: Inherit PatternConfig, cleanup
 @dataclass
 class BigMapHandlerPatternConfig:
     contract: Union[str, ContractConfig]
@@ -452,10 +557,12 @@ class BigMapHandlerConfig(HandlerConfig):
 
 
 @dataclass
-class BigMapIndexConfig(IndexConfig):
+class BigMapIndexConfig(IndexConfig, StateMixin):
     kind: Literal['big_map']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BigMapHandlerConfig]
+
+    stateless: bool = False
     first_block: int = 0
     last_block: int = 0
 
@@ -466,10 +573,13 @@ class BlockHandlerConfig(HandlerConfig):
 
 
 @dataclass
-class BlockIndexConfig(IndexConfig):
+class BlockIndexConfig(IndexConfig, StateMixin):
+    """Stub, not implemented"""
     kind: Literal['block']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BlockHandlerConfig]
+
+    stateless: bool = False
     first_block: int = 0
     last_block: int = 0
 
@@ -557,17 +667,38 @@ class DipDupConfig:
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
 
+    def get_contract(self, name: str) -> ContractConfig:
+        try:
+            return self.contracts[name]
+        except KeyError as e:
+            raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
+
+    def get_datasource(self, name: str) -> DatasourceConfigT:
+        try:
+            return self.datasources[name]
+        except KeyError as e:
+            raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
+
+    def get_template(self, name: str) -> IndexConfigTemplateT:
+        if not self.templates:
+            raise ConfigurationError('`templates` section is missing')
+        try:
+            return self.templates[name]
+        except KeyError as e:
+            raise ConfigurationError(f'Template `{name}` not found in `templates` config section') from e
+
+    def get_tzkt_datasource(self, name: str) -> TzktDatasourceConfig:
+        datasource = self.get_datasource(name)
+        if not isinstance(datasource, TzktDatasourceConfig):
+            raise ConfigurationError('`datasource` field must refer to TzKT datasource')
+        return datasource
+
     def resolve_static_templates(self) -> None:
         _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
             # NOTE: Dynamic templates will be resolved later in dipdup module
             if isinstance(index_config, StaticTemplateConfig):
-                if not self.templates:
-                    raise ConfigurationError('`templates` section is missing')
-                try:
-                    template = self.templates[index_config.template]
-                except KeyError as e:
-                    raise ConfigurationError(f'Template `{index_config.template}` not found in `templates` config section') from e
+                template = self.get_template(index_config.template)
                 raw_template = json.dumps(template, default=pydantic_encoder)
                 for key, value in index_config.values.items():
                     value_regex = r'<[ ]*' + key + r'[ ]*>'
@@ -583,20 +714,11 @@ class DipDupConfig:
 
         if isinstance(index_config, OperationIndexConfig):
             if isinstance(index_config.datasource, str):
-                try:
-                    datasource = self.datasources[index_config.datasource]
-                    if not isinstance(datasource, TzktDatasourceConfig):
-                        raise ConfigurationError('`datasource` field must refer to TzKT datasource')
-                    index_config.datasource = datasource
-                except KeyError as e:
-                    raise ConfigurationError(f'Datasource `{index_config.datasource}` not found in `datasources` config section') from e
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
             for i, contract in enumerate(index_config.contracts):
                 if isinstance(contract, str):
-                    try:
-                        index_config.contracts[i] = self.contracts[contract]
-                    except KeyError as e:
-                        raise ConfigurationError(f'Contract `{contract}` not found in `contracts` config section') from e
+                    index_config.contracts[i] = self.get_contract(contract)
 
             transaction_id = 0
             for handler_config in index_config.handlers:
@@ -604,50 +726,28 @@ class DipDupConfig:
                 for pattern_config in handler_config.pattern:
                     if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
-                            try:
-                                pattern_config.destination = self.contracts[pattern_config.destination]
-                            except KeyError as e:
-                                raise ConfigurationError(
-                                    f'Contract `{pattern_config.destination}` not found in `contracts` config section'
-                                ) from e
+                            pattern_config.destination = self.get_contract(pattern_config.destination)
                         if isinstance(pattern_config.source, str):
-                            try:
-                                pattern_config.source = self.contracts[pattern_config.source]
-                            except KeyError as e:
-                                raise ConfigurationError(
-                                    f'Contract `{pattern_config.source}` not found in `contracts` config section'
-                                ) from e
+                            pattern_config.source = self.get_contract(pattern_config.source)
                         if not pattern_config.entrypoint:
                             pattern_config.transaction_id = transaction_id
                             transaction_id += 1
 
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        if isinstance(pattern_config.originated_contract, str):
-                            try:
-                                pattern_config.originated_contract = self.contracts[pattern_config.originated_contract]
-                            except KeyError as e:
-                                raise ConfigurationError(
-                                    f'Contract `{pattern_config.originated_contract}` not found in `contracts` config section'
-                                ) from e
+                        if isinstance(pattern_config.source, str):
+                            pattern_config.source = self.get_contract(pattern_config.source)
+                        if isinstance(pattern_config.similar_to, str):
+                            pattern_config.similar_to = self.get_contract(pattern_config.similar_to)
 
         elif isinstance(index_config, BigMapIndexConfig):
             if isinstance(index_config.datasource, str):
-                try:
-                    datasource = self.datasources[index_config.datasource]
-                    if not isinstance(datasource, TzktDatasourceConfig):
-                        raise ConfigurationError('`datasource` field must refer to TzKT datasource')
-                    index_config.datasource = datasource
-                except KeyError as e:
-                    raise ConfigurationError(f'Datasource `{index_config.datasource}` not found in `datasources` config section') from e
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
             for handler in index_config.handlers:
                 self._callback_patterns[handler.callback].append(handler.pattern)
                 for pattern in handler.pattern:
                     if isinstance(pattern.contract, str):
-                        try:
-                            pattern.contract = self.contracts[pattern.contract]
-                        except KeyError as e:
-                            raise ConfigurationError(f'Contract `{pattern.contract}` not found in `contracts` config section') from e
+                        pattern.contract = self.get_contract(pattern.contract)
 
         # NOTE: Dynamic templates will be resolved later in dipdup module
         elif isinstance(index_config, DynamicTemplateConfig):
@@ -673,7 +773,7 @@ class DipDupConfig:
                         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig) and pattern_config.entrypoint:
                             module_names.append(pattern_config.destination_contract_config.module_name)
                         elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                            module_names.append(pattern_config.contract_config.module_name)
+                            module_names.append(pattern_config.module_name)
                         # TODO: Check BigMapHandlerPatternConfig
                     return '::'.join(module_names)
 
@@ -736,7 +836,8 @@ class DipDupConfig:
             index_type=index_config.kind,
         )
         if state is None:
-            state = State(
+            state_cls = TemporaryState if index_config.stateless else State
+            state = state_cls(
                 index_name=index_name,
                 index_type=index_config.kind,
                 hash=index_hash,
@@ -775,42 +876,16 @@ class DipDupConfig:
 
                 for operation_pattern_config in operation_handler_config.pattern:
                     if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
-                        if not operation_pattern_config.entrypoint:
-                            continue
-
-                        _logger.info('Registering parameter type for entrypoint `%s`', operation_pattern_config.entrypoint)
-                        parameter_type_module = importlib.import_module(
-                            f'{self.package}'
-                            f'.types'
-                            f'.{operation_pattern_config.destination_contract_config.module_name}'
-                            f'.parameter'
-                            f'.{camel_to_snake(operation_pattern_config.entrypoint)}'
-                        )
-                        parameter_type_cls = getattr(
-                            parameter_type_module, snake_to_camel(operation_pattern_config.entrypoint) + 'Parameter'
-                        )
-                        operation_pattern_config.parameter_type_cls = parameter_type_cls
-
-                        _logger.info('Registering transaction storage type')
-                        storage_type_module = importlib.import_module(
-                            f'{self.package}.types.{operation_pattern_config.destination_contract_config.module_name}.storage'
-                        )
-                        storage_type_cls = getattr(
-                            storage_type_module,
-                            snake_to_camel(operation_pattern_config.destination_contract_config.module_name) + 'Storage',
-                        )
-                        operation_pattern_config.storage_type_cls = storage_type_cls
+                        module_name = operation_pattern_config.destination_contract_config.module_name
+                        if operation_pattern_config.entrypoint:
+                            operation_pattern_config.initialize_parameter_cls(self.package, module_name, operation_pattern_config.entrypoint)
+                        operation_pattern_config.initialize_storage_cls(self.package, module_name)
 
                     elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
-                        _logger.info('Registering origination storage type')
-                        storage_type_module = importlib.import_module(
-                            f'{self.package}.types.{operation_pattern_config.contract_config.module_name}.storage'
-                        )
-                        storage_type_cls = getattr(
-                            storage_type_module, snake_to_camel(operation_pattern_config.contract_config.module_name) + 'Storage'
-                        )
-                        operation_pattern_config.storage_type_cls = storage_type_cls
+                        module_name = operation_pattern_config.module_name
+                        operation_pattern_config.initialize_storage_cls(self.package, module_name)
 
+        # TODO: BigMapTypeMixin, initialize_big_map_type
         elif isinstance(index_config, BigMapIndexConfig):
             for big_map_handler_config in index_config.handlers:
                 await self._initialize_handler_callback(big_map_handler_config)

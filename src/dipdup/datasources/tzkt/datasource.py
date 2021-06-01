@@ -2,6 +2,7 @@ import asyncio
 import logging
 from collections import deque
 from enum import Enum
+from dipdup.models import State
 from typing import Any, Awaitable, Callable, Deque, Dict, List, Optional, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -329,7 +330,7 @@ class TzktDatasource:
         return self._client
 
     async def set_state_level(self, index_config: IndexConfigTemplateT, level: int) -> None:
-        index_config.state.level = level
+        index_config.state.level = level  # type: ignore
         await index_config.state.save()
 
     async def add_subscriptions(self) -> None:
@@ -476,9 +477,12 @@ class TzktDatasource:
         )
 
     async def fetch_operations(self, index_config: OperationIndexConfig, last_level: int) -> None:
-        first_level = index_config.state.level
-        if first_level == last_level:
-            return
+        if isinstance(index_config.state, State):
+            first_level = index_config.state.level
+            if first_level == last_level:
+                return
+        else:
+            first_level = 0
 
         self._logger.info('Fetching operations from level %s to %s', first_level, last_level)
 
@@ -543,9 +547,12 @@ class TzktDatasource:
                 sync=True,
             )
 
-        first_level = index_config.state.level
-        if first_level == last_level:
-            return
+        if isinstance(index_config.state, State):
+            first_level = index_config.state.level
+            if first_level == last_level:
+                return
+        else:
+            first_level = 0
 
         self._logger.info('Fetching big map updates from level %s to %s', first_level, last_level)
 

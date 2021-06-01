@@ -36,6 +36,11 @@ class State(Model):
         table = 'dipdup_state'
 
 
+class TemporaryState(State):
+    async def save(self, using_db=None, update_fields = None, force_create = False, force_update = False) -> None:
+        pass
+
+
 @dataclass
 class OperationData:
     type: str
@@ -127,6 +132,22 @@ class OperationData:
 
 
 @dataclass
+class HandlerContext:
+
+    def __post_init_post_parse__(self) -> None:
+        self._dipdup: Optional['DipDup'] = None
+
+    def set_dipdup(self, dipdup: 'DipDup') -> None:
+        self._dipdup = dipdup
+
+    async def spawn_index(self) -> None:
+        ...
+
+    async def reconfigure(self, **kwargs) -> None:
+        await self._dipdup.configure() # type: ignore
+
+
+@dataclass
 class TransactionContext(Generic[ParameterType, StorageType]):
     data: OperationData
     parameter: ParameterType
@@ -167,11 +188,14 @@ class BigMapData:
 
 
 @dataclass
-class OperationHandlerContext:
+class OperationHandlerContext(HandlerContext):
     operations: List[OperationData]
     template_values: Optional[Dict[str, str]]
 
 
 @dataclass
-class BigMapHandlerContext:
+class BigMapHandlerContext(HandlerContext):
     template_values: Optional[Dict[str, str]]
+
+
+from dipdup.dipdup import DipDup

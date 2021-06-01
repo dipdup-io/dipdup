@@ -13,7 +13,7 @@ from dipdup.config import (
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
 )
-from dipdup.models import BigMapData, OperationData
+from dipdup.models import BigMapData, OperationData, State
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 OperationID = int
@@ -50,6 +50,7 @@ class OperationCache:
         self._operations[key].append(operation)
 
     def match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
+        # NOTE: Reversed conditions are intentional
         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
             if pattern_config.entrypoint != operation.entrypoint:
                 return False
@@ -59,7 +60,10 @@ class OperationCache:
                 return False
             return True
         if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-            return pattern_config.contract_config.address == operation.originated_contract_address
+            if pattern_config.source and pattern_config.source_contract_config.address != operation.sender_address:
+                return False
+            if pattern_config.similar_to:
+                return pattern_config.similar_to_contract_config.address == operation.originated_contract_address
         raise NotImplementedError
 
     async def process(
@@ -79,7 +83,7 @@ class OperationCache:
             self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
             await callback(index_config, handler_config, matched_operations, operations)
 
-            index_config.state.level = self._level
+            index_config.state.level = self._level  # type: ignore
             await index_config.state.save()
 
         if self._level is None:
@@ -204,8 +208,9 @@ class BigMapCache:
                         matched = True
                         await callback(index_config, handler_config, matched_big_maps)
 
-                        index_config.state.level = self._level
-                        await index_config.state.save()
+                        if isinstance(index_config, State):
+                            index_config.state.level = self._level
+                            await index_config.state.save()
 
                         del self._big_maps[key]
                         break

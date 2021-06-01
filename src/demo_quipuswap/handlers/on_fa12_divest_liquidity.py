@@ -33,7 +33,7 @@ async def on_fa12_divest_liquidity(
     tez_pool = Decimal(storage.storage.tez_pool) / (10 ** 6)
     token_pool = Decimal(storage.storage.token_pool) / (10 ** decimals)
 
-    # NOTE: Empty pools mean exchange is not initialized yet 
+    # NOTE: Empty pools mean exchange is not initialized yet
     if not tez_pool and not token_pool:
         return
 
