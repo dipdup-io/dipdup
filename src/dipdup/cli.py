@@ -56,12 +56,13 @@ async def cli(ctx, config: List[str], logging_config: str):
 
 
 @cli.command(help='Run existing dipdup project')
+@click.option('--reindex', is_flag=True)
 @click.pass_context
 @click_async
-async def run(ctx) -> None:
+async def run(ctx, reindex: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.run()
+    await dipdup.run(reindex)
 
 
 @cli.command(help='Initialize new dipdup project')

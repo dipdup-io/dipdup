@@ -62,7 +62,7 @@ async def http_request(method: str, **kwargs):
             return await response.json()
 
 
-async def reindex():
+async def reindex() -> None:
     if isinstance(Tortoise._connections['default'], AsyncpgDBClient):
         async with in_transaction() as conn:
             await conn.execute_script(
@@ -78,4 +78,7 @@ async def reindex():
             )
     else:
         await Tortoise._drop_databases()
-    os.execl(sys.executable, sys.executable, *sys.argv)
+    # NOTE: Remove --reindex from arguments to avoid reindexing loop
+    argv = sys.argv[:-1] if sys.argv[-1] == '--reindex' else sys.argv
+    # NOTE: Tortoise can't recover after dropping database for some reason, restart.
+    os.execl(sys.executable, sys.executable, *argv)

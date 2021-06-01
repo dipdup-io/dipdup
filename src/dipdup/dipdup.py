@@ -14,6 +14,7 @@ from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
 
 import dipdup.codegen as codegen
+import dipdup.utils as utils
 from dipdup import __version__
 from dipdup.config import (
     ROLLBACK_HANDLER,
@@ -34,7 +35,6 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import configure_hasura
 from dipdup.models import IndexType, State
-from dipdup.utils import reindex, tortoise_wrapper
 
 
 class DipDup:
@@ -156,11 +156,11 @@ class DipDup:
             await asyncio.sleep(interval)
             await self.configure(runtime=True)
 
-    async def run(self) -> None:
+    async def run(self, reindex: bool) -> None:
         url = self._config.database.connection_string
         models = f'{self._config.package}.models'
 
-        async with tortoise_wrapper(url, models):
+        async with utils.tortoise_wrapper(url, models):
             await self.initialize_database()
             await self.create_datasources()
 
@@ -188,7 +188,7 @@ class DipDup:
 
             await asyncio.gather(*run_tasks)
 
-    async def initialize_database(self) -> None:
+    async def initialize_database(self, reindex: bool = False) -> None:
         self._logger.info('Initializing database')
 
         if isinstance(self._config.database, PostgresDatabaseConfig) and self._config.database.schema_name:
@@ -202,6 +202,10 @@ class DipDup:
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
+        if reindex:
+            self._logger.warning('Started with `--reindex` argument, reindexing')
+            await utils.reindex()
+
         try:
             schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
         except OperationalError:
@@ -213,7 +217,7 @@ class DipDup:
             await schema_state.save()
         elif schema_state.hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
-            await reindex()
+            await utils.reindex()
 
         sql_path = join(self._config.package_path, 'sql')
         if not exists(sql_path):

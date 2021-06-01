@@ -14,6 +14,7 @@ from dipdup.config import (
     OperationIndexConfig,
 )
 from dipdup.models import BigMapData, OperationData, State
+from dipdup.exceptions import ConfigurationError
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 OperationID = int
@@ -24,15 +25,18 @@ class OperationCache:
         super().__init__()
         self._logger = logging.getLogger(__name__)
         self._level: Optional[int] = None
-        self._indexes: Dict[str, OperationIndexConfig] = {}
+        self._indexes: List[OperationIndexConfig] = []
+        self._addresses: List[str] = []
         self._operations: Dict[OperationGroup, List[OperationData]] = {}
 
     async def add_index(self, index_config: OperationIndexConfig) -> None:
-        self._logger.debug('Adding index %s to cache', index_config)
         for contract in index_config.contract_configs:
-            if contract.address in self._indexes:
-                raise RuntimeError(f'Address `{contract.address}` used in multiple indexes')
-            self._indexes[contract.address] = index_config
+            if contract.address in self._addresses:
+                raise ConfigurationError(f'Address `{contract.address}` used in multiple indexes')
+            self._addresses.append(contract.address)
+
+        self._logger.debug('Adding index %s to cache', index_config)
+        self._indexes.append(index_config)
 
     async def add(self, operation: OperationData):
         self._logger.debug('Adding operation %s to cache (%s, %s)', operation.id, operation.hash, operation.counter)
@@ -95,7 +99,7 @@ class OperationCache:
             self._logger.debug('Matching %s', key)
             matched = False
 
-            for index_config in self._indexes.values():
+            for index_config in self._indexes:
                 for handler_config in index_config.handlers:
                     operation_idx = 0
                     pattern_idx = 0
