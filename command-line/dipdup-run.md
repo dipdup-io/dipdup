@@ -3,10 +3,12 @@
 Configures API engine\(s\) \(if specified in the configuration file\) and runs the indexer. Can be gracefully killed with `Ctrl+C` or `SIGTERM`.
 
 ```text
-dipdup [-c path-to-config.yml] run
+dipdup [-c path-to-config.yml] run [--reindex]
 ```
 
 DipDup will wait until database and API engines are accessible.
+
+Use `--reindex` flag if you want to drop the database and start indexing from scratch.
 
 ## Schema migration
 
