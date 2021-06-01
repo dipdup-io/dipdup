@@ -2,7 +2,6 @@ import asyncio
 import logging
 from collections import deque
 from enum import Enum
-from dipdup.models import State
 from typing import Any, Awaitable, Callable, Deque, Dict, List, Optional, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -39,6 +38,7 @@ from dipdup.models import (
     OperationData,
     OperationHandlerContext,
     OriginationContext,
+    State,
     TransactionContext,
 )
 
@@ -290,6 +290,7 @@ class TzktDatasource:
         self._logger.info('Adding index `%s`', index_name)
 
         if isinstance(index_config, OperationIndexConfig):
+            await index_config.fetch_hashes(self)
             self._operation_index_by_name[index_name] = index_config
             await self._operation_cache.add_index(index_config)
 
@@ -925,6 +926,9 @@ class TzktDatasource:
             skip_cache=True,
         )
         return [c['address'] for c in contracts]
+
+    async def get_contract_summary(self, address: Address) -> Dict[str, Any]:
+        return await self._proxy.http_request('get', url=f'{self._url}/v1/contracts/{address}')
 
     async def get_contract_storage(self, address: Address) -> Dict[str, Any]:
         return await self._proxy.http_request('get', url=f'{self._url}/v1/contracts/{address}/storage')

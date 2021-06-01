@@ -13,8 +13,8 @@ from dipdup.config import (
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
 )
-from dipdup.models import BigMapData, OperationData, State
 from dipdup.exceptions import ConfigurationError
+from dipdup.models import BigMapData, OperationData, State
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 OperationID = int
@@ -58,17 +58,31 @@ class OperationCache:
         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
             if pattern_config.entrypoint != operation.entrypoint:
                 return False
-            if pattern_config.destination and pattern_config.destination_contract_config.address != operation.target_address:
-                return False
-            if pattern_config.source and pattern_config.source_contract_config.address != operation.sender_address:
-                return False
+            if pattern_config.destination:
+                if pattern_config.destination_contract_config.address != operation.target_address:
+                    return False
+            if pattern_config.source:
+                if pattern_config.source_contract_config.address != operation.sender_address:
+                    return False
             return True
-        if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-            if pattern_config.source and pattern_config.source_contract_config.address != operation.sender_address:
-                return False
+
+        elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+            if pattern_config.source:
+                if pattern_config.source_contract_config.address != operation.sender_address:
+                    return False
+            if pattern_config.originated_contract:
+                if pattern_config.originated_contract_config.address != operation.originated_contract_address:
+                    return False
             if pattern_config.similar_to:
-                return pattern_config.similar_to_contract_config.address == operation.originated_contract_address
-        raise NotImplementedError
+                if pattern_config.strict:
+                    if pattern_config.similar_to_contract_config.code_hash != operation.originated_contract_code_hash:
+                        return False
+                else:
+                    if pattern_config.similar_to_contract_config.type_hash != operation.originated_contract_type_hash:
+                        return False
+            return True
+        else:
+            raise NotImplementedError
 
     async def process(
         self,

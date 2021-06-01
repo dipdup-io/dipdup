@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod, abstractproperty
 import hashlib
 import importlib
 import json
@@ -6,6 +5,7 @@ import logging.config
 import os
 import re
 import sys
+from abc import ABC, abstractmethod, abstractproperty
 from collections import defaultdict
 from enum import Enum
 from os import environ as env
@@ -29,6 +29,7 @@ ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
 sys.path.append(os.getcwd())
 _logger = logging.getLogger(__name__)
+
 
 class NoState:
     def __bool__(self):
@@ -137,18 +138,23 @@ class ContractConfig:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
 
-    async def _fetch_hashes(self) -> None:
-        ...
+    async def fetch_hashes(self, datasource: 'TzktDatasource') -> None:
+        summary = await datasource.get_contract_summary(self.address)
+        self._code_hash = summary['codeHash']
+        self._type_hash = summary['typeHash']
 
-    async def get_code_hash(self) -> str:
+    @property
+    def code_hash(self) -> str:
         if self._code_hash is None:
-            await self._fetch_hashes()
-        return cast(str, self._code_hash)
+            raise RuntimeError('Config is not initialized')
+        return self._code_hash
 
-    async def get_type_hash(self) -> str:
+    @property
+    def type_hash(self) -> str:
         if self._type_hash is None:
-            await self._fetch_hashes()
-        return cast(str, self._type_hash)
+            raise RuntimeError('Config is not initialized')
+        return self._type_hash
+
 
 @dataclass
 class TzktDatasourceConfig:
@@ -199,6 +205,7 @@ DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig]
 @dataclass
 class PatternConfig(ABC):
     """Base for pattern config classes containing methods required for codegen"""
+
     @abstractmethod
     def get_handler_imports(self, package: str) -> str:
         ...
@@ -242,6 +249,7 @@ class PatternConfig(ABC):
 @dataclass
 class StorageTypeMixin:
     """`storage_type_cls` field"""
+
     def __post_init_post_parse__(self):
         self._storage_type_cls = None
 
@@ -258,14 +266,17 @@ class StorageTypeMixin:
     def initialize_storage_cls(self, package: str, module_name: str) -> None:
         _logger.info('Registering `%s` storage type', module_name)
         storage_type_module = importlib.import_module(f'{package}.types.{module_name}.storage')
-        storage_type_cls = getattr(storage_type_module, snake_to_camel(module_name) + 'Storage',)
+        storage_type_cls = getattr(
+            storage_type_module,
+            snake_to_camel(module_name) + 'Storage',
+        )
         self.storage_type_cls = storage_type_cls
-
 
 
 @dataclass
 class ParameterTypeMixin:
     """`parameter_type_cls` field"""
+
     def __post_init_post_parse__(self):
         self._parameter_type_cls = None
 
@@ -289,6 +300,7 @@ class ParameterTypeMixin:
 @dataclass
 class TransactionIdMixin:
     """`transaction_id` field"""
+
     def __post_init_post_parse__(self):
         self._transaction_id = None
 
@@ -340,7 +352,6 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         module_name = self.destination_contract_config.module_name
         return self.format_operation_argument(module_name, self.entrypoint, self.optional)
 
-
     @property
     def source_contract_config(self) -> ContractConfig:
         if not isinstance(self.source, ContractConfig):
@@ -354,7 +365,6 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         return self.destination
 
 
-
 @dataclass
 class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     source: Optional[Union[str, ContractConfig]] = None
@@ -362,6 +372,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     originated_contract: Optional[Union[str, ContractConfig]] = None
     type: Literal['origination'] = 'origination'
     optional: bool = False
+    strict: bool = False
 
     def get_handler_imports(self, package: str) -> str:
         result = []
@@ -382,12 +393,13 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
 
     @property
     def contract_config(self) -> ContractConfig:
+        if self.originated_contract:
+            return self.originated_contract_config
         if self.similar_to:
             return self.similar_to_contract_config
-        elif self.source:
+        if self.source:
             return self.source_contract_config
-        else:
-            raise RuntimeError
+        raise RuntimeError
 
     @property
     def source_contract_config(self) -> ContractConfig:
@@ -400,6 +412,12 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
         if not isinstance(self.similar_to, ContractConfig):
             raise RuntimeError('Config is not initialized')
         return self.similar_to
+
+    @property
+    def originated_contract_config(self) -> ContractConfig:
+        if not isinstance(self.originated_contract, ContractConfig):
+            raise RuntimeError('Config is not initialized')
+        return self.originated_contract
 
 
 @dataclass
@@ -513,6 +531,13 @@ class OperationIndexConfig(IndexConfig):
                 raise RuntimeError('Config is not initialized')
         return cast(List[ContractConfig], self.contracts)
 
+    async def fetch_hashes(self, datasource: 'TzktDatasource') -> None:
+        for handler_config in self.handlers:
+            for pattern_config in handler_config.pattern:
+                if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                    if pattern_config.similar_to:
+                        await pattern_config.similar_to_contract_config.fetch_hashes(datasource)
+
 
 # FIXME: Inherit PatternConfig, cleanup
 @dataclass
@@ -575,6 +600,7 @@ class BlockHandlerConfig(HandlerConfig):
 @dataclass
 class BlockIndexConfig(IndexConfig, StateMixin):
     """Stub, not implemented"""
+
     kind: Literal['block']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BlockHandlerConfig]
@@ -878,7 +904,9 @@ class DipDupConfig:
                     if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
                         module_name = operation_pattern_config.destination_contract_config.module_name
                         if operation_pattern_config.entrypoint:
-                            operation_pattern_config.initialize_parameter_cls(self.package, module_name, operation_pattern_config.entrypoint)
+                            operation_pattern_config.initialize_parameter_cls(
+                                self.package, module_name, operation_pattern_config.entrypoint
+                            )
                         operation_pattern_config.initialize_storage_cls(self.package, module_name)
 
                     elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
@@ -942,3 +970,6 @@ class LoggingConfig:
 
     def apply(self):
         logging.config.dictConfig(self.config)
+
+
+from dipdup.datasources.tzkt.datasource import TzktDatasource

@@ -37,7 +37,7 @@ class State(Model):
 
 
 class TemporaryState(State):
-    async def save(self, using_db=None, update_fields = None, force_create = False, force_update = False) -> None:
+    async def save(self, using_db=None, update_fields=None, force_create=False, force_update=False) -> None:
         pass
 
 
@@ -133,7 +133,6 @@ class OperationData:
 
 @dataclass
 class HandlerContext:
-
     def __post_init_post_parse__(self) -> None:
         self._dipdup: Optional['DipDup'] = None
 
@@ -144,7 +143,7 @@ class HandlerContext:
         ...
 
     async def reconfigure(self, **kwargs) -> None:
-        await self._dipdup.configure() # type: ignore
+        await self._dipdup.configure()  # type: ignore
 
 
 @dataclass
