@@ -74,7 +74,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             await self.datasource.start()
 
         fetch_operations_mock.assert_awaited_with(self.index_config, 1337)
-        self.assertEqual({self.index_config.contracts[0].address: [OperationType.transaction]}, self.datasource._operation_subscriptions)
+        self.assertEqual({self.index_config.contracts[0].address: [OperationType.transaction]}, self.datasource._transaction_subscriptions)
         client.start.assert_awaited()
 
     async def test_on_connect_subscribe_to_operations(self):
@@ -82,7 +82,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         client = self.datasource._get_client()
         client.send = send_mock
         client.transport.state = ConnectionState.connected
-        self.datasource._operation_subscriptions = {
+        self.datasource._transaction_subscriptions = {
             self.index_config.contracts[0].address: [OperationType.transaction],
         }
 
@@ -97,7 +97,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
 
     @skip('FIXME')
     async def test_on_fetch_operations(self):
-        self.datasource._operation_subscriptions = {self.index_config.contracts[0].address: [OperationType.transaction]}
+        self.datasource._transaction_subscriptions = {self.index_config.contracts[0].address: [OperationType.transaction]}
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
             del operations_message['state']

@@ -23,9 +23,7 @@ from dipdup.config import (
     DatasourceConfigT,
     DipDupConfig,
     DynamicTemplateConfig,
-    IndexConfigTemplateT,
     PostgresDatabaseConfig,
-    SqliteDatabaseConfig,
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )

@@ -2,7 +2,7 @@ import asyncio
 import logging
 from collections import deque
 from enum import Enum
-from typing import Any, Awaitable, Callable, Deque, Dict, List, Optional, Union, cast
+from typing import Any, AsyncGenerator, Awaitable, Callable, Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
@@ -116,26 +116,60 @@ def dedup_operations(operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     )
 
 
-class OperationFetcher:
+class TzktRequestMixin:
+    _logger: logging.Logger
+    _url: str
+    _proxy: DatasourceRequestProxy
+
+    async def get_similar_contracts(self, address: Address, strict: bool = False) -> List[Address]:
+        entrypoint = 'same' if strict else 'similar'
+        self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
+
+        contracts = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{address}/{entrypoint}',
+            params=dict(
+                select='address',
+                limit=TZKT_HTTP_REQUEST_LIMIT,
+            ),
+            skip_cache=True,
+        )
+        return contracts
+
+    async def get_originated_contracts(self, address: Address) -> List[Address]:
+        contracts = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/accounts/{address}/contracts',
+            params=dict(
+                limit=TZKT_HTTP_REQUEST_LIMIT,
+            ),
+            skip_cache=True,
+        )
+        return [c['address'] for c in contracts]
+
+    async def get_contract_summary(self, address: Address) -> Dict[str, Any]:
+        return await self._proxy.http_request('get', url=f'{self._url}/v1/contracts/{address}')
+
+    async def get_contract_storage(self, address: Address) -> Dict[str, Any]:
+        return await self._proxy.http_request('get', url=f'{self._url}/v1/contracts/{address}/storage')
+
+
+class OperationFetcher(TzktRequestMixin):
     def __init__(
         self,
         url: str,
         proxy: DatasourceRequestProxy,
         first_level: int,
         last_level: int,
-        addresses: List[str],
-        operation_subscriptions: Dict[Address, List[OperationType]],
+        transaction_subscriptions: Set[Address],
+        origination_subscriptions: Set[OperationHandlerOriginationPatternConfig],
     ) -> None:
         self._url = url
         self._proxy = proxy
         self._first_level = first_level
         self._last_level = last_level
-        self._origination_addresses = [
-            address for address, types in operation_subscriptions.items() if address in addresses and OperationType.origination in types
-        ]
-        self._transaction_addresses = [
-            address for address, types in operation_subscriptions.items() if address in addresses and OperationType.transaction in types
-        ]
+        self._transaction_subscriptions = transaction_subscriptions
+        self._origination_subscriptions = origination_subscriptions
         self._logger = logging.getLogger(__name__)
         self._head: int = 0
         self._heads: Dict[OperationFetcherChannel, int] = {}
@@ -151,19 +185,33 @@ class OperationFetcher:
 
     async def _fetch_originations(self) -> None:
         key = OperationFetcherChannel.originations
-        if not self._origination_addresses:
+        if not self._origination_subscriptions:
             self._fetched[key] = True
             self._heads[key] = self._last_level
         if self._fetched[key]:
             return
 
-        self._logger.debug('Fetching originations of %s', self._origination_addresses)
+        originated_contract_addresses: Set[str] = set()
+
+        for pattern_config in self._origination_subscriptions:
+            if pattern_config.originated_contract:
+                originated_contract_addresses.add(pattern_config.originated_contract_config.address)
+            if pattern_config.source:
+                addresses = await self.get_originated_contracts(pattern_config.source_contract_config.address)
+                for address in addresses:
+                    originated_contract_addresses.add(address)
+            if pattern_config.similar_to:
+                addresses = await self.get_similar_contracts(pattern_config.similar_to_contract_config.address, pattern_config.strict)
+                for address in addresses:
+                    originated_contract_addresses.add(address)
+
+        self._logger.debug('Fetching originations of %s', self._origination_subscriptions)
 
         originations = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/operations/originations',
             params={
-                "originatedContract.in": ','.join(self._origination_addresses),
+                "originatedContract.in": ','.join(originated_contract_addresses),
                 "offset": self._offsets[key],
                 "limit": TZKT_HTTP_REQUEST_LIMIT,
                 "level.gt": self._first_level,
@@ -190,21 +238,21 @@ class OperationFetcher:
             self._offsets[key] += TZKT_HTTP_REQUEST_LIMIT
             self._heads[key] = self._get_head(originations)
 
-    async def _fetch_transactions(self, field: str):
+    async def _fetch_transactions(self, field: str) -> None:
         key = getattr(OperationFetcherChannel, field + '_transactions')
-        if not self._transaction_addresses:
+        if not self._transaction_subscriptions:
             self._fetched[key] = True
             self._heads[key] = self._last_level
         if self._fetched[key]:
             return
 
-        self._logger.debug('Fetching %s transactions of %s', field, self._transaction_addresses)
+        self._logger.debug('Fetching %s transactions of %s', field, self._transaction_subscriptions)
 
         transactions = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/operations/transactions',
             params={
-                f"{field}.in": ','.join(self._transaction_addresses),
+                f"{field}.in": ','.join(self._transaction_subscriptions),
                 "offset": self._offsets[key],
                 "limit": TZKT_HTTP_REQUEST_LIMIT,
                 "level.gt": self._first_level,
@@ -231,7 +279,7 @@ class OperationFetcher:
             self._offsets[key] += TZKT_HTTP_REQUEST_LIMIT
             self._heads[key] = self._get_head(transactions)
 
-    async def fetch_operations_by_level(self):
+    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, List[Dict[str, Any]]], None]:
         for type_ in (
             OperationFetcherChannel.sender_transactions,
             OperationFetcherChannel.target_transactions,
@@ -265,15 +313,15 @@ class OperationFetcher:
         assert not self._operations
 
 
-class TzktDatasource:
+class TzktDatasource(TzktRequestMixin):
     def __init__(self, url: str, cache: bool):
         self._url = url.rstrip('/')
         self._logger = logging.getLogger(__name__)
         self._operation_index_by_name: Dict[IndexName, OperationIndexConfig] = {}
         self._big_map_index_by_name: Dict[IndexName, BigMapIndexConfig] = {}
         self._callback_lock = asyncio.Lock()
-        self._operation_subscriptions: Dict[Address, List[OperationType]] = {}
-        self._contract_subscriptions: List[ContractSubscription] = []
+        self._transaction_subscriptions: Set[Address] = set()
+        self._origination_subscriptions: Set[OperationHandlerOriginationPatternConfig] = set()
         self._big_map_subscriptions: Dict[Address, List[Path]] = {}
         self._operations_synchronized = asyncio.Event()
         self._big_maps_synchronized = asyncio.Event()
@@ -343,8 +391,11 @@ class TzktDatasource:
     async def add_subscriptions(self) -> None:
         # NOTE: Safe to call multiple times
         for operation_index_config in self._operation_index_by_name.values():
-            for contract in operation_index_config.contracts:
-                await self.add_operation_subscription(cast(ContractConfig, contract).address, operation_index_config.types)
+            if operation_index_config.contracts:
+                addresses = [cast(ContractConfig, c).address for c in operation_index_config.contracts]
+                await self.add_transaction_subscription(addresses)
+
+        # TODO: origination
 
         for big_map_index_config in self._big_map_index_by_name.values():
             for handler_config in big_map_index_config.handlers:
@@ -400,18 +451,19 @@ class TzktDatasource:
 
     async def on_connect(self):
         self._logger.info('Connected to server')
-        for address, types in self._operation_subscriptions.items():
-            await self.subscribe_to_operations(address, types)
+        for address in self._transaction_subscriptions:
+            await self.subscribe_to_transactions(address)
+        # NOTE: All originations are passed to matcher
+        if self._origination_subscriptions:
+            await self.subscribe_to_originations()
         for address, paths in self._big_map_subscriptions.items():
             await self.subscribe_to_big_maps(address, paths)
-        if self._contract_subscriptions:
-            await self.subscribe_to_originations()
 
     def on_error(self, message: CompletionMessage):
         raise Exception(message.error)
 
-    async def subscribe_to_operations(self, address: str, types: List[OperationType]) -> None:
-        self._logger.info('Subscribing to %s, %s', address, types)
+    async def subscribe_to_transactions(self, address: str) -> None:
+        self._logger.info('Subscribing to %s transactions', address)
 
         while self._get_client().transport.state != ConnectionState.connected:
             await asyncio.sleep(0.1)
@@ -421,7 +473,7 @@ class TzktDatasource:
             [
                 {
                     'address': address,
-                    'types': ','.join([t.value for t in types]),
+                    'types': 'transaction',
                 }
             ],
         )
@@ -458,31 +510,6 @@ class TzktDatasource:
                 ],
             )
 
-    async def add_contract_subscription(
-        self,
-        contract_config: ContractConfig,
-        template_name: str,
-        template: IndexConfigTemplateT,
-        strict: bool,
-    ) -> None:
-        contract = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/contracts/{contract_config.address}',
-            params={
-                "select": "typeHash,codeHash",
-            },
-        )
-        self._contract_subscriptions.append(
-            ContractSubscription(
-                type_hash=contract['typeHash'],
-                code_hash=contract['codeHash'],
-                strict=strict,
-                template=template,
-                template_name=template_name,
-                contract_config=contract_config,
-            )
-        )
-
     async def fetch_operations(self, index_config: OperationIndexConfig, last_level: int) -> None:
         if isinstance(index_config.state, State):
             first_level = index_config.state.level
@@ -493,15 +520,13 @@ class TzktDatasource:
 
         self._logger.info('Fetching operations from level %s to %s', first_level, last_level)
 
-        addresses = [c.address for c in index_config.contract_configs]
-
         fetcher = OperationFetcher(
             url=self._url,
             proxy=self._proxy,
             first_level=first_level,
             last_level=last_level,
-            addresses=addresses,
-            operation_subscriptions=self._operation_subscriptions,
+            transaction_subscriptions=self._transaction_subscriptions,
+            origination_subscriptions=self._origination_subscriptions,
         )
 
         async for level, operations in fetcher.fetch_operations_by_level():
@@ -636,19 +661,6 @@ class TzktDatasource:
                         if operation.status != 'applied':
                             continue
 
-                        if operation.originated_contract_address:
-                            for contract_subscription in self._contract_subscriptions:
-                                if (
-                                    contract_subscription.strict is True
-                                    and contract_subscription.code_hash == operation.originated_contract_code_hash
-                                ):
-                                    await self.on_contract_match(contract_subscription, operation.originated_contract_address)
-                                if (
-                                    contract_subscription.strict is False
-                                    and contract_subscription.type_hash == operation.originated_contract_type_hash
-                                ):
-                                    await self.on_contract_match(contract_subscription, operation.originated_contract_address)
-
                         await self._operation_cache.add(operation)
 
                     async with in_transaction():
@@ -712,11 +724,13 @@ class TzktDatasource:
             else:
                 self._logger.warning('%s is not supported', message_type)
 
-    async def add_operation_subscription(self, address: str, types: Optional[List[OperationType]] = None) -> None:
-        if types is None:
-            types = [OperationType.transaction]
-        if address not in self._operation_subscriptions:
-            self._operation_subscriptions[address] = types
+    async def add_transaction_subscription(self, addresses: List[Address]) -> None:
+        for address in addresses:
+            self._transaction_subscriptions.add(address)
+
+    async def add_origination_subscription(self, patterns: List[OperationHandlerOriginationPatternConfig]) -> None:
+        for pattern in patterns:
+            self._origination_subscriptions.add(pattern)
 
     async def add_big_map_subscription(self, address: str, path: str) -> None:
         if address not in self._big_map_subscriptions:
@@ -900,38 +914,6 @@ class TzktDatasource:
         )
         self._logger.debug(block)
         return block
-
-    async def get_similar_contracts(self, address: Address, strict: bool = False) -> List[Address]:
-        entrypoint = 'same' if strict else 'similar'
-        self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
-
-        contracts = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/contracts/{address}/{entrypoint}',
-            params=dict(
-                select='address',
-                limit=TZKT_HTTP_REQUEST_LIMIT,
-            ),
-            skip_cache=True,
-        )
-        return contracts
-
-    async def get_originated_contracts(self, address: Address) -> List[Address]:
-        contracts = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/accounts/{address}/contracts',
-            params=dict(
-                limit=TZKT_HTTP_REQUEST_LIMIT,
-            ),
-            skip_cache=True,
-        )
-        return [c['address'] for c in contracts]
-
-    async def get_contract_summary(self, address: Address) -> Dict[str, Any]:
-        return await self._proxy.http_request('get', url=f'{self._url}/v1/contracts/{address}')
-
-    async def get_contract_storage(self, address: Address) -> Dict[str, Any]:
-        return await self._proxy.http_request('get', url=f'{self._url}/v1/contracts/{address}/storage')
 
     async def resync(self) -> None:
         self._operations_synchronized.clear()

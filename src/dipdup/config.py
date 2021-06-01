@@ -5,7 +5,7 @@ import logging.config
 import os
 import re
 import sys
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from enum import Enum
 from os import environ as env
@@ -13,7 +13,7 @@ from os.path import dirname
 from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field, validator
+from pydantic import Field, validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
@@ -516,9 +516,9 @@ class OperationIndexConfig(IndexConfig):
     """
 
     kind: Literal["operation"]
-    contracts: List[Union[str, ContractConfig]]
     handlers: List[OperationHandlerConfig]
     types: Optional[List[OperationType]] = None
+    contracts: Optional[List[Union[str, ContractConfig]]] = None
 
     stateless: bool = False
     first_block: int = 0
@@ -526,6 +526,8 @@ class OperationIndexConfig(IndexConfig):
 
     @property
     def contract_configs(self) -> List[ContractConfig]:
+        if not self.contracts:
+            return []
         for contract in self.contracts:
             if not isinstance(contract, ContractConfig):
                 raise RuntimeError('Config is not initialized')
@@ -742,9 +744,10 @@ class DipDupConfig:
             if isinstance(index_config.datasource, str):
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
-            for i, contract in enumerate(index_config.contracts):
-                if isinstance(contract, str):
-                    index_config.contracts[i] = self.get_contract(contract)
+            if index_config.contracts is not None:
+                for i, contract in enumerate(index_config.contracts):
+                    if isinstance(contract, str):
+                        index_config.contracts[i] = self.get_contract(contract)
 
             transaction_id = 0
             for handler_config in index_config.handlers:
