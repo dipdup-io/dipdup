@@ -110,6 +110,13 @@ class CallbackExecutor:
                 return
 
 
+def dedup_operations(operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return sorted(
+        list(({op['id']: op for op in operations}).values()),
+        key=lambda op: op['id'],
+    )
+
+
 class OperationFetcher:
     def __init__(
         self,
@@ -250,8 +257,7 @@ class OperationFetcher:
             while self._head <= head:
                 if self._head in self._operations:
                     operations = self._operations.pop(self._head)
-                    operations = sorted(list(({op['id']: op for op in operations}).values()), key=lambda op: op['id'])
-                    yield self._head, operations
+                    yield self._head, dedup_operations(operations)
                 self._head += 1
 
             if all(list(self._fetched.values())):
