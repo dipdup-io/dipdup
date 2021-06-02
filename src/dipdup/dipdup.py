@@ -22,7 +22,6 @@ from dipdup.config import (
     ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
-    DynamicTemplateConfig,
     PostgresDatabaseConfig,
     StaticTemplateConfig,
     TzktDatasourceConfig,
@@ -47,7 +46,6 @@ class DipDup:
         await codegen.create_package(self._config)
         if dynamic:
             await codegen.create_config_module(self._config)
-        await codegen.resolve_dynamic_templates(self._config)
         await codegen.fetch_schemas(self._config)
         await codegen.generate_types(self._config)
         await codegen.generate_handlers(self._config)
@@ -95,36 +93,6 @@ class DipDup:
             else:
                 raise NotImplementedError
 
-    async def resolve_dynamic_templates(self):
-        if not self._datasources:
-            raise RuntimeError('Call `create_datasources` first')
-
-        for index_name, index_config in copy(self._config.indexes).items():
-            if isinstance(index_config, DynamicTemplateConfig):
-                if not self._config.templates:
-                    raise ConfigurationError('`templates` section is missing')
-
-                template = self._config.templates[index_config.template]
-                # NOTE: Datasource and other fields are str as we haven't initialized DynamicTemplateConfigs yet
-                datasource = self._datasources[cast(str, template.datasource)]
-                if not isinstance(datasource, TzktDatasource):
-                    raise ConfigurationError('`datasource` field must refer to TzKT datasource')
-
-                contract_config = self._config.contracts[cast(str, index_config.similar_to)]
-                await datasource.add_contract_subscription(contract_config, index_name, template, index_config.strict)
-                similar_contracts = await self._datasources[template.datasource].get_similar_contracts(contract_config.address)
-                for contract_address in similar_contracts:
-                    self._config.contracts[contract_address] = ContractConfig(
-                        address=contract_address,
-                        typename=contract_config.typename,
-                    )
-
-                    generated_index_name = f'{index_name}_{contract_address}'
-                    template_config = StaticTemplateConfig(template=index_config.template, values=dict(contract=contract_address))
-                    self._config.indexes[generated_index_name] = template_config
-
-                del self._config.indexes[index_name]
-
     async def spawn_indexes(self, runtime=False) -> None:
         resync_datasources = []
         for index_name, index_config in self._config.indexes.items():
@@ -132,8 +100,6 @@ class DipDup:
                 continue
             if isinstance(index_config, StaticTemplateConfig):
                 raise RuntimeError('Config is not pre-initialized')
-            if isinstance(index_config, DynamicTemplateConfig):
-                raise RuntimeError('Call `resolve_dynamic_templates` first')
 
             self._logger.info('Processing index `%s`', index_name)
             datasource = cast(TzktDatasource, self._datasources_by_config[index_config.datasource_config])
@@ -159,13 +125,11 @@ class DipDup:
         models = f'{self._config.package}.models'
 
         async with utils.tortoise_wrapper(url, models):
-            await self.initialize_database()
+            await self.initialize_database(reindex)
             await self.create_datasources()
 
             if self._config.configuration:
                 await self.configure()
-
-            await self.resolve_dynamic_templates()
 
             # NOTE: We need to initialize config one more time to process generated indexes
             self._config.pre_initialize()

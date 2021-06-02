@@ -15,8 +15,6 @@ from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
     DipDupConfig,
-    DynamicTemplateConfig,
-    OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
@@ -91,17 +89,6 @@ async def create_config_module(config: DipDupConfig) -> None:
         config_code = template.render()
         with open(config_path, 'w') as file:
             file.write(config_code)
-
-
-async def resolve_dynamic_templates(config: DipDupConfig) -> None:
-    for index_name, index_config in config.indexes.items():
-        if isinstance(index_config, DynamicTemplateConfig):
-            config.indexes[index_name] = StaticTemplateConfig(
-                template=index_config.template,
-                values=dict(contract=cast(str, index_config.similar_to)),
-            )
-            config.pre_initialize()
-            index_config = config.indexes[index_name]
 
 
 async def fetch_schemas(config: DipDupConfig) -> None:

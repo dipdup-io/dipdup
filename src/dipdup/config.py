@@ -31,11 +31,6 @@ sys.path.append(os.getcwd())
 _logger = logging.getLogger(__name__)
 
 
-class NoState:
-    def __bool__(self):
-        return False
-
-
 StateT = Union[State, TemporaryState]
 
 
@@ -619,21 +614,7 @@ class StaticTemplateConfig:
     values: Dict[str, str]
 
 
-@dataclass
-class DynamicTemplateConfig:
-    kind = 'dynamic'
-    template: str
-    similar_to: Union[str, ContractConfig]
-    strict: bool = False
-
-    @property
-    def contract_config(self) -> ContractConfig:
-        if not isinstance(self.similar_to, ContractConfig):
-            raise RuntimeError('Config is not initialized')
-        return self.similar_to
-
-
-IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, StaticTemplateConfig, DynamicTemplateConfig]
+IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, StaticTemplateConfig]
 IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
 HandlerPatternConfigT = Union[
     OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig, BigMapHandlerPatternConfig
@@ -778,10 +759,6 @@ class DipDupConfig:
                     if isinstance(pattern.contract, str):
                         pattern.contract = self.get_contract(pattern.contract)
 
-        # NOTE: Dynamic templates will be resolved later in dipdup module
-        elif isinstance(index_config, DynamicTemplateConfig):
-            return
-
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -892,9 +869,6 @@ class DipDupConfig:
 
         if isinstance(index_config, StaticTemplateConfig):
             raise RuntimeError('Config is not pre-initialized')
-        # NOTE: Dynamic templates will be resolved later in dipdup module
-        if isinstance(index_config, DynamicTemplateConfig):
-            return
 
         await self._initialize_index_state(index_name, index_config)
 
