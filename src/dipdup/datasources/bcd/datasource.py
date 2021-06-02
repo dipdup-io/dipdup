@@ -2,7 +2,8 @@ import logging
 from typing import Any, Dict, List
 
 from dipdup.datasources.proxy import DatasourceRequestProxy
-from dipdup.datasources.tzkt.datasource import Address
+
+Address = str
 
 
 class BcdDatasource:

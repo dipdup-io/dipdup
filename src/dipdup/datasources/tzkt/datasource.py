@@ -29,7 +29,6 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
-from dipdup.datasources import DatasourceT
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.exceptions import ConfigurationError
@@ -303,7 +302,7 @@ class OperationFetcher(TzktRequestMixin):
 class OperationMatcher:
     def __init__(
         self,
-        dipdup: 'DipDup',
+        dipdup,
         indexes: Dict[str, OperationIndexConfig],
     ) -> None:
         self._logger = logging.getLogger(__name__)
@@ -311,10 +310,6 @@ class OperationMatcher:
         self._indexes = indexes
         self._level: Optional[int] = None
         self._operations: Dict[OperationGroup, List[OperationData]] = {}
-
-    @property
-    def level(self) -> Optional[int]:
-        return self._level
 
     async def add(self, operation: OperationData):
         self._logger.debug('Adding operation %s to cache (%s, %s)', operation.id, operation.hash, operation.counter)
@@ -462,7 +457,7 @@ class OperationMatcher:
             else:
                 raise NotImplementedError
 
-        await self._dipdup.spawn_operation_handler_callback(operations, index_config, handler_config, args, self._level)
+        await self._dipdup.spawn_operation_handler_callback(index_config, handler_config, args, self._level, operations)
 
 
 class BigMapMatcher:
@@ -690,6 +685,9 @@ class TzktDatasource(TzktRequestMixin):
                 current_level = latest_block['level']
 
             await self.fetch_index(index_config_name, big_map_index_config, current_level)
+
+        while self._dipdup._executor._queue:
+            await asyncio.sleep(0.1)
 
         if not rest_only:
             self._logger.info('Starting websocket client')
@@ -936,8 +934,7 @@ class TzktDatasource(TzktRequestMixin):
             if message_type == TzktMessageType.STATE:
                 last_level = item['state']
                 for index_config in self._big_map_indexes.values():
-                    first_level = self._operation_matcher.level
-                    self._logger.info('Got state message, current level %s, index level %s', first_level, first_level)
+                    self._logger.info('Got state message, current level %s', last_level)
                     await self.fetch_big_maps(index_config, last_level)
                 self._big_maps_synchronized.set()
 
@@ -964,30 +961,6 @@ class TzktDatasource(TzktRequestMixin):
 
             else:
                 self._logger.warning('%s is not supported', message_type)
-
-    # async def on_contract_match(self, contract_subscription: ContractSubscription, address: Address) -> None:
-    #     # FIXME: Summons tainted souls into the realm of the living
-    #     datasource_name = cast(str, contract_subscription.template.datasource)
-    #     temp_config = DipDupConfig(
-    #         spec_version='0.1',
-    #         package=cast(str, self._package),
-    #         contracts=dict(contract=contract_subscription.contract_config),
-    #         datasources={datasource_name: TzktDatasourceConfig(kind='tzkt', url=self._url)},
-    #         indexes={
-    #             f'{contract_subscription.template_name}_{address}': StaticTemplateConfig(
-    #                 template='template',
-    #                 values=dict(
-    #                     contract='contract',
-    #                 ),
-    #             )
-    #         },
-    #         templates=dict(template=contract_subscription.template),
-    #     )
-    #     temp_config.pre_initialize()
-    #     await temp_config.initialize()
-    #     index_name, index_config = list(temp_config.indexes.items())[0]
-    #     await self.add_index(index_name, cast(IndexConfigTemplateT, index_config))
-    #     await self.on_connect()
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
@@ -1057,6 +1030,3 @@ class TzktDatasource(TzktRequestMixin):
         self._operations_synchronized.clear()
         self._big_maps_synchronized.clear()
         await self.on_connect()
-
-
-from dipdup.dipdup import DipDup

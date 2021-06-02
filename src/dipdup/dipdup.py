@@ -14,8 +14,9 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
+from dipdup.codegen import DipDupCodeGenerator
+from dipdup.datasources import DatasourceT
 
-import dipdup.codegen as codegen
 import dipdup.utils as utils
 from dipdup import __version__
 from dipdup.config import (
@@ -29,10 +30,10 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
-from dipdup.datasources import DatasourceT
+
+# from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import configure_hasura
 from dipdup.models import BigMapHandlerContext, IndexType, OperationHandlerContext, State
 
@@ -66,13 +67,16 @@ class DipDup:
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
 
     async def init(self, dynamic: bool) -> None:
-        await codegen.create_package(self._config)
+        self._config.pre_initialize()
+        await self._create_datasources()
+        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        await codegen.create_package()
         if dynamic:
-            await codegen.create_config_module(self._config)
-        await codegen.fetch_schemas(self._config)
-        await codegen.generate_types(self._config)
-        await codegen.generate_handlers(self._config)
-        await codegen.cleanup(self._config)
+            await codegen.create_config_module()
+        await codegen.fetch_schemas()
+        await codegen.generate_types()
+        await codegen.generate_handlers()
+        await codegen.cleanup()
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
@@ -126,7 +130,14 @@ class DipDup:
             for datasource in resync_datasources:
                 await datasource.resync()
 
-    async def _operation_handler_callback(self, index_config, handler_config, args, level, operations):
+    async def _operation_handler_callback(
+        self,
+        index_config,
+        handler_config,
+        args,
+        level,
+        operations,
+    ):
         handler_context = OperationHandlerContext(
             datasources=self._datasources,
             config=self._config,

@@ -20,7 +20,6 @@ from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup.exceptions import ConfigurationError
-from dipdup.models import State, TemporaryState
 from dipdup.utils import camel_to_snake, reindex, snake_to_camel
 
 ROLLBACK_HANDLER = 'on_rollback'
@@ -29,9 +28,6 @@ ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
 sys.path.append(os.getcwd())
 _logger = logging.getLogger(__name__)
-
-
-StateT = Union[State, TemporaryState]
 
 
 class OperationType(Enum):
@@ -369,6 +365,13 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     optional: bool = False
     strict: bool = False
 
+    def __hash__(self) -> int:
+        return hash(''.join([
+            self.source_contract_config.address if self.source else '',
+            self.similar_to_contract_config.address if self.similar_to else '',
+            self.originated_contract_config.address if self.originated_contract else '',
+        ]))
+
     def get_handler_imports(self, package: str) -> str:
         result = []
         if self.source:
@@ -466,13 +469,13 @@ class StateMixin:
         self._state: Optional[StateT] = None
 
     @property
-    def state(self) -> StateT:
+    def state(self) -> 'StateT':
         if not self._state:
             raise RuntimeError('Config is not initialized')
         return self._state
 
     @state.setter
-    def state(self, value: StateT) -> None:
+    def state(self, value: 'StateT') -> None:
         self._state = value
 
 
@@ -481,8 +484,8 @@ class IndexConfig(TemplateValuesMixin, StateMixin):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self):
-        super(TemplateValuesMixin, self).__post_init_post_parse__()
-        super(StateMixin, self).__post_init_post_parse__()
+        TemplateValuesMixin.__post_init_post_parse__(self)
+        StateMixin.__post_init_post_parse__(self)
 
     def hash(self) -> str:
         return hashlib.sha256(
@@ -755,6 +758,8 @@ class DipDupConfig:
                             pattern_config.source = self.get_contract(pattern_config.source)
                         if isinstance(pattern_config.similar_to, str):
                             pattern_config.similar_to = self.get_contract(pattern_config.similar_to)
+                        if isinstance(pattern_config.originated_contract, str):
+                            pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 
         elif isinstance(index_config, BigMapIndexConfig):
             if isinstance(index_config.datasource, str):
@@ -957,3 +962,6 @@ class LoggingConfig:
 
 
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.models import State, TemporaryState
+
+StateT = Union[State, TemporaryState]

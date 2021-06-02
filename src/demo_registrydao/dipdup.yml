@@ -37,6 +37,14 @@ templates:
             originated_contract: <contract>
 
 indexes:
-  registry:
-    template: registry_dao
-    similar_to: registry
+  factory:
+    kind: operation
+    datasource: tzkt
+    types:
+      - origination
+    handlers:
+        - callback: on_factory_origination
+          pattern:
+            - type: origination
+              similar_to: registry
+    stateless: True

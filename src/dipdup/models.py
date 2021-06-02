@@ -7,9 +7,8 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
-
 from dipdup.config import DipDupConfig
-from dipdup.datasources import DatasourceT
+
 from dipdup.exceptions import ConfigurationError
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
@@ -175,11 +174,9 @@ class BigMapData:
 
 @dataclass
 class HandlerContext:
-    """Common handler context.
+    """Common handler context."""
 
-    """
-
-    datasources: Dict[str, DatasourceT]
+    datasources: Dict
     config: DipDupConfig
 
     def __post_init_post_parse__(self) -> None:
@@ -202,6 +199,3 @@ class OperationHandlerContext(HandlerContext):
 @dataclass
 class BigMapHandlerContext(HandlerContext):
     template_values: Optional[Dict[str, str]]
-
-
-from dipdup.dipdup import DipDup
