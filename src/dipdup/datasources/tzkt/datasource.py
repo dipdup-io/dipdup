@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from collections import deque
+from collections import deque, namedtuple
+from copy import copy
 from enum import Enum
 from typing import Any, AsyncGenerator, Awaitable, Callable, Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
@@ -11,25 +12,27 @@ from aiosignalrcore.transport.websockets.connection import ConnectionState  # ty
 from pydantic.dataclasses import dataclass
 from tortoise.transactions import in_transaction
 
-from dipdup import __version__
 from dipdup.config import (
     ROLLBACK_HANDLER,
     BigMapHandlerConfig,
+    BigMapHandlerPatternConfig,
     BigMapIndexConfig,
     ContractConfig,
     DipDupConfig,
     IndexConfigTemplateT,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
+    OperationHandlerPatternConfigT,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
     OperationType,
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
+from dipdup.datasources import DatasourceT
 from dipdup.datasources.proxy import DatasourceRequestProxy
-from dipdup.datasources.tzkt.cache import BigMapCache, OperationCache
 from dipdup.datasources.tzkt.enums import TzktMessageType
+from dipdup.exceptions import ConfigurationError
 from dipdup.models import (
     BigMapAction,
     BigMapContext,
@@ -41,6 +44,9 @@ from dipdup.models import (
     State,
     TransactionContext,
 )
+
+OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
+OperationID = int
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
 OPERATION_FIELDS = (
@@ -88,25 +94,6 @@ class OperationFetcherChannel(Enum):
     sender_transactions = 'sender_transactions'
     target_transactions = 'target_transactions'
     originations = 'originations'
-
-
-class CallbackExecutor:
-    def __init__(self) -> None:
-        self._queue: Deque[Awaitable] = deque()
-
-    def submit(self, fn, *args, **kwargs):
-        self._queue.append(fn(*args, **kwargs))
-
-    async def run(self):
-        while True:
-            await asyncio.sleep(0.1)
-            try:
-                coro = self._queue.popleft()
-                await coro
-            except IndexError:
-                pass
-            except asyncio.CancelledError:
-                return
 
 
 def dedup_operations(operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -313,47 +300,334 @@ class OperationFetcher(TzktRequestMixin):
         assert not self._operations
 
 
+class OperationMatcher:
+    def __init__(
+        self,
+        dipdup: 'DipDup',
+        indexes: Dict[str, OperationIndexConfig],
+    ) -> None:
+        self._logger = logging.getLogger(__name__)
+        self._dipdup = dipdup
+        self._indexes = indexes
+        self._level: Optional[int] = None
+        self._operations: Dict[OperationGroup, List[OperationData]] = {}
+
+    @property
+    def level(self) -> Optional[int]:
+        return self._level
+
+    async def add(self, operation: OperationData):
+        self._logger.debug('Adding operation %s to cache (%s, %s)', operation.id, operation.hash, operation.counter)
+        self._logger.debug('level=%s operation.level=%s', self._level, operation.level)
+
+        if self._level is not None:
+            if self._level != operation.level:
+                raise RuntimeError('Operations must be splitted by level before caching')
+        else:
+            self._level = operation.level
+
+        key = OperationGroup(operation.hash, operation.counter)
+        if key not in self._operations:
+            self._operations[key] = []
+        self._operations[key].append(operation)
+
+    def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
+        # NOTE: Reversed conditions are intentional
+        if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+            if pattern_config.entrypoint != operation.entrypoint:
+                return False
+            if pattern_config.destination:
+                if pattern_config.destination_contract_config.address != operation.target_address:
+                    return False
+            if pattern_config.source:
+                if pattern_config.source_contract_config.address != operation.sender_address:
+                    return False
+            return True
+
+        elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+            if pattern_config.source:
+                if pattern_config.source_contract_config.address != operation.sender_address:
+                    return False
+            if pattern_config.originated_contract:
+                if pattern_config.originated_contract_config.address != operation.originated_contract_address:
+                    return False
+            if pattern_config.similar_to:
+                if pattern_config.strict:
+                    if pattern_config.similar_to_contract_config.code_hash != operation.originated_contract_code_hash:
+                        return False
+                else:
+                    if pattern_config.similar_to_contract_config.type_hash != operation.originated_contract_type_hash:
+                        return False
+            return True
+        else:
+            raise NotImplementedError
+
+    async def process(self) -> int:
+        """Try to match operations in cache with all patterns from indexes."""
+        if self._level is None:
+            raise RuntimeError('Add operations to cache before processing')
+
+        keys = list(self._operations.keys())
+        self._logger.info('Matching %s operation groups', len(keys))
+        for key, operations in self._operations.items():
+            self._logger.debug('Matching %s', key)
+            matched = False
+
+            for index_config in self._indexes.values():
+                for handler_config in index_config.handlers:
+                    operation_idx = 0
+                    pattern_idx = 0
+                    matched_operations: List[Optional[OperationData]] = []
+
+                    # TODO: Ensure complex cases work, for ex. required argument after optional one
+                    # TODO: Add None to matched_operations where applicable
+                    while operation_idx < len(operations):
+                        pattern_config = handler_config.pattern[pattern_idx]
+                        matched = self._match_operation(pattern_config, operations[operation_idx])
+                        if matched:
+                            matched_operations.append(operations[operation_idx])
+                            pattern_idx += 1
+                            operation_idx += 1
+                        elif pattern_config.optional:
+                            matched_operations.append(None)
+                            pattern_idx += 1
+                        else:
+                            operation_idx += 1
+
+                        if pattern_idx == len(handler_config.pattern):
+                            self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
+                            await self.on_match(index_config, handler_config, matched_operations, operations)
+                            matched = True
+                            matched_operations = []
+                            pattern_idx = 0
+
+                    if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
+                        self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
+                        await self.on_match(index_config, handler_config, matched_operations, operations)
+                        matched = True
+
+                # NOTE: Only one index could match as addresses do not intersect between indexes (checked on config initialization)
+                # TODO: Ensure it's really checked
+                if matched:
+                    break
+
+        self._logger.info('Current level: %s', self._level)
+        self._operations = {}
+
+        level = self._level
+        self._level = None
+        return level
+
+    async def on_match(
+        self,
+        index_config: OperationIndexConfig,
+        handler_config: OperationHandlerConfig,
+        matched_operations: List[Optional[OperationData]],
+        operations: List[OperationData],
+    ):
+        """Prepare handler context and arguments, parse parameter and storage. Schedule callback in executor."""
+        args: List[Optional[Union[TransactionContext, OriginationContext, OperationData]]] = []
+        for pattern_config, operation in zip(handler_config.pattern, matched_operations):
+            if operation is None:
+                args.append(None)
+
+            elif isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                if not pattern_config.entrypoint:
+                    args.append(operation)
+                    continue
+
+                parameter_type = pattern_config.parameter_type_cls
+                parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
+
+                storage_type = pattern_config.storage_type_cls
+                storage = operation.get_merged_storage(storage_type)
+
+                transaction_context = TransactionContext(
+                    data=operation,
+                    parameter=parameter,
+                    storage=storage,
+                )
+                args.append(transaction_context)
+
+            elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                storage_type = pattern_config.storage_type_cls
+                storage = operation.get_merged_storage(storage_type)
+
+                origination_context = OriginationContext(
+                    data=operation,
+                    storage=storage,
+                )
+                args.append(origination_context)
+
+            else:
+                raise NotImplementedError
+
+        await self._dipdup.spawn_operation_handler_callback(operations, index_config, handler_config, args, self._level)
+
+
+class BigMapMatcher:
+    def __init__(self, dipdup: 'DipDup', indexes: Dict[str, BigMapIndexConfig]) -> None:
+        super().__init__()
+        self._logger = logging.getLogger(__name__)
+        self._dipdup = dipdup
+        self._indexes = indexes
+        self._level: Optional[int] = None
+        self._big_maps: Dict[OperationID, List[BigMapData]] = {}
+
+    @property
+    def level(self) -> Optional[int]:
+        return self._level
+
+    async def add(self, big_map: BigMapData):
+        self._logger.debug('Adding big map %s to cache (%s)', big_map.id, big_map.operation_id)
+        self._logger.debug('level=%s operation.level=%s', self._level, big_map.level)
+
+        if self._level is not None:
+            if self._level != big_map.level:
+                raise RuntimeError('Big maps must be splitted by level before caching')
+        else:
+            self._level = big_map.level
+
+        key = big_map.operation_id
+        if key not in self._big_maps:
+            self._big_maps[key] = []
+        self._big_maps[key].append(big_map)
+
+    def match_big_map(self, pattern_config: BigMapHandlerPatternConfig, big_map: BigMapData) -> bool:
+        self._logger.debug('pattern: %s, %s', pattern_config.path, pattern_config.contract_config.address)
+        self._logger.debug('big_map: %s, %s', big_map.path, big_map.contract_address)
+        if pattern_config.path != big_map.path:
+            return False
+        if pattern_config.contract_config.address != big_map.contract_address:
+            return False
+        self._logger.debug('match!')
+        return True
+
+    async def process(self) -> int:
+        if self._level is None:
+            raise RuntimeError('Add big maps to cache before processing')
+
+        keys = list(self._big_maps.keys())
+        self._logger.info('Matching %s big map groups', len(keys))
+        for key, big_maps in copy(self._big_maps).items():
+            self._logger.debug('Processing %s', key)
+            matched = False
+
+            for index_config in self._indexes.values():
+                if matched:
+                    break
+                for handler_config in index_config.handlers:
+                    matched_big_maps: List[List[BigMapData]] = [[] for _ in range(len(handler_config.pattern))]
+                    for i, pattern_config in enumerate(handler_config.pattern):
+                        for big_map in big_maps:
+                            big_map_matched = self.match_big_map(pattern_config, big_map)
+                            if big_map_matched:
+                                matched_big_maps[i].append(big_map)
+
+                    if any([len(big_map_group) for big_map_group in matched_big_maps]):
+                        self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
+                        matched = True
+                        await self._dipdup.spawn_big_map_handler_callback(index_config, handler_config, matched_big_maps, self._level)
+                        del self._big_maps[key]
+                        break
+
+        keys_left = self._big_maps.keys()
+        self._logger.info('%s operation groups unmatched', len(keys_left))
+        self._logger.info('Current level: %s', self._level)
+        self._big_maps = {}
+
+        level = self._level
+        self._level = None
+        return level
+
+    async def on_match(
+        self,
+        index_config: BigMapIndexConfig,
+        handler_config: BigMapHandlerConfig,
+        matched_big_maps: List[List[BigMapData]],
+    ):
+        args: List[List[BigMapContext]] = []
+        for matched_big_map_group, pattern_config in zip(matched_big_maps, handler_config.pattern):
+            big_map_contexts = []
+            for big_map in matched_big_map_group:
+
+                try:
+                    action = BigMapAction(big_map.action)
+                except ValueError:
+                    continue
+
+                key_type = pattern_config.key_type_cls
+                key = key_type.parse_obj(big_map.key)
+
+                if action == BigMapAction.REMOVE:
+                    value = None
+                else:
+                    value_type = pattern_config.value_type_cls
+                    value = value_type.parse_obj(big_map.value)
+
+                big_map_context = BigMapContext(  # type: ignore
+                    action=action,
+                    key=key,
+                    value=value,
+                )
+
+                big_map_contexts.append(big_map_context)
+
+            args.append(big_map_contexts)
+
+        await self._dipdup.spawn_big_map_handler_callback(index_config, handler_config, args, self._level)
+
+
 class TzktDatasource(TzktRequestMixin):
-    def __init__(self, url: str, cache: bool):
+    def __init__(self, url: str, dipdup: 'DipDup'):
         self._url = url.rstrip('/')
         self._logger = logging.getLogger(__name__)
-        self._operation_index_by_name: Dict[IndexName, OperationIndexConfig] = {}
-        self._big_map_index_by_name: Dict[IndexName, BigMapIndexConfig] = {}
-        self._callback_lock = asyncio.Lock()
+        self._operation_indexes: Dict[IndexName, OperationIndexConfig] = {}
+        self._big_map_indexes: Dict[IndexName, BigMapIndexConfig] = {}
         self._transaction_subscriptions: Set[Address] = set()
         self._origination_subscriptions: Set[OperationHandlerOriginationPatternConfig] = set()
         self._big_map_subscriptions: Dict[Address, List[Path]] = {}
         self._operations_synchronized = asyncio.Event()
         self._big_maps_synchronized = asyncio.Event()
         self._client: Optional[BaseHubConnection] = None
-        self._operation_cache = OperationCache()
-        self._big_map_cache = BigMapCache()
-        self._rollback_fn: Optional[Callable[[int, int], Awaitable[None]]] = None
-        self._package: Optional[str] = None
-        self._proxy = DatasourceRequestProxy(cache)
-        self._callback_executor = CallbackExecutor()
+
+        self._operation_matcher = OperationMatcher(dipdup, self._operation_indexes)
+        self._big_map_matcher = BigMapMatcher(dipdup, self._big_map_indexes)
+
+        self._dipdup = dipdup
+        self._proxy = DatasourceRequestProxy(self._dipdup._config.cache_enabled)
         self._synched_indexes: List[str] = []
 
-    async def add_index(self, index_name: str, index_config: IndexConfigTemplateT):
+    async def add_index(self, index_name: str, index_config: IndexConfigTemplateT) -> None:
+        """Register index config in internal mappings and caches. Find and register subscriptions.
+        If called in runtime need to `resync` then."""
         self._logger.info('Adding index `%s`', index_name)
 
         if isinstance(index_config, OperationIndexConfig):
             await index_config.fetch_hashes(self)
-            self._operation_index_by_name[index_name] = index_config
-            await self._operation_cache.add_index(index_config)
+            self._operation_indexes[index_name] = index_config
+
+            for contract_config in index_config.contracts or []:
+                self._transaction_subscriptions.add(cast(ContractConfig, contract_config).address)
+
+            for handler_config in index_config.handlers:
+                for pattern_config in handler_config.pattern:
+                    if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                        self._origination_subscriptions.add(pattern_config)
 
         elif isinstance(index_config, BigMapIndexConfig):
-            self._big_map_index_by_name[index_name] = index_config
-            await self._big_map_cache.add_index(index_config)
+            self._big_map_indexes[index_name] = index_config
+
+            for big_map_handler_config in index_config.handlers:
+                for big_map_pattern_config in big_map_handler_config.pattern:
+                    address, path = big_map_pattern_config.contract_config.address, big_map_pattern_config.path
+                    if address not in self._big_map_subscriptions:
+                        self._big_map_subscriptions[address] = []
+                    if path not in self._big_map_subscriptions[address]:
+                        self._big_map_subscriptions[address].append(path)
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
-
-    def set_rollback_fn(self, fn: Callable[[int, int], Awaitable[None]]) -> None:
-        self._rollback_fn = fn
-
-    def set_package(self, package: str) -> None:
-        self._package = package
 
     def _get_client(self) -> BaseHubConnection:
         if self._client is None:
@@ -371,36 +645,16 @@ class TzktDatasource(TzktRequestMixin):
                 )
             ).build()
 
-            async def operation_callback(*args, **kwargs) -> None:
-                self._callback_executor.submit(self.on_operation_message, *args, **kwargs)
-
-            async def big_map_callback(*args, **kwargs) -> None:
-                self._callback_executor.submit(self.on_big_map_message, *args, **kwargs)
-
             self._client.on_open(self.on_connect)
             self._client.on_error(self.on_error)
-            self._client.on('operations', operation_callback)
-            self._client.on('bigmaps', big_map_callback)
+            self._client.on('operations', self.on_operation_message)
+            self._client.on('bigmaps', self.on_big_map_message)
 
         return self._client
 
     async def set_state_level(self, index_config: IndexConfigTemplateT, level: int) -> None:
         index_config.state.level = level  # type: ignore
         await index_config.state.save()
-
-    async def add_subscriptions(self) -> None:
-        # NOTE: Safe to call multiple times
-        for operation_index_config in self._operation_index_by_name.values():
-            if operation_index_config.contracts:
-                addresses = [cast(ContractConfig, c).address for c in operation_index_config.contracts]
-                await self.add_transaction_subscription(addresses)
-
-        # TODO: origination
-
-        for big_map_index_config in self._big_map_index_by_name.values():
-            for handler_config in big_map_index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    await self.add_big_map_subscription(pattern_config.contract_config.address, pattern_config.path)
 
     async def fetch_index(self, index_name: str, index_config: IndexConfigTemplateT, level: int) -> None:
         self._logger.info('Synchronizing `%s`', index_name)
@@ -415,12 +669,10 @@ class TzktDatasource(TzktRequestMixin):
         self._logger.info('Starting datasource')
         rest_only = False
 
-        await self.add_subscriptions()
-
         latest_block = await self.get_latest_block()
 
         self._logger.info('Initial synchronizing operation indexes')
-        for index_config_name, operation_index_config in self._operation_index_by_name.items():
+        for index_config_name, operation_index_config in self._operation_indexes.items():
             if operation_index_config.last_block:
                 current_level = operation_index_config.last_block
                 rest_only = True
@@ -430,7 +682,7 @@ class TzktDatasource(TzktRequestMixin):
             await self.fetch_index(index_config_name, operation_index_config, current_level)
 
         self._logger.info('Initial synchronizing big map indexes')
-        for index_config_name, big_map_index_config in self._big_map_index_by_name.items():
+        for index_config_name, big_map_index_config in self._big_map_indexes.items():
             if big_map_index_config.last_block:
                 current_level = big_map_index_config.last_block
                 rest_only = True
@@ -441,10 +693,7 @@ class TzktDatasource(TzktRequestMixin):
 
         if not rest_only:
             self._logger.info('Starting websocket client')
-            await asyncio.gather(
-                self._get_client().start(),
-                self._callback_executor.run(),
-            )
+            await self._get_client().start()
 
     async def stop(self):
         ...
@@ -642,7 +891,7 @@ class TzktDatasource(TzktRequestMixin):
 
             if message_type == TzktMessageType.STATE:
                 last_level = item['state']
-                for index_config in self._operation_index_by_name.values():
+                for index_config in self._operation_indexes.values():
                     first_level = index_config.state.level
                     self._logger.info('Got state message, current level %s, index level %s', last_level, first_level)
                     await self.fetch_operations(index_config, last_level)
@@ -654,26 +903,21 @@ class TzktDatasource(TzktRequestMixin):
                     await self._operations_synchronized.wait()
                     self._logger.info('Synchronization is complete, processing websocket message')
 
-                self._logger.info('Acquiring callback lock')
-                async with self._callback_lock:
-                    for operation_json in item['data']:
-                        operation = self.convert_operation(operation_json)
-                        if operation.status != 'applied':
-                            continue
+                for operation_json in item['data']:
+                    operation = self.convert_operation(operation_json)
+                    if operation.status != 'applied':
+                        continue
 
-                        await self._operation_cache.add(operation)
+                    await self._operation_matcher.add(operation)
 
-                    async with in_transaction():
-                        await self._operation_cache.process(self.on_operation_match)
+                await self._operation_matcher.process()
 
             elif message_type == TzktMessageType.REORG:
-                if self._rollback_fn is None:
-                    raise RuntimeError('rollback_fn is not set')
                 self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
                 # NOTE: It doesn't matter which index to get
-                from_level = list(self._operation_index_by_name.values())[0].state.level
+                from_level = list(self._operation_indexes.values())[0].state.level
                 to_level = item['state']
-                await self._rollback_fn(from_level, to_level)
+                await self._dipdup.spawn_rollback_handler_callback(from_level, to_level)
 
             else:
                 self._logger.warning('%s is not supported', message_type)
@@ -691,8 +935,8 @@ class TzktDatasource(TzktRequestMixin):
 
             if message_type == TzktMessageType.STATE:
                 last_level = item['state']
-                for index_config in self._big_map_index_by_name.values():
-                    first_level = self._operation_cache.level
+                for index_config in self._big_map_indexes.values():
+                    first_level = self._operation_matcher.level
                     self._logger.info('Got state message, current level %s, index level %s', first_level, first_level)
                     await self.fetch_big_maps(index_config, last_level)
                 self._big_maps_synchronized.set()
@@ -704,152 +948,46 @@ class TzktDatasource(TzktRequestMixin):
                     self._logger.info('Synchronization is complete, processing websocket message')
 
                 self._logger.info('Acquiring callback lock')
-                async with self._callback_lock:
-                    for big_map_json in item['data']:
-                        big_map = self.convert_big_map(big_map_json)
-                        await self._big_map_cache.add(big_map)
 
-                    async with in_transaction():
-                        await self._big_map_cache.process(self.on_big_map_match)
+                for big_map_json in item['data']:
+                    big_map = self.convert_big_map(big_map_json)
+                    await self._big_map_matcher.add(big_map)
+
+                await self._big_map_matcher.process()
 
             elif message_type == TzktMessageType.REORG:
-                if self._rollback_fn is None:
-                    raise RuntimeError('rollback_fn is not set')
                 self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
                 # NOTE: It doesn't matter which index to get
-                from_level = list(self._big_map_index_by_name.values())[0].state.level
+                from_level = list(self._big_map_indexes.values())[0].state.level
                 to_level = item['state']
-                await self._rollback_fn(from_level, to_level)
+                await self._dipdup.spawn_rollback_handler_callback(from_level, to_level)
 
             else:
                 self._logger.warning('%s is not supported', message_type)
 
-    async def add_transaction_subscription(self, addresses: List[Address]) -> None:
-        for address in addresses:
-            self._transaction_subscriptions.add(address)
-
-    async def add_origination_subscription(self, patterns: List[OperationHandlerOriginationPatternConfig]) -> None:
-        for pattern in patterns:
-            self._origination_subscriptions.add(pattern)
-
-    async def add_big_map_subscription(self, address: str, path: str) -> None:
-        if address not in self._big_map_subscriptions:
-            self._big_map_subscriptions[address] = []
-        if path not in self._big_map_subscriptions[address]:
-            self._big_map_subscriptions[address].append(path)
-
-    async def on_operation_match(
-        self,
-        index_config: OperationIndexConfig,
-        handler_config: OperationHandlerConfig,
-        matched_operations: List[Optional[OperationData]],
-        operations: List[OperationData],
-    ):
-        handler_context = OperationHandlerContext(
-            operations=operations,
-            template_values=index_config.template_values,
-        )
-        args: List[Optional[Union[OperationHandlerContext, TransactionContext, OriginationContext, OperationData]]] = [handler_context]
-        for pattern_config, operation in zip(handler_config.pattern, matched_operations):
-            if operation is None:
-                args.append(None)
-
-            elif isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                if not pattern_config.entrypoint:
-                    args.append(operation)
-                    continue
-
-                parameter_type = pattern_config.parameter_type_cls
-                parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
-
-                storage_type = pattern_config.storage_type_cls
-                storage = operation.get_merged_storage(storage_type)
-
-                transaction_context = TransactionContext(
-                    data=operation,
-                    parameter=parameter,
-                    storage=storage,
-                )
-                args.append(transaction_context)
-
-            elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                storage_type = pattern_config.storage_type_cls
-                storage = operation.get_merged_storage(storage_type)
-
-                origination_context = OriginationContext(
-                    data=operation,
-                    storage=storage,
-                )
-                args.append(origination_context)
-
-            else:
-                raise NotImplementedError
-
-        await handler_config.callback_fn(*args)
-
-    async def on_big_map_match(
-        self,
-        index_config: BigMapIndexConfig,
-        handler_config: BigMapHandlerConfig,
-        matched_big_maps: List[List[BigMapData]],
-    ):
-        handler_context = BigMapHandlerContext(
-            template_values=index_config.template_values,
-        )
-        args: List[Union[BigMapHandlerContext, List[BigMapContext]]] = [handler_context]
-        for matched_big_map_group, pattern_config in zip(matched_big_maps, handler_config.pattern):
-            big_map_contexts = []
-            for big_map in matched_big_map_group:
-
-                try:
-                    action = BigMapAction(big_map.action)
-                except ValueError:
-                    continue
-
-                key_type = pattern_config.key_type_cls
-                key = key_type.parse_obj(big_map.key)
-
-                if action == BigMapAction.REMOVE:
-                    value = None
-                else:
-                    value_type = pattern_config.value_type_cls
-                    value = value_type.parse_obj(big_map.value)
-
-                big_map_context = BigMapContext(  # type: ignore
-                    action=action,
-                    key=key,
-                    value=value,
-                )
-
-                big_map_contexts.append(big_map_context)
-
-            args.append(big_map_contexts)
-
-        await handler_config.callback_fn(*args)
-
-    async def on_contract_match(self, contract_subscription: ContractSubscription, address: Address) -> None:
-        # FIXME: Summons tainted souls into the realm of the living
-        datasource_name = cast(str, contract_subscription.template.datasource)
-        temp_config = DipDupConfig(
-            spec_version='0.1',
-            package=cast(str, self._package),
-            contracts=dict(contract=contract_subscription.contract_config),
-            datasources={datasource_name: TzktDatasourceConfig(kind='tzkt', url=self._url)},
-            indexes={
-                f'{contract_subscription.template_name}_{address}': StaticTemplateConfig(
-                    template='template',
-                    values=dict(
-                        contract='contract',
-                    ),
-                )
-            },
-            templates=dict(template=contract_subscription.template),
-        )
-        temp_config.pre_initialize()
-        await temp_config.initialize()
-        index_name, index_config = list(temp_config.indexes.items())[0]
-        await self.add_index(index_name, cast(IndexConfigTemplateT, index_config))
-        await self.on_connect()
+    # async def on_contract_match(self, contract_subscription: ContractSubscription, address: Address) -> None:
+    #     # FIXME: Summons tainted souls into the realm of the living
+    #     datasource_name = cast(str, contract_subscription.template.datasource)
+    #     temp_config = DipDupConfig(
+    #         spec_version='0.1',
+    #         package=cast(str, self._package),
+    #         contracts=dict(contract=contract_subscription.contract_config),
+    #         datasources={datasource_name: TzktDatasourceConfig(kind='tzkt', url=self._url)},
+    #         indexes={
+    #             f'{contract_subscription.template_name}_{address}': StaticTemplateConfig(
+    #                 template='template',
+    #                 values=dict(
+    #                     contract='contract',
+    #                 ),
+    #             )
+    #         },
+    #         templates=dict(template=contract_subscription.template),
+    #     )
+    #     temp_config.pre_initialize()
+    #     await temp_config.initialize()
+    #     index_name, index_config = list(temp_config.indexes.items())[0]
+    #     await self.add_index(index_name, cast(IndexConfigTemplateT, index_config))
+    #     await self.on_connect()
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
@@ -919,3 +1057,6 @@ class TzktDatasource(TzktRequestMixin):
         self._operations_synchronized.clear()
         self._big_maps_synchronized.clear()
         await self.on_connect()
+
+
+from dipdup.dipdup import DipDup

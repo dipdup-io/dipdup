@@ -529,6 +529,7 @@ class OperationIndexConfig(IndexConfig):
         return cast(List[ContractConfig], self.contracts)
 
     async def fetch_hashes(self, datasource: 'TzktDatasource') -> None:
+        """Find all origination patterns with `similar_to` field and fetch hashes for matching"""
         for handler_config in self.handlers:
             for pattern_config in handler_config.pattern:
                 if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
@@ -702,6 +703,12 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
+    def get_rollback_fn(self) -> Type:
+        try:
+            return getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
+        except ModuleNotFoundError as e:
+            raise ConfigurationError(f'Package `{self.package}` not found. Have you forgot to call `init`?') from e
+
     def resolve_static_templates(self) -> None:
         _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
@@ -796,7 +803,7 @@ class DipDupConfig:
         return dirname(package.__file__)
 
     @property
-    def tzkt_cache(self) -> bool:
+    def cache_enabled(self) -> bool:
         return isinstance(self.database, SqliteDatabaseConfig)
 
     @classmethod

@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 
+from dipdup.config import DipDupConfig
+from dipdup.datasources import DatasourceT
 from dipdup.exceptions import ConfigurationError
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
@@ -132,21 +134,6 @@ class OperationData:
 
 
 @dataclass
-class HandlerContext:
-    def __post_init_post_parse__(self) -> None:
-        self._dipdup: Optional['DipDup'] = None
-
-    def set_dipdup(self, dipdup: 'DipDup') -> None:
-        self._dipdup = dipdup
-
-    async def spawn_index(self) -> None:
-        ...
-
-    async def reconfigure(self, **kwargs) -> None:
-        await self._dipdup.configure()  # type: ignore
-
-
-@dataclass
 class TransactionContext(Generic[ParameterType, StorageType]):
     data: OperationData
     parameter: ParameterType
@@ -184,6 +171,26 @@ class BigMapData:
     action: str
     key: Optional[Any] = None
     value: Optional[Any] = None
+
+
+@dataclass
+class HandlerContext:
+    """Common handler context.
+
+    """
+
+    datasources: Dict[str, DatasourceT]
+    config: DipDupConfig
+
+    def __post_init_post_parse__(self) -> None:
+        self._updated: bool = False
+
+    def commit(self) -> None:
+        self._updated = True
+
+    @property
+    def updated(self) -> bool:
+        return self._updated
 
 
 @dataclass

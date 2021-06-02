@@ -29,6 +29,8 @@ _logger = logging.getLogger(__name__)
 
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
+    """Preprocess bigmaps in JSONSchema. Those are unions as could be pointers. We resolve bigmaps from diffs so no need to include int in type signature.
+    """
     if 'properties' in schema:
         return {
             **schema,
@@ -60,7 +62,11 @@ class SchemasCache:
             self._schemas[datasource_config][contract_config.address] = address_schemas_json
         return self._schemas[datasource_config][contract_config.address]
 
-
+class DiDupCodeGenerator:
+    def __init__(config, datasources) -> None:
+        self._logger
+        self._config
+        self._datasources
 async def create_package(config: DipDupConfig) -> None:
     try:
         package_path = config.package_path
