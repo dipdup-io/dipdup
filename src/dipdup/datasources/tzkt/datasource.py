@@ -108,7 +108,8 @@ class TzktRequestMixin:
                 limit=TZKT_HTTP_REQUEST_LIMIT,
             ),
         )
-        return contracts[:10]
+        # FIXME
+        return contracts[:1]
 
     async def get_originated_contracts(self, address: Address) -> List[Address]:
         """Get contracts originated from given address"""
@@ -641,7 +642,7 @@ class TzktDatasource(TzktRequestMixin):
     async def add_index(self, index_name: str, index_config: IndexConfigTemplateT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions.
         If called in runtime need to `resync` then."""
-        await self._callback_lock.acquire()
+        # await self._callback_lock.acquire()
 
         self._logger.info('Adding index `%s`', index_name)
 
@@ -671,7 +672,7 @@ class TzktDatasource(TzktRequestMixin):
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-        self._callback_lock.release()
+        # self._callback_lock.release()
 
     def _get_client(self) -> BaseHubConnection:
         """Create SignalR client, register message callbacks"""
@@ -865,7 +866,7 @@ class TzktDatasource(TzktRequestMixin):
         return big_maps
 
     # TODO: Implement BigMapFetcher
-    async def synchronize_big_maps(self, index_config: BigMapIndexConfig, last_level: int) -> None:
+    async def synchronize_big_map_index(self, index_config: BigMapIndexConfig, last_level: int) -> None:
         """Fetch big map diffs via Fetcher (not implemented yet) and pass to message callback"""
         async def _process_level_big_maps(big_maps):
             self._logger.info('Processing %s big map updates of level %s', len(big_maps), big_maps[0]['level'])
@@ -926,7 +927,7 @@ class TzktDatasource(TzktRequestMixin):
         sync=False,
     ) -> None:
         """Invoke synchronization or parse raw WS/REST operations and pass to Matcher"""
-        await self._callback_lock.acquire()
+        # await self._callback_lock.acquire()
 
         self._logger.info('Got operation message')
         self._logger.debug('%s', message)
@@ -936,11 +937,13 @@ class TzktDatasource(TzktRequestMixin):
 
             if message_type == TzktMessageType.STATE:
                 last_level = item['state']
-                for index_config in self._operation_indexes.values():
+                self._logger.info('Got state message, current level: %s', last_level)
+                # NOTE: Ignore indexes added in process
+                for index_name, index_config in copy(self._operation_indexes).items():
                     first_level = index_config.state.level
-                    self._logger.info('Got state message, current level %s, index level %s', last_level, first_level)
+                    self._logger.info('Synchronizing `%s` since %s until %s', index_name, first_level, last_level)
                     # FIXME: Dafuq
-                    self._dipdup._executor.submit(self.synchronize_operation_index, index_config, last_level)
+                    await self.synchronize_operation_index(index_config, last_level)
                 self._logger.info('All operation indexes are synchronized')
                 self._operations_synchronized.set()
 
@@ -970,7 +973,7 @@ class TzktDatasource(TzktRequestMixin):
             else:
                 self._logger.warning('%s is not supported', message_type)
 
-        self._callback_lock.release()
+        # self._callback_lock.release()
 
     async def on_big_map_message(
         self,
@@ -988,7 +991,7 @@ class TzktDatasource(TzktRequestMixin):
                 last_level = item['state']
                 for index_config in self._big_map_indexes.values():
                     self._logger.info('Got state message, current level %s', last_level)
-                    await self.fetch_big_maps(index_config, last_level)
+                    await self.synchronize_big_map_index(index_config, last_level)
                 self._logger.info('All big map indexes are synchronized')
                 self._big_maps_synchronized.set()
 
@@ -1034,7 +1037,7 @@ class TzktDatasource(TzktRequestMixin):
             counter=operation_json['counter'],
             sender_address=operation_json['sender']['address'] if operation_json.get('sender') else None,
             target_address=operation_json['target']['address'] if operation_json.get('target') else None,
-            amount=operation_json['amount'],
+            amount=operation_json.get('amount'),
             status=operation_json['status'],
             has_internals=operation_json['hasInternals'],
             sender_alias=operation_json['sender'].get('alias'),
@@ -1074,6 +1077,7 @@ class TzktDatasource(TzktRequestMixin):
 
     async def resync(self) -> None:
         """Call after adding new indexes in runtime to synchronize them"""
+        self._logger.info('Resync called')
         self._operations_synchronized.clear()
         self._big_maps_synchronized.clear()
         await self.on_connect()

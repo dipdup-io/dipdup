@@ -224,7 +224,7 @@ class DipDup:
             await index_config.state.save()
 
         if handler_context.updated:
-            await self._spawn_indexes()
+            await self._spawn_indexes(True)
 
     async def _big_map_handler_callback(self, index_config: BigMapIndexConfig, handler_config, args, level):
         handler_context = BigMapHandlerContext(
@@ -240,7 +240,7 @@ class DipDup:
             await index_config.state.save()
 
         if handler_context.updated:
-            await self._spawn_indexes()
+            await self._spawn_indexes(True)
 
     async def _rollback_handler_callback(self, from_level, to_level):
         rollback_fn = self._config.get_rollback_fn()
