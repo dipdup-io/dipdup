@@ -40,8 +40,8 @@ def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
 
 
 class DipDupCodeGenerator:
-    """Generates package based on config, invoked from `init` CLI command
-    """
+    """Generates package based on config, invoked from `init` CLI command"""
+
     def __init__(self, config: DipDupConfig, datasources) -> None:
         self._logger = logging.getLogger(__name__)
         self._config = config
@@ -307,7 +307,7 @@ class DipDupCodeGenerator:
         datasource_config: TzktDatasourceConfig,
         contract_config: ContractConfig,
     ) -> Dict[str, Any]:
-        """Get contract JSONSchema from TzKT or from cache""" 
+        """Get contract JSONSchema from TzKT or from cache"""
         datasource = self._datasources.get(datasource_config)
         if datasource is None:
             raise RuntimeError('Call `create_datasources` first')
@@ -315,6 +315,6 @@ class DipDupCodeGenerator:
             self._schemas[datasource_config] = {}
         if contract_config.address not in self._schemas[datasource_config]:
             self._logger.info('Fetching schemas for contract `%s`', contract_config.address)
-            address_schemas_json = await datasource.fetch_jsonschemas(contract_config.address)
+            address_schemas_json = await datasource.get_jsonschemas(contract_config.address)
             self._schemas[datasource_config][contract_config.address] = address_schemas_json
         return self._schemas[datasource_config][contract_config.address]

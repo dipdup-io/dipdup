@@ -366,11 +366,15 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     strict: bool = False
 
     def __hash__(self) -> int:
-        return hash(''.join([
-            self.source_contract_config.address if self.source else '',
-            self.similar_to_contract_config.address if self.similar_to else '',
-            self.originated_contract_config.address if self.originated_contract else '',
-        ]))
+        return hash(
+            ''.join(
+                [
+                    self.source_contract_config.address if self.source else '',
+                    self.similar_to_contract_config.address if self.similar_to else '',
+                    self.originated_contract_config.address if self.originated_contract else '',
+                ]
+            )
+        )
 
     def get_handler_imports(self, package: str) -> str:
         result = []

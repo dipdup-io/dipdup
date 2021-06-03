@@ -26,15 +26,15 @@ templates:
     contracts:
       - <contract>
     handlers:
+      - callback: on_origination
+        pattern:
+          - type: origination
+            originated_contract: <contract>
       - callback: on_propose
         pattern:
           - type: transaction
             destination: <contract>
             entrypoint: propose
-      - callback: on_origination
-        pattern:
-          - type: origination
-            originated_contract: <contract>
 
 indexes:
   factory:

@@ -29,6 +29,7 @@ class IndexType(Enum):
 
 class State(Model):
     """Stores current level of index and hash of it's config"""
+
     index_name = fields.CharField(256)
     index_type = fields.CharEnumField(IndexType)
     hash = fields.CharField(256)
@@ -40,6 +41,7 @@ class State(Model):
 
 class TemporaryState(State):
     """Used within stateless indexes, skip saving to DB"""
+
     async def save(self, using_db=None, update_fields=None, force_create=False, force_update=False) -> None:
         pass
 
@@ -47,6 +49,7 @@ class TemporaryState(State):
 @dataclass
 class OperationData:
     """Basic structure for operations from TzKT response"""
+
     type: str
     id: int
     level: int

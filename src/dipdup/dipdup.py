@@ -1,10 +1,8 @@
-from ast import Call
 import asyncio
 from collections import deque
 import hashlib
 import importlib
 import logging
-from copy import copy
 from os.path import join
 from posix import listdir
 from typing import Awaitable, Deque, Dict, List, cast
@@ -21,9 +19,7 @@ import dipdup.utils as utils
 from dipdup import __version__
 from dipdup.config import (
     BigMapIndexConfig,
-    ROLLBACK_HANDLER,
     BcdDatasourceConfig,
-    ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
     PostgresDatabaseConfig,
@@ -31,7 +27,6 @@ from dipdup.config import (
     TzktDatasourceConfig,
 )
 
-# from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.hasura import configure_hasura
@@ -40,6 +35,7 @@ from dipdup.models import BigMapHandlerContext, IndexType, OperationHandlerConte
 
 class CallbackExecutor:
     """Executor for handler callbacks. Used avoid blocking datasource loop."""
+
     def __init__(self) -> None:
         self._queue: Deque[Awaitable] = deque()
 
@@ -62,6 +58,8 @@ class CallbackExecutor:
 
 
 class DipDup:
+    """Spawns datasources, processes handler callbacks"""
+
     def __init__(self, config: DipDupConfig) -> None:
         self._logger = logging.getLogger(__name__)
         self._config = config
@@ -84,6 +82,7 @@ class DipDup:
         await codegen.cleanup()
 
     async def run(self, reindex: bool) -> None:
+        """Main entrypoint"""
         url = self._config.database.connection_string
         models = f'{self._config.package}.models'
 
@@ -195,7 +194,7 @@ class DipDup:
                 resync_datasources.append(datasource)
 
             # NOTE: Actual subscription will be performed after resync
-            await datasource.add_index(index_name, index_config)
+            self._executor.submit(datasource.add_index, index_name, index_config)
 
             self._spawned_indexes.append(index_name)
 
