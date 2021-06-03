@@ -118,7 +118,6 @@ class TzktRequestMixin:
                 select='address',
                 limit=TZKT_HTTP_REQUEST_LIMIT,
             ),
-            skip_cache=True,
         )
         return contracts
 
@@ -686,8 +685,8 @@ class TzktDatasource(TzktRequestMixin):
 
             await self.fetch_index(index_config_name, big_map_index_config, current_level)
 
-        while self._dipdup._executor._queue:
-            await asyncio.sleep(0.1)
+        # while self._dipdup._executor._queue:
+        #     await asyncio.sleep(0.1)
 
         if not rest_only:
             self._logger.info('Starting websocket client')

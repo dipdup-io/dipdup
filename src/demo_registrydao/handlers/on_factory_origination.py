@@ -22,4 +22,4 @@ async def on_factory_origination(
             template='registry_dao',
             values=dict(contract=originated_contract),
         )
-    ctx.commit()
+        ctx.commit()

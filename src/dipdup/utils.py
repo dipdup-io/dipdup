@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 import aiohttp
 from tortoise import Tortoise
@@ -16,17 +16,19 @@ from dipdup import __version__
 _logger = logging.getLogger(__name__)
 
 
-def snake_to_camel(value: str) -> str:
+def snake_to_pascal(value: str) -> str:
+    """method_name -> MethodName"""
     return ''.join(map(lambda x: x[0].upper() + x[1:], value.replace('.', '_').split('_')))
 
 
-def camel_to_snake(name):
+def pascal_to_snake(name: str) -> str:
+    """MethodName -> method_name"""
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name.replace('.', '_'))
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 
 @asynccontextmanager
-async def tortoise_wrapper(url: str, models: Optional[str] = None):
+async def tortoise_wrapper(url: str, models: Optional[str] = None) -> AsyncIterator:
     try:
         modules = {'int_models': ['dipdup.models']}
         if models:
@@ -47,6 +49,7 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None):
 
 
 async def http_request(method: str, **kwargs):
+    """Wrapped aiohttp call with preconfigured headers and logging"""
     async with aiohttp.ClientSession() as session:
         headers = {
             **kwargs.pop('headers', {}),
@@ -63,6 +66,7 @@ async def http_request(method: str, **kwargs):
 
 
 async def reindex() -> None:
+    """Drop all tables or whole database and restart with the same CLI arguments"""
     if isinstance(Tortoise._connections['default'], AsyncpgDBClient):
         async with in_transaction() as conn:
             await conn.execute_script(

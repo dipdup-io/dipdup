@@ -20,7 +20,7 @@ from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils import camel_to_snake, reindex, snake_to_camel
+from dipdup.utils import pascal_to_snake, reindex, snake_to_pascal
 
 ROLLBACK_HANDLER = 'on_rollback'
 BLOCK_HANDLER = 'on_block'
@@ -207,25 +207,25 @@ class PatternConfig(ABC):
 
     @classmethod
     def format_storage_import(cls, package: str, module_name: str) -> str:
-        storage_cls = f'{snake_to_camel(module_name)}Storage'
+        storage_cls = f'{snake_to_pascal(module_name)}Storage'
         return f'from {package}.types.{module_name}.storage import {storage_cls}'
 
     @classmethod
     def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> str:
-        parameter_cls = f'{snake_to_camel(entrypoint)}Parameter'
+        parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         return f'from {package}.types.{module_name}.parameter.{entrypoint} import {parameter_cls}'
 
     @classmethod
     def format_origination_argument(cls, module_name: str, optional: bool) -> str:
-        storage_cls = f'{snake_to_camel(module_name)}Storage'
+        storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
             return f'{module_name}_origination: Optional[OriginationContext[{storage_cls}]] = None,'
         return f'{module_name}_origination: OriginationContext[{storage_cls}],'
 
     @classmethod
     def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> str:
-        parameter_cls = f'{snake_to_camel(entrypoint)}Parameter'
-        storage_cls = f'{snake_to_camel(module_name)}Storage'
+        parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
+        storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
             return f'{entrypoint}: Optional[TransactionContext[{parameter_cls}, {storage_cls}]] = None,'
         return f'{entrypoint}: TransactionContext[{parameter_cls}, {storage_cls}],'
@@ -259,7 +259,7 @@ class StorageTypeMixin:
         storage_type_module = importlib.import_module(f'{package}.types.{module_name}.storage')
         storage_type_cls = getattr(
             storage_type_module,
-            snake_to_camel(module_name) + 'Storage',
+            snake_to_pascal(module_name) + 'Storage',
         )
         self.storage_type_cls = storage_type_cls
 
@@ -283,8 +283,8 @@ class ParameterTypeMixin:
 
     def initialize_parameter_cls(self, package: str, module_name: str, entrypoint: str) -> None:
         _logger.info('Registering parameter type for entrypoint `%s`', entrypoint)
-        parameter_type_module = importlib.import_module(f'{package}.types.{module_name}.parameter.{camel_to_snake(entrypoint)}')
-        parameter_type_cls = getattr(parameter_type_module, snake_to_camel(entrypoint) + 'Parameter')
+        parameter_type_module = importlib.import_module(f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}')
+        parameter_type_cls = getattr(parameter_type_module, snake_to_pascal(entrypoint) + 'Parameter')
         self.parameter_type_cls = parameter_type_cls
 
 
@@ -914,9 +914,9 @@ class DipDupConfig:
                         f'.types'
                         f'.{big_map_pattern_config.contract_config.module_name}'
                         f'.big_map'
-                        f'.{camel_to_snake(big_map_pattern_config.path)}_key'
+                        f'.{pascal_to_snake(big_map_pattern_config.path)}_key'
                     )
-                    key_type_cls = getattr(key_type_module, snake_to_camel(big_map_pattern_config.path + '_key'))
+                    key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_pattern_config.path + '_key'))
                     big_map_pattern_config.key_type_cls = key_type_cls
 
                     value_type_module = importlib.import_module(
@@ -924,9 +924,9 @@ class DipDupConfig:
                         f'.types'
                         f'.{big_map_pattern_config.contract_config.module_name}'
                         f'.big_map'
-                        f'.{camel_to_snake(big_map_pattern_config.path)}_value'
+                        f'.{pascal_to_snake(big_map_pattern_config.path)}_value'
                     )
-                    value_type_cls = getattr(value_type_module, snake_to_camel(big_map_pattern_config.path + '_value'))
+                    value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_pattern_config.path + '_value'))
                     big_map_pattern_config.value_type_cls = value_type_cls
 
         else:

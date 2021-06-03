@@ -23,7 +23,7 @@ from dipdup.config import (
     TzktDatasourceConfig,
 )
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils import camel_to_snake, snake_to_camel
+from dipdup.utils import pascal_to_snake, snake_to_pascal
 
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -40,6 +40,8 @@ def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
 
 
 class DipDupCodeGenerator:
+    """Generates package based on config, invoked from `init` CLI command
+    """
     def __init__(self, config: DipDupConfig, datasources) -> None:
         self._logger = logging.getLogger(__name__)
         self._config = config
@@ -47,6 +49,7 @@ class DipDupCodeGenerator:
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
 
     async def create_package(self) -> None:
+        """Create Python package skeleton if not exists"""
         try:
             package_path = self._config.package_path
         except (ImportError, ModuleNotFoundError):
@@ -64,6 +67,7 @@ class DipDupCodeGenerator:
                 file.write(models_code)
 
     async def create_config_module(self) -> None:
+        """Create hander for initial configuration when `init` is called with flag"""
         package_path = self._config.package_path
         config_path = join(package_path, 'config.py')
 
@@ -74,23 +78,8 @@ class DipDupCodeGenerator:
             with open(config_path, 'w') as file:
                 file.write(config_code)
 
-    async def get_schema(
-        self,
-        datasource_config: TzktDatasourceConfig,
-        contract_config: ContractConfig,
-    ) -> Dict[str, Any]:
-        datasource = self._datasources.get(datasource_config)
-        if datasource is None:
-            raise RuntimeError('Call `create_datasources` first')
-        if datasource_config not in self._schemas:
-            self._schemas[datasource_config] = {}
-        if contract_config.address not in self._schemas[datasource_config]:
-            self._logger.info('Fetching schemas for contract `%s`', contract_config.address)
-            address_schemas_json = await datasource.fetch_jsonschemas(contract_config.address)
-            self._schemas[datasource_config][contract_config.address] = address_schemas_json
-        return self._schemas[datasource_config][contract_config.address]
-
     async def fetch_schemas(self) -> None:
+        """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Creating `schemas` package')
         schemas_path = join(self._config.package_path, 'schemas')
         with suppress(FileExistsError):
@@ -113,7 +102,7 @@ class DipDupCodeGenerator:
                             continue
 
                         self._logger.debug(contract_config)
-                        contract_schemas = await self.get_schema(index_config.datasource_config, contract_config)
+                        contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
 
                         contract_schemas_path = join(schemas_path, contract_config.module_name)
                         with suppress(FileExistsError):
@@ -162,7 +151,7 @@ class DipDupCodeGenerator:
                     for big_map_pattern_config in big_map_handler_config.pattern:
                         contract_config = big_map_pattern_config.contract_config
 
-                        contract_schemas = await self.get_schema(index_config.datasource_config, contract_config)
+                        contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
 
                         contract_schemas_path = join(schemas_path, contract_config.module_name)
                         with suppress(FileExistsError):
@@ -199,6 +188,7 @@ class DipDupCodeGenerator:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     async def generate_types(self) -> None:
+        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameter, big map keys/values."""
         schemas_path = join(self._config.package_path, 'schemas')
         types_path = join(self._config.package_path, 'types')
 
@@ -224,7 +214,7 @@ class DipDupCodeGenerator:
                     continue
 
                 input_path = join(root, file)
-                output_path = join(types_root, f'{camel_to_snake(name)}.py')
+                output_path = join(types_root, f'{pascal_to_snake(name)}.py')
 
                 if name == 'storage':
                     name = '_'.join([root.split('/')[-1], name])
@@ -239,7 +229,7 @@ class DipDupCodeGenerator:
                     '--output',
                     output_path,
                     '--class-name',
-                    snake_to_camel(name),
+                    snake_to_pascal(name),
                     '--disable-timestamp',
                     '--use-default',
                 ]
@@ -247,6 +237,7 @@ class DipDupCodeGenerator:
                 subprocess.run(args, check=True)
 
     async def generate_handlers(self) -> None:
+        """Generate handler stubs with typehints from templates if not exist"""
         self._logger.info('Loading handler templates')
         with open(join(dirname(__file__), 'templates', 'operation_handler.py.j2')) as file:
             operation_handler_template = Template(file.read())
@@ -277,8 +268,8 @@ class DipDupCodeGenerator:
                         package=self._config.package,
                         handler=handler_config.callback,
                         patterns=handler_config.pattern,
-                        snake_to_camel=snake_to_camel,
-                        camel_to_snake=camel_to_snake,
+                        snake_to_pascal=snake_to_pascal,
+                        pascal_to_snake=pascal_to_snake,
                     )
                     handler_path = join(handlers_path, f'{handler_config.callback}.py')
                     if not exists(handler_path):
@@ -294,8 +285,8 @@ class DipDupCodeGenerator:
                         package=self._config.package,
                         handler=handler.callback,
                         patterns=handler.pattern,
-                        snake_to_camel=snake_to_camel,
-                        camel_to_snake=camel_to_snake,
+                        snake_to_pascal=snake_to_pascal,
+                        pascal_to_snake=pascal_to_snake,
                     )
                     handler_path = join(handlers_path, f'{handler.callback}.py')
                     if not exists(handler_path):
@@ -306,6 +297,24 @@ class DipDupCodeGenerator:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     async def cleanup(self) -> None:
+        """Remove fetched JSONSchemas"""
         self._logger.info('Cleaning up')
         schemas_path = join(self._config.package_path, 'schemas')
         rmtree(schemas_path)
+
+    async def _get_schema(
+        self,
+        datasource_config: TzktDatasourceConfig,
+        contract_config: ContractConfig,
+    ) -> Dict[str, Any]:
+        """Get contract JSONSchema from TzKT or from cache""" 
+        datasource = self._datasources.get(datasource_config)
+        if datasource is None:
+            raise RuntimeError('Call `create_datasources` first')
+        if datasource_config not in self._schemas:
+            self._schemas[datasource_config] = {}
+        if contract_config.address not in self._schemas[datasource_config]:
+            self._logger.info('Fetching schemas for contract `%s`', contract_config.address)
+            address_schemas_json = await datasource.fetch_jsonschemas(contract_config.address)
+            self._schemas[datasource_config][contract_config.address] = address_schemas_json
+        return self._schemas[datasource_config][contract_config.address]

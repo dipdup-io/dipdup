@@ -9,7 +9,7 @@ import aiohttp
 from aiohttp import ClientConnectorError, ClientOSError
 from tortoise import Model, fields
 
-from dipdup.config import DipDupConfig, PostgresDatabaseConfig, camel_to_snake
+from dipdup.config import DipDupConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import http_request
 
@@ -97,7 +97,7 @@ async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
     models = importlib.import_module(f'{config.package}.models')
 
     for app, model in _iter_models(models, int_models):
-        table_name = model._meta.db_table or camel_to_snake(model.__name__)  # pylint: disable=protected-access
+        table_name = model._meta.db_table or pascal_to_snake(model.__name__)  # pylint: disable=protected-access
         model_tables[f'{app}.{model.__name__}'] = table_name
 
         table = _format_table(
