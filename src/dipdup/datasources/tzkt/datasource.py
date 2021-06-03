@@ -18,27 +18,20 @@ from dipdup.config import (
     BigMapHandlerPatternConfig,
     BigMapIndexConfig,
     ContractConfig,
-    DipDupConfig,
     IndexConfigTemplateT,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerPatternConfigT,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
-    OperationType,
-    StaticTemplateConfig,
-    TzktDatasourceConfig,
 )
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.exceptions import ConfigurationError
 from dipdup.models import (
     BigMapAction,
     BigMapContext,
     BigMapData,
-    BigMapHandlerContext,
     OperationData,
-    OperationHandlerContext,
     OriginationContext,
     State,
     TransactionContext,
@@ -368,6 +361,8 @@ class OperationMatcher:
             matched = False
 
             for index_config in self._indexes.values():
+                if index_config.state.level > self._level:
+                    continue
                 for handler_config in index_config.handlers:
                     operation_idx = 0
                     pattern_idx = 0
@@ -660,6 +655,7 @@ class TzktDatasource(TzktRequestMixin):
             raise NotImplementedError
 
     async def run(self):
+        """Sync indexes via REST, start WS connection"""
         self._logger.info('Starting datasource')
         rest_only = False
 

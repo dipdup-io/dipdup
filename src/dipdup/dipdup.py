@@ -39,13 +39,17 @@ from dipdup.models import BigMapHandlerContext, IndexType, OperationHandlerConte
 
 
 class CallbackExecutor:
+    """Executor for handler callbacks. Used avoid blocking datasource loop."""
     def __init__(self) -> None:
         self._queue: Deque[Awaitable] = deque()
 
-    def submit(self, fn, *args, **kwargs):
+    def submit(self, fn, *args, **kwargs) -> None:
+        """Push coroutine to queue"""
+        # TODO: Check fn signature: must return Awaitable[None]
         self._queue.append(fn(*args, **kwargs))
 
-    async def run(self):
+    async def run(self) -> None:
+        """Executor loop"""
         while True:
             await asyncio.sleep(0.1)
             try:
@@ -67,6 +71,7 @@ class DipDup:
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
 
     async def init(self, dynamic: bool) -> None:
+        """Create new or update existing dipdup project"""
         self._config.pre_initialize()
         await self._create_datasources()
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
@@ -77,6 +82,74 @@ class DipDup:
         await codegen.generate_types()
         await codegen.generate_handlers()
         await codegen.cleanup()
+
+    async def run(self, reindex: bool) -> None:
+        url = self._config.database.connection_string
+        models = f'{self._config.package}.models'
+
+        async with utils.tortoise_wrapper(url, models):
+            await self._initialize_database(reindex)
+            await self._create_datasources()
+
+            if self._config.configuration:
+                await self._configure()
+
+            await self._spawn_indexes()
+
+            self._logger.info('Starting datasources')
+            run_tasks = [asyncio.create_task(d.run()) for d in self._datasources.values()]
+
+            if self._config.hasura:
+                hasura_task = asyncio.create_task(configure_hasura(self._config))
+                run_tasks.append(hasura_task)
+
+            executor_task = asyncio.create_task(self._executor.run())
+            run_tasks.append(executor_task)
+
+            await asyncio.gather(*run_tasks)
+
+    async def spawn_operation_handler_callback(
+        self,
+        index_config,
+        handler_config,
+        args,
+        level,
+        operations,
+    ) -> None:
+        self._executor.submit(
+            self._operation_handler_callback,
+            index_config,
+            handler_config,
+            args,
+            level,
+            operations,
+        )
+
+    async def spawn_big_map_handler_callback(
+        self,
+        index_config,
+        handler_config,
+        args,
+        level,
+    ):
+        self._executor.submit(
+            self._big_map_handler_callback,
+            index_config,
+            handler_config,
+            args,
+            level,
+        )
+
+    async def spawn_rollback_handler_callback(
+        self,
+        from_level,
+        to_level,
+    ):
+        self._executor.submit(
+            self._rollback_handler_callback,
+            from_level,
+            to_level,
+        )
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
@@ -173,74 +246,6 @@ class DipDup:
     async def _rollback_handler_callback(self, from_level, to_level):
         rollback_fn = self._config.get_rollback_fn()
         await rollback_fn(from_level, to_level)
-
-    async def spawn_operation_handler_callback(
-        self,
-        index_config,
-        handler_config,
-        args,
-        level,
-        operations,
-    ) -> None:
-        self._executor.submit(
-            self._operation_handler_callback,
-            index_config,
-            handler_config,
-            args,
-            level,
-            operations,
-        )
-
-    async def spawn_big_map_handler_callback(
-        self,
-        index_config,
-        handler_config,
-        args,
-        level,
-    ):
-        self._executor.submit(
-            self._big_map_handler_callback,
-            index_config,
-            handler_config,
-            args,
-            level,
-        )
-
-    async def spawn_rollback_handler_callback(
-        self,
-        from_level,
-        to_level,
-    ):
-        self._executor.submit(
-            self._rollback_handler_callback,
-            from_level,
-            to_level,
-        )
-
-    async def run(self, reindex: bool) -> None:
-        url = self._config.database.connection_string
-        models = f'{self._config.package}.models'
-
-        async with utils.tortoise_wrapper(url, models):
-            await self._initialize_database(reindex)
-            await self._create_datasources()
-
-            if self._config.configuration:
-                await self._configure()
-
-            await self._spawn_indexes()
-
-            self._logger.info('Starting datasources')
-            run_tasks = [asyncio.create_task(d.run()) for d in self._datasources.values()]
-
-            if self._config.hasura:
-                hasura_task = asyncio.create_task(configure_hasura(self._config))
-                run_tasks.append(hasura_task)
-
-            executor_task = asyncio.create_task(self._executor.run())
-            run_tasks.append(executor_task)
-
-            await asyncio.gather(*run_tasks)
 
     async def _initialize_database(self, reindex: bool = False) -> None:
         self._logger.info('Initializing database')
