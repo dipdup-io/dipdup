@@ -55,7 +55,7 @@ class CallbackExecutor:
                 if all([t.done() for t in tasks]):
                     self._logger.info('Stopping callback executor loop')
                     break
-                await asyncio.sleep(0)
+                await asyncio.sleep(0.01)
             except asyncio.CancelledError:
                 return
 

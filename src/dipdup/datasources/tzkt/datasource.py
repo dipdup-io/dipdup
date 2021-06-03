@@ -109,7 +109,7 @@ class TzktRequestMixin:
             ),
         )
         # FIXME
-        return contracts[:1]
+        return contracts
 
     async def get_originated_contracts(self, address: Address) -> List[Address]:
         """Get contracts originated from given address"""
@@ -399,6 +399,7 @@ class OperationMatcher:
         for key, operations in self._operations.items():
             self._logger.debug('Matching %s', key)
             matched = False
+            origination = False
 
             for index_config in self._indexes.values():
                 for handler_config in index_config.handlers:
@@ -409,10 +410,15 @@ class OperationMatcher:
                     # TODO: Ensure complex cases work, for ex. required argument after optional one
                     # TODO: Add None to matched_operations where applicable (pattern is optional and operation not found)
                     while operation_idx < len(operations):
-                        pattern_config = handler_config.pattern[pattern_idx]
-                        matched = self._match_operation(pattern_config, operations[operation_idx])
+                        operation, pattern_config = operations[operation_idx], handler_config.pattern[pattern_idx]
+                        matched = self._match_operation(pattern_config, operation)
+
+                        # NOTE: Transaction addresses are unique between indexes, origination ones are not. Matche multiple indexes to originations.
+                        if operation.type == 'origination' and isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                            origination = True
+
                         if matched:
-                            matched_operations.append(operations[operation_idx])
+                            matched_operations.append(operation)
                             pattern_idx += 1
                             operation_idx += 1
                         elif pattern_config.optional:
@@ -435,7 +441,7 @@ class OperationMatcher:
 
                 # NOTE: Only one index could match as addresses do not intersect between indexes (checked on config initialization)
                 # TODO: Ensure it's really checked
-                if matched:
+                if matched and not origination:
                     break
 
         self._logger.info('Current level: %s', self._level)
@@ -826,6 +832,8 @@ class TzktDatasource(TzktRequestMixin):
             transaction_subscriptions=self._transaction_subscriptions,
             origination_subscriptions=self._origination_subscriptions,
         )
+        print(self._transaction_subscriptions)
+        print(self._origination_subscriptions)
 
         async for level, operations in fetcher.fetch_operations_by_level():
             self._logger.info('Processing %s operations of level %s', len(operations), level)
@@ -939,11 +947,12 @@ class TzktDatasource(TzktRequestMixin):
                 last_level = item['state']
                 self._logger.info('Got state message, current level: %s', last_level)
                 # NOTE: Ignore indexes added in process
-                for index_name, index_config in copy(self._operation_indexes).items():
+                # for index_name, index_config in copy(self._operation_indexes).items():
+                for index_name, index_config in self._operation_indexes.items():
                     first_level = index_config.state.level
-                    self._logger.info('Synchronizing `%s` since %s until %s', index_name, first_level, last_level)
-                    # FIXME: Dafuq
-                    await self.synchronize_operation_index(index_config, last_level)
+                    if first_level != last_level:
+                        self._logger.info('Synchronizing `%s` since %s until %s', index_name, first_level, last_level)
+                        await self.synchronize_operation_index(index_config, last_level)
                 self._logger.info('All operation indexes are synchronized')
                 self._operations_synchronized.set()
 
@@ -989,9 +998,11 @@ class TzktDatasource(TzktRequestMixin):
 
             if message_type == TzktMessageType.STATE:
                 last_level = item['state']
-                for index_config in self._big_map_indexes.values():
-                    self._logger.info('Got state message, current level %s', last_level)
-                    await self.synchronize_big_map_index(index_config, last_level)
+                for index_name, index_config in self._big_map_indexes.items():
+                    first_level = index_config.state.level
+                    if first_level != last_level:
+                        self._logger.info('Synchronizing `%s` since %s until %s', index_name, first_level, last_level)
+                        await self.synchronize_big_map_index(index_config, last_level)
                 self._logger.info('All big map indexes are synchronized')
                 self._big_maps_synchronized.set()
 
@@ -1039,7 +1050,7 @@ class TzktDatasource(TzktRequestMixin):
             target_address=operation_json['target']['address'] if operation_json.get('target') else None,
             amount=operation_json.get('amount'),
             status=operation_json['status'],
-            has_internals=operation_json['hasInternals'],
+            has_internals=operation_json.get('hasInternals'),
             sender_alias=operation_json['sender'].get('alias'),
             nonce=operation_json.get('nonce'),
             target_alias=operation_json['target'].get('alias') if operation_json.get('target') else None,
