@@ -122,7 +122,7 @@ class ContractConfig:
     def module_name(self) -> str:
         return self.typename if self.typename is not None else self.address
 
-    @validator('address')
+    @validator('address', allow_reuse=True)
     def valid_address(cls, v):
         # NOTE: Wallet addresses are allowed for debugging purposes (source field). Do we need a separate section?
         if not (v.startswith('KT1') or v.startswith('tz1')) or len(v) != 36:
@@ -160,7 +160,7 @@ class TzktDatasourceConfig:
     def __hash__(self):
         return hash(self.url)
 
-    @validator('url')
+    @validator('url', allow_reuse=True)
     def valid_url(cls, v):
         parsed_url = urlparse(v)
         if not (parsed_url.scheme and parsed_url.netloc):
@@ -182,7 +182,7 @@ class BcdDatasourceConfig:
     def __hash__(self):
         return hash(self.url)
 
-    @validator('url')
+    @validator('url', allow_reuse=True)
     def valid_url(cls, v):
         parsed_url = urlparse(v)
         if not (parsed_url.scheme and parsed_url.netloc):
@@ -213,7 +213,7 @@ class PatternConfig(ABC):
     @classmethod
     def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> str:
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
-        return f'from {package}.types.{module_name}.parameter.{entrypoint} import {parameter_cls}'
+        return f'from {package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)} import {parameter_cls}'
 
     @classmethod
     def format_origination_argument(cls, module_name: str, optional: bool) -> str:
@@ -383,6 +383,9 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             result.append(self.format_storage_import(package, module_name))
         if self.similar_to:
             module_name = self.similar_to_contract_config.module_name
+            result.append(self.format_storage_import(package, module_name))
+        if self.originated_contract:
+            module_name = self.originated_contract_config.module_name
             result.append(self.format_storage_import(package, module_name))
         return '\n'.join(result)
 
@@ -634,7 +637,7 @@ class HasuraConfig:
     url: str
     admin_secret: Optional[str] = None
 
-    @validator('url')
+    @validator('url', allow_reuse=True)
     def valid_url(cls, v):
         parsed_url = urlparse(v)
         if not (parsed_url.scheme and parsed_url.netloc):
@@ -732,6 +735,7 @@ class DipDupConfig:
                 self.indexes[index_name] = new_index_config
 
     def pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
+        """Resolve contract and datasource configs by aliases"""
         if index_name in self._pre_initialized:
             return
 
@@ -895,16 +899,17 @@ class DipDupConfig:
 
                 for operation_pattern_config in operation_handler_config.pattern:
                     if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
-                        module_name = operation_pattern_config.destination_contract_config.module_name
                         if operation_pattern_config.entrypoint:
+                            module_name = operation_pattern_config.destination_contract_config.module_name
                             operation_pattern_config.initialize_parameter_cls(
                                 self.package, module_name, operation_pattern_config.entrypoint
                             )
-                        operation_pattern_config.initialize_storage_cls(self.package, module_name)
-
+                            operation_pattern_config.initialize_storage_cls(self.package, module_name)
                     elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
                         module_name = operation_pattern_config.module_name
                         operation_pattern_config.initialize_storage_cls(self.package, module_name)
+                    else:
+                        raise NotImplementedError
 
         # TODO: BigMapTypeMixin, initialize_big_map_type
         elif isinstance(index_config, BigMapIndexConfig):

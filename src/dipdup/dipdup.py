@@ -37,6 +37,7 @@ class CallbackExecutor:
     """Executor for handler callbacks. Used avoid blocking datasource loop."""
 
     def __init__(self) -> None:
+        self._logger = logging.getLogger(__name__)
         self._queue: Deque[Awaitable] = deque()
 
     def submit(self, fn, *args, **kwargs) -> None:
@@ -44,15 +45,17 @@ class CallbackExecutor:
         # TODO: Check fn signature: must return Awaitable[None]
         self._queue.append(fn(*args, **kwargs))
 
-    async def run(self) -> None:
+    async def run(self, tasks: List[asyncio.Task]) -> None:
         """Executor loop"""
         while True:
-            await asyncio.sleep(0.1)
             try:
                 coro = self._queue.popleft()
                 await coro
             except IndexError:
-                pass
+                if all([t.done() for t in tasks]):
+                    self._logger.info('Stopping callback executor loop')
+                    break
+                await asyncio.sleep(0)
             except asyncio.CancelledError:
                 return
 
@@ -96,16 +99,15 @@ class DipDup:
             await self._spawn_indexes()
 
             self._logger.info('Starting datasources')
-            run_tasks = [asyncio.create_task(d.run()) for d in self._datasources.values()]
+            datasource_tasks = [asyncio.create_task(d.run()) for d in self._datasources.values()]
+            worker_tasks = []
 
             if self._config.hasura:
-                hasura_task = asyncio.create_task(configure_hasura(self._config))
-                run_tasks.append(hasura_task)
+                worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
-            executor_task = asyncio.create_task(self._executor.run())
-            run_tasks.append(executor_task)
+            worker_tasks.append(asyncio.create_task(self._executor.run(datasource_tasks)))
 
-            await asyncio.gather(*run_tasks)
+            await asyncio.gather(*datasource_tasks, *worker_tasks)
 
     async def spawn_operation_handler_callback(
         self,
@@ -194,7 +196,7 @@ class DipDup:
                 resync_datasources.append(datasource)
 
             # NOTE: Actual subscription will be performed after resync
-            self._executor.submit(datasource.add_index, index_name, index_config)
+            await datasource.add_index(index_name, index_config)
 
             self._spawned_indexes.append(index_name)
 

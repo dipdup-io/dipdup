@@ -7,7 +7,6 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
-from dipdup.config import DipDupConfig
 
 from dipdup.exceptions import ConfigurationError
 
@@ -182,8 +181,9 @@ class BigMapData:
 class HandlerContext:
     """Common handler context."""
 
-    datasources: Dict
-    config: DipDupConfig
+    # FIXME: Add ForwardRefs
+    datasources: Dict[str, Any]
+    config: Any
 
     def __post_init_post_parse__(self) -> None:
         self._updated: bool = False
