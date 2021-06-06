@@ -96,7 +96,7 @@ class OperationData:
             if field.alias:
                 key = field.alias
 
-            bigmap_name = key if prefix is None else '.'.join([prefix, key])
+            bigmap_name = key if prefix is None else f'{prefix}.{key}'
 
             # NOTE: TzKT could return bigmaps as object or as array of key-value objects. We need to guess this from storage.
             # TODO: This code should be a part of datasource module.
@@ -107,8 +107,14 @@ class OperationData:
                     continue
                 raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists') from e
 
-            if field.type_ not in (int, bool) and isinstance(value, int):
-                if hasattr(field.type_, '__fields__') and 'key' in field.type_.__fields__ and 'value' in field.type_.__fields__:
+            # FIXME: Pydantic bug. `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool]
+            if field.type_ != field.outer_type_ and field.type_ == bool:
+                annotation = field.outer_type_
+            else:
+                annotation = field.type_
+
+            if annotation not in (int, bool) and isinstance(value, int):
+                if hasattr(annotation, '__fields__') and 'key' in annotation.__fields__ and 'value' in annotation.__fields__:
                     storage[key] = []
                     if self.diffs:
                         self._merge_bigmapdiffs(storage, bigmap_name, array=True)
@@ -116,8 +122,8 @@ class OperationData:
                     storage[key] = {}
                     if self.diffs:
                         self._merge_bigmapdiffs(storage, bigmap_name, array=False)
-            elif hasattr(field.type_, '__fields__') and isinstance(value, dict):
-                storage[key] = self._process_storage(field.type_, value, bigmap_name)
+            elif hasattr(annotation, '__fields__') and isinstance(storage[key], dict):
+                storage[key] = self._process_storage(annotation, storage[key], bigmap_name)
 
         return storage
 
