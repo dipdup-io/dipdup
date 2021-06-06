@@ -545,12 +545,12 @@ class BigMapMatcher:
                     if any([len(big_map_group) for big_map_group in matched_big_maps]):
                         self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
                         matched = True
-                        await self._dipdup.spawn_big_map_handler_callback(index_config, handler_config, matched_big_maps, self._level)
+                        await self.on_match(index_config, handler_config, matched_big_maps)
                         del self._big_maps[key]
                         break
 
         keys_left = self._big_maps.keys()
-        self._logger.info('%s operation groups unmatched', len(keys_left))
+        self._logger.info('%s big map groups unmatched', len(keys_left))
         self._logger.info('Current level: %s', self._level)
         self._big_maps = {}
 
@@ -569,23 +569,20 @@ class BigMapMatcher:
         for matched_big_map_group, pattern_config in zip(matched_big_maps, handler_config.pattern):
             big_map_contexts = []
             for big_map in matched_big_map_group:
-
-                try:
-                    action = BigMapAction(big_map.action)
-                except ValueError:
+                if big_map.action == BigMapAction.ALLOCATE:
                     continue
 
                 key_type = pattern_config.key_type_cls
                 key = key_type.parse_obj(big_map.key)
 
-                if action == BigMapAction.REMOVE:
+                if big_map.action == BigMapAction.REMOVE:
                     value = None
                 else:
                     value_type = pattern_config.value_type_cls
                     value = value_type.parse_obj(big_map.value)
 
                 big_map_context = BigMapContext(  # type: ignore
-                    action=action,
+                    action=big_map.action,
                     key=key,
                     value=value,
                 )
@@ -1085,7 +1082,7 @@ class TzktDatasource(TzktRequestMixin):
             bigmap=big_map_json['bigmap'],
             contract_address=big_map_json['contract']['address'],
             path=big_map_json['path'],
-            action=big_map_json['action'],
+            action=BigMapAction(big_map_json['action']),
             key=big_map_json.get('content', {}).get('key'),
             value=big_map_json.get('content', {}).get('value'),
         )

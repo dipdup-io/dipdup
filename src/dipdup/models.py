@@ -157,6 +157,7 @@ class OriginationContext(Generic[StorageType]):
 
 
 class BigMapAction(Enum):
+    ALLOCATE = 'allocate'
     ADD = 'add_key'
     UPDATE = 'update_key'
     REMOVE = 'remove_key'
@@ -178,7 +179,7 @@ class BigMapData:
     bigmap: int
     contract_address: str
     path: str
-    action: str
+    action: BigMapAction
     key: Optional[Any] = None
     value: Optional[Any] = None
 

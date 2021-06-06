@@ -54,12 +54,13 @@ class CallbackExecutor:
             except IndexError:
                 if all([t.done() for t in tasks]):
                     self._logger.info('Stopping callback executor loop')
-                    raise asyncio.CancelledError
+                    return
                 await asyncio.sleep(0.01)
             except (asyncio.CancelledError, KeyboardInterrupt):
                 self._logger.info('Stopping, gathering %s coros', len(self._queue))
                 await asyncio.gather(*self._queue, return_exceptions=True)
                 self._logger.info('Done!')
+                return
 
 
 class DipDup:
