@@ -11,10 +11,10 @@ from typing import Any, Dict, cast
 from jinja2 import Template
 
 from dipdup.config import (
-    DatasourceConfigT,
     ROLLBACK_HANDLER,
     BigMapIndexConfig,
     ContractConfig,
+    DatasourceConfigT,
     DipDupConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,

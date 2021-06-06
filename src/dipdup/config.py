@@ -130,6 +130,8 @@ class ContractConfig:
         return v
 
     async def fetch_hashes(self, datasource: 'TzktDatasource') -> None:
+        if self._code_hash and self._type_hash:
+            return
         summary = await datasource.get_contract_summary(self.address)
         self._code_hash = summary['codeHash']
         self._type_hash = summary['typeHash']
@@ -321,7 +323,9 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
     optional: bool = False
 
     def __post_init_post_parse__(self):
-        super().__post_init_post_parse__()
+        StorageTypeMixin.__post_init_post_parse__(self)
+        ParameterTypeMixin.__post_init_post_parse__(self)
+        TransactionIdMixin.__post_init_post_parse__(self)
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
@@ -364,6 +368,16 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     type: Literal['origination'] = 'origination'
     optional: bool = False
     strict: bool = False
+
+    def __post_init_post_parse__(self):
+        super().__post_init_post_parse__()
+        self._matched_originations = []
+
+    def origination_processed(self, address: str) -> bool:
+        if address in self._matched_originations:
+            return True
+        self._matched_originations.append(address)
+        return False
 
     def __hash__(self) -> int:
         return hash(
@@ -539,7 +553,7 @@ class OperationIndexConfig(IndexConfig):
         return cast(List[ContractConfig], self.contracts)
 
     async def fetch_hashes(self, datasource: 'TzktDatasource') -> None:
-        """Find all origination patterns with `similar_to` field and fetch hashes for matching"""
+        """Find all origination patterns with `similar_to` field and fetch hashes for operation matching"""
         for handler_config in self.handlers:
             for pattern_config in handler_config.pattern:
                 if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):

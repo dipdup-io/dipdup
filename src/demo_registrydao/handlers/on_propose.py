@@ -8,4 +8,5 @@ async def on_propose(
     ctx: OperationHandlerContext,
     propose: TransactionContext[ProposeParameter, RegistryStorage],
 ) -> None:
-    ...
+    dao = await models.DAO.get(address=propose.data.target_address)
+    await models.Proposal(dao=dao).save()

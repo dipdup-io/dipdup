@@ -18,6 +18,7 @@ from dipdup.config import (
     OperationType,
 )
 from dipdup.datasources.tzkt.datasource import TzktDatasource, dedup_operations
+from dipdup.dipdup import DipDup
 from dipdup.models import IndexType, OperationData, OperationHandlerContext, State, TransactionContext
 from dipdup.utils import tortoise_wrapper
 
@@ -43,7 +44,8 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         )
         self.index_config.state = State(index_name='test', index_type=IndexType.operation, hash='')
         self.index_config.handlers[0].pattern[0].parameter_type_cls = CollectParameter
-        self.datasource = TzktDatasource('tzkt.test', True)
+        self.dipdup_mock = MagicMock(spec=DipDup)
+        self.datasource = TzktDatasource('tzkt.test', self.dipdup_mock)
         await self.datasource.add_index('test', self.index_config)
 
     async def test_convert_operation(self):

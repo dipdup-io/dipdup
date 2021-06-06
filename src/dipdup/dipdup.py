@@ -1,8 +1,8 @@
 import asyncio
-from collections import deque
 import hashlib
 import importlib
 import logging
+from collections import deque
 from os.path import join
 from posix import listdir
 from typing import Awaitable, Deque, Dict, List, cast
@@ -12,21 +12,20 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
-from dipdup.codegen import DipDupCodeGenerator
-from dipdup.datasources import DatasourceT
 
 import dipdup.utils as utils
 from dipdup import __version__
+from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
-    BigMapIndexConfig,
     BcdDatasourceConfig,
+    BigMapIndexConfig,
     DatasourceConfigT,
     DipDupConfig,
     PostgresDatabaseConfig,
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
-
+from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.hasura import configure_hasura

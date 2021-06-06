@@ -7,4 +7,4 @@ async def on_origination(
     ctx: OperationHandlerContext,
     registry_origination: OriginationContext[RegistryStorage],
 ) -> None:
-    ...
+    await models.DAO(address=registry_origination.data.originated_contract_address).save()
