@@ -97,6 +97,7 @@ class DipDupCodeGenerator:
                         ):
                             contract_config = operation_pattern_config.destination_contract_config
                         elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
+                            # FIXME: source
                             contract_config = operation_pattern_config.contract_config
                         else:
                             continue

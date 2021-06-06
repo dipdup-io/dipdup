@@ -847,9 +847,9 @@ class TzktDatasource(TzktRequestMixin):
                 ],
                 sync=True,
             )
-            await self._dipdup.commit([index_config], level)
+            await self._dipdup.set_state_level([index_config], level)
         else:
-            await self._dipdup.commit([index_config], last_level)
+            await self._dipdup.set_state_level([index_config], last_level)
 
     # TODO: Implement BigMapFetcher
     async def _fetch_big_maps(
