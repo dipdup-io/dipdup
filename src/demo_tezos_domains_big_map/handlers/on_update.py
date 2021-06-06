@@ -16,6 +16,7 @@ async def on_update(
     store_records: List[BigMapContext[StoreRecordsKey, StoreRecordsValue]],
     store_expiry_map: List[BigMapContext[StoreExpiryMapKey, StoreExpiryMapValue]],
 ) -> None:
+    # quit()
     for diff in store_records:
         if diff.action in (BigMapAction.ADD, BigMapAction.UPDATE):
             assert diff.value

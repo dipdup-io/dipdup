@@ -321,12 +321,12 @@ class OperationMatcher:
 
     async def add(self, operation: OperationData) -> None:
         """Add operation to cache, perform sanity checks"""
-        self._logger.debug('Adding operation %s to cache (%s, %s)', operation.id, operation.hash, operation.counter)
+        self._logger.debug('Adding operation %s to matcher (%s, %s)', operation.id, operation.hash, operation.counter)
         self._logger.debug('level=%s operation.level=%s', self._level, operation.level)
 
         if self._level is not None:
             if self._level != operation.level:
-                raise RuntimeError('Operations must be splitted by level before caching')
+                raise RuntimeError('Operations must be splitted by level before being passed to Matcher')
         else:
             self._level = operation.level
 
@@ -485,7 +485,7 @@ class OperationMatcher:
 class BigMapMatcher:
     """Matches big map diffs of a single level with patterns of all registered indexes, spawns handler callback on match."""
 
-    def __init__(self, dipdup, indexes: Dict[str, BigMapIndexConfig]) -> None:
+    def __init__(self, dipdup, indexes: Dict[str, BigMapIndexConfig],) -> None:
         super().__init__()
         self._logger = logging.getLogger(__name__)
         self._dipdup = dipdup
@@ -495,12 +495,12 @@ class BigMapMatcher:
 
     async def add(self, big_map: BigMapData) -> None:
         """Add operation to cache, perform sanity checks"""
-        self._logger.debug('Adding big map %s to cache (%s)', big_map.id, big_map.operation_id)
+        self._logger.debug('Adding big map %s to matcher (%s)', big_map.id, big_map.operation_id)
         self._logger.debug('level=%s operation.level=%s', self._level, big_map.level)
 
         if self._level is not None:
             if self._level != big_map.level:
-                raise RuntimeError('Big maps must be splitted by level before caching')
+                raise RuntimeError('Big map diffs must be splitted by level before being passed to Matcher')
         else:
             self._level = big_map.level
 
@@ -510,7 +510,7 @@ class BigMapMatcher:
         self._big_maps[key].append(big_map)
 
     def _match_big_map(self, pattern_config: BigMapHandlerPatternConfig, big_map: BigMapData) -> bool:
-        """Match single operation with pattern"""
+        """Match single big map diff with pattern"""
         self._logger.debug('pattern: %s, %s', pattern_config.path, pattern_config.contract_config.address)
         self._logger.debug('big_map: %s, %s', big_map.path, big_map.contract_address)
         if pattern_config.path != big_map.path:

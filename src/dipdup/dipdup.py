@@ -36,7 +36,7 @@ class CallbackExecutor:
     """Executor for handler callbacks. Used avoid blocking datasource loop."""
 
     def __init__(self) -> None:
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger(f'{__name__}.{self.__class__.__qualname__}')
         self._queue: Deque[Awaitable] = deque()
 
     def submit(self, fn, *args, **kwargs) -> None:
@@ -49,14 +49,17 @@ class CallbackExecutor:
         while True:
             try:
                 coro = self._queue.popleft()
+                self._logger.info('Executing %s, %s coros left', coro, len(self._queue))
                 await coro
             except IndexError:
                 if all([t.done() for t in tasks]):
                     self._logger.info('Stopping callback executor loop')
-                    break
+                    raise asyncio.CancelledError
                 await asyncio.sleep(0.01)
-            except asyncio.CancelledError:
-                return
+            except (asyncio.CancelledError, KeyboardInterrupt):
+                self._logger.info('Stopping, gathering %s coros', len(self._queue))
+                await asyncio.gather(*self._queue, return_exceptions=True)
+                self._logger.info('Done!')
 
 
 class DipDup:
@@ -106,7 +109,10 @@ class DipDup:
 
             worker_tasks.append(asyncio.create_task(self._executor.run(datasource_tasks)))
 
-            await asyncio.gather(*datasource_tasks, *worker_tasks)
+            try:
+                await asyncio.gather(*datasource_tasks, *worker_tasks)
+            except (asyncio.CancelledError, KeyboardInterrupt):
+                map(lambda t: t.cancel(), worker_tasks + datasource_tasks)
 
     async def spawn_operation_handler_callback(
         self,
