@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, NoReturn, Optional
 
 import aiohttp
 from tortoise import Tortoise
@@ -65,6 +65,12 @@ async def http_request(method: str, **kwargs):
             return await response.json()
 
 
+async def restart() -> None:
+    # NOTE: Remove --reindex from arguments to avoid reindexing loop
+    argv = sys.argv[:-1] if sys.argv[-1] == '--reindex' else sys.argv
+    os.execl(sys.executable, sys.executable, *argv)
+
+
 async def reindex() -> None:
     """Drop all tables or whole database and restart with the same CLI arguments"""
     if isinstance(Tortoise._connections['default'], AsyncpgDBClient):
@@ -82,7 +88,5 @@ async def reindex() -> None:
             )
     else:
         await Tortoise._drop_databases()
-    # NOTE: Remove --reindex from arguments to avoid reindexing loop
-    argv = sys.argv[:-1] if sys.argv[-1] == '--reindex' else sys.argv
     # NOTE: Tortoise can't recover after dropping database for some reason, restart.
-    os.execl(sys.executable, sys.executable, *argv)
+    await restart()

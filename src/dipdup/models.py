@@ -2,14 +2,14 @@ import logging
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Dict, Generic, List, NoReturn, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 
 from dipdup.exceptions import ConfigurationError
-
+from dipdup.utils import reindex, restart
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
@@ -201,6 +201,12 @@ class HandlerContext:
     @property
     def updated(self) -> bool:
         return self._updated
+
+    async def reindex(self) -> None:
+        await reindex()
+    
+    async def restart(self) -> None:
+        await restart()
 
 
 @dataclass

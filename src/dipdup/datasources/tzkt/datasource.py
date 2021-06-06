@@ -847,9 +847,9 @@ class TzktDatasource(TzktRequestMixin):
                 ],
                 sync=True,
             )
-
-        # NOTE: State level is not updated when there's no operations between first_level and last_level
-        await self.set_state_level(index_config, last_level)
+            await self._dipdup.commit([index_config], level)
+        else:
+            await self._dipdup.commit([index_config], last_level)
 
     # TODO: Implement BigMapFetcher
     async def _fetch_big_maps(
@@ -947,7 +947,7 @@ class TzktDatasource(TzktRequestMixin):
             if message_type == TzktMessageType.STATE:
                 last_level = item['state']
                 self._logger.info('Got state message, current level: %s', last_level)
-                # NOTE: Ignore indexes added in process
+                # NOTE: Ignore indexes added dynamically, reindexing will be invoked anyway
                 for index_name, index_config in copy(self._operation_indexes).items():
                     first_level = index_config.state.level
                     if first_level >= last_level:
@@ -958,11 +958,13 @@ class TzktDatasource(TzktRequestMixin):
                 self._operations_synchronized.set()
 
             elif message_type == TzktMessageType.DATA:
+                # NOTE: WS message, wait until REST synchronization is completed
                 if not sync and not self._operations_synchronized.is_set():
                     self._logger.info('Waiting until synchronization is complete')
                     await self._operations_synchronized.wait()
                     self._logger.info('Synchronization is complete, processing websocket message')
 
+                # NOTE: Operations are deduped, sorted and splitted by level. Pass to Matcher as is.
                 for operation_json in item['data']:
                     operation = self.convert_operation(operation_json)
                     if operation.status != 'applied':
@@ -971,6 +973,10 @@ class TzktDatasource(TzktRequestMixin):
                     await self._operation_matcher.add(operation)
 
                 await self._operation_matcher.process()
+
+                # NOTE: If message is from WS update all index states. If not - fetcher will update state by itself.
+                if not sync:
+                    await self._dipdup.commit(list(self._operation_indexes.values()))
 
             elif message_type == TzktMessageType.REORG:
                 self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)

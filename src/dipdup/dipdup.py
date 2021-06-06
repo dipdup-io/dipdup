@@ -21,6 +21,7 @@ from dipdup.config import (
     BigMapIndexConfig,
     DatasourceConfigT,
     DipDupConfig,
+    IndexConfigTemplateT,
     PostgresDatabaseConfig,
     StaticTemplateConfig,
     TzktDatasourceConfig,
@@ -37,30 +38,38 @@ class CallbackExecutor:
 
     def __init__(self) -> None:
         self._logger = logging.getLogger(f'{__name__}.{self.__class__.__qualname__}')
+        self._queue_ready = asyncio.Event()
         self._queue: Deque[Awaitable] = deque()
 
     def submit(self, fn, *args, **kwargs) -> None:
         """Push coroutine to queue"""
         # TODO: Check fn signature: must return Awaitable[None]
+        self._queue_ready.set()
         self._queue.append(fn(*args, **kwargs))
 
-    async def run(self, tasks: List[asyncio.Task]) -> None:
+    async def run(self, datasource_tasks: List[asyncio.Task]) -> None:
         """Executor loop"""
+        stopping = False
         while True:
             try:
                 coro = self._queue.popleft()
                 self._logger.info('Executing %s, %s coros left', coro, len(self._queue))
                 await coro
             except IndexError:
-                if all([t.done() for t in tasks]):
+                if stopping:
+                    return
+                if all([t.done() for t in datasource_tasks]):
                     self._logger.info('Stopping callback executor loop')
                     return
-                await asyncio.sleep(0.01)
+                self._queue_ready.clear()
+                await self._queue_ready.wait()
             except (asyncio.CancelledError, KeyboardInterrupt):
-                self._logger.info('Stopping, gathering %s coros', len(self._queue))
-                await asyncio.gather(*self._queue, return_exceptions=True)
-                self._logger.info('Done!')
-                return
+                self._logger.info('Stopping, %s coros left', len(self._queue))
+                stopping = True
+
+    async def wait(self, size: int) -> None:
+        while len(self._queue) > size:
+            await asyncio.sleep(0)
 
 
 class DipDup:
@@ -131,6 +140,7 @@ class DipDup:
             level,
             operations,
         )
+        # await self._executor.wait(2000)
 
     async def spawn_big_map_handler_callback(
         self,
@@ -146,17 +156,28 @@ class DipDup:
             args,
             level,
         )
+        # await self._executor.wait(2000)
 
     async def spawn_rollback_handler_callback(
         self,
         from_level,
         to_level,
     ):
-        self._executor.submit(
-            self._rollback_handler_callback,
-            from_level,
-            to_level,
-        )
+        ...
+
+    async def set_state_level(self, indexes: List[IndexConfigTemplateT], level: int) -> None:
+        """Enqueue bumping index state level."""
+        for index_config in indexes:
+            self._executor.submit(
+                self._set_state_level,
+                index_config,
+                level,
+            )
+
+    async def _set_state_level(self, index_config: IndexConfigTemplateT, level: int) -> None:
+        index_config.state.level = level  # type: ignore
+        await index_config.state.save()
+
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
