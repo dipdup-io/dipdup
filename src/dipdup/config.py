@@ -472,8 +472,24 @@ class OperationHandlerConfig(HandlerConfig):
 
 
 @dataclass
+class NameMixin:
+    def __post_init_post_parse__(self) -> None:
+        self._name: Optional[str] = None
+
+    @property
+    def name(self) -> str:
+        if self._name is None:
+            raise RuntimeError('Config is not pre-initialized')
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._name = name
+
+
+@dataclass
 class TemplateValuesMixin:
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         self._template_values: Dict[str, str] = None
 
     @property
@@ -486,7 +502,7 @@ class TemplateValuesMixin:
 
 
 class StateMixin:
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         self._state: Optional[StateT] = None
 
     @property
@@ -501,12 +517,13 @@ class StateMixin:
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, StateMixin):
+class IndexConfig(TemplateValuesMixin, StateMixin, NameMixin):
     datasource: Union[str, TzktDatasourceConfig]
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         StateMixin.__post_init_post_parse__(self)
+        NameMixin.__post_init_post_parse__(self)
 
     def hash(self) -> str:
         return hashlib.sha256(
@@ -754,6 +771,7 @@ class DipDupConfig:
             return
 
         if isinstance(index_config, OperationIndexConfig):
+            index_config.name = index_name
             if isinstance(index_config.datasource, str):
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
@@ -784,6 +802,7 @@ class DipDupConfig:
                             pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 
         elif isinstance(index_config, BigMapIndexConfig):
+            index_config.name = index_name
             if isinstance(index_config.datasource, str):
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 

@@ -5,7 +5,7 @@ import logging
 from collections import deque
 from os.path import join
 from posix import listdir
-from typing import Awaitable, Deque, Dict, List, cast
+from typing import Any, Awaitable, Callable, Deque, Dict, Iterable, List, Mapping, Optional, Set, Tuple, cast
 
 from genericpath import exists
 from tortoise import Tortoise
@@ -32,20 +32,58 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.hasura import configure_hasura
 from dipdup.models import BigMapHandlerContext, IndexType, OperationHandlerContext, State
 
+CallbackT = Tuple[Callable[..., Awaitable[None]], Iterable[Any], Mapping[str, Any]]
+
 
 class CallbackExecutor:
-    """Executor for handler callbacks. Used avoid blocking datasource loop."""
+    """Executor for handler callbacks.
+
+    Used avoid blocking datasource loop. Groups callbacks by level performs some safety checks.
+
+    Bumps levels of matched indexes
+    """
 
     def __init__(self) -> None:
         self._logger = logging.getLogger(f'{__name__}.{self.__class__.__qualname__}')
+        self._callbacks: List[CallbackT] = []
+        self._indexes: Dict[str, IndexConfigTemplateT] = {}
+        self._level: Optional[int] = None
         self._queue_ready = asyncio.Event()
-        self._queue: Deque[Awaitable] = deque()
+        self._queue: Deque[Awaitable[None]] = deque()
 
-    def submit(self, fn, *args, **kwargs) -> None:
+    def submit(self, level: int, index_config: IndexConfigTemplateT, fn, *args, **kwargs) -> None:
+        if index_config.state.level >= level:
+            self._logger.info('!!!!!!!! %s %s', level, index_config.state.level)
+            return
         """Push coroutine to queue"""
-        # TODO: Check fn signature: must return Awaitable[None]
+        if self._level is None:
+            self._level = level
+        if self._level != level:
+            raise RuntimeError('Attempt to submit callback from different level before processing current one')
+        if index_config.name not in self._indexes:
+            self._indexes[index_config.name] = index_config
+
+        callback: CallbackT = (fn, args, kwargs)
+        self._callbacks.append(callback)
+
+    def commit(self) -> None:
+        if self._level is None:
+            return
+
+        coro = self._wrapper(
+            callbacks=tuple(self._callbacks),
+            indexes=tuple(self._indexes.values()),
+            level=self._level,
+        )
+        self.reset()
+
+        self._queue.append(coro)
         self._queue_ready.set()
-        self._queue.append(fn(*args, **kwargs))
+
+    def reset(self) -> None:
+        self._callbacks = []
+        self._indexes = {}
+        self._level = None
 
     async def run(self, datasource_tasks: List[asyncio.Task]) -> None:
         """Executor loop"""
@@ -67,9 +105,31 @@ class CallbackExecutor:
                 self._logger.info('Stopping, %s coros left', len(self._queue))
                 stopping = True
 
-    async def wait(self, size: int) -> None:
+    async def wait(self, size: int = 0) -> None:
+        """Pause current execution branch until queue is reduced to specific size.
+        Helps to keep memory consumption adequate.
+        """
         while len(self._queue) > size:
             await asyncio.sleep(0)
+
+    async def _wrapper(
+        self,
+        callbacks: Tuple[CallbackT, ...],
+        indexes: Tuple[IndexConfigTemplateT, ...],
+        level: int,
+    ) -> None:
+        async with in_transaction():
+            len_callbacks = len(callbacks)
+            self._logger.info('Executing %s callbacks of level %s', len_callbacks, level)
+            for i, callback in enumerate(callbacks):
+                fn, args, kwargs = callback
+                self._logger.info('%s/%s: %s', i, len_callbacks, fn)
+                await fn(*args, **kwargs)
+
+            self._logger.info('Callbacks of level %s are executed, updating state of %s indexes', level, len(indexes))
+            for index_config in indexes:
+                index_config.state.level = level  # type: ignore
+                await index_config.state.save()
 
 
 class DipDup:
@@ -82,6 +142,7 @@ class DipDup:
         self._executor = CallbackExecutor()
         self._datasources: Dict[str, DatasourceT] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
+        self._resyncing: bool = False
 
     async def init(self, dynamic: bool) -> None:
         """Create new or update existing dipdup project"""
@@ -133,12 +194,10 @@ class DipDup:
         operations,
     ) -> None:
         self._executor.submit(
-            self._operation_handler_callback,
-            index_config,
-            handler_config,
-            args,
             level,
-            operations,
+            index_config,
+            self._operation_handler_callback,
+            *(index_config, handler_config, args, operations),
         )
         # await self._executor.wait(2000)
 
@@ -150,13 +209,33 @@ class DipDup:
         level,
     ):
         self._executor.submit(
-            self._big_map_handler_callback,
-            index_config,
-            handler_config,
-            args,
             level,
+            index_config,
+            self._big_map_handler_callback,
+            *(index_config, handler_config, args),
         )
         # await self._executor.wait(2000)
+
+    async def set_index_level(
+        self,
+        index_config,
+        level,
+    ):
+        self._executor.submit(
+            level,
+            index_config,
+            self._set_index_level,
+            *(index_config, level)
+        )
+        self._executor.commit()
+
+    async def _set_index_level(
+        self,
+        index_config,
+        level,
+    ):
+        index_config.state.level = level
+        await index_config.state.save()
 
     async def spawn_rollback_handler_callback(
         self,
@@ -165,19 +244,17 @@ class DipDup:
     ):
         ...
 
-    async def set_state_level(self, indexes: List[IndexConfigTemplateT], level: int) -> None:
-        """Enqueue bumping index state level."""
-        for index_config in indexes:
-            self._executor.submit(
-                self._set_state_level,
-                index_config,
-                level,
-            )
+    def commit(self) -> None:
+        self._executor.commit()
 
-    async def _set_state_level(self, index_config: IndexConfigTemplateT, level: int) -> None:
-        index_config.state.level = level  # type: ignore
-        await index_config.state.save()
-
+    async def _resync(self) -> None:
+        if self._resyncing:
+            return
+        self._resyncing = True
+        await self._executor.wait()
+        for datasource in self._datasources.values():
+            await datasource.resync()
+        self._resynching = False
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
@@ -228,15 +305,13 @@ class DipDup:
             self._spawned_indexes.append(index_name)
 
         if runtime:
-            for datasource in resync_datasources:
-                await datasource.resync()
+            asyncio.create_task(self._resync())
 
     async def _operation_handler_callback(
         self,
         index_config,
         handler_config,
         args,
-        level,
         operations,
     ):
         handler_context = OperationHandlerContext(
@@ -246,27 +321,24 @@ class DipDup:
             template_values=index_config.template_values,
         )
 
-        async with in_transaction():
-            await handler_config.callback_fn(handler_context, *args)
-
-            index_config.state.level = level  # type: ignore
-            await index_config.state.save()
+        await handler_config.callback_fn(handler_context, *args)
 
         if handler_context.updated:
             await self._spawn_indexes(True)
 
-    async def _big_map_handler_callback(self, index_config: BigMapIndexConfig, handler_config, args, level):
+    async def _big_map_handler_callback(
+        self,
+        index_config: BigMapIndexConfig,
+        handler_config,
+        args,
+    ):
         handler_context = BigMapHandlerContext(
             datasources=self._datasources,
             config=self._config,
             template_values=index_config.template_values,
         )
 
-        async with in_transaction():
-            await handler_config.callback_fn(handler_context, *args)
-
-            index_config.state.level = level  # type: ignore
-            await index_config.state.save()
+        await handler_config.callback_fn(handler_context, *args)
 
         if handler_context.updated:
             await self._spawn_indexes(True)

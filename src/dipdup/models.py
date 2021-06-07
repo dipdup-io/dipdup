@@ -10,6 +10,7 @@ from tortoise import Model, fields
 
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import reindex, restart
+
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
@@ -204,7 +205,7 @@ class HandlerContext:
 
     async def reindex(self) -> None:
         await reindex()
-    
+
     async def restart(self) -> None:
         await restart()
 

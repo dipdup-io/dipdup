@@ -324,11 +324,10 @@ class OperationMatcher:
         self._logger.debug('Adding operation %s to matcher (%s, %s)', operation.id, operation.hash, operation.counter)
         self._logger.debug('level=%s operation.level=%s', self._level, operation.level)
 
-        if self._level is not None:
-            if self._level != operation.level:
-                raise RuntimeError('Operations must be splitted by level before being passed to Matcher')
-        else:
+        if self._level is None:
             self._level = operation.level
+        if self._level != operation.level:
+            raise RuntimeError('Operations must be splitted by level before being passed to Matcher')
 
         key = OperationGroup(operation.hash, operation.counter)
         if key not in self._operations:
@@ -367,10 +366,10 @@ class OperationMatcher:
         else:
             raise NotImplementedError
 
-    async def process(self) -> int:
+    async def process(self) -> None:
         """Try to match operations in cache with all patterns from indexes."""
         if self._level is None:
-            raise RuntimeError('Add operations to cache before processing')
+            raise RuntimeError('Add operations to matcher before processing')
 
         keys = list(self._operations.keys())
         self._logger.info('Matching %s operation groups', len(keys))
@@ -428,12 +427,10 @@ class OperationMatcher:
                 if group_matched and not origination:
                     break
 
-        self._logger.info('Current level: %s', self._level)
         self._operations = {}
-
-        level = self._level
         self._level = None
-        return level
+
+        self._dipdup.commit()
 
     async def on_match(
         self,
@@ -485,7 +482,11 @@ class OperationMatcher:
 class BigMapMatcher:
     """Matches big map diffs of a single level with patterns of all registered indexes, spawns handler callback on match."""
 
-    def __init__(self, dipdup, indexes: Dict[str, BigMapIndexConfig],) -> None:
+    def __init__(
+        self,
+        dipdup,
+        indexes: Dict[str, BigMapIndexConfig],
+    ) -> None:
         super().__init__()
         self._logger = logging.getLogger(__name__)
         self._dipdup = dipdup
@@ -520,7 +521,7 @@ class BigMapMatcher:
         self._logger.debug('match!')
         return True
 
-    async def process(self) -> int:
+    async def process(self) -> None:
         """Try to match big map diffs in cache with all patterns from indexes."""
         if self._level is None:
             raise RuntimeError('Add big maps to cache before processing')
@@ -552,11 +553,11 @@ class BigMapMatcher:
         keys_left = self._big_maps.keys()
         self._logger.info('%s big map groups unmatched', len(keys_left))
         self._logger.info('Current level: %s', self._level)
-        self._big_maps = {}
 
-        level = self._level
+        self._big_maps = {}
         self._level = None
-        return level
+
+        self._dipdup.commit()
 
     async def on_match(
         self,
@@ -847,9 +848,8 @@ class TzktDatasource(TzktRequestMixin):
                 ],
                 sync=True,
             )
-            await self._dipdup.set_state_level([index_config], level)
-        else:
-            await self._dipdup.set_state_level([index_config], last_level)
+
+        await self._dipdup.set_index_level(index_config, last_level)
 
     # TODO: Implement BigMapFetcher
     async def _fetch_big_maps(
@@ -928,8 +928,7 @@ class TzktDatasource(TzktRequestMixin):
         if big_maps:
             await _process_level_big_maps(big_maps)
 
-        # NOTE: State level is not updated when there's no operations between first_level and last_level
-        await self.set_state_level(index_config, last_level)
+        await self._dipdup.set_index_level(index_config, last_level)
 
     async def on_operation_message(
         self,
@@ -973,10 +972,6 @@ class TzktDatasource(TzktRequestMixin):
                     await self._operation_matcher.add(operation)
 
                 await self._operation_matcher.process()
-
-                # NOTE: If message is from WS update all index states. If not - fetcher will update state by itself.
-                if not sync:
-                    await self._dipdup.commit(list(self._operation_indexes.values()))
 
             elif message_type == TzktMessageType.REORG:
                 self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
