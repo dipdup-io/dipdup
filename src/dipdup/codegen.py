@@ -96,14 +96,15 @@ class DipDupCodeGenerator:
                             and operation_pattern_config.entrypoint
                         ):
                             contract_config = operation_pattern_config.destination_contract_config
+                            originated = False
                         elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
-                            # FIXME: source
                             contract_config = operation_pattern_config.contract_config
+                            originated = bool(operation_pattern_config.source)
                         else:
                             continue
 
                         self._logger.debug(contract_config)
-                        contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
+                        contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, originated)
 
                         contract_schemas_path = join(schemas_path, contract_config.module_name)
                         with suppress(FileExistsError):
@@ -152,7 +153,7 @@ class DipDupCodeGenerator:
                     for big_map_pattern_config in big_map_handler_config.pattern:
                         contract_config = big_map_pattern_config.contract_config
 
-                        contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
+                        contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
 
                         contract_schemas_path = join(schemas_path, contract_config.module_name)
                         with suppress(FileExistsError):
@@ -307,6 +308,7 @@ class DipDupCodeGenerator:
         self,
         datasource_config: TzktDatasourceConfig,
         contract_config: ContractConfig,
+        originated: bool,
     ) -> Dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
         datasource = self._datasources.get(datasource_config)
@@ -315,7 +317,13 @@ class DipDupCodeGenerator:
         if datasource_config not in self._schemas:
             self._schemas[datasource_config] = {}
         if contract_config.address not in self._schemas[datasource_config]:
-            self._logger.info('Fetching schemas for contract `%s`', contract_config.address)
-            address_schemas_json = await datasource.get_jsonschemas(contract_config.address)
-            self._schemas[datasource_config][contract_config.address] = address_schemas_json
-        return self._schemas[datasource_config][contract_config.address]
+            address = contract_config.address
+            if originated:
+                address = (await datasource.get_originated_contracts(address))[0]
+                self._logger.info('Fetching schemas for contract `%s` (originated from `%s`)', address, contract_config.address)
+            else:
+                self._logger.info('Fetching schemas for contract `%s`', address)
+
+            address_schemas_json = await datasource.get_jsonschemas(address)
+            self._schemas[datasource_config][address] = address_schemas_json
+        return self._schemas[datasource_config][address]
