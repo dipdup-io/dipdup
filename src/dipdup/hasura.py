@@ -17,6 +17,7 @@ _logger = logging.getLogger(__name__)
 
 
 def _is_model_class(obj) -> bool:
+    """Is subclass of tortoise.Model, but not the base class"""
     return isinstance(obj, type) and issubclass(obj, Model) and obj != Model
 
 
@@ -89,6 +90,10 @@ def _iter_models(*modules) -> Iterator[Tuple[str, Type[Model]]]:
 
 
 async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
+    """Generate metadata based on dapp models.
+
+    Includes tables and their relations (but not entities created during execution of snippets from `sql` package directory)
+    """
     _logger.info('Generating Hasura metadata')
     metadata_tables = {}
     model_tables = {}
@@ -137,6 +142,7 @@ async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
 
 
 async def configure_hasura(config: DipDupConfig):
+    """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
     if config.hasura is None:
         raise ConfigurationError('`hasura` config section missing')

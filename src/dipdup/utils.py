@@ -66,6 +66,7 @@ async def http_request(method: str, **kwargs):
 
 
 async def restart() -> None:
+    """Restart preserving CLI arguments"""
     # NOTE: Remove --reindex from arguments to avoid reindexing loop
     argv = sys.argv[:-1] if sys.argv[-1] == '--reindex' else sys.argv
     os.execl(sys.executable, sys.executable, *argv)

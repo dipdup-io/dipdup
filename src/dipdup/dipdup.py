@@ -5,7 +5,7 @@ import logging
 from collections import deque
 from os.path import join
 from posix import listdir
-from typing import Any, Awaitable, Callable, Deque, Dict, Iterable, List, Mapping, Optional, Set, Tuple, cast
+from typing import Any, Awaitable, Callable, Deque, Dict, Iterable, List, Mapping, Optional, Tuple, cast
 
 from genericpath import exists
 from tortoise import Tortoise
@@ -38,7 +38,7 @@ CallbackT = Tuple[Callable[..., Awaitable[None]], Iterable[Any], Mapping[str, An
 class CallbackExecutor:
     """Executor for handler callbacks.
 
-    Used avoid blocking datasource loop. Groups callbacks by level performs some safety checks.
+    Helps to avoid blocking datasource loop. Groups callbacks by level performs some safety checks.
 
     Bumps levels of matched indexes
     """
@@ -52,10 +52,10 @@ class CallbackExecutor:
         self._queue: Deque[Awaitable[None]] = deque()
 
     def submit(self, level: int, index_config: IndexConfigTemplateT, fn, *args, **kwargs) -> None:
+        """Submit callback to active level queue (not executed until `commit` is called)."""
         if index_config.state.level >= level:
             self._logger.info('!!!!!!!! %s %s', level, index_config.state.level)
             return
-        """Push coroutine to queue"""
         if self._level is None:
             self._level = level
         if self._level != level:
@@ -67,6 +67,7 @@ class CallbackExecutor:
         self._callbacks.append(callback)
 
     def commit(self) -> None:
+        """Wrap current level batch of callbacks with transaction wrapper and push to queue."""
         if self._level is None:
             return
 
@@ -81,12 +82,13 @@ class CallbackExecutor:
         self._queue_ready.set()
 
     def reset(self) -> None:
+        """Start new level batch"""
         self._callbacks = []
         self._indexes = {}
         self._level = None
 
     async def run(self, datasource_tasks: List[asyncio.Task]) -> None:
-        """Executor loop"""
+        """Run executor loop until cancellation. Process coros left in queue after interruption."""
         stopping = False
         while True:
             try:
@@ -118,6 +120,7 @@ class CallbackExecutor:
         indexes: Tuple[IndexConfigTemplateT, ...],
         level: int,
     ) -> None:
+        """Wrapper for level batch of callbacks. Open transaction, execute callbacks, update states of related indexes.""" 
         async with in_transaction():
             len_callbacks = len(callbacks)
             self._logger.info('Executing %s callbacks of level %s', len_callbacks, level)
@@ -199,7 +202,7 @@ class DipDup:
             self._operation_handler_callback,
             *(index_config, handler_config, args, operations),
         )
-        # await self._executor.wait(2000)
+        await self._executor.wait(2000)
 
     async def spawn_big_map_handler_callback(
         self,
@@ -214,7 +217,7 @@ class DipDup:
             self._big_map_handler_callback,
             *(index_config, handler_config, args),
         )
-        # await self._executor.wait(2000)
+        await self._executor.wait(2000)
 
     async def set_index_level(
         self,

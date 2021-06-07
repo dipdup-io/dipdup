@@ -74,6 +74,7 @@ class OperationData:
     diffs: Optional[List[Dict[str, Any]]] = None
 
     def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str, array: bool) -> None:
+        """Apply big map diffs of specific path to storage"""
         if self.diffs is None:
             raise Exception('`bigmaps` field missing')
         _logger.debug(bigmap_name)
@@ -129,6 +130,7 @@ class OperationData:
         return storage
 
     def get_merged_storage(self, storage_type: Type[StorageType]) -> StorageType:
+        """Merge big map diffs and deserialize raw storage into typeclass"""
         if self.storage is None:
             raise Exception('`storage` field missing')
 
@@ -146,6 +148,7 @@ class OperationData:
 
 @dataclass
 class TransactionContext(Generic[ParameterType, StorageType]):
+    """Wrapper for every transaction in handler arguments"""
     data: OperationData
     parameter: ParameterType
     storage: StorageType
@@ -153,11 +156,13 @@ class TransactionContext(Generic[ParameterType, StorageType]):
 
 @dataclass
 class OriginationContext(Generic[StorageType]):
+    """Wrapper for every origination in handler arguments"""
     data: OperationData
     storage: StorageType
 
 
 class BigMapAction(Enum):
+    """Mapping for action in TzKT response""" 
     ALLOCATE = 'allocate'
     ADD = 'add_key'
     UPDATE = 'update_key'
@@ -166,6 +171,7 @@ class BigMapAction(Enum):
 
 @dataclass
 class BigMapContext(Generic[KeyType, ValueType]):
+    """Wrapper for every big map diff in each list of handler arguments"""
     action: BigMapAction
     key: KeyType
     value: Optional[ValueType]
@@ -173,6 +179,7 @@ class BigMapContext(Generic[KeyType, ValueType]):
 
 @dataclass
 class BigMapData:
+    """Basic structure for big map diffs from TzKT response"""
     id: int
     level: int
     operation_id: int
@@ -197,6 +204,7 @@ class HandlerContext:
         self._updated: bool = False
 
     def commit(self) -> None:
+        """Spawn indexes after handler execution"""
         self._updated = True
 
     @property
@@ -212,10 +220,12 @@ class HandlerContext:
 
 @dataclass
 class OperationHandlerContext(HandlerContext):
+    """Operation index handler context (first argument)"""
     operations: List[OperationData]
     template_values: Optional[Dict[str, str]]
 
 
 @dataclass
 class BigMapHandlerContext(HandlerContext):
+    """Big map index handler context (first argument)"""
     template_values: Optional[Dict[str, str]]

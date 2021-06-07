@@ -726,7 +726,7 @@ class TzktDatasource(TzktRequestMixin):
         latest_block = await self.get_latest_block()
 
         self._logger.info('Initial synchronizing operation indexes')
-        for index_config_name, operation_index_config in self._operation_indexes.items():
+        for index_config_name, operation_index_config in copy(self._operation_indexes).items():
             self._logger.info('Synchronizing `%s`', index_config_name)
             if operation_index_config.last_block:
                 current_level = operation_index_config.last_block
@@ -737,7 +737,7 @@ class TzktDatasource(TzktRequestMixin):
             await self.synchronize_operation_index(operation_index_config, current_level)
 
         self._logger.info('Initial synchronizing big map indexes')
-        for index_config_name, big_map_index_config in self._big_map_indexes.items():
+        for index_config_name, big_map_index_config in copy(self._big_map_indexes).items():
             self._logger.info('Synchronizing `%s`', index_config_name)
             if big_map_index_config.last_block:
                 current_level = big_map_index_config.last_block
@@ -1091,6 +1091,8 @@ class TzktDatasource(TzktRequestMixin):
     async def resync(self) -> None:
         """Call after adding new indexes in runtime to synchronize them"""
         self._logger.info('Resync called')
+        await self._operations_synchronized.wait()
+        await self._big_maps_synchronized.wait()
         self._operations_synchronized.clear()
         self._big_maps_synchronized.clear()
         await self.on_connect()
