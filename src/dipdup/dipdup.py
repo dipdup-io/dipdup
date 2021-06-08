@@ -30,9 +30,7 @@ CallbackT = Tuple[Callable[..., Awaitable[None]], Iterable[Any], Mapping[str, An
 class CallbackExecutor:
     """Executor for handler callbacks.
 
-    Helps to avoid blocking datasource loop. Groups callbacks by level performs some safety checks.
-
-    Bumps levels of matched indexes
+    Helps to avoid blocking datasource loop. Groups callbacks by level, performs some safety checks, bumps levels of matched indexes.
     """
 
     def __init__(self) -> None:
@@ -127,7 +125,9 @@ class CallbackExecutor:
 
 
 class DipDup:
-    """Spawns datasources, processes handler callbacks"""
+    """Main indexer class.
+
+    Spawns datasources, registers indexes, passes handler callbacks to executor"""
 
     def __init__(self, config: DipDupConfig) -> None:
         self._logger = logging.getLogger(__name__)

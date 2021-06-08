@@ -712,11 +712,9 @@ class TzktDatasource(TzktRequestMixin):
         self._logger.info('Starting datasource')
         rest_only = False
 
-        latest_block = await self.get_latest_block()
-
         async def _synchronize():
-            nonlocal latest_block
             nonlocal rest_only
+            latest_block = await self.get_latest_block()
 
             self._logger.info('Initial synchronizing operation indexes')
             for index_config_name, operation_index_config in copy(self._operation_indexes).items():
@@ -740,11 +738,13 @@ class TzktDatasource(TzktRequestMixin):
 
                 await self.synchronize_big_map_index(big_map_index_config, current_level)
 
+            await self._dipdup._executor.wait()
+
         await _synchronize()
         if rest_only:
             return
 
-        # FIXME: Process spawned indexes with the same block before starting WS connection
+        # FIXME: Process spawned indexes before starting WS connection
         await _synchronize()
         if rest_only:
             return
