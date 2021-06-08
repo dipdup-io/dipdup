@@ -149,6 +149,7 @@ class OperationData:
 @dataclass
 class TransactionContext(Generic[ParameterType, StorageType]):
     """Wrapper for every transaction in handler arguments"""
+
     data: OperationData
     parameter: ParameterType
     storage: StorageType
@@ -157,12 +158,14 @@ class TransactionContext(Generic[ParameterType, StorageType]):
 @dataclass
 class OriginationContext(Generic[StorageType]):
     """Wrapper for every origination in handler arguments"""
+
     data: OperationData
     storage: StorageType
 
 
 class BigMapAction(Enum):
-    """Mapping for action in TzKT response""" 
+    """Mapping for action in TzKT response"""
+
     ALLOCATE = 'allocate'
     ADD = 'add_key'
     UPDATE = 'update_key'
@@ -172,6 +175,7 @@ class BigMapAction(Enum):
 @dataclass
 class BigMapContext(Generic[KeyType, ValueType]):
     """Wrapper for every big map diff in each list of handler arguments"""
+
     action: BigMapAction
     key: KeyType
     value: Optional[ValueType]
@@ -180,6 +184,7 @@ class BigMapContext(Generic[KeyType, ValueType]):
 @dataclass
 class BigMapData:
     """Basic structure for big map diffs from TzKT response"""
+
     id: int
     level: int
     operation_id: int
@@ -221,6 +226,7 @@ class HandlerContext:
 @dataclass
 class OperationHandlerContext(HandlerContext):
     """Operation index handler context (first argument)"""
+
     operations: List[OperationData]
     template_values: Optional[Dict[str, str]]
 
@@ -228,4 +234,5 @@ class OperationHandlerContext(HandlerContext):
 @dataclass
 class BigMapHandlerContext(HandlerContext):
     """Big map index handler context (first argument)"""
+
     template_values: Optional[Dict[str, str]]

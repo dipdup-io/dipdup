@@ -10,20 +10,9 @@ from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: 
 from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 
-from dipdup.config import (
-    ROLLBACK_HANDLER,
-    BigMapHandlerConfig,
-    BigMapHandlerPatternConfig,
-    BigMapIndexConfig,
-    ContractConfig,
-    IndexConfigTemplateT,
-    OperationHandlerConfig,
-    OperationHandlerOriginationPatternConfig,
-    OperationHandlerPatternConfigT,
-    OperationHandlerTransactionPatternConfig,
-    OperationIndexConfig,
-    OperationType,
-)
+from dipdup.config import (ROLLBACK_HANDLER, BigMapHandlerConfig, BigMapHandlerPatternConfig, BigMapIndexConfig, ContractConfig,
+                           IndexConfigTemplateT, OperationHandlerConfig, OperationHandlerOriginationPatternConfig,
+                           OperationHandlerPatternConfigT, OperationHandlerTransactionPatternConfig, OperationIndexConfig, OperationType)
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import BigMapAction, BigMapContext, BigMapData, OperationData, OriginationContext, State, TransactionContext
@@ -725,31 +714,43 @@ class TzktDatasource(TzktRequestMixin):
 
         latest_block = await self.get_latest_block()
 
-        self._logger.info('Initial synchronizing operation indexes')
-        for index_config_name, operation_index_config in copy(self._operation_indexes).items():
-            self._logger.info('Synchronizing `%s`', index_config_name)
-            if operation_index_config.last_block:
-                current_level = operation_index_config.last_block
-                rest_only = True
-            else:
-                current_level = latest_block['level']
+        async def _synchronize():
+            nonlocal latest_block
+            nonlocal rest_only
 
-            await self.synchronize_operation_index(operation_index_config, current_level)
+            self._logger.info('Initial synchronizing operation indexes')
+            for index_config_name, operation_index_config in copy(self._operation_indexes).items():
+                self._logger.info('Synchronizing `%s`', index_config_name)
+                if operation_index_config.last_block:
+                    current_level = operation_index_config.last_block
+                    rest_only = True
+                else:
+                    current_level = latest_block['level']
 
-        self._logger.info('Initial synchronizing big map indexes')
-        for index_config_name, big_map_index_config in copy(self._big_map_indexes).items():
-            self._logger.info('Synchronizing `%s`', index_config_name)
-            if big_map_index_config.last_block:
-                current_level = big_map_index_config.last_block
-                rest_only = True
-            else:
-                current_level = latest_block['level']
+                await self.synchronize_operation_index(operation_index_config, current_level)
 
-            await self.synchronize_big_map_index(big_map_index_config, current_level)
+            self._logger.info('Initial synchronizing big map indexes')
+            for index_config_name, big_map_index_config in copy(self._big_map_indexes).items():
+                self._logger.info('Synchronizing `%s`', index_config_name)
+                if big_map_index_config.last_block:
+                    current_level = big_map_index_config.last_block
+                    rest_only = True
+                else:
+                    current_level = latest_block['level']
 
-        if not rest_only:
-            self._logger.info('Starting websocket client')
-            await self._get_client().start()
+                await self.synchronize_big_map_index(big_map_index_config, current_level)
+
+        await _synchronize()
+        if rest_only:
+            return
+
+        # FIXME: Process spawned indexes with the same block before starting WS connection
+        await _synchronize()
+        if rest_only:
+            return
+
+        self._logger.info('Starting websocket client')
+        await self._get_client().start()
 
     async def on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""

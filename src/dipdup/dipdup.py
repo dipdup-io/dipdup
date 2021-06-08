@@ -16,16 +16,8 @@ from tortoise.utils import get_schema_sql
 import dipdup.utils as utils
 from dipdup import __version__
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import (
-    BcdDatasourceConfig,
-    BigMapIndexConfig,
-    DatasourceConfigT,
-    DipDupConfig,
-    IndexConfigTemplateT,
-    PostgresDatabaseConfig,
-    StaticTemplateConfig,
-    TzktDatasourceConfig,
-)
+from dipdup.config import (BcdDatasourceConfig, BigMapIndexConfig, DatasourceConfigT, DipDupConfig, IndexConfigTemplateT,
+                           PostgresDatabaseConfig, StaticTemplateConfig, TzktDatasourceConfig)
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -54,7 +46,6 @@ class CallbackExecutor:
     def submit(self, level: int, index_config: IndexConfigTemplateT, fn, *args, **kwargs) -> None:
         """Submit callback to active level queue (not executed until `commit` is called)."""
         if index_config.state.level >= level:
-            self._logger.info('!!!!!!!! %s %s', level, index_config.state.level)
             return
         if self._level is None:
             self._level = level
@@ -93,7 +84,7 @@ class CallbackExecutor:
         while True:
             try:
                 coro = self._queue.popleft()
-                self._logger.info('Executing %s, %s coros left', coro, len(self._queue))
+                self._logger.debug('Executing %s, %s coros left', coro, len(self._queue))
                 await coro
             except IndexError:
                 if stopping:
@@ -120,16 +111,16 @@ class CallbackExecutor:
         indexes: Tuple[IndexConfigTemplateT, ...],
         level: int,
     ) -> None:
-        """Wrapper for level batch of callbacks. Open transaction, execute callbacks, update states of related indexes.""" 
+        """Wrapper for level batch of callbacks. Open transaction, execute callbacks, update states of related indexes."""
         async with in_transaction():
             len_callbacks = len(callbacks)
             self._logger.info('Executing %s callbacks of level %s', len_callbacks, level)
             for i, callback in enumerate(callbacks):
                 fn, args, kwargs = callback
-                self._logger.info('%s/%s: %s', i, len_callbacks, fn)
+                self._logger.debug('%s/%s: %s', i, len_callbacks, fn)
                 await fn(*args, **kwargs)
 
-            self._logger.info('Callbacks of level %s are executed, updating state of %s indexes', level, len(indexes))
+            self._logger.info('Done, updating state of %s indexes', len(indexes))
             for index_config in indexes:
                 index_config.state.level = level  # type: ignore
                 await index_config.state.save()
@@ -224,12 +215,7 @@ class DipDup:
         index_config,
         level,
     ):
-        self._executor.submit(
-            level,
-            index_config,
-            self._set_index_level,
-            *(index_config, level)
-        )
+        self._executor.submit(level, index_config, self._set_index_level, *(index_config, level))
         self._executor.commit()
 
     async def _set_index_level(

@@ -10,18 +10,9 @@ from typing import Any, Dict, cast
 
 from jinja2 import Template
 
-from dipdup.config import (
-    ROLLBACK_HANDLER,
-    BigMapIndexConfig,
-    ContractConfig,
-    DatasourceConfigT,
-    DipDupConfig,
-    OperationHandlerOriginationPatternConfig,
-    OperationHandlerTransactionPatternConfig,
-    OperationIndexConfig,
-    StaticTemplateConfig,
-    TzktDatasourceConfig,
-)
+from dipdup.config import (ROLLBACK_HANDLER, BigMapIndexConfig, ContractConfig, DatasourceConfigT, DipDupConfig,
+                           OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig, OperationIndexConfig,
+                           StaticTemplateConfig, TzktDatasourceConfig)
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import pascal_to_snake, snake_to_pascal
 
