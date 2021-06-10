@@ -1,6 +1,7 @@
 from collections import deque, namedtuple
+from contextlib import suppress
 import logging
-from typing import Any, Deque, Dict, List, Optional, Set, Union, cast
+from typing import Any, Deque, Dict, List, Optional, Set, Tuple, Union, cast
 from dipdup.config import (
     ContractConfig,
     DipDupConfig,
@@ -76,36 +77,40 @@ class OperationIndex(Index):
         self._datasource = datasource
 
         self._logger = logging.getLogger(__name__)
-        self._queue: Deque[List[OperationData]] = deque()
+        self._queue: Deque[Tuple[int, List[OperationData]]] = deque()
 
     @property
     def state(self) -> State:
         return self._config.state
 
     def push(self, level: int, operations: List[OperationData]):
-        ...
+        self._queue.append((level, operations))
 
     async def process(self) -> None:
+        self._logger.info('Processing index `%s`', self._config.name)
         if self._datasource.sync_level is None:
-            self._logger.info('Datasource is not active, synchronize to latest block')
+            self._logger.info('Datasource is not active, sync to latest block')
             last_level = (await self._datasource.get_latest_block())['level']
             await self._synchronize(last_level)
-        # 2. Index behind queue, sync to datasource level
         elif self._datasource.sync_level > self.state.level:
+            self._logger.info('Index is behind datasource, sync to datasource level')
             last_level = self._datasource.sync_level
             await self._synchronize(last_level)
         else:
-            self._logger.info('asdf')
+            self._logger.info('Processing websocket queue')
             await self._process_queue()
 
     async def _process_queue(self):
-        ...
+        with suppress(IndexError):
+            while True:
+                level, operations = self._queue.popleft()
+                await self._process_level_operations(level, operations)
 
     async def _synchronize(self, last_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         first_level = self.state.level
         if first_level >= last_level:
-            raise RuntimeError
+            raise RuntimeError(first_level, last_level)
 
         self._logger.info('Fetching operations from level %s to %s', first_level, last_level)
 
@@ -124,9 +129,12 @@ class OperationIndex(Index):
             self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_level_operations(level, operations)
 
+        self.state.level = last_level  # type: ignore
+        await self.state.save()
+
     async def _process_level_operations(self, level: int, operations: List[OperationData]):
-        # if self.state.level + 1 != level:
-        #     raise RuntimeError(self.state.level, level)
+        if self.state.level >= level:
+            raise RuntimeError(self.state.level, level)
 
         async with in_transaction():
             await self._process_operations(operations)

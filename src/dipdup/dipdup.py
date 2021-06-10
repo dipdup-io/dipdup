@@ -94,9 +94,9 @@ class IndexDispatcher:
                 self._ctx._updated = False
                 continue
 
-            if all(bool(index.state.level) for index in self._indexes.values()):
-                for datasource in self._ctx.datasources.values():
-                    await datasource.start()
+            # if all(bool(index.state.level) for index in self._indexes.values()):
+            #     for datasource in self._ctx.datasources.values():
+            #         await datasource.start()
 
 
 class DipDup:

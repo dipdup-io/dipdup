@@ -535,45 +535,7 @@ class TzktDatasource(AsyncIOEventEmitter):
         """Main loop. Sync indexes via REST, start WS connection"""
         self._logger.info('Starting datasource')
 
-        await self._started.wait()
-        # rest_only = False
-
-        # async def _synchronize():
-        #     nonlocal rest_only
-        #     latest_block = await self.get_latest_block()
-
-        #     self._logger.info('Initial synchronizing operation indexes')
-        #     for index_config_name, operation_index_config in copy(self._operation_indexes).items():
-        #         self._logger.info('Synchronizing `%s`', index_config_name)
-        #         if operation_index_config.last_block:
-        #             current_level = operation_index_config.last_block
-        #             rest_only = True
-        #         else:
-        #             current_level = latest_block['level']
-
-        #         await self.synchronize_operation_index(operation_index_config, current_level)
-
-        #     self._logger.info('Initial synchronizing big map indexes')
-        #     for index_config_name, big_map_index_config in copy(self._big_map_indexes).items():
-        #         self._logger.info('Synchronizing `%s`', index_config_name)
-        #         if big_map_index_config.last_block:
-        #             current_level = big_map_index_config.last_block
-        #             rest_only = True
-        #         else:
-        #             current_level = latest_block['level']
-
-        #         await self.synchronize_big_map_index(big_map_index_config, current_level)
-
-        #     await self._dipdup._executor.wait()
-
-        # await _synchronize()
-        # if rest_only:
-        #     return
-
-        # # FIXME: Process spawned indexes before starting WS connection
-        # await _synchronize()
-        # if rest_only:
-        #     return
+        # await self._started.wait()
 
         self._logger.info('Starting websocket client')
         await self._get_client().start()
