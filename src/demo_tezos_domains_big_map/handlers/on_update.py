@@ -6,15 +6,15 @@ from demo_tezos_domains_big_map.types.name_registry.big_map.store_expiry_map_key
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_expiry_map_value import StoreExpiryMapValue
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_records_key import StoreRecordsKey
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_records_value import StoreRecordsValue
-from dipdup.models import BigMapAction, BigMapContext, BigMapHandlerContext
+from dipdup.models import BigMapAction, BigMapDiff, BigMapHandlerContext
 
 _logger = logging.getLogger(__name__)
 
 
 async def on_update(
     ctx: BigMapHandlerContext,
-    store_records: List[BigMapContext[StoreRecordsKey, StoreRecordsValue]],
-    store_expiry_map: List[BigMapContext[StoreExpiryMapKey, StoreExpiryMapValue]],
+    store_records: List[BigMapDiff[StoreRecordsKey, StoreRecordsValue]],
+    store_expiry_map: List[BigMapDiff[StoreExpiryMapKey, StoreExpiryMapValue]],
 ) -> None:
     for diff in store_records:
         if diff.action in (BigMapAction.ADD, BigMapAction.UPDATE):

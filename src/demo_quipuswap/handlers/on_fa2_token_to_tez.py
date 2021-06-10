@@ -5,13 +5,13 @@ from demo_quipuswap.types.fa2_token.parameter.transfer import TransferParameter
 from demo_quipuswap.types.fa2_token.storage import Fa2TokenStorage
 from demo_quipuswap.types.quipu_fa2.parameter.token_to_tez_payment import TokenToTezPaymentParameter
 from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
-from dipdup.models import OperationHandlerContext, TransactionContext
+from dipdup.models import OperationHandlerContext, Transaction
 
 
 async def on_fa2_token_to_tez(
     ctx: OperationHandlerContext,
-    token_to_tez_payment: TransactionContext[TokenToTezPaymentParameter, QuipuFa2Storage],
-    transfer: TransactionContext[TransferParameter, Fa2TokenStorage],
+    token_to_tez_payment: Transaction[TokenToTezPaymentParameter, QuipuFa2Storage],
+    transfer: Transaction[TransferParameter, Fa2TokenStorage],
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')

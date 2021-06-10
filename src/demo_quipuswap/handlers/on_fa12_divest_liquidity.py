@@ -5,13 +5,13 @@ from demo_quipuswap.types.fa12_token.parameter.transfer import TransferParameter
 from demo_quipuswap.types.fa12_token.storage import Fa12TokenStorage
 from demo_quipuswap.types.quipu_fa12.parameter.divest_liquidity import DivestLiquidityParameter
 from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
-from dipdup.models import OperationHandlerContext, TransactionContext
+from dipdup.models import OperationHandlerContext, Transaction
 
 
 async def on_fa12_divest_liquidity(
     ctx: OperationHandlerContext,
-    divest_liquidity: TransactionContext[DivestLiquidityParameter, QuipuFa12Storage],
-    transfer: TransactionContext[TransferParameter, Fa12TokenStorage],
+    divest_liquidity: Transaction[DivestLiquidityParameter, QuipuFa12Storage],
+    transfer: Transaction[TransferParameter, Fa12TokenStorage],
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')

@@ -5,7 +5,7 @@ import re
 import sys
 from contextlib import asynccontextmanager
 import time
-from typing import AsyncIterator, NoReturn, Optional
+from typing import AsyncIterator, Optional
 
 import aiohttp
 from tortoise import Tortoise
@@ -79,8 +79,9 @@ async def http_request(method: str, **kwargs):
 async def restart() -> None:
     """Restart preserving CLI arguments"""
     # NOTE: Remove --reindex from arguments to avoid reindexing loop
-    argv = sys.argv[:-1] if sys.argv[-1] == '--reindex' else sys.argv
-    os.execl(sys.executable, sys.executable, *argv)
+    if '--reindex' in sys.argv:
+        sys.argv.remove('--reindex')
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 
 async def reindex() -> None:

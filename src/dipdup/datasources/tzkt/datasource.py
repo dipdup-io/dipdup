@@ -27,7 +27,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import BigMapAction, BigMapContext, BigMapData, OperationData, OriginationContext, State, TransactionContext
+from dipdup.models import BigMapAction, BigMapDiff, BigMapData, OperationData, Origination, State, Transaction
 
 OperationID = int
 

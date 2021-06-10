@@ -3,12 +3,12 @@ from typing import Optional
 import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa12.parameter.transfer import TransferParameter
 from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
+from dipdup.models import OperationData, OperationHandlerContext, Origination, Transaction
 
 
 async def on_fa12_transfer(
     ctx: OperationHandlerContext,
-    transfer: TransactionContext[TransferParameter, QuipuFa12Storage],
+    transfer: Transaction[TransferParameter, QuipuFa12Storage],
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')

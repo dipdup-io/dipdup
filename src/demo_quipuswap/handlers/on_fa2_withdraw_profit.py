@@ -4,12 +4,12 @@ from typing import Optional
 import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa2.parameter.withdraw_profit import WithdrawProfitParameter
 from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
+from dipdup.models import OperationData, OperationHandlerContext, Origination, Transaction
 
 
 async def on_fa2_withdraw_profit(
     ctx: OperationHandlerContext,
-    withdraw_profit: TransactionContext[WithdrawProfitParameter, QuipuFa2Storage],
+    withdraw_profit: Transaction[WithdrawProfitParameter, QuipuFa2Storage],
     transaction_0: Optional[OperationData] = None,
 ) -> None:
 

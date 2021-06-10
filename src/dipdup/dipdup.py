@@ -104,7 +104,7 @@ class IndexDispatcher:
 
             async with utils.slowdown(2):
                 await asyncio.gather(*[i.process() for i in self._indexes.values()])
-            
+
             if oneshot:
                 break
 

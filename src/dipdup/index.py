@@ -3,6 +3,8 @@ from collections import deque, namedtuple
 from contextlib import suppress
 import logging
 from typing import Any, Deque, Dict, List, Optional, Set, Tuple, Union, cast
+
+from pydantic import BaseModel
 from dipdup.config import (
     BigMapHandlerConfig,
     BigMapHandlerPatternConfig,
@@ -19,9 +21,19 @@ from dipdup.config import (
     OperationIndexConfig,
     OperationType,
 )
+from dipdup.context import HandlerContext, OperationHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.models import BigMapAction, BigMapContext, BigMapData, OperationData, OriginationContext, State, TemporaryState, TransactionContext
+from dipdup.models import (
+    BigMapAction,
+    BigMapDiff,
+    BigMapData,
+    OperationData,
+    Origination,
+    State,
+    TemporaryState,
+    Transaction,
+)
 from tortoise.transactions import in_transaction
 
 from dipdup.utils import reindex, restart
@@ -29,58 +41,6 @@ from pydantic.dataclasses import dataclass
 
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
-
-
-@dataclass
-class HandlerContext:
-    """Common handler context."""
-
-    # FIXME: Add ForwardRefs
-    datasources: Any  # Dict[str, DatasourceT]
-    config: DipDupConfig
-
-    def __post_init_post_parse__(self) -> None:
-        self._updated: bool = False
-
-    def commit(self) -> None:
-        """Spawn indexes after handler execution"""
-        self._updated = True
-
-    def reset(self) -> None:
-        self._updated = False
-
-    @property
-    def updated(self) -> bool:
-        return self._updated
-
-    async def reindex(self) -> None:
-        await reindex()
-
-    async def restart(self) -> None:
-        await restart()
-
-    # TODO
-    async def add_contract(self):
-        ...
-
-    # TODO
-    async def add_index(self):
-        ...
-
-
-@dataclass
-class OperationHandlerContext(HandlerContext):
-    """Operation index handler context (first argument)"""
-
-    operations: List[OperationData]
-    template_values: Optional[Dict[str, str]]
-
-
-@dataclass
-class BigMapHandlerContext(HandlerContext):
-    """Big map index handler context (first argument)"""
-
-    template_values: Optional[Dict[str, str]]
 
 
 class Index:
@@ -111,7 +71,7 @@ class Index:
         else:
             self._logger.info('Processing websocket queue')
             await self._process_queue()
-    
+
     @abstractmethod
     async def _synchronize(self, last_level: int) -> None:
         ...
@@ -119,7 +79,6 @@ class Index:
     @abstractmethod
     async def _process_queue(self) -> None:
         ...
-
 
     async def _initialize_index_state(self) -> None:
         self._logger.info('Getting state for index `%s`', self._config.name)
@@ -291,7 +250,7 @@ class OperationIndex(Index):
         operations: List[OperationData],
     ):
         """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
-        args: List[Optional[Union[TransactionContext, OriginationContext, OperationData]]] = []
+        args: List[Optional[Union[Transaction, Origination, OperationData]]] = []
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
             if operation is None:
                 args.append(None)
@@ -307,7 +266,7 @@ class OperationIndex(Index):
                 storage_type = pattern_config.storage_type_cls
                 storage = operation.get_merged_storage(storage_type)
 
-                transaction_context = TransactionContext(
+                transaction_context = Transaction(
                     data=operation,
                     parameter=parameter,
                     storage=storage,
@@ -318,7 +277,7 @@ class OperationIndex(Index):
                 storage_type = pattern_config.storage_type_cls
                 storage = operation.get_merged_storage(storage_type)
 
-                origination_context = OriginationContext(
+                origination_context = Origination(
                     data=operation,
                     storage=storage,
                 )
@@ -433,7 +392,7 @@ class BigMapIndex(Index):
         matched_big_maps: List[List[BigMapData]],
     ) -> None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-        args: List[List[BigMapContext]] = []
+        args: List[List[BigMapDiff]] = []
         for matched_big_map_group, pattern_config in zip(matched_big_maps, handler_config.pattern):
             big_map_contexts = []
             for big_map in matched_big_map_group:
@@ -449,7 +408,7 @@ class BigMapIndex(Index):
                     value_type = pattern_config.value_type_cls
                     value = value_type.parse_obj(big_map.value)
 
-                big_map_context = BigMapContext(  # type: ignore
+                big_map_context = BigMapDiff(  # type: ignore
                     action=big_map.action,
                     key=key,
                     value=value,

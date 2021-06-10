@@ -5,12 +5,12 @@ import demo_tzbtc.models as models
 from demo_tzbtc.handlers.on_balance_update import on_balance_update
 from demo_tzbtc.types.tzbtc.parameter.transfer import TransferParameter
 from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
+from dipdup.models import OperationData, OperationHandlerContext, Origination, Transaction
 
 
 async def on_transfer(
     ctx: OperationHandlerContext,
-    transfer: TransactionContext[TransferParameter, TzbtcStorage],
+    transfer: Transaction[TransferParameter, TzbtcStorage],
 ) -> None:
     if transfer.parameter.from_ == transfer.parameter.to:
         return

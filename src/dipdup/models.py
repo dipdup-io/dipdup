@@ -147,7 +147,7 @@ class OperationData:
 
 
 @dataclass
-class TransactionContext(Generic[ParameterType, StorageType]):
+class Transaction(Generic[ParameterType, StorageType]):
     """Wrapper for every transaction in handler arguments"""
 
     data: OperationData
@@ -156,7 +156,7 @@ class TransactionContext(Generic[ParameterType, StorageType]):
 
 
 @dataclass
-class OriginationContext(Generic[StorageType]):
+class Origination(Generic[StorageType]):
     """Wrapper for every origination in handler arguments"""
 
     data: OperationData
@@ -173,7 +173,7 @@ class BigMapAction(Enum):
 
 
 @dataclass
-class BigMapContext(Generic[KeyType, ValueType]):
+class BigMapDiff(Generic[KeyType, ValueType]):
     """Wrapper for every big map diff in each list of handler arguments"""
 
     action: BigMapAction

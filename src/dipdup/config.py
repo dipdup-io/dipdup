@@ -237,16 +237,16 @@ class PatternConfig(ABC):
     def format_origination_argument(cls, module_name: str, optional: bool) -> str:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return f'{module_name}_origination: Optional[OriginationContext[{storage_cls}]] = None,'
-        return f'{module_name}_origination: OriginationContext[{storage_cls}],'
+            return f'{module_name}_origination: Optional[Origination[{storage_cls}]] = None,'
+        return f'{module_name}_origination: Origination[{storage_cls}],'
 
     @classmethod
     def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> str:
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return f'{entrypoint}: Optional[TransactionContext[{parameter_cls}, {storage_cls}]] = None,'
-        return f'{entrypoint}: TransactionContext[{parameter_cls}, {storage_cls}],'
+            return f'{entrypoint}: Optional[Transaction[{parameter_cls}, {storage_cls}]] = None,'
+        return f'{entrypoint}: Transaction[{parameter_cls}, {storage_cls}],'
 
     @classmethod
     def format_empty_operation_argument(cls, transaction_id: int, optional: bool) -> str:
