@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from collections import deque, namedtuple
 from contextlib import suppress
 import logging
@@ -9,6 +10,8 @@ from dipdup.config import (
     ContractConfig,
     DipDupConfig,
     IndexConfig,
+    IndexConfigT,
+    IndexConfigTemplateT,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerPatternConfigT,
@@ -18,7 +21,7 @@ from dipdup.config import (
 )
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.models import BigMapAction, BigMapContext, BigMapData, OperationData, OriginationContext, State, TransactionContext
+from dipdup.models import BigMapAction, BigMapContext, BigMapData, OperationData, OriginationContext, State, TemporaryState, TransactionContext
 from tortoise.transactions import in_transaction
 
 from dipdup.utils import reindex, restart
@@ -81,38 +84,76 @@ class BigMapHandlerContext(HandlerContext):
 
 
 class Index:
-    ...
-
-
-class OperationIndex(Index):
-    def __init__(self, ctx: HandlerContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: HandlerContext, config: IndexConfigTemplateT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
         self._config = config
         self._datasource = datasource
 
         self._logger = logging.getLogger(__name__)
-        self._queue: Deque[Tuple[int, List[OperationData]]] = deque()
+        self._state: Optional[State] = None
 
-    @property
-    def state(self) -> State:
-        return self._config.state
-
-    def push(self, level: int, operations: List[OperationData]):
-        self._queue.append((level, operations))
+    async def get_state(self) -> State:
+        if self._state is None:
+            await self._initialize_index_state()
+        return cast(State, self._state)
 
     async def process(self) -> None:
         self._logger.info('Processing index `%s`', self._config.name)
+        state = await self.get_state()
         if self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to latest block')
             last_level = (await self._datasource.get_latest_block())['level']
             await self._synchronize(last_level)
-        elif self._datasource.sync_level > self.state.level:
+        elif self._datasource.sync_level > state.level:
             self._logger.info('Index is behind datasource, sync to datasource level')
             last_level = self._datasource.sync_level
             await self._synchronize(last_level)
         else:
             self._logger.info('Processing websocket queue')
             await self._process_queue()
+    
+    @abstractmethod
+    async def _synchronize(self, last_level: int) -> None:
+        ...
+
+    @abstractmethod
+    async def _process_queue(self) -> None:
+        ...
+
+
+    async def _initialize_index_state(self) -> None:
+        self._logger.info('Getting state for index `%s`', self._config.name)
+        index_hash = self._config.hash()
+        state = await State.get_or_none(
+            index_name=self._config.name,
+            index_type=self._config.kind,
+        )
+        if state is None:
+            state_cls = TemporaryState if self._config.stateless else State
+            state = state_cls(
+                index_name=self._config.name,
+                index_type=self._config.kind,
+                hash=index_hash,
+                level=self._config.first_block,
+            )
+            await state.save()
+
+        elif state.hash != index_hash:
+            self._logger.warning('Config hash mismatch, reindexing')
+            await reindex()
+
+        self._state = state
+
+
+class OperationIndex(Index):
+    _config: OperationIndexConfig
+
+    def __init__(self, ctx: HandlerContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
+        super().__init__(ctx, config, datasource)
+        self._queue: Deque[Tuple[int, List[OperationData]]] = deque()
+
+    def push(self, level: int, operations: List[OperationData]):
+        self._queue.append((level, operations))
 
     async def _process_queue(self):
         with suppress(IndexError):
@@ -122,7 +163,8 @@ class OperationIndex(Index):
 
     async def _synchronize(self, last_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        first_level = self.state.level
+        state = await self.get_state()
+        first_level = state.level
         if first_level >= last_level:
             raise RuntimeError(first_level, last_level)
 
@@ -143,18 +185,19 @@ class OperationIndex(Index):
             self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_level_operations(level, operations)
 
-        self.state.level = last_level  # type: ignore
-        await self.state.save()
+        state.level = last_level  # type: ignore
+        await state.save()
 
     async def _process_level_operations(self, level: int, operations: List[OperationData]):
-        if self.state.level >= level:
-            raise RuntimeError(self.state.level, level)
+        state = await self.get_state()
+        if state.level >= level:
+            raise RuntimeError(state.level, level)
 
         async with in_transaction():
             await self._process_operations(operations)
 
-            self.state.level = level  # type: ignore
-            await self.state.save()
+            state.level = level  # type: ignore
+            await state.save()
 
     def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
@@ -322,35 +365,15 @@ class OperationIndex(Index):
         return set(addresses)
 
 
-class BigMapIndex:
+class BigMapIndex(Index):
+    _config: BigMapIndexConfig
+
     def __init__(self, ctx: HandlerContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
-        self._ctx = ctx
-        self._config = config
-        self._datasource = datasource
-
-        self._logger = logging.getLogger(__name__)
+        super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[int, List[BigMapData]]] = deque()
-
-    @property
-    def state(self) -> State:
-        return self._config.state
 
     def push(self, level: int, big_maps: List[BigMapData]):
         self._queue.append((level, big_maps))
-
-    async def process(self) -> None:
-        self._logger.info('Processing index `%s`', self._config.name)
-        if self._datasource.sync_level is None:
-            self._logger.info('Datasource is not active, sync to latest block')
-            last_level = (await self._datasource.get_latest_block())['level']
-            await self._synchronize(last_level)
-        elif self._datasource.sync_level > self.state.level:
-            self._logger.info('Index is behind datasource, sync to datasource level')
-            last_level = self._datasource.sync_level
-            await self._synchronize(last_level)
-        else:
-            self._logger.info('Processing websocket queue')
-            await self._process_queue()
 
     async def _process_queue(self):
         with suppress(IndexError):
@@ -360,7 +383,8 @@ class BigMapIndex:
 
     async def _synchronize(self, last_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        first_level = self.state.level
+        state = await self.get_state()
+        first_level = state.level
         if first_level >= last_level:
             raise RuntimeError(first_level, last_level)
 
@@ -381,18 +405,19 @@ class BigMapIndex:
             self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_level_big_maps(level, big_maps)
 
-        self.state.level = last_level  # type: ignore
-        await self.state.save()
+        state.level = last_level  # type: ignore
+        await state.save()
 
     async def _process_level_big_maps(self, level: int, big_maps: List[BigMapData]):
-        if self.state.level >= level:
-            raise RuntimeError(self.state.level, level)
+        state = await self.get_state()
+        if state.level >= level:
+            raise RuntimeError(state.level, level)
 
         async with in_transaction():
             await self._process_big_maps(big_maps)
 
-            self.state.level = level  # type: ignore
-            await self.state.save()
+            state.level = level  # type: ignore
+            await state.save()
 
     def _match_big_map(self, pattern_config: BigMapHandlerPatternConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""

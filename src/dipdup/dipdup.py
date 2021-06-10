@@ -62,15 +62,14 @@ class IndexDispatcher:
             return
 
         self._logger.info('Reloading config')
-        self._ctx.config.pre_initialize()
-        await self._ctx.config.initialize()
+        self._ctx.config.initialize()
 
         for index_config in self._ctx.config.indexes.values():
             if isinstance(index_config, StaticTemplateConfig):
                 raise RuntimeError
             await self.add_index(index_config)
 
-        self._ctx._updated = False
+        self._ctx.reset()
 
     async def dispatch_operations(self, operations: List[OperationData]) -> None:
         assert len(set(op.level for op in operations)) == 1
@@ -87,12 +86,15 @@ class IndexDispatcher:
         ...
 
     async def run(self):
+        self._logger.info('Starting index dispatcher')
         for datasource in self._ctx.datasources.values():
             if not isinstance(datasource, TzktDatasource):
                 continue
             datasource.on('operations', self.dispatch_operations)
             datasource.on('big_maps', self.dispatch_big_maps)
             datasource.on('rollback', self.rollback)
+
+        self._ctx.commit()
 
         while True:
             await self.reload_config()
@@ -118,7 +120,6 @@ class DipDup:
 
     async def init(self, dynamic: bool) -> None:
         """Create new or update existing dipdup project"""
-        self._config.pre_initialize()
         await self._create_datasources()
 
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
@@ -132,6 +133,7 @@ class DipDup:
 
     async def run(self, reindex: bool) -> None:
         """Main entrypoint"""
+
         url = self._config.database.connection_string
         models = f'{self._config.package}.models'
 
@@ -163,6 +165,7 @@ class DipDup:
         config_module = importlib.import_module(f'{self._config.package}.config')
         config_handler = getattr(config_module, 'configure')
         await config_handler(self._config, self._datasources)
+        self._config.initialize()
 
     async def _create_datasources(self) -> None:
         datasource: DatasourceT

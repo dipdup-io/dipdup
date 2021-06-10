@@ -501,28 +501,12 @@ class TemplateValuesMixin:
         self._template_values = value
 
 
-class StateMixin:
-    def __post_init_post_parse__(self) -> None:
-        self._state: Optional[StateT] = None
-
-    @property
-    def state(self) -> 'StateT':
-        if not self._state:
-            raise RuntimeError('Config is not initialized')
-        return self._state
-
-    @state.setter
-    def state(self, value: 'StateT') -> None:
-        self._state = value
-
-
 @dataclass
-class IndexConfig(TemplateValuesMixin, StateMixin, NameMixin):
+class IndexConfig(TemplateValuesMixin, NameMixin):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
-        StateMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
 
     def hash(self) -> str:
@@ -621,7 +605,7 @@ class BigMapHandlerConfig(HandlerConfig):
 
 
 @dataclass
-class BigMapIndexConfig(IndexConfig, StateMixin):
+class BigMapIndexConfig(IndexConfig):
     kind: Literal['big_map']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BigMapHandlerConfig]
@@ -637,7 +621,7 @@ class BlockHandlerConfig(HandlerConfig):
 
 
 @dataclass
-class BlockIndexConfig(IndexConfig, StateMixin):
+class BlockIndexConfig(IndexConfig):
     """Stub, not implemented"""
 
     kind: Literal['block']
@@ -712,7 +696,7 @@ class DipDupConfig:
         self._pre_initialized = []
         self._initialized = []
         self.validate()
-        self.pre_initialize()
+        self.initialize()
 
     def validate(self) -> None:
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
@@ -765,7 +749,7 @@ class DipDupConfig:
                 new_index_config.template_values = index_config.values
                 self.indexes[index_name] = new_index_config
 
-    def pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
+    def _pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
         if index_name in self._pre_initialized:
             return
@@ -817,13 +801,13 @@ class DipDupConfig:
 
         self._pre_initialized.append(index_name)
 
-    def pre_initialize(self) -> None:
+    def _pre_initialize(self) -> None:
         for name, config in self.datasources.items():
             config.name = name
 
         self.resolve_static_templates()
         for index_name, index_config in self.indexes.items():
-            self.pre_initialize_index(index_name, index_config)
+            self._pre_initialize_index(index_name, index_config)
 
         _logger.info('Verifying callback uniqueness')
         for callback, patterns in self._callback_patterns.items():
@@ -888,50 +872,23 @@ class DipDupConfig:
         config = cls(**json_config)
         return config
 
-    async def _initialize_index_state(
-        self, index_name: str, index_config: Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
-    ):
-        _logger.info('Getting state for index `%s`', index_name)
-        index_hash = index_config.hash()
-        state = await State.get_or_none(
-            index_name=index_name,
-            index_type=index_config.kind,
-        )
-        if state is None:
-            state_cls = TemporaryState if index_config.stateless else State
-            state = state_cls(
-                index_name=index_name,
-                index_type=index_config.kind,
-                hash=index_hash,
-                level=index_config.first_block - 1,
-            )
-            await state.save()
-
-        elif state.hash != index_hash:
-            _logger.warning('Config hash mismatch, reindexing')
-            await reindex()
-
-        index_config.state = state
-
-    async def _initialize_handler_callback(self, handler_config: HandlerConfig) -> None:
+    def _initialize_handler_callback(self, handler_config: HandlerConfig) -> None:
         _logger.info('Registering handler callback `%s`', handler_config.callback)
         handler_module = importlib.import_module(f'{self.package}.handlers.{handler_config.callback}')
         callback_fn = getattr(handler_module, handler_config.callback)
         handler_config.callback_fn = callback_fn
 
-    async def initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
+    def initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         if index_name in self._initialized:
             return
 
         if isinstance(index_config, StaticTemplateConfig):
             raise RuntimeError('Config is not pre-initialized')
 
-        await self._initialize_index_state(index_name, index_config)
-
         if isinstance(index_config, OperationIndexConfig):
 
             for operation_handler_config in index_config.handlers:
-                await self._initialize_handler_callback(operation_handler_config)
+                self._initialize_handler_callback(operation_handler_config)
 
                 for operation_pattern_config in operation_handler_config.pattern:
                     if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
@@ -950,7 +907,7 @@ class DipDupConfig:
         # TODO: BigMapTypeMixin, initialize_big_map_type
         elif isinstance(index_config, BigMapIndexConfig):
             for big_map_handler_config in index_config.handlers:
-                await self._initialize_handler_callback(big_map_handler_config)
+                self._initialize_handler_callback(big_map_handler_config)
 
                 for big_map_pattern_config in big_map_handler_config.pattern:
                     _logger.info('Registering big map types for path `%s`', big_map_pattern_config.path)
@@ -979,11 +936,12 @@ class DipDupConfig:
 
         self._initialized.append(index_name)
 
-    async def initialize(self) -> None:
+    def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)
 
+        self._pre_initialize()
         for index_name, index_config in self.indexes.items():
-            await self.initialize_index(index_name, index_config)
+            self.initialize_index(index_name, index_config)
 
 
 @dataclass
