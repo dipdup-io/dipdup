@@ -2,7 +2,6 @@ import asyncio
 import hashlib
 import importlib
 import logging
-from collections import deque
 from os.path import join
 from posix import listdir
 from typing import Dict, List, cast
@@ -12,7 +11,6 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
-from dipdup.exceptions import ConfigurationError
 from dipdup.index import BigMapIndex, OperationIndex, HandlerContext, Index
 
 import dipdup.utils as utils

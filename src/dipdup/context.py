@@ -1,7 +1,8 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from dipdup.config import DipDupConfig
+from dipdup.config import ContractConfig, DipDupConfig, StaticTemplateConfig
 from dipdup.datasources import DatasourceT
+from dipdup.exceptions import ConfigurationError
 from dipdup.models import OperationData
 
 from dipdup.utils import reindex, restart
@@ -36,13 +37,24 @@ class HandlerContext:
     async def restart(self) -> None:
         await restart()
 
-    # TODO
-    async def add_contract(self):
-        ...
+    def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
+        if name in self.config.contracts:
+            raise ConfigurationError(f'Contract `{name}` is already exists')
+        self.config.contracts[name] = ContractConfig(
+            address=address,
+            typename=typename,
+        )
+        self._updated = True
 
-    # TODO
-    async def add_index(self):
-        ...
+    def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
+        if name in self.config.indexes:
+            raise ConfigurationError(f'Index `{name}` is already exists')
+        self.config.get_template(template)
+        self.config.indexes[name] = StaticTemplateConfig(
+            template=template,
+            values=values,
+        )
+        self._updated = True
 
 
 class OperationHandlerContext(HandlerContext):
