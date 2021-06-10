@@ -12,6 +12,7 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
+from dipdup.exceptions import ConfigurationError
 from dipdup.index import BigMapIndex, OperationIndex, HandlerContext, Index
 
 import dipdup.utils as utils
@@ -19,6 +20,7 @@ from dipdup import __version__
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
     BcdDatasourceConfig,
+    BigMapIndexConfig,
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
@@ -48,10 +50,21 @@ class IndexDispatcher:
         if isinstance(index_config, OperationIndexConfig):
             datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
             datasource = self._ctx.datasources[datasource_name]
-            index = OperationIndex(self._ctx, index_config, datasource)
-            self._indexes[index_config.name] = index
-
+            if not isinstance(datasource, TzktDatasource):
+                raise RuntimeError
+            operation_index = OperationIndex(self._ctx, index_config, datasource)
+            self._indexes[index_config.name] = operation_index
             await datasource.add_index(index_config)
+
+        elif isinstance(index_config, BigMapIndexConfig):
+            datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
+            datasource = self._ctx.datasources[datasource_name]
+            if not isinstance(datasource, TzktDatasource):
+                raise RuntimeError
+            big_map_index = BigMapIndex(self._ctx, index_config, datasource)
+            self._indexes[index_config.name] = big_map_index
+            await datasource.add_index(index_config)
+
         else:
             raise NotImplementedError
 

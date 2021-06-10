@@ -21,7 +21,7 @@ from dipdup.config import (
     OperationIndexConfig,
     OperationType,
 )
-from dipdup.context import HandlerContext, OperationHandlerContext
+from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import (
