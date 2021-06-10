@@ -6,9 +6,19 @@ from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
 from tortoise.transactions import in_transaction
 
-from dipdup.config import (BigMapHandlerConfig, BigMapHandlerPatternConfig, BigMapIndexConfig, ContractConfig, IndexConfigTemplateT,
-                           OperationHandlerConfig, OperationHandlerOriginationPatternConfig, OperationHandlerPatternConfigT,
-                           OperationHandlerTransactionPatternConfig, OperationIndexConfig, OperationType)
+from dipdup.config import (
+    BigMapHandlerConfig,
+    BigMapHandlerPatternConfig,
+    BigMapIndexConfig,
+    ContractConfig,
+    IndexConfigTemplateT,
+    OperationHandlerConfig,
+    OperationHandlerOriginationPatternConfig,
+    OperationHandlerPatternConfigT,
+    OperationHandlerTransactionPatternConfig,
+    OperationIndexConfig,
+    OperationType,
+)
 from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction

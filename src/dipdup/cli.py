@@ -76,9 +76,6 @@ async def init(ctx, dynamic: bool):
     await dipdup.init(dynamic)
 
 
-# TODO: Init single contract/typename
-
-
 @cli.command(help='Clear development request cache')
 @click.pass_context
 @click_async

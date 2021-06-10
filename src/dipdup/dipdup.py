@@ -14,8 +14,17 @@ from tortoise.utils import get_schema_sql
 
 import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import (BcdDatasourceConfig, BigMapIndexConfig, DatasourceConfigT, DipDupConfig, IndexConfigTemplateT,
-                           OperationIndexConfig, PostgresDatabaseConfig, StaticTemplateConfig, TzktDatasourceConfig)
+from dipdup.config import (
+    BcdDatasourceConfig,
+    BigMapIndexConfig,
+    DatasourceConfigT,
+    DipDupConfig,
+    IndexConfigTemplateT,
+    OperationIndexConfig,
+    PostgresDatabaseConfig,
+    StaticTemplateConfig,
+    TzktDatasourceConfig,
+)
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -73,7 +82,6 @@ class IndexDispatcher:
     async def dispatch_operations(self, operations: List[OperationData]) -> None:
         assert len(set(op.level for op in operations)) == 1
         level = operations[0].level
-        # FIXME: Split by indexes
         for index in self._indexes.values():
             if isinstance(index, OperationIndex):
                 index.push(level, operations)
@@ -81,7 +89,6 @@ class IndexDispatcher:
     async def dispatch_big_maps(self, big_maps: List[BigMapData]) -> None:
         assert len(set(op.level for op in big_maps)) == 1
         level = big_maps[0].level
-        # FIXME: Split by indexes
         for index in self._indexes.values():
             if isinstance(index, BigMapIndex):
                 index.push(level, big_maps)
@@ -165,8 +172,7 @@ class DipDup:
         await self._create_datasources()
         config_module = importlib.import_module(f'{self._config.package}.config')
         config_handler = getattr(config_module, 'configure')
-        # FIXME: pass ctx
-        await config_handler(self._config, self._datasources)
+        await config_handler(self._ctx)
         self._config.initialize()
 
     async def _create_datasources(self) -> None:

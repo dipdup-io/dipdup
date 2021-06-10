@@ -10,8 +10,13 @@ from tortoise import Tortoise
 from demo_hic_et_nunc.types.hen_minter.parameter.collect import CollectParameter
 from demo_registrydao.types.registry.parameter.propose import ProposeParameter
 from demo_registrydao.types.registry.storage import Proposals, RegistryStorage
-from dipdup.config import (ContractConfig, OperationHandlerConfig, OperationHandlerTransactionPatternConfig, OperationIndexConfig,
-                           OperationType)
+from dipdup.config import (
+    ContractConfig,
+    OperationHandlerConfig,
+    OperationHandlerTransactionPatternConfig,
+    OperationIndexConfig,
+    OperationType,
+)
 from dipdup.context import OperationHandlerContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource, dedup_operations
 from dipdup.dipdup import DipDup
@@ -93,7 +98,6 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         )
         self.assertEqual(2, len(client.handlers))
 
-    @skip('FIXME')
     async def test_on_fetch_operations(self):
         self.datasource._transaction_subscriptions = {self.index_config.contracts[0].address: [OperationType.transaction]}
         with open(join(dirname(__file__), 'operations.json')) as file:
@@ -167,7 +171,6 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertIsInstance(callback_mock.await_args[0][1].parameter, CollectParameter)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)
 
-    @skip('FIXME')
     async def test_on_operation_match_with_storage(self):
         with open(join(dirname(__file__), 'operations-storage.json')) as file:
             operations_message = json.load(file)

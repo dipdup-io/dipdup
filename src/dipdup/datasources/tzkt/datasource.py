@@ -9,8 +9,13 @@ from aiosignalrcore.messages.completion_message import CompletionMessage  # type
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from pyee import AsyncIOEventEmitter  # type: ignore
 
-from dipdup.config import (BigMapIndexConfig, ContractConfig, IndexConfigTemplateT, OperationHandlerOriginationPatternConfig,
-                           OperationIndexConfig)
+from dipdup.config import (
+    BigMapIndexConfig,
+    ContractConfig,
+    IndexConfigTemplateT,
+    OperationHandlerOriginationPatternConfig,
+    OperationIndexConfig,
+)
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import BigMapAction, BigMapData, OperationData

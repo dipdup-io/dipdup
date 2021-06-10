@@ -10,8 +10,18 @@ from typing import Any, Dict
 
 from jinja2 import Template
 
-from dipdup.config import (ROLLBACK_HANDLER, BigMapIndexConfig, ContractConfig, DipDupConfig, OperationHandlerOriginationPatternConfig,
-                           OperationHandlerTransactionPatternConfig, OperationIndexConfig, StaticTemplateConfig, TzktDatasourceConfig)
+from dipdup.config import (
+    ROLLBACK_HANDLER,
+    BigMapIndexConfig,
+    ContractConfig,
+    DipDupConfig,
+    OperationHandlerOriginationPatternConfig,
+    OperationHandlerTransactionPatternConfig,
+    OperationIndexConfig,
+    StaticTemplateConfig,
+    TzktDatasourceConfig,
+)
+from dipdup.datasources import DatasourceT
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import pascal_to_snake, snake_to_pascal
 
@@ -33,7 +43,7 @@ def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
 class DipDupCodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources) -> None:
+    def __init__(self, config: DipDupConfig, datasources: Dict[str, DatasourceT]) -> None:
         self._logger = logging.getLogger(__name__)
         self._config = config
         self._datasources = datasources
