@@ -3,7 +3,8 @@ from typing import Optional
 import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa12.parameter.transfer import TransferParameter
 from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
-from dipdup.models import OperationData, OperationHandlerContext, Origination, Transaction
+from dipdup.models import OperationData, Origination, Transaction
+from dipdup.context import OperationHandlerContext
 
 
 async def on_fa12_transfer(

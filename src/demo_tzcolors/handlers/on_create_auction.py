@@ -1,7 +1,8 @@
 import demo_tzcolors.models as models
 from demo_tzcolors.types.tzcolors_auction.parameter.create_auction import CreateAuctionParameter
 from demo_tzcolors.types.tzcolors_auction.storage import TzcolorsAuctionStorage
-from dipdup.models import OperationHandlerContext, Transaction
+from dipdup.models import Transaction
+from dipdup.context import OperationHandlerContext
 
 
 async def on_create_auction(

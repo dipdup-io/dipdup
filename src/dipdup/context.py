@@ -1,42 +1,10 @@
-from abc import abstractmethod
-from collections import deque, namedtuple
-from contextlib import suppress
-import logging
-from typing import Any, Deque, Dict, List, Optional, Set, Tuple, Union, cast
+from typing import Dict, List, Optional
 
-from pydantic import BaseModel
-from dipdup.config import (
-    BigMapHandlerConfig,
-    BigMapHandlerPatternConfig,
-    BigMapIndexConfig,
-    ContractConfig,
-    DipDupConfig,
-    IndexConfig,
-    IndexConfigT,
-    IndexConfigTemplateT,
-    OperationHandlerConfig,
-    OperationHandlerOriginationPatternConfig,
-    OperationHandlerPatternConfigT,
-    OperationHandlerTransactionPatternConfig,
-    OperationIndexConfig,
-    OperationType,
-)
+from dipdup.config import DipDupConfig
 from dipdup.datasources import DatasourceT
-from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.models import (
-    BigMapAction,
-    BigMapDiff,
-    BigMapData,
-    OperationData,
-    Origination,
-    State,
-    TemporaryState,
-    Transaction,
-)
-from tortoise.transactions import in_transaction
+from dipdup.models import OperationData
 
 from dipdup.utils import reindex, restart
-from pydantic.dataclasses import dataclass
 
 
 class HandlerContext:

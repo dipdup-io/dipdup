@@ -60,7 +60,10 @@ class Index:
     async def process(self) -> None:
         self._logger.info('Processing index `%s`', self._config.name)
         state = await self.get_state()
-        if self._datasource.sync_level is None:
+        if self._config.last_block:
+            last_level = self._config.last_block
+            await self._synchronize(last_level)
+        elif self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to latest block')
             last_level = (await self._datasource.get_latest_block())['level']
             await self._synchronize(last_level)
@@ -124,7 +127,9 @@ class OperationIndex(Index):
         """Fetch operations via Fetcher and pass to message callback"""
         state = await self.get_state()
         first_level = state.level
-        if first_level >= last_level:
+        if first_level == last_level:
+            return
+        if first_level > last_level:
             raise RuntimeError(first_level, last_level)
 
         self._logger.info('Fetching operations from level %s to %s', first_level, last_level)
@@ -344,7 +349,9 @@ class BigMapIndex(Index):
         """Fetch operations via Fetcher and pass to message callback"""
         state = await self.get_state()
         first_level = state.level
-        if first_level >= last_level:
+        if first_level == last_level:
+            return
+        if first_level > last_level:
             raise RuntimeError(first_level, last_level)
 
         self._logger.info('Fetching operations from level %s to %s', first_level, last_level)

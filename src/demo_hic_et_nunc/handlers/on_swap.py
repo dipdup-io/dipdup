@@ -1,7 +1,8 @@
 import demo_hic_et_nunc.models as models
 from demo_hic_et_nunc.types.hen_minter.parameter.swap import SwapParameter
 from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
-from dipdup.models import OperationHandlerContext, Transaction
+from dipdup.models import Transaction
+from dipdup.context import OperationHandlerContext
 
 
 async def on_swap(
