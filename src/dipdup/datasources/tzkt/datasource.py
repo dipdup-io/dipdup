@@ -9,13 +9,8 @@ from aiosignalrcore.messages.completion_message import CompletionMessage  # type
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from pyee import AsyncIOEventEmitter  # type: ignore
 
-from dipdup.config import (
-    BigMapIndexConfig,
-    ContractConfig,
-    IndexConfigTemplateT,
-    OperationHandlerOriginationPatternConfig,
-    OperationIndexConfig,
-)
+from dipdup.config import (BigMapIndexConfig, ContractConfig, IndexConfigTemplateT, OperationHandlerOriginationPatternConfig,
+                           OperationIndexConfig)
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import BigMapAction, BigMapData, OperationData
@@ -238,7 +233,7 @@ class BigMapFetcher:
                 for i in range(len(big_maps) - 1):
                     if big_maps[i].level != big_maps[i + 1].level:
                         yield big_maps[i].level, big_maps[: i + 1]
-                        big_maps = big_maps[i + 1 :]
+                        big_maps = big_maps[i + 1 :]  # noqa: E203
                         break
                 else:
                     break

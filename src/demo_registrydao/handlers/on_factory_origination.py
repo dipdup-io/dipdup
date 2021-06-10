@@ -1,8 +1,6 @@
-from typing import Optional, cast
+from typing import cast
 
-import demo_registrydao.models as models
 from demo_registrydao.types.registry.storage import RegistryStorage
-from dipdup.config import ContractConfig, StaticTemplateConfig
 from dipdup.context import OperationHandlerContext
 from dipdup.models import Origination
 

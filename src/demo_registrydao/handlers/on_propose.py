@@ -1,8 +1,8 @@
 import demo_registrydao.models as models
 from demo_registrydao.types.registry.parameter.propose import ProposeParameter
 from demo_registrydao.types.registry.storage import RegistryStorage
-from dipdup.models import Origination, Transaction
 from dipdup.index import OperationHandlerContext
+from dipdup.models import Transaction
 
 
 async def on_propose(

@@ -6,28 +6,19 @@ from contextlib import suppress
 from os import mkdir
 from os.path import basename, dirname, exists, join, splitext
 from shutil import rmtree
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 from jinja2 import Template
 
-from dipdup.config import (
-    ROLLBACK_HANDLER,
-    BigMapIndexConfig,
-    ContractConfig,
-    DatasourceConfigT,
-    DipDupConfig,
-    OperationHandlerOriginationPatternConfig,
-    OperationHandlerTransactionPatternConfig,
-    OperationIndexConfig,
-    StaticTemplateConfig,
-    TzktDatasourceConfig,
-)
+from dipdup.config import (ROLLBACK_HANDLER, BigMapIndexConfig, ContractConfig, DipDupConfig, OperationHandlerOriginationPatternConfig,
+                           OperationHandlerTransactionPatternConfig, OperationIndexConfig, StaticTemplateConfig, TzktDatasourceConfig)
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import pascal_to_snake, snake_to_pascal
 
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
-    """Preprocess bigmaps in JSONSchema. Those are unions as could be pointers. We resolve bigmaps from diffs so no need to include int in type signature."""
+    """Preprocess bigmaps in JSONSchema. Those are unions as could be pointers.
+    We resolve bigmaps from diffs so no need to include int in type signature."""
     if 'properties' in schema:
         return {
             **schema,
@@ -326,4 +317,4 @@ class DipDupCodeGenerator:
 
             address_schemas_json = await datasource.get_jsonschemas(address)
             self._schemas[datasource_config][address] = address_schemas_json
-        return self._schemas[datasource_config][address]
+        return self._schemas[datasource_config][contract_config.address]

@@ -3,8 +3,8 @@ import logging
 import os
 import re
 import sys
-from contextlib import asynccontextmanager
 import time
+from contextlib import asynccontextmanager
 from typing import AsyncIterator, Optional
 
 import aiohttp

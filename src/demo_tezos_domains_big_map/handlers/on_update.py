@@ -6,8 +6,8 @@ from demo_tezos_domains_big_map.types.name_registry.big_map.store_expiry_map_key
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_expiry_map_value import StoreExpiryMapValue
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_records_key import StoreRecordsKey
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_records_value import StoreRecordsValue
-from dipdup.models import BigMapAction, BigMapDiff
 from dipdup.context import BigMapHandlerContext
+from dipdup.models import BigMapAction, BigMapDiff
 
 _logger = logging.getLogger(__name__)
 

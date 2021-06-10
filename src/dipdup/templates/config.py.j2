@@ -1,8 +1,7 @@
 from typing import Dict
 
-from dipdup.config import DipDupConfig
-from dipdup.datasources import DatasourceT
+from dipdup.context import HandlerContext
 
 
-async def configure(config: DipDupConfig, datasources: Dict[str, DatasourceT]) -> None:
+async def configure(ctx: HandlerContext) -> None:
     ...

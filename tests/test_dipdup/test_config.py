@@ -2,11 +2,8 @@ from os.path import dirname, join
 from typing import Callable, Type
 from unittest import IsolatedAsyncioTestCase
 
-from tortoise import Tortoise
-
 from dipdup.config import ContractConfig, DipDupConfig, TzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils import tortoise_wrapper
 
 
 class ConfigTest(IsolatedAsyncioTestCase):
@@ -16,9 +13,7 @@ class ConfigTest(IsolatedAsyncioTestCase):
     async def test_load_initialize(self):
         config = DipDupConfig.load([self.path])
 
-        async with tortoise_wrapper('sqlite://:memory:'):
-            await Tortoise.generate_schemas()
-            await config.initialize()
+        config.initialize()
 
         self.assertIsInstance(config, DipDupConfig)
         self.assertEqual(

@@ -11,26 +11,16 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
-from dipdup.index import BigMapIndex, OperationIndex, HandlerContext, Index
 
 import dipdup.utils as utils
-from dipdup import __version__
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import (
-    BcdDatasourceConfig,
-    BigMapIndexConfig,
-    DatasourceConfigT,
-    DipDupConfig,
-    IndexConfigTemplateT,
-    OperationIndexConfig,
-    PostgresDatabaseConfig,
-    StaticTemplateConfig,
-    TzktDatasourceConfig,
-)
+from dipdup.config import (BcdDatasourceConfig, BigMapIndexConfig, DatasourceConfigT, DipDupConfig, IndexConfigTemplateT,
+                           OperationIndexConfig, PostgresDatabaseConfig, StaticTemplateConfig, TzktDatasourceConfig)
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.hasura import configure_hasura
+from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
 
 

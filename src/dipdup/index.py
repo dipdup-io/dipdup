@@ -1,38 +1,18 @@
+import logging
 from abc import abstractmethod
 from collections import deque, namedtuple
 from contextlib import suppress
-import logging
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
-from dipdup.config import (
-    BigMapHandlerConfig,
-    BigMapHandlerPatternConfig,
-    BigMapIndexConfig,
-    ContractConfig,
-    IndexConfigTemplateT,
-    OperationHandlerConfig,
-    OperationHandlerOriginationPatternConfig,
-    OperationHandlerPatternConfigT,
-    OperationHandlerTransactionPatternConfig,
-    OperationIndexConfig,
-    OperationType,
-)
-from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
-from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.models import (
-    BigMapAction,
-    BigMapDiff,
-    BigMapData,
-    OperationData,
-    Origination,
-    State,
-    TemporaryState,
-    Transaction,
-)
 from tortoise.transactions import in_transaction
 
+from dipdup.config import (BigMapHandlerConfig, BigMapHandlerPatternConfig, BigMapIndexConfig, ContractConfig, IndexConfigTemplateT,
+                           OperationHandlerConfig, OperationHandlerOriginationPatternConfig, OperationHandlerPatternConfigT,
+                           OperationHandlerTransactionPatternConfig, OperationIndexConfig, OperationType)
+from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
+from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
+from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
 from dipdup.utils import reindex
-
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 
@@ -331,6 +311,7 @@ class OperationIndex(Index):
             summary = await self._datasource.get_contract_summary(address)
             self._contract_hashes[address] = (summary['codeHash'], summary['typeHash'])
         return self._contract_hashes[address]
+
 
 class BigMapIndex(Index):
     _config: BigMapIndexConfig
