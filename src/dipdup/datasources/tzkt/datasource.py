@@ -3,21 +3,32 @@ import logging
 from collections import namedtuple
 from copy import copy
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict, List, NoReturn, Optional, Set, Tuple, Union, cast
+from typing import Any, AsyncGenerator, Dict, List, NoReturn, Optional, Sequence, Set, Tuple, Union, cast
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
 from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
+from pyee import AsyncIOEventEmitter  # type: ignore
 
-from dipdup.config import (ROLLBACK_HANDLER, BigMapHandlerConfig, BigMapHandlerPatternConfig, BigMapIndexConfig, ContractConfig,
-                           IndexConfigTemplateT, OperationHandlerConfig, OperationHandlerOriginationPatternConfig,
-                           OperationHandlerPatternConfigT, OperationHandlerTransactionPatternConfig, OperationIndexConfig, OperationType)
+from dipdup.config import (
+    ROLLBACK_HANDLER,
+    BigMapHandlerConfig,
+    BigMapHandlerPatternConfig,
+    BigMapIndexConfig,
+    ContractConfig,
+    IndexConfigTemplateT,
+    OperationHandlerConfig,
+    OperationHandlerOriginationPatternConfig,
+    OperationHandlerPatternConfigT,
+    OperationHandlerTransactionPatternConfig,
+    OperationIndexConfig,
+    OperationType,
+)
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import BigMapAction, BigMapContext, BigMapData, OperationData, OriginationContext, State, TransactionContext
 
-OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 OperationID = int
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
@@ -60,121 +71,46 @@ class OperationFetcherChannel(Enum):
     originations = 'originations'
 
 
-def dedup_operations(operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def dedup_operations(operations: List[OperationData]) -> List[OperationData]:
     """Merge operations from multiple endpoints"""
     return sorted(
-        list(({op['id']: op for op in operations}).values()),
-        key=lambda op: op['id'],
+        list(({op.id: op for op in operations}).values()),
+        key=lambda op: op.id,
     )
 
 
-class TzktRequestMixin:
-    """Common requests shared between datasource and fetchers"""
-
-    _logger: logging.Logger
-    _url: str
-    _proxy: DatasourceRequestProxy
-
-    async def get_similar_contracts(self, address: Address, strict: bool = False) -> List[Address]:
-        """Get list of contracts sharing the same code hash or type hash"""
-        entrypoint = 'same' if strict else 'similar'
-        self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
-
-        contracts = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/contracts/{address}/{entrypoint}',
-            params=dict(
-                select='address',
-                limit=TZKT_HTTP_REQUEST_LIMIT,
-            ),
-        )
-        # FIXME
-        return contracts
-
-    async def get_originated_contracts(self, address: Address) -> List[Address]:
-        """Get contracts originated from given address"""
-        self._logger.info('Fetching originated contracts for address `%s', address)
-        contracts = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/accounts/{address}/contracts',
-            params=dict(
-                limit=TZKT_HTTP_REQUEST_LIMIT,
-            ),
-            skip_cache=True,
-        )
-        return [c['address'] for c in contracts]
-
-    async def get_contract_summary(self, address: Address) -> Dict[str, Any]:
-        """Get contract summary"""
-        self._logger.info('Fetching contract summary for address `%s', address)
-        return await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/contracts/{address}',
-        )
-
-    async def get_contract_storage(self, address: Address) -> Dict[str, Any]:
-        """Get contract storage"""
-        self._logger.info('Fetching contract storage for address `%s', address)
-        return await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/contracts/{address}/storage',
-        )
-
-    async def get_jsonschemas(self, address: str) -> Dict[str, Any]:
-        """Get JSONSchemas for contract's storage/parameter/bigmap types"""
-        self._logger.info('Fetching jsonschemas for address `%s', address)
-        jsonschemas = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/contracts/{address}/interface',
-        )
-        self._logger.debug(jsonschemas)
-        return jsonschemas
-
-    async def get_latest_block(self) -> Dict[str, Any]:
-        """Get latest block (head)"""
-        self._logger.info('Fetching latest block')
-        block = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/head',
-            skip_cache=True,
-        )
-        self._logger.debug(block)
-        return block
-
-
-class OperationFetcher(TzktRequestMixin):
+class OperationFetcher:
     """Fetches and merges history of operations from multiple requests (channels) tracking their states independently.
     Created for each index while synchronizing via REST.
     """
 
     def __init__(
         self,
-        url: str,
-        proxy: DatasourceRequestProxy,
+        datasource: 'TzktDatasource',
         first_level: int,
         last_level: int,
         transaction_addresses: Set[Address],
         origination_addresses: Set[Address],
     ) -> None:
-        self._url = url
-        self._proxy = proxy
+        self._datasource = datasource
         self._first_level = first_level
         self._last_level = last_level
         self._transaction_addresses = transaction_addresses
         self._origination_addresses = origination_addresses
+
         self._logger = logging.getLogger(__name__)
         self._head: int = 0
         self._heads: Dict[OperationFetcherChannel, int] = {}
         self._offsets: Dict[OperationFetcherChannel, int] = {}
         self._fetched: Dict[OperationFetcherChannel, bool] = {}
-        self._operations: Dict[int, List[Dict[str, Any]]] = {}
+        self._operations: Dict[int, List[OperationData]] = {}
 
-    def _get_operations_head(self, operations: List[Dict[str, Any]]) -> int:
+    def _get_operations_head(self, operations: List[OperationData]) -> int:
         """Get latest block level (head) of sorted operations batch"""
         for i in range(len(operations) - 1)[::-1]:
-            if operations[i]['level'] != operations[i + 1]['level']:
-                return operations[i]['level']
-        return operations[0]['level']
+            if operations[i].level != operations[i + 1].level:
+                return operations[i].level
+        return operations[0].level
 
     async def _fetch_originations(self) -> None:
         """Fetch a single batch of originations, bump channel offset"""
@@ -187,24 +123,15 @@ class OperationFetcher(TzktRequestMixin):
 
         self._logger.debug('Fetching originations of %s', self._origination_addresses)
 
-        originations = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/operations/originations',
-            params={
-                "originatedContract.in": ','.join(self._origination_addresses),
-                "offset": self._offsets[key],
-                "limit": TZKT_HTTP_REQUEST_LIMIT,
-                "level.gt": self._first_level,
-                "level.le": self._last_level,
-                "select": ','.join(ORIGINATION_OPERATION_FIELDS),
-                "status": "applied",
-            },
+        originations = await self._datasource.get_originations(
+            addresses=self._origination_addresses,
+            offset=self._offsets[key],
+            first_level=self._first_level,
+            last_level=self._last_level,
         )
 
         for op in originations:
-            # NOTE: `type` field needs to be set manually when requesting operations by specific type
-            op['type'] = 'origination'
-            level = op['level']
+            level = op.level
             if level not in self._operations:
                 self._operations[level] = []
             self._operations[level].append(op)
@@ -229,24 +156,16 @@ class OperationFetcher(TzktRequestMixin):
 
         self._logger.debug('Fetching %s transactions of %s', field, self._transaction_addresses)
 
-        transactions = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/operations/transactions',
-            params={
-                f"{field}.in": ','.join(self._transaction_addresses),
-                "offset": self._offsets[key],
-                "limit": TZKT_HTTP_REQUEST_LIMIT,
-                "level.gt": self._first_level,
-                "level.le": self._last_level,
-                "select": ','.join(TRANSACTION_OPERATION_FIELDS),
-                "status": "applied",
-            },
+        transactions = await self._datasource.get_transactions(
+            field=field,
+            addresses=self._transaction_addresses,
+            offset=self._offsets[key],
+            first_level=self._first_level,
+            last_level=self._last_level,
         )
 
         for op in transactions:
-            # NOTE: type needs to be set manually when requesting operations by specific type
-            op['type'] = 'transaction'
-            level = op['level']
+            level = op.level
             if level not in self._operations:
                 self._operations[level] = []
             self._operations[level].append(op)
@@ -260,7 +179,7 @@ class OperationFetcher(TzktRequestMixin):
             self._offsets[key] += TZKT_HTTP_REQUEST_LIMIT
             self._heads[key] = self._get_operations_head(transactions)
 
-    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, List[Dict[str, Any]]], None]:
+    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, List[OperationData]], None]:
         """Iterate by operations from multiple channels. Return is splitted by level, deduped/sorted and ready to be passeed to Matcher."""
         for type_ in (
             OperationFetcherChannel.sender_transactions,
@@ -293,179 +212,6 @@ class OperationFetcher(TzktRequestMixin):
                 break
 
         assert not self._operations
-
-
-class OperationMatcher:
-    def __init__(
-        self,
-        dipdup,
-        indexes: Dict[str, OperationIndexConfig],
-    ) -> None:
-        """Matches operations of a single level with patterns of all registered indexes, spawns handler callback on match."""
-        self._logger = logging.getLogger(__name__)
-        self._dipdup = dipdup
-        self._indexes = indexes
-        self._level: Optional[int] = None
-        self._operations: Dict[OperationGroup, List[OperationData]] = {}
-
-    async def add(self, operation: OperationData) -> None:
-        """Add operation to cache, perform sanity checks"""
-        self._logger.debug('Adding operation %s to matcher (%s, %s)', operation.id, operation.hash, operation.counter)
-        self._logger.debug('level=%s operation.level=%s', self._level, operation.level)
-
-        if self._level is None:
-            self._level = operation.level
-        if self._level != operation.level:
-            raise RuntimeError('Operations must be splitted by level before being passed to Matcher')
-
-        key = OperationGroup(operation.hash, operation.counter)
-        if key not in self._operations:
-            self._operations[key] = []
-        self._operations[key].append(operation)
-
-    def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
-        """Match single operation with pattern"""
-        # NOTE: Reversed conditions are intentional
-        if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-            if pattern_config.entrypoint != operation.entrypoint:
-                return False
-            if pattern_config.destination:
-                if pattern_config.destination_contract_config.address != operation.target_address:
-                    return False
-            if pattern_config.source:
-                if pattern_config.source_contract_config.address != operation.sender_address:
-                    return False
-            return True
-
-        elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-            if pattern_config.source:
-                if pattern_config.source_contract_config.address != operation.sender_address:
-                    return False
-            if pattern_config.originated_contract:
-                if pattern_config.originated_contract_config.address != operation.originated_contract_address:
-                    return False
-            if pattern_config.similar_to:
-                if pattern_config.strict:
-                    if pattern_config.similar_to_contract_config.code_hash != operation.originated_contract_code_hash:
-                        return False
-                else:
-                    if pattern_config.similar_to_contract_config.type_hash != operation.originated_contract_type_hash:
-                        return False
-            return True
-        else:
-            raise NotImplementedError
-
-    async def process(self) -> None:
-        """Try to match operations in cache with all patterns from indexes."""
-        if self._level is None:
-            raise RuntimeError('Add operations to matcher before processing')
-
-        keys = list(self._operations.keys())
-        self._logger.info('Matching %s operation groups', len(keys))
-        for key, operations in self._operations.items():
-            self._logger.debug('Matching %s', key)
-            group_matched = False
-            origination = False
-
-            for index_config in self._indexes.values():
-                for handler_config in index_config.handlers:
-                    operation_idx = 0
-                    pattern_idx = 0
-                    matched_operations: List[Optional[OperationData]] = []
-
-                    # TODO: Ensure complex cases work, for ex. required argument after optional one
-                    # TODO: Add None to matched_operations where applicable (pattern is optional and operation not found)
-                    while operation_idx < len(operations):
-                        operation, pattern_config = operations[operation_idx], handler_config.pattern[pattern_idx]
-                        operation_matched = self._match_operation(pattern_config, operation)
-
-                        if operation.type == 'origination' and isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                            origination = True
-
-                            if operation_matched is True and pattern_config.origination_processed(
-                                cast(str, operation.originated_contract_address)
-                            ):
-                                operation_matched = False
-
-                        if operation_matched:
-                            matched_operations.append(operation)
-                            pattern_idx += 1
-                            operation_idx += 1
-                        elif pattern_config.optional:
-                            matched_operations.append(None)
-                            pattern_idx += 1
-                        else:
-                            operation_idx += 1
-
-                        if pattern_idx == len(handler_config.pattern):
-                            self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                            group_matched = True
-                            await self.on_match(index_config, handler_config, matched_operations, operations)
-
-                            matched_operations = []
-                            pattern_idx = 0
-
-                    if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
-                        self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                        group_matched = True
-                        await self.on_match(index_config, handler_config, matched_operations, operations)
-
-                # NOTE: Transaction addresses are unique between indexes, origination ones are not.
-                # NOTE: Stop matching after operation group is matched. But continue if it has originations.
-                # TODO: Ensure address intersection between indexes is really checked
-                if group_matched and not origination:
-                    break
-
-        self._operations = {}
-        self._level = None
-
-        self._dipdup.commit()
-
-    async def on_match(
-        self,
-        index_config: OperationIndexConfig,
-        handler_config: OperationHandlerConfig,
-        matched_operations: List[Optional[OperationData]],
-        operations: List[OperationData],
-    ):
-        """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
-        args: List[Optional[Union[TransactionContext, OriginationContext, OperationData]]] = []
-        for pattern_config, operation in zip(handler_config.pattern, matched_operations):
-            if operation is None:
-                args.append(None)
-
-            elif isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                if not pattern_config.entrypoint:
-                    args.append(operation)
-                    continue
-
-                parameter_type = pattern_config.parameter_type_cls
-                parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
-
-                storage_type = pattern_config.storage_type_cls
-                storage = operation.get_merged_storage(storage_type)
-
-                transaction_context = TransactionContext(
-                    data=operation,
-                    parameter=parameter,
-                    storage=storage,
-                )
-                args.append(transaction_context)
-
-            elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                storage_type = pattern_config.storage_type_cls
-                storage = operation.get_merged_storage(storage_type)
-
-                origination_context = OriginationContext(
-                    data=operation,
-                    storage=storage,
-                )
-                args.append(origination_context)
-
-            else:
-                raise NotImplementedError
-
-        await self._dipdup.spawn_operation_handler_callback(index_config, handler_config, args, self._level, operations)
 
 
 class BigMapMatcher:
@@ -589,7 +335,7 @@ class BigMapFetcher:
     ...
 
 
-class TzktDatasource(TzktRequestMixin):
+class TzktDatasource(AsyncIOEventEmitter):
     """Bridge between REST/WS TzKT endpoints and DipDup.
 
     * Converts raw API data to models
@@ -598,35 +344,144 @@ class TzktDatasource(TzktRequestMixin):
     * Calls Matchers to match received operation groups with indexes' pattern and spawn callbacks on match
     """
 
-    def __init__(self, url: str, dipdup) -> None:
-        self._logger = logging.getLogger(__name__)
+    def __init__(self, url: str, cache: bool) -> None:
+        super().__init__()
         self._url = url.rstrip('/')
-        self._dipdup = dipdup
 
-        self._operation_indexes: Dict[IndexName, OperationIndexConfig] = {}
-        self._big_map_indexes: Dict[IndexName, BigMapIndexConfig] = {}
+        self._logger = logging.getLogger(__name__)
         self._transaction_subscriptions: Set[Address] = set()
         self._origination_subscriptions: bool = False
         self._big_map_subscriptions: Dict[Address, List[Path]] = {}
-        self._operations_synchronized = asyncio.Event()
-        self._big_maps_synchronized = asyncio.Event()
+
         self._client: Optional[BaseHubConnection] = None
 
-        self._operation_matcher = OperationMatcher(dipdup, self._operation_indexes)
-        self._big_map_matcher = BigMapMatcher(dipdup, self._big_map_indexes)
+        self._started = asyncio.Event()
+        self._proxy = DatasourceRequestProxy(cache)
+        self._sync_level: Optional[int] = None
 
-        self._proxy = DatasourceRequestProxy(self._dipdup._config.cache_enabled)
-        self._synched_indexes: List[str] = []
+    @property
+    def request_limit(self) -> int:
+        return TZKT_HTTP_REQUEST_LIMIT
 
-    async def add_index(self, index_name: str, index_config: IndexConfigTemplateT) -> None:
+    @property
+    def sync_level(self) -> Optional[int]:
+        return self._sync_level
+
+    async def get_similar_contracts(self, address: Address, strict: bool = False) -> List[Address]:
+        """Get list of contracts sharing the same code hash or type hash"""
+        entrypoint = 'same' if strict else 'similar'
+        self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
+
+        contracts = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{address}/{entrypoint}',
+            params=dict(
+                select='address',
+                limit=TZKT_HTTP_REQUEST_LIMIT,
+            ),
+        )
+        return contracts
+
+    async def get_originated_contracts(self, address: Address) -> List[Address]:
+        """Get contracts originated from given address"""
+        self._logger.info('Fetching originated contracts for address `%s', address)
+        contracts = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/accounts/{address}/contracts',
+            params=dict(
+                limit=TZKT_HTTP_REQUEST_LIMIT,
+            ),
+            skip_cache=True,
+        )
+        return [c['address'] for c in contracts]
+
+    async def get_contract_summary(self, address: Address) -> Dict[str, Any]:
+        """Get contract summary"""
+        self._logger.info('Fetching contract summary for address `%s', address)
+        return await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{address}',
+        )
+
+    async def get_contract_storage(self, address: Address) -> Dict[str, Any]:
+        """Get contract storage"""
+        self._logger.info('Fetching contract storage for address `%s', address)
+        return await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{address}/storage',
+        )
+
+    async def get_jsonschemas(self, address: str) -> Dict[str, Any]:
+        """Get JSONSchemas for contract's storage/parameter/bigmap types"""
+        self._logger.info('Fetching jsonschemas for address `%s', address)
+        jsonschemas = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/contracts/{address}/interface',
+        )
+        self._logger.debug(jsonschemas)
+        return jsonschemas
+
+    async def get_latest_block(self) -> Dict[str, Any]:
+        """Get latest block (head)"""
+        self._logger.info('Fetching latest block')
+        block = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/head',
+            skip_cache=True,
+        )
+        self._logger.debug(block)
+        return block
+
+    async def get_originations(self, addresses: Set[str], offset: int, first_level, last_level) -> List[OperationData]:
+        raw_originations = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/operations/originations',
+            params={
+                "originatedContract.in": ','.join(addresses),
+                "offset": offset,
+                "limit": self.request_limit,
+                "level.gt": first_level,
+                "level.le": last_level,
+                "select": ','.join(ORIGINATION_OPERATION_FIELDS),
+                "status": "applied",
+            },
+        )
+        originations = []
+        for op in raw_originations:
+            # NOTE: `type` field needs to be set manually when requesting operations by specific type
+            op['type'] = 'origination'
+            originations.append(self.convert_operation(op))
+        return originations
+
+    async def get_transactions(self, field: str, addresses: Set[str], offset: int, first_level, last_level) -> List[OperationData]:
+        raw_transactions = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/operations/transactions',
+            params={
+                f"{field}.in": ','.join(addresses),
+                "offset": offset,
+                "limit": self.request_limit,
+                "level.gt": first_level,
+                "level.le": last_level,
+                "select": ','.join(TRANSACTION_OPERATION_FIELDS),
+                "status": "applied",
+            },
+        )
+        transactions = []
+        for op in raw_transactions:
+            # NOTE: type needs to be set manually when requesting operations by specific type
+            op['type'] = 'transaction'
+            transactions.append(self.convert_operation(op))
+        return transactions
+
+    async def add_index(self, index_config: IndexConfigTemplateT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions.
         If called in runtime need to `resync` then."""
 
-        self._logger.info('Adding index `%s`', index_name)
+        # self._logger.info('Adding index `%s`', index_name)
 
         if isinstance(index_config, OperationIndexConfig):
             await index_config.fetch_hashes(self)
-            self._operation_indexes[index_name] = index_config
 
             for contract_config in index_config.contracts or []:
                 self._transaction_subscriptions.add(cast(ContractConfig, contract_config).address)
@@ -637,7 +492,6 @@ class TzktDatasource(TzktRequestMixin):
                         self._origination_subscriptions = True
 
         elif isinstance(index_config, BigMapIndexConfig):
-            self._big_map_indexes[index_name] = index_config
 
             for big_map_handler_config in index_config.handlers:
                 for big_map_pattern_config in big_map_handler_config.pattern:
@@ -649,31 +503,6 @@ class TzktDatasource(TzktRequestMixin):
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
-
-    async def _get_transaction_addresses(self, index_config: OperationIndexConfig) -> Set[Address]:
-        """Get addresses to fetch transactions from during initial synchronization"""
-        if index_config.types and OperationType.transaction not in index_config.types:
-            return set()
-        return set(cast(ContractConfig, c).address for c in index_config.contracts or [])
-
-    async def _get_origination_addresses(self, index_config: OperationIndexConfig) -> Set[Address]:
-        """Get addresses to fetch origination from during initial synchronization"""
-        addresses = set()
-        for handler_config in index_config.handlers:
-            for pattern_config in handler_config.pattern:
-                if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                    if pattern_config.originated_contract:
-                        addresses.add(pattern_config.originated_contract_config.address)
-                    if pattern_config.source:
-                        for address in await self.get_originated_contracts(pattern_config.source_contract_config.address):
-                            addresses.add(address)
-                    if pattern_config.similar_to:
-                        for address in await self.get_similar_contracts(
-                            address=pattern_config.similar_to_contract_config.address,
-                            strict=pattern_config.strict,
-                        ):
-                            addresses.add(address)
-        return set(addresses)
 
     async def _get_big_map_addresses(self, index_config: BigMapIndexConfig):
         ...
@@ -702,55 +531,55 @@ class TzktDatasource(TzktRequestMixin):
 
         return self._client
 
-    async def set_state_level(self, index_config: IndexConfigTemplateT, level: int) -> None:
-        """Set state level and save model"""
-        index_config.state.level = level  # type: ignore
-        await index_config.state.save()
-
     async def run(self) -> None:
         """Main loop. Sync indexes via REST, start WS connection"""
         self._logger.info('Starting datasource')
-        rest_only = False
 
-        async def _synchronize():
-            nonlocal rest_only
-            latest_block = await self.get_latest_block()
+        await self._started.wait()
+        # rest_only = False
 
-            self._logger.info('Initial synchronizing operation indexes')
-            for index_config_name, operation_index_config in copy(self._operation_indexes).items():
-                self._logger.info('Synchronizing `%s`', index_config_name)
-                if operation_index_config.last_block:
-                    current_level = operation_index_config.last_block
-                    rest_only = True
-                else:
-                    current_level = latest_block['level']
+        # async def _synchronize():
+        #     nonlocal rest_only
+        #     latest_block = await self.get_latest_block()
 
-                await self.synchronize_operation_index(operation_index_config, current_level)
+        #     self._logger.info('Initial synchronizing operation indexes')
+        #     for index_config_name, operation_index_config in copy(self._operation_indexes).items():
+        #         self._logger.info('Synchronizing `%s`', index_config_name)
+        #         if operation_index_config.last_block:
+        #             current_level = operation_index_config.last_block
+        #             rest_only = True
+        #         else:
+        #             current_level = latest_block['level']
 
-            self._logger.info('Initial synchronizing big map indexes')
-            for index_config_name, big_map_index_config in copy(self._big_map_indexes).items():
-                self._logger.info('Synchronizing `%s`', index_config_name)
-                if big_map_index_config.last_block:
-                    current_level = big_map_index_config.last_block
-                    rest_only = True
-                else:
-                    current_level = latest_block['level']
+        #         await self.synchronize_operation_index(operation_index_config, current_level)
 
-                await self.synchronize_big_map_index(big_map_index_config, current_level)
+        #     self._logger.info('Initial synchronizing big map indexes')
+        #     for index_config_name, big_map_index_config in copy(self._big_map_indexes).items():
+        #         self._logger.info('Synchronizing `%s`', index_config_name)
+        #         if big_map_index_config.last_block:
+        #             current_level = big_map_index_config.last_block
+        #             rest_only = True
+        #         else:
+        #             current_level = latest_block['level']
 
-            await self._dipdup._executor.wait()
+        #         await self.synchronize_big_map_index(big_map_index_config, current_level)
 
-        await _synchronize()
-        if rest_only:
-            return
+        #     await self._dipdup._executor.wait()
 
-        # FIXME: Process spawned indexes before starting WS connection
-        await _synchronize()
-        if rest_only:
-            return
+        # await _synchronize()
+        # if rest_only:
+        #     return
+
+        # # FIXME: Process spawned indexes before starting WS connection
+        # await _synchronize()
+        # if rest_only:
+        #     return
 
         self._logger.info('Starting websocket client')
         await self._get_client().start()
+
+    async def start(self) -> None:
+        self._started.set()
 
     async def on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
@@ -817,40 +646,6 @@ class TzktDatasource(TzktRequestMixin):
                     }
                 ],
             )
-
-    async def synchronize_operation_index(self, index_config: OperationIndexConfig, last_level: int) -> None:
-        """Fetch operations via Fetcher and pass to message callback"""
-        if isinstance(index_config.state, State):
-            first_level = index_config.state.level
-            if first_level == last_level:
-                return
-        else:
-            first_level = 0
-
-        self._logger.info('Fetching operations from level %s to %s', first_level, last_level)
-
-        fetcher = OperationFetcher(
-            url=self._url,
-            proxy=self._proxy,
-            first_level=first_level,
-            last_level=last_level,
-            transaction_addresses=await self._get_transaction_addresses(index_config),
-            origination_addresses=await self._get_origination_addresses(index_config),
-        )
-
-        async for level, operations in fetcher.fetch_operations_by_level():
-            self._logger.info('Processing %s operations of level %s', len(operations), level)
-            await self.on_operation_message(
-                message=[
-                    {
-                        'type': TzktMessageType.DATA.value,
-                        'data': operations,
-                    },
-                ],
-                sync=True,
-            )
-
-        await self._dipdup.set_index_level(index_config, last_level)
 
     # TODO: Implement BigMapFetcher
     async def _fetch_big_maps(
@@ -934,7 +729,6 @@ class TzktDatasource(TzktRequestMixin):
     async def on_operation_message(
         self,
         message: List[Dict[str, Any]],
-        sync=False,
     ) -> None:
         """Invoke synchronization or parse raw WS/REST operations and pass to Matcher"""
 
@@ -946,41 +740,22 @@ class TzktDatasource(TzktRequestMixin):
 
             if message_type == TzktMessageType.STATE:
                 last_level = item['state']
-                self._logger.info('Got state message, current level: %s', last_level)
-                # NOTE: Ignore indexes added dynamically, reindexing will be invoked anyway
-                for index_name, index_config in copy(self._operation_indexes).items():
-                    first_level = index_config.state.level
-                    if first_level >= last_level:
-                        continue
-                    self._logger.info('Synchronizing `%s` since %s until %s', index_name, first_level, last_level)
-                    await self.synchronize_operation_index(index_config, last_level)
-                self._logger.info('All operation indexes are synchronized')
-                self._operations_synchronized.set()
+                self._sync_level = last_level
 
             elif message_type == TzktMessageType.DATA:
-                # NOTE: WS message, wait until REST synchronization is completed
-                if not sync and not self._operations_synchronized.is_set():
-                    self._logger.info('Waiting until synchronization is complete')
-                    await self._operations_synchronized.wait()
-                    self._logger.info('Synchronization is complete, processing websocket message')
-
-                # NOTE: Operations are deduped, sorted and splitted by level. Pass to Matcher as is.
+                operations = []
                 for operation_json in item['data']:
                     operation = self.convert_operation(operation_json)
                     if operation.status != 'applied':
                         continue
+                    operations.append(operation)
 
-                    await self._operation_matcher.add(operation)
-
-                await self._operation_matcher.process()
+                self.emit("operations", operations)
 
             elif message_type == TzktMessageType.REORG:
                 self._logger.info('Got reorg message, calling `%s` handler', ROLLBACK_HANDLER)
-                # NOTE: It doesn't matter which index to get
-                # TODO: Isn't it? Not sure.
-                from_level = list(self._operation_indexes.values())[0].state.level
                 to_level = item['state']
-                await self._dipdup.spawn_rollback_handler_callback(from_level, to_level)
+                self.emit("rollback", to_level)
 
             else:
                 self._logger.warning('%s is not supported', message_type)
@@ -1089,11 +864,11 @@ class TzktDatasource(TzktRequestMixin):
             value=big_map_json.get('content', {}).get('value'),
         )
 
-    async def resync(self) -> None:
-        """Call after adding new indexes in runtime to synchronize them"""
-        self._logger.info('Resync called')
-        await self._operations_synchronized.wait()
-        await self._big_maps_synchronized.wait()
-        self._operations_synchronized.clear()
-        self._big_maps_synchronized.clear()
-        await self.on_connect()
+    # async def resync(self) -> None:
+    #     """Call after adding new indexes in runtime to synchronize them"""
+    #     self._logger.info('Resync called')
+    #     await self._operations_synchronized.wait()
+    #     await self._big_maps_synchronized.wait()
+    #     self._operations_synchronized.clear()
+    #     self._big_maps_synchronized.clear()
+    #     await self.on_connect()

@@ -150,7 +150,23 @@ class ContractConfig:
 
 
 @dataclass
-class TzktDatasourceConfig:
+class NameMixin:
+    def __post_init_post_parse__(self) -> None:
+        self._name: Optional[str] = None
+
+    @property
+    def name(self) -> str:
+        if self._name is None:
+            raise RuntimeError('Config is not pre-initialized')
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._name = name
+
+
+@dataclass
+class TzktDatasourceConfig(NameMixin):
     """TzKT datasource config
 
     :param url: Base API url
@@ -469,22 +485,6 @@ class OperationHandlerConfig(HandlerConfig):
     """
 
     pattern: List[OperationHandlerPatternConfigT]
-
-
-@dataclass
-class NameMixin:
-    def __post_init_post_parse__(self) -> None:
-        self._name: Optional[str] = None
-
-    @property
-    def name(self) -> str:
-        if self._name is None:
-            raise RuntimeError('Config is not pre-initialized')
-        return self._name
-
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name
 
 
 @dataclass
@@ -818,6 +818,9 @@ class DipDupConfig:
         self._pre_initialized.append(index_name)
 
     def pre_initialize(self) -> None:
+        for name, config in self.datasources.items():
+            config.name = name
+
         self.resolve_static_templates()
         for index_name, index_config in self.indexes.items():
             self.pre_initialize_index(index_name, index_config)

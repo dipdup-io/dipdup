@@ -3,7 +3,8 @@ from typing import Optional, cast
 import demo_registrydao.models as models
 from demo_registrydao.types.registry.storage import RegistryStorage
 from dipdup.config import ContractConfig, StaticTemplateConfig
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
+from dipdup.index import OperationHandlerContext, OriginationContext
+from dipdup.models import *
 
 
 async def on_factory_origination(

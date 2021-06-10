@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum, Flag, auto
 import hashlib
 import importlib
 import logging
@@ -12,116 +13,90 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
+from dipdup.index import OperationIndex, HandlerContext, Index
 
 import dipdup.utils as utils
 from dipdup import __version__
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import (BcdDatasourceConfig, BigMapIndexConfig, DatasourceConfigT, DipDupConfig, IndexConfigTemplateT,
-                           PostgresDatabaseConfig, StaticTemplateConfig, TzktDatasourceConfig)
+from dipdup.config import (
+    BcdDatasourceConfig,
+    BigMapIndexConfig,
+    DatasourceConfigT,
+    DipDupConfig,
+    IndexConfigTemplateT,
+    OperationIndexConfig,
+    PostgresDatabaseConfig,
+    StaticTemplateConfig,
+    TzktDatasourceConfig,
+)
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.datasource import OperationFetcher, TzktDatasource
 from dipdup.hasura import configure_hasura
-from dipdup.models import BigMapHandlerContext, IndexType, OperationHandlerContext, State
-
-CallbackT = Tuple[Callable[..., Awaitable[None]], Iterable[Any], Mapping[str, Any]]
+from dipdup.models import BigMapData, IndexType, OperationData, State
 
 
-class CallbackExecutor:
-    """Executor for handler callbacks.
+class IndexDispatcher:
+    def __init__(self, ctx: HandlerContext) -> None:
+        self._ctx = ctx
 
-    Helps to avoid blocking datasource loop. Groups callbacks by level, performs some safety checks, bumps levels of matched indexes.
-    """
+        self._logger = logging.getLogger(__name__)
+        self._indexes: Dict[str, Index] = {}
 
-    def __init__(self) -> None:
-        self._logger = logging.getLogger(f'{__name__}.{self.__class__.__qualname__}')
-        self._callbacks: List[CallbackT] = []
-        self._indexes: Dict[str, IndexConfigTemplateT] = {}
-        self._level: Optional[int] = None
-        self._queue_ready = asyncio.Event()
-        self._queue: Deque[Awaitable[None]] = deque()
-
-    def submit(self, level: int, index_config: IndexConfigTemplateT, fn, *args, **kwargs) -> None:
-        """Submit callback to active level queue (not executed until `commit` is called)."""
-        if index_config.state.level >= level:
+    async def add_index(self, index_config: IndexConfigTemplateT) -> None:
+        if index_config.name in self._indexes:
             return
-        if self._level is None:
-            self._level = level
-        if self._level != level:
-            raise RuntimeError('Attempt to submit callback from different level before processing current one')
-        if index_config.name not in self._indexes:
-            self._indexes[index_config.name] = index_config
+        if isinstance(index_config, OperationIndexConfig):
+            datasource = self._ctx.datasources[index_config.datasource.name]
+            index = OperationIndex(self._ctx, index_config, datasource)
+            self._indexes[index_config.name] = index
 
-        callback: CallbackT = (fn, args, kwargs)
-        self._callbacks.append(callback)
+            await datasource.add_index(index_config)
+        else:
+            raise NotImplementedError
 
-    def commit(self) -> None:
-        """Wrap current level batch of callbacks with transaction wrapper and push to queue."""
-        if self._level is None:
-            return
+    async def reload_config(self):
+        self._ctx.config.pre_initialize()
+        await self._ctx.config.initialize()
 
-        coro = self._wrapper(
-            callbacks=tuple(self._callbacks),
-            indexes=tuple(self._indexes.values()),
-            level=self._level,
-        )
-        self.reset()
+        for index_config in self._ctx.config.indexes.values():
+            await self.add_index(index_config)
 
-        self._queue.append(coro)
-        self._queue_ready.set()
 
-    def reset(self) -> None:
-        """Start new level batch"""
-        self._callbacks = []
-        self._indexes = {}
-        self._level = None
+    async def dispatch_operations(self, operations: List[OperationData]) -> None:
+        # split by indexes
+        # pass to each
+        ...
 
-    async def run(self, datasource_tasks: List[asyncio.Task]) -> None:
-        """Run executor loop until cancellation. Process coros left in queue after interruption."""
-        stopping = False
+    async def dispatch_big_maps(self, big_maps: List[BigMapData]) -> None:
+        ...
+
+    async def rollback(self):
+        ...
+
+    async def run(self):
+        for datasource in self._ctx.datasources.values():
+            if not isinstance(datasource, TzktDatasource):
+                continue
+            datasource.on('operations', self.dispatch_operations)
+            datasource.on('big_maps', self.dispatch_big_maps)
+            datasource.on('rollback', self.rollback)
+
+        await self.reload_config()
+
         while True:
-            try:
-                coro = self._queue.popleft()
-                self._logger.debug('Executing %s, %s coros left', coro, len(self._queue))
-                await coro
-            except IndexError:
-                if stopping:
-                    return
-                if all([t.done() for t in datasource_tasks]):
-                    self._logger.info('Stopping callback executor loop')
-                    return
-                self._queue_ready.clear()
-                await self._queue_ready.wait()
-            except (asyncio.CancelledError, KeyboardInterrupt):
-                self._logger.info('Stopping, %s coros left', len(self._queue))
-                stopping = True
+            for index in self._indexes.values():
+                await index.process()
 
-    async def wait(self, size: int = 0) -> None:
-        """Pause current execution branch until queue is reduced to specific size.
-        Helps to keep memory consumption adequate.
-        """
-        while len(self._queue) > size:
-            await asyncio.sleep(0)
+            if self._ctx.updated:
+                await self.reload_config()
 
-    async def _wrapper(
-        self,
-        callbacks: Tuple[CallbackT, ...],
-        indexes: Tuple[IndexConfigTemplateT, ...],
-        level: int,
-    ) -> None:
-        """Wrapper for level batch of callbacks. Open transaction, execute callbacks, update states of related indexes."""
-        async with in_transaction():
-            len_callbacks = len(callbacks)
-            self._logger.info('Executing %s callbacks of level %s', len_callbacks, level)
-            for i, callback in enumerate(callbacks):
-                fn, args, kwargs = callback
-                self._logger.debug('%s/%s: %s', i, len_callbacks, fn)
-                await fn(*args, **kwargs)
+                self._ctx._updated = False
+                continue
 
-            self._logger.info('Done, updating state of %s indexes', len(indexes))
-            for index_config in indexes:
-                index_config.state.level = level  # type: ignore
-                await index_config.state.save()
+            if all(bool(index.state.level) for index in self._indexes.values()):
+                for datasource in self._ctx.datasources.values():
+                    await datasource.start()
 
 
 class DipDup:
@@ -132,11 +107,10 @@ class DipDup:
     def __init__(self, config: DipDupConfig) -> None:
         self._logger = logging.getLogger(__name__)
         self._config = config
-        self._spawned_indexes: List[str] = []
-        self._executor = CallbackExecutor()
         self._datasources: Dict[str, DatasourceT] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
-        self._resyncing: bool = False
+        self._ctx = HandlerContext(config=self._config, datasources=self._datasources)
+        self._index_dispatcher = IndexDispatcher(self._ctx)
 
     async def init(self, dynamic: bool) -> None:
         """Create new or update existing dipdup project"""
@@ -163,87 +137,20 @@ class DipDup:
             if self._config.configuration:
                 await self._configure()
 
-            await self._spawn_indexes()
-
             self._logger.info('Starting datasources')
+            # TODO: [] if rest_only
             datasource_tasks = [asyncio.create_task(d.run()) for d in self._datasources.values()]
             worker_tasks = []
 
             if self._config.hasura:
                 worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
-            worker_tasks.append(asyncio.create_task(self._executor.run(datasource_tasks)))
+            worker_tasks.append(asyncio.create_task(self._index_dispatcher.run()))
 
             try:
                 await asyncio.gather(*datasource_tasks, *worker_tasks)
             except (asyncio.CancelledError, KeyboardInterrupt):
                 map(lambda t: t.cancel(), worker_tasks + datasource_tasks)
-
-    async def spawn_operation_handler_callback(
-        self,
-        index_config,
-        handler_config,
-        args,
-        level,
-        operations,
-    ) -> None:
-        self._executor.submit(
-            level,
-            index_config,
-            self._operation_handler_callback,
-            *(index_config, handler_config, args, operations),
-        )
-        await self._executor.wait(2000)
-
-    async def spawn_big_map_handler_callback(
-        self,
-        index_config,
-        handler_config,
-        args,
-        level,
-    ):
-        self._executor.submit(
-            level,
-            index_config,
-            self._big_map_handler_callback,
-            *(index_config, handler_config, args),
-        )
-        await self._executor.wait(2000)
-
-    async def set_index_level(
-        self,
-        index_config,
-        level,
-    ):
-        self._executor.submit(level, index_config, self._set_index_level, *(index_config, level))
-        self._executor.commit()
-
-    async def _set_index_level(
-        self,
-        index_config,
-        level,
-    ):
-        index_config.state.level = level
-        await index_config.state.save()
-
-    async def spawn_rollback_handler_callback(
-        self,
-        from_level,
-        to_level,
-    ):
-        ...
-
-    def commit(self) -> None:
-        self._executor.commit()
-
-    async def _resync(self) -> None:
-        if self._resyncing:
-            return
-        self._resyncing = True
-        await self._executor.wait()
-        for datasource in self._datasources.values():
-            await datasource.resync()
-        self._resynching = False
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
@@ -259,7 +166,7 @@ class DipDup:
                 continue
 
             if isinstance(datasource_config, TzktDatasourceConfig):
-                datasource = TzktDatasource(datasource_config.url, self)
+                datasource = TzktDatasource(datasource_config.url, self._config.cache_enabled)
 
                 self._datasources[name] = datasource
                 self._datasources_by_config[datasource_config] = datasource
@@ -272,48 +179,29 @@ class DipDup:
             else:
                 raise NotImplementedError
 
-    async def _spawn_indexes(self, runtime=False) -> None:
-        self._config.pre_initialize()
-        await self._config.initialize()
+    # async def _spawn_indexes(self, runtime=False) -> None:
+    #     self._config.pre_initialize()
+    #     await self._config.initialize()
 
-        resync_datasources = []
-        for index_name, index_config in self._config.indexes.items():
-            if index_name in self._spawned_indexes:
-                continue
-            if isinstance(index_config, StaticTemplateConfig):
-                raise RuntimeError('Config is not pre-initialized')
+    #     resync_datasources = []
+    #     for index_name, index_config in self._config.indexes.items():
+    #         if index_name in self._spawned_indexes:
+    #             continue
+    #         if isinstance(index_config, StaticTemplateConfig):
+    #             raise RuntimeError('Config is not pre-initialized')
 
-            self._logger.info('Processing index `%s`', index_name)
-            datasource = cast(TzktDatasource, self._datasources_by_config[index_config.datasource_config])
-            if datasource not in resync_datasources:
-                resync_datasources.append(datasource)
+    #         self._logger.info('Processing index `%s`', index_name)
+    #         datasource = cast(TzktDatasource, self._datasources_by_config[index_config.datasource_config])
+    #         if datasource not in resync_datasources:
+    #             resync_datasources.append(datasource)
 
-            # NOTE: Actual subscription will be performed after resync
-            await datasource.add_index(index_name, index_config)
+    #         # NOTE: Actual subscription will be performed after resync
+    #         await datasource.add_index(index_name, index_config)
 
-            self._spawned_indexes.append(index_name)
+    #         self._spawned_indexes.append(index_name)
 
-        if runtime:
-            asyncio.create_task(self._resync())
-
-    async def _operation_handler_callback(
-        self,
-        index_config,
-        handler_config,
-        args,
-        operations,
-    ):
-        handler_context = OperationHandlerContext(
-            datasources=self._datasources,
-            config=self._config,
-            operations=operations,
-            template_values=index_config.template_values,
-        )
-
-        await handler_config.callback_fn(handler_context, *args)
-
-        if handler_context.updated:
-            await self._spawn_indexes(True)
+    #     if runtime:
+    #         asyncio.create_task(self._resync())
 
     async def _big_map_handler_callback(
         self,
