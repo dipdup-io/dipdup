@@ -1,26 +1,24 @@
 import asyncio
-from enum import Enum, Flag, auto
 import hashlib
 import importlib
 import logging
 from collections import deque
 from os.path import join
 from posix import listdir
-from typing import Any, Awaitable, Callable, Deque, Dict, Iterable, List, Mapping, Optional, Tuple, cast
+from typing import Dict, List, cast
 
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
-from dipdup.index import OperationIndex, HandlerContext, Index
+from dipdup.index import BigMapIndex, OperationIndex, HandlerContext, Index
 
 import dipdup.utils as utils
 from dipdup import __version__
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
     BcdDatasourceConfig,
-    BigMapIndexConfig,
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
@@ -31,7 +29,7 @@ from dipdup.config import (
 )
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
-from dipdup.datasources.tzkt.datasource import OperationFetcher, TzktDatasource
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.hasura import configure_hasura
 from dipdup.models import BigMapData, IndexType, OperationData, State
 
@@ -80,12 +78,17 @@ class IndexDispatcher:
                 index.push(level, operations)
 
     async def dispatch_big_maps(self, big_maps: List[BigMapData]) -> None:
-        ...
+        assert len(set(op.level for op in big_maps)) == 1
+        level = big_maps[0].level
+        # FIXME: Split by indexes
+        for index in self._indexes.values():
+            if isinstance(index, BigMapIndex):
+                index.push(level, big_maps)
 
     async def rollback(self):
         ...
 
-    async def run(self):
+    async def run(self, oneshot=False) -> None:
         self._logger.info('Starting index dispatcher')
         for datasource in self._ctx.datasources.values():
             if not isinstance(datasource, TzktDatasource):
@@ -100,9 +103,10 @@ class IndexDispatcher:
             await self.reload_config()
 
             async with utils.slowdown(2):
-                # TODO: gather
-                for index in self._indexes.values():
-                    await index.process()
+                await asyncio.gather(*[i.process() for i in self._indexes.values()])
+            
+            if oneshot:
+                break
 
 
 class DipDup:
@@ -131,7 +135,7 @@ class DipDup:
         await codegen.generate_handlers()
         await codegen.cleanup()
 
-    async def run(self, reindex: bool) -> None:
+    async def run(self, reindex: bool, oneshot: bool) -> None:
         """Main entrypoint"""
 
         url = self._config.database.connection_string
@@ -145,25 +149,22 @@ class DipDup:
                 await self._configure()
 
             self._logger.info('Starting datasources')
-            # TODO: [] if rest_only
-            datasource_tasks = [asyncio.create_task(d.run()) for d in self._datasources.values()]
+            datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
             worker_tasks = []
 
             if self._config.hasura:
                 worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
-            worker_tasks.append(asyncio.create_task(self._index_dispatcher.run()))
+            worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 
-            try:
-                await asyncio.gather(*datasource_tasks, *worker_tasks)
-            except (asyncio.CancelledError, KeyboardInterrupt):
-                map(lambda t: t.cancel(), worker_tasks + datasource_tasks)
+            await asyncio.gather(*datasource_tasks, *worker_tasks)
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
         await self._create_datasources()
         config_module = importlib.import_module(f'{self._config.package}.config')
         config_handler = getattr(config_module, 'configure')
+        # FIXME: pass ctx
         await config_handler(self._config, self._datasources)
         self._config.initialize()
 

@@ -20,7 +20,7 @@ from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils import pascal_to_snake, reindex, snake_to_pascal
+from dipdup.utils import pascal_to_snake, snake_to_pascal
 
 ROLLBACK_HANDLER = 'on_rollback'
 BLOCK_HANDLER = 'on_block'
@@ -962,9 +962,3 @@ class LoggingConfig:
 
     def apply(self):
         logging.config.dictConfig(self.config)
-
-
-from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import State, TemporaryState
-
-StateT = Union[State, TemporaryState]
