@@ -2,7 +2,8 @@ import demo_tezos_domains.models as models
 from demo_tezos_domains.handlers.on_storage_diff import on_storage_diff
 from demo_tezos_domains.types.name_registry.parameter.execute import ExecuteParameter
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
-from dipdup.models import OperationHandlerContext, TransactionContext
+from dipdup.models import TransactionContext
+from dipdup.index import OperationHandlerContext
 
 
 async def on_execute(

@@ -214,125 +214,55 @@ class OperationFetcher:
         assert not self._operations
 
 
-class BigMapMatcher:
-    """Matches big map diffs of a single level with patterns of all registered indexes, spawns handler callback on match."""
-
+class BigMapFetcher:
     def __init__(
         self,
-        dipdup,
-        indexes: Dict[str, BigMapIndexConfig],
+        datasource: 'TzktDatasource',
+        first_level: int,
+        last_level: int,
+        big_map_addresses: Set[Address],
+        big_map_paths: Set[Address],
     ) -> None:
-        super().__init__()
+        self._datasource = datasource
+        self._first_level = first_level
+        self._last_level = last_level
+        self._big_map_addresses = big_map_addresses
+        self._big_map_paths = big_map_paths
+
         self._logger = logging.getLogger(__name__)
-        self._dipdup = dipdup
-        self._indexes = indexes
-        self._level: Optional[int] = None
-        self._big_maps: Dict[OperationID, List[BigMapData]] = {}
 
-    async def add(self, big_map: BigMapData) -> None:
-        """Add operation to cache, perform sanity checks"""
-        self._logger.debug('Adding big map %s to matcher (%s)', big_map.id, big_map.operation_id)
-        self._logger.debug('level=%s operation.level=%s', self._level, big_map.level)
+    async def fetch_big_maps_by_level(self) -> AsyncGenerator[Tuple[int, List[BigMapData]], None]:
+        """Fetch big map diffs via Fetcher (not implemented yet) and pass to message callback"""
 
-        if self._level is not None:
-            if self._level != big_map.level:
-                raise RuntimeError('Big map diffs must be splitted by level before being passed to Matcher')
-        else:
-            self._level = big_map.level
+        offset = 0
+        big_maps = []
 
-        key = big_map.operation_id
-        if key not in self._big_maps:
-            self._big_maps[key] = []
-        self._big_maps[key].append(big_map)
+        while True:
+            fetched_big_maps = await self._datasource.get_big_maps(
+                self._big_map_addresses,
+                self._big_map_paths,
+                offset,
+                self._first_level,
+                self._last_level,
+            )
+            big_maps += fetched_big_maps
 
-    def _match_big_map(self, pattern_config: BigMapHandlerPatternConfig, big_map: BigMapData) -> bool:
-        """Match single big map diff with pattern"""
-        self._logger.debug('pattern: %s, %s', pattern_config.path, pattern_config.contract_config.address)
-        self._logger.debug('big_map: %s, %s', big_map.path, big_map.contract_address)
-        if pattern_config.path != big_map.path:
-            return False
-        if pattern_config.contract_config.address != big_map.contract_address:
-            return False
-        self._logger.debug('match!')
-        return True
-
-    async def process(self) -> None:
-        """Try to match big map diffs in cache with all patterns from indexes."""
-        if self._level is None:
-            raise RuntimeError('Add big maps to cache before processing')
-
-        keys = list(self._big_maps.keys())
-        self._logger.info('Matching %s big map groups', len(keys))
-        for key, big_maps in copy(self._big_maps).items():
-            self._logger.debug('Processing %s', key)
-            matched = False
-
-            for index_config in self._indexes.values():
-                if matched:
-                    break
-                for handler_config in index_config.handlers:
-                    matched_big_maps: List[List[BigMapData]] = [[] for _ in range(len(handler_config.pattern))]
-                    for i, pattern_config in enumerate(handler_config.pattern):
-                        for big_map in big_maps:
-                            big_map_matched = self._match_big_map(pattern_config, big_map)
-                            if big_map_matched:
-                                matched_big_maps[i].append(big_map)
-
-                    if any([len(big_map_group) for big_map_group in matched_big_maps]):
-                        self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                        matched = True
-                        await self.on_match(index_config, handler_config, matched_big_maps)
-                        del self._big_maps[key]
+            while True:
+                for i in range(len(big_maps) - 1):
+                    if big_maps[i].level != big_maps[i + 1].level:
+                        yield big_maps[i].level, big_maps[: i + 1]
+                        big_maps = big_maps[i + 1 :]
                         break
-
-        keys_left = self._big_maps.keys()
-        self._logger.info('%s big map groups unmatched', len(keys_left))
-        self._logger.info('Current level: %s', self._level)
-
-        self._big_maps = {}
-        self._level = None
-
-        self._dipdup.commit()
-
-    async def on_match(
-        self,
-        index_config: BigMapIndexConfig,
-        handler_config: BigMapHandlerConfig,
-        matched_big_maps: List[List[BigMapData]],
-    ) -> None:
-        """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-        args: List[List[BigMapContext]] = []
-        for matched_big_map_group, pattern_config in zip(matched_big_maps, handler_config.pattern):
-            big_map_contexts = []
-            for big_map in matched_big_map_group:
-                if big_map.action == BigMapAction.ALLOCATE:
-                    continue
-
-                key_type = pattern_config.key_type_cls
-                key = key_type.parse_obj(big_map.key)
-
-                if big_map.action == BigMapAction.REMOVE:
-                    value = None
                 else:
-                    value_type = pattern_config.value_type_cls
-                    value = value_type.parse_obj(big_map.value)
+                    break
 
-                big_map_context = BigMapContext(  # type: ignore
-                    action=big_map.action,
-                    key=key,
-                    value=value,
-                )
+            if len(fetched_big_maps) < self._datasource.request_limit:
+                break
 
-                big_map_contexts.append(big_map_context)
+            offset += self._datasource.request_limit
 
-            args.append(big_map_contexts)
-
-        await self._dipdup.spawn_big_map_handler_callback(index_config, handler_config, args, self._level)
-
-
-# TODO: Implement BigMapFetcher
-class BigMapFetcher:
-    ...
+        if big_maps:
+            yield big_maps[0].level, big_maps[: i + 1]
 
 
 class TzktDatasource(AsyncIOEventEmitter):
@@ -474,6 +404,24 @@ class TzktDatasource(AsyncIOEventEmitter):
             transactions.append(self.convert_operation(op))
         return transactions
 
+    async def get_big_maps(self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int) -> List[BigMapData]:
+        raw_big_maps = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/bigmaps/updates',
+            params={
+                "contract.in": ",".join(addresses),
+                "paths.in": ",".join(paths),
+                "offset": offset,
+                "limit": self.request_limit,
+                "level.gt": first_level,
+                "level.le": last_level,
+            },
+        )
+        big_maps = []
+        for bm in raw_big_maps:
+            big_maps.append(self.convert_big_map(bm))
+        return big_maps
+
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions.
         If called in runtime need to `resync` then."""
@@ -609,85 +557,6 @@ class TzktDatasource(AsyncIOEventEmitter):
                 ],
             )
 
-    # TODO: Implement BigMapFetcher
-    async def _fetch_big_maps(
-        self, addresses: List[Address], paths: List[Path], offset: int, first_level: int, last_level: int
-    ) -> List[Dict[str, Any]]:
-        self._logger.info('Fetching levels %s-%s with offset %s', first_level, last_level, offset)
-
-        big_maps = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/bigmaps/updates',
-            params={
-                "contract.in": ",".join(addresses),
-                "paths.in": ",".join(paths),
-                "offset": offset,
-                "limit": TZKT_HTTP_REQUEST_LIMIT,
-                "level.gt": first_level,
-                "level.le": last_level,
-            },
-        )
-
-        self._logger.info('%s big map updates fetched', len(big_maps))
-        self._logger.debug(big_maps)
-        return big_maps
-
-    # TODO: Implement BigMapFetcher
-    async def synchronize_big_map_index(self, index_config: BigMapIndexConfig, last_level: int) -> None:
-        """Fetch big map diffs via Fetcher (not implemented yet) and pass to message callback"""
-
-        async def _process_level_big_maps(big_maps):
-            self._logger.info('Processing %s big map updates of level %s', len(big_maps), big_maps[0]['level'])
-            await self.on_big_map_message(
-                message=[
-                    {
-                        'type': TzktMessageType.DATA.value,
-                        'data': big_maps,
-                    },
-                ],
-                sync=True,
-            )
-
-        if isinstance(index_config.state, State):
-            first_level = index_config.state.level
-            if first_level == last_level:
-                return
-        else:
-            first_level = 0
-
-        self._logger.info('Fetching big map updates from level %s to %s', first_level, last_level)
-
-        big_maps = []
-        offset = 0
-        addresses, paths = set(), set()
-        for handler_config in index_config.handlers:
-            for pattern_config in handler_config.pattern:
-                addresses.add(pattern_config.contract_config.address)
-                paths.add(pattern_config.path)
-
-        while True:
-            fetched_big_maps = await self._fetch_big_maps(list(addresses), list(paths), offset, first_level, last_level)
-            big_maps += fetched_big_maps
-
-            while True:
-                for i in range(len(big_maps) - 1):
-                    if big_maps[i]['level'] != big_maps[i + 1]['level']:
-                        await _process_level_big_maps(big_maps[: i + 1])
-                        big_maps = big_maps[i + 1 :]
-                        break
-                else:
-                    break
-
-            if len(fetched_big_maps) < TZKT_HTTP_REQUEST_LIMIT:
-                break
-
-            offset += TZKT_HTTP_REQUEST_LIMIT
-
-        if big_maps:
-            await _process_level_big_maps(big_maps)
-
-        await self._dipdup.set_index_level(index_config, last_level)
-
     async def on_operation_message(
         self,
         message: List[Dict[str, Any]],
@@ -722,6 +591,7 @@ class TzktDatasource(AsyncIOEventEmitter):
             else:
                 self._logger.warning('%s is not supported', message_type)
 
+    # TODO: as on_operation
     async def on_big_map_message(
         self,
         message: List[Dict[str, Any]],
@@ -825,12 +695,3 @@ class TzktDatasource(AsyncIOEventEmitter):
             key=big_map_json.get('content', {}).get('key'),
             value=big_map_json.get('content', {}).get('value'),
         )
-
-    # async def resync(self) -> None:
-    #     """Call after adding new indexes in runtime to synchronize them"""
-    #     self._logger.info('Resync called')
-    #     await self._operations_synchronized.wait()
-    #     await self._big_maps_synchronized.wait()
-    #     self._operations_synchronized.clear()
-    #     self._big_maps_synchronized.clear()
-    #     await self.on_connect()

@@ -4,6 +4,7 @@ from demo_registrydao.types.registry.storage import RegistryStorage
 from dipdup.models import OriginationContext, TransactionContext
 from dipdup.index import OperationHandlerContext
 
+
 async def on_propose(
     ctx: OperationHandlerContext,
     propose: TransactionContext[ProposeParameter, RegistryStorage],

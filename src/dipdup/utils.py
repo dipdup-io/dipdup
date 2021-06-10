@@ -4,6 +4,7 @@ import os
 import re
 import sys
 from contextlib import asynccontextmanager
+import time
 from typing import AsyncIterator, NoReturn, Optional
 
 import aiohttp
@@ -14,6 +15,16 @@ from tortoise.transactions import in_transaction
 from dipdup import __version__
 
 _logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def slowdown(seconds: int):
+    started_at = time.time()
+    yield
+    finished_at = time.time()
+    time_spent = finished_at - started_at
+    if time_spent < seconds:
+        await asyncio.sleep(seconds - time_spent)
 
 
 def snake_to_pascal(value: str) -> str:

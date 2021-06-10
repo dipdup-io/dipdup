@@ -46,8 +46,10 @@ class IndexDispatcher:
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
         if index_config.name in self._indexes:
             return
+        self._logger.info('Adding index `%s` to dispatcher')
         if isinstance(index_config, OperationIndexConfig):
-            datasource = self._ctx.datasources[index_config.datasource.name]
+            datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
+            datasource = self._ctx.datasources[datasource_name]
             index = OperationIndex(self._ctx, index_config, datasource)
             self._indexes[index_config.name] = index
 
@@ -55,18 +57,28 @@ class IndexDispatcher:
         else:
             raise NotImplementedError
 
-    async def reload_config(self):
+    async def reload_config(self) -> None:
+        if not self._ctx.updated:
+            return
+
+        self._logger.info('Reloading config')
         self._ctx.config.pre_initialize()
         await self._ctx.config.initialize()
 
         for index_config in self._ctx.config.indexes.values():
+            if isinstance(index_config, StaticTemplateConfig):
+                raise RuntimeError
             await self.add_index(index_config)
 
+        self._ctx._updated = False
 
     async def dispatch_operations(self, operations: List[OperationData]) -> None:
-        # split by indexes
-        # pass to each
-        ...
+        assert len(set(op.level for op in operations)) == 1
+        level = operations[0].level
+        # FIXME: Split by indexes
+        for index in self._indexes.values():
+            if isinstance(index, OperationIndex):
+                index.push(level, operations)
 
     async def dispatch_big_maps(self, big_maps: List[BigMapData]) -> None:
         ...
@@ -82,21 +94,13 @@ class IndexDispatcher:
             datasource.on('big_maps', self.dispatch_big_maps)
             datasource.on('rollback', self.rollback)
 
-        await self.reload_config()
-
         while True:
-            for index in self._indexes.values():
-                await index.process()
+            await self.reload_config()
 
-            if self._ctx.updated:
-                await self.reload_config()
-
-                self._ctx._updated = False
-                continue
-
-            # if all(bool(index.state.level) for index in self._indexes.values()):
-            #     for datasource in self._ctx.datasources.values():
-            #         await datasource.start()
+            async with utils.slowdown(2):
+                # TODO: gather
+                for index in self._indexes.values():
+                    await index.process()
 
 
 class DipDup:
@@ -116,6 +120,7 @@ class DipDup:
         """Create new or update existing dipdup project"""
         self._config.pre_initialize()
         await self._create_datasources()
+
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.create_package()
         if dynamic:
@@ -179,47 +184,6 @@ class DipDup:
             else:
                 raise NotImplementedError
 
-    # async def _spawn_indexes(self, runtime=False) -> None:
-    #     self._config.pre_initialize()
-    #     await self._config.initialize()
-
-    #     resync_datasources = []
-    #     for index_name, index_config in self._config.indexes.items():
-    #         if index_name in self._spawned_indexes:
-    #             continue
-    #         if isinstance(index_config, StaticTemplateConfig):
-    #             raise RuntimeError('Config is not pre-initialized')
-
-    #         self._logger.info('Processing index `%s`', index_name)
-    #         datasource = cast(TzktDatasource, self._datasources_by_config[index_config.datasource_config])
-    #         if datasource not in resync_datasources:
-    #             resync_datasources.append(datasource)
-
-    #         # NOTE: Actual subscription will be performed after resync
-    #         await datasource.add_index(index_name, index_config)
-
-    #         self._spawned_indexes.append(index_name)
-
-    #     if runtime:
-    #         asyncio.create_task(self._resync())
-
-    async def _big_map_handler_callback(
-        self,
-        index_config: BigMapIndexConfig,
-        handler_config,
-        args,
-    ):
-        handler_context = BigMapHandlerContext(
-            datasources=self._datasources,
-            config=self._config,
-            template_values=index_config.template_values,
-        )
-
-        await handler_config.callback_fn(handler_context, *args)
-
-        if handler_context.updated:
-            await self._spawn_indexes(True)
-
     async def _rollback_handler_callback(self, from_level, to_level):
         rollback_fn = self._config.get_rollback_fn()
         await rollback_fn(from_level, to_level)
@@ -238,6 +202,7 @@ class DipDup:
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
+        # TODO: Move higher
         if reindex:
             self._logger.warning('Started with `--reindex` argument, reindexing')
             await utils.reindex()
