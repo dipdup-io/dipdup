@@ -19,6 +19,7 @@ _logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def slowdown(seconds: int):
+    """Sleep if nested block executed faster than X seconds"""
     started_at = time.time()
     yield
     finished_at = time.time()
@@ -40,6 +41,7 @@ def pascal_to_snake(name: str) -> str:
 
 @asynccontextmanager
 async def tortoise_wrapper(url: str, models: Optional[str] = None) -> AsyncIterator:
+    """Initialize Tortoise with internal and project models, close connections when done"""
     try:
         modules = {'int_models': ['dipdup.models']}
         if models:

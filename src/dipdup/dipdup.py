@@ -113,7 +113,7 @@ class IndexDispatcher:
         while True:
             await self.reload_config()
 
-            async with utils.slowdown(2):
+            async with utils.slowdown(1):
                 await asyncio.gather(*[i.process() for i in self._indexes.values()])
 
             if oneshot:

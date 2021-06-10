@@ -111,10 +111,6 @@ class ContractConfig:
     address: str
     typename: Optional[str] = None
 
-    def __post_init_post_parse__(self) -> None:
-        self._code_hash: Optional[str] = None
-        self._type_hash: Optional[str] = None
-
     def __hash__(self):
         return hash(f'{self.address}{self.typename or ""}')
 
@@ -128,25 +124,6 @@ class ContractConfig:
         if not (v.startswith('KT1') or v.startswith('tz1')) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
-
-    async def fetch_hashes(self, datasource: 'TzktDatasource') -> None:
-        if self._code_hash and self._type_hash:
-            return
-        summary = await datasource.get_contract_summary(self.address)
-        self._code_hash = summary['codeHash']
-        self._type_hash = summary['typeHash']
-
-    @property
-    def code_hash(self) -> str:
-        if self._code_hash is None:
-            raise RuntimeError('Config is not initialized')
-        return self._code_hash
-
-    @property
-    def type_hash(self) -> str:
-        if self._type_hash is None:
-            raise RuntimeError('Config is not initialized')
-        return self._type_hash
 
 
 @dataclass
@@ -187,7 +164,7 @@ class TzktDatasourceConfig(NameMixin):
 
 
 @dataclass
-class BcdDatasourceConfig:
+class BcdDatasourceConfig(NameMixin):
     """BCD datasource config
 
     :param url: Base API url
@@ -198,7 +175,7 @@ class BcdDatasourceConfig:
     network: str
 
     def __hash__(self):
-        return hash(self.url)
+        return hash(self.url + self.network)
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):
@@ -552,14 +529,6 @@ class OperationIndexConfig(IndexConfig):
             if not isinstance(contract, ContractConfig):
                 raise RuntimeError('Config is not initialized')
         return cast(List[ContractConfig], self.contracts)
-
-    async def fetch_hashes(self, datasource: 'TzktDatasource') -> None:
-        """Find all origination patterns with `similar_to` field and fetch hashes for operation matching"""
-        for handler_config in self.handlers:
-            for pattern_config in handler_config.pattern:
-                if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                    if pattern_config.similar_to:
-                        await pattern_config.similar_to_contract_config.fetch_hashes(datasource)
 
 
 # FIXME: Inherit PatternConfig, cleanup

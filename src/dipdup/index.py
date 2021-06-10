@@ -2,17 +2,13 @@ from abc import abstractmethod
 from collections import deque, namedtuple
 from contextlib import suppress
 import logging
-from typing import Any, Deque, Dict, List, Optional, Set, Tuple, Union, cast
+from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
-from pydantic import BaseModel
 from dipdup.config import (
     BigMapHandlerConfig,
     BigMapHandlerPatternConfig,
     BigMapIndexConfig,
     ContractConfig,
-    DipDupConfig,
-    IndexConfig,
-    IndexConfigT,
     IndexConfigTemplateT,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
@@ -22,7 +18,6 @@ from dipdup.config import (
     OperationType,
 )
 from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
-from dipdup.datasources import DatasourceT
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import (
     BigMapAction,
@@ -36,8 +31,7 @@ from dipdup.models import (
 )
 from tortoise.transactions import in_transaction
 
-from dipdup.utils import reindex, restart
-from pydantic.dataclasses import dataclass
+from dipdup.utils import reindex
 
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
@@ -53,18 +47,18 @@ class Index:
         self._state: Optional[State] = None
 
     async def get_state(self) -> State:
+        """Get state of index containing current level and config hash"""
         if self._state is None:
             await self._initialize_index_state()
         return cast(State, self._state)
 
     async def process(self) -> None:
-        self._logger.info('Processing index `%s`', self._config.name)
         state = await self.get_state()
         if self._config.last_block:
             last_level = self._config.last_block
             await self._synchronize(last_level)
         elif self._datasource.sync_level is None:
-            self._logger.info('Datasource is not active, sync to latest block')
+            self._logger.info('Datasource is not active, sync to the latest block')
             last_level = (await self._datasource.get_latest_block())['level']
             await self._synchronize(last_level)
         elif self._datasource.sync_level > state.level:
@@ -72,7 +66,6 @@ class Index:
             last_level = self._datasource.sync_level
             await self._synchronize(last_level)
         else:
-            self._logger.info('Processing websocket queue')
             await self._process_queue()
 
     @abstractmethod
@@ -113,11 +106,15 @@ class OperationIndex(Index):
     def __init__(self, ctx: HandlerContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[int, List[OperationData]]] = deque()
+        self._contract_hashes: Dict[str, Tuple[str, str]] = {}
 
-    def push(self, level: int, operations: List[OperationData]):
+    def push(self, level: int, operations: List[OperationData]) -> None:
         self._queue.append((level, operations))
 
-    async def _process_queue(self):
+    async def _process_queue(self) -> None:
+        if not self._queue:
+            return
+        self._logger.info('Processing websocket queue')
         with suppress(IndexError):
             while True:
                 level, operations = self._queue.popleft()
@@ -163,7 +160,7 @@ class OperationIndex(Index):
             state.level = level  # type: ignore
             await state.save()
 
-    def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
+    async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
         # NOTE: Reversed conditions are intentional
         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
@@ -185,11 +182,12 @@ class OperationIndex(Index):
                 if pattern_config.originated_contract_config.address != operation.originated_contract_address:
                     return False
             if pattern_config.similar_to:
+                code_hash, type_hash = await self._get_contract_hashes(pattern_config.similar_to_contract_config.address)
                 if pattern_config.strict:
-                    if pattern_config.similar_to_contract_config.code_hash != operation.originated_contract_code_hash:
+                    if code_hash != operation.originated_contract_code_hash:
                         return False
                 else:
-                    if pattern_config.similar_to_contract_config.type_hash != operation.originated_contract_type_hash:
+                    if type_hash != operation.originated_contract_type_hash:
                         return False
             return True
         else:
@@ -218,7 +216,7 @@ class OperationIndex(Index):
                 # TODO: Add None to matched_operations where applicable (pattern is optional and operation not found)
                 while operation_idx < len(operations):
                     operation, pattern_config = operations[operation_idx], handler_config.pattern[pattern_idx]
-                    operation_matched = self._match_operation(pattern_config, operation)
+                    operation_matched = await self._match_operation(pattern_config, operation)
 
                     if operation.type == 'origination' and isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
 
@@ -328,6 +326,11 @@ class OperationIndex(Index):
                             addresses.add(address)
         return set(addresses)
 
+    async def _get_contract_hashes(self, address: str) -> Tuple[str, str]:
+        if address not in self._contract_hashes:
+            summary = await self._datasource.get_contract_summary(address)
+            self._contract_hashes[address] = (summary['codeHash'], summary['typeHash'])
+        return self._contract_hashes[address]
 
 class BigMapIndex(Index):
     _config: BigMapIndexConfig
@@ -340,6 +343,9 @@ class BigMapIndex(Index):
         self._queue.append((level, big_maps))
 
     async def _process_queue(self):
+        if not self._queue:
+            return
+        self._logger.info('Processing websocket queue')
         with suppress(IndexError):
             while True:
                 level, big_maps = self._queue.popleft()
@@ -385,7 +391,7 @@ class BigMapIndex(Index):
             state.level = level  # type: ignore
             await state.save()
 
-    def _match_big_map(self, pattern_config: BigMapHandlerPatternConfig, big_map: BigMapData) -> bool:
+    async def _match_big_map(self, pattern_config: BigMapHandlerPatternConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""
         if pattern_config.path != big_map.path:
             return False
@@ -456,7 +462,7 @@ class BigMapIndex(Index):
                 matched_big_maps: List[List[BigMapData]] = [[] for _ in range(len(handler_config.pattern))]
                 for i, pattern_config in enumerate(handler_config.pattern):
                     for big_map in big_maps:
-                        big_map_matched = self._match_big_map(pattern_config, big_map)
+                        big_map_matched = await self._match_big_map(pattern_config, big_map)
                         if big_map_matched:
                             matched_big_maps[i].append(big_map)
 

@@ -89,7 +89,12 @@ class OperationData:
                 else:
                     storage_dict[bigmap_key][key] = diff['content']['value']
 
-    def _process_storage(self, storage_type: Type[StorageType], storage: Dict, prefix: str = None):
+    def _process_storage(
+        self,
+        storage_type: Type[StorageType],
+        storage: Dict[str, Any],
+        prefix: str = None,
+    ) -> Dict[str, Any]:
         for key, field in storage_type.__fields__.items():
 
             if key == '__root__':
