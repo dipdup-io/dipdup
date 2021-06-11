@@ -319,14 +319,14 @@ class DipDupCodeGenerator:
     ) -> Dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
         datasource = self._datasources.get(datasource_config)
+        address = contract_config.address
         if datasource is None:
             raise RuntimeError('Call `create_datasources` first')
         if not isinstance(datasource, TzktDatasource):
             raise RuntimeError
         if datasource_config not in self._schemas:
             self._schemas[datasource_config] = {}
-        if contract_config.address not in self._schemas[datasource_config]:
-            address = contract_config.address
+        if address not in self._schemas[datasource_config]:
             if originated:
                 address = (await datasource.get_originated_contracts(address))[0]
                 self._logger.info('Fetching schemas for contract `%s` (originated from `%s`)', address, contract_config.address)
@@ -335,7 +335,7 @@ class DipDupCodeGenerator:
 
             address_schemas_json = await datasource.get_jsonschemas(address)
             self._schemas[datasource_config][address] = address_schemas_json
-        return self._schemas[datasource_config][contract_config.address]
+        return self._schemas[datasource_config][address]
 
     async def migrate_handlers_v050(self) -> None:
         remove_lines = [
