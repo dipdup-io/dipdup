@@ -2,6 +2,8 @@ from datetime import datetime
 from decimal import Decimal
 
 import demo_tzbtc.models as models
+from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
+from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, Transaction
 
 
 async def on_balance_update(address: str, balance_update: Decimal, timestamp: datetime):

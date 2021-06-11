@@ -3,5 +3,6 @@ class ConfigurationError(Exception):
 
     ...
 
+
 class HandlerImportError(Exception):
     """Something's wrong with imports in handler, migration may help"""

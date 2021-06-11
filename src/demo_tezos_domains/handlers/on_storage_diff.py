@@ -2,6 +2,8 @@ import logging
 
 import demo_tezos_domains.models as models
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
+from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
+from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, Transaction
 
 _logger = logging.getLogger(__name__)
 

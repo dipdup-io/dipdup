@@ -11,7 +11,6 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
-from dipdup.exceptions import HandlerImportError
 
 import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
@@ -29,6 +28,7 @@ from dipdup.config import (
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.exceptions import HandlerImportError
 from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State

@@ -1,7 +1,7 @@
 import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
-from dipdup.context import OperationHandlerContext
-from dipdup.models import Origination
+from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
+from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, Transaction
 
 
 async def on_fa2_origination(

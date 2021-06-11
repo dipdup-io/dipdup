@@ -5,8 +5,8 @@ from demo_quipuswap.types.fa2_token.parameter.transfer import TransferParameter
 from demo_quipuswap.types.fa2_token.storage import Fa2TokenStorage
 from demo_quipuswap.types.quipu_fa2.parameter.token_to_tez_payment import TokenToTezPaymentParameter
 from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
-from dipdup.context import OperationHandlerContext
-from dipdup.models import Transaction
+from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
+from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, Transaction
 
 
 async def on_fa2_token_to_tez(

@@ -1,9 +1,9 @@
-from copy import copy
 import json
 import logging
 import os
 import subprocess
 from contextlib import suppress
+from copy import copy
 from os import mkdir
 from os.path import basename, dirname, exists, join, splitext
 from shutil import rmtree
@@ -13,10 +13,10 @@ from jinja2 import Template
 
 from dipdup.config import (
     CONFIGURE_HANDLER,
-    DatasourceConfigT,
     ROLLBACK_HANDLER,
     BigMapIndexConfig,
     ContractConfig,
+    DatasourceConfigT,
     DipDupConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
@@ -25,6 +25,7 @@ from dipdup.config import (
     TzktDatasourceConfig,
 )
 from dipdup.datasources import DatasourceT
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import pascal_to_snake, snake_to_pascal
 
@@ -320,6 +321,8 @@ class DipDupCodeGenerator:
         datasource = self._datasources.get(datasource_config)
         if datasource is None:
             raise RuntimeError('Call `create_datasources` first')
+        if not isinstance(datasource, TzktDatasource):
+            raise RuntimeError
         if datasource_config not in self._schemas:
             self._schemas[datasource_config] = {}
         if contract_config.address not in self._schemas[datasource_config]:
@@ -338,11 +341,11 @@ class DipDupCodeGenerator:
         remove_imports = [
             'from dipdup.models import',
             'from dipdup.context import',
-            'from dipdup.utils import reindex'
+            'from dipdup.utils import reindex',
         ]
         add_imports = [
-            'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData',
-            'from dipdup.context import HandlerContext, OperationHandlerContext, BigMapHandlerContext'
+            'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction',
+            'from dipdup.context import HandlerContext, OperationHandlerContext, BigMapHandlerContext',
         ]
         replace_table = {
             'TransactionContext': 'Transaction',

@@ -3,8 +3,8 @@ from demo_hic_et_nunc.types.hen_minter.parameter.mint_objkt import MintOBJKTPara
 from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
 from demo_hic_et_nunc.types.hen_objkts.parameter.mint import MintParameter
 from demo_hic_et_nunc.types.hen_objkts.storage import HenObjktsStorage
-from dipdup.context import OperationHandlerContext
-from dipdup.models import Transaction
+from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
+from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, Transaction
 
 
 async def on_mint(
