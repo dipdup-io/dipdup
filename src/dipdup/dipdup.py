@@ -1,6 +1,6 @@
 import asyncio
+from functools import partial
 import hashlib
-import importlib
 import logging
 from os.path import join
 from posix import listdir
@@ -11,6 +11,7 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
+from dipdup.context import RollbackHandlerContext
 
 import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
@@ -94,17 +95,25 @@ class IndexDispatcher:
             if isinstance(index, BigMapIndex):
                 index.push(level, big_maps)
 
-    async def rollback(self):
-        ...
+    async def _rollback(self, datasource: str, from_level: int, to_level: int) -> None:
+        rollback_fn = self._ctx.config.get_rollback_fn()
+        ctx = RollbackHandlerContext(
+            config=self._ctx.config,
+            datasources=self._ctx.datasources,
+            datasource=datasource,
+            from_level=from_level,
+            to_level=to_level,
+        )
+        await rollback_fn(ctx)
 
     async def run(self, oneshot=False) -> None:
         self._logger.info('Starting index dispatcher')
-        for datasource in self._ctx.datasources.values():
+        for name, datasource in self._ctx.datasources.items():
             if not isinstance(datasource, TzktDatasource):
                 continue
             datasource.on('operations', self.dispatch_operations)
             datasource.on('big_maps', self.dispatch_big_maps)
-            datasource.on('rollback', self.rollback)
+            datasource.on('rollback', partial(self._rollback, datasource=name))
 
         self._ctx.commit()
 
@@ -167,7 +176,7 @@ class DipDup:
 
     async def migrate(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
-        await codegen.generate_default_handlers()
+        await codegen.generate_default_handlers(recreate=True)
         await codegen.migrate_handlers_v050()
         self._logger.warning('==================== WARNING =====================')
         self._logger.warning('Your handlers have just been migrated to v0.5.0 format.')
@@ -183,10 +192,6 @@ class DipDup:
             await self.migrate()
         await configure_fn(self._ctx)
         self._config.initialize()
-
-    async def _rollback(self, from_level: int, to_level: int) -> None:
-        rollback_fn = self._config.get_rollback_fn()
-        await rollback_fn(self._ctx, from_level, to_level)
 
     async def _create_datasources(self) -> None:
         datasource: DatasourceT

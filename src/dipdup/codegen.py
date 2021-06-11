@@ -240,7 +240,7 @@ class DipDupCodeGenerator:
                 self._logger.debug(' '.join(args))
                 subprocess.run(args, check=True)
 
-    async def generate_default_handlers(self) -> None:
+    async def generate_default_handlers(self, recreate=False) -> None:
         handlers_path = join(self._config.package_path, 'handlers')
         with open(join(dirname(__file__), 'templates', f'{ROLLBACK_HANDLER}.py.j2')) as file:
             rollback_template = Template(file.read())
@@ -250,14 +250,14 @@ class DipDupCodeGenerator:
         self._logger.info('Generating handler `%s`', CONFIGURE_HANDLER)
         handler_code = configure_template.render()
         handler_path = join(handlers_path, f'{CONFIGURE_HANDLER}.py')
-        if not exists(handler_path):
+        if recreate or not exists(handler_path):
             with open(handler_path, 'w') as file:
                 file.write(handler_code)
 
         self._logger.info('Generating handler `%s`', ROLLBACK_HANDLER)
         handler_code = rollback_template.render()
         handler_path = join(handlers_path, f'{ROLLBACK_HANDLER}.py')
-        if not exists(handler_path):
+        if recreate or not exists(handler_path):
             with open(handler_path, 'w') as file:
                 file.write(handler_code)
 
@@ -338,23 +338,19 @@ class DipDupCodeGenerator:
         return self._schemas[datasource_config][contract_config.address]
 
     async def migrate_handlers_v050(self) -> None:
-        remove_imports = [
+        remove_lines = [
             'from dipdup.models import',
             'from dipdup.context import',
             'from dipdup.utils import reindex',
         ]
-        add_imports = [
+        add_lines = [
             'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction',
-            'from dipdup.context import HandlerContext, OperationHandlerContext, BigMapHandlerContext',
+            'from dipdup.context import HandlerContext, OperationHandlerContext, BigMapHandlerContext, RollbackHandlerContext',
         ]
         replace_table = {
             'TransactionContext': 'Transaction',
             'OriginationContext': 'Origination',
             'BigMapContext': 'BigMapDiff',
-            'await reindex()': 'await ctx.reindex()',
-        }
-        replace_table_eq = {
-            'async def on_rollback(': 'from dipdup.context import HandlerContext\n\nasync def on_rollback(ctx: HandlerContext,'
         }
         handlers_path = join(self._config.package_path, 'handlers')
 
@@ -363,17 +359,15 @@ class DipDupCodeGenerator:
                 if filename == '__init__.py' or not filename.endswith('.py'):
                     continue
                 path = join(root, filename)
-                newfile = copy(add_imports)
+                newfile = copy(add_lines)
                 with open(path) as file:
                     for line in file.read().split('\n'):
                         # Skip existing models imports
-                        if any(map(lambda l: l in line, remove_imports)):
+                        if any(map(lambda l: l in line, remove_lines)):
                             continue
                         # Replace by table
                         for from_, to in replace_table.items():
                             line = line.replace(from_, to)
-                        for from_, to in replace_table_eq.items():
-                            line = to if line == from_ else line
                         newfile.append(line)
                 with open(path, 'w') as file:
                     file.write('\n'.join(newfile))

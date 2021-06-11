@@ -1,18 +1,10 @@
 import logging
 
-from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
-from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, Transaction
+from dipdup.context import RollbackHandlerContext
 
 _logger = logging.getLogger(__name__)
 
 
-from dipdup.context import HandlerContext
-
-
-async def on_rollback(
-    ctx: HandlerContext,
-    from_level: int,
-    to_level: int,
-) -> None:
-    _logger.warning('Rollback event received, reindexing')
+async def on_rollback(ctx: RollbackHandlerContext) -> None:
+    _logger.warning('Datasource `%s` rolled back from level %s to level %s, reindexing', ctx.datasource, ctx.from_level, ctx.to_level)
     await ctx.reindex()

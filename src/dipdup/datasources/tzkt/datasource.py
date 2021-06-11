@@ -271,14 +271,18 @@ class TzktDatasource(AsyncIOEventEmitter):
         self._big_map_subscriptions: Dict[str, List[str]] = {}
 
         self._client: Optional[BaseHubConnection] = None
-
-        self._started = asyncio.Event()
         self._proxy = DatasourceRequestProxy(cache)
+
+        self._level: Optional[int] = None
         self._sync_level: Optional[int] = None
 
     @property
     def request_limit(self) -> int:
         return TZKT_HTTP_REQUEST_LIMIT
+
+    @property
+    def level(self) -> Optional[int]:
+        return self._level
 
     @property
     def sync_level(self) -> Optional[int]:
@@ -545,26 +549,24 @@ class TzktDatasource(AsyncIOEventEmitter):
         """Parse and emit raw operations from WS"""
 
         for item in message:
+            current_level = item['state']
             message_type = TzktMessageType(item['type'])
-            self._logger.info('Got operation message, type %s', message_type)
+            self._logger.info('Got operation message, %s, level %s', message_type, current_level)
 
             if message_type == TzktMessageType.STATE:
-                last_level = item['state']
-                self._sync_level = last_level
+                self._sync_level = current_level
+                self._level = current_level
 
             elif message_type == TzktMessageType.DATA:
+                self._level = current_level
                 operations = []
                 for operation_json in item['data']:
                     operation = self.convert_operation(operation_json)
-                    if operation.status != 'applied':
-                        continue
                     operations.append(operation)
-
                 self.emit("operations", operations)
 
             elif message_type == TzktMessageType.REORG:
-                to_level = item['state']
-                self.emit("rollback", to_level)
+                self.emit("rollback", self.level, current_level)
 
             else:
                 raise NotImplementedError
@@ -575,26 +577,25 @@ class TzktDatasource(AsyncIOEventEmitter):
         sync=False,
     ) -> None:
         """Parse and emit raw big map diffs from WS"""
-
         for item in message:
+            current_level = item['state']
             message_type = TzktMessageType(item['type'])
-            self._logger.info('Got big map message, type %s', message_type)
+            self._logger.info('Got big map message, %s, level %s', message_type, current_level)
 
             if message_type == TzktMessageType.STATE:
-                last_level = item['state']
-                self._sync_level = last_level
+                self._sync_level = current_level
+                self._level = current_level
 
             elif message_type == TzktMessageType.DATA:
+                self._level = current_level
                 big_maps = []
                 for big_map_json in item['data']:
                     big_map = self.convert_big_map(big_map_json)
                     big_maps.append(big_map)
-
                 self.emit("big_maps", big_maps)
 
             elif message_type == TzktMessageType.REORG:
-                to_level = item['state']
-                self.emit("rollback", to_level)
+                self.emit("rollback", self.level, current_level)
 
             else:
                 raise NotImplementedError

@@ -82,3 +82,18 @@ class BigMapHandlerContext(HandlerContext):
     ) -> None:
         super().__init__(datasources, config)
         self.template_values = template_values
+
+
+class RollbackHandlerContext(HandlerContext):
+    def __init__(
+        self,
+        datasources: Dict[str, DatasourceT],
+        config: DipDupConfig,
+        datasource: str,
+        from_level: int,
+        to_level: int,
+    ) -> None:
+        super().__init__(datasources, config)
+        self.datasource = datasource
+        self.from_level = from_level
+        self.to_level = to_level
