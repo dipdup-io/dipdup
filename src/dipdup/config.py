@@ -23,6 +23,7 @@ from dipdup.exceptions import ConfigurationError, HandlerImportError
 from dipdup.utils import pascal_to_snake, snake_to_pascal
 
 ROLLBACK_HANDLER = 'on_rollback'
+CONFIGURE_HANDLER = 'on_configure'
 BLOCK_HANDLER = 'on_block'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 
@@ -698,14 +699,21 @@ class DipDupConfig:
 
     def get_rollback_fn(self) -> Type:
         try:
-            return getattr(importlib.import_module(f'{self.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
-        except ModuleNotFoundError as e:
-            raise ConfigurationError(f'Package `{self.package}` not found. Have you forgot to call `init`?') from e
+            module = f'{self.package}.handlers.{ROLLBACK_HANDLER}'
+            return getattr(importlib.import_module(module), ROLLBACK_HANDLER)
+        except (ModuleNotFoundError, AttributeError) as e:
+            raise HandlerImportError(f'Module `{module}` not found. Have you forgot to call `init`?') from e
+
+    def get_configure_fn(self) -> Type:
+        try:
+            module = f'{self.package}.handlers.{CONFIGURE_HANDLER}'
+            return getattr(importlib.import_module(module), CONFIGURE_HANDLER)
+        except (ModuleNotFoundError, AttributeError) as e:
+            raise HandlerImportError(f'Module `{module}` not found. Have you forgot to call `init`?') from e
 
     def resolve_static_templates(self) -> None:
         _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
-            # NOTE: Dynamic templates will be resolved later in dipdup module
             if isinstance(index_config, StaticTemplateConfig):
                 template = self.get_template(index_config.template)
                 raw_template = json.dumps(template, default=pydantic_encoder)

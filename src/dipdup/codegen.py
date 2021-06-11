@@ -12,6 +12,8 @@ from typing import Any, Dict
 from jinja2 import Template
 
 from dipdup.config import (
+    CONFIGURE_HANDLER,
+    DatasourceConfigT,
     ROLLBACK_HANDLER,
     BigMapIndexConfig,
     ContractConfig,
@@ -44,7 +46,7 @@ def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
 class DipDupCodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[str, DatasourceT]) -> None:
+    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, DatasourceT]) -> None:
         self._logger = logging.getLogger(__name__)
         self._config = config
         self._datasources = datasources
@@ -52,6 +54,7 @@ class DipDupCodeGenerator:
 
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
+        self._logger.info('Creating package `%s`', self._config.package)
         try:
             package_path = self._config.package_path
         except (ImportError, ModuleNotFoundError):
@@ -60,6 +63,7 @@ class DipDupCodeGenerator:
             with open(join(package_path, '__init__.py'), 'w'):
                 pass
 
+        self._logger.info('Creating `%s.models` module', self._config.package)
         models_path = join(package_path, 'models.py')
         if not exists(models_path):
             with open(join(dirname(__file__), 'templates', 'models.py.j2')) as file:
@@ -68,17 +72,12 @@ class DipDupCodeGenerator:
             with open(models_path, 'w') as file:
                 file.write(models_code)
 
-    async def create_config_module(self) -> None:
-        """Create hander for initial configuration when `init` is called with flag"""
-        package_path = self._config.package_path
-        config_path = join(package_path, 'config.py')
-
-        if not exists(config_path):
-            with open(join(dirname(__file__), 'templates', 'config.py.j2')) as file:
-                template = Template(file.read())
-            config_code = template.render()
-            with open(config_path, 'w') as file:
-                file.write(config_code)
+        self._logger.info('Creating `%s.handlers` package', self._config.package)
+        handlers_path = join(self._config.package_path, 'handlers')
+        with suppress(FileExistsError):
+            mkdir(handlers_path)
+            with open(join(handlers_path, '__init__.py'), 'w'):
+                pass
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
@@ -240,22 +239,19 @@ class DipDupCodeGenerator:
                 self._logger.debug(' '.join(args))
                 subprocess.run(args, check=True)
 
-    async def generate_handlers(self) -> None:
-        """Generate handler stubs with typehints from templates if not exist"""
-        self._logger.info('Loading handler templates')
-        with open(join(dirname(__file__), 'templates', 'operation_handler.py.j2')) as file:
-            operation_handler_template = Template(file.read())
-        with open(join(dirname(__file__), 'templates', 'big_map_handler.py.j2')) as file:
-            big_map_handler_template = Template(file.read())
+    async def generate_default_handlers(self) -> None:
+        handlers_path = join(self._config.package_path, 'handlers')
         with open(join(dirname(__file__), 'templates', f'{ROLLBACK_HANDLER}.py.j2')) as file:
             rollback_template = Template(file.read())
+        with open(join(dirname(__file__), 'templates', f'{CONFIGURE_HANDLER}.py.j2')) as file:
+            configure_template = Template(file.read())
 
-        self._logger.info('Creating `handlers` package')
-        handlers_path = join(self._config.package_path, 'handlers')
-        with suppress(FileExistsError):
-            mkdir(handlers_path)
-            with open(join(handlers_path, '__init__.py'), 'w'):
-                pass
+        self._logger.info('Generating handler `%s`', CONFIGURE_HANDLER)
+        handler_code = configure_template.render()
+        handler_path = join(handlers_path, f'{CONFIGURE_HANDLER}.py')
+        if not exists(handler_path):
+            with open(handler_path, 'w') as file:
+                file.write(handler_code)
 
         self._logger.info('Generating handler `%s`', ROLLBACK_HANDLER)
         handler_code = rollback_template.render()
@@ -263,6 +259,14 @@ class DipDupCodeGenerator:
         if not exists(handler_path):
             with open(handler_path, 'w') as file:
                 file.write(handler_code)
+
+    async def generate_user_handlers(self) -> None:
+        """Generate handler stubs with typehints from templates if not exist"""
+        handlers_path = join(self._config.package_path, 'handlers')
+        with open(join(dirname(__file__), 'templates', 'operation_handler.py.j2')) as file:
+            operation_handler_template = Template(file.read())
+        with open(join(dirname(__file__), 'templates', 'big_map_handler.py.j2')) as file:
+            big_map_handler_template = Template(file.read())
 
         for index_config in self._config.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
@@ -334,6 +338,7 @@ class DipDupCodeGenerator:
         remove_imports = [
             'from dipdup.models import',
             'from dipdup.context import',
+            'from dipdup.utils import reindex'
         ]
         add_imports = [
             'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData',
@@ -343,6 +348,10 @@ class DipDupCodeGenerator:
             'TransactionContext': 'Transaction',
             'OriginationContext': 'Origination',
             'BigMapContext': 'BigMapDiff',
+            'await reindex()': 'await ctx.reindex()',
+        }
+        replace_table_eq = {
+            'async def on_rollback(': 'from dipdup.context import HandlerContext\n\nasync def on_rollback(ctx: HandlerContext,'
         }
         handlers_path = join(self._config.package_path, 'handlers')
 
@@ -360,6 +369,8 @@ class DipDupCodeGenerator:
                         # Replace by table
                         for from_, to in replace_table.items():
                             line = line.replace(from_, to)
+                        for from_, to in replace_table_eq.items():
+                            line = to if line == from_ else line
                         newfile.append(line)
                 with open(path, 'w') as file:
                     file.write('\n'.join(newfile))

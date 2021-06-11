@@ -54,9 +54,7 @@ async def cli(ctx, config: List[str], logging_config: str):
     try:
         _config.initialize()
     except HandlerImportError:
-        codegen = DipDupCodeGenerator(_config, {})
-        await codegen.migrate_handlers_v050()
-        await restart()
+        await DipDup(_config).migrate()
 
     ctx.obj = CLIContext(
         config=_config,
@@ -76,13 +74,12 @@ async def run(ctx, reindex: bool, oneshot: bool) -> None:
 
 
 @cli.command(help='Initialize new dipdup project')
-@click.option('-d', '--dynamic', help='Enable dynamic configuration')
 @click.pass_context
 @click_async
-async def init(ctx, dynamic: bool):
+async def init(ctx):
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(dynamic)
+    await dipdup.init()
 
 
 @cli.command(help='Clear development request cache')

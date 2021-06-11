@@ -11,6 +11,7 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
+from dipdup.exceptions import HandlerImportError
 
 import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
@@ -130,17 +131,16 @@ class DipDup:
         self._ctx = HandlerContext(config=self._config, datasources=self._datasources)
         self._index_dispatcher = IndexDispatcher(self._ctx)
 
-    async def init(self, dynamic: bool) -> None:
+    async def init(self) -> None:
         """Create new or update existing dipdup project"""
         await self._create_datasources()
 
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.create_package()
-        if dynamic:
-            await codegen.create_config_module()
         await codegen.fetch_schemas()
         await codegen.generate_types()
-        await codegen.generate_handlers()
+        await codegen.generate_default_handlers()
+        await codegen.generate_user_handlers()
         await codegen.cleanup()
 
     async def run(self, reindex: bool, oneshot: bool) -> None:
@@ -152,9 +152,7 @@ class DipDup:
         async with utils.tortoise_wrapper(url, models):
             await self._initialize_database(reindex)
             await self._create_datasources()
-
-            if self._config.configuration:
-                await self._configure()
+            await self._configure()
 
             self._logger.info('Starting datasources')
             datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
@@ -167,13 +165,24 @@ class DipDup:
 
             await asyncio.gather(*datasource_tasks, *worker_tasks)
 
+    async def migrate(self) -> None:
+        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        await codegen.generate_default_handlers()
+        await codegen.migrate_handlers_v050()
+        await self._ctx.restart()
+
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
-        await self._create_datasources()
-        config_module = importlib.import_module(f'{self._config.package}.config')
-        config_handler = getattr(config_module, 'configure')
-        await config_handler(self._ctx)
+        try:
+            configure_fn = self._config.get_configure_fn()
+        except HandlerImportError:
+            await self.migrate()
+        await configure_fn(self._ctx)
         self._config.initialize()
+
+    async def _rollback(self, from_level: int, to_level: int) -> None:
+        rollback_fn = self._config.get_rollback_fn()
+        await rollback_fn(self._ctx, from_level, to_level)
 
     async def _create_datasources(self) -> None:
         datasource: DatasourceT
@@ -194,10 +203,6 @@ class DipDup:
                 self._datasources_by_config[datasource_config] = datasource
             else:
                 raise NotImplementedError
-
-    async def _rollback_handler_callback(self, from_level, to_level):
-        rollback_fn = self._config.get_rollback_fn()
-        await rollback_fn(from_level, to_level)
 
     async def _initialize_database(self, reindex: bool = False) -> None:
         self._logger.info('Initializing database')
