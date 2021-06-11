@@ -169,7 +169,11 @@ class DipDup:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.generate_default_handlers()
         await codegen.migrate_handlers_v050()
-        await self._ctx.restart()
+        self._logger.warning('==================== WARNING =====================')
+        self._logger.warning('Your handlers have just been migrated to v0.5.0 format.')
+        self._logger.warning('Review and commit changes before proceeding.')
+        self._logger.warning('==================== WARNING =====================')
+        quit()
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""

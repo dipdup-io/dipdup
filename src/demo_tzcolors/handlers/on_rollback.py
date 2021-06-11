@@ -1,7 +1,7 @@
 import logging
 
 from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
-from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, Transaction
+from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, Transaction
 
 _logger = logging.getLogger(__name__)
 

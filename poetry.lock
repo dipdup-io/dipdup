@@ -207,7 +207,7 @@ toml = ["toml"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.11.6"
+version = "0.11.7"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
@@ -230,12 +230,12 @@ PySnooper = ">=0.4.1,<1.0.0"
 toml = ">=0.10.0,<1.0.0"
 
 [package.extras]
-all = ["pytest-runner", "setuptools-scm", "pytest (>=4.6)", "pytest-benchmark", "pytest-cov", "pytest-mock", "mypy", "isort", "freezegun", "httpx", "mkdocs", "mkdocs-material", "wheel", "twine", "codecov"]
+all = ["pytest-runner", "setuptools-scm", "pytest (>=4.6)", "pytest-benchmark", "pytest-cov", "pytest-mock", "mypy", "isort", "freezegun", "types-jinja2", "types-pyyaml", "types-toml", "httpx", "mkdocs", "mkdocs-material", "wheel", "twine", "codecov"]
 ci = ["codecov"]
 docs = ["mkdocs", "mkdocs-material"]
 http = ["httpx"]
 setup = ["pytest-runner", "setuptools-scm"]
-test = ["pytest (>=4.6)", "pytest-benchmark", "pytest-cov", "pytest-mock", "mypy", "isort", "freezegun"]
+test = ["pytest (>=4.6)", "pytest-benchmark", "pytest-cov", "pytest-mock", "mypy", "isort", "freezegun", "types-jinja2", "types-pyyaml", "types-toml"]
 wheel = ["wheel", "twine"]
 
 [[package]]
@@ -721,7 +721,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 
 [[package]]
 name = "ruamel.yaml"
-version = "0.17.7"
+version = "0.17.9"
 description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
 category = "main"
 optional = false
@@ -1020,8 +1020,8 @@ coverage = [
     {file = "coverage-5.5.tar.gz", hash = "sha256:ebe78fe9a0e874362175b02371bdfbee64d8edc42a044253ddf4ee7d3c15212c"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.11.6.tar.gz", hash = "sha256:18c3b416d7c43fc98248b42a29539a1729ac596aa2b490bf7b29a952c4728969"},
-    {file = "datamodel_code_generator-0.11.6-py3-none-any.whl", hash = "sha256:e2ef31f89a136536b61bdb8862e7c1361b335da9f70b46cf62c17aa41c7a94a9"},
+    {file = "datamodel-code-generator-0.11.7.tar.gz", hash = "sha256:879c37b0eaf5c6bbdab5f14286fa3e663f37c9fe2e322c88ae12fc74ed720a47"},
+    {file = "datamodel_code_generator-0.11.7-py3-none-any.whl", hash = "sha256:1e8009836b59754df7a557630dc757f3ba3097b78b8a59090ee83b0d5cc2c2ce"},
 ]
 diff-cover = [
     {file = "diff_cover-5.1.2-py3-none-any.whl", hash = "sha256:bea4aa85759395b07c4c5c44795b08430f24f87196e31ace579528b07fda3293"},
@@ -1411,8 +1411,8 @@ requests = [
     {file = "requests-2.25.1.tar.gz", hash = "sha256:27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804"},
 ]
 "ruamel.yaml" = [
-    {file = "ruamel.yaml-0.17.7-py3-none-any.whl", hash = "sha256:25c3eaf4f0c52bd15c50c39b100a32168891240f4d2177a4690d5d9b85944bbe"},
-    {file = "ruamel.yaml-0.17.7.tar.gz", hash = "sha256:5c3fa739bbedd2f23769656784e671c6335d17a5bf163c3c3901d8663c0af287"},
+    {file = "ruamel.yaml-0.17.9-py3-none-any.whl", hash = "sha256:8873a6f5516e0d848c92418b0b006519c0566b6cd0dcee7deb9bf399e2bd204f"},
+    {file = "ruamel.yaml-0.17.9.tar.gz", hash = "sha256:374373b4743aee9f6d9f40bea600fe020a7ac7ae36b838b4a6a93f72b584a14c"},
 ]
 "ruamel.yaml.clib" = [
     {file = "ruamel.yaml.clib-0.2.2-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:28116f204103cb3a108dfd37668f20abe6e3cafd0d3fd40dba126c732457b3cc"},
