@@ -1,3 +1,4 @@
+from copy import copy
 import json
 import logging
 import os
@@ -328,3 +329,37 @@ class DipDupCodeGenerator:
             address_schemas_json = await datasource.get_jsonschemas(address)
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][contract_config.address]
+
+    async def migrate_handlers_v050(self) -> None:
+        remove_imports = [
+            'from dipdup.models import',
+            'from dipdup.context import',
+        ]
+        add_imports = [
+            'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData',
+            'from dipdup.context import HandlerContext, OperationHandlerContext, BigMapHandlerContext'
+        ]
+        replace_table = {
+            'TransactionContext': 'Transaction',
+            'OriginationContext': 'Origination',
+            'BigMapContext': 'BigMapDiff',
+        }
+        handlers_path = join(self._config.package_path, 'handlers')
+
+        for root, _, files in os.walk(handlers_path):
+            for filename in files:
+                if filename == '__init__.py' or not filename.endswith('.py'):
+                    continue
+                path = join(root, filename)
+                newfile = copy(add_imports)
+                with open(path) as file:
+                    for line in file.read().split('\n'):
+                        # Skip existing models imports
+                        if any(map(lambda l: l in line, remove_imports)):
+                            continue
+                        # Replace by table
+                        for from_, to in replace_table.items():
+                            line = line.replace(from_, to)
+                        newfile.append(line)
+                with open(path, 'w') as file:
+                    file.write('\n'.join(newfile))

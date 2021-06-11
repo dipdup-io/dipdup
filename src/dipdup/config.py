@@ -19,7 +19,7 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigurationError, HandlerImportError
 from dipdup.utils import pascal_to_snake, snake_to_pascal
 
 ROLLBACK_HANDLER = 'on_rollback'
@@ -665,7 +665,6 @@ class DipDupConfig:
         self._pre_initialized = []
         self._initialized = []
         self.validate()
-        self.initialize()
 
     def validate(self) -> None:
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
@@ -843,9 +842,15 @@ class DipDupConfig:
 
     def _initialize_handler_callback(self, handler_config: HandlerConfig) -> None:
         _logger.info('Registering handler callback `%s`', handler_config.callback)
-        handler_module = importlib.import_module(f'{self.package}.handlers.{handler_config.callback}')
-        callback_fn = getattr(handler_module, handler_config.callback)
-        handler_config.callback_fn = callback_fn
+        try:
+            handler_module = importlib.import_module(f'{self.package}.handlers.{handler_config.callback}')
+            callback_fn = getattr(handler_module, handler_config.callback)
+            handler_config.callback_fn = callback_fn
+        except ImportError as e:
+            if 'Context' in str(e):
+                _logger.warning('Found broken imports, attemping to fix them')
+                raise HandlerImportError from e
+            raise
 
     def initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         if index_name in self._initialized:

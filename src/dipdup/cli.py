@@ -9,9 +9,12 @@ from typing import List
 import click
 from fcache.cache import FileCache  # type: ignore
 
+from dipdup.utils import restart
 from dipdup import __version__
+from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig
 from dipdup.dipdup import DipDup
+from dipdup.exceptions import HandlerImportError
 
 _logger = logging.getLogger(__name__)
 
@@ -48,6 +51,12 @@ async def cli(ctx, config: List[str], logging_config: str):
 
     _logger.info('Loading config')
     _config = DipDupConfig.load(config)
+    try:
+        _config.initialize()
+    except HandlerImportError:
+        codegen = DipDupCodeGenerator(_config, {})
+        await codegen.migrate_handlers_v050()
+        await restart()
 
     ctx.obj = CLIContext(
         config=_config,
