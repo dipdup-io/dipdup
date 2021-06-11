@@ -10,11 +10,9 @@ import click
 from fcache.cache import FileCache  # type: ignore
 
 from dipdup import __version__
-from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import HandlerImportError
-from dipdup.utils import restart
 
 _logger = logging.getLogger(__name__)
 

@@ -41,6 +41,7 @@ class CodegenTest(IsolatedAsyncioTestCase):
             with self.subTest(name):
                 config_path = join(dirname(__file__), name)
                 config = DipDupConfig.load([config_path])
+                config.initialize()
                 config.package = 'tmp_test_dipdup'
 
                 if config.package in sys.modules:
@@ -48,7 +49,7 @@ class CodegenTest(IsolatedAsyncioTestCase):
 
                 try:
                     dipdup = DipDup(config)
-                    await dipdup.init(False)
+                    await dipdup.init()
 
                     import_submodules(config.package)
                 except Exception as exc:

@@ -3,8 +3,8 @@ from decimal import Decimal
 from demo_tzbtc.handlers.on_balance_update import on_balance_update
 from demo_tzbtc.types.tzbtc.parameter.transfer import TransferParameter
 from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
-from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
-from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, Transaction
+from dipdup.context import OperationHandlerContext
+from dipdup.models import Transaction
 
 
 async def on_transfer(

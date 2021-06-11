@@ -1,5 +1,3 @@
-from typing import Dict
-
 from dipdup.context import HandlerContext
 
 

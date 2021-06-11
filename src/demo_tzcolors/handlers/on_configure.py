@@ -1,7 +1,4 @@
-from typing import Dict
-
-from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
-from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, Transaction
+from dipdup.context import HandlerContext
 
 
 async def on_configure(ctx: HandlerContext) -> None:

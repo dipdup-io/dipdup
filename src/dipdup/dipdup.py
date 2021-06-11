@@ -1,7 +1,7 @@
 import asyncio
-from functools import partial
 import hashlib
 import logging
+from functools import partial
 from os.path import join
 from posix import listdir
 from typing import Dict, List, cast
@@ -11,7 +11,6 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
-from dipdup.context import RollbackHandlerContext
 
 import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
@@ -26,6 +25,7 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
+from dipdup.context import RollbackHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource

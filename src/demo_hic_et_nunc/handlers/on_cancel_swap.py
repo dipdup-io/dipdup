@@ -1,8 +1,8 @@
 import demo_hic_et_nunc.models as models
 from demo_hic_et_nunc.types.hen_minter.parameter.cancel_swap import CancelSwapParameter
 from demo_hic_et_nunc.types.hen_minter.storage import HenMinterStorage
-from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
-from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, Transaction
+from dipdup.context import OperationHandlerContext
+from dipdup.models import Transaction
 
 
 async def on_cancel_swap(
