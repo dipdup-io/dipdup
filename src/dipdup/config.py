@@ -26,6 +26,8 @@ ROLLBACK_HANDLER = 'on_rollback'
 CONFIGURE_HANDLER = 'on_configure'
 BLOCK_HANDLER = 'on_block'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
+# NOTE: Default for TzKT instances hosted by Baking Bad
+DEFAULT_TZKT_KEEPALIVE_TIMEOUT = 55
 
 sys.path.append(os.getcwd())
 _logger = logging.getLogger(__name__)
@@ -152,6 +154,7 @@ class TzktDatasourceConfig(NameMixin):
 
     kind: Literal['tzkt']
     url: str
+    keepalive_timeout: int = DEFAULT_TZKT_KEEPALIVE_TIMEOUT
 
     def __hash__(self):
         return hash(self.url)

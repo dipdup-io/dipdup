@@ -42,17 +42,21 @@ def pascal_to_snake(name: str) -> str:
 @asynccontextmanager
 async def tortoise_wrapper(url: str, models: Optional[str] = None) -> AsyncIterator:
     """Initialize Tortoise with internal and project models, close connections when done"""
+    attempts = 60
     try:
         modules = {'int_models': ['dipdup.models']}
         if models:
             modules['models'] = [models]
-        for _ in range(60):
+        for attempt in range(attempts):
             try:
                 await Tortoise.init(
                     db_url=url,
                     modules=modules,  # type: ignore
                 )
             except ConnectionRefusedError:
+                _logger.warning('Can\'t establish database connection, attempt %s/%s', attempt, attempts)
+                if attempt == attempts - 1:
+                    raise
                 await asyncio.sleep(1)
             else:
                 break
@@ -61,9 +65,9 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None) -> AsyncItera
         await Tortoise.close_connections()
 
 
-async def http_request(method: str, **kwargs):
+async def http_request(method: str, connector: Optional[aiohttp.TCPConnector] = None, **kwargs):
     """Wrapped aiohttp call with preconfigured headers and logging"""
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(connector=connector) as session:
         headers = {
             **kwargs.pop('headers', {}),
             'User-Agent': f'dipdup/{__version__}',

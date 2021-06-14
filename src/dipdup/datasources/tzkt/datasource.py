@@ -2,6 +2,7 @@ import asyncio
 import logging
 from enum import Enum
 from typing import Any, AsyncGenerator, Dict, List, NoReturn, Optional, Set, Tuple, cast
+import aiohttp
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
@@ -12,6 +13,7 @@ from pyee import AsyncIOEventEmitter  # type: ignore
 from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
+    DEFAULT_TZKT_KEEPALIVE_TIMEOUT,
     IndexConfigTemplateT,
     OperationHandlerOriginationPatternConfig,
     OperationIndexConfig,
@@ -261,7 +263,7 @@ class TzktDatasource(AsyncIOEventEmitter):
     * Calls Matchers to match received operation groups with indexes' pattern and spawn callbacks on match
     """
 
-    def __init__(self, url: str, cache: bool) -> None:
+    def __init__(self, url: str, cache: bool, keepalive_timeout: int = DEFAULT_TZKT_KEEPALIVE_TIMEOUT) -> None:
         super().__init__()
         self._url = url.rstrip('/')
 
@@ -271,7 +273,10 @@ class TzktDatasource(AsyncIOEventEmitter):
         self._big_map_subscriptions: Dict[str, List[str]] = {}
 
         self._client: Optional[BaseHubConnection] = None
-        self._proxy = DatasourceRequestProxy(cache)
+        self._proxy = DatasourceRequestProxy(
+            cache,
+            aiohttp.TCPConnector(keepalive_timeout=keepalive_timeout),
+        )
 
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None

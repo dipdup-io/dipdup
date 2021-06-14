@@ -200,14 +200,20 @@ class DipDup:
                 continue
 
             if isinstance(datasource_config, TzktDatasourceConfig):
-                datasource = TzktDatasource(datasource_config.url, self._config.cache_enabled)
-
+                datasource = TzktDatasource(
+                    url=datasource_config.url,
+                    cache=self._config.cache_enabled,
+                    keepalive_timeout=datasource_config.keepalive_timeout,
+                )
                 self._datasources[name] = datasource
                 self._datasources_by_config[datasource_config] = datasource
 
             elif isinstance(datasource_config, BcdDatasourceConfig):
-                datasource = BcdDatasource(datasource_config.url, datasource_config.network, self._config.cache_enabled)
-
+                datasource = BcdDatasource(
+                    datasource_config.url,
+                    datasource_config.network,
+                    self._config.cache_enabled,
+                )
                 self._datasources[name] = datasource
                 self._datasources_by_config[datasource_config] = datasource
             else:
