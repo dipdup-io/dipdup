@@ -15,7 +15,8 @@ class DatasourceRequestProxy:
     ) -> None:
         self._logger = logging.getLogger(__name__)
         self._cache = FileCache('dipdup', flag='cs') if cache else None
-        self._session = aiohttp.ClientSession()
+        self._connector = aiohttp.TCPConnector(keepalive_timeout=55)
+        self._session = aiohttp.ClientSession(connector=self._connector)
 
     async def http_request(self, method: str, skip_cache: bool = False, **kwargs):
         if self._cache is not None and not skip_cache:
