@@ -149,6 +149,7 @@ async def configure_hasura(config: DipDupConfig):
 
     _logger.info('Configuring Hasura')
 
+    session = aiohttp.ClientSession()
     url = config.hasura.url.rstrip("/")
     hasura_metadata = await generate_hasura_metadata(config)
 
@@ -169,6 +170,7 @@ async def configure_hasura(config: DipDupConfig):
 
     _logger.info('Fetching existing metadata')
     existing_hasura_metadata = await http_request(
+        session,
         'post',
         url=f'{url}/v1/query',
         data=json.dumps(
@@ -188,6 +190,7 @@ async def configure_hasura(config: DipDupConfig):
 
     _logger.info('Sending replace metadata request')
     result = await http_request(
+        session,
         'post',
         url=f'{url}/v1/query',
         data=json.dumps(

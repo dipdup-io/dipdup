@@ -203,7 +203,6 @@ class DipDup:
                 datasource = TzktDatasource(
                     url=datasource_config.url,
                     cache=self._config.cache_enabled,
-                    keepalive_timeout=datasource_config.keepalive_timeout,
                 )
                 self._datasources[name] = datasource
                 self._datasources_by_config[datasource_config] = datasource
