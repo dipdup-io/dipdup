@@ -1,8 +1,8 @@
 import hashlib
 import logging
 import pickle
-import aiohttp
 
+import aiohttp
 from fcache.cache import FileCache  # type: ignore
 
 from dipdup.utils import http_request
