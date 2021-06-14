@@ -67,18 +67,18 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None) -> AsyncItera
 
 async def http_request(method: str, connector: Optional[aiohttp.TCPConnector] = None, **kwargs):
     """Wrapped aiohttp call with preconfigured headers and logging"""
-    async with aiohttp.ClientSession(connector=connector) as session:
+    async with aiohttp.ClientSession(connector=connector, connector_owner=False) as session:
         headers = {
             **kwargs.pop('headers', {}),
             'User-Agent': f'dipdup/{__version__}',
         }
+        request_string = kwargs['url'] + '?' + '&'.join([f'{key}={value}' for key, value in kwargs.get('params', {}).items()])
+        _logger.debug('Calling `%s`', request_string)
         async with getattr(session, method)(
             skip_auto_headers={'User-Agent'},
             headers=headers,
             **kwargs,
         ) as response:
-            request_string = kwargs['url'] + '?' + '&'.join([f'{key}={value}' for key, value in kwargs.get('params', {}).items()])
-            _logger.debug('Calling `%s`', request_string)
             return await response.json()
 
 

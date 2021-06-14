@@ -56,4 +56,4 @@ async def get_or_create(
 
 
 # FIXME: tortoise-orm 0.17.4 doesn't start connection after transaction fails in `get_or_create`
-Model.get_or_create = classmethod(get_or_create)
+Model.get_or_create = classmethod(get_or_create)  # type: ignore

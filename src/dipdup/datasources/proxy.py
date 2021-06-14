@@ -13,7 +13,7 @@ class DatasourceRequestProxy:
     def __init__(
         self,
         cache: bool = False,
-        connector=Optional[aiohttp.TCPConnector],
+        connector: Optional[aiohttp.TCPConnector] = None,
     ) -> None:
         self._logger = logging.getLogger(__name__)
         self._cache = FileCache('dipdup', flag='cs') if cache else None
