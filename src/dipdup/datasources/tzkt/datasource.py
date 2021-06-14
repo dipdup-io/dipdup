@@ -288,6 +288,9 @@ class TzktDatasource(AsyncIOEventEmitter):
     def sync_level(self) -> Optional[int]:
         return self._sync_level
 
+    async def close_session(self) -> None:
+        await self._proxy.close_session()
+
     async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
         """Get list of contracts sharing the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'

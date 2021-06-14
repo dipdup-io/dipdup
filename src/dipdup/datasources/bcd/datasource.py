@@ -14,6 +14,9 @@ class BcdDatasource:
         self._logger = logging.getLogger(__name__)
         self._proxy = DatasourceRequestProxy(cache)
 
+    async def close_session(self) -> None:
+        await self._proxy.close_session()
+
     async def run(self) -> None:
         pass
 

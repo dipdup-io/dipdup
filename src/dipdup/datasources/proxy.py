@@ -9,14 +9,10 @@ from dipdup.utils import http_request
 
 
 class DatasourceRequestProxy:
-    def __init__(
-        self,
-        cache: bool = False,
-    ) -> None:
+    def __init__(self, cache: bool = False) -> None:
         self._logger = logging.getLogger(__name__)
         self._cache = FileCache('dipdup', flag='cs') if cache else None
-        self._connector = aiohttp.TCPConnector(keepalive_timeout=55)
-        self._session = aiohttp.ClientSession(connector=self._connector)
+        self._session = aiohttp.ClientSession()
 
     async def http_request(self, method: str, skip_cache: bool = False, **kwargs):
         if self._cache is not None and not skip_cache:
@@ -38,3 +34,6 @@ class DatasourceRequestProxy:
                 **kwargs,
             )
             return response
+
+    async def close_session(self) -> None:
+        await self._session.close()

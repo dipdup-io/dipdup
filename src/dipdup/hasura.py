@@ -203,3 +203,5 @@ async def configure_hasura(config: DipDupConfig):
     )
     if not result.get('message') == 'success':
         _logger.error('Can\'t configure Hasura instance: %s', result)
+
+    await session.close()

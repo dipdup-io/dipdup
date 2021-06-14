@@ -120,9 +120,12 @@ class IndexDispatcher:
         while True:
             await self.reload_config()
 
+            # FIXME: Process all indexes in parallel, blocked by https://github.com/tortoise/tortoise-orm/issues/792
             async with utils.slowdown(1):
-                await asyncio.gather(*[i.process() for i in self._indexes.values()])
+                for index in self._indexes.values():
+                    await index.process()
 
+            # TODO: Continue if new indexes are spawned from origination
             if oneshot:
                 break
 
@@ -172,7 +175,13 @@ class DipDup:
 
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 
-            await asyncio.gather(*datasource_tasks, *worker_tasks)
+            try:
+                await asyncio.gather(*datasource_tasks, *worker_tasks)
+            except KeyboardInterrupt:
+                pass
+
+            self._logger.info('Closing datasource sessions')
+            await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
 
     async def migrate(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
