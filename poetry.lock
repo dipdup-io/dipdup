@@ -207,7 +207,7 @@ toml = ["toml"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.11.7"
+version = "0.11.8"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
@@ -270,11 +270,11 @@ trio = ["trio (>=0.14.0)", "sniffio (>=1.1)"]
 
 [[package]]
 name = "email-validator"
-version = "1.1.2"
+version = "1.1.3"
 description = "A robust email syntax and deliverability validation library for Python 2.x/3.x."
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 
 [package.dependencies]
 dnspython = ">=1.15.0"
@@ -847,7 +847,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "1a8fa00d3dc3ca006112c0e4486d73f05e20cc6a0d4aa4ab7f36e700ae17d4b6"
+content-hash = "2881a2b8ad90f0084d413b9d2bdfc01bdb8d771e48e309bba2a36ce577ddc80e"
 
 [metadata.files]
 aiohttp = [
@@ -1020,8 +1020,8 @@ coverage = [
     {file = "coverage-5.5.tar.gz", hash = "sha256:ebe78fe9a0e874362175b02371bdfbee64d8edc42a044253ddf4ee7d3c15212c"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.11.7.tar.gz", hash = "sha256:879c37b0eaf5c6bbdab5f14286fa3e663f37c9fe2e322c88ae12fc74ed720a47"},
-    {file = "datamodel_code_generator-0.11.7-py3-none-any.whl", hash = "sha256:1e8009836b59754df7a557630dc757f3ba3097b78b8a59090ee83b0d5cc2c2ce"},
+    {file = "datamodel-code-generator-0.11.8.tar.gz", hash = "sha256:5d5d654f4811d3e029fab118a5188337da72e5aea1dfc9d6a689327cfb988171"},
+    {file = "datamodel_code_generator-0.11.8-py3-none-any.whl", hash = "sha256:cd0a90bc81612e1b04b7b60e9321c73dc4e1122f05eaa657e645a03ed41be6c0"},
 ]
 diff-cover = [
     {file = "diff_cover-5.1.2-py3-none-any.whl", hash = "sha256:bea4aa85759395b07c4c5c44795b08430f24f87196e31ace579528b07fda3293"},
@@ -1032,8 +1032,8 @@ dnspython = [
     {file = "dnspython-2.1.0.zip", hash = "sha256:e4a87f0b573201a0f3727fa18a516b055fd1107e0e5477cded4a2de497df1dd4"},
 ]
 email-validator = [
-    {file = "email-validator-1.1.2.tar.gz", hash = "sha256:1a13bd6050d1db4475f13e444e169b6fe872434922d38968c67cea9568cce2f0"},
-    {file = "email_validator-1.1.2-py2.py3-none-any.whl", hash = "sha256:094b1d1c60d790649989d38d34f69e1ef07792366277a2cf88684d03495d018f"},
+    {file = "email_validator-1.1.3-py2.py3-none-any.whl", hash = "sha256:5675c8ceb7106a37e40e2698a57c056756bf3f272cfa8682a4f87ebd95d8440b"},
+    {file = "email_validator-1.1.3.tar.gz", hash = "sha256:aa237a65f6f4da067119b7df3f13e89c25c051327b2b5b66dc075f33d62480d7"},
 ]
 fcache = [
     {file = "fcache-0.4.7-py2.py3-none-any.whl", hash = "sha256:36c2aab0ee6e0eccd69ff2b8da4f508f0464d94856c9469c22ba386a0c5e2ba4"},
