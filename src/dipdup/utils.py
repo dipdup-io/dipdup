@@ -71,6 +71,10 @@ async def in_global_transaction():
     if list(Tortoise._connections.keys()) != ['default']:
         raise RuntimeError('`in_global_transaction` wrapper works only with a single DB connection')
     async with in_transaction() as conn:
+        # NOTE: SQLite hacks
+        conn.filename = ''
+        conn.pragmas = {}
+
         original_conn = Tortoise._connections['default']
         Tortoise._connections['default'] = conn
         yield
