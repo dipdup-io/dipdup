@@ -22,7 +22,7 @@ from dipdup.config import (
 from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
-from dipdup.utils import reindex
+from dipdup.utils import in_global_transaction, reindex
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 
@@ -144,7 +144,7 @@ class OperationIndex(Index):
         if state.level >= level:
             raise RuntimeError(state.level, level)
 
-        async with in_transaction():
+        async with in_global_transaction():
             await self._process_operations(operations)
 
             state.level = level  # type: ignore
@@ -376,7 +376,7 @@ class BigMapIndex(Index):
         if state.level >= level:
             raise RuntimeError(state.level, level)
 
-        async with in_transaction():
+        async with in_global_transaction():
             await self._process_big_maps(big_maps)
 
             state.level = level  # type: ignore
