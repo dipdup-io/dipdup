@@ -152,38 +152,37 @@ class DipDupCodeGenerator:
 
             elif isinstance(index_config, BigMapIndexConfig):
                 for big_map_handler_config in index_config.handlers:
-                    for big_map_pattern_config in big_map_handler_config.pattern:
-                        contract_config = big_map_pattern_config.contract_config
+                    contract_config = big_map_handler_config.contract_config
 
-                        contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
+                    contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
 
-                        contract_schemas_path = join(schemas_path, contract_config.module_name)
-                        with suppress(FileExistsError):
-                            mkdir(contract_schemas_path)
+                    contract_schemas_path = join(schemas_path, contract_config.module_name)
+                    with suppress(FileExistsError):
+                        mkdir(contract_schemas_path)
 
-                        big_map_schemas_path = join(contract_schemas_path, 'big_map')
-                        with suppress(FileExistsError):
-                            mkdir(big_map_schemas_path)
+                    big_map_schemas_path = join(contract_schemas_path, 'big_map')
+                    with suppress(FileExistsError):
+                        mkdir(big_map_schemas_path)
 
-                        try:
-                            big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_pattern_config.path)
-                        except StopIteration as e:
-                            raise ConfigurationError(
-                                f'Contract `{contract_config.address}` has no big map path `{big_map_pattern_config.path}`'
-                            ) from e
-                        big_map_key_schema = big_map_schema['keySchema']
-                        big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_pattern_config.path}.key.json')
+                    try:
+                        big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_handler_config.path)
+                    except StopIteration as e:
+                        raise ConfigurationError(
+                            f'Contract `{contract_config.address}` has no big map path `{big_map_handler_config.path}`'
+                        ) from e
+                    big_map_key_schema = big_map_schema['keySchema']
+                    big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_handler_config.path}.key.json')
 
-                        if not exists(big_map_key_schema_path):
-                            with open(big_map_key_schema_path, 'w') as file:
-                                file.write(json.dumps(big_map_key_schema, indent=4))
+                    if not exists(big_map_key_schema_path):
+                        with open(big_map_key_schema_path, 'w') as file:
+                            file.write(json.dumps(big_map_key_schema, indent=4))
 
-                        big_map_value_schema = big_map_schema['valueSchema']
-                        big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_pattern_config.path}.value.json')
+                    big_map_value_schema = big_map_schema['valueSchema']
+                    big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_handler_config.path}.value.json')
 
-                        if not exists(big_map_value_schema_path):
-                            with open(big_map_value_schema_path, 'w') as file:
-                                file.write(json.dumps(big_map_value_schema, indent=4))
+                    if not exists(big_map_value_schema_path):
+                        with open(big_map_value_schema_path, 'w') as file:
+                            file.write(json.dumps(big_map_value_schema, indent=4))
 
             elif isinstance(index_config, StaticTemplateConfig):
                 raise RuntimeError('Config is not pre-initialized')
@@ -286,18 +285,17 @@ class DipDupCodeGenerator:
                             file.write(handler_code)
 
             elif isinstance(index_config, BigMapIndexConfig):
-                for handler in index_config.handlers:
-                    self._logger.info('Generating handler `%s`', handler.callback)
-                    for pattern_config in handler.pattern:
-                        pattern_config.path = pattern_config.path.replace('.', '_')
+                for big_map_handler_config in index_config.handlers:
+                    self._logger.info('Generating handler `%s`', big_map_handler_config.callback)
+                    handler_path = big_map_handler_config.path.replace('.', '_')
                     handler_code = big_map_handler_template.render(
                         package=self._config.package,
-                        handler=handler.callback,
-                        patterns=handler.pattern,
+                        handler=big_map_handler_config,
+                        handler_path=handler_path,
                         snake_to_pascal=snake_to_pascal,
                         pascal_to_snake=pascal_to_snake,
                     )
-                    handler_path = join(handlers_path, f'{handler.callback}.py')
+                    handler_path = join(handlers_path, f'{big_map_handler_config.callback}.py')
                     if not exists(handler_path):
                         with open(handler_path, 'w') as file:
                             file.write(handler_code)
@@ -338,6 +336,7 @@ class DipDupCodeGenerator:
         return self._schemas[datasource_config][address]
 
     async def migrate_handlers_v050(self) -> None:
+        # TODO: Save backups
         remove_lines = [
             'from dipdup.models import',
             'from dipdup.context import',

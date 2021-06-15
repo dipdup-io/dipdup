@@ -177,15 +177,6 @@ class BigMapAction(Enum):
 
 
 @dataclass
-class BigMapDiff(Generic[KeyType, ValueType]):
-    """Wrapper for every big map diff in each list of handler arguments"""
-
-    action: BigMapAction
-    key: KeyType
-    value: Optional[ValueType]
-
-
-@dataclass
 class BigMapData:
     """Basic structure for big map diffs from TzKT response"""
 
@@ -199,3 +190,13 @@ class BigMapData:
     action: BigMapAction
     key: Optional[Any] = None
     value: Optional[Any] = None
+
+
+@dataclass
+class BigMapDiff(Generic[KeyType, ValueType]):
+    """Wrapper for every big map diff in each list of handler arguments"""
+
+    action: BigMapAction
+    data: BigMapData
+    key: KeyType
+    value: Optional[ValueType]

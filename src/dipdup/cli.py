@@ -44,16 +44,8 @@ async def cli(ctx, config: List[str], logging_config: str):
     except FileNotFoundError:
         path = join(dirname(__file__), 'configs', logging_config)
         _logging_config = LoggingConfig.load(path)
-
     _logging_config.apply()
-
-    _logger.info('Loading config')
     _config = DipDupConfig.load(config)
-    try:
-        _config.initialize()
-    except HandlerImportError:
-        await DipDup(_config).migrate()
-
     ctx.obj = CLIContext(
         config=_config,
         logging_config=_logging_config,
@@ -67,6 +59,12 @@ async def cli(ctx, config: List[str], logging_config: str):
 @click_async
 async def run(ctx, reindex: bool, oneshot: bool) -> None:
     config: DipDupConfig = ctx.obj.config
+
+    try:
+        config.initialize()
+    except HandlerImportError:
+        await DipDup(config).migrate()
+
     dipdup = DipDup(config)
     await dipdup.run(reindex, oneshot)
 
@@ -76,6 +74,7 @@ async def run(ctx, reindex: bool, oneshot: bool) -> None:
 @click_async
 async def init(ctx):
     config: DipDupConfig = ctx.obj.config
+    config.pre_initialize()
     dipdup = DipDup(config)
     await dipdup.init()
 

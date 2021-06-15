@@ -433,12 +433,11 @@ class TzktDatasource(AsyncIOEventEmitter):
         elif isinstance(index_config, BigMapIndexConfig):
 
             for big_map_handler_config in index_config.handlers:
-                for big_map_pattern_config in big_map_handler_config.pattern:
-                    address, path = big_map_pattern_config.contract_config.address, big_map_pattern_config.path
-                    if address not in self._big_map_subscriptions:
-                        self._big_map_subscriptions[address] = []
-                    if path not in self._big_map_subscriptions[address]:
-                        self._big_map_subscriptions[address].append(path)
+                address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                if address not in self._big_map_subscriptions:
+                    self._big_map_subscriptions[address] = []
+                if path not in self._big_map_subscriptions[address]:
+                    self._big_map_subscriptions[address].append(path)
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

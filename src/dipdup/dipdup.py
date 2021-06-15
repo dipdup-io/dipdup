@@ -155,6 +155,9 @@ class DipDup:
         await codegen.generate_user_handlers()
         await codegen.cleanup()
 
+        for datasource in self._datasources.values():
+            await datasource.close_session()
+
     async def run(self, reindex: bool, oneshot: bool) -> None:
         """Main entrypoint"""
 
