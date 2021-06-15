@@ -1,11 +1,11 @@
 import asyncio
 import logging
-from logging import Logger
 import os
 import re
 import sys
 import time
 from contextlib import asynccontextmanager
+from logging import Logger
 from typing import AsyncIterator, Optional
 
 import aiohttp

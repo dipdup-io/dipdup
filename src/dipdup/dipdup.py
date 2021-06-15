@@ -15,6 +15,7 @@ from tortoise.utils import get_schema_sql
 import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
+    ROLLBACK_HANDLER,
     BcdDatasourceConfig,
     BigMapIndexConfig,
     DatasourceConfigT,
@@ -22,7 +23,6 @@ from dipdup.config import (
     IndexConfigTemplateT,
     OperationIndexConfig,
     PostgresDatabaseConfig,
-    ROLLBACK_HANDLER,
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
@@ -97,7 +97,7 @@ class IndexDispatcher:
                 index.push(level, big_maps)
 
     async def _rollback(self, datasource: str, from_level: int, to_level: int) -> None:
-        logger = logging.getLogger(ROLLBACK_HANDLER)
+        logger = utils.FormattedLogger(ROLLBACK_HANDLER)
         rollback_fn = self._ctx.config.get_rollback_fn()
         ctx = RollbackHandlerContext(
             config=self._ctx.config,
@@ -146,7 +146,7 @@ class DipDup:
         self._ctx = HandlerContext(
             config=self._config,
             datasources=self._datasources,
-            logger=self._logger,
+            logger=utils.FormattedLogger(__name__),
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
 

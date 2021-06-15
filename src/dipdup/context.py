@@ -1,11 +1,11 @@
-import logging
 from typing import Any, Dict, List, Optional
 
 from dipdup.config import ContractConfig, DipDupConfig, StaticTemplateConfig
 from dipdup.datasources import DatasourceT
 from dipdup.exceptions import ConfigurationError
 from dipdup.models import OperationData
-from dipdup.utils import reindex, restart
+from dipdup.utils import FormattedLogger, reindex, restart
+
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic in HandlerContext.
 class HandlerContext:
@@ -15,7 +15,7 @@ class HandlerContext:
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
-        logger: logging.Logger,
+        logger: FormattedLogger,
     ) -> None:
         self.datasources = datasources
         self.config = config
@@ -66,7 +66,7 @@ class OperationHandlerContext(HandlerContext):
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
-        logger: logging.Logger,
+        logger: FormattedLogger,
         template_values: Optional[Dict[str, str]],
         operations: List[OperationData],
     ) -> None:
@@ -82,7 +82,7 @@ class BigMapHandlerContext(HandlerContext):
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
-        logger: logging.Logger,
+        logger: FormattedLogger,
         template_values: Optional[Dict[str, str]],
     ) -> None:
         super().__init__(datasources, config, logger)
@@ -94,7 +94,7 @@ class RollbackHandlerContext(HandlerContext):
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
-        logger: logging.Logger,
+        logger: FormattedLogger,
         datasource: str,
         from_level: int,
         to_level: int,

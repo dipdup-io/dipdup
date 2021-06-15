@@ -6,10 +6,14 @@ class TLD(Model):
     owner = fields.CharField(max_length=36)
 
 
+class Expiry(Model):
+    id = fields.CharField(max_length=255, pk=True)
+    expiry = fields.DatetimeField(null=True)
+
+
 class Domain(Model):
     id = fields.CharField(max_length=255, pk=True)
     tld = fields.ForeignKeyField('models.TLD', 'domains')
-    expiry = fields.DatetimeField(null=True)
     owner = fields.CharField(max_length=36)
     token_id = fields.BigIntField(null=True)
 
