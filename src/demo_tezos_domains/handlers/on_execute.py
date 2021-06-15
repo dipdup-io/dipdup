@@ -10,4 +10,4 @@ async def on_execute(
     execute: Transaction[ExecuteParameter, NameRegistryStorage],
 ) -> None:
     storage = execute.storage
-    await on_storage_diff(storage)
+    await on_storage_diff(ctx, storage)

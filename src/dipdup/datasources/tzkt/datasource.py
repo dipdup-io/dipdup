@@ -85,7 +85,7 @@ class OperationFetcher:
         self._transaction_addresses = transaction_addresses
         self._origination_addresses = origination_addresses
 
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger('dipdup.tzkt.fetcher')
         self._head: int = 0
         self._heads: Dict[OperationFetcherChannel, int] = {}
         self._offsets: Dict[OperationFetcherChannel, int] = {}
@@ -216,7 +216,7 @@ class BigMapFetcher:
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
 
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger('dipdup.tzkt.fetcher')
 
     async def fetch_big_maps_by_level(self) -> AsyncGenerator[Tuple[int, List[BigMapData]], None]:
         """Fetch big map diffs via Fetcher (not implemented yet) and pass to message callback"""
@@ -265,7 +265,7 @@ class TzktDatasource(AsyncIOEventEmitter):
         super().__init__()
         self._url = url.rstrip('/')
 
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger('dipdup.tzkt')
         self._transaction_subscriptions: Set[str] = set()
         self._origination_subscriptions: bool = False
         self._big_map_subscriptions: Dict[str, List[str]] = {}

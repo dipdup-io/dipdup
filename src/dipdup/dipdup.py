@@ -97,7 +97,7 @@ class IndexDispatcher:
                 index.push(level, big_maps)
 
     async def _rollback(self, datasource: str, from_level: int, to_level: int) -> None:
-        logger = logging.getLogger(f'{self._ctx.config}.handlers.{ROLLBACK_HANDLER}')
+        logger = logging.getLogger(ROLLBACK_HANDLER)
         rollback_fn = self._ctx.config.get_rollback_fn()
         ctx = RollbackHandlerContext(
             config=self._ctx.config,
@@ -146,7 +146,7 @@ class DipDup:
         self._ctx = HandlerContext(
             config=self._config,
             datasources=self._datasources,
-            logger=logging.getLogger(__name__),
+            logger=self._logger,
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
 

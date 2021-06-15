@@ -10,4 +10,4 @@ async def on_admin_update(
     admin_update: Transaction[AdminUpdateParameter, NameRegistryStorage],
 ) -> None:
     storage = admin_update.storage
-    await on_storage_diff(storage)
+    await on_storage_diff(ctx, storage)

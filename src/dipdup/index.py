@@ -19,7 +19,7 @@ from dipdup.config import (
 from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
-from dipdup.utils import in_global_transaction, reindex
+from dipdup.utils import FormattedLogger, in_global_transaction, reindex
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 
@@ -130,7 +130,6 @@ class OperationIndex(Index):
         )
 
         async for level, operations in fetcher.fetch_operations_by_level():
-            self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_level_operations(level, operations)
 
         state.level = last_level  # type: ignore
@@ -142,6 +141,7 @@ class OperationIndex(Index):
             raise RuntimeError(state.level, level)
 
         async with in_global_transaction():
+            self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_operations(operations)
 
             state.level = level  # type: ignore
@@ -190,8 +190,7 @@ class OperationIndex(Index):
             operation_groups[key].append(operation)
 
         keys = list(operation_groups.keys())
-        self._logger.info('Matching %s operation groups', len(keys))
-        for key, operations in operation_groups.items():
+        for operation_group, operations in operation_groups.items():
             self._logger.debug('Matching %s', key)
 
             for handler_config in self._config.handlers:
@@ -223,18 +222,19 @@ class OperationIndex(Index):
                         operation_idx += 1
 
                     if pattern_idx == len(handler_config.pattern):
-                        self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                        await self._on_match(handler_config, matched_operations, operations)
+                        self._logger.info('%s: `%s` handler matched!', operation_group.hash, handler_config.callback)
+                        await self._on_match(operation_group, handler_config, matched_operations, operations)
 
                         matched_operations = []
                         pattern_idx = 0
 
                 if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
-                    self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                    await self._on_match(handler_config, matched_operations, operations)
+                    self._logger.info('%s: `%s` handler matched!', operation_group.hash, handler_config.callback)
+                    await self._on_match(operation_group, handler_config, matched_operations, operations)
 
     async def _on_match(
         self,
+        operation_group: OperationGroup,
         handler_config: OperationHandlerConfig,
         matched_operations: List[Optional[OperationData]],
         operations: List[OperationData],
@@ -276,10 +276,14 @@ class OperationIndex(Index):
             else:
                 raise NotImplementedError
 
+        logger = FormattedLogger(
+            name=handler_config.callback,
+            fmt=operation_group.hash + ': {}',
+        )
         handler_context = OperationHandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
-            logger=logging.getLogger(f'{self._ctx.config}.package.{handler_config.callback}'),
+            logger=logger,
             operations=operations,
             template_values=self._config.template_values,
         )
@@ -363,7 +367,6 @@ class BigMapIndex(Index):
         )
 
         async for level, big_maps in fetcher.fetch_big_maps_by_level():
-            self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_level_big_maps(level, big_maps)
 
         state.level = last_level  # type: ignore
@@ -375,6 +378,7 @@ class BigMapIndex(Index):
             raise RuntimeError(state.level, level)
 
         async with in_global_transaction():
+            self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_big_maps(big_maps)
 
             state.level = level  # type: ignore
@@ -412,10 +416,15 @@ class BigMapIndex(Index):
             key=key,
             value=value,
         )
+        logger = FormattedLogger(
+            name=handler_config.callback,
+            fmt=str(matched_big_map.operation_id) + ': {}',
+        )
+
         handler_context = BigMapHandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
-            logger=logging.getLogger(f'{self._ctx.config}.package.{handler_config.callback}'),
+            logger=logger,
             template_values=self._config.template_values,
         )
 
@@ -427,11 +436,11 @@ class BigMapIndex(Index):
     async def _process_big_maps(self, big_maps: List[BigMapData]) -> None:
         """Try to match big map diffs in cache with all patterns from indexes."""
 
-        self._logger.info('Matching %s big map diffs', len(big_maps))
         for big_map in big_maps:
             for handler_config in self._config.handlers:
                 big_map_matched = await self._match_big_map(handler_config, big_map)
                 if big_map_matched:
+                    self._logger.info('%s: `%s` handler matched!', big_map.operation_id, handler_config.callback)
                     await self._on_match(handler_config, big_map)
 
     async def _get_big_map_addresses(self) -> Set[str]:

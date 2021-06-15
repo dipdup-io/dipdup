@@ -1,19 +1,16 @@
-import logging
-
 import demo_tezos_domains.models as models
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
+from dipdup.context import OperationHandlerContext
 
-_logger = logging.getLogger(__name__)
 
-
-async def on_storage_diff(storage: NameRegistryStorage) -> None:
+async def on_storage_diff(ctx: OperationHandlerContext, storage: NameRegistryStorage) -> None:
     for name, item in storage.store.records.items():  # type: ignore
         record_name = bytes.fromhex(name).decode()
         record_path = record_name.split('.')
-        _logger.info('Processing `%s`', record_name)
+        ctx.logger.info('Processing `%s`', record_name)
 
         if len(record_path) != int(item.level):
-            _logger.error('Invalid record `%s`: expected %s chunks, got %s', record_name, item.level, len(record_path))
+            ctx.logger.error('Invalid record `%s`: expected %s chunks, got %s', record_name, item.level, len(record_path))
             return
 
         if item.level == "1":
