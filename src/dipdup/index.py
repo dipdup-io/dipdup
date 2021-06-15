@@ -279,6 +279,7 @@ class OperationIndex(Index):
         handler_context = OperationHandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
+            logger=logging.getLogger(f'{self._ctx.config}.package.{handler_config.callback}'),
             operations=operations,
             template_values=self._config.template_values,
         )
@@ -414,6 +415,7 @@ class BigMapIndex(Index):
         handler_context = BigMapHandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
+            logger=logging.getLogger(f'{self._ctx.config}.package.{handler_config.callback}'),
             template_values=self._config.template_values,
         )
 

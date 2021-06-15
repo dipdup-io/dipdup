@@ -22,6 +22,7 @@ from dipdup.config import (
     IndexConfigTemplateT,
     OperationIndexConfig,
     PostgresDatabaseConfig,
+    ROLLBACK_HANDLER,
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
@@ -96,10 +97,12 @@ class IndexDispatcher:
                 index.push(level, big_maps)
 
     async def _rollback(self, datasource: str, from_level: int, to_level: int) -> None:
+        logger = logging.getLogger(f'{self._ctx.config}.handlers.{ROLLBACK_HANDLER}')
         rollback_fn = self._ctx.config.get_rollback_fn()
         ctx = RollbackHandlerContext(
             config=self._ctx.config,
             datasources=self._ctx.datasources,
+            logger=logger,
             datasource=datasource,
             from_level=from_level,
             to_level=to_level,
@@ -140,7 +143,11 @@ class DipDup:
         self._config = config
         self._datasources: Dict[str, DatasourceT] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
-        self._ctx = HandlerContext(config=self._config, datasources=self._datasources)
+        self._ctx = HandlerContext(
+            config=self._config,
+            datasources=self._datasources,
+            logger=logging.getLogger(__name__),
+        )
         self._index_dispatcher = IndexDispatcher(self._ctx)
 
     async def init(self) -> None:

@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, List, Optional
 
 from dipdup.config import ContractConfig, DipDupConfig, StaticTemplateConfig
@@ -6,7 +7,7 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.models import OperationData
 from dipdup.utils import reindex, restart
 
-
+# TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic in HandlerContext.
 class HandlerContext:
     """Common handler context."""
 
@@ -14,9 +15,11 @@ class HandlerContext:
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
+        logger: logging.Logger,
     ) -> None:
         self.datasources = datasources
         self.config = config
+        self.logger = logger
         self._updated: bool = False
 
     def commit(self) -> None:
@@ -63,10 +66,11 @@ class OperationHandlerContext(HandlerContext):
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
-        operations: List[OperationData],
+        logger: logging.Logger,
         template_values: Optional[Dict[str, str]],
+        operations: List[OperationData],
     ) -> None:
-        super().__init__(datasources, config)
+        super().__init__(datasources, config, logger)
         self.operations = operations
         self.template_values = template_values
 
@@ -78,9 +82,10 @@ class BigMapHandlerContext(HandlerContext):
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
+        logger: logging.Logger,
         template_values: Optional[Dict[str, str]],
     ) -> None:
-        super().__init__(datasources, config)
+        super().__init__(datasources, config, logger)
         self.template_values = template_values
 
 
@@ -89,11 +94,12 @@ class RollbackHandlerContext(HandlerContext):
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
+        logger: logging.Logger,
         datasource: str,
         from_level: int,
         to_level: int,
     ) -> None:
-        super().__init__(datasources, config)
+        super().__init__(datasources, config, logger)
         self.datasource = datasource
         self.from_level = from_level
         self.to_level = to_level
