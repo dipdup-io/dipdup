@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+
   hic_et_nunc:
     build: .
     depends_on:

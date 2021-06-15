@@ -9,7 +9,7 @@ import aiohttp
 from aiohttp import ClientConnectorError, ClientOSError
 from tortoise import Model, fields
 
-from dipdup.config import DipDupConfig, PostgresDatabaseConfig, camel_to_snake
+from dipdup.config import DipDupConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import http_request
 
@@ -17,6 +17,7 @@ _logger = logging.getLogger(__name__)
 
 
 def _is_model_class(obj) -> bool:
+    """Is subclass of tortoise.Model, but not the base class"""
     return isinstance(obj, type) and issubclass(obj, Model) and obj != Model
 
 
@@ -89,6 +90,10 @@ def _iter_models(*modules) -> Iterator[Tuple[str, Type[Model]]]:
 
 
 async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
+    """Generate metadata based on dapp models.
+
+    Includes tables and their relations (but not entities created during execution of snippets from `sql` package directory)
+    """
     _logger.info('Generating Hasura metadata')
     metadata_tables = {}
     model_tables = {}
@@ -97,7 +102,7 @@ async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
     models = importlib.import_module(f'{config.package}.models')
 
     for app, model in _iter_models(models, int_models):
-        table_name = model._meta.db_table or camel_to_snake(model.__name__)  # pylint: disable=protected-access
+        table_name = model._meta.db_table or pascal_to_snake(model.__name__)  # pylint: disable=protected-access
         model_tables[f'{app}.{model.__name__}'] = table_name
 
         table = _format_table(
@@ -137,12 +142,14 @@ async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
 
 
 async def configure_hasura(config: DipDupConfig):
+    """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
     if config.hasura is None:
         raise ConfigurationError('`hasura` config section missing')
 
     _logger.info('Configuring Hasura')
 
+    session = aiohttp.ClientSession()
     url = config.hasura.url.rstrip("/")
     hasura_metadata = await generate_hasura_metadata(config)
 
@@ -163,6 +170,7 @@ async def configure_hasura(config: DipDupConfig):
 
     _logger.info('Fetching existing metadata')
     existing_hasura_metadata = await http_request(
+        session,
         'post',
         url=f'{url}/v1/query',
         data=json.dumps(
@@ -182,6 +190,7 @@ async def configure_hasura(config: DipDupConfig):
 
     _logger.info('Sending replace metadata request')
     result = await http_request(
+        session,
         'post',
         url=f'{url}/v1/query',
         data=json.dumps(
@@ -194,3 +203,5 @@ async def configure_hasura(config: DipDupConfig):
     )
     if not result.get('message') == 'success':
         _logger.error('Can\'t configure Hasura instance: %s', result)
+
+    await session.close()

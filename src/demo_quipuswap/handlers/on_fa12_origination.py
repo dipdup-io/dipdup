@@ -1,13 +1,12 @@
-from typing import Optional
-
 import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
+from dipdup.context import OperationHandlerContext
+from dipdup.models import Origination
 
 
 async def on_fa12_origination(
     ctx: OperationHandlerContext,
-    quipu_fa12_origination: OriginationContext[QuipuFa12Storage],
+    quipu_fa12_origination: Origination[QuipuFa12Storage],
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')

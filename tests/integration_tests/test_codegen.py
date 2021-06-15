@@ -37,11 +37,11 @@ class CodegenTest(IsolatedAsyncioTestCase):
             'tzcolors.yml',
             'tezos_domains_big_map.yml',
             'registrydao.yml',
-            'registrydao_dynamic.yml',
         ]:
             with self.subTest(name):
                 config_path = join(dirname(__file__), name)
                 config = DipDupConfig.load([config_path])
+                config.initialize()
                 config.package = 'tmp_test_dipdup'
 
                 if config.package in sys.modules:

@@ -24,14 +24,15 @@ packages = [
 python = "^3.8"
 aiohttp = "^3.7.4"
 aiomysql = "^0.0.21"
-asyncpg = "^0.22.0"
+asyncpg = "0.23.0"
 datamodel-code-generator = "^0.11.1"
 "ruamel.yaml" = "^0.17.2"
-tortoise-orm = "^0.17.1"
+tortoise-orm = "0.17.4"
 pydantic = "^1.8.1"
 aiosignalrcore = "^0.9.2"
 fcache = "^0.4.7"
 click = "^8.0.1"
+pyee = "^8.1.0"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"

@@ -27,6 +27,8 @@ class IndexType(Enum):
 
 
 class State(Model):
+    """Stores current level of index and hash of it's config"""
+
     index_name = fields.CharField(256)
     index_type = fields.CharEnumField(IndexType)
     hash = fields.CharField(256)
@@ -36,8 +38,17 @@ class State(Model):
         table = 'dipdup_state'
 
 
+class TemporaryState(State):
+    """Used within stateless indexes, skip saving to DB"""
+
+    async def save(self, using_db=None, update_fields=None, force_create=False, force_update=False) -> None:
+        pass
+
+
 @dataclass
 class OperationData:
+    """Basic structure for operations from TzKT response"""
+
     type: str
     id: int
     level: int
@@ -62,6 +73,7 @@ class OperationData:
     diffs: Optional[List[Dict[str, Any]]] = None
 
     def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str, array: bool) -> None:
+        """Apply big map diffs of specific path to storage"""
         if self.diffs is None:
             raise Exception('`bigmaps` field missing')
         _logger.debug(bigmap_name)
@@ -76,7 +88,12 @@ class OperationData:
                 else:
                     storage_dict[bigmap_key][key] = diff['content']['value']
 
-    def _process_storage(self, storage_type: Type[StorageType], storage: Dict, prefix: str = None):
+    def _process_storage(
+        self,
+        storage_type: Type[StorageType],
+        storage: Dict[str, Any],
+        prefix: str = None,
+    ) -> Dict[str, Any]:
         for key, field in storage_type.__fields__.items():
 
             if key == '__root__':
@@ -117,6 +134,7 @@ class OperationData:
         return storage
 
     def get_merged_storage(self, storage_type: Type[StorageType]) -> StorageType:
+        """Merge big map diffs and deserialize raw storage into typeclass"""
         if self.storage is None:
             raise Exception('`storage` field missing')
 
@@ -133,26 +151,35 @@ class OperationData:
 
 
 @dataclass
-class TransactionContext(Generic[ParameterType, StorageType]):
+class Transaction(Generic[ParameterType, StorageType]):
+    """Wrapper for every transaction in handler arguments"""
+
     data: OperationData
     parameter: ParameterType
     storage: StorageType
 
 
 @dataclass
-class OriginationContext(Generic[StorageType]):
+class Origination(Generic[StorageType]):
+    """Wrapper for every origination in handler arguments"""
+
     data: OperationData
     storage: StorageType
 
 
 class BigMapAction(Enum):
+    """Mapping for action in TzKT response"""
+
+    ALLOCATE = 'allocate'
     ADD = 'add_key'
     UPDATE = 'update_key'
     REMOVE = 'remove_key'
 
 
 @dataclass
-class BigMapContext(Generic[KeyType, ValueType]):
+class BigMapDiff(Generic[KeyType, ValueType]):
+    """Wrapper for every big map diff in each list of handler arguments"""
+
     action: BigMapAction
     key: KeyType
     value: Optional[ValueType]
@@ -160,6 +187,8 @@ class BigMapContext(Generic[KeyType, ValueType]):
 
 @dataclass
 class BigMapData:
+    """Basic structure for big map diffs from TzKT response"""
+
     id: int
     level: int
     operation_id: int
@@ -167,17 +196,6 @@ class BigMapData:
     bigmap: int
     contract_address: str
     path: str
-    action: str
+    action: BigMapAction
     key: Optional[Any] = None
     value: Optional[Any] = None
-
-
-@dataclass
-class OperationHandlerContext:
-    operations: List[OperationData]
-    template_values: Optional[Dict[str, str]]
-
-
-@dataclass
-class BigMapHandlerContext:
-    template_values: Optional[Dict[str, str]]

@@ -1,126 +1,233 @@
 import asyncio
 import hashlib
-import importlib
 import logging
-from copy import copy
-from typing import Dict, cast
+from functools import partial
+from os.path import join
+from posix import listdir
+from typing import Dict, List, cast
 
+from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
+from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
 
-import dipdup.codegen as codegen
 import dipdup.utils as utils
-from dipdup import __version__
+from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
-    ROLLBACK_HANDLER,
-    ContractConfig,
+    BcdDatasourceConfig,
+    BigMapIndexConfig,
+    DatasourceConfigT,
     DipDupConfig,
-    DynamicTemplateConfig,
+    IndexConfigTemplateT,
+    OperationIndexConfig,
     PostgresDatabaseConfig,
-    SqliteDatabaseConfig,
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
+from dipdup.context import RollbackHandlerContext
+from dipdup.datasources import DatasourceT
+from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import HandlerImportError
 from dipdup.hasura import configure_hasura
-from dipdup.models import IndexType, State
+from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
+from dipdup.models import BigMapData, IndexType, OperationData, State
+
+
+class IndexDispatcher:
+    def __init__(self, ctx: HandlerContext) -> None:
+        self._ctx = ctx
+
+        self._logger = logging.getLogger(__name__)
+        self._indexes: Dict[str, Index] = {}
+
+    async def add_index(self, index_config: IndexConfigTemplateT) -> None:
+        if index_config.name in self._indexes:
+            return
+        self._logger.info('Adding index `%s` to dispatcher')
+        if isinstance(index_config, OperationIndexConfig):
+            datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
+            datasource = self._ctx.datasources[datasource_name]
+            if not isinstance(datasource, TzktDatasource):
+                raise RuntimeError
+            operation_index = OperationIndex(self._ctx, index_config, datasource)
+            self._indexes[index_config.name] = operation_index
+            await datasource.add_index(index_config)
+
+        elif isinstance(index_config, BigMapIndexConfig):
+            datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
+            datasource = self._ctx.datasources[datasource_name]
+            if not isinstance(datasource, TzktDatasource):
+                raise RuntimeError
+            big_map_index = BigMapIndex(self._ctx, index_config, datasource)
+            self._indexes[index_config.name] = big_map_index
+            await datasource.add_index(index_config)
+
+        else:
+            raise NotImplementedError
+
+    async def reload_config(self) -> None:
+        if not self._ctx.updated:
+            return
+
+        self._logger.info('Reloading config')
+        self._ctx.config.initialize()
+
+        for index_config in self._ctx.config.indexes.values():
+            if isinstance(index_config, StaticTemplateConfig):
+                raise RuntimeError
+            await self.add_index(index_config)
+
+        self._ctx.reset()
+
+    async def dispatch_operations(self, operations: List[OperationData]) -> None:
+        assert len(set(op.level for op in operations)) == 1
+        level = operations[0].level
+        for index in self._indexes.values():
+            if isinstance(index, OperationIndex):
+                index.push(level, operations)
+
+    async def dispatch_big_maps(self, big_maps: List[BigMapData]) -> None:
+        assert len(set(op.level for op in big_maps)) == 1
+        level = big_maps[0].level
+        for index in self._indexes.values():
+            if isinstance(index, BigMapIndex):
+                index.push(level, big_maps)
+
+    async def _rollback(self, datasource: str, from_level: int, to_level: int) -> None:
+        rollback_fn = self._ctx.config.get_rollback_fn()
+        ctx = RollbackHandlerContext(
+            config=self._ctx.config,
+            datasources=self._ctx.datasources,
+            datasource=datasource,
+            from_level=from_level,
+            to_level=to_level,
+        )
+        await rollback_fn(ctx)
+
+    async def run(self, oneshot=False) -> None:
+        self._logger.info('Starting index dispatcher')
+        for name, datasource in self._ctx.datasources.items():
+            if not isinstance(datasource, TzktDatasource):
+                continue
+            datasource.on('operations', self.dispatch_operations)
+            datasource.on('big_maps', self.dispatch_big_maps)
+            datasource.on('rollback', partial(self._rollback, datasource=name))
+
+        self._ctx.commit()
+
+        while True:
+            await self.reload_config()
+
+            # FIXME: Process all indexes in parallel, blocked by https://github.com/tortoise/tortoise-orm/issues/792
+            async with utils.slowdown(1):
+                for index in self._indexes.values():
+                    await index.process()
+
+            # TODO: Continue if new indexes are spawned from origination
+            if oneshot:
+                break
 
 
 class DipDup:
+    """Main indexer class.
+
+    Spawns datasources, registers indexes, passes handler callbacks to executor"""
+
     def __init__(self, config: DipDupConfig) -> None:
         self._logger = logging.getLogger(__name__)
         self._config = config
+        self._datasources: Dict[str, DatasourceT] = {}
+        self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
+        self._ctx = HandlerContext(config=self._config, datasources=self._datasources)
+        self._index_dispatcher = IndexDispatcher(self._ctx)
 
     async def init(self) -> None:
-        await codegen.create_package(self._config)
-        await codegen.resolve_dynamic_templates(self._config)
-        await codegen.fetch_schemas(self._config)
-        await codegen.generate_types(self._config)
-        await codegen.generate_handlers(self._config)
-        await codegen.cleanup(self._config)
+        """Create new or update existing dipdup project"""
+        await self._create_datasources()
 
-    async def run(self, reindex: bool) -> None:
+        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        await codegen.create_package()
+        await codegen.fetch_schemas()
+        await codegen.generate_types()
+        await codegen.generate_default_handlers()
+        await codegen.generate_user_handlers()
+        await codegen.cleanup()
+
+    async def run(self, reindex: bool, oneshot: bool) -> None:
+        """Main entrypoint"""
+
         url = self._config.database.connection_string
-        cache = isinstance(self._config.database, SqliteDatabaseConfig)
         models = f'{self._config.package}.models'
 
-        try:
-            rollback_fn = getattr(importlib.import_module(f'{self._config.package}.handlers.{ROLLBACK_HANDLER}'), ROLLBACK_HANDLER)
-        except ModuleNotFoundError as e:
-            raise ConfigurationError(f'Package `{self._config.package}` not found. Have you forgot to call `init`?') from e
-
         async with utils.tortoise_wrapper(url, models):
-            await self.initialize_database(reindex)
-
-            await self._config.initialize()
-
-            datasources: Dict[TzktDatasourceConfig, TzktDatasource] = {}
-
-            self._logger.info('Processing dynamic templates')
-            has_dynamic_templates = False
-            for index_name, index_config in copy(self._config.indexes).items():
-                if isinstance(index_config, DynamicTemplateConfig):
-                    if not self._config.templates:
-                        raise ConfigurationError('`templates` section is missing')
-                    has_dynamic_templates = True
-                    template = self._config.templates[index_config.template]
-                    # NOTE: Datasource and other fields are str as we haven't initialized DynamicTemplateConfigs yet
-                    datasource_config = self._config.datasources[cast(str, template.datasource)]
-                    if datasource_config not in datasources:
-                        datasources[datasource_config] = TzktDatasource(datasource_config.url, cache)
-                        datasources[datasource_config].set_rollback_fn(rollback_fn)
-                        datasources[datasource_config].set_package(self._config.package)
-
-                    contract_config = self._config.contracts[cast(str, index_config.similar_to)]
-                    await datasources[datasource_config].add_contract_subscription(
-                        contract_config, index_name, template, index_config.strict
-                    )
-                    similar_contracts = await datasources[datasource_config].get_similar_contracts(contract_config.address)
-                    for contract_address in similar_contracts:
-                        self._config.contracts[contract_address] = ContractConfig(
-                            address=contract_address,
-                            typename=contract_config.typename,
-                        )
-
-                        generated_index_name = f'{index_name}_{contract_address}'
-                        template_config = StaticTemplateConfig(template=index_config.template, values=dict(contract=contract_address))
-                        self._config.indexes[generated_index_name] = template_config
-
-                    del self._config.indexes[index_name]
-
-            # NOTE: We need to initialize config one more time to process generated indexes
-            if has_dynamic_templates:
-                self._config.pre_initialize()
-                await self._config.initialize()
-
-            for index_name, index_config in self._config.indexes.items():
-                if isinstance(index_config, StaticTemplateConfig):
-                    raise RuntimeError('Config is not initialized')
-                if isinstance(index_config, DynamicTemplateConfig):
-                    raise RuntimeError('Dynamic templates must be resolved before this step')
-
-                self._logger.info('Processing index `%s`', index_name)
-                if isinstance(index_config.datasource, TzktDatasourceConfig):
-                    if index_config.datasource_config not in datasources:
-                        datasources[index_config.datasource_config] = TzktDatasource(index_config.datasource_config.url, cache)
-                        datasources[index_config.datasource_config].set_rollback_fn(rollback_fn)
-                        datasources[index_config.datasource_config].set_package(self._config.package)
-                    await datasources[index_config.datasource_config].add_index(index_name, index_config)
-                else:
-                    raise NotImplementedError(f'Datasource `{index_config.datasource}` is not supported')
+            await self._initialize_database(reindex)
+            await self._create_datasources()
+            await self._configure()
 
             self._logger.info('Starting datasources')
-            run_tasks = [asyncio.create_task(d.start()) for d in datasources.values()]
+            datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
+            worker_tasks = []
 
             if self._config.hasura:
-                hasura_task = asyncio.create_task(configure_hasura(self._config))
-                run_tasks.append(hasura_task)
+                worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
-            await asyncio.gather(*run_tasks)
+            worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 
-    async def initialize_database(self, reindex: bool = False) -> None:
+            try:
+                await asyncio.gather(*datasource_tasks, *worker_tasks)
+            except KeyboardInterrupt:
+                pass
+
+            self._logger.info('Closing datasource sessions')
+            await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
+
+    async def migrate(self) -> None:
+        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        await codegen.generate_default_handlers(recreate=True)
+        await codegen.migrate_handlers_v050()
+        self._logger.warning('==================== WARNING =====================')
+        self._logger.warning('Your handlers have just been migrated to v0.5.0 format.')
+        self._logger.warning('Review and commit changes before proceeding.')
+        self._logger.warning('==================== WARNING =====================')
+        quit()
+
+    async def _configure(self) -> None:
+        """Run user-defined initial configuration handler"""
+        try:
+            configure_fn = self._config.get_configure_fn()
+        except HandlerImportError:
+            await self.migrate()
+        await configure_fn(self._ctx)
+        self._config.initialize()
+
+    async def _create_datasources(self) -> None:
+        datasource: DatasourceT
+        for name, datasource_config in self._config.datasources.items():
+            if name in self._datasources:
+                continue
+
+            if isinstance(datasource_config, TzktDatasourceConfig):
+                datasource = TzktDatasource(
+                    url=datasource_config.url,
+                    cache=self._config.cache_enabled,
+                )
+                self._datasources[name] = datasource
+                self._datasources_by_config[datasource_config] = datasource
+
+            elif isinstance(datasource_config, BcdDatasourceConfig):
+                datasource = BcdDatasource(
+                    datasource_config.url,
+                    datasource_config.network,
+                    self._config.cache_enabled,
+                )
+                self._datasources[name] = datasource
+                self._datasources_by_config[datasource_config] = datasource
+            else:
+                raise NotImplementedError
+
+    async def _initialize_database(self, reindex: bool = False) -> None:
         self._logger.info('Initializing database')
 
         if isinstance(self._config.database, PostgresDatabaseConfig) and self._config.database.schema_name:
@@ -134,6 +241,7 @@ class DipDup:
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
+        # TODO: Move higher
         if reindex:
             self._logger.warning('Started with `--reindex` argument, reindexing')
             await utils.reindex()
@@ -150,3 +258,22 @@ class DipDup:
         elif schema_state.hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await utils.reindex()
+
+        sql_path = join(self._config.package_path, 'sql')
+        if not exists(sql_path):
+            return
+        if not isinstance(self._config.database, PostgresDatabaseConfig):
+            self._logger.warning('Injecting raw SQL supported on PostgreSQL only')
+            return
+
+        for filename in listdir(sql_path):
+            if not filename.endswith('.sql'):
+                continue
+
+            with open(join(sql_path, filename)) as file:
+                sql = file.read()
+
+            self._logger.info('Applying raw SQL from `%s`', filename)
+
+            async with in_transaction() as conn:
+                await conn.execute_query(sql)

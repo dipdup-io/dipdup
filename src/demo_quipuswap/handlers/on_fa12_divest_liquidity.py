@@ -5,13 +5,14 @@ from demo_quipuswap.types.fa12_token.parameter.transfer import TransferParameter
 from demo_quipuswap.types.fa12_token.storage import Fa12TokenStorage
 from demo_quipuswap.types.quipu_fa12.parameter.divest_liquidity import DivestLiquidityParameter
 from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
-from dipdup.models import OperationHandlerContext, TransactionContext
+from dipdup.context import OperationHandlerContext
+from dipdup.models import Transaction
 
 
 async def on_fa12_divest_liquidity(
     ctx: OperationHandlerContext,
-    divest_liquidity: TransactionContext[DivestLiquidityParameter, QuipuFa12Storage],
-    transfer: TransactionContext[TransferParameter, Fa12TokenStorage],
+    divest_liquidity: Transaction[DivestLiquidityParameter, QuipuFa12Storage],
+    transfer: Transaction[TransferParameter, Fa12TokenStorage],
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')
@@ -32,12 +33,12 @@ async def on_fa12_divest_liquidity(
 
     tez_pool = Decimal(storage.storage.tez_pool) / (10 ** 6)
     token_pool = Decimal(storage.storage.token_pool) / (10 ** decimals)
-    if tez_pool and token_pool:
-        price = tez_pool / token_pool
-    else:
-        last_trade = await models.Trade.filter(symbol=symbol).order_by('-id').first()
-        assert last_trade
-        price = last_trade.price
+
+    # NOTE: Empty pools mean exchange is not initialized yet
+    if not tez_pool and not token_pool:
+        return
+
+    price = tez_pool / token_pool
     share_px = (tez_qty + price * token_qty) / shares_qty
 
     position.realized_pl += shares_qty * (share_px - position.avg_share_px)

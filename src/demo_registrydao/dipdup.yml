@@ -26,17 +26,25 @@ templates:
     contracts:
       - <contract>
     handlers:
+      - callback: on_origination
+        pattern:
+          - type: origination
+            originated_contract: <contract>
       - callback: on_propose
         pattern:
           - type: transaction
             destination: <contract>
             entrypoint: propose
-      - callback: on_origination
-        pattern:
-          - type: origination
-            originated_contract: <contract>
 
 indexes:
-  registry:
-    template: registry_dao
-    similar_to: registry
+  factory:
+    kind: operation
+    datasource: tzkt
+    types:
+      - origination
+    handlers:
+        - callback: on_factory_origination
+          pattern:
+            - type: origination
+              similar_to: registry
+    stateless: True
