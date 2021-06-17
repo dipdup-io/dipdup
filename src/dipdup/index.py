@@ -16,7 +16,7 @@ from dipdup.config import (
     OperationIndexConfig,
     OperationType,
 )
-from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
+from dipdup.context import HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
 from dipdup.utils import FormattedLogger, in_global_transaction, reindex
@@ -223,21 +223,20 @@ class OperationIndex(Index):
 
                     if pattern_idx == len(handler_config.pattern):
                         self._logger.info('%s: `%s` handler matched!', operation_group.hash, handler_config.callback)
-                        await self._on_match(operation_group, handler_config, matched_operations, operations)
+                        await self._on_match(operation_group, handler_config, matched_operations)
 
                         matched_operations = []
                         pattern_idx = 0
 
                 if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
                     self._logger.info('%s: `%s` handler matched!', operation_group.hash, handler_config.callback)
-                    await self._on_match(operation_group, handler_config, matched_operations, operations)
+                    await self._on_match(operation_group, handler_config, matched_operations)
 
     async def _on_match(
         self,
         operation_group: OperationGroup,
         handler_config: OperationHandlerConfig,
         matched_operations: List[Optional[OperationData]],
-        operations: List[OperationData],
     ):
         """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
         args: List[Optional[Union[Transaction, Origination, OperationData]]] = []
@@ -280,11 +279,10 @@ class OperationIndex(Index):
             name=handler_config.callback,
             fmt=operation_group.hash + ': {}',
         )
-        handler_context = OperationHandlerContext(
+        handler_context = HandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
             logger=logger,
-            operations=operations,
             template_values=self._config.template_values,
         )
 
@@ -421,7 +419,7 @@ class BigMapIndex(Index):
             fmt=str(matched_big_map.operation_id) + ': {}',
         )
 
-        handler_context = BigMapHandlerContext(
+        handler_context = HandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
             logger=logger,

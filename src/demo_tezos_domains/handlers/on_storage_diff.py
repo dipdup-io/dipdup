@@ -1,9 +1,9 @@
 import demo_tezos_domains.models as models
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
-from dipdup.context import OperationHandlerContext
+from dipdup.context import HandlerContext
 
 
-async def on_storage_diff(ctx: OperationHandlerContext, storage: NameRegistryStorage) -> None:
+async def on_storage_diff(ctx: HandlerContext, storage: NameRegistryStorage) -> None:
     for name, item in storage.store.records.items():  # type: ignore
         record_name = bytes.fromhex(name).decode()
         record_path = record_name.split('.')

@@ -17,7 +17,7 @@ from dipdup.config import (
     OperationIndexConfig,
     OperationType,
 )
-from dipdup.context import OperationHandlerContext
+from dipdup.context import HandlerContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource, dedup_operations
 from dipdup.dipdup import DipDup
 from dipdup.models import IndexType, OperationData, State, Transaction
@@ -166,7 +166,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
 
             await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)
 
-            self.assertIsInstance(callback_mock.await_args[0][0], OperationHandlerContext)
+            self.assertIsInstance(callback_mock.await_args[0][0], HandlerContext)
             self.assertIsInstance(callback_mock.await_args[0][1], Transaction)
             self.assertIsInstance(callback_mock.await_args[0][1].parameter, CollectParameter)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)

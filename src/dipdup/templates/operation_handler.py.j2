@@ -1,7 +1,7 @@
 from typing import Optional
 
 from dipdup.models import OperationData, Origination, Transaction
-from dipdup.context import OperationHandlerContext
+from dipdup.context import HandlerContext
 
 import {{ package }}.models as models
 {% for pattern in patterns %}
@@ -10,7 +10,7 @@ import {{ package }}.models as models
 
 
 async def {{ handler }}(
-    ctx: OperationHandlerContext,
+    ctx: HandlerContext,
 {%- for pattern in patterns %}
     {{ pattern.get_handler_argument() }}
 {%- endfor %}

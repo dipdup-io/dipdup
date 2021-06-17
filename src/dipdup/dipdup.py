@@ -147,6 +147,7 @@ class DipDup:
             config=self._config,
             datasources=self._datasources,
             logger=utils.FormattedLogger(__name__),
+            template_values=None,
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
 
@@ -196,9 +197,9 @@ class DipDup:
     async def migrate(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.generate_default_handlers(recreate=True)
-        await codegen.migrate_handlers_v050()
+        await codegen.migrate_user_handlers_to_v1()
         self._logger.warning('==================== WARNING =====================')
-        self._logger.warning('Your handlers have just been migrated to v0.5.0 format.')
+        self._logger.warning('Your handlers have just been migrated to v1.0.0 format.')
         self._logger.warning('Review and commit changes before proceeding.')
         self._logger.warning('==================== WARNING =====================')
         quit()

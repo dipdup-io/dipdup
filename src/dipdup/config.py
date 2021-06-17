@@ -223,8 +223,8 @@ class PatternConfig(ABC):
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return f'{entrypoint}: Optional[Transaction[{parameter_cls}, {storage_cls}]] = None,'
-        return f'{entrypoint}: Transaction[{parameter_cls}, {storage_cls}],'
+            return f'{pascal_to_snake(entrypoint)}: Optional[Transaction[{parameter_cls}, {storage_cls}]] = None,'
+        return f'{pascal_to_snake(entrypoint)}: Transaction[{parameter_cls}, {storage_cls}],'
 
     @classmethod
     def format_empty_operation_argument(cls, transaction_id: int, optional: bool) -> str:

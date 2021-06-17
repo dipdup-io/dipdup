@@ -249,14 +249,20 @@ class DipDupCodeGenerator:
         self._logger.info('Generating handler `%s`', CONFIGURE_HANDLER)
         handler_code = configure_template.render()
         handler_path = join(handlers_path, f'{CONFIGURE_HANDLER}.py')
-        if recreate or not exists(handler_path):
+        if exists(handler_path) and recreate:
+            old_handler_path = join(handlers_path, f'{CONFIGURE_HANDLER}.py.bak')
+            os.rename(handler_path, old_handler_path)
+        if not exists(handler_path):
             with open(handler_path, 'w') as file:
                 file.write(handler_code)
 
         self._logger.info('Generating handler `%s`', ROLLBACK_HANDLER)
         handler_code = rollback_template.render()
         handler_path = join(handlers_path, f'{ROLLBACK_HANDLER}.py')
-        if recreate or not exists(handler_path):
+        if exists(handler_path) and recreate:
+            old_handler_path = join(handlers_path, f'{ROLLBACK_HANDLER}.py.bak')
+            os.rename(handler_path, old_handler_path)
+        if not exists(handler_path):
             with open(handler_path, 'w') as file:
                 file.write(handler_code)
 
@@ -335,7 +341,7 @@ class DipDupCodeGenerator:
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
 
-    async def migrate_handlers_v050(self) -> None:
+    async def migrate_user_handlers_to_v1(self) -> None:
         # TODO: Save backups
         remove_lines = [
             'from dipdup.models import',
@@ -344,12 +350,14 @@ class DipDupCodeGenerator:
         ]
         add_lines = [
             'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction',
-            'from dipdup.context import HandlerContext, OperationHandlerContext, BigMapHandlerContext, RollbackHandlerContext',
+            'from dipdup.context import HandlerContext, RollbackHandlerContext',
         ]
         replace_table = {
             'TransactionContext': 'Transaction',
             'OriginationContext': 'Origination',
             'BigMapContext': 'BigMapDiff',
+            'HandlerContext': 'HandlerContext',
+            'HandlerContext': 'HandlerContext',
         }
         handlers_path = join(self._config.package_path, 'handlers')
 
@@ -358,8 +366,10 @@ class DipDupCodeGenerator:
                 if filename == '__init__.py' or not filename.endswith('.py'):
                     continue
                 path = join(root, filename)
+                bak_path = path + '.bak'
+                os.rename(path, bak_path)
                 newfile = copy(add_lines)
-                with open(path) as file:
+                with open(bak_path) as file:
                     for line in file.read().split('\n'):
                         # Skip existing models imports
                         if any(map(lambda l: l in line, remove_lines)):

@@ -1,11 +1,11 @@
 import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
-from dipdup.context import OperationHandlerContext
+from dipdup.context import HandlerContext
 from dipdup.models import Origination
 
 
 async def on_fa2_origination(
-    ctx: OperationHandlerContext,
+    ctx: HandlerContext,
     quipu_fa2_origination: Origination[QuipuFa2Storage],
 ) -> None:
     if ctx.template_values is None:

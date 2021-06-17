@@ -16,10 +16,12 @@ class HandlerContext:
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
         logger: FormattedLogger,
+        template_values: Optional[Dict[str, str]],
     ) -> None:
         self.datasources = datasources
         self.config = config
         self.logger = logger
+        self.template_values = template_values
         self._updated: bool = False
 
     def commit(self) -> None:
@@ -59,36 +61,6 @@ class HandlerContext:
         self._updated = True
 
 
-class OperationHandlerContext(HandlerContext):
-    """Operation index handler context (first argument)"""
-
-    def __init__(
-        self,
-        datasources: Dict[str, DatasourceT],
-        config: DipDupConfig,
-        logger: FormattedLogger,
-        template_values: Optional[Dict[str, str]],
-        operations: List[OperationData],
-    ) -> None:
-        super().__init__(datasources, config, logger)
-        self.operations = operations
-        self.template_values = template_values
-
-
-class BigMapHandlerContext(HandlerContext):
-    """Big map index handler context (first argument)"""
-
-    def __init__(
-        self,
-        datasources: Dict[str, DatasourceT],
-        config: DipDupConfig,
-        logger: FormattedLogger,
-        template_values: Optional[Dict[str, str]],
-    ) -> None:
-        super().__init__(datasources, config, logger)
-        self.template_values = template_values
-
-
 class RollbackHandlerContext(HandlerContext):
     def __init__(
         self,
@@ -99,7 +71,7 @@ class RollbackHandlerContext(HandlerContext):
         from_level: int,
         to_level: int,
     ) -> None:
-        super().__init__(datasources, config, logger)
+        super().__init__(datasources, config, logger, None)
         self.datasource = datasource
         self.from_level = from_level
         self.to_level = to_level
