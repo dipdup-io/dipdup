@@ -5,6 +5,7 @@ import re
 import sys
 import time
 from contextlib import asynccontextmanager
+from logging import Logger
 from typing import AsyncIterator, Optional
 
 import aiohttp
@@ -124,3 +125,20 @@ async def reindex() -> None:
         await Tortoise._drop_databases()
     # NOTE: Tortoise can't recover after dropping database for some reason, restart.
     await restart()
+
+
+class FormattedLogger(Logger):
+    def __init__(
+        self,
+        name: str,
+        fmt: Optional[str] = None,
+    ):
+        logger = logging.getLogger(name)
+        self.__class__ = type(FormattedLogger.__name__, (self.__class__, logger.__class__), {})
+        self.__dict__ = logger.__dict__
+        self.fmt = fmt
+
+    def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, stacklevel=1):
+        if self.fmt:
+            msg = self.fmt.format(msg)
+        super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)

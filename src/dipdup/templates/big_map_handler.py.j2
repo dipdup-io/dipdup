@@ -1,20 +1,13 @@
-from typing import List
-
-from dipdup.context import BigMapHandlerContext
+from dipdup.context import HandlerContext
 from dipdup.models import BigMapDiff
 
 import {{ package }}.models as models
-{% for pattern in patterns %}
-from {{ package }}.types.{{ pattern.contract.module_name }}.big_map.{{ pascal_to_snake(pattern.path) }}_key import {{ snake_to_pascal(pattern.path) }}Key
-from {{ package }}.types.{{ pattern.contract.module_name }}.big_map.{{ pascal_to_snake(pattern.path) }}_value import {{ snake_to_pascal(pattern.path) }}Value
-{%- endfor %}
+from {{ package }}.types.{{ handler.contract.module_name }}.big_map.{{ pascal_to_snake(handler_path) }}_key import {{ snake_to_pascal(handler_path) }}Key
+from {{ package }}.types.{{ handler.contract.module_name }}.big_map.{{ pascal_to_snake(handler_path) }}_value import {{ snake_to_pascal(handler_path) }}Value
 
 
-async def {{ handler }}(
-    ctx: BigMapHandlerContext,
-{%- for pattern in patterns %}
-    {{ pascal_to_snake(pattern.path) }}: List[BigMapDiff[{{ snake_to_pascal(pattern.path) }}Key, {{ snake_to_pascal(pattern.path) }}Value]],
-{%- endfor %}
+async def {{ handler.callback }}(
+    ctx: HandlerContext,
+    {{ pascal_to_snake(handler_path) }}: BigMapDiff[{{ snake_to_pascal(handler_path) }}Key, {{ snake_to_pascal(handler_path) }}Value],
 ) -> None:
     ...
-    

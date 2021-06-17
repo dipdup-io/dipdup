@@ -20,12 +20,12 @@ templates:
     kind: big_map
     datasource: <datasource>
     handlers:
-      - callback: on_update
-        pattern:
-          - contract: <name_registry>
-            path: store.records
-          - contract: <name_registry>
-            path: store.expiry_map
+      - callback: on_update_records
+        contract: <name_registry>
+        path: store.records
+      - callback: on_update_expiry_map
+        contract: <name_registry>
+        path: store.expiry_map
     last_block: 55363
 
 indexes:

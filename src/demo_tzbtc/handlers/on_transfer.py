@@ -3,12 +3,12 @@ from decimal import Decimal
 from demo_tzbtc.handlers.on_balance_update import on_balance_update
 from demo_tzbtc.types.tzbtc.parameter.transfer import TransferParameter
 from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
-from dipdup.context import OperationHandlerContext
+from dipdup.context import HandlerContext
 from dipdup.models import Transaction
 
 
 async def on_transfer(
-    ctx: OperationHandlerContext,
+    ctx: HandlerContext,
     transfer: Transaction[TransferParameter, TzbtcStorage],
 ) -> None:
     if transfer.parameter.from_ == transfer.parameter.to:

@@ -5,14 +5,15 @@ from demo_quipuswap.types.fa12_token.parameter.transfer import TransferParameter
 from demo_quipuswap.types.fa12_token.storage import Fa12TokenStorage
 from demo_quipuswap.types.quipu_fa12.parameter.divest_liquidity import DivestLiquidityParameter
 from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
-from dipdup.context import OperationHandlerContext
-from dipdup.models import Transaction
+from dipdup.context import HandlerContext
+from dipdup.models import OperationData, Transaction
 
 
 async def on_fa12_divest_liquidity(
-    ctx: OperationHandlerContext,
+    ctx: HandlerContext,
     divest_liquidity: Transaction[DivestLiquidityParameter, QuipuFa12Storage],
     transfer: Transaction[TransferParameter, Fa12TokenStorage],
+    transaction_1: OperationData,
 ) -> None:
     if ctx.template_values is None:
         raise Exception('This index must be templated')
@@ -24,10 +25,9 @@ async def on_fa12_divest_liquidity(
     trader = divest_liquidity.data.sender_address
 
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
-    transaction = next(op for op in ctx.operations if op.amount)
 
-    assert transaction.amount is not None
-    tez_qty = Decimal(transaction.amount) / (10 ** 6)
+    assert transaction_1.amount is not None
+    tez_qty = Decimal(transaction_1.amount) / (10 ** 6)
     token_qty = Decimal(transfer.parameter.value) / (10 ** decimals)
     shares_qty = int(divest_liquidity.parameter.shares)
 

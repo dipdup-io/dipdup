@@ -223,8 +223,8 @@ class PatternConfig(ABC):
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return f'{entrypoint}: Optional[Transaction[{parameter_cls}, {storage_cls}]] = None,'
-        return f'{entrypoint}: Transaction[{parameter_cls}, {storage_cls}],'
+            return f'{pascal_to_snake(entrypoint)}: Optional[Transaction[{parameter_cls}, {storage_cls}]] = None,'
+        return f'{pascal_to_snake(entrypoint)}: Transaction[{parameter_cls}, {storage_cls}],'
 
     @classmethod
     def format_empty_operation_argument(cls, transaction_id: int, optional: bool) -> str:
@@ -532,13 +532,13 @@ class OperationIndexConfig(IndexConfig):
         return cast(List[ContractConfig], self.contracts)
 
 
-# FIXME: Inherit PatternConfig, cleanup
 @dataclass
-class BigMapHandlerPatternConfig:
+class BigMapHandlerConfig(HandlerConfig):
     contract: Union[str, ContractConfig]
     path: str
 
     def __post_init_post_parse__(self):
+        super().__post_init_post_parse__()
         self._key_type_cls = None
         self._value_type_cls = None
 
@@ -567,11 +567,6 @@ class BigMapHandlerPatternConfig:
     @value_type_cls.setter
     def value_type_cls(self, typ: Type) -> None:
         self._value_type_cls = typ
-
-
-@dataclass
-class BigMapHandlerConfig(HandlerConfig):
-    pattern: List[BigMapHandlerPatternConfig]
 
 
 @dataclass
@@ -612,9 +607,7 @@ class StaticTemplateConfig:
 
 IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, StaticTemplateConfig]
 IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
-HandlerPatternConfigT = Union[
-    OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig, BigMapHandlerPatternConfig
-]
+HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
 @dataclass
@@ -767,17 +760,17 @@ class DipDupConfig:
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
             for handler in index_config.handlers:
-                self._callback_patterns[handler.callback].append(handler.pattern)
-                for pattern in handler.pattern:
-                    if isinstance(pattern.contract, str):
-                        pattern.contract = self.get_contract(pattern.contract)
+                # TODO: Verify callback uniqueness
+                # self._callback_patterns[handler.callback].append(handler.pattern)
+                if isinstance(handler.contract, str):
+                    handler.contract = self.get_contract(handler.contract)
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
         self._pre_initialized.append(index_name)
 
-    def _pre_initialize(self) -> None:
+    def pre_initialize(self) -> None:
         for name, config in self.datasources.items():
             config.name = name
 
@@ -860,7 +853,7 @@ class DipDupConfig:
                 raise HandlerImportError from e
             raise
 
-    def initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
+    def _initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         if index_name in self._initialized:
             return
 
@@ -891,27 +884,26 @@ class DipDupConfig:
             for big_map_handler_config in index_config.handlers:
                 self._initialize_handler_callback(big_map_handler_config)
 
-                for big_map_pattern_config in big_map_handler_config.pattern:
-                    _logger.info('Registering big map types for path `%s`', big_map_pattern_config.path)
-                    key_type_module = importlib.import_module(
-                        f'{self.package}'
-                        f'.types'
-                        f'.{big_map_pattern_config.contract_config.module_name}'
-                        f'.big_map'
-                        f'.{pascal_to_snake(big_map_pattern_config.path)}_key'
-                    )
-                    key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_pattern_config.path + '_key'))
-                    big_map_pattern_config.key_type_cls = key_type_cls
+                _logger.info('Registering big map types for path `%s`', big_map_handler_config.path)
+                key_type_module = importlib.import_module(
+                    f'{self.package}'
+                    f'.types'
+                    f'.{big_map_handler_config.contract_config.module_name}'
+                    f'.big_map'
+                    f'.{pascal_to_snake(big_map_handler_config.path)}_key'
+                )
+                key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_handler_config.path + '_key'))
+                big_map_handler_config.key_type_cls = key_type_cls
 
-                    value_type_module = importlib.import_module(
-                        f'{self.package}'
-                        f'.types'
-                        f'.{big_map_pattern_config.contract_config.module_name}'
-                        f'.big_map'
-                        f'.{pascal_to_snake(big_map_pattern_config.path)}_value'
-                    )
-                    value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_pattern_config.path + '_value'))
-                    big_map_pattern_config.value_type_cls = value_type_cls
+                value_type_module = importlib.import_module(
+                    f'{self.package}'
+                    f'.types'
+                    f'.{big_map_handler_config.contract_config.module_name}'
+                    f'.big_map'
+                    f'.{pascal_to_snake(big_map_handler_config.path)}_value'
+                )
+                value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_handler_config.path + '_value'))
+                big_map_handler_config.value_type_cls = value_type_cls
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -921,9 +913,9 @@ class DipDupConfig:
     def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)
 
-        self._pre_initialize()
+        self.pre_initialize()
         for index_name, index_config in self.indexes.items():
-            self.initialize_index(index_name, index_config)
+            self._initialize_index(index_name, index_config)
 
 
 @dataclass

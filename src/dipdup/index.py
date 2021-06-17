@@ -4,11 +4,8 @@ from collections import deque, namedtuple
 from contextlib import suppress
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
-from tortoise.transactions import in_transaction
-
 from dipdup.config import (
     BigMapHandlerConfig,
-    BigMapHandlerPatternConfig,
     BigMapIndexConfig,
     ContractConfig,
     IndexConfigTemplateT,
@@ -19,10 +16,10 @@ from dipdup.config import (
     OperationIndexConfig,
     OperationType,
 )
-from dipdup.context import BigMapHandlerContext, HandlerContext, OperationHandlerContext
+from dipdup.context import HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
-from dipdup.utils import in_global_transaction, reindex
+from dipdup.utils import FormattedLogger, in_global_transaction, reindex
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 
@@ -133,7 +130,6 @@ class OperationIndex(Index):
         )
 
         async for level, operations in fetcher.fetch_operations_by_level():
-            self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_level_operations(level, operations)
 
         state.level = last_level  # type: ignore
@@ -145,6 +141,7 @@ class OperationIndex(Index):
             raise RuntimeError(state.level, level)
 
         async with in_global_transaction():
+            self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_operations(operations)
 
             state.level = level  # type: ignore
@@ -193,8 +190,7 @@ class OperationIndex(Index):
             operation_groups[key].append(operation)
 
         keys = list(operation_groups.keys())
-        self._logger.info('Matching %s operation groups', len(keys))
-        for key, operations in operation_groups.items():
+        for operation_group, operations in operation_groups.items():
             self._logger.debug('Matching %s', key)
 
             for handler_config in self._config.handlers:
@@ -226,21 +222,21 @@ class OperationIndex(Index):
                         operation_idx += 1
 
                     if pattern_idx == len(handler_config.pattern):
-                        self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                        await self._on_match(handler_config, matched_operations, operations)
+                        self._logger.info('%s: `%s` handler matched!', operation_group.hash, handler_config.callback)
+                        await self._on_match(operation_group, handler_config, matched_operations)
 
                         matched_operations = []
                         pattern_idx = 0
 
                 if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
-                    self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                    await self._on_match(handler_config, matched_operations, operations)
+                    self._logger.info('%s: `%s` handler matched!', operation_group.hash, handler_config.callback)
+                    await self._on_match(operation_group, handler_config, matched_operations)
 
     async def _on_match(
         self,
+        operation_group: OperationGroup,
         handler_config: OperationHandlerConfig,
         matched_operations: List[Optional[OperationData]],
-        operations: List[OperationData],
     ):
         """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
         args: List[Optional[Union[Transaction, Origination, OperationData]]] = []
@@ -279,10 +275,14 @@ class OperationIndex(Index):
             else:
                 raise NotImplementedError
 
-        handler_context = OperationHandlerContext(
+        logger = FormattedLogger(
+            name=handler_config.callback,
+            fmt=operation_group.hash + ': {}',
+        )
+        handler_context = HandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
-            operations=operations,
+            logger=logger,
             template_values=self._config.template_values,
         )
 
@@ -365,7 +365,6 @@ class BigMapIndex(Index):
         )
 
         async for level, big_maps in fetcher.fetch_big_maps_by_level():
-            self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_level_big_maps(level, big_maps)
 
         state.level = last_level  # type: ignore
@@ -377,58 +376,57 @@ class BigMapIndex(Index):
             raise RuntimeError(state.level, level)
 
         async with in_global_transaction():
+            self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_big_maps(big_maps)
 
             state.level = level  # type: ignore
             await state.save()
 
-    async def _match_big_map(self, pattern_config: BigMapHandlerPatternConfig, big_map: BigMapData) -> bool:
+    async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""
-        if pattern_config.path != big_map.path:
+        if handler_config.path != big_map.path:
             return False
-        if pattern_config.contract_config.address != big_map.contract_address:
+        if handler_config.contract_config.address != big_map.contract_address:
             return False
         return True
 
     async def _on_match(
         self,
         handler_config: BigMapHandlerConfig,
-        matched_big_maps: List[List[BigMapData]],
+        matched_big_map: BigMapData,
     ) -> None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-        args: List[List[BigMapDiff]] = []
-        for matched_big_map_group, pattern_config in zip(matched_big_maps, handler_config.pattern):
-            big_map_contexts = []
-            for big_map in matched_big_map_group:
-                if big_map.action == BigMapAction.ALLOCATE:
-                    continue
+        if matched_big_map.action == BigMapAction.ALLOCATE:
+            return
 
-                key_type = pattern_config.key_type_cls
-                key = key_type.parse_obj(big_map.key)
+        key_type = handler_config.key_type_cls
+        key = key_type.parse_obj(matched_big_map.key)
 
-                if big_map.action == BigMapAction.REMOVE:
-                    value = None
-                else:
-                    value_type = pattern_config.value_type_cls
-                    value = value_type.parse_obj(big_map.value)
+        if matched_big_map.action == BigMapAction.REMOVE:
+            value = None
+        else:
+            value_type = handler_config.value_type_cls
+            value = value_type.parse_obj(matched_big_map.value)
 
-                big_map_context = BigMapDiff(  # type: ignore
-                    action=big_map.action,
-                    key=key,
-                    value=value,
-                )
+        big_map_context = BigMapDiff(  # type: ignore
+            data=matched_big_map,
+            action=matched_big_map.action,
+            key=key,
+            value=value,
+        )
+        logger = FormattedLogger(
+            name=handler_config.callback,
+            fmt=str(matched_big_map.operation_id) + ': {}',
+        )
 
-                big_map_contexts.append(big_map_context)
-
-            args.append(big_map_contexts)
-
-        handler_context = BigMapHandlerContext(
+        handler_context = HandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
+            logger=logger,
             template_values=self._config.template_values,
         )
 
-        await handler_config.callback_fn(handler_context, *args)
+        await handler_config.callback_fn(handler_context, big_map_context)
 
         if handler_context.updated:
             self._ctx.commit()
@@ -436,44 +434,23 @@ class BigMapIndex(Index):
     async def _process_big_maps(self, big_maps: List[BigMapData]) -> None:
         """Try to match big map diffs in cache with all patterns from indexes."""
 
-        # FIXME: groupby
-        big_map_groups: Dict[int, List[BigMapData]] = {}
         for big_map in big_maps:
-            key = big_map.operation_id
-            if key not in big_map_groups:
-                big_map_groups[key] = []
-            big_map_groups[key].append(big_map)
-
-        keys = list(big_map_groups.keys())
-        self._logger.info('Matching %s big map groups', len(keys))
-        for key, big_maps in big_map_groups.items():
-            self._logger.debug('Processing %s', key)
-
             for handler_config in self._config.handlers:
-                matched_big_maps: List[List[BigMapData]] = [[] for _ in range(len(handler_config.pattern))]
-                for i, pattern_config in enumerate(handler_config.pattern):
-                    for big_map in big_maps:
-                        big_map_matched = await self._match_big_map(pattern_config, big_map)
-                        if big_map_matched:
-                            matched_big_maps[i].append(big_map)
-
-                if any([len(big_map_group) for big_map_group in matched_big_maps]):
-                    self._logger.info('Handler `%s` matched! %s', handler_config.callback, key)
-                    await self._on_match(handler_config, matched_big_maps)
-                    break
+                big_map_matched = await self._match_big_map(handler_config, big_map)
+                if big_map_matched:
+                    self._logger.info('%s: `%s` handler matched!', big_map.operation_id, handler_config.callback)
+                    await self._on_match(handler_config, big_map)
 
     async def _get_big_map_addresses(self) -> Set[str]:
         """Get addresses to fetch transactions from during initial synchronization"""
         addresses = set()
         for handler_config in self._config.handlers:
-            for pattern_config in handler_config.pattern:
-                addresses.add(cast(ContractConfig, pattern_config.contract).address)
+            addresses.add(cast(ContractConfig, handler_config.contract).address)
         return addresses
 
     async def _get_big_map_paths(self) -> Set[str]:
         """Get addresses to fetch transactions from during initial synchronization"""
         paths = set()
         for handler_config in self._config.handlers:
-            for pattern_config in handler_config.pattern:
-                paths.add(pattern_config.path)
+            paths.add(handler_config.path)
         return paths

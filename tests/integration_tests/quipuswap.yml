@@ -46,6 +46,8 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
+          - type: transaction
+            source: <dex_contract>
       - callback: on_fa12_tez_to_token
         pattern:
           - type: transaction
@@ -75,6 +77,8 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
+          - type: transaction
+            source: <dex_contract>
       - callback: on_fa12_withdraw_profit
         pattern:
           - type: transaction
@@ -107,6 +111,8 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
+          - type: transaction
+            source: <dex_contract>
       - callback: on_fa2_tez_to_token
         pattern:
           - type: transaction
@@ -136,6 +142,8 @@ templates:
           - type: transaction
             destination: <token_contract>
             entrypoint: transfer
+          - type: transaction
+            source: <dex_contract>
       - callback: on_fa2_withdraw_profit
         pattern:
           - type: transaction

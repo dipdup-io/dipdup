@@ -15,6 +15,7 @@ from tortoise.utils import get_schema_sql
 import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
+    ROLLBACK_HANDLER,
     BcdDatasourceConfig,
     BigMapIndexConfig,
     DatasourceConfigT,
@@ -96,10 +97,12 @@ class IndexDispatcher:
                 index.push(level, big_maps)
 
     async def _rollback(self, datasource: str, from_level: int, to_level: int) -> None:
+        logger = utils.FormattedLogger(ROLLBACK_HANDLER)
         rollback_fn = self._ctx.config.get_rollback_fn()
         ctx = RollbackHandlerContext(
             config=self._ctx.config,
             datasources=self._ctx.datasources,
+            logger=logger,
             datasource=datasource,
             from_level=from_level,
             to_level=to_level,
@@ -140,7 +143,12 @@ class DipDup:
         self._config = config
         self._datasources: Dict[str, DatasourceT] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
-        self._ctx = HandlerContext(config=self._config, datasources=self._datasources)
+        self._ctx = HandlerContext(
+            config=self._config,
+            datasources=self._datasources,
+            logger=utils.FormattedLogger(__name__),
+            template_values=None,
+        )
         self._index_dispatcher = IndexDispatcher(self._ctx)
 
     async def init(self) -> None:
@@ -154,6 +162,9 @@ class DipDup:
         await codegen.generate_default_handlers()
         await codegen.generate_user_handlers()
         await codegen.cleanup()
+
+        for datasource in self._datasources.values():
+            await datasource.close_session()
 
     async def run(self, reindex: bool, oneshot: bool) -> None:
         """Main entrypoint"""
@@ -186,9 +197,9 @@ class DipDup:
     async def migrate(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.generate_default_handlers(recreate=True)
-        await codegen.migrate_handlers_v050()
+        await codegen.migrate_user_handlers_to_v1()
         self._logger.warning('==================== WARNING =====================')
-        self._logger.warning('Your handlers have just been migrated to v0.5.0 format.')
+        self._logger.warning('Your handlers have just been migrated to v1.0.0 format.')
         self._logger.warning('Review and commit changes before proceeding.')
         self._logger.warning('==================== WARNING =====================')
         quit()

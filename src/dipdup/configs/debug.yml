@@ -2,7 +2,7 @@
   disable_existing_loggers: false
   formatters:
     brief:
-      format: "%(levelname)-8s %(name)-35s %(message)s"
+      format: "%(levelname)-8s %(name)-20s %(message)s"
   handlers:
     console:
       level: DEBUG
@@ -10,17 +10,20 @@
       class: logging.StreamHandler
       stream : ext://sys.stdout
   loggers:
+    dipdup.dipdup:
+      level: DEBUG
+    dipdup.index:
+      level: DEBUG
+    dipdup.tzkt:
+      level: DEBUG
+    dipdup.bcd:
+      level: DEBUG
+
     SignalRCoreClient:
       formatter: brief
-    dipdup.datasources.tzkt.datasource:
-      level: DEBUG
-    dipdup.datasources.tzkt.cache:
-      level: DEBUG
     aiosqlite:
       level: DEBUG
     db_client:
-      level: DEBUG
-    dipdup.models:
       level: DEBUG
   root:
     level: DEBUG

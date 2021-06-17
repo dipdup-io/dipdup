@@ -5,14 +5,15 @@ from demo_quipuswap.types.fa2_token.parameter.transfer import TransferParameter
 from demo_quipuswap.types.fa2_token.storage import Fa2TokenStorage
 from demo_quipuswap.types.quipu_fa2.parameter.divest_liquidity import DivestLiquidityParameter
 from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
-from dipdup.context import OperationHandlerContext
-from dipdup.models import Transaction
+from dipdup.context import HandlerContext
+from dipdup.models import OperationData, Transaction
 
 
 async def on_fa2_divest_liquidity(
-    ctx: OperationHandlerContext,
+    ctx: HandlerContext,
     divest_liquidity: Transaction[DivestLiquidityParameter, QuipuFa2Storage],
     transfer: Transaction[TransferParameter, Fa2TokenStorage],
+    transaction_1: OperationData,
 ) -> None:
 
     if ctx.template_values is None:
@@ -25,10 +26,9 @@ async def on_fa2_divest_liquidity(
     trader = divest_liquidity.data.sender_address
 
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
-    transaction = next(op for op in ctx.operations if op.amount)
 
-    assert transaction.amount is not None
-    tez_qty = Decimal(transaction.amount) / (10 ** 6)
+    assert transaction_1.amount is not None
+    tez_qty = Decimal(transaction_1.amount) / (10 ** 6)
     token_qty = sum(Decimal(tx.amount) for tx in transfer.parameter.__root__[0].txs) / (10 ** decimals)
     shares_qty = int(divest_liquidity.parameter.shares)
 

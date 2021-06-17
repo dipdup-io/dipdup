@@ -1,12 +1,12 @@
 import demo_tzcolors.models as models
 from demo_tzcolors.types.tzcolors_auction.parameter.withdraw import WithdrawParameter
 from demo_tzcolors.types.tzcolors_auction.storage import TzcolorsAuctionStorage
-from dipdup.context import OperationHandlerContext
+from dipdup.context import HandlerContext
 from dipdup.models import Transaction
 
 
 async def on_withdraw(
-    ctx: OperationHandlerContext,
+    ctx: HandlerContext,
     withdraw: Transaction[WithdrawParameter, TzcolorsAuctionStorage],
 ) -> None:
     auction = await models.Auction.filter(
