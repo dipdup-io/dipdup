@@ -18,7 +18,7 @@ Adds new index to the current configuration.
 
 ### `.commit()`
 
-Tells DipDup dispatcher that there are pending dynamic indexes that have to be spawned. 
+Tells DipDup dispatcher that there are pending dynamic indexes that have to be spawned. You will need this method only if you manually change the config \(not through the `add_index` helper\).
 
 ## Properties
 
