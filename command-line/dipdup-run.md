@@ -3,14 +3,12 @@
 Configures API engine\(s\) \(if specified in the configuration file\) and runs the indexer. Can be gracefully killed with `Ctrl+C` or `SIGTERM`.
 
 ```text
-dipdup [-c path-to-config.yml] run [--reindex] [--oneshot]
+dipdup [-c path-to-config.yml] run [--reindex]
 ```
 
 DipDup will wait until database and API engines are accessible.
 
 Use `--reindex` flag if you want to drop the database and start indexing from scratch.
-
-Use `--oneshot` flag to just synchronize your indexes without switching to real-time updates \(useful for debugging together with `first_block` and `last_block` fields set\).
 
 ## Schema migration
 
@@ -33,23 +31,7 @@ If [hasura](../config-file-reference/hasura.md) section is present in configurat
 
 DipDup will execute all the scripts from the `%project_root%/sql` after the database initialization and before any indexing istarted.
 
-## Custom initialization
 
-DipDup generates a default configuration handler `on_configure` that can be filled with custom initialization logic:
-
-{% tabs %}
-{% tab title="Python" %}
-```python
-from dipdup.context import HandlerContext
-
-
-async def on_configure(ctx: HandlerContext) -> None:
-    ...
-```
-{% endtab %}
-{% endtabs %}
-
-It can be used for creating [dynamic indexes](../config-file-reference/templates.md#dynamic-instances) from predefined templates or other tasks. 
 
 {% page-ref page="../config-file-reference/hasura.md" %}
 

@@ -12,5 +12,5 @@ Here are several minimal examples how to use various DipDup features for a real 
 
 ## Community projects
 
-
+* [Tezos profiles](https://github.com/spruceid/tzprofiles/tree/main/api/indexer)
 

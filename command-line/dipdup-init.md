@@ -75,9 +75,9 @@ from <package>.types.<typename>.storage import TypeNameStorage
 
 
 async def callback(
-    ctx: HandlerContext,
-    entry_point_1: Transaction[EntryPoint1Parameter, TypeNameStorage],
-    entry_point_n: Transaction[EntryPointNParameter, TypeNameStorage]
+    ctx: OperationHandlerContext,
+    entry_point_1: TransactionContext[EntryPoint1Parameter, TypeNameStorage],
+    entry_point_n: TransactionContext[EntryPointNParameter, TypeNameStorage]
 ) -> None:
     ...
 ```
@@ -85,8 +85,8 @@ async def callback(
 where:
 
 *  `entry_point_1 ... entry_point_n` are items from the according handler pattern.
-* `ctx: HandlerContext` provides useful helpers and contains internal state.
-* `Transaction` contains transaction amount, parameter, and storage **\(typed\)**.
+* `ctx: OperationHandlerContext` contains all the operations \(both external and internal\) matched in a particular operation group content.
+* `TransactionContext` contains transaction amount, parameter, and storage **\(typed\)**.
 
 For the _origination_ case the handler signature will look similar:
 
@@ -95,12 +95,12 @@ from <package>.types.<typename>.storage import TypeNameStorage
 
 
 async def on_origination(
-    ctx: HandlerContext,
-    origination: Origination[TypeNameStorage],
+    ctx: OperationHandlerContext,
+    origination: OriginationContext[TypeNameStorage],
 )
 ```
 
-where `Origination` contains origination script, initial storage **\(typed\)**, amount, delegate, etc.
+where `OriginationContext` contains origination script, initial storage **\(typed\)**, amount, delegate, etc.
 
 _Big map_ update handler will look like the following:
 
@@ -110,12 +110,12 @@ from <package>.types.name_registry.big_map.<path>_value import PathValue
 
 
 async def on_update(
-    ctx: HandlerContext,
-    update: BigMapDiff[PathKey, PathValue],
+    ctx: BigMapHandlerContext,
+    update: BigMapContext[PathKey, PathValue],
 )
 ```
 
-where `BigMapDiff` contains action \(allocate, update, or remove\), updated key, and nullable value **\(typed\).**
+where `BigMapContext` contains action \(allocate, update, or remove\), updated key, and nullable value **\(typed\).**
 
 **NOTE** that you can safely change argument names \(e.g. in case of collisions\).
 {% endtab %}

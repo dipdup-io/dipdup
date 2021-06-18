@@ -72,24 +72,20 @@ Here are the supported filters for matching operations \(all optional\):
 * `entrypoint` — invoked entrypoint name
 * `source` — operation sender alias \(from the [inventory](../contracts.md)\)
 * `originated_contract` — originated contract alias \(from the [inventory](../contracts.md)\)
-* `similar_to` — originated contract has the same parameter and storage types as the reference one \(from the [inventory](../contracts.md)\)
-* `strict` — stronger the `similar_to` filter by comparing the entire code rather than just parameter+storage
 * `optional` — continue matching even if this item is not found \(with limitations, see below\)
 
 **NOTE** that it's not required to match the entire operation content, you can skip external/internal calls that are not relevant. However, there is a limitation: optional items cannot be followed by operations ignored by the pattern.
 
 ```yaml
 pattern:
-  - destination: contract_1
+  - destination: contract1
     entrypoint: call_1
-  - destination: contract_2
+  - destination: contract2
     entrypoint: internal_call_2
-  - source: contract_1
+  - source: contract1
     type: transaction
-  - source: contract_2
+  - source: contract2
     type: origination
-    similar_to: contract_3
-    strict: true
     optional: true
 ```
 

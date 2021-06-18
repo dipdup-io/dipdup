@@ -32,14 +32,5 @@ Any string value wrapped in angle brackets is treated as a placeholder, so make 
 
 Any index implementing a template has to have a value for each existing placeholder, all those values are then accessible via the handler context.
 
-## Dynamic instances
-
-DipDup allows to spawn new indexes from a template in runtime. There are two ways to do that:
-
-* From another index \(e.g. handling factory originations\)
-* From the [configuration handler](../command-line/dipdup-run.md#custom-initialization)
-
-DipDup exposes several context methods that extend current configuration with new contracts and template instances.
-
-{% page-ref page="../advanced/handler-context.md" %}
+{% page-ref page="indexes/template.md" %}
 
