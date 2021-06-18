@@ -41,5 +41,5 @@ DipDup allows to spawn new indexes from a template in runtime. There are two way
 
 DipDup exposes several context methods that extend current configuration with new contracts and template instances.
 
-{% page-ref page="../advanced/context-helpers.md" %}
+{% page-ref page="../advanced/handler-context.md" %}
 

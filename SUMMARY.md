@@ -22,7 +22,7 @@
 * [Deployment](deployment/README.md)
   * [Docker compose](deployment/docker-compose.md)
 * [Advanced](advanced/README.md)
-  * [Context helpers](advanced/context-helpers.md)
+  * [Handler context](advanced/handler-context.md)
   * [Mempool plugin](advanced/mempool-plugin.md)
   * [Metadata plugin](advanced/metadata-plugin.md)
 * [Examples](examples.md)
