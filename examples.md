@@ -7,7 +7,7 @@ Here are several minimal examples how to use various DipDup features for a real 
 * [Hic-et-nunc](https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_hic_et_nunc)
 * [Quipuswap](https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_quipuswap)
 * [RegistryDAO](https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_registrydao)
-* [Tezos domains](https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_tezos_domains)
+* [Tezos domains](https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_tezos_domains_big_map)
 * [Tzcolors](https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_tzcolors)
 
 ## Community projects
