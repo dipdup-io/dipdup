@@ -46,7 +46,7 @@ class IndexDispatcher:
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
         if index_config.name in self._indexes:
             return
-        self._logger.info('Adding index `%s` to dispatcher')
+        self._logger.info('Adding index `%s` to dispatcher', index_config.name)
         if isinstance(index_config, OperationIndexConfig):
             datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
             datasource = self._ctx.datasources[datasource_name]

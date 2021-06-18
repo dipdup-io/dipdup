@@ -624,12 +624,6 @@ class HasuraConfig:
 
 
 @dataclass
-class ConfigurationConfig:
-    interval: int = 60
-    args: Dict[str, Any] = Field(default_factory=dict)
-
-
-@dataclass
 class DipDupConfig:
     """Main dapp config
 
@@ -652,7 +646,6 @@ class DipDupConfig:
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, MySQLDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     hasura: Optional[HasuraConfig] = None
-    configuration: Optional[ConfigurationConfig] = None
 
     def __post_init_post_parse__(self):
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
@@ -843,15 +836,9 @@ class DipDupConfig:
 
     def _initialize_handler_callback(self, handler_config: HandlerConfig) -> None:
         _logger.info('Registering handler callback `%s`', handler_config.callback)
-        try:
-            handler_module = importlib.import_module(f'{self.package}.handlers.{handler_config.callback}')
-            callback_fn = getattr(handler_module, handler_config.callback)
-            handler_config.callback_fn = callback_fn
-        except ImportError as e:
-            if 'Context' in str(e):
-                _logger.warning('Found broken imports, attemping to fix them')
-                raise HandlerImportError from e
-            raise
+        handler_module = importlib.import_module(f'{self.package}.handlers.{handler_config.callback}')
+        callback_fn = getattr(handler_module, handler_config.callback)
+        handler_config.callback_fn = callback_fn
 
     def _initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         if index_name in self._initialized:
