@@ -16,7 +16,7 @@ pip install dipdup
 
 ## Write config file
 
-Make new folder named `dipdup_demo` cd in and create a configuration file `dipdup.yml` with the following content:
+Make a new folder and create a configuration file `dipdup.yml` inside with the following content:
 
 ```yaml
 spec_version: 0.1
@@ -40,7 +40,8 @@ indexes:
   tzbtc_holders_mainnet:
     kind: operation
     datasource: tzkt_staging
-    contract: tzbtc_mainnet
+    contracts: 
+      - tzbtc_mainnet
     handlers:
       - callback: on_transfer
         pattern:
@@ -52,7 +53,7 @@ indexes:
             entrypoint: mint
 ```
 
-We will index all the tzBTC transfers and mints and have stateful models representing token holders.
+We will index all the tzBTC transfers and mints and store indexed data in the models representing token holders.
 
 ## Generate types
 
@@ -65,11 +66,12 @@ This command will generate the following files:
 {% tabs %}
 {% tab title="Python" %}
 ```text
-dipdup_demo/
+demo_tzbtc/
 ├── models.py
 ├── handlers
 │   ├── on_transfer.py
 │   ├── on_mint.py
+│   ├── on_configure.py
 │   └── on_rollback.py
 └── types
     └── tzbtc
@@ -111,36 +113,100 @@ class Holder(Model):
 
 ## Implement handlers
 
+Our task is to properly index all the balance updates, so we'll start with a helper method handling them.
 
+{% tabs %}
+{% tab title="Python" %}
+`on_balance_update.py`
+
+```python
+from decimal import Decimal
+import demo_tzbtc.models as models
+
+
+async def on_balance_update(
+    address: str,
+    balance_update: Decimal, 
+    timestamp: str
+) -> None:
+    holder, _ = await models.Holder.get_or_create(address=address)
+    holder.balance += balance_update
+    holder.turnover += abs(balance_update)
+    holder.tx_count += 1
+    holder.last_seen = timestamp
+    assert holder.balance >= 0, address
+    await holder.save()
+```
+{% endtab %}
+{% endtabs %}
+
+That was pretty straightforward👍🏻
+
+Now we need to handle two contract methods that can alter token balances — `transfer` and `mint` \(there's also `burn`, but for simplicity we'll omit that in this tutorial\).
 
 {% tabs %}
 {% tab title="Python" %}
 `on_transfer.py`
 
 ```python
-from dipdup_demo.types.tzbtc.parameter.transfer import Transfer
-import dipdup_demo.models as models
-from dipdup.models import HandlerContext, OperationContext
+from typing import Optional
+from decimal import Decimal
+
+from dipdup.models import Transaction
+from dipdup.context import HandlerContext
+
+import demo_tzbtc.models as models
+
+from demo_tzbtc.types.tzbtc.parameter.transfer import TransferParameter
+from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
+from demo_tzbtc.handlers.on_balance_update import on_balance_update
 
 
 async def on_transfer(
-    ctx: HandlerContext, 
-    transfer: OperationContext[Transfer]
+    ctx: HandlerContext,
+    transfer: Transaction[TransferParameter, TzbtcStorage],
 ) -> None:
-    
-    sender = await 
-    
+    if transfer.parameter.from_ == transfer.parameter.to:
+        return  # tzBTC specific
+    amount = Decimal(transfer.parameter.value) / (10 ** 8)
+    await on_balance_update(address=transfer.parameter.from_,
+                            balance_update=-amount,
+                            timestamp=transfer.data.timestamp)
+    await on_balance_update(address=transfer.parameter.to,
+                            balance_update=amount,
+                            timestamp=transfer.data.timestamp)
 ```
 
 `on_mint.py`
 
 ```python
+from typing import Optional
+from decimal import Decimal
+
+from dipdup.models import Transaction
+from dipdup.context import HandlerContext
+
+import demo_tzbtc.models as models
+
+from demo_tzbtc.types.tzbtc.parameter.mint import MintParameter
+from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
+from demo_tzbtc.handlers.on_balance_update import on_balance_update
+
+
+async def on_mint(
+    ctx: HandlerContext,
+    mint: Transaction[MintParameter, TzbtcStorage],
+) -> None:
+    amount = Decimal(mint.parameter.value) / (10 ** 8)
+    await on_balance_update(address=mint.parameter.to,
+                            balance_update=amount,
+                            timestamp=mint.data.timestamp)
 
 ```
 {% endtab %}
 {% endtabs %}
 
-
+And that's all! We can run the indexer now.
 
 ## Run your indexer
 
@@ -148,5 +214,5 @@ async def on_transfer(
 dipdup run
 ```
 
-
+DipDup will fetch all the historical data first, and then switch to real-time updates. You application data has been successfully indexed!
 
