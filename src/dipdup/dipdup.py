@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import suppress
 import hashlib
 import logging
 from functools import partial
@@ -34,6 +35,8 @@ from dipdup.exceptions import HandlerImportError
 from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
+from dipdup.scheduler import add_job, create_scheduler
+from apscheduler.schedulers import SchedulerNotRunningError
 
 
 class IndexDispatcher:
@@ -150,6 +153,7 @@ class DipDup:
             template_values=None,
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
+        self._scheduler = create_scheduler()
 
     async def init(self) -> None:
         """Create new or update existing dipdup project"""
@@ -184,6 +188,11 @@ class DipDup:
             if self._config.hasura:
                 worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
+            if self._config.jobs:
+                for job_config in self._config.jobs:
+                    add_job(self._scheduler, job_config)
+                await self._scheduler.start()
+
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 
             try:
@@ -193,6 +202,8 @@ class DipDup:
 
             self._logger.info('Closing datasource sessions')
             await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
+            with suppress(SchedulerNotRunningError):
+                await self._scheduler.shutdown(wait=True)
 
     async def migrate(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
