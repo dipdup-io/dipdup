@@ -75,12 +75,12 @@ class Index:
             state = state_cls(
                 index_name=self._config.name,
                 index_type=self._config.kind,
-                hash=index_hash,
+                index_hash=index_hash,
                 level=self._config.first_block,
             )
             await state.save()
 
-        elif state.hash != index_hash:
+        elif state.index_hash != index_hash:
             self._logger.warning('Config hash mismatch, reindexing')
             await reindex()
 

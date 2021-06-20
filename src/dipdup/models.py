@@ -29,20 +29,30 @@ class IndexType(Enum):
 class State(Model):
     """Stores current level of index and hash of it's config"""
 
-    index_name = fields.CharField(256)
+    index_name = fields.CharField(256, pk=True)
     index_type = fields.CharEnumField(IndexType)
-    hash = fields.CharField(256)
+    index_hash = fields.CharField(256)
     level = fields.IntField(default=0)
+    hash = fields.CharField(51, null=True)
 
     class Meta:
         table = 'dipdup_state'
 
 
+# TODO: Drop `stateless` option
 class TemporaryState(State):
     """Used within stateless indexes, skip saving to DB"""
 
     async def save(self, using_db=None, update_fields=None, force_create=False, force_update=False) -> None:
         pass
+
+
+class Operation(Model):
+    hash = fields.CharField(51, pk=True)
+    level = fields.IntField(default=0)
+
+    class Meta:
+        table = 'dipdup_operation'
 
 
 @dataclass

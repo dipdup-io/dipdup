@@ -465,6 +465,7 @@ class TzktDatasource(AsyncIOEventEmitter):
             self._client.on_error(self.on_error)
             self._client.on('operations', self.on_operation_message)
             self._client.on('bigmaps', self.on_big_map_message)
+            self._client.on('head', self.on_head_message)
 
         return self._client
 
@@ -481,6 +482,7 @@ class TzktDatasource(AsyncIOEventEmitter):
             return
 
         self._logger.info('Connected to server')
+        await self.subscribe_to_head()
         for address in self._transaction_subscriptions:
             await self.subscribe_to_transactions(address)
         # NOTE: All originations are passed to matcher
@@ -496,11 +498,7 @@ class TzktDatasource(AsyncIOEventEmitter):
     async def subscribe_to_transactions(self, address: str) -> None:
         """Subscribe to contract's operations on established WS connection"""
         self._logger.info('Subscribing to %s transactions', address)
-
-        while self._get_client().transport.state != ConnectionState.connected:
-            await asyncio.sleep(0.1)
-
-        await self._get_client().send(
+        await self._send(
             'SubscribeToOperations',
             [
                 {
@@ -513,11 +511,7 @@ class TzktDatasource(AsyncIOEventEmitter):
     async def subscribe_to_originations(self) -> None:
         """Subscribe to all originations on established WS connection"""
         self._logger.info('Subscribing to originations')
-
-        while self._get_client().transport.state != ConnectionState.connected:
-            await asyncio.sleep(0.1)
-
-        await self._get_client().send(
+        await self._send(
             'SubscribeToOperations',
             [
                 {
@@ -529,12 +523,8 @@ class TzktDatasource(AsyncIOEventEmitter):
     async def subscribe_to_big_maps(self, address: str, paths: List[str]) -> None:
         """Subscribe to contract's big map diffs on established WS connection"""
         self._logger.info('Subscribing to big map updates of %s, %s', address, paths)
-
-        while self._get_client().transport.state != ConnectionState.connected:
-            await asyncio.sleep(0.1)
-
         for path in paths:
-            await self._get_client().send(
+            await self._send(
                 'SubscribeToBigMaps',
                 [
                     {
@@ -544,10 +534,15 @@ class TzktDatasource(AsyncIOEventEmitter):
                 ],
             )
 
-    async def on_operation_message(
-        self,
-        message: List[Dict[str, Any]],
-    ) -> None:
+    async def subscribe_to_head(self) -> None:
+        """Subscribe to head on established WS connection"""
+        self._logger.info('Subscribing to head')
+        await self._send(
+            'SubscribeToHead',
+            [],
+        )
+
+    async def on_operation_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
 
         for item in message:
@@ -573,11 +568,7 @@ class TzktDatasource(AsyncIOEventEmitter):
             else:
                 raise NotImplementedError
 
-    async def on_big_map_message(
-        self,
-        message: List[Dict[str, Any]],
-        sync=False,
-    ) -> None:
+    async def on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
         for item in message:
             current_level = item['state']
@@ -601,6 +592,9 @@ class TzktDatasource(AsyncIOEventEmitter):
 
             else:
                 raise NotImplementedError
+
+    async def on_head_message(self, message: List[Dict[str, Any]]) -> None:
+        ...
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
@@ -657,3 +651,9 @@ class TzktDatasource(AsyncIOEventEmitter):
             key=big_map_json.get('content', {}).get('key'),
             value=big_map_json.get('content', {}).get('value'),
         )
+
+    async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:
+        client = self._get_client()
+        while client.transport.state != ConnectionState.connected:
+            await asyncio.sleep(0.1)
+        await client.send(method, arguments, on_invocation)

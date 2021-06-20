@@ -245,6 +245,11 @@ class DipDup:
             await Tortoise._connections['default'].execute_script(f"CREATE SCHEMA IF NOT EXISTS {self._config.database.schema_name}")
             await Tortoise._connections['default'].execute_script(f"SET search_path TO {self._config.database.schema_name}")
 
+        if reindex:
+            self._logger.warning('Started with `--reindex` argument, reindexing')
+            await utils.reindex()
+
+        self._logger.info('Checking database schema')
         connection_name, connection = next(iter(Tortoise._connections.items()))
         schema_sql = get_schema_sql(connection, False)
 
@@ -252,21 +257,21 @@ class DipDup:
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
-        # TODO: Move higher
-        if reindex:
-            self._logger.warning('Started with `--reindex` argument, reindexing')
-            await utils.reindex()
-
         try:
             schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
         except OperationalError:
             schema_state = None
 
+        # NOTE: `State.index_hash` field contains schema hash when `index_type` is `IndexType.schema`
         if schema_state is None:
             await Tortoise.generate_schemas()
-            schema_state = State(index_type=IndexType.schema, index_name=connection_name, hash=schema_hash)
+            schema_state = State(
+                index_type=IndexType.schema,
+                index_name=connection_name,
+                index_hash=schema_hash,
+            )
             await schema_state.save()
-        elif schema_state.hash != schema_hash:
+        elif schema_state.index_hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await utils.reindex()
 
