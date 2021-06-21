@@ -356,27 +356,25 @@ class TzktDatasource(AsyncIOEventEmitter):
         self._logger.debug(jsonschemas)
         return jsonschemas
 
-    async def get_latest_block(self) -> Dict[str, Any]:
+    async def get_head_block(self) -> HeadBlockData:
         """Get latest block (head)"""
         self._logger.info('Fetching latest block')
-        block = await self._proxy.http_request(
+        head_block_json = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/head',
             skip_cache=True,
         )
-        self._logger.debug(block)
-        return block
+        return self.convert_head_block(head_block_json)
 
-    async def get_block(self, level: int) -> Dict[str, Any]:
+    async def get_block(self, level: int) -> BlockData:
         """Get block by level"""
         self._logger.info('Fetching block %s', level)
-        block = await self._proxy.http_request(
+        block_json = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/blocks/{level}',
             skip_cache=True,
         )
-        self._logger.debug(block)
-        return block
+        return self.convert_block(block_json)
 
     async def get_originations(self, addresses: Set[str], offset: int, first_level: int, last_level: int) -> List[OperationData]:
         raw_originations = []

@@ -63,7 +63,7 @@ class Index:
             await self._synchronize(last_level)
         elif self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to the latest block')
-            last_level = (await self._datasource.get_latest_block())['level']
+            last_level = (await self._datasource.get_head_block()).level
             await self._synchronize(last_level)
         elif self._datasource.sync_level > state.level:
             self._logger.info('Index is behind datasource, sync to datasource level')
@@ -102,11 +102,11 @@ class Index:
 
         block = await self._datasource.get_block(state.level)
         if state.hash:
-            if state.hash != block['hash']:
+            if state.hash != block.hash:
                 self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
                 await reindex()
         else:
-            state.hash = block['hash']
+            state.hash = block.hash  # type: ignore
 
         await state.save()
         self._state = state
