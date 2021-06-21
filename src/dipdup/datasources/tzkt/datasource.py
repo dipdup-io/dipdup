@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from datetime import datetime, timezone, tzinfo
+from decimal import Decimal
 from enum import Enum
 from typing import Any, AsyncGenerator, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
@@ -18,7 +20,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import BigMapAction, BigMapData, BlockData, OperationData
+from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData
 from dipdup.utils import split_by_chunks
 
 OperationID = int
@@ -275,7 +277,7 @@ class TzktDatasource(AsyncIOEventEmitter):
         self._client: Optional[BaseHubConnection] = None
         self._proxy = DatasourceRequestProxy(cache)
 
-        self._block: Optional[BlockData] = None
+        self._block: Optional[HeadBlockData] = None
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None
 
@@ -292,7 +294,7 @@ class TzktDatasource(AsyncIOEventEmitter):
         return self._sync_level
 
     @property
-    def block(self) -> BlockData:
+    def block(self) -> HeadBlockData:
         if self._block is None:
             raise RuntimeError('No message from `head` channel received')
         return self._block
@@ -632,9 +634,8 @@ class TzktDatasource(AsyncIOEventEmitter):
 
             elif message_type == TzktMessageType.DATA:
                 self._level = current_level
-                assert len(item['data']) == 1
-                block_json = item['data'][0]
-                block = self.convert_block(block_json)
+                block_json = item['data']
+                block = self.convert_head_block(block_json)
                 self._block = block
                 self.emit("block", block)
 
@@ -656,7 +657,7 @@ class TzktDatasource(AsyncIOEventEmitter):
             type=operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
-            timestamp=operation_json['timestamp'],
+            timestamp=datetime.fromisoformat(operation_json['timestamp'][:-1]).replace(tzinfo=timezone.utc),
             block=operation_json.get('block'),
             hash=operation_json['hash'],
             counter=operation_json['counter'],
@@ -691,7 +692,7 @@ class TzktDatasource(AsyncIOEventEmitter):
             level=big_map_json['level'],
             # FIXME: operation_id field in API
             operation_id=big_map_json['level'],
-            timestamp=big_map_json['timestamp'],
+            timestamp=datetime.fromisoformat(big_map_json['timestamp'][:-1]).replace(tzinfo=timezone.utc),
             bigmap=big_map_json['bigmap'],
             contract_address=big_map_json['contract']['address'],
             path=big_map_json['path'],
@@ -702,11 +703,11 @@ class TzktDatasource(AsyncIOEventEmitter):
 
     @classmethod
     def convert_block(cls, block_json: Dict[str, Any]) -> BlockData:
-        """Convert raw block message from WS/REST into dataclass"""
+        """Convert raw block message from REST into dataclass"""
         return BlockData(
             level=block_json['level'],
             hash=block_json['hash'],
-            timestamp=block_json['timestamp'],
+            timestamp=datetime.fromisoformat(block_json['timestamp'][:-1]).replace(tzinfo=timezone.utc),
             proto=block_json['proto'],
             priority=block_json['priority'],
             validations=block_json['validations'],
@@ -716,6 +717,30 @@ class TzktDatasource(AsyncIOEventEmitter):
             nonce_revealed=block_json['nonceRevealed'],
             baker_address=block_json['baker']['address'],
             baker_alias=block_json['baker'].get('alias'),
+        )
+
+    @classmethod
+    def convert_head_block(cls, head_block_json: Dict[str, Any]) -> HeadBlockData:
+        """Convert raw head block message from WS/REST into dataclass"""
+        return HeadBlockData(
+            cycle=head_block_json['cycle'],
+            level=head_block_json['level'],
+            hash=head_block_json['hash'],
+            protocol=head_block_json['protocol'],
+            timestamp=datetime.fromisoformat(head_block_json['timestamp'][:-1]).replace(tzinfo=timezone.utc),
+            voting_epoch=head_block_json['votingEpoch'],
+            voting_period=head_block_json['votingPeriod'],
+            known_level=head_block_json['knownLevel'],
+            last_sync=head_block_json['lastSync'],
+            synced=head_block_json['synced'],
+            quote_level=head_block_json['quoteLevel'],
+            quote_btc=Decimal(head_block_json['quoteBtc']),
+            quote_eur=Decimal(head_block_json['quoteEur']),
+            quote_usd=Decimal(head_block_json['quoteUsd']),
+            quote_cny=Decimal(head_block_json['quoteCny']),
+            quote_jpy=Decimal(head_block_json['quoteJpy']),
+            quote_krw=Decimal(head_block_json['quoteKrw']),
+            quote_eth=Decimal(head_block_json['quoteEth']),
         )
 
     async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:

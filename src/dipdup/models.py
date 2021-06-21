@@ -1,6 +1,7 @@
 import logging
 from copy import deepcopy
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
@@ -229,3 +230,25 @@ class BlockData:
     nonce_revealed: bool
     baker_address: str
     baker_alias: Optional[str] = None
+
+
+@dataclass
+class HeadBlockData:
+    cycle: int
+    level: int
+    hash: str
+    protocol: str
+    timestamp: datetime
+    voting_epoch: int
+    voting_period: int
+    known_level: int
+    last_sync: datetime
+    synced: bool
+    quote_level: int
+    quote_btc: Decimal
+    quote_eur: Decimal
+    quote_usd: Decimal
+    quote_cny: Decimal
+    quote_jpy: Decimal
+    quote_krw: Decimal
+    quote_eth: Decimal
