@@ -19,10 +19,12 @@ from dipdup.config import (
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import BigMapAction, BigMapData, OperationData
+from dipdup.utils import split_by_chunks
 
 OperationID = int
 
 TZKT_HTTP_REQUEST_LIMIT = 10000
+TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 OPERATION_FIELDS = (
     "type",
     "id",
@@ -356,20 +358,26 @@ class TzktDatasource(AsyncIOEventEmitter):
         self._logger.debug(block)
         return block
 
-    async def get_originations(self, addresses: Set[str], offset: int, first_level, last_level) -> List[OperationData]:
-        raw_originations = await self._proxy.http_request(
-            'get',
-            url=f'{self._url}/v1/operations/originations',
-            params={
-                "originatedContract.in": ','.join(addresses),
-                "offset": offset,
-                "limit": self.request_limit,
-                "level.gt": first_level,
-                "level.le": last_level,
-                "select": ','.join(ORIGINATION_OPERATION_FIELDS),
-                "status": "applied",
-            },
-        )
+    async def get_originations(self, addresses: Set[str], offset: int, first_level: int, last_level: int) -> List[OperationData]:
+        raw_originations = []
+        # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
+        # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
+        # NOTE: Other operation requests won't hit that limit.
+        for addresses_chunk in split_by_chunks(list(addresses), TZKT_ORIGINATIONS_REQUEST_LIMIT):
+            raw_originations += await self._proxy.http_request(
+                'get',
+                url=f'{self._url}/v1/operations/originations',
+                params={
+                    "originatedContract.in": ','.join(addresses_chunk),
+                    "offset": offset,
+                    "limit": self.request_limit,
+                    "level.gt": first_level,
+                    "level.le": last_level,
+                    "select": ','.join(ORIGINATION_OPERATION_FIELDS),
+                    "status": "applied",
+                },
+            )
+
         originations = []
         for op in raw_originations:
             # NOTE: `type` field needs to be set manually when requesting operations by specific type
@@ -377,7 +385,7 @@ class TzktDatasource(AsyncIOEventEmitter):
             originations.append(self.convert_operation(op))
         return originations
 
-    async def get_transactions(self, field: str, addresses: Set[str], offset: int, first_level, last_level) -> List[OperationData]:
+    async def get_transactions(self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int) -> List[OperationData]:
         raw_transactions = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/operations/transactions',

@@ -6,7 +6,7 @@ import sys
 import time
 from contextlib import asynccontextmanager
 from logging import Logger
-from typing import AsyncIterator, Optional
+from typing import Any, AsyncIterator, Iterator, List, Optional, Sequence
 
 import aiohttp
 from tortoise import Tortoise
@@ -38,6 +38,13 @@ def pascal_to_snake(name: str) -> str:
     """MethodName -> method_name"""
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name.replace('.', '_'))
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+
+
+def split_by_chunks(input_: List[Any], size: int) -> Iterator[List[Any]]:
+    i = 0
+    while i < len(input_):
+        yield input_[i : i + size]
+        i += size
 
 
 @asynccontextmanager
