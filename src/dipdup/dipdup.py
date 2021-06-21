@@ -190,9 +190,9 @@ class DipDup:
                 await asyncio.gather(*datasource_tasks, *worker_tasks)
             except KeyboardInterrupt:
                 pass
-
-            self._logger.info('Closing datasource sessions')
-            await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
+            finally:
+                self._logger.info('Closing datasource sessions')
+                await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
 
     async def migrate(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
