@@ -47,12 +47,13 @@ class TemporaryState(State):
         pass
 
 
-class Operation(Model):
+class StateOperationGroup(Model):
+
     hash = fields.CharField(51, pk=True)
     level = fields.IntField(default=0)
 
     class Meta:
-        table = 'dipdup_operation'
+        table = 'dipdup_state_operation_group'
 
 
 @dataclass

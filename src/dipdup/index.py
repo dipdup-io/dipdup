@@ -4,6 +4,8 @@ from collections import deque, namedtuple
 from contextlib import suppress
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
+from tortoise.exceptions import IntegrityError
+
 from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
@@ -18,10 +20,21 @@ from dipdup.config import (
 )
 from dipdup.context import HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
+from dipdup.models import (
+    BigMapAction,
+    BigMapData,
+    BigMapDiff,
+    OperationData,
+    Origination,
+    State,
+    StateOperationGroup,
+    TemporaryState,
+    Transaction,
+)
 from dipdup.utils import FormattedLogger, in_global_transaction, reindex
 
-OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
+# NOTE: Operations of a single contract call
+OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
 
 
 class Index:
@@ -32,6 +45,10 @@ class Index:
 
         self._logger = logging.getLogger(__name__)
         self._state: Optional[State] = None
+
+    @property
+    def datasource(self) -> TzktDatasource:
+        return self._datasource
 
     async def get_state(self) -> State:
         """Get state of index containing current level and config hash"""
@@ -78,12 +95,20 @@ class Index:
                 index_hash=index_hash,
                 level=self._config.first_block,
             )
-            await state.save()
 
         elif state.index_hash != index_hash:
-            self._logger.warning('Config hash mismatch, reindexing')
+            self._logger.warning('Config hash mismatch (config has been changed), reindexing')
             await reindex()
 
+        block = await self._datasource.get_block(state.level)
+        if state.hash:
+            if state.hash != block['hash']:
+                self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
+                await reindex()
+        else:
+            state.hash = block['hash']
+
+        await state.save()
         self._state = state
 
 
@@ -94,9 +119,17 @@ class OperationIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[int, List[OperationData]]] = deque()
         self._contract_hashes: Dict[str, Tuple[str, str]] = {}
+        self._rollback_level: Optional[int] = None
+        self._rollback_operation_groups: List[StateOperationGroup] = []
 
     def push(self, level: int, operations: List[OperationData]) -> None:
         self._queue.append((level, operations))
+
+    async def single_level_rollback(self, from_level: int) -> None:
+        """Ensure next arrived block the same as one rolled back"""
+        state_operation_groups = await StateOperationGroup.filter(level=from_level).all()
+        self._rollback_level = from_level
+        self._rollback_operation_groups = state_operation_groups
 
     async def _process_queue(self) -> None:
         if not self._queue:
@@ -135,16 +168,35 @@ class OperationIndex(Index):
         state.level = last_level  # type: ignore
         await state.save()
 
-    async def _process_level_operations(self, level: int, operations: List[OperationData]):
+    async def _process_level_operations(self, level: int, operations: List[OperationData]) -> None:
         state = await self.get_state()
-        if state.level >= level:
-            raise RuntimeError(state.level, level)
+        if level < state.level:
+            raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {state.level}')
+
+        if self._rollback_level:
+            if state.level != self._rollback_level:
+                raise RuntimeError
+            if level != self._rollback_level:
+                raise RuntimeError(f'Rolling back to level {self._rollback_level}, got operations of level {level}')
+
+            self._logger.info('Rolling back to previous level, verifying processed operations')
+            expected_hashes = set([opg.hash for opg in self._rollback_operation_groups])
+            received_hashes = set([op.hash for op in operations])
+            if expected_hashes != received_hashes:
+                self._logger.warning('Attempted a single level rollback but arrived block differs from processed one')
+                await self._ctx.reindex()
+            self._rollback_level = None
+            self._rollback_operation_groups = []
+            return
 
         async with in_global_transaction():
             self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_operations(operations)
 
             state.level = level  # type: ignore
+            # TODO: Cache request. lru_cache in proxy?
+            block = await self._datasource.get_block(level)
+            state.hash = block['hash']
             await state.save()
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
@@ -181,16 +233,18 @@ class OperationIndex(Index):
             raise NotImplementedError
 
     async def _process_operations(self, operations: List[OperationData]) -> None:
-        """Try to match operations in cache with all patterns from indexes."""
-        operation_groups: Dict[OperationGroup, List[OperationData]] = {}
+        """Try to match operations in cache with all patterns from indexes. Must be wrapped in transaction."""
+        operation_subgroups: Dict[OperationSubgroup, List[OperationData]] = {}
         for operation in operations:
-            key = OperationGroup(operation.hash, operation.counter)
-            if key not in operation_groups:
-                operation_groups[key] = []
-            operation_groups[key].append(operation)
+            key = OperationSubgroup(operation.hash, operation.counter)
+            if key not in operation_subgroups:
+                # TODO: Table cleanup. In dispatcher?
+                with suppress(IntegrityError):
+                    await StateOperationGroup(hash=operation.hash, level=operation.level).save()
+                operation_subgroups[key] = []
+            operation_subgroups[key].append(operation)
 
-        keys = list(operation_groups.keys())
-        for operation_group, operations in operation_groups.items():
+        for operation_subgroup, operations in operation_subgroups.items():
             self._logger.debug('Matching %s', key)
 
             for handler_config in self._config.handlers:
@@ -222,19 +276,19 @@ class OperationIndex(Index):
                         operation_idx += 1
 
                     if pattern_idx == len(handler_config.pattern):
-                        self._logger.info('%s: `%s` handler matched!', operation_group.hash, handler_config.callback)
-                        await self._on_match(operation_group, handler_config, matched_operations)
+                        self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+                        await self._on_match(operation_subgroup, handler_config, matched_operations)
 
                         matched_operations = []
                         pattern_idx = 0
 
                 if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
-                    self._logger.info('%s: `%s` handler matched!', operation_group.hash, handler_config.callback)
-                    await self._on_match(operation_group, handler_config, matched_operations)
+                    self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+                    await self._on_match(operation_subgroup, handler_config, matched_operations)
 
     async def _on_match(
         self,
-        operation_group: OperationGroup,
+        operation_subgroup: OperationSubgroup,
         handler_config: OperationHandlerConfig,
         matched_operations: List[Optional[OperationData]],
     ):
@@ -277,7 +331,7 @@ class OperationIndex(Index):
 
         logger = FormattedLogger(
             name=handler_config.callback,
-            fmt=operation_group.hash + ': {}',
+            fmt=operation_subgroup.hash + ': {}',
         )
         handler_context = HandlerContext(
             datasources=self._ctx.datasources,

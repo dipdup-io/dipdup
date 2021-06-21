@@ -96,14 +96,28 @@ class IndexDispatcher:
             if isinstance(index, BigMapIndex):
                 index.push(level, big_maps)
 
-    async def _rollback(self, datasource: str, from_level: int, to_level: int) -> None:
+    async def _rollback(self, datasource_name: str, from_level: int, to_level: int) -> None:
         logger = utils.FormattedLogger(ROLLBACK_HANDLER)
+        if from_level - to_level == 1:
+            # NOTE: Single level rollbacks are processed at Index level.
+            # NOTE: Notify all indexes with rolled back datasource to skip next level and just verify it
+            datasource = self._ctx.datasources[datasource_name]
+            for index in self._indexes.values():
+                if index.datasource == datasource:
+                    # NOTE: Continue to rollback with handler
+                    if not isinstance(index, OperationIndex):
+                        break
+                    await index.single_level_rollback(from_level)
+            else:
+                return
+
         rollback_fn = self._ctx.config.get_rollback_fn()
         ctx = RollbackHandlerContext(
             config=self._ctx.config,
             datasources=self._ctx.datasources,
             logger=logger,
-            datasource=datasource,
+            # TODO: datasource in context instead of datasource_name maybe?
+            datasource=datasource_name,
             from_level=from_level,
             to_level=to_level,
         )
@@ -116,7 +130,7 @@ class IndexDispatcher:
                 continue
             datasource.on('operations', self.dispatch_operations)
             datasource.on('big_maps', self.dispatch_big_maps)
-            datasource.on('rollback', partial(self._rollback, datasource=name))
+            datasource.on('rollback', partial(self._rollback, datasource_name=name))
 
         self._ctx.commit()
 

@@ -356,6 +356,17 @@ class TzktDatasource(AsyncIOEventEmitter):
         self._logger.debug(block)
         return block
 
+    async def get_block(self, level: int) -> Dict[str, Any]:
+        """Get block by level"""
+        self._logger.info('Fetching block %s', level)
+        block = await self._proxy.http_request(
+            'get',
+            url=f'{self._url}/v1/blocks/{level}',
+            skip_cache=True,
+        )
+        self._logger.debug(block)
+        return block
+
     async def get_originations(self, addresses: Set[str], offset: int, first_level, last_level) -> List[OperationData]:
         raw_originations = await self._proxy.http_request(
             'get',
