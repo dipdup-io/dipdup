@@ -42,6 +42,7 @@ class IndexDispatcher:
 
         self._logger = logging.getLogger(__name__)
         self._indexes: Dict[str, Index] = {}
+        self._stopped: bool = False
 
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
         if index_config.name in self._indexes:
@@ -82,12 +83,12 @@ class IndexDispatcher:
 
         self._ctx.reset()
 
-    async def dispatch_operations(self, operations: List[OperationData]) -> None:
+    async def dispatch_operations(self, operations: List[OperationData], hash_: str) -> None:
         assert len(set(op.level for op in operations)) == 1
         level = operations[0].level
         for index in self._indexes.values():
             if isinstance(index, OperationIndex):
-                index.push(level, operations)
+                index.push(level, operations, hash_)
 
     async def dispatch_big_maps(self, big_maps: List[BigMapData]) -> None:
         assert len(set(op.level for op in big_maps)) == 1
@@ -134,7 +135,7 @@ class IndexDispatcher:
 
         self._ctx.commit()
 
-        while True:
+        while not self._stopped:
             await self.reload_config()
 
             # FIXME: Process all indexes in parallel, blocked by https://github.com/tortoise/tortoise-orm/issues/792
@@ -145,6 +146,9 @@ class IndexDispatcher:
             # TODO: Continue if new indexes are spawned from origination
             if oneshot:
                 break
+
+    def stop(self) -> None:
+        self._stopped = True
 
 
 class DipDup:

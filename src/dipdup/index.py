@@ -117,13 +117,13 @@ class OperationIndex(Index):
 
     def __init__(self, ctx: HandlerContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[Tuple[int, List[OperationData]]] = deque()
+        self._queue: Deque[Tuple[int, List[OperationData], Optional[str]]] = deque()
         self._contract_hashes: Dict[str, Tuple[str, str]] = {}
         self._rollback_level: Optional[int] = None
         self._rollback_operation_groups: List[StateOperationGroup] = []
 
-    def push(self, level: int, operations: List[OperationData]) -> None:
-        self._queue.append((level, operations))
+    def push(self, level: int, operations: List[OperationData], hash_: Optional[str] = None) -> None:
+        self._queue.append((level, operations, hash_))
 
     async def single_level_rollback(self, from_level: int) -> None:
         """Ensure next arrived block the same as one rolled back"""
@@ -137,8 +137,8 @@ class OperationIndex(Index):
         self._logger.info('Processing websocket queue')
         with suppress(IndexError):
             while True:
-                level, operations = self._queue.popleft()
-                await self._process_level_operations(level, operations)
+                level, operations, hash_ = self._queue.popleft()
+                await self._process_level_operations(level, operations, hash_)
 
     async def _synchronize(self, last_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -168,14 +168,14 @@ class OperationIndex(Index):
         state.level = last_level  # type: ignore
         await state.save()
 
-    async def _process_level_operations(self, level: int, operations: List[OperationData]) -> None:
+    async def _process_level_operations(self, level: int, operations: List[OperationData], hash_: Optional[str] = None) -> None:
         state = await self.get_state()
         if level < state.level:
             raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {state.level}')
 
         if self._rollback_level:
             if state.level != self._rollback_level:
-                raise RuntimeError
+                raise RuntimeError(f'Rolling back to level {self._rollback_level}, state level {state.level}')
             if level != self._rollback_level:
                 raise RuntimeError(f'Rolling back to level {self._rollback_level}, got operations of level {level}')
 
@@ -194,9 +194,7 @@ class OperationIndex(Index):
             await self._process_operations(operations)
 
             state.level = level  # type: ignore
-            # TODO: Cache request. lru_cache in proxy?
-            block = await self._datasource.get_block(level)
-            state.hash = block['hash']
+            state.hash = hash_  # type: ignore
             await state.save()
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:

@@ -211,3 +211,20 @@ class BigMapDiff(Generic[KeyType, ValueType]):
     data: BigMapData
     key: KeyType
     value: Optional[ValueType]
+
+
+@dataclass
+class BlockData:
+    """Basic structure for blocks from TzKT response"""
+    level: int
+    hash: str
+    timestamp: datetime
+    proto: int
+    priority: int
+    validations: int
+    deposit: int
+    reward: int
+    fees: int
+    nonce_revealed: bool
+    baker_address: str
+    baker_alias: Optional[str] = None

@@ -18,7 +18,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import BigMapAction, BigMapData, OperationData
+from dipdup.models import BigMapAction, BigMapData, BlockData, OperationData
 
 OperationID = int
 
@@ -273,6 +273,7 @@ class TzktDatasource(AsyncIOEventEmitter):
         self._client: Optional[BaseHubConnection] = None
         self._proxy = DatasourceRequestProxy(cache)
 
+        self._block: Optional[BlockData] = None
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None
 
@@ -287,6 +288,12 @@ class TzktDatasource(AsyncIOEventEmitter):
     @property
     def sync_level(self) -> Optional[int]:
         return self._sync_level
+
+    @property
+    def block(self) -> BlockData:
+        if self._block is None:
+            raise RuntimeError('No message from `head` channel received')
+        return self._block
 
     async def close_session(self) -> None:
         await self._proxy.close_session()
@@ -555,7 +562,6 @@ class TzktDatasource(AsyncIOEventEmitter):
 
     async def on_operation_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
-
         for item in message:
             current_level = item['state']
             message_type = TzktMessageType(item['type'])
@@ -571,7 +577,7 @@ class TzktDatasource(AsyncIOEventEmitter):
                 for operation_json in item['data']:
                     operation = self.convert_operation(operation_json)
                     operations.append(operation)
-                self.emit("operations", operations)
+                self.emit("operations", operations, self.block.hash)
 
             elif message_type == TzktMessageType.REORG:
                 self.emit("rollback", self.level, current_level)
@@ -605,7 +611,29 @@ class TzktDatasource(AsyncIOEventEmitter):
                 raise NotImplementedError
 
     async def on_head_message(self, message: List[Dict[str, Any]]) -> None:
-        ...
+        for item in message:
+            current_level = item['state']
+            message_type = TzktMessageType(item['type'])
+            self._logger.info('Got block message, %s, level %s', message_type, current_level)
+
+            if message_type == TzktMessageType.STATE:
+                self._sync_level = current_level
+                self._level = current_level
+
+            elif message_type == TzktMessageType.DATA:
+                self._level = current_level
+                assert len(block_json) == 1
+                block_json = item['data'][0]
+                block = self.convert_block(block_json)
+                self._block = block
+                self.emit("block", block)
+
+            elif message_type == TzktMessageType.REORG:
+                self.emit("rollback", self.level, current_level)
+
+            else:
+                raise NotImplementedError
+
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
@@ -661,6 +689,24 @@ class TzktDatasource(AsyncIOEventEmitter):
             action=BigMapAction(big_map_json['action']),
             key=big_map_json.get('content', {}).get('key'),
             value=big_map_json.get('content', {}).get('value'),
+        )
+
+    @classmethod
+    def convert_block(cls, block_json: Dict[str, Any]) -> BlockData:
+        """Convert raw block message from WS/REST into dataclass"""
+        return BlockData(
+            level=block_json['level'],
+            hash=block_json['hash'],
+            timestamp=block_json['timestamp'],
+            proto=block_json['proto'],
+            priority=block_json['priority'],
+            validations=block_json['validations'],
+            deposit=block_json['deposit'],
+            reward=block_json['reward'],
+            fees=block_json['fees'],
+            nonce_revealed=block_json['nonceRevealed'],
+            baker_address=block_json['baker']['address'],
+            baker_alias=block_json['baker'].get('alias')
         )
 
     async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:

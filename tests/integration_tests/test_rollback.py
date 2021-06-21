@@ -1,4 +1,5 @@
 import asyncio
+from functools import partial
 import logging
 from datetime import datetime
 from os.path import dirname, join
@@ -10,7 +11,7 @@ from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup
 from dipdup.index import OperationIndex
-from dipdup.models import OperationData
+from dipdup.models import BlockData, OperationData
 
 logging.basicConfig()
 logging.getLogger().setLevel(0)
@@ -41,19 +42,10 @@ async def operation_index_process(self: OperationIndex):
 
 # NOTE: Emit operations, rollback, emit again
 async def datasource_run(self: TzktDatasource):
-    await asyncio.sleep(1)
-    print('run datasource')
-    self.emit(
-        "operations",
-        [
-            _get_operation('1', 1365001),
-            _get_operation('2', 1365001),
-            _get_operation('3', 1365001),
-        ],
-    )
 
-    self.emit("self, rollback", 2, 1)
-    await asyncio.sleep(1)
+    self._block = MagicMock(spec=BlockData)
+    self._block.hash = 'asdf'
+    self._block.level = 1365000
 
     self.emit(
         "operations",
@@ -62,9 +54,27 @@ async def datasource_run(self: TzktDatasource):
             _get_operation('2', 1365001),
             _get_operation('3', 1365001),
         ],
+        'block_a',
     )
-    await asyncio.sleep(1)
-    raise KeyboardInterrupt
+    await asyncio.sleep(2)
+
+    self.emit(
+        "rollback",
+        from_level=1365001,
+        to_level=1365000,
+    )
+    await asyncio.sleep(2)
+
+    self.emit(
+        "operations",
+        [
+            _get_operation('1', 1365001),
+            _get_operation('2', 1365001),
+            _get_operation('3', 1365001),
+        ],
+        'block_b',
+    )
+    await asyncio.sleep(2)
 
 
 class RollbackTest(IsolatedAsyncioTestCase):
@@ -76,15 +86,20 @@ class RollbackTest(IsolatedAsyncioTestCase):
         datasource.run = MethodType(datasource_run, datasource)
         datasource.get_block = AsyncMock(return_value={'level': 0, 'hash': '0'})
         dipdup = DipDup(config)
+        datasource.on('operations', dipdup._index_dispatcher.dispatch_operations)
+        datasource.on('big_maps', dipdup._index_dispatcher.dispatch_big_maps)
+        datasource.on('rollback', partial(dipdup._index_dispatcher._rollback, datasource_name='tzkt_mainnet'))
+
+
+
         dipdup._datasources[datasource_name] = datasource
         dipdup._datasources_by_config[datasource_config] = datasource
+
+
 
         # Act
         with patch('dipdup.index.OperationIndex.process', operation_index_process):
             await dipdup.run(False, False)
-
-        # process operations
-        # rollback
 
     async def test_rollback_fail(self):
         ...
