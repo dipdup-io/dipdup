@@ -403,7 +403,9 @@ class TzktDatasource(AsyncIOEventEmitter):
             originations.append(self.convert_operation(op))
         return originations
 
-    async def get_transactions(self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int) -> List[OperationData]:
+    async def get_transactions(
+        self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int
+    ) -> List[OperationData]:
         raw_transactions = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/operations/transactions',
@@ -630,7 +632,7 @@ class TzktDatasource(AsyncIOEventEmitter):
 
             elif message_type == TzktMessageType.DATA:
                 self._level = current_level
-                assert len(block_json) == 1
+                assert len(item['data']) == 1
                 block_json = item['data'][0]
                 block = self.convert_block(block_json)
                 self._block = block
@@ -641,7 +643,6 @@ class TzktDatasource(AsyncIOEventEmitter):
 
             else:
                 raise NotImplementedError
-
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
@@ -714,7 +715,7 @@ class TzktDatasource(AsyncIOEventEmitter):
             fees=block_json['fees'],
             nonce_revealed=block_json['nonceRevealed'],
             baker_address=block_json['baker']['address'],
-            baker_alias=block_json['baker'].get('alias')
+            baker_alias=block_json['baker'].get('alias'),
         )
 
     async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:

@@ -35,6 +35,8 @@ from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
 
+INDEX_DISPATCHER_INTERVAL = 1.0
+
 
 class IndexDispatcher:
     def __init__(self, ctx: HandlerContext) -> None:
@@ -139,7 +141,7 @@ class IndexDispatcher:
             await self.reload_config()
 
             # FIXME: Process all indexes in parallel, blocked by https://github.com/tortoise/tortoise-orm/issues/792
-            async with utils.slowdown(1):
+            async with utils.slowdown(INDEX_DISPATCHER_INTERVAL):
                 for index in self._indexes.values():
                     await index.process()
 

@@ -216,6 +216,7 @@ class BigMapDiff(Generic[KeyType, ValueType]):
 @dataclass
 class BlockData:
     """Basic structure for blocks from TzKT response"""
+
     level: int
     hash: str
     timestamp: datetime
