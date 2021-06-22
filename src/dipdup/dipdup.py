@@ -1,12 +1,13 @@
 import asyncio
-from contextlib import suppress
 import hashlib
 import logging
+from contextlib import suppress
 from functools import partial
 from os.path import join
 from posix import listdir
 from typing import Dict, List, cast
 
+from apscheduler.schedulers import SchedulerNotRunningError
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
@@ -36,7 +37,6 @@ from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
 from dipdup.scheduler import add_job, create_scheduler
-from apscheduler.schedulers import SchedulerNotRunningError
 
 
 class IndexDispatcher:
@@ -199,11 +199,11 @@ class DipDup:
                 await asyncio.gather(*datasource_tasks, *worker_tasks)
             except KeyboardInterrupt:
                 pass
-
-            self._logger.info('Closing datasource sessions')
-            await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
-            with suppress(SchedulerNotRunningError):
-                await self._scheduler.shutdown(wait=True)
+            finally:
+                self._logger.info('Closing datasource sessions')
+                await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
+                with suppress(SchedulerNotRunningError):
+                    await self._scheduler.shutdown(wait=True)
 
     async def migrate(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
