@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 
 def _is_model_class(obj) -> bool:
     """Is subclass of tortoise.Model, but not the base class"""
-    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model
+    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
 
 
 def _format_array_relationship(
@@ -148,60 +148,58 @@ async def configure_hasura(config: DipDupConfig):
         raise ConfigurationError('`hasura` config section missing')
 
     _logger.info('Configuring Hasura')
-
-    session = aiohttp.ClientSession()
     url = config.hasura.url.rstrip("/")
     hasura_metadata = await generate_hasura_metadata(config)
 
-    _logger.info('Waiting for Hasura instance to be healthy')
-    for _ in range(60):
-        with suppress(ClientConnectorError, ClientOSError):
-            async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession() as session:
+        _logger.info('Waiting for Hasura instance to be healthy')
+        for _ in range(60):
+            with suppress(ClientConnectorError, ClientOSError):
                 await session.get(f'{url}/healthz')
                 break
-        await asyncio.sleep(1)
-    else:
-        _logger.error('Hasura instance not responding for 60 seconds')
-        return
+            await asyncio.sleep(1)
+        else:
+            _logger.error('Hasura instance not responding for 60 seconds')
+            return
 
-    headers = {}
-    if config.hasura.admin_secret:
-        headers['X-Hasura-Admin-Secret'] = config.hasura.admin_secret
+        headers = {}
+        if config.hasura.admin_secret:
+            headers['X-Hasura-Admin-Secret'] = config.hasura.admin_secret
 
-    _logger.info('Fetching existing metadata')
-    existing_hasura_metadata = await http_request(
-        session,
-        'post',
-        url=f'{url}/v1/query',
-        data=json.dumps(
-            {
-                "type": "export_metadata",
-                "args": hasura_metadata,
-            },
-        ),
-        headers=headers,
-    )
+        _logger.info('Fetching existing metadata')
+        existing_hasura_metadata = await http_request(
+            session,
+            'post',
+            url=f'{url}/v1/query',
+            data=json.dumps(
+                {
+                    "type": "export_metadata",
+                    "args": hasura_metadata,
+                },
+            ),
+            headers=headers,
+        )
 
-    _logger.info('Merging existing metadata')
-    hasura_metadata_tables = [table['table'] for table in hasura_metadata['tables']]
-    for table in existing_hasura_metadata['tables']:
-        if table['table'] not in hasura_metadata_tables:
-            hasura_metadata['tables'].append(table)
+        _logger.info('Merging existing metadata')
+        hasura_metadata_tables = [table['table'] for table in hasura_metadata['tables']]
+        for table in existing_hasura_metadata['tables']:
+            if table['table'] not in hasura_metadata_tables:
+                hasura_metadata['tables'].append(table)
 
-    _logger.info('Sending replace metadata request')
-    result = await http_request(
-        session,
-        'post',
-        url=f'{url}/v1/query',
-        data=json.dumps(
-            {
-                "type": "replace_metadata",
-                "args": hasura_metadata,
-            },
-        ),
-        headers=headers,
-    )
-    if not result.get('message') == 'success':
-        _logger.error('Can\'t configure Hasura instance: %s', result)
-
-    await session.close()
+        _logger.info('Sending replace metadata request')
+        result = await http_request(
+            session,
+            'post',
+            url=f'{url}/v1/query',
+            data=json.dumps(
+                {
+                    "type": "replace_metadata",
+                    "args": hasura_metadata,
+                },
+            ),
+            headers=headers,
+        )
+        if not result.get('message') == 'success':
+            _logger.error('Can\'t configure Hasura instance: %s', result)
+        else:
+            _logger.info('Hasura instance has been configured')
