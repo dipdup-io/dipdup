@@ -1,9 +1,8 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from dipdup.config import ContractConfig, DipDupConfig, StaticTemplateConfig
 from dipdup.datasources import DatasourceT
 from dipdup.exceptions import ConfigurationError
-from dipdup.models import OperationData
 from dipdup.utils import FormattedLogger, reindex, restart
 
 
