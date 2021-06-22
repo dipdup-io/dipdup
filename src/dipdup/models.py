@@ -231,7 +231,7 @@ class BlockData:
     reward: int
     fees: int
     nonce_revealed: bool
-    baker_address: str
+    baker_address: Optional[str] = None
     baker_alias: Optional[str] = None
 
 

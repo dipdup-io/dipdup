@@ -713,8 +713,8 @@ class TzktDatasource(AsyncIOEventEmitter):
             reward=block_json['reward'],
             fees=block_json['fees'],
             nonce_revealed=block_json['nonceRevealed'],
-            baker_address=block_json['baker']['address'],
-            baker_alias=block_json['baker'].get('alias'),
+            baker_address=block_json.get('baker', {}).get('address'),
+            baker_alias=block_json.get('baker', {}).get('alias'),
         )
 
     @classmethod
