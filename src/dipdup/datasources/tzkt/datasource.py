@@ -385,7 +385,9 @@ class TzktDatasource(AsyncIOEventEmitter):
             originations.append(self.convert_operation(op))
         return originations
 
-    async def get_transactions(self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int) -> List[OperationData]:
+    async def get_transactions(
+        self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int
+    ) -> List[OperationData]:
         raw_transactions = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/operations/transactions',
