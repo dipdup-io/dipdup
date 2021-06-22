@@ -224,6 +224,7 @@ class DipDupCodeGenerator:
                 if root.split('/')[-1] == 'parameter':
                     name += '_parameter'
 
+                name = snake_to_pascal(name)
                 self._logger.info('Generating type `%s`', name)
                 args = [
                     'datamodel-codegen',
@@ -232,7 +233,7 @@ class DipDupCodeGenerator:
                     '--output',
                     output_path,
                     '--class-name',
-                    snake_to_pascal(name),
+                    name,
                     '--disable-timestamp',
                     '--use-default',
                 ]

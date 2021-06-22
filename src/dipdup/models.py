@@ -47,6 +47,9 @@ class TemporaryState(State):
     async def save(self, using_db=None, update_fields=None, force_create=False, force_update=False) -> None:
         pass
 
+    class Meta:
+        abstract = True
+
 
 class StateOperationGroup(Model):
 
