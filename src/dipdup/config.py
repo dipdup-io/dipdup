@@ -53,29 +53,6 @@ class SqliteDatabaseConfig:
 
 
 @dataclass
-class MySQLDatabaseConfig:
-    """MySQL database connection config
-
-    :param host: Host
-    :param port: Port
-    :param user: User
-    :param password: Password
-    :param database: Database name
-    """
-
-    kind: Literal['mysql']
-    host: str
-    port: int
-    user: str
-    database: str
-    password: str = ''
-
-    @property
-    def connection_string(self) -> str:
-        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}'
-
-
-@dataclass
 class PostgresDatabaseConfig:
     """Postgres database connection config
 
@@ -85,6 +62,7 @@ class PostgresDatabaseConfig:
     :param password: Password
     :param database: Database name
     :param schema_name: Schema name
+    :param immune_tables: List of tables to preserve during reindexing
     """
 
     kind: Literal['postgres']
@@ -94,10 +72,17 @@ class PostgresDatabaseConfig:
     database: str
     schema_name: str = 'public'
     password: str = ''
+    immune_tables: Optional[List[str]] = None
 
     @property
     def connection_string(self) -> str:
         return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}'
+
+    @validator('immune_tables')
+    def valid_immune_tables(cls, v):
+        if v and 'dipdup_state' in v:
+            raise ConfigurationError('`dipdup_state` table can\'t be immune')
+        return v
 
 
 @dataclass
@@ -635,7 +620,6 @@ class DipDupConfig:
     :param templates: Mapping of template aliases and index templates
     :param database: Database config
     :param hasura: Hasura config
-    :param configuration: Dynamic configuration parameters
     """
 
     spec_version: str
@@ -644,7 +628,7 @@ class DipDupConfig:
     contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
-    database: Union[SqliteDatabaseConfig, MySQLDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
+    database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     hasura: Optional[HasuraConfig] = None
 
     def __post_init_post_parse__(self):

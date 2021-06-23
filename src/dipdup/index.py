@@ -19,7 +19,7 @@ from dipdup.config import (
 from dipdup.context import HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
-from dipdup.utils import FormattedLogger, in_global_transaction, reindex
+from dipdup.utils import FormattedLogger, in_global_transaction
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 
@@ -82,7 +82,7 @@ class Index:
 
         elif state.hash != index_hash:
             self._logger.warning('Config hash mismatch, reindexing')
-            await reindex()
+            await self._ctx.reindex()
 
         self._state = state
 
