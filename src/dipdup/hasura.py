@@ -155,8 +155,9 @@ async def configure_hasura(config: DipDupConfig):
         _logger.info('Waiting for Hasura instance to be healthy')
         for _ in range(60):
             with suppress(ClientConnectorError, ClientOSError):
-                await session.get(f'{url}/healthz')
-                break
+                response = await session.get(f'{url}/healthz')
+                if response.status == 200:
+                    break
             await asyncio.sleep(1)
         else:
             _logger.error('Hasura instance not responding for 60 seconds')
