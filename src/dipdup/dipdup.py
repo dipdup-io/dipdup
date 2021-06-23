@@ -9,7 +9,7 @@ from typing import Dict, List, cast
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
-from tortoise.transactions import in_transaction
+from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
 import dipdup.utils as utils
@@ -264,12 +264,15 @@ class DipDup:
 
         if schema_state is None:
             await Tortoise.generate_schemas()
+            await self._execute_user_sql()
+
             schema_state = State(index_type=IndexType.schema, index_name=connection_name, hash=schema_hash)
             await schema_state.save()
         elif schema_state.hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await utils.reindex()
 
+    async def _execute_user_sql(self) -> None:
         sql_path = join(self._config.package_path, 'sql')
         if not exists(sql_path):
             return
@@ -285,6 +288,4 @@ class DipDup:
                 sql = file.read()
 
             self._logger.info('Applying raw SQL from `%s`', filename)
-
-            async with in_transaction() as conn:
-                await conn.execute_query(sql)
+            await get_connection(None).execute_script(sql)
