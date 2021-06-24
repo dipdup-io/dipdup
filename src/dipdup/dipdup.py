@@ -288,6 +288,8 @@ class DipDup:
             return
 
         sql_path = join(sql_path, 'on_reindex' if reindex else 'on_restart')
+        if not exists(sql_path):
+            return
         self._logger.info('Executing SQL scripts from `%s`', sql_path)
         for filename in sorted(listdir(sql_path)):
             if not filename.endswith('.sql'):
