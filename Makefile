@@ -5,7 +5,7 @@
 DEV ?= 1
 
 all: install lint test cover
-lint: isort black pylint mypy
+lint: isort black flake mypy
 
 debug:
 	pip install . --force --no-deps
@@ -19,8 +19,8 @@ isort:
 black:
 	poetry run black src tests
 
-pylint:
-	poetry run pylint src tests || poetry run pylint-exit $$?
+flake:
+	poetry run flakehell lint src tests
 
 mypy:
 	poetry run mypy src tests

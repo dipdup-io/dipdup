@@ -58,7 +58,7 @@ class DipDupCodeGenerator:
         self._logger.info('Creating package `%s`', self._config.package)
         try:
             package_path = self._config.package_path
-        except (ImportError, ModuleNotFoundError):
+        except ImportError:
             package_path = join(os.getcwd(), self._config.package)
             mkdir(package_path)
             with open(join(package_path, '__init__.py'), 'w'):

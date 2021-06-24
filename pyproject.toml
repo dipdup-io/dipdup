@@ -40,10 +40,10 @@ bump2version = "^1.0.1"
 diff-cover = "^5.0.1"
 isort = "^5.7.0"
 mypy = "^0.812"
-pylint = "^2.7.2"
-pylint-exit = "^1.2.0"
 pytest = "^3.0"
 pytest-cov = "^2.4"
+flake8 = "3.9.0"
+flakehell = "^0.9.0"
 
 [tool.poetry.scripts]
 dipdup = 'dipdup.cli:cli'
@@ -53,8 +53,18 @@ line_length = 140
 
 [tool.black]
 line-length = 140
-target-version = ['py37', 'py38']
+target-version = ['py38']
 skip-string-normalization = true
+
+[tool.flakehell]
+format = "colored"
+max_line_length = 140
+show_source = true
+
+[tool.flakehell.plugins]
+pyflakes = ["+*"]
+"flake8-*" = ["+*"]
+flake8-docstrings = ["-*"]
 
 [build-system]
 requires = ["poetry_core>=1.0.0", "cryptography==3.3.2", "wheel"]
