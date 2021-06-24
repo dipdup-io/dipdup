@@ -121,6 +121,9 @@ async def generate_hasura_metadata(config: DipDupConfig, views: List[str]) -> Di
             name=view,
             schema=config.database.schema_name,
         )
+        metadata_tables[view]['select_permissions'].append(
+            _format_select_permissions(),
+        )
 
     for app, model in _iter_models(models, int_models):
         table_name = model_tables[f'{app}.{model.__name__}']
