@@ -280,7 +280,7 @@ class DipDup:
             self._logger.warning('Injecting raw SQL supported on PostgreSQL only')
             return
 
-        for filename in listdir(sql_path):
+        for filename in sorted(listdir(sql_path)):
             if not filename.endswith('.sql'):
                 continue
 
