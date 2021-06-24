@@ -111,19 +111,16 @@ async def generate_hasura_metadata(config: DipDupConfig, views: List[str]) -> Di
     for app, model in _iter_models(models, int_models):
         table_name = model._meta.db_table or pascal_to_snake(model.__name__)  # pylint: disable=protected-access
         model_tables[f'{app}.{model.__name__}'] = table_name
-
-        table = _format_table(
+        metadata_tables[table_name] = _format_table(
             name=table_name,
             schema=config.database.schema_name,
         )
-        metadata_tables[table_name] = table
 
     for view in views:
-        table = _format_table(
+        metadata_tables[view] = _format_table(
             name=view,
             schema=config.database.schema_name,
         )
-        metadata_tables[table_name] = table
 
     for app, model in _iter_models(models, int_models):
         table_name = model_tables[f'{app}.{model.__name__}']
