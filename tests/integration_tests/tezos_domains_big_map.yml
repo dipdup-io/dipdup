@@ -11,9 +11,9 @@ contracts:
     typename: name_registry
 
 datasources:
-  tzkt_staging_edo:
+  tzkt_edo:
     kind: tzkt
-    url: ${TZKT_URL:-https://staging.api.edo2net.tzkt.io}
+    url: ${TZKT_URL:-https://api.edo2net.tzkt.io}
 
 templates:
   tezos_domains_big_map:
@@ -32,5 +32,5 @@ indexes:
   tezos_domains_big_map_edo:
     template: tezos_domains_big_map
     values:
-      datasource: tzkt_staging_edo
+      datasource: tzkt_edo
       name_registry: edo_name_registry

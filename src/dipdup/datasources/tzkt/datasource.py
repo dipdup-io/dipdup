@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime, timezone, tzinfo
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any, AsyncGenerator, Dict, List, NoReturn, Optional, Set, Tuple, cast
@@ -586,6 +586,8 @@ class TzktDatasource(AsyncIOEventEmitter):
                 operations = []
                 for operation_json in item['data']:
                     operation = self.convert_operation(operation_json)
+                    if operation.status != 'applied':
+                        continue
                     operations.append(operation)
                 self.emit("operations", operations, self.block.hash)
 

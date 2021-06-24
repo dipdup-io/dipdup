@@ -31,7 +31,7 @@ from dipdup.models import (
     TemporaryState,
     Transaction,
 )
-from dipdup.utils import FormattedLogger, in_global_transaction, reindex
+from dipdup.utils import FormattedLogger, in_global_transaction
 
 # NOTE: Operations of a single contract call
 OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
@@ -96,15 +96,15 @@ class Index:
                 level=self._config.first_block,
             )
 
-        elif state.index_hash != index_hash:
+        elif state.hash != index_hash:
             self._logger.warning('Config hash mismatch (config has been changed), reindexing')
-            await reindex()
+            await self._ctx.reindex()
 
         block = await self._datasource.get_block(state.level)
         if state.hash:
             if state.hash != block.hash:
                 self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
-                await reindex()
+                await self._ctx.reindex()
         else:
             state.hash = block.hash  # type: ignore
 

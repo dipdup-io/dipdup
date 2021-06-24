@@ -9,7 +9,7 @@ from typing import Dict, List, cast
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
-from tortoise.transactions import in_transaction
+from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
 import dipdup.utils as utils
@@ -30,7 +30,7 @@ from dipdup.context import RollbackHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import HandlerImportError
+from dipdup.exceptions import ConfigurationError, HandlerImportError
 from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
@@ -267,7 +267,7 @@ class DipDup:
 
         if reindex:
             self._logger.warning('Started with `--reindex` argument, reindexing')
-            await utils.reindex()
+            await self._ctx.reindex()
 
         self._logger.info('Checking database schema')
         connection_name, connection = next(iter(Tortoise._connections.items()))
@@ -277,6 +277,11 @@ class DipDup:
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
+        # TODO: Move higher
+        if reindex:
+            self._logger.warning('Started with `--reindex` argument, reindexing')
+            await self._ctx.reindex()
+
         try:
             schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
         except OperationalError:
@@ -285,31 +290,43 @@ class DipDup:
         # NOTE: `State.index_hash` field contains schema hash when `index_type` is `IndexType.schema`
         if schema_state is None:
             await Tortoise.generate_schemas()
+            await self._execute_sql_scripts(reindex=True)
+
             schema_state = State(
                 index_type=IndexType.schema,
                 index_name=connection_name,
-                index_hash=schema_hash,
+                hash=schema_hash,
             )
             await schema_state.save()
         elif schema_state.index_hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
-            await utils.reindex()
+            await self._ctx.reindex()
 
+        await self._execute_sql_scripts(reindex=False)
+
+    async def _execute_sql_scripts(self, reindex: bool) -> None:
+        """Execute SQL included with project"""
         sql_path = join(self._config.package_path, 'sql')
         if not exists(sql_path):
             return
+        if any(map(lambda p: p not in ('on_reindex', 'on_restart'), listdir(sql_path))):
+            raise ConfigurationError(
+                f'SQL scripts must be placed either to `{self._config.package}/sql/on_restart` or to `{self._config.package}/sql/on_reindex` directory'
+            )
         if not isinstance(self._config.database, PostgresDatabaseConfig):
-            self._logger.warning('Injecting raw SQL supported on PostgreSQL only')
+            self._logger.warning('Execution of user SQL scripts is supported on PostgreSQL only, skipping')
             return
 
-        for filename in listdir(sql_path):
+        sql_path = join(sql_path, 'on_reindex' if reindex else 'on_restart')
+        if not exists(sql_path):
+            return
+        self._logger.info('Executing SQL scripts from `%s`', sql_path)
+        for filename in sorted(listdir(sql_path)):
             if not filename.endswith('.sql'):
                 continue
 
             with open(join(sql_path, filename)) as file:
                 sql = file.read()
 
-            self._logger.info('Applying raw SQL from `%s`', filename)
-
-            async with in_transaction() as conn:
-                await conn.execute_query(sql)
+            self._logger.info('Executing `%s`', filename)
+            await get_connection(None).execute_script(sql)

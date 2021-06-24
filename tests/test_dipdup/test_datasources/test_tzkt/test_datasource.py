@@ -18,7 +18,7 @@ from dipdup.config import (
     OperationType,
 )
 from dipdup.context import HandlerContext
-from dipdup.datasources.tzkt.datasource import TzktDatasource, dedup_operations
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup
 from dipdup.models import IndexType, OperationData, State, Transaction
 from dipdup.utils import tortoise_wrapper
@@ -130,7 +130,6 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
     async def test_on_operation_message_data(self):
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
-        operations = [TzktDatasource.convert_operation(op) for op in operations_message['data']]
         operation = TzktDatasource.convert_operation(operations_message['data'][-2])
 
         on_operation_match_mock = AsyncMock()
