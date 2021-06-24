@@ -1,5 +1,4 @@
 from unittest import TestCase
-from unittest.mock import MagicMock
 
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.models import OperationData
