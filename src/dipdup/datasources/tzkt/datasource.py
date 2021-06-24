@@ -574,6 +574,8 @@ class TzktDatasource(AsyncIOEventEmitter):
                 operations = []
                 for operation_json in item['data']:
                     operation = self.convert_operation(operation_json)
+                    if operation.status != 'applied':
+                        continue
                     operations.append(operation)
                 self.emit("operations", operations)
 
