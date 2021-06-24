@@ -1,5 +1,4 @@
 from contextlib import suppress
-from os.path import dirname, join
 from unittest import IsolatedAsyncioTestCase
 
 from tortoise import Tortoise

@@ -189,7 +189,6 @@ class OperationIndex(Index):
                 operation_groups[key] = []
             operation_groups[key].append(operation)
 
-        keys = list(operation_groups.keys())
         for operation_group, operations in operation_groups.items():
             self._logger.debug('Matching %s', key)
 
