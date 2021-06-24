@@ -135,7 +135,7 @@ async def generate_hasura_metadata(config: DipDupConfig, views: List[str]) -> Di
         for field in model._meta.fields_map.values():
             if isinstance(field, fields.relational.ForeignKeyFieldInstance):
                 if not isinstance(field.related_name, str):
-                    raise Exception(f'`related_name` of `{field}` must be set')
+                    raise HasuraError(f'`related_name` of `{field}` must be set')
                 related_table_name = model_tables[field.model_name]
                 metadata_tables[table_name]['object_relationships'].append(
                     _format_object_relationship(
@@ -185,7 +185,7 @@ async def configure_hasura(config: DipDupConfig):
                     break
             await asyncio.sleep(1)
         else:
-            raise Exception('Hasura instance not responding for 60 seconds')
+            raise HasuraError('Hasura instance not responding for 60 seconds')
 
         headers = {}
         if config.hasura.admin_secret:
