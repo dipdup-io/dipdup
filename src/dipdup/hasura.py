@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterator, List, Tuple, Type
 import aiohttp
 from aiohttp import ClientConnectorError, ClientOSError
 from tortoise import Model, fields
+from tortoise.transactions import get_connection
 
 from dipdup.config import DipDupConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.exceptions import ConfigurationError
@@ -146,6 +147,8 @@ async def configure_hasura(config: DipDupConfig):
 
     if config.hasura is None:
         raise ConfigurationError('`hasura` config section missing')
+    if not isinstance(config.database, PostgresDatabaseConfig):
+        raise RuntimeError
 
     _logger.info('Configuring Hasura')
     url = config.hasura.url.rstrip("/")
@@ -200,7 +203,30 @@ async def configure_hasura(config: DipDupConfig):
             ),
             headers=headers,
         )
-        if not result.get('message') == 'success':
+        if result.get('message') != 'success':
             _logger.error('Can\'t configure Hasura instance: %s', result)
-        else:
-            _logger.info('Hasura instance has been configured')
+            return
+
+        views = await get_connection(None).execute_query(
+            f"SELECT table_name FROM information_schema.views WHERE table_schema = '{config.database.schema_name}'"
+        )
+        for view in views[1]:
+            result = await http_request(
+                session,
+                'post',
+                url=f'{url}/v1/query',
+                data=json.dumps(
+                    {
+                        "type": "add_existing_table_or_view",
+                        "args": {
+                            "name": view[0],
+                            "schema": config.database.schema_name,
+                        },
+                    },
+                ),
+                headers=headers,
+            )
+            if result.get('message') != 'success' and result.get('code') != 'already-tracked':
+                _logger.error('Can\'t configure Hasura instance: %s', result)
+
+        _logger.info('Hasura instance has been configured')
