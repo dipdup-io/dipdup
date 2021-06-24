@@ -62,7 +62,7 @@ You can index several networks at once, or index different nodes independently. 
          accounts:
            - contract_alias
        datasources:
-         tzkt: tzkt_staging_mainnet
+         tzkt: tzkt_mainnet
          rpc: 
            - node_mainnet
      edonet:

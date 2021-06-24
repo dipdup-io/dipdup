@@ -54,7 +54,7 @@ metadata:
         accounts:
           - contract_alias
       datasources:
-        tzkt: tzkt_mainnet
+        tzkt: tzkt_staging_mainnet
 ```
 
 Each indexer object has two keys: `filters` and `datasources` \(required\).
