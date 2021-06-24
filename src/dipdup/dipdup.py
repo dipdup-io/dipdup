@@ -255,7 +255,7 @@ class DipDup:
         # TODO: Move higher
         if reindex:
             self._logger.warning('Started with `--reindex` argument, reindexing')
-            await utils.reindex()
+            await self._ctx.reindex()
 
         try:
             schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
@@ -268,7 +268,7 @@ class DipDup:
             await schema_state.save()
         elif schema_state.hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
-            await utils.reindex()
+            await self._ctx.reindex()
 
         sql_path = join(self._config.package_path, 'sql')
         if not exists(sql_path):

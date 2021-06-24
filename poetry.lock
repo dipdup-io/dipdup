@@ -18,20 +18,6 @@ yarl = ">=1.0,<2.0"
 speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
-name = "aiomysql"
-version = "0.0.21"
-description = "MySQL driver for asyncio."
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-PyMySQL = ">=0.9,<=0.9.3"
-
-[package.extras]
-sa = ["sqlalchemy (>=1.0)"]
-
-[[package]]
 name = "aiosignalrcore"
 version = "0.9.2.1"
 description = "Async fork of Python SignalR Core client(json and messagepack), with invocation auth and two way streaming. Compatible with azure / serverless functions. Also with automatic reconnect and manually reconnect."
@@ -228,7 +214,7 @@ wheel = ["wheel", "twine"]
 
 [[package]]
 name = "diff-cover"
-version = "5.2.0"
+version = "5.3.0"
 description = "Automatically find diff lines that need test coverage."
 category = "dev"
 optional = false
@@ -623,17 +609,6 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
-name = "pymysql"
-version = "0.9.3"
-description = "Pure Python MySQL Driver"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.extras]
-rsa = ["cryptography"]
-
-[[package]]
 name = "pypika-tortoise"
 version = "0.1.1"
 description = "Forked from pypika and streamline just for tortoise-orm"
@@ -854,7 +829,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "f8b2965746336fb7b3c2980dff2a2931ce904a4bf7cfe67b6fc0b04af69016b3"
+content-hash = "39a48a44dc359c18f240d41e353acc698de9eac89b31578f49813f34053b4161"
 
 [metadata.files]
 aiohttp = [
@@ -895,10 +870,6 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0-cp39-cp39-win32.whl", hash = "sha256:932bb1ea39a54e9ea27fc9232163059a0b8855256f4052e776357ad9add6f1c9"},
     {file = "aiohttp-3.7.4.post0-cp39-cp39-win_amd64.whl", hash = "sha256:02f46fc0e3c5ac58b80d4d56eb0a7c7d97fcef69ace9326289fb9f1955e65cfe"},
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
-]
-aiomysql = [
-    {file = "aiomysql-0.0.21-py3-none-any.whl", hash = "sha256:a81a97da3dd732635926a8ea6adbbf2d1345799680bf61b5f89e730bcec88cc5"},
-    {file = "aiomysql-0.0.21.tar.gz", hash = "sha256:811569c0db118dd2685f0878f5cebf17a11e89a995fa14261d5fa0254113842c"},
 ]
 aiosignalrcore = [
     {file = "aiosignalrcore-0.9.2.1-py3-none-any.whl", hash = "sha256:91bf9910f2730dd6b922a55948b28926f339c5faabea338e487f9683a39ff56d"},
@@ -1027,8 +998,8 @@ datamodel-code-generator = [
     {file = "datamodel_code_generator-0.11.8-py3-none-any.whl", hash = "sha256:cd0a90bc81612e1b04b7b60e9321c73dc4e1122f05eaa657e645a03ed41be6c0"},
 ]
 diff-cover = [
-    {file = "diff_cover-5.2.0-py3-none-any.whl", hash = "sha256:c080a6364602f2a4531742ae20169ccc2ee5ceacf37e5ac312a7ecc5445df0ec"},
-    {file = "diff_cover-5.2.0.tar.gz", hash = "sha256:a1cd54232d2e48bd4c1eabc96cfe4a8727a9a92fd2556b52ff8f65bb8adf8768"},
+    {file = "diff_cover-5.3.0-py3-none-any.whl", hash = "sha256:f22db93b94a7ba956be6ee1c471763e6bcb6320f8e0293a401f037b7c778e86c"},
+    {file = "diff_cover-5.3.0.tar.gz", hash = "sha256:82cc8c7a911ffe8e30af80bf1b15dd08180b84751179f5903516f522586cdfc8"},
 ]
 dnspython = [
     {file = "dnspython-2.1.0-py3-none-any.whl", hash = "sha256:95d12f6ef0317118d2a1a6fc49aac65ffec7eb8087474158f42f26a639135216"},
@@ -1295,10 +1266,6 @@ pyflakes = [
 pygments = [
     {file = "Pygments-2.9.0-py3-none-any.whl", hash = "sha256:d66e804411278594d764fc69ec36ec13d9ae9147193a1740cd34d272ca383b8e"},
     {file = "Pygments-2.9.0.tar.gz", hash = "sha256:a18f47b506a429f6f4b9df81bb02beab9ca21d0a5fee38ed15aef65f0545519f"},
-]
-pymysql = [
-    {file = "PyMySQL-0.9.3-py2.py3-none-any.whl", hash = "sha256:3943fbbbc1e902f41daf7f9165519f140c4451c179380677e6a848587042561a"},
-    {file = "PyMySQL-0.9.3.tar.gz", hash = "sha256:d8c059dcd81dedb85a9f034d5e22dcb4442c0b201908bede99e306d65ea7c8e7"},
 ]
 pypika-tortoise = [
     {file = "pypika-tortoise-0.1.1.tar.gz", hash = "sha256:6831d0a56e5e0ecefac3307dd9bdb3e5073fdac5d617401601d3a6713e059f3c"},
