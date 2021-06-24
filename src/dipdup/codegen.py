@@ -80,6 +80,17 @@ class DipDupCodeGenerator:
             with open(join(handlers_path, '__init__.py'), 'w'):
                 pass
 
+        self._logger.info('Creating `%s/sql` directory', self._config.package)
+        sql_path = join(self._config.package_path, 'sql')
+        with suppress(FileExistsError):
+            mkdir(sql_path)
+        sql_on_restart_path = join(sql_path, 'on_restart')
+        with suppress(FileExistsError):
+            mkdir(sql_on_restart_path)
+        sql_on_reindex_path = join(sql_path, 'on_reindex')
+        with suppress(FileExistsError):
+            mkdir(sql_on_reindex_path)
+
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Creating `schemas` package')

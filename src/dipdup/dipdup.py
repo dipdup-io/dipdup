@@ -30,7 +30,7 @@ from dipdup.context import RollbackHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import HandlerImportError
+from dipdup.exceptions import ConfigurationError, HandlerImportError
 from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
@@ -264,7 +264,7 @@ class DipDup:
 
         if schema_state is None:
             await Tortoise.generate_schemas()
-            await self._execute_user_sql()
+            await self._execute_sql_scripts(reindex=True)
 
             schema_state = State(index_type=IndexType.schema, index_name=connection_name, hash=schema_hash)
             await schema_state.save()
@@ -272,14 +272,23 @@ class DipDup:
             self._logger.warning('Schema hash mismatch, reindexing')
             await self._ctx.reindex()
 
-    async def _execute_user_sql(self) -> None:
+        await self._execute_sql_scripts(reindex=False)
+
+    async def _execute_sql_scripts(self, reindex: bool) -> None:
+        """Execute SQL included with project"""
         sql_path = join(self._config.package_path, 'sql')
         if not exists(sql_path):
             return
+        if sorted(listdir(sql_path)) != ['on_reindex', 'on_restart']:
+            raise ConfigurationError(
+                f'SQL scripts must be placed either to `{self._config.package}/sql/on_restart` or to `{self._config.package}/sql/on_reindex` directory'
+            )
         if not isinstance(self._config.database, PostgresDatabaseConfig):
-            self._logger.warning('Injecting raw SQL supported on PostgreSQL only')
+            self._logger.warning('Execution of user SQL scripts is supported on PostgreSQL only, skipping')
             return
 
+        sql_path = join(sql_path, 'on_reindex' if reindex else 'on_restart')
+        self._logger.info('Executing SQL scripts from `%s`', sql_path)
         for filename in sorted(listdir(sql_path)):
             if not filename.endswith('.sql'):
                 continue
@@ -287,5 +296,5 @@ class DipDup:
             with open(join(sql_path, filename)) as file:
                 sql = file.read()
 
-            self._logger.info('Applying raw SQL from `%s`', filename)
+            self._logger.info('Executing `%s`', filename)
             await get_connection(None).execute_script(sql)
