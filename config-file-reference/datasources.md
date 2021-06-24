@@ -15,9 +15,9 @@ This is a list of API endpoints used to retrieve data and pass it to your indexe
 
 ```yaml
 datasources:
-  tzkt_staging_mainnet:
+  tzkt_mainnet:
     kind: tzkt
-    url: https://staging.api.tzkt.io
+    url: https://api.tzkt.io
 ```
 
 **NOTE** that datasource entry is basically an alias for the endpoint URI, there's no mention of the network, thus it's a good practice to add network name to the datasource alias. The reason for this design choice is to provide a generic index parameterization via the single mechanism — [templates](templates.md).
