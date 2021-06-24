@@ -16,7 +16,7 @@ contracts:
 datasources:
   tzkt_mainnet:
     kind: tzkt
-    url: ${TZKT_URL:-https://staging.api.tzkt.io}
+    url: ${TZKT_URL:-https://api.tzkt.io}
 
 indexes:
   hen_mainnet:

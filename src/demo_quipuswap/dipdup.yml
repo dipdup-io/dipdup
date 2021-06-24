@@ -20,14 +20,14 @@ contracts:
     typename: fa2_token
 
 datasources:
-  tzkt_staging_mainnet:
+  tzkt_mainnet:
     kind: tzkt
-    url: https://staging.api.tzkt.io
+    url: https://api.tzkt.io
 
 templates:
   quipuswap_fa12:
     kind: operation
-    datasource: tzkt_staging_mainnet
+    datasource: tzkt_mainnet
     contracts:
       - <dex_contract>
     types:
@@ -90,7 +90,7 @@ templates:
 
   quipuswap_fa2:
     kind: operation
-    datasource: tzkt_staging_mainnet
+    datasource: tzkt_mainnet
     contracts:
       - <dex_contract>
     types:
