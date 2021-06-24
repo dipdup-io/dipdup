@@ -279,7 +279,7 @@ class DipDup:
         sql_path = join(self._config.package_path, 'sql')
         if not exists(sql_path):
             return
-        if sorted(listdir(sql_path)) != ['on_reindex', 'on_restart']:
+        if any(map(lambda p: p not in ('on_reindex', 'on_restart'), listdir(sql_path))):
             raise ConfigurationError(
                 f'SQL scripts must be placed either to `{self._config.package}/sql/on_restart` or to `{self._config.package}/sql/on_reindex` directory'
             )
