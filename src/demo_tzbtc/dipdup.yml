@@ -11,14 +11,14 @@ contracts:
     typename: tzbtc
 
 datasources:
-  tzkt_staging:
+  tzkt:
     kind: tzkt
-    url: https://staging.api.tzkt.io
+    url: https://api.tzkt.io
 
 indexes:
   tzbtc_holders_mainnet:
     kind: operation
-    datasource: tzkt_staging
+    datasource: tzkt
     contracts:
       - tzbtc_mainnet
     handlers:
