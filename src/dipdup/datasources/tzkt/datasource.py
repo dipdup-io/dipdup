@@ -9,7 +9,6 @@ from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ig
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
 from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
-from pyee import AsyncIOEventEmitter  # type: ignore
 
 from dipdup.config import (
     BigMapIndexConfig,
@@ -18,6 +17,7 @@ from dipdup.config import (
     OperationHandlerOriginationPatternConfig,
     OperationIndexConfig,
 )
+from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData
@@ -256,7 +256,7 @@ class BigMapFetcher:
             yield big_maps[0].level, big_maps[: i + 1]
 
 
-class TzktDatasource(AsyncIOEventEmitter):
+class TzktDatasource(IndexDatasource):
     """Bridge between REST/WS TzKT endpoints and DipDup.
 
     * Converts raw API data to models
@@ -470,7 +470,7 @@ class TzktDatasource(AsyncIOEventEmitter):
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-        await self.on_connect()
+        await self._on_connect()
 
     def _get_client(self) -> BaseHubConnection:
         """Create SignalR client, register message callbacks"""
@@ -489,11 +489,11 @@ class TzktDatasource(AsyncIOEventEmitter):
                 )
             ).build()
 
-            self._client.on_open(self.on_connect)
-            self._client.on_error(self.on_error)
-            self._client.on('operations', self.on_operation_message)
-            self._client.on('bigmaps', self.on_big_map_message)
-            self._client.on('head', self.on_head_message)
+            self._client.on_open(self._on_connect)
+            self._client.on_error(self._on_error)
+            self._client.on('operations', self._on_operation_message)
+            self._client.on('bigmaps', self._on_big_map_message)
+            self._client.on('head', self._on_head_message)
 
         return self._client
 
@@ -504,7 +504,7 @@ class TzktDatasource(AsyncIOEventEmitter):
         self._logger.info('Starting websocket client')
         await self._get_client().start()
 
-    async def on_connect(self) -> None:
+    async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
         if self._get_client().transport.state != ConnectionState.connected:
             return
@@ -519,7 +519,7 @@ class TzktDatasource(AsyncIOEventEmitter):
         for address, paths in self._big_map_subscriptions.items():
             await self.subscribe_to_big_maps(address, paths)
 
-    def on_error(self, message: CompletionMessage) -> NoReturn:
+    def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""
         raise Exception(message.error)
 
@@ -570,7 +570,7 @@ class TzktDatasource(AsyncIOEventEmitter):
             [],
         )
 
-    async def on_operation_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
         for item in message:
             current_level = item['state']
@@ -589,15 +589,17 @@ class TzktDatasource(AsyncIOEventEmitter):
                     if operation.status != 'applied':
                         continue
                     operations.append(operation)
-                self.emit("operations", operations, self.block.hash)
+                self.emit_operations(operations, self.block)
 
             elif message_type == TzktMessageType.REORG:
-                self.emit("rollback", self.level, current_level)
+                if self.level is None:
+                    raise RuntimeError
+                self.emit_rollback(self.level, current_level)
 
             else:
                 raise NotImplementedError
 
-    async def on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
         for item in message:
             current_level = item['state']
@@ -614,15 +616,17 @@ class TzktDatasource(AsyncIOEventEmitter):
                 for big_map_json in item['data']:
                     big_map = self.convert_big_map(big_map_json)
                     big_maps.append(big_map)
-                self.emit("big_maps", big_maps)
+                self.emit_big_maps(big_maps)
 
             elif message_type == TzktMessageType.REORG:
-                self.emit("rollback", self.level, current_level)
+                if self.level is None:
+                    raise RuntimeError
+                self.emit_rollback(self.level, current_level)
 
             else:
                 raise NotImplementedError
 
-    async def on_head_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         for item in message:
             current_level = item['state']
             message_type = TzktMessageType(item['type'])
@@ -637,10 +641,12 @@ class TzktDatasource(AsyncIOEventEmitter):
                 block_json = item['data']
                 block = self.convert_head_block(block_json)
                 self._block = block
-                self.emit("block", block)
+                self.emit_head(block)
 
             elif message_type == TzktMessageType.REORG:
-                self.emit("rollback", self.level, current_level)
+                if self.level is None:
+                    raise RuntimeError
+                self.emit_rollback(self.level, current_level)
 
             else:
                 raise NotImplementedError

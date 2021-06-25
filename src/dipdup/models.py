@@ -34,7 +34,7 @@ class State(Model):
     index_type = fields.CharEnumField(IndexType)
     index_hash = fields.CharField(256)
     level = fields.IntField(default=0)
-    hash = fields.CharField(51, null=True)
+    hash = fields.CharField(64, null=True)
 
     class Meta:
         table = 'dipdup_state'
@@ -53,7 +53,7 @@ class TemporaryState(State):
 
 class StateOperationGroup(Model):
 
-    hash = fields.CharField(51, pk=True)
+    hash = fields.CharField(64, pk=True)
     level = fields.IntField(default=0)
 
     class Meta:

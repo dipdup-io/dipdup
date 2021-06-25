@@ -10,7 +10,7 @@ from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup, IndexDispatcher
 from dipdup.index import OperationIndex
-from dipdup.models import BlockData, OperationData, State
+from dipdup.models import BlockData, HeadBlockData, OperationData, State
 
 
 def _get_operation(hash_: str, level: int) -> OperationData:
@@ -39,37 +39,37 @@ async def operation_index_process(self: OperationIndex):
 # NOTE: Emit operations, rollback, emit again, check state
 async def datasource_run(self: TzktDatasource, index_dispatcher: IndexDispatcher, fail=False):
 
-    self._block = MagicMock(spec=BlockData)
-    self._block.hash = 'block_a'
-    self._block.level = 1365000
+    self._old_block = MagicMock(spec=HeadBlockData)
+    self._old_block.hash = 'block_a'
+    self._old_block.level = 1365001
+    self._new_block = MagicMock(spec=HeadBlockData)
+    self._new_block.hash = 'block_b'
+    self._new_block.level = 1365001
 
-    self.emit(
-        "operations",
+    self.emit_operations(
         [
             _get_operation('1', 1365001),
             _get_operation('2', 1365001),
             _get_operation('3', 1365001),
         ],
-        'block_b',
+        self._old_block,
     )
     await asyncio.sleep(0.05)
 
-    self.emit(
-        "rollback",
+    self.emit_rollback(
         from_level=1365001,
         to_level=1365000,
     )
     await asyncio.sleep(0.05)
 
-    self.emit(
-        "operations",
+    self.emit_operations(
         [
             _get_operation('1', 1365001),
             _get_operation('2', 1365001),
             _get_operation('3', 1365001),
         ]
         + ([_get_operation('4', 1365001)] if fail else []),
-        'block_c',
+        self._new_block,
     )
     await asyncio.sleep(0.05)
 
@@ -97,9 +97,9 @@ class RollbackTest(IsolatedAsyncioTestCase):
         initial_block.level = 0
         initial_block.hash = 'block_0'
 
-        datasource.on('operations', dipdup._index_dispatcher.dispatch_operations)
-        datasource.on('big_maps', dipdup._index_dispatcher.dispatch_big_maps)
-        datasource.on('rollback', partial(dipdup._index_dispatcher._rollback, datasource_name='tzkt_mainnet'))
+        datasource.on_operations(dipdup._index_dispatcher.dispatch_operations)
+        datasource.on_big_maps(dipdup._index_dispatcher.dispatch_big_maps)
+        datasource.on_rollback(dipdup._index_dispatcher._rollback)
 
         datasource.run = MethodType(partial(datasource_run, index_dispatcher=dipdup._index_dispatcher), datasource)
         datasource.get_block = AsyncMock(return_value=initial_block)
@@ -125,9 +125,9 @@ class RollbackTest(IsolatedAsyncioTestCase):
         initial_block.level = 0
         initial_block.hash = 'block_0'
 
-        datasource.on('operations', dipdup._index_dispatcher.dispatch_operations)
-        datasource.on('big_maps', dipdup._index_dispatcher.dispatch_big_maps)
-        datasource.on('rollback', partial(dipdup._index_dispatcher._rollback, datasource_name='tzkt_mainnet'))
+        datasource.on_operations(dipdup._index_dispatcher.dispatch_operations)
+        datasource.on_big_maps(dipdup._index_dispatcher.dispatch_big_maps)
+        datasource.on_rollback(dipdup._index_dispatcher._rollback)
 
         datasource.run = MethodType(partial(datasource_run, index_dispatcher=dipdup._index_dispatcher, fail=True), datasource)
         datasource.get_block = AsyncMock(return_value=initial_block)

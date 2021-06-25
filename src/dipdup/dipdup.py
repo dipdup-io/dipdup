@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import logging
-from functools import partial
 from os.path import join
 from posix import listdir
 from typing import Dict, List, cast
@@ -26,20 +25,21 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
-from dipdup.context import RollbackHandlerContext
+from dipdup.context import DipDupContext, RollbackHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
+from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError, HandlerImportError
 from dipdup.hasura import configure_hasura
-from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
-from dipdup.models import BigMapData, IndexType, OperationData, State
+from dipdup.index import BigMapIndex, Index, OperationIndex
+from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 
 
 class IndexDispatcher:
-    def __init__(self, ctx: HandlerContext) -> None:
+    def __init__(self, ctx: DipDupContext) -> None:
         self._ctx = ctx
 
         self._logger = logging.getLogger(__name__)
@@ -85,26 +85,25 @@ class IndexDispatcher:
 
         self._ctx.reset()
 
-    async def dispatch_operations(self, operations: List[OperationData], hash_: str) -> None:
+    async def dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in operations)) == 1
         level = operations[0].level
         for index in self._indexes.values():
-            if isinstance(index, OperationIndex):
-                index.push(level, operations, hash_)
+            if isinstance(index, OperationIndex) and index.datasource == datasource:
+                index.push(level, operations, block)
 
-    async def dispatch_big_maps(self, big_maps: List[BigMapData]) -> None:
+    async def dispatch_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData]) -> None:
         assert len(set(op.level for op in big_maps)) == 1
         level = big_maps[0].level
         for index in self._indexes.values():
-            if isinstance(index, BigMapIndex):
+            if isinstance(index, BigMapIndex) and index.datasource == datasource:
                 index.push(level, big_maps)
 
-    async def _rollback(self, datasource_name: str, from_level: int, to_level: int) -> None:
+    async def _rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         logger = utils.FormattedLogger(ROLLBACK_HANDLER)
         if from_level - to_level == 1:
             # NOTE: Single level rollbacks are processed at Index level.
             # NOTE: Notify all indexes with rolled back datasource to skip next level and just verify it
-            datasource = self._ctx.datasources[datasource_name]
             for index in self._indexes.values():
                 if index.datasource == datasource:
                     # NOTE: Continue to rollback with handler
@@ -119,8 +118,7 @@ class IndexDispatcher:
             config=self._ctx.config,
             datasources=self._ctx.datasources,
             logger=logger,
-            # TODO: datasource in context instead of datasource_name maybe?
-            datasource=datasource_name,
+            datasource=datasource,
             from_level=from_level,
             to_level=to_level,
         )
@@ -128,12 +126,12 @@ class IndexDispatcher:
 
     async def run(self, oneshot=False) -> None:
         self._logger.info('Starting index dispatcher')
-        for name, datasource in self._ctx.datasources.items():
-            if not isinstance(datasource, TzktDatasource):
+        for datasource in self._ctx.datasources.values():
+            if not isinstance(datasource, IndexDatasource):
                 continue
-            datasource.on('operations', self.dispatch_operations)
-            datasource.on('big_maps', self.dispatch_big_maps)
-            datasource.on('rollback', partial(self._rollback, datasource_name=name))
+            datasource.on_operations(self.dispatch_operations)
+            datasource.on_big_maps(self.dispatch_big_maps)
+            datasource.on_rollback(self._rollback)
 
         self._ctx.commit()
 
@@ -163,11 +161,9 @@ class DipDup:
         self._config = config
         self._datasources: Dict[str, DatasourceT] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
-        self._ctx = HandlerContext(
+        self._ctx = DipDupContext(
             config=self._config,
             datasources=self._datasources,
-            logger=utils.FormattedLogger(__name__),
-            template_values=None,
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
 
@@ -295,7 +291,7 @@ class DipDup:
             schema_state = State(
                 index_type=IndexType.schema,
                 index_name=connection_name,
-                hash=schema_hash,
+                index_hash=schema_hash,
             )
             await schema_state.save()
         elif schema_state.index_hash != schema_hash:

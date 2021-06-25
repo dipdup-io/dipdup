@@ -18,12 +18,13 @@ from dipdup.config import (
     OperationIndexConfig,
     OperationType,
 )
-from dipdup.context import HandlerContext
+from dipdup.context import DipDupContext, HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import (
     BigMapAction,
     BigMapData,
     BigMapDiff,
+    HeadBlockData,
     OperationData,
     Origination,
     State,
@@ -38,7 +39,7 @@ OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
 
 
 class Index:
-    def __init__(self, ctx: HandlerContext, config: IndexConfigTemplateT, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: IndexConfigTemplateT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
         self._config = config
         self._datasource = datasource
@@ -115,15 +116,15 @@ class Index:
 class OperationIndex(Index):
     _config: OperationIndexConfig
 
-    def __init__(self, ctx: HandlerContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[Tuple[int, List[OperationData], Optional[str]]] = deque()
+        self._queue: Deque[Tuple[int, List[OperationData], Optional[HeadBlockData]]] = deque()
         self._contract_hashes: Dict[str, Tuple[str, str]] = {}
         self._rollback_level: Optional[int] = None
         self._rollback_operation_groups: List[StateOperationGroup] = []
 
-    def push(self, level: int, operations: List[OperationData], hash_: Optional[str] = None) -> None:
-        self._queue.append((level, operations, hash_))
+    def push(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
+        self._queue.append((level, operations, block))
 
     async def single_level_rollback(self, from_level: int) -> None:
         """Ensure next arrived block the same as one rolled back"""
@@ -137,8 +138,8 @@ class OperationIndex(Index):
         self._logger.info('Processing websocket queue')
         with suppress(IndexError):
             while True:
-                level, operations, hash_ = self._queue.popleft()
-                await self._process_level_operations(level, operations, hash_)
+                level, operations, block = self._queue.popleft()
+                await self._process_level_operations(level, operations, block)
 
     async def _synchronize(self, last_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -168,7 +169,7 @@ class OperationIndex(Index):
         state.level = last_level  # type: ignore
         await state.save()
 
-    async def _process_level_operations(self, level: int, operations: List[OperationData], hash_: Optional[str] = None) -> None:
+    async def _process_level_operations(self, level: int, operations: List[OperationData], hash_: Optional[HeadBlockData] = None) -> None:
         state = await self.get_state()
         if level < state.level:
             raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {state.level}')
@@ -336,6 +337,7 @@ class OperationIndex(Index):
             config=self._ctx.config,
             logger=logger,
             template_values=self._config.template_values,
+            datasource=self.datasource,
         )
 
         await handler_config.callback_fn(handler_context, *args)
@@ -378,7 +380,7 @@ class OperationIndex(Index):
 class BigMapIndex(Index):
     _config: BigMapIndexConfig
 
-    def __init__(self, ctx: HandlerContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[int, List[BigMapData]]] = deque()
 
@@ -476,6 +478,7 @@ class BigMapIndex(Index):
             config=self._ctx.config,
             logger=logger,
             template_values=self._config.template_values,
+            datasource=self.datasource,
         )
 
         await handler_config.callback_fn(handler_context, big_map_context)
