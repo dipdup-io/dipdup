@@ -12,20 +12,14 @@ from dipdup.utils import FormattedLogger
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic in HandlerContext.
-class HandlerContext:
-    """Common handler context."""
-
+class DipDupContext:
     def __init__(
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
-        logger: FormattedLogger,
-        template_values: Optional[Dict[str, str]],
     ) -> None:
         self.datasources = datasources
         self.config = config
-        self.logger = logger
-        self.template_values = template_values
         self._updated: bool = False
 
     def commit(self) -> None:
@@ -70,6 +64,23 @@ class HandlerContext:
             await Tortoise._drop_databases()
         await self.restart()
 
+
+class HandlerContext(DipDupContext):
+    """Common handler context."""
+
+    def __init__(
+        self,
+        datasources: Dict[str, DatasourceT],
+        config: DipDupConfig,
+        logger: FormattedLogger,
+        template_values: Optional[Dict[str, str]],
+        datasource: DatasourceT,
+    ) -> None:
+        super().__init__(datasources, config)
+        self.logger = logger
+        self.template_values = template_values
+        self.datasource = datasource
+
     def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
         if name in self.config.contracts:
             raise ConfigurationError(f'Contract `{name}` is already exists')
@@ -91,16 +102,17 @@ class HandlerContext:
 
 
 class RollbackHandlerContext(HandlerContext):
+    template_values: None
+
     def __init__(
         self,
         datasources: Dict[str, DatasourceT],
         config: DipDupConfig,
         logger: FormattedLogger,
-        datasource: str,
+        datasource: DatasourceT,
         from_level: int,
         to_level: int,
     ) -> None:
-        super().__init__(datasources, config, logger, None)
-        self.datasource = datasource
+        super().__init__(datasources, config, logger, None, datasource)
         self.from_level = from_level
         self.to_level = to_level
