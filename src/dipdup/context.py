@@ -74,7 +74,7 @@ class HandlerContext(DipDupContext):
         config: DipDupConfig,
         logger: FormattedLogger,
         template_values: Optional[Dict[str, str]],
-        datasource: Optional[DatasourceT],
+        datasource: DatasourceT,
     ) -> None:
         super().__init__(datasources, config)
         self.logger = logger
@@ -102,7 +102,6 @@ class HandlerContext(DipDupContext):
 
 
 class RollbackHandlerContext(HandlerContext):
-    datasource: DatasourceT
     template_values: None
 
     def __init__(
