@@ -54,7 +54,7 @@ class TemporaryState(State):
 class StateOperationGroup(Model):
 
     hash = fields.CharField(64, pk=True)
-    level = fields.IntField(default=0)
+    level = fields.IntField()
 
     class Meta:
         table = 'dipdup_state_operation_group'

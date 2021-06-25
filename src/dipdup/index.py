@@ -129,6 +129,8 @@ class OperationIndex(Index):
     async def single_level_rollback(self, from_level: int) -> None:
         """Ensure next arrived block the same as one rolled back"""
         state_operation_groups = await StateOperationGroup.filter(level=from_level).all()
+        if not state_operation_groups:
+            raise RuntimeError(f'No StateOperationGroups found for level {from_level}. Dropped them too early?')
         self._rollback_level = from_level
         self._rollback_operation_groups = state_operation_groups
 

@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import logging
+from contextlib import suppress
 from os.path import join
 from posix import listdir
 from typing import Dict, List, cast
@@ -33,7 +34,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError, HandlerImportError
 from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
+from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State, StateOperationGroup
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 
@@ -201,12 +202,14 @@ class DipDup:
                 worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
+            cleanup_task = asyncio.create_task(self._cleanup_task())
 
             try:
                 await asyncio.gather(*datasource_tasks, *worker_tasks)
             except KeyboardInterrupt:
                 pass
             finally:
+                cleanup_task.cancel()
                 self._logger.info('Closing datasource sessions')
                 await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
 
@@ -273,11 +276,6 @@ class DipDup:
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
-        # TODO: Move higher
-        if reindex:
-            self._logger.warning('Started with `--reindex` argument, reindexing')
-            await self._ctx.reindex()
-
         try:
             schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
         except OperationalError:
@@ -326,3 +324,13 @@ class DipDup:
 
             self._logger.info('Executing `%s`', filename)
             await get_connection(None).execute_script(sql)
+
+    async def _cleanup_task(self) -> None:
+        with suppress(asyncio.CancelledError):
+            while True:
+                await asyncio.sleep(60 * 5)
+                minimum_level_state = await State.filter(index_type__not=IndexType.schema).order_by('level').first()
+                if minimum_level_state is None:
+                    raise RuntimeError('No index states found in database')
+                minimum_level = minimum_level_state.level - 1
+                await StateOperationGroup.filter(level__lt=minimum_level).delete()
