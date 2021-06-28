@@ -327,7 +327,7 @@ class DipDupCodeGenerator:
             return
 
         jobs_path = join(self._config.package_path, 'jobs')
-        with open(join(dirname(__file__), 'templates', f'job.py.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'job.py.j2')) as file:
             job_template = Template(file.read())
 
         job_callbacks = set(job_config.callback for job_config in self._config.jobs.values())

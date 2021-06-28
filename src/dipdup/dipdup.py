@@ -187,7 +187,7 @@ class DipDup:
             if self._config.hasura:
                 worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
-            if self._config.jobs:
+            if self._config.jobs and not oneshot:
                 for job_name, job_config in self._config.jobs.items():
                     add_job(self._scheduler, job_name, job_config)
                 self._scheduler.start()
@@ -201,7 +201,8 @@ class DipDup:
             finally:
                 self._logger.info('Closing datasource sessions')
                 await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
-                with suppress(SchedulerNotRunningError):
+                # FIXME: AttributeError: 'NoneType' object has no attribute 'call_soon_threadsafe'
+                with suppress(AttributeError, SchedulerNotRunningError):
                     await self._scheduler.shutdown(wait=True)
 
     async def migrate(self) -> None:
