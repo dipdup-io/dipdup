@@ -13,6 +13,7 @@
   * [templates](config-file-reference/templates.md)
   * [database](config-file-reference/database.md)
   * [hasura](config-file-reference/hasura.md)
+  * [sentry](config-file-reference/sentry.md)
   * [mempool](config-file-reference/mempool.md)
   * [metadata](config-file-reference/metadata.md)
 * [Command-line reference](command-line/README.md)

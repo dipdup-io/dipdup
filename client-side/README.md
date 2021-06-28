@@ -38,6 +38,9 @@ Hasura is compatible with [subscriptions-transport-ws](https://github.com/apollo
 
 ## Mutations
 
-The pupose of DipDup is to create indexers, which means you can always reproduce the state as long as data sources are accessible. This makes you backend in a sense "stateful" because it's ok to drop the database and start over.  
-However in some cases you might need to introduce a non-recoverable state and mix indexed and user-generated content. DipDup
+The purpose of DipDup is to create indexers, which means you can always reproduce the state as long as data sources are accessible. This makes your backend in a sense "stateless" because it's tolerant to data loss.
+
+However in some cases you might need to introduce a non-recoverable state and mix indexed and user-generated content. DipDup allows to mark these UGC tables "immune" which protects them from being wiped. In addition to that you will need to set up [Hasura Auth](https://hasura.io/docs/latest/graphql/core/auth/index.html) and adjust write permissions for the tables \(by default they are read-only\).
+
+Lastly, in order to modify the state from the client side you will need to execute GQL mutations, [read more](https://hasura.io/docs/latest/graphql/core/databases/postgres/mutations/index.html) about how to do that with Hasura.
 
