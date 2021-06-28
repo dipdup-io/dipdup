@@ -8,7 +8,9 @@ from os.path import dirname, join
 from typing import List, NoReturn
 
 import click
+import sentry_sdk
 from fcache.cache import FileCache  # type: ignore
+from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
 from dipdup import __spec_version__, __version__
 from dipdup.config import DipDupConfig, LoggingConfig
@@ -79,6 +81,12 @@ async def cli(ctx, config: List[str], logging_config: str):
     _config = DipDupConfig.load(config)
     if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
         migration_required(_config.spec_version, __spec_version__)
+
+    if _config.sentry:
+        sentry_sdk.init(
+            dsn=_config.sentry.dsn,
+            integrations=[AioHttpIntegration()],
+        )
 
     ctx.obj = CLIContext(
         config_paths=config,

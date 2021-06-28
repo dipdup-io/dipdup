@@ -609,6 +609,11 @@ class HasuraConfig:
 
 
 @dataclass
+class SentryConfig:
+    dsn: str
+
+
+@dataclass
 class DipDupConfig:
     """Main dapp config
 
@@ -620,6 +625,7 @@ class DipDupConfig:
     :param templates: Mapping of template aliases and index templates
     :param database: Database config
     :param hasura: Hasura config
+    :param sentry: Sentry integration config
     """
 
     spec_version: str
@@ -630,6 +636,7 @@ class DipDupConfig:
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     hasura: Optional[HasuraConfig] = None
+    sentry: Optional[SentryConfig] = None
 
     def __post_init_post_parse__(self):
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
