@@ -21,6 +21,8 @@
   * [dipdup migrate](command-line/dipdup-migrate.md)
 * [Deployment](deployment/README.md)
   * [Docker compose](deployment/docker-compose.md)
+* [Client side](client-side/README.md)
+  * [GenQL](client-side/genql.md)
 * [Advanced](advanced/README.md)
   * [Handler context](advanced/handler-context.md)
   * [Mempool plugin](advanced/mempool-plugin.md)

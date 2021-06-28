@@ -20,3 +20,15 @@ Metadata configuration is idempotent: each time you do `dipdup run` it queries t
 
 DipDup sets READ only permissions for all tables and enables non-authorized access to the `/graphql` endpoint.
 
+### Limit number of rows
+
+
+
+### Disable aggregation queries
+
+
+
+### Convert field names to camel case
+
+
+
