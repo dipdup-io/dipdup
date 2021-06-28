@@ -240,8 +240,7 @@ class OperationIndex(Index):
             key = OperationSubgroup(operation.hash, operation.counter)
             if key not in operation_subgroups:
                 # TODO: Table cleanup. In dispatcher?
-                with suppress(IntegrityError):
-                    await StateOperationGroup(hash=operation.hash, level=operation.level).save()
+                await StateOperationGroup.get_or_create(hash=operation.hash, defaults=dict(level=operation.level))
                 operation_subgroups[key] = []
             operation_subgroups[key].append(operation)
 
