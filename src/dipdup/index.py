@@ -171,7 +171,7 @@ class OperationIndex(Index):
         state.level = last_level  # type: ignore
         await state.save()
 
-    async def _process_level_operations(self, level: int, operations: List[OperationData], hash_: Optional[HeadBlockData] = None) -> None:
+    async def _process_level_operations(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
         state = await self.get_state()
         if level < state.level:
             raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {state.level}')
@@ -197,7 +197,8 @@ class OperationIndex(Index):
             await self._process_operations(operations)
 
             state.level = level  # type: ignore
-            state.hash = hash_  # type: ignore
+            if block:
+                state.hash = block.hash  # type: ignore
             await state.save()
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
@@ -239,8 +240,7 @@ class OperationIndex(Index):
         for operation in operations:
             key = OperationSubgroup(operation.hash, operation.counter)
             if key not in operation_subgroups:
-                # TODO: Table cleanup. In dispatcher?
-                await StateOperationGroup.get_or_create(hash=operation.hash, defaults=dict(level=operation.level))
+                await StateOperationGroup.get_or_create(hash=operation.hash, level=operation.level)
                 operation_subgroups[key] = []
             operation_subgroups[key].append(operation)
 
