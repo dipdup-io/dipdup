@@ -7,6 +7,7 @@ description: Inventory block
 This is a list of API endpoints used to retrieve data and pass it to your indexer handlers. The obligatory field `kind` specifies which data adapter is to be used:
 
 * `tzkt`
+* `bcd`
 * `tezos-node`
 
 ### TzKT 😸
@@ -15,12 +16,25 @@ This is a list of API endpoints used to retrieve data and pass it to your indexe
 
 ```yaml
 datasources:
-  tzkt_staging_mainnet:
+  tzkt_mainnet:
     kind: tzkt
-    url: https://staging.api.tzkt.io
+    url: https://api.tzkt.io
 ```
 
 **NOTE** that datasource entry is basically an alias for the endpoint URI, there's no mention of the network, thus it's a good practice to add network name to the datasource alias. The reason for this design choice is to provide a generic index parameterization via the single mechanism — [templates](templates.md).
+
+### Better Call Dev
+
+Better Call Dev is another blockchain explorer and API with functionality similar to TzKT. It can't be used as a main datasource for indexer and mempool/metadata plugins but you can call it from inside of handlers to gather additional data.
+
+```yaml
+datasources:
+  bcd_mainnet:
+    kind: bcd
+    url: https://api.better-call.dev
+    network: mainnet
+
+```
 
 ### Tezos node
 
@@ -35,12 +49,14 @@ datasources:
 
 ## Compatibility with indexes and plugins
 
-|  | TzKT | Tezos node |
-| :--- | :--- | :--- |
-| Operation index | ✅ | ❌ |
-| Big Map index | ✅ | ❌ |
-| Mempool plugin \* | ✅ | ✅ |
-| Metadata plugin | ✅ | ❌ |
+|  | TzKT | Tezos node | BCD |
+| :--- | :--- | :--- | :--- |
+| Operation index | ✅ | ❌ | ❌ |
+| Big Map index | ✅ | ❌ | ❌ |
+| Handlers \* | ✅ | ❌ | ✅ |
+| Mempool plugin \*\* | ✅ | ✅ | ❌ |
+| Metadata plugin | ✅ | ❌ | ❌ |
 
-\* — Mempool plugin requires both TzKT and Tezos node endpoints to operate.
+\* Available at `ctx.datasources`  
+\*\* Mempool plugin requires both TzKT and Tezos node endpoints to operate.
 

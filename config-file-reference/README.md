@@ -17,7 +17,7 @@ Configuration file consists of several logical blocks:
 | Header | `spec_version` `package` |
 | Inventory | `contracts` `datasources` |
 | Indexer specifications | `indexes` `templates*` |
-| Deployment options | `database` `sentry*` `hasura*` |
+| Deployment options | `database` `hasura*` |
 | Plugin settings | `mempool*` `metadata*` |
 
 `*`  — optional sections
