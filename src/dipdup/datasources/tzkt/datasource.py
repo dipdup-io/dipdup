@@ -589,7 +589,8 @@ class TzktDatasource(IndexDatasource):
                     if operation.status != 'applied':
                         continue
                     operations.append(operation)
-                self.emit_operations(operations, self.block)
+                if operations:
+                    self.emit_operations(operations, self.block)
 
             elif message_type == TzktMessageType.REORG:
                 if self.level is None:
