@@ -15,11 +15,10 @@ indexes:
     datasource: tzkt_mainnet
 ```
 
-There can be various index kinds, currently three possible options are supported for the `kind` field:
+There can be various index kinds, currently two possible options are supported for the `kind` field:
 
 * `operation`
 * `big_map`
-* `template`
 
 All the indexes have to specify `datasource` field which is an alias of an existing entry under the [datasources](../datasources.md) section.
 
@@ -33,4 +32,16 @@ indexes:
     first_block: 1000000
     last_block: 2000000
 ```
+
+## Stateless index
+
+The `stateless` flag indicates that the index contains no database operations and acts just as a factory for spawning other indexes in runtime.
+
+```yaml
+indexes:
+  factory_index:
+    stateless: true
+```
+
+
 

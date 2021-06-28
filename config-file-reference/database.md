@@ -8,7 +8,6 @@ DipDup supports several database engines for development and production. The obl
 
 * `sqlite`
 * `postgres`
-* `mysql`
 
 ### SQLite
 
@@ -20,7 +19,7 @@ database:
   path: db.sqlite3
 ```
 
-{% hint style="info" %}
+{% hint style="warning" %}
 **NOTE**: while it's sometimes convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines.
 {% endhint %}
 
@@ -43,20 +42,6 @@ database:
 You can use compose-style environment variable substitutions with default values for secrets \(and all fields in general\).
 {% endhint %}
 
-### MySQL
-
-Requires `host`, `port`, `user`, `password`, and `database` fields.
-
-```yaml
-database:
-  kind: mysql
-  host: db
-  port: 5432
-  user: dipdup
-  password: ${MYSQL_PASSWORD:-changeme}
-  database: dipdup
-```
-
 ## Compatibility with API engines
 
 While DipDup itself \(actually the ORM used internally\) abstracts developer from particular DB engine implementation, when it comes to exposing API endpoints there are some limitations depending on your API engine choice.
@@ -65,7 +50,27 @@ While DipDup itself \(actually the ORM used internally\) abstracts developer fro
 | :--- | :--- | :--- |
 | SQLite | ❌ | ❌ |
 | Postgres | ✅ | ✅ |
-| MySQL | ✅ | ❌ |
 
+## "Immune" tables
 
+DipDup can drop all the tables in several cases:
+
+* Database schema was changed
+* There was a reorg that DipDup could not handle
+* DipDup was started with `--reindex` flag
+
+But sometimes you might want to keep some data because it's not sensitive to reorgs yet very resource consuming in terms of indexing. Typical example is indexing IPFS data — rollbacks do not affect off-chain storage so you can safely continue.
+
+```yaml
+database:
+  immune_tables:
+    - token_metadata
+    - contract_metadata
+```
+
+`immune_tables` is an optional array of table names. Those tables will survive reorgs, reindexing, and even schema changes.
+
+{% hint style="danger" %}
+Note that in order to change the schema of an immune table you need to manually do a migration. DipDup will not drop the table nor automatically handle the update.
+{% endhint %}
 
