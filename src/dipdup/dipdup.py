@@ -2,16 +2,15 @@ import asyncio
 import hashlib
 import logging
 from contextlib import suppress
-from functools import partial
 from os.path import join
 from posix import listdir
 from typing import Dict, List, cast
 
-from apscheduler.schedulers import SchedulerNotRunningError
+from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
-from tortoise.transactions import in_transaction
+from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
 import dipdup.utils as utils
@@ -28,19 +27,20 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
-from dipdup.context import RollbackHandlerContext
+from dipdup.context import DipDupContext, RollbackHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
+from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import HandlerImportError
+from dipdup.exceptions import ConfigurationError, HandlerImportError
 from dipdup.hasura import configure_hasura
-from dipdup.index import BigMapIndex, HandlerContext, Index, OperationIndex
+from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
 from dipdup.scheduler import add_job, create_scheduler
 
 
 class IndexDispatcher:
-    def __init__(self, ctx: HandlerContext) -> None:
+    def __init__(self, ctx: DipDupContext) -> None:
         self._ctx = ctx
 
         self._logger = logging.getLogger(__name__)
@@ -85,21 +85,21 @@ class IndexDispatcher:
 
         self._ctx.reset()
 
-    async def dispatch_operations(self, operations: List[OperationData]) -> None:
+    async def dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData]) -> None:
         assert len(set(op.level for op in operations)) == 1
         level = operations[0].level
         for index in self._indexes.values():
-            if isinstance(index, OperationIndex):
+            if isinstance(index, OperationIndex) and index.datasource == datasource:
                 index.push(level, operations)
 
-    async def dispatch_big_maps(self, big_maps: List[BigMapData]) -> None:
+    async def dispatch_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData]) -> None:
         assert len(set(op.level for op in big_maps)) == 1
         level = big_maps[0].level
         for index in self._indexes.values():
-            if isinstance(index, BigMapIndex):
+            if isinstance(index, BigMapIndex) and index.datasource == datasource:
                 index.push(level, big_maps)
 
-    async def _rollback(self, datasource: str, from_level: int, to_level: int) -> None:
+    async def _rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         logger = utils.FormattedLogger(ROLLBACK_HANDLER)
         rollback_fn = self._ctx.config.get_rollback_fn()
         ctx = RollbackHandlerContext(
@@ -114,12 +114,12 @@ class IndexDispatcher:
 
     async def run(self, oneshot=False) -> None:
         self._logger.info('Starting index dispatcher')
-        for name, datasource in self._ctx.datasources.items():
-            if not isinstance(datasource, TzktDatasource):
+        for datasource in self._ctx.datasources.values():
+            if not isinstance(datasource, IndexDatasource):
                 continue
-            datasource.on('operations', self.dispatch_operations)
-            datasource.on('big_maps', self.dispatch_big_maps)
-            datasource.on('rollback', partial(self._rollback, datasource=name))
+            datasource.on_operations(self.dispatch_operations)
+            datasource.on_big_maps(self.dispatch_big_maps)
+            datasource.on_rollback(self._rollback)
 
         self._ctx.commit()
 
@@ -146,11 +146,9 @@ class DipDup:
         self._config = config
         self._datasources: Dict[str, DatasourceT] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
-        self._ctx = HandlerContext(
+        self._ctx = DipDupContext(
             config=self._config,
             datasources=self._datasources,
-            logger=utils.FormattedLogger(__name__),
-            template_values=None,
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
         self._scheduler = create_scheduler()
@@ -266,7 +264,7 @@ class DipDup:
         # TODO: Move higher
         if reindex:
             self._logger.warning('Started with `--reindex` argument, reindexing')
-            await utils.reindex()
+            await self._ctx.reindex()
 
         try:
             schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
@@ -275,27 +273,39 @@ class DipDup:
 
         if schema_state is None:
             await Tortoise.generate_schemas()
+            await self._execute_sql_scripts(reindex=True)
+
             schema_state = State(index_type=IndexType.schema, index_name=connection_name, hash=schema_hash)
             await schema_state.save()
         elif schema_state.hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
-            await utils.reindex()
+            await self._ctx.reindex()
 
+        await self._execute_sql_scripts(reindex=False)
+
+    async def _execute_sql_scripts(self, reindex: bool) -> None:
+        """Execute SQL included with project"""
         sql_path = join(self._config.package_path, 'sql')
         if not exists(sql_path):
             return
+        if any(map(lambda p: p not in ('on_reindex', 'on_restart'), listdir(sql_path))):
+            raise ConfigurationError(
+                f'SQL scripts must be placed either to `{self._config.package}/sql/on_restart` or to `{self._config.package}/sql/on_reindex` directory'
+            )
         if not isinstance(self._config.database, PostgresDatabaseConfig):
-            self._logger.warning('Injecting raw SQL supported on PostgreSQL only')
+            self._logger.warning('Execution of user SQL scripts is supported on PostgreSQL only, skipping')
             return
 
-        for filename in listdir(sql_path):
+        sql_path = join(sql_path, 'on_reindex' if reindex else 'on_restart')
+        if not exists(sql_path):
+            return
+        self._logger.info('Executing SQL scripts from `%s`', sql_path)
+        for filename in sorted(listdir(sql_path)):
             if not filename.endswith('.sql'):
                 continue
 
             with open(join(sql_path, filename)) as file:
                 sql = file.read()
 
-            self._logger.info('Applying raw SQL from `%s`', filename)
-
-            async with in_transaction() as conn:
-                await conn.execute_query(sql)
+            self._logger.info('Executing `%s`', filename)
+            await get_connection(None).execute_script(sql)

@@ -1,8 +1,6 @@
 import asyncio
 import logging
-import os
 import re
-import sys
 import time
 from contextlib import asynccontextmanager
 from logging import Logger
@@ -116,35 +114,6 @@ async def http_request(session: aiohttp.ClientSession, method: str, **kwargs):
         **kwargs,
     ) as response:
         return await response.json()
-
-
-async def restart() -> None:
-    """Restart preserving CLI arguments"""
-    # NOTE: Remove --reindex from arguments to avoid reindexing loop
-    if '--reindex' in sys.argv:
-        sys.argv.remove('--reindex')
-    os.execl(sys.executable, sys.executable, *sys.argv)
-
-
-async def reindex() -> None:
-    """Drop all tables or whole database and restart with the same CLI arguments"""
-    if isinstance(Tortoise._connections['default'], AsyncpgDBClient):
-        async with in_transaction() as conn:
-            await conn.execute_script(
-                '''
-                DO $$ DECLARE
-                    r RECORD;
-                BEGIN
-                    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
-                        EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
-                    END LOOP;
-                END $$;
-                '''
-            )
-    else:
-        await Tortoise._drop_databases()
-    # NOTE: Tortoise can't recover after dropping database for some reason, restart.
-    await restart()
 
 
 class FormattedLogger(Logger):

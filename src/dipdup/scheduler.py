@@ -1,16 +1,21 @@
-from apscheduler.executors.asyncio import AsyncIOExecutor
-from apscheduler.jobstores.memory import MemoryJobStore
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
+from apscheduler.executors.asyncio import AsyncIOExecutor  # type: ignore
+from apscheduler.jobstores.memory import MemoryJobStore  # type: ignore
+from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
+from apscheduler.triggers.cron import CronTrigger  # type: ignore
 from pytz import utc
 
 from dipdup.config import JobConfig
 
-jobstores = {'default': MemoryJobStore()}
+jobstores = {
+    'default': MemoryJobStore(),
+}
 executors = {
     'default': AsyncIOExecutor(),
 }
-job_defaults = {'coalesce': False, 'max_instances': 3}
+job_defaults = {
+    'coalesce': False,
+    'max_instances': 3,
+}
 
 
 def create_scheduler() -> AsyncIOScheduler:

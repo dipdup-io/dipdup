@@ -16,22 +16,26 @@ from dipdup.config import (
     OperationIndexConfig,
     OperationType,
 )
-from dipdup.context import HandlerContext
+from dipdup.context import DipDupContext, HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
-from dipdup.utils import FormattedLogger, in_global_transaction, reindex
+from dipdup.utils import FormattedLogger, in_global_transaction
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 
 
 class Index:
-    def __init__(self, ctx: HandlerContext, config: IndexConfigTemplateT, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: IndexConfigTemplateT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
         self._config = config
         self._datasource = datasource
 
         self._logger = logging.getLogger(__name__)
         self._state: Optional[State] = None
+
+    @property
+    def datasource(self) -> TzktDatasource:
+        return self._datasource
 
     async def get_state(self) -> State:
         """Get state of index containing current level and config hash"""
@@ -82,7 +86,7 @@ class Index:
 
         elif state.hash != index_hash:
             self._logger.warning('Config hash mismatch, reindexing')
-            await reindex()
+            await self._ctx.reindex()
 
         self._state = state
 
@@ -90,7 +94,7 @@ class Index:
 class OperationIndex(Index):
     _config: OperationIndexConfig
 
-    def __init__(self, ctx: HandlerContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[int, List[OperationData]]] = deque()
         self._contract_hashes: Dict[str, Tuple[str, str]] = {}
@@ -189,7 +193,6 @@ class OperationIndex(Index):
                 operation_groups[key] = []
             operation_groups[key].append(operation)
 
-        keys = list(operation_groups.keys())
         for operation_group, operations in operation_groups.items():
             self._logger.debug('Matching %s', key)
 
@@ -284,6 +287,7 @@ class OperationIndex(Index):
             config=self._ctx.config,
             logger=logger,
             template_values=self._config.template_values,
+            datasource=self.datasource,
         )
 
         await handler_config.callback_fn(handler_context, *args)
@@ -326,7 +330,7 @@ class OperationIndex(Index):
 class BigMapIndex(Index):
     _config: BigMapIndexConfig
 
-    def __init__(self, ctx: HandlerContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[int, List[BigMapData]]] = deque()
 
@@ -424,6 +428,7 @@ class BigMapIndex(Index):
             config=self._ctx.config,
             logger=logger,
             template_values=self._config.template_values,
+            datasource=self.datasource,
         )
 
         await handler_config.callback_fn(handler_context, big_map_context)

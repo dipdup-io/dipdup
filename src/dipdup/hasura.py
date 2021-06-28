@@ -8,12 +8,17 @@ from typing import Any, Dict, Iterator, List, Tuple, Type
 import aiohttp
 from aiohttp import ClientConnectorError, ClientOSError
 from tortoise import Model, fields
+from tortoise.transactions import get_connection
 
 from dipdup.config import DipDupConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import http_request
 
 _logger = logging.getLogger(__name__)
+
+
+class HasuraError(RuntimeError):
+    ...
 
 
 def _is_model_class(obj) -> bool:
@@ -50,11 +55,11 @@ def _format_object_relationship(name: str, column: str) -> Dict[str, Any]:
     }
 
 
-def _format_select_permissions(columns: List[str]) -> Dict[str, Any]:
+def _format_select_permissions() -> Dict[str, Any]:
     return {
         "role": "user",
         "permission": {
-            "columns": sorted(columns),
+            "columns": "*",
             "filter": {},
             "allow_aggregations": True,
         },
@@ -89,11 +94,13 @@ def _iter_models(*modules) -> Iterator[Tuple[str, Type[Model]]]:
                 yield app, model
 
 
-async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
+async def generate_hasura_metadata(config: DipDupConfig, views: List[str]) -> Dict[str, Any]:
     """Generate metadata based on dapp models.
 
     Includes tables and their relations (but not entities created during execution of snippets from `sql` package directory)
     """
+    if not isinstance(config.database, PostgresDatabaseConfig):
+        raise RuntimeError
     _logger.info('Generating Hasura metadata')
     metadata_tables = {}
     model_tables = {}
@@ -104,24 +111,31 @@ async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
     for app, model in _iter_models(models, int_models):
         table_name = model._meta.db_table or pascal_to_snake(model.__name__)  # pylint: disable=protected-access
         model_tables[f'{app}.{model.__name__}'] = table_name
-
-        table = _format_table(
+        metadata_tables[table_name] = _format_table(
             name=table_name,
-            schema=config.database.schema_name if isinstance(config.database, PostgresDatabaseConfig) else 'public',
+            schema=config.database.schema_name,
         )
-        metadata_tables[table_name] = table
+
+    for view in views:
+        metadata_tables[view] = _format_table(
+            name=view,
+            schema=config.database.schema_name,
+        )
+        metadata_tables[view]['select_permissions'].append(
+            _format_select_permissions(),
+        )
 
     for app, model in _iter_models(models, int_models):
         table_name = model_tables[f'{app}.{model.__name__}']
 
         metadata_tables[table_name]['select_permissions'].append(
-            _format_select_permissions(list(model._meta.db_fields)),
+            _format_select_permissions(),
         )
 
         for field in model._meta.fields_map.values():
             if isinstance(field, fields.relational.ForeignKeyFieldInstance):
                 if not isinstance(field.related_name, str):
-                    raise Exception(f'`related_name` of `{field}` must be set')
+                    raise HasuraError(f'`related_name` of `{field}` must be set')
                 related_table_name = model_tables[field.model_name]
                 metadata_tables[table_name]['object_relationships'].append(
                     _format_object_relationship(
@@ -134,7 +148,7 @@ async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
                         related_name=field.related_name,
                         table=table_name,
                         column=field.model_field_name + '_id',
-                        schema=config.database.schema_name if isinstance(config.database, PostgresDatabaseConfig) else 'public',
+                        schema=config.database.schema_name,
                     )
                 )
 
@@ -146,21 +160,32 @@ async def configure_hasura(config: DipDupConfig):
 
     if config.hasura is None:
         raise ConfigurationError('`hasura` config section missing')
+    if not isinstance(config.database, PostgresDatabaseConfig):
+        raise RuntimeError
 
     _logger.info('Configuring Hasura')
     url = config.hasura.url.rstrip("/")
-    hasura_metadata = await generate_hasura_metadata(config)
+    views = [
+        row[0]
+        for row in (
+            await get_connection(None).execute_query(
+                f"SELECT table_name FROM information_schema.views WHERE table_schema = '{config.database.schema_name}'"
+            )
+        )[1]
+    ]
+
+    hasura_metadata = await generate_hasura_metadata(config, views)
 
     async with aiohttp.ClientSession() as session:
         _logger.info('Waiting for Hasura instance to be healthy')
         for _ in range(60):
             with suppress(ClientConnectorError, ClientOSError):
-                await session.get(f'{url}/healthz')
-                break
+                response = await session.get(f'{url}/healthz')
+                if response.status == 200:
+                    break
             await asyncio.sleep(1)
         else:
-            _logger.error('Hasura instance not responding for 60 seconds')
-            return
+            raise HasuraError('Hasura instance not responding for 60 seconds')
 
         headers = {}
         if config.hasura.admin_secret:
@@ -174,7 +199,7 @@ async def configure_hasura(config: DipDupConfig):
             data=json.dumps(
                 {
                     "type": "export_metadata",
-                    "args": hasura_metadata,
+                    "args": {},
                 },
             ),
             headers=headers,
@@ -199,7 +224,7 @@ async def configure_hasura(config: DipDupConfig):
             ),
             headers=headers,
         )
-        if not result.get('message') == 'success':
-            _logger.error('Can\'t configure Hasura instance: %s', result)
-        else:
-            _logger.info('Hasura instance has been configured')
+        if result.get('message') != 'success':
+            raise HasuraError('Can\'t configure Hasura instance', result)
+
+        _logger.info('Hasura instance has been configured')

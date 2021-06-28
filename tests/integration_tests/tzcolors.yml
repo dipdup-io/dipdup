@@ -14,9 +14,9 @@ contracts:
     typename: tzcolors_auction
 
 datasources:
-  tzkt_staging:
+  tzkt:
     kind: tzkt
-    url: ${TZKT_URL:-https://staging.api.tzkt.io}
+    url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
 
@@ -49,6 +49,6 @@ indexes:
   tzcolors_auction:
     template: tzcolors_auction
     values:
-      datasource: tzkt_staging
+      datasource: tzkt
       minter: tzcolors_minter
       auction: tzcolors_auction
