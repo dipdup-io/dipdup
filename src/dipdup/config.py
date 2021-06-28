@@ -908,7 +908,9 @@ class DipDupConfig:
         self._initialized.append(index_name)
 
     def _initialize_jobs(self) -> None:
-        for job_config in self.jobs or ():
+        if not self.jobs:
+            return
+        for job_config in self.jobs.values():
             self._initialize_job_callback(job_config)
 
     def initialize(self) -> None:
@@ -917,6 +919,7 @@ class DipDupConfig:
         self.pre_initialize()
         for index_name, index_config in self.indexes.items():
             self._initialize_index(index_name, index_config)
+        self._initialize_jobs()
 
 
 @dataclass

@@ -36,5 +36,8 @@ def add_job(scheduler: AsyncIOScheduler, job_name: str, job_config: JobConfig) -
         id=job_name,
         name=job_name,
         trigger=trigger,
-        kwargs=job_config.args,
+        kwargs=dict(
+            ctx=None,
+            args=job_config.args,
+        ),
     )

@@ -190,7 +190,7 @@ class DipDup:
             if self._config.jobs:
                 for job_name, job_config in self._config.jobs.items():
                     add_job(self._scheduler, job_name, job_config)
-                await self._scheduler.start()
+                self._scheduler.start()
 
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 
