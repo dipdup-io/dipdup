@@ -27,14 +27,14 @@ def create_scheduler() -> AsyncIOScheduler:
     )
 
 
-def add_job(scheduler: AsyncIOScheduler, job_config: JobConfig) -> None:
+def add_job(scheduler: AsyncIOScheduler, job_name: str, job_config: JobConfig) -> None:
     if job_config.atomic:
         raise NotImplementedError
     trigger = CronTrigger.from_crontab(job_config.crontab)
     scheduler.add_job(
         func=job_config.callback_fn,
-        id=job_config.callback,
-        name=job_config.callback,
+        id=job_name,
+        name=job_name,
         trigger=trigger,
         kwargs=job_config.args,
     )

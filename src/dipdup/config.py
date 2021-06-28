@@ -424,6 +424,10 @@ class HandlerConfig:
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
+        if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
+            raise ConfigurationError(f'`{self.callback}` callback name is reserved')
+        if self.callback and self.callback != pascal_to_snake(self.callback):
+            raise ConfigurationError('`callback` field must conform to snake_case naming style')
 
     @property
     def callback_fn(self) -> Callable:
@@ -615,6 +619,7 @@ class JobConfig(HandlerConfig):
     atomic: bool = False
 
 
+@dataclass
 class SentryConfig:
     dsn: str
 
@@ -631,6 +636,7 @@ class DipDupConfig:
     :param templates: Mapping of template aliases and index templates
     :param database: Database config
     :param hasura: Hasura config
+    :param jobs: Mapping of job aliases and job configs
     :param sentry: Sentry integration config
     """
 
@@ -642,7 +648,7 @@ class DipDupConfig:
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     hasura: Optional[HasuraConfig] = None
-    jobs: Optional[List[JobConfig]] = None
+    jobs: Optional[Dict[str, JobConfig]] = None
     sentry: Optional[SentryConfig] = None
 
     def __post_init_post_parse__(self):

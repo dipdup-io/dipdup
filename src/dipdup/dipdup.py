@@ -163,6 +163,7 @@ class DipDup:
         await codegen.generate_types()
         await codegen.generate_default_handlers()
         await codegen.generate_user_handlers()
+        await codegen.generate_jobs()
         await codegen.cleanup()
 
         for datasource in self._datasources.values():
@@ -187,8 +188,8 @@ class DipDup:
                 worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
             if self._config.jobs:
-                for job_config in self._config.jobs:
-                    add_job(self._scheduler, job_config)
+                for job_name, job_config in self._config.jobs.items():
+                    add_job(self._scheduler, job_name, job_config)
                 await self._scheduler.start()
 
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
