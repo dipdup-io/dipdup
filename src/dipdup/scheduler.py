@@ -5,6 +5,8 @@ from apscheduler.triggers.cron import CronTrigger  # type: ignore
 from pytz import utc
 
 from dipdup.config import JobConfig
+from dipdup.context import DipDupContext
+from dipdup.utils import in_global_transaction
 
 jobstores = {
     'default': MemoryJobStore(),
@@ -27,17 +29,19 @@ def create_scheduler() -> AsyncIOScheduler:
     )
 
 
-def add_job(scheduler: AsyncIOScheduler, job_name: str, job_config: JobConfig) -> None:
-    if job_config.atomic:
-        raise NotImplementedError
+def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_name: str, job_config: JobConfig) -> None:
+    async def _atomic_wrapper(ctx, args):
+        async with in_global_transaction():
+            await job_config.callback_fn(ctx, args)
+
     trigger = CronTrigger.from_crontab(job_config.crontab)
     scheduler.add_job(
-        func=job_config.callback_fn,
+        func=_atomic_wrapper if job_config.atomic else job_config.callback_fn,
         id=job_name,
         name=job_name,
         trigger=trigger,
         kwargs=dict(
-            ctx=None,
+            ctx=ctx,
             args=job_config.args,
         ),
     )
