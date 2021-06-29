@@ -76,7 +76,9 @@ class PostgresDatabaseConfig:
 
     @property
     def connection_string(self) -> str:
-        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}'
+        # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
+        # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
+        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}&maxsize=1'
 
     @validator('immune_tables')
     def valid_immune_tables(cls, v):
