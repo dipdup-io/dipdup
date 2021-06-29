@@ -123,10 +123,8 @@ class IndexDispatcher:
         while True:
             await self.reload_config()
 
-            # FIXME: Process all indexes in parallel, blocked by https://github.com/tortoise/tortoise-orm/issues/792
             async with utils.slowdown(1):
-                for index in self._indexes.values():
-                    await index.process()
+                await asyncio.gather(*[index.process() for index in self._indexes.values()])
 
             # TODO: Continue if new indexes are spawned from origination
             if oneshot:
