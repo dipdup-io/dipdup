@@ -7,12 +7,23 @@ from pydantic.dataclasses import dataclass
 
 
 class CandleInterval(Enum):
-    ONE_MINUTE = 60
-    FIVE_MINUTES = 300
-    FIFTEEN_MINUTES = 900
-    ONE_HOUR = 3600
-    SIX_HOURS = 21600
-    ONE_DAY = 86400
+    ONE_MINUTE = 'ONE_MINUTE'
+    FIVE_MINUTES = 'FIVE_MINUTES'
+    FIFTEEN_MINUTES = 'FIFTEEN_MINUTES'
+    ONE_HOUR = 'ONE_HOUR'
+    SIX_HOURS = 'SIX_HOURS'
+    ONE_DAY = 'ONE_DAY'
+
+    @property
+    def seconds(self) -> int:
+        return {
+            CandleInterval.ONE_MINUTE: 60,
+            CandleInterval.FIVE_MINUTES: 300,
+            CandleInterval.FIFTEEN_MINUTES: 900,
+            CandleInterval.ONE_HOUR: 3600,
+            CandleInterval.SIX_HOURS: 21600,
+            CandleInterval.ONE_DAY: 86400,
+        }[self]
 
 
 @dataclass

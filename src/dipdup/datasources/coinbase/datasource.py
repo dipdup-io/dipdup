@@ -44,14 +44,14 @@ class CoinbaseDatasource:
                 params={
                     'start': _since.replace(tzinfo=timezone.utc).isoformat(),
                     'end': _until.replace(tzinfo=timezone.utc).isoformat(),
-                    'granularity': interval.value,
+                    'granularity': interval.seconds,
                 },
             )
             candles += [CandleData.from_json(c) for c in candles_json]
         return sorted(candles, key=lambda c: c.timestamp)
 
     def _split_candle_requests(self, since: datetime, until: datetime, interval: CandleInterval) -> List[Tuple[datetime, datetime]]:
-        request_interval_limit = timedelta(seconds=interval.value * CANDLES_REQUEST_LIMIT)
+        request_interval_limit = timedelta(seconds=interval.seconds * CANDLES_REQUEST_LIMIT)
         request_intervals = []
         while since + request_interval_limit < until:
             request_intervals.append((since, since + request_interval_limit))
