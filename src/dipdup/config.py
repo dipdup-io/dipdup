@@ -180,6 +180,9 @@ class CoinbaseDatasourceConfig(NameMixin):
     secret_key: Optional[str] = None
     passphrase: Optional[str] = None
 
+    def __hash__(self):
+        return hash(self.kind)
+
 
 DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig, CoinbaseDatasourceConfig]
 
