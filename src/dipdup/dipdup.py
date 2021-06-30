@@ -12,15 +12,14 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
-from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 
 import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
-    CoinbaseDatasourceConfig,
     ROLLBACK_HANDLER,
     BcdDatasourceConfig,
     BigMapIndexConfig,
+    CoinbaseDatasourceConfig,
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
@@ -32,6 +31,7 @@ from dipdup.config import (
 from dipdup.context import DipDupContext, RollbackHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
+from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError, HandlerImportError
@@ -247,10 +247,9 @@ class DipDup:
                 )
             else:
                 raise NotImplementedError
-            
+
             self._datasources[name] = datasource
             self._datasources_by_config[datasource_config] = datasource
-
 
     async def _initialize_database(self, reindex: bool = False) -> None:
         self._logger.info('Initializing database')

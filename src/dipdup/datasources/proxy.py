@@ -11,7 +11,7 @@ from dipdup.utils import http_request
 
 
 class DatasourceRequestProxy:
-    def __init__(self,cache: bool = False, ratelimiter: Optional[AsyncLimiter] = None) -> None:
+    def __init__(self, cache: bool = False, ratelimiter: Optional[AsyncLimiter] = None) -> None:
         self._logger = logging.getLogger(__name__)
         self._cache = FileCache('dipdup', flag='cs') if cache else None
         self._ratelimiter = ratelimiter

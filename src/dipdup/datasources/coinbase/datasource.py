@@ -1,13 +1,13 @@
-from datetime import datetime, timezone
 import logging
-from typing import Any, Dict, List
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Tuple
 
 from aiolimiter import AsyncLimiter
-from dipdup.datasources.coinbase.models import CandleData, CandleInterval
 
+from dipdup.datasources.coinbase.models import CandleData, CandleInterval
 from dipdup.datasources.proxy import DatasourceRequestProxy
 
-
+CANDLES_REQUEST_LIMIT = 300
 REST_API_URL = 'https://api.pro.coinbase.com'
 WEBSOCKET_API_URL = 'wss://ws-feed.pro.coinbase.com'
 
@@ -36,17 +36,25 @@ class CoinbaseDatasource:
         )
 
     async def get_candles(self, since: datetime, until: datetime, interval: CandleInterval, ticker: str = 'XTZ-USD') -> List[CandleData]:
-        # TODO: Encapsulate multiple requests
-        if (until - since).total_seconds() / interval.value > 300:
-            raise Exception('Can\'t request more than 300 candles')
+        candles = []
+        for _since, _until in self._split_candle_requests(since, until, interval):
+            candles_json = await self._proxy.http_request(
+                'get',
+                url=f'{REST_API_URL}/products/{ticker}/candles',
+                params={
+                    'start': _since.replace(tzinfo=timezone.utc).isoformat(),
+                    'end': _until.replace(tzinfo=timezone.utc).isoformat(),
+                    'granularity': interval.value,
+                },
+            )
+            candles += [CandleData.from_json(c) for c in candles_json]
+        return sorted(candles, key=lambda c: c.timestamp)
 
-        candles_json = await self._proxy.http_request(
-            'get',
-            url=f'{REST_API_URL}/products/{ticker}/candles',
-            params={
-                'start': since.replace(tzinfo=timezone.utc).isoformat(),
-                'end': until.replace(tzinfo=timezone.utc).isoformat(),
-                'granularity': interval.value,
-            }
-        )
-        return [CandleData.from_json(c) for c in candles_json]
+    def _split_candle_requests(self, since: datetime, until: datetime, interval: CandleInterval) -> List[Tuple[datetime, datetime]]:
+        request_interval_limit = timedelta(seconds=interval.value * CANDLES_REQUEST_LIMIT)
+        request_intervals = []
+        while since + request_interval_limit < until:
+            request_intervals.append((since, since + request_interval_limit))
+            since += request_interval_limit
+        request_intervals.append((since, until))
+        return request_intervals
