@@ -22,6 +22,7 @@ class CandleData:
     high: Decimal
     open: Decimal
     close: Decimal
+    volume: Decimal
 
     @classmethod
     def from_json(cls, json: List[Union[int, float]]) -> 'CandleData':
@@ -31,4 +32,5 @@ class CandleData:
             high=Decimal(str(json[2])),
             open=Decimal(str(json[3])),
             close=Decimal(str(json[4])),
+            volume=Decimal(str(json[5])),
         )
