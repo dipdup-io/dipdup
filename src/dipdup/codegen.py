@@ -80,6 +80,13 @@ class DipDupCodeGenerator:
             with open(join(handlers_path, '__init__.py'), 'w'):
                 pass
 
+        self._logger.info('Creating `%s.jobs` package', self._config.package)
+        jobs_path = join(self._config.package_path, 'jobs')
+        with suppress(FileExistsError):
+            mkdir(jobs_path)
+            with open(join(jobs_path, '__init__.py'), 'w'):
+                pass
+
         self._logger.info('Creating `%s/sql` directory', self._config.package)
         sql_path = join(self._config.package_path, 'sql')
         with suppress(FileExistsError):
@@ -314,6 +321,23 @@ class DipDupCodeGenerator:
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+    async def generate_jobs(self) -> None:
+        if not self._config.jobs:
+            return
+
+        jobs_path = join(self._config.package_path, 'jobs')
+        with open(join(dirname(__file__), 'templates', 'job.py.j2')) as file:
+            job_template = Template(file.read())
+
+        job_callbacks = set(job_config.callback for job_config in self._config.jobs.values())
+        for job_callback in job_callbacks:
+            self._logger.info('Generating job `%s`', job_callback)
+            job_code = job_template.render(job=job_callback)
+            job_path = join(jobs_path, f'{job_callback}.py')
+            if not exists(job_path):
+                with open(job_path, 'w') as file:
+                    file.write(job_code)
 
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""

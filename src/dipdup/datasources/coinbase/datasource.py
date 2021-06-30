@@ -37,7 +37,7 @@ class CoinbaseDatasource:
 
     async def get_candles(self, since: datetime, until: datetime, interval: CandleInterval, ticker: str = 'XTZ-USD') -> List[CandleData]:
         # TODO: Encapsulate multiple requests
-        if (until - since).total_seconds() / 60 / interval.value > 300:
+        if (until - since).total_seconds() / interval.value > 300:
             raise Exception('Can\'t request more than 300 candles')
 
         candles_json = await self._proxy.http_request(
