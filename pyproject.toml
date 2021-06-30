@@ -32,6 +32,7 @@ aiosignalrcore = "^0.9.2"
 fcache = "^0.4.7"
 click = "^8.0.1"
 pyee = "^8.1.0"
+APScheduler = "^3.7.0"
 sentry-sdk = "^1.1.0"
 
 [tool.poetry.dev-dependencies]

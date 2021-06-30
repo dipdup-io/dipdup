@@ -426,6 +426,10 @@ class HandlerConfig:
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
+        if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
+            raise ConfigurationError(f'`{self.callback}` callback name is reserved')
+        if self.callback and self.callback != pascal_to_snake(self.callback):
+            raise ConfigurationError('`callback` field must conform to snake_case naming style')
 
     @property
     def callback_fn(self) -> Callable:
@@ -611,6 +615,13 @@ class HasuraConfig:
 
 
 @dataclass
+class JobConfig(HandlerConfig):
+    crontab: str
+    args: Optional[Dict[str, Any]] = None
+    atomic: bool = False
+
+
+@dataclass
 class SentryConfig:
     dsn: str
 
@@ -627,6 +638,7 @@ class DipDupConfig:
     :param templates: Mapping of template aliases and index templates
     :param database: Database config
     :param hasura: Hasura config
+    :param jobs: Mapping of job aliases and job configs
     :param sentry: Sentry integration config
     """
 
@@ -638,6 +650,7 @@ class DipDupConfig:
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     hasura: Optional[HasuraConfig] = None
+    jobs: Optional[Dict[str, JobConfig]] = None
     sentry: Optional[SentryConfig] = None
 
     def __post_init_post_parse__(self):
@@ -833,6 +846,12 @@ class DipDupConfig:
         callback_fn = getattr(handler_module, handler_config.callback)
         handler_config.callback_fn = callback_fn
 
+    def _initialize_job_callback(self, job_config: JobConfig) -> None:
+        _logger.info('Registering job callback `%s`', job_config.callback)
+        job_module = importlib.import_module(f'{self.package}.jobs.{job_config.callback}')
+        callback_fn = getattr(job_module, job_config.callback)
+        job_config.callback_fn = callback_fn
+
     def _initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         if index_name in self._initialized:
             return
@@ -890,12 +909,19 @@ class DipDupConfig:
 
         self._initialized.append(index_name)
 
+    def _initialize_jobs(self) -> None:
+        if not self.jobs:
+            return
+        for job_config in self.jobs.values():
+            self._initialize_job_callback(job_config)
+
     def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)
 
         self.pre_initialize()
         for index_name, index_config in self.indexes.items():
             self._initialize_index(index_name, index_config)
+        self._initialize_jobs()
 
 
 @dataclass

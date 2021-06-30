@@ -1,10 +1,12 @@
 import asyncio
 import hashlib
 import logging
+from contextlib import suppress
 from os.path import join
 from posix import listdir
 from typing import Dict, List, cast
 
+from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
@@ -34,6 +36,7 @@ from dipdup.exceptions import ConfigurationError, HandlerImportError
 from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
+from dipdup.scheduler import add_job, create_scheduler
 
 
 class IndexDispatcher:
@@ -146,6 +149,7 @@ class DipDup:
             datasources=self._datasources,
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
+        self._scheduler = create_scheduler()
 
     async def init(self) -> None:
         """Create new or update existing dipdup project"""
@@ -157,6 +161,7 @@ class DipDup:
         await codegen.generate_types()
         await codegen.generate_default_handlers()
         await codegen.generate_user_handlers()
+        await codegen.generate_jobs()
         await codegen.cleanup()
 
         for datasource in self._datasources.values():
@@ -180,6 +185,11 @@ class DipDup:
             if self._config.hasura:
                 worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
+            if self._config.jobs and not oneshot:
+                for job_name, job_config in self._config.jobs.items():
+                    add_job(self._ctx, self._scheduler, job_name, job_config)
+                self._scheduler.start()
+
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 
             try:
@@ -189,6 +199,9 @@ class DipDup:
             finally:
                 self._logger.info('Closing datasource sessions')
                 await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
+                # FIXME: AttributeError: 'NoneType' object has no attribute 'call_soon_threadsafe'
+                with suppress(AttributeError, SchedulerNotRunningError):
+                    await self._scheduler.shutdown(wait=True)
 
     async def migrate(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
