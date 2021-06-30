@@ -18,6 +18,17 @@ yarl = ">=1.0,<2.0"
 speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
+name = "aiolimiter"
+version = "1.0.0b1"
+description = "asyncio rate limiter, a leaky bucket implementation"
+category = "main"
+optional = false
+python-versions = ">=3.6,<4.0"
+
+[package.extras]
+docs = ["aiohttp-theme (>=0.1.6,<0.2.0)", "sphinx (>=2.2.1,<3.0.0)", "sphinx-autodoc-typehints (>=1.10.3,<2.0.0)", "sphinxcontrib-spelling (>=4.3.0,<5.0.0)", "toml (>=0.10.0,<0.11.0)"]
+
+[[package]]
 name = "aiosignalrcore"
 version = "0.9.2.1"
 description = "Async fork of Python SignalR Core client(json and messagepack), with invocation auth and two way streaming. Compatible with azure / serverless functions. Also with automatic reconnect and manually reconnect."
@@ -857,7 +868,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "a361b92403cc710754c02608ff9d7b494409cf67d8c17f2dae5a9251131f56b8"
+content-hash = "a631d8643de6aaaba4049087301f25d0a025d9355906cd134c01da7eec102349"
 
 [metadata.files]
 aiohttp = [
@@ -898,6 +909,10 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0-cp39-cp39-win32.whl", hash = "sha256:932bb1ea39a54e9ea27fc9232163059a0b8855256f4052e776357ad9add6f1c9"},
     {file = "aiohttp-3.7.4.post0-cp39-cp39-win_amd64.whl", hash = "sha256:02f46fc0e3c5ac58b80d4d56eb0a7c7d97fcef69ace9326289fb9f1955e65cfe"},
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
+]
+aiolimiter = [
+    {file = "aiolimiter-1.0.0b1-py3-none-any.whl", hash = "sha256:2e1866b5d5ba65bbb809521aed3f0bfaa6def9ad8d3d392b8eaadc823918b2ee"},
+    {file = "aiolimiter-1.0.0b1.tar.gz", hash = "sha256:3d0505fc5442da598d5e868fb03890c4e0ef1f1e07d27e9795a7bdb07a5b7c29"},
 ]
 aiosignalrcore = [
     {file = "aiosignalrcore-0.9.2.1-py3-none-any.whl", hash = "sha256:91bf9910f2730dd6b922a55948b28926f339c5faabea338e487f9683a39ff56d"},

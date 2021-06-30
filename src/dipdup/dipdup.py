@@ -10,10 +10,12 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
+from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 
 import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
+    CoinbaseDatasourceConfig,
     ROLLBACK_HANDLER,
     BcdDatasourceConfig,
     BigMapIndexConfig,
@@ -220,19 +222,20 @@ class DipDup:
                     url=datasource_config.url,
                     cache=self._config.cache_enabled,
                 )
-                self._datasources[name] = datasource
-                self._datasources_by_config[datasource_config] = datasource
-
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
                     datasource_config.url,
                     datasource_config.network,
                     self._config.cache_enabled,
                 )
-                self._datasources[name] = datasource
-                self._datasources_by_config[datasource_config] = datasource
+            elif isinstance(datasource_config, CoinbaseDatasourceConfig):
+                datasource = CoinbaseDatasource()
             else:
                 raise NotImplementedError
+            
+            self._datasources[name] = datasource
+            self._datasources_by_config[datasource_config] = datasource
+
 
     async def _initialize_database(self, reindex: bool = False) -> None:
         self._logger.info('Initializing database')
