@@ -400,13 +400,14 @@ class BigMapIndex(Index):
         matched_big_map: BigMapData,
     ) -> None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-        if matched_big_map.action == BigMapAction.ALLOCATE:
+        # TODO: Could be useful?
+        if matched_big_map.action in (BigMapAction.ALLOCATE, BigMapAction.REMOVE):
             return
 
         key_type = handler_config.key_type_cls
         key = key_type.parse_obj(matched_big_map.key)
 
-        if matched_big_map.action == BigMapAction.REMOVE:
+        if not matched_big_map.action.has_value:
             value = None
         else:
             value_type = handler_config.value_type_cls

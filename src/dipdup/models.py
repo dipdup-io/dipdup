@@ -174,9 +174,14 @@ class BigMapAction(Enum):
     """Mapping for action in TzKT response"""
 
     ALLOCATE = 'allocate'
-    ADD = 'add_key'
-    UPDATE = 'update_key'
-    REMOVE = 'remove_key'
+    ADD_KEY = 'add_key'
+    UPDATE_KEY = 'update_key'
+    REMOVE_KEY = 'remove_key'
+    REMOVE = 'remove'
+
+    @property
+    def has_value(self) -> bool:
+        return self in (BigMapAction.ADD_KEY, BigMapAction.UPDATE_KEY)
 
 
 @dataclass

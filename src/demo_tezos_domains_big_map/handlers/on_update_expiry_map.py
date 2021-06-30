@@ -2,14 +2,14 @@ import demo_tezos_domains_big_map.models as models
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_expiry_map_key import StoreExpiryMapKey
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_expiry_map_value import StoreExpiryMapValue
 from dipdup.context import HandlerContext
-from dipdup.models import BigMapAction, BigMapDiff
+from dipdup.models import BigMapDiff
 
 
 async def on_update_expiry_map(
     ctx: HandlerContext,
     store_expiry_map: BigMapDiff[StoreExpiryMapKey, StoreExpiryMapValue],
 ) -> None:
-    if store_expiry_map.action == BigMapAction.REMOVE:
+    if not store_expiry_map.action.has_value:
         return
     assert store_expiry_map.value
 

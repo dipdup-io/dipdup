@@ -2,14 +2,14 @@ import demo_tezos_domains_big_map.models as models
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_records_key import StoreRecordsKey
 from demo_tezos_domains_big_map.types.name_registry.big_map.store_records_value import StoreRecordsValue
 from dipdup.context import HandlerContext
-from dipdup.models import BigMapAction, BigMapDiff
+from dipdup.models import BigMapDiff
 
 
 async def on_update_records(
     ctx: HandlerContext,
     store_records: BigMapDiff[StoreRecordsKey, StoreRecordsValue],
 ) -> None:
-    if store_records.action == BigMapAction.REMOVE:
+    if not store_records.action.has_value:
         return
     assert store_records.value
 
