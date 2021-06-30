@@ -224,12 +224,14 @@ class DipDup:
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
-                    datasource_config.url,
-                    datasource_config.network,
-                    self._config.cache_enabled,
+                    url=datasource_config.url,
+                    network=datasource_config.network,
+                    cache=self._config.cache_enabled,
                 )
             elif isinstance(datasource_config, CoinbaseDatasourceConfig):
-                datasource = CoinbaseDatasource()
+                datasource = CoinbaseDatasource(
+                    cache=self._config.cache_enabled,
+                )
             else:
                 raise NotImplementedError
             
