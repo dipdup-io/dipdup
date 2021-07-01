@@ -32,6 +32,12 @@ From [Hasura documentation](https://hasura.io/docs/latest/graphql/core/databases
 
 This is a very important feature that allows to avoid complex state management \(merging query results and subscription feed\). In most scenarios live queries is exactly what you need to be able to sync latest changed from the backend.
 
+{% hint style="warning" %}
+Note that if the live query has a large response that does not fit into the [limits](../config-file-reference/hasura.md#limit-number-of-rows), you need to either paginate with offset \(which is not convenient\) or use cursor-based pagination \(e.g. by an increasing unique id\) or narrow down the scope with filtering \(e.g. by timestamp or by level\).
+{% endhint %}
+
+Ultimately you can get "subscriptions" on top of live quires by requesting all the items having id greater than the maximum existing or all the items with timestamp greater than now.
+
 ### Websocket transport
 
 Hasura is compatible with [subscriptions-transport-ws](https://github.com/apollographql/subscriptions-transport-ws) library which is currently deprecated by still used by the majority of the clients.
