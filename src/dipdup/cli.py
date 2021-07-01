@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
 from typing import List, NoReturn
-
+import dipdup.hasura as hasura
 import click
 import sentry_sdk
 from fcache.cache import FileCache  # type: ignore
@@ -15,6 +15,7 @@ from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from dipdup import __spec_version__, __version__
 from dipdup.config import DipDupConfig, LoggingConfig
 from dipdup.dipdup import DipDup
+from dipdup.utils import tortoise_wrapper
 
 _logger = logging.getLogger(__name__)
 
@@ -138,3 +139,15 @@ async def migrate(ctx):
 @click_async
 async def clear_cache(ctx):
     FileCache('dipdup', flag='cs').clear()
+
+
+@cli.command(help='Configure Hasura GraphQL Engine')
+@click.pass_context
+@click_async
+async def configure_hasura(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+
+    async with tortoise_wrapper(url, models):
+        await hasura.configure_hasura(ctx.obj.config)

@@ -10,7 +10,7 @@ from aiohttp import ClientConnectorError, ClientOSError
 from tortoise import Model, fields
 from tortoise.transactions import get_connection
 
-from dipdup.config import DipDupConfig, PostgresDatabaseConfig, pascal_to_snake
+from dipdup.config import DipDupConfig, HasuraConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import http_request
 
@@ -55,13 +55,14 @@ def _format_object_relationship(name: str, column: str) -> Dict[str, Any]:
     }
 
 
-def _format_select_permissions() -> Dict[str, Any]:
+def _format_select_permissions(allow_aggregations: bool, select_limit: int) -> Dict[str, Any]:
     return {
         "role": "user",
         "permission": {
             "columns": "*",
             "filter": {},
-            "allow_aggregations": True,
+            "allow_aggregations": allow_aggregations,
+            "limit": select_limit,
         },
     }
 
@@ -94,6 +95,108 @@ def _iter_models(*modules) -> Iterator[Tuple[str, Type[Model]]]:
                 yield app, model
 
 
+async def _to_camelcase(session, config: HasuraConfig) -> None:
+    import sys
+
+    import requests
+    import json
+    import pandas as pd
+    import humps
+    import inflect
+    import time
+
+
+    # Introspect > query_root
+    query = '''
+        query introspectionQueryRoot {
+            __type(name:"query_root") {
+                kind
+                name
+                fields {
+                    name
+                }
+            }
+        }
+    '''
+
+    result = await http_request(
+        session,
+        'post',
+        url=f'{config.url}/v1/graphql',
+        json={'query': query},
+        headers=config.headers,
+    )
+
+    fields = pd.DataFrame(result['data']['__type']['fields'])
+
+    ## Stripping from the _aggregate field to try and target just new tables and views
+    fields = fields[fields['name'].str.endswith('_aggregate')]
+    fields['name'] = fields['name'].str.replace('_aggregate', '')
+
+    # Inflect word to plural / singular
+    p = inflect.engine()
+
+    for i in fields.index:
+        # De-camel any pre-camelized names
+        field_decamel = humps.decamelize(fields.at[i,'name'])
+
+        # Split up words to lists
+        words = field_decamel.split('_')
+
+        # Plural version - last word plural
+        plural = p.plural_noun(words[-1])
+        if plural != False:
+            plural_words = words[:-1]
+            plural_words.append(plural)
+        else:
+            plural_words = words
+
+        # Singular version - last word singular
+        singular = p.singular_noun(words[-1])
+        if singular != False:
+            singular_words = words[:-1]
+            singular_words.append(singular)
+        else:
+            singular_words = words
+
+        # Camel-ise lists
+        plural_camel = plural_words[0] + ''.join(x.title() for x in plural_words[1:])
+        singular_camel = singular_words[0] + ''.join(x.title() for x in singular_words[1:])
+
+        # Build Object
+        jsondata = {}
+        args={}
+        configuration={}
+        custom_root_fields={}
+
+        # Create Custom Root Field Payload
+        jsondata['type'] = 'pg_set_table_customization'
+        args['table'] = {'name': fields.at[i,'name'][12:], 'schema': 'hic_et_nunc'}
+        args['source'] = config.source
+        configuration['identifier'] = singular_camel
+        custom_root_fields['select'] = plural_camel
+        custom_root_fields['select_by_pk'] = singular_camel
+        custom_root_fields['select_aggregate'] = plural_camel + 'Aggregate'
+        custom_root_fields['insert'] = plural_camel + 'Insert'
+        custom_root_fields['insert_one'] = singular_camel + 'Insert'
+        custom_root_fields['update'] = plural_camel + 'Update'
+        custom_root_fields['update_by_pk'] = singular_camel + 'Update'
+        custom_root_fields['delete'] = plural_camel + 'Delete'
+        custom_root_fields['delete_by_pk'] = singular_camel + 'Delete'
+
+        jsondata['args'] = args
+        args['configuration'] = configuration
+        configuration['custom_root_fields'] = custom_root_fields
+
+        result = await http_request(
+            session,
+            'post',
+            url=f'{config.url}/v1/metadata',
+            json=jsondata,
+            headers=config.headers,
+        )
+        print(result)
+
 async def generate_hasura_metadata(config: DipDupConfig, views: List[str]) -> Dict[str, Any]:
     """Generate metadata based on dapp models.
 
@@ -101,6 +204,9 @@ async def generate_hasura_metadata(config: DipDupConfig, views: List[str]) -> Di
     """
     if not isinstance(config.database, PostgresDatabaseConfig):
         raise RuntimeError
+    if not config.hasura:
+        raise RuntimeError
+
     _logger.info('Generating Hasura metadata')
     metadata_tables = {}
     model_tables = {}
@@ -122,14 +228,20 @@ async def generate_hasura_metadata(config: DipDupConfig, views: List[str]) -> Di
             schema=config.database.schema_name,
         )
         metadata_tables[view]['select_permissions'].append(
-            _format_select_permissions(),
+            _format_select_permissions(
+                config.hasura.allow_aggregations,
+                config.hasura.select_limit,
+            ),
         )
 
     for app, model in _iter_models(models, int_models):
         table_name = model_tables[f'{app}.{model.__name__}']
 
         metadata_tables[table_name]['select_permissions'].append(
-            _format_select_permissions(),
+            _format_select_permissions(
+                config.hasura.allow_aggregations,
+                config.hasura.select_limit,
+            ),
         )
 
         for field in model._meta.fields_map.values():
@@ -164,7 +276,6 @@ async def configure_hasura(config: DipDupConfig):
         raise RuntimeError
 
     _logger.info('Configuring Hasura')
-    url = config.hasura.url.rstrip("/")
     views = [
         row[0]
         for row in (
@@ -180,30 +291,28 @@ async def configure_hasura(config: DipDupConfig):
         _logger.info('Waiting for Hasura instance to be healthy')
         for _ in range(60):
             with suppress(ClientConnectorError, ClientOSError):
-                response = await session.get(f'{url}/healthz')
+                response = await session.get(f'{config.hasura.url}/healthz')
                 if response.status == 200:
                     break
             await asyncio.sleep(1)
         else:
             raise HasuraError('Hasura instance not responding for 60 seconds')
 
-        headers = {}
-        if config.hasura.admin_secret:
-            headers['X-Hasura-Admin-Secret'] = config.hasura.admin_secret
-
         _logger.info('Fetching existing metadata')
         existing_hasura_metadata = await http_request(
             session,
             'post',
-            url=f'{url}/v1/query',
+            url=f'{config.hasura.url}/v1/query',
             data=json.dumps(
                 {
                     "type": "export_metadata",
                     "args": {},
                 },
             ),
-            headers=headers,
+            headers=config.hasura.headers,
         )
+        # FIXME: Not cool
+        existing_hasura_metadata = existing_hasura_metadata['sources'][0]
 
         _logger.info('Merging existing metadata')
         hasura_metadata_tables = [table['table'] for table in hasura_metadata['tables']]
@@ -215,16 +324,19 @@ async def configure_hasura(config: DipDupConfig):
         result = await http_request(
             session,
             'post',
-            url=f'{url}/v1/query',
+            url=f'{config.hasura.url}/v1/query',
             data=json.dumps(
                 {
                     "type": "replace_metadata",
                     "args": hasura_metadata,
                 },
             ),
-            headers=headers,
+            headers=config.hasura.headers,
         )
         if result.get('message') != 'success':
             raise HasuraError('Can\'t configure Hasura instance', result)
+
+        if config.hasura.camelcase:
+            await _to_camelcase(session, config.hasura)
 
         _logger.info('Hasura instance has been configured')
