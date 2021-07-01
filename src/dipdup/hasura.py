@@ -172,20 +172,23 @@ class HasuraManager:
 
         return self._format_metadata(tables=list(metadata_tables.values()))
 
-    async def _apply_camelcase(self) -> None:
-
-        # Introspect > query_root
-        query = '''
+    async def _get_fields(self, name: str = 'query_root') -> List[str]:
+        query = (
+            '''
             query introspectionQueryRoot {
-                __type(name:"query_root") {
+                __type(name: "'''
+            + name
+            + '''") {
                     kind
                     name
                     fields {
                         name
+                        description
                     }
                 }
             }
         '''
+        )
 
         result = await http_request(
             self._session,
@@ -195,21 +198,32 @@ class HasuraManager:
             headers=self._hasura_config.headers,
         )
 
-        fields = pd.DataFrame(result['data']['__type']['fields'])
+        fields = result['data']['__type']['fields']
+        return [
+            f['name']
+            for f in fields
+            if not f['name'].endswith('_aggregate')
+            and not f['name'].endswith('_by_pk')
+            and not (f['description'] or '').endswith('relationship')
+        ]
 
-        ## Stripping from the _aggregate field to try and target just new tables and views
-        fields = fields[fields['name'].str.endswith('_aggregate')]
-        fields['name'] = fields['name'].str.replace('_aggregate', '')
+    async def _apply_camelcase(self) -> None:
+        """Convert table and column names to camelCase.
+
+        Slightly modified code from https://github.com/m-rgba/hasura-snake-to-camel
+        """
+
+        tables = await self._get_fields()
 
         # Inflect word to plural / singular
         p = inflect.engine()
 
-        for i in fields.index:
+        for table in tables:
             # De-camel any pre-camelized names
-            field_decamel = humps.decamelize(fields.at[i, 'name'])
+            table_decamel = humps.decamelize(table)
 
             # Split up words to lists
-            words = field_decamel.split('_')
+            words = table_decamel.split('_')
 
             # Plural version - last word plural
             plural = p.plural_noun(words[-1])
@@ -239,8 +253,11 @@ class HasuraManager:
 
             # Create Custom Root Field Payload
             jsondata['type'] = 'pg_set_table_customization'
-            # FIXME
-            args['table'] = {'name': fields.at[i, 'name'][12:], 'schema': 'hic_et_nunc'}
+
+            args['table'] = {
+                'name': table.replace(self._database_config.schema_name, '')[1:],
+                'schema': self._database_config.schema_name,
+            }
             args['source'] = self._hasura_config.source
             configuration['identifier'] = singular_camel
             custom_root_fields['select'] = plural_camel
@@ -253,9 +270,13 @@ class HasuraManager:
             custom_root_fields['delete'] = plural_camel + 'Delete'
             custom_root_fields['delete_by_pk'] = singular_camel + 'Delete'
 
+            columns = await self._get_fields(table)
+            custom_column_names = {c: humps.camelize(c) for c in columns}
+
             jsondata['args'] = args
             args['configuration'] = configuration
             configuration['custom_root_fields'] = custom_root_fields
+            configuration['custom_column_names'] = custom_column_names
 
             result = await http_request(
                 self._session,
@@ -264,7 +285,8 @@ class HasuraManager:
                 json=jsondata,
                 headers=self._hasura_config.headers,
             )
-            print(result)
+            if result.get('message') != 'success':
+                raise HasuraError('Can\'t configure Hasura instance', result)
 
     def _format_table(self, name: str) -> Dict[str, Any]:
         return {
