@@ -8,7 +8,6 @@ from typing import Dict, List, Optional, cast
 
 from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
 from genericpath import exists
-from numpy import isin
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection

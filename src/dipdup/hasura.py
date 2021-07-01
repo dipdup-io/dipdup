@@ -14,6 +14,8 @@ from tortoise.transactions import get_connection
 from dipdup.config import HasuraConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.utils import http_request
 
+inf = inflect.engine()
+
 
 def _is_model_class(obj: Any) -> bool:
     """Is subclass of tortoise.Model, but not the base class"""
@@ -194,7 +196,6 @@ class HasuraManager:
             json={'query': query},
             headers=self._hasura_config.headers,
         )
-
         fields = result['data']['__type']['fields']
         return [
             f['name']
@@ -212,18 +213,19 @@ class HasuraManager:
 
         tables = await self._get_fields()
 
-        # Inflect word to plural / singular
-        p = inflect.engine()
-
         for table in tables:
             # De-camel any pre-camelized names
             table_decamel = humps.decamelize(table)
+
+            # Skip tables from different schemas
+            if not table_decamel.startswith(self._database_config.schema_name):
+                continue
 
             # Split up words to lists
             words = table_decamel.split('_')
 
             # Plural version - last word plural
-            plural = p.plural_noun(words[-1])
+            plural = inf.plural_noun(words[-1])
             if plural != False:
                 plural_words = words[:-1]
                 plural_words.append(plural)
@@ -231,7 +233,7 @@ class HasuraManager:
                 plural_words = words
 
             # Singular version - last word singular
-            singular = p.singular_noun(words[-1])
+            singular = inf.singular_noun(words[-1])
             if singular != False:
                 singular_words = words[:-1]
                 singular_words.append(singular)
@@ -303,7 +305,7 @@ class HasuraManager:
         column: str,
     ) -> Dict[str, Any]:
         return {
-            "name": related_name,
+            "name": related_name if not self._hasura_config.camel_case else humps.camelize(related_name),
             "using": {
                 "foreign_key_constraint_on": {
                     "column": column,
@@ -317,7 +319,7 @@ class HasuraManager:
 
     def _format_object_relationship(self, name: str, column: str) -> Dict[str, Any]:
         return {
-            "name": name,
+            "name": name if not self._hasura_config.camel_case else humps.camelize(name),
             "using": {
                 "foreign_key_constraint_on": column,
             },
