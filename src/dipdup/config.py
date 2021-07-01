@@ -605,10 +605,11 @@ HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, Operatio
 class HasuraConfig:
     url: str
     admin_secret: Optional[str] = None
+    source: str = 'default'
     select_limit: int = 200
     allow_aggregations: bool = True
-    camelcase: bool = False
-    source: str = 'default'
+    camel_case: bool = False
+    connection_timeout: int = 5
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):
@@ -616,7 +617,7 @@ class HasuraConfig:
         if not (parsed_url.scheme and parsed_url.netloc):
             raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
         return v.rstrip('/')
-    
+
     @property
     def headers(self) -> Dict[str, str]:
         if self.admin_secret:

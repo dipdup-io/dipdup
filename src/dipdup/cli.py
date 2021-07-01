@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
 from typing import List, NoReturn
-import dipdup.hasura as hasura
+from dipdup.hasura import HasuraManager
 import click
 import sentry_sdk
 from fcache.cache import FileCache  # type: ignore
@@ -148,6 +148,10 @@ async def configure_hasura(ctx):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
+    hasura = HasuraManager(config.package, config.hasura, config.database)
 
     async with tortoise_wrapper(url, models):
-        await hasura.configure_hasura(ctx.obj.config)
+        try:
+            await hasura.configure()
+        finally:
+            await hasura.close_session()
