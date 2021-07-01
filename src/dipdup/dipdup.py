@@ -4,7 +4,7 @@ import logging
 from contextlib import suppress
 from os.path import join
 from posix import listdir
-from typing import Dict, List, NoReturn, cast
+from typing import Dict, List, cast
 
 from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
 from genericpath import exists
