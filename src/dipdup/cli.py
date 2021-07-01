@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
 from typing import List, NoReturn
-from dipdup.hasura import HasuraManager
+
 import click
 import sentry_sdk
 from fcache.cache import FileCache  # type: ignore
@@ -15,6 +15,7 @@ from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from dipdup import __spec_version__, __version__
 from dipdup.config import DipDupConfig, LoggingConfig
 from dipdup.dipdup import DipDup
+from dipdup.hasura import HasuraManager
 from dipdup.utils import tortoise_wrapper
 
 _logger = logging.getLogger(__name__)

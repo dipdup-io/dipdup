@@ -1,21 +1,18 @@
 import asyncio
 import importlib
-import json
 import logging
 from contextlib import suppress
 from typing import Any, Dict, Iterator, List, Tuple, Type
 
 import aiohttp
+import humps  # type: ignore
+import inflect  # type: ignore
 from aiohttp import ClientConnectorError, ClientOSError
 from tortoise import Model, fields
 from tortoise.transactions import get_connection
 
 from dipdup.config import HasuraConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.utils import http_request
-import json
-import pandas as pd
-import humps
-import inflect
 
 
 def _is_model_class(obj: Any) -> bool:
@@ -246,8 +243,8 @@ class HasuraManager:
             singular_camel = singular_words[0] + ''.join(x.title() for x in singular_words[1:])
 
             # Build Object
-            jsondata = {}
-            args = {}
+            jsondata: Dict[str, Any] = {}
+            args: Dict[str, Any] = {}
             configuration = {}
             custom_root_fields = {}
 

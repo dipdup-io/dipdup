@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, cast
 
 from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
 from genericpath import exists
+from numpy import isin
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
@@ -184,6 +185,8 @@ class DipDup:
 
             hasura_manager: Optional[HasuraManager]
             if self._config.hasura:
+                if not isinstance(self._config.database, PostgresDatabaseConfig):
+                    raise RuntimeError
                 hasura_manager = HasuraManager(self._config.package, self._config.hasura, self._config.database)
                 worker_tasks.append(asyncio.create_task(hasura_manager.configure()))
             else:
