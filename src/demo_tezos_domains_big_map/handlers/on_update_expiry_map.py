@@ -11,6 +11,7 @@ async def on_update_expiry_map(
 ) -> None:
     if not store_expiry_map.action.has_value:
         return
+    assert store_expiry_map.key
     assert store_expiry_map.value
 
     expiry = store_expiry_map.value.__root__

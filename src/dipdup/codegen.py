@@ -371,7 +371,7 @@ class DipDupCodeGenerator:
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
 
-    async def migrate_user_handlers_to_v1(self) -> None:
+    async def migrate_user_handlers_to_v10(self) -> None:
         remove_lines = [
             'from dipdup.models import',
             'from dipdup.context import',
@@ -401,6 +401,29 @@ class DipDupCodeGenerator:
                         # Skip existing models imports
                         if any(map(lambda l: l in line, remove_lines)):
                             continue
+                        # Replace by table
+                        for from_, to in replace_table.items():
+                            line = line.replace(from_, to)
+                        newfile.append(line)
+                with open(path, 'w') as file:
+                    file.write('\n'.join(newfile))
+
+    async def migrate_user_handlers_to_v11(self) -> None:
+        replace_table = {
+            'BigMapAction.ADD': 'BigMapAction.ADD_KEY',
+            'BigMapAction.UPDATE': 'BigMapAction.UPDATE_KEY',
+            'BigMapAction.REMOVE': 'BigMapAction.REMOVE_KEY',
+        }
+        handlers_path = join(self._config.package_path, 'handlers')
+
+        for root, _, files in os.walk(handlers_path):
+            for filename in files:
+                if filename == '__init__.py' or not filename.endswith('.py'):
+                    continue
+                path = join(root, filename)
+                newfile = []
+                with open(path) as file:
+                    for line in file.read().split('\n'):
                         # Replace by table
                         for from_, to in replace_table.items():
                             line = line.replace(from_, to)

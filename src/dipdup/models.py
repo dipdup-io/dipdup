@@ -180,6 +180,10 @@ class BigMapAction(Enum):
     REMOVE = 'remove'
 
     @property
+    def has_key(self) -> bool:
+        return self in (BigMapAction.ADD_KEY, BigMapAction.UPDATE_KEY, BigMapAction.REMOVE_KEY)
+
+    @property
     def has_value(self) -> bool:
         return self in (BigMapAction.ADD_KEY, BigMapAction.UPDATE_KEY)
 
@@ -206,5 +210,5 @@ class BigMapDiff(Generic[KeyType, ValueType]):
 
     action: BigMapAction
     data: BigMapData
-    key: KeyType
+    key: Optional[KeyType]
     value: Optional[ValueType]

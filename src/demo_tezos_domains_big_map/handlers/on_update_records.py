@@ -11,6 +11,7 @@ async def on_update_records(
 ) -> None:
     if not store_records.action.has_value:
         return
+    assert store_records.key
     assert store_records.value
 
     record_name = bytes.fromhex(store_records.key.__root__).decode()
