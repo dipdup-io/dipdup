@@ -27,6 +27,7 @@
   * [GenQL](client-side/genql.md)
 * [Advanced](advanced/README.md)
   * [Handler context](advanced/handler-context.md)
+  * [Query performance](advanced/query-performance.md)
   * [Mempool plugin](advanced/mempool-plugin.md)
   * [Metadata plugin](advanced/metadata-plugin.md)
 * [Examples](examples.md)

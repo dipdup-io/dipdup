@@ -6,7 +6,7 @@ description: Jobs block
 
 In addition to indexing DipDup allows you to execute arbitrary tasks according to schedule. 
 
-```text
+```yaml
 jobs:
   midnight_cleanup:
     callback: cleanup_database
