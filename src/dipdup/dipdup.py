@@ -6,6 +6,7 @@ from os.path import join
 from posix import listdir
 from typing import Dict, List, cast
 
+from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
@@ -18,6 +19,7 @@ from dipdup.config import (
     ROLLBACK_HANDLER,
     BcdDatasourceConfig,
     BigMapIndexConfig,
+    CoinbaseDatasourceConfig,
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
@@ -29,14 +31,16 @@ from dipdup.config import (
 from dipdup.context import DipDupContext, RollbackHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
+from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError, HandlerImportError
+from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State, StateOperationGroup
 
 INDEX_DISPATCHER_INTERVAL = 1.0
+from dipdup.scheduler import add_job, create_scheduler
 
 
 class IndexDispatcher:
@@ -139,10 +143,8 @@ class IndexDispatcher:
         while not self._stopped:
             await self.reload_config()
 
-            # FIXME: Process all indexes in parallel, blocked by https://github.com/tortoise/tortoise-orm/issues/792
             async with utils.slowdown(INDEX_DISPATCHER_INTERVAL):
-                for index in self._indexes.values():
-                    await index.process()
+                await asyncio.gather(*[index.process() for index in self._indexes.values()])
 
             # TODO: Continue if new indexes are spawned from origination
             if oneshot:
@@ -167,6 +169,7 @@ class DipDup:
             datasources=self._datasources,
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
+        self._scheduler = create_scheduler()
 
     async def init(self) -> None:
         """Create new or update existing dipdup project"""
@@ -178,6 +181,7 @@ class DipDup:
         await codegen.generate_types()
         await codegen.generate_default_handlers()
         await codegen.generate_user_handlers()
+        await codegen.generate_jobs()
         await codegen.cleanup()
 
         for datasource in self._datasources.values():
@@ -201,6 +205,11 @@ class DipDup:
             if self._config.hasura:
                 worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
 
+            if self._config.jobs and not oneshot:
+                for job_name, job_config in self._config.jobs.items():
+                    add_job(self._ctx, self._scheduler, job_name, job_config)
+                self._scheduler.start()
+
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
             cleanup_task = asyncio.create_task(self._cleanup_task())
 
@@ -212,23 +221,24 @@ class DipDup:
                 cleanup_task.cancel()
                 self._logger.info('Closing datasource sessions')
                 await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
+                # FIXME: AttributeError: 'NoneType' object has no attribute 'call_soon_threadsafe'
+                with suppress(AttributeError, SchedulerNotRunningError):
+                    self._scheduler.shutdown(wait=True)
 
-    async def migrate(self) -> None:
+    async def migrate_to_v10(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.generate_default_handlers(recreate=True)
-        await codegen.migrate_user_handlers_to_v1()
-        self._logger.warning('==================== WARNING =====================')
-        self._logger.warning('Your handlers have just been migrated to v1.0.0 format.')
-        self._logger.warning('Review and commit changes before proceeding.')
-        self._logger.warning('==================== WARNING =====================')
-        quit()
+        await codegen.migrate_user_handlers_to_v10()
+        self._finish_migration('1.0')
+
+    async def migrate_to_v11(self) -> None:
+        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        await codegen.migrate_user_handlers_to_v11()
+        self._finish_migration('1.1')
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
-        try:
-            configure_fn = self._config.get_configure_fn()
-        except HandlerImportError:
-            await self.migrate()
+        configure_fn = self._config.get_configure_fn()
         await configure_fn(self._ctx)
         self._config.initialize()
 
@@ -243,19 +253,21 @@ class DipDup:
                     url=datasource_config.url,
                     cache=self._config.cache_enabled,
                 )
-                self._datasources[name] = datasource
-                self._datasources_by_config[datasource_config] = datasource
-
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
-                    datasource_config.url,
-                    datasource_config.network,
-                    self._config.cache_enabled,
+                    url=datasource_config.url,
+                    network=datasource_config.network,
+                    cache=self._config.cache_enabled,
                 )
-                self._datasources[name] = datasource
-                self._datasources_by_config[datasource_config] = datasource
+            elif isinstance(datasource_config, CoinbaseDatasourceConfig):
+                datasource = CoinbaseDatasource(
+                    cache=self._config.cache_enabled,
+                )
             else:
                 raise NotImplementedError
+
+            self._datasources[name] = datasource
+            self._datasources_by_config[datasource_config] = datasource
 
     async def _initialize_database(self, reindex: bool = False) -> None:
         self._logger.info('Initializing database')
@@ -334,3 +346,9 @@ class DipDup:
                     raise RuntimeError('No index states found in database')
                 minimum_level = minimum_level_state.level - 1
                 await StateOperationGroup.filter(level__lt=minimum_level).delete()
+
+    def _finish_migration(self, version: str) -> None:
+        self._logger.warning('==================== WARNING =====================')
+        self._logger.warning('Your project has been migrated to spec version %s.', version)
+        self._logger.warning('Review and commit changes before proceeding.')
+        self._logger.warning('==================== WARNING =====================')

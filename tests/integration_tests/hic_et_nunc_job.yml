@@ -50,3 +50,10 @@ indexes:
             entrypoint: collect
     first_block: 1365000
     last_block: 1366000
+
+jobs:
+  test:
+    callback: test_job
+    crontab: "* * * * *"
+    args:
+      foo: bar

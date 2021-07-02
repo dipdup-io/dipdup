@@ -76,7 +76,9 @@ class PostgresDatabaseConfig:
 
     @property
     def connection_string(self) -> str:
-        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}'
+        # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
+        # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
+        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}&maxsize=1'
 
     @validator('immune_tables')
     def valid_immune_tables(cls, v):
@@ -171,7 +173,18 @@ class BcdDatasourceConfig(NameMixin):
         return v
 
 
-DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig]
+@dataclass
+class CoinbaseDatasourceConfig(NameMixin):
+    kind: Literal['coinbase']
+    api_key: Optional[str] = None
+    secret_key: Optional[str] = None
+    passphrase: Optional[str] = None
+
+    def __hash__(self):
+        return hash(self.kind)
+
+
+DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig, CoinbaseDatasourceConfig]
 
 
 @dataclass
@@ -424,6 +437,10 @@ class HandlerConfig:
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
+        if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
+            raise ConfigurationError(f'`{self.callback}` callback name is reserved')
+        if self.callback and self.callback != pascal_to_snake(self.callback):
+            raise ConfigurationError('`callback` field must conform to snake_case naming style')
 
     @property
     def callback_fn(self) -> Callable:
@@ -609,6 +626,13 @@ class HasuraConfig:
 
 
 @dataclass
+class JobConfig(HandlerConfig):
+    crontab: str
+    args: Optional[Dict[str, Any]] = None
+    atomic: bool = False
+
+
+@dataclass
 class SentryConfig:
     dsn: str
 
@@ -625,17 +649,19 @@ class DipDupConfig:
     :param templates: Mapping of template aliases and index templates
     :param database: Database config
     :param hasura: Hasura config
+    :param jobs: Mapping of job aliases and job configs
     :param sentry: Sentry integration config
     """
 
     spec_version: str
     package: str
-    datasources: Dict[str, Union[TzktDatasourceConfig, BcdDatasourceConfig]]
+    datasources: Dict[str, DatasourceConfigT]
     contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     hasura: Optional[HasuraConfig] = None
+    jobs: Optional[Dict[str, JobConfig]] = None
     sentry: Optional[SentryConfig] = None
 
     def __post_init_post_parse__(self):
@@ -831,6 +857,12 @@ class DipDupConfig:
         callback_fn = getattr(handler_module, handler_config.callback)
         handler_config.callback_fn = callback_fn
 
+    def _initialize_job_callback(self, job_config: JobConfig) -> None:
+        _logger.info('Registering job callback `%s`', job_config.callback)
+        job_module = importlib.import_module(f'{self.package}.jobs.{job_config.callback}')
+        callback_fn = getattr(job_module, job_config.callback)
+        job_config.callback_fn = callback_fn
+
     def _initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         if index_name in self._initialized:
             return
@@ -888,12 +920,19 @@ class DipDupConfig:
 
         self._initialized.append(index_name)
 
+    def _initialize_jobs(self) -> None:
+        if not self.jobs:
+            return
+        for job_config in self.jobs.values():
+            self._initialize_job_callback(job_config)
+
     def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)
 
         self.pre_initialize()
         for index_name, index_config in self.indexes.items():
             self._initialize_index(index_name, index_config)
+        self._initialize_jobs()
 
 
 @dataclass

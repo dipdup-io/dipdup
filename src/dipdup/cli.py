@@ -15,12 +15,14 @@ from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from dipdup import __spec_version__, __version__
 from dipdup.config import DipDupConfig, LoggingConfig
 from dipdup.dipdup import DipDup
+from dipdup.exceptions import ConfigurationError
 
 _logger = logging.getLogger(__name__)
 
 spec_version_to_version = {
-    '0.1': 'dipdup <0.4.3',
-    '1.0': 'dipdup ^1.0.0',
+    '0.1': 'dipdup v0.4.3 and below',
+    '1.0': 'dipdup v1.0.0 - v1.1.2',
+    '1.1': 'dipdup v1.2.0 and above',
 }
 
 migration_required_message = """
@@ -79,6 +81,8 @@ async def cli(ctx, config: List[str], logging_config: str):
     _logging_config.apply()
 
     _config = DipDupConfig.load(config)
+    if _config.spec_version not in spec_version_to_version:
+        raise ConfigurationError('Unknown `spec_version`')
     if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
         migration_required(_config.spec_version, __spec_version__)
 
@@ -121,16 +125,27 @@ async def init(ctx):
 @click.pass_context
 @click_async
 async def migrate(ctx):
+    def _bump_spec_version(spec_version: str):
+        for config_path in ctx.obj.config_paths:
+            for line in fileinput.input(config_path, inplace=True):
+                if 'spec_version' in line:
+                    print(f'spec_version: {spec_version}')
+                else:
+                    print(line.rstrip())
+
     config: DipDupConfig = ctx.obj.config
     config.pre_initialize()
-    await DipDup(config).migrate()
 
-    for config_path in ctx.obj.config_paths:
-        for line in fileinput.input(config_path, inplace=True):
-            if 'spec_version' in line:
-                print(f'spec_version: {__spec_version__}')
-            else:
-                print(line.rstrip())
+    if config.spec_version == __spec_version__:
+        _logger.error('Project is already at latest version')
+    elif config.spec_version == '0.1':
+        await DipDup(config).migrate_to_v10()
+        _bump_spec_version('1.0')
+    elif config.spec_version == '1.0':
+        await DipDup(config).migrate_to_v11()
+        _bump_spec_version('1.1')
+    else:
+        raise ConfigurationError('Unknown `spec_version`')
 
 
 @cli.command(help='Clear development request cache')
