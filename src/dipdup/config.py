@@ -173,7 +173,18 @@ class BcdDatasourceConfig(NameMixin):
         return v
 
 
-DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig]
+@dataclass
+class CoinbaseDatasourceConfig(NameMixin):
+    kind: Literal['coinbase']
+    api_key: Optional[str] = None
+    secret_key: Optional[str] = None
+    passphrase: Optional[str] = None
+
+    def __hash__(self):
+        return hash(self.kind)
+
+
+DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig, CoinbaseDatasourceConfig]
 
 
 @dataclass
@@ -644,7 +655,7 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    datasources: Dict[str, Union[TzktDatasourceConfig, BcdDatasourceConfig]]
+    datasources: Dict[str, DatasourceConfigT]
     contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
     templates: Optional[Dict[str, IndexConfigTemplateT]] = None

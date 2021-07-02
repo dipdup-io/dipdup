@@ -8,7 +8,6 @@ Address = str
 
 class BcdDatasource:
     def __init__(self, url: str, network: str, cache: bool) -> None:
-        super().__init__()
         self._url = url.rstrip('/')
         self._network = network
         self._logger = logging.getLogger('dipdup.bcd')

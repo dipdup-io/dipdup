@@ -19,6 +19,7 @@ from dipdup.config import (
     ROLLBACK_HANDLER,
     BcdDatasourceConfig,
     BigMapIndexConfig,
+    CoinbaseDatasourceConfig,
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
@@ -30,6 +31,7 @@ from dipdup.config import (
 from dipdup.context import DipDupContext, RollbackHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
+from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError, HandlerImportError
@@ -201,7 +203,7 @@ class DipDup:
                 await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
                 # FIXME: AttributeError: 'NoneType' object has no attribute 'call_soon_threadsafe'
                 with suppress(AttributeError, SchedulerNotRunningError):
-                    await self._scheduler.shutdown(wait=True)
+                    self._scheduler.shutdown(wait=True)
 
     async def migrate(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
@@ -233,19 +235,21 @@ class DipDup:
                     url=datasource_config.url,
                     cache=self._config.cache_enabled,
                 )
-                self._datasources[name] = datasource
-                self._datasources_by_config[datasource_config] = datasource
-
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
-                    datasource_config.url,
-                    datasource_config.network,
-                    self._config.cache_enabled,
+                    url=datasource_config.url,
+                    network=datasource_config.network,
+                    cache=self._config.cache_enabled,
                 )
-                self._datasources[name] = datasource
-                self._datasources_by_config[datasource_config] = datasource
+            elif isinstance(datasource_config, CoinbaseDatasourceConfig):
+                datasource = CoinbaseDatasource(
+                    cache=self._config.cache_enabled,
+                )
             else:
                 raise NotImplementedError
+
+            self._datasources[name] = datasource
+            self._datasources_by_config[datasource_config] = datasource
 
     async def _initialize_database(self, reindex: bool = False) -> None:
         self._logger.info('Initializing database')
