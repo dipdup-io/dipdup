@@ -19,6 +19,7 @@ from dipdup.config import (
     ROLLBACK_HANDLER,
     BcdDatasourceConfig,
     BigMapIndexConfig,
+    CoinbaseDatasourceConfig,
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
@@ -30,9 +31,10 @@ from dipdup.config import (
 from dipdup.context import DipDupContext, RollbackHandlerContext
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
+from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError, HandlerImportError
+from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import HasuraManager
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
@@ -209,24 +211,22 @@ class DipDup:
                     await hasura_manager.close_session()
                 # FIXME: AttributeError: 'NoneType' object has no attribute 'call_soon_threadsafe'
                 with suppress(AttributeError, SchedulerNotRunningError):
-                    await self._scheduler.shutdown(wait=True)
+                    self._scheduler.shutdown(wait=True)
 
-    async def migrate(self) -> None:
+    async def migrate_to_v10(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.generate_default_handlers(recreate=True)
-        await codegen.migrate_user_handlers_to_v1()
-        self._logger.warning('==================== WARNING =====================')
-        self._logger.warning('Your handlers have just been migrated to v1.0.0 format.')
-        self._logger.warning('Review and commit changes before proceeding.')
-        self._logger.warning('==================== WARNING =====================')
-        quit()
+        await codegen.migrate_user_handlers_to_v10()
+        self._finish_migration('1.0')
+
+    async def migrate_to_v11(self) -> None:
+        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        await codegen.migrate_user_handlers_to_v11()
+        self._finish_migration('1.1')
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
-        try:
-            configure_fn = self._config.get_configure_fn()
-        except HandlerImportError:
-            await self.migrate()
+        configure_fn = self._config.get_configure_fn()
         await configure_fn(self._ctx)
         self._config.initialize()
 
@@ -241,19 +241,21 @@ class DipDup:
                     url=datasource_config.url,
                     cache=self._config.cache_enabled,
                 )
-                self._datasources[name] = datasource
-                self._datasources_by_config[datasource_config] = datasource
-
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
-                    datasource_config.url,
-                    datasource_config.network,
-                    self._config.cache_enabled,
+                    url=datasource_config.url,
+                    network=datasource_config.network,
+                    cache=self._config.cache_enabled,
                 )
-                self._datasources[name] = datasource
-                self._datasources_by_config[datasource_config] = datasource
+            elif isinstance(datasource_config, CoinbaseDatasourceConfig):
+                datasource = CoinbaseDatasource(
+                    cache=self._config.cache_enabled,
+                )
             else:
                 raise NotImplementedError
+
+            self._datasources[name] = datasource
+            self._datasources_by_config[datasource_config] = datasource
 
     async def _initialize_database(self, reindex: bool = False) -> None:
         self._logger.info('Initializing database')
@@ -317,3 +319,9 @@ class DipDup:
 
             self._logger.info('Executing `%s`', filename)
             await get_connection(None).execute_script(sql)
+
+    def _finish_migration(self, version: str) -> None:
+        self._logger.warning('==================== WARNING =====================')
+        self._logger.warning('Your project has been migrated to spec version %s.', version)
+        self._logger.warning('Review and commit changes before proceeding.')
+        self._logger.warning('==================== WARNING =====================')
