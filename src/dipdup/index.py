@@ -18,7 +18,7 @@ from dipdup.config import (
 )
 from dipdup.context import DipDupContext, HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.models import BigMapAction, BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
+from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
 from dipdup.utils import FormattedLogger, in_global_transaction
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
@@ -400,17 +400,18 @@ class BigMapIndex(Index):
         matched_big_map: BigMapData,
     ) -> None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-        if matched_big_map.action == BigMapAction.ALLOCATE:
-            return
 
-        key_type = handler_config.key_type_cls
-        key = key_type.parse_obj(matched_big_map.key)
-
-        if matched_big_map.action == BigMapAction.REMOVE:
-            value = None
+        if matched_big_map.action.has_key:
+            key_type = handler_config.key_type_cls
+            key = key_type.parse_obj(matched_big_map.key)
         else:
+            key = None
+
+        if matched_big_map.action.has_value:
             value_type = handler_config.value_type_cls
             value = value_type.parse_obj(matched_big_map.value)
+        else:
+            value = None
 
         big_map_context = BigMapDiff(  # type: ignore
             data=matched_big_map,

@@ -34,7 +34,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError, HandlerImportError
+from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import configure_hasura
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
@@ -205,22 +205,20 @@ class DipDup:
                 with suppress(AttributeError, SchedulerNotRunningError):
                     self._scheduler.shutdown(wait=True)
 
-    async def migrate(self) -> None:
+    async def migrate_to_v10(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.generate_default_handlers(recreate=True)
-        await codegen.migrate_user_handlers_to_v1()
-        self._logger.warning('==================== WARNING =====================')
-        self._logger.warning('Your handlers have just been migrated to v1.0.0 format.')
-        self._logger.warning('Review and commit changes before proceeding.')
-        self._logger.warning('==================== WARNING =====================')
-        quit()
+        await codegen.migrate_user_handlers_to_v10()
+        self._finish_migration('1.0')
+
+    async def migrate_to_v11(self) -> None:
+        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        await codegen.migrate_user_handlers_to_v11()
+        self._finish_migration('1.1')
 
     async def _configure(self) -> None:
         """Run user-defined initial configuration handler"""
-        try:
-            configure_fn = self._config.get_configure_fn()
-        except HandlerImportError:
-            await self.migrate()
+        configure_fn = self._config.get_configure_fn()
         await configure_fn(self._ctx)
         self._config.initialize()
 
@@ -313,3 +311,9 @@ class DipDup:
 
             self._logger.info('Executing `%s`', filename)
             await get_connection(None).execute_script(sql)
+
+    def _finish_migration(self, version: str) -> None:
+        self._logger.warning('==================== WARNING =====================')
+        self._logger.warning('Your project has been migrated to spec version %s.', version)
+        self._logger.warning('Review and commit changes before proceeding.')
+        self._logger.warning('==================== WARNING =====================')
