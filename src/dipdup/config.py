@@ -613,6 +613,13 @@ HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, Operatio
 
 
 @dataclass
+class RESTEndpointHasuraConfig:
+    table: str
+    filters: Optional[List[str]] = None
+    relations: Optional[List[str]] = None
+
+
+@dataclass
 class HasuraConfig:
     url: str
     admin_secret: Optional[str] = None
@@ -621,6 +628,7 @@ class HasuraConfig:
     allow_aggregations: bool = True
     camel_case: bool = False
     connection_timeout: int = 5
+    rest_endpoints: Optional[Dict[str, RESTEndpointHasuraConfig]] = None
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):
