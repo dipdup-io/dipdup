@@ -29,11 +29,13 @@ async def slowdown(seconds: int):
         await asyncio.sleep(seconds - time_spent)
 
 
+# TODO: Replace with humps
 def snake_to_pascal(value: str) -> str:
     """method_name -> MethodName"""
     return ''.join(map(lambda x: x[0].upper() + x[1:], value.replace('.', '_').split('_')))
 
 
+# TODO: Replace with humps
 def pascal_to_snake(name: str) -> str:
     """MethodName -> method_name"""
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name.replace('.', '_'))
