@@ -91,7 +91,7 @@ class HasuraManager:
             },
             headers=self._hasura_config.headers,
         )
-        # TODO: Support multiple sources
+        # TODO: Support multiple sources. Forbidden in config for now.
         return metadata['sources'][0]
 
     async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
@@ -208,84 +208,81 @@ class HasuraManager:
     async def _apply_camelcase(self) -> None:
         """Convert table and column names to camelCase.
 
-        Slightly modified code from https://github.com/m-rgba/hasura-snake-to-camel
+        Based on https://github.com/m-rgba/hasura-snake-to-camel
         """
 
         tables = await self._get_fields()
 
         for table in tables:
-            # De-camel any pre-camelized names
             table_decamel = humps.decamelize(table)
 
-            # Skip tables from different schemas
+            # NOTE: Skip tables from different schemas
             if not table_decamel.startswith(self._database_config.schema_name):
                 continue
 
-            # Split up words to lists
-            words = table_decamel.split('_')
-
-            # Plural version - last word plural
-            plural = inf.plural_noun(words[-1])
-            if plural != False:
-                plural_words = words[:-1]
-                plural_words.append(plural)
-            else:
-                plural_words = words
-
-            # Singular version - last word singular
-            singular = inf.singular_noun(words[-1])
-            if singular != False:
-                singular_words = words[:-1]
-                singular_words.append(singular)
-            else:
-                singular_words = words
-
-            # Camel-ise lists
-            plural_camel = plural_words[0] + ''.join(x.title() for x in plural_words[1:])
-            singular_camel = singular_words[0] + ''.join(x.title() for x in singular_words[1:])
-
-            # Build Object
-            jsondata: Dict[str, Any] = {}
-            args: Dict[str, Any] = {}
-            configuration = {}
-            custom_root_fields = {}
-
-            # Create Custom Root Field Payload
-            jsondata['type'] = 'pg_set_table_customization'
-
-            args['table'] = {
-                'name': table.replace(self._database_config.schema_name, '')[1:],
-                'schema': self._database_config.schema_name,
-            }
-            args['source'] = self._hasura_config.source
-            configuration['identifier'] = singular_camel
-            custom_root_fields['select'] = plural_camel
-            custom_root_fields['select_by_pk'] = singular_camel
-            custom_root_fields['select_aggregate'] = plural_camel + 'Aggregate'
-            custom_root_fields['insert'] = plural_camel + 'Insert'
-            custom_root_fields['insert_one'] = singular_camel + 'Insert'
-            custom_root_fields['update'] = plural_camel + 'Update'
-            custom_root_fields['update_by_pk'] = singular_camel + 'Update'
-            custom_root_fields['delete'] = plural_camel + 'Delete'
-            custom_root_fields['delete_by_pk'] = singular_camel + 'Delete'
+            custom_root_fields = self._format_custom_root_fields(table_decamel)
 
             columns = await self._get_fields(table)
-            custom_column_names = {c: humps.camelize(c) for c in columns}
+            custom_column_names = self._format_custom_column_names(columns)
 
-            jsondata['args'] = args
-            args['configuration'] = configuration
-            configuration['custom_root_fields'] = custom_root_fields
-            configuration['custom_column_names'] = custom_column_names
+            args: Dict[str, Any] = {
+                'table': {
+                    'name': table.replace(self._database_config.schema_name, '')[1:],
+                    'schema': self._database_config.schema_name,
+                },
+                'source': self._hasura_config.source,
+                'configuration': {
+                    'identifier': custom_root_fields['select_by_pk'],
+                    'custom_root_fields': custom_root_fields,
+                    'custom_column_names': custom_column_names,
+                },
+            }
 
             result = await http_request(
                 self._session,
                 'post',
                 url=f'{self._hasura_config.url}/v1/metadata',
-                json=jsondata,
+                json={
+                    'type': 'pg_set_table_customization',
+                    'args': args,
+                },
                 headers=self._hasura_config.headers,
             )
             if result.get('message') != 'success':
                 raise HasuraError('Can\'t configure Hasura instance', result)
+
+    def _format_custom_root_fields(self, table: str) -> Dict[str, Any]:
+        words = table.split('_')
+
+        plural = inf.plural_noun(words[-1])
+        if plural != False:
+            plural_words = words[:-1] + [plural]
+        else:
+            plural_words = words
+
+        singular = inf.singular_noun(words[-1])
+        if singular != False:
+            singular_words = words[:-1] + [singular]
+        else:
+            singular_words = words
+
+        plural_camel = plural_words[0] + ''.join(x.title() for x in plural_words[1:])
+        singular_camel = singular_words[0] + ''.join(x.title() for x in singular_words[1:])
+
+        return {
+            'select': plural_camel,
+            'select_by_pk': singular_camel,
+            'select_aggregate': plural_camel + 'Aggregate',
+            'insert': plural_camel + 'Insert',
+            'insert_one': singular_camel + 'Insert',
+            'update': plural_camel + 'Update',
+            'update_by_pk': singular_camel + 'Update',
+            'delete': plural_camel + 'Delete',
+            'delete_by_pk': singular_camel + 'Delete',
+        }
+
+    def _format_custom_column_names(self, columns: List[str]) -> Dict[str, Any]:
+        return {c: humps.camelize(c) for c in columns}
 
     def _format_table(self, name: str) -> Dict[str, Any]:
         return {
