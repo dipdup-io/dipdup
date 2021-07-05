@@ -12,4 +12,4 @@ hasura:
   admin_secret: ${ADMIN_SECRET:-changeme}
   rest_endpoints:
     tokens:
-      table: hic_et_nunc_tokens
+      table: hic_et_nunc_token

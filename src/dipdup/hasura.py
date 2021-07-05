@@ -214,7 +214,10 @@ class HasuraManager:
             json={'query': query},
             headers=self._hasura_config.headers,
         )
-        fields = result['data']['__type']['fields']
+        try:
+            fields = result['data']['__type']['fields']
+        except TypeError as e:
+            raise HasuraError(f'Unknown table `{name}`') from e
         return [
             Field(name=f['name'], type=f['type']['ofType']['name'])
             for f in fields
@@ -283,13 +286,16 @@ class HasuraManager:
         )
 
     def _format_rest_query(self, name: str, table: str, fields: List[Field]) -> Dict[str, Any]:
-        query_name = humps.camelize(name) + 'RESTQuery'
-        query_args = ','.join(f'${f.name}: {f.type}' for f in fields)
-        query_filters = ','.join(f'{f.name}: ${f.name}' for f in fields)
+        def _type(type_: str) -> str:
+            return type_.replace('bigint', 'Number')
+
+        query_name = humps.camelize(name)
+        query_args = ', '.join(f'${f.name}: {_type(f.type)}' for f in fields)
+        query_filters = ', '.join(f'{f.name}: ${f.name}' for f in fields)
         query_fields = ' '.join(f.name for f in fields)
         return {
             'name': query_name,
-            'query': 'query ' + query_name + ' (' + query_args + ') {' + table + '(' + query_filters + ') {' + query_fields + '}',
+            'query': 'query ' + query_name + ' (' + query_args + ') {' + table + '(' + query_filters + ') {' + query_fields + '}}',
         }
 
     def _format_create_rest_endpoint_subquery(self, query: Dict[str, Any]) -> Dict[str, Any]:
