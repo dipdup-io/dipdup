@@ -38,7 +38,7 @@ class DatasourceRequestProxy:
             self._logger.debug('Datasource request attempt %s/%s', attempt + 1, self._retry_count)
             try:
                 return await http_request(self._session, method, **kwargs)
-            except aiohttp.ClientConnectionError as e:
+            except (aiohttp.ClientConnectionError, aiohttp.ClientConnectorError) as e:
                 if attempt + 1 == self._retry_count:
                     raise e
                 self._logger.warning('Datasource request failed: %s', e)
