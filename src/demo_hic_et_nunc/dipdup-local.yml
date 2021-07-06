@@ -13,7 +13,6 @@ hasura:
   rest_endpoints:
     tokens:
       table: token
-      pk: id
     tokens_query:
       query: "query tokens ($id: bigint) {hicEtNuncToken(where: {id: {_eq: $id}}) {creatorId id level supply timestamp}}"
   camel_case: True

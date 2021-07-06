@@ -1,13 +1,14 @@
 import asyncio
 import importlib
 import logging
-from collections import namedtuple
 from contextlib import suppress
-from typing import Any, Dict, Iterator, List, Tuple, Type
+from types import ModuleType
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type
 
 import aiohttp
 import humps  # type: ignore
 from aiohttp import ClientConnectorError, ClientOSError
+from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 from tortoise.transactions import get_connection
 
@@ -15,7 +16,17 @@ from dipdup.config import HasuraConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import http_request
 
-Field = namedtuple('Field', ['name', 'type'])
+
+@dataclass
+class Field:
+    name: str
+    type: Optional[str]
+
+    def camelize(self) -> 'Field':
+        return Field(
+            name=humps.camelize(self.name),
+            type=self.type,
+        )
 
 
 def _is_model_class(obj: Any) -> bool:
@@ -23,7 +34,7 @@ def _is_model_class(obj: Any) -> bool:
     return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
 
 
-def _iter_models(*modules) -> Iterator[Tuple[str, Type[Model]]]:
+def _iter_models(modules: Iterable[ModuleType]) -> Iterator[Tuple[str, Type[Model]]]:
     """Iterate over built-in and project's models"""
     for models in modules:
         for attr in dir(models):
@@ -151,6 +162,11 @@ class HasuraManager:
             )[1]
         ]
 
+    def _get_model_modules(self) -> Tuple[ModuleType, ModuleType]:
+        int_models = importlib.import_module('dipdup.models')
+        models = importlib.import_module(f'{self._package}.models')
+        return int_models, models
+
     async def _generate_source_tables_metadata(self) -> List[Dict[str, Any]]:
         """Generate source tables metadata based on project models and views.
 
@@ -162,19 +178,17 @@ class HasuraManager:
 
         metadata_tables = {}
         model_tables = {}
+        model_modules = self._get_model_modules()
 
-        int_models = importlib.import_module('dipdup.models')
-        models = importlib.import_module(f'{self._package}.models')
-
-        for app, model in _iter_models(models, int_models):
-            table_name = model._meta.db_table or pascal_to_snake(model.__name__)  # pylint: disable=protected-access
+        for app, model in _iter_models(model_modules):
+            table_name = model._meta.db_table or pascal_to_snake(model.__name__)
             model_tables[f'{app}.{model.__name__}'] = table_name
             metadata_tables[table_name] = self._format_table(table_name)
 
         for view in views:
             metadata_tables[view] = self._format_table(view)
 
-        for app, model in _iter_models(models, int_models):
+        for app, model in _iter_models(model_modules):
             table_name = model_tables[f'{app}.{model.__name__}']
 
             for field in model._meta.fields_map.values():
@@ -201,10 +215,30 @@ class HasuraManager:
     async def _generate_query_collections_metadata(self) -> List[Dict[str, Any]]:
         queries = []
         for endpoint_name, endpoint_config in self._hasura_config.rest_endpoints.items():
-            if endpoint_config.table and endpoint_config.pk:
+            if endpoint_config.table:
+                if endpoint_config.filter:
+                    filter = endpoint_config.filter
+                else:
+                    # NOTE: Detect table's primary key.
+                    # NOTE: 1. Find matching model
+                    model_modules = self._get_model_modules()
+                    for _, model in _iter_models(model_modules):
+                        table_name = model._meta.db_table or pascal_to_snake(model.__name__)
+                        if table_name == endpoint_config.table:
+                            break
+                    else:
+                        raise ConfigurationError('`filter` field could not be omitted for views')
+                    # NOTE: 2. Find primary key field
+                    for field_name, field in model._meta.fields_map.items():
+                        if field.pk:
+                            filter = field_name
+                            break
+                    else:
+                        raise RuntimeError(f'Table `{table_name}` has no primary key. How is that possible?')
+
                 table = f'{self._database_config.schema_name}_{endpoint_config.table}'
                 fields = await self._get_fields(table)
-                queries.append(self._format_rest_query(endpoint_name, table, endpoint_config.pk, fields))
+                queries.append(self._format_rest_query(endpoint_name, table, filter, fields))
             elif endpoint_config.query:
                 queries.append(dict(name=endpoint_name, query=endpoint_config.query))
             else:
@@ -263,15 +297,20 @@ class HasuraManager:
         result = []
         for field in fields:
             # NOTE: Exclude autogenerated aggregate and pk fields
-            if field['name'].endswith('_aggregate') or field['name'].endswith('_by_pk'):
+            ignore_postfixes = ('_aggregate', '_by_pk', 'Aggregate', 'ByPk')
+            if any(map(lambda postfix: field['name'].endswith(postfix), ignore_postfixes)):
                 continue
 
             # NOTE: Exclude relations. Not reliable enough but ok for now.
             if (field['description'] or '').endswith('relationship'):
                 continue
 
-            print(field)
-            result.append(Field(name=field['name'], type=field['type']['ofType']['name'] if 'type' in field else None))
+            result.append(
+                Field(
+                    name=field['name'],
+                    type=field['type']['ofType']['name'],
+                )
+            )
 
         return result
 
@@ -291,12 +330,12 @@ class HasuraManager:
                 continue
 
             custom_root_fields = self._format_custom_root_fields(decamelized_table)
-            columns = await self._get_fields(table.name)
+            columns = await self._get_fields(decamelized_table)
             custom_column_names = self._format_custom_column_names(columns)
             args: Dict[str, Any] = {
                 'table': {
                     # NOTE: Remove schema prefix from table name
-                    'name': table.name.replace(self._database_config.schema_name, '')[1:],
+                    'name': decamelized_table.replace(self._database_config.schema_name, '')[1:],
                     'schema': self._database_config.schema_name,
                 },
                 'source': self._hasura_config.source,
@@ -315,15 +354,17 @@ class HasuraManager:
                 },
             )
 
-    def _format_rest_query(self, name: str, table: str, pk: str, fields: List[Field]) -> Dict[str, Any]:
+    def _format_rest_query(self, name: str, table: str, filter: str, fields: List[Field]) -> Dict[str, Any]:
+        name = humps.camelize(name) if self._hasura_config.camel_case else name
+        filter = humps.camelize(filter) if self._hasura_config.camel_case else filter
         table = humps.camelize(table) if self._hasura_config.camel_case else table
-        query_name = humps.camelize(name) if self._hasura_config.camel_case else name
-        query_args = ', '.join(f'${f.name}: {f.type}' for f in fields if f.name == pk)
-        query_filters = ', '.join('where: {' + f.name + ': {_eq: $' + f.name + '}}' for f in fields if f.name == pk)
+        fields = [f.camelize() for f in fields] if self._hasura_config.camel_case else fields
+        query_args = ', '.join(f'${f.name}: {f.type}' for f in fields if f.name == filter)
+        query_filters = ', '.join('where: {' + f.name + ': {_eq: $' + f.name + '}}' for f in fields if f.name == filter)
         query_fields = ' '.join(f.name for f in fields)
         return {
-            'name': query_name,
-            'query': 'query ' + query_name + ' (' + query_args + ') {' + table + '(' + query_filters + ') {' + query_fields + '}}',
+            'name': name,
+            'query': 'query ' + name + ' (' + query_args + ') {' + table + '(' + query_filters + ') {' + query_fields + '}}',
         }
 
     def _format_rest_endpoint(self, name: str) -> Dict[str, Any]:
@@ -376,7 +417,7 @@ class HasuraManager:
         }
 
     def _format_custom_column_names(self, fields: List[Field]) -> Dict[str, Any]:
-        return {f.name: humps.camelize(f.name) for f in fields}
+        return {humps.decamelize(f.name): humps.camelize(f.name) for f in fields}
 
     def _format_table(self, name: str) -> Dict[str, Any]:
         return {
