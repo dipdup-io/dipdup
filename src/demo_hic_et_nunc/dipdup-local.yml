@@ -10,9 +10,4 @@ database:
 hasura:
   url: http://127.0.0.1:8080
   admin_secret: ${ADMIN_SECRET:-changeme}
-  rest_endpoints:
-    tokens:
-      table: token
-    tokens_query:
-      query: "query tokens ($id: bigint) {hicEtNuncToken(where: {id: {_eq: $id}}) {creatorId id level supply timestamp}}"
   camel_case: True

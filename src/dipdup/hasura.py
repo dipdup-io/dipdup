@@ -1,7 +1,10 @@
 import asyncio
+from genericpath import exists
 import importlib
 import logging
 from contextlib import suppress
+from os.path import join, dirname
+from os import listdir
 from types import ModuleType
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type
 
@@ -83,7 +86,8 @@ class HasuraManager:
 
         # NOTE: 3. Generate and apply queries and rest endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
-        rest_endpoints_metadata = await self._generate_rest_endpoints_metadata()
+        query_names = [q['name'] for q in query_collections_metadata]
+        rest_endpoints_metadata = await self._generate_rest_endpoints_metadata(query_names)
 
         try:
             metadata['query_collections'][0]['definition']['queries'] = self._merge_metadata(
@@ -212,43 +216,45 @@ class HasuraManager:
 
         return list(metadata_tables.values())
 
+    def _iterate_graphql_queries(self) -> Iterator[Tuple[str, str]]:
+        package = importlib.import_module(self._package)
+        package_path = dirname(package.__file__)
+        graphql_path = join(package_path, 'graphql')
+        if not exists(graphql_path):
+            return
+        for filename in sorted(listdir(graphql_path)):
+            if not filename.endswith('.graphql'):
+                continue
+
+            with open(join(graphql_path, filename)) as file:
+                yield filename[:-8], file.read()
+
     async def _generate_query_collections_metadata(self) -> List[Dict[str, Any]]:
         queries = []
-        for endpoint_name, endpoint_config in self._hasura_config.rest_endpoints.items():
-            if endpoint_config.table:
-                if endpoint_config.filter:
-                    filter = endpoint_config.filter
-                else:
-                    # NOTE: Detect table's primary key.
-                    # NOTE: 1. Find matching model
-                    model_modules = self._get_model_modules()
-                    for _, model in _iter_models(model_modules):
-                        table_name = model._meta.db_table or pascal_to_snake(model.__name__)
-                        if table_name == endpoint_config.table:
-                            break
-                    else:
-                        raise ConfigurationError('`filter` field could not be omitted for views')
-                    # NOTE: 2. Find primary key field
-                    for field_name, field in model._meta.fields_map.items():
-                        if field.pk:
-                            filter = field_name
-                            break
-                    else:
-                        raise RuntimeError(f'Table `{table_name}` has no primary key. How is that possible?')
+        model_modules = self._get_model_modules()
+        for _, model in _iter_models(model_modules):
+            table_name = model._meta.db_table or pascal_to_snake(model.__name__)
 
-                table = f'{self._database_config.schema_name}_{endpoint_config.table}'
-                fields = await self._get_fields(table)
-                queries.append(self._format_rest_query(endpoint_name, table, filter, fields))
-            elif endpoint_config.query:
-                queries.append(dict(name=endpoint_name, query=endpoint_config.query))
+            for field_name, field in model._meta.fields_map.items():
+                if field.pk:
+                    filter = field_name
+                    break
             else:
-                raise ConfigurationError('Either `table` and `pk` or `query` fields must be specified')
+                raise RuntimeError(f'Table `{table_name}` has no primary key. How is that possible?')
+
+            table_name = f'{self._database_config.schema_name}_{table_name}'
+            fields = await self._get_fields(table_name)
+            queries.append(self._format_rest_query(table_name, table_name, filter, fields))
+
+        for query_name, query in self._iterate_graphql_queries():
+            queries.append(dict(name=query_name, query=query))
+
         return queries
 
-    async def _generate_rest_endpoints_metadata(self) -> List[Dict[str, Any]]:
+    async def _generate_rest_endpoints_metadata(self, query_names: List[str]) -> List[Dict[str, Any]]:
         rest_endpoints = []
-        for endpoint_name in self._hasura_config.rest_endpoints.keys():
-            rest_endpoints.append(self._format_rest_endpoint(endpoint_name))
+        for query_name in query_names:
+            rest_endpoints.append(self._format_rest_endpoint(query_name))
         return rest_endpoints
 
     def _merge_metadata(self, existing: List[Dict[str, Any]], generated: List[Dict[str, Any]], key) -> List[Dict[str, Any]]:
@@ -367,17 +373,17 @@ class HasuraManager:
             'query': 'query ' + name + ' (' + query_args + ') {' + table + '(' + query_filters + ') {' + query_fields + '}}',
         }
 
-    def _format_rest_endpoint(self, name: str) -> Dict[str, Any]:
+    def _format_rest_endpoint(self, query_name: str) -> Dict[str, Any]:
         return {
             "definition": {
                 "query": {
                     "collection_name": "allowed-queries",
-                    "query_name": name,
+                    "query_name": query_name,
                 },
             },
-            "url": name,
+            "url": query_name,
             "methods": ["GET", "POST"],
-            "name": name,
+            "name": query_name,
             "comment": None,
         }
 
