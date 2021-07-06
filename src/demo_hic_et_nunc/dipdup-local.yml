@@ -13,3 +13,4 @@ hasura:
   rest_endpoints:
     tokens:
       table: hic_et_nunc_token
+      pk: id

@@ -615,8 +615,8 @@ HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, Operatio
 @dataclass
 class RESTEndpointHasuraConfig:
     table: str
-    filters: Optional[List[str]] = None
-    relations: Optional[List[str]] = None
+    pk: Optional[str] = None
+    query: Optional[str] = None
 
 
 @dataclass

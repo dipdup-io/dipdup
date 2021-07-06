@@ -52,21 +52,36 @@ class HasuraManager:
 
         self._logger.info('Configuring Hasura')
         await self._healthcheck()
-        metadata = await self._generate_metadata()
-        existing_metadata = await self._fetch_metadata()
+        metadata = await self._fetch_metadata()
+
+        self._logger.info('Generating metadata')
+        # FIXME: Existing select permissions are lost
+        source_tables_metadata = await self._generate_source_tables_metadata()
+        query_collections_metadata = await self._generate_query_collections_metadata()
+        rest_endpoints_metadata = await self._generate_rest_endpoints_metadata()
 
         self._logger.info('Merging existing metadata')
-        metadata_tables = [table['table'] for table in metadata['tables']]
-        for table in existing_metadata['tables']:
-            if table['table'] not in metadata_tables:
-                metadata['tables'].append(table)
+        metadata['sources'][0]['tables'] = self._merge_metadata(
+            existing=metadata['sources'][0]['tables'],
+            generated=source_tables_metadata,
+            key=lambda m: m['table']['name'],
+        )
+        metadata['query_collections'][0]['definition']['queries'] = self._merge_metadata(
+            # TODO: Separate collection?
+            existing=metadata['query_collections'][0]['definition']['queries'],
+            generated=query_collections_metadata,
+            key=lambda m: m['name'],
+        )
+        metadata['rest_endpoints'] = self._merge_metadata(
+            existing=metadata.get('rest_endpoints', []),
+            generated=rest_endpoints_metadata,
+            key=lambda m: m['name'],
+        )
 
         await self._replace_metadata(metadata)
 
         if self._hasura_config.camel_case:
             await self._apply_camelcase()
-        
-        await self._create_rest_endpoints()
 
         self._logger.info('Hasura instance has been configured')
 
@@ -99,15 +114,13 @@ class HasuraManager:
 
     async def _fetch_metadata(self) -> Dict[str, Any]:
         self._logger.info('Fetching existing metadata')
-        metadata = await self._hasura_http_request(
-            endpoint='query',
+        return await self._hasura_http_request(
+            endpoint='metadata',
             json={
                 "type": "export_metadata",
                 "args": {},
             },
         )
-        # TODO: Support multiple sources. Forbidden in config for now.
-        return metadata['sources'][0]
 
     async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')
@@ -129,8 +142,8 @@ class HasuraManager:
             )[1]
         ]
 
-    async def _generate_metadata(self) -> Dict[str, Any]:
-        """Generate metadata based on project models and views.
+    async def _generate_source_tables_metadata(self) -> List[Dict[str, Any]]:
+        """Generate source tables metadata based on project models and views.
 
         Includes tables and their relations.
         """
@@ -151,14 +164,9 @@ class HasuraManager:
 
         for view in views:
             metadata_tables[view] = self._format_table(view)
-            metadata_tables[view]['select_permissions'].append(self._format_select_permissions())
 
         for app, model in _iter_models(models, int_models):
             table_name = model_tables[f'{app}.{model.__name__}']
-
-            metadata_tables[table_name]['select_permissions'].append(
-                self._format_select_permissions(),
-            )
 
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
@@ -179,7 +187,25 @@ class HasuraManager:
                         )
                     )
 
-        return self._format_metadata(tables=list(metadata_tables.values()))
+        return list(metadata_tables.values())
+
+    async def _generate_query_collections_metadata(self) -> List[Dict[str, Any]]:
+        queries = []
+        for endpoint_name, endpoint_config in self._hasura_config.rest_endpoints.items():
+            fields = await self._get_fields(endpoint_config.table)
+            queries.append(self._format_rest_query(endpoint_name, endpoint_config.table, endpoint_config.pk, fields))
+        return queries
+
+    async def _generate_rest_endpoints_metadata(self) -> List[Dict[str, Any]]:
+        rest_endpoints = []
+        for endpoint_name in self._hasura_config.rest_endpoints.keys():
+            rest_endpoints.append(self._format_rest_endpoint(endpoint_name))
+        return rest_endpoints
+
+    def _merge_metadata(self, existing: List[Dict[str, Any]], generated: List[Dict[str, Any]], key) -> List[Dict[str, Any]]:
+        existing_dict = {key(t): t for t in existing}
+        generated_dict = {key(t): t for t in generated}
+        return list({**existing_dict, **generated_dict}.values())
 
     async def _get_fields(self, name: str = 'query_root') -> List[Field]:
         query = (
@@ -267,51 +293,30 @@ class HasuraManager:
                 },
             )
 
-    async def _create_rest_endpoints(self) -> None:
-        if not self._hasura_config.rest_endpoints:
-            return
-        queries = []
-        for endpoint_name, endpoint_config in self._hasura_config.rest_endpoints.items():
-            fields = await self._get_fields(endpoint_config.table)
-            queries.append(self._format_rest_query(endpoint_name, endpoint_config.table, fields))
-        create_query_collection_request = self._format_create_query_collection(queries)
-        await self._hasura_http_request(
-            endpoint='query',
-            json=create_query_collection_request,
-        )
-        create_rest_endpoint_request = self._format_create_rest_endpoint(queries)
-        await self._hasura_http_request(
-            endpoint='query',
-            json=create_rest_endpoint_request,
-        )
-
-    def _format_rest_query(self, name: str, table: str, fields: List[Field]) -> Dict[str, Any]:
-        def _type(type_: str) -> str:
-            return type_.replace('bigint', 'Number')
-
-        query_name = humps.camelize(name)
-        query_args = ', '.join(f'${f.name}: {_type(f.type)}' for f in fields)
-        query_filters = ', '.join(f'{f.name}: ${f.name}' for f in fields)
+    def _format_rest_query(self, name: str, table: str, pk: str, fields: List[Field]) -> Dict[str, Any]:
+        query_name = name
+        query_args = ', '.join(f'${f.name}: {f.type}' for f in fields if f.name == pk)
+        query_filters = ', '.join('where: {' + f.name + ': {_eq: $' + f.name + '}}' for f in fields if f.name == pk)
         query_fields = ' '.join(f.name for f in fields)
         return {
             'name': query_name,
             'query': 'query ' + query_name + ' (' + query_args + ') {' + table + '(' + query_filters + ') {' + query_fields + '}}',
         }
 
-    def _format_create_rest_endpoint_subquery(self, query: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_rest_endpoint(self, name: str) -> Dict[str, Any]:
         return {
-            "type": "create_rest_endpoint",
-            "args": {
-                "name": query['name'],
-                "url": query['name'],
-                "definition": {
-                    "query": {
-                        "query_name": query['name'],
-                        "collection_name": "allowed-queries",
-                    },
-                },
-                "methods": ["GET"],
+            "definition": {
+                "query": {
+                    "collection_name": "allowed-queries",
+                    "query_name": name
+                }
             },
+            "url": name,
+            "methods": [
+                "GET", "POST"
+            ],
+            "name": name,
+            "comment": None
         }
 
     def _format_create_query_collection(self, queries: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -333,14 +338,6 @@ class HasuraManager:
                     "args": {"collection": "allowed-queries"},
                 },
             ],
-        }
-
-
-    def _format_create_rest_endpoint(self, queries: List[Dict[str, Any]]) -> Dict[str, Any]:
-        return {
-            "type": "bulk",
-            "source": "default",
-            "args": [self._format_create_rest_endpoint_subquery(q) for q in queries]
         }
 
     def _format_custom_root_fields(self, table: str) -> Dict[str, Any]:
@@ -384,7 +381,9 @@ class HasuraManager:
             },
             "object_relationships": [],
             "array_relationships": [],
-            "select_permissions": [],
+            "select_permissions": [
+                self._format_select_permissions(),
+            ],
         }
 
     def _format_array_relationship(
@@ -423,10 +422,4 @@ class HasuraManager:
                 "allow_aggregations": self._hasura_config.allow_aggregations,
                 "limit": self._hasura_config.select_limit,
             },
-        }
-
-    def _format_metadata(self, tables: List[Dict[str, Any]]) -> Dict[str, Any]:
-        return {
-            "version": 2,
-            "tables": tables,
         }
