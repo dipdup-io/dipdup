@@ -614,7 +614,7 @@ HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, Operatio
 
 @dataclass
 class RESTEndpointHasuraConfig:
-    table: str
+    table: Optional[str] = None
     pk: Optional[str] = None
     query: Optional[str] = None
 
@@ -628,7 +628,7 @@ class HasuraConfig:
     allow_aggregations: bool = True
     camel_case: bool = False
     connection_timeout: int = 5
-    rest_endpoints: Optional[Dict[str, RESTEndpointHasuraConfig]] = None
+    rest_endpoints: Dict[str, RESTEndpointHasuraConfig] = Field(default_factory=dict)
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):
