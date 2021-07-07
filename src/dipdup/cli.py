@@ -2,7 +2,6 @@ import asyncio
 import fileinput
 import logging
 import os
-from asyncio.log import logger
 from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
@@ -167,7 +166,7 @@ async def configure_hasura(ctx, reset: bool):
     url = config.database.connection_string
     models = f'{config.package}.models'
     if not config.hasura:
-        logger.error('`hasura` config section is empty')
+        _logger.error('`hasura` config section is empty')
         return
     hasura = HasuraManager(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
 
