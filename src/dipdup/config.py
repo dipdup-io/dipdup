@@ -142,7 +142,7 @@ class TzktDatasourceConfig(NameMixin):
     kind: Literal['tzkt']
     url: str
 
-    cache: bool = False
+    cache: Optional[bool] = None
     retry_count: int = DEFAULT_RETRY_COUNT
     retry_sleep: int = DEFAULT_RETRY_SLEEP
 
@@ -168,7 +168,7 @@ class BcdDatasourceConfig(NameMixin):
     url: str
     network: str
 
-    cache: bool = False
+    cache: Optional[bool] = None
     retry_count: int = DEFAULT_RETRY_COUNT
     retry_sleep: int = DEFAULT_RETRY_SLEEP
 
@@ -190,7 +190,7 @@ class CoinbaseDatasourceConfig(NameMixin):
     secret_key: Optional[str] = None
     passphrase: Optional[str] = None
 
-    cache: bool = False
+    cache: Optional[bool] = None
     retry_count: int = DEFAULT_RETRY_COUNT
     retry_sleep: int = DEFAULT_RETRY_SLEEP
 

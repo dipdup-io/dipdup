@@ -230,9 +230,10 @@ class DipDup:
             if name in self._datasources:
                 continue
 
+            cache = self._config.cache_enabled if datasource_config.cache is None else datasource_config.cache
             if isinstance(datasource_config, TzktDatasourceConfig):
                 proxy = DatasourceRequestProxy(
-                    cache=self._config.cache_enabled,
+                    cache=cache,
                     retry_count=datasource_config.retry_count,
                     retry_sleep=datasource_config.retry_sleep,
                 )
@@ -242,7 +243,7 @@ class DipDup:
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 proxy = DatasourceRequestProxy(
-                    cache=self._config.cache_enabled,
+                    cache=cache,
                     retry_count=datasource_config.retry_count,
                     retry_sleep=datasource_config.retry_sleep,
                 )
@@ -253,7 +254,7 @@ class DipDup:
                 )
             elif isinstance(datasource_config, CoinbaseDatasourceConfig):
                 proxy = DatasourceRequestProxy(
-                    cache=self._config.cache_enabled,
+                    cache=cache,
                     retry_count=datasource_config.retry_count,
                     retry_sleep=datasource_config.retry_sleep,
                     ratelimiter=AsyncLimiter(max_rate=10, time_period=1),
