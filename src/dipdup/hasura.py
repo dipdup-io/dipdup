@@ -16,6 +16,7 @@ from tortoise import Model, fields
 from tortoise.transactions import get_connection
 
 from dipdup.config import HasuraConfig, PostgresDatabaseConfig, pascal_to_snake
+from dipdup.exceptions import ConfigurationError
 from dipdup.utils import http_request
 
 
@@ -374,16 +375,24 @@ class HasuraManager:
             )
 
     def _format_rest_query(self, name: str, table: str, filter: str, fields: List[Field]) -> Dict[str, Any]:
+        if not table.endswith('_by_pk'):
+            table += '_by_pk'
         name = humps.camelize(name) if self._hasura_config.camel_case else name
         filter = humps.camelize(filter) if self._hasura_config.camel_case else filter
         table = humps.camelize(table) if self._hasura_config.camel_case else table
         fields = [f.camelize() for f in fields] if self._hasura_config.camel_case else fields
-        query_args = ', '.join(f'${f.name}: {f.type}' for f in fields if f.name == filter)
-        query_filters = ', '.join('where: {' + f.name + ': {_eq: $' + f.name + '}}' for f in fields if f.name == filter)
+
+        try:
+            filter_field = next(f for f in fields if f.name == filter)
+        except StopIteration as e:
+            raise ConfigurationError(f'Table `{table}` has no column `{filter}`') from e
+
+        query_arg = f'${filter_field.name}: {filter_field.type}!'
+        query_filter = filter_field.name + ': $' + filter_field.name
         query_fields = ' '.join(f.name for f in fields)
         return {
             'name': name,
-            'query': 'query ' + name + ' (' + query_args + ') {' + table + '(' + query_filters + ') {' + query_fields + '}}',
+            'query': 'query ' + name + ' (' + query_arg + ') {' + table + '(' + query_filter + ') {' + query_fields + '}}',
         }
 
     def _format_rest_endpoint(self, query_name: str) -> Dict[str, Any]:
