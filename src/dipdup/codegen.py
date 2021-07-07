@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import subprocess
 from contextlib import suppress
 from copy import copy
@@ -240,7 +241,7 @@ class DipDupCodeGenerator:
                 if exists(output_path):
                     with open(output_path) as type_file:
                         first_line = type_file.readline()
-                        if first_line == '# dipdup: ignore\n':
+                        if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
                             continue
 
                 if name == 'storage':
