@@ -1,22 +1,21 @@
 import asyncio
-from genericpath import exists
 import importlib
 import logging
 from contextlib import suppress
-from os.path import join, dirname
 from os import listdir
+from os.path import dirname, join
 from types import ModuleType
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type
 
 import aiohttp
 import humps  # type: ignore
 from aiohttp import ClientConnectorError, ClientOSError
+from genericpath import exists
 from pydantic.dataclasses import dataclass
 from tortoise import Model, fields
 from tortoise.transactions import get_connection
 
 from dipdup.config import HasuraConfig, PostgresDatabaseConfig, pascal_to_snake
-from dipdup.exceptions import ConfigurationError
 from dipdup.utils import http_request
 
 
@@ -59,11 +58,15 @@ class HasuraManager:
         self._database_config = database_config
         self._session = aiohttp.ClientSession()
 
-    async def configure(self) -> None:
+    async def configure(self, reset: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
         self._logger.info('Configuring Hasura')
         await self._healthcheck()
+
+        if reset:
+            await self._reset_metadata()
+
         metadata = await self._fetch_metadata()
 
         self._logger.info('Generating metadata')
@@ -135,6 +138,16 @@ class HasuraManager:
             await asyncio.sleep(1)
         else:
             raise HasuraError(f'Hasura instance not responding for {self._hasura_config.connection_timeout} seconds')
+
+    async def _reset_metadata(self) -> None:
+        self._logger.info('Resetting metadata')
+        await self._hasura_http_request(
+            endpoint='metadata',
+            json={
+                "type": "clear_metadata",
+                "args": {},
+            },
+        )
 
     async def _fetch_metadata(self) -> Dict[str, Any]:
         self._logger.info('Fetching existing metadata')

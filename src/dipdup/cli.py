@@ -2,10 +2,11 @@ import asyncio
 import fileinput
 import logging
 import os
+from asyncio.log import logger
 from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
-from typing import List, NoReturn
+from typing import List, NoReturn, cast
 
 import click
 import sentry_sdk
@@ -13,7 +14,7 @@ from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
 from dipdup import __spec_version__, __version__
-from dipdup.config import DipDupConfig, LoggingConfig
+from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import HasuraManager
@@ -158,16 +159,20 @@ async def clear_cache(ctx):
 
 
 @cli.command(help='Configure Hasura GraphQL Engine')
+@click.option('--reset', is_flag=True, help='Reset metadata before configuring')
 @click.pass_context
 @click_async
-async def configure_hasura(ctx):
+async def configure_hasura(ctx, reset: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
-    hasura = HasuraManager(config.package, config.hasura, config.database)
+    if not config.hasura:
+        logger.error('`hasura` config section is empty')
+        return
+    hasura = HasuraManager(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
 
     async with tortoise_wrapper(url, models):
         try:
-            await hasura.configure()
+            await hasura.configure(reset)
         finally:
             await hasura.close_session()
