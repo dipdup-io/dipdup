@@ -400,27 +400,6 @@ class HasuraManager:
             "comment": None,
         }
 
-    def _format_create_query_collection(self, queries: List[Dict[str, Any]]) -> Dict[str, Any]:
-        return {
-            "type": "bulk",
-            "source": "default",
-            "args": [
-                {
-                    "type": "create_query_collection",
-                    "args": {
-                        "name": "allowed-queries",
-                        "definition": {
-                            "queries": queries,
-                        },
-                    },
-                },
-                {
-                    "type": "add_collection_to_allowlist",
-                    "args": {"collection": "allowed-queries"},
-                },
-            ],
-        }
-
     def _format_custom_root_fields(self, table: str) -> Dict[str, Any]:
         # NOTE: Do not change original Hasura format, REST endpoints generation will be broken otherwise
         return {
