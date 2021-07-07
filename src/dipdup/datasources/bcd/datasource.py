@@ -7,11 +7,11 @@ Address = str
 
 
 class BcdDatasource:
-    def __init__(self, url: str, network: str, cache: bool) -> None:
+    def __init__(self, url: str, network: str, proxy=DatasourceRequestProxy()) -> None:
         self._url = url.rstrip('/')
         self._network = network
+        self._proxy = proxy
         self._logger = logging.getLogger('dipdup.bcd')
-        self._proxy = DatasourceRequestProxy(cache)
 
     async def close_session(self) -> None:
         await self._proxy.close_session()

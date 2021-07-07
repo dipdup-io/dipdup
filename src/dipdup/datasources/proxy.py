@@ -8,10 +8,8 @@ import aiohttp
 from aiolimiter import AsyncLimiter
 from fcache.cache import FileCache  # type: ignore
 
+from dipdup.config import DEFAULT_RETRY_COUNT, DEFAULT_RETRY_SLEEP  # type: ignore
 from dipdup.utils import http_request
-
-DEFAULT_RETRY_COUNT = 3
-DEFAULT_RETRY_SLEEP = 1
 
 
 class DatasourceRequestProxy:
@@ -22,15 +20,15 @@ class DatasourceRequestProxy:
     def __init__(
         self,
         cache: bool = False,
-        ratelimiter: Optional[AsyncLimiter] = None,
         retry_count: int = DEFAULT_RETRY_COUNT,
         retry_sleep: int = DEFAULT_RETRY_SLEEP,
+        ratelimiter: Optional[AsyncLimiter] = None,
     ) -> None:
         self._logger = logging.getLogger(__name__)
         self._cache = FileCache('dipdup', flag='cs') if cache else None
-        self._ratelimiter = ratelimiter
         self._retry_count = retry_count
         self._retry_sleep = retry_sleep
+        self._ratelimiter = ratelimiter
         self._session = aiohttp.ClientSession()
 
     async def _wrapped_request(self, method: str, **kwargs):
