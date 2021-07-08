@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+import json
 import logging
 from contextlib import suppress
 from os import listdir
@@ -128,7 +129,8 @@ class HasuraManager:
             json=json,
             headers=self._hasura_config.headers,
         )
-        if 'error' in result:
+        self._logger.debug('Response: %s', result)
+        if 'error' in result or 'errors' in result:
             raise HasuraError('Can\'t configure Hasura instance', result)
         return result
 
@@ -280,34 +282,36 @@ class HasuraManager:
         return list({**existing_dict, **generated_dict}.values())
 
     async def _get_fields(self, name: str = 'query_root') -> List[Field]:
-        query = (
-            '''
-            query introspectionQuery {
-                __type(name: "'''
-            + name
-            + '''") {
-                    kind
-                    name
-                    fields {
-                        name
-                        description
-                        type {
-                            name
-                            kind
-                            ofType {
-                            name
-                            kind
-                            }
-                        }
-                    }
-                }
-            }
-        '''
+        query = '''
+query introspectionQuery($name: String!) {
+  __type(name: $name) {
+    kind
+    name
+    fields {
+      name
+      description
+      type {
+        name
+        kind
+        ofType {
+          name
+          kind
+        }
+      }
+    }
+  }
+}
+        '''.replace(
+            '\n', ' '
+        ).replace(
+            '  ', ''
         )
-
         result = await self._hasura_http_request(
             endpoint='graphql',
-            json={'query': query},
+            json={
+                'query': query,
+                'variables': {'name': name},
+            },
         )
         try:
             fields_json = result['data']['__type']['fields']
@@ -325,10 +329,15 @@ class HasuraManager:
             if (field_json['description'] or '').endswith('relationship'):
                 continue
 
+            # TODO: More precise matching
+            try:
+                type_ = field_json['type']['ofType']['name']
+            except TypeError:
+                type_ = field_json['type']['name']
             fields.append(
                 Field(
                     name=field_json['name'],
-                    type=field_json['type']['ofType']['name'],
+                    type=type_,
                 )
             )
 

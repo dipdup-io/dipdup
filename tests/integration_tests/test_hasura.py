@@ -10,9 +10,6 @@ from dipdup.config import HasuraConfig, PostgresDatabaseConfig
 from dipdup.hasura import HasuraManager
 from dipdup.utils import tortoise_wrapper
 
-logging.basicConfig()
-logging.getLogger().setLevel(0)
-
 
 class HasuraTest(IsolatedAsyncioTestCase):
     async def test_configure_hasura(self):
@@ -40,6 +37,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
 
             hasura_manager = HasuraManager('demo_hic_et_nunc', hasura_config, database_config)
             hasura_manager._get_views = AsyncMock(return_value=[])
+            await hasura_manager._proxy._session.close()
             hasura_manager._proxy = Mock()
             hasura_manager._proxy.http_request = AsyncMock(
                 side_effect=[
