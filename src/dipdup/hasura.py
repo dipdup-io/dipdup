@@ -17,7 +17,6 @@ from tortoise.transactions import get_connection
 from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.datasources.proxy import HTTPRequestProxy
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils import http_request
 
 
 @dataclass

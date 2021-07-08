@@ -1,0 +1,142 @@
+{
+    "data": {
+        "__type": {
+            "kind": "OBJECT",
+            "name": "hic_et_nunc_swap",
+            "fields": [
+                {
+                    "name": "amount",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "bigint",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "amount_left",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "bigint",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "creator",
+                    "description": "An object relationship",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "hic_et_nunc_holder",
+                            "kind": "OBJECT"
+                        }
+                    }
+                },
+                {
+                    "name": "creator_id",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "String",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "id",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "bigint",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "level",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "bigint",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "price",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "bigint",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "status",
+                    "description": "ACTIVE: 0\\nFINISHED: 1\\nCANCELED: 2",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "smallint",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "timestamp",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "timestamptz",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "trades",
+                    "description": "An array relationship",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": null,
+                            "kind": "LIST"
+                        }
+                    }
+                },
+                {
+                    "name": "trades_aggregate",
+                    "description": "An aggregate relationship",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "hic_et_nunc_trade_aggregate",
+                            "kind": "OBJECT"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
