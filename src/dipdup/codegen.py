@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import subprocess
 from contextlib import suppress
 from copy import copy
@@ -236,6 +237,12 @@ class DipDupCodeGenerator:
 
                 input_path = join(root, file)
                 output_path = join(types_root, f'{pascal_to_snake(name)}.py')
+
+                if exists(output_path):
+                    with open(output_path) as type_file:
+                        first_line = type_file.readline()
+                        if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
+                            continue
 
                 if name == 'storage':
                     name = '_'.join([root.split('/')[-1], name])
