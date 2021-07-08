@@ -1,6 +1,5 @@
 import asyncio
 import importlib
-import json
 import logging
 from contextlib import suppress
 from os import listdir

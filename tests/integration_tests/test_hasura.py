@@ -1,5 +1,4 @@
 import json
-import logging
 from os.path import dirname, join
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, Mock
