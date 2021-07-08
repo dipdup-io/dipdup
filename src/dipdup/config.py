@@ -26,6 +26,8 @@ ROLLBACK_HANDLER = 'on_rollback'
 CONFIGURE_HANDLER = 'on_configure'
 BLOCK_HANDLER = 'on_block'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
+DEFAULT_RETRY_COUNT = 3
+DEFAULT_RETRY_SLEEP = 1
 
 sys.path.append(os.getcwd())
 _logger = logging.getLogger(__name__)
@@ -140,6 +142,10 @@ class TzktDatasourceConfig(NameMixin):
     kind: Literal['tzkt']
     url: str
 
+    cache: Optional[bool] = None
+    retry_count: int = DEFAULT_RETRY_COUNT
+    retry_sleep: int = DEFAULT_RETRY_SLEEP
+
     def __hash__(self):
         return hash(self.url)
 
@@ -162,6 +168,10 @@ class BcdDatasourceConfig(NameMixin):
     url: str
     network: str
 
+    cache: Optional[bool] = None
+    retry_count: int = DEFAULT_RETRY_COUNT
+    retry_sleep: int = DEFAULT_RETRY_SLEEP
+
     def __hash__(self):
         return hash(self.url + self.network)
 
@@ -179,6 +189,10 @@ class CoinbaseDatasourceConfig(NameMixin):
     api_key: Optional[str] = None
     secret_key: Optional[str] = None
     passphrase: Optional[str] = None
+
+    cache: Optional[bool] = None
+    retry_count: int = DEFAULT_RETRY_COUNT
+    retry_sleep: int = DEFAULT_RETRY_SLEEP
 
     def __hash__(self):
         return hash(self.kind)

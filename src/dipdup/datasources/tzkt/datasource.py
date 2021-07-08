@@ -263,9 +263,14 @@ class TzktDatasource(IndexDatasource):
     * Calls Matchers to match received operation groups with indexes' pattern and spawn callbacks on match
     """
 
-    def __init__(self, url: str, cache: bool) -> None:
+    def __init__(
+        self,
+        url: str,
+        proxy: DatasourceRequestProxy,
+    ) -> None:
         super().__init__()
         self._url = url.rstrip('/')
+        self._proxy = proxy
 
         self._logger = logging.getLogger('dipdup.tzkt')
         self._transaction_subscriptions: Set[str] = set()
@@ -273,7 +278,6 @@ class TzktDatasource(IndexDatasource):
         self._big_map_subscriptions: Dict[str, List[str]] = {}
 
         self._client: Optional[BaseHubConnection] = None
-        self._proxy = DatasourceRequestProxy(cache)
 
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None

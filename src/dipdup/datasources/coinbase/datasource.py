@@ -2,8 +2,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Tuple
 
-from aiolimiter import AsyncLimiter
-
 from dipdup.datasources.coinbase.models import CandleData, CandleInterval
 from dipdup.datasources.proxy import DatasourceRequestProxy
 
@@ -13,12 +11,9 @@ WEBSOCKET_API_URL = 'wss://ws-feed.pro.coinbase.com'
 
 
 class CoinbaseDatasource:
-    def __init__(self, cache: bool) -> None:
+    def __init__(self, proxy: DatasourceRequestProxy) -> None:
         self._logger = logging.getLogger('dipdup.coinbase')
-        self._proxy = DatasourceRequestProxy(
-            cache=cache,
-            ratelimiter=AsyncLimiter(max_rate=10, time_period=1),
-        )
+        self._proxy = proxy
 
     async def close_session(self) -> None:
         await self._proxy.close_session()
