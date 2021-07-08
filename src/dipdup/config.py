@@ -90,6 +90,15 @@ class PostgresDatabaseConfig:
 
 
 @dataclass
+class HTTPConfig:
+    cache: bool = True
+    retry_count: int = DEFAULT_RETRY_COUNT
+    retry_sleep: int = DEFAULT_RETRY_SLEEP
+    ratelimit_rate: Optional[int] = None
+    ratelimit_period: Optional[int] = None
+
+
+@dataclass
 class ContractConfig:
     """Contract config
 
@@ -141,10 +150,7 @@ class TzktDatasourceConfig(NameMixin):
 
     kind: Literal['tzkt']
     url: str
-
-    cache: Optional[bool] = None
-    retry_count: int = DEFAULT_RETRY_COUNT
-    retry_sleep: int = DEFAULT_RETRY_SLEEP
+    http: Optional[HTTPConfig] = None
 
     def __hash__(self):
         return hash(self.url)
@@ -167,10 +173,7 @@ class BcdDatasourceConfig(NameMixin):
     kind: Literal['bcd']
     url: str
     network: str
-
-    cache: Optional[bool] = None
-    retry_count: int = DEFAULT_RETRY_COUNT
-    retry_sleep: int = DEFAULT_RETRY_SLEEP
+    http: Optional[HTTPConfig] = None
 
     def __hash__(self):
         return hash(self.url + self.network)
@@ -189,10 +192,7 @@ class CoinbaseDatasourceConfig(NameMixin):
     api_key: Optional[str] = None
     secret_key: Optional[str] = None
     passphrase: Optional[str] = None
-
-    cache: Optional[bool] = None
-    retry_count: int = DEFAULT_RETRY_COUNT
-    retry_sleep: int = DEFAULT_RETRY_SLEEP
+    http: Optional[HTTPConfig] = None
 
     def __hash__(self):
         return hash(self.kind)
@@ -631,11 +631,12 @@ class HasuraConfig:
     url: str
     admin_secret: Optional[str] = None
     source: str = 'default'
-    select_limit: int = 200
+    select_limit: int = 100
     allow_aggregations: bool = True
     camel_case: bool = False
     connection_timeout: int = 5
     rest: bool = True
+    http: Optional[HTTPConfig] = None
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):

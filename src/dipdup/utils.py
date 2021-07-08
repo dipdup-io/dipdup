@@ -107,7 +107,10 @@ async def http_request(session: aiohttp.ClientSession, method: str, **kwargs):
         **kwargs.pop('headers', {}),
         'User-Agent': f'dipdup/{__version__}',
     }
-    request_string = kwargs['url'] + '?' + '&'.join([f'{key}={value}' for key, value in kwargs.get('params', {}).items()])
+    url = kwargs['url']
+    params = kwargs.get('params', {})
+    params_string = '&'.join([f'{k}={v}' for k, v in params.items()])
+    request_string = f'{url}?{params_string}'.rstrip('?')
     _logger.debug('Calling `%s`', request_string)
     async with getattr(session, method)(
         skip_auto_headers={'User-Agent'},

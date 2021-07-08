@@ -47,7 +47,7 @@ class Index:
         state = await self.get_state()
         if self._config.last_block:
             last_level = self._config.last_block
-            await self._synchronize(last_level)
+            await self._synchronize(last_level, cache=True)
         elif self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to the latest block')
             last_level = (await self._datasource.get_latest_block())['level']
@@ -60,7 +60,7 @@ class Index:
             await self._process_queue()
 
     @abstractmethod
-    async def _synchronize(self, last_level: int) -> None:
+    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         ...
 
     @abstractmethod
@@ -111,7 +111,7 @@ class OperationIndex(Index):
                 level, operations = self._queue.popleft()
                 await self._process_level_operations(level, operations)
 
-    async def _synchronize(self, last_level: int) -> None:
+    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         state = await self.get_state()
         first_level = state.level
@@ -131,6 +131,7 @@ class OperationIndex(Index):
             last_level=last_level,
             transaction_addresses=transaction_addresses,
             origination_addresses=origination_addresses,
+            cache=cache,
         )
 
         async for level, operations in fetcher.fetch_operations_by_level():
@@ -346,7 +347,7 @@ class BigMapIndex(Index):
                 level, big_maps = self._queue.popleft()
                 await self._process_level_big_maps(level, big_maps)
 
-    async def _synchronize(self, last_level: int) -> None:
+    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         state = await self.get_state()
         first_level = state.level
@@ -366,6 +367,7 @@ class BigMapIndex(Index):
             last_level=last_level,
             big_map_addresses=big_map_addresses,
             big_map_paths=big_map_paths,
+            cache=cache,
         )
 
         async for level, big_maps in fetcher.fetch_big_maps_by_level():

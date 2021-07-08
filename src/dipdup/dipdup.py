@@ -6,7 +6,6 @@ from os.path import join
 from posix import listdir
 from typing import Dict, List, Optional, cast
 
-from aiolimiter import AsyncLimiter
 from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
 from genericpath import exists
 from tortoise import Tortoise
@@ -34,7 +33,6 @@ from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import HasuraManager
@@ -238,37 +236,20 @@ class DipDup:
             if name in self._datasources:
                 continue
 
-            cache = self._config.cache_enabled if datasource_config.cache is None else datasource_config.cache
             if isinstance(datasource_config, TzktDatasourceConfig):
-                proxy = DatasourceRequestProxy(
-                    cache=cache,
-                    retry_count=datasource_config.retry_count,
-                    retry_sleep=datasource_config.retry_sleep,
-                )
                 datasource = TzktDatasource(
                     url=datasource_config.url,
-                    proxy=proxy,
+                    http_config=datasource_config.http,
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
-                proxy = DatasourceRequestProxy(
-                    cache=cache,
-                    retry_count=datasource_config.retry_count,
-                    retry_sleep=datasource_config.retry_sleep,
-                )
                 datasource = BcdDatasource(
                     url=datasource_config.url,
                     network=datasource_config.network,
-                    proxy=proxy,
+                    http_config=datasource_config.http,
                 )
             elif isinstance(datasource_config, CoinbaseDatasourceConfig):
-                proxy = DatasourceRequestProxy(
-                    cache=cache,
-                    retry_count=datasource_config.retry_count,
-                    retry_sleep=datasource_config.retry_sleep,
-                    ratelimiter=AsyncLimiter(max_rate=10, time_period=1),
-                )
                 datasource = CoinbaseDatasource(
-                    proxy=proxy,
+                    http_config=datasource_config.http,
                 )
             else:
                 raise NotImplementedError
