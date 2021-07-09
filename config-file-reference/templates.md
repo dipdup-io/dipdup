@@ -20,6 +20,8 @@ templates:
             entrypoint: call
 ```
 
+{% page-ref page="indexes/template.md" %}
+
 ## Placeholders
 
 Templates have the same syntax as [indexes](indexes/) of all kinds, the only difference is that they additionally support placeholders enabling parameterization:
