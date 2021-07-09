@@ -1,0 +1,13 @@
+database:
+  kind: postgres
+  host: 127.0.0.1
+  port: 6423
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD:-changeme}
+  database: ${POSTGRES_DB:-dipdup}
+  schema_name: hic_et_nunc
+
+hasura:
+  url: http://127.0.0.1:8080
+  admin_secret: ${ADMIN_SECRET:-changeme}
+  camel_case: True

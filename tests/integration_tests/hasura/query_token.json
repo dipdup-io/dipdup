@@ -1,0 +1,82 @@
+{
+    "data": {
+        "__type": {
+            "kind": "OBJECT",
+            "name": "hic_et_nunc_token",
+            "fields": [
+                {
+                    "name": "creator",
+                    "description": "An object relationship",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "hic_et_nunc_holder",
+                            "kind": "OBJECT"
+                        }
+                    }
+                },
+                {
+                    "name": "creator_id",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "String",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "id",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "bigint",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "level",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "bigint",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "supply",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "bigint",
+                            "kind": "SCALAR"
+                        }
+                    }
+                },
+                {
+                    "name": "timestamp",
+                    "description": null,
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "timestamptz",
+                            "kind": "SCALAR"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

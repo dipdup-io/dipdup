@@ -1,0 +1,175 @@
+{
+    "data": {
+        "__type": {
+            "kind": "OBJECT",
+            "name": "query_root",
+            "fields": [
+                {
+                    "name": "hic_et_nunc_dipdup_state",
+                    "description": "fetch data from the table: \"hic_et_nunc.dipdup_state\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": null,
+                            "kind": "LIST"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_dipdup_state_aggregate",
+                    "description": "fetch aggregated fields from the table: \"hic_et_nunc.dipdup_state\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "hic_et_nunc_dipdup_state_aggregate",
+                            "kind": "OBJECT"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_dipdup_state_by_pk",
+                    "description": "fetch data from the table: \"hic_et_nunc.dipdup_state\" using primary key columns",
+                    "type": {
+                        "name": "hic_et_nunc_dipdup_state",
+                        "kind": "OBJECT",
+                        "ofType": null
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_holder",
+                    "description": "fetch data from the table: \"hic_et_nunc.holder\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": null,
+                            "kind": "LIST"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_holder_aggregate",
+                    "description": "fetch aggregated fields from the table: \"hic_et_nunc.holder\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "hic_et_nunc_holder_aggregate",
+                            "kind": "OBJECT"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_holder_by_pk",
+                    "description": "fetch data from the table: \"hic_et_nunc.holder\" using primary key columns",
+                    "type": {
+                        "name": "hic_et_nunc_holder",
+                        "kind": "OBJECT",
+                        "ofType": null
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_swap",
+                    "description": "fetch data from the table: \"hic_et_nunc.swap\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": null,
+                            "kind": "LIST"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_swap_aggregate",
+                    "description": "fetch aggregated fields from the table: \"hic_et_nunc.swap\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "hic_et_nunc_swap_aggregate",
+                            "kind": "OBJECT"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_swap_by_pk",
+                    "description": "fetch data from the table: \"hic_et_nunc.swap\" using primary key columns",
+                    "type": {
+                        "name": "hic_et_nunc_swap",
+                        "kind": "OBJECT",
+                        "ofType": null
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_token",
+                    "description": "fetch data from the table: \"hic_et_nunc.token\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": null,
+                            "kind": "LIST"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_token_aggregate",
+                    "description": "fetch aggregated fields from the table: \"hic_et_nunc.token\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "hic_et_nunc_token_aggregate",
+                            "kind": "OBJECT"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_token_by_pk",
+                    "description": "fetch data from the table: \"hic_et_nunc.token\" using primary key columns",
+                    "type": {
+                        "name": "hic_et_nunc_token",
+                        "kind": "OBJECT",
+                        "ofType": null
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_trade",
+                    "description": "fetch data from the table: \"hic_et_nunc.trade\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": null,
+                            "kind": "LIST"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_trade_aggregate",
+                    "description": "fetch aggregated fields from the table: \"hic_et_nunc.trade\"",
+                    "type": {
+                        "name": null,
+                        "kind": "NON_NULL",
+                        "ofType": {
+                            "name": "hic_et_nunc_trade_aggregate",
+                            "kind": "OBJECT"
+                        }
+                    }
+                },
+                {
+                    "name": "hic_et_nunc_trade_by_pk",
+                    "description": "fetch data from the table: \"hic_et_nunc.trade\" using primary key columns",
+                    "type": {
+                        "name": "hic_et_nunc_trade",
+                        "kind": "OBJECT",
+                        "ofType": null
+                    }
+                }
+            ]
+        }
+    }
+}
