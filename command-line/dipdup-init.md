@@ -21,8 +21,7 @@ You might need to install additional [plugins](https://pydantic-docs.helpmanual.
 
 DipDup generates only necessary models:
 
-* For `operation` ****index it will generate storage type classes for all contracts met in handler patterns plus parameter type classes for all destination+entrypoint pairs.
-* For `big_map` index it will generate key and storage type classes for all big map paths in handler configs.
+* For **operation index** it will generate storage type classes for all contracts met in handler patterns plus parameter type classes for all destination+entrypoint pairs.
 
 ### Naming
 
@@ -116,7 +115,7 @@ async def on_update(
 )
 ```
 
-where `BigMapDiff` contains action \(allocate, update, or remove\) and nullable key and value **\(typed\).**
+where `BigMapDiff` contains action \(allocate, update, or remove\), updated key, and nullable value **\(typed\).**
 
 **NOTE** that you can safely change argument names \(e.g. in case of collisions\).
 {% endtab %}
@@ -126,17 +125,9 @@ where `BigMapDiff` contains action \(allocate, update, or remove\) and nullable 
 If you use index templates your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same **`typename`** and raises an error otherwise.
 {% endhint %}
 
-### Default handlers
+### Rollback
 
-There is a special handlers DipDup generates for all indexes. They covers network events and initialization hooks. Names of those handlers are reserved, you can't use them in config.
-
-#### on\_rollback.py
-
-It tells DipDip how to handle chain reorgs, which is a purely application-specific logic especially if there are stateful entities. The default implementation does nothing if rollback size is 1 block and full reindexing otherwise.
-
-#### on\_configure.py
-
-Executed before starting indexes. Allows to configure DipDup dynamically based on data from external sources. Datasources are already initialized at the time of execution and available at `ctx.datasources`. See [Handler context](../advanced/handler-context.md) for more details how to perform configuration.
+There is a special handler DipDup generates for all indexes. It tells DipDip how to handle chain reorgs, which is a purely application-specific logic especially if there are stateful entities. The default implementation does nothing if rollback size is 1 block and full reindexing otherwise.
 
 ## Models
 

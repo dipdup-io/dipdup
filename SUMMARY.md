@@ -11,6 +11,7 @@
   * [indexes](config-file-reference/indexes/README.md)
     * [operation](config-file-reference/indexes/operation.md)
     * [big\_map](config-file-reference/indexes/big_map.md)
+    * [template](config-file-reference/indexes/template.md)
   * [templates](config-file-reference/templates.md)
   * [jobs](config-file-reference/jobs.md)
   * [hasura](config-file-reference/hasura.md)
