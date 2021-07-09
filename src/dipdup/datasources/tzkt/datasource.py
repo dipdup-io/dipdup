@@ -639,7 +639,7 @@ class TzktDatasource(IndexDatasource):
             counter=operation_json['counter'],
             sender_address=operation_json['sender']['address'] if operation_json.get('sender') else None,
             target_address=operation_json['target']['address'] if operation_json.get('target') else None,
-            amount=operation_json.get('amount'),
+            amount=operation_json.get('amount') or operation_json.get('contractBalance'),
             status=operation_json['status'],
             has_internals=operation_json.get('hasInternals'),
             sender_alias=operation_json['sender'].get('alias'),
