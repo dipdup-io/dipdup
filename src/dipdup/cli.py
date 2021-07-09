@@ -5,55 +5,30 @@ import os
 from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
-from typing import List, NoReturn
+from typing import List
 
 import click
 import sentry_sdk
 from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
-from dipdup import __spec_version__, __version__
+from dipdup import __spec_version__, __version__, spec_version_mapping
 from dipdup.config import DipDupConfig, LoggingConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
 
 _logger = logging.getLogger(__name__)
 
-spec_version_to_version = {
-    '0.1': 'dipdup v0.4.3 and below',
-    '1.0': 'dipdup v1.0.0 - v1.1.2',
-    '1.1': 'dipdup v1.2.0 and above',
-}
 
-migration_required_message = """
-
-Migration required!
-
-project spec version: %s (%s)
-current spec version: %s (%s)
-
-  1. Run `dipdup migrate`
-  2. Review and commit changes
-
-See https://baking-bad.org/blog/ for additional release information.
-"""
-
-
-def migration_required(from_: str, to: str) -> NoReturn:
-    _logger.warning(
-        migration_required_message,
-        from_,
-        spec_version_to_version[from_],
-        to,
-        spec_version_to_version[to],
-    )
-    quit()
-
-
-def click_async(fn):
+def click_command_wrapper(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        return asyncio.run(fn(*args, **kwargs))
+        try:
+            return asyncio.run(fn(*args, **kwargs))
+        except DipDupError as e:
+            _logger.critical(e.__repr__())
+            _logger.info(e.format())
+            quit(e.exit_code)
 
     return wrapper
 
@@ -70,7 +45,7 @@ class CLIContext:
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--logging-config', '-l', type=str, help='Path to logging YAML config', default='logging.yml')
 @click.pass_context
-@click_async
+@click_command_wrapper
 async def cli(ctx, config: List[str], logging_config: str):
     try:
         path = join(os.getcwd(), logging_config)
@@ -81,10 +56,10 @@ async def cli(ctx, config: List[str], logging_config: str):
     _logging_config.apply()
 
     _config = DipDupConfig.load(config)
-    if _config.spec_version not in spec_version_to_version:
-        raise ConfigurationError('Unknown `spec_version`')
+    if _config.spec_version not in spec_version_mapping:
+        raise ConfigurationError('Unknown `spec_version`, correct ones: {}')
     if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
-        migration_required(_config.spec_version, __spec_version__)
+        raise MigrationRequiredError(None, _config.spec_version, __spec_version__)
 
     if _config.sentry:
         sentry_sdk.init(
@@ -103,7 +78,7 @@ async def cli(ctx, config: List[str], logging_config: str):
 @click.option('--reindex', is_flag=True, help='Drop database and start indexing from scratch')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
 @click.pass_context
-@click_async
+@click_command_wrapper
 async def run(ctx, reindex: bool, oneshot: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
@@ -113,7 +88,7 @@ async def run(ctx, reindex: bool, oneshot: bool) -> None:
 
 @cli.command(help='Initialize new dipdup project')
 @click.pass_context
-@click_async
+@click_command_wrapper
 async def init(ctx):
     config: DipDupConfig = ctx.obj.config
     config.pre_initialize()
@@ -123,7 +98,7 @@ async def init(ctx):
 
 @cli.command(help='Migrate project to the new spec version')
 @click.pass_context
-@click_async
+@click_command_wrapper
 async def migrate(ctx):
     def _bump_spec_version(spec_version: str):
         for config_path in ctx.obj.config_paths:
@@ -150,6 +125,6 @@ async def migrate(ctx):
 
 @cli.command(help='Clear development request cache')
 @click.pass_context
-@click_async
+@click_command_wrapper
 async def clear_cache(ctx):
     FileCache('dipdup', flag='cs').clear()
