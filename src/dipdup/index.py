@@ -318,7 +318,7 @@ class OperationIndex(Index):
                             strict=pattern_config.strict,
                         ):
                             addresses.add(address)
-        return set(addresses)
+        return addresses
 
     async def _get_contract_hashes(self, address: str) -> Tuple[str, str]:
         if address not in self._contract_hashes:

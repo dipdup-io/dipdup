@@ -6,7 +6,7 @@ from tabulate import tabulate
 
 from dipdup import spec_version_mapping
 
-migration_required_message = """Project migration required!
+_migration_required_message = """Project migration required!
 
 {version_table}
 
@@ -16,7 +16,7 @@ migration_required_message = """Project migration required!
 See https://baking-bad.org/blog/ for additional release information.
 """
 
-handler_import_message = """Failed to import `{obj}` from `{module}`.
+_handler_import_message = """Failed to import `{obj}` from `{module}`.
 
 Reasons in order of possibility:
 
@@ -27,7 +27,19 @@ Reasons in order of possibility:
 
 """
 
-tab = '\n\n' + ('_' * 80) + '\n\n'
+_contract_already_exists_error = """Contract with name `{name}` or address `{address}` already exists.
+
+Active contracts:
+{contracts_table}
+"""
+
+_index_already_exists_error = """Index with name `{name}` already exists.
+
+Active indexes:
+{indexes_table}
+"""
+
+_tab = '\n\n' + ('_' * 80) + '\n\n'
 
 
 class DipDupError(ABC, Exception):
@@ -45,8 +57,8 @@ class DipDupError(ABC, Exception):
         ...
 
     def format(self) -> str:
-        exc = f'\n\n{traceback.format_exc()}'
-        return tab.join(filter(lambda x: x is not None, [exc, self.ctx, self.format_help()]))
+        exc = f'\n\n{traceback.format_exc()}'.rstrip()
+        return _tab.join([exc, self.format_help() + '\n'])
 
 
 class ConfigurationError(DipDupError):
@@ -76,7 +88,7 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
-        return migration_required_message.format(version_table=version_table)
+        return _migration_required_message.format(version_table=version_table)
 
 
 class HandlerImportError(DipDupError):
@@ -88,12 +100,29 @@ class HandlerImportError(DipDupError):
         self.obj = obj
 
     def format_help(self) -> str:
-        return handler_import_message.format(obj=self.obj or '', module=self.module)
+        return _handler_import_message.format(obj=self.obj or '', module=self.module)
 
 
 class ContractAlreadyExistsError(DipDupError):
     """Attemp to add a contract with alias or address which is already in use"""
 
+    def __init__(self, ctx, name: str, address: str) -> None:
+        super().__init__(ctx)
+        self.name = name
+        self.address = address
+
+    def format_help(self) -> str:
+        contracts_table = tabulate([(name, c.address) for name, c in self.ctx.config.contracts.items()])
+        return _contract_already_exists_error.format(name=self.name, address=self.address, contracts_table=contracts_table)
+
 
 class IndexAlreadyExistsError(DipDupError):
     """Attemp to add an index with alias which is already in use"""
+
+    def __init__(self, ctx, name: str) -> None:
+        super().__init__(ctx)
+        self.name = name
+
+    def format_help(self) -> str:
+        indexes_table = tabulate([(name,) for name in self.ctx.config.indexes.values()])
+        return _index_already_exists_error.format(name=self.name, indexes_table=indexes_table)
