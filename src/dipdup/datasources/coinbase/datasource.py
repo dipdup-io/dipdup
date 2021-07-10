@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
+from dipdup.config import HTTPConfig
 from dipdup.datasources.coinbase.models import CandleData, CandleInterval
-from dipdup.datasources.proxy import DatasourceRequestProxy
+from dipdup.datasources.proxy import HTTPRequestProxy
 
 CANDLES_REQUEST_LIMIT = 300
 REST_API_URL = 'https://api.pro.coinbase.com'
@@ -11,9 +12,16 @@ WEBSOCKET_API_URL = 'wss://ws-feed.pro.coinbase.com'
 
 
 class CoinbaseDatasource:
-    def __init__(self, proxy: DatasourceRequestProxy) -> None:
+    def __init__(self, http_config: Optional[HTTPConfig] = None) -> None:
+        if http_config is None:
+            http_config = HTTPConfig(
+                cache=True,
+                ratelimit_rate=10,
+                ratelimit_period=1,
+            )
+
         self._logger = logging.getLogger('dipdup.coinbase')
-        self._proxy = proxy
+        self._proxy = HTTPRequestProxy(http_config)
 
     async def close_session(self) -> None:
         await self._proxy.close_session()
@@ -41,6 +49,7 @@ class CoinbaseDatasource:
                     'end': _until.replace(tzinfo=timezone.utc).isoformat(),
                     'granularity': interval.seconds,
                 },
+                cache=True,
             )
             candles += [CandleData.from_json(c) for c in candles_json]
         return sorted(candles, key=lambda c: c.timestamp)

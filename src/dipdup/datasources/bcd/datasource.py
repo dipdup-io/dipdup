@@ -1,16 +1,25 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from dipdup.datasources.proxy import DatasourceRequestProxy
+from dipdup.config import HTTPConfig
+from dipdup.datasources.proxy import HTTPRequestProxy
 
 TOKENS_REQUEST_LIMIT = 10
 
 
 class BcdDatasource:
-    def __init__(self, url: str, network: str, proxy: DatasourceRequestProxy) -> None:
+    def __init__(
+        self,
+        url: str,
+        network: str,
+        http_config: Optional[HTTPConfig] = None,
+    ) -> None:
+        if http_config is None:
+            http_config = HTTPConfig()
+
         self._url = url.rstrip('/')
         self._network = network
-        self._proxy = proxy
+        self._proxy = HTTPRequestProxy(http_config)
         self._logger = logging.getLogger('dipdup.bcd')
 
     async def close_session(self) -> None:

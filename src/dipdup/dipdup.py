@@ -4,9 +4,8 @@ import logging
 from contextlib import suppress
 from os.path import join
 from posix import listdir
-from typing import Dict, List, cast
+from typing import Dict, List, Optional, cast
 
-from aiolimiter import AsyncLimiter
 from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
 from genericpath import exists
 from tortoise import Tortoise
@@ -34,10 +33,9 @@ from dipdup.datasources import DatasourceT
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.proxy import DatasourceRequestProxy
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
-from dipdup.hasura import configure_hasura
+from dipdup.hasura import HasuraManager
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
 from dipdup.scheduler import add_job, create_scheduler
@@ -186,8 +184,14 @@ class DipDup:
             datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
             worker_tasks = []
 
+            hasura_manager: Optional[HasuraManager]
             if self._config.hasura:
-                worker_tasks.append(asyncio.create_task(configure_hasura(self._config)))
+                if not isinstance(self._config.database, PostgresDatabaseConfig):
+                    raise RuntimeError
+                hasura_manager = HasuraManager(self._config.package, self._config.hasura, self._config.database)
+                worker_tasks.append(asyncio.create_task(hasura_manager.configure()))
+            else:
+                hasura_manager = None
 
             if self._config.jobs and not oneshot:
                 for job_name, job_config in self._config.jobs.items():
@@ -203,6 +207,8 @@ class DipDup:
             finally:
                 self._logger.info('Closing datasource sessions')
                 await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
+                if hasura_manager:
+                    await hasura_manager.close_session()
                 # FIXME: AttributeError: 'NoneType' object has no attribute 'call_soon_threadsafe'
                 with suppress(AttributeError, SchedulerNotRunningError):
                     self._scheduler.shutdown(wait=True)
@@ -230,37 +236,20 @@ class DipDup:
             if name in self._datasources:
                 continue
 
-            cache = self._config.cache_enabled if datasource_config.cache is None else datasource_config.cache
             if isinstance(datasource_config, TzktDatasourceConfig):
-                proxy = DatasourceRequestProxy(
-                    cache=cache,
-                    retry_count=datasource_config.retry_count,
-                    retry_sleep=datasource_config.retry_sleep,
-                )
                 datasource = TzktDatasource(
                     url=datasource_config.url,
-                    proxy=proxy,
+                    http_config=datasource_config.http,
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
-                proxy = DatasourceRequestProxy(
-                    cache=cache,
-                    retry_count=datasource_config.retry_count,
-                    retry_sleep=datasource_config.retry_sleep,
-                )
                 datasource = BcdDatasource(
                     url=datasource_config.url,
                     network=datasource_config.network,
-                    proxy=proxy,
+                    http_config=datasource_config.http,
                 )
             elif isinstance(datasource_config, CoinbaseDatasourceConfig):
-                proxy = DatasourceRequestProxy(
-                    cache=cache,
-                    retry_count=datasource_config.retry_count,
-                    retry_sleep=datasource_config.retry_sleep,
-                    ratelimiter=AsyncLimiter(max_rate=10, time_period=1),
-                )
                 datasource = CoinbaseDatasource(
-                    proxy=proxy,
+                    http_config=datasource_config.http,
                 )
             else:
                 raise NotImplementedError
