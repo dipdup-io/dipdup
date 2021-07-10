@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
 from typing import List
+from typing import List, NoReturn, cast
 
 import click
 import sentry_sdk
@@ -16,6 +17,12 @@ from dipdup import __spec_version__, __version__, spec_version_mapping
 from dipdup.config import DipDupConfig, LoggingConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
+from dipdup import __spec_version__, __version__
+from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
+from dipdup.dipdup import DipDup
+from dipdup.exceptions import ConfigurationError
+from dipdup.hasura import HasuraManager
+from dipdup.utils import tortoise_wrapper
 
 _logger = logging.getLogger(__name__)
 
@@ -128,3 +135,23 @@ async def migrate(ctx):
 @click_command_wrapper
 async def clear_cache(ctx):
     FileCache('dipdup', flag='cs').clear()
+
+
+@cli.command(help='Configure Hasura GraphQL Engine')
+@click.option('--reset', is_flag=True, help='Reset metadata before configuring')
+@click.pass_context
+@click_command_wrapper
+async def configure_hasura(ctx, reset: bool):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+    if not config.hasura:
+        _logger.error('`hasura` config section is empty')
+        return
+    hasura = HasuraManager(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
+
+    async with tortoise_wrapper(url, models):
+        try:
+            await hasura.configure(reset)
+        finally:
+            await hasura.close_session()

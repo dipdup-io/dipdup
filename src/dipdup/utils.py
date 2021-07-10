@@ -29,6 +29,7 @@ async def slowdown(seconds: int):
         await asyncio.sleep(seconds - time_spent)
 
 
+# NOTE: These two helpers are not the same as humps.camelize/decamelize as could be used with Python module paths
 def snake_to_pascal(value: str) -> str:
     """method_name -> MethodName"""
     return ''.join(map(lambda x: x[0].upper() + x[1:], value.replace('.', '_').split('_')))
@@ -106,7 +107,10 @@ async def http_request(session: aiohttp.ClientSession, method: str, **kwargs):
         **kwargs.pop('headers', {}),
         'User-Agent': f'dipdup/{__version__}',
     }
-    request_string = kwargs['url'] + '?' + '&'.join([f'{key}={value}' for key, value in kwargs.get('params', {}).items()])
+    url = kwargs['url']
+    params = kwargs.get('params', {})
+    params_string = '&'.join([f'{k}={v}' for k, v in params.items()])
+    request_string = f'{url}?{params_string}'.rstrip('?')
     _logger.debug('Calling `%s`', request_string)
     async with getattr(session, method)(
         skip_auto_headers={'User-Agent'},
