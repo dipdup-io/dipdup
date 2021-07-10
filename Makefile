@@ -4,7 +4,7 @@
 
 DEV=1
 PLUGINS=""
-VERSION=latest
+TAG=latest
 
 all: install lint test cover
 lint: isort black flake mypy
@@ -39,8 +39,8 @@ build:
 	poetry build
 
 image:
-	docker build . -t dipdup:${VERSION}
-	docker build . -t dipdup:${VERSION}-pytezos --build-arg PLUGINS=pytezos
+	docker build . -t dipdup:${TAG}
+	docker build . -t dipdup:${TAG}-pytezos --build-arg PLUGINS=pytezos
 
 release-patch:
 	bumpversion patch

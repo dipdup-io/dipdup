@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
-from typing import List
+from typing import List, Optional
 from typing import List, NoReturn, cast
 
 import click
@@ -14,6 +14,7 @@ from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
 from dipdup import __spec_version__, __version__, spec_version_mapping
+from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
@@ -155,3 +156,26 @@ async def configure_hasura(ctx, reset: bool):
             await hasura.configure(reset)
         finally:
             await hasura.close_session()
+
+
+@cli.group()
+@click.pass_context
+@click_command_wrapper
+async def docker(ctx):
+    ...
+
+
+@docker.command(name='init')
+@click.option('--image', '-i', type=str, help='', default=f'dipdup:{__version__}')
+@click.option('--env-file', '-e', type=str, help='', default=f'dipdup.env')
+@click.pass_context
+@click_command_wrapper
+async def docker_init(ctx, image: str, env_file: str):
+    config: DipDupConfig = ctx.obj.config
+    if config.plugins:
+        plugins = []
+        if config.plugins.pytezos:
+            plugins.append('pytezos')
+        image += f'-{"-".join(sorted(plugins))}'
+    
+    await DipDupCodeGenerator(config, {}).generate_docker(image, env_file)
