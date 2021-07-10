@@ -53,10 +53,9 @@ class _HTTPGateway:
     @property
     def user_agent(self) -> str:
         if self._user_agent is None:
-            user_agent = f'dipdup/{__version__} '
             user_agent_args = (platform.system(), platform.machine()) + (self._user_agent_args or ())
-            user_agent += f" ({'; '.join(user_agent_args)})"
-            user_agent += aiohttp.http.SERVER_SOFTWARE
+            user_agent = f'dipdup/{__version__} ({"; ".join(user_agent_args)})'
+            user_agent += ' ' + aiohttp.http.SERVER_SOFTWARE
             self._user_agent = user_agent
         return self._user_agent
 
