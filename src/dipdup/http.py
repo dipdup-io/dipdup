@@ -116,6 +116,6 @@ class _HTTPGateway:
     async def close_session(self) -> None:
         await self._session.close()
 
-    async def set_user_agent(self, *args: str) -> None:
+    def set_user_agent(self, *args: str) -> None:
         self._user_agent_args = args
         self._user_agent = None

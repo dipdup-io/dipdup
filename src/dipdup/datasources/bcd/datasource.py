@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional
 from dipdup.config import HTTPConfig
 from dipdup.http import HTTPGateway
 
+TOKENS_REQUEST_LIMIT = 10
+
 
 class BcdDatasource(HTTPGateway):
     def __init__(
@@ -23,9 +25,22 @@ class BcdDatasource(HTTPGateway):
         pass
 
     async def get_tokens(self, address: str) -> List[Dict[str, Any]]:
+        tokens, offset = [], 0
+        while True:
+            tokens_batch = await self._http.request(
+                'get',
+                url=f'v1/contract/{self._network}/{address}/tokens?offset={offset}',
+            )
+            tokens += tokens_batch
+            offset += TOKENS_REQUEST_LIMIT
+            if len(tokens_batch) < TOKENS_REQUEST_LIMIT:
+                break
+        return tokens
+
+    async def get_token(self, address: str, token_id: int) -> Dict[str, Any]:
         return await self._http.request(
             'get',
-            url=f'v1/contract/{self._network}/{address}/tokens',
+            url=f'v1/contract/{self._network}/{address}/tokens?token_id={token_id}',
         )
 
     def _default_http_config(self) -> HTTPConfig:
@@ -36,9 +51,3 @@ class BcdDatasource(HTTPGateway):
             ratelimit_rate=100,
             ratelimit_period=30,
         )
-
-    cache: Optional[bool] = None
-    retry_count: Optional[int] = None
-    retry_sleep: Optional[int] = None
-    ratelimit_rate: Optional[int] = None
-    ratelimit_period: Optional[int] = None
