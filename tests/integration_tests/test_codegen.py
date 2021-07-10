@@ -6,6 +6,8 @@ from os.path import dirname, join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
 
+from dipdup import __version__
+from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
 
@@ -50,6 +52,7 @@ class CodegenTest(IsolatedAsyncioTestCase):
                 try:
                     dipdup = DipDup(config)
                     await dipdup.init()
+                    await DipDupCodeGenerator(config, {}).generate_docker(f'dipdup:{__version__}', 'dipdup.env')
 
                     import_submodules(config.package)
                 except Exception as exc:

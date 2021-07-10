@@ -5,8 +5,7 @@ import os
 from dataclasses import dataclass
 from functools import wraps
 from os.path import dirname, join
-from typing import List, Optional
-from typing import List, NoReturn, cast
+from typing import List, cast
 
 import click
 import sentry_sdk
@@ -15,13 +14,9 @@ from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
 from dipdup import __spec_version__, __version__, spec_version_mapping
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import DipDupConfig, LoggingConfig
-from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
-from dipdup import __spec_version__, __version__
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
 from dipdup.hasura import HasuraManager
 from dipdup.utils import tortoise_wrapper
 
@@ -167,7 +162,7 @@ async def docker(ctx):
 
 @docker.command(name='init')
 @click.option('--image', '-i', type=str, help='', default=f'dipdup:{__version__}')
-@click.option('--env-file', '-e', type=str, help='', default=f'dipdup.env')
+@click.option('--env-file', '-e', type=str, help='', default='dipdup.env')
 @click.pass_context
 @click_command_wrapper
 async def docker_init(ctx, image: str, env_file: str):
@@ -177,5 +172,5 @@ async def docker_init(ctx, image: str, env_file: str):
         if config.plugins.pytezos:
             plugins.append('pytezos')
         image += f'-{"-".join(sorted(plugins))}'
-    
+
     await DipDupCodeGenerator(config, {}).generate_docker(image, env_file)

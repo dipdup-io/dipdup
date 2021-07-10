@@ -1,13 +1,12 @@
 import json
 import logging
 import os
-from posixpath import abspath, relpath
 import re
 import subprocess
 from contextlib import suppress
 from copy import copy
 from os import mkdir
-from os.path import basename, dirname, exists, join, splitext
+from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
 from typing import Any, Dict
 
@@ -42,6 +41,7 @@ DEFAULT_DOCKER_ENV_FILE = dict(
     HASURA_GRAPHQL_ADMIN_SECRET="changeme",
     HASURA_GRAPHQL_UNAUTHORIZED_ROLE="user",
 )
+
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
     """Preprocess bigmaps in JSONSchema. Those are unions as could be pointers.
@@ -374,11 +374,11 @@ class DipDupCodeGenerator:
         with suppress(FileExistsError):
             mkdir(docker_path)
 
-        with open(join(dirname(__file__), 'templates', 'docker', f'Dockerfile.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'docker', 'Dockerfile.j2')) as file:
             dockerfile_template = Template(file.read())
-        with open(join(dirname(__file__), 'templates', 'docker', f'docker-compose.yml.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'docker', 'docker-compose.yml.j2')) as file:
             docker_compose_template = Template(file.read())
-        with open(join(dirname(__file__), 'templates', 'docker', f'dipdup.env.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'docker', 'dipdup.env.j2')) as file:
             dipdup_env_template = Template(file.read())
 
         self._logger.info('Generating `Dockerfile`')
@@ -429,7 +429,6 @@ class DipDupCodeGenerator:
         gitignore_path = join(docker_path, '.gitignore')
         with open(gitignore_path, 'w') as file:
             file.write('*.env')
-
 
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""
