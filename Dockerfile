@@ -1,7 +1,10 @@
 FROM python:3.8-slim-buster
 
+ARG PLUGINS
+
+SHELL ["/bin/bash", "-x", "-v", "-c"]
 RUN apt update && \
-    apt install -y make git && \
+    apt install -y make git `if [[ $PLUGINS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi` && \
     rm -rf /var/lib/apt/lists/*
 RUN pip install poetry
 RUN useradd -ms /bin/bash dipdup
@@ -14,7 +17,7 @@ RUN mkdir -p /home/dipdup/source/src/dipdup && \
 
 WORKDIR /home/dipdup/source
 RUN poetry config virtualenvs.create false
-RUN make install DEV=0
+RUN make install DEV=0 PLUGINS="${PLUGINS}"
 
 COPY . /home/dipdup/source/
 RUN chown -R dipdup /home/dipdup/
@@ -22,6 +25,5 @@ RUN chown -R dipdup /home/dipdup/
 USER dipdup
 
 WORKDIR /home/dipdup/
-EXPOSE 8888
-ENTRYPOINT ["python", "-m", "dipdup"]
-CMD ["-c", "dipdup.yml", "run"]
+ENTRYPOINT ["dipdup"]
+CMD ["run"]
