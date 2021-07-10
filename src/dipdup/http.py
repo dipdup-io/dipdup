@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import logging
 import pickle
+import platform
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 
@@ -40,6 +41,7 @@ class _HTTPGateway:
         self._url = url
         self._config = config
         self._user_agent_args: Tuple[str, ...] = ()
+        self._user_agent: Optional[str] = None
         self._cache = FileCache('dipdup', flag='cs')
         self._ratelimiter = (
             AsyncLimiter(max_rate=config.ratelimit_rate, time_period=config.ratelimit_period)
@@ -47,6 +49,16 @@ class _HTTPGateway:
             else None
         )
         self._session = aiohttp.ClientSession()
+
+    @property
+    def user_agent(self) -> str:
+        if self._user_agent is None:
+            user_agent = f'dipdup/{__version__} '
+            user_agent_args = (platform.system(), platform.machine()) + (self._user_agent_args or ())
+            user_agent += f" ({'; '.join(user_agent_args)})"
+            user_agent += aiohttp.http.SERVER_SOFTWARE
+            self._user_agent = user_agent
+        return self._user_agent
 
     async def _wrapped_request(self, method: str, url: str, **kwargs):
         attempts = list(range(self._config.retry_count)) if self._config.retry_count else [0]
@@ -66,13 +78,9 @@ class _HTTPGateway:
 
     async def _request(self, method: str, url: str, **kwargs):
         """Wrapped aiohttp call with preconfigured headers and logging"""
-        user_agent = f'dipdup/{__version__} '
-        if self._user_agent_args:
-            user_agent += f" ({', '.join(self._user_agent_args)})"
-        user_agent += aiohttp.http.SERVER_SOFTWARE
         headers = {
             **kwargs.pop('headers', {}),
-            'User-Agent': user_agent,
+            'User-Agent': self.user_agent,
         }
         if not url.startswith(self._url):
             url = self._url + '/' + url.lstrip('/')
@@ -110,3 +118,4 @@ class _HTTPGateway:
 
     async def set_user_agent(self, *args: str) -> None:
         self._user_agent_args = args
+        self._user_agent = None
