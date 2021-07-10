@@ -1,13 +1,21 @@
 import os
 import sys
+from pprint import pformat
 from typing import Any, Dict, Optional
 
 from tortoise import Tortoise
 from tortoise.transactions import in_transaction
 
-from dipdup.config import ContractConfig, DipDupConfig, PostgresDatabaseConfig, StaticTemplateConfig
+from dipdup.config import (
+    ContractConfig,
+    DipDupConfig,
+    OperationHandlerOriginationPatternConfig,
+    OperationIndexConfig,
+    PostgresDatabaseConfig,
+    StaticTemplateConfig,
+)
 from dipdup.datasources import DatasourceT
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ContractAlreadyExistsError, IndexAlreadyExistsError
 from dipdup.utils import FormattedLogger
 
 
@@ -21,6 +29,9 @@ class DipDupContext:
         self.datasources = datasources
         self.config = config
         self._updated: bool = False
+
+    def __str__(self) -> str:
+        return pformat(self.__dict__)
 
     def commit(self) -> None:
         """Spawn indexes after handler execution"""
@@ -82,8 +93,23 @@ class HandlerContext(DipDupContext):
         self.datasource = datasource
 
     def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
-        if name in self.config.contracts:
-            raise ConfigurationError(f'Contract `{name}` is already exists')
+        for contract_name, contract_config in self.config.contracts.items():
+            if name == contract_name or address == contract_config.address:
+                # NOTE: Origination pattern with `similar_to` field is a special case, safe to add duplicate
+                is_similar_to = False
+                for index_config in self.config.indexes.values():
+                    if not isinstance(index_config, OperationIndexConfig):
+                        continue
+                    for handler_config in index_config.handlers:
+                        for pattern_config in handler_config.pattern:
+                            if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                                continue
+                            if pattern_config.similar_to_contract_config.address == address:
+                                is_similar_to = True
+
+                if not is_similar_to:
+                    raise ContractAlreadyExistsError(self, name, address)
+
         self.config.contracts[name] = ContractConfig(
             address=address,
             typename=typename,
@@ -92,7 +118,7 @@ class HandlerContext(DipDupContext):
 
     def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
         if name in self.config.indexes:
-            raise ConfigurationError(f'Index `{name}` is already exists')
+            raise IndexAlreadyExistsError(self, name)
         self.config.get_template(template)
         self.config.indexes[name] = StaticTemplateConfig(
             template=template,
