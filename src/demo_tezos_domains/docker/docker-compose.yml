@@ -9,8 +9,8 @@ services:
     depends_on:
       - db
     volumes:
-      - /home/droserasprout/git/dipdup/src/demo_tezos_domains/dipdup.yml:/home/dipdup/dipdup.yml
-      - /home/droserasprout/git/dipdup/src/demo_tezos_domains/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
+      - ../dipdup.yml:/home/dipdup/dipdup.yml
+      - ../dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
     command: ['-c', 'dipdup.yml', '-c', 'dipdup-docker.yml', 'run']
     restart: always
     env_file: dipdup.env

@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from posixpath import abspath
+from posixpath import abspath, relpath
 import re
 import subprocess
 from contextlib import suppress
@@ -391,7 +391,13 @@ class DipDupCodeGenerator:
         with open(dockerfile_path, 'w') as file:
             file.write(dockerfile_code)
 
-        mounts = {abspath(filename): f'/home/dipdup/{filename.split("/")[-1]}' for filename in self._config.filenames}
+        mounts = {}
+        for filename in self._config.filenames:
+            filename_part = filename.split("/")[-1]
+            from_ = join(relpath(self._config.package_path, filename), filename_part)
+            to = f'/home/dipdup/{filename_part}'
+            mounts[from_] = to
+
         command = []
         for filename in self._config.filenames:
             command += ['-c', filename.split("/")[-1]]
