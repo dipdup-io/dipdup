@@ -81,6 +81,7 @@ class ModelsTest(TestCase):
             counter=0,
             sender_address='',
             target_address='',
+            initiator_address='',
             amount=0,
             status='',
             has_internals=False,
