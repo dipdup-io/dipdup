@@ -10,21 +10,15 @@
       class: logging.StreamHandler
       stream : ext://sys.stdout
   loggers:
-    dipdup.dipdup:
-      level: INFO
-    dipdup.index:
-      level: INFO
-    dipdup.tzkt:
-      level: INFO
-    dipdup.bcd:
-      level: INFO
+    dipdup:
+      level: WARNING
 
     SignalRCoreClient:
       formatter: brief
     aiosqlite:
-      level: INFO
+      level: WARNING
     db_client:
-      level: INFO
+      level: WARNING
   root:
     level: WARNING
     handlers:
