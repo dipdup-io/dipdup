@@ -11,12 +11,13 @@ from aiosignalrcore.transport.websockets.connection import ConnectionState  # ty
 from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
+    HTTPConfig,
     IndexConfigTemplateT,
     OperationHandlerOriginationPatternConfig,
     OperationIndexConfig,
 )
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.proxy import DatasourceRequestProxy
+from dipdup.datasources.proxy import HTTPRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import BigMapAction, BigMapData, OperationData
 from dipdup.utils import split_by_chunks
@@ -81,12 +82,14 @@ class OperationFetcher:
         last_level: int,
         transaction_addresses: Set[str],
         origination_addresses: Set[str],
+        cache: bool = False,
     ) -> None:
         self._datasource = datasource
         self._first_level = first_level
         self._last_level = last_level
         self._transaction_addresses = transaction_addresses
         self._origination_addresses = origination_addresses
+        self._cache = cache
 
         self._logger = logging.getLogger('dipdup.tzkt.fetcher')
         self._head: int = 0
@@ -118,6 +121,7 @@ class OperationFetcher:
             offset=self._offsets[key],
             first_level=self._first_level,
             last_level=self._last_level,
+            cache=self._cache,
         )
 
         for op in originations:
@@ -152,6 +156,7 @@ class OperationFetcher:
             offset=self._offsets[key],
             first_level=self._first_level,
             last_level=self._last_level,
+            cache=self._cache,
         )
 
         for op in transactions:
@@ -212,12 +217,14 @@ class BigMapFetcher:
         last_level: int,
         big_map_addresses: Set[str],
         big_map_paths: Set[str],
+        cache: bool = False,
     ) -> None:
         self._datasource = datasource
         self._first_level = first_level
         self._last_level = last_level
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
+        self._cache = cache
 
         self._logger = logging.getLogger('dipdup.tzkt.fetcher')
 
@@ -234,6 +241,7 @@ class BigMapFetcher:
                 offset,
                 self._first_level,
                 self._last_level,
+                cache=self._cache,
             )
             big_maps += fetched_big_maps
 
@@ -267,11 +275,13 @@ class TzktDatasource(IndexDatasource):
     def __init__(
         self,
         url: str,
-        proxy: DatasourceRequestProxy,
+        http_config: Optional[HTTPConfig] = None,
     ) -> None:
         super().__init__()
+        if http_config is None:
+            http_config = HTTPConfig()
         self._url = url.rstrip('/')
-        self._proxy = proxy
+        self._proxy = HTTPRequestProxy(http_config)
 
         self._logger = logging.getLogger('dipdup.tzkt')
         self._transaction_subscriptions: Set[str] = set()
@@ -322,7 +332,6 @@ class TzktDatasource(IndexDatasource):
             params=dict(
                 limit=self.request_limit,
             ),
-            skip_cache=True,
         )
         return [c['address'] for c in contracts]
 
@@ -348,6 +357,7 @@ class TzktDatasource(IndexDatasource):
         jsonschemas = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/contracts/{address}/interface',
+            cache=True,
         )
         self._logger.debug(jsonschemas)
         return jsonschemas
@@ -358,12 +368,13 @@ class TzktDatasource(IndexDatasource):
         block = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/head',
-            skip_cache=True,
         )
         self._logger.debug(block)
         return block
 
-    async def get_originations(self, addresses: Set[str], offset: int, first_level: int, last_level: int) -> List[OperationData]:
+    async def get_originations(
+        self, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
+    ) -> List[OperationData]:
         raw_originations = []
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
         # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
@@ -381,6 +392,7 @@ class TzktDatasource(IndexDatasource):
                     "select": ','.join(ORIGINATION_OPERATION_FIELDS),
                     "status": "applied",
                 },
+                cache=cache,
             )
 
         originations = []
@@ -391,7 +403,7 @@ class TzktDatasource(IndexDatasource):
         return originations
 
     async def get_transactions(
-        self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int
+        self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
     ) -> List[OperationData]:
         raw_transactions = await self._proxy.http_request(
             'get',
@@ -405,6 +417,7 @@ class TzktDatasource(IndexDatasource):
                 "select": ','.join(TRANSACTION_OPERATION_FIELDS),
                 "status": "applied",
             },
+            cache=cache,
         )
         transactions = []
         for op in raw_transactions:
@@ -413,7 +426,9 @@ class TzktDatasource(IndexDatasource):
             transactions.append(self.convert_operation(op))
         return transactions
 
-    async def get_big_maps(self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int) -> List[BigMapData]:
+    async def get_big_maps(
+        self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
+    ) -> List[BigMapData]:
         raw_big_maps = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/bigmaps/updates',
@@ -425,6 +440,7 @@ class TzktDatasource(IndexDatasource):
                 "level.gt": first_level,
                 "level.le": last_level,
             },
+            cache=cache,
         )
         big_maps = []
         for bm in raw_big_maps:
@@ -641,7 +657,7 @@ class TzktDatasource(IndexDatasource):
             sender_address=operation_json['sender']['address'] if operation_json.get('sender') else None,
             target_address=operation_json['target']['address'] if operation_json.get('target') else None,
             initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
-            amount=operation_json.get('amount'),
+            amount=operation_json.get('amount') or operation_json.get('contractBalance'),
             status=operation_json['status'],
             has_internals=operation_json.get('hasInternals'),
             sender_alias=operation_json['sender'].get('alias'),

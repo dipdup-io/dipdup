@@ -95,9 +95,20 @@ class DipDupCodeGenerator:
         sql_on_restart_path = join(sql_path, 'on_restart')
         with suppress(FileExistsError):
             mkdir(sql_on_restart_path)
+        with open(join(sql_on_restart_path, '.keep'), 'w'):
+            pass
         sql_on_reindex_path = join(sql_path, 'on_reindex')
         with suppress(FileExistsError):
             mkdir(sql_on_reindex_path)
+        with open(join(sql_on_reindex_path, '.keep'), 'w'):
+            pass
+
+        self._logger.info('Creating `%s/graphql` directory', self._config.package)
+        graphql_path = join(self._config.package_path, 'graphql')
+        with suppress(FileExistsError):
+            mkdir(graphql_path)
+        with open(join(graphql_path, '.keep'), 'w'):
+            pass
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
