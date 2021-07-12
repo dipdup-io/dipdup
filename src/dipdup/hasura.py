@@ -15,8 +15,8 @@ from tortoise import Model, fields
 from tortoise.transactions import get_connection
 
 from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig, pascal_to_snake
-from dipdup.datasources.proxy import HTTPRequestProxy
 from dipdup.exceptions import ConfigurationError
+from dipdup.http import HTTPGateway
 
 
 @dataclass
@@ -50,17 +50,19 @@ class HasuraError(RuntimeError):
     ...
 
 
-class HasuraManager:
+class HasuraGateway(HTTPGateway):
     def __init__(
-        self, package: str, hasura_config: HasuraConfig, database_config: PostgresDatabaseConfig, proxy: Optional[HTTPRequestProxy] = None
+        self,
+        package: str,
+        hasura_config: HasuraConfig,
+        database_config: PostgresDatabaseConfig,
+        http_config: Optional[HTTPConfig] = None,
     ) -> None:
-        if proxy is None:
-            proxy = HTTPRequestProxy(HTTPConfig(cache=False))
-        self._logger = logging.getLogger(__name__)
+        super().__init__(hasura_config.url, http_config)
+        self._logger = logging.getLogger('dipdup.hasura')
         self._package = package
         self._hasura_config = hasura_config
         self._database_config = database_config
-        self._proxy = proxy
 
     async def configure(self, reset: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
@@ -116,12 +118,18 @@ class HasuraManager:
 
         self._logger.info('Hasura instance has been configured')
 
-    async def close_session(self) -> None:
-        await self._proxy.close_session()
+    def _default_http_config(self) -> HTTPConfig:
+        return HTTPConfig(
+            cache=False,
+            retry_count=3,
+            retry_sleep=1,
+            ratelimit_rate=100,
+            ratelimit_period=1,
+        )
 
-    async def _hasura_http_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
+    async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, json)
-        result = await self._proxy.http_request(
+        result = await self._http.request(
             method='post',
             cache=False,
             url=f'{self._hasura_config.url}/v1/{endpoint}',
@@ -137,7 +145,7 @@ class HasuraManager:
         self._logger.info('Waiting for Hasura instance to be ready')
         for _ in range(self._hasura_config.connection_timeout):
             with suppress(ClientConnectorError, ClientOSError):
-                response = await self._proxy._session.get(f'{self._hasura_config.url}/healthz')
+                response = await self._http._session.get(f'{self._hasura_config.url}/healthz')
                 if response.status == 200:
                     break
             await asyncio.sleep(1)
@@ -146,7 +154,7 @@ class HasuraManager:
 
     async def _reset_metadata(self) -> None:
         self._logger.info('Resetting metadata')
-        await self._hasura_http_request(
+        await self._hasura_request(
             endpoint='metadata',
             json={
                 "type": "clear_metadata",
@@ -156,7 +164,7 @@ class HasuraManager:
 
     async def _fetch_metadata(self) -> Dict[str, Any]:
         self._logger.info('Fetching existing metadata')
-        return await self._hasura_http_request(
+        return await self._hasura_request(
             endpoint='metadata',
             json={
                 "type": "export_metadata",
@@ -166,7 +174,7 @@ class HasuraManager:
 
     async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')
-        await self._hasura_http_request(
+        await self._hasura_request(
             endpoint='query',
             json={
                 "type": "replace_metadata",
@@ -305,7 +313,7 @@ query introspectionQuery($name: String!) {
         ).replace(
             '  ', ''
         )
-        result = await self._hasura_http_request(
+        result = await self._hasura_request(
             endpoint='graphql',
             json={
                 'query': query,
@@ -374,7 +382,7 @@ query introspectionQuery($name: String!) {
                 },
             }
 
-            await self._hasura_http_request(
+            await self._hasura_request(
                 endpoint='metadata',
                 json={
                     'type': 'pg_set_table_customization',

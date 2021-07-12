@@ -35,7 +35,7 @@ from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
-from dipdup.hasura import HasuraManager
+from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, IndexType, OperationData, State
 from dipdup.scheduler import add_job, create_scheduler
@@ -45,7 +45,7 @@ class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
         self._ctx = ctx
 
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
 
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
@@ -142,7 +142,7 @@ class DipDup:
     Spawns datasources, registers indexes, passes handler callbacks to executor"""
 
     def __init__(self, config: DipDupConfig) -> None:
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger('dipdup')
         self._config = config
         self._datasources: Dict[str, DatasourceT] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, DatasourceT] = {}
@@ -184,14 +184,14 @@ class DipDup:
             datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
             worker_tasks = []
 
-            hasura_manager: Optional[HasuraManager]
+            hasura_gateway: Optional[HasuraGateway]
             if self._config.hasura:
                 if not isinstance(self._config.database, PostgresDatabaseConfig):
                     raise RuntimeError
-                hasura_manager = HasuraManager(self._config.package, self._config.hasura, self._config.database)
-                worker_tasks.append(asyncio.create_task(hasura_manager.configure()))
+                hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
+                worker_tasks.append(asyncio.create_task(hasura_gateway.configure()))
             else:
-                hasura_manager = None
+                hasura_gateway = None
 
             if self._config.jobs and not oneshot:
                 for job_name, job_config in self._config.jobs.items():
@@ -207,8 +207,8 @@ class DipDup:
             finally:
                 self._logger.info('Closing datasource sessions')
                 await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
-                if hasura_manager:
-                    await hasura_manager.close_session()
+                if hasura_gateway:
+                    await hasura_gateway.close_session()
                 # FIXME: AttributeError: 'NoneType' object has no attribute 'call_soon_threadsafe'
                 with suppress(AttributeError, SchedulerNotRunningError):
                     self._scheduler.shutdown(wait=True)
@@ -254,6 +254,7 @@ class DipDup:
             else:
                 raise NotImplementedError
 
+            datasource.set_user_agent(self._config.package)
             self._datasources[name] = datasource
             self._datasources_by_config[datasource_config] = datasource
 

@@ -6,16 +6,13 @@ from contextlib import asynccontextmanager
 from logging import Logger
 from typing import Any, AsyncIterator, Iterator, List, Optional
 
-import aiohttp
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import TransactionContext
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.transactions import in_transaction
 
-from dipdup import __version__
-
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('dipdup.utils')
 
 
 @asynccontextmanager
@@ -99,25 +96,6 @@ async def in_global_transaction():
         yield
 
     Tortoise._connections['default'] = original_conn
-
-
-async def http_request(session: aiohttp.ClientSession, method: str, **kwargs):
-    """Wrapped aiohttp call with preconfigured headers and logging"""
-    headers = {
-        **kwargs.pop('headers', {}),
-        'User-Agent': f'dipdup/{__version__}',
-    }
-    url = kwargs['url']
-    params = kwargs.get('params', {})
-    params_string = '&'.join([f'{k}={v}' for k, v in params.items()])
-    request_string = f'{url}?{params_string}'.rstrip('?')
-    _logger.debug('Calling `%s`', request_string)
-    async with getattr(session, method)(
-        skip_auto_headers={'User-Agent'},
-        headers=headers,
-        **kwargs,
-    ) as response:
-        return await response.json()
 
 
 class FormattedLogger(Logger):

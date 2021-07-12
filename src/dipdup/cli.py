@@ -17,10 +17,10 @@ from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
-from dipdup.hasura import HasuraManager
+from dipdup.hasura import HasuraGateway
 from dipdup.utils import tortoise_wrapper
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('dipdup.cli')
 
 
 def click_command_wrapper(fn):
@@ -144,7 +144,7 @@ async def configure_hasura(ctx, reset: bool):
     if not config.hasura:
         _logger.error('`hasura` config section is empty')
         return
-    hasura = HasuraManager(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
+    hasura = HasuraGateway(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
 
     async with tortoise_wrapper(url, models):
         try:

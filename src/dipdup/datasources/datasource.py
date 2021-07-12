@@ -1,9 +1,10 @@
-from abc import ABC
 from enum import Enum
-from typing import Awaitable, List, Protocol
+from typing import Awaitable, List, Optional, Protocol
 
 from pyee import AsyncIOEventEmitter  # type: ignore
 
+from dipdup.config import HTTPConfig
+from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData, OperationData
 
 
@@ -28,7 +29,11 @@ class RollbackCallback(Protocol):
         ...
 
 
-class IndexDatasource(ABC, AsyncIOEventEmitter):
+class IndexDatasource(HTTPGateway, AsyncIOEventEmitter):
+    def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
+        HTTPGateway.__init__(self, url, http_config)
+        AsyncIOEventEmitter.__init__(self)
+
     def on(self, event, f=None) -> None:
         raise RuntimeError('Do not use `on` directly')
 
