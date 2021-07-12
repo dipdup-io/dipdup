@@ -259,7 +259,7 @@ class OperationIndex(Index):
                 try:
                     parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
                 except ValidationError:
-                    raise InvalidDataError(operation.parameter_json)
+                    raise InvalidDataError(operation.parameter_json, parameter_type)
 
                 storage_type = pattern_config.storage_type_cls
                 storage = operation.get_merged_storage(storage_type)
@@ -413,7 +413,7 @@ class BigMapIndex(Index):
             try:
                 key = key_type.parse_obj(matched_big_map.key)
             except ValidationError:
-                raise InvalidDataError(matched_big_map.key)
+                raise InvalidDataError(matched_big_map.key, key_type)
         else:
             key = None
 
@@ -422,7 +422,7 @@ class BigMapIndex(Index):
             try:
                 value = value_type.parse_obj(matched_big_map.value)
             except ValidationError:
-                raise InvalidDataError(matched_big_map.key)
+                raise InvalidDataError(matched_big_map.key, value_type)
         else:
             value = None
 

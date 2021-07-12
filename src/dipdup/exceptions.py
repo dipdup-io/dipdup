@@ -42,6 +42,9 @@ Active indexes:
 
 _data_validation_error = """Failed to validate operation/big_map data against a generated type class.
 
+Expected type:
+{type_name}
+
 Invalid data:
 {invalid_data}
 """
@@ -138,9 +141,10 @@ class IndexAlreadyExistsError(DipDupError):
 class InvalidDataError(DipDupError):
     """Failed to validate operation/big_map data against a generated type class"""
 
-    def __init__(self, data) -> None:
+    def __init__(self, data, type_cls) -> None:
         super().__init__(None)
         self.data = data
+        self.type_name = type_cls.__name__
 
     def format_help(self) -> str:
-        return _data_validation_error.format(invalid_data=self.data)
+        return _data_validation_error.format(invalid_data=self.data, type_name=self.type_name)
