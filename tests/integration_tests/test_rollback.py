@@ -25,6 +25,7 @@ def _get_operation(hash_: str, level: int) -> OperationData:
         counter=0,
         sender_address='',
         target_address='',
+        initiator_address='',
         amount=0,
         status='',
         has_internals=False,

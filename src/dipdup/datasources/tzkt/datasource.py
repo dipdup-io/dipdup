@@ -685,7 +685,7 @@ class TzktDatasource(IndexDatasource):
             type=operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
-            timestamp=datetime.fromisoformat(operation_json['timestamp'][:-1]).replace(tzinfo=timezone.utc),
+            timestamp=cls._parse_timestamp(operation_json['timestamp']),
             block=operation_json.get('block'),
             hash=operation_json['hash'],
             counter=operation_json['counter'],
@@ -722,7 +722,7 @@ class TzktDatasource(IndexDatasource):
             level=big_map_json['level'],
             # FIXME: operation_id field in API
             operation_id=big_map_json['level'],
-            timestamp=datetime.fromisoformat(big_map_json['timestamp'][:-1]).replace(tzinfo=timezone.utc),
+            timestamp=cls._parse_timestamp(big_map_json['timestamp']),
             bigmap=big_map_json['bigmap'],
             contract_address=big_map_json['contract']['address'],
             path=big_map_json['path'],
@@ -737,7 +737,7 @@ class TzktDatasource(IndexDatasource):
         return BlockData(
             level=block_json['level'],
             hash=block_json['hash'],
-            timestamp=datetime.fromisoformat(block_json['timestamp'][:-1]).replace(tzinfo=timezone.utc),
+            timestamp=cls._parse_timestamp(block_json['timestamp']),
             proto=block_json['proto'],
             priority=block_json['priority'],
             validations=block_json['validations'],
@@ -757,7 +757,7 @@ class TzktDatasource(IndexDatasource):
             level=head_block_json['level'],
             hash=head_block_json['hash'],
             protocol=head_block_json['protocol'],
-            timestamp=datetime.fromisoformat(head_block_json['timestamp'][:-1]).replace(tzinfo=timezone.utc),
+            timestamp=cls._parse_timestamp(head_block_json['timestamp']),
             voting_epoch=head_block_json['votingEpoch'],
             voting_period=head_block_json['votingPeriod'],
             known_level=head_block_json['knownLevel'],
@@ -778,3 +778,7 @@ class TzktDatasource(IndexDatasource):
         while client.transport.state != ConnectionState.connected:
             await asyncio.sleep(0.1)
         await client.send(method, arguments, on_invocation)
+
+    @classmethod
+    def _parse_timestamp(cls, timestamp: str) -> datetime:
+        return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
