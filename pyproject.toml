@@ -37,7 +37,7 @@ sentry-sdk = "^1.1.0"
 pyhumps = "^3.0.2"
 aiolimiter = "^1.0.0-beta.1"
 tabulate = "^0.8.9"
-pytezos = {git = "https://github.com/baking-bad/pytezos.git", branch = "aux/dipdup-compatibility", optional = true}
+pytezos = {version = "^3.2.4", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
