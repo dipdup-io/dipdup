@@ -259,7 +259,12 @@ class OperationIndex(Index):
                 try:
                     parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
                 except ValidationError:
-                    raise InvalidDataError(operation.parameter_json, parameter_type)
+                    error_context = dict(
+                        hash=operation.hash,
+                        counter=operation.counter,
+                        nonce=operation.nonce
+                    )
+                    raise InvalidDataError(operation.parameter_json, parameter_type, error_context)
 
                 storage_type = pattern_config.storage_type_cls
                 storage = operation.get_merged_storage(storage_type)
