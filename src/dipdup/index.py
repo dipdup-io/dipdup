@@ -183,7 +183,7 @@ class OperationIndex(Index):
             self._logger.info('Rolling back to previous level, verifying processed operations')
             expected_hashes = set([opg.hash for opg in self._rollback_operation_groups])
             received_hashes = set([op.hash for op in operations])
-            if expected_hashes != received_hashes:
+            if received_hashes.intersection(expected_hashes) != expected_hashes:
                 self._logger.warning('Attempted a single level rollback but arrived block differs from processed one')
                 await self._ctx.reindex()
             self._rollback_level = None
