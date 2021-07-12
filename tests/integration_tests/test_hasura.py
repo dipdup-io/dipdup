@@ -11,6 +11,8 @@ from dipdup.utils import tortoise_wrapper
 
 
 class HasuraTest(IsolatedAsyncioTestCase):
+    maxDiff = None
+
     async def test_configure_hasura(self):
 
         with open(join(dirname(__file__), 'hasura', 'empty.json')) as file:

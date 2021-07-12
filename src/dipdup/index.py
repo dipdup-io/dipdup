@@ -169,12 +169,17 @@ class OperationIndex(Index):
             self._logger.info('Rolling back to previous level, verifying processed operations')
             expected_hashes = set(self._last_hashes)
             received_hashes = set([op.hash for op in operations])
-            if received_hashes.intersection(expected_hashes) != expected_hashes:
+            reused_hashes = received_hashes & expected_hashes
+            if reused_hashes != expected_hashes:
                 self._logger.warning('Attempted a single level rollback but arrived block differs from processed one')
                 await self._ctx.reindex()
+
             self._rollback_level = None
             self._last_hashes = set()
-            return
+            new_hashes = received_hashes - expected_hashes
+            if not new_hashes:
+                return
+            operations = [op for op in operations if op.hash in new_hashes]
 
         async with in_global_transaction():
             self._logger.info('Processing %s operations of level %s', len(operations), level)

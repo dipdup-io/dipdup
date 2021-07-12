@@ -16,19 +16,7 @@
                         }
                     }
                 },
-                {
-                    "name": "id",
-                    "description": null,
-                    "type": {
-                        "name": null,
-                        "kind": "NON_NULL",
-                        "ofType": {
-                            "name": "Int",
-                            "kind": "SCALAR"
-                        }
-                    }
-                },
-                {
+    {
                     "name": "index_name",
                     "description": null,
                     "type": {
