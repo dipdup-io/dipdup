@@ -26,6 +26,8 @@ ROLLBACK_HANDLER = 'on_rollback'
 CONFIGURE_HANDLER = 'on_configure'
 BLOCK_HANDLER = 'on_block'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
+DEFAULT_RETRY_COUNT = 3
+DEFAULT_RETRY_SLEEP = 1
 
 sys.path.append(os.getcwd())
 _logger = logging.getLogger(__name__)
@@ -88,6 +90,15 @@ class PostgresDatabaseConfig:
 
 
 @dataclass
+class HTTPConfig:
+    cache: bool = True
+    retry_count: int = DEFAULT_RETRY_COUNT
+    retry_sleep: int = DEFAULT_RETRY_SLEEP
+    ratelimit_rate: Optional[int] = None
+    ratelimit_period: Optional[int] = None
+
+
+@dataclass
 class ContractConfig:
     """Contract config
 
@@ -139,6 +150,7 @@ class TzktDatasourceConfig(NameMixin):
 
     kind: Literal['tzkt']
     url: str
+    http: Optional[HTTPConfig] = None
 
     def __hash__(self):
         return hash(self.url)
@@ -161,6 +173,7 @@ class BcdDatasourceConfig(NameMixin):
     kind: Literal['bcd']
     url: str
     network: str
+    http: Optional[HTTPConfig] = None
 
     def __hash__(self):
         return hash(self.url + self.network)
@@ -179,6 +192,7 @@ class CoinbaseDatasourceConfig(NameMixin):
     api_key: Optional[str] = None
     secret_key: Optional[str] = None
     passphrase: Optional[str] = None
+    http: Optional[HTTPConfig] = None
 
     def __hash__(self):
         return hash(self.kind)
@@ -616,13 +630,31 @@ HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, Operatio
 class HasuraConfig:
     url: str
     admin_secret: Optional[str] = None
+    source: str = 'default'
+    select_limit: int = 100
+    allow_aggregations: bool = True
+    camel_case: bool = False
+    connection_timeout: int = 5
+    rest: bool = True
+    http: Optional[HTTPConfig] = None
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):
         parsed_url = urlparse(v)
         if not (parsed_url.scheme and parsed_url.netloc):
             raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
-        return v
+        return v.rstrip('/')
+
+    @validator('source', allow_reuse=True)
+    def valid_source(cls, v):
+        if v != 'default':
+            raise NotImplementedError('Multiple Hasura sources are not supported at the moment')
+
+    @property
+    def headers(self) -> Dict[str, str]:
+        if self.admin_secret:
+            return {'X-Hasura-Admin-Secret': self.admin_secret}
+        return {}
 
 
 @dataclass
@@ -702,17 +734,17 @@ class DipDupConfig:
 
     def get_rollback_fn(self) -> Type:
         try:
-            module = f'{self.package}.handlers.{ROLLBACK_HANDLER}'
-            return getattr(importlib.import_module(module), ROLLBACK_HANDLER)
+            module_name = f'{self.package}.handlers.{ROLLBACK_HANDLER}'
+            return getattr(importlib.import_module(module_name), ROLLBACK_HANDLER)
         except (ModuleNotFoundError, AttributeError) as e:
-            raise HandlerImportError(f'Module `{module}` not found. Have you forgot to call `init`?') from e
+            raise HandlerImportError(module=module_name, obj=ROLLBACK_HANDLER) from e
 
     def get_configure_fn(self) -> Type:
         try:
-            module = f'{self.package}.handlers.{CONFIGURE_HANDLER}'
-            return getattr(importlib.import_module(module), CONFIGURE_HANDLER)
+            module_name = f'{self.package}.handlers.{CONFIGURE_HANDLER}'
+            return getattr(importlib.import_module(module_name), CONFIGURE_HANDLER)
         except (ModuleNotFoundError, AttributeError) as e:
-            raise HandlerImportError(f'Module `{module}` not found. Have you forgot to call `init`?') from e
+            raise HandlerImportError(module=module_name, obj=CONFIGURE_HANDLER) from e
 
     def resolve_static_templates(self) -> None:
         _logger.info('Substituting index templates')
@@ -848,20 +880,31 @@ class DipDupConfig:
                 **YAML(typ='base').load(raw_config),
             }
 
-        config = cls(**json_config)
+        try:
+            config = cls(**json_config)
+        except Exception as e:
+            raise ConfigurationError(str(e)) from e
         return config
 
     def _initialize_handler_callback(self, handler_config: HandlerConfig) -> None:
         _logger.info('Registering handler callback `%s`', handler_config.callback)
-        handler_module = importlib.import_module(f'{self.package}.handlers.{handler_config.callback}')
-        callback_fn = getattr(handler_module, handler_config.callback)
-        handler_config.callback_fn = callback_fn
+        try:
+            module_name = f'{self.package}.handlers.{handler_config.callback}'
+            module = importlib.import_module(module_name)
+            callback_fn = getattr(module, handler_config.callback)
+            handler_config.callback_fn = callback_fn
+        except (ModuleNotFoundError, AttributeError) as e:
+            raise HandlerImportError(module=module_name, obj=handler_config.callback) from e
 
     def _initialize_job_callback(self, job_config: JobConfig) -> None:
         _logger.info('Registering job callback `%s`', job_config.callback)
-        job_module = importlib.import_module(f'{self.package}.jobs.{job_config.callback}')
-        callback_fn = getattr(job_module, job_config.callback)
-        job_config.callback_fn = callback_fn
+        try:
+            module_name = f'{self.package}.jobs.{job_config.callback}'
+            module = importlib.import_module(module_name)
+            callback_fn = getattr(module, job_config.callback)
+            job_config.callback_fn = callback_fn
+        except (ModuleNotFoundError, AttributeError) as e:
+            raise HandlerImportError(module=module_name, obj=job_config.callback) from e
 
     def _initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         if index_name in self._initialized:

@@ -72,6 +72,7 @@ class OperationData:
     counter: int
     sender_address: str
     target_address: Optional[str]
+    initiator_address: Optional[str]
     amount: Optional[int]
     status: str
     has_internals: Optional[bool]
@@ -80,6 +81,7 @@ class OperationData:
     sender_alias: Optional[str] = None
     nonce: Optional[int] = None
     target_alias: Optional[str] = None
+    initiator_alias: Optional[str] = None
     entrypoint: Optional[str] = None
     parameter_json: Optional[Any] = None
     originated_contract_address: Optional[str] = None

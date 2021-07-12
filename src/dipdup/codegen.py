@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import subprocess
 from contextlib import suppress
 from copy import copy
@@ -94,9 +95,20 @@ class DipDupCodeGenerator:
         sql_on_restart_path = join(sql_path, 'on_restart')
         with suppress(FileExistsError):
             mkdir(sql_on_restart_path)
+        with open(join(sql_on_restart_path, '.keep'), 'w'):
+            pass
         sql_on_reindex_path = join(sql_path, 'on_reindex')
         with suppress(FileExistsError):
             mkdir(sql_on_reindex_path)
+        with open(join(sql_on_reindex_path, '.keep'), 'w'):
+            pass
+
+        self._logger.info('Creating `%s/graphql` directory', self._config.package)
+        graphql_path = join(self._config.package_path, 'graphql')
+        with suppress(FileExistsError):
+            mkdir(graphql_path)
+        with open(join(graphql_path, '.keep'), 'w'):
+            pass
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
@@ -236,6 +248,12 @@ class DipDupCodeGenerator:
 
                 input_path = join(root, file)
                 output_path = join(types_root, f'{pascal_to_snake(name)}.py')
+
+                if exists(output_path):
+                    with open(output_path) as type_file:
+                        first_line = type_file.readline()
+                        if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
+                            continue
 
                 if name == 'storage':
                     name = '_'.join([root.split('/')[-1], name])
