@@ -93,23 +93,8 @@ class HandlerContext(DipDupContext):
         self.datasource = datasource
 
     def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
-        for contract_name, contract_config in self.config.contracts.items():
-            if name == contract_name or address == contract_config.address:
-                # NOTE: Origination pattern with `similar_to` field is a special case, safe to add duplicate
-                is_similar_to = False
-                for index_config in self.config.indexes.values():
-                    if not isinstance(index_config, OperationIndexConfig):
-                        continue
-                    for handler_config in index_config.handlers:
-                        for pattern_config in handler_config.pattern:
-                            if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig) or not pattern_config.similar_to:
-                                continue
-                            if pattern_config.similar_to_contract_config.address == address:
-                                is_similar_to = True
-
-                if not is_similar_to:
-                    raise ContractAlreadyExistsError(self, name, address)
-
+        if name in self.config.contracts:
+            raise ContractAlreadyExistsError(self, name, address)
         self.config.contracts[name] = ContractConfig(
             address=address,
             typename=typename,
