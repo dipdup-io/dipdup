@@ -67,9 +67,14 @@ async def datasource_run(self: TzktDatasource, index_dispatcher: IndexDispatcher
         [
             _get_operation('1', 1365001),
             _get_operation('2', 1365001),
-            _get_operation('3', 1365001),
         ]
-        + ([_get_operation('4', 1365001)] if fail else []),
+        + (
+            [
+                _get_operation('3', 1365001),
+            ]
+            if not fail
+            else []
+        ),
         self._new_block,
     )
     await asyncio.sleep(0.05)
@@ -89,7 +94,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         config.database.path = ':memory:'
 
         datasource_name, datasource_config = list(config.datasources.items())[0]
-        datasource = TzktDatasource('test', False)
+        datasource = TzktDatasource('test')
         dipdup = DipDup(config)
         dipdup._datasources[datasource_name] = datasource
         dipdup._datasources_by_config[datasource_config] = datasource
@@ -116,7 +121,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         config.database.path = ':memory:'
 
         datasource_name, datasource_config = list(config.datasources.items())[0]
-        datasource = TzktDatasource('test', False)
+        datasource = TzktDatasource('test')
         dipdup = DipDup(config)
         dipdup._datasources[datasource_name] = datasource
         dipdup._datasources_by_config[datasource_config] = datasource

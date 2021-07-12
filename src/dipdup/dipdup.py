@@ -37,7 +37,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import HasuraManager
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State, StateOperationGroup
+from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
@@ -217,14 +217,12 @@ class DipDup:
                 self._scheduler.start()
 
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
-            cleanup_task = asyncio.create_task(self._cleanup_task())
 
             try:
                 await asyncio.gather(*datasource_tasks, *worker_tasks)
             except KeyboardInterrupt:
                 pass
             finally:
-                cleanup_task.cancel()
                 self._logger.info('Closing datasource sessions')
                 await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
                 if hasura_manager:
@@ -344,16 +342,6 @@ class DipDup:
 
             self._logger.info('Executing `%s`', filename)
             await get_connection(None).execute_script(sql)
-
-    async def _cleanup_task(self) -> None:
-        with suppress(asyncio.CancelledError):
-            while True:
-                await asyncio.sleep(60 * 5)
-                minimum_level_state = await State.filter(index_type__not=IndexType.schema).order_by('level').first()
-                if minimum_level_state is None:
-                    raise RuntimeError('No index states found in database')
-                minimum_level = minimum_level_state.level - 1
-                await StateOperationGroup.filter(level__lt=minimum_level).delete()
 
     def _finish_migration(self, version: str) -> None:
         self._logger.warning('==================== WARNING =====================')

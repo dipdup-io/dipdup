@@ -1,6 +1,6 @@
 import logging
 from abc import abstractmethod
-from collections import deque, namedtuple
+from collections import defaultdict, deque, namedtuple
 from contextlib import suppress
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
@@ -18,17 +18,7 @@ from dipdup.config import (
 )
 from dipdup.context import DipDupContext, HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.models import (
-    BigMapData,
-    BigMapDiff,
-    HeadBlockData,
-    OperationData,
-    Origination,
-    State,
-    StateOperationGroup,
-    TemporaryState,
-    Transaction,
-)
+from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, OperationData, Origination, State, TemporaryState, Transaction
 from dipdup.utils import FormattedLogger, in_global_transaction
 
 # NOTE: Operations of a single contract call
@@ -118,18 +108,14 @@ class OperationIndex(Index):
         self._queue: Deque[Tuple[int, List[OperationData], Optional[HeadBlockData]]] = deque()
         self._contract_hashes: Dict[str, Tuple[str, str]] = {}
         self._rollback_level: Optional[int] = None
-        self._rollback_operation_groups: List[StateOperationGroup] = []
+        self._last_hashes: Set[str] = set()
 
     def push(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
         self._queue.append((level, operations, block))
 
     async def single_level_rollback(self, from_level: int) -> None:
-        """Ensure next arrived block the same as one rolled back"""
-        state_operation_groups = await StateOperationGroup.filter(level=from_level).all()
-        if not state_operation_groups:
-            raise RuntimeError(f'No StateOperationGroups found for level {from_level}. Dropped them too early?')
+        """Ensure next arrived block is the same as rolled back one"""
         self._rollback_level = from_level
-        self._rollback_operation_groups = state_operation_groups
 
     async def _process_queue(self) -> None:
         if not self._queue:
@@ -181,13 +167,13 @@ class OperationIndex(Index):
                 raise RuntimeError(f'Rolling back to level {self._rollback_level}, got operations of level {level}')
 
             self._logger.info('Rolling back to previous level, verifying processed operations')
-            expected_hashes = set([opg.hash for opg in self._rollback_operation_groups])
+            expected_hashes = set(self._last_hashes)
             received_hashes = set([op.hash for op in operations])
             if received_hashes.intersection(expected_hashes) != expected_hashes:
                 self._logger.warning('Attempted a single level rollback but arrived block differs from processed one')
                 await self._ctx.reindex()
             self._rollback_level = None
-            self._rollback_operation_groups = []
+            self._last_hashes = set()
             return
 
         async with in_global_transaction():
@@ -234,13 +220,12 @@ class OperationIndex(Index):
 
     async def _process_operations(self, operations: List[OperationData]) -> None:
         """Try to match operations in cache with all patterns from indexes. Must be wrapped in transaction."""
-        operation_subgroups: Dict[OperationSubgroup, List[OperationData]] = {}
+        self._last_hashes = set()
+        operation_subgroups: Dict[OperationSubgroup, List[OperationData]] = defaultdict(list)
         for operation in operations:
             key = OperationSubgroup(operation.hash, operation.counter)
-            if key not in operation_subgroups:
-                await StateOperationGroup.get_or_create(hash=operation.hash, level=operation.level)
-                operation_subgroups[key] = []
             operation_subgroups[key].append(operation)
+            self._last_hashes.add(operation.hash)
 
         for operation_subgroup, operations in operation_subgroups.items():
             self._logger.debug('Matching %s', key)

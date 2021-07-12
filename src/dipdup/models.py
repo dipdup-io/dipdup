@@ -51,15 +51,6 @@ class TemporaryState(State):
         abstract = True
 
 
-class StateOperationGroup(Model):
-
-    hash = fields.CharField(64, pk=True)
-    level = fields.IntField()
-
-    class Meta:
-        table = 'dipdup_state_operation_group'
-
-
 @dataclass
 class OperationData:
     """Basic structure for operations from TzKT response"""

@@ -386,7 +386,6 @@ class TzktDatasource(IndexDatasource):
         block_json = await self._proxy.http_request(
             'get',
             url=f'{self._url}/v1/blocks/{level}',
-            skip_cache=True,
         )
         return self.convert_block(block_json)
 
