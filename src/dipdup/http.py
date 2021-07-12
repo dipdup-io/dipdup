@@ -4,7 +4,9 @@ import logging
 import pickle
 import platform
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
+from contextlib import suppress
+from http import HTTPStatus
+from typing import Mapping, Optional, Tuple, cast
 
 import aiohttp
 from aiolimiter import AsyncLimiter
@@ -74,6 +76,21 @@ class _HTTPGateway:
                     raise e
                 self._logger.warning('HTTP request failed: %s', e)
                 await asyncio.sleep(self._config.retry_sleep or 0)
+            except aiohttp.ClientResponseError as e:
+                if e.code == HTTPStatus.TOO_MANY_REQUESTS:
+                    ratelimit_sleep = 5
+                    # TODO: Parse Retry-After in UTC date format
+                    with suppress(KeyError, ValueError):
+                        e.headers = cast(Mapping, e.headers)
+                        ratelimit_sleep = int(e.headers['Retry-After'])
+
+                    self._logger.warning('HTTP request failed: %s', e)
+                    await asyncio.sleep(ratelimit_sleep)
+                else:
+                    if attempt + 1 == attempts[-1]:
+                        raise e
+                    self._logger.warning('HTTP request failed: %s', e)
+                    await asyncio.sleep(self._config.retry_sleep or 0)
 
     async def _request(self, method: str, url: str, **kwargs):
         """Wrapped aiohttp call with preconfigured headers and logging"""
@@ -91,6 +108,7 @@ class _HTTPGateway:
             method=method,
             url=url,
             headers=headers,
+            raise_for_status=True,
             **kwargs,
         ) as response:
             return await response.json()
