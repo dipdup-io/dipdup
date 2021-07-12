@@ -30,7 +30,7 @@ DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 
 sys.path.append(os.getcwd())
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('dipdup.config')
 
 
 class OperationType(Enum):
@@ -91,11 +91,18 @@ class PostgresDatabaseConfig:
 
 @dataclass
 class HTTPConfig:
-    cache: bool = True
-    retry_count: int = DEFAULT_RETRY_COUNT
-    retry_sleep: int = DEFAULT_RETRY_SLEEP
+    cache: Optional[bool] = None
+    retry_count: Optional[int] = None
+    retry_sleep: Optional[int] = None
     ratelimit_rate: Optional[int] = None
     ratelimit_period: Optional[int] = None
+
+    def merge(self, other: Optional['HTTPConfig']) -> None:
+        if not other:
+            return
+        for k, v in other.__dict__.items():
+            if v is not None:
+                setattr(self, k, v)
 
 
 @dataclass
