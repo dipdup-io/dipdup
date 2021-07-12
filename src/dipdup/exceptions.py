@@ -138,9 +138,9 @@ class IndexAlreadyExistsError(DipDupError):
 class InvalidDataError(DipDupError):
     """Failed to validate operation/big_map data against a generated type class"""
 
-    def __init__(self, ctx, data) -> None:
-        super().__init__()
+    def __init__(self, data) -> None:
+        super().__init__(None)
         self.data = data
 
-    def format(self) -> str:
+    def format_help(self) -> str:
         return _data_validation_error.format(invalid_data=self.data)
