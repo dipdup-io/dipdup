@@ -31,7 +31,7 @@ class Index:
         self._config = config
         self._datasource = datasource
 
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger('dipdup.index')
         self._state: Optional[State] = None
 
     @property

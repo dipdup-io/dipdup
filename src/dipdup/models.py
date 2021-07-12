@@ -17,7 +17,7 @@ KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('dipdup.models')
 
 
 class IndexType(Enum):

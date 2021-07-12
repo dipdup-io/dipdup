@@ -19,7 +19,6 @@ from dipdup.config import (
     OperationIndexConfig,
 )
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.proxy import HTTPRequestProxy
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData
 from dipdup.utils import split_by_chunks
@@ -93,7 +92,7 @@ class OperationFetcher:
         self._origination_addresses = origination_addresses
         self._cache = cache
 
-        self._logger = logging.getLogger('dipdup.tzkt.fetcher')
+        self._logger = logging.getLogger('dipdup.tzkt')
         self._head: int = 0
         self._heads: Dict[OperationFetcherChannel, int] = {}
         self._offsets: Dict[OperationFetcherChannel, int] = {}
@@ -221,14 +220,13 @@ class BigMapFetcher:
         big_map_paths: Set[str],
         cache: bool = False,
     ) -> None:
+        self._logger = logging.getLogger('dipdup.tzkt')
         self._datasource = datasource
         self._first_level = first_level
         self._last_level = last_level
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
         self._cache = cache
-
-        self._logger = logging.getLogger('dipdup.tzkt.fetcher')
 
     async def fetch_big_maps_by_level(self) -> AsyncGenerator[Tuple[int, List[BigMapData]], None]:
         """Fetch big map diffs via Fetcher (not implemented yet) and pass to message callback"""
@@ -279,12 +277,7 @@ class TzktDatasource(IndexDatasource):
         url: str,
         http_config: Optional[HTTPConfig] = None,
     ) -> None:
-        super().__init__()
-        if http_config is None:
-            http_config = HTTPConfig()
-        self._url = url.rstrip('/')
-        self._proxy = HTTPRequestProxy(http_config)
-
+        super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.tzkt')
         self._transaction_subscriptions: Set[str] = set()
         self._origination_subscriptions: bool = False
@@ -314,17 +307,14 @@ class TzktDatasource(IndexDatasource):
             raise RuntimeError('No message from `head` channel received')
         return self._block
 
-    async def close_session(self) -> None:
-        await self._proxy.close_session()
-
     async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
         """Get list of contracts sharing the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
 
-        contracts = await self._proxy.http_request(
+        contracts = await self._http.request(
             'get',
-            url=f'{self._url}/v1/contracts/{address}/{entrypoint}',
+            url=f'v1/contracts/{address}/{entrypoint}',
             params=dict(
                 select='address',
                 limit=self.request_limit,
@@ -335,9 +325,9 @@ class TzktDatasource(IndexDatasource):
     async def get_originated_contracts(self, address: str) -> List[str]:
         """Get contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s', address)
-        contracts = await self._proxy.http_request(
+        contracts = await self._http.request(
             'get',
-            url=f'{self._url}/v1/accounts/{address}/contracts',
+            url=f'v1/accounts/{address}/contracts',
             params=dict(
                 limit=self.request_limit,
             ),
@@ -347,25 +337,25 @@ class TzktDatasource(IndexDatasource):
     async def get_contract_summary(self, address: str) -> Dict[str, Any]:
         """Get contract summary"""
         self._logger.info('Fetching contract summary for address `%s', address)
-        return await self._proxy.http_request(
+        return await self._http.request(
             'get',
-            url=f'{self._url}/v1/contracts/{address}',
+            url=f'v1/contracts/{address}',
         )
 
     async def get_contract_storage(self, address: str) -> Dict[str, Any]:
         """Get contract storage"""
         self._logger.info('Fetching contract storage for address `%s', address)
-        return await self._proxy.http_request(
+        return await self._http.request(
             'get',
-            url=f'{self._url}/v1/contracts/{address}/storage',
+            url=f'v1/contracts/{address}/storage',
         )
 
     async def get_jsonschemas(self, address: str) -> Dict[str, Any]:
         """Get JSONSchemas for contract's storage/parameter/bigmap types"""
         self._logger.info('Fetching jsonschemas for address `%s', address)
-        jsonschemas = await self._proxy.http_request(
+        jsonschemas = await self._http.request(
             'get',
-            url=f'{self._url}/v1/contracts/{address}/interface',
+            url=f'v1/contracts/{address}/interface',
             cache=True,
         )
         self._logger.debug(jsonschemas)
@@ -374,18 +364,18 @@ class TzktDatasource(IndexDatasource):
     async def get_head_block(self) -> HeadBlockData:
         """Get latest block (head)"""
         self._logger.info('Fetching latest block')
-        head_block_json = await self._proxy.http_request(
+        head_block_json = await self._http.request(
             'get',
-            url=f'{self._url}/v1/head',
+            url='v1/head',
         )
         return self.convert_head_block(head_block_json)
 
     async def get_block(self, level: int) -> BlockData:
         """Get block by level"""
         self._logger.info('Fetching block %s', level)
-        block_json = await self._proxy.http_request(
+        block_json = await self._http.request(
             'get',
-            url=f'{self._url}/v1/blocks/{level}',
+            url=f'v1/blocks/{level}',
         )
         return self.convert_block(block_json)
 
@@ -397,9 +387,9 @@ class TzktDatasource(IndexDatasource):
         # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
         # NOTE: Other operation requests won't hit that limit.
         for addresses_chunk in split_by_chunks(list(addresses), TZKT_ORIGINATIONS_REQUEST_LIMIT):
-            raw_originations += await self._proxy.http_request(
+            raw_originations += await self._http.request(
                 'get',
-                url=f'{self._url}/v1/operations/originations',
+                url='v1/operations/originations',
                 params={
                     "originatedContract.in": ','.join(addresses_chunk),
                     "offset": offset,
@@ -422,9 +412,9 @@ class TzktDatasource(IndexDatasource):
     async def get_transactions(
         self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
     ) -> List[OperationData]:
-        raw_transactions = await self._proxy.http_request(
+        raw_transactions = await self._http.request(
             'get',
-            url=f'{self._url}/v1/operations/transactions',
+            url='v1/operations/transactions',
             params={
                 f"{field}.in": ','.join(addresses),
                 "offset": offset,
@@ -446,9 +436,9 @@ class TzktDatasource(IndexDatasource):
     async def get_big_maps(
         self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
     ) -> List[BigMapData]:
-        raw_big_maps = await self._proxy.http_request(
+        raw_big_maps = await self._http.request(
             'get',
-            url=f'{self._url}/v1/bigmaps/updates',
+            url='v1/bigmaps/updates',
             params={
                 "contract.in": ",".join(addresses),
                 "paths.in": ",".join(paths),
@@ -498,7 +488,7 @@ class TzktDatasource(IndexDatasource):
             self._logger.info('Creating websocket client')
             self._client = (
                 HubConnectionBuilder()
-                .with_url(self._url + '/v1/events')
+                .with_url(self._http._url + '/v1/events')
                 .with_automatic_reconnect(
                     {
                         "type": "raw",
@@ -588,6 +578,15 @@ class TzktDatasource(IndexDatasource):
         await self._send(
             'SubscribeToHead',
             [],
+        )
+
+    def _default_http_config(self) -> HTTPConfig:
+        return HTTPConfig(
+            cache=True,
+            retry_count=3,
+            retry_sleep=1,
+            ratelimit_rate=100,
+            ratelimit_period=30,
         )
 
     async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:

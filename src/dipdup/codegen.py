@@ -49,7 +49,7 @@ class DipDupCodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
     def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, DatasourceT]) -> None:
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock
 from tortoise import Tortoise
 
 from dipdup.config import HasuraConfig, PostgresDatabaseConfig
-from dipdup.hasura import HasuraManager
+from dipdup.hasura import HasuraGateway
 from dipdup.utils import tortoise_wrapper
 
 
@@ -36,11 +36,11 @@ class HasuraTest(IsolatedAsyncioTestCase):
             database_config = PostgresDatabaseConfig(kind='postgres', host='', port=0, user='', database='', schema_name='hic_et_nunc')
             hasura_config = HasuraConfig('http://localhost')
 
-            hasura_manager = HasuraManager('demo_hic_et_nunc', hasura_config, database_config)
-            hasura_manager._get_views = AsyncMock(return_value=[])
-            await hasura_manager._proxy._session.close()
-            hasura_manager._proxy = Mock()
-            hasura_manager._proxy.http_request = AsyncMock(
+            hasura_gateway = HasuraGateway('demo_hic_et_nunc', hasura_config, database_config)
+            hasura_gateway._get_views = AsyncMock(return_value=[])
+            await hasura_gateway.close_session()
+            hasura_gateway._http = Mock()
+            hasura_gateway._http.request = AsyncMock(
                 side_effect=[
                     empty_metadata,
                     {},
@@ -52,8 +52,8 @@ class HasuraTest(IsolatedAsyncioTestCase):
                     {},
                 ]
             )
-            hasura_manager._healthcheck = AsyncMock()
+            hasura_gateway._healthcheck = AsyncMock()
 
-            await hasura_manager.configure()
+            await hasura_gateway.configure()
 
-            self.assertEqual(hasura_manager._proxy.http_request.call_args[-1]['json'], replace_metadata_request)
+            self.assertEqual(hasura_gateway._http.request.call_args[-1]['json'], replace_metadata_request)
