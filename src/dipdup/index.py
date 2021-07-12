@@ -3,6 +3,7 @@ from abc import abstractmethod
 from collections import deque, namedtuple
 from contextlib import suppress
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
+from pydantic.error_wrappers import ValidationError
 
 from dipdup.config import (
     BigMapHandlerConfig,
@@ -20,6 +21,7 @@ from dipdup.context import DipDupContext, HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.models import BigMapData, BigMapDiff, OperationData, Origination, State, TemporaryState, Transaction
 from dipdup.utils import FormattedLogger, in_global_transaction
+from dipdup.exceptions import InvalidDataError
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
 
@@ -254,7 +256,10 @@ class OperationIndex(Index):
                     continue
 
                 parameter_type = pattern_config.parameter_type_cls
-                parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
+                try:
+                    parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
+                except ValidationError:
+                    raise InvalidDataError(operation.parameter_json)
 
                 storage_type = pattern_config.storage_type_cls
                 storage = operation.get_merged_storage(storage_type)
@@ -405,13 +410,19 @@ class BigMapIndex(Index):
 
         if matched_big_map.action.has_key:
             key_type = handler_config.key_type_cls
-            key = key_type.parse_obj(matched_big_map.key)
+            try:
+                key = key_type.parse_obj(matched_big_map.key)
+            except ValidationError:
+                raise InvalidDataError(matched_big_map.key)
         else:
             key = None
 
         if matched_big_map.action.has_value:
             value_type = handler_config.value_type_cls
-            value = value_type.parse_obj(matched_big_map.value)
+            try:
+                value = value_type.parse_obj(matched_big_map.value)
+            except ValidationError:
+                raise InvalidDataError(matched_big_map.key)
         else:
             value = None
 

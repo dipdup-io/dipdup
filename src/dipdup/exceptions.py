@@ -1,6 +1,7 @@
 import traceback
 from abc import ABC, abstractmethod
 from typing import Optional
+from pprint import pformat
 
 from tabulate import tabulate
 
@@ -37,6 +38,12 @@ _index_already_exists_error = """Index with name `{name}` already exists.
 
 Active indexes:
 {indexes_table}
+"""
+
+_data_validation_error = """Failed to validate operation/big_map data against a generated type class.
+
+Invalid data:
+{invalid_data}
 """
 
 _tab = '\n\n' + ('_' * 80) + '\n\n'
@@ -126,3 +133,14 @@ class IndexAlreadyExistsError(DipDupError):
     def format_help(self) -> str:
         indexes_table = tabulate([(name,) for name in self.ctx.config.indexes.values()])
         return _index_already_exists_error.format(name=self.name, indexes_table=indexes_table)
+
+
+class InvalidDataError(DipDupError):
+    """Failed to validate operation/big_map data against a generated type class"""
+
+    def __init__(self, ctx, data) -> None:
+        super().__init__()
+        self.data = data
+
+    def format(self) -> str:
+        return _data_validation_error.format(invalid_data=self.data)
