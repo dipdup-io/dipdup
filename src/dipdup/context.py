@@ -102,7 +102,7 @@ class HandlerContext(DipDupContext):
                         continue
                     for handler_config in index_config.handlers:
                         for pattern_config in handler_config.pattern:
-                            if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                            if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig) or not pattern_config.similar_to:
                                 continue
                             if pattern_config.similar_to_contract_config.address == address:
                                 is_similar_to = True
