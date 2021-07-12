@@ -147,4 +147,6 @@ class InvalidDataError(DipDupError):
         self.type_name = type_cls.__name__
 
     def format_help(self) -> str:
-        return _data_validation_error.format(invalid_data=self.data, type_name=self.type_name)
+        return _data_validation_error.format(
+            invalid_data=pformat(self.data, compact=True),
+            type_name=self.type_name)
