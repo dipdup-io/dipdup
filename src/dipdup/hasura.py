@@ -95,9 +95,6 @@ class HasuraGateway(HTTPGateway):
 
         # NOTE: 3. Generate and apply queries and rest endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
-        query_names = [q['name'] for q in query_collections_metadata]
-        rest_endpoints_metadata = await self._generate_rest_endpoints_metadata(query_names)
-
         try:
             metadata['query_collections'][0]['definition']['queries'] = self._merge_metadata(
                 # TODO: Separate collection?
@@ -106,13 +103,21 @@ class HasuraGateway(HTTPGateway):
                 key=lambda m: m['name'],
             )
         except KeyError:
-            metadata['query_collections'] = [{"name": "allowed-queries", "definition": {"queries": query_collections_metadata}}]
+            metadata['query_collections'] = [
+                {
+                    "name": "allowed-queries",
+                    "definition": {"queries": query_collections_metadata},
+                }
+            ]
 
-        metadata['rest_endpoints'] = self._merge_metadata(
-            existing=metadata.get('rest_endpoints', []),
-            generated=rest_endpoints_metadata,
-            key=lambda m: m['name'],
-        )
+        if self._hasura_config.rest:
+            query_names = [q['name'] for q in query_collections_metadata]
+            rest_endpoints_metadata = await self._generate_rest_endpoints_metadata(query_names)
+            metadata['rest_endpoints'] = self._merge_metadata(
+                existing=metadata.get('rest_endpoints', []),
+                generated=rest_endpoints_metadata,
+                key=lambda m: m['name'],
+            )
 
         await self._replace_metadata(metadata)
 
