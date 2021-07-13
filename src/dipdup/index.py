@@ -258,13 +258,13 @@ class OperationIndex(Index):
                 parameter_type = pattern_config.parameter_type_cls
                 try:
                     parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
-                except ValidationError:
+                except ValidationError as e:
                     error_context = dict(
                         hash=operation.hash,
                         counter=operation.counter,
                         nonce=operation.nonce
                     )
-                    raise InvalidDataError(operation.parameter_json, parameter_type, error_context)
+                    raise InvalidDataError(operation.parameter_json, parameter_type, error_context) from e
 
                 storage_type = pattern_config.storage_type_cls
                 storage = operation.get_merged_storage(storage_type)
@@ -417,8 +417,8 @@ class BigMapIndex(Index):
             key_type = handler_config.key_type_cls
             try:
                 key = key_type.parse_obj(matched_big_map.key)
-            except ValidationError:
-                raise InvalidDataError(matched_big_map.key, key_type)
+            except ValidationError as e:
+                raise InvalidDataError(matched_big_map.key, key_type) from e
         else:
             key = None
 
@@ -426,8 +426,8 @@ class BigMapIndex(Index):
             value_type = handler_config.value_type_cls
             try:
                 value = value_type.parse_obj(matched_big_map.value)
-            except ValidationError:
-                raise InvalidDataError(matched_big_map.key, value_type)
+            except ValidationError as e:
+                raise InvalidDataError(matched_big_map.key, value_type) from e
         else:
             value = None
 
