@@ -1,7 +1,7 @@
 import traceback
 from abc import ABC, abstractmethod
+from typing import Optional, Type, Any
 from pprint import pformat
-from typing import Any, Optional, Type
 
 from tabulate import tabulate
 
@@ -144,7 +144,7 @@ class IndexAlreadyExistsError(DipDupError):
 class InvalidDataError(DipDupError):
     """Failed to validate operation/big_map data against a generated type class"""
 
-    def __init__(self, data: Any, type_cls: Type, error_context: Optional[Any] = None) -> None:
+    def __init__(self, data: Any, type_cls: Type, error_context : Optional[Any] = None) -> None:
         super().__init__(None)
         self.data = data
         self.type_name = type_cls.__name__
@@ -152,5 +152,7 @@ class InvalidDataError(DipDupError):
 
     def format_help(self) -> str:
         return _data_validation_error.format(
-            invalid_data=pformat(self.data, compact=True), type_name=self.type_name, error_context=pformat(self.error_context, compact=True)
+            invalid_data=pformat(self.data, compact=True),
+            type_name=self.type_name,
+            error_context=pformat(self.error_context, compact=True)
         )
