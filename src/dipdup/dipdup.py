@@ -13,7 +13,6 @@ from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
-import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
     ROLLBACK_HANDLER,
@@ -38,6 +37,7 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
+from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
@@ -105,7 +105,7 @@ class IndexDispatcher:
                 index.push(level, big_maps)
 
     async def _rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
-        logger = utils.FormattedLogger(ROLLBACK_HANDLER)
+        logger = FormattedLogger(ROLLBACK_HANDLER)
         if from_level - to_level == 1:
             # NOTE: Single level rollbacks are processed at Index level.
             # NOTE: Notify all indexes with rolled back datasource to skip next level and just verify it
@@ -143,7 +143,7 @@ class IndexDispatcher:
         while not self._stopped:
             await self.reload_config()
 
-            async with utils.slowdown(INDEX_DISPATCHER_INTERVAL):
+            async with slowdown(INDEX_DISPATCHER_INTERVAL):
                 await asyncio.gather(*[index.process() for index in self._indexes.values()])
 
             # TODO: Continue if new indexes are spawned from origination
@@ -193,7 +193,7 @@ class DipDup:
         url = self._config.database.connection_string
         models = f'{self._config.package}.models'
 
-        async with utils.tortoise_wrapper(url, models):
+        async with tortoise_wrapper(url, models):
             await self._initialize_database(reindex)
             await self._create_datasources()
             await self._configure()

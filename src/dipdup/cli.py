@@ -17,7 +17,7 @@ from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.utils import tortoise_wrapper
+from dipdup.utils import set_decimal_context, tortoise_wrapper
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -69,6 +69,8 @@ async def cli(ctx, config: List[str], logging_config: str):
             environment=_config.sentry.environment,
             integrations=[AioHttpIntegration()],
         )
+
+    set_decimal_context(_config.package)
 
     ctx.obj = CLIContext(
         config_paths=config,
