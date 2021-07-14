@@ -2,8 +2,8 @@ import asyncio
 import hashlib
 import logging
 from contextlib import suppress
+from os import listdir
 from os.path import join
-from posix import listdir
 from typing import Dict, List, Optional, cast
 
 from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
