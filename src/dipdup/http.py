@@ -22,6 +22,12 @@ class HTTPGateway(ABC):
         self._http_config.merge(http_config)
         self._http = _HTTPGateway(url.rstrip('/'), self._http_config)
 
+    async def __aenter__(self) -> None:
+        await self._http.__aenter__()
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        await self._http.__aexit__(exc_type, exc, tb)
+
     @abstractmethod
     def _default_http_config(self) -> HTTPConfig:
         ...
@@ -50,7 +56,15 @@ class _HTTPGateway:
             if config.ratelimit_rate and config.ratelimit_period
             else None
         )
-        self._session = aiohttp.ClientSession()
+        self.__session: Optional[aiohttp.ClientSession] = None
+
+    async def __aenter__(self) -> None:
+        self.__session = aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(limit=self._config.connection_limit or 100),
+        )
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.__session.close()
 
     @property
     def user_agent(self) -> str:
@@ -60,6 +74,12 @@ class _HTTPGateway:
             user_agent += ' ' + aiohttp.http.SERVER_SOFTWARE
             self._user_agent = user_agent
         return self._user_agent
+
+    @property
+    def _session(self) -> aiohttp.ClientSession:
+        if not self.__session:
+            raise RuntimeError('Session is not initialized. Wrap with `async with`')
+        return self.__session
 
     async def _wrapped_request(self, method: str, url: str, **kwargs):
         attempts = list(range(self._config.retry_count)) if self._config.retry_count else [0]

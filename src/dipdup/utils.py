@@ -6,8 +6,7 @@ import re
 import time
 from contextlib import asynccontextmanager
 from logging import Logger
-from types import ModuleType
-from typing import Any, AsyncIterator, Iterable, Iterator, List, Optional, Tuple, Type
+from typing import Any, AsyncIterator, Iterator, List, Optional, Tuple, Type
 
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
@@ -130,9 +129,7 @@ def set_decimal_context(package: str) -> None:
             if isinstance(field, DecimalField):
                 context.prec = max(context.prec, field.max_digits + field.max_digits)
     if prec < context.prec:
-        _logger.warning(
-            'Decimal context precision has been updated: %s -> %s', prec, context.prec
-        )
+        _logger.warning('Decimal context precision has been updated: %s -> %s', prec, context.prec)
         # NOTE: DefaultContext used for new threads
         decimal.DefaultContext.prec = context.prec
         decimal.setcontext(context)

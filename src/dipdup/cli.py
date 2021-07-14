@@ -146,10 +146,8 @@ async def configure_hasura(ctx, reset: bool):
     if not config.hasura:
         _logger.error('`hasura` config section is empty')
         return
-    hasura = HasuraGateway(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
+    hasura_gateway = HasuraGateway(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
 
     async with tortoise_wrapper(url, models):
-        try:
-            await hasura.configure(reset)
-        finally:
-            await hasura.close_session()
+        async with hasura_gateway:
+            await hasura_gateway.configure(reset)

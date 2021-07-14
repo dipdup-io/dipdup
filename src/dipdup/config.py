@@ -93,9 +93,12 @@ class PostgresDatabaseConfig:
 class HTTPConfig:
     cache: Optional[bool] = None
     retry_count: Optional[int] = None
-    retry_sleep: Optional[int] = None
+    retry_sleep: Optional[float] = None
+    retry_multiplier: Optional[float] = None
     ratelimit_rate: Optional[int] = None
     ratelimit_period: Optional[int] = None
+    connection_limit: Optional[int] = None
+    batch_size: Optional[int] = None
 
     def merge(self, other: Optional['HTTPConfig']) -> None:
         if not other:
