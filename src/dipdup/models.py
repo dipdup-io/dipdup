@@ -6,9 +6,10 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
+from pydantic.error_wrappers import ValidationError
 from tortoise import Model, fields
 
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigurationError, InvalidDataError
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -77,6 +78,7 @@ class OperationData:
     originated_contract_code_hash: Optional[int] = None
     diffs: Optional[List[Dict[str, Any]]] = None
 
+    # TODO: refactor this class -> move merge/process methods away
     def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str, array: bool) -> None:
         """Apply big map diffs of specific path to storage"""
         if self.diffs is None:
@@ -152,7 +154,10 @@ class OperationData:
 
         _logger.debug('After: %s', storage)
 
-        return storage_type.parse_obj(storage)
+        try:
+            return storage_type.parse_obj(storage)
+        except ValidationError as e:
+            raise InvalidDataError(storage, storage_type) from e
 
 
 @dataclass
