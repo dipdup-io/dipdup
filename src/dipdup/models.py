@@ -1,6 +1,7 @@
 import logging
 from copy import deepcopy
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
@@ -30,15 +31,17 @@ class IndexType(Enum):
 class State(Model):
     """Stores current level of index and hash of it's config"""
 
-    index_name = fields.CharField(256)
+    index_name = fields.CharField(256, pk=True)
     index_type = fields.CharEnumField(IndexType)
-    hash = fields.CharField(256)
+    index_hash = fields.CharField(256)
     level = fields.IntField(default=0)
+    hash = fields.CharField(64, null=True)
 
     class Meta:
         table = 'dipdup_state'
 
 
+# TODO: Drop `stateless` option
 class TemporaryState(State):
     """Used within stateless indexes, skip saving to DB"""
 
@@ -219,3 +222,43 @@ class BigMapDiff(Generic[KeyType, ValueType]):
     data: BigMapData
     key: Optional[KeyType]
     value: Optional[ValueType]
+
+
+@dataclass
+class BlockData:
+    """Basic structure for blocks from TzKT response"""
+
+    level: int
+    hash: str
+    timestamp: datetime
+    proto: int
+    priority: int
+    validations: int
+    deposit: int
+    reward: int
+    fees: int
+    nonce_revealed: bool
+    baker_address: Optional[str] = None
+    baker_alias: Optional[str] = None
+
+
+@dataclass
+class HeadBlockData:
+    cycle: int
+    level: int
+    hash: str
+    protocol: str
+    timestamp: datetime
+    voting_epoch: int
+    voting_period: int
+    known_level: int
+    last_sync: datetime
+    synced: bool
+    quote_level: int
+    quote_btc: Decimal
+    quote_eur: Decimal
+    quote_usd: Decimal
+    quote_cny: Decimal
+    quote_jpy: Decimal
+    quote_krw: Decimal
+    quote_eth: Decimal

@@ -37,7 +37,9 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, IndexType, OperationData, State
+from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
+
+INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
 
 
@@ -47,6 +49,7 @@ class IndexDispatcher:
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
+        self._stopped: bool = False
 
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
         if index_config.name in self._indexes:
@@ -87,12 +90,12 @@ class IndexDispatcher:
 
         self._ctx.reset()
 
-    async def dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData]) -> None:
+    async def dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in operations)) == 1
         level = operations[0].level
         for index in self._indexes.values():
             if isinstance(index, OperationIndex) and index.datasource == datasource:
-                index.push(level, operations)
+                index.push(level, operations, block)
 
     async def dispatch_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData]) -> None:
         assert len(set(op.level for op in big_maps)) == 1
@@ -103,6 +106,18 @@ class IndexDispatcher:
 
     async def _rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         logger = utils.FormattedLogger(ROLLBACK_HANDLER)
+        if from_level - to_level == 1:
+            # NOTE: Single level rollbacks are processed at Index level.
+            # NOTE: Notify all indexes with rolled back datasource to skip next level and just verify it
+            for index in self._indexes.values():
+                if index.datasource == datasource:
+                    # NOTE: Continue to rollback with handler
+                    if not isinstance(index, OperationIndex):
+                        break
+                    await index.single_level_rollback(from_level)
+            else:
+                return
+
         rollback_fn = self._ctx.config.get_rollback_fn()
         ctx = RollbackHandlerContext(
             config=self._ctx.config,
@@ -125,15 +140,18 @@ class IndexDispatcher:
 
         self._ctx.commit()
 
-        while True:
+        while not self._stopped:
             await self.reload_config()
 
-            async with utils.slowdown(1):
+            async with utils.slowdown(INDEX_DISPATCHER_INTERVAL):
                 await asyncio.gather(*[index.process() for index in self._indexes.values()])
 
             # TODO: Continue if new indexes are spawned from origination
             if oneshot:
                 break
+
+    def stop(self) -> None:
+        self._stopped = True
 
 
 class DipDup:
@@ -265,6 +283,11 @@ class DipDup:
             await Tortoise._connections['default'].execute_script(f"CREATE SCHEMA IF NOT EXISTS {self._config.database.schema_name}")
             await Tortoise._connections['default'].execute_script(f"SET search_path TO {self._config.database.schema_name}")
 
+        if reindex:
+            self._logger.warning('Started with `--reindex` argument, reindexing')
+            await self._ctx.reindex()
+
+        self._logger.info('Checking database schema')
         connection_name, connection = next(iter(Tortoise._connections.items()))
         schema_sql = get_schema_sql(connection, False)
 
@@ -272,23 +295,23 @@ class DipDup:
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
-        # TODO: Move higher
-        if reindex:
-            self._logger.warning('Started with `--reindex` argument, reindexing')
-            await self._ctx.reindex()
-
         try:
             schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
         except OperationalError:
             schema_state = None
 
+        # NOTE: `State.index_hash` field contains schema hash when `index_type` is `IndexType.schema`
         if schema_state is None:
             await Tortoise.generate_schemas()
             await self._execute_sql_scripts(reindex=True)
 
-            schema_state = State(index_type=IndexType.schema, index_name=connection_name, hash=schema_hash)
+            schema_state = State(
+                index_type=IndexType.schema,
+                index_name=connection_name,
+                index_hash=schema_hash,
+            )
             await schema_state.save()
-        elif schema_state.hash != schema_hash:
+        elif schema_state.index_hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await self._ctx.reindex()
 
