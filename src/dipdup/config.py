@@ -165,12 +165,13 @@ class TzktDatasourceConfig(NameMixin):
     def __hash__(self):
         return hash(self.url)
 
-    @validator('url', allow_reuse=True)
-    def valid_url(cls, v):
-        parsed_url = urlparse(v)
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        if self.http and self.http.batch_size and self.http.batch_size > 10000:
+            raise ConfigurationError('`batch_size` must be less than 10000')
+        parsed_url = urlparse(self.url)
         if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{v}` is not a valid datasource URL')
-        return v
+            raise ConfigurationError(f'`{self.url}` is not a valid datasource URL')
 
 
 @dataclass

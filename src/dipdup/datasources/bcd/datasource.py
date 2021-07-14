@@ -53,4 +53,5 @@ class BcdDatasource(HTTPGateway):
             retry_sleep=1,
             ratelimit_rate=100,
             ratelimit_period=30,
+            connection_limit=25,
         )
