@@ -82,9 +82,10 @@ class _HTTPGateway:
         return self.__session
 
     async def _wrapped_request(self, method: str, url: str, **kwargs):
-        attempts = list(range(self._config.retry_count)) if self._config.retry_count else [0]
-        for attempt in attempts:
-            self._logger.debug('HTTP request attempt %s/%s', attempt + 1, self._config.retry_count)
+        attempt = 1
+        retry_sleep = self._config.retry_sleep or 0
+        while True:
+            self._logger.debug('HTTP request attempt %s/%s', attempt + 1, self._config.retry_count or 'inf')
             try:
                 return await self._request(
                     method=method,
@@ -92,10 +93,11 @@ class _HTTPGateway:
                     **kwargs,
                 )
             except (aiohttp.ClientConnectionError, aiohttp.ClientConnectorError) as e:
-                if attempt + 1 == attempts[-1]:
+                if self._config.retry_count and attempt - 1 == self._config.retry_count:
                     raise e
                 self._logger.warning('HTTP request failed: %s', e)
-                await asyncio.sleep(self._config.retry_sleep or 0)
+                await asyncio.sleep(retry_sleep)
+                retry_sleep *= self._config.retry_multiplier or 1
             except aiohttp.ClientResponseError as e:
                 if e.code == HTTPStatus.TOO_MANY_REQUESTS:
                     ratelimit_sleep = 5
@@ -107,10 +109,11 @@ class _HTTPGateway:
                     self._logger.warning('HTTP request failed: %s', e)
                     await asyncio.sleep(ratelimit_sleep)
                 else:
-                    if attempt + 1 == attempts[-1]:
+                    if self._config.retry_count and attempt - 1 == self._config.retry_count:
                         raise e
                     self._logger.warning('HTTP request failed: %s', e)
                     await asyncio.sleep(self._config.retry_sleep or 0)
+                    retry_sleep *= self._config.retry_multiplier or 1
 
     async def _request(self, method: str, url: str, **kwargs):
         """Wrapped aiohttp call with preconfigured headers and logging"""

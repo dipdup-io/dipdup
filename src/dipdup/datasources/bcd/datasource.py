@@ -49,8 +49,8 @@ class BcdDatasource(HTTPGateway):
     def _default_http_config(self) -> HTTPConfig:
         return HTTPConfig(
             cache=True,
-            retry_count=3,
             retry_sleep=1,
+            retry_multiplier=1.1,
             ratelimit_rate=100,
             ratelimit_period=30,
             connection_limit=25,
