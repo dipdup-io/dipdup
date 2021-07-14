@@ -3,6 +3,7 @@ from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
 from contextlib import suppress
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
+
 from pydantic.error_wrappers import ValidationError
 
 from dipdup.config import (
@@ -19,9 +20,9 @@ from dipdup.config import (
 )
 from dipdup.context import DipDupContext, HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
+from dipdup.exceptions import InvalidDataError
 from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, OperationData, Origination, State, TemporaryState, Transaction
 from dipdup.utils import FormattedLogger, in_global_transaction
-from dipdup.exceptions import InvalidDataError
 
 # NOTE: Operations of a single contract call
 OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
@@ -297,11 +298,7 @@ class OperationIndex(Index):
                 try:
                     parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
                 except ValidationError as e:
-                    error_context = dict(
-                        hash=operation.hash,
-                        counter=operation.counter,
-                        nonce=operation.nonce
-                    )
+                    error_context = dict(hash=operation.hash, counter=operation.counter, nonce=operation.nonce)
                     raise InvalidDataError(operation.parameter_json, parameter_type, error_context) from e
 
                 storage_type = pattern_config.storage_type_cls
