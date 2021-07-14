@@ -66,6 +66,7 @@ async def cli(ctx, config: List[str], logging_config: str):
     if _config.sentry:
         sentry_sdk.init(
             dsn=_config.sentry.dsn,
+            environment=_config.sentry.environment,
             integrations=[AioHttpIntegration()],
         )
 
