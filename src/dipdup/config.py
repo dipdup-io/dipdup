@@ -666,9 +666,15 @@ class HasuraConfig:
 
 @dataclass
 class JobConfig(HandlerConfig):
-    crontab: str
+    crontab: Optional[str] = None
+    interval: Optional[int] = None
     args: Optional[Dict[str, Any]] = None
     atomic: bool = False
+
+    def __post_init_post_parse__(self):
+        if int(bool(self.crontab)) + int(bool(self.interval)) != 1:
+            raise ConfigurationError('Either `interval` or `crontab` field must be specified')
+        super().__post_init_post_parse__()
 
 
 @dataclass
