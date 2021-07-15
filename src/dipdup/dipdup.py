@@ -2,8 +2,8 @@ import asyncio
 import hashlib
 import logging
 from contextlib import AsyncExitStack
+from os import listdir
 from os.path import join
-from posix import listdir
 from typing import Dict, List, Optional, cast
 
 from genericpath import exists
