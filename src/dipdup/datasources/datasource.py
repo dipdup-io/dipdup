@@ -5,17 +5,18 @@ from pyee import AsyncIOEventEmitter  # type: ignore
 
 from dipdup.config import HTTPConfig
 from dipdup.http import HTTPGateway
-from dipdup.models import BigMapData, OperationData
+from dipdup.models import BigMapData, HeadBlockData, OperationData
 
 
 class EventType(Enum):
     operations = 'operatitions'
     big_maps = 'big_maps'
     rollback = 'rollback'
+    head = 'head'
 
 
 class OperationsCallback(Protocol):
-    def __call__(self, datasource: 'IndexDatasource', operations: List[OperationData]) -> Awaitable[None]:
+    def __call__(self, datasource: 'IndexDatasource', operations: List[OperationData], block: HeadBlockData) -> Awaitable[None]:
         ...
 
 
@@ -26,6 +27,11 @@ class BigMapsCallback(Protocol):
 
 class RollbackCallback(Protocol):
     def __call__(self, datasource: 'IndexDatasource', from_level: int, to_level: int) -> Awaitable[None]:
+        ...
+
+
+class HeadCallback(Protocol):
+    def __call__(self, datasource: 'IndexDatasource', block: HeadBlockData) -> Awaitable[None]:
         ...
 
 
@@ -51,11 +57,17 @@ class IndexDatasource(HTTPGateway, AsyncIOEventEmitter):
     def on_rollback(self, fn: RollbackCallback) -> None:
         super().on(EventType.rollback, fn)
 
-    def emit_operations(self, operations: List[OperationData]) -> None:
-        super().emit(EventType.operations, datasource=self, operations=operations)
+    def on_head(self, fn: HeadCallback) -> None:
+        super().on(EventType.head, fn)
+
+    def emit_operations(self, operations: List[OperationData], block: HeadBlockData) -> None:
+        super().emit(EventType.operations, datasource=self, operations=operations, block=block)
 
     def emit_big_maps(self, big_maps: List[BigMapData]) -> None:
         super().emit(EventType.big_maps, datasource=self, big_maps=big_maps)
 
     def emit_rollback(self, from_level: int, to_level: int) -> None:
         super().emit(EventType.rollback, datasource=self, from_level=from_level, to_level=to_level)
+
+    def emit_head(self, block: HeadBlockData) -> None:
+        super().emit(EventType.head, datasource=self, block=block)

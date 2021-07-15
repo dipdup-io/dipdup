@@ -1,14 +1,16 @@
 import logging
 from copy import deepcopy
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
+from pydantic.error_wrappers import ValidationError
 from tortoise import Model, fields
 
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigurationError, InvalidDataError
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -29,15 +31,17 @@ class IndexType(Enum):
 class State(Model):
     """Stores current level of index and hash of it's config"""
 
-    index_name = fields.CharField(256)
+    index_name = fields.CharField(256, pk=True)
     index_type = fields.CharEnumField(IndexType)
-    hash = fields.CharField(256)
+    index_hash = fields.CharField(256)
     level = fields.IntField(default=0)
+    hash = fields.CharField(64, null=True)
 
     class Meta:
         table = 'dipdup_state'
 
 
+# TODO: Drop `stateless` option
 class TemporaryState(State):
     """Used within stateless indexes, skip saving to DB"""
 
@@ -77,6 +81,7 @@ class OperationData:
     originated_contract_code_hash: Optional[int] = None
     diffs: Optional[List[Dict[str, Any]]] = None
 
+    # TODO: refactor this class -> move merge/process methods away
     def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str, array: bool) -> None:
         """Apply big map diffs of specific path to storage"""
         if self.diffs is None:
@@ -152,7 +157,10 @@ class OperationData:
 
         _logger.debug('After: %s', storage)
 
-        return storage_type.parse_obj(storage)
+        try:
+            return storage_type.parse_obj(storage)
+        except ValidationError as e:
+            raise InvalidDataError(storage, storage_type) from e
 
 
 @dataclass
@@ -214,3 +222,43 @@ class BigMapDiff(Generic[KeyType, ValueType]):
     data: BigMapData
     key: Optional[KeyType]
     value: Optional[ValueType]
+
+
+@dataclass
+class BlockData:
+    """Basic structure for blocks from TzKT response"""
+
+    level: int
+    hash: str
+    timestamp: datetime
+    proto: int
+    priority: int
+    validations: int
+    deposit: int
+    reward: int
+    fees: int
+    nonce_revealed: bool
+    baker_address: Optional[str] = None
+    baker_alias: Optional[str] = None
+
+
+@dataclass
+class HeadBlockData:
+    cycle: int
+    level: int
+    hash: str
+    protocol: str
+    timestamp: datetime
+    voting_epoch: int
+    voting_period: int
+    known_level: int
+    last_sync: datetime
+    synced: bool
+    quote_level: int
+    quote_btc: Decimal
+    quote_eur: Decimal
+    quote_usd: Decimal
+    quote_cny: Decimal
+    quote_jpy: Decimal
+    quote_krw: Decimal
+    quote_eth: Decimal

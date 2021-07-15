@@ -86,5 +86,5 @@ class ModelsTest(TestCase):
             status='',
             has_internals=False,
         )
-        merged_storage = OperationData.get_merged_storage(operation_data, NameRegistryStorage)
+        merged_storage = operation_data.get_merged_storage(NameRegistryStorage)
         self.assertTrue('6672657175656e742d616e616c7973742e65646f' in merged_storage.store.records)

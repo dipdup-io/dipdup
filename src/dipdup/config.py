@@ -803,10 +803,10 @@ class DipDupConfig:
                     if isinstance(contract, str):
                         index_config.contracts[i] = self.get_contract(contract)
 
-            transaction_id = 0
             for handler_config in index_config.handlers:
                 self._callback_patterns[handler_config.callback].append(handler_config.pattern)
                 for pattern_config in handler_config.pattern:
+                    transaction_id = 0
                     if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
                             pattern_config.destination = self.get_contract(pattern_config.destination)

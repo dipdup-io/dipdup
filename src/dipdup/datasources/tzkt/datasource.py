@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from datetime import datetime, timezone
+from decimal import Decimal
 from enum import Enum
 from typing import Any, AsyncGenerator, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
@@ -18,7 +20,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import BigMapAction, BigMapData, OperationData
+from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData
 from dipdup.utils import split_by_chunks
 
 OperationID = int
@@ -283,6 +285,7 @@ class TzktDatasource(IndexDatasource):
 
         self._client: Optional[BaseHubConnection] = None
 
+        self._block: Optional[HeadBlockData] = None
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None
 
@@ -297,6 +300,12 @@ class TzktDatasource(IndexDatasource):
     @property
     def sync_level(self) -> Optional[int]:
         return self._sync_level
+
+    @property
+    def block(self) -> HeadBlockData:
+        if self._block is None:
+            raise RuntimeError('No message from `head` channel received')
+        return self._block
 
     async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
         """Get list of contracts sharing the same code hash or type hash"""
@@ -352,15 +361,23 @@ class TzktDatasource(IndexDatasource):
         self._logger.debug(jsonschemas)
         return jsonschemas
 
-    async def get_latest_block(self) -> Dict[str, Any]:
+    async def get_head_block(self) -> HeadBlockData:
         """Get latest block (head)"""
         self._logger.info('Fetching latest block')
-        block = await self._http.request(
+        head_block_json = await self._http.request(
             'get',
             url='v1/head',
         )
-        self._logger.debug(block)
-        return block
+        return self.convert_head_block(head_block_json)
+
+    async def get_block(self, level: int) -> BlockData:
+        """Get block by level"""
+        self._logger.info('Fetching block %s', level)
+        block_json = await self._http.request(
+            'get',
+            url=f'v1/blocks/{level}',
+        )
+        return self.convert_block(block_json)
 
     async def get_originations(
         self, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
@@ -486,6 +503,7 @@ class TzktDatasource(IndexDatasource):
             self._client.on_error(self._on_error)
             self._client.on('operations', self._on_operation_message)
             self._client.on('bigmaps', self._on_big_map_message)
+            self._client.on('head', self._on_head_message)
 
         return self._client
 
@@ -502,6 +520,7 @@ class TzktDatasource(IndexDatasource):
             return
 
         self._logger.info('Connected to server')
+        await self.subscribe_to_head()
         for address in self._transaction_subscriptions:
             await self.subscribe_to_transactions(address)
         # NOTE: All originations are passed to matcher
@@ -517,11 +536,7 @@ class TzktDatasource(IndexDatasource):
     async def subscribe_to_transactions(self, address: str) -> None:
         """Subscribe to contract's operations on established WS connection"""
         self._logger.info('Subscribing to %s transactions', address)
-
-        while self._get_client().transport.state != ConnectionState.connected:
-            await asyncio.sleep(0.1)
-
-        await self._get_client().send(
+        await self._send(
             'SubscribeToOperations',
             [
                 {
@@ -534,11 +549,7 @@ class TzktDatasource(IndexDatasource):
     async def subscribe_to_originations(self) -> None:
         """Subscribe to all originations on established WS connection"""
         self._logger.info('Subscribing to originations')
-
-        while self._get_client().transport.state != ConnectionState.connected:
-            await asyncio.sleep(0.1)
-
-        await self._get_client().send(
+        await self._send(
             'SubscribeToOperations',
             [
                 {
@@ -550,12 +561,8 @@ class TzktDatasource(IndexDatasource):
     async def subscribe_to_big_maps(self, address: str, paths: List[str]) -> None:
         """Subscribe to contract's big map diffs on established WS connection"""
         self._logger.info('Subscribing to big map updates of %s, %s', address, paths)
-
-        while self._get_client().transport.state != ConnectionState.connected:
-            await asyncio.sleep(0.1)
-
         for path in paths:
-            await self._get_client().send(
+            await self._send(
                 'SubscribeToBigMaps',
                 [
                     {
@@ -564,6 +571,14 @@ class TzktDatasource(IndexDatasource):
                     }
                 ],
             )
+
+    async def subscribe_to_head(self) -> None:
+        """Subscribe to head on established WS connection"""
+        self._logger.info('Subscribing to head')
+        await self._send(
+            'SubscribeToHead',
+            [],
+        )
 
     def _default_http_config(self) -> HTTPConfig:
         return HTTPConfig(
@@ -574,12 +589,8 @@ class TzktDatasource(IndexDatasource):
             ratelimit_period=30,
         )
 
-    async def _on_operation_message(
-        self,
-        message: List[Dict[str, Any]],
-    ) -> None:
+    async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
-
         for item in message:
             current_level = item['state']
             message_type = TzktMessageType(item['type'])
@@ -597,7 +608,8 @@ class TzktDatasource(IndexDatasource):
                     if operation.status != 'applied':
                         continue
                     operations.append(operation)
-                self.emit_operations(operations)
+                if operations:
+                    self.emit_operations(operations, self.block)
 
             elif message_type == TzktMessageType.REORG:
                 if self.level is None:
@@ -607,10 +619,7 @@ class TzktDatasource(IndexDatasource):
             else:
                 raise NotImplementedError
 
-    async def _on_big_map_message(
-        self,
-        message: List[Dict[str, Any]],
-    ) -> None:
+    async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
         for item in message:
             current_level = item['state']
@@ -637,6 +646,31 @@ class TzktDatasource(IndexDatasource):
             else:
                 raise NotImplementedError
 
+    async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
+        for item in message:
+            current_level = item['state']
+            message_type = TzktMessageType(item['type'])
+            self._logger.info('Got block message, %s, level %s', message_type, current_level)
+
+            if message_type == TzktMessageType.STATE:
+                self._sync_level = current_level
+                self._level = current_level
+
+            elif message_type == TzktMessageType.DATA:
+                self._level = current_level
+                block_json = item['data']
+                block = self.convert_head_block(block_json)
+                self._block = block
+                self.emit_head(block)
+
+            elif message_type == TzktMessageType.REORG:
+                if self.level is None:
+                    raise RuntimeError
+                self.emit_rollback(self.level, current_level)
+
+            else:
+                raise NotImplementedError
+
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
         """Convert raw operation message from WS/REST into dataclass"""
@@ -649,7 +683,7 @@ class TzktDatasource(IndexDatasource):
             type=operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
-            timestamp=operation_json['timestamp'],
+            timestamp=cls._parse_timestamp(operation_json['timestamp']),
             block=operation_json.get('block'),
             hash=operation_json['hash'],
             counter=operation_json['counter'],
@@ -686,7 +720,7 @@ class TzktDatasource(IndexDatasource):
             level=big_map_json['level'],
             # FIXME: operation_id field in API
             operation_id=big_map_json['level'],
-            timestamp=big_map_json['timestamp'],
+            timestamp=cls._parse_timestamp(big_map_json['timestamp']),
             bigmap=big_map_json['bigmap'],
             contract_address=big_map_json['contract']['address'],
             path=big_map_json['path'],
@@ -694,3 +728,55 @@ class TzktDatasource(IndexDatasource):
             key=big_map_json.get('content', {}).get('key'),
             value=big_map_json.get('content', {}).get('value'),
         )
+
+    @classmethod
+    def convert_block(cls, block_json: Dict[str, Any]) -> BlockData:
+        """Convert raw block message from REST into dataclass"""
+        return BlockData(
+            level=block_json['level'],
+            hash=block_json['hash'],
+            timestamp=cls._parse_timestamp(block_json['timestamp']),
+            proto=block_json['proto'],
+            priority=block_json['priority'],
+            validations=block_json['validations'],
+            deposit=block_json['deposit'],
+            reward=block_json['reward'],
+            fees=block_json['fees'],
+            nonce_revealed=block_json['nonceRevealed'],
+            baker_address=block_json.get('baker', {}).get('address'),
+            baker_alias=block_json.get('baker', {}).get('alias'),
+        )
+
+    @classmethod
+    def convert_head_block(cls, head_block_json: Dict[str, Any]) -> HeadBlockData:
+        """Convert raw head block message from WS/REST into dataclass"""
+        return HeadBlockData(
+            cycle=head_block_json['cycle'],
+            level=head_block_json['level'],
+            hash=head_block_json['hash'],
+            protocol=head_block_json['protocol'],
+            timestamp=cls._parse_timestamp(head_block_json['timestamp']),
+            voting_epoch=head_block_json['votingEpoch'],
+            voting_period=head_block_json['votingPeriod'],
+            known_level=head_block_json['knownLevel'],
+            last_sync=head_block_json['lastSync'],
+            synced=head_block_json['synced'],
+            quote_level=head_block_json['quoteLevel'],
+            quote_btc=Decimal(head_block_json['quoteBtc']),
+            quote_eur=Decimal(head_block_json['quoteEur']),
+            quote_usd=Decimal(head_block_json['quoteUsd']),
+            quote_cny=Decimal(head_block_json['quoteCny']),
+            quote_jpy=Decimal(head_block_json['quoteJpy']),
+            quote_krw=Decimal(head_block_json['quoteKrw']),
+            quote_eth=Decimal(head_block_json['quoteEth']),
+        )
+
+    async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:
+        client = self._get_client()
+        while client.transport.state != ConnectionState.connected:
+            await asyncio.sleep(0.1)
+        await client.send(method, arguments, on_invocation)
+
+    @classmethod
+    def _parse_timestamp(cls, timestamp: str) -> datetime:
+        return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)

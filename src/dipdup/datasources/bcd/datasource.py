@@ -37,11 +37,14 @@ class BcdDatasource(HTTPGateway):
                 break
         return tokens
 
-    async def get_token(self, address: str, token_id: int) -> Dict[str, Any]:
-        return await self._http.request(
+    async def get_token(self, address: str, token_id: int) -> Optional[Dict[str, Any]]:
+        response = await self._http.request(
             'get',
             url=f'v1/contract/{self._network}/{address}/tokens?token_id={token_id}',
         )
+        if response:
+            return response[0]
+        return None
 
     def _default_http_config(self) -> HTTPConfig:
         return HTTPConfig(
