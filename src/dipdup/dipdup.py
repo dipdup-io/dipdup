@@ -183,6 +183,7 @@ class DipDup:
         await codegen.generate_user_handlers()
         await codegen.generate_jobs()
         await codegen.cleanup()
+        await codegen.verify_package()
 
         for datasource in self._datasources.values():
             await datasource.close_session()

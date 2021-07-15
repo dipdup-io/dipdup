@@ -1,11 +1,15 @@
 import asyncio
+import importlib
 import logging
-import re
+import pkgutil
 import time
+import types
 from contextlib import asynccontextmanager
 from logging import Logger
-from typing import Any, AsyncIterator, Iterator, List, Optional
+from os.path import dirname
+from typing import Any, AsyncIterator, Dict, Iterator, List, Optional
 
+import humps  # type: ignore
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import TransactionContext
@@ -13,6 +17,18 @@ from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.transactions import in_transaction
 
 _logger = logging.getLogger('dipdup.utils')
+
+
+def import_submodules(package: str) -> Dict[str, types.ModuleType]:
+    """Import all submodules of a module, recursively, including subpackages"""
+    module = importlib.import_module(package)
+    results = {}
+    for _, name, is_pkg in pkgutil.walk_packages((dirname(module.__file__),)):
+        full_name = module.__name__ + '.' + name
+        results[full_name] = importlib.import_module(full_name)
+        if is_pkg:
+            results.update(import_submodules(full_name))
+    return results
 
 
 @asynccontextmanager
@@ -26,16 +42,12 @@ async def slowdown(seconds: int):
         await asyncio.sleep(seconds - time_spent)
 
 
-# NOTE: These two helpers are not the same as humps.camelize/decamelize as could be used with Python module paths
 def snake_to_pascal(value: str) -> str:
-    """method_name -> MethodName"""
-    return ''.join(map(lambda x: x[0].upper() + x[1:], value.replace('.', '_').split('_')))
+    return humps.pascalize(value)
 
 
-def pascal_to_snake(name: str) -> str:
-    """MethodName -> method_name"""
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name.replace('.', '_'))
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+def pascal_to_snake(value: str) -> str:
+    return humps.depascalize(value.replace('.', '_')).replace('__', '_')
 
 
 def split_by_chunks(input_: List[Any], size: int) -> Iterator[List[Any]]:
