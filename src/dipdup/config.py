@@ -231,6 +231,7 @@ class PatternConfig(ABC):
 
     @classmethod
     def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> str:
+        entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         return f'from {package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)} import {parameter_cls}'
 
@@ -243,6 +244,7 @@ class PatternConfig(ABC):
 
     @classmethod
     def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> str:
+        entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
@@ -956,24 +958,15 @@ class DipDupConfig:
                 self._initialize_handler_callback(big_map_handler_config)
 
                 _logger.info('Registering big map types for path `%s`', big_map_handler_config.path)
-                key_type_module = importlib.import_module(
-                    f'{self.package}'
-                    f'.types'
-                    f'.{big_map_handler_config.contract_config.module_name}'
-                    f'.big_map'
-                    f'.{pascal_to_snake(big_map_handler_config.path)}_key'
-                )
-                key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_handler_config.path + '_key'))
+                module_name = big_map_handler_config.contract_config.module_name
+                big_map_path = pascal_to_snake(big_map_handler_config.path.replace('.', '_'))
+
+                key_type_module = importlib.import_module(f'{self.package}.types.{module_name}.big_map.{big_map_path}_key')
+                key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_path + '_key'))
                 big_map_handler_config.key_type_cls = key_type_cls
 
-                value_type_module = importlib.import_module(
-                    f'{self.package}'
-                    f'.types'
-                    f'.{big_map_handler_config.contract_config.module_name}'
-                    f'.big_map'
-                    f'.{pascal_to_snake(big_map_handler_config.path)}_value'
-                )
-                value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_handler_config.path + '_value'))
+                value_type_module = importlib.import_module(f'{self.package}.types.{module_name}.big_map.{big_map_path}_value')
+                value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_path + '_value'))
                 big_map_handler_config.value_type_cls = value_type_cls
 
         else:

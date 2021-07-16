@@ -187,6 +187,7 @@ class DipDup:
             await codegen.generate_user_handlers()
             await codegen.generate_jobs()
             await codegen.cleanup()
+            await codegen.verify_package()
 
     async def run(self, reindex: bool, oneshot: bool) -> None:
         """Main entrypoint"""
