@@ -1,2 +1,2 @@
-FROM dipdup:1.1.2
+FROM droserasprout/dipdup:latest
 COPY demo_tezos_domains /home/dipdup/demo_tezos_domains

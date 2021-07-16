@@ -1,2 +1,2 @@
-FROM dipdup:1.1.2
+FROM droserasprout/dipdup:latest
 COPY demo_registrydao /home/dipdup/demo_registrydao

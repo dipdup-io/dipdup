@@ -1,2 +1,2 @@
-FROM dipdup:1.1.2
+FROM droserasprout/dipdup:latest
 COPY demo_tzcolors /home/dipdup/demo_tzcolors
