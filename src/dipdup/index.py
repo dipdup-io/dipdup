@@ -91,13 +91,15 @@ class Index:
             self._logger.warning('Config hash mismatch (config has been changed), reindexing')
             await self._ctx.reindex()
 
-        block = await self._datasource.get_block(state.level)
-        if state.hash:
-            if state.hash != block.hash:
-                self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
-                await self._ctx.reindex()
-        else:
-            state.hash = block.hash  # type: ignore
+        # NOTE: No need to check genesis block
+        if state.level:
+            block = await self._datasource.get_block(state.level)
+            if state.hash:
+                if state.hash != block.hash:
+                    self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
+                    await self._ctx.reindex()
+            else:
+                state.hash = block.hash  # type: ignore
 
         await state.save()
         self._state = state

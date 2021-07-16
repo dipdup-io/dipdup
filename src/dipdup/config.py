@@ -93,9 +93,12 @@ class PostgresDatabaseConfig:
 class HTTPConfig:
     cache: Optional[bool] = None
     retry_count: Optional[int] = None
-    retry_sleep: Optional[int] = None
+    retry_sleep: Optional[float] = None
+    retry_multiplier: Optional[float] = None
     ratelimit_rate: Optional[int] = None
     ratelimit_period: Optional[int] = None
+    connection_limit: Optional[int] = None
+    batch_size: Optional[int] = None
 
     def merge(self, other: Optional['HTTPConfig']) -> None:
         if not other:
@@ -162,12 +165,13 @@ class TzktDatasourceConfig(NameMixin):
     def __hash__(self):
         return hash(self.url)
 
-    @validator('url', allow_reuse=True)
-    def valid_url(cls, v):
-        parsed_url = urlparse(v)
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        if self.http and self.http.batch_size and self.http.batch_size > 10000:
+            raise ConfigurationError('`batch_size` must be less than 10000')
+        parsed_url = urlparse(self.url)
         if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{v}` is not a valid datasource URL')
-        return v
+            raise ConfigurationError(f'`{self.url}` is not a valid datasource URL')
 
 
 @dataclass
@@ -666,14 +670,21 @@ class HasuraConfig:
 
 @dataclass
 class JobConfig(HandlerConfig):
-    crontab: str
+    crontab: Optional[str] = None
+    interval: Optional[int] = None
     args: Optional[Dict[str, Any]] = None
     atomic: bool = False
+
+    def __post_init_post_parse__(self):
+        if int(bool(self.crontab)) + int(bool(self.interval)) != 1:
+            raise ConfigurationError('Either `interval` or `crontab` field must be specified')
+        super().__post_init_post_parse__()
 
 
 @dataclass
 class SentryConfig:
     dsn: str
+    environment: Optional[str] = None
 
 
 @dataclass

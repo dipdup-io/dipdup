@@ -25,7 +25,6 @@ from dipdup.utils import split_by_chunks
 
 OperationID = int
 
-TZKT_HTTP_REQUEST_LIMIT = 10000
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 OPERATION_FIELDS = (
     "type",
@@ -291,7 +290,7 @@ class TzktDatasource(IndexDatasource):
 
     @property
     def request_limit(self) -> int:
-        return TZKT_HTTP_REQUEST_LIMIT
+        return self._http_config.batch_size or 10000
 
     @property
     def level(self) -> Optional[int]:
@@ -583,10 +582,11 @@ class TzktDatasource(IndexDatasource):
     def _default_http_config(self) -> HTTPConfig:
         return HTTPConfig(
             cache=True,
-            retry_count=3,
             retry_sleep=1,
+            retry_multiplier=1.1,
             ratelimit_rate=100,
             ratelimit_period=30,
+            connection_limit=25,
         )
 
     async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
