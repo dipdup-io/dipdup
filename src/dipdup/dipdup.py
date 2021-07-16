@@ -1,19 +1,17 @@
 import asyncio
 import hashlib
 import logging
-from contextlib import suppress
+from contextlib import AsyncExitStack
+from os import listdir
 from os.path import join
-from posix import listdir
 from typing import Dict, List, Optional, cast
 
-from apscheduler.schedulers import SchedulerNotRunningError  # type: ignore
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
-import dipdup.utils as utils
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
     ROLLBACK_HANDLER,
@@ -38,6 +36,7 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
+from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
@@ -105,7 +104,7 @@ class IndexDispatcher:
                 index.push(level, big_maps)
 
     async def _rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
-        logger = utils.FormattedLogger(ROLLBACK_HANDLER)
+        logger = FormattedLogger(ROLLBACK_HANDLER)
         if from_level - to_level == 1:
             # NOTE: Single level rollbacks are processed at Index level.
             # NOTE: Notify all indexes with rolled back datasource to skip next level and just verify it
@@ -143,7 +142,7 @@ class IndexDispatcher:
         while not self._stopped:
             await self.reload_config()
 
-            async with utils.slowdown(INDEX_DISPATCHER_INTERVAL):
+            async with slowdown(INDEX_DISPATCHER_INTERVAL):
                 await asyncio.gather(*[index.process() for index in self._indexes.values()])
 
             # TODO: Continue if new indexes are spawned from origination
@@ -176,17 +175,19 @@ class DipDup:
         await self._create_datasources()
 
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
-        await codegen.create_package()
-        await codegen.fetch_schemas()
-        await codegen.generate_types()
-        await codegen.generate_default_handlers()
-        await codegen.generate_user_handlers()
-        await codegen.generate_jobs()
-        await codegen.cleanup()
-        await codegen.verify_package()
 
-        for datasource in self._datasources.values():
-            await datasource.close_session()
+        async with AsyncExitStack() as stack:
+            for datasource in self._datasources.values():
+                await stack.enter_async_context(datasource)
+
+            await codegen.create_package()
+            await codegen.fetch_schemas()
+            await codegen.generate_types()
+            await codegen.generate_default_handlers()
+            await codegen.generate_user_handlers()
+            await codegen.generate_jobs()
+            await codegen.cleanup()
+            await codegen.verify_package()
 
     async def run(self, reindex: bool, oneshot: bool) -> None:
         """Main entrypoint"""
@@ -194,28 +195,35 @@ class DipDup:
         url = self._config.database.connection_string
         models = f'{self._config.package}.models'
 
-        async with utils.tortoise_wrapper(url, models):
+        await self._create_datasources()
+
+        hasura_gateway: Optional[HasuraGateway]
+        if self._config.hasura:
+            if not isinstance(self._config.database, PostgresDatabaseConfig):
+                raise RuntimeError
+            hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
+        else:
+            hasura_gateway = None
+
+        async with AsyncExitStack() as stack:
+            worker_tasks = []
+            await stack.enter_async_context(tortoise_wrapper(url, models))
+            for datasource in self._datasources.values():
+                await stack.enter_async_context(datasource)
+            if hasura_gateway:
+                await stack.enter_async_context(hasura_gateway)
+                worker_tasks.append(asyncio.create_task(hasura_gateway.configure()))
+
             await self._initialize_database(reindex)
-            await self._create_datasources()
             await self._configure()
 
             self._logger.info('Starting datasources')
             datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
-            worker_tasks = []
-
-            hasura_gateway: Optional[HasuraGateway]
-            if self._config.hasura:
-                if not isinstance(self._config.database, PostgresDatabaseConfig):
-                    raise RuntimeError
-                hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
-                worker_tasks.append(asyncio.create_task(hasura_gateway.configure()))
-            else:
-                hasura_gateway = None
 
             if self._config.jobs and not oneshot:
+                stack.enter_context(self._scheduler)
                 for job_name, job_config in self._config.jobs.items():
                     add_job(self._ctx, self._scheduler, job_name, job_config)
-                self._scheduler.start()
 
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 
@@ -223,14 +231,8 @@ class DipDup:
                 await asyncio.gather(*datasource_tasks, *worker_tasks)
             except KeyboardInterrupt:
                 pass
-            finally:
-                self._logger.info('Closing datasource sessions')
-                await asyncio.gather(*[d.close_session() for d in self._datasources.values()])
-                if hasura_gateway:
-                    await hasura_gateway.close_session()
-                # FIXME: AttributeError: 'NoneType' object has no attribute 'call_soon_threadsafe'
-                with suppress(AttributeError, SchedulerNotRunningError):
-                    self._scheduler.shutdown(wait=True)
+            except GeneratorExit:
+                pass
 
     async def migrate_to_v10(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)

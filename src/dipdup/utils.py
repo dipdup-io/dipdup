@@ -1,4 +1,5 @@
 import asyncio
+import decimal
 import importlib
 import logging
 import pkgutil
@@ -7,13 +8,15 @@ import types
 from contextlib import asynccontextmanager
 from logging import Logger
 from os.path import dirname
-from typing import Any, AsyncIterator, Dict, Iterator, List, Optional
+from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Tuple, Type
 
 import humps  # type: ignore
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import TransactionContext
 from tortoise.backends.sqlite.client import SqliteClient
+from tortoise.fields import DecimalField
+from tortoise.models import Model
 from tortoise.transactions import in_transaction
 
 _logger = logging.getLogger('dipdup.utils')
@@ -108,6 +111,39 @@ async def in_global_transaction():
         yield
 
     Tortoise._connections['default'] = original_conn
+
+
+def is_model_class(obj: Any) -> bool:
+    """Is subclass of tortoise.Model, but not the base class"""
+    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
+
+
+# TODO: Cache me
+def iter_models(package: str) -> Iterator[Tuple[str, Type[Model]]]:
+    """Iterate over built-in and project's models"""
+    dipdup_models = importlib.import_module('dipdup.models')
+    package_models = importlib.import_module(f'{package}.models')
+
+    for models in (dipdup_models, package_models):
+        for attr in dir(models):
+            model = getattr(models, attr)
+            if is_model_class(model):
+                app = 'int_models' if models.__name__ == 'dipdup.models' else 'models'
+                yield app, model
+
+
+def set_decimal_context(package: str) -> None:
+    context = decimal.getcontext()
+    prec = context.prec
+    for _, model in iter_models(package):
+        for field in model._meta.fields_map.values():
+            if isinstance(field, DecimalField):
+                context.prec = max(context.prec, field.max_digits + field.max_digits)
+    if prec < context.prec:
+        _logger.warning('Decimal context precision has been updated: %s -> %s', prec, context.prec)
+        # NOTE: DefaultContext used for new threads
+        decimal.DefaultContext.prec = context.prec
+        decimal.setcontext(context)
 
 
 class FormattedLogger(Logger):

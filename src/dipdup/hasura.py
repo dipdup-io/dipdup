@@ -4,19 +4,19 @@ import logging
 from contextlib import suppress
 from os import listdir
 from os.path import dirname, join
-from types import ModuleType
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import humps  # type: ignore
 from aiohttp import ClientConnectorError, ClientOSError
 from genericpath import exists
 from pydantic.dataclasses import dataclass
-from tortoise import Model, fields
+from tortoise import fields
 from tortoise.transactions import get_connection
 
 from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
+from dipdup.utils import iter_models
 
 
 @dataclass
@@ -29,21 +29,6 @@ class Field:
             name=humps.camelize(self.name),
             type=self.type,
         )
-
-
-def _is_model_class(obj: Any) -> bool:
-    """Is subclass of tortoise.Model, but not the base class"""
-    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
-
-
-def _iter_models(modules: Iterable[ModuleType]) -> Iterator[Tuple[str, Type[Model]]]:
-    """Iterate over built-in and project's models"""
-    for models in modules:
-        for attr in dir(models):
-            model = getattr(models, attr)
-            if _is_model_class(model):
-                app = 'int_models' if models.__name__ == 'dipdup.models' else 'models'
-                yield app, model
 
 
 class HasuraError(RuntimeError):
@@ -126,8 +111,8 @@ class HasuraGateway(HTTPGateway):
     def _default_http_config(self) -> HTTPConfig:
         return HTTPConfig(
             cache=False,
-            retry_count=3,
             retry_sleep=1,
+            retry_multiplier=1.1,
             ratelimit_rate=100,
             ratelimit_period=1,
         )
@@ -197,11 +182,6 @@ class HasuraGateway(HTTPGateway):
             )[1]
         ]
 
-    def _get_model_modules(self) -> Tuple[ModuleType, ModuleType]:
-        int_models = importlib.import_module('dipdup.models')
-        models = importlib.import_module(f'{self._package}.models')
-        return int_models, models
-
     async def _generate_source_tables_metadata(self) -> List[Dict[str, Any]]:
         """Generate source tables metadata based on project models and views.
 
@@ -213,9 +193,8 @@ class HasuraGateway(HTTPGateway):
 
         metadata_tables = {}
         model_tables = {}
-        model_modules = self._get_model_modules()
 
-        for app, model in _iter_models(model_modules):
+        for app, model in iter_models(self._package):
             table_name = model._meta.db_table or pascal_to_snake(model.__name__)
             model_tables[f'{app}.{model.__name__}'] = table_name
             metadata_tables[table_name] = self._format_table(table_name)
@@ -223,7 +202,7 @@ class HasuraGateway(HTTPGateway):
         for view in views:
             metadata_tables[view] = self._format_table(view)
 
-        for app, model in _iter_models(model_modules):
+        for app, model in iter_models(self._package):
             table_name = model_tables[f'{app}.{model.__name__}']
 
             for field in model._meta.fields_map.values():
@@ -262,8 +241,7 @@ class HasuraGateway(HTTPGateway):
 
     async def _generate_query_collections_metadata(self) -> List[Dict[str, Any]]:
         queries = []
-        model_modules = self._get_model_modules()
-        for _, model in _iter_models(model_modules):
+        for _, model in iter_models(self._package):
             table_name = model._meta.db_table or pascal_to_snake(model.__name__)
 
             for field_name, field in model._meta.fields_map.items():

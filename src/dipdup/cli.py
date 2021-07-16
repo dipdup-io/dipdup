@@ -17,7 +17,7 @@ from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.utils import tortoise_wrapper
+from dipdup.utils import set_decimal_context, tortoise_wrapper
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -66,8 +66,11 @@ async def cli(ctx, config: List[str], logging_config: str):
     if _config.sentry:
         sentry_sdk.init(
             dsn=_config.sentry.dsn,
+            environment=_config.sentry.environment,
             integrations=[AioHttpIntegration()],
         )
+
+    set_decimal_context(_config.package)
 
     ctx.obj = CLIContext(
         config_paths=config,
@@ -143,10 +146,8 @@ async def configure_hasura(ctx, reset: bool):
     if not config.hasura:
         _logger.error('`hasura` config section is empty')
         return
-    hasura = HasuraGateway(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
+    hasura_gateway = HasuraGateway(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
 
     async with tortoise_wrapper(url, models):
-        try:
-            await hasura.configure(reset)
-        finally:
-            await hasura.close_session()
+        async with hasura_gateway:
+            await hasura_gateway.configure(reset)

@@ -38,7 +38,6 @@ class HasuraTest(IsolatedAsyncioTestCase):
 
             hasura_gateway = HasuraGateway('demo_hic_et_nunc', hasura_config, database_config)
             hasura_gateway._get_views = AsyncMock(return_value=[])
-            await hasura_gateway.close_session()
             hasura_gateway._http = Mock()
             hasura_gateway._http.request = AsyncMock(
                 side_effect=[
