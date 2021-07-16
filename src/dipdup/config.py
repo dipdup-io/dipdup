@@ -93,9 +93,12 @@ class PostgresDatabaseConfig:
 class HTTPConfig:
     cache: Optional[bool] = None
     retry_count: Optional[int] = None
-    retry_sleep: Optional[int] = None
+    retry_sleep: Optional[float] = None
+    retry_multiplier: Optional[float] = None
     ratelimit_rate: Optional[int] = None
     ratelimit_period: Optional[int] = None
+    connection_limit: Optional[int] = None
+    batch_size: Optional[int] = None
 
     def merge(self, other: Optional['HTTPConfig']) -> None:
         if not other:
@@ -162,12 +165,13 @@ class TzktDatasourceConfig(NameMixin):
     def __hash__(self):
         return hash(self.url)
 
-    @validator('url', allow_reuse=True)
-    def valid_url(cls, v):
-        parsed_url = urlparse(v)
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        if self.http and self.http.batch_size and self.http.batch_size > 10000:
+            raise ConfigurationError('`batch_size` must be less than 10000')
+        parsed_url = urlparse(self.url)
         if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{v}` is not a valid datasource URL')
-        return v
+            raise ConfigurationError(f'`{self.url}` is not a valid datasource URL')
 
 
 @dataclass
@@ -227,6 +231,7 @@ class PatternConfig(ABC):
 
     @classmethod
     def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> str:
+        entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         return f'from {package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)} import {parameter_cls}'
 
@@ -239,6 +244,7 @@ class PatternConfig(ABC):
 
     @classmethod
     def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> str:
+        entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
@@ -666,14 +672,21 @@ class HasuraConfig:
 
 @dataclass
 class JobConfig(HandlerConfig):
-    crontab: str
+    crontab: Optional[str] = None
+    interval: Optional[int] = None
     args: Optional[Dict[str, Any]] = None
     atomic: bool = False
+
+    def __post_init_post_parse__(self):
+        if int(bool(self.crontab)) + int(bool(self.interval)) != 1:
+            raise ConfigurationError('Either `interval` or `crontab` field must be specified')
+        super().__post_init_post_parse__()
 
 
 @dataclass
 class SentryConfig:
     dsn: str
+    environment: Optional[str] = None
 
 
 @dataclass
@@ -970,24 +983,15 @@ class DipDupConfig:
                 self._initialize_handler_callback(big_map_handler_config)
 
                 _logger.info('Registering big map types for path `%s`', big_map_handler_config.path)
-                key_type_module = importlib.import_module(
-                    f'{self.package}'
-                    f'.types'
-                    f'.{big_map_handler_config.contract_config.module_name}'
-                    f'.big_map'
-                    f'.{pascal_to_snake(big_map_handler_config.path)}_key'
-                )
-                key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_handler_config.path + '_key'))
+                module_name = big_map_handler_config.contract_config.module_name
+                big_map_path = pascal_to_snake(big_map_handler_config.path.replace('.', '_'))
+
+                key_type_module = importlib.import_module(f'{self.package}.types.{module_name}.big_map.{big_map_path}_key')
+                key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_path + '_key'))
                 big_map_handler_config.key_type_cls = key_type_cls
 
-                value_type_module = importlib.import_module(
-                    f'{self.package}'
-                    f'.types'
-                    f'.{big_map_handler_config.contract_config.module_name}'
-                    f'.big_map'
-                    f'.{pascal_to_snake(big_map_handler_config.path)}_value'
-                )
-                value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_handler_config.path + '_value'))
+                value_type_module = importlib.import_module(f'{self.package}.types.{module_name}.big_map.{big_map_path}_value')
+                value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_path + '_value'))
                 big_map_handler_config.value_type_cls = value_type_cls
 
         else:

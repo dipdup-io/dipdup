@@ -1,18 +1,37 @@
 import asyncio
+import decimal
+import importlib
 import logging
-import re
+import pkgutil
 import time
+import types
 from contextlib import asynccontextmanager
 from logging import Logger
-from typing import Any, AsyncIterator, Iterator, List, Optional
+from os.path import dirname
+from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Tuple, Type
 
+import humps  # type: ignore
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import TransactionContext
 from tortoise.backends.sqlite.client import SqliteClient
+from tortoise.fields import DecimalField
+from tortoise.models import Model
 from tortoise.transactions import in_transaction
 
 _logger = logging.getLogger('dipdup.utils')
+
+
+def import_submodules(package: str) -> Dict[str, types.ModuleType]:
+    """Import all submodules of a module, recursively, including subpackages"""
+    module = importlib.import_module(package)
+    results = {}
+    for _, name, is_pkg in pkgutil.walk_packages((dirname(module.__file__),)):
+        full_name = module.__name__ + '.' + name
+        results[full_name] = importlib.import_module(full_name)
+        if is_pkg:
+            results.update(import_submodules(full_name))
+    return results
 
 
 @asynccontextmanager
@@ -26,16 +45,12 @@ async def slowdown(seconds: int):
         await asyncio.sleep(seconds - time_spent)
 
 
-# NOTE: These two helpers are not the same as humps.camelize/decamelize as could be used with Python module paths
 def snake_to_pascal(value: str) -> str:
-    """method_name -> MethodName"""
-    return ''.join(map(lambda x: x[0].upper() + x[1:], value.replace('.', '_').split('_')))
+    return humps.pascalize(value)
 
 
-def pascal_to_snake(name: str) -> str:
-    """MethodName -> method_name"""
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name.replace('.', '_'))
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+def pascal_to_snake(value: str) -> str:
+    return humps.depascalize(value.replace('.', '_')).replace('__', '_')
 
 
 def split_by_chunks(input_: List[Any], size: int) -> Iterator[List[Any]]:
@@ -96,6 +111,39 @@ async def in_global_transaction():
         yield
 
     Tortoise._connections['default'] = original_conn
+
+
+def is_model_class(obj: Any) -> bool:
+    """Is subclass of tortoise.Model, but not the base class"""
+    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
+
+
+# TODO: Cache me
+def iter_models(package: str) -> Iterator[Tuple[str, Type[Model]]]:
+    """Iterate over built-in and project's models"""
+    dipdup_models = importlib.import_module('dipdup.models')
+    package_models = importlib.import_module(f'{package}.models')
+
+    for models in (dipdup_models, package_models):
+        for attr in dir(models):
+            model = getattr(models, attr)
+            if is_model_class(model):
+                app = 'int_models' if models.__name__ == 'dipdup.models' else 'models'
+                yield app, model
+
+
+def set_decimal_context(package: str) -> None:
+    context = decimal.getcontext()
+    prec = context.prec
+    for _, model in iter_models(package):
+        for field in model._meta.fields_map.values():
+            if isinstance(field, DecimalField):
+                context.prec = max(context.prec, field.max_digits + field.max_digits)
+    if prec < context.prec:
+        _logger.warning('Decimal context precision has been updated: %s -> %s', prec, context.prec)
+        # NOTE: DefaultContext used for new threads
+        decimal.DefaultContext.prec = context.prec
+        decimal.setcontext(context)
 
 
 class FormattedLogger(Logger):

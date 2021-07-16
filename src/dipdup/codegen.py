@@ -8,7 +8,7 @@ from copy import copy
 from os import mkdir
 from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from jinja2 import Template
 
@@ -28,7 +28,7 @@ from dipdup.config import (
 from dipdup.datasources import DatasourceT
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils import pascal_to_snake, snake_to_pascal
+from dipdup.utils import import_submodules, pascal_to_snake, snake_to_pascal
 
 DEFAULT_DOCKER_ENV_FILE = dict(
     POSTGRES_USER="dipdup",
@@ -65,6 +65,20 @@ class DipDupCodeGenerator:
         self._config = config
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
+
+    async def init(self) -> None:
+        await self.create_package()
+        await self.fetch_schemas()
+        await self.generate_types()
+        await self.generate_default_handlers()
+        await self.generate_user_handlers()
+        await self.generate_jobs()
+        await self.cleanup()
+        await self.verify_package()
+
+    async def docker_init(self, image: str, env_file: str) -> None:
+        await self.generate_docker(image, env_file)
+        await self.verify_package()
 
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -165,21 +179,19 @@ class DipDupCodeGenerator:
                             continue
 
                         parameter_schemas_path = join(contract_schemas_path, 'parameter')
+                        entrypoint = cast(str, operation_pattern_config.entrypoint)
                         with suppress(FileExistsError):
                             mkdir(parameter_schemas_path)
 
                         try:
                             entrypoint_schema = next(
-                                ep['parameterSchema']
-                                for ep in contract_schemas['entrypoints']
-                                if ep['name'] == operation_pattern_config.entrypoint
+                                ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint
                             )
                         except StopIteration as e:
-                            raise ConfigurationError(
-                                f'Contract `{contract_config.address}` has no entrypoint `{operation_pattern_config.entrypoint}`'
-                            ) from e
+                            raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e
 
-                        entrypoint_schema_path = join(parameter_schemas_path, f'{operation_pattern_config.entrypoint}.json')
+                        entrypoint = entrypoint.replace('.', '_').lstrip('_')
+                        entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
 
                         if not exists(entrypoint_schema_path):
                             with open(entrypoint_schema_path, 'w') as file:
@@ -212,15 +224,16 @@ class DipDupCodeGenerator:
                         raise ConfigurationError(
                             f'Contract `{contract_config.address}` has no big map path `{big_map_handler_config.path}`'
                         ) from e
+                    big_map_path = big_map_handler_config.path.replace('.', '_')
                     big_map_key_schema = big_map_schema['keySchema']
-                    big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_handler_config.path}.key.json')
+                    big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_path}_key.json')
 
                     if not exists(big_map_key_schema_path):
                         with open(big_map_key_schema_path, 'w') as file:
                             file.write(json.dumps(big_map_key_schema, indent=4))
 
                     big_map_value_schema = big_map_schema['valueSchema']
-                    big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_handler_config.path}.value.json')
+                    big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_path}_value.json')
 
                     if not exists(big_map_value_schema_path):
                         with open(big_map_value_schema_path, 'w') as file:
@@ -281,7 +294,7 @@ class DipDupCodeGenerator:
                     '--output',
                     output_path,
                     '--class-name',
-                    name,
+                    name.lstrip('_'),
                     '--disable-timestamp',
                     '--use-default',
                 ]
@@ -435,6 +448,9 @@ class DipDupCodeGenerator:
         self._logger.info('Cleaning up')
         schemas_path = join(self._config.package_path, 'schemas')
         rmtree(schemas_path)
+
+    async def verify_package(self) -> None:
+        import_submodules(self._config.package)
 
     async def _get_schema(
         self,
