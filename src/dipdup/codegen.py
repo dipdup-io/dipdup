@@ -30,7 +30,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import import_submodules, pascal_to_snake, snake_to_pascal
 
-DEFAULT_DOCKER_ENV_FILE = dict(
+DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
     POSTGRES_USER="dipdup",
     POSTGRES_DB="dipdup",
     POSTGRES_PASSWORD="changeme",
@@ -41,6 +41,8 @@ DEFAULT_DOCKER_ENV_FILE = dict(
     HASURA_GRAPHQL_ADMIN_SECRET="changeme",
     HASURA_GRAPHQL_UNAUTHORIZED_ROLE="user",
 )
+DEFAULT_DOCKER_IMAGE = 'droserasprout/dipdup:latest'
+DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
 
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -428,7 +430,7 @@ class DipDupCodeGenerator:
 
         dipdup_env_code = dipdup_env_template.render(
             environment={
-                **DEFAULT_DOCKER_ENV_FILE,
+                **DEFAULT_DOCKER_ENV_FILE_CONTENT,
                 **self._config.environment,
             }
         )

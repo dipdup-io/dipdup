@@ -13,7 +13,7 @@ from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
 from dipdup import __spec_version__, __version__, spec_version_mapping
-from dipdup.codegen import DipDupCodeGenerator
+from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
@@ -162,8 +162,8 @@ async def docker(ctx):
 
 
 @docker.command(name='init')
-@click.option('--image', '-i', type=str, help='', default=f'dipdup:{__version__}')
-@click.option('--env-file', '-e', type=str, help='', default='dipdup.env')
+@click.option('--image', '-i', type=str, help='', default=DEFAULT_DOCKER_IMAGE)
+@click.option('--env-file', '-e', type=str, help='', default=DEFAULT_DOCKER_ENV_FILE)
 @click.pass_context
 @click_command_wrapper
 async def docker_init(ctx, image: str, env_file: str):
