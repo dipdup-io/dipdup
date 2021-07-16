@@ -5,7 +5,7 @@ ARG PLUGINS=pytezos
 
 SHELL ["/bin/bash", "-x", "-v", "-c"]
 RUN apt update && \
-    apt install -y make git `if [[ $PLUGINS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi` && \
+    apt install -y make git sudo `if [[ $PLUGINS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi` && \
     rm -rf /var/lib/apt/lists/*
 RUN pip install poetry
 RUN useradd -ms /bin/bash dipdup
@@ -20,10 +20,17 @@ WORKDIR /home/dipdup/source
 RUN poetry config virtualenvs.create false
 RUN make install DEV=0 PLUGINS="${PLUGINS}"
 
+COPY inject_pyproject.sh /home/dipdup/inject_pyproject
+RUN chmod +x /home/dipdup/inject_pyproject
+RUN chown dipdup /home/dipdup/inject_pyproject
+
+RUN echo 'dipdup ALL = NOPASSWD: /home/dipdup/inject_pyproject' >> /etc/sudoers
+
 COPY . /home/dipdup/source/
 RUN chown -R dipdup /home/dipdup/
 
 USER dipdup
+RUN poetry config virtualenvs.create false
 
 WORKDIR /home/dipdup/
 ENTRYPOINT ["dipdup"]
