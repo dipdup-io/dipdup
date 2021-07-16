@@ -12,3 +12,4 @@ tests
 *.zip
 docker-compose.yml
 Dockerfile
+.venv

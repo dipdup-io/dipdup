@@ -1,4 +1,3 @@
-# Temporary copy for dockerhub
 FROM python:3.8-slim-buster
 
 ARG PLUGINS
@@ -11,7 +10,7 @@ RUN pip install poetry
 RUN useradd -ms /bin/bash dipdup
 
 RUN mkdir /home/dipdup/source
-COPY Makefile pyproject.toml poetry.lock README.md /home/dipdup/source/
+COPY --chown=dipdup Makefile pyproject.toml poetry.lock README.md /home/dipdup/source/
 # We want to copy our code at the last layer but not to break poetry's "packages" section
 RUN mkdir -p /home/dipdup/source/src/dipdup && \
     touch /home/dipdup/source/src/dipdup/__init__.py
@@ -20,14 +19,11 @@ WORKDIR /home/dipdup/source
 RUN poetry config virtualenvs.create false
 RUN make install DEV=0 PLUGINS="${PLUGINS}"
 
-COPY inject_pyproject.sh /home/dipdup/inject_pyproject
+COPY --chown=dipdup inject_pyproject.sh /home/dipdup/inject_pyproject
 RUN chmod +x /home/dipdup/inject_pyproject
-RUN chown dipdup /home/dipdup/inject_pyproject
-
 RUN echo 'dipdup ALL = NOPASSWD: /home/dipdup/inject_pyproject' >> /etc/sudoers
 
-COPY . /home/dipdup/source/
-RUN chown -R dipdup /home/dipdup/
+COPY --chown=dipdup src /home/dipdup/source/src
 
 USER dipdup
 RUN poetry config virtualenvs.create false
