@@ -12,6 +12,7 @@ from typing import Any, Dict, cast
 
 from jinja2 import Template
 
+from dipdup import __version__
 from dipdup.config import (
     CONFIGURE_HANDLER,
     ROLLBACK_HANDLER,
@@ -41,7 +42,8 @@ DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
     HASURA_GRAPHQL_ADMIN_SECRET="changeme",
     HASURA_GRAPHQL_UNAUTHORIZED_ROLE="user",
 )
-DEFAULT_DOCKER_IMAGE = 'droserasprout/dipdup:latest'
+DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
+DEFAULT_DOCKER_TAG = __version__
 DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
 
 
@@ -78,8 +80,8 @@ class DipDupCodeGenerator:
         await self.cleanup()
         await self.verify_package()
 
-    async def docker_init(self, image: str, env_file: str) -> None:
-        await self.generate_docker(image, env_file)
+    async def docker_init(self, image: str, tag: str, env_file: str) -> None:
+        await self.generate_docker(image, tag, env_file)
         await self.verify_package()
 
     async def create_package(self) -> None:
@@ -384,7 +386,7 @@ class DipDupCodeGenerator:
                 with open(job_path, 'w') as file:
                     file.write(job_code)
 
-    async def generate_docker(self, image: str, env_file: str) -> None:
+    async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
         docker_path = join(self._config.package_path, 'docker')
         with suppress(FileExistsError):
             mkdir(docker_path)
@@ -398,7 +400,7 @@ class DipDupCodeGenerator:
 
         self._logger.info('Generating `Dockerfile`')
         dockerfile_code = dockerfile_template.render(
-            image=image,
+            image=f'{image}:{tag}',
             package=self._config.package,
             package_path=self._config.package_path,
         )

@@ -690,16 +690,6 @@ class SentryConfig:
 
 
 @dataclass
-class PytezosPluginConfig:
-    ...
-
-
-@dataclass
-class PluginsConfig:
-    pytezos: Optional[PytezosPluginConfig] = None
-
-
-@dataclass
 class DipDupConfig:
     """Main dapp config
 
@@ -725,7 +715,6 @@ class DipDupConfig:
     hasura: Optional[HasuraConfig] = None
     jobs: Optional[Dict[str, JobConfig]] = None
     sentry: Optional[SentryConfig] = None
-    plugins: Optional[PluginsConfig] = None
 
     @property
     def environment(self) -> Dict[str, str]:

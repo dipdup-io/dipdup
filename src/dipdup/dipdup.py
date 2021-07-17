@@ -181,8 +181,8 @@ class DipDup:
 
             await self._codegen.init()
 
-    async def docker_init(self, image: str, env_file: str) -> None:
-        await self._codegen.docker_init(image, env_file)
+    async def docker_init(self, image: str, tag: str, env_file: str) -> None:
+        await self._codegen.docker_init(image, tag, env_file)
 
     async def run(self, reindex: bool, oneshot: bool) -> None:
         """Main entrypoint"""
