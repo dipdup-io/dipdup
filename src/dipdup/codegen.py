@@ -387,6 +387,7 @@ class DipDupCodeGenerator:
                     file.write(job_code)
 
     async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
+        self._logger.info('Generating Docker template')
         docker_path = join(self._config.package_path, 'docker')
         with suppress(FileExistsError):
             mkdir(docker_path)
@@ -398,7 +399,6 @@ class DipDupCodeGenerator:
         with open(join(dirname(__file__), 'templates', 'docker', 'dipdup.env.j2')) as file:
             dipdup_env_template = Template(file.read())
 
-        self._logger.info('Generating `Dockerfile`')
         dockerfile_code = dockerfile_template.render(
             image=f'{image}:{tag}',
             package=self._config.package,
