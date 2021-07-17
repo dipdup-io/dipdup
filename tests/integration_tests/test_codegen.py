@@ -30,7 +30,7 @@ class CodegenTest(IsolatedAsyncioTestCase):
                 try:
                     dipdup = DipDup(config)
                     await dipdup.init()
-                    await dipdup.docker_init(f'dipdup', __version__, 'dipdup.env')
+                    await dipdup.docker_init('dipdup', __version__, 'dipdup.env')
                 except Exception as exc:
                     with suppress(FileNotFoundError):
                         rmtree('tmp_test_dipdup')
