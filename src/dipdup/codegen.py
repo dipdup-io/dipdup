@@ -436,12 +436,13 @@ class DipDupCodeGenerator:
                 **self._config.environment,
             }
         )
-        dipdup_env_example_path = join(docker_path, 'dipdup.env.example')
+        dipdup_env_example_path = join(docker_path, f'{env_file}.example')
         with open(dipdup_env_example_path, 'w') as file:
             file.write(dipdup_env_code)
-        dipdup_env_path = join(docker_path, 'dipdup.env')
-        with open(dipdup_env_path, 'w') as file:
-            file.write(dipdup_env_code)
+        dipdup_env_path = join(docker_path, env_file)
+        if not exists(dipdup_env_path):
+            with open(dipdup_env_path, 'w') as file:
+                file.write(dipdup_env_code)
 
         gitignore_path = join(docker_path, '.gitignore')
         with open(gitignore_path, 'w') as file:
