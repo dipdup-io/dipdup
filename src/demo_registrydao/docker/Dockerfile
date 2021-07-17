@@ -1,2 +1,2 @@
-FROM dipdup/dipdup:1.1.2
+FROM dipdup/dipdup:2.0.0
 COPY demo_registrydao /home/dipdup/demo_registrydao
