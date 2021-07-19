@@ -1,7 +1,7 @@
 import asyncio
 import hashlib
 import logging
-from contextlib import AsyncExitStack
+from contextlib import AsyncExitStack, asynccontextmanager
 from os import listdir
 from os.path import join
 from typing import Dict, List, Optional, cast
@@ -216,7 +216,7 @@ class DipDup:
             datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
 
             if self._config.jobs and not oneshot:
-                stack.enter_context(self._scheduler)
+                await stack.enter_async_context(self._scheduler_context())
                 for job_name, job_config in self._config.jobs.items():
                     add_job(self._ctx, self._scheduler, job_name, job_config)
 
@@ -351,3 +351,11 @@ class DipDup:
         self._logger.warning('Your project has been migrated to spec version %s.', version)
         self._logger.warning('Review and commit changes before proceeding.')
         self._logger.warning('==================== WARNING =====================')
+
+    @asynccontextmanager
+    async def _scheduler_context(self):
+        self._scheduler.start()
+        try:
+            yield
+        finally:
+            self._scheduler.shutdown()

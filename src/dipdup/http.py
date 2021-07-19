@@ -64,6 +64,7 @@ class _HTTPGateway:
         )
 
     async def __aexit__(self, exc_type, exc, tb):
+        self._logger.info('Closing gateway session (%s)', self._url)
         await self.__session.close()
 
     @property

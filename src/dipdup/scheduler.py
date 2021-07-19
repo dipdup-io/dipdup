@@ -1,3 +1,5 @@
+from contextlib import AsyncExitStack
+
 from apscheduler.executors.asyncio import AsyncIOExecutor  # type: ignore
 from apscheduler.jobstores.memory import MemoryJobStore  # type: ignore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
@@ -31,8 +33,11 @@ def create_scheduler() -> AsyncIOScheduler:
 
 
 def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_name: str, job_config: JobConfig) -> None:
-    async def _atomic_wrapper(ctx, args):
-        async with in_global_transaction():
+    async def _wrapper(ctx, args) -> None:
+        nonlocal job_config
+        async with AsyncExitStack() as stack:
+            if job_config.atomic:
+                await stack.enter_async_context(in_global_transaction())
             await job_config.callback_fn(ctx, args)
 
     if job_config.crontab:
@@ -40,7 +45,7 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_name: str, job_
     elif job_config.interval:
         trigger = IntervalTrigger(seconds=job_config.interval)
     scheduler.add_job(
-        func=_atomic_wrapper if job_config.atomic else job_config.callback_fn,
+        func=_wrapper,
         id=job_name,
         name=job_name,
         trigger=trigger,
