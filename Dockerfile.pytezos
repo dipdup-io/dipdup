@@ -1,6 +1,7 @@
+# Temporary copy for dockerhub
 FROM python:3.8-slim-buster
 
-ARG PLUGINS
+ARG PLUGINS=pytezos
 
 SHELL ["/bin/bash", "-x", "-v", "-c"]
 RUN apt update && \

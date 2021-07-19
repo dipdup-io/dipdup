@@ -716,7 +716,17 @@ class DipDupConfig:
     jobs: Optional[Dict[str, JobConfig]] = None
     sentry: Optional[SentryConfig] = None
 
+    @property
+    def environment(self) -> Dict[str, str]:
+        return self._environment
+
+    @property
+    def filenames(self) -> List[str]:
+        return self._filenames
+
     def __post_init_post_parse__(self):
+        self._filenames: List[str] = []
+        self._environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
         self._pre_initialized = []
         self._initialized = []
@@ -879,6 +889,7 @@ class DipDupConfig:
         current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
+        config_environment: Dict[str, str] = {}
         for filename in filenames:
             filename = os.path.join(current_workdir, filename)
 
@@ -889,6 +900,7 @@ class DipDupConfig:
             _logger.info('Substituting environment variables')
             for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
                 variable, default_value = match.group(1), match.group(2)
+                config_environment[variable] = default_value
                 value = env.get(variable)
                 if not default_value and not value:
                     raise ConfigurationError(f'Environment variable `{variable}` is not set')
@@ -902,6 +914,8 @@ class DipDupConfig:
 
         try:
             config = cls(**json_config)
+            config._environment = config_environment
+            config._filenames = filenames
         except Exception as e:
             raise ConfigurationError(str(e)) from e
         return config
