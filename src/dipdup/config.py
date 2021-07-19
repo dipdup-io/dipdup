@@ -517,12 +517,9 @@ class IndexConfig(TemplateValuesMixin, NameMixin):
         NameMixin.__post_init_post_parse__(self)
 
     def hash(self) -> str:
-        return hashlib.sha256(
-            json.dumps(
-                self,
-                default=pydantic_encoder,
-            ).encode(),
-        ).hexdigest()
+        config_json = json.dumps(self, default=pydantic_encoder)
+        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
+        return config_hash
 
     @property
     def datasource_config(self) -> TzktDatasourceConfig:

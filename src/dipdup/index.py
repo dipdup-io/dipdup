@@ -76,7 +76,7 @@ class Index:
 
     async def _initialize_index_state(self) -> None:
         self._logger.info('Getting state for index `%s`', self._config.name)
-        index_hash = self._config.hash()
+        index_config_hash = self._config.hash()
         state = await State.get_or_none(
             index_name=self._config.name,
             index_type=self._config.kind,
@@ -86,11 +86,11 @@ class Index:
             state = state_cls(
                 index_name=self._config.name,
                 index_type=self._config.kind,
-                index_hash=index_hash,
+                index_hash=index_config_hash,
                 level=self._config.first_block,
             )
 
-        elif state.hash != index_hash:
+        elif state.index_hash != index_config_hash:
             self._logger.warning('Config hash mismatch (config has been changed), reindexing')
             await self._ctx.reindex()
 
