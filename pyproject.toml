@@ -37,6 +37,7 @@ sentry-sdk = "^1.1.0"
 pyhumps = "^3.0.2"
 aiolimiter = "^1.0.0-beta.1"
 tabulate = "^0.8.9"
+python-dotenv = "^0.18.0"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"

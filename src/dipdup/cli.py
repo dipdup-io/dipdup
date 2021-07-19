@@ -1,5 +1,6 @@
 import asyncio
 import fileinput
+from genericpath import exists
 import logging
 import os
 from dataclasses import dataclass
@@ -8,6 +9,7 @@ from os.path import dirname, join
 from typing import List, cast
 
 import click
+from dotenv import load_dotenv
 import sentry_sdk
 from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
@@ -45,10 +47,11 @@ class CLIContext:
 @click.group()
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
+@click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
 @click.option('--logging-config', '-l', type=str, help='Path to logging YAML config', default='logging.yml')
 @click.pass_context
 @click_command_wrapper
-async def cli(ctx, config: List[str], logging_config: str):
+async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     try:
         path = join(os.getcwd(), logging_config)
         _logging_config = LoggingConfig.load(path)
@@ -56,6 +59,13 @@ async def cli(ctx, config: List[str], logging_config: str):
         path = join(dirname(__file__), 'configs', logging_config)
         _logging_config = LoggingConfig.load(path)
     _logging_config.apply()
+
+    for env_path in env_file:
+        env_path = join(os.getcwd(), env_path)
+        if not exists(env_path):
+            raise ConfigurationError(f'env file `{env_path}` does not exist')
+        _logger.info('Applying env_file `%s`', env_path)
+        load_dotenv(env_path, override=True)
 
     _config = DipDupConfig.load(config)
     if _config.spec_version not in spec_version_mapping:
