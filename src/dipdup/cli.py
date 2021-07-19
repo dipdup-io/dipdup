@@ -1,16 +1,15 @@
 import asyncio
 import fileinput
-from genericpath import exists
 import logging
 import os
 from dataclasses import dataclass
 from functools import wraps
-from os.path import dirname, join
+from os.path import dirname, exists, join
 from typing import List, cast
 
 import click
-from dotenv import load_dotenv
 import sentry_sdk
+from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
