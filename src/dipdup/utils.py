@@ -7,7 +7,6 @@ import time
 import types
 from contextlib import asynccontextmanager
 from logging import Logger
-from os.path import dirname
 from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Tuple, Type
 
 import humps  # type: ignore
@@ -24,10 +23,9 @@ _logger = logging.getLogger('dipdup.utils')
 
 def import_submodules(package: str) -> Dict[str, types.ModuleType]:
     """Import all submodules of a module, recursively, including subpackages"""
-    module = importlib.import_module(package)
     results = {}
-    for _, name, is_pkg in pkgutil.walk_packages((dirname(module.__file__),)):
-        full_name = module.__name__ + '.' + name
+    for _, name, is_pkg in pkgutil.walk_packages((package,)):
+        full_name = package + '.' + name
         results[full_name] = importlib.import_module(full_name)
         if is_pkg:
             results.update(import_submodules(full_name))
