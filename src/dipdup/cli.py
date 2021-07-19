@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
-from dipdup import __spec_version__, __version__, spec_version_mapping
+from dipdup import __spec_version__, __version__, spec_version_mapping, spec_reindex_mapping
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
@@ -71,7 +71,8 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     if _config.spec_version not in spec_version_mapping:
         raise ConfigurationError('Unknown `spec_version`, correct ones: {}')
     if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
-        raise MigrationRequiredError(None, _config.spec_version, __spec_version__)
+        reindex = spec_reindex_mapping[__spec_version__]
+        raise MigrationRequiredError(None, _config.spec_version, __spec_version__, reindex)
 
     if _config.sentry:
         sentry_sdk.init(
