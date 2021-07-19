@@ -4,6 +4,7 @@ from os.path import dirname, join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
 
+from dipdup import __version__
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
 
@@ -29,6 +30,7 @@ class CodegenTest(IsolatedAsyncioTestCase):
                 try:
                     dipdup = DipDup(config)
                     await dipdup.init()
+                    await dipdup.docker_init('dipdup', __version__, 'dipdup.env')
                 except Exception as exc:
                     with suppress(FileNotFoundError):
                         rmtree('tmp_test_dipdup')

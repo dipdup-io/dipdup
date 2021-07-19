@@ -6,12 +6,13 @@ import subprocess
 from contextlib import suppress
 from copy import copy
 from os import mkdir
-from os.path import basename, dirname, exists, join, splitext
+from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
 from typing import Any, Dict, cast
 
 from jinja2 import Template
 
+from dipdup import __version__
 from dipdup.config import (
     CONFIGURE_HANDLER,
     ROLLBACK_HANDLER,
@@ -29,6 +30,21 @@ from dipdup.datasources import DatasourceT
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import import_submodules, pascal_to_snake, snake_to_pascal
+
+DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
+    POSTGRES_USER="dipdup",
+    POSTGRES_DB="dipdup",
+    POSTGRES_PASSWORD="changeme",
+    HASURA_GRAPHQL_DATABASE_URL="postgres://dipdup:changeme@db:5432/dipdup",
+    HASURA_GRAPHQL_ENABLE_CONSOLE="true",
+    HASURA_GRAPHQL_DEV_MODE="true",
+    HASURA_GRAPHQL_ENABLED_LOG_TYPES="startup, http-log, webhook-log, websocket-log, query-log",
+    HASURA_GRAPHQL_ADMIN_SECRET="changeme",
+    HASURA_GRAPHQL_UNAUTHORIZED_ROLE="user",
+)
+DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
+DEFAULT_DOCKER_TAG = __version__
+DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
 
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -53,6 +69,20 @@ class DipDupCodeGenerator:
         self._config = config
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
+
+    async def init(self) -> None:
+        await self.create_package()
+        await self.fetch_schemas()
+        await self.generate_types()
+        await self.generate_default_handlers()
+        await self.generate_user_handlers()
+        await self.generate_jobs()
+        await self.cleanup()
+        await self.verify_package()
+
+    async def docker_init(self, image: str, tag: str, env_file: str) -> None:
+        await self.generate_docker(image, tag, env_file)
+        await self.verify_package()
 
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -277,9 +307,9 @@ class DipDupCodeGenerator:
 
     async def generate_default_handlers(self, recreate=False) -> None:
         handlers_path = join(self._config.package_path, 'handlers')
-        with open(join(dirname(__file__), 'templates', f'{ROLLBACK_HANDLER}.py.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'handlers', f'{ROLLBACK_HANDLER}.py.j2')) as file:
             rollback_template = Template(file.read())
-        with open(join(dirname(__file__), 'templates', f'{CONFIGURE_HANDLER}.py.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'handlers', f'{CONFIGURE_HANDLER}.py.j2')) as file:
             configure_template = Template(file.read())
 
         self._logger.info('Generating handler `%s`', CONFIGURE_HANDLER)
@@ -299,9 +329,9 @@ class DipDupCodeGenerator:
     async def generate_user_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
         handlers_path = join(self._config.package_path, 'handlers')
-        with open(join(dirname(__file__), 'templates', 'operation_handler.py.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'handlers', 'operation.py.j2')) as file:
             operation_handler_template = Template(file.read())
-        with open(join(dirname(__file__), 'templates', 'big_map_handler.py.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'handlers', 'big_map.py.j2')) as file:
             big_map_handler_template = Template(file.read())
 
         for index_config in self._config.indexes.values():
@@ -344,7 +374,7 @@ class DipDupCodeGenerator:
             return
 
         jobs_path = join(self._config.package_path, 'jobs')
-        with open(join(dirname(__file__), 'templates', 'job.py.j2')) as file:
+        with open(join(dirname(__file__), 'templates', 'jobs', 'job.py.j2')) as file:
             job_template = Template(file.read())
 
         job_callbacks = set(job_config.callback for job_config in self._config.jobs.values())
@@ -355,6 +385,68 @@ class DipDupCodeGenerator:
             if not exists(job_path):
                 with open(job_path, 'w') as file:
                     file.write(job_code)
+
+    async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
+        self._logger.info('Generating Docker template')
+        docker_path = join(self._config.package_path, 'docker')
+        with suppress(FileExistsError):
+            mkdir(docker_path)
+
+        with open(join(dirname(__file__), 'templates', 'docker', 'Dockerfile.j2')) as file:
+            dockerfile_template = Template(file.read())
+        with open(join(dirname(__file__), 'templates', 'docker', 'docker-compose.yml.j2')) as file:
+            docker_compose_template = Template(file.read())
+        with open(join(dirname(__file__), 'templates', 'docker', 'dipdup.env.j2')) as file:
+            dipdup_env_template = Template(file.read())
+
+        dockerfile_code = dockerfile_template.render(
+            image=f'{image}:{tag}',
+            package=self._config.package,
+            package_path=self._config.package_path,
+        )
+        dockerfile_path = join(docker_path, 'Dockerfile')
+        with open(dockerfile_path, 'w') as file:
+            file.write(dockerfile_code)
+
+        mounts = {}
+        for filename in self._config.filenames:
+            filename_part = filename.split("/")[-1]
+            from_ = join(relpath(self._config.package_path, filename), filename_part)
+            to = f'/home/dipdup/{filename_part}'
+            mounts[from_] = to
+
+        command = []
+        for filename in self._config.filenames:
+            command += ['-c', filename.split("/")[-1]]
+        command += ['run']
+
+        docker_compose_code = docker_compose_template.render(
+            package=self._config.package,
+            mounts=mounts,
+            env_file=env_file,
+            command=command,
+        )
+        docker_compose_path = join(docker_path, 'docker-compose.yml')
+        with open(docker_compose_path, 'w') as file:
+            file.write(docker_compose_code)
+
+        dipdup_env_code = dipdup_env_template.render(
+            environment={
+                **DEFAULT_DOCKER_ENV_FILE_CONTENT,
+                **self._config.environment,
+            }
+        )
+        dipdup_env_example_path = join(docker_path, f'{env_file}.example')
+        with open(dipdup_env_example_path, 'w') as file:
+            file.write(dipdup_env_code)
+        dipdup_env_path = join(docker_path, env_file)
+        if not exists(dipdup_env_path):
+            with open(dipdup_env_path, 'w') as file:
+                file.write(dipdup_env_code)
+
+        gitignore_path = join(docker_path, '.gitignore')
+        with open(gitignore_path, 'w') as file:
+            file.write('*.env')
 
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""

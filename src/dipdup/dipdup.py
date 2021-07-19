@@ -169,25 +169,20 @@ class DipDup:
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
         self._scheduler = create_scheduler()
+        self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
 
     async def init(self) -> None:
         """Create new or update existing dipdup project"""
         await self._create_datasources()
 
-        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
-
         async with AsyncExitStack() as stack:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            await codegen.create_package()
-            await codegen.fetch_schemas()
-            await codegen.generate_types()
-            await codegen.generate_default_handlers()
-            await codegen.generate_user_handlers()
-            await codegen.generate_jobs()
-            await codegen.cleanup()
-            await codegen.verify_package()
+            await self._codegen.init()
+
+    async def docker_init(self, image: str, tag: str, env_file: str) -> None:
+        await self._codegen.docker_init(image, tag, env_file)
 
     async def run(self, reindex: bool, oneshot: bool) -> None:
         """Main entrypoint"""

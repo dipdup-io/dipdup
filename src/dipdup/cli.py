@@ -14,6 +14,7 @@ from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
 from dipdup import __spec_version__, __version__, spec_version_mapping
+from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
@@ -160,3 +161,21 @@ async def configure_hasura(ctx, reset: bool):
     async with tortoise_wrapper(url, models):
         async with hasura_gateway:
             await hasura_gateway.configure(reset)
+
+
+@cli.group()
+@click.pass_context
+@click_command_wrapper
+async def docker(ctx):
+    ...
+
+
+@docker.command(name='init')
+@click.option('--image', '-i', type=str, help='DipDup Docker image', default=DEFAULT_DOCKER_IMAGE)
+@click.option('--tag', '-t', type=str, help='DipDup Docker tag', default=DEFAULT_DOCKER_TAG)
+@click.option('--env-file', '-e', type=str, help='Path to env_file', default=DEFAULT_DOCKER_ENV_FILE)
+@click.pass_context
+@click_command_wrapper
+async def docker_init(ctx, image: str, tag: str, env_file: str):
+    config: DipDupConfig = ctx.obj.config
+    await DipDupCodeGenerator(config, {}).generate_docker(image, tag, env_file)

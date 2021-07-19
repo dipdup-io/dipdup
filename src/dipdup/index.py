@@ -29,6 +29,8 @@ OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
 
 
 class Index:
+    _queue: Deque
+
     def __init__(self, ctx: DipDupContext, config: IndexConfigTemplateT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
         self._config = config
@@ -58,6 +60,7 @@ class Index:
             await self._synchronize(last_level)
         elif self._datasource.sync_level > state.level:
             self._logger.info('Index is behind datasource, sync to datasource level')
+            self._queue.clear()
             last_level = self._datasource.sync_level
             await self._synchronize(last_level)
         else:
