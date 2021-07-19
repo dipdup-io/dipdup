@@ -7,6 +7,8 @@ from tabulate import tabulate
 
 from dipdup import spec_version_mapping
 
+_tab = '\n\n' + ('_' * 80) + '\n\n'
+
 _migration_required_message = """Project migration required!
 
 {version_table}
@@ -15,6 +17,14 @@ _migration_required_message = """Project migration required!
   2. Review and commit changes
 
 See https://baking-bad.org/blog/ for additional release information.
+"""
+
+_reindexing_required_message = """Reindexing required!
+
+Recent changes in the framework have made it necessary to reindex the project.
+
+  1. Optionally backup a database
+  2. Run `dipdup run --reindex` 
 """
 
 _handler_import_message = """Failed to import `{obj}` from `{module}`.
@@ -52,8 +62,6 @@ Error context:
 {error_context}
 """
 
-_tab = '\n\n' + ('_' * 80) + '\n\n'
-
 
 class DipDupError(ABC, Exception):
     exit_code = 1
@@ -86,12 +94,13 @@ class ConfigurationError(DipDupError):
 
 
 class MigrationRequiredError(DipDupError):
-    """Project and DipDup spec versions don't match """
+    """Project and DipDup spec versions don't match"""
 
-    def __init__(self, ctx, from_: str, to: str) -> None:
+    def __init__(self, ctx, from_: str, to: str, reindex: bool = False) -> None:
         super().__init__(ctx)
         self.from_ = from_
         self.to = to
+        self.reindex = reindex
 
     def format_help(self) -> str:
         version_table = tabulate(
@@ -101,7 +110,16 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
-        return _migration_required_message.format(version_table=version_table)
+        message = _migration_required_message.format(version_table=version_table)
+        if self.reindex:
+            message += _tab +_reindexing_required_message
+        return message
+
+
+class ReindexingRequiredError(DipDupError):
+    """Performed migration requires reindexing"""
+    def format_help(self) -> str:
+        return _reindexing_required_message
 
 
 class HandlerImportError(DipDupError):

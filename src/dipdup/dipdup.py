@@ -32,7 +32,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigurationError, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
@@ -287,16 +287,20 @@ class DipDup:
 
         self._logger.info('Checking database schema')
         connection_name, connection = next(iter(Tortoise._connections.items()))
-        schema_sql = get_schema_sql(connection, False)
-
-        # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
-        processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
-        schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
         try:
             schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
         except OperationalError:
             schema_state = None
+        # TODO: Process exception in Tortoise
+        except KeyError as e:
+            raise ReindexingRequiredError(None) from e
+
+        schema_sql = get_schema_sql(connection, False)
+
+        # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
+        processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
+        schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
         # NOTE: `State.index_hash` field contains schema hash when `index_type` is `IndexType.schema`
         if schema_state is None:
