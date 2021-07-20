@@ -4,21 +4,27 @@ description: Jobs block
 
 # jobs
 
-In addition to indexing DipDup allows you to execute arbitrary tasks according to schedule. 
+In some cases, it may come in handy to have an ability to run some code on schedule. For example, you want to calculate some statistics once per hour, not on every block. Add the following section to DipDup config:
 
 ```yaml
 jobs:
-  midnight_cleanup:
-    callback: cleanup_database
+  midnight_stats:
+    callback: calculate_stats
     crontab: "0 0 * * *"
     args:
-      foo: bar 
+      major: True
+    atomic: True
+  leet_stats:
+    callback: calculate_stats
+    interval: 1337  # in seconds
+    args:
+      major: False
     atomic: True
 ```
 
-Run `dipdup init` after defining jobs in config to generate placeholders in `jobs` directory of your project.
+Run `dipdup init` to generate according handlers in the `jobs` directory. A single callback can be reused with different arguments.
 
-When `atomic` argument is set job will be wrapped in SQL transaction and rolled back in case of failure.
+When `atomic` parameter is set, the job will be wrapped in SQL transaction and rolled back in case of failure.
 
-If you're not familiar with crontab syntax there's an online service [crontab.guru](https://crontab.guru) to help you to compose desired expression. 
+If you're not familiar with the crontab syntax, there's an online service [crontab.guru \(opens new window\)](https://crontab.guru/) that will help you to build a desired expression.
 

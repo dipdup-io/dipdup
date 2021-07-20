@@ -38,5 +38,13 @@ Here's a few important things to know before running your indexer:
 * Make sure that database you're connecting to is used by DipDup exclusively. When index configuration or models change the whole **database will be dropped** and indexing will start from scratch.
 * Do not rename existing indexes in config file without cleaning up the database first, DipDup won't be able to handle that automatically and will treat the renamed index as a new one.
 * Multiple indexes pointing to different contracts should not reuse the same models \(unless you know what you are doing\) because synchronization is done sequentially index by index.
-* Reorg messages signal about chain reorganizations, when some blocks, including all operations, are rolled back in favor of blocks with higher fitness. Chain reorgs happen from time to time \(especially in testnets\), so it's not something you can ignore. You have to handle such messages correctly, otherwise you will likely accumulate duplicate data or, worse, invalid data. By default DipDup ignores reorgs of size 1 and starts indexing from scratch if more that one block is reverted. You can implement your own rollback logic by editing auto-generated `on_rollback` handler.
+* Reorg messages signal about chain reorganizations, when some blocks, including all operations, are rolled back in favor of blocks with higher fitness. Chain reorgs happen from time to time \(especially in testnets\), so it's not something you can ignore. You have to handle such messages correctly, otherwise you will likely accumulate duplicate data or, worse, invalid data. You can implement your own rollback logic by editing auto-generated `on_rollback` handler.
+
+### Single level reorgs
+
+It's important for DipDup to be able to handle chain reorgs since reindexing from scratch leads to several minutes of downtime. Single level rollbacks are now processed in the following way:
+
+* If the new block has the same subset of operations as the replaced one — do nothing;
+* If the new block has all the operation from the replaced one AND several new operations — process those new operations;
+* If the new block misses some operations from the replaced one: trigger full reindexing.
 

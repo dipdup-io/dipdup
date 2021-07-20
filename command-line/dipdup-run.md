@@ -31,7 +31,13 @@ If [hasura](../config-file-reference/hasura.md) section is present in configurat
 
 ## SQL scripts
 
-DipDup will execute all the scripts from the `%project_root%/sql` after the database initialization and before any indexing istarted.
+DipDup will execute all the scripts from the `%project_root%/sql/**/*.sql` after the database initialization and before any indexing started.
+
+* Scripts from `sql/on_restart` directory are executed each time you run DipDup. Those scripts may contain `CREATE OR REPLACE VIEW` or similar non-destructive operations;
+* Scripts from `sql/on_reindex` directory are executed _after_ database schema is created based on `models.py` module, but _before_ indexing starts. It may be useful to change database schema in the ways that are not supported by the Tortoise ORM, e.g. to create a composite primary key;
+* Both type of scripts are executed without being wrapped with transaction. It's generally a good idea to avoid touching table data in scripts;
+* Scripts are executed in alphabetical order. If you're getting SQL engine errors, try to split large scripts to smaller ones;
+* SQL scripts are ignored in case of SQLite database backend.
 
 ## Custom initialization
 
