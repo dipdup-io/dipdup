@@ -1,10 +1,10 @@
 import asyncio
 import hashlib
 import logging
-from contextlib import AsyncExitStack, asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from os import listdir
 from os.path import join
-from typing import Dict, List, Optional, cast
+from typing import AsyncIterator, Dict, List, Optional, cast
 
 from genericpath import exists
 from tortoise import Tortoise
@@ -40,6 +40,20 @@ from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
+
+
+@asynccontextmanager
+async def awaiting_stack(tasks: List[asyncio.Task]) -> AsyncIterator[AsyncExitStack]:
+    async with AsyncExitStack() as stack:
+        try:
+            yield stack
+        finally:
+            # NOTE: Gather tasks before unwinding stack
+            for task in tasks:
+                logging.info('Cancelling task %s', task._coro)  # type: ignore
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
 
 
 class IndexDispatcher:
@@ -200,34 +214,29 @@ class DipDup:
         else:
             hasura_gateway = None
 
-        async with AsyncExitStack() as stack:
-            worker_tasks = []
+        tasks: List[asyncio.Task] = []
+        async with awaiting_stack(tasks) as stack:
             await stack.enter_async_context(tortoise_wrapper(url, models))
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
             if hasura_gateway:
                 await stack.enter_async_context(hasura_gateway)
-                worker_tasks.append(asyncio.create_task(hasura_gateway.configure()))
+                tasks.append(asyncio.create_task(hasura_gateway.configure()))
 
             await self._initialize_database(reindex)
             await self._configure()
 
             self._logger.info('Starting datasources')
-            datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
+            tasks += [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
 
             if self._config.jobs and not oneshot:
                 await stack.enter_async_context(self._scheduler_context())
                 for job_name, job_config in self._config.jobs.items():
                     add_job(self._ctx, self._scheduler, job_name, job_config)
 
-            worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
+            tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 
-            try:
-                await asyncio.gather(*datasource_tasks, *worker_tasks)
-            except KeyboardInterrupt:
-                pass
-            except GeneratorExit:
-                pass
+            await asyncio.gather(*tasks)
 
     async def migrate_to_v10(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)

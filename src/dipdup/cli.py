@@ -1,40 +1,25 @@
-import asyncio
 import fileinput
 import logging
 import os
 from dataclasses import dataclass
-from functools import wraps
 from os.path import dirname, exists, join
 from typing import List, cast
 
-import click
+import asyncclick as click
 import sentry_sdk
 from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
-from dipdup import __spec_version__, __version__, spec_version_mapping, spec_reindex_mapping
+from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_version_mapping
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
+from dipdup.exceptions import ConfigurationError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.utils import set_decimal_context, tortoise_wrapper
 
 _logger = logging.getLogger('dipdup.cli')
-
-
-def click_command_wrapper(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        try:
-            return asyncio.run(fn(*args, **kwargs))
-        except DipDupError as e:
-            _logger.critical(e.__repr__())
-            _logger.info(e.format())
-            quit(e.exit_code)
-
-    return wrapper
 
 
 @dataclass
@@ -50,7 +35,6 @@ class CLIContext:
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
 @click.option('--logging-config', '-l', type=str, help='Path to logging YAML config', default='logging.yml')
 @click.pass_context
-@click_command_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     try:
         path = join(os.getcwd(), logging_config)
@@ -94,7 +78,6 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @click.option('--reindex', is_flag=True, help='Drop database and start indexing from scratch')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
 @click.pass_context
-@click_command_wrapper
 async def run(ctx, reindex: bool, oneshot: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
@@ -104,7 +87,6 @@ async def run(ctx, reindex: bool, oneshot: bool) -> None:
 
 @cli.command(help='Initialize new dipdup project')
 @click.pass_context
-@click_command_wrapper
 async def init(ctx):
     config: DipDupConfig = ctx.obj.config
     config.pre_initialize()
@@ -114,7 +96,6 @@ async def init(ctx):
 
 @cli.command(help='Migrate project to the new spec version')
 @click.pass_context
-@click_command_wrapper
 async def migrate(ctx):
     def _bump_spec_version(spec_version: str):
         for config_path in ctx.obj.config_paths:
@@ -141,7 +122,6 @@ async def migrate(ctx):
 
 @cli.command(help='Clear development request cache')
 @click.pass_context
-@click_command_wrapper
 async def clear_cache(ctx):
     FileCache('dipdup', flag='cs').clear()
 
@@ -149,7 +129,6 @@ async def clear_cache(ctx):
 @cli.command(help='Configure Hasura GraphQL Engine')
 @click.option('--reset', is_flag=True, help='Reset metadata before configuring')
 @click.pass_context
-@click_command_wrapper
 async def configure_hasura(ctx, reset: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -166,7 +145,6 @@ async def configure_hasura(ctx, reset: bool):
 
 @cli.group()
 @click.pass_context
-@click_command_wrapper
 async def docker(ctx):
     ...
 
@@ -176,7 +154,6 @@ async def docker(ctx):
 @click.option('--tag', '-t', type=str, help='DipDup Docker tag', default=DEFAULT_DOCKER_TAG)
 @click.option('--env-file', '-e', type=str, help='Path to env_file', default=DEFAULT_DOCKER_ENV_FILE)
 @click.pass_context
-@click_command_wrapper
 async def docker_init(ctx, image: str, tag: str, env_file: str):
     config: DipDupConfig = ctx.obj.config
     await DipDupCodeGenerator(config, {}).generate_docker(image, tag, env_file)

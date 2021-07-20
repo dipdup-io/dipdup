@@ -1,4 +1,5 @@
-from contextlib import AsyncExitStack
+import asyncio
+from contextlib import AsyncExitStack, suppress
 
 from apscheduler.executors.asyncio import AsyncIOExecutor  # type: ignore
 from apscheduler.jobstores.memory import MemoryJobStore  # type: ignore
@@ -38,7 +39,8 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_name: str, job_
         async with AsyncExitStack() as stack:
             if job_config.atomic:
                 await stack.enter_async_context(in_global_transaction())
-            await job_config.callback_fn(ctx, args)
+            with suppress(asyncio.CancelledError, KeyboardInterrupt):
+                await job_config.callback_fn(ctx, args)
 
     if job_config.crontab:
         trigger = CronTrigger.from_crontab(job_config.crontab)

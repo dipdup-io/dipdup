@@ -508,8 +508,6 @@ class TzktDatasource(IndexDatasource):
 
     async def run(self) -> None:
         """Main loop. Sync indexes via REST, start WS connection"""
-        self._logger.info('Starting datasource')
-
         self._logger.info('Starting websocket client')
         await self._get_client().start()
 
