@@ -112,12 +112,13 @@ class MigrationRequiredError(DipDupError):
         )
         message = _migration_required_message.format(version_table=version_table)
         if self.reindex:
-            message += _tab +_reindexing_required_message
+            message += _tab + _reindexing_required_message
         return message
 
 
 class ReindexingRequiredError(DipDupError):
     """Performed migration requires reindexing"""
+
     def format_help(self) -> str:
         return _reindexing_required_message
 
