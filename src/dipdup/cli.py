@@ -65,8 +65,6 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
             integrations=[AioHttpIntegration()],
         )
 
-    set_decimal_context(_config.package)
-
     ctx.obj = CLIContext(
         config_paths=config,
         config=_config,
@@ -81,6 +79,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 async def run(ctx, reindex: bool, oneshot: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
+    set_decimal_context(config.package)
     dipdup = DipDup(config)
     await dipdup.run(reindex, oneshot)
 
