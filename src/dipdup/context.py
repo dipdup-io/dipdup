@@ -104,7 +104,7 @@ class HandlerContext(DipDupContext):
             template=template,
             values=values,
         )
-        # NOTE: Notify datasource to subscribe by to operations by entrypoint if enabled in config
+        # NOTE: Notify datasource to subscribe to operations by entrypoint if enabled in index config
         self.config.indexes[name].parent = self.index_config
         self._updated = True
 

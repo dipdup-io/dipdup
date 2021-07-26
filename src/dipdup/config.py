@@ -10,7 +10,7 @@ from collections import defaultdict
 from enum import Enum
 from os import environ as env
 from os.path import dirname
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Type, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import Field, validator
@@ -581,12 +581,12 @@ class OperationIndexConfig(IndexConfig):
         return cast(List[ContractConfig], self.contracts)
 
     @property
-    def entrypoints(self) -> List[str]:
-        entrypoints = []
+    def entrypoints(self) -> Set[str]:
+        entrypoints = set()
         for handler in self.handlers:
             for pattern in handler.pattern:
                 if isinstance(pattern, OperationHandlerTransactionPatternConfig) and pattern.entrypoint:
-                    entrypoints.append(pattern.entrypoint)
+                    entrypoints.add(pattern.entrypoint)
         return entrypoints
 
 

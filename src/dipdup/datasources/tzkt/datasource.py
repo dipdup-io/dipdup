@@ -455,8 +455,15 @@ class TzktDatasource(IndexDatasource):
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
 
         if isinstance(index_config, OperationIndexConfig):
-            if index_config.subscribe_by_entrypoints:
-                map(self._subscriptions.add_entrypoint_transaction_subscription, index_config.entrypoints)
+            # FIXME: Spaghetti code, refactor
+            if index_config.parent:
+                if not isinstance(index_config.parent, OperationIndexConfig):
+                    raise RuntimeError('Parent of operation index must be another operation index')
+                if index_config.parent.subscribe_by_entrypoints:
+                    map(self._subscriptions.add_entrypoint_transaction_subscription, index_config.entrypoints)
+                else:
+                    for contract_config in index_config.contracts or []:
+                        self._subscriptions.add_address_transaction_subscription(cast(ContractConfig, contract_config).address)
             else:
                 for contract_config in index_config.contracts or []:
                     self._subscriptions.add_address_transaction_subscription(cast(ContractConfig, contract_config).address)
@@ -530,7 +537,7 @@ class TzktDatasource(IndexDatasource):
             await self._subscribe_to_originations()
         if pending_subscriptions.head:
             await self._subscribe_to_head()
-        for address, paths in self._big_map_subscriptions.items():
+        for address, paths in pending_subscriptions.big_maps.items():
             await self._subscribe_to_big_maps(address, paths)
 
         self._subscriptions.commit()
@@ -577,7 +584,7 @@ class TzktDatasource(IndexDatasource):
             ],
         )
 
-    async def _subscribe_to_big_maps(self, address: str, paths: List[str]) -> None:
+    async def _subscribe_to_big_maps(self, address: str, paths: Set[str]) -> None:
         """Subscribe to contract's big map diffs on established WS connection"""
         self._logger.info('Subscribing to big map updates of %s, %s', address, paths)
         for path in paths:
