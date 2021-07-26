@@ -128,7 +128,7 @@ class SubscriptionManager:
         return pending_subscriptions
 
     def commit(self) -> None:
-        self._subscriptions = copy(self._active_subscriptions)
+        self._active_subscriptions = copy(self._subscriptions)
 
     def reset(self) -> None:
         self._active_subscriptions = Subscriptions()

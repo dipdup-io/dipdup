@@ -460,7 +460,8 @@ class TzktDatasource(IndexDatasource):
                 if not isinstance(index_config.parent, OperationIndexConfig):
                     raise RuntimeError('Parent of operation index must be another operation index')
                 if index_config.parent.subscribe_by_entrypoints:
-                    map(self._subscriptions.add_entrypoint_transaction_subscription, index_config.entrypoints)
+                    for entrypoint in index_config.entrypoints:
+                        self._subscriptions.add_entrypoint_transaction_subscription(entrypoint)
                 else:
                     for contract_config in index_config.contracts or []:
                         self._subscriptions.add_address_transaction_subscription(cast(ContractConfig, contract_config).address)
@@ -481,7 +482,7 @@ class TzktDatasource(IndexDatasource):
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-        await self._on_connect()
+        await self.subscribe()
 
     def _get_client(self) -> BaseHubConnection:
         """Create SignalR client, register message callbacks"""
@@ -528,6 +529,7 @@ class TzktDatasource(IndexDatasource):
     async def subscribe(self) -> None:
         """Subscribe to all required channels"""
         pending_subscriptions = self._subscriptions.get_pending()
+        print(pending_subscriptions)
 
         for address in pending_subscriptions.address_transactions:
             await self._subscribe_to_address_transactions(address)
@@ -562,6 +564,7 @@ class TzktDatasource(IndexDatasource):
     async def _subscribe_to_entrypoint_transactions(self, entrypoints: Set[str]) -> None:
         """Subscribe to contract's operations on established WS connection"""
         self._logger.info('Subscribing to %s transactions', entrypoints)
+        quit()
         await self._send(
             'SubscribeToOperations',
             [
