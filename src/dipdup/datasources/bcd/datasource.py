@@ -2,12 +2,12 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from dipdup.config import HTTPConfig
-from dipdup.http import HTTPGateway
+from dipdup.datasources.datasource import Datasource
 
 TOKENS_REQUEST_LIMIT = 10
 
 
-class BcdDatasource(HTTPGateway):
+class BcdDatasource(Datasource):
     def __init__(
         self,
         url: str,

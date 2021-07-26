@@ -286,6 +286,24 @@ class StorageTypeMixin:
 
 
 @dataclass
+class ParentMixin:
+    """`parent` field for index and template configs"""
+
+    def __post_init_post_parse__(self):
+        self._parent: Optional['IndexConfig'] = None
+
+    @property
+    def parent(self) -> Optional['IndexConfig']:
+        return self._parent
+
+    @parent.setter
+    def parent(self, config: 'IndexConfig') -> None:
+        if self._parent:
+            raise RuntimeError('Can\'t unset parent once set')
+        self._parent = config
+
+
+@dataclass
 class ParameterTypeMixin:
     """`parameter_type_cls` field"""
 
@@ -509,12 +527,13 @@ class TemplateValuesMixin:
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, NameMixin):
+class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
+        ParentMixin.__post_init_post_parse__(self)
 
     def hash(self) -> str:
         config_json = json.dumps(self, default=pydantic_encoder)
@@ -532,10 +551,13 @@ class IndexConfig(TemplateValuesMixin, NameMixin):
 class OperationIndexConfig(IndexConfig):
     """Operation index config
 
-    :param datasource: Alias of datasource in `datasources` block
-    :param contract: Alias of contract to fetch operations for
-    :param first_block: First block to process
-    :param last_block: Last block to process
+    :param datasource: Alias of index datasource in `datasources` section
+    :param contracts: Aliases of contracts being indexed in `contracts` section
+    :param stateless: Makes index dynamic. DipDup will synchronize index from the first block on every run
+    :param subscribe_by_entrypoints: Subscribe to operations by list of entrypoints instead of per-address in dynamic indexes (factories).
+        Helps to reduce total number of subscriptions at a cost of additional computations and traffic.
+    :param first_block: First block to process (use with `--oneshot` run argument)
+    :param last_block: Last block to process (use with `--oneshot` run argument)
     :param handlers: List of indexer handlers
     """
 
@@ -545,6 +567,7 @@ class OperationIndexConfig(IndexConfig):
     contracts: Optional[List[Union[str, ContractConfig]]] = None
 
     stateless: bool = False
+    subscribe_by_entrypoints: bool = False
     first_block: int = 0
     last_block: int = 0
 
@@ -556,6 +579,15 @@ class OperationIndexConfig(IndexConfig):
             if not isinstance(contract, ContractConfig):
                 raise RuntimeError('Config is not initialized')
         return cast(List[ContractConfig], self.contracts)
+
+    @property
+    def entrypoints(self) -> List[str]:
+        entrypoints = []
+        for handler in self.handlers:
+            for pattern in handler.pattern:
+                if isinstance(pattern, OperationHandlerTransactionPatternConfig) and pattern.entrypoint:
+                    entrypoints.append(pattern.entrypoint)
+        return entrypoints
 
 
 @dataclass
@@ -625,7 +657,7 @@ class BlockIndexConfig(IndexConfig):
 
 
 @dataclass
-class StaticTemplateConfig:
+class StaticTemplateConfig(ParentMixin):
     kind = 'template'
     template: str
     values: Dict[str, str]
@@ -785,6 +817,7 @@ class DipDupConfig:
                 json_template = json.loads(raw_template)
                 new_index_config = template.__class__(**json_template)
                 new_index_config.template_values = index_config.values
+                new_index_config.parent = index_config.parent
                 self.indexes[index_name] = new_index_config
 
     def _pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:

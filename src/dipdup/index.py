@@ -343,6 +343,7 @@ class OperationIndex(Index):
             logger=logger,
             template_values=self._config.template_values,
             datasource=self.datasource,
+            index_config=self._config,
         )
 
         await handler_config.callback_fn(handler_context, *args)
@@ -492,6 +493,7 @@ class BigMapIndex(Index):
             logger=logger,
             template_values=self._config.template_values,
             datasource=self.datasource,
+            index_config=self._config,
         )
 
         await handler_config.callback_fn(handler_context, big_map_context)

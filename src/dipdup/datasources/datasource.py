@@ -1,6 +1,12 @@
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from copy import copy
 from enum import Enum
-from typing import Awaitable, List, Optional, Protocol
+from functools import partial
+from typing import Awaitable, DefaultDict, List, Optional, Protocol, Set
 
+from pydantic.dataclasses import dataclass
+from pydantic.fields import Field
 from pyee import AsyncIOEventEmitter  # type: ignore
 
 from dipdup.config import HTTPConfig
@@ -35,7 +41,13 @@ class HeadCallback(Protocol):
         ...
 
 
-class IndexDatasource(HTTPGateway, AsyncIOEventEmitter):
+class Datasource(HTTPGateway):
+    @abstractmethod
+    async def run(self) -> None:
+        ...
+
+
+class IndexDatasource(Datasource, AsyncIOEventEmitter):
     def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
         HTTPGateway.__init__(self, url, http_config)
         AsyncIOEventEmitter.__init__(self)
@@ -71,3 +83,52 @@ class IndexDatasource(HTTPGateway, AsyncIOEventEmitter):
 
     def emit_head(self, block: HeadBlockData) -> None:
         super().emit(EventType.head, datasource=self, block=block)
+
+
+@dataclass
+class Subscriptions:
+    address_transactions: Set[str] = Field(default_factory=set)
+    entrypoint_transactions: Set[str] = Field(default_factory=set)
+    originations: bool = False
+    head: bool = False
+    big_maps: DefaultDict[str, Set[str]] = Field(default_factory=partial(defaultdict, set))
+
+    def diff(self, other: 'Subscriptions') -> 'Subscriptions':
+        return Subscriptions(
+            address_transactions=self.address_transactions.difference(other.address_transactions),
+            entrypoint_transactions=self.entrypoint_transactions.difference(other.entrypoint_transactions),
+            originations=self.originations and other.originations,
+            head=self.head and other.head,
+            big_maps=defaultdict(set, {k: self.big_maps[k] for k in set(self.big_maps) - set(other.big_maps)}),
+        )
+
+
+class SubscriptionManager:
+    def __init__(self) -> None:
+        self._subscriptions: Subscriptions = Subscriptions()
+        self._active_subscriptions: Subscriptions = Subscriptions()
+
+    def add_address_transaction_subscription(self, address: str) -> None:
+        self._subscriptions.address_transactions.add(address)
+
+    def add_entrypoint_transaction_subscription(self, entrypoint: str) -> None:
+        self._subscriptions.entrypoint_transactions.add(entrypoint)
+
+    def add_origination_subscription(self) -> None:
+        self._subscriptions.originations = True
+
+    def add_head_subscription(self) -> None:
+        self._subscriptions.head = True
+
+    def add_big_map_subscription(self, address: str, paths: Set[str]) -> None:
+        self._subscriptions.big_maps[address] = self._subscriptions.big_maps[address] | paths
+
+    def get_pending(self) -> Subscriptions:
+        pending_subscriptions = self._subscriptions.diff(self._active_subscriptions)
+        return pending_subscriptions
+
+    def commit(self) -> None:
+        self._subscriptions = copy(self._active_subscriptions)
+
+    def reset(self) -> None:
+        self._active_subscriptions = Subscriptions()

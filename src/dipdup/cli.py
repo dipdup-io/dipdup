@@ -2,6 +2,7 @@ import fileinput
 import logging
 import os
 from dataclasses import dataclass
+from functools import wraps
 from os.path import dirname, exists, join
 from typing import List, cast
 
@@ -15,7 +16,7 @@ from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_ver
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError, MigrationRequiredError
+from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.utils import set_decimal_context, tortoise_wrapper
 
@@ -29,12 +30,28 @@ class CLIContext:
     logging_config: LoggingConfig
 
 
+def cli_wrapper(fn):
+    @wraps(fn)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await fn(*args, **kwargs)
+        except KeyboardInterrupt:
+            pass
+        except DipDupError as e:
+            _logger.critical(e.__repr__())
+            _logger.info(e.format())
+            quit(e.exit_code)
+
+    return wrapper
+
+
 @click.group()
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
 @click.option('--logging-config', '-l', type=str, help='Path to logging YAML config', default='logging.yml')
 @click.pass_context
+@cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     try:
         path = join(os.getcwd(), logging_config)

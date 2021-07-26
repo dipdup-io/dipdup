@@ -26,7 +26,7 @@ from dipdup.config import (
     StaticTemplateConfig,
     TzktDatasourceConfig,
 )
-from dipdup.datasources import DatasourceT
+from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import import_submodules, pascal_to_snake, snake_to_pascal
@@ -64,7 +64,7 @@ def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
 class DipDupCodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, DatasourceT]) -> None:
+    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, Datasource]) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
