@@ -1,10 +1,12 @@
 import asyncio
 import hashlib
 import logging
+import operator
 from contextlib import AsyncExitStack, asynccontextmanager
+from functools import reduce
 from os import listdir
 from os.path import join
-from typing import Dict, List, Optional, cast
+from typing import Dict, Iterator, List, Optional, Tuple, Type, cast
 
 from genericpath import exists
 from tortoise import Tortoise
@@ -18,6 +20,7 @@ from dipdup.config import (
     BcdDatasourceConfig,
     BigMapIndexConfig,
     CoinbaseDatasourceConfig,
+    ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
@@ -36,7 +39,7 @@ from dipdup.exceptions import ConfigurationError, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
-from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
+from dipdup.utils import FormattedLogger, groupby, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
@@ -49,6 +52,7 @@ class IndexDispatcher:
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
         self._stopped: bool = False
+        self._has_intersecting_indexes = False
 
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
         if index_config.name in self._indexes:
@@ -87,6 +91,7 @@ class IndexDispatcher:
                 raise RuntimeError
             await self.add_index(index_config)
 
+        self._check_intersecting_indexes()
         self._ctx.reset()
 
     async def dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
@@ -143,7 +148,8 @@ class IndexDispatcher:
             await self.reload_config()
 
             async with slowdown(INDEX_DISPATCHER_INTERVAL):
-                await asyncio.gather(*[index.process() for index in self._indexes.values()])
+                for index_batch in self._prioritize_indexes():
+                    await asyncio.gather(*[index.process() for index in index_batch])
 
             # TODO: Continue if new indexes are spawned from origination
             if oneshot:
@@ -151,6 +157,23 @@ class IndexDispatcher:
 
     def stop(self) -> None:
         self._stopped = True
+
+    def _check_intersecting_indexes(self) -> None:
+        contracts = cast(
+            List[ContractConfig],
+            reduce(operator.add, [index._config.contracts for index in self._indexes.values()]),
+        )
+        self._has_intersecting_indexes = len(contracts) != len(set(contracts))
+
+    def _prioritize_indexes(self) -> Iterator[Tuple[Index, ...]]:
+        """Intersecting operation indexes must be processed before big_map ones because of originations"""
+        indexes = tuple(self._indexes.values())
+        if not self._has_intersecting_indexes:
+            yield indexes
+
+        indexes_by_type: Dict[Type[Index], List[Index]] = groupby(indexes, type)
+        yield tuple(indexes_by_type[OperationIndex])
+        yield tuple(indexes_by_type[BigMapIndex])
 
 
 class DipDup:
