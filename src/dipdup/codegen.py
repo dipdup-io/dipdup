@@ -176,15 +176,21 @@ class DipDupCodeGenerator:
                         storage_schema = resolve_big_maps(contract_schemas['storageSchema'])
                         write(storage_schema_path, json.dumps(storage_schema, indent=4, sort_keys=True))
 
-                        if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
-                            pass
-                        elif (
-                            isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig)
-                            and operation_pattern_config.similar_to
-                        ):
-                            contract_name = operation_pattern_config.similar_to_contract_config.name
-                            for template in self._config.templates:
+                        is_transaction = isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig)
+                        is_factory = isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig) and (
+                            operation_pattern_config.similar_to or operation_pattern_config.source
+                        )
 
+                        if is_transaction:
+                            pass
+                        elif is_factory:
+                            assert isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig)
+                            if operation_pattern_config.similar_to:
+                                contract_name = operation_pattern_config.similar_to_contract_config.name
+                            elif operation_pattern_config.source:
+                                contract_name = operation_pattern_config.source_contract_config.name
+
+                            for template in self._config.templates:
                                 # NOTE: We don't know which template will be used in factory handler, so let's try all
                                 with suppress(ConfigurationError):
                                     await self.fetch_schemas(template=template, contract=contract_name)
@@ -192,6 +198,7 @@ class DipDupCodeGenerator:
                         else:
                             continue
 
+                        assert isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig)
                         parameter_schemas_path = join(contract_schemas_path, 'parameter')
                         entrypoint = cast(str, operation_pattern_config.entrypoint)
                         mkdir_p(parameter_schemas_path)
@@ -430,7 +437,10 @@ class DipDupCodeGenerator:
             self._schemas[datasource_config] = {}
         if address not in self._schemas[datasource_config]:
             if originated:
-                address = (await datasource.get_originated_contracts(address))[0]
+                try:
+                    address = (await datasource.get_originated_contracts(address))[0]
+                except IndexError as e:
+                    raise ConfigurationError(f'Contract `{address}` has no originations') from e
                 self._logger.info('Fetching schemas for contract `%s` (originated from `%s`)', address, contract_config.address)
             else:
                 self._logger.info('Fetching schemas for contract `%s`', address)
