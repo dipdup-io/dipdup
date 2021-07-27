@@ -36,7 +36,7 @@ from dipdup.exceptions import ConfigurationError, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
-from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
+from dipdup.utils import FormattedLogger, iter_files, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
@@ -336,14 +336,9 @@ class DipDup:
         if not exists(sql_path):
             return
         self._logger.info('Executing SQL scripts from `%s`', sql_path)
-        for filename in sorted(listdir(sql_path)):
-            if not filename.endswith('.sql'):
-                continue
-
-            with open(join(sql_path, filename)) as file:
-                sql = file.read()
-
-            self._logger.info('Executing `%s`', filename)
+        for file in iter_files(sql_path, '.sql'):
+            self._logger.info('Executing `%s`', file.name)
+            sql = file.read()
             await get_connection(None).execute_script(sql)
 
     def _finish_migration(self, version: str) -> None:
