@@ -143,6 +143,7 @@ class DipDupCodeGenerator:
                             contract_config = operation_pattern_config.contract_config
                             originated = bool(operation_pattern_config.source)
                         else:
+                            # NOTE: Operations without entrypoint are untyped
                             continue
 
                         self._logger.debug(contract_config)
@@ -154,9 +155,7 @@ class DipDupCodeGenerator:
                         storage_schema_path = join(contract_schemas_path, 'storage.json')
 
                         storage_schema = resolve_big_maps(contract_schemas['storageSchema'])
-                        if not exists(storage_schema_path):
-                            with open(storage_schema_path, 'w') as file:
-                                file.write(json.dumps(storage_schema, indent=4, sort_keys=True))
+                        write(storage_schema_path, json.dumps(storage_schema, indent=4, sort_keys=True))
 
                         if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
                             continue
@@ -174,11 +173,8 @@ class DipDupCodeGenerator:
 
                         entrypoint = entrypoint.replace('.', '_').lstrip('_')
                         entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
-
-                        if not exists(entrypoint_schema_path):
-                            with open(entrypoint_schema_path, 'w') as file:
-                                file.write(json.dumps(entrypoint_schema, indent=4))
-                        elif contract_config.typename is not None:
+                        written = write(entrypoint_schema_path, json.dumps(entrypoint_schema, indent=4))
+                        if not written and contract_config.typename is not None:
                             with open(entrypoint_schema_path, 'r') as file:
                                 existing_schema = json.loads(file.read())
                             if entrypoint_schema != existing_schema:
@@ -194,7 +190,6 @@ class DipDupCodeGenerator:
 
                     contract_schemas_path = join(schemas_path, contract_config.module_name)
                     mkdir_p(contract_schemas_path)
-
                     big_map_schemas_path = join(contract_schemas_path, 'big_map')
                     mkdir_p(big_map_schemas_path)
 
@@ -207,17 +202,11 @@ class DipDupCodeGenerator:
                     big_map_path = big_map_handler_config.path.replace('.', '_')
                     big_map_key_schema = big_map_schema['keySchema']
                     big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_path}_key.json')
-
-                    if not exists(big_map_key_schema_path):
-                        with open(big_map_key_schema_path, 'w') as file:
-                            file.write(json.dumps(big_map_key_schema, indent=4))
+                    write(big_map_key_schema_path, json.dumps(big_map_key_schema, indent=4))
 
                     big_map_value_schema = big_map_schema['valueSchema']
                     big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_path}_value.json')
-
-                    if not exists(big_map_value_schema_path):
-                        with open(big_map_value_schema_path, 'w') as file:
-                            file.write(json.dumps(big_map_value_schema, indent=4))
+                    write(big_map_value_schema_path, json.dumps(big_map_value_schema, indent=4))
 
             elif isinstance(index_config, StaticTemplateConfig):
                 raise RuntimeError('Config is not pre-initialized')

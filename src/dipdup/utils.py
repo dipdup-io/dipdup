@@ -198,10 +198,11 @@ def touch(path: str) -> None:
             raise
 
 
-def write(path: str, content: str, overwrite: bool = False) -> None:
+def write(path: str, content: str, overwrite: bool = False) -> bool:
     """Write content to file, create directory tree if necessary"""
     mkdir_p(dirname(path))
     if exists(path) and not overwrite:
-        return
+        return False
     with open(path, 'w') as file:
         file.write(content)
+    return True
