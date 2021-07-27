@@ -1,16 +1,15 @@
 import asyncio
 import decimal
 import errno
-from os import makedirs
-from os.path import exists, join, getsize
 import importlib
 import logging
 import pkgutil
-from posix import listdir
 import time
 import types
 from contextlib import asynccontextmanager
 from logging import Logger
+from os import listdir, makedirs
+from os.path import dirname, exists, getsize, join
 from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, TextIO, Tuple, Type
 
 import humps  # type: ignore
@@ -164,6 +163,7 @@ class FormattedLogger(Logger):
             msg = self.fmt.format(msg)
         super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
+
 def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
     """Iterate over files in a directory. Sort alphabetically, filter by extension, skip empty files."""
     if not exists(path):
@@ -178,6 +178,7 @@ def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
         with open(filepath) as file:
             yield file
 
+
 def mkdir_p(path: str) -> None:
     """Create directory tree, ignore if already exists"""
     try:
@@ -185,3 +186,22 @@ def mkdir_p(path: str) -> None:
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+
+def touch(path: str) -> None:
+    """Create empty file, ignore if already exists"""
+    mkdir_p(dirname(path))
+    try:
+        open(path, 'a').close()
+    except IOError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+def write(path: str, content: str, overwrite: bool = False) -> None:
+    """Write content to file, create directory tree if necessary"""
+    mkdir_p(dirname(path))
+    if exists(path) and not overwrite:
+        return
+    with open(path, 'w') as file:
+        file.write(content)
