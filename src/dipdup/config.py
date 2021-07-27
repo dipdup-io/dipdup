@@ -109,7 +109,23 @@ class HTTPConfig:
 
 
 @dataclass
-class ContractConfig:
+class NameMixin:
+    def __post_init_post_parse__(self) -> None:
+        self._name: Optional[str] = None
+
+    @property
+    def name(self) -> str:
+        if self._name is None:
+            raise RuntimeError('Config is not pre-initialized')
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._name = name
+
+
+@dataclass
+class ContractConfig(NameMixin):
     """Contract config
 
     :param network: Corresponding network alias, only for sanity checks
@@ -133,22 +149,6 @@ class ContractConfig:
         if not (v.startswith('KT1') or v.startswith('tz1')) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
-
-
-@dataclass
-class NameMixin:
-    def __post_init_post_parse__(self) -> None:
-        self._name: Optional[str] = None
-
-    @property
-    def name(self) -> str:
-        if self._name is None:
-            raise RuntimeError('Config is not pre-initialized')
-        return self._name
-
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name
 
 
 @dataclass
@@ -625,13 +625,13 @@ class BlockIndexConfig(IndexConfig):
 
 
 @dataclass
-class StaticTemplateConfig:
+class IndexTemplateConfig:
     kind = 'template'
     template: str
     values: Dict[str, str]
 
 
-IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, StaticTemplateConfig]
+IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, IndexTemplateConfig]
 IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
 HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
@@ -707,7 +707,7 @@ class DipDupConfig:
     datasources: Dict[str, DatasourceConfigT]
     contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
-    templates: Optional[Dict[str, IndexConfigTemplateT]] = None
+    templates: Dict[str, IndexConfigTemplateT] = Field(default_factory=dict)
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     hasura: Optional[HasuraConfig] = None
     jobs: Optional[Dict[str, JobConfig]] = None
@@ -773,10 +773,10 @@ class DipDupConfig:
         except (ModuleNotFoundError, AttributeError) as e:
             raise HandlerImportError(module=module_name, obj=CONFIGURE_HANDLER) from e
 
-    def resolve_static_templates(self) -> None:
+    def resolve_index_templates(self) -> None:
         _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
-            if isinstance(index_config, StaticTemplateConfig):
+            if isinstance(index_config, IndexTemplateConfig):
                 template = self.get_template(index_config.template)
                 raw_template = json.dumps(template, default=pydantic_encoder)
                 for key, value in index_config.values.items():
@@ -840,10 +840,12 @@ class DipDupConfig:
         self._pre_initialized.append(index_name)
 
     def pre_initialize(self) -> None:
-        for name, config in self.datasources.items():
-            config.name = name
+        for name, contract_config in self.contracts.items():
+            contract_config.name = name
+        for name, datasource_config in self.datasources.items():
+            datasource_config.name = name
 
-        self.resolve_static_templates()
+        self.resolve_index_templates()
         for index_name, index_config in self.indexes.items():
             self._pre_initialize_index(index_name, index_config)
 
@@ -941,7 +943,7 @@ class DipDupConfig:
         if index_name in self._initialized:
             return
 
-        if isinstance(index_config, StaticTemplateConfig):
+        if isinstance(index_config, IndexTemplateConfig):
             raise RuntimeError('Config is not pre-initialized')
 
         if isinstance(index_config, OperationIndexConfig):

@@ -21,9 +21,9 @@ from dipdup.config import (
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
+    IndexTemplateConfig,
     OperationIndexConfig,
     PostgresDatabaseConfig,
-    StaticTemplateConfig,
     TzktDatasourceConfig,
 )
 from dipdup.context import DipDupContext, RollbackHandlerContext
@@ -83,7 +83,7 @@ class IndexDispatcher:
         self._ctx.config.initialize()
 
         for index_config in self._ctx.config.indexes.values():
-            if isinstance(index_config, StaticTemplateConfig):
+            if isinstance(index_config, IndexTemplateConfig):
                 raise RuntimeError
             await self.add_index(index_config)
 

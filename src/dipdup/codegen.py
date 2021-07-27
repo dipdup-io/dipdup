@@ -3,10 +3,11 @@ import logging
 import os
 import re
 import subprocess
+from contextlib import suppress
 from copy import copy
 from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
-from typing import Any, Dict, cast
+from typing import Any, Dict, List, Optional, cast
 
 from jinja2 import Template
 
@@ -18,10 +19,11 @@ from dipdup.config import (
     ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
+    IndexConfigT,
+    IndexTemplateConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
-    StaticTemplateConfig,
     TzktDatasourceConfig,
 )
 from dipdup.datasources import DatasourceT
@@ -121,13 +123,30 @@ class DipDupCodeGenerator:
         graphql_path = join(self._config.package_path, 'graphql')
         touch(join(graphql_path, '.keep'))
 
-    async def fetch_schemas(self) -> None:
+    async def fetch_schemas(self, template: Optional[str] = None, contract: Optional[str] = None) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Creating `schemas` package')
         schemas_path = join(self._config.package_path, 'schemas')
         mkdir_p(schemas_path)
 
-        for index_config in self._config.indexes.values():
+        index_configs: List[IndexConfigT]
+        if template:
+            if not contract:
+                raise RuntimeError('Both `template` and `contract` arguments are required')
+            # FIXME: Implement classmethods to avoid adding temporary index
+            self._config.indexes['TEMP'] = IndexTemplateConfig(
+                template=template,
+                # NOTE: Regex magic! Replace all variables. What could possibly go wrong?
+                values={'\w*': contract},
+            )
+            self._config.resolve_index_templates()
+            self._config.pre_initialize()
+            index_config = self._config.indexes.pop('TEMP')
+            index_configs = [index_config]
+        else:
+            index_configs = list(self._config.indexes.values())
+
+        for index_config in index_configs:
 
             if isinstance(index_config, OperationIndexConfig):
                 for operation_handler_config in index_config.handlers:
@@ -157,7 +176,20 @@ class DipDupCodeGenerator:
                         storage_schema = resolve_big_maps(contract_schemas['storageSchema'])
                         write(storage_schema_path, json.dumps(storage_schema, indent=4, sort_keys=True))
 
-                        if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
+                        if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
+                            pass
+                        elif (
+                            isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig)
+                            and operation_pattern_config.similar_to
+                        ):
+                            contract_name = operation_pattern_config.similar_to_contract_config.name
+                            for template in self._config.templates:
+
+                                # NOTE: We don't know which template will be used in factory handler, so let's try all
+                                with suppress(ConfigurationError):
+                                    await self.fetch_schemas(template=template, contract=contract_name)
+                            continue
+                        else:
                             continue
 
                         parameter_schemas_path = join(contract_schemas_path, 'parameter')
@@ -208,7 +240,7 @@ class DipDupCodeGenerator:
                     big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_path}_value.json')
                     write(big_map_value_schema_path, json.dumps(big_map_value_schema, indent=4))
 
-            elif isinstance(index_config, StaticTemplateConfig):
+            elif isinstance(index_config, IndexTemplateConfig):
                 raise RuntimeError('Config is not pre-initialized')
 
             else:
