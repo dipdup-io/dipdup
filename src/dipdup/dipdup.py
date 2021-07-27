@@ -51,8 +51,8 @@ class IndexDispatcher:
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
+        self._prioritized_indexes: Optional[Tuple[Tuple[Index, ...], Tuple[Index, ...]]] = None
         self._stopped: bool = False
-        self._has_intersecting_indexes = False
 
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
         if index_config.name in self._indexes:
@@ -88,10 +88,10 @@ class IndexDispatcher:
 
         for index_config in self._ctx.config.indexes.values():
             if isinstance(index_config, StaticTemplateConfig):
-                raise RuntimeError
+                raise RuntimeError('Config is not initialized')
             await self.add_index(index_config)
 
-        self._check_intersecting_indexes()
+        self._prioritize_indexes()
         self._ctx.reset()
 
     async def dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
@@ -148,7 +148,7 @@ class IndexDispatcher:
             await self.reload_config()
 
             async with slowdown(INDEX_DISPATCHER_INTERVAL):
-                for index_batch in self._prioritize_indexes():
+                for index_batch in self._iter_indexes():
                     await asyncio.gather(*[index.process() for index in index_batch])
 
             # TODO: Continue if new indexes are spawned from origination
@@ -158,22 +158,25 @@ class IndexDispatcher:
     def stop(self) -> None:
         self._stopped = True
 
-    def _check_intersecting_indexes(self) -> None:
+    def _prioritize_indexes(self) -> None:
         contracts = cast(
             List[ContractConfig],
             reduce(operator.add, [index._config.contracts for index in self._indexes.values()]),
         )
-        self._has_intersecting_indexes = len(contracts) != len(set(contracts))
+        if len(contracts) != len(set(contracts)):
+            self._logger.warning('Intersecting indexes detected, operations will be processed before big map diffs')
+            indexes_by_type: Dict[Type[Index], List[Index]] = groupby(tuple(self._indexes.values()), type)
+            self._prioritized_indexes = tuple(indexes_by_type[OperationIndex]), tuple(indexes_by_type[BigMapIndex])
+        else:
+            self._prioritized_indexes = None
 
-    def _prioritize_indexes(self) -> Iterator[Tuple[Index, ...]]:
+    def _iter_indexes(self) -> Iterator[Tuple[Index, ...]]:
         """Intersecting operation indexes must be processed before big_map ones because of originations"""
-        indexes = tuple(self._indexes.values())
-        if not self._has_intersecting_indexes:
-            yield indexes
-
-        indexes_by_type: Dict[Type[Index], List[Index]] = groupby(indexes, type)
-        yield tuple(indexes_by_type[OperationIndex])
-        yield tuple(indexes_by_type[BigMapIndex])
+        if self._prioritized_indexes:
+            yield self._prioritized_indexes[0]
+            yield self._prioritized_indexes[1]
+        else:
+            yield tuple(self._indexes.values())
 
 
 class DipDup:

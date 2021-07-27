@@ -607,7 +607,7 @@ class BigMapIndexConfig(IndexConfig):
 
     @property
     def contracts(self) -> List[ContractConfig]:
-        return [cast(ContractConfig, handler_config.contract) for handler_config in self.handlers]
+        return list(set([cast(ContractConfig, handler_config.contract) for handler_config in self.handlers]))
 
 
 @dataclass
