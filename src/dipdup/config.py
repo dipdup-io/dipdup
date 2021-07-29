@@ -109,7 +109,23 @@ class HTTPConfig:
 
 
 @dataclass
-class ContractConfig:
+class NameMixin:
+    def __post_init_post_parse__(self) -> None:
+        self._name: Optional[str] = None
+
+    @property
+    def name(self) -> str:
+        if self._name is None:
+            raise RuntimeError('Config is not pre-initialized')
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._name = name
+
+
+@dataclass
+class ContractConfig(NameMixin):
     """Contract config
 
     :param network: Corresponding network alias, only for sanity checks
@@ -133,22 +149,6 @@ class ContractConfig:
         if not (v.startswith('KT1') or v.startswith('tz1')) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
-
-
-@dataclass
-class NameMixin:
-    def __post_init_post_parse__(self) -> None:
-        self._name: Optional[str] = None
-
-    @property
-    def name(self) -> str:
-        if self._name is None:
-            raise RuntimeError('Config is not pre-initialized')
-        return self._name
-
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name
 
 
 @dataclass
@@ -826,8 +826,10 @@ class DipDupConfig:
         self._pre_initialized.append(index_name)
 
     def pre_initialize(self) -> None:
-        for name, config in self.datasources.items():
-            config.name = name
+        for name, datasource_config in self.datasources.items():
+            datasource_config.name = name
+        for name, contract_config in self.contracts.items():
+            contract_config.name = name
 
         self.resolve_static_templates()
         for index_name, index_config in self.indexes.items():
