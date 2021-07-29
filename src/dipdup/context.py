@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 from tortoise import Tortoise
 from tortoise.transactions import in_transaction
 
-from dipdup.config import ContractConfig, DipDupConfig, PostgresDatabaseConfig, StaticTemplateConfig
+from dipdup.config import ContractConfig, DipDupConfig, IndexTemplateConfig, PostgresDatabaseConfig
 from dipdup.datasources import DatasourceT
 from dipdup.exceptions import ContractAlreadyExistsError, IndexAlreadyExistsError
 from dipdup.utils import FormattedLogger
@@ -98,7 +98,7 @@ class HandlerContext(DipDupContext):
         if name in self.config.indexes:
             raise IndexAlreadyExistsError(self, name)
         self.config.get_template(template)
-        self.config.indexes[name] = StaticTemplateConfig(
+        self.config.indexes[name] = IndexTemplateConfig(
             template=template,
             values=values,
         )
