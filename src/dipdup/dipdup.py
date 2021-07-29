@@ -1,7 +1,10 @@
 import asyncio
 import hashlib
 import logging
-from contextlib import AsyncExitStack, asynccontextmanager
+import operator
+from collections import Counter
+from contextlib import AsyncExitStack, asynccontextmanager, suppress
+from functools import reduce
 from os import listdir
 from os.path import join
 from typing import Dict, List, Optional, cast
@@ -18,12 +21,13 @@ from dipdup.config import (
     BcdDatasourceConfig,
     BigMapIndexConfig,
     CoinbaseDatasourceConfig,
+    ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
+    IndexTemplateConfig,
     OperationIndexConfig,
     PostgresDatabaseConfig,
-    StaticTemplateConfig,
     TzktDatasourceConfig,
 )
 from dipdup.context import DipDupContext, RollbackHandlerContext
@@ -35,7 +39,7 @@ from dipdup.exceptions import ConfigurationError, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
-from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
+from dipdup.utils import FormattedLogger, iter_files, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
@@ -82,9 +86,18 @@ class IndexDispatcher:
         self._ctx.config.initialize()
 
         for index_config in self._ctx.config.indexes.values():
-            if isinstance(index_config, StaticTemplateConfig):
-                raise RuntimeError
+            if isinstance(index_config, IndexTemplateConfig):
+                raise RuntimeError('Config is not initialized')
             await self.add_index(index_config)
+
+        contracts = [index._config.contracts for index in self._indexes.values() if index._config.contracts]
+        plain_contracts = reduce(operator.add, contracts)
+        duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
+        if duplicate_contracts:
+            self._logger.warning(
+                "The following contracts are used in more than one index: %s. Make sure you know what you're doing.",
+                ' '.join(duplicate_contracts),
+            )
 
         self._ctx.reset()
 
@@ -335,15 +348,11 @@ class DipDup:
         if not exists(sql_path):
             return
         self._logger.info('Executing SQL scripts from `%s`', sql_path)
-        for filename in sorted(listdir(sql_path)):
-            if not filename.endswith('.sql'):
-                continue
-
-            with open(join(sql_path, filename)) as file:
-                sql = file.read()
-
-            self._logger.info('Executing `%s`', filename)
-            await get_connection(None).execute_script(sql)
+        for file in iter_files(sql_path, '.sql'):
+            self._logger.info('Executing `%s`', file.name)
+            sql = file.read()
+            with suppress(AttributeError):
+                await get_connection(None).execute_script(sql)
 
     def _finish_migration(self, version: str) -> None:
         self._logger.warning('==================== WARNING =====================')

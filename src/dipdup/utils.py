@@ -1,13 +1,18 @@
 import asyncio
 import decimal
+import errno
 import importlib
 import logging
 import pkgutil
 import time
 import types
+from collections import defaultdict
 from contextlib import asynccontextmanager
+from functools import reduce
 from logging import Logger
-from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Tuple, Type
+from os import listdir, makedirs
+from os.path import dirname, exists, getsize, join
+from typing import Any, AsyncIterator, Callable, DefaultDict, Dict, Iterator, List, Optional, Sequence, TextIO, Tuple, Type, TypeVar
 
 import humps  # type: ignore
 from tortoise import Tortoise
@@ -144,6 +149,19 @@ def set_decimal_context(package: str) -> None:
         decimal.setcontext(context)
 
 
+_T = TypeVar('_T')
+_TT = TypeVar('_TT')
+
+
+def groupby(seq: Sequence[_T], key: Callable[[Any], _TT]) -> DefaultDict[_TT, List[_T]]:
+    """Group by key into defaultdict"""
+    return reduce(
+        lambda grp, val: grp[key(val)].append(val) or grp,  # type: ignore
+        seq,
+        defaultdict(list),
+    )
+
+
 class FormattedLogger(Logger):
     def __init__(
         self,
@@ -159,3 +177,47 @@ class FormattedLogger(Logger):
         if self.fmt:
             msg = self.fmt.format(msg)
         super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+
+
+def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
+    """Iterate over files in a directory. Sort alphabetically, filter by extension, skip empty files."""
+    if not exists(path):
+        raise StopIteration
+    for filename in sorted(listdir(path)):
+        filepath = join(path, filename)
+        if ext and not filename.endswith(ext):
+            continue
+        if not getsize(filepath):
+            continue
+
+        with open(filepath) as file:
+            yield file
+
+
+def mkdir_p(path: str) -> None:
+    """Create directory tree, ignore if already exists"""
+    try:
+        makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+def touch(path: str) -> None:
+    """Create empty file, ignore if already exists"""
+    mkdir_p(dirname(path))
+    try:
+        open(path, 'a').close()
+    except IOError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+def write(path: str, content: str, overwrite: bool = False) -> bool:
+    """Write content to file, create directory tree if necessary"""
+    mkdir_p(dirname(path))
+    if exists(path) and not overwrite:
+        return False
+    with open(path, 'w') as file:
+        file.write(content)
+    return True
