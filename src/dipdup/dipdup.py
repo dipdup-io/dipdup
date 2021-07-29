@@ -159,11 +159,9 @@ class IndexDispatcher:
         self._stopped = True
 
     def _prioritize_indexes(self) -> None:
-        contracts = cast(
-            List[ContractConfig],
-            reduce(operator.add, [index._config.contracts for index in self._indexes.values()]),
-        )
-        if len(contracts) != len(set(contracts)):
+        contracts = [index._config.contracts for index in self._indexes.values() if index._config.contracts]
+        plain_contracts = reduce(operator.add, contracts)
+        if len(plain_contracts) != len(set(plain_contracts)):
             self._logger.warning('Intersecting indexes detected, operations will be processed before big map diffs')
             indexes_by_type: Dict[Type[Index], List[Index]] = groupby(tuple(self._indexes.values()), type)
             self._prioritized_indexes = tuple(indexes_by_type[OperationIndex]), tuple(indexes_by_type[BigMapIndex])
