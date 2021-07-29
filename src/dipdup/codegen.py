@@ -401,7 +401,7 @@ class DipDupCodeGenerator:
                 try:
                     address = (await datasource.get_originated_contracts(address))[0]
                 except IndexError as e:
-                    raise ConfigurationError(f'Contract `{address}` has no originations') from e
+                    raise ConfigurationError(f'No contracts were originated from `{address}`') from e
                 self._logger.info('Fetching schemas for contract `%s` (originated from `%s`)', address, contract_config.address)
             else:
                 self._logger.info('Fetching schemas for contract `%s`', address)
