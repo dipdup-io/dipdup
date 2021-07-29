@@ -684,6 +684,7 @@ class JobConfig(HandlerConfig):
 class SentryConfig:
     dsn: str
     environment: Optional[str] = None
+    debug: bool = False
 
 
 @dataclass

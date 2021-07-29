@@ -10,6 +10,7 @@ import sentry_sdk
 from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_version_mapping
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
@@ -29,6 +30,29 @@ class CLIContext:
     logging_config: LoggingConfig
 
 
+def init_sentry(config: DipDupConfig) -> None:
+    if not config.sentry:
+        return
+    if config.sentry.debug:
+        level, event_level = logging.DEBUG, logging.WARNING
+    else:
+        level, event_level = logging.INFO, logging.ERROR
+
+    integrations = [
+        AioHttpIntegration(),
+        LoggingIntegration(
+            level=level,
+            event_level=event_level,
+        ),
+    ]
+    sentry_sdk.init(
+        dsn=config.sentry.dsn,
+        environment=config.sentry.environment,
+        integrations=integrations,
+        release=__version__,
+    )
+
+
 @click.group()
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
@@ -44,6 +68,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         _logging_config = LoggingConfig.load(path)
     _logging_config.apply()
 
+    # NOTE: Apply env files before loading config
     for env_path in env_file:
         env_path = join(os.getcwd(), env_path)
         if not exists(env_path):
@@ -52,18 +77,13 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         load_dotenv(env_path, override=True)
 
     _config = DipDupConfig.load(config)
+    init_sentry(_config)
+
     if _config.spec_version not in spec_version_mapping:
         raise ConfigurationError('Unknown `spec_version`, correct ones: {}')
     if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
         reindex = spec_reindex_mapping[__spec_version__]
         raise MigrationRequiredError(None, _config.spec_version, __spec_version__, reindex)
-
-    if _config.sentry:
-        sentry_sdk.init(
-            dsn=_config.sentry.dsn,
-            environment=_config.sentry.environment,
-            integrations=[AioHttpIntegration()],
-        )
 
     ctx.obj = CLIContext(
         config_paths=config,
