@@ -6,11 +6,13 @@ import logging
 import pkgutil
 import time
 import types
+from collections import defaultdict
 from contextlib import asynccontextmanager
+from functools import reduce
 from logging import Logger
 from os import listdir, makedirs
 from os.path import dirname, exists, getsize, join
-from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, TextIO, Tuple, Type
+from typing import Any, AsyncIterator, Callable, DefaultDict, Dict, Iterator, List, Optional, Sequence, TextIO, Tuple, Type, TypeVar
 
 import humps  # type: ignore
 from tortoise import Tortoise
@@ -145,6 +147,19 @@ def set_decimal_context(package: str) -> None:
         # NOTE: DefaultContext used for new threads
         decimal.DefaultContext.prec = context.prec
         decimal.setcontext(context)
+
+
+_T = TypeVar('_T')
+_TT = TypeVar('_TT')
+
+
+def groupby(seq: Sequence[_T], key: Callable[[Any], _TT]) -> DefaultDict[_TT, List[_T]]:
+    """Group by key into defaultdict"""
+    return reduce(
+        lambda grp, val: grp[key(val)].append(val) or grp,  # type: ignore
+        seq,
+        defaultdict(list),
+    )
 
 
 class FormattedLogger(Logger):

@@ -1,7 +1,10 @@
 import asyncio
 import hashlib
 import logging
+import operator
+from collections import Counter
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
+from functools import reduce
 from os import listdir
 from os.path import join
 from typing import Dict, List, Optional, cast
@@ -18,6 +21,7 @@ from dipdup.config import (
     BcdDatasourceConfig,
     BigMapIndexConfig,
     CoinbaseDatasourceConfig,
+    ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
     IndexConfigTemplateT,
@@ -84,8 +88,17 @@ class IndexDispatcher:
 
         for index_config in self._ctx.config.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
-                raise RuntimeError
+                raise RuntimeError('Config is not initialized')
             await self.add_index(index_config)
+
+        contracts = [index._config.contracts for index in self._indexes.values() if index._config.contracts]
+        plain_contracts = reduce(operator.add, contracts)
+        duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
+        if duplicate_contracts:
+            self._logger.warning(
+                "The following contracts are used in more than one index: %s. Make sure you know what you're doing.",
+                ' '.join(duplicate_contracts),
+            )
 
         self._ctx.reset()
 

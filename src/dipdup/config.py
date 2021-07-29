@@ -605,23 +605,9 @@ class BigMapIndexConfig(IndexConfig):
     first_block: int = 0
     last_block: int = 0
 
-
-@dataclass
-class BlockHandlerConfig(HandlerConfig):
-    pattern = None
-
-
-@dataclass
-class BlockIndexConfig(IndexConfig):
-    """Stub, not implemented"""
-
-    kind: Literal['block']
-    datasource: Union[str, TzktDatasourceConfig]
-    handlers: List[BlockHandlerConfig]
-
-    stateless: bool = False
-    first_block: int = 0
-    last_block: int = 0
+    @property
+    def contracts(self) -> List[ContractConfig]:
+        return list(set([cast(ContractConfig, handler_config.contract) for handler_config in self.handlers]))
 
 
 @dataclass
@@ -631,8 +617,8 @@ class IndexTemplateConfig:
     values: Dict[str, str]
 
 
-IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, IndexTemplateConfig]
-IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
+IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, IndexTemplateConfig]
+IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig]
 HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
@@ -714,14 +700,6 @@ class DipDupConfig:
     jobs: Optional[Dict[str, JobConfig]] = None
     sentry: Optional[SentryConfig] = None
 
-    @property
-    def environment(self) -> Dict[str, str]:
-        return self._environment
-
-    @property
-    def filenames(self) -> List[str]:
-        return self._filenames
-
     def __post_init_post_parse__(self):
         self._filenames: List[str] = []
         self._environment: Dict[str, str] = {}
@@ -729,6 +707,14 @@ class DipDupConfig:
         self._pre_initialized = []
         self._initialized = []
         self.validate()
+
+    @property
+    def environment(self) -> Dict[str, str]:
+        return self._environment
+
+    @property
+    def filenames(self) -> List[str]:
+        return self._filenames
 
     def validate(self) -> None:
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
