@@ -2,13 +2,11 @@ import asyncio
 import importlib
 import logging
 from contextlib import suppress
-from os import listdir
 from os.path import dirname, join
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import humps  # type: ignore
 from aiohttp import ClientConnectorError, ClientOSError
-from genericpath import exists
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.transactions import get_connection
@@ -16,7 +14,7 @@ from tortoise.transactions import get_connection
 from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
-from dipdup.utils import iter_models
+from dipdup.utils import iter_files, iter_models
 
 
 @dataclass
@@ -230,14 +228,8 @@ class HasuraGateway(HTTPGateway):
         package = importlib.import_module(self._package)
         package_path = dirname(package.__file__)
         graphql_path = join(package_path, 'graphql')
-        if not exists(graphql_path):
-            return
-        for filename in sorted(listdir(graphql_path)):
-            if not filename.endswith('.graphql'):
-                continue
-
-            with open(join(graphql_path, filename)) as file:
-                yield filename[:-8], file.read()
+        for file in iter_files(graphql_path, '.graphql'):
+            yield file.name.split('/')[-1][:-8], file.read()
 
     async def _generate_query_collections_metadata(self) -> List[Dict[str, Any]]:
         queries = []
