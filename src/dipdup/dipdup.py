@@ -7,7 +7,7 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from functools import reduce
 from os import listdir
 from os.path import join
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, cast
 
 from genericpath import exists
 from tortoise import Tortoise
@@ -52,7 +52,6 @@ class IndexDispatcher:
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
-        self._prioritized_indexes: Optional[Tuple[Tuple[Index, ...], Tuple[Index, ...]]] = None
         self._stopped: bool = False
 
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
