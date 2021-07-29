@@ -3,11 +3,10 @@ import logging
 import os
 import re
 import subprocess
-from contextlib import suppress
 from copy import copy
 from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, cast
 
 from jinja2 import Template
 
@@ -19,7 +18,6 @@ from dipdup.config import (
     ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
-    IndexConfigT,
     IndexTemplateConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
@@ -123,30 +121,13 @@ class DipDupCodeGenerator:
         graphql_path = join(self._config.package_path, 'graphql')
         touch(join(graphql_path, '.keep'))
 
-    async def fetch_schemas(self, template: Optional[str] = None, contract: Optional[str] = None) -> None:
+    async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Creating `schemas` package')
         schemas_path = join(self._config.package_path, 'schemas')
         mkdir_p(schemas_path)
 
-        index_configs: List[IndexConfigT]
-        if template:
-            if not contract:
-                raise RuntimeError('Both `template` and `contract` arguments are required')
-            # FIXME: Implement classmethods to avoid adding temporary index
-            self._config.indexes['TEMP'] = IndexTemplateConfig(
-                template=template,
-                # NOTE: Regex magic! Replace all variables. What could possibly go wrong?
-                values={'\w*': contract},
-            )
-            self._config.resolve_index_templates()
-            self._config.pre_initialize()
-            index_config = self._config.indexes.pop('TEMP')
-            index_configs = [index_config]
-        else:
-            index_configs = list(self._config.indexes.values())
-
-        for index_config in index_configs:
+        for index_config in self._config.indexes.values():
 
             if isinstance(index_config, OperationIndexConfig):
                 for operation_handler_config in index_config.handlers:
@@ -176,29 +157,9 @@ class DipDupCodeGenerator:
                         storage_schema = resolve_big_maps(contract_schemas['storageSchema'])
                         write(storage_schema_path, json.dumps(storage_schema, indent=4, sort_keys=True))
 
-                        is_transaction = isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig)
-                        is_factory = isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig) and (
-                            operation_pattern_config.similar_to or operation_pattern_config.source
-                        )
-
-                        if is_transaction:
-                            pass
-                        elif is_factory:
-                            assert isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig)
-                            if operation_pattern_config.similar_to:
-                                contract_name = operation_pattern_config.similar_to_contract_config.name
-                            elif operation_pattern_config.source:
-                                contract_name = operation_pattern_config.source_contract_config.name
-
-                            for template in self._config.templates:
-                                # NOTE: We don't know which template will be used in factory handler, so let's try all
-                                with suppress(ConfigurationError):
-                                    await self.fetch_schemas(template=template, contract=contract_name)
-                            continue
-                        else:
+                        if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
                             continue
 
-                        assert isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig)
                         parameter_schemas_path = join(contract_schemas_path, 'parameter')
                         entrypoint = cast(str, operation_pattern_config.entrypoint)
                         mkdir_p(parameter_schemas_path)
