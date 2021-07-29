@@ -1,7 +1,7 @@
 import asyncio
 import hashlib
 import logging
-from contextlib import AsyncExitStack, asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from os import listdir
 from os.path import join
 from typing import Dict, List, Optional, cast
@@ -339,7 +339,8 @@ class DipDup:
         for file in iter_files(sql_path, '.sql'):
             self._logger.info('Executing `%s`', file.name)
             sql = file.read()
-            await get_connection(None).execute_script(sql)
+            with suppress(AttributeError):
+                await get_connection(None).execute_script(sql)
 
     def _finish_migration(self, version: str) -> None:
         self._logger.warning('==================== WARNING =====================')
