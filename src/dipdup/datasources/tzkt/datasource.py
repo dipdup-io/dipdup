@@ -697,8 +697,8 @@ class TzktDatasource(IndexDatasource):
             nonce=operation_json.get('nonce'),
             target_alias=operation_json['target'].get('alias') if operation_json.get('target') else None,
             initiator_alias=operation_json['initiator'].get('alias') if operation_json.get('initiator') else None,
-            entrypoint=operation_json['parameter']['entrypoint'] if operation_json.get('parameter') else None,
-            parameter_json=operation_json['parameter']['value'] if operation_json.get('parameter') else None,
+            entrypoint=operation_json['parameter'].get('entrypoint') if operation_json.get('parameter') else None,
+            parameter_json=operation_json['parameter'].get('value') if operation_json.get('parameter') else None,
             originated_contract_address=operation_json['originatedContract']['address']
             if operation_json.get('originatedContract')
             else None,
