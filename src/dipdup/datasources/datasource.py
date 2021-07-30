@@ -93,13 +93,13 @@ class Subscriptions:
     head: bool = False
     big_maps: DefaultDict[str, Set[str]] = Field(default_factory=partial(defaultdict, set))
 
-    def diff(self, other: 'Subscriptions') -> 'Subscriptions':
+    def get_pending(self, active_subscriptions: 'Subscriptions') -> 'Subscriptions':
         return Subscriptions(
-            address_transactions=self.address_transactions.difference(other.address_transactions),
-            entrypoint_transactions=self.entrypoint_transactions.difference(other.entrypoint_transactions),
-            originations=self.originations and other.originations,
-            head=self.head and other.head,
-            big_maps=defaultdict(set, {k: self.big_maps[k] for k in set(self.big_maps) - set(other.big_maps)}),
+            address_transactions=self.address_transactions.difference(active_subscriptions.address_transactions),
+            entrypoint_transactions=self.entrypoint_transactions.difference(active_subscriptions.entrypoint_transactions),
+            originations=not active_subscriptions.originations,
+            head=not active_subscriptions.head,
+            big_maps=defaultdict(set, {k: self.big_maps[k] for k in set(self.big_maps) - set(active_subscriptions.big_maps)}),
         )
 
 
@@ -124,7 +124,7 @@ class SubscriptionManager:
         self._subscriptions.big_maps[address] = self._subscriptions.big_maps[address] | paths
 
     def get_pending(self) -> Subscriptions:
-        pending_subscriptions = self._subscriptions.diff(self._active_subscriptions)
+        pending_subscriptions = self._subscriptions.get_pending(self._active_subscriptions)
         return pending_subscriptions
 
     def commit(self) -> None:

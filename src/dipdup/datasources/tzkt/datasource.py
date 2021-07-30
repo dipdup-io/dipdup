@@ -455,16 +455,11 @@ class TzktDatasource(IndexDatasource):
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
 
         if isinstance(index_config, OperationIndexConfig):
-            # FIXME: Spaghetti code, refactor
-            if index_config.parent:
-                if not isinstance(index_config.parent, OperationIndexConfig):
-                    raise RuntimeError('Parent of operation index must be another operation index')
-                if index_config.parent.subscribe_by_entrypoints:
-                    for entrypoint in index_config.entrypoints:
-                        self._subscriptions.add_entrypoint_transaction_subscription(entrypoint)
-                else:
-                    for contract_config in index_config.contracts or []:
-                        self._subscriptions.add_address_transaction_subscription(cast(ContractConfig, contract_config).address)
+            parent_config = cast(Optional[OperationIndexConfig], index_config.parent)
+            subscribe_by_entrypoints = parent_config.subscribe_by_entrypoints if parent_config else index_config.subscribe_by_entrypoints
+            if subscribe_by_entrypoints:
+                for entrypoint in index_config.entrypoints:
+                    self._subscriptions.add_entrypoint_transaction_subscription(entrypoint)
             else:
                 for contract_config in index_config.contracts or []:
                     self._subscriptions.add_address_transaction_subscription(cast(ContractConfig, contract_config).address)
@@ -529,7 +524,6 @@ class TzktDatasource(IndexDatasource):
     async def subscribe(self) -> None:
         """Subscribe to all required channels"""
         pending_subscriptions = self._subscriptions.get_pending()
-        print(pending_subscriptions)
 
         for address in pending_subscriptions.address_transactions:
             await self._subscribe_to_address_transactions(address)
@@ -544,9 +538,12 @@ class TzktDatasource(IndexDatasource):
 
         self._subscriptions.commit()
 
+    # NOTE: Pay attention: this is not a pyee callback
     def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""
         raise Exception(message.error)
+
+    # TODO: Catch exceptions from pyee 'error' channel 
 
     async def _subscribe_to_address_transactions(self, address: str) -> None:
         """Subscribe to contract's operations on established WS connection"""
@@ -564,12 +561,11 @@ class TzktDatasource(IndexDatasource):
     async def _subscribe_to_entrypoint_transactions(self, entrypoints: Set[str]) -> None:
         """Subscribe to contract's operations on established WS connection"""
         self._logger.info('Subscribing to %s transactions', entrypoints)
-        quit()
         await self._send(
             'SubscribeToOperations',
             [
                 {
-                    'entrypoints': entrypoints,
+                    'entrypoints': tuple(entrypoints),
                     'types': 'transaction',
                 }
             ],
@@ -601,7 +597,7 @@ class TzktDatasource(IndexDatasource):
                 ],
             )
 
-    async def subscribe_to_head(self) -> None:
+    async def _subscribe_to_head(self) -> None:
         """Subscribe to head on established WS connection"""
         self._logger.info('Subscribing to head')
         await self._send(
