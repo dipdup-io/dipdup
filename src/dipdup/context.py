@@ -109,6 +109,21 @@ class HandlerContext(DipDupContext):
         self._updated = True
 
 
+class JobContext(DipDupContext):
+    """Job handler context."""
+
+    def __init__(
+        self,
+        datasources: Dict[str, Datasource],
+        config: DipDupConfig,
+        logger: FormattedLogger,
+    ) -> None:
+        super().__init__(datasources, config)
+        self.logger = logger
+
+    # TODO: Spawning indexes from jobs?
+
+
 class RollbackHandlerContext(DipDupContext):
     def __init__(
         self,

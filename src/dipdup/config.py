@@ -477,10 +477,11 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
 
 
 @dataclass
-class HandlerConfig:
+class HandlerConfig(NameMixin):
     callback: str
 
     def __post_init_post_parse__(self):
+        super().__post_init_post_parse__()
         self._callback_fn = None
         if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
             raise ConfigurationError(f'`{self.callback}` callback name is reserved')
@@ -724,12 +725,12 @@ class DipDupConfig:
     spec_version: str
     package: str
     datasources: Dict[str, DatasourceConfigT]
+    database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
     templates: Dict[str, IndexConfigTemplateT] = Field(default_factory=dict)
-    database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
+    jobs: Dict[str, JobConfig] = Field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
-    jobs: Optional[Dict[str, JobConfig]] = None
     sentry: Optional[SentryConfig] = None
 
     def __post_init_post_parse__(self):
@@ -864,6 +865,8 @@ class DipDupConfig:
             contract_config.name = name
         for name, datasource_config in self.datasources.items():
             datasource_config.name = name
+        for name, job_config in self.jobs.items():
+            job_config.name = name
 
         self.resolve_index_templates()
         for index_name, index_config in self.indexes.items():

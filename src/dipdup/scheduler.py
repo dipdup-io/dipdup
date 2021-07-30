@@ -8,8 +8,8 @@ from apscheduler.triggers.interval import IntervalTrigger  # type: ignore
 from pytz import utc
 
 from dipdup.config import JobConfig
-from dipdup.context import DipDupContext
-from dipdup.utils import in_global_transaction
+from dipdup.context import DipDupContext, JobContext
+from dipdup.utils import FormattedLogger, in_global_transaction
 
 jobstores = {
     'default': MemoryJobStore(),
@@ -17,17 +17,12 @@ jobstores = {
 executors = {
     'default': AsyncIOExecutor(),
 }
-job_defaults = {
-    'coalesce': False,
-    'max_instances': 3,
-}
 
 
 def create_scheduler() -> AsyncIOScheduler:
     return AsyncIOScheduler(
         jobstores=jobstores,
         executors=executors,
-        job_defaults=job_defaults,
         timezone=utc,
     )
 
@@ -40,6 +35,10 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_name: str, job_
                 await stack.enter_async_context(in_global_transaction())
             await job_config.callback_fn(ctx, args)
 
+    logger = FormattedLogger(
+        name=job_config.callback,
+        fmt=job_config.name + ': {}',
+    )
     if job_config.crontab:
         trigger = CronTrigger.from_crontab(job_config.crontab)
     elif job_config.interval:
@@ -50,7 +49,11 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_name: str, job_
         name=job_name,
         trigger=trigger,
         kwargs=dict(
-            ctx=ctx,
+            ctx=JobContext(
+                config=ctx.config,
+                datasources=ctx.datasources,
+                logger=logger,
+            ),
             args=job_config.args,
         ),
     )
