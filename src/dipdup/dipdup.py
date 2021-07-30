@@ -90,7 +90,12 @@ class IndexDispatcher:
                 raise RuntimeError('Config is not initialized')
             await self.add_index(index_config)
 
+        self._ctx.reset()
+
         contracts = [index._config.contracts for index in self._indexes.values() if index._config.contracts]
+        if not contracts:
+            return
+
         plain_contracts = reduce(operator.add, contracts)
         duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
         if duplicate_contracts:
@@ -98,8 +103,6 @@ class IndexDispatcher:
                 "The following contracts are used in more than one index: %s. Make sure you know what you're doing.",
                 ' '.join(duplicate_contracts),
             )
-
-        self._ctx.reset()
 
     async def dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in operations)) == 1
