@@ -36,7 +36,7 @@ class Index:
         self._config = config
         self._datasource = datasource
 
-        self._logger = logging.getLogger('dipdup.index')
+        self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
         self._state: Optional[State] = None
 
     @property
@@ -75,7 +75,7 @@ class Index:
         ...
 
     async def _initialize_index_state(self) -> None:
-        self._logger.info('Getting state for index `%s`', self._config.name)
+        self._logger.info('Getting index state')
         index_config_hash = self._config.hash()
         state = await State.get_or_none(
             index_name=self._config.name,
@@ -94,6 +94,7 @@ class Index:
             self._logger.warning('Config hash mismatch (config has been changed), reindexing')
             await self._ctx.reindex()
 
+        self._logger.info('%s', f'{state.level=} {state.hash=}'.replace('state.', ''))
         # NOTE: No need to check genesis block
         if state.level:
             block = await self._datasource.get_block(state.level)
@@ -162,6 +163,7 @@ class OperationIndex(Index):
 
         state.level = last_level  # type: ignore
         await state.save()
+        self._logger.info('Index is synchronized to level %s', last_level)
 
     async def _process_level_operations(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
         state = await self.get_state()
@@ -430,6 +432,7 @@ class BigMapIndex(Index):
 
         state.level = last_level  # type: ignore
         await state.save()
+        self._logger.info('Index is synchronized to level %s', last_level)
 
     async def _process_level_big_maps(self, level: int, big_maps: List[BigMapData]):
         state = await self.get_state()
