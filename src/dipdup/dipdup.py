@@ -188,7 +188,7 @@ class DipDup:
 
     async def init(self) -> None:
         """Create new or update existing dipdup project"""
-        await self._create_datasources()
+        await self._create_datasources(realtime=False)
 
         async with AsyncExitStack() as stack:
             for datasource in self._datasources.values():
@@ -205,7 +205,7 @@ class DipDup:
         url = self._config.database.connection_string
         models = f'{self._config.package}.models'
 
-        await self._create_datasources()
+        await self._create_datasources(realtime=not oneshot)
 
         hasura_gateway: Optional[HasuraGateway]
         if self._config.hasura:
@@ -261,7 +261,7 @@ class DipDup:
         await configure_fn(self._ctx)
         self._config.initialize()
 
-    async def _create_datasources(self) -> None:
+    async def _create_datasources(self, realtime: bool = True) -> None:
         datasource: Datasource
         for name, datasource_config in self._config.datasources.items():
             if name in self._datasources:
@@ -271,6 +271,7 @@ class DipDup:
                 datasource = TzktDatasource(
                     url=datasource_config.url,
                     http_config=datasource_config.http,
+                    realtime=realtime,
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(

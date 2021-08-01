@@ -275,11 +275,13 @@ class TzktDatasource(IndexDatasource):
         self,
         url: str,
         http_config: Optional[HTTPConfig] = None,
+        realtime: bool = True,
     ) -> None:
         super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.tzkt')
         self._subscriptions: SubscriptionManager = SubscriptionManager()
 
+        self._realtime: bool = realtime
         self._client: Optional[BaseHubConnection] = None
 
         self._block: Optional[HeadBlockData] = None
@@ -506,6 +508,7 @@ class TzktDatasource(IndexDatasource):
 
     async def run(self) -> None:
         """Main loop. Sync indexes via REST, start WS connection"""
+        # TODO: Update docs, honor `realtime` flag
         self._logger.info('Starting datasource')
 
         self._logger.info('Starting websocket client')
@@ -513,16 +516,15 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
-        # FIXME: What does this check do?
-        if self._get_client().transport.state != ConnectionState.connected:
-            return
-
         self._logger.info('Connected to server')
         self._subscriptions.reset()
         await self.subscribe()
 
     async def subscribe(self) -> None:
         """Subscribe to all required channels"""
+        if not self._realtime:
+            return
+
         pending_subscriptions = self._subscriptions.get_pending()
 
         for address in pending_subscriptions.address_transactions:
@@ -543,7 +545,7 @@ class TzktDatasource(IndexDatasource):
         """Raise exception from WS server's error message"""
         raise Exception(message.error)
 
-    # TODO: Catch exceptions from pyee 'error' channel 
+    # TODO: Catch exceptions from pyee 'error' channel
 
     async def _subscribe_to_address_transactions(self, address: str) -> None:
         """Subscribe to contract's operations on established WS connection"""
