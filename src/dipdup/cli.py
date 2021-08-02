@@ -113,6 +113,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @click.option('--reindex', is_flag=True, help='Drop database and start indexing from scratch')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
 @click.pass_context
+@cli_wrapper
 async def run(ctx, reindex: bool, oneshot: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
@@ -123,6 +124,7 @@ async def run(ctx, reindex: bool, oneshot: bool) -> None:
 
 @cli.command(help='Initialize new dipdup project')
 @click.pass_context
+@cli_wrapper
 async def init(ctx):
     config: DipDupConfig = ctx.obj.config
     config.pre_initialize()
@@ -132,6 +134,7 @@ async def init(ctx):
 
 @cli.command(help='Migrate project to the new spec version')
 @click.pass_context
+@cli_wrapper
 async def migrate(ctx):
     def _bump_spec_version(spec_version: str):
         for config_path in ctx.obj.config_paths:
@@ -158,12 +161,14 @@ async def migrate(ctx):
 
 @cli.command(help='Clear development request cache')
 @click.pass_context
+@cli_wrapper
 async def clear_cache(ctx):
     FileCache('dipdup', flag='cs').clear()
 
 
 @cli.group()
 @click.pass_context
+@cli_wrapper
 async def docker(ctx):
     ...
 
@@ -173,6 +178,7 @@ async def docker(ctx):
 @click.option('--tag', '-t', type=str, help='DipDup Docker tag', default=DEFAULT_DOCKER_TAG)
 @click.option('--env-file', '-e', type=str, help='Path to env_file', default=DEFAULT_DOCKER_ENV_FILE)
 @click.pass_context
+@cli_wrapper
 async def docker_init(ctx, image: str, tag: str, env_file: str):
     config: DipDupConfig = ctx.obj.config
     await DipDupCodeGenerator(config, {}).generate_docker(image, tag, env_file)
@@ -180,6 +186,7 @@ async def docker_init(ctx, image: str, tag: str, env_file: str):
 
 @cli.group()
 @click.pass_context
+@cli_wrapper
 async def hasura(ctx):
     ...
 
@@ -187,6 +194,7 @@ async def hasura(ctx):
 @hasura.command(name='configure', help='Configure Hasura GraphQL Engine')
 @click.option('--reset', is_flag=True, help='Reset metadata before configuring')
 @click.pass_context
+@cli_wrapper
 async def hasura_configure(ctx, reset: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string

@@ -754,20 +754,27 @@ class DipDupConfig:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
 
     def get_contract(self, name: str) -> ContractConfig:
+        if name.startswith('<') and name.endswith('>'):
+            raise ConfigurationError(f'`{name}` variable of index template is not set')
+
         try:
             return self.contracts[name]
         except KeyError as e:
             raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
 
     def get_datasource(self, name: str) -> DatasourceConfigT:
+        if name.startswith('<') and name.endswith('>'):
+            raise ConfigurationError(f'`{name}` variable of index template is not set')
+
         try:
             return self.datasources[name]
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
 
     def get_template(self, name: str) -> IndexConfigTemplateT:
-        if not self.templates:
-            raise ConfigurationError('`templates` section is missing')
+        if name.startswith('<') and name.endswith('>'):
+            raise ConfigurationError(f'`{name}` variable of index template is not set')
+
         try:
             return self.templates[name]
         except KeyError as e:
