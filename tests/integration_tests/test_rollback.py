@@ -94,7 +94,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         config.database.path = ':memory:'
 
         datasource_name, datasource_config = list(config.datasources.items())[0]
-        datasource = TzktDatasource('test')
+        datasource = TzktDatasource('test', realtime=False)
         dipdup = DipDup(config)
         dipdup._datasources[datasource_name] = datasource
         dipdup._datasources_by_config[datasource_config] = datasource
@@ -121,7 +121,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         config.database.path = ':memory:'
 
         datasource_name, datasource_config = list(config.datasources.items())[0]
-        datasource = TzktDatasource('test')
+        datasource = TzktDatasource('test', realtime=False)
         dipdup = DipDup(config)
         dipdup._datasources[datasource_name] = datasource
         dipdup._datasources_by_config[datasource_config] = datasource

@@ -2,6 +2,7 @@ import fileinput
 import logging
 import os
 from dataclasses import dataclass
+from functools import wraps
 from os.path import dirname, exists, join
 from typing import List, cast
 
@@ -16,7 +17,7 @@ from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_ver
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError, MigrationRequiredError
+from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.utils import set_decimal_context, tortoise_wrapper
 
@@ -28,6 +29,21 @@ class CLIContext:
     config_paths: List[str]
     config: DipDupConfig
     logging_config: LoggingConfig
+
+
+def cli_wrapper(fn):
+    @wraps(fn)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await fn(*args, **kwargs)
+        except KeyboardInterrupt:
+            pass
+        except DipDupError as e:
+            _logger.critical(e.__repr__())
+            _logger.info(e.format())
+            quit(e.exit_code)
+
+    return wrapper
 
 
 def init_sentry(config: DipDupConfig) -> None:
@@ -59,6 +75,7 @@ def init_sentry(config: DipDupConfig) -> None:
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
 @click.option('--logging-config', '-l', type=str, help='Path to logging YAML config', default='logging.yml')
 @click.pass_context
+@cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     try:
         path = join(os.getcwd(), logging_config)
@@ -96,6 +113,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @click.option('--reindex', is_flag=True, help='Drop database and start indexing from scratch')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
 @click.pass_context
+@cli_wrapper
 async def run(ctx, reindex: bool, oneshot: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
@@ -106,6 +124,7 @@ async def run(ctx, reindex: bool, oneshot: bool) -> None:
 
 @cli.command(help='Initialize new dipdup project')
 @click.pass_context
+@cli_wrapper
 async def init(ctx):
     config: DipDupConfig = ctx.obj.config
     config.pre_initialize()
@@ -115,6 +134,7 @@ async def init(ctx):
 
 @cli.command(help='Migrate project to the new spec version')
 @click.pass_context
+@cli_wrapper
 async def migrate(ctx):
     def _bump_spec_version(spec_version: str):
         for config_path in ctx.obj.config_paths:
@@ -141,12 +161,14 @@ async def migrate(ctx):
 
 @cli.command(help='Clear development request cache')
 @click.pass_context
+@cli_wrapper
 async def clear_cache(ctx):
     FileCache('dipdup', flag='cs').clear()
 
 
 @cli.group()
 @click.pass_context
+@cli_wrapper
 async def docker(ctx):
     ...
 
@@ -156,6 +178,7 @@ async def docker(ctx):
 @click.option('--tag', '-t', type=str, help='DipDup Docker tag', default=DEFAULT_DOCKER_TAG)
 @click.option('--env-file', '-e', type=str, help='Path to env_file', default=DEFAULT_DOCKER_ENV_FILE)
 @click.pass_context
+@cli_wrapper
 async def docker_init(ctx, image: str, tag: str, env_file: str):
     config: DipDupConfig = ctx.obj.config
     await DipDupCodeGenerator(config, {}).generate_docker(image, tag, env_file)
@@ -163,6 +186,7 @@ async def docker_init(ctx, image: str, tag: str, env_file: str):
 
 @cli.group()
 @click.pass_context
+@cli_wrapper
 async def hasura(ctx):
     ...
 
@@ -170,6 +194,7 @@ async def hasura(ctx):
 @hasura.command(name='configure', help='Configure Hasura GraphQL Engine')
 @click.option('--reset', is_flag=True, help='Reset metadata before configuring')
 @click.pass_context
+@cli_wrapper
 async def hasura_configure(ctx, reset: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string

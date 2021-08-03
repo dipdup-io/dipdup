@@ -10,7 +10,7 @@ from collections import defaultdict
 from enum import Enum
 from os import environ as env
 from os.path import dirname
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Type, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import Field, validator
@@ -286,6 +286,24 @@ class StorageTypeMixin:
 
 
 @dataclass
+class ParentMixin:
+    """`parent` field for index and template configs"""
+
+    def __post_init_post_parse__(self):
+        self._parent: Optional['IndexConfig'] = None
+
+    @property
+    def parent(self) -> Optional['IndexConfig']:
+        return self._parent
+
+    @parent.setter
+    def parent(self, config: 'IndexConfig') -> None:
+        if self._parent:
+            raise RuntimeError('Can\'t unset parent once set')
+        self._parent = config
+
+
+@dataclass
 class ParameterTypeMixin:
     """`parameter_type_cls` field"""
 
@@ -459,10 +477,11 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
 
 
 @dataclass
-class HandlerConfig:
+class HandlerConfig(NameMixin):
     callback: str
 
     def __post_init_post_parse__(self):
+        super().__post_init_post_parse__()
         self._callback_fn = None
         if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
             raise ConfigurationError(f'`{self.callback}` callback name is reserved')
@@ -509,12 +528,13 @@ class TemplateValuesMixin:
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, NameMixin):
+class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
+        ParentMixin.__post_init_post_parse__(self)
 
     def hash(self) -> str:
         config_json = json.dumps(self, default=pydantic_encoder)
@@ -532,10 +552,11 @@ class IndexConfig(TemplateValuesMixin, NameMixin):
 class OperationIndexConfig(IndexConfig):
     """Operation index config
 
-    :param datasource: Alias of datasource in `datasources` block
-    :param contract: Alias of contract to fetch operations for
-    :param first_block: First block to process
-    :param last_block: Last block to process
+    :param datasource: Alias of index datasource in `datasources` section
+    :param contracts: Aliases of contracts being indexed in `contracts` section
+    :param stateless: Makes index dynamic. DipDup will synchronize index from the first block on every run
+    :param first_block: First block to process (use with `--oneshot` run argument)
+    :param last_block: Last block to process (use with `--oneshot` run argument)
     :param handlers: List of indexer handlers
     """
 
@@ -556,6 +577,15 @@ class OperationIndexConfig(IndexConfig):
             if not isinstance(contract, ContractConfig):
                 raise RuntimeError('Config is not initialized')
         return cast(List[ContractConfig], self.contracts)
+
+    @property
+    def entrypoints(self) -> Set[str]:
+        entrypoints = set()
+        for handler in self.handlers:
+            for pattern in handler.pattern:
+                if isinstance(pattern, OperationHandlerTransactionPatternConfig) and pattern.entrypoint:
+                    entrypoints.add(pattern.entrypoint)
+        return entrypoints
 
 
 @dataclass
@@ -611,7 +641,7 @@ class BigMapIndexConfig(IndexConfig):
 
 
 @dataclass
-class IndexTemplateConfig:
+class IndexTemplateConfig(ParentMixin):
     kind = 'template'
     template: str
     values: Dict[str, str]
@@ -692,12 +722,12 @@ class DipDupConfig:
     spec_version: str
     package: str
     datasources: Dict[str, DatasourceConfigT]
+    database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
     templates: Dict[str, IndexConfigTemplateT] = Field(default_factory=dict)
-    database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
+    jobs: Dict[str, JobConfig] = Field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
-    jobs: Optional[Dict[str, JobConfig]] = None
     sentry: Optional[SentryConfig] = None
 
     def __post_init_post_parse__(self):
@@ -721,20 +751,27 @@ class DipDupConfig:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
 
     def get_contract(self, name: str) -> ContractConfig:
+        if name.startswith('<') and name.endswith('>'):
+            raise ConfigurationError(f'`{name}` variable of index template is not set')
+
         try:
             return self.contracts[name]
         except KeyError as e:
             raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
 
     def get_datasource(self, name: str) -> DatasourceConfigT:
+        if name.startswith('<') and name.endswith('>'):
+            raise ConfigurationError(f'`{name}` variable of index template is not set')
+
         try:
             return self.datasources[name]
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
 
     def get_template(self, name: str) -> IndexConfigTemplateT:
-        if not self.templates:
-            raise ConfigurationError('`templates` section is missing')
+        if name.startswith('<') and name.endswith('>'):
+            raise ConfigurationError(f'`{name}` variable of index template is not set')
+
         try:
             return self.templates[name]
         except KeyError as e:
@@ -772,6 +809,7 @@ class DipDupConfig:
                 json_template = json.loads(raw_template)
                 new_index_config = template.__class__(**json_template)
                 new_index_config.template_values = index_config.values
+                new_index_config.parent = index_config.parent
                 self.indexes[index_name] = new_index_config
 
     def _pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
@@ -831,6 +869,8 @@ class DipDupConfig:
             contract_config.name = name
         for name, datasource_config in self.datasources.items():
             datasource_config.name = name
+        for name, job_config in self.jobs.items():
+            job_config.name = name
 
         self.resolve_index_templates()
         for index_name, index_config in self.indexes.items():

@@ -4,13 +4,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from dipdup.config import HTTPConfig
 from dipdup.datasources.coinbase.models import CandleData, CandleInterval
-from dipdup.http import HTTPGateway
+from dipdup.datasources.datasource import Datasource
 
 CANDLES_REQUEST_LIMIT = 300
 API_URL = 'https://api.pro.coinbase.com'
 
 
-class CoinbaseDatasource(HTTPGateway):
+class CoinbaseDatasource(Datasource):
     def __init__(self, url: str = API_URL, http_config: Optional[HTTPConfig] = None) -> None:
         super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.coinbase')

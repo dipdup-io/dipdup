@@ -86,7 +86,7 @@ class _HTTPGateway:
         attempt = 1
         retry_sleep = self._config.retry_sleep or 0
         while True:
-            self._logger.debug('HTTP request attempt %s/%s', attempt + 1, self._config.retry_count or 'inf')
+            self._logger.debug('HTTP request attempt %s/%s', attempt, self._config.retry_count or 'inf')
             try:
                 return await self._request(
                     method=method,

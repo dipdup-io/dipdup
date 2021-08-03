@@ -24,7 +24,7 @@ from dipdup.config import (
     OperationIndexConfig,
     TzktDatasourceConfig,
 )
-from dipdup.datasources import DatasourceT
+from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import import_submodules, mkdir_p, pascal_to_snake, snake_to_pascal, touch, write
@@ -68,7 +68,7 @@ def load_template(name: str) -> Template:
 class DipDupCodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, DatasourceT]) -> None:
+    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, Datasource]) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
