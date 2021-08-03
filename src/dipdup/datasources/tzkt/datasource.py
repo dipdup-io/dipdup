@@ -457,14 +457,8 @@ class TzktDatasource(IndexDatasource):
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
 
         if isinstance(index_config, OperationIndexConfig):
-            parent_config = cast(Optional[OperationIndexConfig], index_config.parent)
-            subscribe_by_entrypoints = parent_config.subscribe_by_entrypoints if parent_config else index_config.subscribe_by_entrypoints
-            if subscribe_by_entrypoints:
-                for entrypoint in index_config.entrypoints:
-                    self._subscriptions.add_entrypoint_transaction_subscription(entrypoint)
-            else:
-                for contract_config in index_config.contracts or []:
-                    self._subscriptions.add_address_transaction_subscription(cast(ContractConfig, contract_config).address)
+            for contract_config in index_config.contracts or []:
+                self._subscriptions.add_address_transaction_subscription(cast(ContractConfig, contract_config).address)
 
             for handler_config in index_config.handlers:
                 for pattern_config in handler_config.pattern:
@@ -529,8 +523,6 @@ class TzktDatasource(IndexDatasource):
 
         for address in pending_subscriptions.address_transactions:
             await self._subscribe_to_address_transactions(address)
-        if pending_subscriptions.entrypoint_transactions:
-            await self._subscribe_to_entrypoint_transactions(pending_subscriptions.entrypoint_transactions)
         if pending_subscriptions.originations:
             await self._subscribe_to_originations()
         if pending_subscriptions.head:
@@ -555,19 +547,6 @@ class TzktDatasource(IndexDatasource):
             [
                 {
                     'address': address,
-                    'types': 'transaction',
-                }
-            ],
-        )
-
-    async def _subscribe_to_entrypoint_transactions(self, entrypoints: Set[str]) -> None:
-        """Subscribe to contract's operations on established WS connection"""
-        self._logger.info('Subscribing to %s transactions', entrypoints)
-        await self._send(
-            'SubscribeToOperations',
-            [
-                {
-                    'entrypoints': tuple(entrypoints),
                     'types': 'transaction',
                 }
             ],

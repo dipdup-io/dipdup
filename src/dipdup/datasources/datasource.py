@@ -88,7 +88,6 @@ class IndexDatasource(Datasource, AsyncIOEventEmitter):
 @dataclass
 class Subscriptions:
     address_transactions: Set[str] = Field(default_factory=set)
-    entrypoint_transactions: Set[str] = Field(default_factory=set)
     originations: bool = False
     head: bool = False
     big_maps: DefaultDict[str, Set[str]] = Field(default_factory=partial(defaultdict, set))
@@ -96,7 +95,6 @@ class Subscriptions:
     def get_pending(self, active_subscriptions: 'Subscriptions') -> 'Subscriptions':
         return Subscriptions(
             address_transactions=self.address_transactions.difference(active_subscriptions.address_transactions),
-            entrypoint_transactions=self.entrypoint_transactions.difference(active_subscriptions.entrypoint_transactions),
             originations=not active_subscriptions.originations,
             head=not active_subscriptions.head,
             big_maps=defaultdict(set, {k: self.big_maps[k] for k in set(self.big_maps) - set(active_subscriptions.big_maps)}),
@@ -110,9 +108,6 @@ class SubscriptionManager:
 
     def add_address_transaction_subscription(self, address: str) -> None:
         self._subscriptions.address_transactions.add(address)
-
-    def add_entrypoint_transaction_subscription(self, entrypoint: str) -> None:
-        self._subscriptions.entrypoint_transactions.add(entrypoint)
 
     def add_origination_subscription(self) -> None:
         self._subscriptions.originations = True

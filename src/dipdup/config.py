@@ -555,8 +555,6 @@ class OperationIndexConfig(IndexConfig):
     :param datasource: Alias of index datasource in `datasources` section
     :param contracts: Aliases of contracts being indexed in `contracts` section
     :param stateless: Makes index dynamic. DipDup will synchronize index from the first block on every run
-    :param subscribe_by_entrypoints: Subscribe to operations by list of entrypoints instead of per-address in dynamic indexes (factories).
-        Helps to reduce total number of subscriptions at a cost of additional computations and traffic.
     :param first_block: First block to process (use with `--oneshot` run argument)
     :param last_block: Last block to process (use with `--oneshot` run argument)
     :param handlers: List of indexer handlers
@@ -568,7 +566,6 @@ class OperationIndexConfig(IndexConfig):
     contracts: Optional[List[Union[str, ContractConfig]]] = None
 
     stateless: bool = False
-    subscribe_by_entrypoints: bool = False
     first_block: int = 0
     last_block: int = 0
 
