@@ -39,8 +39,16 @@ build:
 	poetry build
 
 image:
-	docker build . -t dipdup:${TAG}
-	docker build . -t dipdup:${TAG}-pytezos --build-arg PLUGINS=pytezos
+	docker build . -t dipdup/dipdup:${TAG}
+	docker build . -t dipdup/dipdup:${TAG}-pytezos --build-arg PLUGINS=pytezos
+
+push-image:
+	docker tag dipdup/dipdup:${TAG} dipdup/dipdup:latest
+	docker tag dipdup/dipdup:${TAG}-pytezos dipdup/dipdup:latest-pytezos
+	docker push dipdup/dipdup:${TAG}
+	docker push dipdup/dipdup:${TAG}-pytezos
+	docker push dipdup/dipdup:latest
+	docker push dipdup/dipdup:latest-pytezos
 
 release-patch:
 	bumpversion patch
