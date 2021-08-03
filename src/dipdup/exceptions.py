@@ -1,7 +1,7 @@
 import traceback
 from abc import ABC, abstractmethod
 from pprint import pformat
-from typing import Any, Optional, Type
+from typing import Any, Iterable, Optional, Type
 
 from tabulate import tabulate
 
@@ -60,6 +60,11 @@ Invalid data:
 
 Error context:
 {error_context}
+"""
+
+_missing_origination_error = """Contract `{address}` has been originated with blockchain migration instead of operation.
+
+The following `OperationData` fields are not available (since there's no real operation): {missing_fields}.
 """
 
 
@@ -174,4 +179,19 @@ class InvalidDataError(DipDupError):
             invalid_data=pformat(self.data, compact=True),
             type_name=self.type_name,
             error_context=pformat(self.error_context, compact=True),
+        )
+
+
+class MissingOriginationError(DipDupError):
+    """Contract has been originated with blockchain migration"""
+
+    def __init__(self, address: str, missing_fields: Iterable[str]) -> None:
+        super().__init__(None)
+        self.address = address
+        self.missing_fields = missing_fields
+
+    def format_help(self) -> str:
+        return _missing_origination_error.format(
+            address=self.address,
+            missing_fields=', '.join(self.missing_fields),
         )

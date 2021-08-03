@@ -1,10 +1,13 @@
 import asyncio
 import logging
+from collections import defaultdict
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from types import MethodType
+from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
+from aiohttp import ClientResponseError
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
 from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
@@ -20,8 +23,9 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import IndexDatasource, SubscriptionManager
 from dipdup.datasources.tzkt.enums import TzktMessageType
+from dipdup.exceptions import MissingOriginationError
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData
-from dipdup.utils import split_by_chunks
+from dipdup.utils import groupby, split_by_chunks
 
 OperationID = int
 
@@ -42,6 +46,15 @@ OPERATION_FIELDS = (
     "status",
     "hasInternals",
     "diffs",
+)
+ORIGINATION_MIGRATION_FIELDS = (
+    "id",
+    "level",
+    "timestamp",
+    "storage",
+    "diffs",
+    "account",
+    "balanceChange",
 )
 ORIGINATION_OPERATION_FIELDS = (
     *OPERATION_FIELDS,
@@ -83,6 +96,7 @@ class OperationFetcher:
         transaction_addresses: Set[str],
         origination_addresses: Set[str],
         cache: bool = False,
+        migration_originations: List[OperationData] = None,
     ) -> None:
         self._datasource = datasource
         self._first_level = first_level
@@ -96,7 +110,12 @@ class OperationFetcher:
         self._heads: Dict[OperationFetcherChannel, int] = {}
         self._offsets: Dict[OperationFetcherChannel, int] = {}
         self._fetched: Dict[OperationFetcherChannel, bool] = {}
-        self._operations: Dict[int, List[OperationData]] = {}
+
+        self._operations: DefaultDict[int, List[OperationData]]
+        if migration_originations:
+            self._operations = groupby(migration_originations, lambda op: op.level)
+        else:
+            self._operations = defaultdict(list)
 
     def _get_operations_head(self, operations: List[OperationData]) -> int:
         """Get latest block level (head) of sorted operations batch"""
@@ -377,6 +396,32 @@ class TzktDatasource(IndexDatasource):
             url=f'v1/blocks/{level}',
         )
         return self.convert_block(block_json)
+
+    async def get_migration_originations(self) -> List[OperationData]:
+        """Get contracts originated from migrations"""
+        self._logger.info('Fetching contracts originated with migrations')
+        # NOTE: Empty unwrapped request to ensure API supports migration originations
+        try:
+            await self._http._request(
+                'get',
+                url='v1/operations/migrations',
+                params={
+                    'kind': 'origination',
+                    'limit': 0,
+                },
+            )
+        except ClientResponseError:
+            return []
+
+        raw_migrations = await self._http.request(
+            'get',
+            url='v1/operations/migrations',
+            params={
+                'kind': 'origination',
+                'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
+            },
+        )
+        return [self.convert_migration_origination(m) for m in raw_migrations]
 
     async def get_originations(
         self, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
@@ -718,6 +763,45 @@ class TzktDatasource(IndexDatasource):
             storage=storage,
             diffs=operation_json.get('diffs'),
         )
+
+    @classmethod
+    def convert_migration_origination(cls, migration_origination_json: Dict[str, Any]) -> OperationData:
+        """Convert raw migration message from REST into dataclass"""
+        storage = migration_origination_json.get('storage')
+        # FIXME: Plain storage, has issues in codegen: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
+        if not isinstance(storage, Dict):
+            storage = {}
+
+        missing_fields = dict(
+            hash='',
+            counter=0,
+            sender_address='',
+            target_address=None,
+            initiator_address=None,
+        )
+        fake_operation_data = OperationData(
+            type='origination',
+            id=migration_origination_json['id'],
+            level=migration_origination_json['level'],
+            timestamp=cls._parse_timestamp(migration_origination_json['timestamp']),
+            block=migration_origination_json.get('block'),
+            originated_contract_address=migration_origination_json['account']['address'],
+            originated_contract_alias=migration_origination_json['account'].get('alias'),
+            amount=migration_origination_json['balanceChange'],
+            storage=storage,
+            diffs=migration_origination_json.get('diffs'),
+            status='applied',
+            has_internals=False,
+            **missing_fields,  # type: ignore
+        )
+
+        def __getattribute__(self, name):
+            if name in missing_fields:
+                raise MissingOriginationError(fake_operation_data.originated_contract_address, missing_fields.keys())
+            return super().__getattr__()
+
+        fake_operation_data.__getattribute__ = MethodType(__getattribute__, fake_operation_data)  # type: ignore
+        return fake_operation_data
 
     @classmethod
     def convert_big_map(cls, big_map_json: Dict[str, Any]) -> BigMapData:

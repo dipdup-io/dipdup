@@ -114,9 +114,10 @@ class OperationIndex(Index):
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[int, List[OperationData], Optional[HeadBlockData]]] = deque()
-        self._contract_hashes: Dict[str, Tuple[str, str]] = {}
+        self._contract_hashes: Dict[str, Tuple[int, int]] = {}
         self._rollback_level: Optional[int] = None
         self._last_hashes: Set[str] = set()
+        self._migration_originations: Optional[Dict[str, OperationData]] = None
 
     def push(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
         self._queue.append((level, operations, block))
@@ -148,6 +149,11 @@ class OperationIndex(Index):
         transaction_addresses = await self._get_transaction_addresses()
         origination_addresses = await self._get_origination_addresses()
 
+        migration_originations = await self._datasource.get_migration_originations()
+        for op in migration_originations:
+            code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
+            op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
+
         fetcher = OperationFetcher(
             datasource=self._datasource,
             first_level=first_level,
@@ -155,6 +161,7 @@ class OperationIndex(Index):
             transaction_addresses=transaction_addresses,
             origination_addresses=origination_addresses,
             cache=cache,
+            migration_originations=migration_originations,
         )
 
         async for level, operations in fetcher.fetch_operations_by_level():
@@ -377,7 +384,7 @@ class OperationIndex(Index):
                             addresses.add(address)
         return addresses
 
-    async def _get_contract_hashes(self, address: str) -> Tuple[str, str]:
+    async def _get_contract_hashes(self, address: str) -> Tuple[int, int]:
         if address not in self._contract_hashes:
             summary = await self._datasource.get_contract_summary(address)
             self._contract_hashes[address] = (summary['codeHash'], summary['typeHash'])
