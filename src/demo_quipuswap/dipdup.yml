@@ -166,4 +166,4 @@ indexes:
       dex_contract: hdao_dex_mainnet
       token_contract: hdao_token_mainnet
       symbol: hDAO
-      decimals: 6
+      # decimals: 6

@@ -13,10 +13,6 @@ async def on_fa2_withdraw_profit(
     withdraw_profit: Transaction[WithdrawProfitParameter, QuipuFa2Storage],
     transaction_0: Optional[OperationData] = None,
 ) -> None:
-
-    if ctx.template_values is None:
-        raise Exception('This index must be templated')
-
     symbol = ctx.template_values['symbol']
     trader = withdraw_profit.data.sender_address
 

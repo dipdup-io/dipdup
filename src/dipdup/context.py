@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sys
 from pprint import pformat
@@ -8,7 +10,7 @@ from tortoise.transactions import in_transaction
 
 from dipdup.config import ContractConfig, DipDupConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig
 from dipdup.datasources.datasource import Datasource
-from dipdup.exceptions import ContractAlreadyExistsError, IndexAlreadyExistsError
+from dipdup.exceptions import ConfigurationError, ContractAlreadyExistsError, IndexAlreadyExistsError
 from dipdup.utils import FormattedLogger
 
 
@@ -69,6 +71,18 @@ class DipDupContext:
         await self.restart()
 
 
+class TemplateValuesDict(dict):
+    def __init__(self, ctx, **kwargs):
+        self.ctx = ctx
+        super().__init__(**kwargs)
+
+    def __getitem__(self, key):
+        try:
+            return dict.__getitem__(self, key)
+        except KeyError as e:
+            raise ConfigurationError(f'Index `{self.ctx.index_config.name}` requires `{key}` template value to be set') from e
+
+
 class HandlerContext(DipDupContext):
     """Common handler context."""
 
@@ -77,13 +91,13 @@ class HandlerContext(DipDupContext):
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
         logger: FormattedLogger,
-        template_values: Optional[Dict[str, str]],
+        template_values: Dict[str, str],
         datasource: Datasource,
         index_config: IndexConfig,
     ) -> None:
         super().__init__(datasources, config)
         self.logger = logger
-        self.template_values = template_values
+        self.template_values = TemplateValuesDict(self, **template_values)
         self.datasource = datasource
         self.index_config = index_config
 

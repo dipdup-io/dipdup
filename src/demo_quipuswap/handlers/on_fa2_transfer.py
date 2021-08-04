@@ -9,9 +9,6 @@ async def on_fa2_transfer(
     ctx: HandlerContext,
     transfer: Transaction[TransferParameter, QuipuFa2Storage],
 ) -> None:
-    if ctx.template_values is None:
-        raise Exception('This index must be templated')
-
     transfer_parameter = transfer.parameter.__root__[0]
 
     symbol = ctx.template_values['symbol']

@@ -9,9 +9,6 @@ async def on_fa12_transfer(
     ctx: HandlerContext,
     transfer: Transaction[TransferParameter, QuipuFa12Storage],
 ) -> None:
-    if ctx.template_values is None:
-        raise Exception('This index must be templated')
-
     symbol = ctx.template_values['symbol']
     from_address = transfer.parameter.from_
     to_address = transfer.parameter.to
