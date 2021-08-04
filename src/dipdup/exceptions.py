@@ -62,11 +62,6 @@ Error context:
 {error_context}
 """
 
-_missing_origination_error = """Contract `{address}` has been originated with blockchain migration instead of operation.
-
-The following `OperationData` fields are not available (since there's no real operation): {missing_fields}.
-"""
-
 
 class DipDupError(ABC, Exception):
     exit_code = 1
