@@ -23,6 +23,8 @@ from tortoise.fields import DecimalField
 from tortoise.models import Model
 from tortoise.transactions import in_transaction
 
+from dipdup.exceptions import HandlerImportError
+
 _logger = logging.getLogger('dipdup.utils')
 
 
@@ -221,3 +223,11 @@ def write(path: str, content: str, overwrite: bool = False) -> bool:
     with open(path, 'w') as file:
         file.write(content)
     return True
+
+
+def import_from(module: str, obj: str) -> Any:
+    """Import object from module, raise HandlerImportError on failure"""
+    try:
+        return getattr(importlib.import_module(module), obj)
+    except (ImportError, AttributeError) as e:
+        raise HandlerImportError(module, obj) from e
