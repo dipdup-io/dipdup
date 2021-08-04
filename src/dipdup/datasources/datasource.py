@@ -3,6 +3,7 @@ from collections import defaultdict
 from copy import copy
 from enum import Enum
 from functools import partial
+import logging
 from typing import Awaitable, DefaultDict, List, Optional, Protocol, Set
 
 from pydantic.dataclasses import dataclass
@@ -12,6 +13,10 @@ from pyee import AsyncIOEventEmitter  # type: ignore
 from dipdup.config import HTTPConfig
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData, HeadBlockData, OperationData
+
+
+# NOTE: Since there's no other index datasource
+_logger = logging.getLogger('dipdup.tzkt')
 
 
 class EventType(Enum):
@@ -100,11 +105,15 @@ class Subscriptions:
             big_maps=defaultdict(set, {k: self.big_maps[k] for k in set(self.big_maps) - set(active_subscriptions.big_maps)}),
         )
 
-
 class SubscriptionManager:
     def __init__(self) -> None:
         self._subscriptions: Subscriptions = Subscriptions()
         self._active_subscriptions: Subscriptions = Subscriptions()
+
+    def status(self, pending: bool = False) -> str:
+        subs = self.get_pending() if pending else self._active_subscriptions
+        big_maps_len = sum([len(v) for v in subs.big_maps.values()])
+        return f'{len(subs.address_transactions)} contracts, {int(subs.originations)} originations, {int(subs.head)} head, {big_maps_len} big maps'
 
     def add_address_transaction_subscription(self, address: str) -> None:
         self._subscriptions.address_transactions.add(address)

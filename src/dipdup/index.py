@@ -149,7 +149,7 @@ class OperationIndex(Index):
         transaction_addresses = await self._get_transaction_addresses()
         origination_addresses = await self._get_origination_addresses()
 
-        migration_originations = await self._datasource.get_migration_originations()
+        migration_originations = await self._datasource.get_migration_originations(first_level)
         for op in migration_originations:
             code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
             op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash

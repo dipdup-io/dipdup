@@ -395,7 +395,7 @@ class TzktDatasource(IndexDatasource):
         )
         return self.convert_block(block_json)
 
-    async def get_migration_originations(self) -> List[OperationData]:
+    async def get_migration_originations(self, first_level: int = 0) -> List[OperationData]:
         """Get contracts originated from migrations"""
         self._logger.info('Fetching contracts originated with migrations')
         # NOTE: Empty unwrapped request to ensure API supports migration originations
@@ -416,6 +416,7 @@ class TzktDatasource(IndexDatasource):
             url='v1/operations/migrations',
             params={
                 'kind': 'origination',
+                'level.gt': first_level,
                 'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
             },
         )
@@ -563,6 +564,9 @@ class TzktDatasource(IndexDatasource):
             return
 
         pending_subscriptions = self._subscriptions.get_pending()
+        self._logger.info('Subscribing to channels')
+        self._logger.info('Active: %s', self._subscriptions.status(False))
+        self._logger.info('Pending: %s', self._subscriptions.status(True))
 
         for address in pending_subscriptions.address_transactions:
             await self._subscribe_to_address_transactions(address)
