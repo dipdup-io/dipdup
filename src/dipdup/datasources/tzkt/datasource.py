@@ -772,13 +772,6 @@ class TzktDatasource(IndexDatasource):
         if not isinstance(storage, Dict):
             storage = {}
 
-        missing_fields = dict(
-            hash='',
-            counter=0,
-            sender_address='',
-            target_address=None,
-            initiator_address=None,
-        )
         fake_operation_data = OperationData(
             type='origination',
             id=migration_origination_json['id'],
@@ -792,15 +785,12 @@ class TzktDatasource(IndexDatasource):
             diffs=migration_origination_json.get('diffs'),
             status='applied',
             has_internals=False,
-            **missing_fields,  # type: ignore
+            hash='[none]',
+            counter=0,
+            sender_address='[none]',
+            target_address=None,
+            initiator_address=None,
         )
-
-        def __getattribute__(self, name):
-            if name in missing_fields:
-                raise MissingOriginationError(fake_operation_data.originated_contract_address, missing_fields.keys())
-            return super().__getattr__()
-
-        fake_operation_data.__getattribute__ = MethodType(__getattribute__, fake_operation_data)  # type: ignore
         return fake_operation_data
 
     @classmethod

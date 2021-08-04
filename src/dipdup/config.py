@@ -277,12 +277,15 @@ class StorageTypeMixin:
 
     def initialize_storage_cls(self, package: str, module_name: str) -> None:
         _logger.info('Registering `%s` storage type', module_name)
-        storage_type_module = importlib.import_module(f'{package}.types.{module_name}.storage')
-        storage_type_cls = getattr(
-            storage_type_module,
-            snake_to_pascal(module_name) + 'Storage',
-        )
-        self.storage_type_cls = storage_type_cls
+        # TODO: import_from util
+        cls_name = snake_to_pascal(module_name) + 'Storage'
+        module_name = f'{package}.types.{module_name}.storage'
+        try:
+            storage_type_module = importlib.import_module(module_name)
+            storage_type_cls = getattr(storage_type_module, cls_name)
+            self.storage_type_cls = storage_type_cls
+        except (ModuleNotFoundError, AttributeError) as e:
+            raise HandlerImportError(module_name, cls_name) from e
 
 
 @dataclass
@@ -322,10 +325,15 @@ class ParameterTypeMixin:
 
     def initialize_parameter_cls(self, package: str, module_name: str, entrypoint: str) -> None:
         _logger.info('Registering parameter type for entrypoint `%s`', entrypoint)
-        parameter_type_module = importlib.import_module(f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}')
-        parameter_type_cls = getattr(parameter_type_module, snake_to_pascal(entrypoint) + 'Parameter')
-        self.parameter_type_cls = parameter_type_cls
-
+        # TODO: import_from util
+        module_name = f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}'
+        cls_name = snake_to_pascal(entrypoint) + 'Parameter'
+        try:
+            parameter_type_module = importlib.import_module(module_name)
+            parameter_type_cls = getattr(parameter_type_module, cls_name)
+            self.parameter_type_cls = parameter_type_cls
+        except (ModuleNotFoundError, AttributeError) as e:
+            raise HandlerImportError(module_name, cls_name) from e
 
 @dataclass
 class TransactionIdMixin:
@@ -751,27 +759,21 @@ class DipDupConfig:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
 
     def get_contract(self, name: str) -> ContractConfig:
-        if name.startswith('<') and name.endswith('>'):
-            raise ConfigurationError(f'`{name}` variable of index template is not set')
-
+        self._check_name(name)
         try:
             return self.contracts[name]
         except KeyError as e:
             raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
 
     def get_datasource(self, name: str) -> DatasourceConfigT:
-        if name.startswith('<') and name.endswith('>'):
-            raise ConfigurationError(f'`{name}` variable of index template is not set')
-
+        self._check_name(name)
         try:
             return self.datasources[name]
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
 
     def get_template(self, name: str) -> IndexConfigTemplateT:
-        if name.startswith('<') and name.endswith('>'):
-            raise ConfigurationError(f'`{name}` variable of index template is not set')
-
+        self._check_name(name)
         try:
             return self.templates[name]
         except KeyError as e:
@@ -811,6 +813,11 @@ class DipDupConfig:
                 new_index_config.template_values = index_config.values
                 new_index_config.parent = index_config.parent
                 self.indexes[index_name] = new_index_config
+
+    def _check_name(self, name: str) -> None:
+        variable = name.split('<')[-1].split('>')[0]
+        if variable != name:
+            raise ConfigurationError(f'`{variable}` variable of index template is not set')
 
     def _pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
