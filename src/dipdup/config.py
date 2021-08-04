@@ -335,6 +335,7 @@ class ParameterTypeMixin:
         except (ModuleNotFoundError, AttributeError) as e:
             raise HandlerImportError(module_name, cls_name) from e
 
+
 @dataclass
 class TransactionIdMixin:
     """`transaction_id` field"""

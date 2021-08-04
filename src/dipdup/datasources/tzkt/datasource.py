@@ -4,7 +4,6 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from types import MethodType
 from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
@@ -23,7 +22,6 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import IndexDatasource, SubscriptionManager
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.exceptions import MissingOriginationError
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData
 from dipdup.utils import groupby, split_by_chunks
 
