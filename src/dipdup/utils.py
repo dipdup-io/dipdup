@@ -165,20 +165,21 @@ def groupby(seq: Sequence[_T], key: Callable[[Any], _TT]) -> DefaultDict[_TT, Li
 
 
 class FormattedLogger(Logger):
-    def __init__(
-        self,
-        name: str,
-        fmt: Optional[str] = None,
-    ):
-        logger = logging.getLogger(name)
-        self.__class__ = type(FormattedLogger.__name__, (self.__class__, logger.__class__), {})
-        self.__dict__ = logger.__dict__
+    """Logger wrapper with additional formatting"""
+
+    def __init__(self, name: str, fmt: Optional[str] = None) -> None:
+        self.logger = logging.getLogger(name)
         self.fmt = fmt
+
+    def __getattr__(self, name: str) -> Callable:
+        if name == '_log':
+            return self._log
+        return getattr(self.logger, name)
 
     def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, stacklevel=1):
         if self.fmt:
             msg = self.fmt.format(msg)
-        super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+        self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
 
 def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
