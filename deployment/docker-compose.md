@@ -37,7 +37,7 @@ services:
     depends_on:
       - db
       - hasura
-    restart: always
+    restart: "no"
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
@@ -90,6 +90,7 @@ database:
   user: dipdup
   password: ${POSTGRES_PASSWORD:-changeme}
   database: dipdup
+  schema_name: demo
 
 hasura:
   url: http://hasura:8080
