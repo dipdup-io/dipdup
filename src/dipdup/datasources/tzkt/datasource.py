@@ -555,8 +555,11 @@ class TzktDatasource(IndexDatasource):
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
         self._logger.info('Connected to server')
-        self._subscriptions.reset()
         await self.subscribe()
+
+    async def _on_disconnect(self) -> None:
+        self._logger.info('Disconnected from server')
+        self._subscriptions.reset()
 
     async def subscribe(self) -> None:
         """Subscribe to all required channels"""
