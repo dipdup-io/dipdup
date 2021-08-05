@@ -170,6 +170,8 @@ class OperationIndex(Index):
             await self._process_level_operations(level, operations)
 
         state.level = last_level  # type: ignore
+        # FIXME: Block hashes are not available during synchronization
+        state.hash = (await self._datasource.get_block(last_level)).hash  # type: ignore
         await state.save()
         self._logger.info('Index is synchronized to level %s', last_level)
 
@@ -439,6 +441,8 @@ class BigMapIndex(Index):
             await self._process_level_big_maps(level, big_maps)
 
         state.level = last_level  # type: ignore
+        # FIXME: Block hashes are not available during synchronization
+        state.hash = (await self._datasource.get_block(last_level)).hash  # type: ignore
         await state.save()
         self._logger.info('Index is synchronized to level %s', last_level)
 
