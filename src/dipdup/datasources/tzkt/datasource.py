@@ -20,7 +20,7 @@ from dipdup.config import (
     OperationHandlerOriginationPatternConfig,
     OperationIndexConfig,
 )
-from dipdup.datasources.datasource import IndexDatasource, SubscriptionManager
+from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData
 from dipdup.utils import groupby, split_by_chunks
@@ -292,13 +292,13 @@ class TzktDatasource(IndexDatasource):
         self,
         url: str,
         http_config: Optional[HTTPConfig] = None,
-        realtime: bool = True,
     ) -> None:
         super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.tzkt')
-        self._subscriptions: SubscriptionManager = SubscriptionManager()
 
-        self._realtime: bool = realtime
+        self._transaction_subscriptions: Set[str] = set()
+        self._origination_subscriptions: bool = False
+        self._big_map_subscriptions: Dict[str, Set[str]] = {}
         self._client: Optional[BaseHubConnection] = None
 
         self._block: Optional[HeadBlockData] = None
@@ -502,22 +502,24 @@ class TzktDatasource(IndexDatasource):
 
         if isinstance(index_config, OperationIndexConfig):
             for contract_config in index_config.contracts or []:
-                self._subscriptions.add_address_transaction_subscription(cast(ContractConfig, contract_config).address)
-
+                self._transaction_subscriptions.add(cast(ContractConfig, contract_config).address)
             for handler_config in index_config.handlers:
                 for pattern_config in handler_config.pattern:
                     if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        self._subscriptions.add_origination_subscription()
+                        self._origination_subscriptions = True
 
         elif isinstance(index_config, BigMapIndexConfig):
             for big_map_handler_config in index_config.handlers:
                 address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
-                self._subscriptions.add_big_map_subscription(address, set(path))
+                if address not in self._big_map_subscriptions:
+                    self._big_map_subscriptions[address] = set()
+                if path not in self._big_map_subscriptions[address]:
+                    self._big_map_subscriptions[address].add(path)
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-        await self.subscribe()
+        await self._on_connect()
 
     def _get_client(self) -> BaseHubConnection:
         """Create SignalR client, register message callbacks"""
@@ -554,33 +556,18 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
-        self._logger.info('Connected to server')
-        await self.subscribe()
-
-    async def _on_disconnect(self) -> None:
-        self._logger.info('Disconnected from server')
-        self._subscriptions.reset()
-
-    async def subscribe(self) -> None:
-        """Subscribe to all required channels"""
-        if not self._realtime:
+        if self._get_client().transport.state != ConnectionState.connected:
             return
 
-        pending_subscriptions = self._subscriptions.get_pending()
-        self._logger.info('Subscribing to channels')
-        self._logger.info('Active: %s', self._subscriptions.status(False))
-        self._logger.info('Pending: %s', self._subscriptions.status(True))
-
-        for address in pending_subscriptions.address_transactions:
-            await self._subscribe_to_address_transactions(address)
-        if pending_subscriptions.originations:
+        self._logger.info('Connected to server')
+        await self._subscribe_to_head()
+        for address in self._transaction_subscriptions:
+            await self._subscribe_to_transactions(address)
+        # NOTE: All originations are passed to matcher
+        if self._origination_subscriptions:
             await self._subscribe_to_originations()
-        if pending_subscriptions.head:
-            await self._subscribe_to_head()
-        for address, paths in pending_subscriptions.big_maps.items():
+        for address, paths in self._big_map_subscriptions.items():
             await self._subscribe_to_big_maps(address, paths)
-
-        self._subscriptions.commit()
 
     # NOTE: Pay attention: this is not a pyee callback
     def _on_error(self, message: CompletionMessage) -> NoReturn:
@@ -589,7 +576,7 @@ class TzktDatasource(IndexDatasource):
 
     # TODO: Catch exceptions from pyee 'error' channel
 
-    async def _subscribe_to_address_transactions(self, address: str) -> None:
+    async def _subscribe_to_transactions(self, address: str) -> None:
         """Subscribe to contract's operations on established WS connection"""
         self._logger.info('Subscribing to %s transactions', address)
         await self._send(

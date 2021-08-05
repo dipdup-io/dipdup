@@ -188,7 +188,7 @@ class DipDup:
 
     async def init(self) -> None:
         """Create new or update existing dipdup project"""
-        await self._create_datasources(realtime=False)
+        await self._create_datasources()
 
         async with AsyncExitStack() as stack:
             for datasource in self._datasources.values():
@@ -271,7 +271,6 @@ class DipDup:
                 datasource = TzktDatasource(
                     url=datasource_config.url,
                     http_config=datasource_config.http,
-                    realtime=realtime,
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
