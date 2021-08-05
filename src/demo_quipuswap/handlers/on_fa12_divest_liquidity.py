@@ -15,9 +15,6 @@ async def on_fa12_divest_liquidity(
     transfer: Transaction[TransferParameter, Fa12TokenStorage],
     transaction_1: OperationData,
 ) -> None:
-    if ctx.template_values is None:
-        raise Exception('This index must be templated')
-
     storage = divest_liquidity.storage
 
     decimals = int(ctx.template_values['decimals'])

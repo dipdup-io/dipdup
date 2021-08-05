@@ -516,10 +516,10 @@ class OperationHandlerConfig(HandlerConfig):
 @dataclass
 class TemplateValuesMixin:
     def __post_init_post_parse__(self) -> None:
-        self._template_values: Optional[Dict[str, str]] = None
+        self._template_values: Dict[str, str] = {}
 
     @property
-    def template_values(self) -> Optional[Dict[str, str]]:
+    def template_values(self) -> Dict[str, str]:
         return self._template_values
 
     @template_values.setter
