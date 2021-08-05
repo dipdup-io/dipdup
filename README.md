@@ -19,7 +19,7 @@ pip install dipdup
 Make a new folder and create a configuration file `dipdup.yml` inside with the following content:
 
 ```yaml
-spec_version: 0.1
+spec_version: 1.1
 package: demo_tzbtc
 
 database:
