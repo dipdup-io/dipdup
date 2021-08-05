@@ -36,6 +36,7 @@ _logger = logging.getLogger('dipdup.config')
 class OperationType(Enum):
     transaction = 'transaction'
     origination = 'origination'
+    migration = 'migration'
 
 
 @dataclass
