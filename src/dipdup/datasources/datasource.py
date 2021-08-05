@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from enum import Enum
+from logging import Logger
 from typing import Awaitable, List, Optional, Protocol
 
 from pyee import AsyncIOEventEmitter  # type: ignore
@@ -37,6 +38,8 @@ class HeadCallback(Protocol):
 
 
 class Datasource(HTTPGateway):
+    _logger: Logger
+
     @abstractmethod
     async def run(self) -> None:
         ...

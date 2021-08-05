@@ -285,6 +285,7 @@ class DipDup:
             else:
                 raise NotImplementedError
 
+            datasource._logger = FormattedLogger(datasource._logger.name, datasource_config.name + ': {}')
             datasource.set_user_agent(self._config.package)
             self._datasources[name] = datasource
             self._datasources_by_config[datasource_config] = datasource
