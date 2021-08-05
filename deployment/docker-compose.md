@@ -21,7 +21,7 @@ RUN poetry config virtualenvs.create false && poetry install --no-dev
 COPY . /demo
 
 ENTRYPOINT ["poetry", "run", "dipdup"]
-COMMAND ["-c", "dipdup.yml", "run"]
+CMD ["-c", "dipdup.yml", "run"]
 ```
 {% endtab %}
 {% endtabs %}
@@ -36,6 +36,7 @@ services:
     build: .
     depends_on:
       - db
+      - hasura
     restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -57,7 +58,7 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v1.3.3
+    image: hasura/graphql-engine:v2.0.1
     ports:
       - 127.0.0.1:42000:8080
     depends_on:
@@ -93,6 +94,9 @@ database:
 hasura:
   url: http://hasura:8080
   admin_secret: ${ADMIN_SECRET:-changeme}
+  allow_aggregations: False
+  camel_case: true
+  select_limit: 100
 ```
 
 Note the hostnames \(will be resolved in the docker network\) and environment variables \(will be expanded by DipDup\).
