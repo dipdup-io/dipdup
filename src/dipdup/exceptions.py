@@ -144,7 +144,7 @@ class ContractAlreadyExistsError(DipDupError):
         self.address = address
 
     def format_help(self) -> str:
-        contracts_table = tabulate([(name, c.address) for name, c in self.ctx.config.contracts.items()])
+        contracts_table = tabulate([(c.name, c.address) for c in self.ctx.config.contracts.values()], tablefmt='plain')
         return _contract_already_exists_error.format(name=self.name, address=self.address, contracts_table=contracts_table)
 
 
@@ -156,7 +156,7 @@ class IndexAlreadyExistsError(DipDupError):
         self.name = name
 
     def format_help(self) -> str:
-        indexes_table = tabulate([(name,) for name in self.ctx.config.indexes.values()])
+        indexes_table = tabulate([(c.name, c.kind) for c in self.ctx.config.indexes.values()], tablefmt='plain')
         return _index_already_exists_error.format(name=self.name, indexes_table=indexes_table)
 
 

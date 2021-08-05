@@ -19,8 +19,8 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
-from dipdup.exceptions import ConfigurationError, HandlerImportError
-from dipdup.utils import pascal_to_snake, snake_to_pascal
+from dipdup.exceptions import ConfigurationError
+from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
 
 ROLLBACK_HANDLER = 'on_rollback'
 CONFIGURE_HANDLER = 'on_configure'
@@ -36,6 +36,7 @@ _logger = logging.getLogger('dipdup.config')
 class OperationType(Enum):
     transaction = 'transaction'
     origination = 'origination'
+    migration = 'migration'
 
 
 @dataclass
@@ -128,7 +129,6 @@ class NameMixin:
 class ContractConfig(NameMixin):
     """Contract config
 
-    :param network: Corresponding network alias, only for sanity checks
     :param address: Contract address
     :param typename: User-defined alias for the contract script
     """
@@ -277,12 +277,9 @@ class StorageTypeMixin:
 
     def initialize_storage_cls(self, package: str, module_name: str) -> None:
         _logger.info('Registering `%s` storage type', module_name)
-        storage_type_module = importlib.import_module(f'{package}.types.{module_name}.storage')
-        storage_type_cls = getattr(
-            storage_type_module,
-            snake_to_pascal(module_name) + 'Storage',
-        )
-        self.storage_type_cls = storage_type_cls
+        cls_name = snake_to_pascal(module_name) + 'Storage'
+        module_name = f'{package}.types.{module_name}.storage'
+        self.storage_type_cls = import_from(module_name, cls_name)
 
 
 @dataclass
@@ -322,9 +319,9 @@ class ParameterTypeMixin:
 
     def initialize_parameter_cls(self, package: str, module_name: str, entrypoint: str) -> None:
         _logger.info('Registering parameter type for entrypoint `%s`', entrypoint)
-        parameter_type_module = importlib.import_module(f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}')
-        parameter_type_cls = getattr(parameter_type_module, snake_to_pascal(entrypoint) + 'Parameter')
-        self.parameter_type_cls = parameter_type_cls
+        module_name = f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}'
+        cls_name = snake_to_pascal(entrypoint) + 'Parameter'
+        self.parameter_type_cls = import_from(module_name, cls_name)
 
 
 @dataclass
@@ -751,27 +748,21 @@ class DipDupConfig:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
 
     def get_contract(self, name: str) -> ContractConfig:
-        if name.startswith('<') and name.endswith('>'):
-            raise ConfigurationError(f'`{name}` variable of index template is not set')
-
+        self._check_name(name)
         try:
             return self.contracts[name]
         except KeyError as e:
             raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
 
     def get_datasource(self, name: str) -> DatasourceConfigT:
-        if name.startswith('<') and name.endswith('>'):
-            raise ConfigurationError(f'`{name}` variable of index template is not set')
-
+        self._check_name(name)
         try:
             return self.datasources[name]
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
 
     def get_template(self, name: str) -> IndexConfigTemplateT:
-        if name.startswith('<') and name.endswith('>'):
-            raise ConfigurationError(f'`{name}` variable of index template is not set')
-
+        self._check_name(name)
         try:
             return self.templates[name]
         except KeyError as e:
@@ -784,18 +775,14 @@ class DipDupConfig:
         return datasource
 
     def get_rollback_fn(self) -> Type:
-        try:
-            module_name = f'{self.package}.handlers.{ROLLBACK_HANDLER}'
-            return getattr(importlib.import_module(module_name), ROLLBACK_HANDLER)
-        except (ModuleNotFoundError, AttributeError) as e:
-            raise HandlerImportError(module=module_name, obj=ROLLBACK_HANDLER) from e
+        module_name = f'{self.package}.handlers.{ROLLBACK_HANDLER}'
+        fn_name = ROLLBACK_HANDLER
+        return import_from(module_name, fn_name)
 
     def get_configure_fn(self) -> Type:
-        try:
-            module_name = f'{self.package}.handlers.{CONFIGURE_HANDLER}'
-            return getattr(importlib.import_module(module_name), CONFIGURE_HANDLER)
-        except (ModuleNotFoundError, AttributeError) as e:
-            raise HandlerImportError(module=module_name, obj=CONFIGURE_HANDLER) from e
+        module_name = f'{self.package}.handlers.{CONFIGURE_HANDLER}'
+        fn_name = CONFIGURE_HANDLER
+        return import_from(module_name, fn_name)
 
     def resolve_index_templates(self) -> None:
         _logger.info('Substituting index templates')
@@ -811,6 +798,11 @@ class DipDupConfig:
                 new_index_config.template_values = index_config.values
                 new_index_config.parent = index_config.parent
                 self.indexes[index_name] = new_index_config
+
+    def _check_name(self, name: str) -> None:
+        variable = name.split('<')[-1].split('>')[0]
+        if variable != name:
+            raise ConfigurationError(f'`{variable}` variable of index template is not set')
 
     def _pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
@@ -948,23 +940,15 @@ class DipDupConfig:
 
     def _initialize_handler_callback(self, handler_config: HandlerConfig) -> None:
         _logger.info('Registering handler callback `%s`', handler_config.callback)
-        try:
-            module_name = f'{self.package}.handlers.{handler_config.callback}'
-            module = importlib.import_module(module_name)
-            callback_fn = getattr(module, handler_config.callback)
-            handler_config.callback_fn = callback_fn
-        except (ModuleNotFoundError, AttributeError) as e:
-            raise HandlerImportError(module=module_name, obj=handler_config.callback) from e
+        module_name = f'{self.package}.handlers.{handler_config.callback}'
+        fn_name = handler_config.callback
+        handler_config.callback_fn = import_from(module_name, fn_name)
 
     def _initialize_job_callback(self, job_config: JobConfig) -> None:
         _logger.info('Registering job callback `%s`', job_config.callback)
-        try:
-            module_name = f'{self.package}.jobs.{job_config.callback}'
-            module = importlib.import_module(module_name)
-            callback_fn = getattr(module, job_config.callback)
-            job_config.callback_fn = callback_fn
-        except (ModuleNotFoundError, AttributeError) as e:
-            raise HandlerImportError(module=module_name, obj=job_config.callback) from e
+        module_name = f'{self.package}.jobs.{job_config.callback}'
+        fn_name = job_config.callback
+        job_config.callback_fn = import_from(module_name, fn_name)
 
     def _initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         if index_name in self._initialized:

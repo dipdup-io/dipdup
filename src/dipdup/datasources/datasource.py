@@ -1,12 +1,8 @@
 from abc import abstractmethod
-from collections import defaultdict
-from copy import copy
 from enum import Enum
-from functools import partial
-from typing import Awaitable, DefaultDict, List, Optional, Protocol, Set
+from logging import Logger
+from typing import Awaitable, List, Optional, Protocol
 
-from pydantic.dataclasses import dataclass
-from pydantic.fields import Field
 from pyee import AsyncIOEventEmitter  # type: ignore
 
 from dipdup.config import HTTPConfig
@@ -42,6 +38,8 @@ class HeadCallback(Protocol):
 
 
 class Datasource(HTTPGateway):
+    _logger: Logger
+
     @abstractmethod
     async def run(self) -> None:
         ...
@@ -83,47 +81,3 @@ class IndexDatasource(Datasource, AsyncIOEventEmitter):
 
     def emit_head(self, block: HeadBlockData) -> None:
         super().emit(EventType.head, datasource=self, block=block)
-
-
-@dataclass
-class Subscriptions:
-    address_transactions: Set[str] = Field(default_factory=set)
-    originations: bool = False
-    head: bool = False
-    big_maps: DefaultDict[str, Set[str]] = Field(default_factory=partial(defaultdict, set))
-
-    def get_pending(self, active_subscriptions: 'Subscriptions') -> 'Subscriptions':
-        return Subscriptions(
-            address_transactions=self.address_transactions.difference(active_subscriptions.address_transactions),
-            originations=not active_subscriptions.originations,
-            head=not active_subscriptions.head,
-            big_maps=defaultdict(set, {k: self.big_maps[k] for k in set(self.big_maps) - set(active_subscriptions.big_maps)}),
-        )
-
-
-class SubscriptionManager:
-    def __init__(self) -> None:
-        self._subscriptions: Subscriptions = Subscriptions()
-        self._active_subscriptions: Subscriptions = Subscriptions()
-
-    def add_address_transaction_subscription(self, address: str) -> None:
-        self._subscriptions.address_transactions.add(address)
-
-    def add_origination_subscription(self) -> None:
-        self._subscriptions.originations = True
-
-    def add_head_subscription(self) -> None:
-        self._subscriptions.head = True
-
-    def add_big_map_subscription(self, address: str, paths: Set[str]) -> None:
-        self._subscriptions.big_maps[address] = self._subscriptions.big_maps[address] | paths
-
-    def get_pending(self) -> Subscriptions:
-        pending_subscriptions = self._subscriptions.get_pending(self._active_subscriptions)
-        return pending_subscriptions
-
-    def commit(self) -> None:
-        self._active_subscriptions = copy(self._subscriptions)
-
-    def reset(self) -> None:
-        self._active_subscriptions = Subscriptions()
