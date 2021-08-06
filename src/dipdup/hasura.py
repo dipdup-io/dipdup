@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import logging
+import re
 from contextlib import suppress
 from os.path import dirname, join
 from typing import Any, Dict, Iterator, List, Optional, Tuple
@@ -15,6 +16,31 @@ from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig, pasc
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
 from dipdup.utils import iter_files, iter_models
+
+_get_fields_query = '''
+query introspectionQuery($name: String!) {
+  __type(name: $name) {
+    kind
+    name
+    fields {
+      name
+      description
+      type {
+        name
+        kind
+        ofType {
+          name
+          kind
+        }
+      }
+    }
+  }
+}
+'''.replace(
+    '\n', ' '
+).replace(
+    '  ', ''
+)
 
 
 @dataclass
@@ -263,42 +289,29 @@ class HasuraGateway(HTTPGateway):
         generated_dict = {key(t): t for t in generated}
         return list({**existing_dict, **generated_dict}.values())
 
-    async def _get_fields(self, name: str = 'query_root') -> List[Field]:
-        query = '''
-query introspectionQuery($name: String!) {
-  __type(name: $name) {
-    kind
-    name
-    fields {
-      name
-      description
-      type {
-        name
-        kind
-        ofType {
-          name
-          kind
-        }
-      }
-    }
-  }
-}
-        '''.replace(
-            '\n', ' '
-        ).replace(
-            '  ', ''
-        )
+    async def _get_fields_json(self, name: str) -> List[Dict[str, Any]]:
         result = await self._hasura_request(
             endpoint='graphql',
             json={
-                'query': query,
+                'query': _get_fields_query,
                 'variables': {'name': name},
             },
         )
         try:
-            fields_json = result['data']['__type']['fields']
+            return result['data']['__type']['fields']
         except TypeError as e:
             raise HasuraError(f'Unknown table `{name}`') from e
+
+    async def _get_fields(self, name: str = 'query_root') -> List[Field]:
+
+        try:
+            fields_json = await self._get_fields_json(name)
+        except HasuraError:
+            # NOTE: An issue with decamelizing the table name?
+            # NOTE: dex_quotes_15m -> dexQuotes15m -> dex_quotes15m -> FAIL
+            # NOTE: Let's prefix every numeric with underscore. Won't help in complex cases but worth a try.
+            alternative_name = ''.join([f"_{w}" if w.isnumeric() else w for w in re.split(r'(\d+)', name)])
+            fields_json = await self._get_fields_json(alternative_name)
 
         fields = []
         for field_json in fields_json:
