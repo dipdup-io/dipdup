@@ -73,6 +73,24 @@ class Index:
     async def _process_queue(self) -> None:
         ...
 
+    async def _enter_sync_state(self, last_level: int) -> Optional[int]:
+        state = await self.get_state()
+        first_level = state.level
+        if first_level == last_level:
+            return None
+        if first_level > last_level:
+            raise RuntimeError(f'Attempt to synchronize index from level {first_level} to level {last_level}')
+        self._logger.info('Synchronizing index to level %s', last_level)
+        state.hash = None  # type: ignore
+        await state.save()
+        return first_level
+
+    async def _exit_sync_state(self, last_level: int) -> None:
+        self._logger.info('Index is synchronized to level %s', last_level)
+        state = await self.get_state()
+        state.level = last_level  # type: ignore
+        await state.save()
+
     async def _initialize_index_state(self) -> None:
         self._logger.info('Getting index state')
         index_config_hash = self._config.hash()
@@ -94,15 +112,12 @@ class Index:
             await self._ctx.reindex()
 
         self._logger.info('%s', f'{state.level=} {state.hash=}'.replace('state.', ''))
-        # NOTE: No need to check genesis block
-        if state.level:
+        # NOTE: No need to check indexes which are not synchronized.
+        if state.level and state.hash:
             block = await self._datasource.get_block(state.level)
-            if state.hash:
-                if state.hash != block.hash:
-                    self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
-                    await self._ctx.reindex()
-            else:
-                state.hash = block.hash  # type: ignore
+            if state.hash != block.hash:
+                self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
+                await self._ctx.reindex()
 
         await state.save()
         self._state = state
@@ -137,15 +152,11 @@ class OperationIndex(Index):
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        state = await self.get_state()
-        first_level = state.level
-        if first_level == last_level:
+        first_level = await self._enter_sync_state(last_level)
+        if first_level is None:
             return
-        if first_level > last_level:
-            raise RuntimeError(first_level, last_level)
 
         self._logger.info('Fetching operations from level %s to %s', first_level, last_level)
-
         transaction_addresses = await self._get_transaction_addresses()
         origination_addresses = await self._get_origination_addresses()
 
@@ -169,11 +180,7 @@ class OperationIndex(Index):
         async for level, operations in fetcher.fetch_operations_by_level():
             await self._process_level_operations(level, operations)
 
-        state.level = last_level  # type: ignore
-        # FIXME: Block hashes are not available during synchronization
-        state.hash = (await self._datasource.get_block(last_level)).hash  # type: ignore
-        await state.save()
-        self._logger.info('Index is synchronized to level %s', last_level)
+        await self._exit_sync_state(last_level)
 
     async def _process_level_operations(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
         state = await self.get_state()
@@ -416,14 +423,11 @@ class BigMapIndex(Index):
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        state = await self.get_state()
-        first_level = state.level
-        if first_level == last_level:
+        first_level = await self._enter_sync_state(last_level)
+        if first_level is None:
             return
-        if first_level > last_level:
-            raise RuntimeError(first_level, last_level)
 
-        self._logger.info('Fetching operations from level %s to %s', first_level, last_level)
+        self._logger.info('Fetching big map diffs from level %s to %s', first_level, last_level)
 
         big_map_addresses = await self._get_big_map_addresses()
         big_map_paths = await self._get_big_map_paths()
@@ -440,11 +444,7 @@ class BigMapIndex(Index):
         async for level, big_maps in fetcher.fetch_big_maps_by_level():
             await self._process_level_big_maps(level, big_maps)
 
-        state.level = last_level  # type: ignore
-        # FIXME: Block hashes are not available during synchronization
-        state.hash = (await self._datasource.get_block(last_level)).hash  # type: ignore
-        await state.save()
-        self._logger.info('Index is synchronized to level %s', last_level)
+        await self._exit_sync_state(last_level)
 
     async def _process_level_big_maps(self, level: int, big_maps: List[BigMapData]):
         state = await self.get_state()
