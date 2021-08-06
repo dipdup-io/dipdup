@@ -8,9 +8,6 @@ async def on_fa12_origination(
     ctx: HandlerContext,
     quipu_fa12_origination: Origination[QuipuFa12Storage],
 ) -> None:
-    if ctx.template_values is None:
-        raise Exception('This index must be templated')
-
     symbol = ctx.template_values['symbol']
 
     for address, value in quipu_fa12_origination.storage.storage.ledger.items():

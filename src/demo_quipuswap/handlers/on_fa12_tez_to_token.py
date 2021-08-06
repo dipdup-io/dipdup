@@ -14,9 +14,6 @@ async def on_fa12_tez_to_token(
     tez_to_token_payment: Transaction[TezToTokenPaymentParameter, QuipuFa12Storage],
     transfer: Transaction[TransferParameter, Fa12TokenStorage],
 ) -> None:
-    if ctx.template_values is None:
-        raise Exception('This index must be templated')
-
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']
     trader = tez_to_token_payment.data.sender_address

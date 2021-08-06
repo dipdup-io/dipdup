@@ -242,6 +242,7 @@ class DipDupCodeGenerator:
                     with open(output_path) as type_file:
                         first_line = type_file.readline()
                         if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
+                            self._logger.info('Skipping `%s`', output_path)
                             continue
 
                 if name == 'storage':

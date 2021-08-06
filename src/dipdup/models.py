@@ -77,6 +77,7 @@ class OperationData:
     entrypoint: Optional[str] = None
     parameter_json: Optional[Any] = None
     originated_contract_address: Optional[str] = None
+    originated_contract_alias: Optional[str] = None
     originated_contract_type_hash: Optional[int] = None
     originated_contract_code_hash: Optional[int] = None
     diffs: Optional[List[Dict[str, Any]]] = None

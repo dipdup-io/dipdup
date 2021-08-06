@@ -14,9 +14,6 @@ async def on_fa12_invest_liquidity(
     invest_liquidity: Transaction[InvestLiquidityParameter, QuipuFa12Storage],
     transfer: Transaction[TransferParameter, Fa12TokenStorage],
 ) -> None:
-    if ctx.template_values is None:
-        raise Exception('This index must be templated')
-
     storage = invest_liquidity.storage
 
     decimals = int(ctx.template_values['decimals'])

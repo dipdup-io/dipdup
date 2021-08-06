@@ -15,9 +15,6 @@ async def on_fa2_token_to_tez(
     transfer: Transaction[TransferParameter, Fa2TokenStorage],
     transaction_0: OperationData,
 ) -> None:
-    if ctx.template_values is None:
-        raise Exception('This index must be templated')
-
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']
     trader = token_to_tez_payment.data.sender_address
