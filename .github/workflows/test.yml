@@ -1,0 +1,20 @@
+name: Test
+on: push
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8.x"
+      - uses: snok/install-poetry@v1.1.7
+
+      - name: Install project
+        run: make install
+      - name: Run lint
+        run: make lint
+      - name: Run tests
+        run: make test
