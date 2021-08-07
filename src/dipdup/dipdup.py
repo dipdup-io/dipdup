@@ -219,14 +219,15 @@ class DipDup:
         async with AsyncExitStack() as stack:
             worker_tasks = []
             await stack.enter_async_context(tortoise_wrapper(url, models))
+
+            await self._initialize_database(reindex)
+            await self._configure()
+
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
             if hasura_gateway:
                 await stack.enter_async_context(hasura_gateway)
                 worker_tasks.append(asyncio.create_task(hasura_gateway.configure()))
-
-            await self._initialize_database(reindex)
-            await self._configure()
 
             self._logger.info('Starting datasources')
             datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
