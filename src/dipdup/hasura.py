@@ -201,7 +201,8 @@ class HasuraGateway(HTTPGateway):
             row[0]
             for row in (
                 await get_connection(None).execute_query(
-                    f"SELECT table_name FROM information_schema.views WHERE table_schema = '{self._database_config.schema_name}'"
+                    f"SELECT table_name FROM information_schema.views WHERE table_schema = '{self._database_config.schema_name}' UNION "
+                    f"SELECT matviewname as table_name FROM pg_matviews WHERE schemaname = '{self._database_config.schema_name}'"
                 )
             )[1]
         ]
