@@ -633,87 +633,57 @@ class TzktDatasource(IndexDatasource):
             connection_limit=25,
         )
 
-    async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
-        """Parse and emit raw operations from WS"""
+    async def _extract_message_data(self, channel: str, message: List[Any]) -> Any:
         for item in message:
-            current_level = item['state']
+            head_level = item['state']
             message_type = TzktMessageType(item['type'])
-            self._logger.info('Got operation message, %s, level %s', message_type, current_level)
+            self._logger.debug('`%s` message: %s', channel, message_type.name) 
 
             if message_type == TzktMessageType.STATE:
-                self._sync_level = current_level
-                self._level = current_level
+                if self._sync_level != head_level:
+                    self._logger.info('Datasource level set to %s', head_level)
+                    self._sync_level = head_level
+                    self._level = head_level
 
             elif message_type == TzktMessageType.DATA:
-                self._level = current_level
-                operations = []
-                for operation_json in item['data']:
-                    operation = self.convert_operation(operation_json)
-                    if operation.status != 'applied':
-                        continue
-                    operations.append(operation)
-                if operations:
-                    self.emit_operations(operations, self.block)
+                self._level = head_level
+                yield item['data']
 
             elif message_type == TzktMessageType.REORG:
                 if self.level is None:
                     raise RuntimeError
-                self.emit_rollback(self.level, current_level)
+                self.emit_rollback(self.level, head_level)
 
             else:
                 raise NotImplementedError
+
+
+    async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
+        """Parse and emit raw operations from WS"""
+        async for data in self._extract_message_data('operation', message):
+            operations = []
+            for operation_json in data:
+                operation = self.convert_operation(operation_json)
+                if operation.status != 'applied':
+                    continue
+                operations.append(operation)
+            if operations:
+                self.emit_operations(operations, self.block)
 
     async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        for item in message:
-            current_level = item['state']
-            message_type = TzktMessageType(item['type'])
-            self._logger.info('Got big map message, %s, level %s', message_type, current_level)
-
-            if message_type == TzktMessageType.STATE:
-                self._sync_level = current_level
-                self._level = current_level
-
-            elif message_type == TzktMessageType.DATA:
-                self._level = current_level
-                big_maps = []
-                for big_map_json in item['data']:
-                    big_map = self.convert_big_map(big_map_json)
-                    big_maps.append(big_map)
-                self.emit_big_maps(big_maps)
-
-            elif message_type == TzktMessageType.REORG:
-                if self.level is None:
-                    raise RuntimeError
-                self.emit_rollback(self.level, current_level)
-
-            else:
-                raise NotImplementedError
+        async for data in self._extract_message_data('big_map', message):
+            big_maps = []
+            for big_map_json in data:
+                big_map = self.convert_big_map(big_map_json)
+                big_maps.append(big_map)
+            self.emit_big_maps(big_maps)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
-        for item in message:
-            current_level = item['state']
-            message_type = TzktMessageType(item['type'])
-            self._logger.info('Got block message, %s, level %s', message_type, current_level)
-
-            if message_type == TzktMessageType.STATE:
-                self._sync_level = current_level
-                self._level = current_level
-
-            elif message_type == TzktMessageType.DATA:
-                self._level = current_level
-                block_json = item['data']
-                block = self.convert_head_block(block_json)
-                self._block = block
-                self.emit_head(block)
-
-            elif message_type == TzktMessageType.REORG:
-                if self.level is None:
-                    raise RuntimeError
-                self.emit_rollback(self.level, current_level)
-
-            else:
-                raise NotImplementedError
+        async for data in self._extract_message_data('head', message):
+            block = self.convert_head_block(data)
+            self._block = block
+            self.emit_head(block)
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
