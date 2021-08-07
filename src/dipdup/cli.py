@@ -50,9 +50,9 @@ def init_sentry(config: DipDupConfig) -> None:
     if not config.sentry:
         return
     if config.sentry.debug:
-        level, event_level = logging.DEBUG, logging.WARNING
+        level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
-        level, event_level = logging.INFO, logging.ERROR
+        level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
 
     integrations = [
         AioHttpIntegration(),
@@ -66,6 +66,7 @@ def init_sentry(config: DipDupConfig) -> None:
         environment=config.sentry.environment,
         integrations=integrations,
         release=__version__,
+        attach_stacktrace=attach_stacktrace,
     )
 
 
