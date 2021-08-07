@@ -320,7 +320,7 @@ class TzktDatasource(IndexDatasource):
     @property
     def block(self) -> HeadBlockData:
         if self._block is None:
-            raise RuntimeError('No message from `head` channel received')
+            raise RuntimeError('Attempt to access head block before the first message')
         return self._block
 
     async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
