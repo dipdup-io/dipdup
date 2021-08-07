@@ -18,22 +18,3 @@ jobs:
         run: make lint
       - name: Run tests
         run: make test
-
-      - name: Publish Docker image
-        uses: elgohr/Publish-Docker-Github-Action@master
-        with:
-          name: dipdup/dipdup
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          tags: "test"
-
-      - name: Publish Docker image (-pytezos)
-        uses: elgohr/Publish-Docker-Github-Action@master
-        env:
-          PLUGINS: pytezos
-        with:
-          name: dipdup/dipdup
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          tags: "test-pytezos"
-          buildargs: PLUGINS
