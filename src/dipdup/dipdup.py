@@ -221,10 +221,12 @@ class DipDup:
             await stack.enter_async_context(tortoise_wrapper(url, models))
 
             await self._initialize_database(reindex)
-            await self._configure()
-
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
+
+            # NOTE: on_configure hook fires after database and datasources are initialized but before Hasura is
+            await self._on_configure()
+
             if hasura_gateway:
                 await stack.enter_async_context(hasura_gateway)
                 worker_tasks.append(asyncio.create_task(hasura_gateway.configure()))
@@ -257,7 +259,7 @@ class DipDup:
         await codegen.migrate_user_handlers_to_v11()
         self._finish_migration('1.1')
 
-    async def _configure(self) -> None:
+    async def _on_configure(self) -> None:
         """Run user-defined initial configuration handler"""
         configure_fn = self._config.get_configure_fn()
         await configure_fn(self._ctx)
