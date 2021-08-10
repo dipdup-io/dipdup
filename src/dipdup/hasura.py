@@ -3,9 +3,11 @@ import importlib
 import logging
 import re
 from contextlib import suppress
+from http import HTTPStatus
 from os.path import dirname, join
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
+import aiohttp
 import humps  # type: ignore
 from aiohttp import ClientConnectorError, ClientOSError
 from pydantic.dataclasses import dataclass
@@ -73,13 +75,13 @@ class HasuraGateway(HTTPGateway):
         self._hasura_config = hasura_config
         self._database_config = database_config
 
-    async def configure(self, reset: bool = False) -> None:
+    async def configure(self) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
         self._logger.info('Configuring Hasura')
         await self._healthcheck()
 
-        if reset:
+        if self._hasura_config.reset is True:
             await self._reset_metadata()
 
         metadata = await self._fetch_metadata()
@@ -186,13 +188,20 @@ class HasuraGateway(HTTPGateway):
 
     async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')
-        await self._hasura_request(
-            endpoint='query',
-            json={
-                "type": "replace_metadata",
-                "args": metadata,
-            },
-        )
+        endpoint, json = 'query', {
+            "type": "replace_metadata",
+            "args": metadata,
+        }
+        try:
+            await self._hasura_request(endpoint, json)
+        except aiohttp.ClientResponseError as e:
+            # NOTE: 400 from Hasura means we failed either to generate or to merge existing metadata.
+            # NOTE: Reset metadata and retry if not forbidden by config.
+            if e.status != HTTPStatus.BAD_REQUEST or self._hasura_config.reset is False:
+                raise
+            self._logger.warning('Failed to replace metadata, resetting')
+            await self._reset_metadata()
+            await self._hasura_request(endpoint, json)
 
     async def _get_views(self) -> List[str]:
         return [
