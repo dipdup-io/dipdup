@@ -192,7 +192,6 @@ class HasuraGateway(HTTPGateway):
             "args": metadata,
         }
         try:
-            self._logger.info(self._http_config)
             await self._hasura_request(endpoint, json)
         except aiohttp.ClientResponseError as e:
             # NOTE: 400 from Hasura means we failed either to generate or to merge existing metadata.
