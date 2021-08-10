@@ -1,9 +1,9 @@
+from abc import ABC
 import asyncio
 import hashlib
 import logging
 import pickle
 import platform
-from abc import ABC, abstractmethod
 from contextlib import suppress
 from http import HTTPStatus
 from typing import Mapping, Optional, Tuple, cast
@@ -19,9 +19,10 @@ from dipdup.config import HTTPConfig  # type: ignore
 class HTTPGateway(ABC):
     """Base class for datasources which connect to remote HTTP endpoints"""
 
-    def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
-        self._http_config = self._default_http_config()
-        self._http_config.merge(http_config)
+    _default_http_config: HTTPConfig
+
+    def __init__(self, url: str, http_config: HTTPConfig) -> None:
+        self._http_config = http_config
         self._http = _HTTPGateway(url.rstrip('/'), self._http_config)
 
     async def __aenter__(self) -> None:
@@ -31,11 +32,6 @@ class HTTPGateway(ABC):
     async def __aexit__(self, exc_type, exc, tb) -> None:
         """Close underlying aiohttp session"""
         await self._http.__aexit__(exc_type, exc, tb)
-
-    @abstractmethod
-    def _default_http_config(self) -> HTTPConfig:
-        """Default config, properties from user config will be applied one by one"""
-        ...
 
     async def close_session(self) -> None:
         """Close aiohttp session"""
@@ -99,8 +95,23 @@ class _HTTPGateway:
         """Retry a request in case of failure sleeping according to config"""
         attempt = 1
         retry_sleep = self._config.retry_sleep or 0
+        retry_count = self._config.retry_count
+        retry_count_str = str(retry_count or 'inf')
+
+        async def _next_attempt(exc: Exception, sleep: Optional[float] = None):
+            nonlocal self
+            nonlocal attempt
+            nonlocal retry_sleep
+
+            self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, exc)
+            self._logger.info('Waiting %s seconds before retry', sleep or retry_sleep)
+            await asyncio.sleep(sleep or retry_sleep)
+            attempt += 1
+            multiplier = self._config.retry_multiplier or 1 if not sleep else 1
+            retry_sleep *= multiplier
+
         while True:
-            self._logger.debug('HTTP request attempt %s/%s', attempt, self._config.retry_count or 'inf')
+            self._logger.debug('HTTP request attempt %s/%s', attempt, retry_count_str)
             try:
                 return await self._request(
                     method=method,
@@ -108,28 +119,20 @@ class _HTTPGateway:
                     weight=weight,
                     **kwargs,
                 )
-            except (aiohttp.ClientConnectionError, aiohttp.ClientConnectorError) as e:
+            except (aiohttp.ClientConnectionError, aiohttp.ClientConnectorError, aiohttp.ClientResponseError) as e:
                 if self._config.retry_count and attempt - 1 == self._config.retry_count:
                     raise e
-                self._logger.warning('HTTP request failed: %s', e)
-                await asyncio.sleep(retry_sleep)
-                retry_sleep *= self._config.retry_multiplier or 1
-            except aiohttp.ClientResponseError as e:
-                if e.code == HTTPStatus.TOO_MANY_REQUESTS:
-                    ratelimit_sleep = 5
+
+                sleep: Optional[float] = None
+                if isinstance(e, aiohttp.ClientResponseError) and e.code == HTTPStatus.TOO_MANY_REQUESTS:
+                    # NOTE: Sleep at least 5 seconds on ratelimit
+                    sleep = 5
                     # TODO: Parse Retry-After in UTC date format
                     with suppress(KeyError, ValueError):
                         e.headers = cast(Mapping, e.headers)
-                        ratelimit_sleep = int(e.headers['Retry-After'])
+                        sleep = int(e.headers['Retry-After'])
 
-                    self._logger.warning('HTTP request failed: %s', e)
-                    await asyncio.sleep(ratelimit_sleep)
-                else:
-                    if self._config.retry_count and attempt - 1 == self._config.retry_count:
-                        raise e
-                    self._logger.warning('HTTP request failed: %s', e)
-                    await asyncio.sleep(self._config.retry_sleep or 0)
-                    retry_sleep *= self._config.retry_multiplier or 1
+                await _next_attempt(e, sleep)
 
     async def _request(self, method: str, url: str, weight: int = 1, **kwargs):
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""

@@ -62,6 +62,12 @@ class HasuraError(RuntimeError):
 
 
 class HasuraGateway(HTTPGateway):
+    _default_http_config = HTTPConfig(
+        cache=False,
+        retry_count=3,
+        retry_sleep=1,
+    )
+
     def __init__(
         self,
         package: str,
@@ -69,7 +75,7 @@ class HasuraGateway(HTTPGateway):
         database_config: PostgresDatabaseConfig,
         http_config: Optional[HTTPConfig] = None,
     ) -> None:
-        super().__init__(hasura_config.url, http_config)
+        super().__init__(hasura_config.url, self._default_http_config.merge(http_config))
         self._logger = logging.getLogger('dipdup.hasura')
         self._package = package
         self._hasura_config = hasura_config
@@ -134,13 +140,6 @@ class HasuraGateway(HTTPGateway):
 
         self._logger.info('Hasura instance has been configured')
 
-    def _default_http_config(self) -> HTTPConfig:
-        return HTTPConfig(
-            cache=False,
-            retry_count=3,
-            retry_sleep=1,
-        )
-
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, json)
         result = await self._http.request(
@@ -193,11 +192,14 @@ class HasuraGateway(HTTPGateway):
             "args": metadata,
         }
         try:
+            self._logger.info(self._http_config)
             await self._hasura_request(endpoint, json)
         except aiohttp.ClientResponseError as e:
             # NOTE: 400 from Hasura means we failed either to generate or to merge existing metadata.
             # NOTE: Reset metadata and retry if not forbidden by config.
+            print(e.status, self._hasura_config.reset)
             if e.status != HTTPStatus.BAD_REQUEST or self._hasura_config.reset is False:
+                print('raise')
                 raise
             self._logger.warning('Failed to replace metadata, resetting')
             await self._reset_metadata()
