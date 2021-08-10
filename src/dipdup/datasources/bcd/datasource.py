@@ -8,13 +8,22 @@ TOKENS_REQUEST_LIMIT = 10
 
 
 class BcdDatasource(Datasource):
+    _default_http_config = HTTPConfig(
+        cache=True,
+        retry_sleep=1,
+        retry_multiplier=1.1,
+        ratelimit_rate=100,
+        ratelimit_period=30,
+        connection_limit=25,
+    )
+
     def __init__(
         self,
         url: str,
         network: str,
         http_config: Optional[HTTPConfig] = None,
     ) -> None:
-        super().__init__(url, http_config)
+        super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = logging.getLogger('dipdup.bcd')
         self._network = network
 
@@ -45,13 +54,3 @@ class BcdDatasource(Datasource):
         if response:
             return response[0]
         return None
-
-    def _default_http_config(self) -> HTTPConfig:
-        return HTTPConfig(
-            cache=True,
-            retry_sleep=1,
-            retry_multiplier=1.1,
-            ratelimit_rate=100,
-            ratelimit_period=30,
-            connection_limit=25,
-        )

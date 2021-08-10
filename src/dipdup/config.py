@@ -7,6 +7,7 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from copy import copy
 from enum import Enum
 from os import environ as env
 from os.path import dirname
@@ -101,12 +102,13 @@ class HTTPConfig:
     connection_limit: Optional[int] = None
     batch_size: Optional[int] = None
 
-    def merge(self, other: Optional['HTTPConfig']) -> None:
-        if not other:
-            return
-        for k, v in other.__dict__.items():
-            if v is not None:
-                setattr(self, k, v)
+    def merge(self, other: Optional['HTTPConfig']) -> 'HTTPConfig':
+        config = copy(self)
+        if other:
+            for k, v in other.__dict__.items():
+                if v is not None:
+                    setattr(config, k, v)
+        return config
 
 
 @dataclass
@@ -659,6 +661,7 @@ class HasuraConfig:
     camel_case: bool = False
     connection_timeout: int = 5
     rest: bool = True
+    reset: Optional[bool] = None
     http: Optional[HTTPConfig] = None
 
     @validator('url', allow_reuse=True)

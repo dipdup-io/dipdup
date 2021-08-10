@@ -288,12 +288,21 @@ class TzktDatasource(IndexDatasource):
     * Calls Matchers to match received operation groups with indexes' pattern and spawn callbacks on match
     """
 
+    _default_http_config = HTTPConfig(
+        cache=True,
+        retry_sleep=1,
+        retry_multiplier=1.1,
+        ratelimit_rate=100,
+        ratelimit_period=30,
+        connection_limit=25,
+    )
+
     def __init__(
         self,
         url: str,
         http_config: Optional[HTTPConfig] = None,
     ) -> None:
-        super().__init__(url, http_config)
+        super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = logging.getLogger('dipdup.tzkt')
 
         self._transaction_subscriptions: Set[str] = set()
@@ -623,21 +632,11 @@ class TzktDatasource(IndexDatasource):
             [],
         )
 
-    def _default_http_config(self) -> HTTPConfig:
-        return HTTPConfig(
-            cache=True,
-            retry_sleep=1,
-            retry_multiplier=1.1,
-            ratelimit_rate=100,
-            ratelimit_period=30,
-            connection_limit=25,
-        )
-
     async def _extract_message_data(self, channel: str, message: List[Any]) -> Any:
         for item in message:
             head_level = item['state']
             message_type = TzktMessageType(item['type'])
-            self._logger.debug('`%s` message: %s', channel, message_type.name) 
+            self._logger.debug('`%s` message: %s', channel, message_type.name)
 
             if message_type == TzktMessageType.STATE:
                 if self._sync_level != head_level:
@@ -656,7 +655,6 @@ class TzktDatasource(IndexDatasource):
 
             else:
                 raise NotImplementedError
-
 
     async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""

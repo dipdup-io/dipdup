@@ -3,9 +3,11 @@ import importlib
 import logging
 import re
 from contextlib import suppress
+from http import HTTPStatus
 from os.path import dirname, join
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
+import aiohttp
 import humps  # type: ignore
 from aiohttp import ClientConnectorError, ClientOSError
 from pydantic.dataclasses import dataclass
@@ -60,6 +62,12 @@ class HasuraError(RuntimeError):
 
 
 class HasuraGateway(HTTPGateway):
+    _default_http_config = HTTPConfig(
+        cache=False,
+        retry_count=3,
+        retry_sleep=1,
+    )
+
     def __init__(
         self,
         package: str,
@@ -67,19 +75,19 @@ class HasuraGateway(HTTPGateway):
         database_config: PostgresDatabaseConfig,
         http_config: Optional[HTTPConfig] = None,
     ) -> None:
-        super().__init__(hasura_config.url, http_config)
+        super().__init__(hasura_config.url, self._default_http_config.merge(http_config))
         self._logger = logging.getLogger('dipdup.hasura')
         self._package = package
         self._hasura_config = hasura_config
         self._database_config = database_config
 
-    async def configure(self, reset: bool = False) -> None:
+    async def configure(self) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
         self._logger.info('Configuring Hasura')
         await self._healthcheck()
 
-        if reset:
+        if self._hasura_config.reset is True:
             await self._reset_metadata()
 
         metadata = await self._fetch_metadata()
@@ -132,15 +140,6 @@ class HasuraGateway(HTTPGateway):
 
         self._logger.info('Hasura instance has been configured')
 
-    def _default_http_config(self) -> HTTPConfig:
-        return HTTPConfig(
-            cache=False,
-            retry_sleep=1,
-            retry_multiplier=1.1,
-            ratelimit_rate=100,
-            ratelimit_period=1,
-        )
-
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, json)
         result = await self._http.request(
@@ -188,13 +187,22 @@ class HasuraGateway(HTTPGateway):
 
     async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')
-        await self._hasura_request(
-            endpoint='query',
-            json={
-                "type": "replace_metadata",
-                "args": metadata,
-            },
-        )
+        endpoint, json = 'query', {
+            "type": "replace_metadata",
+            "args": metadata,
+        }
+        try:
+            await self._hasura_request(endpoint, json)
+        except aiohttp.ClientResponseError as e:
+            # NOTE: 400 from Hasura means we failed either to generate or to merge existing metadata.
+            # NOTE: Reset metadata and retry if not forbidden by config.
+            print(e.status, self._hasura_config.reset)
+            if e.status != HTTPStatus.BAD_REQUEST or self._hasura_config.reset is False:
+                print('raise')
+                raise
+            self._logger.warning('Failed to replace metadata, resetting')
+            await self._reset_metadata()
+            await self._hasura_request(endpoint, json)
 
     async def _get_views(self) -> List[str]:
         return [

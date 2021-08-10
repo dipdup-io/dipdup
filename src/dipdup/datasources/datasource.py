@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from enum import Enum
 from logging import Logger
-from typing import Awaitable, List, Optional, Protocol
+from typing import Awaitable, List, Protocol
 
 from pyee import AsyncIOEventEmitter  # type: ignore
 
@@ -46,7 +46,7 @@ class Datasource(HTTPGateway):
 
 
 class IndexDatasource(Datasource, AsyncIOEventEmitter):
-    def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
+    def __init__(self, url: str, http_config: HTTPConfig) -> None:
         HTTPGateway.__init__(self, url, http_config)
         AsyncIOEventEmitter.__init__(self)
 
