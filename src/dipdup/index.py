@@ -42,14 +42,15 @@ class Index:
     def datasource(self) -> TzktDatasource:
         return self._datasource
 
-    async def get_state(self) -> State:
-        """Get state of index containing current level and config hash"""
+    @property
+    def state(self) -> State:
         if self._state is None:
-            await self._initialize_index_state()
-        return cast(State, self._state)
+            raise RuntimeError('Index state is not initialized')
+        return self._state
 
     async def process(self) -> None:
-        state = await self.get_state()
+        await self._initialize_index_state()
+
         if self._config.last_block:
             last_level = self._config.last_block
             await self._synchronize(last_level, cache=True)
@@ -57,7 +58,7 @@ class Index:
             self._logger.info('Datasource is not active, sync to the latest block')
             last_level = (await self._datasource.get_head_block()).level
             await self._synchronize(last_level)
-        elif self._datasource.sync_level > state.level:
+        elif self._datasource.sync_level > self.state.level:
             self._logger.info('Index is behind datasource, sync to datasource level')
             self._queue.clear()
             last_level = self._datasource.sync_level
@@ -74,25 +75,25 @@ class Index:
         ...
 
     async def _enter_sync_state(self, last_level: int) -> Optional[int]:
-        state = await self.get_state()
-        first_level = state.level
+        first_level = self.state.level
         if first_level == last_level:
             return None
         if first_level > last_level:
             raise RuntimeError(f'Attempt to synchronize index from level {first_level} to level {last_level}')
         self._logger.info('Synchronizing index to level %s', last_level)
-        state.hash = None  # type: ignore
-        await state.save()
+        self.state.hash = None  # type: ignore
+        await self.state.save()
         return first_level
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
-        state = await self.get_state()
-        state.level = last_level  # type: ignore
-        await state.save()
+        self.state.level = last_level  # type: ignore
+        await self.state.save()
 
     async def _initialize_index_state(self) -> None:
-        self._logger.info('Getting index state')
+        if self._state:
+            return
+        self._logger.info('Initializing index state')
         index_config_hash = self._config.hash()
         state = await State.get_or_none(
             index_name=self._config.name,
@@ -138,8 +139,21 @@ class OperationIndex(Index):
         self._queue.append((level, operations, block))
 
     async def single_level_rollback(self, from_level: int) -> None:
-        """Ensure next arrived block is the same as rolled back one"""
-        self._rollback_level = from_level
+        """Ensure next arrived block is the same as rolled back one
+
+        Called by IndexDispatcher in case index datasource reported a rollback.
+        """
+        if self._rollback_level:
+            raise RuntimeError('Already in rollback state')
+
+        await self._initialize_index_state()
+        if self.state.level < from_level:
+            self._logger.info('Index level is lower than rollback level, ignoring')
+        elif self.state.level == from_level:
+            self._logger.info('Single level rollback has been triggered')
+            self._rollback_level = from_level
+        else:
+            raise RuntimeError('Index level is higher than rollback level')
 
     async def _process_queue(self) -> None:
         if not self._queue:
@@ -183,22 +197,26 @@ class OperationIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_operations(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
-        state = await self.get_state()
-        if level < state.level:
-            raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {state.level}')
+        if level < self.state.level:
+            raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {self.state.level}')
 
         if self._rollback_level:
-            if state.level != self._rollback_level:
-                raise RuntimeError(f'Rolling back to level {self._rollback_level}, state level {state.level}')
-            if level != self._rollback_level:
-                raise RuntimeError(f'Rolling back to level {self._rollback_level}, got operations of level {level}')
+            levels = {
+                'operations': level,
+                'rollback': self._rollback_level,
+                'index': self.state.level,
+                'block': block.level if block else level,
+            }
+            if len(set(levels.values())) != 1:
+                levels_repr = ', '.join(f'{k}={v}' for k, v in levels.items())
+                raise RuntimeError(f'Index is in a rollback state, but received operation batch with different levels: {levels_repr}')
 
             self._logger.info('Rolling back to previous level, verifying processed operations')
             expected_hashes = set(self._last_hashes)
             received_hashes = set([op.hash for op in operations])
             reused_hashes = received_hashes & expected_hashes
             if reused_hashes != expected_hashes:
-                self._logger.warning('Attempted a single level rollback but arrived block differs from processed one')
+                self._logger.warning('Attempted a single level rollback, but arrived block differs from processed one')
                 await self._ctx.reindex()
 
             self._rollback_level = None
@@ -212,10 +230,10 @@ class OperationIndex(Index):
             self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_operations(operations)
 
-            state.level = level  # type: ignore
+            self.state.level = level  # type: ignore
             if block:
-                state.hash = block.hash  # type: ignore
-            await state.save()
+                self.state.hash = block.hash  # type: ignore
+            await self.state.save()
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
@@ -407,10 +425,10 @@ class BigMapIndex(Index):
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[Tuple[int, List[BigMapData]]] = deque()
+        self._queue: Deque[Tuple[int, List[BigMapData], Optional[HeadBlockData]]] = deque()
 
-    def push(self, level: int, big_maps: List[BigMapData]):
-        self._queue.append((level, big_maps))
+    def push(self, level: int, big_maps: List[BigMapData], block: Optional[HeadBlockData] = None):
+        self._queue.append((level, big_maps, block))
 
     async def _process_queue(self):
         if not self._queue:
@@ -418,8 +436,8 @@ class BigMapIndex(Index):
         self._logger.info('Processing websocket queue')
         with suppress(IndexError):
             while True:
-                level, big_maps = self._queue.popleft()
-                await self._process_level_big_maps(level, big_maps)
+                level, big_maps, block = self._queue.popleft()
+                await self._process_level_big_maps(level, big_maps, block)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -446,17 +464,18 @@ class BigMapIndex(Index):
 
         await self._exit_sync_state(last_level)
 
-    async def _process_level_big_maps(self, level: int, big_maps: List[BigMapData]):
-        state = await self.get_state()
-        if state.level >= level:
-            raise RuntimeError(state.level, level)
+    async def _process_level_big_maps(self, level: int, big_maps: List[BigMapData], block: Optional[HeadBlockData] = None):
+        if level < self.state.level:
+            raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {self.state.level}')
 
         async with in_global_transaction():
             self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_big_maps(big_maps)
 
-            state.level = level  # type: ignore
-            await state.save()
+            self.state.level = level  # type: ignore
+            if block:
+                self.state.hash = block.hash  # type: ignore
+            await self.state.save()
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""

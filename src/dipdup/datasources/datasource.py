@@ -23,7 +23,7 @@ class OperationsCallback(Protocol):
 
 
 class BigMapsCallback(Protocol):
-    def __call__(self, datasource: 'IndexDatasource', big_maps: List[BigMapData]) -> Awaitable[None]:
+    def __call__(self, datasource: 'IndexDatasource', big_maps: List[BigMapData], block: HeadBlockData) -> Awaitable[None]:
         ...
 
 

@@ -61,7 +61,7 @@ class IndexDispatcher:
             datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
             datasource = self._ctx.datasources[datasource_name]
             if not isinstance(datasource, TzktDatasource):
-                raise RuntimeError
+                raise RuntimeError(f'`{datasource_name}` is not a TzktDatasource')
             operation_index = OperationIndex(self._ctx, index_config, datasource)
             self._indexes[index_config.name] = operation_index
             await datasource.add_index(index_config)
@@ -70,7 +70,7 @@ class IndexDispatcher:
             datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
             datasource = self._ctx.datasources[datasource_name]
             if not isinstance(datasource, TzktDatasource):
-                raise RuntimeError
+                raise RuntimeError(f'`{datasource_name}` is not a TzktDatasource')
             big_map_index = BigMapIndex(self._ctx, index_config, datasource)
             self._indexes[index_config.name] = big_map_index
             await datasource.add_index(index_config)
@@ -111,22 +111,23 @@ class IndexDispatcher:
             if isinstance(index, OperationIndex) and index.datasource == datasource:
                 index.push(level, operations, block)
 
-    async def dispatch_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData]) -> None:
+    async def dispatch_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in big_maps)) == 1
         level = big_maps[0].level
         for index in self._indexes.values():
             if isinstance(index, BigMapIndex) and index.datasource == datasource:
-                index.push(level, big_maps)
+                index.push(level, big_maps, block)
 
     async def _rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         logger = FormattedLogger(ROLLBACK_HANDLER)
         if from_level - to_level == 1:
             # NOTE: Single level rollbacks are processed at Index level.
-            # NOTE: Notify all indexes with rolled back datasource to skip next level and just verify it
+            # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
             for index in self._indexes.values():
                 if index.datasource == datasource:
                     # NOTE: Continue to rollback with handler
                     if not isinstance(index, OperationIndex):
+                        self._logger.info('Single level rollback is not supported by `%s` indexes', index._config.kind)
                         break
                     await index.single_level_rollback(from_level)
             else:
@@ -218,14 +219,17 @@ class DipDup:
         async with AsyncExitStack() as stack:
             worker_tasks = []
             await stack.enter_async_context(tortoise_wrapper(url, models))
+
+            await self._initialize_database(reindex)
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
+
+            # NOTE: on_configure hook fires after database and datasources are initialized but before Hasura is
+            await self._on_configure()
+
             if hasura_gateway:
                 await stack.enter_async_context(hasura_gateway)
                 worker_tasks.append(asyncio.create_task(hasura_gateway.configure()))
-
-            await self._initialize_database(reindex)
-            await self._configure()
 
             self._logger.info('Starting datasources')
             datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
@@ -255,7 +259,7 @@ class DipDup:
         await codegen.migrate_user_handlers_to_v11()
         self._finish_migration('1.1')
 
-    async def _configure(self) -> None:
+    async def _on_configure(self) -> None:
         """Run user-defined initial configuration handler"""
         configure_fn = self._config.get_configure_fn()
         await configure_fn(self._ctx)

@@ -34,6 +34,7 @@ def _get_operation(hash_: str, level: int) -> OperationData:
 
 # NOTE: Skip synchronization
 async def operation_index_process(self: OperationIndex):
+    await self._initialize_index_state()
     await self._process_queue()
 
 
