@@ -98,18 +98,6 @@ class _HTTPGateway:
         retry_count = self._config.retry_count
         retry_count_str = str(retry_count or 'inf')
 
-        async def _next_attempt(exc: Exception, sleep: Optional[float] = None):
-            nonlocal self
-            nonlocal attempt
-            nonlocal retry_sleep
-
-            self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, exc)
-            self._logger.info('Waiting %s seconds before retry', sleep or retry_sleep)
-            await asyncio.sleep(sleep or retry_sleep)
-            attempt += 1
-            multiplier = self._config.retry_multiplier or 1 if not sleep else 1
-            retry_sleep *= multiplier
-
         while True:
             self._logger.debug('HTTP request attempt %s/%s', attempt, retry_count_str)
             try:
@@ -123,16 +111,21 @@ class _HTTPGateway:
                 if self._config.retry_count and attempt - 1 == self._config.retry_count:
                     raise e
 
-                sleep: Optional[float] = None
+                ratelimit_sleep: Optional[float] = None
                 if isinstance(e, aiohttp.ClientResponseError) and e.code == HTTPStatus.TOO_MANY_REQUESTS:
                     # NOTE: Sleep at least 5 seconds on ratelimit
-                    sleep = 5
+                    ratelimit_sleep = 5
                     # TODO: Parse Retry-After in UTC date format
                     with suppress(KeyError, ValueError):
                         e.headers = cast(Mapping, e.headers)
-                        sleep = int(e.headers['Retry-After'])
+                        ratelimit_sleep = int(e.headers['Retry-After'])
 
-                await _next_attempt(e, sleep)
+                self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, e)
+                self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
+                await asyncio.sleep(ratelimit_sleep or retry_sleep)
+                attempt += 1
+                multiplier = 1 if ratelimit_sleep is None else self._config.retry_multiplier or 1
+                retry_sleep *= multiplier
 
     async def _request(self, method: str, url: str, weight: int = 1, **kwargs):
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
