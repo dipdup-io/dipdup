@@ -146,3 +146,5 @@ cython_debug/
 .noseids
 
 secrets.env
+
+*.out*
