@@ -222,7 +222,7 @@
                     "queries": [
                         {
                             "name": "hic_et_nunc_dipdup_state",
-                            "query": "query hic_et_nunc_dipdup_state ($index_name: String!) {hic_et_nunc_dipdup_state_by_pk(index_name: $index_name) {hash index_name index_type level}}"
+                            "query": "query hic_et_nunc_dipdup_state ($name: String!) {hic_et_nunc_dipdup_state_by_pk(name: $name) {hash name type level}}"
                         },
                         {
                             "name": "hic_et_nunc_holder",

@@ -32,7 +32,7 @@ templates:
           - type: transaction
             destination: <name_registry>
             entrypoint: execute
-    last_block: 55363
+    last_level: 55363
 
 indexes:
   tezos_domains_edo:

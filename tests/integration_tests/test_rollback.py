@@ -34,7 +34,7 @@ def _get_operation(hash_: str, level: int) -> OperationData:
 
 # NOTE: Skip synchronization
 async def operation_index_process(self: OperationIndex):
-    await self._initialize_index_state()
+    await self._initialize_state()
     await self._process_queue()
 
 
@@ -44,9 +44,11 @@ async def datasource_run(self: TzktDatasource, index_dispatcher: IndexDispatcher
     self._old_block = MagicMock(spec=HeadBlockData)
     self._old_block.hash = 'block_a'
     self._old_block.level = 1365001
+    self._old_block.timestamp = datetime(2018, 1, 1)
     self._new_block = MagicMock(spec=HeadBlockData)
     self._new_block.hash = 'block_b'
     self._new_block.level = 1365001
+    self._new_block.timestamp = datetime(2018, 1, 1)
 
     self.emit_operations(
         [
@@ -83,9 +85,8 @@ async def datasource_run(self: TzktDatasource, index_dispatcher: IndexDispatcher
     index_dispatcher.stop()
 
     # Assert
-    state = await State.filter(index_name='hen_mainnet').get()
+    state = await State.filter(name='hen_mainnet').get()
     assert state.level == 1365001
-    state.hash == 'block_c'
 
 
 class RollbackTest(IsolatedAsyncioTestCase):

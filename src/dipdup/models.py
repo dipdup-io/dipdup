@@ -31,11 +31,18 @@ class IndexType(Enum):
 class State(Model):
     """Stores current level of index and hash of it's config"""
 
-    index_name = fields.CharField(256, pk=True)
-    index_type = fields.CharEnumField(IndexType)
-    index_hash = fields.CharField(256)
+    name = fields.CharField(256, pk=True)
+    type = fields.CharEnumField(IndexType)
     level = fields.IntField(default=0)
-    hash = fields.CharField(64, null=True)
+    config_hash = fields.CharField(256)
+
+    head_level = fields.IntField(null=True)
+    head_hash = fields.CharField(64, null=True)
+    head_timestamp = fields.DatetimeField(null=True)
+    synchronized = fields.BooleanField(default=False)
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
         table = 'dipdup_state'
@@ -82,7 +89,7 @@ class OperationData:
     originated_contract_code_hash: Optional[int] = None
     diffs: Optional[List[Dict[str, Any]]] = None
 
-    # TODO: refactor this class -> move merge/process methods away
+    # TODO: Refactor this class, move storage processing methods to TzktDatasource
     def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str, array: bool) -> None:
         """Apply big map diffs of specific path to storage"""
         if self.diffs is None:
@@ -217,7 +224,7 @@ class BigMapData:
 
 @dataclass
 class BigMapDiff(Generic[KeyType, ValueType]):
-    """Wrapper for every big map diff in each list of handler arguments"""
+    """Wrapper for every big map diff in handler arguments"""
 
     action: BigMapAction
     data: BigMapData
@@ -227,7 +234,7 @@ class BigMapDiff(Generic[KeyType, ValueType]):
 
 @dataclass
 class BlockData:
-    """Basic structure for blocks from TzKT response"""
+    """Basic structure for blocks from TzKT HTTP response"""
 
     level: int
     hash: str
@@ -245,6 +252,8 @@ class BlockData:
 
 @dataclass
 class HeadBlockData:
+    """Basic structure for head block from TzKT SignalR response"""
+
     cycle: int
     level: int
     hash: str

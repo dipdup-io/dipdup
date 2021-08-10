@@ -637,7 +637,7 @@ class TzktDatasource(IndexDatasource):
         for item in message:
             head_level = item['state']
             message_type = TzktMessageType(item['type'])
-            self._logger.debug('`%s` message: %s', channel, message_type.name) 
+            self._logger.debug('`%s` message: %s', channel, message_type.name)
 
             if message_type == TzktMessageType.STATE:
                 if self._sync_level != head_level:
@@ -656,7 +656,6 @@ class TzktDatasource(IndexDatasource):
 
             else:
                 raise NotImplementedError
-
 
     async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""

@@ -552,8 +552,8 @@ class OperationIndexConfig(IndexConfig):
     :param datasource: Alias of index datasource in `datasources` section
     :param contracts: Aliases of contracts being indexed in `contracts` section
     :param stateless: Makes index dynamic. DipDup will synchronize index from the first block on every run
-    :param first_block: First block to process (use with `--oneshot` run argument)
-    :param last_block: Last block to process (use with `--oneshot` run argument)
+    :param first_level: First block to process (use with `--oneshot` run argument)
+    :param last_level: Last block to process (use with `--oneshot` run argument)
     :param handlers: List of indexer handlers
     """
 
@@ -563,8 +563,8 @@ class OperationIndexConfig(IndexConfig):
     contracts: Optional[List[Union[str, ContractConfig]]] = None
 
     stateless: bool = False
-    first_block: int = 0
-    last_block: int = 0
+    first_level: int = 0
+    last_level: int = 0
 
     @property
     def contract_configs(self) -> List[ContractConfig]:
@@ -629,8 +629,8 @@ class BigMapIndexConfig(IndexConfig):
     handlers: List[BigMapHandlerConfig]
 
     stateless: bool = False
-    first_block: int = 0
-    last_block: int = 0
+    first_level: int = 0
+    last_level: int = 0
 
     @property
     def contracts(self) -> List[ContractConfig]:
@@ -786,7 +786,7 @@ class DipDupConfig:
 
     def resolve_index_templates(self) -> None:
         _logger.info('Substituting index templates')
-        for index_name, index_config in self.indexes.items():
+        for name, index_config in self.indexes.items():
             if isinstance(index_config, IndexTemplateConfig):
                 template = self.get_template(index_config.template)
                 raw_template = json.dumps(template, default=pydantic_encoder)
@@ -797,20 +797,20 @@ class DipDupConfig:
                 new_index_config = template.__class__(**json_template)
                 new_index_config.template_values = index_config.values
                 new_index_config.parent = index_config.parent
-                self.indexes[index_name] = new_index_config
+                self.indexes[name] = new_index_config
 
     def _check_name(self, name: str) -> None:
         variable = name.split('<')[-1].split('>')[0]
         if variable != name:
             raise ConfigurationError(f'`{variable}` variable of index template is not set')
 
-    def _pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
+    def _pre_initialize_index(self, name: str, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
-        if index_name in self._pre_initialized:
+        if name in self._pre_initialized:
             return
 
         if isinstance(index_config, OperationIndexConfig):
-            index_config.name = index_name
+            index_config.name = name
             if isinstance(index_config.datasource, str):
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
@@ -841,7 +841,7 @@ class DipDupConfig:
                             pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 
         elif isinstance(index_config, BigMapIndexConfig):
-            index_config.name = index_name
+            index_config.name = name
             if isinstance(index_config.datasource, str):
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
@@ -854,7 +854,7 @@ class DipDupConfig:
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-        self._pre_initialized.append(index_name)
+        self._pre_initialized.append(name)
 
     def pre_initialize(self) -> None:
         for name, contract_config in self.contracts.items():
@@ -865,8 +865,8 @@ class DipDupConfig:
             job_config.name = name
 
         self.resolve_index_templates()
-        for index_name, index_config in self.indexes.items():
-            self._pre_initialize_index(index_name, index_config)
+        for name, index_config in self.indexes.items():
+            self._pre_initialize_index(name, index_config)
 
         _logger.info('Verifying callback uniqueness')
         for callback, patterns in self._callback_patterns.items():
@@ -950,8 +950,8 @@ class DipDupConfig:
         fn_name = job_config.callback
         job_config.callback_fn = import_from(module_name, fn_name)
 
-    def _initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
-        if index_name in self._initialized:
+    def _initialize_index(self, name: str, index_config: IndexConfigT) -> None:
+        if name in self._initialized:
             return
 
         if isinstance(index_config, IndexTemplateConfig):
@@ -996,7 +996,7 @@ class DipDupConfig:
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-        self._initialized.append(index_name)
+        self._initialized.append(name)
 
     def _initialize_jobs(self) -> None:
         if not self.jobs:
@@ -1008,8 +1008,8 @@ class DipDupConfig:
         _logger.info('Setting up handlers and types for package `%s`', self.package)
 
         self.pre_initialize()
-        for index_name, index_config in self.indexes.items():
-            self._initialize_index(index_name, index_config)
+        for name, index_config in self.indexes.items():
+            self._initialize_index(name, index_config)
         self._initialize_jobs()
 
 

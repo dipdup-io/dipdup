@@ -17,7 +17,7 @@
                     }
                 },
     {
-                    "name": "index_name",
+                    "name": "name",
                     "description": null,
                     "type": {
                         "name": null,
@@ -29,7 +29,7 @@
                     }
                 },
                 {
-                    "name": "index_type",
+                    "name": "type",
                     "description": "operation: operation\\nbig_map: big_map\\nblock: block\\nschema: schema",
                     "type": {
                         "name": null,

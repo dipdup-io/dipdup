@@ -49,10 +49,10 @@ class Index:
         return self._state
 
     async def process(self) -> None:
-        await self._initialize_index_state()
+        await self._initialize_state()
 
-        if self._config.last_block:
-            last_level = self._config.last_block
+        if self._config.last_level:
+            last_level = self._config.last_level
             await self._synchronize(last_level, cache=True)
         elif self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to the latest block')
@@ -75,13 +75,14 @@ class Index:
         ...
 
     async def _enter_sync_state(self, last_level: int) -> Optional[int]:
-        first_level = self.state.level
+        first_level = self.state.head_level or self.state.level
         if first_level == last_level:
             return None
         if first_level > last_level:
             raise RuntimeError(f'Attempt to synchronize index from level {first_level} to level {last_level}')
+
         self._logger.info('Synchronizing index to level %s', last_level)
-        self.state.hash = None  # type: ignore
+        self.state.synchronized = False  # type: ignore
         await self.state.save()
         return first_level
 
@@ -90,38 +91,48 @@ class Index:
         self.state.level = last_level  # type: ignore
         await self.state.save()
 
-    async def _initialize_index_state(self) -> None:
+    async def _initialize_state(self) -> None:
         if self._state:
             return
         self._logger.info('Initializing index state')
         index_config_hash = self._config.hash()
         state = await State.get_or_none(
-            index_name=self._config.name,
-            index_type=self._config.kind,
+            name=self._config.name,
+            type=self._config.kind,
         )
         if state is None:
             state_cls = TemporaryState if self._config.stateless else State
             state = state_cls(
-                index_name=self._config.name,
-                index_type=self._config.kind,
-                index_hash=index_config_hash,
-                level=self._config.first_block,
+                name=self._config.name,
+                type=self._config.kind,
+                level=self._config.first_level,
+                config_hash=index_config_hash,
             )
 
-        elif state.index_hash != index_config_hash:
+        elif state.config_hash != index_config_hash:
             self._logger.warning('Config hash mismatch (config has been changed), reindexing')
             await self._ctx.reindex()
 
-        self._logger.info('%s', f'{state.level=} {state.hash=}'.replace('state.', ''))
         # NOTE: No need to check indexes which are not synchronized.
-        if state.level and state.hash:
-            block = await self._datasource.get_block(state.level)
-            if state.hash != block.hash:
+        if state.level and state.synchronized:
+            if not state.head_level:
+                raise RuntimeError('Index is synchronized but has no head block data')
+
+            block = await self._datasource.get_block(state.head_level)
+            if state.head_hash != block.hash:
                 self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
                 await self._ctx.reindex()
 
         await state.save()
         self._state = state
+
+    async def _update_state(self, level: int, block: Optional[HeadBlockData] = None) -> None:
+        self.state.level = level  # type: ignore
+        if block:
+            self.state.head_level = block.level  # type: ignore
+            self.state.head_hash = block.hash  # type: ignore
+            self.state.head_timestamp = block.timestamp  # type: ignore
+        await self.state.save()
 
 
 class OperationIndex(Index):
@@ -146,7 +157,7 @@ class OperationIndex(Index):
         if self._rollback_level:
             raise RuntimeError('Already in rollback state')
 
-        await self._initialize_index_state()
+        await self._initialize_state()
         if self.state.level < from_level:
             self._logger.info('Index level is lower than rollback level, ignoring')
         elif self.state.level == from_level:
@@ -229,11 +240,7 @@ class OperationIndex(Index):
         async with in_global_transaction():
             self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_operations(operations)
-
-            self.state.level = level  # type: ignore
-            if block:
-                self.state.hash = block.hash  # type: ignore
-            await self.state.save()
+            await self._update_state(level, block)
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
@@ -471,11 +478,7 @@ class BigMapIndex(Index):
         async with in_global_transaction():
             self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_big_maps(big_maps)
-
-            self.state.level = level  # type: ignore
-            if block:
-                self.state.hash = block.hash  # type: ignore
-            await self.state.save()
+            await self._update_state(level, block)
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""

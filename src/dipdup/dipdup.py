@@ -309,7 +309,7 @@ class DipDup:
         connection_name, connection = next(iter(Tortoise._connections.items()))
 
         try:
-            schema_state = await State.get_or_none(index_type=IndexType.schema, index_name=connection_name)
+            schema_state = await State.get_or_none(type=IndexType.schema, name=connection_name)
         except OperationalError:
             schema_state = None
         # TODO: Process exception in Tortoise
@@ -322,18 +322,18 @@ class DipDup:
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
-        # NOTE: `State.index_hash` field contains schema hash when `index_type` is `IndexType.schema`
+        # NOTE: `State.config_hash` field contains schema hash when `type` is `IndexType.schema`
         if schema_state is None:
             await Tortoise.generate_schemas()
             await self._execute_sql_scripts(reindex=True)
 
             schema_state = State(
-                index_type=IndexType.schema,
-                index_name=connection_name,
-                index_hash=schema_hash,
+                type=IndexType.schema,
+                name=connection_name,
+                config_hash=schema_hash,
             )
             await schema_state.save()
-        elif schema_state.index_hash != schema_hash:
+        elif schema_state.config_hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await self._ctx.reindex()
 

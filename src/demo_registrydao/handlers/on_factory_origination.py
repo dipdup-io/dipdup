@@ -10,14 +10,14 @@ async def on_factory_origination(
     registry_origination: Origination[RegistryStorage],
 ) -> None:
     originated_contract = cast(str, registry_origination.data.originated_contract_address)
-    index_name = f'registry_dao_{originated_contract}'
+    name = f'registry_dao_{originated_contract}'
     ctx.add_contract(
         name=originated_contract,
         address=originated_contract,
         typename='registry',
     )
     ctx.add_index(
-        name=index_name,
+        name=name,
         template='registry_dao',
         values=dict(contract=originated_contract),
     )

@@ -87,8 +87,8 @@ templates:
           - type: transaction
             source: <dex_contract>
             optional: True
-    first_block: 1407528
-    last_block: 1437610
+    first_level: 1407528
+    last_level: 1437610
 
   quipuswap_fa2:
     kind: operation
@@ -152,8 +152,8 @@ templates:
           - type: transaction
             source: <dex_contract>
             optional: True
-    first_block: 1407528
-    last_block: 1444133
+    first_level: 1407528
+    last_level: 1444133
 
 indexes:
   kusd_mainnet:

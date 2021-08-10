@@ -44,7 +44,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 )
             ],
         )
-        self.index_config.state = State(index_name='test', index_type=IndexType.operation, hash='')
+        self.index_config.state = State(name='test', type=IndexType.operation, hash='')
         self.index_config.handlers[0].pattern[0].parameter_type_cls = CollectParameter
         self.dipdup_mock = MagicMock(spec=DipDup)
         self.datasource = TzktDatasource('tzkt.test', self.dipdup_mock)
