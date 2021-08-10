@@ -17,25 +17,32 @@ from dipdup.config import HTTPConfig  # type: ignore
 
 
 class HTTPGateway(ABC):
+    """Base class for datasources which connect to remote HTTP endpoints"""
+
     def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
         self._http_config = self._default_http_config()
         self._http_config.merge(http_config)
         self._http = _HTTPGateway(url.rstrip('/'), self._http_config)
 
     async def __aenter__(self) -> None:
+        """Create underlying aiohttp session"""
         await self._http.__aenter__()
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
+        """Close underlying aiohttp session"""
         await self._http.__aexit__(exc_type, exc, tb)
 
     @abstractmethod
     def _default_http_config(self) -> HTTPConfig:
+        """Default config, properties from user config will be applied one by one"""
         ...
 
     async def close_session(self) -> None:
+        """Close aiohttp session"""
         await self._http.close_session()
 
     def set_user_agent(self, *args: str) -> None:
+        """Add list of arguments to User-Agent header"""
         self._http.set_user_agent(*args)
 
 
@@ -59,16 +66,19 @@ class _HTTPGateway:
         self.__session: Optional[aiohttp.ClientSession] = None
 
     async def __aenter__(self) -> None:
+        """Create underlying aiohttp session"""
         self.__session = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit or 100),
         )
 
     async def __aexit__(self, exc_type, exc, tb):
+        """Close underlying aiohttp session"""
         self._logger.info('Closing gateway session (%s)', self._url)
         await self.__session.close()
 
     @property
     def user_agent(self) -> str:
+        """Return User-Agent header compiled from aiohttp's one and dipdup environment"""
         if self._user_agent is None:
             user_agent_args = (platform.system(), platform.machine()) + (self._user_agent_args or ())
             user_agent = f'dipdup/{__version__} ({"; ".join(user_agent_args)})'
@@ -78,11 +88,15 @@ class _HTTPGateway:
 
     @property
     def _session(self) -> aiohttp.ClientSession:
-        if not self.__session:
-            raise RuntimeError('Session is not initialized. Wrap with `async with`')
+        """Get an aiohttp session from inside of it's context manager"""
+        if self.__session is None:
+            raise RuntimeError('aiohttp session is not initialized. Wrap with `async with httpgateway_instance`')
+        if self.__session.closed:
+            raise RuntimeError('aiohttp session is closed')
         return self.__session
 
-    async def _wrapped_request(self, method: str, url: str, **kwargs):
+    async def _retry_request(self, method: str, url: str, weight: int = 1, **kwargs):
+        """Retry a request in case of failure sleeping according to config"""
         attempt = 1
         retry_sleep = self._config.retry_sleep or 0
         while True:
@@ -91,6 +105,7 @@ class _HTTPGateway:
                 return await self._request(
                     method=method,
                     url=url,
+                    weight=weight,
                     **kwargs,
                 )
             except (aiohttp.ClientConnectionError, aiohttp.ClientConnectorError) as e:
@@ -116,8 +131,8 @@ class _HTTPGateway:
                     await asyncio.sleep(self._config.retry_sleep or 0)
                     retry_sleep *= self._config.retry_multiplier or 1
 
-    async def _request(self, method: str, url: str, **kwargs):
-        """Wrapped aiohttp call with preconfigured headers and logging"""
+    async def _request(self, method: str, url: str, weight: int = 1, **kwargs):
+        """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
         headers = {
             **kwargs.pop('headers', {}),
             'User-Agent': self.user_agent,
@@ -128,6 +143,10 @@ class _HTTPGateway:
         params_string = '&'.join([f'{k}={v}' for k, v in params.items()])
         request_string = f'{url}?{params_string}'.rstrip('?')
         self._logger.debug('Calling `%s`', request_string)
+
+        if self._ratelimiter:
+            await self._ratelimiter.acquire(weight)
+
         async with self._session.request(
             method=method,
             url=url,
@@ -138,25 +157,27 @@ class _HTTPGateway:
             return await response.json()
 
     async def request(self, method: str, url: str, cache: bool = False, weight: int = 1, **kwargs):
+        """Perform an HTTP request.
+
+        Check for parameters in cache, if not found, perform retried request and cache result.
+        """
         if self._config.cache and cache:
             key = hashlib.sha256(pickle.dumps([method, url, kwargs])).hexdigest()
             try:
                 return self._cache[key]
             except KeyError:
-                if self._ratelimiter:
-                    await self._ratelimiter.acquire(weight)
-                response = await self._wrapped_request(method, url, **kwargs)
+                response = await self._retry_request(method, url, weight, **kwargs)
                 self._cache[key] = response
                 return response
         else:
-            if self._ratelimiter:
-                await self._ratelimiter.acquire(weight)
-            response = await self._wrapped_request(method, url, **kwargs)
+            response = await self._retry_request(method, url, weight, **kwargs)
             return response
 
     async def close_session(self) -> None:
+        """Close aiohttp session"""
         await self._session.close()
 
     def set_user_agent(self, *args: str) -> None:
+        """Add list of arguments to User-Agent header"""
         self._user_agent_args = args
         self._user_agent = None

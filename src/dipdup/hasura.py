@@ -135,10 +135,8 @@ class HasuraGateway(HTTPGateway):
     def _default_http_config(self) -> HTTPConfig:
         return HTTPConfig(
             cache=False,
+            retry_count=3,
             retry_sleep=1,
-            retry_multiplier=1.1,
-            ratelimit_rate=100,
-            ratelimit_period=1,
         )
 
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
