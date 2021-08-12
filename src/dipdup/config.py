@@ -661,7 +661,6 @@ class HasuraConfig:
     camel_case: bool = False
     connection_timeout: int = 5
     rest: bool = True
-    reset: Optional[bool] = None
     http: Optional[HTTPConfig] = None
 
     @validator('url', allow_reuse=True)
