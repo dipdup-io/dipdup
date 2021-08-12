@@ -194,17 +194,14 @@ async def hasura(ctx):
 
 
 @hasura.command(name='configure', help='Configure Hasura GraphQL Engine')
-@click.option('--reset', is_flag=True, help='Reset metadata before configuring')
 @click.pass_context
 @cli_wrapper
-async def hasura_configure(ctx, reset: bool):
+async def hasura_configure(ctx):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
     if not config.hasura:
         raise ConfigurationError('`hasura` config section is empty')
-    if reset:
-        config.hasura.reset = True
     hasura_gateway = HasuraGateway(
         package=config.package,
         hasura_config=config.hasura,

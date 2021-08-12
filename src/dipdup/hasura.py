@@ -3,12 +3,10 @@ import importlib
 import logging
 import re
 from contextlib import suppress
-from http import HTTPStatus
 from json import dumps as dump_json
 from os.path import dirname, join
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
-import aiohttp
 import humps  # type: ignore
 from aiohttp import ClientConnectorError, ClientOSError
 from pydantic.dataclasses import dataclass
@@ -92,20 +90,14 @@ class HasuraGateway(HTTPGateway):
 
         self._logger.info('Configuring Hasura')
         await self._healthcheck()
-
-        if self._hasura_config.reset is True:
-            await self._reset_metadata()
-
+        await self._reset_metadata()
         metadata = await self._fetch_metadata()
 
-        self._logger.info('Generating metadata')
-
-        # NOTE: Hasura metadata updated in three steps, order matters:
+        # NOTE: Hasura metadata updated in three steps.
+        # NOTE: Order matters because queries must be generated after applying camelcase to model names.
         # NOTE: 1. Generate and apply tables metadata.
         source_tables_metadata = await self._generate_source_tables_metadata()
         metadata['sources'][0]['tables'] = source_tables_metadata
-
-        # FIXME: Existing select permissions are not merged thus lost
         await self._replace_metadata(metadata)
 
         # NOTE: 2. Apply camelcase and refresh metadata
@@ -116,36 +108,18 @@ class HasuraGateway(HTTPGateway):
         # NOTE: 3. Generate and apply queries and rest endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
         self._logger.info('Adding %s generated and user-defined queries', len(query_collections_metadata))
-
-        try:
-            self._logger.info('Merging %s existing queries', len(metadata['query_collections'][0]['definition']['queries']))
-            metadata['query_collections'][0]['definition']['queries'] = self._merge_metadata(
-                # TODO: Store dipdup queries in a separate collection?
-                existing=metadata['query_collections'][0]['definition']['queries'],
-                generated=query_collections_metadata,
-                key=lambda m: m['name'],
-            )
-        except KeyError:
-            metadata['query_collections'] = [
-                {
-                    "name": "allowed-queries",
-                    "definition": {"queries": query_collections_metadata},
-                }
-            ]
+        metadata['query_collections'] = [
+            {
+                "name": "allowed-queries",
+                "definition": {"queries": query_collections_metadata},
+            }
+        ]
 
         if self._hasura_config.rest:
             self._logger.info('Adding %s REST endpoints', len(query_collections_metadata))
             query_names = [q['name'] for q in query_collections_metadata]
             rest_endpoints_metadata = await self._generate_rest_endpoints_metadata(query_names)
-            try:
-                self._logger.info('Merging %s existing REST endpoints', len(metadata['rest_endpoints']))
-                metadata['rest_endpoints'] = self._merge_metadata(
-                    existing=metadata['rest_endpoints'],
-                    generated=rest_endpoints_metadata,
-                    key=lambda m: m['name'],
-                )
-            except KeyError:
-                metadata['rest_endpoints'] = rest_endpoints_metadata
+            metadata['rest_endpoints'] = rest_endpoints_metadata
 
         await self._replace_metadata(metadata)
 
@@ -202,18 +176,7 @@ class HasuraGateway(HTTPGateway):
             "type": "replace_metadata",
             "args": metadata,
         }
-        try:
-            await self._hasura_request(endpoint, json)
-        except aiohttp.ClientResponseError as e:
-            # NOTE: 400 from Hasura means we failed either to generate or to merge existing metadata.
-            # NOTE: Reset metadata and retry if not forbidden by config.
-            print(e.status, self._hasura_config.reset)
-            if e.status != HTTPStatus.BAD_REQUEST or self._hasura_config.reset is False:
-                print('raise')
-                raise
-            self._logger.warning('Failed to replace metadata, resetting')
-            await self._reset_metadata()
-            await self._hasura_request(endpoint, json)
+        await self._hasura_request(endpoint, json)
 
     async def _get_views(self) -> List[str]:
         views = [
@@ -305,11 +268,6 @@ class HasuraGateway(HTTPGateway):
         for query_name in query_names:
             rest_endpoints.append(self._format_rest_endpoint(query_name))
         return rest_endpoints
-
-    def _merge_metadata(self, existing: List[Dict[str, Any]], generated: List[Dict[str, Any]], key) -> List[Dict[str, Any]]:
-        existing_dict = {key(t): t for t in existing}
-        generated_dict = {key(t): t for t in generated}
-        return list({**existing_dict, **generated_dict}.values())
 
     async def _get_fields_json(self, name: str) -> List[Dict[str, Any]]:
         result = await self._hasura_request(
