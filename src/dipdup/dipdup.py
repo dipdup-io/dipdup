@@ -312,7 +312,7 @@ class DipDup:
             schema_state = await State.get_or_none(type=IndexType.schema, name=connection_name)
         except OperationalError:
             schema_state = None
-        # TODO: Process exception in Tortoise
+        # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError as e:
             raise ReindexingRequiredError(None) from e
 
@@ -332,7 +332,11 @@ class DipDup:
                 name=connection_name,
                 config_hash=schema_hash,
             )
-            await schema_state.save()
+            try:
+                await schema_state.save()
+            except OperationalError as e:
+                raise ReindexingRequiredError(None) from e
+
         elif schema_state.config_hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await self._ctx.reindex()

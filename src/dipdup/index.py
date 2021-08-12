@@ -82,14 +82,12 @@ class Index:
             raise RuntimeError(f'Attempt to synchronize index from level {first_level} to level {last_level}')
 
         self._logger.info('Synchronizing index to level %s', last_level)
-        self.state.synchronized = False  # type: ignore
-        await self.state.save()
+        await self._update_state(first_level)
         return first_level
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
-        self.state.level = last_level  # type: ignore
-        await self.state.save()
+        await self._update_state(last_level)
 
     async def _initialize_state(self) -> None:
         if self._state:
@@ -132,6 +130,13 @@ class Index:
             self.state.head_level = block.level  # type: ignore
             self.state.head_hash = block.hash  # type: ignore
             self.state.head_timestamp = block.timestamp  # type: ignore
+            self.state.synchronized = True  # type: ignore
+        else:
+            self.state.head_level = None  # type: ignore
+            self.state.head_hash = None  # type: ignore
+            self.state.head_timestamp = None  # type: ignore
+            self.state.synchronized = False  # type: ignore
+
         await self.state.save()
 
 
