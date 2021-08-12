@@ -18,6 +18,7 @@ from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig, pasc
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
 from dipdup.utils import iter_files, iter_models
+from json import dumps as dump_json
 
 _get_fields_query = '''
 query introspectionQuery($name: String!) {
@@ -96,13 +97,15 @@ class HasuraGateway(HTTPGateway):
 
         # NOTE: Hasura metadata updated in three steps, order matters:
         # NOTE: 1. Generate and apply tables metadata.
-        # FIXME: Existing select permissions are lost
         source_tables_metadata = await self._generate_source_tables_metadata()
+        self._logger.info('Merging %s existing tables', len(metadata['sources'][0]['tables']))
         metadata['sources'][0]['tables'] = self._merge_metadata(
             existing=metadata['sources'][0]['tables'],
             generated=source_tables_metadata,
-            key=lambda m: m['table']['name'],
+            # NOTE: Two tables from different schemas can share the same name.
+            key=lambda m: (m['table']['name'], m['table']['schema']),
         )
+        # FIXME: Existing select permissions are not merged thus lost
         await self._replace_metadata(metadata)
 
         # NOTE: 2. Apply camelcase and refresh metadata
@@ -112,9 +115,12 @@ class HasuraGateway(HTTPGateway):
 
         # NOTE: 3. Generate and apply queries and rest endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
+        self._logger.info('Adding %s generated and user-defined queries', len(query_collections_metadata))
+
         try:
+            self._logger.info('Merging %s existing queries', len(metadata['query_collections'][0]['definition']['queries']))
             metadata['query_collections'][0]['definition']['queries'] = self._merge_metadata(
-                # TODO: Separate collection?
+                # TODO: Store dipdup queries in a separate collection?
                 existing=metadata['query_collections'][0]['definition']['queries'],
                 generated=query_collections_metadata,
                 key=lambda m: m['name'],
@@ -128,20 +134,25 @@ class HasuraGateway(HTTPGateway):
             ]
 
         if self._hasura_config.rest:
+            self._logger.info('Adding %s REST endpoints', len(query_collections_metadata))
             query_names = [q['name'] for q in query_collections_metadata]
             rest_endpoints_metadata = await self._generate_rest_endpoints_metadata(query_names)
-            metadata['rest_endpoints'] = self._merge_metadata(
-                existing=metadata.get('rest_endpoints', []),
-                generated=rest_endpoints_metadata,
-                key=lambda m: m['name'],
-            )
+            try:
+                self._logger.info('Merging %s existing REST endpoints', len(metadata['rest_endpoints']))
+                metadata['rest_endpoints'] = self._merge_metadata(
+                    existing=metadata['rest_endpoints'],
+                    generated=rest_endpoints_metadata,
+                    key=lambda m: m['name'],
+                )
+            except KeyError:
+                metadata['rest_endpoints'] = rest_endpoints_metadata
 
         await self._replace_metadata(metadata)
 
         self._logger.info('Hasura instance has been configured')
 
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
-        self._logger.debug('Sending `%s` request: %s', endpoint, json)
+        self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
         result = await self._http.request(
             method='post',
             cache=False,
@@ -205,7 +216,7 @@ class HasuraGateway(HTTPGateway):
             await self._hasura_request(endpoint, json)
 
     async def _get_views(self) -> List[str]:
-        return [
+        views = [
             row[0]
             for row in (
                 await get_connection(None).execute_query(
@@ -214,6 +225,8 @@ class HasuraGateway(HTTPGateway):
                 )
             )[1]
         ]
+        self._logger.info('Found %s regular and materialized views', len(views))
+        return views
 
     async def _generate_source_tables_metadata(self) -> List[Dict[str, Any]]:
         """Generate source tables metadata based on project models and views.
@@ -221,7 +234,7 @@ class HasuraGateway(HTTPGateway):
         Includes tables and their relations.
         """
 
-        self._logger.info('Generating Hasura metadata')
+        self._logger.info('Generating Hasura metadata based on project models')
         views = await self._get_views()
 
         metadata_tables = {}
@@ -312,6 +325,8 @@ class HasuraGateway(HTTPGateway):
             raise HasuraError(f'Unknown table `{name}`') from e
 
     async def _get_fields(self, name: str = 'query_root') -> List[Field]:
+        # NOTE: Hasura omits default schema name
+        name = name.lstrip('public_')
 
         try:
             fields_json = await self._get_fields_json(name)
@@ -352,6 +367,7 @@ class HasuraGateway(HTTPGateway):
 
         Based on https://github.com/m-rgba/hasura-snake-to-camel
         """
+        self._logger.info('Converting field names to camelCase')
 
         tables = await self._get_fields()
 
@@ -359,7 +375,8 @@ class HasuraGateway(HTTPGateway):
             decamelized_table = humps.decamelize(table.name)
 
             # NOTE: Skip tables from different schemas
-            if not decamelized_table.startswith(self._database_config.schema_name):
+            if self._database_config.schema_name != 'public' and not decamelized_table.startswith(self._database_config.schema_name):
+                self._logger.info('Skipping table `%s` from different schema', table.name)
                 continue
 
             custom_root_fields = self._format_custom_root_fields(decamelized_table)
@@ -368,7 +385,7 @@ class HasuraGateway(HTTPGateway):
             args: Dict[str, Any] = {
                 'table': {
                     # NOTE: Remove schema prefix from table name
-                    'name': decamelized_table.replace(self._database_config.schema_name, '')[1:],
+                    'name': decamelized_table.replace(self._database_config.schema_name, '').strip('_'),
                     'schema': self._database_config.schema_name,
                 },
                 'source': self._hasura_config.source,
