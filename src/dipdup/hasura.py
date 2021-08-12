@@ -4,8 +4,9 @@ import logging
 import re
 from contextlib import suppress
 from http import HTTPStatus
+from json import dumps as dump_json
 from os.path import dirname, join
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
 import aiohttp
 import humps  # type: ignore
@@ -14,11 +15,10 @@ from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.transactions import get_connection
 
-from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig, pascal_to_snake
+from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
-from dipdup.utils import iter_files, iter_models
-from json import dumps as dump_json
+from dipdup.utils import iter_files, iter_models, pascal_to_snake
 
 _get_fields_query = '''
 query introspectionQuery($name: String!) {
@@ -56,6 +56,11 @@ class Field:
             name=humps.camelize(self.name),
             type=self.type,
         )
+
+    @property
+    def root(self) -> str:
+        # NOTE: Hasura omits default schema name in root field name
+        return humps.decamelize(self.name).lstrip('public_')
 
 
 class HasuraError(RuntimeError):
@@ -98,13 +103,8 @@ class HasuraGateway(HTTPGateway):
         # NOTE: Hasura metadata updated in three steps, order matters:
         # NOTE: 1. Generate and apply tables metadata.
         source_tables_metadata = await self._generate_source_tables_metadata()
-        self._logger.info('Merging %s existing tables', len(metadata['sources'][0]['tables']))
-        metadata['sources'][0]['tables'] = self._merge_metadata(
-            existing=metadata['sources'][0]['tables'],
-            generated=source_tables_metadata,
-            # NOTE: Two tables from different schemas can share the same name.
-            key=lambda m: (m['table']['name'], m['table']['schema']),
-        )
+        metadata['sources'][0]['tables'] = source_tables_metadata
+
         # FIXME: Existing select permissions are not merged thus lost
         await self._replace_metadata(metadata)
 
@@ -372,22 +372,11 @@ class HasuraGateway(HTTPGateway):
         tables = await self._get_fields()
 
         for table in tables:
-            decamelized_table = humps.decamelize(table.name)
-
-            # NOTE: Skip tables from different schemas
-            if self._database_config.schema_name != 'public' and not decamelized_table.startswith(self._database_config.schema_name):
-                self._logger.info('Skipping table `%s` from different schema', table.name)
-                continue
-
-            custom_root_fields = self._format_custom_root_fields(decamelized_table)
-            columns = await self._get_fields(decamelized_table)
+            custom_root_fields = self._format_custom_root_fields(table.root)
+            columns = await self._get_fields(table.root)
             custom_column_names = self._format_custom_column_names(columns)
             args: Dict[str, Any] = {
-                'table': {
-                    # NOTE: Remove schema prefix from table name
-                    'name': decamelized_table.replace(self._database_config.schema_name, '').strip('_'),
-                    'schema': self._database_config.schema_name,
-                },
+                'table': self._format_table_table(table.root),
                 'source': self._hasura_config.source,
                 'configuration': {
                     'identifier': custom_root_fields['select_by_pk'],
@@ -404,13 +393,15 @@ class HasuraGateway(HTTPGateway):
                 },
             )
 
-    def _format_rest_query(self, name: str, table: str, filter: str, fields: List[Field]) -> Dict[str, Any]:
+    def _format_rest_query(self, name: str, table: str, filter: str, fields: Iterable[Field]) -> Dict[str, Any]:
         if not table.endswith('_by_pk'):
             table += '_by_pk'
-        name = humps.camelize(name) if self._hasura_config.camel_case else name
-        filter = humps.camelize(filter) if self._hasura_config.camel_case else filter
-        table = humps.camelize(table) if self._hasura_config.camel_case else table
-        fields = [f.camelize() for f in fields] if self._hasura_config.camel_case else fields
+
+        if self._hasura_config.camel_case:
+            name = humps.camelize(name)
+            filter = humps.camelize(filter)
+            table = humps.camelize(table)
+            map(lambda f: f.camelize(), fields)
 
         try:
             filter_field = next(f for f in fields if f.name == filter)
@@ -458,15 +449,19 @@ class HasuraGateway(HTTPGateway):
 
     def _format_table(self, name: str) -> Dict[str, Any]:
         return {
-            "table": {
-                "schema": self._database_config.schema_name,
-                "name": name,
-            },
+            "table": self._format_table_table(name),
             "object_relationships": [],
             "array_relationships": [],
             "select_permissions": [
                 self._format_select_permissions(),
             ],
+        }
+
+    def _format_table_table(self, name: str) -> Dict[str, Any]:
+        return {
+            "schema": self._database_config.schema_name,
+            # NOTE: Remove schema prefix from table name
+            'name': name.replace(self._database_config.schema_name, '').strip('_'),
         }
 
     def _format_array_relationship(
