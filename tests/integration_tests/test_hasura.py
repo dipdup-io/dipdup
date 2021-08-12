@@ -41,6 +41,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
             hasura_gateway._http = Mock()
             hasura_gateway._http.request = AsyncMock(
                 side_effect=[
+                    {},
                     empty_metadata,
                     {},
                     query_dipdup_state,
