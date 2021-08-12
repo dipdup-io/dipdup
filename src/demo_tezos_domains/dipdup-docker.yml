@@ -1,6 +1,6 @@
 database:
   kind: postgres
-  host: 127.0.0.1
+  host: db
   port: 5432
   user: ${POSTGRES_USER:-dipdup}
   password: ${POSTGRES_PASSWORD:-changeme}
@@ -8,6 +8,5 @@ database:
   schema_name: tezos_domains
 
 hasura:
-  url: http://127.0.0.1:8080
+  url: http://hasura:8080
   admin_secret: ${ADMIN_SECRET:-changeme}
-  camel_case: True
