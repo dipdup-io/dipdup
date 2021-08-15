@@ -9,7 +9,7 @@ from os import listdir
 from os.path import join
 from typing import Dict, List, Optional, cast
 
-import sqlparse
+import sqlparse  # type: ignore
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
