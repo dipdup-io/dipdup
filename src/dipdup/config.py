@@ -71,9 +71,9 @@ class PostgresDatabaseConfig:
 
     kind: Literal['postgres']
     host: str
-    port: int
-    user: str
-    database: str
+    user: str = 'postgres'
+    database: str = 'postgres'
+    port: int = 5432
     schema_name: str = 'public'
     password: str = ''
     immune_tables: Optional[List[str]] = None

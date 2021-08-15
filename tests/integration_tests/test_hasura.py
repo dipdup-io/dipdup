@@ -1,11 +1,13 @@
-import json
+from contextlib import AsyncExitStack
 from os.path import dirname, join
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import MagicMock
 
-from tortoise import Tortoise
+from testcontainers.core.generic import DbContainer  # type: ignore
+from testcontainers.postgres import PostgresContainer  # type: ignore
 
-from dipdup.config import HasuraConfig, PostgresDatabaseConfig
+from dipdup.config import DipDupConfig, HasuraConfig, PostgresDatabaseConfig
+from dipdup.dipdup import DipDup
 from dipdup.hasura import HasuraGateway
 from dipdup.utils import tortoise_wrapper
 
@@ -14,46 +16,42 @@ class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
 
     async def test_configure_hasura(self):
+        config_path = join(dirname(__file__), 'hic_et_nunc.yml')
+        config = DipDupConfig.load([config_path])
+        config.pre_initialize()
 
-        with open(join(dirname(__file__), 'hasura', 'empty.json')) as file:
-            empty_metadata = json.load(file)
-        with open(join(dirname(__file__), 'hasura', 'query_dipdup_state.json')) as file:
-            query_dipdup_state = json.load(file)
-        with open(join(dirname(__file__), 'hasura', 'query_holder.json')) as file:
-            query_holder = json.load(file)
-        with open(join(dirname(__file__), 'hasura', 'query_swap.json')) as file:
-            query_swap = json.load(file)
-        with open(join(dirname(__file__), 'hasura', 'query_token.json')) as file:
-            query_token = json.load(file)
-        with open(join(dirname(__file__), 'hasura', 'query_trade.json')) as file:
-            query_trade = json.load(file)
-        with open(join(dirname(__file__), 'hasura', 'replace_metadata_request.json')) as file:
-            replace_metadata_request = json.load(file)
+        async with AsyncExitStack() as stack:
+            postgres_container = PostgresContainer()
+            postgres_container._connect = MagicMock()
+            stack.enter_context(postgres_container)
+            postgres_container._container.reload()
+            postgres_ip = postgres_container._container.attrs['NetworkSettings']['IPAddress']
 
-        async with tortoise_wrapper('sqlite://:memory:', 'demo_hic_et_nunc.models'):
-            await Tortoise.generate_schemas()
-
-            database_config = PostgresDatabaseConfig(kind='postgres', host='', port=0, user='', database='', schema_name='hic_et_nunc')
-            hasura_config = HasuraConfig('http://localhost')
-
-            hasura_gateway = HasuraGateway('demo_hic_et_nunc', hasura_config, database_config)
-            hasura_gateway._get_views = AsyncMock(return_value=[])
-            hasura_gateway._http = Mock()
-            hasura_gateway._http.request = AsyncMock(
-                side_effect=[
-                    {},
-                    empty_metadata,
-                    {},
-                    query_dipdup_state,
-                    query_holder,
-                    query_swap,
-                    query_token,
-                    query_trade,
-                    {},
-                ]
+            config.database = PostgresDatabaseConfig(
+                kind='postgres',
+                host=postgres_ip,
+                port=5432,
+                user='test',
+                database='test',
+                password='test',
+                schema_name='test',
             )
-            hasura_gateway._healthcheck = AsyncMock()
+            dipdup = DipDup(config)
+            await stack.enter_async_context(tortoise_wrapper(config.database.connection_string, 'demo_hic_et_nunc.models'))
+            await dipdup._initialize_database()
+
+            hasura_container = DbContainer('hasura/graphql-engine:v2.0.4').with_env(
+                'HASURA_GRAPHQL_DATABASE_URL',
+                f'postgres://test:test@{postgres_ip}:5432/test',
+            )
+            hasura_container._connect = MagicMock()
+            hasura_container._configure = MagicMock()
+            stack.enter_context(hasura_container)
+            hasura_container._container.reload()
+            hasura_ip = hasura_container._container.attrs['NetworkSettings']['IPAddress']
+
+            config.hasura = HasuraConfig(f'http://{hasura_ip}:8080')
+            hasura_gateway = HasuraGateway('demo_hic_et_nunc', config.hasura, config.database)
+            await stack.enter_async_context(hasura_gateway)
 
             await hasura_gateway.configure()
-
-            self.assertEqual(hasura_gateway._http.request.call_args[-1]['json'], replace_metadata_request)

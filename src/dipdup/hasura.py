@@ -94,16 +94,15 @@ class HasuraGateway(HTTPGateway):
         metadata = await self._fetch_metadata()
 
         # NOTE: Hasura metadata updated in three steps.
-        # NOTE: Order matters because queries must be generated after applying camelcase to model names.
+        # NOTE: Order matters because queries must be generated after applying table customization to be valid.
         # NOTE: 1. Generate and apply tables metadata.
         source_tables_metadata = await self._generate_source_tables_metadata()
         metadata['sources'][0]['tables'] = source_tables_metadata
         await self._replace_metadata(metadata)
 
-        # NOTE: 2. Apply camelcase and refresh metadata
-        if self._hasura_config.camel_case:
-            await self._apply_camelcase()
-            metadata = await self._fetch_metadata()
+        # NOTE: 2. Apply table customization and refresh metadata
+        await self._apply_table_customization()
+        metadata = await self._fetch_metadata()
 
         # NOTE: 3. Generate and apply queries and rest endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
@@ -191,6 +190,13 @@ class HasuraGateway(HTTPGateway):
         self._logger.info('Found %s regular and materialized views', len(views))
         return views
 
+    def _iterate_graphql_queries(self) -> Iterator[Tuple[str, str]]:
+        package = importlib.import_module(self._package)
+        package_path = dirname(package.__file__)
+        graphql_path = join(package_path, 'graphql')
+        for file in iter_files(graphql_path, '.graphql'):
+            yield file.name.split('/')[-1][:-8], file.read()
+
     async def _generate_source_tables_metadata(self) -> List[Dict[str, Any]]:
         """Generate source tables metadata based on project models and views.
 
@@ -234,13 +240,6 @@ class HasuraGateway(HTTPGateway):
                     )
 
         return list(metadata_tables.values())
-
-    def _iterate_graphql_queries(self) -> Iterator[Tuple[str, str]]:
-        package = importlib.import_module(self._package)
-        package_path = dirname(package.__file__)
-        graphql_path = join(package_path, 'graphql')
-        for file in iter_files(graphql_path, '.graphql'):
-            yield file.name.split('/')[-1][:-8], file.read()
 
     async def _generate_query_collections_metadata(self) -> List[Dict[str, Any]]:
         queries = []
@@ -320,17 +319,17 @@ class HasuraGateway(HTTPGateway):
 
         return fields
 
-    async def _apply_camelcase(self) -> None:
+    async def _apply_table_customization(self) -> None:
         """Convert table and column names to camelCase.
 
         Based on https://github.com/m-rgba/hasura-snake-to-camel
         """
-        self._logger.info('Converting field names to camelCase')
 
         tables = await self._get_fields()
 
+        # TODO: Bulk request
         for table in tables:
-            custom_root_fields = self._format_custom_root_fields(table.root)
+            custom_root_fields = self._format_custom_root_fields(table)
             columns = await self._get_fields(table.root)
             custom_column_names = self._format_custom_column_names(columns)
             args: Dict[str, Any] = {
@@ -343,6 +342,7 @@ class HasuraGateway(HTTPGateway):
                 },
             }
 
+            self._logger.info('Applying `%s` table customization', table.root)
             await self._hasura_request(
                 endpoint='metadata',
                 json={
@@ -388,22 +388,33 @@ class HasuraGateway(HTTPGateway):
             "comment": None,
         }
 
-    def _format_custom_root_fields(self, table: str) -> Dict[str, Any]:
+    def _format_custom_root_fields(self, table: Field) -> Dict[str, Any]:
+        # NOTE: Schema name plus underscore
+        table_name = table.root[len(self._database_config.schema_name) + 1 :]
+
+        def _fmt(fmt: str) -> str:
+            if self._hasura_config.camel_case:
+                return humps.camelize(fmt.format(table_name))
+            return humps.decamelize(fmt.format(table_name))
+
         # NOTE: Do not change original Hasura format, REST endpoints generation will be broken otherwise
         return {
-            'select': humps.camelize(table),
-            'select_by_pk': humps.camelize(f'{table}_by_pk'),
-            'select_aggregate': humps.camelize(f'{table}_aggregate'),
-            'insert': humps.camelize(f'insert_{table}'),
-            'insert_one': humps.camelize(f'insert_{table}_one'),
-            'update': humps.camelize(f'update_{table}'),
-            'update_by_pk': humps.camelize(f'update_{table}_by_pk'),
-            'delete': humps.camelize(f'delete_{table}'),
-            'delete_by_pk': humps.camelize(f'delete_{table}_by_pk'),
+            'select': _fmt('{}'),
+            'select_by_pk': _fmt('{}_by_pk'),
+            'select_aggregate': _fmt('{}_aggregate'),
+            'insert': _fmt('insert_{}'),
+            'insert_one': _fmt('insert_{}_one'),
+            'update': _fmt('update_{}'),
+            'update_by_pk': _fmt('update_{}_by_pk'),
+            'delete': _fmt('delete_{}'),
+            'delete_by_pk': _fmt('delete_{}_by_pk'),
         }
 
     def _format_custom_column_names(self, fields: List[Field]) -> Dict[str, Any]:
-        return {humps.decamelize(f.name): humps.camelize(f.name) for f in fields}
+        if self._hasura_config.camel_case:
+            return {humps.decamelize(f.name): humps.camelize(f.name) for f in fields}
+        else:
+            return {humps.decamelize(f.name): humps.decamelize(f.name) for f in fields}
 
     def _format_table(self, name: str) -> Dict[str, Any]:
         return {
