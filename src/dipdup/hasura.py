@@ -16,7 +16,7 @@ from tortoise.transactions import get_connection
 from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
-from dipdup.utils import iter_files, iter_models, pascal_to_snake
+from dipdup.utils import iter_files, iter_models, pascal_to_snake, remove_prefix
 
 _get_fields_query = '''
 query introspectionQuery($name: String!) {
@@ -47,7 +47,7 @@ query introspectionQuery($name: String!) {
 @dataclass
 class Field:
     name: str
-    type: Optional[str]
+    type: Optional[str] = None
 
     def camelize(self) -> 'Field':
         return Field(
@@ -57,8 +57,8 @@ class Field:
 
     @property
     def root(self) -> str:
-        # NOTE: Hasura omits default schema name in root field name
-        return humps.decamelize(self.name).lstrip('public_')
+        # NOTE: Hasura omits schema name prefix in root fields
+        return remove_prefix(humps.decamelize(self.name), 'public')
 
 
 class HasuraError(RuntimeError):
@@ -148,6 +148,17 @@ class HasuraGateway(HTTPGateway):
             await asyncio.sleep(1)
         else:
             raise HasuraError(f'Hasura instance not responding for {self._hasura_config.connection_timeout} seconds')
+
+        version_json = await (
+            await self._http._session.get(
+                f'{self._hasura_config.url}/v1/version',
+            )
+        ).json()
+        version = version_json['version']
+        if version.startswith('v1'):
+            raise HasuraError('Hasura v1 is not supported.')
+
+        self._logger.info('Connected to Hasura %s', version)
 
     async def _reset_metadata(self) -> None:
         self._logger.info('Resetting metadata')
@@ -282,8 +293,7 @@ class HasuraGateway(HTTPGateway):
             raise HasuraError(f'Unknown table `{name}`') from e
 
     async def _get_fields(self, name: str = 'query_root') -> List[Field]:
-        # NOTE: Hasura omits default schema name
-        name = name.lstrip('public_')
+        name = Field(name).root
 
         try:
             fields_json = await self._get_fields_json(name)
@@ -389,8 +399,7 @@ class HasuraGateway(HTTPGateway):
         }
 
     def _format_custom_root_fields(self, table: Field) -> Dict[str, Any]:
-        # NOTE: Schema name plus underscore
-        table_name = table.root[len(self._database_config.schema_name) + 1 :]
+        table_name = remove_prefix(table.root, self._database_config.schema_name)
 
         def _fmt(fmt: str) -> str:
             if self._hasura_config.camel_case:
@@ -429,8 +438,7 @@ class HasuraGateway(HTTPGateway):
     def _format_table_table(self, name: str) -> Dict[str, Any]:
         return {
             "schema": self._database_config.schema_name,
-            # NOTE: Remove schema prefix from table name
-            'name': name.replace(self._database_config.schema_name, '').strip('_'),
+            'name': remove_prefix(name, self._database_config.schema_name),
         }
 
     def _format_array_relationship(
