@@ -113,6 +113,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @cli.command(help='Run existing dipdup project')
 @click.option('--reindex', is_flag=True, help='Drop database and start indexing from scratch')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
+@click.option('--hotswap', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
 @click.pass_context
 @cli_wrapper
 async def run(ctx, reindex: bool, oneshot: bool) -> None:

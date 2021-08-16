@@ -28,6 +28,12 @@ class IndexType(Enum):
     schema = 'schema'
 
 
+class IndexStatus(Enum):
+    CREATED = 'CREATED'
+    IN_PROGRESS = 'IN_PROGRESS'
+    REALTIME = 'REALTIME'
+
+
 class State(Model):
     """Stores current level of index and hash of it's config"""
 

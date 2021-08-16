@@ -301,10 +301,7 @@ class BlockCache:
             raise RuntimeError(f'Attemps to get block older than {self._limit} levels from head')
 
         try:
-            await asyncio.wait_for(
-                fut=self._events[level].wait(),
-                timeout=3
-            )
+            await asyncio.wait_for(fut=self._events[level].wait(), timeout=3)
         except asyncio.TimeoutError as e:
             raise RuntimeError(f'Block {level} hasn\'t arrived in 3 seconds. Forgot to subscribe to head?') from e
 

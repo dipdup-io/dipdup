@@ -29,7 +29,7 @@ _logger = logging.getLogger('dipdup.utils')
 
 
 def import_submodules(package: str) -> Dict[str, types.ModuleType]:
-    """Import all submodules of a module, recursively, including subpackages"""
+    """Recursively import all submodules of a package"""
     results = {}
     for _, name, is_pkg in pkgutil.walk_packages((package,)):
         full_name = package + '.' + name
@@ -41,7 +41,7 @@ def import_submodules(package: str) -> Dict[str, types.ModuleType]:
 
 @asynccontextmanager
 async def slowdown(seconds: int):
-    """Sleep if nested block executed faster than X seconds"""
+    """Sleep if nested block was executed faster than X seconds"""
     started_at = time.time()
     yield
     finished_at = time.time()
@@ -51,10 +51,12 @@ async def slowdown(seconds: int):
 
 
 def snake_to_pascal(value: str) -> str:
+    """humps wrapper for Python imports"""
     return humps.pascalize(value)
 
 
 def pascal_to_snake(value: str) -> str:
+    """humps wrapper for Python imports"""
     return humps.depascalize(value.replace('.', '_')).replace('__', '_')
 
 

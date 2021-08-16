@@ -11,6 +11,7 @@ from dipdup.datasources.datasource import Datasource
 from dipdup.exceptions import ConfigurationError, ContractAlreadyExistsError, IndexAlreadyExistsError
 from dipdup.utils import FormattedLogger
 
+ONETIME_ARGS = ('--reindex', '--hotswap')
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
 class DipDupContext:

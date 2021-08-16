@@ -5,7 +5,7 @@ from dipdup.context import HandlerContext
 
 import {{ package }}.models as models
 {% for pattern in patterns %}
-{{ pattern.get_handler_imports(package) }}
+{{ pattern.get_imports(package) }}
 {%- endfor %}
 
 

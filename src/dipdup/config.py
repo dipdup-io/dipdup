@@ -7,10 +7,12 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from dataclasses import field
 from enum import Enum
 from os import environ as env
 from os.path import dirname
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Type, Union, cast
+from pydoc import locate
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, Type, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import Field, validator
@@ -213,17 +215,19 @@ DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig, CoinbaseDat
 
 
 @dataclass
-class PatternConfig(ABC):
+class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 
     @abstractmethod
-    def get_handler_imports(self, package: str) -> str:
+    def get_imports(self, package: str) -> Sequence[str]:
         ...
 
     @abstractmethod
-    def get_handler_argument(self) -> str:
+    def get_arguments(self) -> Sequence[str]:
         ...
 
+
+class PatternConfig(CodegenMixin, ABC):
     @classmethod
     def format_storage_import(cls, package: str, module_name: str) -> str:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
@@ -363,23 +367,22 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
-    def get_handler_imports(self, package: str) -> str:
+    def get_imports(self, package: str) -> Tuple[str, ...]:
         if not self.entrypoint:
-            return ''
+            return ()
 
         module_name = self.destination_contract_config.module_name
-        result = [
+        return (
             self.format_parameter_import(package, module_name, self.entrypoint),
             self.format_storage_import(package, module_name),
-        ]
-        return '\n'.join(result)
+        )
 
-    def get_handler_argument(self) -> str:
+    def get_arguments(self) -> Tuple[str, ...]:
         if not self.entrypoint:
-            return self.format_empty_operation_argument(self.transaction_id, self.optional)
+            return (self.format_empty_operation_argument(self.transaction_id, self.optional),)
 
         module_name = self.destination_contract_config.module_name
-        return self.format_operation_argument(module_name, self.entrypoint, self.optional)
+        return (self.format_operation_argument(module_name, self.entrypoint, self.optional),)
 
     @property
     def source_contract_config(self) -> ContractConfig:
@@ -424,7 +427,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             )
         )
 
-    def get_handler_imports(self, package: str) -> str:
+    def get_imports(self, package: str) -> Tuple[str, ...]:
         result = []
         if self.source:
             module_name = self.source_contract_config.module_name
@@ -435,10 +438,12 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
         if self.originated_contract:
             module_name = self.originated_contract_config.module_name
             result.append(self.format_storage_import(package, module_name))
-        return '\n'.join(result)
+        else:
+            raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
+        return tuple(result)
 
-    def get_handler_argument(self) -> str:
-        return self.format_origination_argument(self.module_name, self.optional)
+    def get_arguments(self) -> Tuple[str]:
+        return (self.format_origination_argument(self.module_name, self.optional),)
 
     @property
     def module_name(self) -> str:
@@ -474,14 +479,15 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
 
 
 @dataclass
-class HandlerConfig(NameMixin):
+class CallbackMixin:
     callback: str
 
     def __post_init_post_parse__(self):
         super().__post_init_post_parse__()
         self._callback_fn = None
-        if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
-            raise ConfigurationError(f'`{self.callback}` callback name is reserved')
+        # TODO: Warn or forbid?
+        # if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
+        #     raise ConfigurationError(f'`{self.callback}` callback name is reserved')
         if self.callback and self.callback != pascal_to_snake(self.callback):
             raise ConfigurationError('`callback` field must conform to snake_case naming style')
 
@@ -494,6 +500,13 @@ class HandlerConfig(NameMixin):
     @callback_fn.setter
     def callback_fn(self, fn: Callable) -> None:
         self._callback_fn = fn
+
+
+@dataclass
+class HandlerConfig(CallbackMixin, NameMixin):
+    def __post_init_post_parse__(self) -> None:
+        CallbackMixin.__post_init_post_parse__(self)
+        NameMixin.__post_init_post_parse__(self)
 
 
 OperationHandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
@@ -701,6 +714,30 @@ class SentryConfig:
 
 
 @dataclass
+class HookConfig(NameMixin, CallbackMixin, CodegenMixin):
+    args: Dict[str, str] = field(default_factory=dict)
+
+    def get_arguments(self) -> Tuple[str, ...]:
+        return ()
+
+    def get_imports(self, package: str) -> Tuple[str, ...]:
+        return ()
+
+
+default_hooks = {
+    'on_configure': HookConfig(
+        callback='on_configure',
+        args=dict(
+            ctx='dipdup.context.HandlerContext',
+        ),
+    ),
+    'on_index_created': HookConfig('on_index_created'),
+    'on_restart': HookConfig('on_restart'),
+    'on_reindex': HookConfig('on_reindex'),
+}
+
+
+@dataclass
 class DipDupConfig:
     """Main dapp config
 
@@ -724,6 +761,7 @@ class DipDupConfig:
     indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
     templates: Dict[str, IndexConfigTemplateT] = Field(default_factory=dict)
     jobs: Dict[str, JobConfig] = Field(default_factory=dict)
+    hooks: Dict[str, HookConfig] = Field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
     sentry: Optional[SentryConfig] = None
 
@@ -746,6 +784,10 @@ class DipDupConfig:
     def validate(self) -> None:
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
+        # NOTE: Endpoints are equal to names
+        for name in self.hooks.items():
+            if name in default_hooks:
+                raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
     def get_contract(self, name: str) -> ContractConfig:
         self._check_name(name)
