@@ -79,7 +79,7 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None) -> AsyncItera
                     db_url=url,
                     modules=modules,  # type: ignore
                 )
-            except ConnectionRefusedError:
+            except (OSError, ConnectionRefusedError):
                 _logger.warning('Can\'t establish database connection, attempt %s/%s', attempt, attempts)
                 if attempt == attempts - 1:
                     raise
@@ -232,3 +232,10 @@ def import_from(module: str, obj: str) -> Any:
         return getattr(importlib.import_module(module), obj)
     except (ImportError, AttributeError) as e:
         raise HandlerImportError(module, obj) from e
+
+
+def remove_prefix(text: str, prefix: str) -> str:
+    """Remove prefix and strip underscores"""
+    if text.startswith(prefix):
+        text = text[len(prefix) :]
+    return text.strip('_')
