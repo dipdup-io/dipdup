@@ -1,3 +1,4 @@
+import time
 from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
 from contextlib import suppress
@@ -321,14 +322,12 @@ class OperationIndex(Index):
                         operation_idx += 1
 
                     if pattern_idx == len(handler_config.pattern):
-                        self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
                         await self._on_match(operation_subgroup, handler_config, matched_operations)
 
                         matched_operations = []
                         pattern_idx = 0
 
                 if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
-                    self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
                     await self._on_match(operation_subgroup, handler_config, matched_operations)
 
     async def _on_match(
@@ -338,6 +337,9 @@ class OperationIndex(Index):
         matched_operations: List[Optional[OperationData]],
     ):
         """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
+        self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+        start = time.perf_counter()
+
         args: List[Optional[Union[Transaction, Origination, OperationData]]] = []
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
             if operation is None:
@@ -396,6 +398,9 @@ class OperationIndex(Index):
         )
 
         await handler_config.callback_fn(handler_context, *args)
+
+        end = time.perf_counter()
+        self._logger.debug(f'{handler_config.callback}` handler executed in {end - start:.3f}s')
 
         if handler_context.updated:
             self._ctx.commit()
@@ -499,6 +504,8 @@ class BigMapIndex(Index):
         matched_big_map: BigMapData,
     ) -> None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
+        self._logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
+        start = time.perf_counter()
 
         if matched_big_map.action.has_key:
             key_type = handler_config.key_type_cls
@@ -540,6 +547,9 @@ class BigMapIndex(Index):
 
         await handler_config.callback_fn(handler_context, big_map_context)
 
+        end = time.perf_counter()
+        self._logger.debug(f'{handler_config.callback}` handler executed in {end - start:.3f}s')
+
         if handler_context.updated:
             self._ctx.commit()
 
@@ -550,7 +560,6 @@ class BigMapIndex(Index):
             for handler_config in self._config.handlers:
                 big_map_matched = await self._match_big_map(handler_config, big_map)
                 if big_map_matched:
-                    self._logger.info('%s: `%s` handler matched!', big_map.operation_id, handler_config.callback)
                     await self._on_match(handler_config, big_map)
 
     async def _get_big_map_addresses(self) -> Set[str]:

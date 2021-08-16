@@ -9,6 +9,7 @@ from os import listdir
 from os.path import join
 from typing import Dict, List, Optional, cast
 
+import sqlparse  # type: ignore
 from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
@@ -363,8 +364,10 @@ class DipDup:
         for file in iter_files(sql_path, '.sql'):
             self._logger.info('Executing `%s`', file.name)
             sql = file.read()
-            with suppress(AttributeError):
-                await get_connection(None).execute_script(sql)
+            for statement in sqlparse.split(sql):
+                # NOTE: Ignore empty statements
+                with suppress(AttributeError):
+                    await get_connection(None).execute_script(statement)
 
     def _finish_migration(self, version: str) -> None:
         self._logger.warning('==================== WARNING =====================')

@@ -161,6 +161,7 @@ async def migrate(ctx):
         raise ConfigurationError('Unknown `spec_version`')
 
 
+# TODO: "cache clear"?
 @cli.command(help='Clear development request cache')
 @click.pass_context
 @cli_wrapper
@@ -168,14 +169,14 @@ async def clear_cache(ctx):
     FileCache('dipdup', flag='cs').clear()
 
 
-@cli.group()
+@cli.group(help='Docker integration related commands')
 @click.pass_context
 @cli_wrapper
 async def docker(ctx):
     ...
 
 
-@docker.command(name='init')
+@docker.command(name='init', help='Generate Docker inventory in project directory')
 @click.option('--image', '-i', type=str, help='DipDup Docker image', default=DEFAULT_DOCKER_IMAGE)
 @click.option('--tag', '-t', type=str, help='DipDup Docker tag', default=DEFAULT_DOCKER_TAG)
 @click.option('--env-file', '-e', type=str, help='Path to env_file', default=DEFAULT_DOCKER_ENV_FILE)
@@ -186,7 +187,7 @@ async def docker_init(ctx, image: str, tag: str, env_file: str):
     await DipDupCodeGenerator(config, {}).generate_docker(image, tag, env_file)
 
 
-@cli.group()
+@cli.group(help='Hasura integration related commands')
 @click.pass_context
 @cli_wrapper
 async def hasura(ctx):
@@ -194,18 +195,20 @@ async def hasura(ctx):
 
 
 @hasura.command(name='configure', help='Configure Hasura GraphQL Engine')
-@click.option('--reset', is_flag=True, help='Reset metadata before configuring')
 @click.pass_context
 @cli_wrapper
-async def hasura_configure(ctx, reset: bool):
+async def hasura_configure(ctx):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
     if not config.hasura:
-        _logger.error('`hasura` config section is empty')
-        return
-    hasura_gateway = HasuraGateway(config.package, config.hasura, cast(PostgresDatabaseConfig, config.database))
+        raise ConfigurationError('`hasura` config section is empty')
+    hasura_gateway = HasuraGateway(
+        package=config.package,
+        hasura_config=config.hasura,
+        database_config=cast(PostgresDatabaseConfig, config.database),
+    )
 
     async with tortoise_wrapper(url, models):
         async with hasura_gateway:
-            await hasura_gateway.configure(reset)
+            await hasura_gateway.configure()

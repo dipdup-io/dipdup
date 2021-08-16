@@ -7,6 +7,7 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from copy import copy
 from dataclasses import field
 from enum import Enum
 from os import environ as env
@@ -72,9 +73,9 @@ class PostgresDatabaseConfig:
 
     kind: Literal['postgres']
     host: str
-    port: int
-    user: str
-    database: str
+    user: str = 'postgres'
+    database: str = 'postgres'
+    port: int = 5432
     schema_name: str = 'public'
     password: str = ''
     immune_tables: Optional[List[str]] = None
@@ -103,12 +104,13 @@ class HTTPConfig:
     connection_limit: Optional[int] = None
     batch_size: Optional[int] = None
 
-    def merge(self, other: Optional['HTTPConfig']) -> None:
-        if not other:
-            return
-        for k, v in other.__dict__.items():
-            if v is not None:
-                setattr(self, k, v)
+    def merge(self, other: Optional['HTTPConfig']) -> 'HTTPConfig':
+        config = copy(self)
+        if other:
+            for k, v in other.__dict__.items():
+                if v is not None:
+                    setattr(config, k, v)
+        return config
 
 
 @dataclass

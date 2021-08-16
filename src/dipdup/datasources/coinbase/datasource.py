@@ -11,8 +11,16 @@ API_URL = 'https://api.pro.coinbase.com'
 
 
 class CoinbaseDatasource(Datasource):
+    _default_http_config = HTTPConfig(
+        cache=True,
+        retry_count=3,
+        retry_sleep=1,
+        ratelimit_rate=10,
+        ratelimit_period=1,
+    )
+
     def __init__(self, url: str = API_URL, http_config: Optional[HTTPConfig] = None) -> None:
-        super().__init__(url, http_config)
+        super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = logging.getLogger('dipdup.coinbase')
 
     async def run(self) -> None:
@@ -42,15 +50,6 @@ class CoinbaseDatasource(Datasource):
             )
             candles += [CandleData.from_json(c) for c in candles_json]
         return sorted(candles, key=lambda c: c.timestamp)
-
-    def _default_http_config(self) -> HTTPConfig:
-        return HTTPConfig(
-            cache=True,
-            retry_count=3,
-            retry_sleep=1,
-            ratelimit_rate=10,
-            ratelimit_period=1,
-        )
 
     def _split_candle_requests(self, since: datetime, until: datetime, interval: CandleInterval) -> List[Tuple[datetime, datetime]]:
         request_interval_limit = timedelta(seconds=interval.seconds * CANDLES_REQUEST_LIMIT)
