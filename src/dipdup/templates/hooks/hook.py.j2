@@ -5,7 +5,7 @@ from dipdup.context import HandlerContext
 
 import {{ package }}.models as models
 {% for pattern_config in pattern_items %}
-{%- for imp in pattern_config.get_imports() %}
+{%- for imp in pattern_config.iter_imports(package) %}
 {{ imp }}
 {%- endfor %}
 {%- endfor %}
@@ -14,7 +14,7 @@ import {{ package }}.models as models
 async def {{ callback }}(
     ctx: HandlerContext,
 {%- for pattern_config in pattern_items %}
-{%- for arg in pattern_config.get_arguments() %}
+{%- for arg in pattern_config.iter_arguments() %}
     {{ arg }}
 {%- endfor %}
 {%- endfor %}

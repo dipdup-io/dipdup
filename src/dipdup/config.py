@@ -1,3 +1,4 @@
+from contextlib import suppress
 import hashlib
 import importlib
 import json
@@ -13,7 +14,7 @@ from enum import Enum
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, Type, Union, cast
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Set, Tuple, Type, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import Field, validator
@@ -221,11 +222,11 @@ class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 
     @abstractmethod
-    def get_imports(self, package: str) -> Sequence[str]:
+    def iter_imports(self, package: str) -> Iterator[str]:
         ...
 
     @abstractmethod
-    def get_arguments(self) -> Sequence[str]:
+    def iter_arguments(self) -> Iterator[str]:
         ...
 
 
@@ -369,22 +370,20 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
-    def get_imports(self, package: str) -> Tuple[str, ...]:
+    def iter_imports(self, package: str) -> Iterator[str]:
         if not self.entrypoint:
-            return ()
+            return
 
         module_name = self.destination_contract_config.module_name
-        return (
-            self.format_parameter_import(package, module_name, self.entrypoint),
-            self.format_storage_import(package, module_name),
-        )
+        yield self.format_parameter_import(package, module_name, self.entrypoint)
+        yield self.format_storage_import(package, module_name)
 
-    def get_arguments(self) -> Tuple[str, ...]:
+    def iter_arguments(self) -> Iterator[str]:
         if not self.entrypoint:
-            return (self.format_empty_operation_argument(self.transaction_id, self.optional),)
-
-        module_name = self.destination_contract_config.module_name
-        return (self.format_operation_argument(module_name, self.entrypoint, self.optional),)
+            yield self.format_empty_operation_argument(self.transaction_id, self.optional)
+        else:
+            module_name = self.destination_contract_config.module_name
+            yield self.format_operation_argument(module_name, self.entrypoint, self.optional)
 
     @property
     def source_contract_config(self) -> ContractConfig:
@@ -429,23 +428,19 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             )
         )
 
-    def get_imports(self, package: str) -> Tuple[str, ...]:
-        result = []
+    def iter_imports(self, package: str) -> Iterator[str]:
         if self.source:
             module_name = self.source_contract_config.module_name
-            result.append(self.format_storage_import(package, module_name))
         if self.similar_to:
             module_name = self.similar_to_contract_config.module_name
-            result.append(self.format_storage_import(package, module_name))
         if self.originated_contract:
             module_name = self.originated_contract_config.module_name
-            result.append(self.format_storage_import(package, module_name))
         else:
             raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
-        return tuple(result)
+        yield self.format_storage_import(package, module_name)
 
-    def get_arguments(self) -> Tuple[str, ...]:
-        return (self.format_origination_argument(self.module_name, self.optional),)
+    def iter_arguments(self) -> Iterator[str]:
+        yield self.format_origination_argument(self.module_name, self.optional)
 
     @property
     def module_name(self) -> str:
@@ -485,7 +480,6 @@ class CallbackMixin:
     callback: str
 
     def __post_init_post_parse__(self):
-        super().__post_init_post_parse__()
         self._callback_fn = None
         # TODO: Warn or forbid?
         # if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
@@ -719,29 +713,40 @@ class SentryConfig:
 class HookConfig(NameMixin, CallbackMixin, CodegenMixin):
     args: Dict[str, str] = field(default_factory=dict)
 
-    def get_arguments(self) -> Tuple[str, ...]:
-        return ()
+    def __post_init_post_parse__(self):
+        NameMixin.__post_init_post_parse__(self)
+        CallbackMixin.__post_init_post_parse__(self)
 
-    def get_imports(self, package: str) -> Tuple[str, ...]:
-        return ()
+    @property
+    def ctx_args(self) -> Dict[str, str]:
+        return {'ctx': 'dipdup.context.HookContext', **self.args}
+
+    def iter_arguments(self) -> Iterator[str]:
+        for k, v in self.ctx_args.items():
+            yield f'{k}: {v.split(".")[-1]}'
+
+    def iter_imports(self, package: str) -> Iterator[str]:
+        for k, v in self.ctx_args.items():
+            with suppress(ValueError):
+                package, obj = v.rsplit('.', 1)
+                yield f'from {package} import {obj}'
 
 
 default_hooks = {
-    'on_configure': HookConfig(
-        callback='on_configure',
+    'on_restart': HookConfig(
+        callback='on_restart',
+    ),
+    'on_rollback': HookConfig(
+        callback='on_rollback',
         args=dict(
-            ctx='dipdup.context.DipDupContext',
+            datasource='dipdup.datasources.Datasource',
+            from_level='int',
+            to_level='int',
         ),
     ),
-    'on_index_created': HookConfig(
-        callback='on_index_created',
-        args=dict(
-            ctx='dipdup.context.DipDupContext',
-        ),
+    'on_reindex': HookConfig(
+        callback='on_reindex',
     ),
-    'on_rollback': HookConfig('on_rollback'),
-    'on_restart': HookConfig('on_restart'),
-    'on_reindex': HookConfig('on_reindex'),
 }
 
 
@@ -989,17 +994,11 @@ class DipDupConfig:
             raise ConfigurationError(str(e)) from e
         return config
 
-    def _initialize_handler_callback(self, handler_config: HandlerConfig) -> None:
-        _logger.info('Registering handler callback `%s`', handler_config.callback)
+    def _initialize_callback(self, callback_config: CallbackMixin, type: str) -> None:
+        _logger.info('Registering %s callback `%s`', type, callback_config.callback)
         module_name = f'{self.package}.handlers.{handler_config.callback}'
         fn_name = handler_config.callback
         handler_config.callback_fn = import_from(module_name, fn_name)
-
-    def _initialize_job_callback(self, job_config: JobConfig) -> None:
-        _logger.info('Registering job callback `%s`', job_config.callback)
-        module_name = f'{self.package}.jobs.{job_config.callback}'
-        fn_name = job_config.callback
-        job_config.callback_fn = import_from(module_name, fn_name)
 
     def _initialize_index(self, name: str, index_config: IndexConfigT) -> None:
         if name in self._initialized:

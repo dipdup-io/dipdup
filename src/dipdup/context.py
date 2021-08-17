@@ -123,7 +123,7 @@ class HandlerContext(DipDupContext):
 
 
 class JobContext(DipDupContext):
-    """Job handler context."""
+    """Job callback context."""
 
     def __init__(
         self,
@@ -137,18 +137,14 @@ class JobContext(DipDupContext):
     # TODO: Spawning indexes from jobs?
 
 
-class RollbackHookContext(DipDupContext):
+class HookContext(DipDupContext):
+    """Hook callback context."""
+
     def __init__(
         self,
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
         logger: FormattedLogger,
-        datasource: Datasource,
-        from_level: int,
-        to_level: int,
     ) -> None:
         super().__init__(datasources, config)
         self.logger = logger
-        self.datasource = datasource
-        self.from_level = from_level
-        self.to_level = to_level

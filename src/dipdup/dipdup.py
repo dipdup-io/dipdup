@@ -31,7 +31,7 @@ from dipdup.config import (
     PostgresDatabaseConfig,
     TzktDatasourceConfig,
 )
-from dipdup.context import DipDupContext, RollbackHookContext
+from dipdup.context import DipDupContext, HookContext
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
@@ -135,14 +135,15 @@ class IndexDispatcher:
                 return
 
         rollback_fn = self._ctx.config.get_rollback_fn()
-        ctx = RollbackHookContext(
+        ctx = HookContext(
             config=self._ctx.config,
             datasources=self._ctx.datasources,
             logger=logger,
-            datasource=datasource,
-            from_level=from_level,
-            to_level=to_level,
+            # datasource=datasource,
+            # from_level=from_level,
+            # to_level=to_level,
         )
+        # FIXME
         await rollback_fn(ctx)
 
     async def run(self, oneshot=False) -> None:

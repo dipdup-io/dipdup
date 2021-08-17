@@ -75,6 +75,7 @@ class DipDupCodeGenerator:
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
 
     async def init(self) -> None:
+        self._logger.info('Initializing project')
         await self.create_package()
         await self.fetch_schemas()
         await self.generate_types()
@@ -85,6 +86,7 @@ class DipDupCodeGenerator:
         await self.verify_package()
 
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
+        self._logger.info('Initializing Docker inventory')
         await self.generate_docker(image, tag, env_file)
         await self.verify_package()
 
@@ -104,13 +106,10 @@ class DipDupCodeGenerator:
             models_code = template.render()
             write(models_path, models_code)
 
-        self._logger.info('Creating `%s.handlers` package', self._config.package)
-        handlers_path = join(self._config.package_path, 'handlers')
-        touch(join(handlers_path, '__init__.py'))
-
-        self._logger.info('Creating `%s.jobs` package', self._config.package)
-        jobs_path = join(self._config.package_path, 'jobs')
-        touch(join(jobs_path, '__init__.py'))
+        for subpackage in ('handlers', 'jobs', 'hooks'):
+            self._logger.info('Creating `%s.%s` package', self._config.package, subpackage)
+            subpackage_path = join(self._config.package_path, subpackage)
+            touch(join(subpackage_path, '__init__.py'))
 
         self._logger.info('Creating `%s/sql` directory', self._config.package)
         sql_path = join(self._config.package_path, 'sql')
@@ -123,7 +122,7 @@ class DipDupCodeGenerator:
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
-        self._logger.info('Creating `schemas` package')
+        self._logger.info('Creating `schemas` directory')
         schemas_path = join(self._config.package_path, 'schemas')
         mkdir_p(schemas_path)
 
