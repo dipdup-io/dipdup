@@ -137,7 +137,7 @@ class JobContext(DipDupContext):
     # TODO: Spawning indexes from jobs?
 
 
-class RollbackHandlerContext(DipDupContext):
+class RollbackHookContext(DipDupContext):
     def __init__(
         self,
         datasources: Dict[str, Datasource],

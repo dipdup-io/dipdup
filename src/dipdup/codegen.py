@@ -78,8 +78,8 @@ class DipDupCodeGenerator:
         await self.create_package()
         await self.fetch_schemas()
         await self.generate_types()
-        await self.generate_default_handlers()
-        await self.generate_user_handlers()
+        await self.generate_hooks()
+        await self.generate_handlers()
         await self.generate_jobs()
         await self.cleanup()
         await self.verify_package()
@@ -266,16 +266,17 @@ class DipDupCodeGenerator:
                 self._logger.debug(' '.join(args))
                 subprocess.run(args, check=True)
 
-    async def generate_default_handlers(self, recreate=False) -> None:
-        handlers_path = join(self._config.package_path, 'handlers')
-        for handler_name in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
-            self._logger.info('Generating handler `%s`', handler_name)
-            template = load_template(f'handlers/{handler_name}.py')
-            handler_code = template.render()
-            handler_path = join(handlers_path, f'{handler_name}.py')
-            write(handler_path, handler_code, overwrite=recreate)
+    async def generate_hooks(self) -> None:
+        hooks_path = join(self._config.package_path, 'hooks')
+        hook_template = load_template(f'hooks/hook.py')
 
-    async def generate_user_handlers(self) -> None:
+        for hook_config in self._config.hooks.values():
+            self._logger.info('Generating hook `%s`', hook_config.name)
+            hook_code = hook_template.render()
+            hook_path = join(hooks_path, f'{hook_config.name}.py')
+            write(hook_path, hook_code)
+
+    async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
         handlers_path = join(self._config.package_path, 'handlers')
         operation_handler_template = load_template('handlers/operation.py')
@@ -287,8 +288,8 @@ class DipDupCodeGenerator:
                     self._logger.info('Generating handler `%s`', handler_config.callback)
                     handler_code = operation_handler_template.render(
                         package=self._config.package,
-                        handler=handler_config.callback,
-                        patterns=handler_config.pattern,
+                        callback=handler_config.callback,
+                        pattern_items=handler_config.pattern,
                         snake_to_pascal=snake_to_pascal,
                         pascal_to_snake=pascal_to_snake,
                     )
@@ -419,7 +420,7 @@ class DipDupCodeGenerator:
         ]
         add_lines = [
             'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction',
-            'from dipdup.context import HandlerContext, RollbackHandlerContext',
+            'from dipdup.context import HandlerContext, RollbackHookContext',
         ]
         replace_table = {
             'TransactionContext': 'Transaction',

@@ -444,7 +444,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
         return tuple(result)
 
-    def get_arguments(self) -> Tuple[str]:
+    def get_arguments(self) -> Tuple[str, ...]:
         return (self.format_origination_argument(self.module_name, self.optional),)
 
     @property
@@ -730,10 +730,16 @@ default_hooks = {
     'on_configure': HookConfig(
         callback='on_configure',
         args=dict(
-            ctx='dipdup.context.HandlerContext',
+            ctx='dipdup.context.DipDupContext',
         ),
     ),
-    'on_index_created': HookConfig('on_index_created'),
+    'on_index_created': HookConfig(
+        callback='on_index_created',
+        args=dict(
+            ctx='dipdup.context.DipDupContext',
+        ),
+    ),
+    'on_rollback': HookConfig('on_rollback'),
     'on_restart': HookConfig('on_restart'),
     'on_reindex': HookConfig('on_reindex'),
 }
@@ -913,25 +919,26 @@ class DipDupConfig:
             self._pre_initialize_index(name, index_config)
 
         _logger.info('Verifying callback uniqueness')
-        for callback, patterns in self._callback_patterns.items():
-            if len(patterns) > 1:
+        for callback, pattern_items in self._callback_patterns.items():
+            if len(pattern_items) in (0, 1):
+                return
 
-                def get_pattern_type(pattern: Sequence[HandlerPatternConfigT]) -> str:
-                    module_names = []
-                    for pattern_config in pattern:
-                        if isinstance(pattern_config, OperationHandlerTransactionPatternConfig) and pattern_config.entrypoint:
-                            module_names.append(pattern_config.destination_contract_config.module_name)
-                        elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                            module_names.append(pattern_config.module_name)
-                        # TODO: Check BigMapHandlerPatternConfig
-                    return '::'.join(module_names)
+            def get_pattern_type(pattern_items: Sequence[HandlerPatternConfigT]) -> str:
+                module_names = []
+                for pattern_config in pattern_items:
+                    if isinstance(pattern_config, OperationHandlerTransactionPatternConfig) and pattern_config.entrypoint:
+                        module_names.append(pattern_config.destination_contract_config.module_name)
+                    elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                        module_names.append(pattern_config.module_name)
+                    # TODO: Check BigMapHandlerPatternConfig
+                return '::'.join(module_names)
 
-                pattern_types = list(map(get_pattern_type, patterns))
-                if any(map(lambda x: x != pattern_types[0], pattern_types)):
-                    _logger.warning(
-                        'Callback `%s` used multiple times with different signatures. Make sure you have specified contract typenames',
-                        callback,
-                    )
+            pattern_types = list(map(get_pattern_type, pattern_items))
+            if any(map(lambda x: x != pattern_types[0], pattern_types)):
+                _logger.warning(
+                    'Callback `%s` used multiple times with different signatures. Make sure you have specified contract typenames',
+                    callback,
+                )
 
     @property
     def package_path(self) -> str:

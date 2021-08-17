@@ -157,6 +157,9 @@ async def migrate(ctx):
     elif config.spec_version == '1.0':
         await DipDup(config).migrate_to_v11()
         _bump_spec_version('1.1')
+    elif config.spec_version == '1.1':
+        await DipDup(config).migrate_to_v12()
+        _bump_spec_version('1.2')
     else:
         raise ConfigurationError('Unknown `spec_version`')
 

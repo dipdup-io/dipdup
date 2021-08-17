@@ -31,7 +31,7 @@ from dipdup.config import (
     PostgresDatabaseConfig,
     TzktDatasourceConfig,
 )
-from dipdup.context import DipDupContext, RollbackHandlerContext
+from dipdup.context import DipDupContext, RollbackHookContext
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
@@ -135,7 +135,7 @@ class IndexDispatcher:
                 return
 
         rollback_fn = self._ctx.config.get_rollback_fn()
-        ctx = RollbackHandlerContext(
+        ctx = RollbackHookContext(
             config=self._ctx.config,
             datasources=self._ctx.datasources,
             logger=logger,
@@ -251,7 +251,8 @@ class DipDup:
 
     async def migrate_to_v10(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
-        await codegen.generate_default_handlers(recreate=True)
+        self._logger.warning('Not updating default handlers: deprecated in favor of hooks introduced in 1.2 spec')
+        self._logger.info('See release notes for more information')
         await codegen.migrate_user_handlers_to_v10()
         self._finish_migration('1.0')
 
@@ -259,6 +260,11 @@ class DipDup:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.migrate_user_handlers_to_v11()
         self._finish_migration('1.1')
+
+    async def migrate_to_v12(self) -> None:
+        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        await codegen.generate_hooks()
+        self._finish_migration('1.2')
 
     async def _on_configure(self) -> None:
         """Run user-defined initial configuration handler"""

@@ -9,5 +9,5 @@ from {{ package }}.types.{{ handler.contract.module_name }}.big_map.{{ pascal_to
 async def {{ handler.callback }}(
     ctx: HandlerContext,
     {{ pascal_to_snake(handler_path) }}: BigMapDiff[{{ snake_to_pascal(handler_path) }}Key, {{ snake_to_pascal(handler_path) }}Value],
-) -> None:
-    ...
+):
+    return NotImplemented
