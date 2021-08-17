@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class CreateAuctionParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     auction_id: str
     bid_amount: str
     end_timestamp: str

@@ -5,21 +5,30 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class Ledger(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     allowances: Dict[str, str]
     balance: str
     frozen_balance: str
 
 
 class UserRewards(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     reward: str
     reward_paid: str
 
 
 class Voters(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     candidate: Optional[str]
     last_veto: str
     veto: str
@@ -27,6 +36,9 @@ class Voters(BaseModel):
 
 
 class Storage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     baker_validator: str
     current_candidate: Optional[str]
     current_delegated: Optional[str]
@@ -52,6 +64,9 @@ class Storage(BaseModel):
 
 
 class QuipuFa12Storage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     dex_lambdas: Dict[str, str]
     metadata: Dict[str, str]
     storage: Storage

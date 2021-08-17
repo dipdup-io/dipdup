@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Extra, Field
 
 
 class TransferParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     from_: str = Field(..., alias='from')
     to: str
     value: str

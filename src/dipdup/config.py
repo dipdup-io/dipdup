@@ -433,9 +433,9 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     def iter_imports(self, package: str) -> Iterator[str]:
         if self.source:
             module_name = self.source_contract_config.module_name
-        if self.similar_to:
+        elif self.similar_to:
             module_name = self.similar_to_contract_config.module_name
-        if self.originated_contract:
+        elif self.originated_contract:
             module_name = self.originated_contract_config.module_name
         else:
             raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
@@ -532,7 +532,7 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
         yield 'from dipdup.context import HandlerContext'
         for pattern in self.pattern:
             yield from pattern.iter_imports(package)
-    
+
     def iter_arguments(self) -> Iterator[str]:
         yield 'ctx: HandlerContext'
         for pattern in self.pattern:
@@ -649,10 +649,10 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
         yield self.format_key_import(package, self.contract_config.module_name, self.path)
         yield self.format_value_import(package, self.contract_config.module_name, self.path)
-    
+
     def iter_arguments(self) -> Iterator[str]:
         yield 'ctx: HandlerContext'
-        yield self.format_big_map_diff_argument(self.contract_config.module_name)        
+        yield self.format_big_map_diff_argument(self.contract_config.module_name)
 
     @property
     def contract_config(self) -> ContractConfig:

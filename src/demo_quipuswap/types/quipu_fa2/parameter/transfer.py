@@ -5,16 +5,22 @@ from __future__ import annotations
 
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class Tx(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     to_: str
     token_id: str
     amount: str
 
 
 class TransferParameterItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     from_: str
     txs: List[Tx]
 

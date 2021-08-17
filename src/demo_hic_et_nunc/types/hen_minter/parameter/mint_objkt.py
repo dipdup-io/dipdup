@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class MintOBJKTParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     address: str
     amount: str
     metadata: str

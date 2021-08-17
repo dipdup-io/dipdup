@@ -5,10 +5,13 @@ from __future__ import annotations
 
 from typing import Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class MintParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     address: str
     amount: str
     token_id: str

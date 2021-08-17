@@ -5,10 +5,13 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class StoreRecordsValue(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     address: Optional[str]
     data: Dict[str, str]
     expiry_key: Optional[str]

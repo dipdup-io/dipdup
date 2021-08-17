@@ -1,14 +1,12 @@
 import json
 import logging
-import operator
 import os
 import re
 import subprocess
 from copy import copy
-from functools import reduce
 from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
-from typing import Any, Dict, Iterable, cast
+from typing import Any, Dict, cast
 
 from jinja2 import Template
 
@@ -16,7 +14,6 @@ from dipdup import __version__
 from dipdup.config import (
     BigMapIndexConfig,
     CallbackMixin,
-    CodegenMixin,
     ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
@@ -289,7 +286,7 @@ class DipDupCodeGenerator:
 
     async def generate_hooks(self) -> None:
         for hook_config in self._config.hooks.values():
-            await self._generate_callback(hook_config)
+            await self._generate_callback(hook_config, sql=True)
 
     async def generate_jobs(self) -> None:
         for job_config in self._config.jobs.values():
@@ -440,7 +437,7 @@ class DipDupCodeGenerator:
                 with open(path, 'w') as file:
                     file.write('\n'.join(newfile))
 
-    async def _generate_callback(self, callback_config: CallbackMixin) -> None:
+    async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
         self._logger.info('Generating %s callback `%s`', callback_config.kind, callback_config.callback)
         callback_template = load_template('callback.py')
         subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
@@ -455,3 +452,6 @@ class DipDupCodeGenerator:
         )
         callback_path = join(subpackage_path, f'{callback_config.callback}.py')
         write(callback_path, callback_code)
+        if sql:
+            callback_sql_path = join(subpackage_path, f'{callback_config.callback}.sql')
+            touch(callback_sql_path)

@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class TokenToTezPaymentParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     amount: str
     min_out: str
     receiver: str
