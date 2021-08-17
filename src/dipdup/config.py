@@ -483,7 +483,7 @@ class CallbackMixin(CodegenMixin):
     callback: str
 
     def __init_subclass__(cls, kind: str):
-        cls._kind = kind
+        cls._kind = kind  # type: ignore
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
@@ -495,7 +495,7 @@ class CallbackMixin(CodegenMixin):
 
     @property
     def kind(self) -> str:
-        return self._kind
+        return self._kind  # type: ignore
 
     @property
     def callback_fn(self) -> Callable:
@@ -893,16 +893,6 @@ class DipDupConfig:
         if not isinstance(datasource, TzktDatasourceConfig):
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
-
-    def get_rollback_fn(self) -> Type:
-        module_name = f'{self.package}.handlers.{ROLLBACK_HANDLER}'
-        fn_name = ROLLBACK_HANDLER
-        return import_from(module_name, fn_name)
-
-    def get_configure_fn(self) -> Type:
-        module_name = f'{self.package}.handlers.{CONFIGURE_HANDLER}'
-        fn_name = CONFIGURE_HANDLER
-        return import_from(module_name, fn_name)
 
     def resolve_index_templates(self) -> None:
         _logger.info('Substituting index templates')

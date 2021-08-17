@@ -1,6 +1,6 @@
-
-from dipdup.datasources.datasource import Datasource
 from dipdup.context import HookContext
+from dipdup.datasources.datasource import Datasource
+
 
 async def on_rollback(
     ctx: HookContext,

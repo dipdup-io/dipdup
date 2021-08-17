@@ -134,17 +134,13 @@ class IndexDispatcher:
             else:
                 return
 
-        rollback_fn = self._ctx.config.get_rollback_fn()
         ctx = HookContext(
             config=self._ctx.config,
             datasources=self._ctx.datasources,
             logger=logger,
-            # datasource=datasource,
-            # from_level=from_level,
-            # to_level=to_level,
         )
-        # FIXME
-        await rollback_fn(ctx)
+        # TODO:
+        # await self.fire_hook('on_rollback', datasource, ctx, from_level, to_level)
 
     async def run(self, oneshot=False) -> None:
         self._logger.info('Starting index dispatcher')
@@ -227,7 +223,7 @@ class DipDup:
                 await stack.enter_async_context(datasource)
 
             # NOTE: on_configure hook fires after database and datasources are initialized but before Hasura is
-            await self._on_configure()
+            # TODO: self.fire_hook('on_configure')
 
             if hasura_gateway:
                 await stack.enter_async_context(hasura_gateway)
