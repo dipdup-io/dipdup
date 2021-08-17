@@ -27,9 +27,6 @@ from typing_extensions import Literal
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
 
-ROLLBACK_HANDLER = 'on_rollback'
-CONFIGURE_HANDLER = 'on_configure'
-BLOCK_HANDLER = 'on_block'
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
@@ -740,30 +737,16 @@ class HasuraConfig:
 
 
 @dataclass
-class JobConfig(HandlerConfig, kind='job'):
+class JobConfig(NameMixin):
+    hook: Union[str, 'HookConfig']
     crontab: Optional[str] = None
     interval: Optional[int] = None
-    args: Optional[Dict[str, Any]] = None
-    atomic: bool = False
+    args: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self):
         if int(bool(self.crontab)) + int(bool(self.interval)) != 1:
             raise ConfigurationError('Either `interval` or `crontab` field must be specified')
-        HandlerConfig.__post_init_post_parse__(self)
-
-    @property
-    def ctx_args(self) -> Dict[str, str]:
-        return {'ctx': 'dipdup.context.JobContext', 'args': 'Dict[str, Any]'}
-
-    def iter_arguments(self) -> Iterator[str]:
-        for k, v in self.ctx_args.items():
-            yield f'{k}: {v.split(".")[-1]}'
-
-    def iter_imports(self, package: str) -> Iterator[str]:
-        for k, v in self.ctx_args.items():
-            with suppress(ValueError):
-                package, obj = v.rsplit('.', 1)
-                yield f'from {package} import {obj}'
+        NameMixin.__post_init_post_parse__(self)
 
 
 @dataclass
@@ -774,23 +757,23 @@ class SentryConfig:
 
 
 @dataclass
-class HookConfig(NameMixin, CallbackMixin, kind='hook'):
+class HookConfig(CallbackMixin, kind='hook'):
     args: Dict[str, str] = field(default_factory=dict)
-
-    def __post_init_post_parse__(self):
-        NameMixin.__post_init_post_parse__(self)
-        CallbackMixin.__post_init_post_parse__(self)
+    atomic: bool = False
 
     @property
-    def ctx_args(self) -> Dict[str, str]:
-        return {'ctx': 'dipdup.context.HookContext', **self.args}
+    def callback_args(self) -> Dict[str, str]:
+        return {
+            'ctx': 'dipdup.context.HookContext',
+            **self.args,
+        }
 
     def iter_arguments(self) -> Iterator[str]:
-        for k, v in self.ctx_args.items():
+        for k, v in self.callback_args.items():
             yield f'{k}: {v.split(".")[-1]}'
 
     def iter_imports(self, package: str) -> Iterator[str]:
-        for k, v in self.ctx_args.items():
+        for k, v in self.callback_args.items():
             with suppress(ValueError):
                 package, obj = v.rsplit('.', 1)
                 yield f'from {package} import {obj}'
@@ -868,25 +851,28 @@ class DipDupConfig:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
     def get_contract(self, name: str) -> ContractConfig:
-        self._check_name(name)
         try:
             return self.contracts[name]
         except KeyError as e:
             raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
 
     def get_datasource(self, name: str) -> DatasourceConfigT:
-        self._check_name(name)
         try:
             return self.datasources[name]
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
 
     def get_template(self, name: str) -> IndexConfigTemplateT:
-        self._check_name(name)
         try:
             return self.templates[name]
         except KeyError as e:
             raise ConfigurationError(f'Template `{name}` not found in `templates` config section') from e
+
+    def get_hook(self, name: str) -> HookConfig:
+        try:
+            return self.hooks[name]
+        except KeyError as e:
+            raise ConfigurationError(f'Hook `{name}` not found in `templates` config section') from e
 
     def get_tzkt_datasource(self, name: str) -> TzktDatasourceConfig:
         datasource = self.get_datasource(name)
@@ -903,16 +889,16 @@ class DipDupConfig:
                 for key, value in index_config.values.items():
                     value_regex = r'<[ ]*' + key + r'[ ]*>'
                     raw_template = re.sub(value_regex, value, raw_template)
+
+                with suppress(AttributeError):
+                    missing_value = re.search(r'<*>', raw_template).search(0)  # type: ignore
+                    raise ConfigurationError(f'`{name}` index config is missing required template value `{missing_value}`')
+
                 json_template = json.loads(raw_template)
                 new_index_config = template.__class__(**json_template)
                 new_index_config.template_values = index_config.values
                 new_index_config.parent = index_config.parent
                 self.indexes[name] = new_index_config
-
-    def _check_name(self, name: str) -> None:
-        variable = name.split('<')[-1].split('>')[0]
-        if variable != name:
-            raise ConfigurationError(f'`{variable}` variable of index template is not set')
 
     def _pre_initialize_index(self, name: str, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
@@ -1103,9 +1089,9 @@ class DipDupConfig:
 
         self._initialized.append(name)
 
-    def _initialize_jobs(self) -> None:
-        for job_config in self.jobs.values():
-            self._initialize_callback(job_config)
+    # def _initialize_jobs(self) -> None:
+    #     for job_config in self.jobs.values():
+    #         self._initialize_callback(job_config)
 
     def _initialize_hooks(self) -> None:
         for hook_config in self.hooks.values():
@@ -1117,7 +1103,7 @@ class DipDupConfig:
         self.pre_initialize()
         for name, index_config in self.indexes.items():
             self._initialize_index(name, index_config)
-        self._initialize_jobs()
+        # self._initialize_jobs()
         self._initialize_hooks()
 
 

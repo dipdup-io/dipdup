@@ -7,7 +7,7 @@ from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import reduce
 from os import listdir
 from os.path import join
-from typing import Dict, List, Optional, cast
+from typing import Any, Awaitable, Callable, Dict, List, Optional, cast
 
 import sqlparse  # type: ignore
 from genericpath import exists
@@ -18,6 +18,8 @@ from tortoise.utils import get_schema_sql
 
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
+    HandlerConfig,
+    HookConfig,
     ROLLBACK_HANDLER,
     BcdDatasourceConfig,
     BigMapIndexConfig,
@@ -45,6 +47,20 @@ from dipdup.utils import FormattedLogger, iter_files, slowdown, tortoise_wrapper
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
 
+
+class CallbackManager:
+    def __init__(self) -> None:
+        self._handlers: Dict[str, HandlerConfig] = {}
+        self._hooks: Dict[str, HookConfig] = {}
+        self._handler_callbacks: Dict[str, Callable[[Any], Awaitable[None]]] = {}
+        self._hook_callbacks: Dict[str, Callable[[Any], Awaitable[None]]] = {}
+
+    def register_handler(self, name: str, config: HandlerConfig) -> None:
+        self._handlers[name] = config
+    
+    def register_hook(self, name: str, config: HookConfig) -> None:
+        self._hooks[name] = config
+    
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
@@ -262,12 +278,6 @@ class DipDup:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         await codegen.generate_hooks()
         self._finish_migration('1.2')
-
-    async def _on_configure(self) -> None:
-        """Run user-defined initial configuration handler"""
-        configure_fn = self._config.get_configure_fn()
-        await configure_fn(self._ctx)
-        self._config.initialize()
 
     async def _create_datasources(self, realtime: bool = True) -> None:
         datasource: Datasource

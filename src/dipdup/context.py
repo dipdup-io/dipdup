@@ -122,21 +122,6 @@ class HandlerContext(DipDupContext):
         self._updated = True
 
 
-class JobContext(DipDupContext):
-    """Job callback context."""
-
-    def __init__(
-        self,
-        datasources: Dict[str, Datasource],
-        config: DipDupConfig,
-        logger: FormattedLogger,
-    ) -> None:
-        super().__init__(datasources, config)
-        self.logger = logger
-
-    # TODO: Spawning indexes from jobs?
-
-
 class HookContext(DipDupContext):
     """Hook callback context."""
 
