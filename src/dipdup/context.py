@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 from pprint import pformat
@@ -6,12 +7,21 @@ from typing import Any, Dict, Optional
 from tortoise import Tortoise
 from tortoise.transactions import in_transaction
 
-from dipdup.config import ContractConfig, DipDupConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig
+from dipdup.config import (
+    ContractConfig,
+    DipDupConfig,
+    HandlerConfig,
+    HookConfig,
+    IndexConfig,
+    IndexTemplateConfig,
+    PostgresDatabaseConfig,
+)
 from dipdup.datasources.datasource import Datasource
 from dipdup.exceptions import ConfigurationError, ContractAlreadyExistsError, IndexAlreadyExistsError
 from dipdup.utils import FormattedLogger
 
 ONETIME_ARGS = ('--reindex', '--hotswap')
+
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
 class DipDupContext:
@@ -19,13 +29,21 @@ class DipDupContext:
         self,
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
+        callbacks: 'CallbackManager',
     ) -> None:
         self.datasources = datasources
         self.config = config
+        self.callbacks = callbacks
         self._updated: bool = False
 
     def __str__(self) -> str:
         return pformat(self.__dict__)
+
+    async def fire_hook(self, name: str, *args, **kwargs: Any) -> None:
+        self.callbacks.fire_hook(self, name, *args, **kwargs)
+
+    async def fire_handler(self, name: str, *args, **kwargs: Any) -> None:
+        self.callbacks.fire_handler(self, name, *args, **kwargs)
 
     def commit(self) -> None:
         """Spawn indexes after handler execution"""
@@ -70,6 +88,30 @@ class DipDupContext:
         await self.restart()
 
 
+class CallbackManager:
+    def __init__(self, package: str) -> None:
+        self._logger = logging.getLogger('dipdup.callbacks')
+        self._package = package
+        self._handlers: Dict[str, HandlerConfig] = {}
+        self._hooks: Dict[str, HookConfig] = {}
+
+    def register_handler(self, name: str, config: HandlerConfig) -> None:
+        self._handlers[name] = config
+
+    def register_hook(self, name: str, config: HookConfig) -> None:
+        self._hooks[name] = config
+
+    async def fire_handler(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
+        # verify arguments over config
+        # fire callback
+        ...
+
+    async def fire_hook(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
+        # verify arguments over config
+        # fire callback
+        ...
+
+
 class TemplateValuesDict(dict):
     def __init__(self, ctx, **kwargs):
         self.ctx = ctx
@@ -89,12 +131,13 @@ class HandlerContext(DipDupContext):
         self,
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
+        callbacks: 'CallbackManager',
         logger: FormattedLogger,
         template_values: Dict[str, str],
         datasource: Datasource,
         index_config: IndexConfig,
     ) -> None:
-        super().__init__(datasources, config)
+        super().__init__(datasources, config, callbacks)
         self.logger = logger
         self.template_values = TemplateValuesDict(self, **template_values)
         self.datasource = datasource
@@ -129,7 +172,10 @@ class HookContext(DipDupContext):
         self,
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
+        callbacks: 'CallbackManager',
         logger: FormattedLogger,
+        hook_config: HookConfig,
     ) -> None:
-        super().__init__(datasources, config)
+        super().__init__(datasources, config, callbacks)
         self.logger = logger
+        self.hook_config = hook_config

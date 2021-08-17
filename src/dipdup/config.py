@@ -322,9 +322,9 @@ class ParameterTypeMixin:
     def parameter_type_cls(self, typ: Type) -> None:
         self._parameter_type_cls = typ
 
-    def initialize_parameter_cls(self, package: str, module_name: str, entrypoint: str) -> None:
+    def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
         _logger.info('Registering parameter type for entrypoint `%s`', entrypoint)
-        module_name = f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}'
+        module_name = f'{package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
         cls_name = snake_to_pascal(entrypoint) + 'Parameter'
         self.parameter_type_cls = import_from(module_name, cls_name)
 
@@ -504,6 +504,12 @@ class CallbackMixin(CodegenMixin):
     def callback_fn(self, fn: Callable) -> None:
         self._callback_fn = fn
 
+    def initialize_callback_fn(self):
+        self._logger.info('Registering %s callback `%s`', self.kind, self.callback)
+        module_name = f'{self._package}.{self.kind}s.{self.callback}'
+        fn_name = self.callback
+        self.callback_fn = import_from(module_name, fn_name)
+
 
 @dataclass
 class HandlerConfig(CallbackMixin, NameMixin, kind='handler'):
@@ -677,6 +683,18 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     def value_type_cls(self, typ: Type) -> None:
         self._value_type_cls = typ
 
+    def initialize_big_map_type(self, package: str) -> None:
+        _logger.info('Registering big map types for path `%s`', self.path)
+        path = pascal_to_snake(self.path.replace('.', '_'))
+
+        module_name = f'{package}.types.{self.contract_config.module_name}.big_map.{path}_key'
+        cls_name = snake_to_pascal(path + '_key')
+        self.key_type_cls = import_from(module_name, cls_name)
+
+        module_name = f'{package}.types.{self.contract_config.module_name}.big_map.{path}_value'
+        cls_name = snake_to_pascal(path + '_value')
+        self.value_type_cls = import_from(module_name, cls_name)
+
 
 @dataclass
 class BigMapIndexConfig(IndexConfig):
@@ -748,6 +766,12 @@ class JobConfig(NameMixin):
             raise ConfigurationError('Either `interval` or `crontab` field must be specified')
         NameMixin.__post_init_post_parse__(self)
 
+    @property
+    def hook_config(self) -> 'HookConfig':
+        if not isinstance(self.hook, HookConfig):
+            raise RuntimeError('Config is not initialized')
+        return self.hook
+
 
 @dataclass
 class SentryConfig:
@@ -757,7 +781,7 @@ class SentryConfig:
 
 
 @dataclass
-class HookConfig(CallbackMixin, kind='hook'):
+class HookConfig(NameMixin, CallbackMixin, kind='hook'):
     args: Dict[str, str] = field(default_factory=dict)
     atomic: bool = False
 
@@ -1035,12 +1059,6 @@ class DipDupConfig:
             raise ConfigurationError(str(e)) from e
         return config
 
-    def _initialize_callback(self, callback_config: CallbackMixin) -> None:
-        _logger.info('Registering %s callback `%s`', callback_config.kind, callback_config.callback)
-        module_name = f'{self.package}.{callback_config.kind}s.{callback_config.callback}'
-        fn_name = callback_config.callback
-        callback_config.callback_fn = import_from(module_name, fn_name)
-
     def _initialize_index(self, name: str, index_config: IndexConfigT) -> None:
         if name in self._initialized:
             return
@@ -1048,11 +1066,10 @@ class DipDupConfig:
         if isinstance(index_config, IndexTemplateConfig):
             raise RuntimeError('Config is not pre-initialized')
 
+        # FIXME: Too much nested logic
         if isinstance(index_config, OperationIndexConfig):
 
             for operation_handler_config in index_config.handlers:
-                self._initialize_callback(operation_handler_config)
-
                 for operation_pattern_config in operation_handler_config.pattern:
                     if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
                         if operation_pattern_config.entrypoint:
@@ -1067,35 +1084,13 @@ class DipDupConfig:
                     else:
                         raise NotImplementedError
 
-        # TODO: BigMapTypeMixin, initialize_big_map_type
         elif isinstance(index_config, BigMapIndexConfig):
             for big_map_handler_config in index_config.handlers:
-                self._initialize_callback(big_map_handler_config)
-
-                _logger.info('Registering big map types for path `%s`', big_map_handler_config.path)
-                module_name = big_map_handler_config.contract_config.module_name
-                big_map_path = pascal_to_snake(big_map_handler_config.path.replace('.', '_'))
-
-                key_type_module = importlib.import_module(f'{self.package}.types.{module_name}.big_map.{big_map_path}_key')
-                key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_path + '_key'))
-                big_map_handler_config.key_type_cls = key_type_cls
-
-                value_type_module = importlib.import_module(f'{self.package}.types.{module_name}.big_map.{big_map_path}_value')
-                value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_path + '_value'))
-                big_map_handler_config.value_type_cls = value_type_cls
-
+                big_map_handler_config.initialize_big_map_type(self.package)
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
         self._initialized.append(name)
-
-    # def _initialize_jobs(self) -> None:
-    #     for job_config in self.jobs.values():
-    #         self._initialize_callback(job_config)
-
-    def _initialize_hooks(self) -> None:
-        for hook_config in self.hooks.values():
-            self._initialize_callback(hook_config)
 
     def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)
@@ -1103,8 +1098,6 @@ class DipDupConfig:
         self.pre_initialize()
         for name, index_config in self.indexes.items():
             self._initialize_index(name, index_config)
-        # self._initialize_jobs()
-        self._initialize_hooks()
 
 
 @dataclass

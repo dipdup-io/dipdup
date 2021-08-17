@@ -27,17 +27,19 @@ def create_scheduler() -> AsyncIOScheduler:
     )
 
 
-def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_name: str, job_config: JobConfig) -> None:
+def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConfig) -> None:
+    hook_config = job_config.hook_config
+
     async def _wrapper(ctx, args) -> None:
-        nonlocal job_config
+        nonlocal job_config, job_config
         async with AsyncExitStack() as stack:
-            if job_config.atomic:
+            if hook_config.atomic:
                 await stack.enter_async_context(in_global_transaction())
-            await job_config.callback_fn(ctx, args)
+            await hook_config.callback_fn(ctx, args)
 
     logger = FormattedLogger(
-        name=job_config.callback,
-        fmt=job_config.name + ': {}',
+        name=hook_config.callback,
+        fmt=hook_config.name + ': {}',
     )
     if job_config.crontab:
         trigger = CronTrigger.from_crontab(job_config.crontab)
@@ -45,14 +47,16 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_name: str, job_
         trigger = IntervalTrigger(seconds=job_config.interval)
     scheduler.add_job(
         func=_wrapper,
-        id=job_name,
-        name=job_name,
+        id=job_config.name,
+        name=job_config.name,
         trigger=trigger,
         kwargs=dict(
-            ctx=JobContext(
+            ctx=HookContext(
                 config=ctx.config,
                 datasources=ctx.datasources,
+                callbacks=ctx.callbacks,
                 logger=logger,
+                hook_config=hook_config,
             ),
             args=job_config.args,
         ),

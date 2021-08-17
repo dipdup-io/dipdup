@@ -7,7 +7,7 @@ from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import reduce
 from os import listdir
 from os.path import join
-from typing import Any, Awaitable, Callable, Dict, List, Optional, cast
+from typing import Dict, List, Optional, cast
 
 import sqlparse  # type: ignore
 from genericpath import exists
@@ -18,9 +18,6 @@ from tortoise.utils import get_schema_sql
 
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
-    HandlerConfig,
-    HookConfig,
-    ROLLBACK_HANDLER,
     BcdDatasourceConfig,
     BigMapIndexConfig,
     CoinbaseDatasourceConfig,
@@ -33,7 +30,7 @@ from dipdup.config import (
     PostgresDatabaseConfig,
     TzktDatasourceConfig,
 )
-from dipdup.context import DipDupContext, HookContext
+from dipdup.context import CallbackManager, DipDupContext
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
@@ -47,20 +44,6 @@ from dipdup.utils import FormattedLogger, iter_files, slowdown, tortoise_wrapper
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
 
-
-class CallbackManager:
-    def __init__(self) -> None:
-        self._handlers: Dict[str, HandlerConfig] = {}
-        self._hooks: Dict[str, HookConfig] = {}
-        self._handler_callbacks: Dict[str, Callable[[Any], Awaitable[None]]] = {}
-        self._hook_callbacks: Dict[str, Callable[[Any], Awaitable[None]]] = {}
-
-    def register_handler(self, name: str, config: HandlerConfig) -> None:
-        self._handlers[name] = config
-    
-    def register_hook(self, name: str, config: HookConfig) -> None:
-        self._hooks[name] = config
-    
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
@@ -136,7 +119,6 @@ class IndexDispatcher:
                 index.push(level, big_maps, block)
 
     async def _rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
-        logger = FormattedLogger(ROLLBACK_HANDLER)
         if from_level - to_level == 1:
             # NOTE: Single level rollbacks are processed at Index level.
             # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
@@ -150,13 +132,7 @@ class IndexDispatcher:
             else:
                 return
 
-        ctx = HookContext(
-            config=self._ctx.config,
-            datasources=self._ctx.datasources,
-            logger=logger,
-        )
-        # TODO:
-        # await self.fire_hook('on_rollback', datasource, ctx, from_level, to_level)
+        await self._ctx.fire_hook('on_rollback', datasource, from_level, to_level)
 
     async def run(self, oneshot=False) -> None:
         self._logger.info('Starting index dispatcher')
@@ -193,9 +169,11 @@ class DipDup:
         self._config = config
         self._datasources: Dict[str, Datasource] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, Datasource] = {}
+        self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._ctx = DipDupContext(
             config=self._config,
             datasources=self._datasources,
+            callbacks=self._callbacks,
         )
         self._index_dispatcher = IndexDispatcher(self._ctx)
         self._scheduler = create_scheduler()
@@ -250,8 +228,8 @@ class DipDup:
 
             if self._config.jobs and not oneshot:
                 await stack.enter_async_context(self._scheduler_context())
-                for job_name, job_config in self._config.jobs.items():
-                    add_job(self._ctx, self._scheduler, job_name, job_config)
+                for job_config in self._config.jobs.values():
+                    add_job(self._ctx, self._scheduler, job_config)
 
             worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 

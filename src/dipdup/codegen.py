@@ -85,7 +85,6 @@ class DipDupCodeGenerator:
         await self.generate_types()
         await self.generate_hooks()
         await self.generate_handlers()
-        await self.generate_jobs()
         await self.cleanup()
         await self.verify_package()
 
@@ -288,10 +287,6 @@ class DipDupCodeGenerator:
         for hook_config in self._config.hooks.values():
             await self._generate_callback(hook_config, sql=True)
 
-    async def generate_jobs(self) -> None:
-        for job_config in self._config.jobs.values():
-            await self._generate_callback(job_config)
-
     async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
         self._logger.info('Generating Docker template')
         docker_path = join(self._config.package_path, 'docker')
@@ -452,6 +447,7 @@ class DipDupCodeGenerator:
         )
         callback_path = join(subpackage_path, f'{callback_config.callback}.py')
         write(callback_path, callback_code)
+
         if sql:
-            callback_sql_path = join(subpackage_path, f'{callback_config.callback}.sql')
-            touch(callback_sql_path)
+            sql_path = join(f'{subpackage_path}.sql', '.keep')
+            touch(sql_path)
