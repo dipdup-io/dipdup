@@ -1,0 +1,12 @@
+from typing import Optional
+
+{%- for imp in imports %}
+{{ imp }}
+{%- endfor %}
+
+async def {{ callback }}(
+{%- for arg in arguments %}
+    {{ arg }},
+{%- endfor %}
+) -> Optional[NotImplemented]:
+    return NotImplemented

@@ -1,20 +1,21 @@
 import json
 import logging
+import operator
 import os
 import re
 import subprocess
 from copy import copy
+from functools import reduce
 from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
-from typing import Any, Dict, cast
+from typing import Any, Dict, Iterable, cast
 
 from jinja2 import Template
 
 from dipdup import __version__
 from dipdup.config import (
-    CONFIGURE_HANDLER,
-    ROLLBACK_HANDLER,
     BigMapIndexConfig,
+    CodegenMixin,
     ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
@@ -44,6 +45,8 @@ DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
 DEFAULT_DOCKER_TAG = __version__
 DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
 
+_templates: Dict[str, Template] = {}
+
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
     """Preprocess bigmaps in JSONSchema. Those are unions as could be pointers.
@@ -61,8 +64,10 @@ def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
 
 def load_template(name: str) -> Template:
     """Load template from templates/{name}.j2"""
-    with open(join(dirname(__file__), 'templates', name + '.j2'), 'r') as f:
-        return Template(f.read())
+    if name not in _templates:
+        with open(join(dirname(__file__), 'templates', name + '.j2'), 'r') as f:
+            return Template(f.read())
+    return _templates[name]
 
 
 class DipDupCodeGenerator:
@@ -265,66 +270,31 @@ class DipDupCodeGenerator:
                 self._logger.debug(' '.join(args))
                 subprocess.run(args, check=True)
 
-    async def generate_hooks(self) -> None:
-        hooks_path = join(self._config.package_path, 'hooks')
-        hook_template = load_template(f'hooks/hook.py')
-
-        for hook_config in self._config.hooks.values():
-            self._logger.info('Generating hook `%s`', hook_config.name)
-            hook_code = hook_template.render()
-            hook_path = join(hooks_path, f'{hook_config.name}.py')
-            write(hook_path, hook_code)
-
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
-        handlers_path = join(self._config.package_path, 'handlers')
-        operation_handler_template = load_template('handlers/operation.py')
-        big_map_handler_template = load_template('handlers/big_map.py')
-
         for index_config in self._config.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
                 for handler_config in index_config.handlers:
                     self._logger.info('Generating handler `%s`', handler_config.callback)
-                    handler_code = operation_handler_template.render(
-                        package=self._config.package,
-                        callback=handler_config.callback,
-                        pattern_items=handler_config.pattern,
-                        snake_to_pascal=snake_to_pascal,
-                        pascal_to_snake=pascal_to_snake,
-                    )
-                    handler_path = join(handlers_path, f'{handler_config.callback}.py')
-                    write(handler_path, handler_code)
+                    await self._generate_callback('handlers', handler_config.callback, handler_config.pattern)
 
             elif isinstance(index_config, BigMapIndexConfig):
                 for big_map_handler_config in index_config.handlers:
                     self._logger.info('Generating handler `%s`', big_map_handler_config.callback)
-                    handler_path = big_map_handler_config.path.replace('.', '_')
-                    handler_code = big_map_handler_template.render(
-                        package=self._config.package,
-                        handler=big_map_handler_config,
-                        handler_path=handler_path,
-                        snake_to_pascal=snake_to_pascal,
-                        pascal_to_snake=pascal_to_snake,
-                    )
-                    handler_path = join(handlers_path, f'{big_map_handler_config.callback}.py')
-                    write(handler_path, handler_code)
+                    await self._generate_callback('handlers', handler_config.callback, handler_config.pattern)
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
+    async def generate_hooks(self) -> None:
+        for hook_config in self._config.hooks.values():
+            self._logger.info('Generating hook `%s`', hook_config.callback)
+            await self._generate_callback('hooks', hook_config.callback, (hook_config,))
+
     async def generate_jobs(self) -> None:
-        if not self._config.jobs:
-            return
-
-        jobs_path = join(self._config.package_path, 'jobs')
-        job_template = load_template('jobs/job.py')
-
-        job_callbacks = set(job_config.callback for job_config in self._config.jobs.values())
-        for job_callback in job_callbacks:
-            self._logger.info('Generating job `%s`', job_callback)
-            job_code = job_template.render(job=job_callback)
-            job_path = join(jobs_path, f'{job_callback}.py')
-            write(job_path, job_code)
+        for job_config in self._config.jobs.values():
+            self._logger.info('Generating job `%s`', job_config.callback)
+            await self._generate_callback('jobs', job_config.callback, (job_config,))
 
     async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
         self._logger.info('Generating Docker template')
@@ -419,7 +389,7 @@ class DipDupCodeGenerator:
         ]
         add_lines = [
             'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction',
-            'from dipdup.context import HandlerContext, RollbackHookContext',
+            'from dipdup.context import HandlerContext, HookContext',
         ]
         replace_table = {
             'TransactionContext': 'Transaction',
@@ -470,3 +440,18 @@ class DipDupCodeGenerator:
                         newfile.append(line)
                 with open(path, 'w') as file:
                     file.write('\n'.join(newfile))
+
+    async def _generate_callback(self, subpackage: str, callback: str, items: Iterable[CodegenMixin]) -> None:
+        callback_template = load_template('callback.py')
+        subpackage_path = join(self._config.package_path, subpackage)
+
+        arguments = set(reduce(operator.add, [tuple(i.iter_arguments()) for i in items]))
+        imports = set(reduce(operator.add, [tuple(i.iter_imports(self._config.package)) for i in items]))
+
+        callback_code = callback_template.render(
+            callback=callback,
+            imports=imports,
+            arguments=arguments,
+        )
+        callback_path = join(subpackage_path, f'{callback}.py')
+        write(callback_path, callback_code)

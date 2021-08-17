@@ -1,4 +1,3 @@
-from contextlib import suppress
 import hashlib
 import importlib
 import json
@@ -8,13 +7,14 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from contextlib import suppress
 from copy import copy
 from dataclasses import field
 from enum import Enum
 from os import environ as env
 from os.path import dirname
-from pydoc import locate
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Set, Tuple, Type, Union, cast
+# from pydoc import locate
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Set, Type, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import Field, validator
@@ -377,6 +377,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         module_name = self.destination_contract_config.module_name
         yield self.format_parameter_import(package, module_name, self.entrypoint)
         yield self.format_storage_import(package, module_name)
+        yield 'from dipdup.models import Transaction'
 
     def iter_arguments(self) -> Iterator[str]:
         if not self.entrypoint:
@@ -437,6 +438,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             module_name = self.originated_contract_config.module_name
         else:
             raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
+        yield 'from dipdup.models import Origination'
         yield self.format_storage_import(package, module_name)
 
     def iter_arguments(self) -> Iterator[str]:
@@ -479,13 +481,18 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
 class CallbackMixin:
     callback: str
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self, kind: str):
+        self._kind = kind
         self._callback_fn = None
         # TODO: Warn or forbid?
         # if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
         #     raise ConfigurationError(f'`{self.callback}` callback name is reserved')
         if self.callback and self.callback != pascal_to_snake(self.callback):
             raise ConfigurationError('`callback` field must conform to snake_case naming style')
+
+    @property
+    def kind(self) -> str:
+        return self._kind
 
     @property
     def callback_fn(self) -> Callable:
@@ -501,7 +508,7 @@ class CallbackMixin:
 @dataclass
 class HandlerConfig(CallbackMixin, NameMixin):
     def __post_init_post_parse__(self) -> None:
-        CallbackMixin.__post_init_post_parse__(self)
+        CallbackMixin.__post_init_post_parse__(self, 'handler')
         NameMixin.__post_init_post_parse__(self)
 
 
@@ -690,7 +697,7 @@ class HasuraConfig:
 
 
 @dataclass
-class JobConfig(HandlerConfig):
+class JobConfig(HandlerConfig, CodegenMixin):
     crontab: Optional[str] = None
     interval: Optional[int] = None
     args: Optional[Dict[str, Any]] = None
@@ -699,7 +706,21 @@ class JobConfig(HandlerConfig):
     def __post_init_post_parse__(self):
         if int(bool(self.crontab)) + int(bool(self.interval)) != 1:
             raise ConfigurationError('Either `interval` or `crontab` field must be specified')
-        super().__post_init_post_parse__()
+        HandlerConfig.__post_init_post_parse__(self)
+
+    @property
+    def ctx_args(self) -> Dict[str, str]:
+        return {'ctx': 'dipdup.context.JobContext', 'args': 'Dict[str, Any]'}
+
+    def iter_arguments(self) -> Iterator[str]:
+        for k, v in self.ctx_args.items():
+            yield f'{k}: {v.split(".")[-1]}'
+
+    def iter_imports(self, package: str) -> Iterator[str]:
+        for k, v in self.ctx_args.items():
+            with suppress(ValueError):
+                package, obj = v.rsplit('.', 1)
+                yield f'from {package} import {obj}'
 
 
 @dataclass
@@ -715,7 +736,7 @@ class HookConfig(NameMixin, CallbackMixin, CodegenMixin):
 
     def __post_init_post_parse__(self):
         NameMixin.__post_init_post_parse__(self)
-        CallbackMixin.__post_init_post_parse__(self)
+        CallbackMixin.__post_init_post_parse__(self, 'hook')
 
     @property
     def ctx_args(self) -> Dict[str, str]:
@@ -994,11 +1015,11 @@ class DipDupConfig:
             raise ConfigurationError(str(e)) from e
         return config
 
-    def _initialize_callback(self, callback_config: CallbackMixin, type: str) -> None:
-        _logger.info('Registering %s callback `%s`', type, callback_config.callback)
-        module_name = f'{self.package}.handlers.{handler_config.callback}'
-        fn_name = handler_config.callback
-        handler_config.callback_fn = import_from(module_name, fn_name)
+    def _initialize_callback(self, callback_config: CallbackMixin) -> None:
+        _logger.info('Registering %s callback `%s`', callback_config.kind, callback_config.callback)
+        module_name = f'{self.package}.{callback_config.kind}s.{callback_config.callback}'
+        fn_name = callback_config.callback
+        callback_config.callback_fn = import_from(module_name, fn_name)
 
     def _initialize_index(self, name: str, index_config: IndexConfigT) -> None:
         if name in self._initialized:
@@ -1010,7 +1031,7 @@ class DipDupConfig:
         if isinstance(index_config, OperationIndexConfig):
 
             for operation_handler_config in index_config.handlers:
-                self._initialize_handler_callback(operation_handler_config)
+                self._initialize_callback(operation_handler_config)
 
                 for operation_pattern_config in operation_handler_config.pattern:
                     if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
@@ -1029,7 +1050,7 @@ class DipDupConfig:
         # TODO: BigMapTypeMixin, initialize_big_map_type
         elif isinstance(index_config, BigMapIndexConfig):
             for big_map_handler_config in index_config.handlers:
-                self._initialize_handler_callback(big_map_handler_config)
+                self._initialize_callback(big_map_handler_config)
 
                 _logger.info('Registering big map types for path `%s`', big_map_handler_config.path)
                 module_name = big_map_handler_config.contract_config.module_name
@@ -1049,10 +1070,12 @@ class DipDupConfig:
         self._initialized.append(name)
 
     def _initialize_jobs(self) -> None:
-        if not self.jobs:
-            return
         for job_config in self.jobs.values():
-            self._initialize_job_callback(job_config)
+            self._initialize_callback(job_config)
+
+    def _initialize_hooks(self) -> None:
+        for hook_config in self.hooks.values():
+            self._initialize_callback(hook_config)
 
     def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)
@@ -1061,6 +1084,7 @@ class DipDupConfig:
         for name, index_config in self.indexes.items():
             self._initialize_index(name, index_config)
         self._initialize_jobs()
+        self._initialize_hooks()
 
 
 @dataclass
