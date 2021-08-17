@@ -13,6 +13,7 @@ from dataclasses import field
 from enum import Enum
 from os import environ as env
 from os.path import dirname
+
 # from pydoc import locate
 from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Set, Type, Union, cast
 from urllib.parse import urlparse
@@ -246,8 +247,8 @@ class PatternConfig(CodegenMixin, ABC):
     def format_origination_argument(cls, module_name: str, optional: bool) -> str:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return f'{module_name}_origination: Optional[Origination[{storage_cls}]] = None,'
-        return f'{module_name}_origination: Origination[{storage_cls}],'
+            return f'{module_name}_origination: Optional[Origination[{storage_cls}]] = None'
+        return f'{module_name}_origination: Origination[{storage_cls}]'
 
     @classmethod
     def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> str:
@@ -255,14 +256,14 @@ class PatternConfig(CodegenMixin, ABC):
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return f'{pascal_to_snake(entrypoint)}: Optional[Transaction[{parameter_cls}, {storage_cls}]] = None,'
-        return f'{pascal_to_snake(entrypoint)}: Transaction[{parameter_cls}, {storage_cls}],'
+            return f'{pascal_to_snake(entrypoint)}: Optional[Transaction[{parameter_cls}, {storage_cls}]] = None'
+        return f'{pascal_to_snake(entrypoint)}: Transaction[{parameter_cls}, {storage_cls}]'
 
     @classmethod
     def format_empty_operation_argument(cls, transaction_id: int, optional: bool) -> str:
         if optional:
-            return f'transaction_{transaction_id}: Optional[OperationData] = None,'
-        return f'transaction_{transaction_id}: OperationData,'
+            return f'transaction_{transaction_id}: Optional[OperationData] = None'
+        return f'transaction_{transaction_id}: OperationData'
 
 
 @dataclass
@@ -375,9 +376,9 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
             return
 
         module_name = self.destination_contract_config.module_name
+        yield 'from dipdup.models import Transaction'
         yield self.format_parameter_import(package, module_name, self.entrypoint)
         yield self.format_storage_import(package, module_name)
-        yield 'from dipdup.models import Transaction'
 
     def iter_arguments(self) -> Iterator[str]:
         if not self.entrypoint:
@@ -478,11 +479,13 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
 
 
 @dataclass
-class CallbackMixin:
+class CallbackMixin(CodegenMixin):
     callback: str
 
-    def __post_init_post_parse__(self, kind: str):
-        self._kind = kind
+    def __init_subclass__(cls, kind: str):
+        cls._kind = kind
+
+    def __post_init_post_parse__(self):
         self._callback_fn = None
         # TODO: Warn or forbid?
         # if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
@@ -506,9 +509,9 @@ class CallbackMixin:
 
 
 @dataclass
-class HandlerConfig(CallbackMixin, NameMixin):
+class HandlerConfig(CallbackMixin, NameMixin, kind='handler'):
     def __post_init_post_parse__(self) -> None:
-        CallbackMixin.__post_init_post_parse__(self, 'handler')
+        CallbackMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
 
 
@@ -516,7 +519,7 @@ OperationHandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig,
 
 
 @dataclass
-class OperationHandlerConfig(HandlerConfig):
+class OperationHandlerConfig(HandlerConfig, kind='handler'):
     """Operation handler config
 
     :param callback: Name of method in `handlers` package
@@ -524,6 +527,16 @@ class OperationHandlerConfig(HandlerConfig):
     """
 
     pattern: List[OperationHandlerPatternConfigT]
+
+    def iter_imports(self, package: str) -> Iterator[str]:
+        yield 'from dipdup.context import HandlerContext'
+        for pattern in self.pattern:
+            yield from pattern.iter_imports(package)
+    
+    def iter_arguments(self) -> Iterator[str]:
+        yield 'ctx: HandlerContext'
+        for pattern in self.pattern:
+            yield from pattern.iter_arguments()
 
 
 @dataclass
@@ -602,7 +615,7 @@ class OperationIndexConfig(IndexConfig):
 
 
 @dataclass
-class BigMapHandlerConfig(HandlerConfig):
+class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     contract: Union[str, ContractConfig]
     path: str
 
@@ -610,6 +623,36 @@ class BigMapHandlerConfig(HandlerConfig):
         super().__post_init_post_parse__()
         self._key_type_cls = None
         self._value_type_cls = None
+
+    @classmethod
+    def format_key_import(cls, package: str, module_name: str, path: str) -> str:
+        key_cls = f'{snake_to_pascal(module_name)}Key'
+        key_module = f'{path}_key'
+        return f'from {package}.types.{module_name}.big_map.{key_module} import {key_cls}'
+
+    @classmethod
+    def format_value_import(cls, package: str, module_name: str, path: str) -> str:
+        value_cls = f'{snake_to_pascal(module_name)}Value'
+        value_module = f'{path}_value'
+        return f'from {package}.types.{module_name}.big_map.{value_module} import {value_cls}'
+
+    @classmethod
+    def format_big_map_diff_argument(cls, module_name: str) -> str:
+        key_cls = f'{snake_to_pascal(module_name)}Key'
+        value_cls = f'{snake_to_pascal(module_name)}Value'
+        return f'{module_name}: BigMapDiff[{key_cls}, {value_cls}]'
+
+    def iter_imports(self, package: str) -> Iterator[str]:
+        yield 'from dipdup.context import HandlerContext'
+        yield 'from dipdup.models import BigMapDiff'
+        yield f'import {package}.models as models'
+
+        yield self.format_key_import(package, self.contract_config.module_name, self.path)
+        yield self.format_value_import(package, self.contract_config.module_name, self.path)
+    
+    def iter_arguments(self) -> Iterator[str]:
+        yield 'ctx: HandlerContext'
+        yield self.format_big_map_diff_argument(self.contract_config.module_name)        
 
     @property
     def contract_config(self) -> ContractConfig:
@@ -697,7 +740,7 @@ class HasuraConfig:
 
 
 @dataclass
-class JobConfig(HandlerConfig, CodegenMixin):
+class JobConfig(HandlerConfig, kind='job'):
     crontab: Optional[str] = None
     interval: Optional[int] = None
     args: Optional[Dict[str, Any]] = None
@@ -731,12 +774,12 @@ class SentryConfig:
 
 
 @dataclass
-class HookConfig(NameMixin, CallbackMixin, CodegenMixin):
+class HookConfig(NameMixin, CallbackMixin, kind='hook'):
     args: Dict[str, str] = field(default_factory=dict)
 
     def __post_init_post_parse__(self):
         NameMixin.__post_init_post_parse__(self)
-        CallbackMixin.__post_init_post_parse__(self, 'hook')
+        CallbackMixin.__post_init_post_parse__(self)
 
     @property
     def ctx_args(self) -> Dict[str, str]:
@@ -760,7 +803,7 @@ default_hooks = {
     'on_rollback': HookConfig(
         callback='on_rollback',
         args=dict(
-            datasource='dipdup.datasources.Datasource',
+            datasource='dipdup.datasources.datasource.Datasource',
             from_level='int',
             to_level='int',
         ),
@@ -806,6 +849,7 @@ class DipDupConfig:
         self._pre_initialized = []
         self._initialized = []
         self.validate()
+        self.hooks = {**default_hooks, **self.hooks}
 
     @property
     def environment(self) -> Dict[str, str]:
@@ -819,7 +863,7 @@ class DipDupConfig:
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
         # NOTE: Endpoints are equal to names
-        for name in self.hooks.items():
+        for name in self.hooks:
             if name in default_hooks:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 

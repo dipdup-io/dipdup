@@ -15,10 +15,12 @@ from jinja2 import Template
 from dipdup import __version__
 from dipdup.config import (
     BigMapIndexConfig,
+    CallbackMixin,
     CodegenMixin,
     ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
+    HandlerConfig,
     IndexTemplateConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
@@ -272,29 +274,26 @@ class DipDupCodeGenerator:
 
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
+        handler_config: HandlerConfig
         for index_config in self._config.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
                 for handler_config in index_config.handlers:
-                    self._logger.info('Generating handler `%s`', handler_config.callback)
-                    await self._generate_callback('handlers', handler_config.callback, handler_config.pattern)
+                    await self._generate_callback(handler_config)
 
             elif isinstance(index_config, BigMapIndexConfig):
-                for big_map_handler_config in index_config.handlers:
-                    self._logger.info('Generating handler `%s`', big_map_handler_config.callback)
-                    await self._generate_callback('handlers', handler_config.callback, handler_config.pattern)
+                for handler_config in index_config.handlers:
+                    await self._generate_callback(handler_config)
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     async def generate_hooks(self) -> None:
         for hook_config in self._config.hooks.values():
-            self._logger.info('Generating hook `%s`', hook_config.callback)
-            await self._generate_callback('hooks', hook_config.callback, (hook_config,))
+            await self._generate_callback(hook_config)
 
     async def generate_jobs(self) -> None:
         for job_config in self._config.jobs.values():
-            self._logger.info('Generating job `%s`', job_config.callback)
-            await self._generate_callback('jobs', job_config.callback, (job_config,))
+            await self._generate_callback(job_config)
 
     async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
         self._logger.info('Generating Docker template')
@@ -441,17 +440,18 @@ class DipDupCodeGenerator:
                 with open(path, 'w') as file:
                     file.write('\n'.join(newfile))
 
-    async def _generate_callback(self, subpackage: str, callback: str, items: Iterable[CodegenMixin]) -> None:
+    async def _generate_callback(self, callback_config: CallbackMixin) -> None:
+        self._logger.info('Generating %s callback `%s`', callback_config.kind, callback_config.callback)
         callback_template = load_template('callback.py')
-        subpackage_path = join(self._config.package_path, subpackage)
+        subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
 
-        arguments = set(reduce(operator.add, [tuple(i.iter_arguments()) for i in items]))
-        imports = set(reduce(operator.add, [tuple(i.iter_imports(self._config.package)) for i in items]))
+        arguments = set(callback_config.iter_arguments())
+        imports = set(callback_config.iter_imports(self._config.package))
 
         callback_code = callback_template.render(
-            callback=callback,
+            callback=callback_config.callback,
             imports=imports,
             arguments=arguments,
         )
-        callback_path = join(subpackage_path, f'{callback}.py')
+        callback_path = join(subpackage_path, f'{callback_config.callback}.py')
         write(callback_path, callback_code)
