@@ -7,15 +7,7 @@ from typing import Any, Dict, Optional
 from tortoise import Tortoise
 from tortoise.transactions import in_transaction
 
-from dipdup.config import (
-    ContractConfig,
-    DipDupConfig,
-    HandlerConfig,
-    HookConfig,
-    IndexConfig,
-    IndexTemplateConfig,
-    PostgresDatabaseConfig,
-)
+from dipdup.config import ContractConfig, DipDupConfig, HandlerConfig, HookConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig
 from dipdup.datasources.datasource import Datasource
 from dipdup.exceptions import ConfigurationError, ContractAlreadyExistsError, IndexAlreadyExistsError
 from dipdup.utils import FormattedLogger
