@@ -20,7 +20,8 @@ from dipdup.config import (
 from dipdup.context import HandlerContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup
-from dipdup.models import IndexType, OperationData, Index as State, Transaction
+from dipdup.models import Index as State
+from dipdup.models import IndexType, OperationData, Transaction
 from dipdup.utils import tortoise_wrapper
 
 

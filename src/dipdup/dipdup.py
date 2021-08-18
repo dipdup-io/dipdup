@@ -5,7 +5,7 @@ from asyncio import Task, create_task, gather
 from collections import Counter
 from contextlib import AsyncExitStack, asynccontextmanager
 from functools import reduce
-from typing import Dict, List, Set, cast
+from typing import Dict, List, Set, Union, cast
 
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
@@ -33,7 +33,9 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, HeadBlockData, OperationData, Schema, Index as IndexState
+from dipdup.models import BigMapData, HeadBlockData
+from dipdup.models import Index as IndexState
+from dipdup.models import OperationData, Schema
 from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
@@ -52,7 +54,6 @@ class IndexDispatcher:
         self._logger.info('Starting index dispatcher')
         await self._subscribe()
         await self._load_index_states()
-        self._ctx.commit()
 
         while not self._stopped:
             await self.reload_config()
@@ -71,29 +72,27 @@ class IndexDispatcher:
         if index_config.name in self._indexes:
             return
         self._logger.info('Adding index `%s` to dispatcher', index_config.name)
+
+        index: Union[OperationIndex, BigMapIndex]
+        datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
+        datasource = self._ctx.datasources[datasource_name]
+        if not isinstance(datasource, TzktDatasource):
+            raise RuntimeError(f'`{datasource_name}` is not a TzktDatasource')
+
         if isinstance(index_config, OperationIndexConfig):
-            datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
-            datasource = self._ctx.datasources[datasource_name]
-            if not isinstance(datasource, TzktDatasource):
-                raise RuntimeError(f'`{datasource_name}` is not a TzktDatasource')
-            operation_index = OperationIndex(self._ctx, index_config, datasource)
-            self._indexes[index_config.name] = operation_index
-            await datasource.add_index(index_config)
-
+            index = OperationIndex(self._ctx, index_config, datasource)
         elif isinstance(index_config, BigMapIndexConfig):
-            datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
-            datasource = self._ctx.datasources[datasource_name]
-            if not isinstance(datasource, TzktDatasource):
-                raise RuntimeError(f'`{datasource_name}` is not a TzktDatasource')
-            big_map_index = BigMapIndex(self._ctx, index_config, datasource)
-            self._indexes[index_config.name] = big_map_index
-            await datasource.add_index(index_config)
-
+            index = BigMapIndex(self._ctx, index_config, datasource)
         else:
             raise NotImplementedError
 
+        self._indexes[index_config.name] = index
+        await datasource.add_index(index_config)
+
         for handler_config in index_config.handlers:
             self._ctx.callbacks.register_handler(handler_config)
+
+        await index.initialize_state()
 
     async def reload_config(self) -> None:
         if not self._ctx.updated:
@@ -133,7 +132,25 @@ class IndexDispatcher:
         index_states = await IndexState.filter().all()
         self._logger.info('%s indexes found in database', len(index_states))
         for index_state in index_states:
-            ...
+            name, template, template_values = index_state.name, index_state.template, index_state.template_values
+            if name in self._indexes:
+                raise RuntimeError
+
+            if index_config := self._ctx.config.indexes.get(name):
+                if isinstance(index_config, IndexTemplateConfig):
+                    raise RuntimeError('Config is not initialized')
+                if index_config.hash() != index_state.config_hash:
+                    await self._ctx.reindex('config has been modified')
+
+            elif template:
+                if template not in self._ctx.config.templates:
+                    await self._ctx.reindex(f'template `{template}` has been removed from config')
+                self._ctx.add_index(name, template, template_values)
+
+            else:
+                self._logger.warning('Index `%s` was removed from config, ignoring', name)
+
+        self._ctx.commit()
 
     async def _dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in operations)) == 1

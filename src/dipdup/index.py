@@ -18,12 +18,12 @@ from dipdup.config import (
     OperationIndexConfig,
     OperationType,
 )
-from dipdup.context import DipDupContext, HandlerContext
+from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import InvalidDataError
-from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, IndexStatus
+from dipdup.models import BigMapData, BigMapDiff, HeadBlockData
 from dipdup.models import Index as IndexState
-from dipdup.models import OperationData, Origination, Transaction
+from dipdup.models import IndexStatus, OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger, in_global_transaction
 
 # NOTE: Operations of a single contract call
@@ -56,13 +56,32 @@ class Index:
             raise RuntimeError('Index state is not initialized')
         return self._state
 
-    # @classmethod
-    # def from_state(cls, ctx: DipDupContext, state: models.Index, datasource: TzktDatasource) -> 'Index':
-    #     self = cls(ctx, state.config, datasource)
+    async def initialize_state(self, state: Optional[IndexState] = None) -> None:
+        if not self._state:
+            if not state:
+                state, _ = await models.Index.get_or_create(
+                    name=self._config.name,
+                    type=self._config.kind,
+                    defaults=dict(
+                        level=self._config.first_level,
+                        config_hash=self._config.hash(),
+                    ),
+                )
+            self._state = state
+
+        # NOTE: No need to check indexes which are not synchronized.
+        if not (self.state.level and self.state.status == IndexStatus.REALTIME):
+            return
+
+        state_head = await self.state.head
+        if not state_head:
+            raise RuntimeError('Index is synchronized but has no head block data')
+
+        block = await self._datasource.get_block(state_head.level)
+        if state_head.hash != block.hash:
+            await self._ctx.reindex('block hash mismatch (missed rollback while DipDup was stopped)')
 
     async def process(self) -> None:
-        await self._initialize_state()
-
         if self._config.last_level:
             last_level = self._config.last_level
             await self._synchronize(last_level, cache=True)
@@ -101,54 +120,10 @@ class Index:
         self._logger.info('Index is synchronized to level %s', last_level)
         await self._update_state(last_level)
 
-    async def _initialize_state(self) -> None:
-        if self._state:
-            return
-        self._logger.info('Initializing index state')
-        config_json = self._config.json()
-        state = await models.Index.get_or_none(
-            name=self._config.name,
-            type=self._config.kind,
-        )
-        if state is None:
-            state = models.Index(
-                name=self._config.name,
-                type=self._config.kind,
-                level=self._config.first_level,
-                config=config_json,
-            )
-
-        # elif state.hash != index_config_hash:
-        #     await self._ctx.reindex()
-
-        # NOTE: No need to check indexes which are not synchronized.
-        if state.level and state.status == IndexStatus.REALTIME:
-            state_head = await state.head
-            if not state_head:
-                raise RuntimeError('Index is synchronized but has no head block data')
-
-            block = await self._datasource.get_block(state_head.level)
-            if state_head.hash != block.hash:
-                await self._ctx.reindex('block hash mismatch (missed rollback while DipDup was stopped)')
-
-        await state.save()
-        self._state = state
-
     async def _update_state(self, level: int, block: Optional[HeadBlockData] = None) -> None:
-        if self.block:
-            self.block.head
         self.state.level = level  # type: ignore
-        if block:
-            self.state.head_level = block.level  # type: ignore
-            self.state.head_hash = block.hash  # type: ignore
-            self.state.head_timestamp = block.timestamp  # type: ignore
-            self.state.synchronized = True  # type: ignore
-        else:
-            self.state.head_level = None  # type: ignore
-            self.state.head_hash = None  # type: ignore
-            self.state.head_timestamp = None  # type: ignore
-            self.state.synchronized = False  # type: ignore
-
+        self.state.head = self.head
+        self.state.status = IndexStatus.REALTIME if block else IndexStatus.SYNCING
         await self.state.save()
 
 
@@ -174,7 +149,6 @@ class OperationIndex(Index):
         if self._rollback_level:
             raise RuntimeError('Already in rollback state')
 
-        await self._initialize_state()
         if self.state.level < from_level:
             self._logger.info('Index level is lower than rollback level, ignoring')
         elif self.state.level == from_level:

@@ -11,16 +11,7 @@ import sqlparse  # type: ignore
 from tortoise import Tortoise
 from tortoise.transactions import get_connection, in_transaction
 
-from dipdup.config import (
-    CallbackMixin,
-    ContractConfig,
-    DipDupConfig,
-    HandlerConfig,
-    HookConfig,
-    IndexConfig,
-    IndexTemplateConfig,
-    PostgresDatabaseConfig,
-)
+from dipdup.config import ContractConfig, DipDupConfig, HandlerConfig, HookConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig
 from dipdup.datasources.datasource import Datasource
 from dipdup.exceptions import (
     CallbackTypeError,
@@ -45,6 +36,7 @@ class DipDupContext:
         self.datasources = datasources
         self.config = config
         self.callbacks = callbacks
+        self.logger = FormattedLogger('dipdup.context')
         self._updated: bool = False
 
     def __str__(self) -> str:
@@ -99,6 +91,24 @@ class DipDupContext:
             await Tortoise._drop_databases()
         await self.restart()
 
+    def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
+        if name in self.config.contracts:
+            raise ContractAlreadyExistsError(self, name, address)
+        self.config.contracts[name] = ContractConfig(
+            address=address,
+            typename=typename,
+        )
+        self._updated = True
+
+    def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
+        if name in self.config.indexes:
+            raise IndexAlreadyExistsError(self, name)
+        self.config.indexes[name] = IndexTemplateConfig(
+            template=template,
+            values=values,
+        )
+        self._updated = True
+
 
 class HookContext(DipDupContext):
     """Hook callback context."""
@@ -144,25 +154,8 @@ class HandlerContext(DipDupContext):
         self.logger = logger
         self.handler_config = handler_config
         self.datasource = datasource
-        self.template_values = TemplateValuesDict(self, **cast(IndexConfig, handler_config.parent).template_values)
-
-    def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
-        if name in self.config.contracts:
-            raise ContractAlreadyExistsError(self, name, address)
-        self.config.contracts[name] = ContractConfig(
-            address=address,
-            typename=typename,
-        )
-        self._updated = True
-
-    def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
-        if name in self.config.indexes:
-            raise IndexAlreadyExistsError(self, name)
-        self.config.indexes[name] = IndexTemplateConfig(
-            template=template,
-            values=values,
-        )
-        self._updated = True
+        template_values = cast(IndexConfig, handler_config.parent).template_values if handler_config.parent else {}
+        self.template_values = TemplateValuesDict(self, **template_values)
 
 
 class CallbackManager:
@@ -175,10 +168,12 @@ class CallbackManager:
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if handler_config.callback not in self._handlers:
             self._handlers[handler_config.callback] = handler_config
+            handler_config.initialize_callback_fn(self._package)
 
     def register_hook(self, hook_config: HookConfig) -> None:
         if hook_config.callback not in self._hooks:
             self._hooks[hook_config.callback] = hook_config
+            hook_config.initialize_callback_fn(self._package)
 
     async def fire_handler(self, ctx: 'DipDupContext', name: str, datasource: Datasource, *args, **kwargs: Any) -> None:
         try:
@@ -228,12 +223,13 @@ class CallbackManager:
 
     async def _fire_sql_hook(self, ctx: 'HookContext') -> None:
         """Execute SQL included with project"""
-        sql_path = join(ctx.config.package_path, 'hooks', f'{ctx.hook_config.callback}.sql')
+        name = f'{ctx.hook_config.callback}.sql'
+        sql_path = join(ctx.config.package_path, 'hooks', name)
         if not exists(sql_path):
             raise InitializationRequiredError
 
         if not isinstance(ctx.config.database, PostgresDatabaseConfig):
-            self._logger.warning('Skipping SQL hook `%s`: not supported on SQLite')
+            self._logger.warning('Skipping SQL hook `%s`: not supported on SQLite', name)
             return
 
         # NOTE: SQL hooks are executed on default connection

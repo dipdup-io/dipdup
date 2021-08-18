@@ -10,7 +10,9 @@ from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup, IndexDispatcher
 from dipdup.index import OperationIndex
-from dipdup.models import BlockData, HeadBlockData, OperationData, Index as State
+from dipdup.models import BlockData, HeadBlockData
+from dipdup.models import Index as State
+from dipdup.models import OperationData
 
 
 def _get_operation(hash_: str, level: int) -> OperationData:
@@ -34,7 +36,7 @@ def _get_operation(hash_: str, level: int) -> OperationData:
 
 # NOTE: Skip synchronization
 async def operation_index_process(self: OperationIndex):
-    await self._initialize_state()
+    await self.initialize_state()
     await self._process_queue()
 
 
@@ -105,8 +107,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
         initial_block.level = 0
         initial_block.hash = 'block_0'
 
-        datasource.on_operations(dipdup._index_dispatcher.dispatch_operations)
-        datasource.on_big_maps(dipdup._index_dispatcher.dispatch_big_maps)
+        datasource.on_operations(dipdup._index_dispatcher._dispatch_operations)
+        datasource.on_big_maps(dipdup._index_dispatcher._dispatch_big_maps)
         datasource.on_rollback(dipdup._index_dispatcher._rollback)
 
         datasource.run = MethodType(partial(datasource_run, index_dispatcher=dipdup._index_dispatcher), datasource)
@@ -133,8 +135,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
         initial_block.level = 0
         initial_block.hash = 'block_0'
 
-        datasource.on_operations(dipdup._index_dispatcher.dispatch_operations)
-        datasource.on_big_maps(dipdup._index_dispatcher.dispatch_big_maps)
+        datasource.on_operations(dipdup._index_dispatcher._dispatch_operations)
+        datasource.on_big_maps(dipdup._index_dispatcher._dispatch_big_maps)
         datasource.on_rollback(dipdup._index_dispatcher._rollback)
 
         datasource.run = MethodType(partial(datasource_run, index_dispatcher=dipdup._index_dispatcher, fail=True), datasource)
