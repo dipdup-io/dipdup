@@ -1001,25 +1001,25 @@ class DipDupConfig:
             if name in default_hooks:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
-    def _resolve_template(self, index_config: IndexTemplateConfig) -> None:
-        _logger.info('Resolving template `%s', index_config.name)
+    def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
+        _logger.info('Resolving template `%s', template_config.name)
 
-        template = self.get_template(index_config.template)
+        template = self.get_template(template_config.template)
         raw_template = json.dumps(template, default=pydantic_encoder)
-        for key, value in index_config.values.items():
+        for key, value in template_config.values.items():
             value_regex = r'<[ ]*' + key + r'[ ]*>'
             raw_template = re.sub(value_regex, value, raw_template)
 
         with suppress(AttributeError):
             missing_value = re.search(r'<*>', raw_template).search(0)  # type: ignore
-            raise ConfigurationError(f'`{index_config.name}` index config is missing required template value `{missing_value}`')
+            raise ConfigurationError(f'`{template_config.name}` index config is missing required template value `{missing_value}`')
 
         json_template = json.loads(raw_template)
         new_index_config = template.__class__(**json_template)
-        new_index_config.template_values = index_config.values
-        new_index_config.parent = index_config
-        new_index_config.name = index_config.name
-        self.indexes[index_config.name] = new_index_config
+        new_index_config.template_values = template_config.values
+        new_index_config.parent = template
+        new_index_config.name = template_config.name
+        self.indexes[template_config.name] = new_index_config
 
     def _resolve_templates(self) -> None:
         for index_config in self.indexes.values():

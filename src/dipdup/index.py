@@ -65,6 +65,8 @@ class Index:
                     defaults=dict(
                         level=self._config.first_level,
                         config_hash=self._config.hash(),
+                        template=self._config.parent.name if self._config.parent else None,
+                        template_values=self._config.template_values,
                     ),
                 )
             self._state = state

@@ -283,7 +283,7 @@ class BlockCache:
     def __init__(self) -> None:
         # FIXME: Why store older blocks?
         self._limit = 10
-        self._blocks: DefaultDict[int, Optional[HeadBlockData]] = defaultdict(None)
+        self._blocks: DefaultDict[int, Optional[HeadBlockData]] = defaultdict(lambda: None)
         self._events: DefaultDict[int, asyncio.Event] = defaultdict(asyncio.Event)
 
     async def add_block(self, block: HeadBlockData) -> None:
@@ -293,7 +293,7 @@ class BlockCache:
         self._events[block.level].set()
 
         last_blocks = sorted(self._blocks.keys())[-self._limit :]
-        self._blocks = defaultdict(None, ({k: v for k, v in self._blocks.items() if k in last_blocks}))
+        self._blocks = defaultdict(lambda: None, ({k: v for k, v in self._blocks.items() if k in last_blocks}))
         self._events = defaultdict(asyncio.Event, ({k: v for k, v in self._events.items() if k in last_blocks}))
 
     async def get_block(self, level: int) -> HeadBlockData:
@@ -701,7 +701,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        async for level, data in self._extract_message_data('big_map', message):
+        async for _, data in self._extract_message_data('big_map', message):
             big_maps = []
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
@@ -709,9 +709,26 @@ class TzktDatasource(IndexDatasource):
             self.emit_big_maps(big_maps)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
-        async for level, data in self._extract_message_data('head', message):
+        async for _, data in self._extract_message_data('head', message):
             block = self.convert_head_block(data)
-            self._block = block
+            await self._block_cache.add_block(block)
+
+            created = False
+            if self._head is None:
+                self._head, created = await Head.get_or_create(
+                    name=self._http._url,
+                    defaults=dict(
+                        level=block.level,
+                        hash=block.hash,
+                        timestamp=block.timestamp,
+                    )
+                )
+            if not created:
+                self._head.level = block.level  # type: ignore
+                self._head.hash = block.hash  # type: ignore
+                self._head.timestamp = block.timestamp  # type: ignore
+                await self._head.save()
+
             self.emit_head(block)
 
     @classmethod
