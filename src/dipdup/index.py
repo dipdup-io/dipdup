@@ -388,24 +388,7 @@ class OperationIndex(Index):
             else:
                 raise NotImplementedError
 
-        logger = FormattedLogger(
-            name=handler_config.callback,
-            fmt=operation_subgroup.hash + ': {}',
-        )
-        ctx = HandlerContext(
-            datasources=self._ctx.datasources,
-            config=self._ctx.config,
-            callbacks=self._ctx.callbacks,
-            logger=logger,
-            template_values=self._config.template_values,
-            datasource=self.datasource,
-            index_config=self._config,
-        )
-
-        await ctx.fire_handler(handler_config.callback, *args)
-
-        if ctx.updated:
-            self._ctx.commit()
+        await self._ctx.fire_handler(handler_config.callback, self.datasource, *args)
 
     async def _get_transaction_addresses(self) -> Set[str]:
         """Get addresses to fetch transactions from during initial synchronization"""
@@ -532,25 +515,8 @@ class BigMapIndex(Index):
             key=key,
             value=value,
         )
-        logger = FormattedLogger(
-            name=handler_config.callback,
-            fmt=str(matched_big_map.operation_id) + ': {}',
-        )
 
-        ctx = HandlerContext(
-            datasources=self._ctx.datasources,
-            config=self._ctx.config,
-            callbacks=self._ctx.callbacks,
-            logger=logger,
-            template_values=self._config.template_values,
-            datasource=self.datasource,
-            index_config=self._config,
-        )
-
-        await ctx.fire_handler(handler_config.callback, big_map_diff)
-
-        if ctx.updated:
-            self._ctx.commit()
+        await self._ctx.fire_handler(handler_config.callback, self.datasource, big_map_diff)
 
     async def _process_big_maps(self, big_maps: List[BigMapData]) -> None:
         """Try to match big map diffs in cache with all patterns from indexes."""

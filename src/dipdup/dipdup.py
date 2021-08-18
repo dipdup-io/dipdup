@@ -1,19 +1,14 @@
-from asyncio import Task, create_task, gather
 import hashlib
 import logging
 import operator
+from asyncio import Task, create_task, gather
 from collections import Counter
-from contextlib import AsyncExitStack, asynccontextmanager, suppress
+from contextlib import AsyncExitStack, asynccontextmanager
 from functools import reduce
-from os import listdir
-from os.path import join
 from typing import Dict, List, Set, cast
 
-import sqlparse  # type: ignore
-from genericpath import exists
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
-from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
 from dipdup.codegen import DipDupCodeGenerator
@@ -35,11 +30,11 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError, ReindexingRequiredError
+from dipdup.exceptions import ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, HeadBlockData, OperationData, Schema
-from dipdup.utils import FormattedLogger, iter_files, slowdown, tortoise_wrapper
+from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
@@ -352,31 +347,6 @@ class DipDup:
 
     async def _spawn_datasources(self, tasks: Set[Task]) -> None:
         tasks.update(create_task(d.run()) for d in self._datasources.values())
-
-    async def _execute_sql_scripts(self, reindex: bool) -> None:
-        """Execute SQL included with project"""
-        sql_path = join(self._config.package_path, 'sql')
-        if not exists(sql_path):
-            return
-        if any(map(lambda p: p not in ('on_reindex', 'on_restart'), listdir(sql_path))):
-            raise ConfigurationError(
-                f'SQL scripts must be placed either to `{self._config.package}/sql/on_restart` or to `{self._config.package}/sql/on_reindex` directory'
-            )
-        if not isinstance(self._config.database, PostgresDatabaseConfig):
-            self._logger.warning('Execution of user SQL scripts is supported on PostgreSQL only, skipping')
-            return
-
-        sql_path = join(sql_path, 'on_reindex' if reindex else 'on_restart')
-        if not exists(sql_path):
-            return
-        self._logger.info('Executing SQL scripts from `%s`', sql_path)
-        for file in iter_files(sql_path, '.sql'):
-            self._logger.info('Executing `%s`', file.name)
-            sql = file.read()
-            for statement in sqlparse.split(sql):
-                # NOTE: Ignore empty statements
-                with suppress(AttributeError):
-                    await get_connection(None).execute_script(statement)
 
     def _finish_migration(self, version: str) -> None:
         self._logger.warning('==================== WARNING =====================')

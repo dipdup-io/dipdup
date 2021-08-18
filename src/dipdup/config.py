@@ -16,7 +16,7 @@ from os.path import dirname
 from pydoc import locate
 
 # from pydoc import locate
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Set, Tuple, Type, Union, cast
+from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import Field, validator
@@ -302,22 +302,24 @@ class StorageTypeMixin:
         module_name = f'{package}.types.{module_name}.storage'
         self.storage_type_cls = import_from(module_name, cls_name)
 
+T = TypeVar('T')
+
 
 @dataclass
-class ParentMixin:
+class ParentMixin(Generic[T]):
     """`parent` field for index and template configs"""
 
     def __post_init_post_parse__(self):
-        self._parent: Optional['IndexConfig'] = None
+        self._parent: Optional[T] = None
 
     @property
-    def parent(self) -> Optional['IndexConfig']:
+    def parent(self) -> Optional[T]:
         return self._parent
 
     @parent.setter
-    def parent(self, config: 'IndexConfig') -> None:
+    def parent(self, config: T) -> None:
         if self._parent:
-            raise RuntimeError('Can\'t unset parent once set')
+            raise RuntimeError("Can't unset parent once set")
         self._parent = config
 
 
@@ -525,9 +527,10 @@ class CallbackMixin(CodegenMixin):
 
 
 @dataclass
-class HandlerConfig(CallbackMixin, kind='handler'):
+class HandlerConfig(CallbackMixin, ParentMixin, kind='handler'):
     def __post_init_post_parse__(self) -> None:
         CallbackMixin.__post_init_post_parse__(self)
+        ParentMixin.__post_init_post_parse__(self)
 
 
 OperationHandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
@@ -724,14 +727,10 @@ class BigMapIndexConfig(IndexConfig):
 
 
 @dataclass
-class IndexTemplateConfig(NameMixin, ParentMixin):
+class IndexTemplateConfig(NameMixin):
     kind = 'template'
     template: str
     values: Dict[str, str]
-
-    def __post_init_post_parse__(self):
-        NameMixin.__post_init_post_parse__(self)
-        ParentMixin.__post_init_post_parse__(self)
 
 
 IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, IndexTemplateConfig]
@@ -1011,7 +1010,7 @@ class DipDupConfig:
         json_template = json.loads(raw_template)
         new_index_config = template.__class__(**json_template)
         new_index_config.template_values = index_config.values
-        new_index_config.parent = index_config.parent
+        new_index_config.parent = index_config
         new_index_config.name = index_config.name
         self.indexes[index_config.name] = new_index_config
 
@@ -1040,6 +1039,7 @@ class DipDupConfig:
                         index_config.contracts[i] = self.get_contract(contract)
 
             for handler_config in index_config.handlers:
+                handler_config.parent = index_config
                 self._callback_patterns[handler_config.callback].append(handler_config.pattern)
                 for pattern_config in handler_config.pattern:
                     transaction_id = 0

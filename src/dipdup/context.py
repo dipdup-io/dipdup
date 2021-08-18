@@ -2,11 +2,14 @@ import logging
 import os
 import sys
 import time
+from contextlib import suppress
+from os.path import exists, join
 from pprint import pformat
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
+import sqlparse  # type: ignore
 from tortoise import Tortoise
-from tortoise.transactions import in_transaction
+from tortoise.transactions import get_connection, in_transaction
 
 from dipdup.config import (
     CallbackMixin,
@@ -19,8 +22,14 @@ from dipdup.config import (
     PostgresDatabaseConfig,
 )
 from dipdup.datasources.datasource import Datasource
-from dipdup.exceptions import CallbackTypeError, ConfigurationError, ContractAlreadyExistsError, IndexAlreadyExistsError
-from dipdup.utils import FormattedLogger
+from dipdup.exceptions import (
+    CallbackTypeError,
+    ConfigurationError,
+    ContractAlreadyExistsError,
+    IndexAlreadyExistsError,
+    InitializationRequiredError,
+)
+from dipdup.utils import FormattedLogger, iter_files
 
 ONETIME_ARGS = ('--reindex', '--hotswap')
 
@@ -44,8 +53,8 @@ class DipDupContext:
     async def fire_hook(self, name: str, *args, **kwargs: Any) -> None:
         await self.callbacks.fire_hook(self, name, *args, **kwargs)
 
-    async def fire_handler(self, name: str, *args, **kwargs: Any) -> None:
-        await self.callbacks.fire_handler(self, name, *args, **kwargs)
+    async def fire_handler(self, name: str, datasource: Datasource, *args, **kwargs: Any) -> None:
+        await self.callbacks.fire_handler(self, name, datasource, *args, **kwargs)
 
     def commit(self) -> None:
         """Spawn indexes after handler execution"""
@@ -90,61 +99,20 @@ class DipDupContext:
         await self.restart()
 
 
-class CallbackManager:
-    def __init__(self, package: str) -> None:
-        self._logger = logging.getLogger('dipdup.callbacks')
-        self._package = package
-        self._handlers: Dict[str, HandlerConfig] = {}
-        self._hooks: Dict[str, HookConfig] = {}
+class HookContext(DipDupContext):
+    """Hook callback context."""
 
-    def register_handler(self, handler_config: HandlerConfig) -> None:
-        if handler_config.callback not in self._handlers:
-            self._handlers[handler_config.callback] = handler_config
-
-    def register_hook(self, hook_config: HookConfig) -> None:
-        if hook_config.callback not in self._hooks:
-            self._hooks[hook_config.callback] = hook_config
-
-    async def fire_handler(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
-        try:
-            handler_config = self._handlers[name]
-        except KeyError as e:
-            raise ConfigurationError(f'Attempt to fire unregistered handler `{name}`') from e
-
-        start = time.perf_counter()
-        await handler_config.callback_fn(ctx, *args, **kwargs)
-        end = time.perf_counter()
-        self._logger.debug(f'Handler `{name}` executed in {end - start:.3f}s')
-
-    async def fire_hook(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
-        try:
-            hook_config = self._hooks[name]
-        except KeyError as e:
-            raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
-
-        self._verify_arguments(ctx, hook_config, *args, **kwargs)
-
-        start = time.perf_counter()
-        await hook_config.callback_fn(ctx, *args, **kwargs)
-        end = time.perf_counter()
-        self._logger.debug(f'Hook `{name}` executed in {end - start:.3f}s')
-
-    @classmethod
-    def _verify_arguments(cls, ctx: DipDupContext, config: CallbackMixin, *args, **kwargs) -> None:
-        kwargs_annotations = config.locate_arguments()
-        args_names = tuple(kwargs_annotations.keys())
-        args_annotations = tuple(kwargs_annotations.values())
-
-        for i, arg in enumerate(args):
-            expected_type = args_annotations[i]
-            if expected_type and not isinstance(arg, expected_type):
-                raise CallbackTypeError(
-                    ctx=ctx,
-                    callback=config.callback,
-                    arg=args_names[i],
-                    type_=type(arg),
-                    expected_type=expected_type,
-                )
+    def __init__(
+        self,
+        datasources: Dict[str, Datasource],
+        config: DipDupConfig,
+        callbacks: 'CallbackManager',
+        logger: FormattedLogger,
+        hook_config: HookConfig,
+    ) -> None:
+        super().__init__(datasources, config, callbacks)
+        self.logger = logger
+        self.hook_config = hook_config
 
 
 class TemplateValuesDict(dict):
@@ -168,15 +136,14 @@ class HandlerContext(DipDupContext):
         config: DipDupConfig,
         callbacks: 'CallbackManager',
         logger: FormattedLogger,
-        template_values: Dict[str, str],
+        handler_config: HandlerConfig,
         datasource: Datasource,
-        index_config: IndexConfig,
     ) -> None:
         super().__init__(datasources, config, callbacks)
         self.logger = logger
-        self.template_values = TemplateValuesDict(self, **template_values)
+        self.handler_config = handler_config
         self.datasource = datasource
-        self.index_config = index_config
+        self.template_values = TemplateValuesDict(self, **cast(IndexConfig, handler_config.parent).template_values)
 
     def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
         if name in self.config.contracts:
@@ -190,27 +157,108 @@ class HandlerContext(DipDupContext):
     def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
         if name in self.config.indexes:
             raise IndexAlreadyExistsError(self, name)
-        self.config.get_template(template)
         self.config.indexes[name] = IndexTemplateConfig(
             template=template,
             values=values,
         )
-        # NOTE: Notify datasource to subscribe to operations by entrypoint if enabled in index config
-        self.config.indexes[name].parent = self.index_config
         self._updated = True
 
 
-class HookContext(DipDupContext):
-    """Hook callback context."""
+class CallbackManager:
+    def __init__(self, package: str) -> None:
+        self._logger = logging.getLogger('dipdup.callback')
+        self._package = package
+        self._handlers: Dict[str, HandlerConfig] = {}
+        self._hooks: Dict[str, HookConfig] = {}
 
-    def __init__(
-        self,
-        datasources: Dict[str, Datasource],
-        config: DipDupConfig,
-        callbacks: 'CallbackManager',
-        logger: FormattedLogger,
-        hook_config: HookConfig,
-    ) -> None:
-        super().__init__(datasources, config, callbacks)
-        self.logger = logger
-        self.hook_config = hook_config
+    def register_handler(self, handler_config: HandlerConfig) -> None:
+        if handler_config.callback not in self._handlers:
+            self._handlers[handler_config.callback] = handler_config
+
+    def register_hook(self, hook_config: HookConfig) -> None:
+        if hook_config.callback not in self._hooks:
+            self._hooks[hook_config.callback] = hook_config
+
+    async def fire_handler(self, ctx: 'DipDupContext', name: str, datasource: Datasource, *args, **kwargs: Any) -> None:
+        try:
+            new_ctx = HandlerContext(
+                datasources=ctx.datasources,
+                config=ctx.config,
+                callbacks=ctx.callbacks,
+                logger=FormattedLogger(f'dipdup.handlers.{name}'),
+                handler_config=self._handlers[name],
+                datasource=datasource,
+            )
+        except KeyError as e:
+            raise ConfigurationError(f'Attempt to fire unregistered handler `{name}`') from e
+
+        start = time.perf_counter()
+        await new_ctx.handler_config.callback_fn(new_ctx, *args, **kwargs)
+        end = time.perf_counter()
+        self._logger.debug(f'Handler `{name}` executed in {end - start:.3f}s')
+
+        if new_ctx.updated:
+            ctx.commit()
+
+    async def fire_hook(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
+        try:
+            ctx = HookContext(
+                datasources=ctx.datasources,
+                config=ctx.config,
+                callbacks=ctx.callbacks,
+                logger=FormattedLogger(f'dipdup.hooks.{name}'),
+                hook_config=self._hooks[name],
+            )
+        except KeyError as e:
+            raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
+
+        start = time.perf_counter()
+
+        self._verify_arguments(ctx, *args, **kwargs)
+        # NOTE: Not sure about order of hooks.
+        await self._fire_sql_hook(ctx)
+        await self._fire_python_hook(ctx, *args, **kwargs)
+
+        end = time.perf_counter()
+        self._logger.debug(f'Hook `{name}` executed in {end - start:.3f}s')
+
+    async def _fire_python_hook(self, ctx: 'HookContext', *args, **kwargs) -> None:
+        await ctx.hook_config.callback_fn(ctx, *args, **kwargs)
+
+    async def _fire_sql_hook(self, ctx: 'HookContext') -> None:
+        """Execute SQL included with project"""
+        sql_path = join(ctx.config.package_path, 'hooks', f'{ctx.hook_config.callback}.sql')
+        if not exists(sql_path):
+            raise InitializationRequiredError
+
+        if not isinstance(ctx.config.database, PostgresDatabaseConfig):
+            self._logger.warning('Skipping SQL hook `%s`: not supported on SQLite')
+            return
+
+        # NOTE: SQL hooks are executed on default connection
+        connection = get_connection(None)
+
+        for file in iter_files(sql_path, '.sql'):
+            ctx.logger.info('Executing `%s`', file.name)
+            sql = file.read()
+            for statement in sqlparse.split(sql):
+                # NOTE: Ignore empty statements
+                with suppress(AttributeError):
+                    await connection.execute_script(statement)
+
+    @classmethod
+    def _verify_arguments(cls, ctx: HookContext, *args, **kwargs) -> None:
+        kwargs_annotations = ctx.hook_config.locate_arguments()
+        args_names = tuple(kwargs_annotations.keys())
+        args_annotations = tuple(kwargs_annotations.values())
+
+        for i, arg in enumerate(args):
+            expected_type = args_annotations[i]
+            if expected_type and not isinstance(arg, expected_type):
+                raise CallbackTypeError(
+                    ctx=ctx,
+                    callback=ctx.hook_config.callback,
+                    arg=args_names[i],
+                    type_=type(arg),
+                    expected_type=expected_type,
+                )

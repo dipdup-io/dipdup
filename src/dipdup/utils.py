@@ -184,6 +184,7 @@ class FormattedLogger(Logger):
         self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
 
+# TODO: Cache me
 def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
     """Iterate over files in a directory. Sort alphabetically, filter by extension, skip empty files."""
     if not exists(path):

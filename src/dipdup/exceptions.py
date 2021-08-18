@@ -130,6 +130,10 @@ class ReindexingRequiredError(DipDupError):
         return _reindexing_required_message
 
 
+class InitializationRequiredError(DipDupError):
+    ...
+
+
 class HandlerImportError(DipDupError):
     """Can't perform import from handler module"""
 
