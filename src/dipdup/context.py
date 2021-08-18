@@ -98,14 +98,12 @@ class CallbackManager:
         self._hooks: Dict[str, HookConfig] = {}
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
-        if handler_config.callback in self._handlers:
-            raise ConfigurationError(f'Handler `{handler_config.callback}` is already registered')
-        self._handlers[handler_config.callback] = handler_config
+        if handler_config.callback not in self._handlers:
+            self._handlers[handler_config.callback] = handler_config
 
     def register_hook(self, hook_config: HookConfig) -> None:
-        if hook_config.callback in self._hooks:
-            raise ConfigurationError(f'Hook `{hook_config.callback}` is already registered')
-        self._hooks[hook_config.callback] = hook_config
+        if hook_config.callback not in self._hooks:
+            self._hooks[hook_config.callback] = hook_config
 
     async def fire_handler(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
         try:
