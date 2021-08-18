@@ -50,6 +50,7 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConf
         id=job_config.name,
         name=job_config.name,
         trigger=trigger,
+        # TODO: Is it ok to reuse context between job runs?
         kwargs=dict(
             ctx=HookContext(
                 config=ctx.config,

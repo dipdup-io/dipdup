@@ -437,17 +437,17 @@ class DipDupCodeGenerator:
         callback_template = load_template('callback.py')
         subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
 
-        arguments = set(callback_config.iter_arguments())
-        imports = set(callback_config.iter_imports(self._config.package))
+        arguments = callback_config.format_arguments()
+        imports = set(callback_config.format_imports(self._config.package))
 
         callback_code = callback_template.render(
             callback=callback_config.callback,
-            imports=imports,
             arguments=arguments,
+            imports=list(dict.fromkeys(imports)),
         )
         callback_path = join(subpackage_path, f'{callback_config.callback}.py')
         write(callback_path, callback_code)
 
         if sql:
-            sql_path = join(f'{subpackage_path}.sql', '.keep')
+            sql_path = join(subpackage_path, f'{callback_config.callback}.sql', '.keep')
             touch(sql_path)
