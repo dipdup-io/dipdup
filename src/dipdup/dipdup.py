@@ -3,7 +3,7 @@ import logging
 import operator
 from asyncio import Task, create_task, gather
 from collections import Counter
-from contextlib import AsyncExitStack, asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import reduce
 from typing import Dict, List, Set, Union, cast
 
@@ -33,7 +33,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, HeadBlockData
+from dipdup.models import BigMapData, Contract, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import OperationData, Schema
 from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
@@ -48,6 +48,7 @@ class IndexDispatcher:
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
+        self._contracts: Set[ContractConfig] = set()
         self._stopped: bool = False
 
     async def run(self, oneshot=False) -> None:
@@ -94,11 +95,26 @@ class IndexDispatcher:
 
         await index.initialize_state()
 
+    async def add_contract(self, contract_config: ContractConfig) -> None:
+        if contract_config in self._contracts:
+            return
+
+        self._contracts.add(contract_config)
+        with suppress(OperationalError):
+            await Contract(
+                name=contract_config.name,
+                address=contract_config.address,
+                typename=contract_config.typename,
+            ).save()
+
     async def reload_config(self) -> None:
         if not self._ctx.updated:
             return
 
-        self._logger.info('Reloading config')
+        self._logger.info('Config has been updated, reloading')
+        if not self._contracts:
+            await self._fetch_contracts()
+
         self._ctx.config.initialize()
 
         for index_config in self._ctx.config.indexes.values():
@@ -106,8 +122,12 @@ class IndexDispatcher:
                 raise RuntimeError('Config is not initialized')
             await self.add_index(index_config)
 
+        for contract_config in self._ctx.config.contracts.values():
+            await self.add_contract(contract_config)
+
         self._ctx.reset()
 
+        # TODO: Move this check somewhere else
         contracts = [index._config.contracts for index in self._indexes.values() if index._config.contracts]
         if not contracts:
             return
@@ -119,6 +139,15 @@ class IndexDispatcher:
                 "The following contracts are used in more than one index: %s. Make sure you know what you're doing.",
                 ' '.join(duplicate_contracts),
             )
+
+    async def _fetch_contracts(self) -> None:
+        contracts = await Contract.filter().all()
+        self._logger.info('%s contracts fetched from database', len(contracts))
+
+        for contract in contracts:
+            if contract.name not in self._ctx.config.contracts:
+                contract_config = ContractConfig(address=contract.address, typename=contract.typename)
+                self._ctx.config.contracts[contract.name] = contract_config
 
     async def _subscribe(self) -> None:
         for datasource in self._ctx.datasources.values():

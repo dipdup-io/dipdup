@@ -77,6 +77,18 @@ class Index(Model):
         table = 'dipdup_index'
 
 
+class Contract(Model):
+    name = fields.CharField(256, pk=True)
+    address = fields.CharField(256)
+    typename = fields.CharField(256, null=True)
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_contract'
+
+
 @dataclass
 class OperationData:
     """Basic structure for operations from TzKT response"""

@@ -1,3 +1,4 @@
+from asyncio import create_task
 import logging
 import os
 import sys
@@ -20,6 +21,7 @@ from dipdup.exceptions import (
     IndexAlreadyExistsError,
     InitializationRequiredError,
 )
+from dipdup.models import Contract
 from dipdup.utils import FormattedLogger, iter_files
 
 ONETIME_ARGS = ('--reindex', '--hotswap')
@@ -94,10 +96,11 @@ class DipDupContext:
     def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(self, name, address)
-        self.config.contracts[name] = ContractConfig(
+        contract_config = ContractConfig(
             address=address,
             typename=typename,
         )
+        self.config.contracts[name] = contract_config
         self._updated = True
 
     def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:

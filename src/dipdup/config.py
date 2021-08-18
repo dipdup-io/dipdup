@@ -997,12 +997,13 @@ class DipDupConfig:
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
         # NOTE: Endpoints are equal to names
+        # TODO: Ensure
         for name in self.hooks:
             if name in default_hooks:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
-        _logger.info('Resolving template `%s', template_config.name)
+        _logger.info('Resolving template `%s`', template_config.name)
 
         template = self.get_template(template_config.template)
         raw_template = json.dumps(template, default=pydantic_encoder)
