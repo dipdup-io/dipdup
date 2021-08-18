@@ -78,6 +78,9 @@ class IndexDispatcher:
         else:
             raise NotImplementedError
 
+        for handler_config in index_config.handlers:
+            self._ctx.callbacks.register_handler(handler_config)
+
     async def reload_config(self) -> None:
         if not self._ctx.updated:
             return
@@ -216,8 +219,11 @@ class DipDup:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
+            for hook_config in self._config.hooks.values():
+                self._ctx.callbacks.register_hook(hook_config)
+
             # NOTE: on_configure hook fires after database and datasources are initialized but before Hasura is
-            # TODO: self.fire_hook('on_configure')
+            # await self._ctx.fire_hook('on_configure')
 
             if hasura_gateway:
                 await stack.enter_async_context(hasura_gateway)

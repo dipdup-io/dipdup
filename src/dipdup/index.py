@@ -1,4 +1,3 @@
-import time
 from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
 from contextlib import suppress
@@ -338,7 +337,6 @@ class OperationIndex(Index):
     ):
         """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
-        start = time.perf_counter()
 
         args: List[Optional[Union[Transaction, Origination, OperationData]]] = []
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
@@ -388,7 +386,7 @@ class OperationIndex(Index):
             name=handler_config.callback,
             fmt=operation_subgroup.hash + ': {}',
         )
-        handler_context = HandlerContext(
+        ctx = HandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
             callbacks=self._ctx.callbacks,
@@ -398,12 +396,9 @@ class OperationIndex(Index):
             index_config=self._config,
         )
 
-        await handler_config.callback_fn(handler_context, *args)
+        await ctx.fire_handler(handler_config.callback, *args)
 
-        end = time.perf_counter()
-        self._logger.debug(f'{handler_config.callback}` handler executed in {end - start:.3f}s')
-
-        if handler_context.updated:
+        if ctx.updated:
             self._ctx.commit()
 
     async def _get_transaction_addresses(self) -> Set[str]:
@@ -506,7 +501,6 @@ class BigMapIndex(Index):
     ) -> None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
-        start = time.perf_counter()
 
         if matched_big_map.action.has_key:
             key_type = handler_config.key_type_cls
@@ -526,7 +520,7 @@ class BigMapIndex(Index):
         else:
             value = None
 
-        big_map_context = BigMapDiff(  # type: ignore
+        big_map_diff = BigMapDiff(  # type: ignore
             data=matched_big_map,
             action=matched_big_map.action,
             key=key,
@@ -537,7 +531,7 @@ class BigMapIndex(Index):
             fmt=str(matched_big_map.operation_id) + ': {}',
         )
 
-        handler_context = HandlerContext(
+        ctx = HandlerContext(
             datasources=self._ctx.datasources,
             config=self._ctx.config,
             callbacks=self._ctx.callbacks,
@@ -547,12 +541,9 @@ class BigMapIndex(Index):
             index_config=self._config,
         )
 
-        await handler_config.callback_fn(handler_context, big_map_context)
+        await ctx.fire_handler(handler_config.callback, big_map_diff)
 
-        end = time.perf_counter()
-        self._logger.debug(f'{handler_config.callback}` handler executed in {end - start:.3f}s')
-
-        if handler_context.updated:
+        if ctx.updated:
             self._ctx.commit()
 
     async def _process_big_maps(self, big_maps: List[BigMapData]) -> None:

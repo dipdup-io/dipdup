@@ -62,6 +62,13 @@ Error context:
 {error_context}
 """
 
+_callback_type_error = """Callback `{callback}` was called with an argument of invalid type.
+
+argument: `{arg}`
+type: {type_}
+expected type: {expected_type}
+"""
+
 
 class DipDupError(ABC, Exception):
     exit_code = 1
@@ -174,4 +181,23 @@ class InvalidDataError(DipDupError):
             invalid_data=pformat(self.data, compact=True),
             type_name=self.type_name,
             error_context=pformat(self.error_context, compact=True),
+        )
+
+
+class CallbackTypeError(DipDupError):
+    """Agrument of invalid type was passed to a callback"""
+
+    def __init__(self, ctx, callback: str, arg: str, type_: Type, expected_type: Type) -> None:
+        super().__init__(ctx)
+        self.callback = callback
+        self.arg = arg
+        self.type_ = type_
+        self.expected_type = expected_type
+
+    def format_help(self) -> str:
+        return _callback_type_error.format(
+            callback=self.callback,
+            arg=self.arg,
+            type_=self.type_,
+            expected_type=self.expected_type,
         )

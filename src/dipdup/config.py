@@ -3,7 +3,6 @@ import importlib
 import json
 import logging.config
 import os
-from pydoc import locate
 import re
 import sys
 from abc import ABC, abstractmethod
@@ -14,6 +13,7 @@ from dataclasses import field
 from enum import Enum
 from os import environ as env
 from os.path import dirname
+from pydoc import locate
 
 # from pydoc import locate
 from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Set, Tuple, Type, Union, cast
@@ -525,10 +525,9 @@ class CallbackMixin(CodegenMixin):
 
 
 @dataclass
-class HandlerConfig(CallbackMixin, NameMixin, kind='handler'):
+class HandlerConfig(CallbackMixin, kind='handler'):
     def __post_init_post_parse__(self) -> None:
         CallbackMixin.__post_init_post_parse__(self)
-        NameMixin.__post_init_post_parse__(self)
 
 
 OperationHandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
@@ -798,7 +797,7 @@ class SentryConfig:
 
 
 @dataclass
-class HookConfig(NameMixin, CallbackMixin, kind='hook'):
+class HookConfig(CallbackMixin, kind='hook'):
     args: Dict[str, str] = field(default_factory=dict)
     atomic: bool = False
 

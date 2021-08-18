@@ -31,15 +31,15 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConf
     hook_config = job_config.hook_config
 
     async def _wrapper(ctx, args) -> None:
-        nonlocal job_config, job_config
+        nonlocal job_config, hook_config
         async with AsyncExitStack() as stack:
             if hook_config.atomic:
                 await stack.enter_async_context(in_global_transaction())
-            await hook_config.callback_fn(ctx, args)
+            await ctx.callbacks.fire_hook(hook_config.callback, args)
 
     logger = FormattedLogger(
-        name=hook_config.callback,
-        fmt=hook_config.name + ': {}',
+        name=f'dipdup.hooks.{hook_config.callback}',
+        fmt=job_config.name + ': {}',
     )
     if job_config.crontab:
         trigger = CronTrigger.from_crontab(job_config.crontab)

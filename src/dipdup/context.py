@@ -1,15 +1,25 @@
 import logging
 import os
 import sys
+import time
 from pprint import pformat
 from typing import Any, Dict, Optional
 
 from tortoise import Tortoise
 from tortoise.transactions import in_transaction
 
-from dipdup.config import ContractConfig, DipDupConfig, HandlerConfig, HookConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig
+from dipdup.config import (
+    CallbackMixin,
+    ContractConfig,
+    DipDupConfig,
+    HandlerConfig,
+    HookConfig,
+    IndexConfig,
+    IndexTemplateConfig,
+    PostgresDatabaseConfig,
+)
 from dipdup.datasources.datasource import Datasource
-from dipdup.exceptions import ConfigurationError, ContractAlreadyExistsError, IndexAlreadyExistsError
+from dipdup.exceptions import CallbackTypeError, ConfigurationError, ContractAlreadyExistsError, IndexAlreadyExistsError
 from dipdup.utils import FormattedLogger
 
 ONETIME_ARGS = ('--reindex', '--hotswap')
@@ -32,10 +42,10 @@ class DipDupContext:
         return pformat(self.__dict__)
 
     async def fire_hook(self, name: str, *args, **kwargs: Any) -> None:
-        self.callbacks.fire_hook(self, name, *args, **kwargs)
+        await self.callbacks.fire_hook(self, name, *args, **kwargs)
 
     async def fire_handler(self, name: str, *args, **kwargs: Any) -> None:
-        self.callbacks.fire_handler(self, name, *args, **kwargs)
+        await self.callbacks.fire_handler(self, name, *args, **kwargs)
 
     def commit(self) -> None:
         """Spawn indexes after handler execution"""
@@ -87,21 +97,56 @@ class CallbackManager:
         self._handlers: Dict[str, HandlerConfig] = {}
         self._hooks: Dict[str, HookConfig] = {}
 
-    def register_handler(self, name: str, config: HandlerConfig) -> None:
-        self._handlers[name] = config
+    def register_handler(self, handler_config: HandlerConfig) -> None:
+        if handler_config.callback in self._handlers:
+            raise ConfigurationError(f'Handler `{handler_config.callback}` is already registered')
+        self._handlers[handler_config.callback] = handler_config
 
-    def register_hook(self, name: str, config: HookConfig) -> None:
-        self._hooks[name] = config
+    def register_hook(self, hook_config: HookConfig) -> None:
+        if hook_config.callback in self._hooks:
+            raise ConfigurationError(f'Hook `{hook_config.callback}` is already registered')
+        self._hooks[hook_config.callback] = hook_config
 
     async def fire_handler(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
-        # verify arguments over config
-        # fire callback
-        ...
+        try:
+            handler_config = self._handlers[name]
+        except KeyError as e:
+            raise ConfigurationError(f'Attempt to fire unregistered handler `{name}`') from e
+
+        start = time.perf_counter()
+        await handler_config.callback_fn(ctx, *args, **kwargs)
+        end = time.perf_counter()
+        self._logger.debug(f'Handler `{name}` executed in {end - start:.3f}s')
 
     async def fire_hook(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
-        # verify arguments over config
-        # fire callback
-        ...
+        try:
+            hook_config = self._hooks[name]
+        except KeyError as e:
+            raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
+
+        self._verify_arguments(ctx, hook_config, *args, **kwargs)
+
+        start = time.perf_counter()
+        await hook_config.callback_fn(ctx, *args, **kwargs)
+        end = time.perf_counter()
+        self._logger.debug(f'Hook `{name}` executed in {end - start:.3f}s')
+
+    @classmethod
+    def _verify_arguments(cls, ctx: DipDupContext, config: CallbackMixin, *args, **kwargs) -> None:
+        kwargs_annotations = config.locate_arguments()
+        args_names = tuple(kwargs_annotations.keys())
+        args_annotations = tuple(kwargs_annotations.values())
+
+        for i, arg in enumerate(args):
+            expected_type = args_annotations[i]
+            if expected_type and not isinstance(arg, expected_type):
+                raise CallbackTypeError(
+                    ctx=ctx,
+                    callback=config.callback,
+                    arg=args_names[i],
+                    type_=type(arg),
+                    expected_type=expected_type,
+                )
 
 
 class TemplateValuesDict(dict):
