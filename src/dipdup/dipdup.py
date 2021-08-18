@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import Task, create_task, gather
 import hashlib
 import logging
 import operator
@@ -7,7 +7,7 @@ from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import reduce
 from os import listdir
 from os.path import join
-from typing import Dict, List, Optional, Set, cast
+from typing import Dict, List, Set, cast
 
 import sqlparse  # type: ignore
 from genericpath import exists
@@ -16,7 +16,6 @@ from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
-import dipdup.models as models
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
     BcdDatasourceConfig,
@@ -39,6 +38,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
+from dipdup.models import BigMapData, HeadBlockData, OperationData, Schema
 from dipdup.utils import FormattedLogger, iter_files, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
@@ -152,7 +152,7 @@ class IndexDispatcher:
             await self.reload_config()
 
             async with slowdown(INDEX_DISPATCHER_INTERVAL):
-                await asyncio.gather(*[index.process() for index in self._indexes.values()])
+                await gather(*[index.process() for index in self._indexes.values()])
 
             # TODO: Continue if new indexes are spawned from origination
             if oneshot:
@@ -196,14 +196,11 @@ class DipDup:
         await self._codegen.docker_init(image, tag, env_file)
 
     async def run(self, reindex: bool, oneshot: bool) -> None:
-        """Main entrypoint"""
-
-        await self._create_datasources(realtime=not oneshot)
-
-        tasks: Set[asyncio.Task] = set()
+        """Run indexing process"""
+        tasks: Set[Task] = set()
         async with AsyncExitStack() as stack:
             await self._set_up_database(stack, reindex)
-            await self._set_up_datasources(stack, tasks, pre=True)
+            await self._set_up_datasources(stack)
             await self._set_up_hooks()
 
             await self._initialize_schema()
@@ -211,12 +208,12 @@ class DipDup:
 
             if not oneshot:
                 await self._set_up_jobs(stack)
-                await self._set_up_datasources(stack, tasks, pre=False)
+                await self._spawn_datasources(tasks)
 
-            tasks.add(asyncio.create_task(self._index_dispatcher.run(oneshot)))
+            tasks.add(create_task(self._index_dispatcher.run(oneshot)))
 
             try:
-                await asyncio.gather(*tasks)
+                await gather(*tasks)
             except KeyboardInterrupt:
                 pass
             except GeneratorExit:
@@ -239,7 +236,7 @@ class DipDup:
         await codegen.generate_hooks()
         self._finish_migration('1.2')
 
-    async def _create_datasources(self, realtime: bool = True) -> None:
+    async def _create_datasources(self) -> None:
         datasource: Datasource
         for name, datasource_config in self._config.datasources.items():
             if name in self._datasources:
@@ -279,7 +276,7 @@ class DipDup:
             await connection.execute_script(f"SET search_path TO {schema_name}")
 
         try:
-            schema_state = await models.Schema.get_or_none(name=schema_name)
+            schema_state = await Schema.get_or_none(name=schema_name)
         except OperationalError:
             schema_state = None
         # TODO: Fix Tortoise ORM to raise more specific exception
@@ -299,7 +296,7 @@ class DipDup:
             # await self._execute_sql_scripts(reindex=True)
             await self._ctx.fire_hook('on_reindex')
 
-            schema_state = models.Schema(
+            schema_state = Schema(
                 name=schema_name,
                 hash=schema_hash,
             )
@@ -336,7 +333,7 @@ class DipDup:
         for job_config in self._config.jobs.values():
             add_job(self._ctx, self._scheduler, job_config)
 
-    async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[asyncio.Task]) -> None:
+    async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
         if not self._config.hasura:
             return
 
@@ -344,14 +341,17 @@ class DipDup:
             raise RuntimeError
         hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
         await stack.enter_async_context(hasura_gateway)
-        tasks.add(asyncio.create_task(hasura_gateway.configure()))
+        tasks.add(create_task(hasura_gateway.configure()))
 
-    async def _set_up_datasources(self, stack: AsyncExitStack, tasks: Set[asyncio.Task], pre: bool) -> None:
-        if pre:
-            for datasource in self._datasources.values():
-                await stack.enter_async_context(datasource)
-        else:
-            tasks.update(asyncio.create_task(d.run()) for d in self._datasources.values())
+    async def _set_up_datasources(self, stack: AsyncExitStack) -> None:
+        if self._datasources:
+            raise RuntimeError
+        await self._create_datasources()
+        for datasource in self._datasources.values():
+            await stack.enter_async_context(datasource)
+
+    async def _spawn_datasources(self, tasks: Set[Task]) -> None:
+        tasks.update(create_task(d.run()) for d in self._datasources.values())
 
     async def _execute_sql_scripts(self, reindex: bool) -> None:
         """Execute SQL included with project"""

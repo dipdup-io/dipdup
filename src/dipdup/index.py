@@ -21,6 +21,9 @@ from dipdup.config import (
 from dipdup.context import DipDupContext, HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import InvalidDataError
+from dipdup.models import BigMapData, BigMapDiff, HeadBlockData
+from dipdup.models import Index as IndexState
+from dipdup.models import OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger, in_global_transaction
 
 # NOTE: Operations of a single contract call
