@@ -5,6 +5,7 @@ from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
 from pydantic.error_wrappers import ValidationError
 
+import dipdup.models as models
 from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
@@ -20,7 +21,6 @@ from dipdup.config import (
 from dipdup.context import DipDupContext, HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import InvalidDataError
-from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, OperationData, Origination, State, TemporaryState, Transaction
 from dipdup.utils import FormattedLogger, in_global_transaction
 
 # NOTE: Operations of a single contract call
@@ -36,17 +36,21 @@ class Index:
         self._datasource = datasource
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
-        self._state: Optional[State] = None
+        self._state: Optional[models.Index] = None
 
     @property
     def datasource(self) -> TzktDatasource:
         return self._datasource
 
     @property
-    def state(self) -> State:
+    def state(self) -> models.Index:
         if self._state is None:
             raise RuntimeError('Index state is not initialized')
         return self._state
+
+    @classmethod
+    def from_state(cls, ctx: DipDupContext, state: models.Index, datasource: TzktDatasource) -> 'Index':
+        ...
 
     async def process(self) -> None:
         await self._initialize_state()
@@ -94,13 +98,12 @@ class Index:
             return
         self._logger.info('Initializing index state')
         index_config_hash = self._config.hash()
-        state = await State.get_or_none(
+        state = await models.Index.get_or_none(
             name=self._config.name,
             type=self._config.kind,
         )
         if state is None:
-            state_cls = TemporaryState if self._config.stateless else State
-            state = state_cls(
+            state = models.Index(
                 name=self._config.name,
                 type=self._config.kind,
                 level=self._config.first_level,

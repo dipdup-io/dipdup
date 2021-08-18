@@ -7,7 +7,7 @@ from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import reduce
 from os import listdir
 from os.path import join
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional, Set, cast
 
 import sqlparse  # type: ignore
 from genericpath import exists
@@ -16,6 +16,7 @@ from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
+import dipdup.models as models
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
     BcdDatasourceConfig,
@@ -38,7 +39,6 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, HeadBlockData, IndexType, OperationData, State
 from dipdup.utils import FormattedLogger, iter_files, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
@@ -198,49 +198,25 @@ class DipDup:
     async def run(self, reindex: bool, oneshot: bool) -> None:
         """Main entrypoint"""
 
-        url = self._config.database.connection_string
-        models = f'{self._config.package}.models'
-
         await self._create_datasources(realtime=not oneshot)
 
-        hasura_gateway: Optional[HasuraGateway]
-        if self._config.hasura:
-            if not isinstance(self._config.database, PostgresDatabaseConfig):
-                raise RuntimeError
-            hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
-        else:
-            hasura_gateway = None
-
+        tasks: Set[asyncio.Task] = set()
         async with AsyncExitStack() as stack:
-            worker_tasks = []
-            await stack.enter_async_context(tortoise_wrapper(url, models))
+            await self._set_up_database(stack, reindex)
+            await self._set_up_datasources(stack, tasks, pre=True)
+            await self._set_up_hooks()
 
-            await self._initialize_database(reindex)
-            for datasource in self._datasources.values():
-                await stack.enter_async_context(datasource)
+            await self._initialize_schema()
+            await self._set_up_hasura(stack, tasks)
 
-            for hook_config in self._config.hooks.values():
-                self._ctx.callbacks.register_hook(hook_config)
+            if not oneshot:
+                await self._set_up_jobs(stack)
+                await self._set_up_datasources(stack, tasks, pre=False)
 
-            # NOTE: on_configure hook fires after database and datasources are initialized but before Hasura is
-            # await self._ctx.fire_hook('on_configure')
-
-            if hasura_gateway:
-                await stack.enter_async_context(hasura_gateway)
-                worker_tasks.append(asyncio.create_task(hasura_gateway.configure()))
-
-            self._logger.info('Starting datasources')
-            datasource_tasks = [] if oneshot else [asyncio.create_task(d.run()) for d in self._datasources.values()]
-
-            if self._config.jobs and not oneshot:
-                await stack.enter_async_context(self._scheduler_context())
-                for job_config in self._config.jobs.values():
-                    add_job(self._ctx, self._scheduler, job_config)
-
-            worker_tasks.append(asyncio.create_task(self._index_dispatcher.run(oneshot)))
+            tasks.add(asyncio.create_task(self._index_dispatcher.run(oneshot)))
 
             try:
-                await asyncio.gather(*datasource_tasks, *worker_tasks)
+                await asyncio.gather(*tasks)
             except KeyboardInterrupt:
                 pass
             except GeneratorExit:
@@ -292,22 +268,18 @@ class DipDup:
             self._datasources[name] = datasource
             self._datasources_by_config[datasource_config] = datasource
 
-    async def _initialize_database(self, reindex: bool = False) -> None:
-        self._logger.info('Initializing database')
+    async def _initialize_schema(self) -> None:
+        self._logger.info('Initializing database schema')
+        schema_name = 'public'
+        connection = next(iter(Tortoise._connections.values()))
 
-        if isinstance(self._config.database, PostgresDatabaseConfig) and self._config.database.schema_name:
-            await Tortoise._connections['default'].execute_script(f"CREATE SCHEMA IF NOT EXISTS {self._config.database.schema_name}")
-            await Tortoise._connections['default'].execute_script(f"SET search_path TO {self._config.database.schema_name}")
-
-        if reindex:
-            self._logger.warning('Started with `--reindex` argument, reindexing')
-            await self._ctx.reindex()
-
-        self._logger.info('Checking database schema')
-        connection_name, connection = next(iter(Tortoise._connections.items()))
+        if isinstance(self._config.database, PostgresDatabaseConfig):
+            schema_name = self._config.database.schema_name
+            await connection.execute_script(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
+            await connection.execute_script(f"SET search_path TO {schema_name}")
 
         try:
-            schema_state = await State.get_or_none(type=IndexType.schema, name=connection_name)
+            schema_state = await models.Schema.get_or_none(name=schema_name)
         except OperationalError:
             schema_state = None
         # TODO: Fix Tortoise ORM to raise more specific exception
@@ -317,29 +289,69 @@ class DipDup:
         schema_sql = get_schema_sql(connection, False)
 
         # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
+        # TODO: Ignore comments
         processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
         schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
 
         # NOTE: `State.config_hash` field contains schema hash when `type` is `IndexType.schema`
         if schema_state is None:
             await Tortoise.generate_schemas()
-            await self._execute_sql_scripts(reindex=True)
+            # await self._execute_sql_scripts(reindex=True)
+            await self._ctx.fire_hook('on_reindex')
 
-            schema_state = State(
-                type=IndexType.schema,
-                name=connection_name,
-                config_hash=schema_hash,
+            schema_state = models.Schema(
+                name=schema_name,
+                hash=schema_hash,
             )
             try:
                 await schema_state.save()
             except OperationalError as e:
                 raise ReindexingRequiredError(None) from e
 
-        elif schema_state.config_hash != schema_hash:
+        elif schema_state.hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await self._ctx.reindex()
 
-        await self._execute_sql_scripts(reindex=False)
+        # await self._execute_sql_scripts(reindex=False)
+        await self._ctx.fire_hook('on_restart')
+
+    async def _set_up_database(self, stack: AsyncExitStack, reindex: bool) -> None:
+        url = self._config.database.connection_string
+        models = f'{self._config.package}.models'
+        await stack.enter_async_context(tortoise_wrapper(url, models))
+
+        if reindex:
+            self._logger.warning('Started with `--reindex` argument, reindexing')
+            await self._ctx.reindex()
+
+    async def _set_up_hooks(self) -> None:
+        for hook_config in self._config.hooks.values():
+            self._ctx.callbacks.register_hook(hook_config)
+
+    async def _set_up_jobs(self, stack: AsyncExitStack) -> None:
+        if not self._config.jobs:
+            return
+
+        await stack.enter_async_context(self._scheduler_context())
+        for job_config in self._config.jobs.values():
+            add_job(self._ctx, self._scheduler, job_config)
+
+    async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[asyncio.Task]) -> None:
+        if not self._config.hasura:
+            return
+
+        if not isinstance(self._config.database, PostgresDatabaseConfig):
+            raise RuntimeError
+        hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
+        await stack.enter_async_context(hasura_gateway)
+        tasks.add(asyncio.create_task(hasura_gateway.configure()))
+
+    async def _set_up_datasources(self, stack: AsyncExitStack, tasks: Set[asyncio.Task], pre: bool) -> None:
+        if pre:
+            for datasource in self._datasources.values():
+                await stack.enter_async_context(datasource)
+        else:
+            tasks.update(asyncio.create_task(d.run()) for d in self._datasources.values())
 
     async def _execute_sql_scripts(self, reindex: bool) -> None:
         """Execute SQL included with project"""

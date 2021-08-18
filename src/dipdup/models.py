@@ -24,45 +24,58 @@ _logger = logging.getLogger('dipdup.models')
 class IndexType(Enum):
     operation = 'operation'
     big_map = 'big_map'
-    block = 'block'
-    schema = 'schema'
 
 
 class IndexStatus(Enum):
-    CREATED = 'CREATED'
-    IN_PROGRESS = 'IN_PROGRESS'
+    NEW = 'NEW'
+    SYNCING = 'SYNCING'
     REALTIME = 'REALTIME'
+    ROLLBACK = 'ROLLBACK'
+    ONESHOT = 'ONESHOT'
 
 
-class State(Model):
-    """Stores current level of index and hash of it's config"""
-
+class Schema(Model):
     name = fields.CharField(256, pk=True)
-    type = fields.CharEnumField(IndexType)
-    level = fields.IntField(default=0)
-    config_hash = fields.CharField(256)
-
-    head_level = fields.IntField(null=True)
-    head_hash = fields.CharField(64, null=True)
-    head_timestamp = fields.DatetimeField(null=True)
-    synchronized = fields.BooleanField(default=False)
+    hash = fields.CharField(256)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
-        table = 'dipdup_state'
+        table = 'dipdup_schema'
 
 
-# TODO: Drop `stateless` option
-class TemporaryState(State):
-    """Used within stateless indexes, skip saving to DB"""
+class Head(Model):
+    name = fields.CharField(256, pk=True)
+    level = fields.IntField()
+    hash = fields.CharField(64)
+    timestamp = fields.DatetimeField()
 
-    async def save(self, using_db=None, update_fields=None, force_create=False, force_update=False) -> None:
-        pass
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
-        abstract = True
+        table = 'dipdup_head'
+
+
+class Index(Model):
+    name = fields.CharField(256, pk=True)
+    type = fields.CharEnumField(IndexType)
+    status = fields.CharEnumField(IndexStatus, default=IndexStatus.NEW)
+
+    datasource = fields.CharField(256)
+    template = fields.CharField(256)
+    config = ...
+    template_values = ...
+
+    level = fields.IntField(default=0)
+    head = fields.ForeignKeyField('models.Head', related_name='indexes', null=True)
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_index'
 
 
 @dataclass
