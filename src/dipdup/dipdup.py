@@ -33,7 +33,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, HeadBlockData, OperationData, Schema
+from dipdup.models import BigMapData, HeadBlockData, OperationData, Schema, Index as IndexState
 from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
 
 INDEX_DISPATCHER_INTERVAL = 1.0
@@ -47,6 +47,25 @@ class IndexDispatcher:
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
         self._stopped: bool = False
+
+    async def run(self, oneshot=False) -> None:
+        self._logger.info('Starting index dispatcher')
+        await self._subscribe()
+        await self._load_index_states()
+        self._ctx.commit()
+
+        while not self._stopped:
+            await self.reload_config()
+
+            async with slowdown(INDEX_DISPATCHER_INTERVAL):
+                await gather(*[index.process() for index in self._indexes.values()])
+
+            # TODO: Continue if new indexes are spawned from origination
+            if oneshot:
+                break
+
+    def stop(self) -> None:
+        self._stopped = True
 
     async def add_index(self, index_config: IndexConfigTemplateT) -> None:
         if index_config.name in self._indexes:
@@ -102,14 +121,28 @@ class IndexDispatcher:
                 ' '.join(duplicate_contracts),
             )
 
-    async def dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
+    async def _subscribe(self) -> None:
+        for datasource in self._ctx.datasources.values():
+            if not isinstance(datasource, IndexDatasource):
+                continue
+            datasource.on_operations(self._dispatch_operations)
+            datasource.on_big_maps(self._dispatch_big_maps)
+            datasource.on_rollback(self._rollback)
+
+    async def _load_index_states(self) -> None:
+        index_states = await IndexState.filter().all()
+        self._logger.info('%s indexes found in database', len(index_states))
+        for index_state in index_states:
+            ...
+
+    async def _dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in operations)) == 1
         level = operations[0].level
         for index in self._indexes.values():
             if isinstance(index, OperationIndex) and index.datasource == datasource:
                 index.push(level, operations, block)
 
-    async def dispatch_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData], block: HeadBlockData) -> None:
+    async def _dispatch_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in big_maps)) == 1
         level = big_maps[0].level
         for index in self._indexes.values():
@@ -131,30 +164,6 @@ class IndexDispatcher:
                 return
 
         await self._ctx.fire_hook('on_rollback', datasource, from_level, to_level)
-
-    async def run(self, oneshot=False) -> None:
-        self._logger.info('Starting index dispatcher')
-        for datasource in self._ctx.datasources.values():
-            if not isinstance(datasource, IndexDatasource):
-                continue
-            datasource.on_operations(self.dispatch_operations)
-            datasource.on_big_maps(self.dispatch_big_maps)
-            datasource.on_rollback(self._rollback)
-
-        self._ctx.commit()
-
-        while not self._stopped:
-            await self.reload_config()
-
-            async with slowdown(INDEX_DISPATCHER_INTERVAL):
-                await gather(*[index.process() for index in self._indexes.values()])
-
-            # TODO: Continue if new indexes are spawned from origination
-            if oneshot:
-                break
-
-    def stop(self) -> None:
-        self._stopped = True
 
 
 class DipDup:

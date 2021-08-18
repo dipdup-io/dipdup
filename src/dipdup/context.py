@@ -74,8 +74,9 @@ class DipDupContext:
             sys.argv.remove('--reindex')
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    async def reindex(self) -> None:
+    async def reindex(self, reason: Optional[str] = None) -> None:
         """Drop all tables or whole database and restart with the same CLI arguments"""
+        self.logger.warning('Reindexing initialized, reason: %s', reason)
         if isinstance(self.config.database, PostgresDatabaseConfig):
             exclude_expression = ''
             if self.config.database.immune_tables:

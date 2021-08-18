@@ -10,7 +10,7 @@ from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup, IndexDispatcher
 from dipdup.index import OperationIndex
-from dipdup.models import BlockData, HeadBlockData, OperationData, State
+from dipdup.models import BlockData, HeadBlockData, OperationData, Index as State
 
 
 def _get_operation(hash_: str, level: int) -> OperationData:

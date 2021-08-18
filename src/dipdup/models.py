@@ -63,10 +63,9 @@ class Index(Model):
     type = fields.CharEnumField(IndexType)
     status = fields.CharEnumField(IndexStatus, default=IndexStatus.NEW)
 
-    datasource = fields.CharField(256)
-    template = fields.CharField(256)
-    config = ...
-    template_values = ...
+    config = fields.JSONField()
+    template = fields.CharField(256, null=True)
+    template_values = fields.JSONField(null=True)
 
     level = fields.IntField(default=0)
     head = fields.ForeignKeyField('models.Head', related_name='indexes', null=True)

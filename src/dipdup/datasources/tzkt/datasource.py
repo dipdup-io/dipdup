@@ -22,7 +22,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData
+from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData
 from dipdup.utils import groupby, split_by_chunks
 
 OperationID = int
@@ -343,6 +343,7 @@ class TzktDatasource(IndexDatasource):
         self._client: Optional[BaseHubConnection] = None
 
         self._block_cache: BlockCache = BlockCache()
+        self._head: Optional[Head] = None
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None
 

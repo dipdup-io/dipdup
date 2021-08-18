@@ -302,6 +302,7 @@ class StorageTypeMixin:
         module_name = f'{package}.types.{module_name}.storage'
         self.storage_type_cls = import_from(module_name, cls_name)
 
+
 T = TypeVar('T')
 
 
@@ -580,8 +581,14 @@ class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin):
         NameMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
 
+    def dumps(self) -> str:
+        return json.dumps(self, default=pydantic_encoder)
+
+    def json(self) -> Dict[str, Any]:
+        return json.loads(self.dumps())
+
     def hash(self) -> str:
-        config_json = json.dumps(self, default=pydantic_encoder)
+        config_json = self.dumps()
         config_hash = hashlib.sha256(config_json.encode()).hexdigest()
         return config_hash
 

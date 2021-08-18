@@ -21,7 +21,7 @@ from dipdup.config import (
 from dipdup.context import DipDupContext, HandlerContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import InvalidDataError
-from dipdup.models import BigMapData, BigMapDiff, HeadBlockData
+from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, IndexStatus
 from dipdup.models import Index as IndexState
 from dipdup.models import OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger, in_global_transaction
@@ -39,6 +39,7 @@ class Index:
         self._datasource = datasource
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
+        self._head: Optional[models.Head] = None
         self._state: Optional[models.Index] = None
 
     @property
@@ -46,14 +47,18 @@ class Index:
         return self._datasource
 
     @property
+    def head(self) -> Optional[models.Head]:
+        return self._head
+
+    @property
     def state(self) -> models.Index:
         if self._state is None:
             raise RuntimeError('Index state is not initialized')
         return self._state
 
-    @classmethod
-    def from_state(cls, ctx: DipDupContext, state: models.Index, datasource: TzktDatasource) -> 'Index':
-        ...
+    # @classmethod
+    # def from_state(cls, ctx: DipDupContext, state: models.Index, datasource: TzktDatasource) -> 'Index':
+    #     self = cls(ctx, state.config, datasource)
 
     async def process(self) -> None:
         await self._initialize_state()
@@ -82,7 +87,7 @@ class Index:
         ...
 
     async def _enter_sync_state(self, last_level: int) -> Optional[int]:
-        first_level = self.state.head_level or self.state.level
+        first_level = self.state.level
         if first_level == last_level:
             return None
         if first_level > last_level:
@@ -100,7 +105,7 @@ class Index:
         if self._state:
             return
         self._logger.info('Initializing index state')
-        index_config_hash = self._config.hash()
+        config_json = self._config.json()
         state = await models.Index.get_or_none(
             name=self._config.name,
             type=self._config.kind,
@@ -110,27 +115,28 @@ class Index:
                 name=self._config.name,
                 type=self._config.kind,
                 level=self._config.first_level,
-                config_hash=index_config_hash,
+                config=config_json,
             )
 
-        elif state.config_hash != index_config_hash:
-            self._logger.warning('Config hash mismatch (config has been changed), reindexing')
-            await self._ctx.reindex()
+        # elif state.hash != index_config_hash:
+        #     await self._ctx.reindex()
 
         # NOTE: No need to check indexes which are not synchronized.
-        if state.level and state.synchronized:
-            if not state.head_level:
+        if state.level and state.status == IndexStatus.REALTIME:
+            state_head = await state.head
+            if not state_head:
                 raise RuntimeError('Index is synchronized but has no head block data')
 
-            block = await self._datasource.get_block(state.head_level)
-            if state.head_hash != block.hash:
-                self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
-                await self._ctx.reindex()
+            block = await self._datasource.get_block(state_head.level)
+            if state_head.hash != block.hash:
+                await self._ctx.reindex('block hash mismatch (missed rollback while DipDup was stopped)')
 
         await state.save()
         self._state = state
 
     async def _update_state(self, level: int, block: Optional[HeadBlockData] = None) -> None:
+        if self.block:
+            self.block.head
         self.state.level = level  # type: ignore
         if block:
             self.state.head_level = block.level  # type: ignore
