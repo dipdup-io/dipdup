@@ -3,6 +3,7 @@ import importlib
 import json
 import logging.config
 import os
+from pydoc import locate
 import re
 import sys
 from abc import ABC, abstractmethod
@@ -220,47 +221,62 @@ class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 
     @abstractmethod
-    def iter_imports(self, package: str) -> Iterator[str]:
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         ...
 
     @abstractmethod
-    def iter_arguments(self) -> Iterator[str]:
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         ...
+
+    def format_imports(self, package: str) -> Iterator[str]:
+        for package, cls in self.iter_imports(package):
+            yield f'from {package} import {cls}'
+
+    def format_arguments(self) -> Iterator[str]:
+        for name, cls in self.iter_arguments():
+            yield f'{name}: {cls}'
+
+    def locate_arguments(self) -> Dict[str, Optional[Type]]:
+        kwargs: Dict[str, Optional[Type]] = {}
+        for name, cls in self.iter_arguments():
+            cls = cls.split(' as ')[0]
+            kwargs[name] = cast(Optional[Type], locate(cls))
+        return kwargs
 
 
 class PatternConfig(CodegenMixin, ABC):
     @classmethod
-    def format_storage_import(cls, package: str, module_name: str) -> str:
+    def format_storage_import(cls, package: str, module_name: str) -> Tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
-        return f'from {package}.types.{module_name}.storage import {storage_cls}'
+        return f'from {package}.types.{module_name}.storage', storage_cls
 
     @classmethod
-    def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> str:
+    def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> Tuple[str, str]:
         entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
-        return f'from {package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)} import {parameter_cls}'
+        return f'from {package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}', parameter_cls
 
     @classmethod
-    def format_origination_argument(cls, module_name: str, optional: bool) -> str:
+    def format_origination_argument(cls, module_name: str, optional: bool) -> Tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return f'{module_name}_origination: Optional[Origination[{storage_cls}]] = None'
-        return f'{module_name}_origination: Origination[{storage_cls}]'
+            return f'{module_name}_origination', f'Optional[Origination[{storage_cls}]] = None'
+        return f'{module_name}_origination', f'Origination[{storage_cls}]'
 
     @classmethod
-    def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> str:
+    def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> Tuple[str, str]:
         entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return f'{pascal_to_snake(entrypoint)}: Optional[Transaction[{parameter_cls}, {storage_cls}]] = None'
-        return f'{pascal_to_snake(entrypoint)}: Transaction[{parameter_cls}, {storage_cls}]'
+            return pascal_to_snake(entrypoint), f'Optional[Transaction[{parameter_cls}, {storage_cls}]] = None'
+        return pascal_to_snake(entrypoint), f'Transaction[{parameter_cls}, {storage_cls}]'
 
     @classmethod
-    def format_empty_operation_argument(cls, transaction_id: int, optional: bool) -> str:
+    def format_empty_operation_argument(cls, transaction_id: int, optional: bool) -> Tuple[str, str]:
         if optional:
-            return f'transaction_{transaction_id}: Optional[OperationData] = None'
-        return f'transaction_{transaction_id}: OperationData'
+            return f'transaction_{transaction_id}', 'Optional[OperationData] = None'
+        return f'transaction_{transaction_id}', 'OperationData'
 
 
 @dataclass
@@ -368,16 +384,16 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
-    def iter_imports(self, package: str) -> Iterator[str]:
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         if not self.entrypoint:
             return
 
         module_name = self.destination_contract_config.module_name
-        yield 'from dipdup.models import Transaction'
+        yield 'from dipdup.models', 'Transaction'
         yield self.format_parameter_import(package, module_name, self.entrypoint)
         yield self.format_storage_import(package, module_name)
 
-    def iter_arguments(self) -> Iterator[str]:
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         if not self.entrypoint:
             yield self.format_empty_operation_argument(self.transaction_id, self.optional)
         else:
@@ -427,7 +443,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             )
         )
 
-    def iter_imports(self, package: str) -> Iterator[str]:
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         if self.source:
             module_name = self.source_contract_config.module_name
         elif self.similar_to:
@@ -436,10 +452,10 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             module_name = self.originated_contract_config.module_name
         else:
             raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
-        yield 'from dipdup.models import Origination'
+        yield 'from dipdup.models', 'Origination'
         yield self.format_storage_import(package, module_name)
 
-    def iter_arguments(self) -> Iterator[str]:
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         yield self.format_origination_argument(self.module_name, self.optional)
 
     @property
@@ -528,13 +544,13 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
     pattern: List[OperationHandlerPatternConfigT]
 
-    def iter_imports(self, package: str) -> Iterator[str]:
-        yield 'from dipdup.context import HandlerContext'
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
         for pattern in self.pattern:
             yield from pattern.iter_imports(package)
 
-    def iter_arguments(self) -> Iterator[str]:
-        yield 'ctx: HandlerContext'
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
         for pattern in self.pattern:
             yield from pattern.iter_arguments()
 
@@ -625,33 +641,33 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         self._value_type_cls = None
 
     @classmethod
-    def format_key_import(cls, package: str, module_name: str, path: str) -> str:
+    def format_key_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
         key_cls = f'{snake_to_pascal(module_name)}Key'
         key_module = f'{path}_key'
-        return f'from {package}.types.{module_name}.big_map.{key_module} import {key_cls}'
+        return f'from {package}.types.{module_name}.big_map.{key_module}', key_cls
 
     @classmethod
-    def format_value_import(cls, package: str, module_name: str, path: str) -> str:
+    def format_value_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
         value_cls = f'{snake_to_pascal(module_name)}Value'
         value_module = f'{path}_value'
-        return f'from {package}.types.{module_name}.big_map.{value_module} import {value_cls}'
+        return f'from {package}.types.{module_name}.big_map.{value_module}', value_cls
 
     @classmethod
-    def format_big_map_diff_argument(cls, module_name: str) -> str:
+    def format_big_map_diff_argument(cls, module_name: str) -> Tuple[str, str]:
         key_cls = f'{snake_to_pascal(module_name)}Key'
         value_cls = f'{snake_to_pascal(module_name)}Value'
-        return f'{module_name}: BigMapDiff[{key_cls}, {value_cls}]'
+        return module_name, f'BigMapDiff[{key_cls}, {value_cls}]'
 
-    def iter_imports(self, package: str) -> Iterator[str]:
-        yield 'from dipdup.context import HandlerContext'
-        yield 'from dipdup.models import BigMapDiff'
-        yield f'import {package}.models as models'
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'from dipdup.context', 'HandlerContext'
+        yield 'from dipdup.models', 'BigMapDiff'
+        yield package, 'models as models'
 
         yield self.format_key_import(package, self.contract_config.module_name, self.path)
         yield self.format_value_import(package, self.contract_config.module_name, self.path)
 
-    def iter_arguments(self) -> Iterator[str]:
-        yield 'ctx: HandlerContext'
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
         yield self.format_big_map_diff_argument(self.contract_config.module_name)
 
     @property
@@ -786,22 +802,24 @@ class HookConfig(NameMixin, CallbackMixin, kind='hook'):
     args: Dict[str, str] = field(default_factory=dict)
     atomic: bool = False
 
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HookContext'
+        for name, annotation in self.args.items():
+            yield name, annotation.split('.')[-1]
+
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HookContext'
+        for _, annotation in self.args.items():
+            with suppress(ValueError):
+                package, obj = annotation.rsplit('.', 1)
+                yield package, obj
+
     @property
-    def callback_args(self) -> Dict[str, str]:
+    def _args_with_context(self) -> Dict[str, str]:
         return {
             'ctx': 'dipdup.context.HookContext',
             **self.args,
         }
-
-    def iter_arguments(self) -> Iterator[str]:
-        for k, v in self.callback_args.items():
-            yield f'{k}: {v.split(".")[-1]}'
-
-    def iter_imports(self, package: str) -> Iterator[str]:
-        for k, v in self.callback_args.items():
-            with suppress(ValueError):
-                package, obj = v.rsplit('.', 1)
-                yield f'from {package} import {obj}'
 
 
 default_hooks = {
