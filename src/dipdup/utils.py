@@ -15,6 +15,7 @@ from os.path import dirname, exists, getsize, join
 from typing import Any, AsyncIterator, Callable, DefaultDict, Dict, Iterator, List, Optional, Sequence, TextIO, Tuple, Type, TypeVar
 
 import humps  # type: ignore
+from genericpath import isdir, isfile
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import TransactionContext
@@ -186,17 +187,24 @@ class FormattedLogger(Logger):
 
 # TODO: Cache me
 def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
-    """Iterate over files in a directory. Sort alphabetically, filter by extension, skip empty files."""
+    """Iterate over files in a directory. Or a single file. Sort alphabetically, filter by extension, skip empty files."""
     if not exists(path):
-        raise StopIteration
-    for filename in sorted(listdir(path)):
-        filepath = join(path, filename)
-        if ext and not filename.endswith(ext):
-            continue
-        if not getsize(filepath):
-            continue
+        return
+    elif isfile(path):
+        paths = iter(
+            path,
+        )
+    elif isdir(path):
+        paths = (join(path, f) for f in sorted(listdir(path)))
+    else:
+        raise RuntimeError(f'Path `{path}` exists but is neither a file nor a directory')
 
-        with open(filepath) as file:
+    for path in paths:
+        if ext and not path.endswith(ext):
+            continue
+        if not getsize(path):
+            continue
+        with open(path) as file:
             yield file
 
 

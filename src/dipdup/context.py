@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 import time
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 from os.path import exists, join
 from pprint import pformat
 from typing import Any, Dict, Optional, cast
@@ -47,6 +47,9 @@ class DipDupContext:
 
     async def fire_handler(self, name: str, datasource: Datasource, *args, **kwargs: Any) -> None:
         await self.callbacks.fire_handler(self, name, datasource, *args, **kwargs)
+
+    async def execute_sql(self, name: str) -> None:
+        await self.callbacks.execute_sql(self, name)
 
     def commit(self) -> None:
         """Spawn indexes after handler execution"""
@@ -209,29 +212,34 @@ class CallbackManager:
         except KeyError as e:
             raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
 
-        start = time.perf_counter()
-
         self._verify_arguments(ctx, *args, **kwargs)
-        # NOTE: Not sure about order of hooks.
-        await self._fire_sql_hook(ctx)
-        await self._fire_python_hook(ctx, *args, **kwargs)
+        with self.timeit('Hook', name):
+            await ctx.hook_config.callback_fn(ctx, *args, **kwargs)
 
-        end = time.perf_counter()
-        self._logger.debug(f'Hook `{name}` executed in {end - start:.3f}s')
-
-    async def _fire_python_hook(self, ctx: 'HookContext', *args, **kwargs) -> None:
-        await ctx.hook_config.callback_fn(ctx, *args, **kwargs)
-
-    async def _fire_sql_hook(self, ctx: 'HookContext') -> None:
+    async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""
-        name = f'{ctx.hook_config.callback}.sql'
-        sql_path = join(ctx.config.package_path, 'hooks', name)
-        if not exists(sql_path):
-            raise InitializationRequiredError
-
         if not isinstance(ctx.config.database, PostgresDatabaseConfig):
             self._logger.warning('Skipping SQL hook `%s`: not supported on SQLite', name)
             return
+
+        sql_path = join(ctx.config.package_path, 'sql')
+        if not exists(sql_path):
+            raise InitializationRequiredError
+
+        paths = (
+            # NOTE: `sql` directory -> relative/absolute path
+            join(sql_path, name),
+            join(sql_path, name + '.sql'),
+            name,
+            f'{name}.sql',
+        )
+
+        for path in paths:
+            if exists(path):
+                break
+        else:
+            # NOTE: Not exactly this type of error
+            raise ConfigurationError(f'SQL file/directory `{name}` not exists')
 
         # NOTE: SQL hooks are executed on default connection
         connection = get_connection(None)
@@ -243,6 +251,14 @@ class CallbackManager:
                 # NOTE: Ignore empty statements
                 with suppress(AttributeError):
                     await connection.execute_script(statement)
+
+    @contextmanager
+    def timeit(self, kind: str, name: str):
+        start = time.perf_counter()
+        yield
+        diff = time.time() - start
+        level = self._logger.info if diff > 1 else self._logger.debug
+        level('%s `%s` executed in %s seconds', kind, name, diff)
 
     @classmethod
     def _verify_arguments(cls, ctx: HookContext, *args, **kwargs) -> None:
