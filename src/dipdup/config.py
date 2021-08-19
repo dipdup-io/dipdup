@@ -321,6 +321,7 @@ class ParameterTypeMixin:
 
     def initialize_parameter_cls(self, package: str, module_name: str, entrypoint: str) -> None:
         _logger.info('Registering parameter type for entrypoint `%s`', entrypoint)
+        entrypoint = entrypoint.lstrip('_')
         module_name = f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}'
         cls_name = snake_to_pascal(entrypoint) + 'Parameter'
         self.parameter_type_cls = import_from(module_name, cls_name)
