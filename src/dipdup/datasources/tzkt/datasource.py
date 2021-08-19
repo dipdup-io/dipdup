@@ -721,7 +721,7 @@ class TzktDatasource(IndexDatasource):
                         level=block.level,
                         hash=block.hash,
                         timestamp=block.timestamp,
-                    )
+                    ),
                 )
             if not created:
                 self._head.level = block.level  # type: ignore

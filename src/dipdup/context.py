@@ -1,4 +1,3 @@
-from asyncio import create_task
 import logging
 import os
 import sys
@@ -21,7 +20,6 @@ from dipdup.exceptions import (
     IndexAlreadyExistsError,
     InitializationRequiredError,
 )
-from dipdup.models import Contract
 from dipdup.utils import FormattedLogger, iter_files
 
 ONETIME_ARGS = ('--reindex', '--hotswap')
