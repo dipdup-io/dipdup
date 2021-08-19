@@ -25,7 +25,7 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigInitializationException, ConfigurationError
 from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
 
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
@@ -121,7 +121,7 @@ class NameMixin:
     @property
     def name(self) -> str:
         if self._name is None:
-            raise RuntimeError('Config is not pre-initialized')
+            raise ConfigInitializationException
         return self._name
 
     @name.setter
@@ -289,7 +289,7 @@ class StorageTypeMixin:
     @property
     def storage_type_cls(self) -> Type:
         if self._storage_type_cls is None:
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self._storage_type_cls
 
     @storage_type_cls.setter
@@ -334,7 +334,7 @@ class ParameterTypeMixin:
     @property
     def parameter_type_cls(self) -> Type:
         if self._parameter_type_cls is None:
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self._parameter_type_cls
 
     @parameter_type_cls.setter
@@ -358,7 +358,7 @@ class TransactionIdMixin:
     @property
     def transaction_id(self) -> int:
         if self._transaction_id is None:
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self._transaction_id
 
     @transaction_id.setter
@@ -406,13 +406,13 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
     @property
     def source_contract_config(self) -> ContractConfig:
         if not isinstance(self.source, ContractConfig):
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self.source
 
     @property
     def destination_contract_config(self) -> ContractConfig:
         if not isinstance(self.destination, ContractConfig):
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self.destination
 
 
@@ -478,19 +478,19 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     @property
     def source_contract_config(self) -> ContractConfig:
         if not isinstance(self.source, ContractConfig):
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self.source
 
     @property
     def similar_to_contract_config(self) -> ContractConfig:
         if not isinstance(self.similar_to, ContractConfig):
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self.similar_to
 
     @property
     def originated_contract_config(self) -> ContractConfig:
         if not isinstance(self.originated_contract, ContractConfig):
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self.originated_contract
 
 
@@ -513,7 +513,7 @@ class CallbackMixin(CodegenMixin):
     @property
     def callback_fn(self) -> Callable:
         if self._callback_fn is None:
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self._callback_fn
 
     @callback_fn.setter
@@ -549,6 +549,7 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.exceptions', 'CallbackNotImplementedError'
         for pattern in self.pattern:
             yield from pattern.iter_imports(package)
 
@@ -595,7 +596,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin):
     @property
     def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self.datasource
 
 
@@ -626,7 +627,7 @@ class OperationIndexConfig(IndexConfig):
             return []
         for contract in self.contracts:
             if not isinstance(contract, ContractConfig):
-                raise RuntimeError('Config is not initialized')
+                raise ConfigInitializationException
         return cast(List[ContractConfig], self.contracts)
 
     @property
@@ -668,8 +669,9 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         return module_name, f'BigMapDiff[{key_cls}, {value_cls}]'
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
-        yield 'from dipdup.context', 'HandlerContext'
-        yield 'from dipdup.models', 'BigMapDiff'
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'BigMapDiff'
+        yield 'dipdup.exceptions', 'CallbackNotImplementedError'
         yield package, 'models as models'
 
         yield self.format_key_import(package, self.contract_config.module_name, self.path)
@@ -682,13 +684,13 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     @property
     def contract_config(self) -> ContractConfig:
         if not isinstance(self.contract, ContractConfig):
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self.contract
 
     @property
     def key_type_cls(self) -> Type:
         if self._key_type_cls is None:
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self._key_type_cls
 
     @key_type_cls.setter
@@ -698,7 +700,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     @property
     def value_type_cls(self) -> Type:
         if self._value_type_cls is None:
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self._value_type_cls
 
     @value_type_cls.setter
@@ -791,7 +793,7 @@ class JobConfig(NameMixin):
     @property
     def hook_config(self) -> 'HookConfig':
         if not isinstance(self.hook, HookConfig):
-            raise RuntimeError('Config is not initialized')
+            raise ConfigInitializationException
         return self.hook
 
 
@@ -814,6 +816,7 @@ class HookConfig(CallbackMixin, kind='hook'):
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HookContext'
+        yield 'dipdup.exceptions', 'CallbackNotImplementedError'
         for _, annotation in self.args.items():
             with suppress(ValueError):
                 package, obj = annotation.rsplit('.', 1)
@@ -1115,7 +1118,7 @@ class DipDupConfig:
 
     def _load_index_types(self, index_config: IndexConfigTemplateT) -> None:
         if isinstance(index_config, IndexTemplateConfig):
-            raise RuntimeError('Config is not pre-initialized')
+            raise ConfigInitializationException
 
         elif isinstance(index_config, OperationIndexConfig):
             self._load_operation_index_types(index_config)
@@ -1144,7 +1147,7 @@ class DipDupConfig:
                 continue
 
             if isinstance(index_config, IndexTemplateConfig):
-                raise RuntimeError('Config is not pre-initialized')
+                raise ConfigInitializationException
 
             elif isinstance(index_config, OperationIndexConfig):
                 self._load_operation_index_types(index_config)

@@ -5,7 +5,7 @@ import time
 from contextlib import contextmanager, suppress
 from os.path import exists, join
 from pprint import pformat
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Iterator, Optional, cast
 
 import sqlparse  # type: ignore
 from tortoise import Tortoise
@@ -14,6 +14,8 @@ from tortoise.transactions import get_connection, in_transaction
 from dipdup.config import ContractConfig, DipDupConfig, HandlerConfig, HookConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig
 from dipdup.datasources.datasource import Datasource
 from dipdup.exceptions import (
+    CallbackError,
+    CallbackNotImplementedError,
     CallbackTypeError,
     ConfigurationError,
     ContractAlreadyExistsError,
@@ -192,10 +194,8 @@ class CallbackManager:
         except KeyError as e:
             raise ConfigurationError(f'Attempt to fire unregistered handler `{name}`') from e
 
-        start = time.perf_counter()
-        await new_ctx.handler_config.callback_fn(new_ctx, *args, **kwargs)
-        end = time.perf_counter()
-        self._logger.debug(f'Handler `{name}` executed in {end - start:.3f}s')
+        with self._wrapper('handler', name, required=True):
+            await new_ctx.handler_config.callback_fn(new_ctx, *args, **kwargs)
 
         if new_ctx.updated:
             ctx.commit()
@@ -213,7 +213,7 @@ class CallbackManager:
             raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
 
         self._verify_arguments(ctx, *args, **kwargs)
-        with self.timeit('Hook', name):
+        with self._wrapper('hook', name, required=False):
             await ctx.hook_config.callback_fn(ctx, *args, **kwargs)
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
@@ -229,9 +229,7 @@ class CallbackManager:
         paths = (
             # NOTE: `sql` directory -> relative/absolute path
             join(sql_path, name),
-            join(sql_path, name + '.sql'),
             name,
-            f'{name}.sql',
         )
 
         for path in paths:
@@ -253,12 +251,19 @@ class CallbackManager:
                     await connection.execute_script(statement)
 
     @contextmanager
-    def timeit(self, kind: str, name: str):
-        start = time.perf_counter()
-        yield
-        diff = time.time() - start
-        level = self._logger.info if diff > 1 else self._logger.debug
-        level('%s `%s` executed in %s seconds', kind, name, diff)
+    def _wrapper(self, kind: str, name: str, required: bool = True) -> Iterator[None]:
+        try:
+            start = time.perf_counter()
+            yield
+            diff = time.time() - start
+            level = self._logger.info if diff > 1 else self._logger.debug
+            level('`%s` %s callback executed in %s seconds', kind, name, diff)
+        except CallbackNotImplementedError as e:
+            if required:
+                raise CallbackNotImplementedError(kind, name) from e
+            self._logger.warning('`%s` %s callback is not implemented. Remove `raise` statement from it to hide this message.', name, kind)
+        except Exception as e:
+            raise CallbackError(kind, name) from e
 
     @classmethod
     def _verify_arguments(cls, ctx: HookContext, *args, **kwargs) -> None:
@@ -270,8 +275,8 @@ class CallbackManager:
             expected_type = args_annotations[i]
             if expected_type and not isinstance(arg, expected_type):
                 raise CallbackTypeError(
-                    ctx=ctx,
-                    callback=ctx.hook_config.callback,
+                    name=ctx.hook_config.callback,
+                    kind='hook',
                     arg=args_names[i],
                     type_=type(arg),
                     expected_type=expected_type,

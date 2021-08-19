@@ -198,7 +198,7 @@ class OperationData:
         try:
             return storage_type.parse_obj(storage)
         except ValidationError as e:
-            raise InvalidDataError(storage, storage_type) from e
+            raise InvalidDataError(storage_type, storage, self) from e
 
 
 @dataclass

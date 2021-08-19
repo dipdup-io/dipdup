@@ -38,7 +38,9 @@ class HasuraTest(IsolatedAsyncioTestCase):
             )
             dipdup = DipDup(config)
             await stack.enter_async_context(tortoise_wrapper(config.database.connection_string, 'demo_hic_et_nunc.models'))
-            await dipdup._initialize_database()
+            await dipdup._set_up_database(stack, False)
+            await dipdup._set_up_hooks()
+            await dipdup._initialize_schema()
 
             hasura_container = DbContainer('hasura/graphql-engine:v2.0.4').with_env(
                 'HASURA_GRAPHQL_DATABASE_URL',

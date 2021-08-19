@@ -191,9 +191,7 @@ def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
     if not exists(path):
         return
     elif isfile(path):
-        paths = iter(
-            path,
-        )
+        paths = iter(path)
     elif isdir(path):
         paths = (join(path, f) for f in sorted(listdir(path)))
     else:
@@ -201,6 +199,8 @@ def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
 
     for path in paths:
         if ext and not path.endswith(ext):
+            continue
+        if not exists(path):
             continue
         if not getsize(path):
             continue
@@ -250,33 +250,3 @@ def remove_prefix(text: str, prefix: str) -> str:
     if text.startswith(prefix):
         text = text[len(prefix) :]
     return text.strip('_')
-
-
-# https://stackoverflow.com/a/58973125
-def is_empty_function(fn: Callable) -> bool:
-    """Returns true if f is an empty function."""
-
-    def empty_func():
-        pass
-
-    def empty_func_with_docstring():
-        """Empty function with docstring."""
-        pass
-
-    empty_lambda = lambda: None
-
-    empty_lambda_with_docstring = lambda: None
-    empty_lambda_with_docstring.__doc__ = """Empty function with docstring."""
-
-    def constants(f):
-        """Return a tuple containing all the constants of a function without:
-        * docstring
-        """
-        return tuple(x for x in f.__code__.co_consts if x != f.__doc__)
-
-    return (
-        (fn.__code__.co_code == empty_func.__code__.co_code and constants(fn) == constants(empty_func))
-        or (fn.__code__.co_code == empty_func_with_docstring.__code__.co_code and constants(fn) == constants(empty_func_with_docstring))
-        or (fn.__code__.co_code == empty_lambda.__code__.co_code and constants(fn) == constants(empty_lambda))
-        or (fn.__code__.co_code == empty_lambda_with_docstring.__code__.co_code and constants(fn) == constants(empty_lambda_with_docstring))
-    )

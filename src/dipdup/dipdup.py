@@ -30,7 +30,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ReindexingRequiredError
+from dipdup.exceptions import ConfigInitializationException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, Contract, HeadBlockData
@@ -119,7 +119,7 @@ class IndexDispatcher:
 
         for index_config in self._ctx.config.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
-                raise RuntimeError('Config is not initialized')
+                raise ConfigInitializationException
             await self.add_index(index_config)
 
         for contract_config in self._ctx.config.contracts.values():
@@ -167,7 +167,7 @@ class IndexDispatcher:
 
             if index_config := self._ctx.config.indexes.get(name):
                 if isinstance(index_config, IndexTemplateConfig):
-                    raise RuntimeError('Config is not initialized')
+                    raise ConfigInitializationException
                 if index_config.hash() != index_state.config_hash:
                     await self._ctx.reindex('config has been modified')
 
@@ -232,7 +232,7 @@ class DipDup:
         self._scheduler = create_scheduler()
         self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
 
-    async def init(self) -> None:
+    async def init(self, full: bool = True) -> None:
         """Create new or update existing dipdup project"""
         await self._create_datasources()
 
@@ -240,7 +240,7 @@ class DipDup:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            await self._codegen.init()
+            await self._codegen.init(full)
 
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)
@@ -394,8 +394,9 @@ class DipDup:
         tasks.add(create_task(hasura_gateway.configure()))
 
     async def _set_up_datasources(self, stack: AsyncExitStack) -> None:
-        if self._datasources:
-            raise RuntimeError
+        # FIXME: Find a better way to do this
+        # if self._datasources:
+        #     raise RuntimeError
         await self._create_datasources()
         for datasource in self._datasources.values():
             await stack.enter_async_context(datasource)

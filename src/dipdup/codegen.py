@@ -6,7 +6,7 @@ import subprocess
 from copy import copy
 from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
-from typing import Any, Dict, cast
+from typing import Any, Dict, List, cast
 
 from jinja2 import Template
 
@@ -26,7 +26,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigInitializationException, ConfigurationError
 from dipdup.utils import import_submodules, mkdir_p, pascal_to_snake, snake_to_pascal, touch, write
 
 DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
@@ -78,11 +78,11 @@ class DipDupCodeGenerator:
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
 
-    async def init(self) -> None:
+    async def init(self, full: bool = False) -> None:
         self._logger.info('Initializing project')
         await self.create_package()
         await self.fetch_schemas()
-        await self.generate_types()
+        await self.generate_types(full)
         await self.generate_hooks()
         await self.generate_handlers()
         await self.cleanup()
@@ -181,7 +181,7 @@ class DipDupCodeGenerator:
                                 existing_schema = json.loads(file.read())
                             if entrypoint_schema != existing_schema:
                                 self._logger.warning(
-                                    'Contract "%s" falsely claims to be a "%s"', contract_config.address, contract_config.typename
+                                    'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename
                                 )
 
             elif isinstance(index_config, BigMapIndexConfig):
@@ -211,12 +211,12 @@ class DipDupCodeGenerator:
                     write(big_map_value_schema_path, json.dumps(big_map_value_schema, indent=4))
 
             elif isinstance(index_config, IndexTemplateConfig):
-                raise RuntimeError('Config is not pre-initialized')
+                raise ConfigInitializationException
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-    async def generate_types(self) -> None:
+    async def generate_types(self, full: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameter, big map keys/values."""
         schemas_path = join(self._config.package_path, 'schemas')
         types_path = join(self._config.package_path, 'types')
@@ -238,6 +238,9 @@ class DipDupCodeGenerator:
 
                 input_path = join(root, file)
                 output_path = join(types_root, f'{pascal_to_snake(name)}.py')
+
+                if exists and not full:
+                    continue
 
                 # NOTE: Skip if the first line starts with "# dipdup: ignore"
                 if exists(output_path):
@@ -433,21 +436,29 @@ class DipDupCodeGenerator:
                     file.write('\n'.join(newfile))
 
     async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
+        subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
+        callback_path = join(subpackage_path, f'{callback_config.callback}.py')
+        if exists(callback_path):
+            return
+
         self._logger.info('Generating %s callback `%s`', callback_config.kind, callback_config.callback)
         callback_template = load_template('callback.py')
-        subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
 
         arguments = callback_config.format_arguments()
         imports = set(callback_config.format_imports(self._config.package))
 
+        code: List[str] = []
+        if sql:
+            code.append(f"await ctx.execute_sql('{callback_config.callback}')")
+        code.append('raise CallbackNotImplementedError')
+
         callback_code = callback_template.render(
             callback=callback_config.callback,
-            arguments=arguments,
-            imports=list(dict.fromkeys(imports)),
+            arguments=tuple(dict.fromkeys(arguments)),
+            imports=tuple(dict.fromkeys(imports)),
+            code=code,
         )
-        callback_path = join(subpackage_path, f'{callback_config.callback}.py')
         write(callback_path, callback_code)
 
         if sql:
-            sql_path = join(subpackage_path, f'{callback_config.callback}.sql', '.keep')
-            touch(sql_path)
+            touch(join(self._config.package_path, 'sql', callback_config.callback, '.keep'))

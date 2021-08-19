@@ -72,10 +72,10 @@ class Index:
             self._state = state
 
         # NOTE: No need to check indexes which are not synchronized.
-        if not (self.state.level and self.state.status == IndexStatus.REALTIME):
+        if self.state.status != IndexStatus.REALTIME:
             return
 
-        state_head = await self.state.head
+        state_head = await self.state.head if self.state.head else None
         if not state_head:
             raise RuntimeError('Index is synchronized but has no head block data')
 
@@ -340,12 +340,7 @@ class OperationIndex(Index):
                 try:
                     parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
                 except ValidationError as e:
-                    error_context = dict(
-                        hash=operation.hash,
-                        counter=operation.counter,
-                        nonce=operation.nonce,
-                    )
-                    raise InvalidDataError(operation.parameter_json, parameter_type, error_context) from e
+                    raise InvalidDataError(parameter_type, operation.parameter_json, operation) from e
 
                 storage_type = pattern_config.storage_type_cls
                 storage = operation.get_merged_storage(storage_type)
@@ -478,7 +473,7 @@ class BigMapIndex(Index):
             try:
                 key = key_type.parse_obj(matched_big_map.key)
             except ValidationError as e:
-                raise InvalidDataError(matched_big_map.key, key_type) from e
+                raise InvalidDataError(key_type, matched_big_map.key, matched_big_map) from e
         else:
             key = None
 
@@ -487,7 +482,7 @@ class BigMapIndex(Index):
             try:
                 value = value_type.parse_obj(matched_big_map.value)
             except ValidationError as e:
-                raise InvalidDataError(matched_big_map.key, value_type) from e
+                raise InvalidDataError(value_type, matched_big_map.key, matched_big_map) from e
         else:
             value = None
 

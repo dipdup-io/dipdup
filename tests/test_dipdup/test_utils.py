@@ -13,19 +13,19 @@ class UtilsTest(IsolatedAsyncioTestCase):
             await Tortoise.generate_schemas()
 
             # 1. Success query without transaction
-            await Index(name='1', type=IndexType.schema, config_hash='').save()
+            await Index(name='1', type=IndexType.operation, config_hash='').save()
             count = await Index.filter().count()
             self.assertEqual(1, count)
 
             # 2. Success query within transaction
             async with in_global_transaction():
-                await Index(name='2', type=IndexType.schema, config_hash='').save()
+                await Index(name='2', type=IndexType.operation, config_hash='').save()
             count = await Index.filter().count()
             self.assertEqual(2, count)
 
             # 3. Not rolled back query without transaction
             with suppress(Exception):
-                await Index(name='3', type=IndexType.schema, config_hash='').save()
+                await Index(name='3', type=IndexType.operation, config_hash='').save()
                 raise Exception
             count = await Index.filter().count()
             self.assertEqual(3, count)
@@ -33,7 +33,7 @@ class UtilsTest(IsolatedAsyncioTestCase):
             # 4. Rolled back query within transaction
             with suppress(Exception):
                 async with in_global_transaction():
-                    await Index(name='4', type=IndexType.schema, config_hash='').save()
+                    await Index(name='4', type=IndexType.operation, config_hash='').save()
                     raise Exception
             count = await Index.filter().count()
             self.assertEqual(3, count)

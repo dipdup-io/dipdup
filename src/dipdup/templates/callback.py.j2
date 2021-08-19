@@ -7,4 +7,6 @@ async def {{ callback }}(
     {{ arg }},
 {%- endfor %}
 ) -> None:
-    ...
+{%- for line in code %}
+    {{ line }}
+{%- endfor %}

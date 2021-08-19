@@ -33,15 +33,16 @@ class CLIContext:
 
 def cli_wrapper(fn):
     @wraps(fn)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs) -> None:
         try:
-            return await fn(*args, **kwargs)
+            with DipDupError.wrap():
+                await fn(*args, **kwargs)
         except KeyboardInterrupt:
             pass
         except DipDupError as e:
             _logger.critical(e.__repr__())
             _logger.info(e.format())
-            quit(e.exit_code)
+            quit(1)
 
     return wrapper
 
@@ -70,7 +71,7 @@ def init_sentry(config: DipDupConfig) -> None:
     )
 
 
-@click.group()
+@click.group(help='Docs: https://docs.dipdup.net')
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
@@ -101,7 +102,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         raise ConfigurationError('Unknown `spec_version`, correct ones: {}')
     if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
         reindex = spec_reindex_mapping[__spec_version__]
-        raise MigrationRequiredError(None, _config.spec_version, __spec_version__, reindex)
+        raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
     ctx.obj = CLIContext(
         config_paths=config,
@@ -110,7 +111,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     )
 
 
-@cli.command(help='Run existing dipdup project')
+@cli.command(help='Run indexing')
 @click.option('--reindex', is_flag=True, help='Drop database and start indexing from scratch')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
 @click.pass_context
@@ -123,14 +124,15 @@ async def run(ctx, reindex: bool, oneshot: bool) -> None:
     await dipdup.run(reindex, oneshot)
 
 
-@cli.command(help='Initialize new dipdup project')
+@cli.command(help='Generate missing callbacks and types')
+@click.option('--full', is_flag=True, help='Regenerate existing types')
 @click.pass_context
 @cli_wrapper
-async def init(ctx):
+async def init(ctx, full: bool):
     config: DipDupConfig = ctx.obj.config
     config.pre_initialize()
     dipdup = DipDup(config)
-    await dipdup.init()
+    await dipdup.init(full)
 
 
 @cli.command(help='Migrate project to the new spec version')
