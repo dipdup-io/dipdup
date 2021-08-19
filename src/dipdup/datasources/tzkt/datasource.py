@@ -675,7 +675,7 @@ class TzktDatasource(IndexDatasource):
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
                 big_maps.append(big_map)
-            self.emit_big_maps(big_maps)
+            self.emit_big_maps(big_maps, self.block)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         async for data in self._extract_message_data('head', message):
