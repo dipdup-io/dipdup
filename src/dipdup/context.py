@@ -194,7 +194,7 @@ class CallbackManager:
         except KeyError as e:
             raise ConfigurationError(f'Attempt to fire unregistered handler `{name}`') from e
 
-        with self._wrapper('handler', name, required=True):
+        with self._wrapper('handler', name):
             await new_ctx.handler_config.callback_fn(new_ctx, *args, **kwargs)
 
         if new_ctx.updated:
@@ -213,8 +213,13 @@ class CallbackManager:
             raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
 
         self._verify_arguments(ctx, *args, **kwargs)
-        with self._wrapper('hook', name, required=False):
-            await ctx.hook_config.callback_fn(ctx, *args, **kwargs)
+        try:
+            with self._wrapper('hook', name):
+                await ctx.hook_config.callback_fn(ctx, *args, **kwargs)
+        except CallbackNotImplementedError:
+            if name == 'on_rollback':
+                await ctx.reindex(f'reorg message received, `{name}` hook callback is not implemented.')
+            self._logger.warning('`%s` hook callback is not implemented. Remove `raise` statement from it to hide this message.', name)
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""
@@ -251,7 +256,7 @@ class CallbackManager:
                     await connection.execute_script(statement)
 
     @contextmanager
-    def _wrapper(self, kind: str, name: str, required: bool = True) -> Iterator[None]:
+    def _wrapper(self, kind: str, name: str) -> Iterator[None]:
         try:
             start = time.perf_counter()
             yield
@@ -259,9 +264,7 @@ class CallbackManager:
             level = self._logger.info if diff > 1 else self._logger.debug
             level('`%s` %s callback executed in %s seconds', kind, name, diff)
         except CallbackNotImplementedError as e:
-            if required:
-                raise CallbackNotImplementedError(kind, name) from e
-            self._logger.warning('`%s` %s callback is not implemented. Remove `raise` statement from it to hide this message.', name, kind)
+            raise CallbackNotImplementedError(kind, name) from e
         except Exception as e:
             raise CallbackError(kind, name) from e
 
