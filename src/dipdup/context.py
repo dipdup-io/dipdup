@@ -11,7 +11,16 @@ import sqlparse  # type: ignore
 from tortoise import Tortoise
 from tortoise.transactions import get_connection, in_transaction
 
-from dipdup.config import ContractConfig, DipDupConfig, HandlerConfig, HookConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig, default_hooks
+from dipdup.config import (
+    ContractConfig,
+    DipDupConfig,
+    HandlerConfig,
+    HookConfig,
+    IndexConfig,
+    IndexTemplateConfig,
+    PostgresDatabaseConfig,
+    default_hooks,
+)
 from dipdup.datasources.datasource import Datasource
 from dipdup.exceptions import (
     CallbackError,
@@ -261,9 +270,9 @@ class CallbackManager:
         try:
             start = time.perf_counter()
             yield
-            diff = time.time() - start
+            diff = time.perf_counter() - start
             level = self._logger.info if diff > 1 else self._logger.debug
-            level('`%s` %s callback executed in %s seconds', kind, name, diff)
+            level('`%s` %s callback executed in %s seconds', name, kind, diff)
         except CallbackNotImplementedError as e:
             raise CallbackNotImplementedError(kind, name) from e
         except Exception as e:

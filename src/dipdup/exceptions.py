@@ -233,8 +233,8 @@ class InvalidDataError(DipDupError):
 class CallbackError(DipDupError):
     """An error occured during callback execution"""
 
-    name: str
     kind: str
+    name: str
 
     def _help(self) -> str:
         return f"""
@@ -246,8 +246,8 @@ class CallbackError(DipDupError):
 class CallbackTypeError(DipDupError):
     """Agrument of invalid type was passed to a callback"""
 
-    name: str
     kind: str
+    name: str
 
     arg: str
     type_: Type

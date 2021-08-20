@@ -1,7 +1,7 @@
 import hashlib
 import logging
 import operator
-from asyncio import Task, create_task, gather
+from asyncio import CancelledError, Task, create_task, gather
 from collections import Counter
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import reduce
@@ -30,7 +30,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import CallbackNotImplementedError, ConfigInitializationException, ReindexingRequiredError
+from dipdup.exceptions import ConfigInitializationException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, Contract, HeadBlockData
@@ -249,6 +249,7 @@ class DipDup:
         """Run indexing process"""
         tasks: Set[Task] = set()
         async with AsyncExitStack() as stack:
+            stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack, reindex)
             await self._set_up_datasources(stack)
             await self._set_up_hooks()
@@ -262,12 +263,7 @@ class DipDup:
 
             tasks.add(create_task(self._index_dispatcher.run(oneshot)))
 
-            try:
-                await gather(*tasks)
-            except KeyboardInterrupt:
-                pass
-            except GeneratorExit:
-                pass
+            await gather(*tasks)
 
     async def migrate_to_v10(self) -> None:
         codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)

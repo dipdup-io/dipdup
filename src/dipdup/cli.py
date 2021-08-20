@@ -1,8 +1,10 @@
+import asyncio
 import fileinput
 import logging
 import os
+import signal
 from dataclasses import dataclass
-from functools import wraps
+from functools import partial, wraps
 from os.path import dirname, exists, join
 from typing import List, cast
 
@@ -31,13 +33,22 @@ class CLIContext:
     logging_config: LoggingConfig
 
 
+async def shutdown() -> None:
+    _logger.info('Shutting down')
+    tasks = filter(lambda t: t != asyncio.current_task(), asyncio.all_tasks())
+    list(map(asyncio.Task.cancel, tasks))
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+
 def cli_wrapper(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs) -> None:
+        loop = asyncio.get_running_loop()
+        loop.add_signal_handler(signal.SIGINT, partial(asyncio.ensure_future, shutdown()))
         try:
             with DipDupError.wrap():
                 await fn(*args, **kwargs)
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except DipDupError as e:
             _logger.critical(e.__repr__())
