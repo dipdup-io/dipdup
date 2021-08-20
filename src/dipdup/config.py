@@ -14,8 +14,6 @@ from enum import Enum
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
-
-# from pydoc import locate
 from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast
 from urllib.parse import urlparse
 
@@ -310,7 +308,7 @@ T = TypeVar('T')
 class ParentMixin(Generic[T]):
     """`parent` field for index and template configs"""
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self: 'ParentMixin') -> None:
         self._parent: Optional[T] = None
 
     @property
@@ -528,7 +526,7 @@ class CallbackMixin(CodegenMixin):
 
 
 @dataclass
-class HandlerConfig(CallbackMixin, ParentMixin, kind='handler'):
+class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig'], kind='handler'):
     def __post_init_post_parse__(self) -> None:
         CallbackMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
@@ -574,7 +572,14 @@ class TemplateValuesMixin:
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin):
+class IndexTemplateConfig(NameMixin):
+    kind = 'template'
+    template: str
+    values: Dict[str, str]
+
+
+@dataclass
+class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['IndexConfigTemplateT']):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
@@ -733,13 +738,6 @@ class BigMapIndexConfig(IndexConfig):
     @property
     def contracts(self) -> List[ContractConfig]:
         return list(set([cast(ContractConfig, handler_config.contract) for handler_config in self.handlers]))
-
-
-@dataclass
-class IndexTemplateConfig(NameMixin):
-    kind = 'template'
-    template: str
-    values: Dict[str, str]
 
 
 IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, IndexTemplateConfig]
