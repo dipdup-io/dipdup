@@ -11,7 +11,7 @@ import sqlparse  # type: ignore
 from tortoise import Tortoise
 from tortoise.transactions import get_connection, in_transaction
 
-from dipdup.config import ContractConfig, DipDupConfig, HandlerConfig, HookConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig
+from dipdup.config import ContractConfig, DipDupConfig, HandlerConfig, HookConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig, default_hooks
 from dipdup.datasources.datasource import Datasource
 from dipdup.exceptions import (
     CallbackError,
@@ -219,7 +219,8 @@ class CallbackManager:
         except CallbackNotImplementedError:
             if name == 'on_rollback':
                 await ctx.reindex(f'reorg message received, `{name}` hook callback is not implemented.')
-            self._logger.warning('`%s` hook callback is not implemented. Remove `raise` statement from it to hide this message.', name)
+            if name not in default_hooks:
+                self._logger.warning('`%s` hook callback is not implemented. Remove `raise` statement from it to hide this message.', name)
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""
