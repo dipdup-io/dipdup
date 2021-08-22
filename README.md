@@ -4,22 +4,18 @@ description: Get your selective indexer up & running in a few steps
 
 # Quick start
 
-## Install SDK
+## Install Python SDK
 
-{% tabs %}
-{% tab title="Python" %}
 ```bash
 pip install dipdup
 ```
-{% endtab %}
-{% endtabs %}
 
 ## Write config file
 
 Make a new folder and create a configuration file `dipdup.yml` inside with the following content:
 
 ```yaml
-spec_version: 0.1
+spec_version: 1.1
 package: demo_tzbtc
 
 database:
@@ -63,8 +59,6 @@ dipdup init
 
 This command will generate the following files:
 
-{% tabs %}
-{% tab title="Python" %}
 ```text
 demo_tzbtc/
 ├── models.py
@@ -80,8 +74,6 @@ demo_tzbtc/
             └── transfer.py
             └── mint.py
 ```
-{% endtab %}
-{% endtabs %}
 
 Let's fill them one by one.
 
@@ -95,8 +87,6 @@ Our schema will consist of a single model `Holder` having several fields:
 * `tx_count` — number of transfers/mints
 * `last_seen` — time of the last transfer/mint
 
-{% tabs %}
-{% tab title="Python" %}
 ```python
 from tortoise import Model, fields
 
@@ -108,17 +98,13 @@ class Holder(Model):
     tx_count = fields.BigIntField(default=0)
     last_seen = fields.DateTimeField(null=True)
 ```
-{% endtab %}
-{% endtabs %}
 
 ## Implement handlers
 
 Our task is to properly index all the balance updates, so we'll start with a helper method handling them.
 
 {% tabs %}
-{% tab title="Python" %}
-`on_balance_update.py`
-
+{% tab title="on\_balance\_update.py" %}
 ```python
 from decimal import Decimal
 import demo_tzbtc.models as models
@@ -145,9 +131,7 @@ That was pretty straightforward👍🏻
 Now we need to handle two contract methods that can alter token balances — `transfer` and `mint` \(there's also `burn`, but for simplicity we'll omit that in this tutorial\).
 
 {% tabs %}
-{% tab title="Python" %}
-`on_transfer.py`
-
+{% tab title="on\_transfer.py" %}
 ```python
 from typing import Optional
 from decimal import Decimal
@@ -176,9 +160,11 @@ async def on_transfer(
                             balance_update=amount,
                             timestamp=transfer.data.timestamp)
 ```
+{% endtab %}
+{% endtabs %}
 
-`on_mint.py`
-
+{% tabs %}
+{% tab title="on\_mint.py" %}
 ```python
 from typing import Optional
 from decimal import Decimal

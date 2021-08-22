@@ -26,7 +26,7 @@
   * [dipdup docker init](command-line/dipdup-docker-init.md)
   * [dipdup hasura configure](command-line/dipdup-hasura-configure.md)
 * [Deployment](deployment/README.md)
-  * [Docker compose](deployment/docker-compose.md)
+  * [Docker](deployment/docker-compose.md)
 * [Client side](client-side/README.md)
   * [GenQL](client-side/genql.md)
 * [Advanced](advanced/README.md)
