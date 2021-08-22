@@ -1,4 +1,4 @@
-# Docker
+# Docker compose
 
 Make sure you have [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) installed.
 

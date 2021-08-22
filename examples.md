@@ -13,4 +13,7 @@ Here are several minimal examples how to use various DipDup features for a real 
 ## Community projects
 
 * [Tezos profiles](https://github.com/spruceid/tzprofiles/tree/main/api/indexer)
+* [NFTButton](https://github.com/bobobobob/nftbutton-backend)
+* [HicDEX](https://github.com/hicdex/hicdex)
+* [HomebaseDAO](https://github.com/dOrgTech/homebase-indexer)
 
