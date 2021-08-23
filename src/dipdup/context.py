@@ -4,7 +4,7 @@ from pprint import pformat
 from typing import Any, Dict, Optional
 
 from tortoise import Tortoise
-from tortoise.transactions import in_transaction
+from tortoise.transactions import get_connection
 
 from dipdup.config import ContractConfig, DipDupConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig
 from dipdup.datasources.datasource import Datasource
@@ -46,24 +46,30 @@ class DipDupContext:
 
     async def reindex(self) -> None:
         """Drop all tables or whole database and restart with the same CLI arguments"""
-        if isinstance(self.config.database, PostgresDatabaseConfig):
-            exclude_expression = ''
-            if self.config.database.immune_tables:
-                immune_tables = [f"'{t}'" for t in self.config.database.immune_tables]
-                exclude_expression = f' AND tablename NOT IN ({",".join(immune_tables)})'
 
-            async with in_transaction() as conn:
-                await conn.execute_script(
-                    f'''
-                    DO $$ DECLARE
-                        r RECORD;
-                    BEGIN
-                        FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema(){exclude_expression}) LOOP
-                            EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
-                        END LOOP;
-                    END $$;
-                    '''
-                )
+        async def _recreate_schema(conn, name: str) -> None:
+            await conn.execute_script(f'DROP SCHEMA IF EXISTS {name} CASCADE')
+            await conn.execute_script(f'CREATE SCHEMA {name}')
+
+        async def _move_table(conn, name: str, schema: str, new_schema: str) -> None:
+            await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
+
+        database_config = self.config.database
+        if isinstance(database_config, PostgresDatabaseConfig):
+            conn = get_connection(None)
+            immune_schema_name = f'{database_config.schema_name}_immune'
+
+            if database_config.immune_tables:
+                await _recreate_schema(conn, immune_schema_name)
+
+            for table in database_config.immune_tables:
+                await _move_table(conn, table, database_config.schema_name, immune_schema_name)
+
+            await _recreate_schema(conn, database_config.schema_name)
+
+            for table in database_config.immune_tables:
+                await _move_table(conn, table, immune_schema_name, database_config.schema_name)
+
         else:
             await Tortoise._drop_databases()
         await self.restart()
