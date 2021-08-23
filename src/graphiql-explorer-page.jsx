@@ -5,10 +5,20 @@ import GraphiQL from "graphiql";
 import GraphiQLExplorer from "graphiql-explorer";
 import "graphiql/graphiql.css";
 import "./static/css/app.css"
+import "./static/css/graphiql.css"
+
+const getGQLEndpoint = function() {
+  const res = /service=([^&]+)/.exec(location.search);
+  if (res && res.length == 2) {
+    return `https://${res[1]}.dipdup.net/v1/graphql`;
+  } else {
+    return 'https://metadata.dipdup.net/v1/graphql';
+  }
+}
 
 const fetcher = params => {
   return fetch(
-    `https://api.dipdup.net/metadata/graphql`,
+    getGQLEndpoint(),
     {
       method: 'post',
       headers: {
@@ -45,6 +55,7 @@ class App extends Component {
   }
 
   componentDidMount() {
+    document.getElementById("endpoint").innerText = getGQLEndpoint();
     setTimeout(() => {
       if (this.state.schema === null) {
         this.setState({

@@ -32,16 +32,58 @@
     .lang-logo {
       margin-left:auto;
       margin-right:auto;
-      display:block;
-      filter: saturate(0.4);
-      width: 150px;
-      height: 150px;
+      filter: saturate(0.7);
     }
-
+    .step {
+      font-size: 4em; 
+      line-height: .4em; 
+      font-family: 'VT323', monospace;
+    }
+    .hosted-instance {
+      padding: 15px;
+      margin: 15px;
+      background: #2f2f2f;
+      box-shadow: 0 0 10px rgb(100 100 100 / 20%);
+    }
+    .hosted-instance:hover {
+      box-shadow: 0 0 10px rgb(100 100 100 / 70%);
+    }
+    .url {
+      background: #202124;
+      padding: 5px 10px;
+      border-radius: 3px;
+      color: #eee;
+      font-size: .8em;
+      font-family: monospace;
+    }
+    .btn-icon {
+      font-size: 32px;
+      color: #eee;
+    }
+    .btn-icon:hover {
+      text-decoration: none;
+    }
+    .footer {
+      padding: 10px;
+      opacity: .5;
+      font-size: .9em;
+    }
+    .support {
+      position: absolute;
+      font-size: 32px;
+      color: #eee;
+      right: 20px;
+      top: 20px;
+    }
   </style>
 </head>
 <body style="background: #202124; color: #fff;">
-  <div class="container-fluid mt-4">
+  <div class="support">
+    <a class="btn-icon" href="https://discord.gg/aG8XKuwsQd" target="_blank" rel="noreferrer nofollow" title="Get help">
+      <span class="iconify" data-icon="mdi:discord"></span>
+    </a>
+  </div>
+  <div class="container-fluid mt-4 px-0">
     <div class="row no-gutters align-items-center">
         <div class="col col-lg-6 col-md-10 col-sm-12 ml-auto mr-auto">
             <div class="mt-5 text-center">
@@ -49,46 +91,163 @@
                   <span>DIP</span><br class="d-lg-none d-md-none"/><span>{DUP}</span>
                 </h1>
             </div>
-            <div class="mt-5 text-center">
+            <div class="mt-4 text-center">
                 <p style="font-size: 1.5em;">
-                  A framework for building selective Tezos indexers<br>inspired by The Graph</span>
+                  A full stack framework for building selective Tezos indexers,<br>service workers, and reactive UI components</span>
                 </p>
             </div>
             <div class="mt-3 text-center">
                 <a role="button" aria-pressed="true" class="btn btn-lg btn-light mb-1 ml-2 mr-2 mt-1"
-                    href="https://docs.dipdup.net">Documentation</a>
+                    href="https://docs.dipdup.net/" target="_blank" rel="noreferrer nofollow">Read the docs</a>
                 <a role="button" aria-pressed="true" class="btn btn-lg btn-outline-light mb-1 mt-1"
-                    href="sandbox.html">Demo sandbox</a>
+                    href="https://www.youtube.com/watch?v=K-1s6fCBegc" 
+                    target="_blank" rel="noreferrer nofollow">Watch tutorial</a>
             </div>
         </div>
     </div>
-  </div>
-  <div class="container-fluid mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-2 col-md-4 col-sm-12 mt-5">
-          <img src="img/python.png" class="img-fluid lang-logo">
-          <div class="mt-4 pl-3 text-center">
-            <iframe
-                src="https://ghbtns.com/github-btn.html?user=dipdup-net&repo=dipdup-py&type=star&count=true&size=large"
-                frameborder="0" scrolling="0" width="130" height="30" title="DipDup"></iframe>
-          </div>
+    <div class="row justify-content-center" style="background: #2f2f2f; padding: 40px 10px; margin: 50px 0;">
+      <div class="col-12 col-lg-2 col-md-6 col-sm-12">
+        <img src="img/step1.svg" class="img-fluid lang-logo d-none d-md-block">
+        <div class="d-flex flex-row align-items-center mt-2">
+          <span class="step">
+            1.
+          </span>
+          <span class="pl-2">
+            Write configuration file and do code generation
+          </span>
         </div>
-        <div class="col-12 col-lg-2 col-md-4 col-sm-12 mt-5" style="opacity: 0.7;">
-          <img src="img/golang.png" class="img-fluid lang-logo logo-disabled">
-          <div class="mt-4 pl-3 text-center">
-            <iframe
-                src="https://ghbtns.com/github-btn.html?user=dipdup-net&repo=go-lib&type=star&count=true&size=large"
-                frameborder="0" scrolling="0" width="130" height="30" title="DipDup"></iframe>
-          </div>
+      </div>
+      <div class="col-12 col-lg-2 col-md-6 col-sm-12">
+        <img src="img/step2.svg" class="img-fluid lang-logo d-none d-md-block">
+        <div class="d-flex flex-row align-items-center mt-2">
+          <span class="step">
+            2.
+          </span>
+          <span class="pl-2">
+            Define data models and implement indexing logic
+          </span>
         </div>
-        <div class="col-12 col-lg-2 col-md-4 col-sm-12 mt-5" style="opacity: 0.7;">
-          <img src="img/typescript.png" class="img-fluid lang-logo logo-disabled">
-          <div class="mt-4 text-center">
-            <span style="font-size: 1.2em;">Coming soon</span>
-          </div>
+      </div>
+      <div class="col-12 col-lg-2 col-md-6 col-sm-12">
+        <img src="img/step3.svg" class="img-fluid lang-logo d-none d-md-block">
+        <div class="d-flex flex-row align-items-center mt-2">
+          <span class="step">
+            3.
+          </span>
+          <span class="pl-2">
+            Deploy indexer and expose GraphQL API using Hasura
+          </span> 
+        </div>    
+      </div>
+      <div class="col-12 col-lg-2 col-md-6 col-sm-12">
+        <img src="img/step4.svg" class="img-fluid lang-logo d-none d-md-block">
+        <div class="d-flex flex-row align-items-center mt-2">
+          <span class="step">
+            4.
+          </span>
+          <span class="pl-2">
+            Generate typed GraphQL client and use it on the front
+          </span>
         </div>
+      </div>
+  
     </div>
-</div>
+    <div class="row no-gutters justify-content-center">
+      <div class="col-12 col-lg-4 col-md-8 col-sm-12">
+        <h5 class="text-center mb-5">Hosted Service</h5>
 
+        <div class="hosted-instance">
+          <div class="d-flex flex-row justify-content-between">
+            <div class="d-flex flex-column">
+              <h4 class="mb-0">Metadata</h4>
+              <span class="font-weight-light">Baking Bad</span>
+            </div>
+            <div>
+              <a class="btn-icon" href="https://www.npmjs.com/package/@dipdup/metadata" target="_blank" rel="noreferrer nofollow" title="NPM package">
+                <span class="iconify" data-icon="mdi:npm"></span>
+              </a> 
+              <a class="btn-icon" href="https://github.com/dipdup-net/metadata" target="_blank" rel="noreferrer nofollow" title="Github repo">
+                <span class="iconify" data-icon="mdi:github"></span>
+              </a>
+              <a class="btn-icon" href="sandbox.html?service=metadata" title="GraphQL playground">
+                <span class="iconify" data-icon="mdi:graphql"></span>
+              </a>
+            </div>
+          </div>
+          <div class="mt-2">
+            <span class="url">https://metadata.dipdup.net/v1/graphql</span>
+          </div>
+          <p class="mt-2 mb-0">
+            Selective indexer for 
+            <a href="https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-16/tzip-16.md" target="_blank" rel="noreferrer nofollow">TZIP-16</a> 
+            contract metadata and 
+            <a href="https://gitlab.com/tezos/tzip/-/blob/master/proposals/tzip-12/tzip-12.md#token-metadata" target="_blank" rel="noreferrer nofollow">TZIP-12</a>
+            token metadata.
+          </p>
+        </div>
+
+        <div class="hosted-instance">
+          <div class="d-flex flex-row justify-content-between">
+            <div class="d-flex flex-column">
+              <h4 class="mb-0">Mempool</h4>
+              <span class="font-weight-light">Baking Bad</span>
+            </div>
+            <div>
+              <a class="btn-icon" href="https://www.npmjs.com/package/@dipdup/mempool" target="_blank" rel="noreferrer nofollow" title="NPM package">
+                <span class="iconify" data-icon="mdi:npm"></span>
+              </a> 
+              <a class="btn-icon" href="https://github.com/dipdup-net/mempool" target="_blank" rel="noreferrer nofollow" title="Github repo">
+                <span class="iconify" data-icon="mdi:github"></span>
+              </a>
+              <a class="btn-icon" href="sandbox.html?service=mempool" title="GraphQL playground">
+                <span class="iconify" data-icon="mdi:graphql"></span>
+              </a>
+            </div>
+          </div>
+          <div class="mt-2">
+            <span class="url">https://mempool.dipdup.net/v1/graphql</span>
+          </div>
+          <p class="mt-2 mb-0">
+            Selective indexer for Tezos mempool operations.
+          </p>
+        </div>
+
+        <div class="hosted-instance">
+          <div class="d-flex flex-row justify-content-between">
+            <div class="d-flex flex-column">
+              <h4 class="mb-0">Domains</h4>
+              <span class="font-weight-light">Baking Bad</span>
+            </div>
+            <div>
+              <a class="btn-icon" href="https://www.npmjs.com/package/@dipdup/domains" target="_blank" rel="noreferrer nofollow" title="NPM package">
+                <span class="iconify" data-icon="mdi:npm"></span>
+              </a> 
+              <a class="btn-icon" href="https://github.com/dipdup-net/tezos-domains" target="_blank" rel="noreferrer nofollow" title="Github repo">
+                <span class="iconify" data-icon="mdi:github"></span>
+              </a>
+              <a class="btn-icon" href="sandbox.html?service=domains" title="GraphQL playground">
+                <span class="iconify" data-icon="mdi:graphql"></span>
+              </a>
+            </div>
+          </div>
+          <div class="mt-2">
+            <span class="url">https://domains.dipdup.net/v1/graphql</span>
+          </div>
+          <p class="mt-2 mb-0">
+            Selective indexer for Tezos Domains name <a href="https://tezos.domains/" target="_blank" rel="noreferrer nofollow">service</a>.
+          </p>
+        </div>
+           
+      </div>
+    </div>
+    <div class="row no-gutters">
+      <div class="col-12">
+        <div class="text-center footer">
+          <span>© 2018-2021 Baking Bad</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://code.iconify.design/2/2.0.3/iconify.min.js"></script>
 </body>
 </html>

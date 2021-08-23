@@ -25,7 +25,16 @@
   <link rel=icon href=img/favicon.ico>
 </head>
 <body>
-  <div id="graphiql"></div>
+  <div class="body-wrap">
+    <div class="nav-wrap">
+      <a href="index.html">DipDup</a><span style="font-size: 0.9em;"><span style="margin: 0 7px;">/</span><span>Playground</span></span>
+    </div>
+    <div class="endpoint-wrap">
+      <div class="method">POST</div>
+      <div id="endpoint" class="url"></div>
+    </div>
+    <div id="graphiql"></div>
+  </div>
   <script src="js/graphiql-explorer-page.js"></script>
 </body>
 </html>

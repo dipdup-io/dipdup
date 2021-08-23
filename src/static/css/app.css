@@ -8,10 +8,57 @@ html,
 body {
   width: 100vw;
   height: 100vh;
+  background: #f0f0f0;
 }
 
 #graphiql {
+  height: 80%;
+  box-shadow: 0 0 10px rgb(0 0 0 / 10%);
+}
+
+.body-wrap {
+  height: 100%; 
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.nav-wrap {
+  font-size: 24px;
+  font-family: monospace;
+}
+
+.nav-wrap > a {
+  text-decoration: none;
+  color: #d2054e;
+}
+
+.endpoint-wrap {
+  height: 48px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  box-shadow: 0 0 10px rgb(0 0 0 / 10%);
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.endpoint-wrap > .method {
+  padding-left: 15px;
+  padding-right: 45px;
+  color: rgb(177, 26, 4);
+  background: #e8e8e8;
   height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.endpoint-wrap > .url {
+  padding-left: 15px;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
 
 .doc-explorer-title {
