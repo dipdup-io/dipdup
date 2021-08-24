@@ -95,6 +95,7 @@ def iter_models(package: str) -> Iterator[Tuple[str, Type[Model]]]:
 
 
 def set_decimal_context(package: str) -> None:
+    """Adjust system decimal context to match database precision"""
     context = decimal.getcontext()
     prec = context.prec
     for _, model in iter_models(package):
@@ -109,6 +110,7 @@ def set_decimal_context(package: str) -> None:
 
 
 def get_schema_hash(conn: BaseDBAsyncClient) -> str:
+    """Get hash of the current schema"""
     schema_sql = get_schema_sql(conn, False)
     # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
     processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
@@ -116,25 +118,28 @@ def get_schema_hash(conn: BaseDBAsyncClient) -> str:
 
 
 async def set_schema(conn: BaseDBAsyncClient, name: str) -> None:
+    """Set schema for the connection"""
     await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
     await conn.execute_script(f'SET search_path TO {name}')
 
 
 async def recreate_schema(conn: BaseDBAsyncClient, name: str) -> None:
+    """Drop and recreate schema"""
     await conn.execute_script(f'DROP SCHEMA IF EXISTS {name} CASCADE')
     await conn.execute_script(f'CREATE SCHEMA {name}')
 
 
 async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema: str) -> None:
+    """Move table from one schema to another"""
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
 
 def validate_models(package: str) -> None:
-    """Validate models in package"""
+    """Validate project models"""
     for _, model in iter_models(package):
         name = model._meta.db_table
         if name != pascal_to_snake(name):
             raise DatabaseConfigurationError('Table names should be in `snake_case`', model)
         for field in model._meta.fields_map.values():
             if field.model_field_name != pascal_to_snake(field.model_field_name):
-                raise DatabaseConfigurationError('Table names should be in `snake_case`', model)
+                raise DatabaseConfigurationError('Column names should be in `snake_case`', model)
