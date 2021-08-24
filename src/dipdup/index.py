@@ -10,13 +10,13 @@ from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
     ContractConfig,
-    IndexConfigTemplateT,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerPatternConfigT,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
     OperationType,
+    ResolvedIndexConfigT,
 )
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
@@ -34,7 +34,7 @@ OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
 class Index:
     _queue: Deque
 
-    def __init__(self, ctx: DipDupContext, config: IndexConfigTemplateT, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: ResolvedIndexConfigT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
         self._config = config
         self._datasource = datasource

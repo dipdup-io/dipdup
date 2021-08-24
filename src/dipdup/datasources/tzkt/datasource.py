@@ -16,9 +16,9 @@ from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
     HTTPConfig,
-    IndexConfigTemplateT,
     OperationHandlerOriginationPatternConfig,
     OperationIndexConfig,
+    ResolvedIndexConfigT,
 )
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
@@ -533,7 +533,7 @@ class TzktDatasource(IndexDatasource):
             big_maps.append(self.convert_big_map(bm))
         return big_maps
 
-    async def add_index(self, index_config: IndexConfigTemplateT) -> None:
+    async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
 
         if isinstance(index_config, OperationIndexConfig):

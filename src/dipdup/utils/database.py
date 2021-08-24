@@ -80,7 +80,6 @@ def is_model_class(obj: Any) -> bool:
     return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
 
 
-# TODO: Cache me
 def iter_models(package: str) -> Iterator[Tuple[str, Type[Model]]]:
     """Iterate over built-in and project's models"""
     dipdup_models = importlib.import_module('dipdup.models')
@@ -139,7 +138,7 @@ def validate_models(package: str) -> None:
     for _, model in iter_models(package):
         name = model._meta.db_table
         if name != pascal_to_snake(name):
-            raise DatabaseConfigurationError('Table names should be in `snake_case`', model)
+            raise DatabaseConfigurationError('Table names should be in snake_case', model)
         for field in model._meta.fields_map.values():
             if field.model_field_name != pascal_to_snake(field.model_field_name):
-                raise DatabaseConfigurationError('Column names should be in `snake_case`', model)
+                raise DatabaseConfigurationError('Column names should be in snake_case', model)

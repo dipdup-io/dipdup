@@ -4,7 +4,7 @@ import logging
 import os
 import signal
 from dataclasses import dataclass
-from functools import partial, wraps
+from functools import wraps
 from os.path import dirname, exists, join
 from typing import List, cast
 
@@ -44,13 +44,14 @@ def cli_wrapper(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs) -> None:
         loop = asyncio.get_running_loop()
-        loop.add_signal_handler(signal.SIGINT, partial(asyncio.ensure_future, shutdown()))
+        loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(shutdown()))
         try:
             with DipDupError.wrap():
                 await fn(*args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except DipDupError as e:
+            # FIXME: No traceback in test logs
             _logger.critical(e.__repr__())
             _logger.info(e.format())
             quit(1)

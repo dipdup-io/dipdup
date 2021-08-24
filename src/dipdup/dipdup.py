@@ -1,7 +1,7 @@
 import logging
 from asyncio import CancelledError, Task, create_task, gather
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
-from typing import Dict, List, Set, Union, cast
+from typing import Dict, List, Set
 
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
@@ -10,14 +10,11 @@ from tortoise.transactions import get_connection
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
     BcdDatasourceConfig,
-    BigMapIndexConfig,
     CoinbaseDatasourceConfig,
     ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
-    IndexConfigTemplateT,
     IndexTemplateConfig,
-    OperationIndexConfig,
     PostgresDatabaseConfig,
     TzktDatasourceConfig,
 )
@@ -48,81 +45,25 @@ class IndexDispatcher:
 
     async def run(self, oneshot=False) -> None:
         self._logger.info('Starting index dispatcher')
-        await self._subscribe()
+        await self._subscribe_to_datasources()
         await self._load_index_states()
 
         while not self._stopped:
-            await self.reload_config()
+            with suppress(KeyError):
+                while index := self._ctx._pending_indexes.pop():
+                    self._indexes[index._config.name] = index
 
             async with slowdown(1.0):
                 await gather(*[index.process() for index in self._indexes.values()])
 
-            # TODO: Continue if new indexes are spawned from origination
             if oneshot:
                 break
 
     def stop(self) -> None:
         self._stopped = True
 
-    async def add_index(self, index_config: IndexConfigTemplateT) -> None:
-        if index_config.name in self._indexes:
-            return
-        self._logger.info('Adding index `%s` to dispatcher', index_config.name)
-
-        index: Union[OperationIndex, BigMapIndex]
-        datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
-        datasource = self._ctx.datasources[datasource_name]
-        if not isinstance(datasource, TzktDatasource):
-            raise RuntimeError(f'`{datasource_name}` is not a TzktDatasource')
-
-        if isinstance(index_config, OperationIndexConfig):
-            index = OperationIndex(self._ctx, index_config, datasource)
-        elif isinstance(index_config, BigMapIndexConfig):
-            index = BigMapIndex(self._ctx, index_config, datasource)
-        else:
-            raise NotImplementedError
-
-        self._indexes[index_config.name] = index
-        await datasource.add_index(index_config)
-
-        for handler_config in index_config.handlers:
-            self._ctx.callbacks.register_handler(handler_config)
-
-        await index.initialize_state()
-
-    async def add_contract(self, contract_config: ContractConfig) -> None:
-        if contract_config in self._contracts:
-            return
-
-        self._contracts.add(contract_config)
-        with suppress(OperationalError):
-            await Contract(
-                name=contract_config.name,
-                address=contract_config.address,
-                typename=contract_config.typename,
-            ).save()
-
-    async def reload_config(self) -> None:
-        if not self._ctx.updated:
-            return
-
-        self._logger.info('Config has been updated, reloading')
-        if not self._contracts:
-            await self._fetch_contracts()
-
-        self._ctx.config.initialize()
-
-        for index_config in self._ctx.config.indexes.values():
-            if isinstance(index_config, IndexTemplateConfig):
-                raise ConfigInitializationException
-            await self.add_index(index_config)
-
-        for contract_config in self._ctx.config.contracts.values():
-            await self.add_contract(contract_config)
-
-        self._ctx.reset()
-
     async def _fetch_contracts(self) -> None:
+        """Add contracts spawned from context to config"""
         contracts = await Contract.filter().all()
         self._logger.info('%s contracts fetched from database', len(contracts))
 
@@ -131,7 +72,7 @@ class IndexDispatcher:
                 contract_config = ContractConfig(address=contract.address, typename=contract.typename)
                 self._ctx.config.contracts[contract.name] = contract_config
 
-    async def _subscribe(self) -> None:
+    async def _subscribe_to_datasources(self) -> None:
         for datasource in self._ctx.datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
@@ -160,8 +101,6 @@ class IndexDispatcher:
 
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
-
-        self._ctx.commit()
 
     async def _dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in operations)) == 1
@@ -242,6 +181,9 @@ class DipDup:
             if not oneshot:
                 await self._set_up_jobs(stack)
                 await self._spawn_datasources(tasks)
+
+            for name in self._config.indexes:
+                await self._ctx._spawn_index(name)
 
             tasks.add(create_task(self._index_dispatcher.run(oneshot)))
 

@@ -2,26 +2,33 @@ import logging
 import os
 import sys
 import time
+import warnings
 from contextlib import contextmanager, suppress
 from os.path import exists, join
 from pprint import pformat
-from typing import Any, Dict, Iterator, Optional, cast
+from typing import Any, Dict, Iterator, Optional, Union, cast
 
 import sqlparse  # type: ignore
 from tortoise import Tortoise
+from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
 from dipdup.config import (
+    BigMapIndexConfig,
     ContractConfig,
     DipDupConfig,
     HandlerConfig,
     HookConfig,
     IndexConfig,
     IndexTemplateConfig,
+    OperationIndexConfig,
     PostgresDatabaseConfig,
+    ResolvedIndexConfigT,
+    TzktDatasourceConfig,
     default_hooks,
 )
 from dipdup.datasources.datasource import Datasource
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import (
     CallbackError,
     CallbackNotImplementedError,
@@ -31,10 +38,9 @@ from dipdup.exceptions import (
     IndexAlreadyExistsError,
     InitializationRequiredError,
 )
+from dipdup.models import Contract
 from dipdup.utils import FormattedLogger, iter_files
 from dipdup.utils.database import move_table, recreate_schema
-
-ONETIME_ARGS = ('--reindex', '--hotswap')
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -49,7 +55,7 @@ class DipDupContext:
         self.config = config
         self.callbacks = callbacks
         self.logger = FormattedLogger('dipdup.context')
-        self._updated: bool = False
+        self._pending_indexes = set()  # type: ignore
 
     def __str__(self) -> str:
         return pformat(self.__dict__)
@@ -62,17 +68,6 @@ class DipDupContext:
 
     async def execute_sql(self, name: str) -> None:
         await self.callbacks.execute_sql(self, name)
-
-    def commit(self) -> None:
-        """Spawn indexes after handler execution"""
-        self._updated = True
-
-    def reset(self) -> None:
-        self._updated = False
-
-    @property
-    def updated(self) -> bool:
-        return self._updated
 
     async def restart(self) -> None:
         """Restart preserving CLI arguments"""
@@ -105,7 +100,7 @@ class DipDupContext:
             await Tortoise._drop_databases()
         await self.restart()
 
-    def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
+    async def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(self, name, address)
         contract_config = ContractConfig(
@@ -113,16 +108,50 @@ class DipDupContext:
             typename=typename,
         )
         self.config.contracts[name] = contract_config
-        self._updated = True
 
-    def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
+        with suppress(OperationalError):
+            await Contract(
+                name=contract_config.name,
+                address=contract_config.address,
+                typename=contract_config.typename,
+            ).save()
+
+        self.config.initialize()
+
+    async def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
         if name in self.config.indexes:
             raise IndexAlreadyExistsError(self, name)
+
         self.config.indexes[name] = IndexTemplateConfig(
             template=template,
             values=values,
         )
-        self._updated = True
+        self.config.initialize()
+        await self._spawn_index(name)
+
+    async def _spawn_index(self, name: str) -> None:
+        from dipdup.index import BigMapIndex, OperationIndex
+
+        index_config = cast(ResolvedIndexConfigT, self.config.indexes[name])
+        index: Union[OperationIndex, BigMapIndex]
+        datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
+        datasource = self.datasources[datasource_name]
+        if not isinstance(datasource, TzktDatasource):
+            raise RuntimeError(f'`{datasource_name}` is not a TzktDatasource')
+
+        if isinstance(index_config, OperationIndexConfig):
+            index = OperationIndex(self, index_config, datasource)
+        elif isinstance(index_config, BigMapIndexConfig):
+            index = BigMapIndex(self, index_config, datasource)
+        else:
+            raise NotImplementedError
+
+        await datasource.add_index(index_config)
+        for handler_config in index_config.handlers:
+            self.callbacks.register_handler(handler_config)
+        await index.initialize_state()
+
+        self._pending_indexes.add(index)
 
 
 class HookContext(DipDupContext):
@@ -205,9 +234,6 @@ class CallbackManager:
 
         with self._wrapper('handler', name):
             await new_ctx.handler_config.callback_fn(new_ctx, *args, **kwargs)
-
-        if new_ctx.updated:
-            ctx.commit()
 
     async def fire_hook(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
         try:

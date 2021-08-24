@@ -583,7 +583,7 @@ class IndexTemplateConfig(NameMixin):
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['IndexConfigTemplateT']):
+class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConfigT']):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
@@ -745,7 +745,7 @@ class BigMapIndexConfig(IndexConfig):
 
 
 IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, IndexTemplateConfig]
-IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig]
+ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig]
 HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
@@ -833,9 +833,11 @@ class HookConfig(CallbackMixin, kind='hook'):
 
 
 default_hooks = {
+    # NOTE: After schema initialization. Default: nothing.
     'on_restart': HookConfig(
         callback='on_restart',
     ),
+    # NOTE: On reorg message. Default: reindex.
     'on_rollback': HookConfig(
         callback='on_rollback',
         args=dict(
@@ -844,6 +846,7 @@ default_hooks = {
             to_level='int',
         ),
     ),
+    # NOTE: After restart (important!) after ctx.reindex call. Default: nothing.
     'on_reindex': HookConfig(
         callback='on_reindex',
     ),
@@ -872,7 +875,7 @@ class DipDupConfig:
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
-    templates: Dict[str, IndexConfigTemplateT] = Field(default_factory=dict)
+    templates: Dict[str, ResolvedIndexConfigT] = Field(default_factory=dict)
     jobs: Dict[str, JobConfig] = Field(default_factory=dict)
     hooks: Dict[str, HookConfig] = Field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
@@ -951,7 +954,7 @@ class DipDupConfig:
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
 
-    def get_template(self, name: str) -> IndexConfigTemplateT:
+    def get_template(self, name: str) -> ResolvedIndexConfigT:
         try:
             return self.templates[name]
         except KeyError as e:
@@ -1017,7 +1020,7 @@ class DipDupConfig:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
         # NOTE: Duplicate contracts
-        contracts = [i.contracts for i in self.indexes.values() if isinstance(i, OperationIndexConfig) and i.contracts]
+        contracts = [cast(ResolvedIndexConfigT, i).contracts for i in self.indexes.values() if cast(ResolvedIndexConfigT, i).contracts]
         plain_contracts = reduce(operator.add, contracts)
         # NOTE: After pre_initialize
         duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
@@ -1161,7 +1164,7 @@ class DipDupConfig:
                 else:
                     raise NotImplementedError
 
-    def _load_index_callbacks(self, index_config: IndexConfigTemplateT) -> None:
+    def _load_index_callbacks(self, index_config: ResolvedIndexConfigT) -> None:
         for handler_config in index_config.handlers:
             handler_config.initialize_callback_fn(self.package)
 

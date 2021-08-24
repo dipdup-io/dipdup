@@ -81,6 +81,7 @@ class ConfigurationError(DipDupError):
         """
 
 
+# TODO: Any cases besides model validation?
 @dataclass(frozen=True)
 class DatabaseConfigurationError(ConfigurationError):
     """DipDup can't initialize database with given models and parameters"""
