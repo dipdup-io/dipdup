@@ -73,8 +73,8 @@ class IndexDatasource(Datasource, AsyncIOEventEmitter):
     def emit_operations(self, operations: List[OperationData], block: HeadBlockData) -> None:
         super().emit(EventType.operations, datasource=self, operations=operations, block=block)
 
-    def emit_big_maps(self, big_maps: List[BigMapData]) -> None:
-        super().emit(EventType.big_maps, datasource=self, big_maps=big_maps)
+    def emit_big_maps(self, big_maps: List[BigMapData], block: HeadBlockData) -> None:
+        super().emit(EventType.big_maps, datasource=self, big_maps=big_maps, block=block)
 
     def emit_rollback(self, from_level: int, to_level: int) -> None:
         super().emit(EventType.rollback, datasource=self, from_level=from_level, to_level=to_level)

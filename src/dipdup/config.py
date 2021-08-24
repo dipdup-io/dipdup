@@ -76,7 +76,7 @@ class PostgresDatabaseConfig:
     port: int = 5432
     schema_name: str = 'public'
     password: str = ''
-    immune_tables: Optional[List[str]] = None
+    immune_tables: List[str] = Field(default_factory=list)
 
     @property
     def connection_string(self) -> str:
@@ -86,8 +86,9 @@ class PostgresDatabaseConfig:
 
     @validator('immune_tables')
     def valid_immune_tables(cls, v):
-        if v and 'dipdup_state' in v:
-            raise ConfigurationError('`dipdup_state` table can\'t be immune')
+        for table in v:
+            if table.startswith('dipdup'):
+                raise ConfigurationError('Tables with `dipdup` prefix can\'t be immune')
         return v
 
 
@@ -341,6 +342,7 @@ class ParameterTypeMixin:
 
     def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
         _logger.info('Registering parameter type for entrypoint `%s`', entrypoint)
+        entrypoint = entrypoint.lstrip('_')
         module_name = f'{package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
         cls_name = snake_to_pascal(entrypoint) + 'Parameter'
         self.parameter_type_cls = import_from(module_name, cls_name)
