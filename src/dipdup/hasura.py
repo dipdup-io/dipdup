@@ -16,7 +16,8 @@ from tortoise.transactions import get_connection
 from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
-from dipdup.utils import iter_files, iter_models, pascal_to_snake, remove_prefix
+from dipdup.utils import iter_files, pascal_to_snake, remove_prefix
+from dipdup.utils.database import iter_models
 
 _get_fields_query = '''
 query introspectionQuery($name: String!) {

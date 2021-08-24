@@ -4,7 +4,7 @@ from unittest import IsolatedAsyncioTestCase
 from tortoise import Tortoise
 
 from dipdup.models import Index, IndexType
-from dipdup.utils import in_global_transaction, tortoise_wrapper
+from dipdup.utils.database import in_global_transaction, tortoise_wrapper
 
 
 class UtilsTest(IsolatedAsyncioTestCase):

@@ -1,4 +1,3 @@
-import hashlib
 import logging
 import operator
 from asyncio import CancelledError, Task, create_task, gather
@@ -9,7 +8,7 @@ from typing import Dict, List, Set, Union, cast
 
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
-from tortoise.utils import get_schema_sql
+from tortoise.transactions import get_connection
 
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import (
@@ -36,10 +35,9 @@ from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, Contract, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import OperationData, Schema
-from dipdup.utils import FormattedLogger, slowdown, tortoise_wrapper
-
-INDEX_DISPATCHER_INTERVAL = 1.0
 from dipdup.scheduler import add_job, create_scheduler
+from dipdup.utils import FormattedLogger, slowdown
+from dipdup.utils.database import get_schema_hash, set_schema, tortoise_wrapper, validate_models
 
 
 class IndexDispatcher:
@@ -59,7 +57,7 @@ class IndexDispatcher:
         while not self._stopped:
             await self.reload_config()
 
-            async with slowdown(INDEX_DISPATCHER_INTERVAL):
+            async with slowdown(1.0):
                 await gather(*[index.process() for index in self._indexes.values()])
 
             # TODO: Continue if new indexes are spawned from origination
@@ -314,12 +312,11 @@ class DipDup:
     async def _initialize_schema(self) -> None:
         self._logger.info('Initializing database schema')
         schema_name = 'public'
-        connection = next(iter(Tortoise._connections.values()))
+        conn = get_connection(None)
 
         if isinstance(self._config.database, PostgresDatabaseConfig):
             schema_name = self._config.database.schema_name
-            await connection.execute_script(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
-            await connection.execute_script(f"SET search_path TO {schema_name}")
+            await set_schema(conn, schema_name)
 
         try:
             schema_state = await Schema.get_or_none(name=schema_name)
@@ -327,19 +324,13 @@ class DipDup:
             schema_state = None
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError as e:
-            raise ReindexingRequiredError(None) from e
+            raise ReindexingRequiredError from e
 
-        schema_sql = get_schema_sql(connection, False)
-
-        # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
-        # TODO: Ignore comments
-        processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
-        schema_hash = hashlib.sha256(processed_schema_sql).hexdigest()
+        schema_hash = get_schema_hash(conn)
 
         # NOTE: `State.config_hash` field contains schema hash when `type` is `IndexType.schema`
         if schema_state is None:
             await Tortoise.generate_schemas()
-            # await self._execute_sql_scripts(reindex=True)
             await self._ctx.fire_hook('on_reindex')
 
             schema_state = Schema(
@@ -349,16 +340,17 @@ class DipDup:
             try:
                 await schema_state.save()
             except OperationalError as e:
-                raise ReindexingRequiredError(None) from e
+                raise ReindexingRequiredError from e
 
         elif schema_state.hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await self._ctx.reindex()
 
-        # await self._execute_sql_scripts(reindex=False)
         await self._ctx.fire_hook('on_restart')
 
     async def _set_up_database(self, stack: AsyncExitStack, reindex: bool) -> None:
+        validate_models(self._config.package)
+
         url = self._config.database.connection_string
         models = f'{self._config.package}.models'
         await stack.enter_async_context(tortoise_wrapper(url, models))

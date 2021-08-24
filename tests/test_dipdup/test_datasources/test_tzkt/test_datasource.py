@@ -22,7 +22,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup
 from dipdup.models import Index as State
 from dipdup.models import IndexType, OperationData, Transaction
-from dipdup.utils import tortoise_wrapper
+from dipdup.utils.database import tortoise_wrapper
 
 
 @skip('FIXME')

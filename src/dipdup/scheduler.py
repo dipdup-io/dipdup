@@ -9,7 +9,8 @@ from pytz import utc
 
 from dipdup.config import JobConfig
 from dipdup.context import DipDupContext, HookContext
-from dipdup.utils import FormattedLogger, in_global_transaction
+from dipdup.utils import FormattedLogger
+from dipdup.utils.database import in_global_transaction
 
 jobstores = {
     'default': MemoryJobStore(),

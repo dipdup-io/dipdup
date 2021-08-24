@@ -9,7 +9,7 @@ from testcontainers.postgres import PostgresContainer  # type: ignore
 from dipdup.config import DipDupConfig, HasuraConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.hasura import HasuraGateway
-from dipdup.utils import tortoise_wrapper
+from dipdup.utils.database import tortoise_wrapper
 
 
 class HasuraTest(IsolatedAsyncioTestCase):

@@ -32,6 +32,7 @@ from dipdup.exceptions import (
     InitializationRequiredError,
 )
 from dipdup.utils import FormattedLogger, iter_files
+from dipdup.utils.database import move_table, recreate_schema
 
 ONETIME_ARGS = ('--reindex', '--hotswap')
 
@@ -83,13 +84,6 @@ class DipDupContext:
     async def reindex(self, reason: Optional[str] = None) -> None:
         """Drop all tables or whole database and restart with the same CLI arguments"""
 
-        async def _recreate_schema(conn, name: str) -> None:
-            await conn.execute_script(f'DROP SCHEMA IF EXISTS {name} CASCADE')
-            await conn.execute_script(f'CREATE SCHEMA {name}')
-
-        async def _move_table(conn, name: str, schema: str, new_schema: str) -> None:
-            await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
-
         self.logger.warning('Reindexing initialized, reason: %s', reason)
         database_config = self.config.database
         if isinstance(database_config, PostgresDatabaseConfig):
@@ -97,15 +91,15 @@ class DipDupContext:
             immune_schema_name = f'{database_config.schema_name}_immune'
 
             if database_config.immune_tables:
-                await _recreate_schema(conn, immune_schema_name)
+                await recreate_schema(conn, immune_schema_name)
 
             for table in database_config.immune_tables:
-                await _move_table(conn, table, database_config.schema_name, immune_schema_name)
+                await move_table(conn, table, database_config.schema_name, immune_schema_name)
 
-            await _recreate_schema(conn, database_config.schema_name)
+            await recreate_schema(conn, database_config.schema_name)
 
             for table in database_config.immune_tables:
-                await _move_table(conn, table, immune_schema_name, database_config.schema_name)
+                await move_table(conn, table, immune_schema_name, database_config.schema_name)
 
         else:
             await Tortoise._drop_databases()

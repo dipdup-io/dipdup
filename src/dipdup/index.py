@@ -24,7 +24,8 @@ from dipdup.exceptions import InvalidDataError
 from dipdup.models import BigMapData, BigMapDiff, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Origination, Transaction
-from dipdup.utils import FormattedLogger, in_global_transaction
+from dipdup.utils import FormattedLogger
+from dipdup.utils.database import in_global_transaction
 
 # NOTE: Operations of a single contract call
 OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))

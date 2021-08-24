@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Iterator, Optional, Type
 
 from tabulate import tabulate
+from tortoise.models import Model
 
 from dipdup import spec_version_mapping
 
@@ -77,6 +78,24 @@ class ConfigurationError(DipDupError):
             {self.msg}
 
             DipDup config reference: https://docs.dipdup.net/config-file-reference
+        """
+
+
+@dataclass(frozen=True)
+class DatabaseConfigurationError(ConfigurationError):
+    """DipDup can't initialize database with given models and parameters"""
+
+    model: Type[Model]
+
+    def _help(self) -> str:
+        return f"""
+            {self.msg}
+
+            Model: `{self.model.__class__.__name__}`
+            Table: `{self.model._meta.db_table}`
+
+            Tortoise ORM examples: https://tortoise-orm.readthedocs.io/en/latest/examples.html
+            DipDup config reference: https://docs.dipdup.net/config-file-reference/database
         """
 
 
@@ -260,6 +279,8 @@ class CallbackTypeError(DipDupError):
               argument: `{self.arg}`
               type: {self.type_}
               expected type: {self.expected_type}
+
+            Make sure to set correct typenames in config and run `dipdup init --full` to regenerate typeclasses.
         """
 
 

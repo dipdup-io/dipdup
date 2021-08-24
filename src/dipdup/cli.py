@@ -21,7 +21,7 @@ from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.utils import set_decimal_context, tortoise_wrapper
+from dipdup.utils.database import set_decimal_context, tortoise_wrapper
 
 _logger = logging.getLogger('dipdup.cli')
 
