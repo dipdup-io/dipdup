@@ -2,15 +2,17 @@ import hashlib
 import importlib
 import json
 import logging.config
+import operator
 import os
 import re
 import sys
 from abc import ABC, abstractmethod
-from collections import defaultdict
+from collections import Counter, defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
 from enum import Enum
+from functools import reduce
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
@@ -880,10 +882,9 @@ class DipDupConfig:
         self._filenames: List[str] = []
         self._environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
-        self._links_resolved = []
-        self._imports_resolved = []
-        self._validate()
-        self.hooks = {**default_hooks, **self.hooks}
+        self._default_hooks: bool = False
+        self._links_resolved: Set[str] = set()
+        self._imports_resolved: Set[str] = set()
 
     @property
     def environment(self) -> Dict[str, str]:
@@ -972,9 +973,62 @@ class DipDupConfig:
         self._set_names()
         self._resolve_templates()
         self._resolve_links()
+        self._validate()
+        if not self._default_hooks:
+            self.hooks = {**default_hooks, **self.hooks}
+            self._set_names()
 
-        # TODO: Should be handled by `CallbackManager` and cover all callbacks
-        _logger.info('Verifying callback uniqueness')
+    def initialize(self) -> None:
+        _logger.info('Setting up handlers and types for package `%s`', self.package)
+        self.pre_initialize()
+
+        for index_config in self.indexes.values():
+            if index_config.name in self._imports_resolved:
+                continue
+
+            if isinstance(index_config, IndexTemplateConfig):
+                raise ConfigInitializationException
+
+            elif isinstance(index_config, OperationIndexConfig):
+                self._load_operation_index_types(index_config)
+                self._load_index_callbacks(index_config)
+
+            elif isinstance(index_config, BigMapIndexConfig):
+                self._load_big_map_index_types(index_config)
+                self._load_index_callbacks(index_config)
+
+            else:
+                raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+            self._imports_resolved.add(index_config.name)
+
+    def _validate(self) -> None:
+        _logger.info('Validating config')
+
+        # NOTE: Hasura
+        if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
+            raise ConfigurationError('SQLite database engine is not supported by Hasura')
+
+        # NOTE: Reserved hooks
+        for name, hook_config in self.hooks.items():
+            if name != hook_config.callback:
+                raise ConfigurationError(f'`{name}` hook name must be equal to `callback` value.')
+            if name in default_hooks:
+                raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
+
+        # NOTE: Duplicate contracts
+        contracts = [i.contracts for i in self.indexes.values() if isinstance(i, OperationIndexConfig) and i.contracts]
+        plain_contracts = reduce(operator.add, contracts)
+        # NOTE: After pre_initialize
+        duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
+        if duplicate_contracts:
+            _logger.warning(
+                "The following contracts are used in more than one index: %s. Make sure you know what you're doing.",
+                ' '.join(duplicate_contracts),
+            )
+
+        # NOTE: Callback uniqueness
+        # TODO: Refactor, cover all cases
         for callback, pattern_items in self._callback_patterns.items():
             if len(pattern_items) in (0, 1):
                 return
@@ -995,15 +1049,6 @@ class DipDupConfig:
                     'Callback `%s` used multiple times with different signatures. Make sure you have specified contract typenames',
                     callback,
                 )
-
-    def _validate(self) -> None:
-        if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
-            raise ConfigurationError('SQLite DB engine is not supported by Hasura')
-        # NOTE: Endpoints are equal to names
-        # TODO: Ensure
-        for name in self.hooks:
-            if name in default_hooks:
-                raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.info('Resolving template `%s`', template_config.name)
@@ -1035,7 +1080,7 @@ class DipDupConfig:
             if name in self._links_resolved:
                 continue
             self._resolve_index_links(index_config)
-            self._links_resolved.append(index_config.name)
+            self._links_resolved.add(index_config.name)
 
     def _resolve_index_links(self, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
@@ -1116,20 +1161,6 @@ class DipDupConfig:
                 else:
                     raise NotImplementedError
 
-    def _load_index_types(self, index_config: IndexConfigTemplateT) -> None:
-        if isinstance(index_config, IndexTemplateConfig):
-            raise ConfigInitializationException
-
-        elif isinstance(index_config, OperationIndexConfig):
-            self._load_operation_index_types(index_config)
-        elif isinstance(index_config, BigMapIndexConfig):
-            for big_map_handler_config in index_config.handlers:
-                big_map_handler_config.initialize_big_map_type(self.package)
-        else:
-            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
-
-        self._imports_resolved.append(index_config.name)
-
     def _load_index_callbacks(self, index_config: IndexConfigTemplateT) -> None:
         for handler_config in index_config.handlers:
             handler_config.initialize_callback_fn(self.package)
@@ -1137,28 +1168,6 @@ class DipDupConfig:
     def _load_big_map_index_types(self, index_config: BigMapIndexConfig) -> None:
         for big_map_handler_config in index_config.handlers:
             big_map_handler_config.initialize_big_map_type(self.package)
-
-    def initialize(self) -> None:
-        _logger.info('Setting up handlers and types for package `%s`', self.package)
-        self.pre_initialize()
-
-        for index_config in self.indexes.values():
-            if index_config.name in self._imports_resolved:
-                continue
-
-            if isinstance(index_config, IndexTemplateConfig):
-                raise ConfigInitializationException
-
-            elif isinstance(index_config, OperationIndexConfig):
-                self._load_operation_index_types(index_config)
-                self._load_index_callbacks(index_config)
-
-            elif isinstance(index_config, BigMapIndexConfig):
-                self._load_big_map_index_types(index_config)
-                self._load_index_callbacks(index_config)
-
-            else:
-                raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
 
 @dataclass
