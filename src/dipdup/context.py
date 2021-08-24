@@ -103,6 +103,7 @@ class DipDupContext:
     async def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(self, name, address)
+
         contract_config = ContractConfig(
             address=address,
             typename=typename,
@@ -116,8 +117,6 @@ class DipDupContext:
                 typename=contract_config.typename,
             ).save()
 
-        self.config.initialize()
-
     async def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
         if name in self.config.indexes:
             raise IndexAlreadyExistsError(self, name)
@@ -127,6 +126,7 @@ class DipDupContext:
             values=values,
         )
         self.config.initialize()
+
         await self._spawn_index(name)
 
     async def _spawn_index(self, name: str) -> None:
