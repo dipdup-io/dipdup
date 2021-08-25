@@ -613,7 +613,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe_to_transactions(self, address: str) -> None:
         """Subscribe to contract's operations on established WS connection"""
-        self._logger.info('Subscribing to %s transactions', address)
+        self._logger.debug('Subscribing to %s transactions', address)
         await self._send(
             'SubscribeToOperations',
             [
@@ -626,7 +626,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe_to_originations(self) -> None:
         """Subscribe to all originations on established WS connection"""
-        self._logger.info('Subscribing to originations')
+        self._logger.debug('Subscribing to originations')
         await self._send(
             'SubscribeToOperations',
             [
@@ -638,7 +638,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe_to_big_maps(self, address: str, paths: Set[str]) -> None:
         """Subscribe to contract's big map diffs on established WS connection"""
-        self._logger.info('Subscribing to big map updates of %s, %s', address, paths)
+        self._logger.debug('Subscribing to big map updates of %s, %s', address, paths)
         for path in paths:
             await self._send(
                 'SubscribeToBigMaps',
@@ -652,7 +652,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe_to_head(self) -> None:
         """Subscribe to head on established WS connection"""
-        self._logger.info('Subscribing to head')
+        self._logger.debug('Subscribing to head')
         await self._send(
             'SubscribeToHead',
             [],

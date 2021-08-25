@@ -298,7 +298,7 @@ class StorageTypeMixin:
         self._storage_type_cls = typ
 
     def initialize_storage_cls(self, package: str, module_name: str) -> None:
-        _logger.info('Registering `%s` storage type', module_name)
+        _logger.debug('Registering `%s` storage type', module_name)
         cls_name = snake_to_pascal(module_name) + 'Storage'
         module_name = f'{package}.types.{module_name}.storage'
         self.storage_type_cls = import_from(module_name, cls_name)
@@ -343,7 +343,7 @@ class ParameterTypeMixin:
         self._parameter_type_cls = typ
 
     def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
-        _logger.info('Registering parameter type for entrypoint `%s`', entrypoint)
+        _logger.debug('Registering parameter type for entrypoint `%s`', entrypoint)
         entrypoint = entrypoint.lstrip('_')
         module_name = f'{package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
         cls_name = snake_to_pascal(entrypoint) + 'Parameter'
@@ -523,7 +523,7 @@ class CallbackMixin(CodegenMixin):
         self._callback_fn = fn
 
     def initialize_callback_fn(self, package: str):
-        _logger.info('Registering %s callback `%s`', self.kind, self.callback)
+        _logger.debug('Registering %s callback `%s`', self.kind, self.callback)
         module_name = f'{package}.{self.kind}s.{self.callback}'
         fn_name = self.callback
         self.callback_fn = import_from(module_name, fn_name)
@@ -717,7 +717,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         self._value_type_cls = typ
 
     def initialize_big_map_type(self, package: str) -> None:
-        _logger.info('Registering big map types for path `%s`', self.path)
+        _logger.debug('Registering big map types for path `%s`', self.path)
         path = pascal_to_snake(self.path.replace('.', '_'))
 
         module_name = f'{package}.types.{self.contract_config.module_name}.big_map.{path}_key'
@@ -979,12 +979,13 @@ class DipDupConfig:
         self._validate()
 
     def initialize(self) -> None:
-        _logger.info('Setting up handlers and types for package `%s`', self.package)
         self.pre_initialize()
 
         for index_config in self.indexes.values():
             if index_config.name in self._imports_resolved:
                 continue
+
+            _logger.info('Loading callbacks and typeclasses of index `%s`', index_config.name)
 
             if isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException
