@@ -1,7 +1,9 @@
 import logging
 from asyncio import CancelledError, Task, create_task, gather
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
-from typing import Dict, List, Set
+from functools import partial
+from operator import ne
+from typing import Dict, List, Optional, Set
 
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
@@ -23,12 +25,12 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigInitializationException, ReindexingRequiredError
+from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, Contract, HeadBlockData
 from dipdup.models import Index as IndexState
-from dipdup.models import OperationData, Schema
+from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
 from dipdup.utils import FormattedLogger, slowdown
 from dipdup.utils.database import get_schema_hash, set_schema, tortoise_wrapper, validate_models
@@ -42,8 +44,9 @@ class IndexDispatcher:
         self._indexes: Dict[str, Index] = {}
         self._contracts: Set[ContractConfig] = set()
         self._stopped: bool = False
+        self._synchronized: bool = False
 
-    async def run(self, oneshot=False) -> None:
+    async def run(self) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasources()
         await self._load_index_states()
@@ -53,14 +56,30 @@ class IndexDispatcher:
                 while index := self._ctx._pending_indexes.pop():
                     self._indexes[index._config.name] = index
 
+            tasks = [index.process() for index in self._indexes.values()]
             async with slowdown(1.0):
-                await gather(*[index.process() for index in self._indexes.values()])
+                await gather(*tasks)
 
-            if oneshot:
-                break
+            await self._check_states()
 
     def stop(self) -> None:
         self._stopped = True
+
+    async def _check_states(self) -> None:
+        statuses = [i.state.status for i in self._indexes.values()]
+
+        def _have_no(status: IndexStatus) -> bool:
+            nonlocal statuses
+            return bool(tuple(filter(partial(ne, status), statuses)))
+
+        synching_indexes = _have_no(IndexStatus.REALTIME)
+        if not synching_indexes:
+            # TODO: `on_synchronized` hook? Not sure if we need it.
+            ...
+
+        pending_oneshot_indexes = _have_no(IndexStatus.ONESHOT)
+        if not pending_oneshot_indexes:
+            self.stop()
 
     async def _fetch_contracts(self) -> None:
         """Add contracts spawned from context to config"""
@@ -149,9 +168,16 @@ class DipDup:
             datasources=self._datasources,
             callbacks=self._callbacks,
         )
-        self._index_dispatcher = IndexDispatcher(self._ctx)
+        self._index_dispatcher: Optional[IndexDispatcher] = None
         self._scheduler = create_scheduler()
         self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        self._schema: Optional[Schema] = None
+
+    @property
+    def schema(self) -> Schema:
+        if self._schema is None:
+            raise DipDupException('Schema is not initialized')
+        return self._schema
 
     async def init(self, full: bool = True) -> None:
         """Create new or update existing dipdup project"""
@@ -185,7 +211,7 @@ class DipDup:
             for name in self._config.indexes:
                 await self._ctx._spawn_index(name)
 
-            tasks.add(create_task(self._index_dispatcher.run(oneshot)))
+            await self._set_up_index_dispatcher(tasks)
 
             await gather(*tasks)
 
@@ -245,30 +271,29 @@ class DipDup:
             await set_schema(conn, schema_name)
 
         try:
-            schema_state = await Schema.get_or_none(name=schema_name)
+            self._schema = await Schema.get_or_none(name=schema_name)
         except OperationalError:
-            schema_state = None
+            self._schema = None
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError as e:
             raise ReindexingRequiredError from e
 
         schema_hash = get_schema_hash(conn)
 
-        # NOTE: `State.config_hash` field contains schema hash when `type` is `IndexType.schema`
-        if schema_state is None:
+        if self._schema is None:
             await Tortoise.generate_schemas()
             await self._ctx.fire_hook('on_reindex')
 
-            schema_state = Schema(
+            self._schema = Schema(
                 name=schema_name,
                 hash=schema_hash,
             )
             try:
-                await schema_state.save()
+                await self._schema.save()
             except OperationalError as e:
                 raise ReindexingRequiredError from e
 
-        elif schema_state.hash != schema_hash:
+        elif self._schema.hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
             await self._ctx.reindex()
 
@@ -317,6 +342,10 @@ class DipDup:
         await self._create_datasources()
         for datasource in self._datasources.values():
             await stack.enter_async_context(datasource)
+
+    async def _set_up_index_dispatcher(self, tasks: Set[Task]) -> None:
+        index_dispatcher = IndexDispatcher(self._ctx)
+        tasks.add(create_task(index_dispatcher.run()))
 
     async def _spawn_datasources(self, tasks: Set[Task]) -> None:
         tasks.update(create_task(d.run()) for d in self._datasources.values())

@@ -977,9 +977,6 @@ class DipDupConfig:
         self._resolve_templates()
         self._resolve_links()
         self._validate()
-        if not self._default_hooks:
-            self.hooks = {**default_hooks, **self.hooks}
-            self._set_names()
 
     def initialize(self) -> None:
         _logger.info('Setting up handlers and types for package `%s`', self.package)

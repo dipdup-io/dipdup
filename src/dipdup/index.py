@@ -70,9 +70,10 @@ class Index:
                         template_values=self._config.template_values,
                     ),
                 )
+
             self._state = state
 
-        # NOTE: No need to check indexes which are not synchronized.
+        # NOTE: No need to check hashes of indexes which are not synchronized.
         if self.state.status != IndexStatus.REALTIME:
             return
 
@@ -85,18 +86,23 @@ class Index:
             await self._ctx.reindex('block hash mismatch (missed rollback while DipDup was stopped)')
 
     async def process(self) -> None:
+        # NOTE: `--oneshot` flag implied
         if self._config.last_level:
             last_level = self._config.last_level
             await self._synchronize(last_level, cache=True)
+            await self.state.update_status(IndexStatus.ONESHOT, last_level)
+
         elif self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to the latest block')
             last_level = (await self._datasource.get_head_block()).level
             await self._synchronize(last_level)
+
         elif self._datasource.sync_level > self.state.level:
             self._logger.info('Index is behind datasource, sync to datasource level')
             self._queue.clear()
             last_level = self._datasource.sync_level
             await self._synchronize(last_level)
+
         else:
             await self._process_queue()
 
@@ -116,18 +122,12 @@ class Index:
             raise RuntimeError(f'Attempt to synchronize index from level {first_level} to level {last_level}')
 
         self._logger.info('Synchronizing index to level %s', last_level)
-        await self._update_state(first_level)
+        await self.state.update_status(IndexStatus.SYNCING, first_level)
         return first_level
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
-        await self._update_state(last_level)
-
-    async def _update_state(self, level: int, block: Optional[HeadBlockData] = None) -> None:
-        self.state.level = level  # type: ignore
-        self.state.head = self.head
-        self.state.status = IndexStatus.REALTIME if block else IndexStatus.SYNCING
-        await self.state.save()
+        await self.state.update_status(IndexStatus.REALTIME, last_level)
 
 
 class OperationIndex(Index):
@@ -234,7 +234,9 @@ class OperationIndex(Index):
         async with in_global_transaction():
             self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_operations(operations)
-            await self._update_state(level, block)
+
+            status = IndexStatus.REALTIME if block else IndexStatus.SYNCING
+            await self.state.update_status(status, level, self.datasource.block if block else None)
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
@@ -451,7 +453,9 @@ class BigMapIndex(Index):
         async with in_global_transaction():
             self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_big_maps(big_maps)
-            await self._update_state(level, block)
+
+            status = IndexStatus.REALTIME if block else IndexStatus.SYNCING
+            await self.state.update_status(status, level, self.datasource.block if block else None)
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""
