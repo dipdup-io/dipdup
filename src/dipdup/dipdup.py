@@ -275,6 +275,7 @@ class DipDup:
         await self._ctx.fire_hook('on_restart')
 
     async def _set_up_database(self, stack: AsyncExitStack, reindex: bool) -> None:
+        # NOTE: Must be called before Tortoise.init
         validate_models(self._config.package)
 
         url = self._config.database.connection_string

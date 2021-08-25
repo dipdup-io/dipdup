@@ -136,6 +136,10 @@ async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema
 def validate_models(package: str) -> None:
     """Validate project models"""
     for _, model in iter_models(package):
+        # NOTE: Resolve missing table names before Tortoise does
+        if model._meta.db_table is None:
+            model._meta.db_table = pascal_to_snake(model.__name__)
+
         name = model._meta.db_table
         if name != pascal_to_snake(name):
             raise DatabaseConfigurationError('Table names should be in snake_case', model)
