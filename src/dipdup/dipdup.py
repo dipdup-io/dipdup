@@ -296,6 +296,8 @@ class DipDup:
 
         await stack.enter_async_context(self._scheduler_context())
         for job_config in self._config.jobs.values():
+            # FIXME: Move somewhere
+            job_config.hook = self._ctx.config.hooks[job_config.hook]  # type: ignore
             add_job(self._ctx, self._scheduler, job_config)
 
     async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:

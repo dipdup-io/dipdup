@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 import time
-import warnings
 from contextlib import contextmanager, suppress
 from os.path import exists, join
 from pprint import pformat
