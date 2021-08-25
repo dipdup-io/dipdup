@@ -74,15 +74,12 @@ class Index:
             self._state = state
 
         # NOTE: No need to check hashes of indexes which are not synchronized.
-        if self.state.status != IndexStatus.REALTIME:
+        head = await self.state.head
+        if not head or self.state.level != head.level:
             return
 
-        state_head = await self.state.head if self.state.head else None
-        if not state_head:
-            raise RuntimeError('Index is synchronized but has no head block data')
-
-        block = await self._datasource.get_block(state_head.level)
-        if state_head.hash != block.hash:
+        block = await self._datasource.get_block(self.state.level)
+        if self.state.head.hash != block.hash:
             await self._ctx.reindex('block hash mismatch (missed rollback while DipDup was stopped)')
 
     async def process(self) -> None:
@@ -236,7 +233,8 @@ class OperationIndex(Index):
             await self._process_operations(operations)
 
             status = IndexStatus.REALTIME if block else IndexStatus.SYNCING
-            await self.state.update_status(status, level, self.datasource.block if block else None)
+            # FIXME: Not obvious: receiving `BlockData`, sending `Head`
+            await self.state.update_status(status, level, self.head if block else None)
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""

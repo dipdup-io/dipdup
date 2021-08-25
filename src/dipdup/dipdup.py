@@ -19,6 +19,7 @@ from dipdup.config import (
     IndexTemplateConfig,
     PostgresDatabaseConfig,
     TzktDatasourceConfig,
+    default_hooks,
 )
 from dipdup.context import CallbackManager, DipDupContext
 from dipdup.datasources.bcd.datasource import BcdDatasource
@@ -90,6 +91,7 @@ class IndexDispatcher:
             if contract.name not in self._ctx.config.contracts:
                 contract_config = ContractConfig(address=contract.address, typename=contract.typename)
                 self._ctx.config.contracts[contract.name] = contract_config
+        self._ctx.config.pre_initialize()
 
     async def _subscribe_to_datasources(self) -> None:
         for datasource in self._ctx.datasources.values():
@@ -100,6 +102,7 @@ class IndexDispatcher:
             datasource.on_rollback(self._rollback)
 
     async def _load_index_states(self) -> None:
+        await self._fetch_contracts()
         index_states = await IndexState.filter().all()
         self._logger.info('%s indexes found in database', len(index_states))
         for index_state in index_states:
@@ -116,7 +119,7 @@ class IndexDispatcher:
             elif template:
                 if template not in self._ctx.config.templates:
                     await self._ctx.reindex(f'template `{template}` has been removed from config')
-                self._ctx.add_index(name, template, template_values)
+                await self._ctx.add_index(name, template, template_values)
 
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
@@ -312,6 +315,8 @@ class DipDup:
             await self._ctx.reindex()
 
     async def _set_up_hooks(self) -> None:
+        for hook_config in default_hooks.values():
+            self._ctx.callbacks.register_hook(hook_config)
         for hook_config in self._config.hooks.values():
             self._ctx.callbacks.register_hook(hook_config)
 
@@ -321,7 +326,6 @@ class DipDup:
 
         await stack.enter_async_context(self._scheduler_context())
         for job_config in self._config.jobs.values():
-            # FIXME: Move somewhere
             job_config.hook = self._ctx.config.hooks[job_config.hook]  # type: ignore
             add_job(self._ctx, self._scheduler, job_config)
 
