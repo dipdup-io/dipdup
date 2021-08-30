@@ -80,7 +80,7 @@ class Index:
 
         block = await self._datasource.get_block(self.state.level)
         if head.hash != block.hash:
-            await self._ctx.reindex('block hash mismatch (missed rollback while DipDup was stopped)')
+            await self._ctx.reindex(reason='block hash mismatch (missed rollback while DipDup was stopped)')
 
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied
@@ -218,8 +218,7 @@ class OperationIndex(Index):
             received_hashes = set([op.hash for op in operations])
             reused_hashes = received_hashes & expected_hashes
             if reused_hashes != expected_hashes:
-                self._logger.warning('Attempted a single level rollback, but arrived block differs from processed one')
-                await self._ctx.reindex()
+                await self._ctx.reindex(reason='attempted a single level rollback, but arrived block differs from processed one')
 
             self._rollback_level = None
             self._last_hashes = set()

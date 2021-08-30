@@ -114,11 +114,11 @@ class IndexDispatcher:
                 if isinstance(index_config, IndexTemplateConfig):
                     raise ConfigInitializationException
                 if index_config.hash() != index_state.config_hash:
-                    await self._ctx.reindex('config has been modified')
+                    await self._ctx.reindex(reason='config has been modified')
 
             elif template:
                 if template not in self._ctx.config.templates:
-                    await self._ctx.reindex(f'template `{template}` has been removed from config')
+                    await self._ctx.reindex(reason=f'template `{template}` has been removed from config')
                 await self._ctx.add_index(name, template, template_values)
 
             else:
@@ -280,8 +280,7 @@ class DipDup:
                 raise ReindexingRequiredError from e
 
         elif self._schema.hash != schema_hash:
-            self._logger.warning('Schema hash mismatch, reindexing')
-            await self._ctx.reindex()
+            await self._ctx.reindex(reason='schema hash mismatch')
 
         await self._ctx.fire_hook('on_restart')
 
@@ -294,8 +293,7 @@ class DipDup:
         await stack.enter_async_context(tortoise_wrapper(url, models))
 
         if reindex:
-            self._logger.warning('Started with `--reindex` argument, reindexing')
-            await self._ctx.reindex()
+            await self._ctx.reindex(reason='run with `--reindex` option')
 
     async def _set_up_hooks(self) -> None:
         for hook_config in default_hooks.values():
