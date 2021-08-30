@@ -50,12 +50,3 @@ indexes:
       datasource: tzkt
       minter: tzcolors_minter
       auction: tzcolors_auction
-
-hooks:
-  test:
-    callback: test
-
-jobs:
-  test:
-    hook: test
-    interval: 1
