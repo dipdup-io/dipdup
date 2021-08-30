@@ -24,13 +24,11 @@ from dipdup.config import (
     PostgresDatabaseConfig,
     ResolvedIndexConfigT,
     TzktDatasourceConfig,
-    default_hooks,
 )
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import (
     CallbackError,
-    CallbackNotImplementedError,
     CallbackTypeError,
     ConfigurationError,
     ContractAlreadyExistsError,
@@ -248,14 +246,8 @@ class CallbackManager:
             raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
 
         self._verify_arguments(ctx, *args, **kwargs)
-        try:
-            with self._wrapper('hook', name):
-                await ctx.hook_config.callback_fn(ctx, *args, **kwargs)
-        except CallbackNotImplementedError:
-            if name == 'on_rollback':
-                await ctx.reindex(f'reorg message received, `{name}` hook callback is not implemented.')
-            if name not in default_hooks:
-                self._logger.warning('`%s` hook callback is not implemented. Remove `raise` statement from it to hide this message.', name)
+        with self._wrapper('hook', name):
+            await ctx.hook_config.callback_fn(ctx, *args, **kwargs)
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""
@@ -299,8 +291,6 @@ class CallbackManager:
             diff = time.perf_counter() - start
             level = self._logger.info if diff > 1 else self._logger.debug
             level('`%s` %s callback executed in %s seconds', name, kind, diff)
-        except CallbackNotImplementedError as e:
-            raise CallbackNotImplementedError(kind, name) from e
         except Exception as e:
             raise CallbackError(kind, name) from e
 

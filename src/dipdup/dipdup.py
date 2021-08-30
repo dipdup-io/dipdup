@@ -182,7 +182,7 @@ class DipDup:
             raise DipDupException('Schema is not initialized')
         return self._schema
 
-    async def init(self, full: bool = True) -> None:
+    async def init(self, overwrite_types: bool = True) -> None:
         """Create new or update existing dipdup project"""
         await self._create_datasources()
 
@@ -190,7 +190,7 @@ class DipDup:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            await self._codegen.init(full)
+            await self._codegen.init(overwrite_types)
 
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)
@@ -217,23 +217,6 @@ class DipDup:
             await self._set_up_index_dispatcher(tasks)
 
             await gather(*tasks)
-
-    async def migrate_to_v10(self) -> None:
-        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
-        self._logger.warning('Not updating default handlers: deprecated in favor of hooks introduced in 1.2 spec')
-        self._logger.info('See release notes for more information')
-        await codegen.migrate_user_handlers_to_v10()
-        self._finish_migration('1.0')
-
-    async def migrate_to_v11(self) -> None:
-        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
-        await codegen.migrate_user_handlers_to_v11()
-        self._finish_migration('1.1')
-
-    async def migrate_to_v12(self) -> None:
-        codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
-        await codegen.generate_hooks()
-        self._finish_migration('1.2')
 
     async def _create_datasources(self) -> None:
         datasource: Datasource
@@ -353,12 +336,6 @@ class DipDup:
 
     async def _spawn_datasources(self, tasks: Set[Task]) -> None:
         tasks.update(create_task(d.run()) for d in self._datasources.values())
-
-    def _finish_migration(self, version: str) -> None:
-        self._logger.warning('==================== WARNING =====================')
-        self._logger.warning('Your project has been migrated to spec version %s.', version)
-        self._logger.warning('Review and commit changes before proceeding.')
-        self._logger.warning('==================== WARNING =====================')
 
     @asynccontextmanager
     async def _scheduler_context(self):

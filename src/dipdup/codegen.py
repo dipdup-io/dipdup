@@ -23,6 +23,7 @@ from dipdup.config import (
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
     TzktDatasourceConfig,
+    default_hooks,
 )
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -78,11 +79,11 @@ class DipDupCodeGenerator:
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
 
-    async def init(self, full: bool = False) -> None:
+    async def init(self, overwrite_types: bool = False) -> None:
         self._logger.info('Initializing project')
         await self.create_package()
         await self.fetch_schemas()
-        await self.generate_types(full)
+        await self.generate_types(overwrite_types)
         await self.generate_hooks()
         await self.generate_handlers()
         await self.cleanup()
@@ -109,7 +110,7 @@ class DipDupCodeGenerator:
             models_code = template.render()
             write(models_path, models_code)
 
-        for subpackage in ('handlers', 'jobs', 'hooks'):
+        for subpackage in ('handlers', 'hooks'):
             self._logger.info('Creating `%s.%s` package', self._config.package, subpackage)
             subpackage_path = join(self._config.package_path, subpackage)
             touch(join(subpackage_path, '__init__.py'))
@@ -216,7 +217,7 @@ class DipDupCodeGenerator:
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-    async def generate_types(self, full: bool = False) -> None:
+    async def generate_types(self, overwrite_types: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameter, big map keys/values."""
         schemas_path = join(self._config.package_path, 'schemas')
         types_path = join(self._config.package_path, 'types')
@@ -239,7 +240,7 @@ class DipDupCodeGenerator:
                 input_path = join(root, file)
                 output_path = join(types_root, f'{pascal_to_snake(name)}.py')
 
-                if exists and not full:
+                if exists and not overwrite_types:
                     continue
 
                 # NOTE: Skip if the first line starts with "# dipdup: ignore"
@@ -287,8 +288,9 @@ class DipDupCodeGenerator:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     async def generate_hooks(self) -> None:
-        for hook_config in self._config.hooks.values():
-            await self._generate_callback(hook_config, sql=True)
+        for hook_configs in self._config.hooks.values(), default_hooks.values():
+            for hook_config in hook_configs:
+                await self._generate_callback(hook_config, sql=True)
 
     async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
         self._logger.info('Generating Docker template')
@@ -375,7 +377,7 @@ class DipDupCodeGenerator:
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
 
-    async def migrate_user_handlers_to_v10(self) -> None:
+    async def migrate_handlers_to_v10(self) -> None:
         remove_lines = [
             'from dipdup.models import',
             'from dipdup.context import',
@@ -412,7 +414,7 @@ class DipDupCodeGenerator:
                 with open(path, 'w') as file:
                     file.write('\n'.join(newfile))
 
-    async def migrate_user_handlers_to_v11(self) -> None:
+    async def migrate_handlers_to_v11(self) -> None:
         replace_table = {
             'BigMapAction.ADD': 'BigMapAction.ADD_KEY',
             'BigMapAction.UPDATE': 'BigMapAction.UPDATE_KEY',
@@ -450,7 +452,10 @@ class DipDupCodeGenerator:
         code: List[str] = []
         if sql:
             code.append(f"await ctx.execute_sql('{callback_config.callback}')")
-        code.append('raise CallbackNotImplementedError')
+            if callback_config.callback == 'on_rollback':
+                code.append("await ctx.reindex(reason='reorg message received')")
+        else:
+            code.append('...')
 
         callback_code = callback_template.render(
             callback=callback_config.callback,

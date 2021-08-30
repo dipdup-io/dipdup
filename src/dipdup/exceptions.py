@@ -33,7 +33,7 @@ class ConfigInitializationException(DipDupException):
     message = 'Config is not initialized. Some stage was skipped. Call `pre_initialize` or `initialize`.'
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class DipDupError(Exception):
     """Unknown DipDup error"""
 
@@ -67,7 +67,7 @@ class DipDupError(Exception):
             raise DipDupError from e
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class ConfigurationError(DipDupError):
     """DipDup YAML config is invalid"""
 
@@ -82,7 +82,7 @@ class ConfigurationError(DipDupError):
 
 
 # TODO: Any cases besides model validation?
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class DatabaseConfigurationError(ConfigurationError):
     """DipDup can't initialize database with given models and parameters"""
 
@@ -100,7 +100,7 @@ class DatabaseConfigurationError(ConfigurationError):
         """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class MigrationRequiredError(DipDupError):
     """Project and DipDup spec versions don't match"""
 
@@ -116,21 +116,20 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
+        reindex = _tab + ReindexingRequiredError().help() if self.reindex else ''
         return f"""
             Project migration required!
 
-            {version_table}
+            {version_table.strip()}
 
               1. Run `dipdup migrate`
               2. Review and commit changes
 
-            See https://baking-bad.org/blog/ for additional release information.
-
-            {_tab + ReindexingRequiredError().help() if self.reindex else ''}
+            See https://baking-bad.org/blog/ for additional release information. {reindex}
         """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class ReindexingRequiredError(DipDupError):
     """Performed migration requires reindexing"""
 
@@ -145,7 +144,7 @@ class ReindexingRequiredError(DipDupError):
         """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class InitializationRequiredError(DipDupError):
     def _help(self) -> str:
         return """
@@ -156,7 +155,7 @@ class InitializationRequiredError(DipDupError):
         """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class HandlerImportError(DipDupError):
     """Can't perform import from handler module"""
 
@@ -178,7 +177,7 @@ class HandlerImportError(DipDupError):
         """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class ContractAlreadyExistsError(DipDupError):
     """Attemp to add a contract with alias or address which is already in use"""
 
@@ -202,7 +201,7 @@ class ContractAlreadyExistsError(DipDupError):
         """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class IndexAlreadyExistsError(DipDupError):
     """Attemp to add an index with alias which is already in use"""
 
@@ -225,7 +224,7 @@ class IndexAlreadyExistsError(DipDupError):
         """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class InvalidDataError(DipDupError):
     """Failed to validate operation/big_map data against a generated type class"""
 
@@ -249,7 +248,7 @@ class InvalidDataError(DipDupError):
         """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class CallbackError(DipDupError):
     """An error occured during callback execution"""
 
@@ -262,7 +261,7 @@ class CallbackError(DipDupError):
         """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class CallbackTypeError(DipDupError):
     """Agrument of invalid type was passed to a callback"""
 
@@ -281,19 +280,24 @@ class CallbackTypeError(DipDupError):
               type: {self.type_}
               expected type: {self.expected_type}
 
-            Make sure to set correct typenames in config and run `dipdup init --full` to regenerate typeclasses.
+            Make sure to set correct typenames in config and run `dipdup init --overwrite-types` to regenerate typeclasses.
         """
 
 
-@dataclass(frozen=True)
-class CallbackNotImplementedError(DipDupError):
-    # NOTE: Optionals to raise from callbacks without arguments. Will be wrapped.
-    kind: str = ''
-    name: str = ''
+@dataclass(frozen=True, repr=False)
+class DeprecatedHandlerError(DipDupError):
+    """Default handlers need to be converted to hooks"""
 
     def _help(self) -> str:
-        return f"""
-            `{self.name}` {self.kind} callback is not implemented.
+        return """
+            Default handlers have been deprecated in favor of hooks in DipDup 3.0.
 
-            If you want this {self.kind} to present in config but do nothing, remove `raise` statement from it.
+              * `handlers/on_rollback.py` -> `hooks/on_rollback.py`
+              * `handlers/on_configure.py` -> `hooks/on_restart.py`
+              * [none] -> `hooks/on_reindex.py`
+
+            Perform the following actions:
+
+              1. If you have any custom logic implemented in default handlers move it to corresponding hooks from the table above.
+              2. Remove default handlers from project.
         """
