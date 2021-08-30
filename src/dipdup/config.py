@@ -1001,8 +1001,6 @@ class DipDupConfig:
             self._imports_resolved.add(index_config.name)
 
     def _validate(self) -> None:
-        _logger.info('Validating config')
-
         # NOTE: Hasura
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
             raise ConfigurationError('SQLite database engine is not supported by Hasura')
@@ -1049,7 +1047,7 @@ class DipDupConfig:
                 )
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
-        _logger.info('Resolving template `%s`', template_config.name)
+        _logger.info('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
         template = self.get_template(template_config.template)
         raw_template = json.dumps(template, default=pydantic_encoder)

@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import time
+from collections import deque
 from contextlib import contextmanager, suppress
 from os.path import exists, join
 from pprint import pformat
@@ -35,9 +36,11 @@ from dipdup.exceptions import (
     IndexAlreadyExistsError,
     InitializationRequiredError,
 )
-from dipdup.models import Contract, OperationData
+from dipdup.models import Contract
 from dipdup.utils import FormattedLogger, iter_files
 from dipdup.utils.database import move_table, recreate_schema
+
+pending_indexes = deque()  # type: ignore
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -52,16 +55,15 @@ class DipDupContext:
         self.config = config
         self.callbacks = callbacks
         self.logger = FormattedLogger('dipdup.context')
-        self._pending_indexes = set()  # type: ignore
 
     def __str__(self) -> str:
         return pformat(self.__dict__)
 
-    async def fire_hook(self, name: str, *args, **kwargs: Any) -> None:
-        await self.callbacks.fire_hook(self, name, *args, **kwargs)
+    async def fire_hook(self, name: str, fmt: Optional[str] = None, *args, **kwargs: Any) -> None:
+        await self.callbacks.fire_hook(self, name, fmt, *args, **kwargs)
 
-    async def fire_handler(self, name: str, datasource: Datasource, *args, **kwargs: Any) -> None:
-        await self.callbacks.fire_handler(self, name, datasource, *args, **kwargs)
+    async def fire_handler(self, name: str, datasource: Datasource, fmt: Optional[str] = None, *args, **kwargs: Any) -> None:
+        await self.callbacks.fire_handler(self, name, datasource, fmt, *args, **kwargs)
 
     async def execute_sql(self, name: str) -> None:
         await self.callbacks.execute_sql(self, name)
@@ -98,6 +100,7 @@ class DipDupContext:
         await self.restart()
 
     async def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
+        self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(self, name, address)
 
@@ -116,6 +119,7 @@ class DipDupContext:
             ).save()
 
     async def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
+        self.logger.info('Creating index `%s` from template `%s`', name, template)
         if name in self.config.indexes:
             raise IndexAlreadyExistsError(self, name)
 
@@ -149,7 +153,7 @@ class DipDupContext:
             self.callbacks.register_handler(handler_config)
         await index.initialize_state()
 
-        self._pending_indexes.add(index)
+        pending_indexes.append(index)
 
 
 class HookContext(DipDupContext):
@@ -217,14 +221,16 @@ class CallbackManager:
             self._hooks[hook_config.callback] = hook_config
             hook_config.initialize_callback_fn(self._package)
 
-    async def fire_handler(self, ctx: 'DipDupContext', name: str, datasource: Datasource, *args, **kwargs: Any) -> None:
+    async def fire_handler(
+        self,
+        ctx: 'DipDupContext',
+        name: str,
+        datasource: Datasource,
+        fmt: Optional[str] = None,
+        *args,
+        **kwargs: Any,
+    ) -> None:
         try:
-            # FIXME: This is a very hacky way to get logger prefix from handler arguments. Should be done on another level.
-            fmt: Optional[str] = None
-            if args:
-                fmt = args[0].hash if isinstance(args[0], OperationData) else args[0].data.hash
-                fmt += ': {}'
-
             new_ctx = HandlerContext(
                 datasources=ctx.datasources,
                 config=ctx.config,
@@ -239,13 +245,20 @@ class CallbackManager:
         with self._wrapper('handler', name):
             await new_ctx.handler_config.callback_fn(new_ctx, *args, **kwargs)
 
-    async def fire_hook(self, ctx: 'DipDupContext', name: str, *args, **kwargs: Any) -> None:
+    async def fire_hook(
+        self,
+        ctx: 'DipDupContext',
+        name: str,
+        fmt: Optional[str] = None,
+        *args,
+        **kwargs: Any,
+    ) -> None:
         try:
             ctx = HookContext(
                 datasources=ctx.datasources,
                 config=ctx.config,
                 callbacks=ctx.callbacks,
-                logger=FormattedLogger(f'dipdup.hooks.{name}'),
+                logger=FormattedLogger(f'dipdup.hooks.{name}', fmt),
                 hook_config=self._hooks[name],
             )
         except KeyError as e:

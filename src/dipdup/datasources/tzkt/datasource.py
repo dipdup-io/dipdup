@@ -594,7 +594,7 @@ class TzktDatasource(IndexDatasource):
         if self._get_client().transport.state != ConnectionState.connected:
             return
 
-        self._logger.info('Connected to server')
+        self._logger.info('Realtime connection established, subscribing to channels')
         await self._subscribe_to_head()
         for address in self._transaction_subscriptions:
             await self._subscribe_to_transactions(address)
@@ -807,7 +807,7 @@ class TzktDatasource(IndexDatasource):
         return BigMapData(
             id=big_map_json['id'],
             level=big_map_json['level'],
-            # FIXME: operation_id field in API
+            # FIXME: missing `operation_id` field in API to identify operation
             operation_id=big_map_json['level'],
             timestamp=cls._parse_timestamp(big_map_json['timestamp']),
             bigmap=big_map_json['bigmap'],

@@ -21,7 +21,7 @@ from dipdup.config import (
     TzktDatasourceConfig,
     default_hooks,
 )
-from dipdup.context import CallbackManager, DipDupContext
+from dipdup.context import CallbackManager, DipDupContext, pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
@@ -53,8 +53,8 @@ class IndexDispatcher:
         await self._load_index_states()
 
         while not self._stopped:
-            with suppress(KeyError):
-                while index := self._ctx._pending_indexes.pop():
+            with suppress(IndexError):
+                while index := pending_indexes.pop():
                     self._indexes[index._config.name] = index
 
             tasks = [index.process() for index in self._indexes.values()]

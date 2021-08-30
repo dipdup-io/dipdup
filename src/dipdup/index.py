@@ -365,7 +365,12 @@ class OperationIndex(Index):
             else:
                 raise NotImplementedError
 
-        await self._ctx.fire_handler(handler_config.callback, self.datasource, *args)
+        await self._ctx.fire_handler(
+            handler_config.callback,
+            self.datasource,
+            operation_subgroup.hash + ': {}',
+            *args,
+        )
 
     async def _get_transaction_addresses(self) -> Set[str]:
         """Get addresses to fetch transactions from during initial synchronization"""
@@ -495,7 +500,13 @@ class BigMapIndex(Index):
             value=value,
         )
 
-        await self._ctx.fire_handler(handler_config.callback, self.datasource, big_map_diff)
+        await self._ctx.fire_handler(
+            handler_config.callback,
+            self.datasource,
+            # FIXME: missing `operation_id` field in API to identify operation
+            None,
+            big_map_diff,
+        )
 
     async def _process_big_maps(self, big_maps: List[BigMapData]) -> None:
         """Try to match big map diffs in cache with all patterns from indexes."""
