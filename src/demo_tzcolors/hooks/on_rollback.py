@@ -1,6 +1,5 @@
 from dipdup.context import HookContext
 from dipdup.datasources.datasource import Datasource
-from dipdup.exceptions import CallbackNotImplementedError
 
 
 async def on_rollback(
@@ -10,4 +9,4 @@ async def on_rollback(
     to_level: int,
 ) -> None:
     await ctx.execute_sql('on_rollback')
-    raise CallbackNotImplementedError
+    await ctx.reindex(reason='reorg message received')

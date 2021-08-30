@@ -79,7 +79,7 @@ class Index:
             return
 
         block = await self._datasource.get_block(self.state.level)
-        if self.state.head.hash != block.hash:
+        if head.hash != block.hash:
             await self._ctx.reindex('block hash mismatch (missed rollback while DipDup was stopped)')
 
     async def process(self) -> None:

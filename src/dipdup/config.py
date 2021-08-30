@@ -551,7 +551,6 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.exceptions', 'CallbackNotImplementedError'
         for pattern in self.pattern:
             yield from pattern.iter_imports(package)
 
@@ -680,7 +679,6 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'BigMapDiff'
-        yield 'dipdup.exceptions', 'CallbackNotImplementedError'
         yield package, 'models as models'
 
         yield self.format_key_import(package, self.contract_config.module_name, self.path)
@@ -818,7 +816,6 @@ class HookConfig(CallbackMixin, kind='hook'):
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HookContext'
-        yield 'dipdup.exceptions', 'CallbackNotImplementedError'
         for _, annotation in self.args.items():
             with suppress(ValueError):
                 package, obj = annotation.rsplit('.', 1)
@@ -1019,7 +1016,7 @@ class DipDupConfig:
 
         # NOTE: Duplicate contracts
         contracts = [cast(ResolvedIndexConfigT, i).contracts for i in self.indexes.values() if cast(ResolvedIndexConfigT, i).contracts]
-        plain_contracts = reduce(operator.add, contracts) if contracts else []
+        plain_contracts = reduce(operator.add, contracts) if contracts else [] # type: ignore
         # NOTE: After pre_initialize
         duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
         if duplicate_contracts:
