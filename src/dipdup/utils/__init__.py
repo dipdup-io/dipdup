@@ -7,7 +7,7 @@ import time
 import types
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from functools import reduce
+from functools import partial, reduce
 from logging import Logger
 from os import listdir, makedirs
 from os.path import dirname, exists, getsize, join
@@ -97,7 +97,7 @@ def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
     elif isfile(path):
         paths = iter(path)
     elif isdir(path):
-        paths = (join(path, f) for f in sorted(listdir(path)))
+        paths = map(partial(join, path), sorted(listdir(path)))
     else:
         raise RuntimeError(f'Path `{path}` exists but is neither a file nor a directory')
 

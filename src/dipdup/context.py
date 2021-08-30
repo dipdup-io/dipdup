@@ -284,17 +284,16 @@ class CallbackManager:
             name,
         )
 
-        for path in paths:
-            if exists(path):
-                break
-        else:
+        try:
+            path = next(filter(exists, paths))
+        except StopIteration:
             # NOTE: Not exactly this type of error
             raise ConfigurationError(f'SQL file/directory `{name}` not exists')
 
         # NOTE: SQL hooks are executed on default connection
         connection = get_connection(None)
 
-        for file in iter_files(sql_path, '.sql'):
+        for file in iter_files(path, '.sql'):
             ctx.logger.info('Executing `%s`', file.name)
             sql = file.read()
             for statement in sqlparse.split(sql):
