@@ -1,5 +1,5 @@
 import logging
-from asyncio import CancelledError, Task, create_task, gather
+from asyncio import CancelledError, Event, Task, create_task, gather
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import partial
 from operator import ne
@@ -21,6 +21,7 @@ from dipdup.config import (
     TzktDatasourceConfig,
     default_hooks,
 )
+from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from dipdup.context import CallbackManager, DipDupContext, pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
@@ -208,7 +209,7 @@ class DipDup:
             await self._set_up_hasura(stack, tasks)
 
             if not oneshot:
-                await self._set_up_jobs(stack)
+                await self._set_up_scheduler(stack, tasks)
                 await self._spawn_datasources(tasks)
 
             for name in self._config.indexes:
@@ -301,15 +302,6 @@ class DipDup:
         for hook_config in self._config.hooks.values():
             self._ctx.callbacks.register_hook(hook_config)
 
-    async def _set_up_jobs(self, stack: AsyncExitStack) -> None:
-        if not self._config.jobs:
-            return
-
-        await stack.enter_async_context(self._scheduler_context())
-        for job_config in self._config.jobs.values():
-            job_config.hook = self._ctx.config.hooks[job_config.hook]  # type: ignore
-            add_job(self._ctx, self._scheduler, job_config)
-
     async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
         if not self._config.hasura:
             return
@@ -335,10 +327,32 @@ class DipDup:
     async def _spawn_datasources(self, tasks: Set[Task]) -> None:
         tasks.update(create_task(d.run()) for d in self._datasources.values())
 
-    @asynccontextmanager
-    async def _scheduler_context(self):
+    async def _set_up_scheduler(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
+        job_failed = Event()
+        exception: Optional[Exception] = None
+
+        @asynccontextmanager
+        async def _context():
+            try:
+                yield
+            finally:
+                self._scheduler.shutdown()
+
+        def _hook(event) -> None:
+            nonlocal job_failed, exception
+            exception = event.exception
+            job_failed.set()
+
+        async def _watchdog() -> None:
+            nonlocal job_failed
+            await job_failed.wait()
+            raise exception  # type: ignore
+
+        await stack.enter_async_context(_context())
+        tasks.add(create_task(_watchdog()))
+
+        for job_config in self._config.jobs.values():
+            add_job(self._ctx, self._scheduler, job_config)
+
+        self._scheduler.add_listener(_hook, EVENT_JOB_ERROR)
         self._scheduler.start()
-        try:
-            yield
-        finally:
-            self._scheduler.shutdown()

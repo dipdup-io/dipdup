@@ -1078,6 +1078,10 @@ class DipDupConfig:
             self._resolve_index_links(index_config)
             self._links_resolved.add(index_config.name)
 
+        for job_config in self.jobs.values():
+            if isinstance(job_config.hook, str):
+                job_config.hook = self.hooks[job_config.hook]
+
     def _resolve_index_links(self, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
 
