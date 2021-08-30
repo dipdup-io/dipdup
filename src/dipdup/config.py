@@ -1016,7 +1016,7 @@ class DipDupConfig:
 
         # NOTE: Duplicate contracts
         contracts = [cast(ResolvedIndexConfigT, i).contracts for i in self.indexes.values() if cast(ResolvedIndexConfigT, i).contracts]
-        plain_contracts = reduce(operator.add, contracts) if contracts else [] # type: ignore
+        plain_contracts = reduce(operator.add, contracts) if contracts else []  # type: ignore
         # NOTE: After pre_initialize
         duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
         if duplicate_contracts:

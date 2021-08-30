@@ -35,7 +35,7 @@ from dipdup.exceptions import (
     IndexAlreadyExistsError,
     InitializationRequiredError,
 )
-from dipdup.models import Contract
+from dipdup.models import Contract, OperationData
 from dipdup.utils import FormattedLogger, iter_files
 from dipdup.utils.database import move_table, recreate_schema
 
@@ -219,11 +219,17 @@ class CallbackManager:
 
     async def fire_handler(self, ctx: 'DipDupContext', name: str, datasource: Datasource, *args, **kwargs: Any) -> None:
         try:
+            # FIXME: This is a very hacky way to get logger prefix from handler arguments. Should be done on another level.
+            fmt: Optional[str] = None
+            if args:
+                fmt = args[0].hash if isinstance(args[0], OperationData) else args[0].data.hash
+                fmt += ': {}'
+
             new_ctx = HandlerContext(
                 datasources=ctx.datasources,
                 config=ctx.config,
                 callbacks=ctx.callbacks,
-                logger=FormattedLogger(f'dipdup.handlers.{name}'),
+                logger=FormattedLogger(f'dipdup.handlers.{name}', fmt),
                 handler_config=self._handlers[name],
                 datasource=datasource,
             )
