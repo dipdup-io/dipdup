@@ -34,7 +34,6 @@ class HasuraTest(IsolatedAsyncioTestCase):
                 user='test',
                 database='test',
                 password='test',
-                schema_name='test',
             )
             dipdup = DipDup(config)
             await stack.enter_async_context(tortoise_wrapper(config.database.connection_string, 'demo_hic_et_nunc.models'))
@@ -44,7 +43,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
 
             hasura_container = DbContainer('hasura/graphql-engine:v2.0.8').with_env(
                 'HASURA_GRAPHQL_DATABASE_URL',
-                f'postgres://test:test@{postgres_ip}:5432/test',
+                f'postgres://test:test@{postgres_ip}:5432',
             )
             hasura_container._connect = MagicMock()
             hasura_container._configure = MagicMock()
@@ -56,4 +55,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
             hasura_gateway = HasuraGateway('demo_hic_et_nunc', config.hasura, config.database)
             await stack.enter_async_context(hasura_gateway)
 
+            await hasura_gateway.configure()
+
+            config.hasura.camel_case = True
             await hasura_gateway.configure()

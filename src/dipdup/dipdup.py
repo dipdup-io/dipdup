@@ -5,6 +5,7 @@ from functools import partial
 from operator import ne
 from typing import Dict, List, Optional, Set
 
+from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
@@ -21,7 +22,6 @@ from dipdup.config import (
     TzktDatasourceConfig,
     default_hooks,
 )
-from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from dipdup.context import CallbackManager, DipDupContext, pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
