@@ -1,4 +1,3 @@
-import time
 from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
 from contextlib import suppress
@@ -6,23 +5,27 @@ from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
 from pydantic.error_wrappers import ValidationError
 
+import dipdup.models as models
 from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
     ContractConfig,
-    IndexConfigTemplateT,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerPatternConfigT,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
     OperationType,
+    ResolvedIndexConfigT,
 )
-from dipdup.context import DipDupContext, HandlerContext
+from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import InvalidDataError
-from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, OperationData, Origination, State, TemporaryState, Transaction
-from dipdup.utils import FormattedLogger, in_global_transaction
+from dipdup.models import BigMapData, BigMapDiff, HeadBlockData
+from dipdup.models import Index as IndexState
+from dipdup.models import IndexStatus, OperationData, Origination, Transaction
+from dipdup.utils import FormattedLogger
+from dipdup.utils.database import in_global_transaction
 
 # NOTE: Operations of a single contract call
 OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
@@ -31,39 +34,72 @@ OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
 class Index:
     _queue: Deque
 
-    def __init__(self, ctx: DipDupContext, config: IndexConfigTemplateT, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: ResolvedIndexConfigT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
         self._config = config
         self._datasource = datasource
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
-        self._state: Optional[State] = None
+        self._head: Optional[models.Head] = None
+        self._state: Optional[models.Index] = None
 
     @property
     def datasource(self) -> TzktDatasource:
         return self._datasource
 
     @property
-    def state(self) -> State:
+    def head(self) -> Optional[models.Head]:
+        return self._head
+
+    @property
+    def state(self) -> models.Index:
         if self._state is None:
             raise RuntimeError('Index state is not initialized')
         return self._state
 
-    async def process(self) -> None:
-        await self._initialize_index_state()
+    async def initialize_state(self, state: Optional[IndexState] = None) -> None:
+        if not self._state:
+            if not state:
+                state, _ = await models.Index.get_or_create(
+                    name=self._config.name,
+                    type=self._config.kind,
+                    defaults=dict(
+                        level=self._config.first_level,
+                        config_hash=self._config.hash(),
+                        template=self._config.parent.name if self._config.parent else None,
+                        template_values=self._config.template_values,
+                    ),
+                )
 
-        if self._config.last_block:
-            last_level = self._config.last_block
+            self._state = state
+
+        # NOTE: No need to check hashes of indexes which are not synchronized.
+        head = await self.state.head
+        if not head or self.state.level != head.level:
+            return
+
+        block = await self._datasource.get_block(self.state.level)
+        if head.hash != block.hash:
+            await self._ctx.reindex(reason='block hash mismatch (missed rollback while DipDup was stopped)')
+
+    async def process(self) -> None:
+        # NOTE: `--oneshot` flag implied
+        if self._config.last_level:
+            last_level = self._config.last_level
             await self._synchronize(last_level, cache=True)
+            await self.state.update_status(IndexStatus.ONESHOT, last_level)
+
         elif self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to the latest block')
             last_level = (await self._datasource.get_head_block()).level
             await self._synchronize(last_level)
+
         elif self._datasource.sync_level > self.state.level:
             self._logger.info('Index is behind datasource, sync to datasource level')
             self._queue.clear()
             last_level = self._datasource.sync_level
             await self._synchronize(last_level)
+
         else:
             await self._process_queue()
 
@@ -81,48 +117,14 @@ class Index:
             return None
         if first_level > last_level:
             raise RuntimeError(f'Attempt to synchronize index from level {first_level} to level {last_level}')
+
         self._logger.info('Synchronizing index to level %s', last_level)
-        self.state.hash = None  # type: ignore
-        await self.state.save()
+        await self.state.update_status(IndexStatus.SYNCING, first_level)
         return first_level
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
-        self.state.level = last_level  # type: ignore
-        await self.state.save()
-
-    async def _initialize_index_state(self) -> None:
-        if self._state:
-            return
-        self._logger.info('Initializing index state')
-        index_config_hash = self._config.hash()
-        state = await State.get_or_none(
-            index_name=self._config.name,
-            index_type=self._config.kind,
-        )
-        if state is None:
-            state_cls = TemporaryState if self._config.stateless else State
-            state = state_cls(
-                index_name=self._config.name,
-                index_type=self._config.kind,
-                index_hash=index_config_hash,
-                level=self._config.first_block,
-            )
-
-        elif state.index_hash != index_config_hash:
-            self._logger.warning('Config hash mismatch (config has been changed), reindexing')
-            await self._ctx.reindex()
-
-        self._logger.info('%s', f'{state.level=} {state.hash=}'.replace('state.', ''))
-        # NOTE: No need to check indexes which are not synchronized.
-        if state.level and state.hash:
-            block = await self._datasource.get_block(state.level)
-            if state.hash != block.hash:
-                self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
-                await self._ctx.reindex()
-
-        await state.save()
-        self._state = state
+        await self.state.update_status(IndexStatus.REALTIME, last_level)
 
 
 class OperationIndex(Index):
@@ -147,7 +149,6 @@ class OperationIndex(Index):
         if self._rollback_level:
             raise RuntimeError('Already in rollback state')
 
-        await self._initialize_index_state()
         if self.state.level < from_level:
             self._logger.info('Index level is lower than rollback level, ignoring')
         elif self.state.level == from_level:
@@ -217,8 +218,7 @@ class OperationIndex(Index):
             received_hashes = set([op.hash for op in operations])
             reused_hashes = received_hashes & expected_hashes
             if reused_hashes != expected_hashes:
-                self._logger.warning('Attempted a single level rollback, but arrived block differs from processed one')
-                await self._ctx.reindex()
+                await self._ctx.reindex(reason='attempted a single level rollback, but arrived block differs from processed one')
 
             self._rollback_level = None
             self._last_hashes = set()
@@ -231,10 +231,9 @@ class OperationIndex(Index):
             self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_operations(operations)
 
-            self.state.level = level  # type: ignore
-            if block:
-                self.state.hash = block.hash  # type: ignore
-            await self.state.save()
+            status = IndexStatus.REALTIME if block else IndexStatus.SYNCING
+            # FIXME: Not obvious: receiving `BlockData`, sending `Head`
+            await self.state.update_status(status, level, self.head if block else None)
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
@@ -326,7 +325,6 @@ class OperationIndex(Index):
     ):
         """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
-        start = time.perf_counter()
 
         args: List[Optional[Union[Transaction, Origination, OperationData]]] = []
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
@@ -342,12 +340,7 @@ class OperationIndex(Index):
                 try:
                     parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
                 except ValidationError as e:
-                    error_context = dict(
-                        hash=operation.hash,
-                        counter=operation.counter,
-                        nonce=operation.nonce,
-                    )
-                    raise InvalidDataError(operation.parameter_json, parameter_type, error_context) from e
+                    raise InvalidDataError(parameter_type, operation.parameter_json, operation) from e
 
                 storage_type = pattern_config.storage_type_cls
                 storage = operation.get_merged_storage(storage_type)
@@ -372,26 +365,12 @@ class OperationIndex(Index):
             else:
                 raise NotImplementedError
 
-        logger = FormattedLogger(
-            name=handler_config.callback,
-            fmt=operation_subgroup.hash + ': {}',
+        await self._ctx.fire_handler(
+            handler_config.callback,
+            self.datasource,
+            operation_subgroup.hash + ': {}',
+            *args,
         )
-        handler_context = HandlerContext(
-            datasources=self._ctx.datasources,
-            config=self._ctx.config,
-            logger=logger,
-            template_values=self._config.template_values,
-            datasource=self.datasource,
-            index_config=self._config,
-        )
-
-        await handler_config.callback_fn(handler_context, *args)
-
-        end = time.perf_counter()
-        self._logger.debug(f'{handler_config.callback}` handler executed in {end - start:.3f}s')
-
-        if handler_context.updated:
-            self._ctx.commit()
 
     async def _get_transaction_addresses(self) -> Set[str]:
         """Get addresses to fetch transactions from during initial synchronization"""
@@ -477,10 +456,8 @@ class BigMapIndex(Index):
             self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_big_maps(big_maps)
 
-            self.state.level = level  # type: ignore
-            if block:
-                self.state.hash = block.hash  # type: ignore
-            await self.state.save()
+            status = IndexStatus.REALTIME if block else IndexStatus.SYNCING
+            await self.state.update_status(status, level, self.datasource.block if block else None)
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""
@@ -497,14 +474,13 @@ class BigMapIndex(Index):
     ) -> None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
-        start = time.perf_counter()
 
         if matched_big_map.action.has_key:
             key_type = handler_config.key_type_cls
             try:
                 key = key_type.parse_obj(matched_big_map.key)
             except ValidationError as e:
-                raise InvalidDataError(matched_big_map.key, key_type) from e
+                raise InvalidDataError(key_type, matched_big_map.key, matched_big_map) from e
         else:
             key = None
 
@@ -513,37 +489,24 @@ class BigMapIndex(Index):
             try:
                 value = value_type.parse_obj(matched_big_map.value)
             except ValidationError as e:
-                raise InvalidDataError(matched_big_map.key, value_type) from e
+                raise InvalidDataError(value_type, matched_big_map.key, matched_big_map) from e
         else:
             value = None
 
-        big_map_context = BigMapDiff(  # type: ignore
+        big_map_diff = BigMapDiff(  # type: ignore
             data=matched_big_map,
             action=matched_big_map.action,
             key=key,
             value=value,
         )
-        logger = FormattedLogger(
-            name=handler_config.callback,
-            fmt=str(matched_big_map.operation_id) + ': {}',
+
+        await self._ctx.fire_handler(
+            handler_config.callback,
+            self.datasource,
+            # FIXME: missing `operation_id` field in API to identify operation
+            None,
+            big_map_diff,
         )
-
-        handler_context = HandlerContext(
-            datasources=self._ctx.datasources,
-            config=self._ctx.config,
-            logger=logger,
-            template_values=self._config.template_values,
-            datasource=self.datasource,
-            index_config=self._config,
-        )
-
-        await handler_config.callback_fn(handler_context, big_map_context)
-
-        end = time.perf_counter()
-        self._logger.debug(f'{handler_config.callback}` handler executed in {end - start:.3f}s')
-
-        if handler_context.updated:
-            self._ctx.commit()
 
     async def _process_big_maps(self, big_maps: List[BigMapData]) -> None:
         """Try to match big map diffs in cache with all patterns from indexes."""

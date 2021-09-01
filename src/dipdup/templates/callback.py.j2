@@ -1,0 +1,12 @@
+{%- for imp in imports %}
+{{ imp }}
+{%- endfor %}
+
+async def {{ callback }}(
+{%- for arg in arguments %}
+    {{ arg }},
+{%- endfor %}
+) -> None:
+{%- for line in code %}
+    {{ line }}
+{%- endfor %}

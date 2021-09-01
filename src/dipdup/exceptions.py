@@ -1,108 +1,114 @@
+import textwrap
 import traceback
-from abc import ABC, abstractmethod
-from pprint import pformat
-from typing import Any, Optional, Type
+from contextlib import contextmanager
+from dataclasses import dataclass
+from typing import Any, Iterator, Optional, Type
 
 from tabulate import tabulate
+from tortoise.models import Model
 
 from dipdup import spec_version_mapping
 
 _tab = '\n\n' + ('_' * 80) + '\n\n'
 
-_migration_required_message = """Project migration required!
 
-{version_table}
-
-  1. Run `dipdup migrate`
-  2. Review and commit changes
-
-See https://baking-bad.org/blog/ for additional release information.
-"""
-
-_reindexing_required_message = """Reindexing required!
-
-Recent changes in the framework have made it necessary to reindex the project.
-
-  1. Optionally backup a database
-  2. Run `dipdup run --reindex` 
-"""
-
-_handler_import_message = """Failed to import `{obj}` from `{module}`.
-
-Reasons in order of possibility:
-
-  1. `init` command was not called after modifying config
-  2. Name of handler module and handler function inside it don't match
-  2. Invalid `package` config value, reusing name of existing package
-  3. Something's wrong with PYTHONPATH env variable
-
-"""
-
-_contract_already_exists_error = """Contract with name `{name}` or address `{address}` already exists.
-
-Active contracts:
-{contracts_table}
-"""
-
-_index_already_exists_error = """Index with name `{name}` already exists.
-
-Active indexes:
-{indexes_table}
-"""
-
-_data_validation_error = """Failed to validate operation/big_map data against a generated type class.
-
-Expected type:
-{type_name}
-
-Invalid data:
-{invalid_data}
-
-Error context:
-{error_context}
-"""
+def unindent(text: str) -> str:
+    """Remove indentation from text"""
+    return textwrap.dedent(text).strip()
 
 
-class DipDupError(ABC, Exception):
-    exit_code = 1
+def indent(text: str, indent: int = 2) -> str:
+    """Add indentation to text"""
+    return textwrap.indent(text, ' ' * indent)
 
-    def __init__(self, ctx) -> None:
-        super().__init__()
-        self.ctx = ctx
+
+class DipDupException(Exception):
+    message: str
+
+    def __init__(self, *args) -> None:
+        super().__init__(self.message, *args)
+
+
+class ConfigInitializationException(DipDupException):
+    message = 'Config is not initialized. Some stage was skipped. Call `pre_initialize` or `initialize`.'
+
+
+@dataclass(frozen=True, repr=False)
+class DipDupError(Exception):
+    """Unknown DipDup error"""
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}: {self.__doc__}'
 
-    @abstractmethod
-    def format_help(self) -> str:
-        ...
+    def _help(self) -> str:
+        return """
+            Unexpected error occurred!
+
+            Please file a bug report at https://github.com/dipdup-net/dipdup/issues and attach the following:
+
+              * `dipdup.yml` config. Make sure to remove sensitive information.
+              * Reasonable amount of logs before the crash.
+        """
+
+    def help(self) -> str:
+        return unindent(self._help())
 
     def format(self) -> str:
         exc = f'\n\n{traceback.format_exc()}'.rstrip()
-        return _tab.join([exc, self.format_help() + '\n'])
+        return _tab.join([exc, self.help() + '\n'])
+
+    @contextmanager
+    def wrap(ctx: Optional[Any] = None) -> Iterator[None]:
+        try:
+            yield
+        except DipDupError:
+            raise
+        except Exception as e:
+            raise DipDupError from e
 
 
+@dataclass(frozen=True, repr=False)
 class ConfigurationError(DipDupError):
     """DipDup YAML config is invalid"""
 
-    def __init__(self, msg: str) -> None:
-        super().__init__(None)
-        self.msg = msg
+    msg: str
 
-    def format_help(self) -> str:
-        return f"{self.msg}\n\nDipDup config reference: https://docs.dipdup.net/config-file-reference\n"
+    def _help(self) -> str:
+        return f"""
+            {self.msg}
+
+            DipDup config reference: https://docs.dipdup.net/config-file-reference
+        """
 
 
+# TODO: Any cases besides model validation?
+@dataclass(frozen=True, repr=False)
+class DatabaseConfigurationError(ConfigurationError):
+    """DipDup can't initialize database with given models and parameters"""
+
+    model: Type[Model]
+
+    def _help(self) -> str:
+        return f"""
+            {self.msg}
+
+            Model: `{self.model.__class__.__name__}`
+            Table: `{self.model._meta.db_table}`
+
+            Tortoise ORM examples: https://tortoise-orm.readthedocs.io/en/latest/examples.html
+            DipDup config reference: https://docs.dipdup.net/config-file-reference/database
+        """
+
+
+@dataclass(frozen=True, repr=False)
 class MigrationRequiredError(DipDupError):
     """Project and DipDup spec versions don't match"""
 
-    def __init__(self, ctx, from_: str, to: str, reindex: bool = False) -> None:
-        super().__init__(ctx)
-        self.from_ = from_
-        self.to = to
-        self.reindex = reindex
+    from_: str
+    to: str
+    reindex: bool = False
 
-    def format_help(self) -> str:
+    def _help(self) -> str:
         version_table = tabulate(
             [
                 ['current', self.from_, spec_version_mapping[self.from_]],
@@ -110,68 +116,188 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
-        message = _migration_required_message.format(version_table=version_table)
-        if self.reindex:
-            message += _tab + _reindexing_required_message
-        return message
+        reindex = _tab + ReindexingRequiredError().help() if self.reindex else ''
+        return f"""
+            Project migration required!
+
+            {version_table.strip()}
+
+              1. Run `dipdup migrate`
+              2. Review and commit changes
+
+            See https://baking-bad.org/blog/ for additional release information. {reindex}
+        """
 
 
+@dataclass(frozen=True, repr=False)
 class ReindexingRequiredError(DipDupError):
     """Performed migration requires reindexing"""
 
-    def format_help(self) -> str:
-        return _reindexing_required_message
+    def _help(self) -> str:
+        return """
+            Reindexing required!
+
+            Recent changes in the framework have made it necessary to reindex the project.
+
+              1. Optionally backup a database
+              2. Run `dipdup run --reindex` 
+        """
 
 
+@dataclass(frozen=True, repr=False)
+class InitializationRequiredError(DipDupError):
+    def _help(self) -> str:
+        return """
+            Project initialization required!
+
+            1. Run `dipdup init`
+            2. Review and commit changes
+        """
+
+
+@dataclass(frozen=True, repr=False)
 class HandlerImportError(DipDupError):
     """Can't perform import from handler module"""
 
-    def __init__(self, module: str, obj: Optional[str] = None) -> None:
-        super().__init__(None)
-        self.module = module
-        self.obj = obj
+    module: str
+    obj: Optional[str] = None
 
-    def format_help(self) -> str:
-        return _handler_import_message.format(obj=self.obj or '', module=self.module)
+    def _help(self) -> str:
+        what = f'`{self.obj}` from ' if self.obj else ''
+        return f"""
+            Failed to import {what} module `{self.module}`.
+
+            Reasons in order of possibility:
+
+            1. `init` command was not called after modifying config
+            2. Name of handler module and handler function inside it don't match
+            2. Invalid `package` config value, reusing name of existing package
+            3. Something's wrong with PYTHONPATH env variable
+
+        """
 
 
+@dataclass(frozen=True, repr=False)
 class ContractAlreadyExistsError(DipDupError):
     """Attemp to add a contract with alias or address which is already in use"""
 
-    def __init__(self, ctx, name: str, address: str) -> None:
-        super().__init__(ctx)
-        self.name = name
-        self.address = address
+    ctx: Any
+    name: str
+    address: str
 
-    def format_help(self) -> str:
-        contracts_table = tabulate([(c.name, c.address) for c in self.ctx.config.contracts.values()], tablefmt='plain')
-        return _contract_already_exists_error.format(name=self.name, address=self.address, contracts_table=contracts_table)
+    def _help(self) -> str:
+        contracts_table = indent(
+            tabulate(
+                [(c.name, c.address) for c in self.ctx.config.contracts.values()],
+                tablefmt='plain',
+            )
+        )
+        return f"""
+            Contract with name `{self.name}` or address `{self.address}` already exists.
+
+            Active contracts:
+
+            {contracts_table}
+        """
 
 
+@dataclass(frozen=True, repr=False)
 class IndexAlreadyExistsError(DipDupError):
     """Attemp to add an index with alias which is already in use"""
 
-    def __init__(self, ctx, name: str) -> None:
-        super().__init__(ctx)
-        self.name = name
+    ctx: Any
+    name: str
 
     def format_help(self) -> str:
-        indexes_table = tabulate([(c.name, c.kind) for c in self.ctx.config.indexes.values()], tablefmt='plain')
-        return _index_already_exists_error.format(name=self.name, indexes_table=indexes_table)
+        indexes_table = indent(
+            tabulate(
+                [(c.name, c.kind) for c in self.ctx.config.indexes.values()],
+                tablefmt='plain',
+            )
+        )
+        return f"""
+            Index with name `{self.name}` already exists.
+
+            Active indexes:
+
+            {indexes_table}
+        """
 
 
+@dataclass(frozen=True, repr=False)
 class InvalidDataError(DipDupError):
     """Failed to validate operation/big_map data against a generated type class"""
 
-    def __init__(self, data: Any, type_cls: Type, error_context: Optional[Any] = None) -> None:
-        super().__init__(None)
-        self.data = data
-        self.type_name = type_cls.__name__
-        self.error_context = error_context if error_context else {}
+    type_cls: Type
+    data: Any
+    parsed_object: Any
 
-    def format_help(self) -> str:
-        return _data_validation_error.format(
-            invalid_data=pformat(self.data, compact=True),
-            type_name=self.type_name,
-            error_context=pformat(self.error_context, compact=True),
-        )
+    def _help(self) -> str:
+
+        return f"""
+            Failed to validate operation/big_map data against a generated type class.
+
+            Expected type:
+            `{self.type_cls.__class__.__qualname__}`
+
+            Invalid data:
+            {self.data}
+
+            Parsed object:
+            {self.parsed_object}
+        """
+
+
+@dataclass(frozen=True, repr=False)
+class CallbackError(DipDupError):
+    """An error occured during callback execution"""
+
+    kind: str
+    name: str
+
+    def _help(self) -> str:
+        return f"""
+            `{self.name}` {self.kind} callback execution failed.
+        """
+
+
+@dataclass(frozen=True, repr=False)
+class CallbackTypeError(DipDupError):
+    """Agrument of invalid type was passed to a callback"""
+
+    kind: str
+    name: str
+
+    arg: str
+    type_: Type
+    expected_type: Type
+
+    def _help(self) -> str:
+        return f"""
+            `{self.name}` {self.kind} callback was called with an argument of invalid type.
+
+              argument: `{self.arg}`
+              type: {self.type_}
+              expected type: {self.expected_type}
+
+            Make sure to set correct typenames in config and run `dipdup init --overwrite-types` to regenerate typeclasses.
+        """
+
+
+@dataclass(frozen=True, repr=False)
+class DeprecatedHandlerError(DipDupError):
+    """Default handlers need to be converted to hooks"""
+
+    def _help(self) -> str:
+        return """
+            Default handlers have been deprecated in favor of hooks in DipDup 3.0.
+
+              * `handlers/on_rollback.py` -> `hooks/on_rollback.py`
+              * `handlers/on_configure.py` -> `hooks/on_restart.py`
+              * [none] -> `hooks/on_reindex.py`
+
+            Perform the following actions:
+
+              1. If you have any custom logic implemented in default handlers move it to corresponding hooks from the table above.
+              2. Remove default handlers from project.
+        """

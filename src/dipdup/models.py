@@ -10,7 +10,7 @@ from pydantic.dataclasses import dataclass
 from pydantic.error_wrappers import ValidationError
 from tortoise import Model, fields
 
-from dipdup.exceptions import ConfigurationError, InvalidDataError
+from dipdup.exceptions import ConfigurationError, DipDupException, InvalidDataError
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -24,32 +24,14 @@ _logger = logging.getLogger('dipdup.models')
 class IndexType(Enum):
     operation = 'operation'
     big_map = 'big_map'
-    block = 'block'
-    schema = 'schema'
 
 
-class State(Model):
-    """Stores current level of index and hash of it's config"""
-
-    index_name = fields.CharField(256, pk=True)
-    index_type = fields.CharEnumField(IndexType)
-    index_hash = fields.CharField(256)
-    level = fields.IntField(default=0)
-    hash = fields.CharField(64, null=True)
-
-    class Meta:
-        table = 'dipdup_state'
-
-
-# TODO: Drop `stateless` option
-class TemporaryState(State):
-    """Used within stateless indexes, skip saving to DB"""
-
-    async def save(self, using_db=None, update_fields=None, force_create=False, force_update=False) -> None:
-        pass
-
-    class Meta:
-        abstract = True
+class IndexStatus(Enum):
+    NEW = 'NEW'
+    SYNCING = 'SYNCING'
+    REALTIME = 'REALTIME'
+    ROLLBACK = 'ROLLBACK'
+    ONESHOT = 'ONESHOT'
 
 
 @dataclass
@@ -82,7 +64,7 @@ class OperationData:
     originated_contract_code_hash: Optional[int] = None
     diffs: Optional[List[Dict[str, Any]]] = None
 
-    # TODO: refactor this class -> move merge/process methods away
+    # TODO: Refactor this class, move storage processing methods to TzktDatasource
     def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str, array: bool) -> None:
         """Apply big map diffs of specific path to storage"""
         if self.diffs is None:
@@ -161,7 +143,7 @@ class OperationData:
         try:
             return storage_type.parse_obj(storage)
         except ValidationError as e:
-            raise InvalidDataError(storage, storage_type) from e
+            raise InvalidDataError(storage_type, storage, self) from e
 
 
 @dataclass
@@ -217,7 +199,7 @@ class BigMapData:
 
 @dataclass
 class BigMapDiff(Generic[KeyType, ValueType]):
-    """Wrapper for every big map diff in each list of handler arguments"""
+    """Wrapper for every big map diff in handler arguments"""
 
     action: BigMapAction
     data: BigMapData
@@ -227,7 +209,7 @@ class BigMapDiff(Generic[KeyType, ValueType]):
 
 @dataclass
 class BlockData:
-    """Basic structure for blocks from TzKT response"""
+    """Basic structure for blocks from TzKT HTTP response"""
 
     level: int
     hash: str
@@ -245,6 +227,8 @@ class BlockData:
 
 @dataclass
 class HeadBlockData:
+    """Basic structure for head block from TzKT SignalR response"""
+
     cycle: int
     level: int
     hash: str
@@ -263,3 +247,73 @@ class HeadBlockData:
     quote_jpy: Decimal
     quote_krw: Decimal
     quote_eth: Decimal
+
+
+class Schema(Model):
+    name = fields.CharField(256, pk=True)
+    hash = fields.CharField(256)
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_schema'
+
+
+class Head(Model):
+    name = fields.CharField(256, pk=True)
+    level = fields.IntField()
+    hash = fields.CharField(64)
+    timestamp = fields.DatetimeField()
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_head'
+
+
+class Index(Model):
+    name = fields.CharField(256, pk=True)
+    type = fields.CharEnumField(IndexType)
+    status = fields.CharEnumField(IndexStatus, default=IndexStatus.NEW)
+
+    config_hash = fields.CharField(256)
+    template = fields.CharField(256, null=True)
+    template_values = fields.JSONField(null=True)
+
+    level = fields.IntField(default=0)
+    head = fields.ForeignKeyField('int_models.Head', related_name='indexes', null=True)
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    async def update_status(
+        self,
+        status: IndexStatus,
+        level: Optional[int] = None,
+        head: Optional['Head'] = None,
+    ) -> None:
+        if level:
+            if level < self.level:
+                raise DipDupException('Index level is higher than desired level')
+            self.level = level  # type: ignore
+
+        self.head = head
+        self.status = status
+        await self.save()
+
+    class Meta:
+        table = 'dipdup_index'
+
+
+class Contract(Model):
+    name = fields.CharField(256, pk=True)
+    address = fields.CharField(256)
+    typename = fields.CharField(256, null=True)
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_contract'

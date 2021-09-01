@@ -12,7 +12,7 @@ from dipdup.dipdup import DipDup
 class CodegenTest(IsolatedAsyncioTestCase):
     async def test_codegen(self):
         for name in [
-            'hic_et_nunc_job.yml',
+            'hic_et_nunc.yml',
             'quipuswap.yml',
             'tzcolors.yml',
             'tezos_domains_big_map.yml',

@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class ExecuteParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     action_name: str
-    original_sender: str
     payload: str
+    original_sender: str

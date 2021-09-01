@@ -112,7 +112,7 @@ class _HTTPGateway:
                     raise e
 
                 ratelimit_sleep: Optional[float] = None
-                if isinstance(e, aiohttp.ClientResponseError) and e.code == HTTPStatus.TOO_MANY_REQUESTS:
+                if isinstance(e, aiohttp.ClientResponseError) and e.status == HTTPStatus.TOO_MANY_REQUESTS:
                     # NOTE: Sleep at least 5 seconds on ratelimit
                     ratelimit_sleep = 5
                     # TODO: Parse Retry-After in UTC date format

@@ -16,13 +16,13 @@ from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
     HTTPConfig,
-    IndexConfigTemplateT,
     OperationHandlerOriginationPatternConfig,
     OperationIndexConfig,
+    ResolvedIndexConfigT,
 )
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData
+from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData
 from dipdup.utils import groupby, split_by_chunks
 
 OperationID = int
@@ -279,6 +279,38 @@ class BigMapFetcher:
             yield big_maps[0].level, big_maps[: i + 1]
 
 
+class BlockCache:
+    def __init__(self) -> None:
+        # FIXME: Why store older blocks?
+        self._limit = 10
+        self._blocks: DefaultDict[int, Optional[HeadBlockData]] = defaultdict(lambda: None)
+        self._events: DefaultDict[int, asyncio.Event] = defaultdict(asyncio.Event)
+
+    async def add_block(self, block: HeadBlockData) -> None:
+        if self._blocks[block.level]:
+            raise RuntimeError('Attempt to add block {block.level} which is already cached')
+        self._blocks[block.level] = block
+        self._events[block.level].set()
+
+        last_blocks = sorted(self._blocks.keys())[-self._limit :]
+        self._blocks = defaultdict(lambda: None, ({k: v for k, v in self._blocks.items() if k in last_blocks}))
+        self._events = defaultdict(asyncio.Event, ({k: v for k, v in self._events.items() if k in last_blocks}))
+
+    async def get_block(self, level: int) -> HeadBlockData:
+        if self._blocks and level < sorted(self._blocks.keys())[-1] - self._limit:
+            raise RuntimeError(f'Attemps to get block older than {self._limit} levels from head')
+
+        try:
+            await asyncio.wait_for(fut=self._events[level].wait(), timeout=3)
+        except asyncio.TimeoutError as e:
+            raise RuntimeError(f'Block {level} hasn\'t arrived in 3 seconds. Forgot to subscribe to head?') from e
+
+        block = self._blocks[level]
+        if not block:
+            raise RuntimeError('Event is set but block is missing in cache')
+        return block
+
+
 class TzktDatasource(IndexDatasource):
     """Bridge between REST/WS TzKT endpoints and DipDup.
 
@@ -310,7 +342,8 @@ class TzktDatasource(IndexDatasource):
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
         self._client: Optional[BaseHubConnection] = None
 
-        self._block: Optional[HeadBlockData] = None
+        self._block_cache: BlockCache = BlockCache()
+        self._head: Optional[Head] = None
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None
 
@@ -325,12 +358,6 @@ class TzktDatasource(IndexDatasource):
     @property
     def sync_level(self) -> Optional[int]:
         return self._sync_level
-
-    @property
-    def block(self) -> HeadBlockData:
-        if self._block is None:
-            raise RuntimeError('Attempt to access head block before the first message')
-        return self._block
 
     async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
         """Get list of contracts sharing the same code hash or type hash"""
@@ -506,7 +533,7 @@ class TzktDatasource(IndexDatasource):
             big_maps.append(self.convert_big_map(bm))
         return big_maps
 
-    async def add_index(self, index_config: IndexConfigTemplateT) -> None:
+    async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
 
         if isinstance(index_config, OperationIndexConfig):
@@ -557,7 +584,6 @@ class TzktDatasource(IndexDatasource):
 
     async def run(self) -> None:
         """Main loop. Sync indexes via REST, start WS connection"""
-        # TODO: Update docs, honor `realtime` flag
         self._logger.info('Starting datasource')
 
         self._logger.info('Starting websocket client')
@@ -568,7 +594,7 @@ class TzktDatasource(IndexDatasource):
         if self._get_client().transport.state != ConnectionState.connected:
             return
 
-        self._logger.info('Connected to server')
+        self._logger.info('Realtime connection established, subscribing to channels')
         await self._subscribe_to_head()
         for address in self._transaction_subscriptions:
             await self._subscribe_to_transactions(address)
@@ -587,7 +613,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe_to_transactions(self, address: str) -> None:
         """Subscribe to contract's operations on established WS connection"""
-        self._logger.info('Subscribing to %s transactions', address)
+        self._logger.debug('Subscribing to %s transactions', address)
         await self._send(
             'SubscribeToOperations',
             [
@@ -600,7 +626,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe_to_originations(self) -> None:
         """Subscribe to all originations on established WS connection"""
-        self._logger.info('Subscribing to originations')
+        self._logger.debug('Subscribing to originations')
         await self._send(
             'SubscribeToOperations',
             [
@@ -612,7 +638,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe_to_big_maps(self, address: str, paths: Set[str]) -> None:
         """Subscribe to contract's big map diffs on established WS connection"""
-        self._logger.info('Subscribing to big map updates of %s, %s', address, paths)
+        self._logger.debug('Subscribing to big map updates of %s, %s', address, paths)
         for path in paths:
             await self._send(
                 'SubscribeToBigMaps',
@@ -626,18 +652,22 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe_to_head(self) -> None:
         """Subscribe to head on established WS connection"""
-        self._logger.info('Subscribing to head')
+        self._logger.debug('Subscribing to head')
         await self._send(
             'SubscribeToHead',
             [],
         )
 
-    async def _extract_message_data(self, channel: str, message: List[Any]) -> Any:
+    async def _extract_message_data(self, channel: str, message: List[Any]) -> AsyncGenerator[Tuple[int, Dict], None]:
         for item in message:
-            head_level = item['state']
             message_type = TzktMessageType(item['type'])
             self._logger.debug('`%s` message: %s', channel, message_type.name)
 
+            head_level = item['state']
+            if self._level and head_level < self._level:
+                raise RuntimeError('Received data message from level lower than current: {head_level} < {self._level}')
+
+            # TODO: State messages will be dropped from TzKT
             if message_type == TzktMessageType.STATE:
                 if self._sync_level != head_level:
                     self._logger.info('Datasource level set to %s', head_level)
@@ -646,11 +676,11 @@ class TzktDatasource(IndexDatasource):
 
             elif message_type == TzktMessageType.DATA:
                 self._level = head_level
-                yield item['data']
+                yield head_level, item['data']
 
             elif message_type == TzktMessageType.REORG:
                 if self.level is None:
-                    raise RuntimeError
+                    raise RuntimeError('Reorg message received but datasource is not connected')
                 self.emit_rollback(self.level, head_level)
 
             else:
@@ -658,7 +688,8 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
-        async for data in self._extract_message_data('operation', message):
+        async for level, data in self._extract_message_data('operation', message):
+            block = await self._block_cache.get_block(level)
             operations = []
             for operation_json in data:
                 operation = self.convert_operation(operation_json)
@@ -666,11 +697,11 @@ class TzktDatasource(IndexDatasource):
                     continue
                 operations.append(operation)
             if operations:
-                self.emit_operations(operations, self.block)
+                self.emit_operations(operations, block)
 
     async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        async for data in self._extract_message_data('big_map', message):
+        async for _, data in self._extract_message_data('big_map', message):
             big_maps = []
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
@@ -678,9 +709,26 @@ class TzktDatasource(IndexDatasource):
             self.emit_big_maps(big_maps, self.block)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
-        async for data in self._extract_message_data('head', message):
+        async for _, data in self._extract_message_data('head', message):
             block = self.convert_head_block(data)
-            self._block = block
+            await self._block_cache.add_block(block)
+
+            created = False
+            if self._head is None:
+                self._head, created = await Head.get_or_create(
+                    name=self._http._url,
+                    defaults=dict(
+                        level=block.level,
+                        hash=block.hash,
+                        timestamp=block.timestamp,
+                    ),
+                )
+            if not created:
+                self._head.level = block.level  # type: ignore
+                self._head.hash = block.hash  # type: ignore
+                self._head.timestamp = block.timestamp  # type: ignore
+                await self._head.save()
+
             self.emit_head(block)
 
     @classmethod
@@ -759,7 +807,7 @@ class TzktDatasource(IndexDatasource):
         return BigMapData(
             id=big_map_json['id'],
             level=big_map_json['level'],
-            # FIXME: operation_id field in API
+            # FIXME: missing `operation_id` field in API to identify operation
             operation_id=big_map_json['level'],
             timestamp=cls._parse_timestamp(big_map_json['timestamp']),
             bigmap=big_map_json['bigmap'],

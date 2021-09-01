@@ -5,10 +5,13 @@ from __future__ import annotations
 
 from typing import Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Extra, Field
 
 
 class TzbtcStorage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     big_map: Dict[str, str]
     bool: bool
     lambda_: str = Field(..., alias='lambda')

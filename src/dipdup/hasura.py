@@ -16,7 +16,8 @@ from tortoise.transactions import get_connection
 from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
-from dipdup.utils import iter_files, iter_models, pascal_to_snake, remove_prefix
+from dipdup.utils import iter_files, pascal_to_snake
+from dipdup.utils.database import iter_models
 
 _get_fields_query = '''
 query introspectionQuery($name: String!) {
@@ -57,8 +58,7 @@ class Field:
 
     @property
     def root(self) -> str:
-        # NOTE: Hasura omits schema name prefix in root fields
-        return remove_prefix(humps.decamelize(self.name), 'public')
+        return humps.decamelize(self.name)
 
 
 class HasuraError(RuntimeError):
@@ -87,6 +87,9 @@ class HasuraGateway(HTTPGateway):
 
     async def configure(self) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
+
+        if self._database_config.schema_name != 'public':
+            raise ConfigurationError('Hasura integration requires `schema_name` to be `public`')
 
         self._logger.info('Configuring Hasura')
         await self._healthcheck()
@@ -264,7 +267,6 @@ class HasuraGateway(HTTPGateway):
             else:
                 raise RuntimeError(f'Table `{table_name}` has no primary key. How is that possible?')
 
-            table_name = f'{self._database_config.schema_name}_{table_name}'
             fields = await self._get_fields(table_name)
             queries.append(self._format_rest_query(table_name, table_name, filter, fields))
 
@@ -293,7 +295,7 @@ class HasuraGateway(HTTPGateway):
             raise HasuraError(f'Unknown table `{name}`') from e
 
     async def _get_fields(self, name: str = 'query_root') -> List[Field]:
-        name = Field(name).root
+        name = humps.decamelize(name)
 
         try:
             fields_json = await self._get_fields_json(name)
@@ -399,7 +401,7 @@ class HasuraGateway(HTTPGateway):
         }
 
     def _format_custom_root_fields(self, table: Field) -> Dict[str, Any]:
-        table_name = remove_prefix(table.root, self._database_config.schema_name)
+        table_name = table.root
 
         def _fmt(fmt: str) -> str:
             if self._hasura_config.camel_case:
@@ -438,7 +440,7 @@ class HasuraGateway(HTTPGateway):
     def _format_table_table(self, name: str) -> Dict[str, Any]:
         return {
             "schema": self._database_config.schema_name,
-            'name': remove_prefix(name, self._database_config.schema_name),
+            'name': name,
         }
 
     def _format_array_relationship(

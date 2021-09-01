@@ -1,8 +1,10 @@
-import fileinput
+import asyncio
 import logging
 import os
+import signal
 from dataclasses import dataclass
 from functools import wraps
+from os import listdir
 from os.path import dirname, exists, join
 from typing import List, cast
 
@@ -17,9 +19,10 @@ from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_ver
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError, DipDupError, MigrationRequiredError
+from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDupError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.utils import set_decimal_context, tortoise_wrapper
+from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
+from dipdup.utils.database import set_decimal_context, tortoise_wrapper
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -31,17 +34,28 @@ class CLIContext:
     logging_config: LoggingConfig
 
 
+async def shutdown() -> None:
+    _logger.info('Shutting down')
+    tasks = filter(lambda t: t != asyncio.current_task(), asyncio.all_tasks())
+    list(map(asyncio.Task.cancel, tasks))
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+
 def cli_wrapper(fn):
     @wraps(fn)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs) -> None:
+        loop = asyncio.get_running_loop()
+        loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(shutdown()))
         try:
-            return await fn(*args, **kwargs)
-        except KeyboardInterrupt:
+            with DipDupError.wrap():
+                await fn(*args, **kwargs)
+        except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except DipDupError as e:
+            # FIXME: No traceback in test logs
             _logger.critical(e.__repr__())
             _logger.info(e.format())
-            quit(e.exit_code)
+            quit(1)
 
     return wrapper
 
@@ -70,7 +84,7 @@ def init_sentry(config: DipDupConfig) -> None:
     )
 
 
-@click.group()
+@click.group(help='Docs: https://docs.dipdup.net')
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
@@ -98,10 +112,15 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     init_sentry(_config)
 
     if _config.spec_version not in spec_version_mapping:
-        raise ConfigurationError('Unknown `spec_version`, correct ones: {}')
+        raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
     if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
         reindex = spec_reindex_mapping[__spec_version__]
-        raise MigrationRequiredError(None, _config.spec_version, __spec_version__, reindex)
+        raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
+
+    if ctx.invoked_subcommand != 'migrate':
+        handlers_path = join(_config.package_path, 'handlers')
+        if set(listdir(handlers_path)).intersection(set(deprecated_handlers)):
+            raise DeprecatedHandlerError
 
     ctx.obj = CLIContext(
         config_paths=config,
@@ -110,7 +129,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     )
 
 
-@cli.command(help='Run existing dipdup project')
+@cli.command(help='Run indexing')
 @click.option('--reindex', is_flag=True, help='Drop database and start indexing from scratch')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
 @click.pass_context
@@ -123,41 +142,25 @@ async def run(ctx, reindex: bool, oneshot: bool) -> None:
     await dipdup.run(reindex, oneshot)
 
 
-@cli.command(help='Initialize new dipdup project')
+@cli.command(help='Generate missing callbacks and types')
+@click.option('--overwrite-types', is_flag=True, help='Regenerate existing types')
 @click.pass_context
 @cli_wrapper
-async def init(ctx):
+async def init(ctx, overwrite_types: bool):
     config: DipDupConfig = ctx.obj.config
     config.pre_initialize()
     dipdup = DipDup(config)
-    await dipdup.init()
+    await dipdup.init(overwrite_types)
 
 
 @cli.command(help='Migrate project to the new spec version')
 @click.pass_context
 @cli_wrapper
 async def migrate(ctx):
-    def _bump_spec_version(spec_version: str):
-        for config_path in ctx.obj.config_paths:
-            for line in fileinput.input(config_path, inplace=True):
-                if 'spec_version' in line:
-                    print(f'spec_version: {spec_version}')
-                else:
-                    print(line.rstrip())
-
     config: DipDupConfig = ctx.obj.config
     config.pre_initialize()
-
-    if config.spec_version == __spec_version__:
-        _logger.error('Project is already at latest version')
-    elif config.spec_version == '0.1':
-        await DipDup(config).migrate_to_v10()
-        _bump_spec_version('1.0')
-    elif config.spec_version == '1.0':
-        await DipDup(config).migrate_to_v11()
-        _bump_spec_version('1.1')
-    else:
-        raise ConfigurationError('Unknown `spec_version`')
+    migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
+    await migrations.migrate()
 
 
 # TODO: "cache clear"?

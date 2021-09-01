@@ -5,10 +5,13 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class Records(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     address: Optional[str]
     data: Dict[str, str]
     expiry_key: Optional[str]
@@ -19,12 +22,18 @@ class Records(BaseModel):
 
 
 class ReverseRecords(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     internal_data: Dict[str, str]
     name: Optional[str]
     owner: str
 
 
 class Store(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     data: Dict[str, str]
     expiry_map: Dict[str, str]
     metadata: Dict[str, str]
@@ -36,6 +45,9 @@ class Store(BaseModel):
 
 
 class NameRegistryStorage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     actions: Dict[str, str]
     store: Store
     trusted_senders: List[str]

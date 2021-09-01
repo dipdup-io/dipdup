@@ -1,4 +1,4 @@
-spec_version: 1.1
+spec_version: 1.2
 package: demo_hic_et_nunc
 
 database:
@@ -48,5 +48,5 @@ indexes:
           - type: transaction
             destination: HEN_minter
             entrypoint: collect
-    first_block: 1365000
-    last_block: 1366000
+    first_level: 1365000
+    last_level: 1366000

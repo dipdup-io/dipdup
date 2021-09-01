@@ -5,10 +5,13 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class FreezeHistory(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     current_period_num: str
     current_unstaked: str
     past_unstaked: str
@@ -16,52 +19,82 @@ class FreezeHistory(BaseModel):
 
 
 class LastPeriodChange(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     changed_on: str
     period_num: str
 
 
 class Key(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     address: str
     nat: str
 
 
 class LedgerItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     key: Key
     value: str
 
 
 class MaxQuorumThreshold(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     denominator: str
     numerator: str
 
 
 class MinQuorumThreshold(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     denominator: str
     numerator: str
 
 
 class Key1(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     operator: str
     owner: str
 
 
 class Operator(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     key: Key1
     value: Dict[str, Any]
 
 
 class ProposalKeyListSortByDateItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     bytes: str
     timestamp: str
 
 
 class Voter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     vote_amount: str
     vote_type: bool
     voter_address: str
 
 
 class Proposals(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     downvotes: str
     metadata: Dict[str, str]
     period_num: str
@@ -74,11 +107,17 @@ class Proposals(BaseModel):
 
 
 class QuorumThreshold(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     denominator: str
     numerator: str
 
 
 class RegistryStorage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     admin: str
     custom_entrypoints: Dict[str, str]
     decision_lambda: str

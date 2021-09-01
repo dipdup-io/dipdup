@@ -3,9 +3,12 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class MintParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     to: str
     value: str

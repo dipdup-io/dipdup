@@ -1,4 +1,5 @@
 from contextlib import AsyncExitStack
+from functools import partial
 
 from apscheduler.executors.asyncio import AsyncIOExecutor  # type: ignore
 from apscheduler.jobstores.memory import MemoryJobStore  # type: ignore
@@ -8,8 +9,9 @@ from apscheduler.triggers.interval import IntervalTrigger  # type: ignore
 from pytz import utc
 
 from dipdup.config import JobConfig
-from dipdup.context import DipDupContext, JobContext
-from dipdup.utils import FormattedLogger, in_global_transaction
+from dipdup.context import DipDupContext, HookContext
+from dipdup.utils import FormattedLogger
+from dipdup.utils.database import in_global_transaction
 
 jobstores = {
     'default': MemoryJobStore(),
@@ -27,33 +29,37 @@ def create_scheduler() -> AsyncIOScheduler:
     )
 
 
-def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_name: str, job_config: JobConfig) -> None:
-    async def _wrapper(ctx, args) -> None:
-        nonlocal job_config
+def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConfig) -> None:
+    hook_config = job_config.hook_config
+
+    async def _job_wrapper(ctx: DipDupContext, *args, **kwargs) -> None:
+        nonlocal job_config, hook_config
+        job_ctx = HookContext(
+            config=ctx.config,
+            datasources=ctx.datasources,
+            callbacks=ctx.callbacks,
+            logger=logger,
+            hook_config=hook_config,
+        )
+
         async with AsyncExitStack() as stack:
-            if job_config.atomic:
+            if hook_config.atomic:
                 await stack.enter_async_context(in_global_transaction())
-            await job_config.callback_fn(ctx, args)
+            await job_ctx.fire_hook(hook_config.callback, *args, **kwargs)
 
     logger = FormattedLogger(
-        name=job_config.callback,
+        name=f'dipdup.hooks.{hook_config.callback}',
         fmt=job_config.name + ': {}',
     )
     if job_config.crontab:
         trigger = CronTrigger.from_crontab(job_config.crontab)
     elif job_config.interval:
         trigger = IntervalTrigger(seconds=job_config.interval)
+
     scheduler.add_job(
-        func=_wrapper,
-        id=job_name,
-        name=job_name,
+        func=partial(_job_wrapper, ctx=ctx),
+        id=job_config.name,
+        name=job_config.name,
         trigger=trigger,
-        kwargs=dict(
-            ctx=JobContext(
-                config=ctx.config,
-                datasources=ctx.datasources,
-                logger=logger,
-            ),
-            args=job_config.args,
-        ),
+        kwargs=job_config.args,
     )

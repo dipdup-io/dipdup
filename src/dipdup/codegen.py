@@ -6,27 +6,28 @@ import subprocess
 from copy import copy
 from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
-from typing import Any, Dict, cast
+from typing import Any, Dict, List, cast
 
 from jinja2 import Template
 
 from dipdup import __version__
 from dipdup.config import (
-    CONFIGURE_HANDLER,
-    ROLLBACK_HANDLER,
     BigMapIndexConfig,
+    CallbackMixin,
     ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
+    HandlerConfig,
     IndexTemplateConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
     TzktDatasourceConfig,
+    default_hooks,
 )
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigInitializationException, ConfigurationError
 from dipdup.utils import import_submodules, mkdir_p, pascal_to_snake, snake_to_pascal, touch, write
 
 DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
@@ -43,6 +44,8 @@ DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
 DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
 DEFAULT_DOCKER_TAG = __version__
 DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
+
+_templates: Dict[str, Template] = {}
 
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -61,8 +64,10 @@ def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
 
 def load_template(name: str) -> Template:
     """Load template from templates/{name}.j2"""
-    with open(join(dirname(__file__), 'templates', name + '.j2'), 'r') as f:
-        return Template(f.read())
+    if name not in _templates:
+        with open(join(dirname(__file__), 'templates', name + '.j2'), 'r') as f:
+            return Template(f.read())
+    return _templates[name]
 
 
 class DipDupCodeGenerator:
@@ -74,17 +79,18 @@ class DipDupCodeGenerator:
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
 
-    async def init(self) -> None:
+    async def init(self, overwrite_types: bool = False) -> None:
+        self._logger.info('Initializing project')
         await self.create_package()
         await self.fetch_schemas()
-        await self.generate_types()
-        await self.generate_default_handlers()
-        await self.generate_user_handlers()
-        await self.generate_jobs()
+        await self.generate_types(overwrite_types)
+        await self.generate_hooks()
+        await self.generate_handlers()
         await self.cleanup()
         await self.verify_package()
 
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
+        self._logger.info('Initializing Docker inventory')
         await self.generate_docker(image, tag, env_file)
         await self.verify_package()
 
@@ -104,13 +110,10 @@ class DipDupCodeGenerator:
             models_code = template.render()
             write(models_path, models_code)
 
-        self._logger.info('Creating `%s.handlers` package', self._config.package)
-        handlers_path = join(self._config.package_path, 'handlers')
-        touch(join(handlers_path, '__init__.py'))
-
-        self._logger.info('Creating `%s.jobs` package', self._config.package)
-        jobs_path = join(self._config.package_path, 'jobs')
-        touch(join(jobs_path, '__init__.py'))
+        for subpackage in ('handlers', 'hooks'):
+            self._logger.info('Creating `%s.%s` package', self._config.package, subpackage)
+            subpackage_path = join(self._config.package_path, subpackage)
+            touch(join(subpackage_path, '__init__.py'))
 
         self._logger.info('Creating `%s/sql` directory', self._config.package)
         sql_path = join(self._config.package_path, 'sql')
@@ -123,7 +126,7 @@ class DipDupCodeGenerator:
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
-        self._logger.info('Creating `schemas` package')
+        self._logger.info('Creating `schemas` directory')
         schemas_path = join(self._config.package_path, 'schemas')
         mkdir_p(schemas_path)
 
@@ -179,7 +182,7 @@ class DipDupCodeGenerator:
                                 existing_schema = json.loads(file.read())
                             if entrypoint_schema != existing_schema:
                                 self._logger.warning(
-                                    'Contract "%s" falsely claims to be a "%s"', contract_config.address, contract_config.typename
+                                    'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename
                                 )
 
             elif isinstance(index_config, BigMapIndexConfig):
@@ -209,12 +212,12 @@ class DipDupCodeGenerator:
                     write(big_map_value_schema_path, json.dumps(big_map_value_schema, indent=4))
 
             elif isinstance(index_config, IndexTemplateConfig):
-                raise RuntimeError('Config is not pre-initialized')
+                raise ConfigInitializationException
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-    async def generate_types(self) -> None:
+    async def generate_types(self, overwrite_types: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameter, big map keys/values."""
         schemas_path = join(self._config.package_path, 'schemas')
         types_path = join(self._config.package_path, 'types')
@@ -236,6 +239,9 @@ class DipDupCodeGenerator:
 
                 input_path = join(root, file)
                 output_path = join(types_root, f'{pascal_to_snake(name)}.py')
+
+                if exists and not overwrite_types:
+                    continue
 
                 # NOTE: Skip if the first line starts with "# dipdup: ignore"
                 if exists(output_path):
@@ -266,65 +272,25 @@ class DipDupCodeGenerator:
                 self._logger.debug(' '.join(args))
                 subprocess.run(args, check=True)
 
-    async def generate_default_handlers(self, recreate=False) -> None:
-        handlers_path = join(self._config.package_path, 'handlers')
-        for handler_name in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
-            self._logger.info('Generating handler `%s`', handler_name)
-            template = load_template(f'handlers/{handler_name}.py')
-            handler_code = template.render()
-            handler_path = join(handlers_path, f'{handler_name}.py')
-            write(handler_path, handler_code, overwrite=recreate)
-
-    async def generate_user_handlers(self) -> None:
+    async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
-        handlers_path = join(self._config.package_path, 'handlers')
-        operation_handler_template = load_template('handlers/operation.py')
-        big_map_handler_template = load_template('handlers/big_map.py')
-
+        handler_config: HandlerConfig
         for index_config in self._config.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
                 for handler_config in index_config.handlers:
-                    self._logger.info('Generating handler `%s`', handler_config.callback)
-                    handler_code = operation_handler_template.render(
-                        package=self._config.package,
-                        handler=handler_config.callback,
-                        patterns=handler_config.pattern,
-                        snake_to_pascal=snake_to_pascal,
-                        pascal_to_snake=pascal_to_snake,
-                    )
-                    handler_path = join(handlers_path, f'{handler_config.callback}.py')
-                    write(handler_path, handler_code)
+                    await self._generate_callback(handler_config)
 
             elif isinstance(index_config, BigMapIndexConfig):
-                for big_map_handler_config in index_config.handlers:
-                    self._logger.info('Generating handler `%s`', big_map_handler_config.callback)
-                    handler_path = big_map_handler_config.path.replace('.', '_')
-                    handler_code = big_map_handler_template.render(
-                        package=self._config.package,
-                        handler=big_map_handler_config,
-                        handler_path=handler_path,
-                        snake_to_pascal=snake_to_pascal,
-                        pascal_to_snake=pascal_to_snake,
-                    )
-                    handler_path = join(handlers_path, f'{big_map_handler_config.callback}.py')
-                    write(handler_path, handler_code)
+                for handler_config in index_config.handlers:
+                    await self._generate_callback(handler_config)
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-    async def generate_jobs(self) -> None:
-        if not self._config.jobs:
-            return
-
-        jobs_path = join(self._config.package_path, 'jobs')
-        job_template = load_template('jobs/job.py')
-
-        job_callbacks = set(job_config.callback for job_config in self._config.jobs.values())
-        for job_callback in job_callbacks:
-            self._logger.info('Generating job `%s`', job_callback)
-            job_code = job_template.render(job=job_callback)
-            job_path = join(jobs_path, f'{job_callback}.py')
-            write(job_path, job_code)
+    async def generate_hooks(self) -> None:
+        for hook_configs in self._config.hooks.values(), default_hooks.values():
+            for hook_config in hook_configs:
+                await self._generate_callback(hook_config, sql=True)
 
     async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
         self._logger.info('Generating Docker template')
@@ -411,7 +377,7 @@ class DipDupCodeGenerator:
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
 
-    async def migrate_user_handlers_to_v10(self) -> None:
+    async def migrate_handlers_to_v10(self) -> None:
         remove_lines = [
             'from dipdup.models import',
             'from dipdup.context import',
@@ -419,7 +385,7 @@ class DipDupCodeGenerator:
         ]
         add_lines = [
             'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction',
-            'from dipdup.context import HandlerContext, RollbackHandlerContext',
+            'from dipdup.context import HandlerContext, HookContext',
         ]
         replace_table = {
             'TransactionContext': 'Transaction',
@@ -448,7 +414,7 @@ class DipDupCodeGenerator:
                 with open(path, 'w') as file:
                     file.write('\n'.join(newfile))
 
-    async def migrate_user_handlers_to_v11(self) -> None:
+    async def migrate_handlers_to_v11(self) -> None:
         replace_table = {
             'BigMapAction.ADD': 'BigMapAction.ADD_KEY',
             'BigMapAction.UPDATE': 'BigMapAction.UPDATE_KEY',
@@ -470,3 +436,34 @@ class DipDupCodeGenerator:
                         newfile.append(line)
                 with open(path, 'w') as file:
                     file.write('\n'.join(newfile))
+
+    async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
+        subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
+        callback_path = join(subpackage_path, f'{callback_config.callback}.py')
+        if exists(callback_path):
+            return
+
+        self._logger.info('Generating %s callback `%s`', callback_config.kind, callback_config.callback)
+        callback_template = load_template('callback.py')
+
+        arguments = callback_config.format_arguments()
+        imports = set(callback_config.format_imports(self._config.package))
+
+        code: List[str] = []
+        if sql:
+            code.append(f"await ctx.execute_sql('{callback_config.callback}')")
+            if callback_config.callback == 'on_rollback':
+                code.append("await ctx.reindex(reason='reorg message received')")
+        else:
+            code.append('...')
+
+        callback_code = callback_template.render(
+            callback=callback_config.callback,
+            arguments=tuple(dict.fromkeys(arguments)),
+            imports=tuple(dict.fromkeys(imports)),
+            code=code,
+        )
+        write(callback_path, callback_code)
+
+        if sql:
+            touch(join(self._config.package_path, 'sql', callback_config.callback, '.keep'))
