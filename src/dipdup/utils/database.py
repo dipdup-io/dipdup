@@ -22,23 +22,21 @@ _logger = logging.getLogger('dipdup.database')
 
 
 @asynccontextmanager
-async def tortoise_wrapper(url: str, models: Optional[str] = None) -> AsyncIterator:
+async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int = 60) -> AsyncIterator:
     """Initialize Tortoise with internal and project models, close connections when done"""
-    # TODO: Fail fast
-    attempts = 60
+    modules = {'int_models': ['dipdup.models']}
+    if models:
+        modules['models'] = [models]
     try:
-        modules = {'int_models': ['dipdup.models']}
-        if models:
-            modules['models'] = [models]
-        for attempt in range(attempts):
+        for attempt in range(timeout):
             try:
                 await Tortoise.init(
                     db_url=url,
                     modules=modules,  # type: ignore
                 )
             except (OSError, ConnectionRefusedError):
-                _logger.warning('Can\'t establish database connection, attempt %s/%s', attempt, attempts)
-                if attempt == attempts - 1:
+                _logger.warning('Can\'t establish database connection, attempt %s/%s', attempt, timeout)
+                if attempt == timeout - 1:
                     raise
                 await asyncio.sleep(1)
             else:

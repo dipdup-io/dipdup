@@ -65,6 +65,7 @@ class _HTTPGateway:
         """Create underlying aiohttp session"""
         self.__session = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit or 100),
+            timeout=aiohttp.ClientTimeout(self._config.connection_timeout or 60),
         )
 
     async def __aexit__(self, exc_type, exc, tb):

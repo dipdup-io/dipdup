@@ -79,6 +79,7 @@ class PostgresDatabaseConfig:
     schema_name: str = 'public'
     password: str = ''
     immune_tables: List[str] = Field(default_factory=list)
+    connection_timeout: int = 60
 
     @property
     def connection_string(self) -> str:
@@ -102,7 +103,8 @@ class HTTPConfig:
     retry_multiplier: Optional[float] = None
     ratelimit_rate: Optional[int] = None
     ratelimit_period: Optional[int] = None
-    connection_limit: Optional[int] = None
+    connection_limit: Optional[int] = None  # default 100
+    connection_timeout: Optional[int] = None  # default 60
     batch_size: Optional[int] = None
 
     def merge(self, other: Optional['HTTPConfig']) -> 'HTTPConfig':
@@ -151,7 +153,7 @@ class ContractConfig(NameMixin):
     @validator('address', allow_reuse=True)
     def valid_address(cls, v):
         # NOTE: Wallet addresses are allowed for debugging purposes (source field). Do we need a separate section?
-        if not (v.startswith('KT1') or v.startswith('tz1')) or len(v) != 36:
+        if not (v.startswith('KT') or v.startswith('tz')) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
 
@@ -755,7 +757,6 @@ class HasuraConfig:
     select_limit: int = 100
     allow_aggregations: bool = True
     camel_case: bool = False
-    connection_timeout: int = 5
     rest: bool = True
     http: Optional[HTTPConfig] = None
 
