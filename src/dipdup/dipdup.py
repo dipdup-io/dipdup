@@ -290,8 +290,9 @@ class DipDup:
         validate_models(self._config.package)
 
         url = self._config.database.connection_string
+        timeout = self._config.database.connection_timeout if isinstance(self._config.database, PostgresDatabaseConfig) else None
         models = f'{self._config.package}.models'
-        await stack.enter_async_context(tortoise_wrapper(url, models))
+        await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
 
         if reindex:
             await self._ctx.reindex(reason='run with `--reindex` option')

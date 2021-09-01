@@ -143,14 +143,15 @@ class HasuraGateway(HTTPGateway):
 
     async def _healthcheck(self) -> None:
         self._logger.info('Waiting for Hasura instance to be ready')
-        for _ in range(self._hasura_config.connection_timeout):
+        timeout = self._http_config.connection_timeout or 60
+        for _ in range(timeout):
             with suppress(ClientConnectorError, ClientOSError):
                 response = await self._http._session.get(f'{self._hasura_config.url}/healthz')
                 if response.status == 200:
                     break
             await asyncio.sleep(1)
         else:
-            raise HasuraError(f'Hasura instance not responding for {self._hasura_config.connection_timeout} seconds')
+            raise HasuraError(f'Hasura instance not responding for {timeout} seconds')
 
         version_json = await (
             await self._http._session.get(
