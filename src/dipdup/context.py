@@ -6,7 +6,7 @@ from collections import deque
 from contextlib import contextmanager, suppress
 from os.path import exists, join
 from pprint import pformat
-from typing import Any, Dict, Iterator, Optional, Union, cast
+from typing import Any, Dict, Iterator, Optional, Tuple, Union, cast
 
 import sqlparse  # type: ignore
 from tortoise import Tortoise
@@ -19,7 +19,6 @@ from dipdup.config import (
     DipDupConfig,
     HandlerConfig,
     HookConfig,
-    IndexConfig,
     IndexTemplateConfig,
     OperationIndexConfig,
     PostgresDatabaseConfig,
@@ -59,11 +58,25 @@ class DipDupContext:
     def __str__(self) -> str:
         return pformat(self.__dict__)
 
-    async def fire_hook(self, name: str, fmt: Optional[str] = None, *args, **kwargs: Any) -> None:
+    async def fire_hook(
+        self,
+        name: str,
+        fmt: Optional[str] = None,
+        *args,
+        **kwargs: Any,
+    ) -> None:
         await self.callbacks.fire_hook(self, name, fmt, *args, **kwargs)
 
-    async def fire_handler(self, name: str, datasource: Datasource, fmt: Optional[str] = None, *args, **kwargs: Any) -> None:
-        await self.callbacks.fire_handler(self, name, datasource, fmt, *args, **kwargs)
+    async def fire_handler(
+        self,
+        name: str,
+        index: str,
+        datasource: Datasource,
+        fmt: Optional[str] = None,
+        *args,
+        **kwargs: Any,
+    ) -> None:
+        await self.callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
     async def execute_sql(self, name: str) -> None:
         await self.callbacks.execute_sql(self, name)
@@ -200,7 +213,7 @@ class HandlerContext(DipDupContext):
         self.logger = logger
         self.handler_config = handler_config
         self.datasource = datasource
-        template_values = cast(IndexConfig, handler_config.parent).template_values if handler_config.parent else {}
+        template_values = handler_config.parent.template_values if handler_config.parent else {}
         self.template_values = TemplateValuesDict(self, **template_values)
 
 
@@ -208,42 +221,46 @@ class CallbackManager:
     def __init__(self, package: str) -> None:
         self._logger = logging.getLogger('dipdup.callback')
         self._package = package
-        self._handlers: Dict[str, HandlerConfig] = {}
+        self._handlers: Dict[Tuple[str, str], HandlerConfig] = {}
         self._hooks: Dict[str, HookConfig] = {}
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
-        if handler_config.callback not in self._handlers:
-            self._handlers[handler_config.callback] = handler_config
+        if not handler_config.parent:
+            raise RuntimeError('Handler must have a parent index')
+
+        # NOTE: Same handlers can be linked to different indexes, we need to use exact config
+        key = (handler_config.callback, handler_config.parent.name)
+        if key not in self._handlers:
+            self._handlers[key] = handler_config
             handler_config.initialize_callback_fn(self._package)
 
     def register_hook(self, hook_config: HookConfig) -> None:
-        if hook_config.callback not in self._hooks:
-            self._hooks[hook_config.callback] = hook_config
+        key = hook_config.callback
+        if key not in self._hooks:
+            self._hooks[key] = hook_config
             hook_config.initialize_callback_fn(self._package)
 
     async def fire_handler(
         self,
         ctx: 'DipDupContext',
         name: str,
+        index: str,
         datasource: Datasource,
         fmt: Optional[str] = None,
         *args,
         **kwargs: Any,
     ) -> None:
-        try:
-            new_ctx = HandlerContext(
-                datasources=ctx.datasources,
-                config=ctx.config,
-                callbacks=ctx.callbacks,
-                logger=FormattedLogger(f'dipdup.handlers.{name}', fmt),
-                handler_config=self._handlers[name],
-                datasource=datasource,
-            )
-        except KeyError as e:
-            raise ConfigurationError(f'Attempt to fire unregistered handler `{name}`') from e
-
+        handler_config = self._get_handler(name, index)
+        new_ctx = HandlerContext(
+            datasources=ctx.datasources,
+            config=ctx.config,
+            callbacks=ctx.callbacks,
+            logger=FormattedLogger(f'dipdup.handlers.{name}', fmt),
+            handler_config=handler_config,
+            datasource=datasource,
+        )
         with self._wrapper('handler', name):
-            await new_ctx.handler_config.callback_fn(new_ctx, *args, **kwargs)
+            await handler_config.callback_fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
         self,
@@ -253,20 +270,18 @@ class CallbackManager:
         *args,
         **kwargs: Any,
     ) -> None:
-        try:
-            ctx = HookContext(
-                datasources=ctx.datasources,
-                config=ctx.config,
-                callbacks=ctx.callbacks,
-                logger=FormattedLogger(f'dipdup.hooks.{name}', fmt),
-                hook_config=self._hooks[name],
-            )
-        except KeyError as e:
-            raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
+        hook_config = self._get_hook(name)
+        new_ctx = HookContext(
+            datasources=ctx.datasources,
+            config=ctx.config,
+            callbacks=ctx.callbacks,
+            logger=FormattedLogger(f'dipdup.hooks.{name}', fmt),
+            hook_config=hook_config,
+        )
 
-        self._verify_arguments(ctx, *args, **kwargs)
+        self._verify_arguments(new_ctx, *args, **kwargs)
         with self._wrapper('hook', name):
-            await ctx.hook_config.callback_fn(ctx, *args, **kwargs)
+            await hook_config.callback_fn(ctx, *args, **kwargs)
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""
@@ -328,3 +343,16 @@ class CallbackManager:
                     type_=type(arg),
                     expected_type=expected_type,
                 )
+
+    def _get_handler(self, name: str, index: str) -> HandlerConfig:
+        try:
+            return self._handlers[(name, index)]
+        except KeyError as e:
+            raise ConfigurationError(f'Attempt to fire unregistered handler `{name}` of index `{index}`') from e
+
+    def _get_hook(self, name: str) -> HookConfig:
+
+        try:
+            return self._hooks[name]
+        except KeyError as e:
+            raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e

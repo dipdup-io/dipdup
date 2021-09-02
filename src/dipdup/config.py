@@ -322,8 +322,8 @@ class ParentMixin(Generic[T]):
 
     @parent.setter
     def parent(self, config: T) -> None:
-        if self._parent:
-            raise RuntimeError("Can't unset parent once set")
+        if self._parent and config is not self._parent:
+            raise ConfigInitializationException
         self._parent = config
 
 
@@ -525,6 +525,8 @@ class CallbackMixin(CodegenMixin):
         self._callback_fn = fn
 
     def initialize_callback_fn(self, package: str):
+        if self._callback_fn:
+            return
         _logger.debug('Registering %s callback `%s`', self.kind, self.callback)
         module_name = f'{package}.{self.kind}s.{self.callback}'
         fn_name = self.callback
@@ -1122,6 +1124,7 @@ class DipDupConfig:
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
             for handler in index_config.handlers:
+                handler.parent = index_config
                 # TODO: Verify callback uniqueness
                 # self._callback_patterns[handler.callback].append(handler.pattern)
                 if isinstance(handler.contract, str):

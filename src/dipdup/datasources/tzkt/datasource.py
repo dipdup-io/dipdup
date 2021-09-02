@@ -667,7 +667,7 @@ class TzktDatasource(IndexDatasource):
             if self._level and head_level < self._level:
                 raise RuntimeError('Received data message from level lower than current: {head_level} < {self._level}')
 
-            # TODO: State messages will be dropped from TzKT
+            # NOTE: State messages will be replaced with negotiation some day
             if message_type == TzktMessageType.STATE:
                 if self._sync_level != head_level:
                     self._logger.info('Datasource level set to %s', head_level)
