@@ -325,6 +325,8 @@ class OperationIndex(Index):
     ):
         """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+        if not handler_config.parent:
+            raise RuntimeError('Handler must have a parent')
 
         args: List[Optional[Union[Transaction, Origination, OperationData]]] = []
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
@@ -367,6 +369,7 @@ class OperationIndex(Index):
 
         await self._ctx.fire_handler(
             handler_config.callback,
+            handler_config.parent.name,
             self.datasource,
             operation_subgroup.hash + ': {}',
             *args,
@@ -474,6 +477,8 @@ class BigMapIndex(Index):
     ) -> None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
+        if not handler_config.parent:
+            raise RuntimeError('Handler must have a parent')
 
         if matched_big_map.action.has_key:
             key_type = handler_config.key_type_cls
@@ -502,6 +507,7 @@ class BigMapIndex(Index):
 
         await self._ctx.fire_handler(
             handler_config.callback,
+            handler_config.parent.name,
             self.datasource,
             # FIXME: missing `operation_id` field in API to identify operation
             None,

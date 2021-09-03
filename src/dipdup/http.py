@@ -15,6 +15,13 @@ from fcache.cache import FileCache  # type: ignore
 from dipdup import __version__
 from dipdup.config import HTTPConfig  # type: ignore
 
+safe_exceptions = (
+    aiohttp.ClientConnectionError,
+    aiohttp.ClientConnectorError,
+    aiohttp.ClientResponseError,
+    aiohttp.ClientPayloadError,
+)
+
 
 class HTTPGateway(ABC):
     """Base class for datasources which connect to remote HTTP endpoints"""
@@ -108,7 +115,7 @@ class _HTTPGateway:
                     weight=weight,
                     **kwargs,
                 )
-            except (aiohttp.ClientConnectionError, aiohttp.ClientConnectorError, aiohttp.ClientResponseError) as e:
+            except safe_exceptions as e:
                 if self._config.retry_count and attempt - 1 == self._config.retry_count:
                     raise e
 
