@@ -7,11 +7,9 @@ from enum import Enum
 from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
-from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
-from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
-from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
-from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
-
+from aiosignalrcore.messages import CompletionMessage  # type: ignore
+from aiosignalrcore.transport.abstract import ConnectionState  # type: ignore
+from aiosignalrcore.client import SignalRClient
 from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
@@ -340,7 +338,7 @@ class TzktDatasource(IndexDatasource):
         self._transaction_subscriptions: Set[str] = set()
         self._origination_subscriptions: bool = False
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
-        self._client: Optional[BaseHubConnection] = None
+        self._client: Optional[SignalRClient] = None
 
         self._block_cache: BlockCache = BlockCache()
         self._head: Optional[Head] = None
@@ -557,25 +555,13 @@ class TzktDatasource(IndexDatasource):
 
         await self._on_connect()
 
-    def _get_client(self) -> BaseHubConnection:
+    def _get_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
         if self._client is None:
             self._logger.info('Creating websocket client')
-            self._client = (
-                HubConnectionBuilder()
-                .with_url(self._http._url + '/v1/events')
-                .with_automatic_reconnect(
-                    {
-                        "type": "raw",
-                        "keep_alive_interval": 10,
-                        "reconnect_interval": 5,
-                        "max_attempts": 5,
-                    }
-                )
-            ).build()
+            self._client = SignalRClient(url=f'{self._http._url}/v1/events')
 
             self._client.on_open(self._on_connect)
-            self._client.on_error(self._on_error)
             self._client.on('operations', self._on_operation_message)
             self._client.on('bigmaps', self._on_big_map_message)
             self._client.on('head', self._on_head_message)
@@ -587,11 +573,11 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Starting datasource')
 
         self._logger.info('Starting websocket client')
-        await self._get_client().start()
+        await self._get_client().run()
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
-        if self._get_client().transport.state != ConnectionState.connected:
+        if self._get_client()._transport._state != ConnectionState.connected:
             return
 
         self._logger.info('Realtime connection established, subscribing to channels')
@@ -862,8 +848,6 @@ class TzktDatasource(IndexDatasource):
 
     async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:
         client = self._get_client()
-        while client.transport.state != ConnectionState.connected:
-            await asyncio.sleep(0.1)
         await client.send(method, arguments, on_invocation)
 
     @classmethod
