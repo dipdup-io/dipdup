@@ -40,16 +40,11 @@ class Index:
         self._datasource = datasource
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
-        self._head: Optional[models.Head] = None
         self._state: Optional[models.Index] = None
 
     @property
     def datasource(self) -> TzktDatasource:
         return self._datasource
-
-    @property
-    def head(self) -> Optional[models.Head]:
-        return self._head
 
     @property
     def state(self) -> models.Index:
@@ -124,6 +119,7 @@ class Index:
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
+        # NOTE: No head yet, wait for realtime messages to be processed
         await self.state.update_status(IndexStatus.REALTIME, last_level)
 
 
@@ -231,9 +227,11 @@ class OperationIndex(Index):
             self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_operations(operations)
 
-            status = IndexStatus.REALTIME if block else IndexStatus.SYNCING
-            # FIXME: Not obvious: receiving `BlockData`, sending `Head`
-            await self.state.update_status(status, level, self.head if block else None)
+            if block:
+                status, head = IndexStatus.REALTIME, self.datasource.head
+            else:
+                status, head = IndexStatus.SYNCING, None
+            await self.state.update_status(status, level, head)
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
@@ -459,8 +457,11 @@ class BigMapIndex(Index):
             self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_big_maps(big_maps)
 
-            status = IndexStatus.REALTIME if block else IndexStatus.SYNCING
-            await self.state.update_status(status, level, self.datasource.block if block else None)
+            if block:
+                status, head = IndexStatus.REALTIME, self.datasource.head
+            else:
+                status, head = IndexStatus.SYNCING, None
+            await self.state.update_status(status, level, head)
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""
