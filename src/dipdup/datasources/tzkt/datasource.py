@@ -359,6 +359,10 @@ class TzktDatasource(IndexDatasource):
     def sync_level(self) -> Optional[int]:
         return self._sync_level
 
+    @property
+    def head(self) -> Optional[Head]:
+        return self._head
+
     async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
         """Get list of contracts sharing the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'
@@ -716,6 +720,7 @@ class TzktDatasource(IndexDatasource):
             created = False
             if self._head is None:
                 self._head, created = await Head.get_or_create(
+                    # NOTE: It would be better to use datasource name but it's not available
                     name=self._http._url,
                     defaults=dict(
                         level=block.level,
