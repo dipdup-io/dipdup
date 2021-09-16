@@ -705,12 +705,13 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        async for _, data in self._extract_message_data('big_map', message):
+        async for level, data in self._extract_message_data('big_map', message):
+            block = await self._block_cache.get_block(level)
             big_maps = []
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
                 big_maps.append(big_map)
-            self.emit_big_maps(big_maps, self.block)
+            self.emit_big_maps(big_maps, block)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         async for _, data in self._extract_message_data('head', message):
