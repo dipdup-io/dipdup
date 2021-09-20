@@ -137,7 +137,6 @@ async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
         await create_schema(conn, name)
         await set_schema(conn, name)
         await Tortoise.generate_schemas()
-        await conn.execute_script(_truncate_schema_sql)
     else:
         raise NotImplementedError
 
@@ -146,6 +145,7 @@ async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
 
+    await conn.execute_script(_truncate_schema_sql)
     await conn.execute_script(f"SELECT truncate_schema('{name}')")
 
 
