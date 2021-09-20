@@ -6,7 +6,6 @@ from operator import ne
 from typing import Dict, List, Optional, Set
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
-from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
@@ -35,7 +34,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
 from dipdup.utils import FormattedLogger, slowdown
-from dipdup.utils.database import get_schema_hash, set_schema, tortoise_wrapper, validate_models
+from dipdup.utils.database import generate_schema, get_schema_hash, set_schema, tortoise_wrapper, validate_models
 
 
 class IndexDispatcher:
@@ -268,7 +267,7 @@ class DipDup:
         schema_hash = get_schema_hash(conn)
 
         if self._schema is None:
-            await Tortoise.generate_schemas()
+            await generate_schema(conn, schema_name)
             await self._ctx.fire_hook('on_reindex')
 
             self._schema = Schema(
