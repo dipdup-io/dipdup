@@ -4,9 +4,8 @@ import hashlib
 import importlib
 import logging
 from contextlib import asynccontextmanager
-from os.path import join
+from os.path import dirname, join
 from pathlib import Path
-from posixpath import dirname
 from typing import Any, AsyncIterator, Iterator, Optional, Tuple, Type
 
 from tortoise import Tortoise
