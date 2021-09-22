@@ -71,7 +71,7 @@ class DipDupContext:
         self,
         name: str,
         index: str,
-        datasource: Datasource,
+        datasource: TzktDatasource,
         fmt: Optional[str] = None,
         *args,
         **kwargs: Any,
@@ -208,7 +208,7 @@ class HandlerContext(DipDupContext):
         callbacks: 'CallbackManager',
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: Datasource,
+        datasource: TzktDatasource,
     ) -> None:
         super().__init__(datasources, config, callbacks)
         self.logger = logger
@@ -246,7 +246,7 @@ class CallbackManager:
         ctx: 'DipDupContext',
         name: str,
         index: str,
-        datasource: Datasource,
+        datasource: TzktDatasource,
         fmt: Optional[str] = None,
         *args,
         **kwargs: Any,

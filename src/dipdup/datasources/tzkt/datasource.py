@@ -22,7 +22,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData
+from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
 
 OperationID = int
@@ -537,6 +537,17 @@ class TzktDatasource(IndexDatasource):
             big_maps.append(self.convert_big_map(bm))
         return big_maps
 
+    async def get_quotes(self, level: int) -> QuoteData:
+        """Get quote for block"""
+        self._logger.info('Fetching quotes for level %s', level)
+        quote_json = await self._http.request(
+            'get',
+            url='v1/quotes',
+            params={"level": level},
+            cache=True,
+        )
+        return self.convert_quote(quote_json[0])
+
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
 
@@ -864,6 +875,21 @@ class TzktDatasource(IndexDatasource):
             quote_jpy=Decimal(head_block_json['quoteJpy']),
             quote_krw=Decimal(head_block_json['quoteKrw']),
             quote_eth=Decimal(head_block_json['quoteEth']),
+        )
+
+    @classmethod
+    def convert_quote(cls, quote_json: Dict[str, Any]) -> QuoteData:
+        """Convert raw quote message from REST into dataclass"""
+        return QuoteData(
+            level=quote_json['level'],
+            timestamp=cls._parse_timestamp(quote_json['timestamp']),
+            btc=Decimal(quote_json['btc']),
+            eur=Decimal(quote_json['eur']),
+            usd=Decimal(quote_json['usd']),
+            cny=Decimal(quote_json['cny']),
+            jpy=Decimal(quote_json['jpy']),
+            krw=Decimal(quote_json['krw']),
+            eth=Decimal(quote_json['eth']),
         )
 
     async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:
