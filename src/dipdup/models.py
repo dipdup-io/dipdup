@@ -249,6 +249,21 @@ class HeadBlockData:
     quote_eth: Decimal
 
 
+@dataclass
+class QuoteData:
+    """Basic structure for quotes from TzKT HTTP response"""
+
+    level: int
+    timestamp: datetime
+    btc: Decimal
+    eur: Decimal
+    usd: Decimal
+    cny: Decimal
+    jpy: Decimal
+    krw: Decimal
+    eth: Decimal
+
+
 class Schema(Model):
     name = fields.CharField(256, pk=True)
     hash = fields.CharField(256)
