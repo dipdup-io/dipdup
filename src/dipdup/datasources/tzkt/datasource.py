@@ -556,7 +556,9 @@ class TzktDatasource(IndexDatasource):
             url='v1/quotes',
             params={
                 "level.ge": from_level,
-                "level.lt": to_level},
+                "level.lt": to_level,
+                "limit": self.request_limit,
+            },
             cache=False,
         )
         return [self.convert_quote(quote) for quote in quotes_json]
