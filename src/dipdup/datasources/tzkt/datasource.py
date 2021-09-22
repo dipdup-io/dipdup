@@ -537,7 +537,7 @@ class TzktDatasource(IndexDatasource):
             big_maps.append(self.convert_big_map(bm))
         return big_maps
 
-    async def get_quotes(self, level: int) -> QuoteData:
+    async def get_quote(self, level: int) -> QuoteData:
         """Get quote for block"""
         self._logger.info('Fetching quotes for level %s', level)
         quote_json = await self._http.request(
@@ -547,6 +547,19 @@ class TzktDatasource(IndexDatasource):
             cache=True,
         )
         return self.convert_quote(quote_json[0])
+
+    async def get_quotes(self, from_level: int, to_level: int) -> List[QuoteData]:
+        """Get quotes for blocks"""
+        self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
+        quotes_json = await self._http.request(
+            'get',
+            url='v1/quotes',
+            params={
+                "level.ge": from_level,
+                "level.lt": to_level},
+            cache=False,
+        )
+        return [self.convert_quote(quote) for quote in quotes_json]
 
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
