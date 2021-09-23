@@ -29,7 +29,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, Contract, Head, HeadBlockData
+from dipdup.models import BigMapData, Contract, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
@@ -108,7 +108,7 @@ class IndexDispatcher:
     async def _set_datasource_heads(self) -> None:
         for datasource in self._ctx.datasources.values():
             if isinstance(datasource, TzktDatasource):
-                head = await datasource.set_head_from_http()
+                await datasource.set_head_from_http()
 
     async def _load_index_states(self) -> None:
         await self._fetch_contracts()
