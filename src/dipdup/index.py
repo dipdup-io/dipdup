@@ -195,8 +195,8 @@ class OperationIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_operations(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
-        if level < self.state.level:
-            raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {self.state.level}')
+        if level <= self.state.level:
+            raise RuntimeError(f'Level of operation batch is lower than index state level: {level} <= {self.state.level}')
 
         if self._rollback_level:
             levels = {

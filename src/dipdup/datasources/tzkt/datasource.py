@@ -695,7 +695,7 @@ class TzktDatasource(IndexDatasource):
 
             head_level = item['state']
             if self._level and head_level < self._level:
-                raise RuntimeError('Received data message from level lower than current: {head_level} < {self._level}')
+                raise RuntimeError(f'Received data message from level lower than current: {head_level} < {self._level}')
 
             # NOTE: State messages will be replaced with negotiation some day
             if message_type == TzktMessageType.STATE:

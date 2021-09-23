@@ -332,7 +332,9 @@ class DipDup:
         event = Event()
 
         async def _wrapper():
+            self._logger.info('Waiting for IndexDispatcher to spawn datasources')
             await event.wait()
+            self._logger.info('Spawning datasources')
             _tasks = [create_task(d.run()) for d in self._datasources.values()]
             await gather(*_tasks)
 
