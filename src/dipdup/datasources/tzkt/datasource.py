@@ -697,7 +697,7 @@ class TzktDatasource(IndexDatasource):
             if self._level and head_level < self._level:
                 raise RuntimeError(f'Received data message from level lower than current: {head_level} < {self._level}')
 
-            # NOTE: State messages will be replaced with negotiation some day
+            # NOTE: State messages will be replaced with WS negotiation some day
             if message_type == TzktMessageType.STATE:
                 if self._sync_level != head_level:
                     self._logger.info('Datasource level set to %s', head_level)
@@ -747,7 +747,6 @@ class TzktDatasource(IndexDatasource):
             created = False
             if self._head is None:
                 self._head, created = await Head.get_or_create(
-                    # NOTE: It would be better to use datasource name but it's not available
                     name=self._http._url,
                     defaults=dict(
                         level=block.level,
@@ -762,6 +761,31 @@ class TzktDatasource(IndexDatasource):
                 await self._head.save()
 
             self.emit_head(block)
+
+    # FIXME: I don't like this approach, too hacky.
+    async def set_head_from_http(self) -> None:
+        """Set block from `get_head_block` HTTP method for indexes to use the same level during initial sync"""
+        if self._head:
+            self._logger.warning('Attempt to set head twice')
+            return
+        block = await self.get_head_block()
+        self._head, created = await Head.get_or_create(
+            name=self._http._url,
+            defaults=dict(
+                level=block.level,
+                hash=block.hash,
+                timestamp=block.timestamp,
+            ),
+        )
+        if not created:
+            self._head.level = block.level  # type: ignore
+            self._head.hash = block.hash  # type: ignore
+            self._head.timestamp = block.timestamp  # type: ignore
+            await self._head.save()
+
+        self._logger.info('Datasource head set to block with level %s', self._head.level)
+
+        # NOTE: No need to emit?
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:

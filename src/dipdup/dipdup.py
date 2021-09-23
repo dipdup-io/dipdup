@@ -29,7 +29,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, Contract, HeadBlockData
+from dipdup.models import BigMapData, Contract, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
@@ -49,6 +49,7 @@ class IndexDispatcher:
     async def run(self, spawn_datasources_event: Optional[Event]) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
+        await self._set_datasource_heads()
         await self._load_index_states()
 
         while not self._stopped:
@@ -103,6 +104,11 @@ class IndexDispatcher:
             datasource.on_operations(self._dispatch_operations)
             datasource.on_big_maps(self._dispatch_big_maps)
             datasource.on_rollback(self._rollback)
+
+    async def _set_datasource_heads(self) -> None:
+        for datasource in self._ctx.datasources.values():
+            if isinstance(datasource, TzktDatasource):
+                head = await datasource.set_head_from_http()
 
     async def _load_index_states(self) -> None:
         await self._fetch_contracts()
@@ -317,9 +323,6 @@ class DipDup:
         tasks.add(create_task(hasura_gateway.configure()))
 
     async def _set_up_datasources(self, stack: AsyncExitStack) -> None:
-        # FIXME: Find a better way to do this
-        # if self._datasources:
-        #     raise RuntimeError
         await self._create_datasources()
         for datasource in self._datasources.values():
             await stack.enter_async_context(datasource)
