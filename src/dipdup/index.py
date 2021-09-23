@@ -86,7 +86,11 @@ class Index:
 
         elif self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to the latest block')
-            last_level = (await self._datasource.get_head_block()).level
+            # NOTE: Late establishing connection to the WebSocket
+            if self.datasource.head:
+                last_level = self.datasource.head.level
+            else:
+                last_level = (await self._datasource.get_head_block()).level
             await self._synchronize(last_level)
 
         elif self._datasource.sync_level > self.state.level:
