@@ -219,6 +219,7 @@ class DipDup:
             await self._set_up_hasura(stack, tasks)
 
             spawn_datasources_event: Optional[Event] = None
+            start_scheduler_event: Optional[Event] = None
             if not oneshot:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)
                 spawn_datasources_event = await self._spawn_datasources(tasks)
