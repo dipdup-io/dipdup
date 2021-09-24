@@ -74,7 +74,11 @@ class IndexDispatcher:
                     spawn_datasources_event.set()
 
             if start_scheduler_event and not start_scheduler_event.is_set():
-                if self._every_index_is(IndexStatus.REALTIME):
+                # NOTE: Do not check with every_index_is, indexes become REALTIME after first message from WS is received
+                for index in self._indexes.values():
+                    if index.state.level != index.datasource.head.level:
+                        break
+                else:
                     start_scheduler_event.set()
 
     def stop(self) -> None:
@@ -215,6 +219,7 @@ class DipDup:
             await self._set_up_hasura(stack, tasks)
 
             spawn_datasources_event: Optional[Event] = None
+            start_scheduler_event: Optional[Event] = None
             if not oneshot:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)
                 spawn_datasources_event = await self._spawn_datasources(tasks)
