@@ -1,4 +1,4 @@
-__version__ = '3.0.0'
+__version__ = '3.0.1'
 __spec_version__ = '1.2'
 spec_version_mapping = {
     '0.1': '<=0.4.3',
