@@ -4,12 +4,14 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from functools import wraps
+from typing import Any, AsyncGenerator, Callable, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
+from aiosignalrcore.client import SignalRClient
 from aiosignalrcore.messages import CompletionMessage  # type: ignore
 from aiosignalrcore.transport.abstract import ConnectionState  # type: ignore
-from aiosignalrcore.client import SignalRClient
+
 from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
@@ -20,7 +22,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData
+from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
 
 OperationID = int
@@ -338,7 +340,7 @@ class TzktDatasource(IndexDatasource):
         self._transaction_subscriptions: Set[str] = set()
         self._origination_subscriptions: bool = False
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
-        self._client: Optional[SignalRClient] = None
+        self._ws_client: Optional[SignalRClient] = None
 
         self._block_cache: BlockCache = BlockCache()
         self._head: Optional[Head] = None
@@ -356,6 +358,10 @@ class TzktDatasource(IndexDatasource):
     @property
     def sync_level(self) -> Optional[int]:
         return self._sync_level
+
+    @property
+    def head(self) -> Optional[Head]:
+        return self._head
 
     async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
         """Get list of contracts sharing the same code hash or type hash"""
@@ -531,6 +537,32 @@ class TzktDatasource(IndexDatasource):
             big_maps.append(self.convert_big_map(bm))
         return big_maps
 
+    async def get_quote(self, level: int) -> QuoteData:
+        """Get quote for block"""
+        self._logger.info('Fetching quotes for level %s', level)
+        quote_json = await self._http.request(
+            'get',
+            url='v1/quotes',
+            params={"level": level},
+            cache=True,
+        )
+        return self.convert_quote(quote_json[0])
+
+    async def get_quotes(self, from_level: int, to_level: int) -> List[QuoteData]:
+        """Get quotes for blocks"""
+        self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
+        quotes_json = await self._http.request(
+            'get',
+            url='v1/quotes',
+            params={
+                "level.ge": from_level,
+                "level.lt": to_level,
+                "limit": self.request_limit,
+            },
+            cache=False,
+        )
+        return [self.convert_quote(quote) for quote in quotes_json]
+
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
 
@@ -555,29 +587,43 @@ class TzktDatasource(IndexDatasource):
 
         await self._on_connect()
 
-    def _get_client(self) -> SignalRClient:
+    def _get_ws_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
-        if self._client is None:
-            self._logger.info('Creating websocket client')
-            self._client = SignalRClient(url=f'{self._http._url}/v1/events')
+        if self._ws_client:
+            return self._ws_client
 
-            self._client.on_open(self._on_connect)
-            self._client.on('operations', self._on_operation_message)
-            self._client.on('bigmaps', self._on_big_map_message)
-            self._client.on('head', self._on_head_message)
+        self._logger.info('Creating websocket client')
+        self._ws_client = SignalRClient(url=f'{self._http._url}/v1/events')
 
-        return self._client
+        _ws_lock = asyncio.Lock()
+
+        def _lock_wrapper(fn: Callable):
+            @wraps(fn)
+            async def _wrapper(*args, **kwargs):
+                async with _ws_lock:
+                    return await fn(*args, **kwargs)
+
+            return _wrapper
+
+        self._ws_client.on_open(_lock_wrapper(self._on_connect))
+        # FIXME: missing method
+        # self._ws_client.on_error(_lock_wrapper(self._on_error))
+        self._ws_client.on('operations', _lock_wrapper(self._on_operation_message))
+        self._ws_client.on('bigmaps', _lock_wrapper(self._on_big_map_message))
+        self._ws_client.on('head', _lock_wrapper(self._on_head_message))
+
+        return self._ws_client
 
     async def run(self) -> None:
         """Main loop. Sync indexes via REST, start WS connection"""
         self._logger.info('Starting datasource')
 
         self._logger.info('Starting websocket client')
-        await self._get_client().run()
+        await self._get_ws_client().run()
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
-        if self._get_client()._transport._state != ConnectionState.connected:
+        if self._get_ws_client()._transport._state != ConnectionState.connected:
             return
 
         self._logger.info('Realtime connection established, subscribing to channels')
@@ -651,9 +697,9 @@ class TzktDatasource(IndexDatasource):
 
             head_level = item['state']
             if self._level and head_level < self._level:
-                raise RuntimeError('Received data message from level lower than current: {head_level} < {self._level}')
+                raise RuntimeError(f'Received data message from level lower than current: {head_level} < {self._level}')
 
-            # NOTE: State messages will be replaced with negotiation some day
+            # NOTE: State messages will be replaced with WS negotiation some day
             if message_type == TzktMessageType.STATE:
                 if self._sync_level != head_level:
                     self._logger.info('Datasource level set to %s', head_level)
@@ -687,12 +733,13 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        async for _, data in self._extract_message_data('big_map', message):
+        async for level, data in self._extract_message_data('big_map', message):
+            block = await self._block_cache.get_block(level)
             big_maps = []
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
                 big_maps.append(big_map)
-            self.emit_big_maps(big_maps, self.block)
+            self.emit_big_maps(big_maps, block)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         async for _, data in self._extract_message_data('head', message):
@@ -716,6 +763,31 @@ class TzktDatasource(IndexDatasource):
                 await self._head.save()
 
             self.emit_head(block)
+
+    # FIXME: I don't like this approach, too hacky.
+    async def set_head_from_http(self) -> None:
+        """Set block from `get_head_block` HTTP method for indexes to use the same level during initial sync"""
+        if self._head:
+            self._logger.warning('Attempt to set head twice')
+            return
+        block = await self.get_head_block()
+        self._head, created = await Head.get_or_create(
+            name=self._http._url,
+            defaults=dict(
+                level=block.level,
+                hash=block.hash,
+                timestamp=block.timestamp,
+            ),
+        )
+        if not created:
+            self._head.level = block.level  # type: ignore
+            self._head.hash = block.hash  # type: ignore
+            self._head.timestamp = block.timestamp  # type: ignore
+            await self._head.save()
+
+        self._logger.info('Datasource head set to block with level %s', self._head.level)
+
+        # NOTE: No need to emit?
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
@@ -846,8 +918,23 @@ class TzktDatasource(IndexDatasource):
             quote_eth=Decimal(head_block_json['quoteEth']),
         )
 
+    @classmethod
+    def convert_quote(cls, quote_json: Dict[str, Any]) -> QuoteData:
+        """Convert raw quote message from REST into dataclass"""
+        return QuoteData(
+            level=quote_json['level'],
+            timestamp=cls._parse_timestamp(quote_json['timestamp']),
+            btc=Decimal(quote_json['btc']),
+            eur=Decimal(quote_json['eur']),
+            usd=Decimal(quote_json['usd']),
+            cny=Decimal(quote_json['cny']),
+            jpy=Decimal(quote_json['jpy']),
+            krw=Decimal(quote_json['krw']),
+            eth=Decimal(quote_json['eth']),
+        )
+
     async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:
-        client = self._get_client()
+        client = self._get_ws_client()
         await client.send(method, arguments, on_invocation)
 
     @classmethod

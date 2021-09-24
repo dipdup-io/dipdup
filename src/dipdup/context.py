@@ -37,7 +37,7 @@ from dipdup.exceptions import (
 )
 from dipdup.models import Contract
 from dipdup.utils import FormattedLogger, iter_files
-from dipdup.utils.database import move_table, recreate_schema
+from dipdup.utils.database import create_schema, drop_schema, move_table, truncate_schema
 
 pending_indexes = deque()  # type: ignore
 
@@ -71,7 +71,7 @@ class DipDupContext:
         self,
         name: str,
         index: str,
-        datasource: Datasource,
+        datasource: TzktDatasource,
         fmt: Optional[str] = None,
         *args,
         **kwargs: Any,
@@ -98,15 +98,16 @@ class DipDupContext:
             immune_schema_name = f'{database_config.schema_name}_immune'
 
             if database_config.immune_tables:
-                await recreate_schema(conn, immune_schema_name)
+                await create_schema(conn, immune_schema_name)
+                for table in database_config.immune_tables:
+                    await move_table(conn, table, database_config.schema_name, immune_schema_name)
 
-            for table in database_config.immune_tables:
-                await move_table(conn, table, database_config.schema_name, immune_schema_name)
+            await truncate_schema(conn, database_config.schema_name)
 
-            await recreate_schema(conn, database_config.schema_name)
-
-            for table in database_config.immune_tables:
-                await move_table(conn, table, immune_schema_name, database_config.schema_name)
+            if database_config.immune_tables:
+                for table in database_config.immune_tables:
+                    await move_table(conn, table, immune_schema_name, database_config.schema_name)
+                await drop_schema(conn, immune_schema_name)
 
         else:
             await Tortoise._drop_databases()
@@ -207,7 +208,7 @@ class HandlerContext(DipDupContext):
         callbacks: 'CallbackManager',
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: Datasource,
+        datasource: TzktDatasource,
     ) -> None:
         super().__init__(datasources, config, callbacks)
         self.logger = logger
@@ -245,7 +246,7 @@ class CallbackManager:
         ctx: 'DipDupContext',
         name: str,
         index: str,
-        datasource: Datasource,
+        datasource: TzktDatasource,
         fmt: Optional[str] = None,
         *args,
         **kwargs: Any,

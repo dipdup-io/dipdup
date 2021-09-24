@@ -4,6 +4,8 @@ import hashlib
 import importlib
 import logging
 from contextlib import asynccontextmanager
+from os.path import dirname, join
+from pathlib import Path
 from typing import Any, AsyncIterator, Iterator, Optional, Tuple, Type
 
 from tortoise import Tortoise
@@ -19,6 +21,7 @@ from dipdup.exceptions import DatabaseConfigurationError
 from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.database')
+_truncate_schema_sql = Path(join(dirname(__file__), 'truncate_schema.sql')).read_text()
 
 
 @asynccontextmanager
@@ -64,9 +67,7 @@ async def in_global_transaction():
             conn._pool = original_conn._pool
             conn._template = original_conn._template
         else:
-            raise NotImplementedError(
-                '`in_global_transaction` wrapper was not tested with database backends other then aiosqlite and asyncpg'
-            )
+            raise NotImplementedError
 
         yield
 
@@ -116,18 +117,50 @@ def get_schema_hash(conn: BaseDBAsyncClient) -> str:
 
 async def set_schema(conn: BaseDBAsyncClient, name: str) -> None:
     """Set schema for the connection"""
-    await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
+    if isinstance(conn, SqliteClient):
+        raise NotImplementedError
+
     await conn.execute_script(f'SET search_path TO {name}')
 
 
-async def recreate_schema(conn: BaseDBAsyncClient, name: str) -> None:
-    """Drop and recreate schema"""
-    await conn.execute_script(f'DROP SCHEMA IF EXISTS {name} CASCADE')
-    await conn.execute_script(f'CREATE SCHEMA {name}')
+async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
+    if isinstance(conn, SqliteClient):
+        raise NotImplementedError
+
+    await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
+
+
+async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
+    if isinstance(conn, SqliteClient):
+        await Tortoise.generate_schemas()
+    elif isinstance(conn, AsyncpgDBClient):
+        await create_schema(conn, name)
+        await set_schema(conn, name)
+        await Tortoise.generate_schemas()
+    else:
+        raise NotImplementedError
+
+
+async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
+    if isinstance(conn, SqliteClient):
+        raise NotImplementedError
+
+    await conn.execute_script(_truncate_schema_sql)
+    await conn.execute_script(f"SELECT truncate_schema('{name}')")
+
+
+async def drop_schema(conn: BaseDBAsyncClient, name: str) -> None:
+    if isinstance(conn, SqliteClient):
+        raise NotImplementedError
+
+    await conn.execute_script(f'DROP SCHEMA IF EXISTS {name}')
 
 
 async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema: str) -> None:
     """Move table from one schema to another"""
+    if isinstance(conn, SqliteClient):
+        raise NotImplementedError
+
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
 
