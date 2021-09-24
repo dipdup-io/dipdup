@@ -20,7 +20,7 @@ from dipdup.config import (
 )
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.exceptions import InvalidDataError
+from dipdup.exceptions import ConfigInitializationException, InvalidDataError
 from dipdup.models import BigMapData, BigMapDiff, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Origination, Transaction
@@ -86,7 +86,11 @@ class Index:
 
         elif self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to the latest block')
-            last_level = (await self._datasource.get_head_block()).level
+            # NOTE: Late establishing connection to the WebSocket
+            if self.datasource.head:
+                last_level = self.datasource.head.level
+            else:
+                last_level = (await self._datasource.get_head_block()).level
             await self._synchronize(last_level)
 
         elif self._datasource.sync_level > self.state.level:
@@ -154,6 +158,7 @@ class OperationIndex(Index):
             raise RuntimeError('Index level is higher than rollback level')
 
     async def _process_queue(self) -> None:
+        """Process WebSocket queue"""
         if not self._queue:
             return
         self._logger.info('Processing websocket queue')
@@ -195,8 +200,8 @@ class OperationIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_operations(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
-        if level < self.state.level:
-            raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {self.state.level}')
+        if level <= self.state.level:
+            raise RuntimeError(f'Level of operation batch must be higher than index state level: {level} <= {self.state.level}')
 
         if self._rollback_level:
             levels = {
@@ -214,7 +219,7 @@ class OperationIndex(Index):
             received_hashes = set([op.hash for op in operations])
             reused_hashes = received_hashes & expected_hashes
             if reused_hashes != expected_hashes:
-                await self._ctx.reindex(reason='attempted a single level rollback, but arrived block differs from processed one')
+                await self._ctx.reindex(reason='attempted a single level rollback, but arrived block has additional transactions')
 
             self._rollback_level = None
             self._last_hashes = set()
@@ -324,7 +329,7 @@ class OperationIndex(Index):
         """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
         if not handler_config.parent:
-            raise RuntimeError('Handler must have a parent')
+            raise ConfigInitializationException
 
         args: List[Optional[Union[Transaction, Origination, OperationData]]] = []
         for pattern_config, operation in zip(handler_config.pattern, matched_operations):
@@ -415,7 +420,8 @@ class BigMapIndex(Index):
     def push(self, level: int, big_maps: List[BigMapData], block: Optional[HeadBlockData] = None):
         self._queue.append((level, big_maps, block))
 
-    async def _process_queue(self):
+    async def _process_queue(self) -> None:
+        """Process WebSocket queue"""
         if not self._queue:
             return
         self._logger.info('Processing websocket queue')
@@ -450,8 +456,8 @@ class BigMapIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_big_maps(self, level: int, big_maps: List[BigMapData], block: Optional[HeadBlockData] = None):
-        if level < self.state.level:
-            raise RuntimeError(f'Level of operation batch is lower than index state level: {level} < {self.state.level}')
+        if level <= self.state.level:
+            raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
 
         async with in_global_transaction():
             self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
@@ -479,7 +485,7 @@ class BigMapIndex(Index):
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
         if not handler_config.parent:
-            raise RuntimeError('Handler must have a parent')
+            raise ConfigInitializationException
 
         if matched_big_map.action.has_key:
             key_type = handler_config.key_type_cls
@@ -525,14 +531,14 @@ class BigMapIndex(Index):
                     await self._on_match(handler_config, big_map)
 
     async def _get_big_map_addresses(self) -> Set[str]:
-        """Get addresses to fetch transactions from during initial synchronization"""
+        """Get addresses to fetch big map diffs from during initial synchronization"""
         addresses = set()
         for handler_config in self._config.handlers:
             addresses.add(cast(ContractConfig, handler_config.contract).address)
         return addresses
 
     async def _get_big_map_paths(self) -> Set[str]:
-        """Get addresses to fetch transactions from during initial synchronization"""
+        """Get addresses to fetch big map diffs from during initial synchronization"""
         paths = set()
         for handler_config in self._config.handlers:
             paths.add(handler_config.path)

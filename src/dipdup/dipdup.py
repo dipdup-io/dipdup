@@ -45,23 +45,30 @@ class IndexDispatcher:
         self._indexes: Dict[str, Index] = {}
         self._contracts: Set[ContractConfig] = set()
         self._stopped: bool = False
-        self._synchronized: bool = False
 
-    async def run(self) -> None:
+    async def run(self, spawn_datasources_event: Optional[Event]) -> None:
         self._logger.info('Starting index dispatcher')
-        await self._subscribe_to_datasources()
+        await self._subscribe_to_datasource_events()
+        await self._set_datasource_heads()
         await self._load_index_states()
 
         while not self._stopped:
-            with suppress(IndexError):
-                while index := pending_indexes.pop():
-                    self._indexes[index._config.name] = index
-
             tasks = [index.process() for index in self._indexes.values()]
             async with slowdown(1.0):
                 await gather(*tasks)
 
             await self._check_states()
+
+            indexes_spawned = False
+            with suppress(IndexError):
+                while index := pending_indexes.popleft():
+                    self._indexes[index._config.name] = index
+                    indexes_spawned = True
+            if not indexes_spawned:
+                await self._check_states()
+
+                if spawn_datasources_event:
+                    spawn_datasources_event.set()
 
     def stop(self) -> None:
         self._stopped = True
@@ -69,17 +76,14 @@ class IndexDispatcher:
     async def _check_states(self) -> None:
         statuses = [i.state.status for i in self._indexes.values()]
 
-        def _have_no(status: IndexStatus) -> bool:
+        def _every_index_is(status: IndexStatus) -> bool:
             nonlocal statuses
-            return bool(tuple(filter(partial(ne, status), statuses)))
+            return bool(statuses) and not bool(tuple(filter(partial(ne, status), statuses)))
 
-        synching_indexes = _have_no(IndexStatus.REALTIME)
-        if not synching_indexes:
-            # TODO: `on_synchronized` hook? Not sure if we need it.
-            ...
+        # TODO: `on_synchronized` hook? Not sure if we need it.
+        # if _every_index_is(IndexStatus.REALTIME): ...
 
-        pending_oneshot_indexes = _have_no(IndexStatus.ONESHOT)
-        if not pending_oneshot_indexes:
+        if _every_index_is(IndexStatus.ONESHOT):
             self.stop()
 
     async def _fetch_contracts(self) -> None:
@@ -93,13 +97,18 @@ class IndexDispatcher:
                 self._ctx.config.contracts[contract.name] = contract_config
         self._ctx.config.pre_initialize()
 
-    async def _subscribe_to_datasources(self) -> None:
+    async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
             datasource.on_operations(self._dispatch_operations)
             datasource.on_big_maps(self._dispatch_big_maps)
             datasource.on_rollback(self._rollback)
+
+    async def _set_datasource_heads(self) -> None:
+        for datasource in self._ctx.datasources.values():
+            if isinstance(datasource, TzktDatasource):
+                await datasource.set_head_from_http()
 
     async def _load_index_states(self) -> None:
         await self._fetch_contracts()
@@ -207,14 +216,15 @@ class DipDup:
             await self._initialize_schema()
             await self._set_up_hasura(stack, tasks)
 
+            spawn_datasources_event: Optional[Event] = None
             if not oneshot:
                 await self._set_up_scheduler(stack, tasks)
-                await self._spawn_datasources(tasks)
+                spawn_datasources_event = await self._spawn_datasources(tasks)
 
             for name in self._config.indexes:
                 await self._ctx._spawn_index(name)
 
-            await self._set_up_index_dispatcher(tasks)
+            await self._set_up_index_dispatcher(tasks, spawn_datasources_event)
 
             await gather(*tasks)
 
@@ -313,19 +323,26 @@ class DipDup:
         tasks.add(create_task(hasura_gateway.configure()))
 
     async def _set_up_datasources(self, stack: AsyncExitStack) -> None:
-        # FIXME: Find a better way to do this
-        # if self._datasources:
-        #     raise RuntimeError
         await self._create_datasources()
         for datasource in self._datasources.values():
             await stack.enter_async_context(datasource)
 
-    async def _set_up_index_dispatcher(self, tasks: Set[Task]) -> None:
+    async def _set_up_index_dispatcher(self, tasks: Set[Task], spawn_datasources_event: Optional[Event]) -> None:
         index_dispatcher = IndexDispatcher(self._ctx)
-        tasks.add(create_task(index_dispatcher.run()))
+        tasks.add(create_task(index_dispatcher.run(spawn_datasources_event)))
 
-    async def _spawn_datasources(self, tasks: Set[Task]) -> None:
-        tasks.update(create_task(d.run()) for d in self._datasources.values())
+    async def _spawn_datasources(self, tasks: Set[Task]) -> Event:
+        event = Event()
+
+        async def _wrapper():
+            self._logger.info('Waiting for IndexDispatcher to spawn datasources')
+            await event.wait()
+            self._logger.info('Spawning datasources')
+            _tasks = [create_task(d.run()) for d in self._datasources.values()]
+            await gather(*_tasks)
+
+        tasks.add(create_task(_wrapper()))
+        return event
 
     async def _set_up_scheduler(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
         job_failed = Event()
