@@ -39,7 +39,7 @@ BEGIN
             EXECUTE rec.name;
         EXCEPTION
             WHEN others THEN END;
-        END LOOP;
+    END LOOP;
 
     FOR rec IN SELECT
             'DROP FUNCTION ' || quote_ident(ns.nspname) || '.'
@@ -61,7 +61,16 @@ BEGIN
             EXECUTE rec.name;
         EXCEPTION
             WHEN others THEN END;
-        END LOOP;
+    END LOOP;
+
+    BEGIN
+        CREATE EXTENSION IF NOT EXISTS pgcrypto;
+        CREATE EXTENSION IF NOT EXISTS timescaledb;
+    EXCEPTION
+        WHEN OTHERS THEN
+            NULL;
+    END;
+    
     RETURN;
 END;
 $$ LANGUAGE plpgsql;

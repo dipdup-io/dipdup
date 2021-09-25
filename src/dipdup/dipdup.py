@@ -262,6 +262,7 @@ class DipDup:
 
     async def _initialize_schema(self) -> None:
         self._logger.info('Initializing database schema')
+        # TODO: Incorrect for sqlite, fix on the next major release
         schema_name = 'public'
         conn = get_connection(None)
 
