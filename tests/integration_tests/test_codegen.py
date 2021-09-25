@@ -21,7 +21,7 @@ class CodegenTest(IsolatedAsyncioTestCase):
             with self.subTest(name):
                 config_path = join(dirname(__file__), name)
                 config = DipDupConfig.load([config_path])
-                config.pre_initialize()
+                config.initialize(skip_imports=True)
                 config.package = 'tmp_test_dipdup'
 
                 if config.package in sys.modules:

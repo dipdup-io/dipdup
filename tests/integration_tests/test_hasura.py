@@ -18,7 +18,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
     async def test_configure_hasura(self):
         config_path = join(dirname(__file__), 'hic_et_nunc.yml')
         config = DipDupConfig.load([config_path])
-        config.pre_initialize()
+        config.initialize(skip_imports=True)
 
         async with AsyncExitStack() as stack:
             postgres_container = PostgresContainer()
