@@ -314,8 +314,10 @@ class Index(Model):
                 raise DipDupException('Index level is higher than desired level')
             self.level = level  # type: ignore
 
-        self.head = head
-        self.head_id = head.pk if head else None
+        if head:
+            self.head = head
+            self.head_id = head.pk if head else None
+
         self.status = status
         await self.save()
 
