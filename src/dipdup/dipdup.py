@@ -293,7 +293,9 @@ class DipDup:
                 raise ReindexingRequiredError from e
 
         elif self._schema.hash != schema_hash:
-            await self._ctx.reindex(reason='schema hash mismatch')
+            # FIXME: It seems like this check is broken in some cases
+            # await self._ctx.reindex(reason='schema hash mismatch')
+            self._logger.error('Schema hash mismatch, reindex may be required')
 
         await self._ctx.fire_hook('on_restart')
 
