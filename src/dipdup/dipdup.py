@@ -262,6 +262,7 @@ class DipDup:
 
     async def _initialize_schema(self) -> None:
         self._logger.info('Initializing database schema')
+        # TODO: Incorrect for sqlite, fix on the next major release
         schema_name = 'public'
         conn = get_connection(None)
 
@@ -293,7 +294,9 @@ class DipDup:
                 raise ReindexingRequiredError from e
 
         elif self._schema.hash != schema_hash:
-            await self._ctx.reindex(reason='schema hash mismatch')
+            # FIXME: It seems like this check is broken in some cases
+            # await self._ctx.reindex(reason='schema hash mismatch')
+            self._logger.error('Schema hash mismatch, reindex may be required')
 
         await self._ctx.fire_hook('on_restart')
 
