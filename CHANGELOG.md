@@ -15,6 +15,7 @@
 * Removed unnecessary calls to TzKT API during the partial sync.
 * Fixed removal of PostgreSQL extensions (`timescaledb`, `pgcrypto`) by function `truncate_database` triggered on reindex.
 * Fixed updating relation between index and head in DB.
+* Fixed creation of missing project package
 
 ## 3.0.1 - 2021-09-24
 

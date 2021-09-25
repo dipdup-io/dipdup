@@ -888,6 +888,7 @@ class DipDupConfig:
         self._default_hooks: bool = False
         self._links_resolved: Set[str] = set()
         self._imports_resolved: Set[str] = set()
+        self._package_path: Optional[str] = None
 
     @property
     def environment(self) -> Dict[str, str]:
@@ -899,8 +900,17 @@ class DipDupConfig:
 
     @property
     def package_path(self) -> str:
-        package = importlib.import_module(self.package)
-        return dirname(package.__file__)
+        if not self._package_path:
+            package = importlib.import_module(self.package)
+            self._package_path = dirname(package.__file__)
+
+        return self._package_path
+
+    @package_path.setter
+    def package_path(self, value: str):
+        if self._package_path:
+            raise ConfigInitializationException
+        self._package_path = value
 
     @classmethod
     def load(
@@ -972,14 +982,14 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
-    def pre_initialize(self) -> None:
+    def initialize(self, skip_imports: bool = False) -> None:
         self._set_names()
         self._resolve_templates()
         self._resolve_links()
         self._validate()
 
-    def initialize(self) -> None:
-        self.pre_initialize()
+        if skip_imports:
+            return
 
         for index_config in self.indexes.values():
             if index_config.name in self._imports_resolved:
@@ -991,12 +1001,12 @@ class DipDupConfig:
                 raise ConfigInitializationException
 
             elif isinstance(index_config, OperationIndexConfig):
-                self._load_operation_index_types(index_config)
-                self._load_index_callbacks(index_config)
+                self._import_operation_index_types(index_config)
+                self._import_index_callbacks(index_config)
 
             elif isinstance(index_config, BigMapIndexConfig):
-                self._load_big_map_index_types(index_config)
-                self._load_index_callbacks(index_config)
+                self._import_big_map_index_types(index_config)
+                self._import_index_callbacks(index_config)
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1151,7 +1161,7 @@ class DipDupConfig:
             for name, config in named_configs.items():
                 config.name = name
 
-    def _load_operation_index_types(self, index_config: OperationIndexConfig) -> None:
+    def _import_operation_index_types(self, index_config: OperationIndexConfig) -> None:
         for handler_config in index_config.handlers:
             for pattern_config in handler_config.pattern:
                 if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
@@ -1165,11 +1175,11 @@ class DipDupConfig:
                 else:
                     raise NotImplementedError
 
-    def _load_index_callbacks(self, index_config: ResolvedIndexConfigT) -> None:
+    def _import_index_callbacks(self, index_config: ResolvedIndexConfigT) -> None:
         for handler_config in index_config.handlers:
             handler_config.initialize_callback_fn(self.package)
 
-    def _load_big_map_index_types(self, index_config: BigMapIndexConfig) -> None:
+    def _import_big_map_index_types(self, index_config: BigMapIndexConfig) -> None:
         for big_map_handler_config in index_config.handlers:
             big_map_handler_config.initialize_big_map_type(self.package)
 

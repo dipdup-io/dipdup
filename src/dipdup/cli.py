@@ -92,6 +92,7 @@ def init_sentry(config: DipDupConfig) -> None:
 @click.pass_context
 @cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
+    # NOTE: Config from cwd, fallback to builtin
     try:
         path = join(os.getcwd(), logging_config)
         _logging_config = LoggingConfig.load(path)
@@ -110,6 +111,8 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
     _config = DipDupConfig.load(config)
     init_sentry(_config)
+
+    await DipDupCodeGenerator(_config, {}).create_package()
 
     if _config.spec_version not in spec_version_mapping:
         raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
@@ -148,7 +151,7 @@ async def run(ctx, reindex: bool, oneshot: bool) -> None:
 @cli_wrapper
 async def init(ctx, overwrite_types: bool):
     config: DipDupConfig = ctx.obj.config
-    config.pre_initialize()
+    config.initialize(skip_imports=True)
     dipdup = DipDup(config)
     await dipdup.init(overwrite_types)
 
@@ -158,7 +161,7 @@ async def init(ctx, overwrite_types: bool):
 @cli_wrapper
 async def migrate(ctx):
     config: DipDupConfig = ctx.obj.config
-    config.pre_initialize()
+    config.initialize(skip_imports=True)
     migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
     await migrations.migrate()
 

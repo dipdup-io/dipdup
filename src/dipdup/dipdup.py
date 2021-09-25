@@ -97,7 +97,7 @@ class IndexDispatcher:
             if contract.name not in self._ctx.config.contracts:
                 contract_config = ContractConfig(address=contract.address, typename=contract.typename)
                 self._ctx.config.contracts[contract.name] = contract_config
-        self._ctx.config.pre_initialize()
+        self._ctx.config.initialize(skip_imports=True)
 
     async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
