@@ -52,8 +52,8 @@ BEGIN
         ON
             (pg_proc.pronamespace = ns.oid)
         WHERE
-            ns.nspname =
-            schema_name
+            ns.nspname = schema_name AND
+            pg_catalog.pg_function_is_visible(pg_proc.oid)
         ORDER BY
             proname
     LOOP
@@ -63,13 +63,13 @@ BEGIN
             WHEN others THEN END;
     END LOOP;
 
-    BEGIN
-        CREATE EXTENSION IF NOT EXISTS pgcrypto;
-        CREATE EXTENSION IF NOT EXISTS timescaledb;
-    EXCEPTION
-        WHEN OTHERS THEN
-            NULL;
-    END;
+    -- BEGIN
+    --     CREATE EXTENSION IF NOT EXISTS pgcrypto;
+    --     CREATE EXTENSION IF NOT EXISTS timescaledb;
+    -- EXCEPTION
+    --     WHEN OTHERS THEN
+    --         NULL;
+    -- END;
     
     RETURN;
 END;
