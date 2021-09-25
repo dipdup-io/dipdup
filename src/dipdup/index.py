@@ -21,7 +21,7 @@ from dipdup.config import (
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, InvalidDataError
-from dipdup.models import BigMapData, BigMapDiff, HeadBlockData
+from dipdup.models import BigMapData, BigMapDiff, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger
@@ -111,7 +111,15 @@ class Index:
         ...
 
     async def _enter_sync_state(self, last_level: int) -> Optional[int]:
-        first_level = self.state.level
+        if self.state.status == IndexStatus.ONESHOT:
+            return None
+        # FIXME: I'm not sure if this is a good way to check if index is in sync
+        # TODO: Move to model class
+        elif self.state.status == IndexStatus.REALTIME and isinstance(self.state.head, Head):
+            self.state.head.level
+        else:
+            first_level = self.state.level
+
         if first_level == last_level:
             return None
         if first_level > last_level:
