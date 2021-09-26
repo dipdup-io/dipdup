@@ -116,7 +116,7 @@ class Index:
         # FIXME: I'm not sure if this is a good way to check if index is in sync
         # TODO: Move to model class
         elif self.state.status == IndexStatus.REALTIME and isinstance(self.state.head, Head):
-            self.state.head.level
+            first_level = self.state.head.level
         else:
             first_level = self.state.level
 
