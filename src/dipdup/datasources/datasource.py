@@ -15,8 +15,8 @@ from dipdup.models import BigMapData, HeadBlockData, OperationData
 class DatasourceEventEmitter(AsyncIOEventEmitter):
     """This class changes behavior of emit method to block execution until previous level emit callbacks are done"""
 
-    def __init__(self, loop=None):
-        super(AsyncIOEventEmitter, self).__init__(loop)
+    def __init__(self) -> None:
+        super(AsyncIOEventEmitter, self).__init__()
         self._prefix = 'emit_'
         self._tasks: DefaultDict[int, List[asyncio.Task]] = defaultdict(list)
 
