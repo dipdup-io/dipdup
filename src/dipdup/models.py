@@ -9,8 +9,8 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from pydantic.error_wrappers import ValidationError
 from tortoise import Model, fields
-from dipdup.enums import IndexStatus, IndexType
 
+from dipdup.enums import IndexStatus, IndexType
 from dipdup.exceptions import ConfigurationError, DipDupException, InvalidDataError
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)

@@ -283,8 +283,8 @@ class BigMapFetcher:
 
 class BlockCache:
     def __init__(self) -> None:
-        # FIXME: Why store older blocks?
         self._limit = 10
+        self._timeout = 60
         self._blocks: DefaultDict[int, Optional[HeadBlockData]] = defaultdict(lambda: None)
         self._events: DefaultDict[int, asyncio.Event] = defaultdict(asyncio.Event)
 
@@ -294,7 +294,7 @@ class BlockCache:
         self._blocks[block.level] = block
         self._events[block.level].set()
 
-        # FIXME: There should be a more readable way to do this
+        # FIXME: Refactor this
         last_blocks = sorted(self._blocks.keys())[-self._limit :]
         self._blocks = defaultdict(lambda: None, ({k: v for k, v in self._blocks.items() if k in last_blocks}))
         self._events = defaultdict(asyncio.Event, ({k: v for k, v in self._events.items() if k in last_blocks}))
@@ -304,9 +304,12 @@ class BlockCache:
             raise RuntimeError(f'Attemps to get block older than {self._limit} levels from head')
 
         try:
-            await asyncio.wait_for(fut=self._events[level].wait(), timeout=3)
+            await asyncio.wait_for(
+                fut=self._events[level].wait(),
+                timeout=self._timeout,
+            )
         except asyncio.TimeoutError as e:
-            raise RuntimeError(f'Block {level} hasn\'t arrived in 3 seconds. Forgot to subscribe to head?') from e
+            raise RuntimeError(f'Block {level} hasn\'t arrived in {self._timeout} seconds. Forgot to subscribe to head?') from e
 
         block = self._blocks[level]
         if not block:
@@ -632,7 +635,10 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Starting datasource')
 
         self._logger.info('Starting websocket client')
-        await self._get_ws_client().start()
+        await asyncio.gather(
+            self._get_ws_client().start(),
+            super().run(),
+        )
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
@@ -745,7 +751,7 @@ class TzktDatasource(IndexDatasource):
                     continue
                 operations.append(operation)
             if operations:
-                self.emit_operations(operations, block)
+                await self.emit_operations(operations, block)
 
     async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
@@ -757,14 +763,14 @@ class TzktDatasource(IndexDatasource):
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
                 big_maps.append(big_map)
-            self.emit_big_maps(big_maps, block)
+            await self.emit_big_maps(big_maps, block)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw head block from WS"""
         async for _, data in self._extract_message_data(MessageType.head, message):
             block = self.convert_head_block(data)
             await self._update_head(block)
-            self.emit_head(block)
+            await self.emit_head(block)
 
     async def _update_head(self, block: HeadBlockData) -> None:
         """Update Head model linked to datasource from WS head message"""
