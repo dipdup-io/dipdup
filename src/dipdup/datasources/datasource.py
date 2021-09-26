@@ -27,19 +27,24 @@ class DatasourceEventEmitter(AsyncIOEventEmitter):
         return False
 
     async def level_emit(self, level: int, event, *args, **kwargs) -> None:
-
-        while True:
+        timeout, sleep = 60, 0.5
+        for _ in range(int(timeout / sleep)):
             if self._level_has_pending_tasks(level):
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(sleep)
             else:
                 kwargs['_level'] = level
                 super().emit(event, *args, **kwargs)
                 break
+        else:
+            raise RuntimeError(f'Levels lower than {level} are still processing after {timeout} seconds')
 
     def _emit_run(self, f, args, kwargs) -> None:
         level = kwargs.pop('_level', 0)
-        task = asyncio.create_task(f(*args, **kwargs), name=f'{self._prefix}_{level}')
-        self._tasks[level].append(task)
+        if level:
+            task = asyncio.create_task(f(*args, **kwargs), name=f'{self._prefix}_{level}')
+            self._tasks[level].append(task)
+        else:
+            task = asyncio.create_task(f(*args, **kwargs))
 
         def _callback(f: asyncio.Task):
             if f.cancelled():
@@ -47,7 +52,8 @@ class DatasourceEventEmitter(AsyncIOEventEmitter):
 
             exc = f.exception()
             if exc:
-                self.emit("error", exc)
+                # TODO: Keep exception
+                self.emit('error', exc)
 
         task.add_done_callback(_callback)
 
