@@ -86,7 +86,7 @@ class Datasource(HTTPGateway):
         ...
 
 
-class IndexDatasource(Datasource, AsyncIOEventEmitter):
+class IndexDatasource(Datasource, DatasourceEventEmitter):
     def __init__(self, url: str, http_config: HTTPConfig) -> None:
         HTTPGateway.__init__(self, url, http_config)
         AsyncIOEventEmitter.__init__(self)
