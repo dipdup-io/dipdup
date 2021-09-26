@@ -22,9 +22,8 @@ class DatasourceEventEmitter(AsyncIOEventEmitter):
 
     def _level_has_pending_tasks(self, level: int) -> bool:
         for task_level in self._tasks:
-            if task_level < level:
-                if filter(lambda t: not t.done(), self._tasks[task_level]):
-                    return True
+            if task_level < level and filter(lambda t: not t.done(), self._tasks[task_level]):
+                return True
         return False
 
     async def level_emit(self, level: int, event, *args, **kwargs) -> None:
@@ -89,7 +88,7 @@ class Datasource(HTTPGateway):
 class IndexDatasource(Datasource, DatasourceEventEmitter):
     def __init__(self, url: str, http_config: HTTPConfig) -> None:
         HTTPGateway.__init__(self, url, http_config)
-        AsyncIOEventEmitter.__init__(self)
+        DatasourceEventEmitter.__init__(self)
 
     def on(self, event, f=None) -> None:
         raise RuntimeError('Do not use `on` directly')
