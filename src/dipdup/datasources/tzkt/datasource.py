@@ -23,6 +23,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
+from dipdup.enums import MessageType
 from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
 
@@ -293,6 +294,7 @@ class BlockCache:
         self._blocks[block.level] = block
         self._events[block.level].set()
 
+        # FIXME: There should be a more readable way to do this
         last_blocks = sorted(self._blocks.keys())[-self._limit :]
         self._blocks = defaultdict(lambda: None, ({k: v for k, v in self._blocks.items() if k in last_blocks}))
         self._events = defaultdict(asyncio.Event, ({k: v for k, v in self._events.items() if k in last_blocks}))
@@ -701,27 +703,28 @@ class TzktDatasource(IndexDatasource):
             [],
         )
 
-    async def _extract_message_data(self, channel: str, message: List[Any]) -> AsyncGenerator[Tuple[int, Dict], None]:
+    async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Tuple[int, Dict], None]:
+        # TODO: Docstring
         for item in message:
-            message_type = TzktMessageType(item['type'])
-            self._logger.debug('`%s` message: %s', channel, message_type.name)
-
+            tzkt_type = TzktMessageType(item['type'])
             head_level = item['state']
+
+            self._logger.info('Realtime message received: %s, %s', type_, tzkt_type)
             if self._level and head_level < self._level:
                 raise RuntimeError(f'Received data message from level lower than current: {head_level} < {self._level}')
 
             # NOTE: State messages will be replaced with WS negotiation some day
-            if message_type == TzktMessageType.STATE:
+            if tzkt_type == TzktMessageType.STATE:
                 if self._sync_level != head_level:
                     self._logger.info('Datasource level set to %s', head_level)
                     self._sync_level = head_level
                     self._level = head_level
 
-            elif message_type == TzktMessageType.DATA:
+            elif tzkt_type == TzktMessageType.DATA:
                 self._level = head_level
                 yield head_level, item['data']
 
-            elif message_type == TzktMessageType.REORG:
+            elif tzkt_type == TzktMessageType.REORG:
                 if self.level is None:
                     raise RuntimeError('Reorg message received but datasource is not connected')
                 self.emit_rollback(self.level, head_level)
@@ -731,8 +734,10 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
-        async for level, data in self._extract_message_data('operation', message):
+        async for level, data in self._extract_message_data(MessageType.operation, message):
+            # NOTE: Wait for head message to arrive
             block = await self._block_cache.get_block(level)
+
             operations = []
             for operation_json in data:
                 operation = self.convert_operation(operation_json)
@@ -744,8 +749,10 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        async for level, data in self._extract_message_data('big_map', message):
+        async for level, data in self._extract_message_data(MessageType.big_map, message):
+            # NOTE: Wait for head message to arrive
             block = await self._block_cache.get_block(level)
+
             big_maps = []
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
@@ -753,27 +760,29 @@ class TzktDatasource(IndexDatasource):
             self.emit_big_maps(big_maps, block)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
-        async for _, data in self._extract_message_data('head', message):
+        """Parse and emit raw head block from WS"""
+        async for _, data in self._extract_message_data(MessageType.head, message):
             block = self.convert_head_block(data)
-            await self._block_cache.add_block(block)
-
-            created = False
-            if self._head is None:
-                self._head, created = await Head.get_or_create(
-                    name=self._http._url,
-                    defaults=dict(
-                        level=block.level,
-                        hash=block.hash,
-                        timestamp=block.timestamp,
-                    ),
-                )
-            if not created:
-                self._head.level = block.level  # type: ignore
-                self._head.hash = block.hash  # type: ignore
-                self._head.timestamp = block.timestamp  # type: ignore
-                await self._head.save()
-
+            await self._update_head(block)
             self.emit_head(block)
+
+    async def _update_head(self, block: HeadBlockData) -> None:
+        """Update Head model linked to datasource from WS head message"""
+        created = False
+        if self._head is None:
+            self._head, created = await Head.get_or_create(
+                name=self._http._url,
+                defaults=dict(
+                    level=block.level,
+                    hash=block.hash,
+                    timestamp=block.timestamp,
+                ),
+            )
+        if not created:
+            self._head.level = block.level  # type: ignore
+            self._head.hash = block.hash  # type: ignore
+            self._head.timestamp = block.timestamp  # type: ignore
+            await self._head.save()
 
     # FIXME: I don't like this approach, too hacky.
     async def set_head_from_http(self) -> None:

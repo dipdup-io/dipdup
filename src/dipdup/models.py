@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from pydantic.error_wrappers import ValidationError
 from tortoise import Model, fields
+from dipdup.enums import IndexStatus, IndexType
 
 from dipdup.exceptions import ConfigurationError, DipDupException, InvalidDataError
 
@@ -19,19 +20,6 @@ ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
 _logger = logging.getLogger('dipdup.models')
-
-
-class IndexType(Enum):
-    operation = 'operation'
-    big_map = 'big_map'
-
-
-class IndexStatus(Enum):
-    NEW = 'NEW'
-    SYNCING = 'SYNCING'
-    REALTIME = 'REALTIME'
-    ROLLBACK = 'ROLLBACK'
-    ONESHOT = 'ONESHOT'
 
 
 @dataclass
