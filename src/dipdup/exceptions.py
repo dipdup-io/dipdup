@@ -3,6 +3,7 @@ import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Iterator, Optional, Type
+import sentry_sdk
 
 from tabulate import tabulate
 from tortoise.models import Model
@@ -64,6 +65,7 @@ class DipDupError(Exception):
         except DipDupError:
             raise
         except Exception as e:
+            sentry_sdk.capture_exception(e)
             raise DipDupError from e
 
 
