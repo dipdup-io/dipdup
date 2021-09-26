@@ -88,7 +88,7 @@ class Datasource(HTTPGateway):
 class IndexDatasource(Datasource, DatasourceEventEmitter):
     def __init__(self, url: str, http_config: HTTPConfig) -> None:
         HTTPGateway.__init__(self, url, http_config)
-        DatasourceEventEmitter.__init__(self)
+        DatasourceEventEmitter.__init__()
 
     def on(self, event, f=None) -> None:
         raise RuntimeError('Do not use `on` directly')
