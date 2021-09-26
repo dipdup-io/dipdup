@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from abc import abstractmethod
 from collections import defaultdict
 from enum import Enum
@@ -11,6 +12,8 @@ from dipdup.config import HTTPConfig
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData, HeadBlockData, OperationData
 
+_logger = logging.getLogger('dipdup.datasource')
+
 
 class DatasourceEventEmitter(AsyncIOEventEmitter):
     """This class changes behavior of emit method to block execution until previous level emit callbacks are done"""
@@ -22,8 +25,12 @@ class DatasourceEventEmitter(AsyncIOEventEmitter):
 
     def _level_has_pending_tasks(self, level: int) -> bool:
         for task_level in self._tasks:
-            if task_level < level and filter(lambda t: not t.done(), self._tasks[task_level]):
-                return True
+            if task_level >= level:
+                continue
+            for task in self._tasks[task_level]:
+                if not task.done():
+                    _logger.warning('Pending task %s on level %s', task, task_level)
+                    return True
         return False
 
     async def level_emit(self, level: int, event, *args, **kwargs) -> None:
