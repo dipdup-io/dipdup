@@ -4,8 +4,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from functools import wraps
-from typing import Any, AsyncGenerator, Callable, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -612,21 +611,12 @@ class TzktDatasource(IndexDatasource):
             )
         ).build()
 
-        _ws_lock = asyncio.Lock()
-
-        def _lock_wrapper(fn: Callable):
-            @wraps(fn)
-            async def _wrapper(*args, **kwargs):
-                async with _ws_lock:
-                    return await fn(*args, **kwargs)
-
-            return _wrapper
-
-        self._ws_client.on_open(_lock_wrapper(self._on_connect))
-        self._ws_client.on_error(_lock_wrapper(self._on_error))
-        self._ws_client.on('operations', _lock_wrapper(self._on_operation_message))
-        self._ws_client.on('bigmaps', _lock_wrapper(self._on_big_map_message))
-        self._ws_client.on('head', _lock_wrapper(self._on_head_message))
+        # NOTE: Let callbacks handle locks by themselves
+        self._ws_client.on_open(self._on_connect)
+        self._ws_client.on_error(self._on_error)
+        self._ws_client.on('operations', self._on_operation_message)
+        self._ws_client.on('bigmaps', self._on_big_map_message)
+        self._ws_client.on('head', self._on_head_message)
 
         return self._ws_client
 
@@ -774,6 +764,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _update_head(self, block: HeadBlockData) -> None:
         """Update Head model linked to datasource from WS head message"""
+        self._block_cache.add_block(block)
         created = False
         if self._head is None:
             self._head, created = await Head.get_or_create(
