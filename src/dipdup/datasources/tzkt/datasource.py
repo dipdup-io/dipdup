@@ -764,7 +764,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _update_head(self, block: HeadBlockData) -> None:
         """Update Head model linked to datasource from WS head message"""
-        self._block_cache.add_block(block)
+        await self._block_cache.add_block(block)
         created = False
         if self._head is None:
             self._head, created = await Head.get_or_create(
