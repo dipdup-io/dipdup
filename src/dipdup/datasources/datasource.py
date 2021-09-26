@@ -32,10 +32,12 @@ class DatasourceEventEmitter(AsyncIOEventEmitter):
             if self._level_has_pending_tasks(level):
                 await asyncio.sleep(0.2)
             else:
+                kwargs['_level'] = level
                 super().emit(event, *args, **kwargs)
                 break
 
-    def _emit_run(self, level: int, f, args, kwargs) -> None:
+    def _emit_run(self, f, args, kwargs) -> None:
+        level = kwargs.pop('_level', 0)
         task = asyncio.create_task(f(*args, **kwargs), name=f'{self._prefix}_{level}')
         self._tasks[level].append(task)
 
