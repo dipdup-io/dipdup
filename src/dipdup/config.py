@@ -236,8 +236,15 @@ class CodegenMixin(ABC):
             yield f'from {package} import {cls}'
 
     def format_arguments(self) -> Iterator[str]:
-        for name, cls in self.iter_arguments():
-            yield f'{name}: {cls}'
+        arguments = list(self.iter_arguments())
+        i, counter = 0, Counter(name for name, _ in arguments)
+
+        for name, cls in arguments:
+            if counter[name] > 1:
+                yield f'{name}_{i}: {cls}'
+                i += 1
+            else:
+                yield f'{name}: {cls}'
 
     def locate_arguments(self) -> Dict[str, Optional[Type]]:
         kwargs: Dict[str, Optional[Type]] = {}
