@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.2 - 2021-09-25
+## [unreleased]
 
 ### Added
 
@@ -15,7 +15,9 @@
 * Removed unnecessary calls to TzKT API during the partial sync.
 * Fixed removal of PostgreSQL extensions (`timescaledb`, `pgcrypto`) by function `truncate_database` triggered on reindex.
 * Fixed updating relation between index and head in DB.
-* Fixed creation of missing project package
+* Fixed creation of missing project package on `init`.
+* Fixed invalid handler callbacks generated on `init`.
+* Fixed detection of existing types in the project.
 
 ## 3.0.1 - 2021-09-24
 

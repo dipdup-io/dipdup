@@ -240,7 +240,7 @@ class DipDupCodeGenerator:
                 input_path = join(root, file)
                 output_path = join(types_root, f'{pascal_to_snake(name)}.py')
 
-                if exists and not overwrite_types:
+                if exists(output_path) and not overwrite_types:
                     continue
 
                 # NOTE: Skip if the first line starts with "# dipdup: ignore"
