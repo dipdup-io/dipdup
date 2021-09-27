@@ -251,13 +251,13 @@ class PatternConfig(CodegenMixin, ABC):
     @classmethod
     def format_storage_import(cls, package: str, module_name: str) -> Tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
-        return f'from {package}.types.{module_name}.storage', storage_cls
+        return f'{package}.types.{module_name}.storage', storage_cls
 
     @classmethod
     def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> Tuple[str, str]:
         entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
-        return f'from {package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}', parameter_cls
+        return f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}', parameter_cls
 
     @classmethod
     def format_origination_argument(cls, module_name: str, optional: bool) -> Tuple[str, str]:
@@ -396,7 +396,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
             return
 
         module_name = self.destination_contract_config.module_name
-        yield 'from dipdup.models', 'Transaction'
+        yield 'dipdup.models', 'Transaction'
         yield self.format_parameter_import(package, module_name, self.entrypoint)
         yield self.format_storage_import(package, module_name)
 
@@ -459,7 +459,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             module_name = self.originated_contract_config.module_name
         else:
             raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
-        yield 'from dipdup.models', 'Origination'
+        yield 'dipdup.models', 'Origination'
         yield self.format_storage_import(package, module_name)
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
@@ -666,13 +666,13 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     def format_key_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
         key_cls = f'{snake_to_pascal(module_name)}Key'
         key_module = f'{path}_key'
-        return f'from {package}.types.{module_name}.big_map.{key_module}', key_cls
+        return f'{package}.types.{module_name}.big_map.{key_module}', key_cls
 
     @classmethod
     def format_value_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
         value_cls = f'{snake_to_pascal(module_name)}Value'
         value_module = f'{path}_value'
-        return f'from {package}.types.{module_name}.big_map.{value_module}', value_cls
+        return f'{package}.types.{module_name}.big_map.{value_module}', value_cls
 
     @classmethod
     def format_big_map_diff_argument(cls, module_name: str) -> Tuple[str, str]:
