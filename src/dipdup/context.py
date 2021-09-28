@@ -34,12 +34,14 @@ from dipdup.exceptions import (
     ContractAlreadyExistsError,
     IndexAlreadyExistsError,
     InitializationRequiredError,
+    ReindexingRequiredError,
 )
-from dipdup.models import Contract
+from dipdup.models import Contract, ReindexingReason, Schema
 from dipdup.utils import FormattedLogger, iter_files
 from dipdup.utils.database import create_schema, drop_schema, move_table, truncate_schema
 
 pending_indexes = deque()  # type: ignore
+forbid_reindexing = False
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -88,10 +90,23 @@ class DipDupContext:
             sys.argv.remove('--reindex')
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    async def reindex(self, reason: Optional[str] = None) -> None:
+    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None) -> None:
         """Drop all tables or whole database and restart with the same CLI arguments"""
+        reason_str = reason.value if isinstance(reason, ReindexingReason) else 'unknown'
+        self.logger.warning('Reindexing initialized, reason: %s', reason_str)
 
-        self.logger.warning('Reindexing initialized, reason: %s', reason)
+        if not reason or isinstance(reason, str):
+            reason = ReindexingReason.MANUAL
+
+        if forbid_reindexing:
+            schema = await Schema.filter().get()
+            if schema.reindex:
+                raise ReindexingRequiredError(schema.reindex)
+
+            schema.reindex = reason
+            await schema.save()
+            raise ReindexingRequiredError(schema.reindex)
+
         database_config = self.config.database
         if isinstance(database_config, PostgresDatabaseConfig):
             conn = get_connection(None)

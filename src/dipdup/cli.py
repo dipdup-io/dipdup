@@ -15,6 +15,7 @@ from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
+import dipdup.context as context
 from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_version_mapping
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
@@ -135,12 +136,15 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @cli.command(help='Run indexing')
 @click.option('--reindex', is_flag=True, help='Drop database and start indexing from scratch')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
+@click.option('--forbid-reindexing', is_flag=True, help='Raise exception instead of truncating database when reindexing is triggered')
 @click.pass_context
 @cli_wrapper
-async def run(ctx, reindex: bool, oneshot: bool) -> None:
+async def run(ctx, reindex: bool, oneshot: bool, forbid_reindexing: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     set_decimal_context(config.package)
+    if forbid_reindexing:
+        context.forbid_reindexing = True
     dipdup = DipDup(config)
     await dipdup.run(reindex, oneshot)
 
