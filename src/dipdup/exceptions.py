@@ -2,7 +2,6 @@ import textwrap
 import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
-from enum import Enum
 from typing import Any, Iterator, Optional, Type
 
 import sentry_sdk
@@ -10,6 +9,7 @@ from tabulate import tabulate
 from tortoise.models import Model
 
 from dipdup import spec_version_mapping
+from dipdup.enums import ReindexingReason
 
 _tab = '\n\n' + ('_' * 80) + '\n\n'
 
@@ -103,17 +103,6 @@ class DatabaseConfigurationError(ConfigurationError):
         """
 
 
-class ReindexingReason(Enum):
-    MANUAL = 'triggered manually from callback'
-    MIGRATION = 'applied migration requires reindexing'
-    CLI_OPTION = 'run with `--reindex` option'
-    ROLLBACK = 'reorg message received and can\'t be processed'
-    CONFIG_HASH_MISMATCH = 'index config has been modified'
-    SCHEMA_HASH_MISMATCH = 'database schema has been modified'
-    BLOCK_HASH_MISMATCH = 'block hash mismatch, missed rollback when DipDup was stopped'
-    MISSING_INDEX_TEMPLATE = 'index template is missing, can\'t restore index state'
-
-
 @dataclass(frozen=True, repr=False)
 class MigrationRequiredError(DipDupError):
     """Project and DipDup spec versions don't match"""
@@ -145,7 +134,7 @@ class MigrationRequiredError(DipDupError):
 
 @dataclass(frozen=True, repr=False)
 class ReindexingRequiredError(DipDupError):
-    """Performed migration requires reindexing"""
+    """Unable to continue indexing with existing database"""
 
     reason: ReindexingReason
 

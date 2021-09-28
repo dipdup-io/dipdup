@@ -453,8 +453,8 @@ class DipDupCodeGenerator:
         if sql:
             code.append(f"await ctx.execute_sql('{callback_config.callback}')")
             if callback_config.callback == 'on_rollback':
+                imports.add('from dipdup.enums import ReindexingReason')
                 code.append('await ctx.reindex(ReindexingReason.ROLLBACK)')
-                imports.add('from dipdup.context import ReindexingReason')
         else:
             code.append('...')
 
