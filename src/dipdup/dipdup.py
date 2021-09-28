@@ -208,6 +208,7 @@ class DipDup:
             await self._set_up_hooks()
 
             await self._initialize_schema()
+            await self._initialize_datasources()
             await self._set_up_hasura(stack, tasks)
 
             spawn_datasources_event: Optional[Event] = None
@@ -323,11 +324,15 @@ class DipDup:
         for datasource in self._datasources.values():
             await stack.enter_async_context(datasource)
 
-            if isinstance(datasource, TzktDatasource):
-                try:
-                    await datasource.block_cache.initialize()
-                except ReindexingRequiredError as e:
-                    await self._ctx.reindex(e.reason)
+    async def _initialize_datasources(self) -> None:
+        for datasource in self._datasources.values():
+            if not isinstance(datasource, TzktDatasource):
+                continue
+
+            try:
+                await datasource.block_cache.initialize()
+            except ReindexingRequiredError as e:
+                await self._ctx.reindex(e.reason)
 
     async def _set_up_index_dispatcher(
         self,
