@@ -5,10 +5,7 @@
 ### Added
 
 * Human-readable `CHANGELOG.md` 🕺
-
-### Changed
-
-* Reindex on schema hash mismatch was disabled until TimescaleDB issues won't be resolved.
+* `--forbid-reindexing` option added to `dipdup run` command. When this flag is set DipDup will raise `ReindexingRequiredError` instead of truncating database when reindexing is triggered for any reason.
 
 ### Fixed
 
