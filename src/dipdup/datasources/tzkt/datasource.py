@@ -785,8 +785,8 @@ class TzktDatasource(IndexDatasource):
     async def set_head_from_http(self) -> None:
         """Set block from `get_head_block` HTTP method for indexes to use the same level during initial sync"""
         if self._head:
-            self._logger.warning('Attempt to set head twice')
-            return
+            raise RuntimeError('Head is already set')
+
         block = await self.get_head_block()
         self._head, created = await Head.get_or_create(
             name=self._http._url,

@@ -305,7 +305,6 @@ class Index(Model):
 
         if head:
             self.head = head
-            self.head_id = head.pk if head else None
 
         self.status = status
         await self.save()

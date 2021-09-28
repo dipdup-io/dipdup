@@ -21,9 +21,7 @@ from dipdup.config import (
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, InvalidDataError, ReindexingReason
-from dipdup.models import BigMapData, BigMapDiff, Head, HeadBlockData
-from dipdup.models import Index as IndexState
-from dipdup.models import IndexStatus, OperationData, Origination, Transaction
+from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, IndexStatus, OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
@@ -52,30 +50,27 @@ class Index:
             raise RuntimeError('Index state is not initialized')
         return self._state
 
-    async def initialize_state(self, state: Optional[IndexState] = None) -> None:
-        if not self._state:
-            if not state:
-                state, _ = await models.Index.get_or_create(
-                    name=self._config.name,
-                    type=self._config.kind,
-                    defaults=dict(
-                        level=self._config.first_level,
-                        config_hash=self._config.hash(),
-                        template=self._config.parent.name if self._config.parent else None,
-                        template_values=self._config.template_values,
-                    ),
-                )
+    async def initialize_state(self) -> None:
+        if self._state:
+            raise RuntimeError('Index state is already initialized')
 
-            self._state = state
+        self._state, _ = await models.Index.get_or_create(
+            name=self._config.name,
+            type=self._config.kind,
+            defaults=dict(
+                level=self._config.first_level,
+                config_hash=self._config.hash(),
+                template=self._config.parent.name if self._config.parent else None,
+                template_values=self._config.template_values,
+            ),
+        )
 
         # NOTE: No need to check hashes of indexes which are not synchronized.
         head = await self.state.head
-        if not head or self.state.level != head.level:
-            return
-
-        block = await self._datasource.get_block(self.state.level)
-        if head.hash != block.hash:
-            await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
+        if head and self.state.status == IndexStatus.REALTIME:
+            block = await self._datasource.get_block(head.level)
+            if head.hash != block.hash:
+                await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
 
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied
@@ -113,12 +108,9 @@ class Index:
     async def _enter_sync_state(self, last_level: int) -> Optional[int]:
         if self.state.status == IndexStatus.ONESHOT:
             return None
-        # FIXME: I'm not sure if this is a good way to check if index is in sync
-        # TODO: Move to model class
-        elif self.state.status == IndexStatus.REALTIME and isinstance(self.state.head, Head):
-            first_level = self.state.head.level
-        else:
-            first_level = self.state.level
+
+        # FIXME: Use Head when postponed datasource spawning will be reversed
+        first_level = self.state.level
 
         if first_level == last_level:
             return None
