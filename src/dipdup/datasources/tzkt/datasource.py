@@ -331,7 +331,7 @@ class BlockCache:
         return self._initial_block
 
     async def verify_head(self) -> None:
-        head = await Head.filter(name=self._name).order_by('level-').get()
+        head = await Head.filter(name=self._name).order_by('-level').get()
         block = cast(BlockDataT, await self.get_block(head.level, required=True))
 
         if head.hash != block.hash:
@@ -339,7 +339,7 @@ class BlockCache:
             raise ReindexingRequiredError(ReindexingReason.BLOCK_HASH_MISMATCH)
 
     async def cleanup_heads(self) -> None:
-        await Head.filter(name=self._name).order_by('level-').offset(self._limit).delete()
+        await Head.filter(name=self._name).order_by('-level').offset(self._limit).delete()
 
 
 class TzktDatasource(IndexDatasource):
