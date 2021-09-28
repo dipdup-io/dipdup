@@ -8,12 +8,12 @@ from dipdup.models import BigMapData, HeadBlockData, OperationData
 
 
 class OperationsCallback(Protocol):
-    def __call__(self, datasource: 'IndexDatasource', operations: List[OperationData], block: HeadBlockData) -> Awaitable[None]:
+    def __call__(self, datasource: 'IndexDatasource', operations: List[OperationData]) -> Awaitable[None]:
         ...
 
 
 class BigMapsCallback(Protocol):
-    def __call__(self, datasource: 'IndexDatasource', big_maps: List[BigMapData], block: HeadBlockData) -> Awaitable[None]:
+    def __call__(self, datasource: 'IndexDatasource', big_maps: List[BigMapData]) -> Awaitable[None]:
         ...
 
 
@@ -23,7 +23,7 @@ class RollbackCallback(Protocol):
 
 
 class HeadCallback(Protocol):
-    def __call__(self, datasource: 'IndexDatasource', block: HeadBlockData) -> Awaitable[None]:
+    def __call__(self, datasource: 'IndexDatasource', head: HeadBlockData) -> Awaitable[None]:
         ...
 
 
@@ -55,18 +55,18 @@ class IndexDatasource(Datasource):
     def on_rollback(self, fn: RollbackCallback) -> None:
         self._on_rollback.add(fn)
 
-    async def emit_head(self, block: HeadBlockData) -> None:
+    async def emit_head(self, head: HeadBlockData) -> None:
         for fn in self._on_head:
-            await fn(self, block)
+            await fn(self, head)
 
-    async def emit_operations(self, operations: List[OperationData], block: HeadBlockData) -> None:
+    async def emit_operations(self, operations: List[OperationData]) -> None:
         for fn in self._on_operations:
-            await fn(self, operations, block)
+            await fn(self, operations)
 
-    async def emit_big_maps(self, big_maps: List[BigMapData], block: HeadBlockData) -> None:
+    async def emit_big_maps(self, big_maps: List[BigMapData]) -> None:
         for fn in self._on_big_maps:
-            await fn(self, big_maps, block)
+            await fn(self, big_maps)
 
     async def emit_rollback(self, from_level: int, to_level: int) -> None:
         for fn in self._on_rollback:
-            fn(self, from_level, to_level)
+            await fn(self, from_level, to_level)

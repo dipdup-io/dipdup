@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, Union, cast
 
 from aiohttp import ClientResponseError
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -23,6 +23,7 @@ from dipdup.config import (
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.enums import MessageType
+from dipdup.exceptions import DipDupException
 from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
 
@@ -280,40 +281,54 @@ class BigMapFetcher:
             yield big_maps[0].level, big_maps[: i + 1]
 
 
+BlockDataT = Union[HeadBlockData, BlockData]
+
+
 class BlockCache:
-    def __init__(self) -> None:
+    def __init__(self, datasource: 'TzktDatasource') -> None:
+        self._datasource = datasource
         self._limit = 10
-        self._timeout = 60
-        self._blocks: DefaultDict[int, Optional[HeadBlockData]] = defaultdict(lambda: None)
-        self._events: DefaultDict[int, asyncio.Event] = defaultdict(asyncio.Event)
+        self._initial_block: Optional[BlockDataT] = None
+        self._blocks: Dict[int, BlockDataT] = {}
+        self._heads: Dict[int, Head] = {}
 
-    async def add_block(self, block: HeadBlockData) -> None:
-        if self._blocks[block.level]:
-            raise RuntimeError('Attempt to add block {block.level} which is already cached')
+    async def initialize(self) -> None:
+        block = await self._datasource.get_head_block()
+        self._initial_block = block
+        await self.add_block(block)
+
+    async def add_block(self, block: BlockDataT) -> None:
         self._blocks[block.level] = block
-        self._events[block.level].set()
 
-        # FIXME: Refactor this
-        last_blocks = sorted(self._blocks.keys())[-self._limit :]
-        self._blocks = defaultdict(lambda: None, ({k: v for k, v in self._blocks.items() if k in last_blocks}))
-        self._events = defaultdict(asyncio.Event, ({k: v for k, v in self._events.items() if k in last_blocks}))
+        old_blocks = sorted(self._blocks.keys())[-self._limit :]
+        map(self._blocks.pop, old_blocks)
 
-    async def get_block(self, level: int) -> HeadBlockData:
-        if self._blocks and level < sorted(self._blocks.keys())[-1] - self._limit:
-            raise RuntimeError(f'Attemps to get block older than {self._limit} levels from head')
+    async def get_block(self, level: int, required: bool = False) -> Optional[BlockDataT]:
+        if level not in self._blocks:
+            if required:
+                self._blocks[level] = await self._datasource.get_block(level)
+                # save Head
+            else:
+                return None
 
-        try:
-            await asyncio.wait_for(
-                fut=self._events[level].wait(),
-                timeout=self._timeout,
-            )
-        except asyncio.TimeoutError as e:
-            raise RuntimeError(f'Block {level} hasn\'t arrived in {self._timeout} seconds. Forgot to subscribe to head?') from e
+        return self._blocks[level]
 
-        block = self._blocks[level]
-        if not block:
-            raise RuntimeError('Event is set but block is missing in cache')
-        return block
+    async def get_initial_block(self) -> BlockDataT:
+        if not self._initial_block:
+            raise DipDupException('Attempted to get initial block but cache is not initialized')
+        return self._initial_block
+
+    async def verify_latest_blocks(self) -> None:
+        ...
+        # NOTE: No need to check hashes of indexes which are not synchronized.
+        # head = await self.state.head
+        # if head and self.state.status == IndexStatus.REALTIME:
+        #     block = await self._datasource.get_block(head.level)
+        #     if head.hash != block.hash:
+        #         await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
+
+    async def cleanup_heads(self) -> None:
+        ...
 
 
 class TzktDatasource(IndexDatasource):
@@ -347,8 +362,7 @@ class TzktDatasource(IndexDatasource):
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
         self._ws_client: Optional[BaseHubConnection] = None
 
-        self._block_cache: BlockCache = BlockCache()
-        self._head: Optional[Head] = None
+        self.block_cache: BlockCache = BlockCache(self)
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None
 
@@ -363,10 +377,6 @@ class TzktDatasource(IndexDatasource):
     @property
     def sync_level(self) -> Optional[int]:
         return self._sync_level
-
-    @property
-    def head(self) -> Optional[Head]:
-        return self._head
 
     async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
         """Get list of contracts sharing the same code hash or type hash"""
@@ -730,9 +740,6 @@ class TzktDatasource(IndexDatasource):
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
         async for level, data in self._extract_message_data(MessageType.operation, message):
-            # NOTE: Wait for head message to arrive
-            block = await self._block_cache.get_block(level)
-
             operations = []
             for operation_json in data:
                 operation = self.convert_operation(operation_json)
@@ -740,70 +747,23 @@ class TzktDatasource(IndexDatasource):
                     continue
                 operations.append(operation)
             if operations:
-                await self.emit_operations(operations, block)
+                await self.emit_operations(operations)
 
     async def _on_big_maps_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
         async for level, data in self._extract_message_data(MessageType.big_map, message):
-            # NOTE: Wait for head message to arrive
-            block = await self._block_cache.get_block(level)
-
             big_maps = []
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
                 big_maps.append(big_map)
-            await self.emit_big_maps(big_maps, block)
+            await self.emit_big_maps(big_maps)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw head block from WS"""
         async for _, data in self._extract_message_data(MessageType.head, message):
             block = self.convert_head_block(data)
-            await self._update_head(block)
+            await self.block_cache.add_block(block)
             await self.emit_head(block)
-
-    async def _update_head(self, block: HeadBlockData) -> None:
-        """Update Head model linked to datasource from WS head message"""
-        await self._block_cache.add_block(block)
-        created = False
-        if self._head is None:
-            self._head, created = await Head.get_or_create(
-                name=self._http._url,
-                defaults=dict(
-                    level=block.level,
-                    hash=block.hash,
-                    timestamp=block.timestamp,
-                ),
-            )
-        if not created:
-            self._head.level = block.level  # type: ignore
-            self._head.hash = block.hash  # type: ignore
-            self._head.timestamp = block.timestamp  # type: ignore
-            await self._head.save()
-
-    # FIXME: I don't like this approach, too hacky.
-    async def set_head_from_http(self) -> None:
-        """Set block from `get_head_block` HTTP method for indexes to use the same level during initial sync"""
-        if self._head:
-            raise RuntimeError('Head is already set')
-
-        block = await self.get_head_block()
-        self._head, created = await Head.get_or_create(
-            name=self._http._url,
-            defaults=dict(
-                level=block.level,
-                hash=block.hash,
-                timestamp=block.timestamp,
-            ),
-        )
-        if not created:
-            self._head.level = block.level  # type: ignore
-            self._head.hash = block.hash  # type: ignore
-            self._head.timestamp = block.timestamp  # type: ignore
-            await self._head.save()
-
-        self._logger.info('Datasource head set to block with level %s', self._head.level)
-
-        # NOTE: No need to emit?
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:

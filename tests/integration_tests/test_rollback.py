@@ -58,7 +58,6 @@ async def datasource_run(self: TzktDatasource, index_dispatcher: IndexDispatcher
             _get_operation('2', 1365001),
             _get_operation('3', 1365001),
         ],
-        old_block,
     )
     await asyncio.sleep(0.05)
 
@@ -80,7 +79,6 @@ async def datasource_run(self: TzktDatasource, index_dispatcher: IndexDispatcher
             if not fail
             else []
         ),
-        new_block,
     )
     await asyncio.sleep(0.05)
 

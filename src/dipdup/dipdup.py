@@ -29,7 +29,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingReason
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, Contract, HeadBlockData
+from dipdup.models import BigMapData, Contract
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
@@ -53,7 +53,6 @@ class IndexDispatcher:
     ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
-        await self._set_datasource_heads()
         await self._load_index_states()
 
         while not self._stopped:
@@ -76,7 +75,7 @@ class IndexDispatcher:
             if start_scheduler_event and not start_scheduler_event.is_set():
                 # NOTE: Do not check with every_index_is, indexes become REALTIME after first message from WS is received
                 for index in self._indexes.values():
-                    if index.state.level != index.datasource.head.level:
+                    if index.state.status != IndexStatus.REALTIME:
                         break
                 else:
                     start_scheduler_event.set()
@@ -109,11 +108,6 @@ class IndexDispatcher:
             datasource.on_big_maps(self._on_big_maps)  # type: ignore
             datasource.on_rollback(self._on_rollback)  # type: ignore
 
-    async def _set_datasource_heads(self) -> None:
-        for datasource in self._ctx.datasources.values():
-            if isinstance(datasource, TzktDatasource):
-                await datasource.set_head_from_http()
-
     async def _load_index_states(self) -> None:
         await self._fetch_contracts()
         index_states = await IndexState.filter().all()
@@ -137,19 +131,19 @@ class IndexDispatcher:
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
 
-    async def _on_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
+    async def _on_operations(self, datasource: TzktDatasource, operations: List[OperationData]) -> None:
         assert len(set(op.level for op in operations)) == 1
         level = operations[0].level
         for index in self._indexes.values():
             if isinstance(index, OperationIndex) and index.datasource == datasource:
-                index.push(level, operations, block)
+                index.push(level, operations)
 
-    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData], block: HeadBlockData) -> None:
+    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData]) -> None:
         assert len(set(op.level for op in big_maps)) == 1
         level = big_maps[0].level
         for index in self._indexes.values():
             if isinstance(index, BigMapIndex) and index.datasource == datasource:
-                index.push(level, big_maps, block)
+                index.push(level, big_maps)
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         if from_level - to_level == 1:
@@ -332,6 +326,9 @@ class DipDup:
         await self._create_datasources()
         for datasource in self._datasources.values():
             await stack.enter_async_context(datasource)
+
+            if isinstance(datasource, TzktDatasource):
+                await datasource.block_cache.initialize()
 
     async def _set_up_index_dispatcher(
         self,

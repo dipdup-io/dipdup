@@ -11,7 +11,7 @@ from pydantic.error_wrappers import ValidationError
 from tortoise import Model, fields
 
 from dipdup.enums import IndexStatus, IndexType
-from dipdup.exceptions import ConfigurationError, DipDupException, InvalidDataError, ReindexingReason
+from dipdup.exceptions import ConfigurationError, InvalidDataError, ReindexingReason
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -287,26 +287,20 @@ class Index(Model):
     template_values = fields.JSONField(null=True)
 
     level = fields.IntField(default=0)
-    head = fields.ForeignKeyField('int_models.Head', related_name='indexes', null=True)
+    hash = fields.CharField(64, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     async def update_status(
         self,
-        status: IndexStatus,
+        status: Optional[IndexStatus] = None,
         level: Optional[int] = None,
-        head: Optional['Head'] = None,
+        hash_: Optional[str] = None,
     ) -> None:
-        if level:
-            if level < self.level:
-                raise DipDupException('Index level is higher than desired level')
-            self.level = level  # type: ignore
-
-        if head:
-            self.head = head
-
-        self.status = status
+        self.status = status or self.status
+        self.level = level or self.level  # type: ignore
+        self.hash = hash_ if (level and hash_) else None  # type: ignore
         await self.save()
 
     class Meta:
