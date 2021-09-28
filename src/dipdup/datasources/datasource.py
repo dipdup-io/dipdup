@@ -1,9 +1,13 @@
+import logging
 from abc import abstractmethod
 from typing import Awaitable, List, Protocol, Set
 
 from dipdup.config import HTTPConfig
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData, HeadBlockData, OperationData
+from dipdup.utils import FormattedLogger
+
+_logger = logging.getLogger('dipdup.datasource')
 
 
 class OperationsCallback(Protocol):
@@ -27,9 +31,16 @@ class HeadCallback(Protocol):
 
 
 class Datasource(HTTPGateway):
+    def __init__(self, url: str, http_config: HTTPConfig) -> None:
+        super().__init__(url, http_config)
+        self._logger = _logger
+
     @abstractmethod
     async def run(self) -> None:
         ...
+
+    def set_logger(self, name: str) -> None:
+        self._logger = FormattedLogger(self._logger.name, name + ': {}')
 
 
 class IndexDatasource(Datasource):

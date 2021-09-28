@@ -27,8 +27,6 @@ from dipdup.exceptions import DipDupException
 from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
 
-OperationID = int
-
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 OPERATION_FIELDS = (
     "type",
@@ -634,10 +632,7 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Starting datasource')
 
         self._logger.info('Starting websocket client')
-        await asyncio.gather(
-            self._get_ws_client().start(),
-            super().run(),
-        )
+        await self._get_ws_client().start(),
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
@@ -654,12 +649,10 @@ class TzktDatasource(IndexDatasource):
         for address, paths in self._big_map_subscriptions.items():
             await self._subscribe_to_big_maps(address, paths)
 
-    # NOTE: Pay attention: this is not a pyee callback
+    # TODO: Exception class
     def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""
         raise Exception(message.error)
-
-    # TODO: Catch exceptions from pyee 'error' channel
 
     async def _subscribe_to_transactions(self, address: str) -> None:
         """Subscribe to contract's operations on established WS connection"""

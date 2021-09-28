@@ -33,7 +33,7 @@ from dipdup.models import BigMapData, Contract
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
-from dipdup.utils import FormattedLogger, slowdown
+from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema, get_schema_hash, set_schema, tortoise_wrapper, validate_models
 
 
@@ -247,7 +247,7 @@ class DipDup:
             else:
                 raise NotImplementedError
 
-            datasource._logger = FormattedLogger(datasource._logger.name, datasource_config.name + ': {}')
+            datasource.set_logger(datasource_config.name)
             datasource.set_user_agent(self._config.package)
             self._datasources[name] = datasource
             self._datasources_by_config[datasource_config] = datasource
