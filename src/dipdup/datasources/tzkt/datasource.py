@@ -611,11 +611,10 @@ class TzktDatasource(IndexDatasource):
             )
         ).build()
 
-        # NOTE: Let callbacks handle locks by themselves
         self._ws_client.on_open(self._on_connect)
         self._ws_client.on_error(self._on_error)
-        self._ws_client.on('operations', self._on_operation_message)
-        self._ws_client.on('bigmaps', self._on_big_map_message)
+        self._ws_client.on('operations', self._on_operations_message)
+        self._ws_client.on('bigmaps', self._on_big_maps_message)
         self._ws_client.on('head', self._on_head_message)
 
         return self._ws_client
@@ -728,7 +727,7 @@ class TzktDatasource(IndexDatasource):
             else:
                 raise NotImplementedError
 
-    async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
         async for level, data in self._extract_message_data(MessageType.operation, message):
             # NOTE: Wait for head message to arrive
@@ -743,7 +742,7 @@ class TzktDatasource(IndexDatasource):
             if operations:
                 await self.emit_operations(operations, block)
 
-    async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _on_big_maps_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
         async for level, data in self._extract_message_data(MessageType.big_map, message):
             # NOTE: Wait for head message to arrive
