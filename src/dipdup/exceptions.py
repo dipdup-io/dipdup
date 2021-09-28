@@ -155,8 +155,8 @@ class ReindexingRequiredError(DipDupError):
 
             You may want to backup database before proceeding. After that perform one of the following actions:
 
-              * Eliminate the cause of reindexing and update `dupdup_schema.reindex` column to NULL
-              * Run `dipdup run --reindex` to stast indexing from scratch
+              * Eliminate the cause of reindexing and run `UPDATE dupdup_schema SET reindex = NULL;`
+              * Run `dipdup run --reindex` to truncate database and start indexing from scratch
         """
 
 
