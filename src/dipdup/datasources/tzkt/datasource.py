@@ -632,7 +632,7 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Starting datasource')
 
         self._logger.info('Starting websocket client')
-        await self._get_ws_client().start(),
+        await self._get_ws_client().start()
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
