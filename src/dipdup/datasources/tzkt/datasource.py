@@ -725,7 +725,7 @@ class TzktDatasource(IndexDatasource):
             elif tzkt_type == TzktMessageType.REORG:
                 if self.level is None:
                     raise RuntimeError('Reorg message received but datasource is not connected')
-                self.emit_rollback(self.level, head_level)
+                await self.emit_rollback(self.level, head_level)
 
             else:
                 raise NotImplementedError

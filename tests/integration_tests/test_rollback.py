@@ -52,7 +52,7 @@ async def datasource_run(self: TzktDatasource, index_dispatcher: IndexDispatcher
     new_block.level = 1365001
     new_block.timestamp = datetime(2018, 1, 1)
 
-    self.emit_operations(
+    await self.emit_operations(
         [
             _get_operation('1', 1365001),
             _get_operation('2', 1365001),
@@ -61,7 +61,7 @@ async def datasource_run(self: TzktDatasource, index_dispatcher: IndexDispatcher
     )
     await asyncio.sleep(0.05)
 
-    self.emit_rollback(
+    await self.emit_rollback(
         from_level=1365001,
         to_level=1365000,
     )
