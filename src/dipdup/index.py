@@ -110,11 +110,8 @@ class Index:
             return None
 
         head = await self.state.head
-        # NOTE: Head may be set from REST sync indexes to the same level
-        if head and self.state.status == IndexStatus.REALTIME:
-            first_level = head.level
-        else:
-            first_level = self.state.level
+        # FIXME: Use Head when postponed WS init will be reversed
+        first_level = self.state.level
 
         if first_level == last_level:
             return None
