@@ -20,7 +20,7 @@ from dipdup.config import (
 )
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.exceptions import ConfigInitializationException, InvalidDataError
+from dipdup.exceptions import ConfigInitializationException, InvalidDataError, ReindexingReason
 from dipdup.models import BigMapData, BigMapDiff, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Origination, Transaction
@@ -75,7 +75,7 @@ class Index:
 
         block = await self._datasource.get_block(self.state.level)
         if head.hash != block.hash:
-            await self._ctx.reindex(reason='block hash mismatch (missed rollback while DipDup was stopped)')
+            await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
 
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied
@@ -227,7 +227,7 @@ class OperationIndex(Index):
             received_hashes = set([op.hash for op in operations])
             reused_hashes = received_hashes & expected_hashes
             if reused_hashes != expected_hashes:
-                await self._ctx.reindex(reason='attempted a single level rollback, but arrived block has additional transactions')
+                await self._ctx.reindex(ReindexingReason.ROLLBACK)
 
             self._rollback_level = None
             self._last_hashes = set()

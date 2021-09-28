@@ -240,7 +240,7 @@ class DipDupCodeGenerator:
                 input_path = join(root, file)
                 output_path = join(types_root, f'{pascal_to_snake(name)}.py')
 
-                if exists and not overwrite_types:
+                if exists(output_path) and not overwrite_types:
                     continue
 
                 # NOTE: Skip if the first line starts with "# dipdup: ignore"
@@ -453,7 +453,8 @@ class DipDupCodeGenerator:
         if sql:
             code.append(f"await ctx.execute_sql('{callback_config.callback}')")
             if callback_config.callback == 'on_rollback':
-                code.append("await ctx.reindex(reason='reorg message received')")
+                code.append('await ctx.reindex(ReindexingReason.ROLLBACK)')
+                imports.add('from dipdup.context import ReindexingReason')
         else:
             code.append('...')
 

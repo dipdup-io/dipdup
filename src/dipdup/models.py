@@ -11,7 +11,7 @@ from pydantic.error_wrappers import ValidationError
 from tortoise import Model, fields
 
 from dipdup.enums import IndexStatus, IndexType
-from dipdup.exceptions import ConfigurationError, DipDupException, InvalidDataError
+from dipdup.exceptions import ConfigurationError, DipDupException, InvalidDataError, ReindexingReason
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -255,6 +255,7 @@ class QuoteData:
 class Schema(Model):
     name = fields.CharField(256, pk=True)
     hash = fields.CharField(256)
+    reindex = fields.CharEnumField(ReindexingReason, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

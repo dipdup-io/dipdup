@@ -5,17 +5,16 @@
 ### Added
 
 * Human-readable `CHANGELOG.md` 🕺
-
-### Changed
-
-* Reindex on schema hash mismatch was disabled until TimescaleDB issues won't be resolved.
+* `--forbid-reindexing` option added to `dipdup run` command. When this flag is set DipDup will raise `ReindexingRequiredError` instead of truncating database when reindexing is triggered for any reason.
 
 ### Fixed
 
 * Removed unnecessary calls to TzKT API during the partial sync.
 * Fixed removal of PostgreSQL extensions (`timescaledb`, `pgcrypto`) by function `truncate_database` triggered on reindex.
 * Fixed updating relation between index and head in DB.
-* Fixed creation of missing project package.
+* Fixed creation of missing project package on `init`.
+* Fixed invalid handler callbacks generated on `init`.
+* Fixed detection of existing types in the project.
 * Fixed race condition caused by event emitter concurrency.
 
 ## 3.0.1 - 2021-09-24
