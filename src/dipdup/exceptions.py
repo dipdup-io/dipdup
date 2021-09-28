@@ -2,6 +2,7 @@ import textwrap
 import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Iterator, Optional, Type
 
 from tabulate import tabulate
@@ -100,6 +101,17 @@ class DatabaseConfigurationError(ConfigurationError):
         """
 
 
+class ReindexingReason(Enum):
+    MANUAL = 'triggered manually from callback'
+    MIGRATION = 'applied migration requires reindexing'
+    CLI_OPTION = 'run with `--reindex` option'
+    ROLLBACK = 'reorg message received and can\'t be processed'
+    CONFIG_HASH_MISMATCH = 'index config has been modified'
+    SCHEMA_HASH_MISMATCH = 'database schema has been modified'
+    BLOCK_HASH_MISMATCH = 'block hash mismatch, missed rollback when DipDup was stopped'
+    MISSING_INDEX_TEMPLATE = 'index template is missing, can\'t restore index state'
+
+
 @dataclass(frozen=True, repr=False)
 class MigrationRequiredError(DipDupError):
     """Project and DipDup spec versions don't match"""
@@ -116,7 +128,7 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
-        reindex = _tab + ReindexingRequiredError().help() if self.reindex else ''
+        reindex = _tab + ReindexingRequiredError(ReindexingReason.MIGRATION).help() if self.reindex else ''
         return f"""
             Project migration required!
 
@@ -133,14 +145,18 @@ class MigrationRequiredError(DipDupError):
 class ReindexingRequiredError(DipDupError):
     """Performed migration requires reindexing"""
 
+    reason: ReindexingReason
+
     def _help(self) -> str:
-        return """
+        return f"""
             Reindexing required!
 
-            Recent changes in the framework have made it necessary to reindex the project.
+            Reason: {self.reason.value}
 
-              1. Optionally backup a database
-              2. Run `dipdup run --reindex` 
+            You may want to backup database before proceeding. After that perform one of the following actions:
+
+              * Eliminate the cause of reindexing and update `dupdup_schema.reindex` column to NULL
+              * Run `dipdup run --reindex` to stast indexing from scratch
         """
 
 

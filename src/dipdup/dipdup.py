@@ -26,7 +26,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
+from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingReason
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, Contract, HeadBlockData
@@ -125,11 +125,11 @@ class IndexDispatcher:
                 if isinstance(index_config, IndexTemplateConfig):
                     raise ConfigInitializationException
                 if index_config.hash() != index_state.config_hash:
-                    await self._ctx.reindex(reason='config has been modified')
+                    await self._ctx.reindex(ReindexingReason.CONFIG_HASH_MISMATCH)
 
             elif template:
                 if template not in self._ctx.config.templates:
-                    await self._ctx.reindex(reason=f'template `{template}` has been removed from config')
+                    await self._ctx.reindex(ReindexingReason.MISSING_INDEX_TEMPLATE)
                 await self._ctx.add_index(name, template, template_values)
 
             else:
@@ -275,8 +275,8 @@ class DipDup:
         except OperationalError:
             self._schema = None
         # TODO: Fix Tortoise ORM to raise more specific exception
-        except KeyError as e:
-            raise ReindexingRequiredError from e
+        except KeyError:
+            await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
         schema_hash = get_schema_hash(conn)
 
@@ -290,13 +290,11 @@ class DipDup:
             )
             try:
                 await self._schema.save()
-            except OperationalError as e:
-                raise ReindexingRequiredError from e
+            except OperationalError:
+                await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
         elif self._schema.hash != schema_hash:
-            # FIXME: It seems like this check is broken in some cases
-            # await self._ctx.reindex(reason='schema hash mismatch')
-            self._logger.error('Schema hash mismatch, reindex may be required')
+            await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
         await self._ctx.fire_hook('on_restart')
 
@@ -310,7 +308,7 @@ class DipDup:
         await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
 
         if reindex:
-            await self._ctx.reindex(reason='run with `--reindex` option')
+            await self._ctx.reindex(ReindexingReason.CLI_OPTION)
 
     async def _set_up_hooks(self) -> None:
         for hook_config in default_hooks.values():
