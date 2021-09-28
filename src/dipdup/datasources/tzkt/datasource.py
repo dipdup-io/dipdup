@@ -331,9 +331,11 @@ class BlockCache:
         return self._initial_block
 
     async def verify_head(self) -> None:
-        head = await Head.filter(name=self._name).order_by('-level').get()
-        block = cast(BlockDataT, await self.get_block(head.level, required=True))
+        head = await Head.filter(name=self._name).order_by('-level').first()
+        if not head:
+            return
 
+        block = cast(BlockDataT, await self.get_block(head.level, required=True))
         if head.hash != block.hash:
             # NOTE: No access to context, catch on dipdup.dipdup level
             raise ReindexingRequiredError(ReindexingReason.BLOCK_HASH_MISMATCH)
