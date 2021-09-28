@@ -20,7 +20,7 @@
 * Fixed detection of existing types in the project.
 * Fixed race condition caused by event emitter concurrency.
 * Capture unknown exceptions with Sentry before wrapping to `DipDupError`.
-* Job scheduler starts after all indexes are synchronized.
+* Fixed job scheduler start delay.
 
 ## 3.0.1 - 2021-09-24
 
