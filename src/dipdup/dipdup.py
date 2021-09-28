@@ -73,11 +73,7 @@ class IndexDispatcher:
                     spawn_datasources_event.set()
 
             if start_scheduler_event and not start_scheduler_event.is_set():
-                # NOTE: Do not check with every_index_is, indexes become REALTIME after first message from WS is received
-                for index in self._indexes.values():
-                    if index.state.status != IndexStatus.REALTIME:
-                        break
-                else:
+                if self._every_index_is(IndexStatus.REALTIME):
                     start_scheduler_event.set()
 
     def stop(self) -> None:

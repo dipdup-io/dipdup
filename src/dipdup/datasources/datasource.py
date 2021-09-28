@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from logging import Logger
 from typing import Awaitable, List, Protocol, Set
 
 from dipdup.config import HTTPConfig
@@ -28,8 +27,6 @@ class HeadCallback(Protocol):
 
 
 class Datasource(HTTPGateway):
-    _logger: Logger
-
     @abstractmethod
     async def run(self) -> None:
         ...
