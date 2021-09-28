@@ -265,7 +265,8 @@ class Schema(Model):
 
 
 class Head(Model):
-    name = fields.CharField(256, pk=True)
+    id = fields.BigIntField(pk=True)
+    name = fields.CharField(256)
     level = fields.IntField()
     hash = fields.CharField(64)
     timestamp = fields.DatetimeField()

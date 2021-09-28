@@ -26,7 +26,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingReason
+from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingReason, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, Contract
@@ -324,7 +324,10 @@ class DipDup:
             await stack.enter_async_context(datasource)
 
             if isinstance(datasource, TzktDatasource):
-                await datasource.block_cache.initialize()
+                try:
+                    await datasource.block_cache.initialize()
+                except ReindexingRequiredError as e:
+                    await self._ctx.reindex(e.reason)
 
     async def _set_up_index_dispatcher(
         self,

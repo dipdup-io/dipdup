@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from collections import defaultdict
+from contextlib import suppress
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
@@ -11,6 +12,7 @@ from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ig
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
 from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
+from tortoise.exceptions import OperationalError
 
 from dipdup.config import (
     BigMapIndexConfig,
@@ -23,7 +25,7 @@ from dipdup.config import (
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.enums import MessageType
-from dipdup.exceptions import DipDupException
+from dipdup.exceptions import DipDupException, ReindexingReason, ReindexingRequiredError
 from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
 
@@ -285,6 +287,7 @@ BlockDataT = Union[HeadBlockData, BlockData]
 class BlockCache:
     def __init__(self, datasource: 'TzktDatasource') -> None:
         self._datasource = datasource
+        self._name = self._datasource._http._url
         self._limit = 10
         self._initial_block: Optional[BlockDataT] = None
         self._blocks: Dict[int, BlockDataT] = {}
@@ -294,6 +297,7 @@ class BlockCache:
         block = await self._datasource.get_head_block()
         self._initial_block = block
         await self.add_block(block)
+        await self.verify_head()
 
     async def add_block(self, block: BlockDataT) -> None:
         self._blocks[block.level] = block
@@ -303,11 +307,21 @@ class BlockCache:
 
     async def get_block(self, level: int, required: bool = False) -> Optional[BlockDataT]:
         if level not in self._blocks:
-            if required:
-                self._blocks[level] = await self._datasource.get_block(level)
-                # save Head
-            else:
+            if not required:
                 return None
+
+            block = await self._datasource.get_block(level)
+            self._blocks[level] = block
+
+            head = Head(
+                name=self._name,
+                level=block.level,
+                hash=block.hash,
+                timestamp=block.timestamp,
+            )
+            self._heads[level] = head
+            with suppress(OperationalError):
+                await head.save()
 
         return self._blocks[level]
 
@@ -316,17 +330,16 @@ class BlockCache:
             raise DipDupException('Attempted to get initial block but cache is not initialized')
         return self._initial_block
 
-    async def verify_latest_blocks(self) -> None:
-        ...
-        # NOTE: No need to check hashes of indexes which are not synchronized.
-        # head = await self.state.head
-        # if head and self.state.status == IndexStatus.REALTIME:
-        #     block = await self._datasource.get_block(head.level)
-        #     if head.hash != block.hash:
-        #         await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
+    async def verify_head(self) -> None:
+        head = await Head.filter(name=self._name).order_by('level-').get()
+        block = cast(BlockDataT, await self.get_block(head.level, required=True))
+
+        if head.hash != block.hash:
+            # NOTE: No access to context, catch on dipdup.dipdup level
+            raise ReindexingRequiredError(ReindexingReason.BLOCK_HASH_MISMATCH)
 
     async def cleanup_heads(self) -> None:
-        ...
+        await Head.filter(name=self._name).order_by('level-').offset(self._limit).delete()
 
 
 class TzktDatasource(IndexDatasource):
