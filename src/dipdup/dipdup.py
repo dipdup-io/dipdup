@@ -103,9 +103,11 @@ class IndexDispatcher:
         for datasource in self._ctx.datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
-            datasource.on_operations(self._dispatch_operations)
-            datasource.on_big_maps(self._dispatch_big_maps)
-            datasource.on_rollback(self._rollback)
+            # NOTE: No need to subscribe to head, handled by datasource itself
+            # FIXME: mypy tricks
+            datasource.on_operations(self._on_operations)  # type: ignore
+            datasource.on_big_maps(self._on_big_maps)  # type: ignore
+            datasource.on_rollback(self._on_rollback)  # type: ignore
 
     async def _set_datasource_heads(self) -> None:
         for datasource in self._ctx.datasources.values():
@@ -135,21 +137,21 @@ class IndexDispatcher:
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
 
-    async def _dispatch_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
+    async def _on_operations(self, datasource: TzktDatasource, operations: List[OperationData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in operations)) == 1
         level = operations[0].level
         for index in self._indexes.values():
             if isinstance(index, OperationIndex) and index.datasource == datasource:
                 index.push(level, operations, block)
 
-    async def _dispatch_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData], block: HeadBlockData) -> None:
+    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData], block: HeadBlockData) -> None:
         assert len(set(op.level for op in big_maps)) == 1
         level = big_maps[0].level
         for index in self._indexes.values():
             if isinstance(index, BigMapIndex) and index.datasource == datasource:
                 index.push(level, big_maps, block)
 
-    async def _rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
+    async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         if from_level - to_level == 1:
             # NOTE: Single level rollbacks are processed at Index level.
             # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
@@ -163,7 +165,7 @@ class IndexDispatcher:
             else:
                 return
 
-        await self._ctx.fire_hook('on_rollback', datasource, from_level, to_level)
+        await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
 
 
 class DipDup:

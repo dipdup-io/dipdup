@@ -1,75 +1,10 @@
-import asyncio
-import logging
 from abc import abstractmethod
-from collections import defaultdict
-from enum import Enum
 from logging import Logger
-from typing import Awaitable, DefaultDict, List, Protocol
-
-from pyee import AsyncIOEventEmitter  # type: ignore
+from typing import Awaitable, List, Protocol, Set
 
 from dipdup.config import HTTPConfig
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData, HeadBlockData, OperationData
-
-_logger = logging.getLogger('dipdup.datasource')
-
-
-class DatasourceEventEmitter(AsyncIOEventEmitter):
-    """This class changes behavior of emit method to block execution until previous level emit callbacks are done"""
-
-    def __init__(self) -> None:
-        super(AsyncIOEventEmitter, self).__init__()
-        self._prefix = 'emit_'
-        self._tasks: DefaultDict[int, List[asyncio.Task]] = defaultdict(list)
-
-    def _level_has_pending_tasks(self, level: int) -> bool:
-        for task_level in self._tasks:
-            if task_level >= level:
-                continue
-            for task in self._tasks[task_level]:
-                if not task.done():
-                    _logger.warning('Pending task %s on level %s', task, task_level)
-                    return True
-        return False
-
-    async def level_emit(self, level: int, event, *args, **kwargs) -> None:
-        timeout, sleep = 60, 0.5
-        for _ in range(int(timeout / sleep)):
-            if self._level_has_pending_tasks(level):
-                await asyncio.sleep(sleep)
-            else:
-                kwargs['_level'] = level
-                super().emit(event, *args, **kwargs)
-                break
-        else:
-            raise RuntimeError(f'Levels lower than {level} are still processing after {timeout} seconds')
-
-    def _emit_run(self, f, args, kwargs) -> None:
-        level = kwargs.pop('_level', 0)
-        if level:
-            task = asyncio.create_task(f(*args, **kwargs), name=f'{self._prefix}_{level}')
-            self._tasks[level].append(task)
-        else:
-            task = asyncio.create_task(f(*args, **kwargs))
-
-        def _callback(f: asyncio.Task):
-            if f.cancelled():
-                return
-
-            exc = f.exception()
-            if exc:
-                # TODO: Keep exception
-                self.emit('error', exc)
-
-        task.add_done_callback(_callback)
-
-
-class EventType(Enum):
-    operations = 'operatitions'
-    big_maps = 'big_maps'
-    rollback = 'rollback'
-    head = 'head'
 
 
 class OperationsCallback(Protocol):
@@ -100,43 +35,38 @@ class Datasource(HTTPGateway):
         ...
 
 
-class IndexDatasource(Datasource, DatasourceEventEmitter):
+class IndexDatasource(Datasource):
     def __init__(self, url: str, http_config: HTTPConfig) -> None:
-        HTTPGateway.__init__(self, url, http_config)
-        DatasourceEventEmitter.__init__(self)
-
-    def on(self, event, f=None) -> None:
-        raise RuntimeError('Do not use `on` directly')
-
-    def emit(self, event: str, *args, **kwargs) -> None:
-        if event not in ('new_listener', 'error'):
-            raise RuntimeError('Do not use `emit` directly')
-        super().emit(event, *args, **kwargs)
+        super().__init__(url, http_config)
+        self._on_head: Set[HeadCallback] = set()
+        self._on_operations: Set[OperationsCallback] = set()
+        self._on_big_maps: Set[BigMapsCallback] = set()
+        self._on_rollback: Set[RollbackCallback] = set()
 
     def on_head(self, fn: HeadCallback) -> None:
-        super().on(EventType.head, fn)
+        self._on_head.add(fn)
 
     def on_operations(self, fn: OperationsCallback) -> None:
-        super().on(EventType.operations, fn)
+        self._on_operations.add(fn)
 
     def on_big_maps(self, fn: BigMapsCallback) -> None:
-        super().on(EventType.big_maps, fn)
+        self._on_big_maps.add(fn)
 
     def on_rollback(self, fn: RollbackCallback) -> None:
-        super().on(EventType.rollback, fn)
+        self._on_rollback.add(fn)
 
     async def emit_head(self, block: HeadBlockData) -> None:
-        await self.level_emit(block.level, EventType.head, datasource=self, block=block)
+        for fn in self._on_head:
+            await fn(self, block)
 
     async def emit_operations(self, operations: List[OperationData], block: HeadBlockData) -> None:
-        if not operations:
-            return
-        await self.level_emit(operations[0].level, EventType.operations, datasource=self, operations=operations, block=block)
+        for fn in self._on_operations:
+            await fn(self, operations, block)
 
     async def emit_big_maps(self, big_maps: List[BigMapData], block: HeadBlockData) -> None:
-        if not big_maps:
-            return
-        await self.level_emit(big_maps[0].level, EventType.big_maps, datasource=self, big_maps=big_maps, block=block)
+        for fn in self._on_big_maps:
+            await fn(self, big_maps, block)
 
-    def emit_rollback(self, from_level: int, to_level: int) -> None:
-        super().emit(EventType.rollback, datasource=self, from_level=from_level, to_level=to_level)
+    async def emit_rollback(self, from_level: int, to_level: int) -> None:
+        for fn in self._on_rollback:
+            fn(self, from_level, to_level)
