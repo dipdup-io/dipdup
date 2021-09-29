@@ -303,7 +303,10 @@ class BlockCache:
         self._blocks[block.level] = block
 
         old_blocks = sorted(self._blocks.keys())[-self._limit :]
-        map(self._blocks.pop, old_blocks)
+        for level in old_blocks:
+            del self._blocks[level]
+            if level in self._heads:
+                del self._heads[level]
 
     async def get_block(self, level: int, required: bool = False) -> Optional[BlockDataT]:
         if level not in self._blocks:
