@@ -21,6 +21,7 @@
 * Fixed race condition caused by event emitter concurrency.
 * Capture unknown exceptions with Sentry before wrapping to `DipDupError`.
 * Fixed job scheduler start delay.
+* Fixed processing of reorg messages.
 
 ## 3.0.1 - 2021-09-24
 

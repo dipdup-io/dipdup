@@ -296,6 +296,7 @@ class TzktDatasource(IndexDatasource):
         ratelimit_rate=100,
         ratelimit_period=30,
         connection_limit=25,
+        batch_size=10000,
     )
 
     def __init__(
@@ -316,11 +317,7 @@ class TzktDatasource(IndexDatasource):
 
     @property
     def request_limit(self) -> int:
-        return self._http_config.batch_size or 10000
-
-    @property
-    def level(self) -> Optional[int]:
-        return self._level
+        return cast(int, self._http_config.batch_size)
 
     @property
     def sync_level(self) -> Optional[int]:
@@ -664,8 +661,6 @@ class TzktDatasource(IndexDatasource):
             head_level = item['state']
 
             self._logger.info('Realtime message received: %s, %s', type_, tzkt_type)
-            if self._level and head_level < self._level:
-                raise RuntimeError(f'Received data message from level lower than current: {head_level} < {self._level}')
 
             # NOTE: State messages will be replaced with WS negotiation some day
             if tzkt_type == TzktMessageType.STATE:
@@ -679,9 +674,9 @@ class TzktDatasource(IndexDatasource):
                 yield item['data']
 
             elif tzkt_type == TzktMessageType.REORG:
-                if self.level is None:
+                if self._level is None:
                     raise RuntimeError('Reorg message received but datasource is not connected')
-                await self.emit_rollback(self.level, head_level)
+                await self.emit_rollback(self._level, head_level)
 
             else:
                 raise NotImplementedError
