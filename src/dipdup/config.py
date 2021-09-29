@@ -625,7 +625,6 @@ class OperationIndexConfig(IndexConfig):
 
     :param datasource: Alias of index datasource in `datasources` section
     :param contracts: Aliases of contracts being indexed in `contracts` section
-    :param stateless: Makes index dynamic. DipDup will synchronize index from the first block on every run
     :param first_level: First block to process (use with `--oneshot` run argument)
     :param last_level: Last block to process (use with `--oneshot` run argument)
     :param handlers: List of indexer handlers
@@ -636,7 +635,6 @@ class OperationIndexConfig(IndexConfig):
     types: Optional[List[OperationType]] = None
     contracts: Optional[List[Union[str, ContractConfig]]] = None
 
-    stateless: bool = False
     first_level: int = 0
     last_level: int = 0
 
@@ -744,7 +742,6 @@ class BigMapIndexConfig(IndexConfig):
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BigMapHandlerConfig]
 
-    stateless: bool = False
     first_level: int = 0
     last_level: int = 0
 
