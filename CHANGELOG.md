@@ -9,7 +9,7 @@
 
 ### Changed
 
-* `Index.head` relation removed. `dipdup_head` now contains the latest 10 blocks received by each datasource.
+* `Index.head` relation removed. `dipdup_head` now contains the latest blocks from Websocket received by each datasource.
 
 ### Fixed
 
