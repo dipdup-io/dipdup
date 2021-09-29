@@ -54,12 +54,11 @@ class Index:
         if self._state:
             raise RuntimeError('Index state is already initialized')
 
-        block = cast(BlockDataT, await self.datasource.block_cache.get_block(self._config.first_level, required=True))
         self._state, _ = await models.Index.get_or_create(
             name=self._config.name,
             type=self._config.kind,
             defaults=dict(
-                level=block.level,
+                level=self._config.first_level,
                 config_hash=self._config.hash(),
                 template=self._config.parent.name if self._config.parent else None,
                 template_values=self._config.template_values,
@@ -75,7 +74,7 @@ class Index:
 
         elif self._datasource.sync_level is None:
             self._logger.info('Datasource is not active, sync to the latest block')
-            # NOTE: Datasources are not spawned yet, but initial block is set during creation
+            # NOTE: Datasources are not spawned yet, but initial block is set during creation to sync indexes to the same level
             block = await self.datasource.block_cache.get_initial_block()
             await self._synchronize(block.level)
 
