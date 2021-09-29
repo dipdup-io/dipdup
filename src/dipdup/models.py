@@ -276,6 +276,7 @@ class Head(Model):
 
     class Meta:
         table = 'dipdup_head'
+        unique_together = ('name', 'level')
 
 
 class Index(Model):
