@@ -110,14 +110,12 @@ class Index:
             raise RuntimeError(f'Attempt to synchronize index from level {first_level} to level {last_level}')
 
         self._logger.info('Synchronizing index to level %s', last_level)
-        block = cast(BlockDataT, await self.datasource.block_cache.get_block(self._config.first_level, required=True))
-        await self.state.update_status(status=IndexStatus.SYNCING, level=first_level, hash_=block.hash)
+        await self.state.update_status(status=IndexStatus.SYNCING, level=first_level)
         return first_level
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
-        block = cast(BlockDataT, await self.datasource.block_cache.get_block(self._config.first_level, required=True))
-        await self.state.update_status(status=IndexStatus.REALTIME, level=last_level, hash_=block.hash)
+        await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
 
 
 class OperationIndex(Index):
@@ -449,9 +447,7 @@ class BigMapIndex(Index):
         async with in_global_transaction():
             self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_big_maps(big_maps)
-            required = self.state.status == IndexStatus.REALTIME
-            block = await self.datasource.block_cache.get_block(level, required)
-            await self.state.update_status(level=level, hash_=block.hash if block else None)
+            await self.state.update_status(level=level)
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""

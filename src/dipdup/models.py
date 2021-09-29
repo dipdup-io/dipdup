@@ -288,7 +288,6 @@ class Index(Model):
     template_values = fields.JSONField(null=True)
 
     level = fields.IntField(default=0)
-    hash = fields.CharField(64, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -297,11 +296,9 @@ class Index(Model):
         self,
         status: Optional[IndexStatus] = None,
         level: Optional[int] = None,
-        hash_: Optional[str] = None,
     ) -> None:
         self.status = status or self.status
         self.level = level or self.level  # type: ignore
-        self.hash = hash_ if (level and hash_) else None  # type: ignore
         await self.save()
 
     class Meta:
