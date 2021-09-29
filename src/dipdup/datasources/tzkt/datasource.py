@@ -5,7 +5,7 @@ from contextlib import suppress
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, Union, cast
+from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -25,7 +25,6 @@ from dipdup.config import (
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.enums import MessageType
-from dipdup.exceptions import DipDupException, ReindexingReason, ReindexingRequiredError
 from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
 
@@ -281,72 +280,6 @@ class BigMapFetcher:
             yield big_maps[0].level, big_maps[: i + 1]
 
 
-BlockDataT = Union[HeadBlockData, BlockData]
-
-
-class BlockCache:
-    def __init__(self, datasource: 'TzktDatasource') -> None:
-        self._datasource = datasource
-        self._name = self._datasource._http._url
-        self._limit = 10
-        self._initial_block: Optional[BlockDataT] = None
-        self._blocks: Dict[int, BlockDataT] = {}
-        self._heads: Dict[int, Head] = {}
-
-    async def initialize(self) -> None:
-        block = await self._datasource.get_head_block()
-        self._initial_block = block
-        await self.add_block(block)
-        await self.verify_head()
-
-    async def add_block(self, block: BlockDataT) -> None:
-        self._blocks[block.level] = block
-
-        old_blocks = sorted(self._blocks.keys())[-self._limit :]
-        for level in old_blocks:
-            del self._blocks[level]
-            if level in self._heads:
-                del self._heads[level]
-
-    async def get_block(self, level: int, required: bool = False) -> Optional[BlockDataT]:
-        if level not in self._blocks:
-            if not required:
-                return None
-
-            block = await self._datasource.get_block(level)
-            self._blocks[level] = block
-
-            head = Head(
-                name=self._name,
-                level=block.level,
-                hash=block.hash,
-                timestamp=block.timestamp,
-            )
-            self._heads[level] = head
-            with suppress(OperationalError):
-                await head.save()
-
-        return self._blocks[level]
-
-    async def get_initial_block(self) -> BlockDataT:
-        if not self._initial_block:
-            raise DipDupException('Attempted to get initial block but cache is not initialized')
-        return self._initial_block
-
-    async def verify_head(self) -> None:
-        head = await Head.filter(name=self._name).order_by('-level').first()
-        if not head:
-            return
-
-        block = cast(BlockDataT, await self.get_block(head.level, required=True))
-        if head.hash != block.hash:
-            # NOTE: No access to context, catch on dipdup.dipdup level
-            raise ReindexingRequiredError(ReindexingReason.BLOCK_HASH_MISMATCH)
-
-    async def cleanup_heads(self) -> None:
-        await Head.filter(name=self._name).order_by('-level').offset(self._limit).delete()
-
-
 class TzktDatasource(IndexDatasource):
     """Bridge between REST/WS TzKT endpoints and DipDup.
 
@@ -378,7 +311,6 @@ class TzktDatasource(IndexDatasource):
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
         self._ws_client: Optional[BaseHubConnection] = None
 
-        self.block_cache: BlockCache = BlockCache(self)
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None
 
@@ -618,6 +550,12 @@ class TzktDatasource(IndexDatasource):
 
         await self._on_connect()
 
+    async def set_sync_level(self) -> None:
+        if self._sync_level:
+            return
+        block = await self.get_head_block()
+        self._sync_level = block.level
+
     def _get_ws_client(self) -> BaseHubConnection:
         """Create SignalR client, register message callbacks"""
         if self._ws_client:
@@ -773,7 +711,15 @@ class TzktDatasource(IndexDatasource):
         """Parse and emit raw head block from WS"""
         async for _, data in self._extract_message_data(MessageType.head, message):
             block = self.convert_head_block(data)
-            await self.block_cache.add_block(block)
+            # NOTE: Do not move this, Head needs to be saved only once
+            # TODO: Cleanup
+            with suppress(OperationalError):
+                await Head.create(
+                    name=self.name,
+                    level=block.level,
+                    hash=block.hash,
+                    timestamp=block.timestamp,
+                )
             await self.emit_head(block)
 
     @classmethod

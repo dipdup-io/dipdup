@@ -26,7 +26,8 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingReason, ReindexingRequiredError
+from dipdup.enums import ReindexingReason
+from dipdup.exceptions import ConfigInitializationException, DipDupException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
 from dipdup.models import BigMapData, Contract
@@ -105,13 +106,14 @@ class IndexDispatcher:
             datasource.on_rollback(self._on_rollback)  # type: ignore
 
     async def _load_index_states(self) -> None:
+        if self._indexes:
+            raise RuntimeError('Index states are already loaded')
+
         await self._fetch_contracts()
         index_states = await IndexState.filter().all()
         self._logger.info('%s indexes found in database', len(index_states))
         for index_state in index_states:
             name, template, template_values = index_state.name, index_state.template, index_state.template_values
-            if name in self._indexes:
-                raise RuntimeError
 
             if index_config := self._ctx.config.indexes.get(name):
                 if isinstance(index_config, IndexTemplateConfig):
@@ -326,13 +328,8 @@ class DipDup:
 
     async def _initialize_datasources(self) -> None:
         for datasource in self._datasources.values():
-            if not isinstance(datasource, TzktDatasource):
-                continue
-
-            try:
-                await datasource.block_cache.initialize()
-            except ReindexingRequiredError as e:
-                await self._ctx.reindex(e.reason)
+            if isinstance(datasource, TzktDatasource):
+                await datasource.set_sync_level()
 
     async def _set_up_index_dispatcher(
         self,

@@ -51,6 +51,10 @@ class IndexDatasource(Datasource):
         self._on_big_maps: Set[BigMapsCallback] = set()
         self._on_rollback: Set[RollbackCallback] = set()
 
+    @property
+    def name(self) -> str:
+        return self._http._url
+
     def on_head(self, fn: HeadCallback) -> None:
         self._on_head.add(fn)
 

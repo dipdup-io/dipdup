@@ -19,7 +19,7 @@ from dipdup.config import (
     ResolvedIndexConfigT,
 )
 from dipdup.context import DipDupContext
-from dipdup.datasources.tzkt.datasource import BigMapFetcher, BlockDataT, OperationFetcher, TzktDatasource
+from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, InvalidDataError, ReindexingReason
 from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, IndexStatus, OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger
@@ -54,7 +54,7 @@ class Index:
         if self._state:
             raise RuntimeError('Index state is already initialized')
 
-        self._state, _ = await models.Index.get_or_create(
+        self._state, created = await models.Index.get_or_create(
             name=self._config.name,
             type=self._config.kind,
             defaults=dict(
@@ -65,6 +65,17 @@ class Index:
             ),
         )
 
+        if created or not self._state.level:
+            return
+
+        head = await models.Head.filter(name=self.datasource.name).order_by('-level').first()
+        if not head:
+            return
+
+        block = await self.datasource.get_block(head.level)
+        if head.hash != block.hash:
+            await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
+
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied
         if self._config.last_level:
@@ -72,13 +83,10 @@ class Index:
             await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
-        elif self._datasource.sync_level is None:
-            self._logger.info('Datasource is not active, sync to the latest block')
-            # NOTE: Datasources are not spawned yet, but initial block is set during creation to sync indexes to the same level
-            block = await self.datasource.block_cache.get_initial_block()
-            await self._synchronize(block.level)
+        if self._datasource.sync_level is None:
+            raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
 
-        elif self._datasource.sync_level > self.state.level:
+        elif self.state.level < self._datasource.sync_level:
             self._logger.info('Index is behind datasource, sync to datasource level')
             self._queue.clear()
             last_level = self._datasource.sync_level
