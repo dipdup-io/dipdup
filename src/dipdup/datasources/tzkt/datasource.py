@@ -712,7 +712,7 @@ class TzktDatasource(IndexDatasource):
         async for data in self._extract_message_data(MessageType.head, message):
             block = self.convert_head_block(data)
             # NOTE: Do not move this, Head needs to be saved only once
-            # TODO: Cleanup
+            # TODO: Cleanup unused heads (no indexes with the same level and datasource)
             with suppress(OperationalError):
                 await Head.create(
                     name=self.name,
