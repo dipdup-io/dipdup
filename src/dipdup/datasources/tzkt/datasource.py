@@ -657,7 +657,7 @@ class TzktDatasource(IndexDatasource):
             [],
         )
 
-    async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Tuple[int, Dict], None]:
+    async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
         # TODO: Docstring
         for item in message:
             tzkt_type = TzktMessageType(item['type'])
@@ -676,7 +676,7 @@ class TzktDatasource(IndexDatasource):
 
             elif tzkt_type == TzktMessageType.DATA:
                 self._level = head_level
-                yield head_level, item['data']
+                yield item['data']
 
             elif tzkt_type == TzktMessageType.REORG:
                 if self.level is None:
@@ -688,7 +688,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
-        async for level, data in self._extract_message_data(MessageType.operation, message):
+        async for data in self._extract_message_data(MessageType.operation, message):
             operations = []
             for operation_json in data:
                 operation = self.convert_operation(operation_json)
@@ -700,7 +700,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_big_maps_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        async for level, data in self._extract_message_data(MessageType.big_map, message):
+        async for data in self._extract_message_data(MessageType.big_map, message):
             big_maps = []
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
@@ -709,7 +709,7 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw head block from WS"""
-        async for _, data in self._extract_message_data(MessageType.head, message):
+        async for data in self._extract_message_data(MessageType.head, message):
             block = self.convert_head_block(data)
             # NOTE: Do not move this, Head needs to be saved only once
             # TODO: Cleanup
