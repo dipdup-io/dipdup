@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## 3.0.2 - 2021-09-30
+
 ### Added
 
 * Human-readable `CHANGELOG.md` 🕺
