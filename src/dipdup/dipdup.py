@@ -225,7 +225,7 @@ class DipDup:
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)
 
-    async def run(self, reindex: bool, oneshot: bool) -> None:
+    async def run(self, reindex: bool, oneshot: bool, postpone_jobs: bool) -> None:
         """Run indexing process"""
         tasks: Set[Task] = set()
         async with AsyncExitStack() as stack:
@@ -242,6 +242,8 @@ class DipDup:
             start_scheduler_event: Optional[Event] = None
             if not oneshot:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)
+                if not postpone_jobs:
+                    start_scheduler_event.set()
                 spawn_datasources_event = await self._spawn_datasources(tasks)
 
             for name in self._config.indexes:
