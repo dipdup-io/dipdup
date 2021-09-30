@@ -115,17 +115,20 @@ class IndexDispatcher:
         for index_state in index_states:
             name, template, template_values = index_state.name, index_state.template, index_state.template_values
 
+            # NOTE: Index in config (templates are already resolved): just verify hash
             if index_config := self._ctx.config.indexes.get(name):
                 if isinstance(index_config, IndexTemplateConfig):
                     raise ConfigInitializationException
                 if index_config.hash() != index_state.config_hash:
                     await self._ctx.reindex(ReindexingReason.CONFIG_HASH_MISMATCH)
 
+            # NOTE: Templated index: recreate index config, verify hash
             elif template:
                 if template not in self._ctx.config.templates:
                     await self._ctx.reindex(ReindexingReason.MISSING_INDEX_TEMPLATE)
                 await self._ctx.add_index(name, template, template_values)
 
+            # NOTE: Index config is missing
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
 

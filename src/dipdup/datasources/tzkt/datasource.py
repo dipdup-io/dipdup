@@ -706,15 +706,15 @@ class TzktDatasource(IndexDatasource):
         """Parse and emit raw head block from WS"""
         async for data in self._extract_message_data(MessageType.head, message):
             block = self.convert_head_block(data)
-            # NOTE: Do not move this, Head needs to be saved only once
-            # TODO: Cleanup unused heads (no indexes with the same level and datasource)
-            with suppress(OperationalError):
-                await Head.create(
-                    name=self.name,
+            # NOTE: Do not move this query to lower level
+            await Head.update_or_create(
+                name=self.name,
+                defaults=dict(
                     level=block.level,
                     hash=block.hash,
                     timestamp=block.timestamp,
-                )
+                ),
+            )
             await self.emit_head(block)
 
     @classmethod
