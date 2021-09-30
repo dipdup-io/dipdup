@@ -5,7 +5,9 @@
 ### Added
 
 * Human-readable `CHANGELOG.md` 🕺
-* `--forbid-reindexing` option added to `dipdup run` command. If this flag is set, DipDup will raise `ReindexingRequiredError` when reindexing is triggered for any reason. A database won't be truncated. To continue indexing with existing database run `UPDATE dipdup_schema SET reindex = NULL;`
+* Two new options added to `dipdup run` command:
+  * `--forbid-reindexing` – raise `ReindexingRequiredError` instead of truncating database when reindexing is triggered for any reason. To continue indexing with existing database run `UPDATE dipdup_schema SET reindex = NULL;`
+  * `--postpone-jobs` – job scheduler won't start until all indexes are synchronized. 
 
 ### Changed
 
