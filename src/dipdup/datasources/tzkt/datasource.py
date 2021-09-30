@@ -23,7 +23,7 @@ from dipdup.config import (
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.enums import MessageType
-from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData, QuoteData
+from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
 
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
@@ -674,6 +674,7 @@ class TzktDatasource(IndexDatasource):
             elif tzkt_type == TzktMessageType.REORG:
                 if self._level is None:
                     raise RuntimeError('Reorg message received but datasource is not connected')
+                self._logger.info('Emitting rollback from %s to %s', self._level, head_level)
                 await self.emit_rollback(self._level, head_level)
 
             else:
@@ -704,15 +705,6 @@ class TzktDatasource(IndexDatasource):
         """Parse and emit raw head block from WS"""
         async for data in self._extract_message_data(MessageType.head, message):
             block = self.convert_head_block(data)
-            # NOTE: Do not move this query to lower level
-            await Head.update_or_create(
-                name=self.name,
-                defaults=dict(
-                    level=block.level,
-                    hash=block.hash,
-                    timestamp=block.timestamp,
-                ),
-            )
             await self.emit_head(block)
 
     @classmethod

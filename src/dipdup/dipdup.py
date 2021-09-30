@@ -1,9 +1,11 @@
+import asyncio
 import logging
 from asyncio import CancelledError, Event, Task, create_task, gather
+from collections import deque
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import partial
 from operator import ne
-from typing import Dict, List, Optional, Set
+from typing import Awaitable, Deque, Dict, List, Optional, Set
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
@@ -30,7 +32,7 @@ from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException, DipDupException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, Index, OperationIndex
-from dipdup.models import BigMapData, Contract
+from dipdup.models import BigMapData, Contract, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
@@ -46,6 +48,7 @@ class IndexDispatcher:
         self._indexes: Dict[str, Index] = {}
         self._contracts: Set[ContractConfig] = set()
         self._stopped: bool = False
+        self._tasks: Deque[asyncio.Task] = deque()
 
     async def run(
         self,
@@ -57,7 +60,11 @@ class IndexDispatcher:
         await self._load_index_states()
 
         while not self._stopped:
-            tasks = [index.process() for index in self._indexes.values()]
+            tasks: List[Awaitable] = [index.process() for index in self._indexes.values()]
+            with suppress(IndexError):
+                while True:
+                    tasks.append(self._tasks.popleft())
+
             async with slowdown(1.0):
                 await gather(*tasks)
 
@@ -131,6 +138,21 @@ class IndexDispatcher:
             # NOTE: Index config is missing
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
+
+    async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
+        # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
+        self._tasks.append(
+            asyncio.create_task(
+                Head.update_or_create(
+                    name=datasource.name,
+                    defaults=dict(
+                        level=head.level,
+                        hash=head.hash,
+                        timestamp=head.timestamp,
+                    ),
+                ),
+            )
+        )
 
     async def _on_operations(self, datasource: TzktDatasource, operations: List[OperationData]) -> None:
         assert len(set(op.level for op in operations)) == 1
