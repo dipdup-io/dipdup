@@ -4,8 +4,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from functools import wraps
-from typing import Any, AsyncGenerator, Callable, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -23,10 +22,9 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.enums import TzktMessageType
-from dipdup.models import BigMapAction, BigMapData, BlockData, Head, HeadBlockData, OperationData, QuoteData
+from dipdup.enums import MessageType
+from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
-
-OperationID = int
 
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 OPERATION_FIELDS = (
@@ -280,38 +278,6 @@ class BigMapFetcher:
             yield big_maps[0].level, big_maps[: i + 1]
 
 
-class BlockCache:
-    def __init__(self) -> None:
-        # FIXME: Why store older blocks?
-        self._limit = 10
-        self._blocks: DefaultDict[int, Optional[HeadBlockData]] = defaultdict(lambda: None)
-        self._events: DefaultDict[int, asyncio.Event] = defaultdict(asyncio.Event)
-
-    async def add_block(self, block: HeadBlockData) -> None:
-        if self._blocks[block.level]:
-            raise RuntimeError('Attempt to add block {block.level} which is already cached')
-        self._blocks[block.level] = block
-        self._events[block.level].set()
-
-        last_blocks = sorted(self._blocks.keys())[-self._limit :]
-        self._blocks = defaultdict(lambda: None, ({k: v for k, v in self._blocks.items() if k in last_blocks}))
-        self._events = defaultdict(asyncio.Event, ({k: v for k, v in self._events.items() if k in last_blocks}))
-
-    async def get_block(self, level: int) -> HeadBlockData:
-        if self._blocks and level < sorted(self._blocks.keys())[-1] - self._limit:
-            raise RuntimeError(f'Attemps to get block older than {self._limit} levels from head')
-
-        try:
-            await asyncio.wait_for(fut=self._events[level].wait(), timeout=3)
-        except asyncio.TimeoutError as e:
-            raise RuntimeError(f'Block {level} hasn\'t arrived in 3 seconds. Forgot to subscribe to head?') from e
-
-        block = self._blocks[level]
-        if not block:
-            raise RuntimeError('Event is set but block is missing in cache')
-        return block
-
-
 class TzktDatasource(IndexDatasource):
     """Bridge between REST/WS TzKT endpoints and DipDup.
 
@@ -328,6 +294,7 @@ class TzktDatasource(IndexDatasource):
         ratelimit_rate=100,
         ratelimit_period=30,
         connection_limit=25,
+        batch_size=10000,
     )
 
     def __init__(
@@ -343,26 +310,16 @@ class TzktDatasource(IndexDatasource):
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
         self._ws_client: Optional[BaseHubConnection] = None
 
-        self._block_cache: BlockCache = BlockCache()
-        self._head: Optional[Head] = None
         self._level: Optional[int] = None
         self._sync_level: Optional[int] = None
 
     @property
     def request_limit(self) -> int:
-        return self._http_config.batch_size or 10000
-
-    @property
-    def level(self) -> Optional[int]:
-        return self._level
+        return cast(int, self._http_config.batch_size)
 
     @property
     def sync_level(self) -> Optional[int]:
         return self._sync_level
-
-    @property
-    def head(self) -> Optional[Head]:
-        return self._head
 
     async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
         """Get list of contracts sharing the same code hash or type hash"""
@@ -588,6 +545,12 @@ class TzktDatasource(IndexDatasource):
 
         await self._on_connect()
 
+    async def set_sync_level(self) -> None:
+        if self._sync_level:
+            return
+        block = await self.get_head_block()
+        self._sync_level = block.level
+
     def _get_ws_client(self) -> BaseHubConnection:
         """Create SignalR client, register message callbacks"""
         if self._ws_client:
@@ -607,21 +570,11 @@ class TzktDatasource(IndexDatasource):
             )
         ).build()
 
-        _ws_lock = asyncio.Lock()
-
-        def _lock_wrapper(fn: Callable):
-            @wraps(fn)
-            async def _wrapper(*args, **kwargs):
-                async with _ws_lock:
-                    return await fn(*args, **kwargs)
-
-            return _wrapper
-
-        self._ws_client.on_open(_lock_wrapper(self._on_connect))
-        self._ws_client.on_error(_lock_wrapper(self._on_error))
-        self._ws_client.on('operations', _lock_wrapper(self._on_operation_message))
-        self._ws_client.on('bigmaps', _lock_wrapper(self._on_big_map_message))
-        self._ws_client.on('head', _lock_wrapper(self._on_head_message))
+        self._ws_client.on_open(self._on_connect)
+        self._ws_client.on_error(self._on_error)
+        self._ws_client.on('operations', self._on_operations_message)
+        self._ws_client.on('bigmaps', self._on_big_maps_message)
+        self._ws_client.on('head', self._on_head_message)
 
         return self._ws_client
 
@@ -647,12 +600,10 @@ class TzktDatasource(IndexDatasource):
         for address, paths in self._big_map_subscriptions.items():
             await self._subscribe_to_big_maps(address, paths)
 
-    # NOTE: Pay attention: this is not a pyee callback
+    # TODO: Exception class
     def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""
         raise Exception(message.error)
-
-    # TODO: Catch exceptions from pyee 'error' channel
 
     async def _subscribe_to_transactions(self, address: str) -> None:
         """Subscribe to contract's operations on established WS connection"""
@@ -701,104 +652,60 @@ class TzktDatasource(IndexDatasource):
             [],
         )
 
-    async def _extract_message_data(self, channel: str, message: List[Any]) -> AsyncGenerator[Tuple[int, Dict], None]:
+    async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
+        # TODO: Docstring
         for item in message:
-            message_type = TzktMessageType(item['type'])
-            self._logger.debug('`%s` message: %s', channel, message_type.name)
-
+            tzkt_type = TzktMessageType(item['type'])
             head_level = item['state']
-            if self._level and head_level < self._level:
-                raise RuntimeError(f'Received data message from level lower than current: {head_level} < {self._level}')
+
+            self._logger.info('Realtime message received: %s, %s', type_, tzkt_type)
 
             # NOTE: State messages will be replaced with WS negotiation some day
-            if message_type == TzktMessageType.STATE:
+            if tzkt_type == TzktMessageType.STATE:
                 if self._sync_level != head_level:
                     self._logger.info('Datasource level set to %s', head_level)
                     self._sync_level = head_level
                     self._level = head_level
 
-            elif message_type == TzktMessageType.DATA:
+            elif tzkt_type == TzktMessageType.DATA:
                 self._level = head_level
-                yield head_level, item['data']
+                yield item['data']
 
-            elif message_type == TzktMessageType.REORG:
-                if self.level is None:
+            elif tzkt_type == TzktMessageType.REORG:
+                if self._level is None:
                     raise RuntimeError('Reorg message received but datasource is not connected')
-                self.emit_rollback(self.level, head_level)
+                self._logger.info('Emitting rollback from %s to %s', self._level, head_level)
+                await self.emit_rollback(self._level, head_level)
 
             else:
                 raise NotImplementedError
 
-    async def _on_operation_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
-        async for level, data in self._extract_message_data('operation', message):
-            block = await self._block_cache.get_block(level)
+        async for data in self._extract_message_data(MessageType.operation, message):
             operations = []
             for operation_json in data:
-                operation = self.convert_operation(operation_json)
-                if operation.status != 'applied':
+                if operation_json['status'] != 'applied':
                     continue
+                operation = self.convert_operation(operation_json)
                 operations.append(operation)
             if operations:
-                self.emit_operations(operations, block)
+                await self.emit_operations(operations)
 
-    async def _on_big_map_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _on_big_maps_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        async for level, data in self._extract_message_data('big_map', message):
-            block = await self._block_cache.get_block(level)
+        async for data in self._extract_message_data(MessageType.big_map, message):
             big_maps = []
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
                 big_maps.append(big_map)
-            self.emit_big_maps(big_maps, block)
+            await self.emit_big_maps(big_maps)
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
-        async for _, data in self._extract_message_data('head', message):
+        """Parse and emit raw head block from WS"""
+        async for data in self._extract_message_data(MessageType.head, message):
             block = self.convert_head_block(data)
-            await self._block_cache.add_block(block)
-
-            created = False
-            if self._head is None:
-                self._head, created = await Head.get_or_create(
-                    name=self._http._url,
-                    defaults=dict(
-                        level=block.level,
-                        hash=block.hash,
-                        timestamp=block.timestamp,
-                    ),
-                )
-            if not created:
-                self._head.level = block.level  # type: ignore
-                self._head.hash = block.hash  # type: ignore
-                self._head.timestamp = block.timestamp  # type: ignore
-                await self._head.save()
-
-            self.emit_head(block)
-
-    # FIXME: I don't like this approach, too hacky.
-    async def set_head_from_http(self) -> None:
-        """Set block from `get_head_block` HTTP method for indexes to use the same level during initial sync"""
-        if self._head:
-            raise RuntimeError('Head is already set')
-
-        block = await self.get_head_block()
-        self._head, created = await Head.get_or_create(
-            name=self._http._url,
-            defaults=dict(
-                level=block.level,
-                hash=block.hash,
-                timestamp=block.timestamp,
-            ),
-        )
-        if not created:
-            self._head.level = block.level  # type: ignore
-            self._head.hash = block.hash  # type: ignore
-            self._head.timestamp = block.timestamp  # type: ignore
-            await self._head.save()
-
-        self._logger.info('Datasource head set to block with level %s', self._head.level)
-
-        # NOTE: No need to emit?
+            await self.emit_head(block)
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:

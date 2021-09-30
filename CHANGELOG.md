@@ -5,16 +5,24 @@
 ### Added
 
 * Human-readable `CHANGELOG.md` 🕺
-* `--forbid-reindexing` option added to `dipdup run` command. When this flag is set DipDup will raise `ReindexingRequiredError` instead of truncating database when reindexing is triggered for any reason.
+* `--forbid-reindexing` option added to `dipdup run` command. If this flag is set, DipDup will raise `ReindexingRequiredError` when reindexing is triggered for any reason. A database won't be truncated. To continue indexing with existing database run `UPDATE dipdup_schema SET reindex = NULL;`
+
+### Changed
+
+* Migration to this version requires reindexing.
+* `dipdup_index.head_id` foreign key removed. `dipdup_head` table still contains the latest blocks from Websocket received by each datasource.
 
 ### Fixed
 
-* Removed unnecessary calls to TzKT API during the partial sync.
+* Removed unnecessary calls to TzKT API.
 * Fixed removal of PostgreSQL extensions (`timescaledb`, `pgcrypto`) by function `truncate_database` triggered on reindex.
-* Fixed updating relation between index and head in DB.
 * Fixed creation of missing project package on `init`.
 * Fixed invalid handler callbacks generated on `init`.
 * Fixed detection of existing types in the project.
+* Fixed race condition caused by event emitter concurrency.
+* Capture unknown exceptions with Sentry before wrapping to `DipDupError`.
+* Fixed job scheduler start delay.
+* Fixed processing of reorg messages.
 
 ## 3.0.1 - 2021-09-24
 

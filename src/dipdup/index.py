@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
-from contextlib import suppress
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
 from pydantic.error_wrappers import ValidationError
@@ -21,12 +20,14 @@ from dipdup.config import (
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, InvalidDataError, ReindexingReason
-from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, IndexStatus, OperationData, Origination, Transaction
+from dipdup.models import BigMapData, BigMapDiff, BlockData, IndexStatus, OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
 # NOTE: Operations of a single contract call
 OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
+
+_cached_blocks: Dict[int, BlockData] = {}
 
 
 class Index:
@@ -54,7 +55,7 @@ class Index:
         if self._state:
             raise RuntimeError('Index state is already initialized')
 
-        self._state, _ = await models.Index.get_or_create(
+        self._state, created = await models.Index.get_or_create(
             name=self._config.name,
             type=self._config.kind,
             defaults=dict(
@@ -65,12 +66,17 @@ class Index:
             ),
         )
 
-        # NOTE: No need to check hashes of indexes which are not synchronized.
-        head = await self.state.head
-        if head and self.state.status == IndexStatus.REALTIME:
-            block = await self._datasource.get_block(head.level)
-            if head.hash != block.hash:
-                await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
+        if created or not self._state.level:
+            return
+
+        head = await models.Head.filter(name=self.datasource.name).order_by('-level').first()
+        if not head:
+            return
+
+        if head.level not in _cached_blocks:
+            _cached_blocks[head.level] = await self.datasource.get_block(head.level)
+        if head.hash != _cached_blocks[head.level].hash:
+            await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
 
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied
@@ -79,16 +85,10 @@ class Index:
             await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
-        elif self._datasource.sync_level is None:
-            self._logger.info('Datasource is not active, sync to the latest block')
-            # NOTE: Late establishing connection to the WebSocket
-            if self.datasource.head:
-                last_level = self.datasource.head.level
-            else:
-                last_level = (await self._datasource.get_head_block()).level
-            await self._synchronize(last_level)
+        if self._datasource.sync_level is None:
+            raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
 
-        elif self._datasource.sync_level > self.state.level:
+        elif self.state.level < self._datasource.sync_level:
             self._logger.info('Index is behind datasource, sync to datasource level')
             self._queue.clear()
             last_level = self._datasource.sync_level
@@ -109,8 +109,6 @@ class Index:
         if self.state.status == IndexStatus.ONESHOT:
             return None
 
-        head = await self.state.head
-        # FIXME: Use Head when postponed WS init will be reversed
         first_level = self.state.level
 
         if first_level == last_level:
@@ -119,13 +117,12 @@ class Index:
             raise RuntimeError(f'Attempt to synchronize index from level {first_level} to level {last_level}')
 
         self._logger.info('Synchronizing index to level %s', last_level)
-        await self.state.update_status(IndexStatus.SYNCING, first_level)
+        await self.state.update_status(status=IndexStatus.SYNCING, level=first_level)
         return first_level
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
-        # NOTE: No head yet, wait for realtime messages to be processed
-        await self.state.update_status(IndexStatus.REALTIME, last_level)
+        await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
 
 
 class OperationIndex(Index):
@@ -133,14 +130,14 @@ class OperationIndex(Index):
 
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[Tuple[int, List[OperationData], Optional[HeadBlockData]]] = deque()
+        self._queue: Deque[Tuple[int, List[OperationData]]] = deque()
         self._contract_hashes: Dict[str, Tuple[int, int]] = {}
         self._rollback_level: Optional[int] = None
         self._last_hashes: Set[str] = set()
         self._migration_originations: Optional[Dict[str, OperationData]] = None
 
-    def push(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
-        self._queue.append((level, operations, block))
+    def push(self, level: int, operations: List[OperationData]) -> None:
+        self._queue.append((level, operations))
 
     async def single_level_rollback(self, from_level: int) -> None:
         """Ensure next arrived block is the same as rolled back one
@@ -160,13 +157,11 @@ class OperationIndex(Index):
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
-        if not self._queue:
-            return
-        self._logger.info('Processing websocket queue')
-        with suppress(IndexError):
-            while True:
-                level, operations, block = self._queue.popleft()
-                await self._process_level_operations(level, operations, block)
+        if self._queue:
+            self._logger.info('Processing websocket queue')
+        while self._queue:
+            level, operations = self._queue.popleft()
+            await self._process_level_operations(level, operations)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -200,7 +195,7 @@ class OperationIndex(Index):
 
         await self._exit_sync_state(last_level)
 
-    async def _process_level_operations(self, level: int, operations: List[OperationData], block: Optional[HeadBlockData] = None) -> None:
+    async def _process_level_operations(self, level: int, operations: List[OperationData]) -> None:
         if level <= self.state.level:
             raise RuntimeError(f'Level of operation batch must be higher than index state level: {level} <= {self.state.level}')
 
@@ -209,7 +204,6 @@ class OperationIndex(Index):
                 'operations': level,
                 'rollback': self._rollback_level,
                 'index': self.state.level,
-                'block': block.level if block else level,
             }
             if len(set(levels.values())) != 1:
                 levels_repr = ', '.join(f'{k}={v}' for k, v in levels.items())
@@ -232,12 +226,7 @@ class OperationIndex(Index):
         async with in_global_transaction():
             self._logger.info('Processing %s operations of level %s', len(operations), level)
             await self._process_operations(operations)
-
-            if block:
-                status, head = IndexStatus.REALTIME, self.datasource.head
-            else:
-                status, head = IndexStatus.SYNCING, None
-            await self.state.update_status(status, level, head)
+            await self.state.update_status(self.state.status, level)
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
@@ -416,20 +405,18 @@ class BigMapIndex(Index):
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[Tuple[int, List[BigMapData], Optional[HeadBlockData]]] = deque()
+        self._queue: Deque[Tuple[int, List[BigMapData]]] = deque()
 
-    def push(self, level: int, big_maps: List[BigMapData], block: Optional[HeadBlockData] = None):
-        self._queue.append((level, big_maps, block))
+    def push(self, level: int, big_maps: List[BigMapData]):
+        self._queue.append((level, big_maps))
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
-        if not self._queue:
-            return
-        self._logger.info('Processing websocket queue')
-        with suppress(IndexError):
-            while True:
-                level, big_maps, block = self._queue.popleft()
-                await self._process_level_big_maps(level, big_maps, block)
+        if self._queue:
+            self._logger.info('Processing websocket queue')
+        while self._queue:
+            level, big_maps = self._queue.popleft()
+            await self._process_level_big_maps(level, big_maps)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -456,19 +443,14 @@ class BigMapIndex(Index):
 
         await self._exit_sync_state(last_level)
 
-    async def _process_level_big_maps(self, level: int, big_maps: List[BigMapData], block: Optional[HeadBlockData] = None):
+    async def _process_level_big_maps(self, level: int, big_maps: List[BigMapData]):
         if level <= self.state.level:
             raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
 
         async with in_global_transaction():
             self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
             await self._process_big_maps(big_maps)
-
-            if block:
-                status, head = IndexStatus.REALTIME, self.datasource.head
-            else:
-                status, head = IndexStatus.SYNCING, None
-            await self.state.update_status(status, level, head)
+            await self.state.update_status(level=level)
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""

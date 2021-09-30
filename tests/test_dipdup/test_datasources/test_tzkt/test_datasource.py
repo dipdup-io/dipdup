@@ -121,14 +121,14 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             sync=True,
         )
 
-    async def test_on_operation_message_state(self):
+    async def test_on_operations_message_state(self):
         fetch_operations_mock = AsyncMock()
         self.datasource.fetch_operations = fetch_operations_mock
 
         await self.datasource.on_operation_message([{'type': 0, 'state': 123}], self.index_config)
         fetch_operations_mock.assert_awaited_with(self.index_config, 123)
 
-    async def test_on_operation_message_data(self):
+    async def test_on_operations_message_data(self):
         with open(join(dirname(__file__), 'operations.json')) as file:
             operations_message = json.load(file)
         operation = TzktDatasource.convert_operation(operations_message['data'][-2])

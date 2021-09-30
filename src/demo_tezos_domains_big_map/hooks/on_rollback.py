@@ -1,6 +1,6 @@
 from dipdup.context import HookContext
 from dipdup.datasources.datasource import Datasource
-from dipdup.exceptions import ReindexingReason
+from dipdup.enums import ReindexingReason
 
 
 async def on_rollback(
