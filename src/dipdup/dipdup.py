@@ -169,7 +169,8 @@ class IndexDispatcher:
                 index.push(level, big_maps)
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
-        if from_level - to_level == 1:
+        # NOTE: Rollback could be received before head
+        if from_level - to_level in (0, 1):
             # NOTE: Single level rollbacks are processed at Index level.
             # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
             for index in self._indexes.values():
