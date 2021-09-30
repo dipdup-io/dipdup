@@ -107,7 +107,8 @@ class IndexDispatcher:
             if not isinstance(datasource, IndexDatasource):
                 continue
             # NOTE: No need to subscribe to head, handled by datasource itself
-            # FIXME: mypy tricks
+            # FIXME: mypy tricks, ignore first argument
+            datasource.on_head(self._on_head)  # type: ignore
             datasource.on_operations(self._on_operations)  # type: ignore
             datasource.on_big_maps(self._on_big_maps)  # type: ignore
             datasource.on_rollback(self._on_rollback)  # type: ignore
