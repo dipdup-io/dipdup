@@ -109,7 +109,6 @@ class Index:
         if self.state.status == IndexStatus.ONESHOT:
             return None
 
-        # FIXME: Use Head when postponed datasource spawning will be reversed
         first_level = self.state.level
 
         if first_level == last_level:
