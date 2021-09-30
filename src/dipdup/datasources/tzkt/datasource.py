@@ -684,7 +684,7 @@ class TzktDatasource(IndexDatasource):
         async for data in self._extract_message_data(MessageType.operation, message):
             operations = []
             for operation_json in data:
-                if operation_json['status'] == 'applied':
+                if operation_json['status'] != 'applied':
                     continue
                 operation = self.convert_operation(operation_json)
                 operations.append(operation)
