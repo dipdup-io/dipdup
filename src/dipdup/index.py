@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
-from contextlib import suppress
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
 from pydantic.error_wrappers import ValidationError
@@ -21,12 +20,14 @@ from dipdup.config import (
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, InvalidDataError, ReindexingReason
-from dipdup.models import BigMapData, BigMapDiff, HeadBlockData, IndexStatus, OperationData, Origination, Transaction
+from dipdup.models import BigMapData, BigMapDiff, BlockData, IndexStatus, OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
 # NOTE: Operations of a single contract call
 OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
+
+_cached_blocks: Dict[int, BlockData] = {}
 
 
 class Index:
@@ -72,8 +73,9 @@ class Index:
         if not head:
             return
 
-        block = await self.datasource.get_block(head.level)
-        if head.hash != block.hash:
+        if head.level not in _cached_blocks:
+            _cached_blocks[head.level] = await self.datasource.get_block(head.level)
+        if head.hash != _cached_blocks[head.level]:
             await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
 
     async def process(self) -> None:
@@ -156,13 +158,11 @@ class OperationIndex(Index):
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
-        if not self._queue:
-            return
-        self._logger.info('Processing websocket queue')
-        with suppress(IndexError):
-            while True:
-                level, operations = self._queue.popleft()
-                await self._process_level_operations(level, operations)
+        if self._queue:
+            self._logger.info('Processing websocket queue')
+        while self._queue:
+            level, operations = self._queue.popleft()
+            await self._process_level_operations(level, operations)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -406,20 +406,18 @@ class BigMapIndex(Index):
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[Tuple[int, List[BigMapData], Optional[HeadBlockData]]] = deque()
+        self._queue: Deque[Tuple[int, List[BigMapData]]] = deque()
 
-    def push(self, level: int, big_maps: List[BigMapData], block: Optional[HeadBlockData] = None):
-        self._queue.append((level, big_maps, block))
+    def push(self, level: int, big_maps: List[BigMapData]):
+        self._queue.append((level, big_maps))
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
-        if not self._queue:
-            return
-        self._logger.info('Processing websocket queue')
-        with suppress(IndexError):
-            while True:
-                level, big_maps, block = self._queue.popleft()
-                await self._process_level_big_maps(level, big_maps)
+        if self._queue:
+            self._logger.info('Processing websocket queue')
+        while self._queue:
+            level, big_maps = self._queue.popleft()
+            await self._process_level_big_maps(level, big_maps)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""

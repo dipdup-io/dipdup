@@ -61,18 +61,17 @@ class IndexDispatcher:
 
         while not self._stopped:
             tasks: List[Awaitable] = [index.process() for index in self._indexes.values()]
-            with suppress(IndexError):
-                while True:
-                    tasks.append(self._tasks.popleft())
+            while self._tasks:
+                tasks.append(self._tasks.popleft())
 
             async with slowdown(1.0):
                 await gather(*tasks)
 
             indexes_spawned = False
-            with suppress(IndexError):
-                while index := pending_indexes.popleft():
-                    self._indexes[index._config.name] = index
-                    indexes_spawned = True
+            while pending_indexes:
+                index = pending_indexes.popleft()
+                self._indexes[index._config.name] = index
+                indexes_spawned = True
             if not indexes_spawned:
                 if self._every_index_is(IndexStatus.ONESHOT):
                     self.stop()
