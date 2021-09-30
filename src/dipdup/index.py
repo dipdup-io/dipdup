@@ -75,7 +75,7 @@ class Index:
 
         if head.level not in _cached_blocks:
             _cached_blocks[head.level] = await self.datasource.get_block(head.level)
-        if head.hash != _cached_blocks[head.level]:
+        if head.hash != _cached_blocks[head.level].hash:
             await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
 
     async def process(self) -> None:
