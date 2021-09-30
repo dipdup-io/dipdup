@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from collections import defaultdict
-from contextlib import suppress
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
@@ -12,7 +11,6 @@ from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ig
 from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
 from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
-from tortoise.exceptions import OperationalError
 
 from dipdup.config import (
     BigMapIndexConfig,
