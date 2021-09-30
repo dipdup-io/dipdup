@@ -5,11 +5,12 @@
 ### Added
 
 * Human-readable `CHANGELOG.md` 🕺
-* `--forbid-reindexing` option added to `dipdup run` command. If this flag is set DipDup will raise `ReindexingRequiredError` when reindexing is triggered for any reason. A database won't be truncated. To continue indexing with existing database run `UPDATE dipdup_schema SET reindex = NULL;`
+* `--forbid-reindexing` option added to `dipdup run` command. If this flag is set, DipDup will raise `ReindexingRequiredError` when reindexing is triggered for any reason. A database won't be truncated. To continue indexing with existing database run `UPDATE dipdup_schema SET reindex = NULL;`
 
 ### Changed
 
-* `Index.head` relation removed. `dipdup_head` now contains the latest blocks from Websocket received by each datasource.
+* Migration to this version requires reindexing.
+* `dipdup_index.head_id` foreign key removed. `dipdup_head` table still contains the latest blocks from Websocket received by each datasource.
 
 ### Fixed
 
