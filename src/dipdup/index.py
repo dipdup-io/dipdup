@@ -145,7 +145,7 @@ class OperationIndex(Index):
         Called by IndexDispatcher in case index datasource reported a rollback.
         """
         if self._rollback_level:
-            raise RuntimeError('Already in rollback state')
+            raise RuntimeError('Index is already in rollback state')
 
         if self.state.level < from_level:
             self._logger.info('Index level is lower than rollback level, ignoring')
@@ -196,9 +196,6 @@ class OperationIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_operations(self, level: int, operations: List[OperationData]) -> None:
-        if level <= self.state.level:
-            raise RuntimeError(f'Level of operation batch must be higher than index state level: {level} <= {self.state.level}')
-
         if self._rollback_level:
             levels = {
                 'operations': level,
@@ -222,6 +219,10 @@ class OperationIndex(Index):
             if not new_hashes:
                 return
             operations = [op for op in operations if op.hash in new_hashes]
+
+        # NOTE: le intended since it's not a single level rollback
+        elif level <= self.state.level:
+            raise RuntimeError(f'Level of operation batch must be higher than index state level: {level} <= {self.state.level}')
 
         async with in_global_transaction():
             self._logger.info('Processing %s operations of level %s', len(operations), level)
