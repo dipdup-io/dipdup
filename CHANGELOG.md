@@ -2,6 +2,12 @@
 
 ## [unreleased]
 
+## 3.0.3 - 2021-10-01
+
+### Fixed
+
+* Fixed processing of single level rollbacks emitted before rolled back head
+
 ## 3.0.2 - 2021-09-30
 
 ### Added
