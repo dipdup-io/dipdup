@@ -5,7 +5,7 @@ from collections import deque
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import partial
 from operator import ne
-from typing import Awaitable, Deque, Dict, List, Optional, Set
+from typing import Awaitable, Deque, Dict, List, Optional, Set, cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
@@ -169,18 +169,16 @@ class IndexDispatcher:
                 index.push(level, big_maps)
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
-        # NOTE: Rollback could be received before head
-        if from_level - to_level in (0, 1):
+        if from_level - to_level == 1:
             # NOTE: Single level rollbacks are processed at Index level.
             # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
-            for index in self._indexes.values():
-                if index.datasource == datasource:
-                    # NOTE: Continue to rollback with handler
-                    if not isinstance(index, OperationIndex):
-                        self._logger.info('Single level rollback is not supported by `%s` indexes', index._config.kind)
-                        break
-                    await index.single_level_rollback(from_level)
-            else:
+            indexes = iter(self._indexes.values())
+            matching_indexes = filter(lambda index: index.datasource == datasource, indexes)
+            all_indexes_are_operation = all(isinstance(index, OperationIndex) for index in matching_indexes)
+
+            if all_indexes_are_operation:
+                for index in matching_indexes:
+                    await cast(OperationIndex, index).single_level_rollback(from_level)
                 return
 
         await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)

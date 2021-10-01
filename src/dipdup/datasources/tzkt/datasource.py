@@ -310,7 +310,7 @@ class TzktDatasource(IndexDatasource):
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
         self._ws_client: Optional[BaseHubConnection] = None
 
-        self._level: Optional[int] = None
+        self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(None)
         self._sync_level: Optional[int] = None
 
     @property
@@ -656,26 +656,28 @@ class TzktDatasource(IndexDatasource):
         # TODO: Docstring
         for item in message:
             tzkt_type = TzktMessageType(item['type'])
-            head_level = item['state']
+            level, last_level = item['state'], self._level[type_]
+            self._level[type_] = level
 
-            self._logger.info('Realtime message received: %s, %s', type_, tzkt_type)
+            self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, last_level, level)
 
             # NOTE: State messages will be replaced with WS negotiation some day
             if tzkt_type == TzktMessageType.STATE:
-                if self._sync_level != head_level:
-                    self._logger.info('Datasource level set to %s', head_level)
-                    self._sync_level = head_level
-                    self._level = head_level
+                if self._sync_level != level:
+                    self._logger.info('Datasource sync level set to %s', level)
+                    self._sync_level = level
 
             elif tzkt_type == TzktMessageType.DATA:
-                self._level = head_level
                 yield item['data']
 
             elif tzkt_type == TzktMessageType.REORG:
-                if self._level is None:
-                    raise RuntimeError('Reorg message received but datasource is not connected')
-                self._logger.info('Emitting rollback from %s to %s', self._level, head_level)
-                await self.emit_rollback(self._level, head_level)
+                if last_level is None:
+                    raise RuntimeError('Reorg message received but level is not set')
+                # NOTE:
+                if type_ == MessageType.head:
+                    return
+                self._logger.info('Emitting rollback from %s to %s', last_level, level)
+                await self.emit_rollback(last_level, level)
 
             else:
                 raise NotImplementedError
