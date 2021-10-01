@@ -5,6 +5,7 @@
 ### Fixed
 
 * Fixed possible race condition during single level rollback.
+* Removed unnecessary file IO calls, improved logging.
 
 ## 3.0.3 - 2021-10-01
 

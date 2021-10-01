@@ -1,5 +1,4 @@
 import asyncio
-import errno
 import importlib
 import logging
 import pkgutil
@@ -17,6 +16,8 @@ import humps  # type: ignore
 from genericpath import isdir, isfile
 
 from dipdup.exceptions import HandlerImportError
+
+_logger = logging.getLogger('dipdup.utils')
 
 
 def import_submodules(package: str) -> Dict[str, types.ModuleType]:
@@ -114,21 +115,17 @@ def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
 
 def mkdir_p(path: str) -> None:
     """Create directory tree, ignore if already exists"""
-    try:
+    if not exists(path):
+        _logger.info('Creating directory `%s`', path)
         makedirs(path)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
 
 
 def touch(path: str) -> None:
     """Create empty file, ignore if already exists"""
     mkdir_p(dirname(path))
-    try:
+    if not exists(path):
+        _logger.info('Creating file `%s`', path)
         open(path, 'a').close()
-    except IOError as e:
-        if e.errno != errno.EEXIST:
-            raise
 
 
 def write(path: str, content: str, overwrite: bool = False) -> bool:
@@ -136,6 +133,7 @@ def write(path: str, content: str, overwrite: bool = False) -> bool:
     mkdir_p(dirname(path))
     if exists(path) and not overwrite:
         return False
+    _logger.info('Writing into file `%s`', path)
     with open(path, 'w') as file:
         file.write(content)
     return True
