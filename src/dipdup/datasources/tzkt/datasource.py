@@ -310,7 +310,7 @@ class TzktDatasource(IndexDatasource):
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
         self._ws_client: Optional[BaseHubConnection] = None
 
-        self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(None)
+        self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
         self._sync_level: Optional[int] = None
 
     @property
