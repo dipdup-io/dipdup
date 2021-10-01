@@ -148,6 +148,7 @@ class OperationIndex(Index):
             raise RuntimeError('Index is already in rollback state')
 
         if self.state.level < from_level:
+            print(self.state.level, from_level)
             self._logger.info('Index level is lower than rollback level, ignoring')
         elif self.state.level == from_level:
             self._logger.info('Single level rollback has been triggered')

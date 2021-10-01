@@ -64,7 +64,7 @@ class IndexDispatcher:
             while self._tasks:
                 tasks.append(self._tasks.popleft())
 
-            async with slowdown(1.0):
+            async with slowdown(0.1):
                 await gather(*tasks)
 
             indexes_spawned = False
@@ -170,11 +170,12 @@ class IndexDispatcher:
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         if from_level - to_level == 1:
-            # NOTE: Single level rollbacks are processed at Index level.
+            self._logger.info('Attempting a single level rollback')
             # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
             indexes = iter(self._indexes.values())
-            matching_indexes = filter(lambda index: index.datasource == datasource, indexes)
+            matching_indexes = tuple(filter(lambda index: index.datasource == datasource, indexes))
             all_indexes_are_operation = all(isinstance(index, OperationIndex) for index in matching_indexes)
+            self._logger.info('Indexes: %s total, %s matching, all are `operation` is %s', len(self._indexes), len(matching_indexes), all_indexes_are_operation)
 
             if all_indexes_are_operation:
                 for index in matching_indexes:
