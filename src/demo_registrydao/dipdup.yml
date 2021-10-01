@@ -47,4 +47,3 @@ indexes:
           pattern:
             - type: origination
               similar_to: registry
-    stateless: True

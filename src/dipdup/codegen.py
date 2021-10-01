@@ -96,14 +96,14 @@ class DipDupCodeGenerator:
 
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
-        self._logger.info('Creating package `%s`', self._config.package)
         try:
             package_path = self._config.package_path
         except ImportError:
+            self._logger.info('Creating package `%s`', self._config.package)
             package_path = join(os.getcwd(), self._config.package)
-            touch(join(package_path, '__init__.py'))
 
-        self._logger.info('Creating `%s.models` module', self._config.package)
+        touch(join(package_path, '__init__.py'))
+
         models_path = join(package_path, 'models.py')
         if not exists(models_path):
             template = load_template('models.py')
@@ -111,16 +111,12 @@ class DipDupCodeGenerator:
             write(models_path, models_code)
 
         for subpackage in ('handlers', 'hooks'):
-            self._logger.info('Creating `%s.%s` package', self._config.package, subpackage)
             subpackage_path = join(self._config.package_path, subpackage)
             touch(join(subpackage_path, '__init__.py'))
 
-        self._logger.info('Creating `%s/sql` directory', self._config.package)
         sql_path = join(self._config.package_path, 'sql')
-        touch(join(sql_path, 'on_restart', '.keep'))
-        touch(join(sql_path, 'on_reindex', '.keep'))
+        touch(join(sql_path, '.keep'))
 
-        self._logger.info('Creating `%s/graphql` directory', self._config.package)
         graphql_path = join(self._config.package_path, 'graphql')
         touch(join(graphql_path, '.keep'))
 

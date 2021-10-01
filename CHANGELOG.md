@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Fixed
+
+* Removed unnecessary file IO calls, improved logging
+
 ## 3.0.3 - 2021-10-01
 
 ### Fixed
