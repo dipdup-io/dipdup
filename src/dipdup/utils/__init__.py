@@ -1,5 +1,4 @@
 import asyncio
-import errno
 import importlib
 import logging
 import pkgutil
