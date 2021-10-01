@@ -673,9 +673,10 @@ class TzktDatasource(IndexDatasource):
             elif tzkt_type == TzktMessageType.REORG:
                 if last_level is None:
                     raise RuntimeError('Reorg message received but level is not set')
-                # NOTE:
+                # NOTE: operation/big_map channels have their own levels
                 if type_ == MessageType.head:
                     return
+
                 self._logger.info('Emitting rollback from %s to %s', last_level, level)
                 await self.emit_rollback(last_level, level)
 
