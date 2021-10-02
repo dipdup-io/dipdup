@@ -615,33 +615,38 @@ class TzktDatasource(IndexDatasource):
         )
 
     async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
-        """"""
-        # TODO: Docstring
+        """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         for item in message:
             tzkt_type = TzktMessageType(item['type'])
-            level, last_level = item['state'], self._level[type_]
+            level, current_level = item['state'], self._level[type_]
             self._level[type_] = level
 
-            self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, last_level, level)
+            self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
 
-            # NOTE: State messages will be replaced with WS negotiation some day
+            # NOTE: Ensure correctness, update sync level
             if tzkt_type == TzktMessageType.STATE:
-                if self._sync_level != level:
-                    self._logger.info('Datasource sync level set to %s', level)
+                if self._sync_level < level:
+                    self._logger.info('Datasource sync level has been updated: %s -> %s', self._sync_level, level)
                     self._sync_level = level
+                elif self._sync_level > level:
+                    raise RuntimeError('Attempt to set sync level to the lower value: %s -> %s', self._sync_level, level)
+                else:
+                    pass
 
+            # NOTE: Just yield data
             elif tzkt_type == TzktMessageType.DATA:
                 yield item['data']
 
+            # NOTE: Emit rollback, but not on `head` message
             elif tzkt_type == TzktMessageType.REORG:
-                if last_level is None:
+                if current_level is None:
                     raise RuntimeError('Reorg message received but level is not set')
                 # NOTE: operation/big_map channels have their own levels
                 if type_ == MessageType.head:
                     return
 
-                self._logger.info('Emitting rollback from %s to %s', last_level, level)
-                await self.emit_rollback(last_level, level)
+                self._logger.info('Emitting rollback from %s to %s', current_level, level)
+                await self.emit_rollback(current_level, level)
 
             else:
                 raise NotImplementedError
