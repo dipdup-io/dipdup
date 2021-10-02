@@ -157,27 +157,21 @@ class IndexDispatcher:
         )
 
     async def _on_operations(self, datasource: TzktDatasource, operations: List[OperationData]) -> None:
-        # FIXME: set
-        assert len(set(op.level for op in operations)) == 1
-        level = operations[0].level
         for index in self._indexes.values():
             if isinstance(index, OperationIndex) and index.datasource == datasource:
                 index.push_operations(operations)
 
     async def _on_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData]) -> None:
-        # FIXME: set
-        assert len(set(op.level for op in big_maps)) == 1
-        level = big_maps[0].level
         for index in self._indexes.values():
             if isinstance(index, BigMapIndex) and index.datasource == datasource:
-                index.push_big_maps(level, big_maps)
+                index.push_big_maps(big_maps)
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         if from_level - to_level == 1:
             self._logger.info('Attempting a single level rollback')
             # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
             indexes = iter(self._indexes.values())
-            matching_indexes: Tuple[OperationIndex] = tuple(filter(lambda index: index.datasource == datasource, indexes))
+            matching_indexes: Tuple[OperationIndex] = tuple(filter(lambda index: index.datasource == datasource, indexes))  # type: ignore
             all_indexes_are_operation = all(isinstance(index, OperationIndex) for index in matching_indexes)
             self._logger.info(
                 'Indexes: %s total, %s matching, all are `operation` is %s',

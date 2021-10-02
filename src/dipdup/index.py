@@ -2,7 +2,6 @@ from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
-from lru import LRU
 from pydantic.error_wrappers import ValidationError
 
 import dipdup.models as models
@@ -34,7 +33,7 @@ Operations = List[OperationData]
 OperationQueueItemT = Union[Operations, SingleLevelRollback]
 
 # NOTE: For initializing the index state on startup
-block_cache: Dict[int, BlockData] = LRU(10)
+block_cache: Dict[int, BlockData] = {}
 
 
 class Index:
@@ -159,7 +158,7 @@ class OperationIndex(Index):
 
         state_level = cast(int, self.state.level)
         if state_level < level:
-            self._logger.info('Index level is lower than rollback level, ignoring')
+            self._logger.info('Index level is lower than rollback level, ignoring: %s < %s', state_level, level)
         elif state_level == level:
             self._logger.info('Single level rollback has been triggered')
             self._rollback_level = level
@@ -212,6 +211,7 @@ class OperationIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_operations(self, operations: List[OperationData]) -> None:
+        # TODO: extract_level
         batch_levels = tuple(set(operation.level for operation in operations))
         if len(batch_levels) != 1:
             raise RuntimeError(f'Operations in batch have different levels: {batch_levels}')
@@ -427,18 +427,18 @@ class BigMapIndex(Index):
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[Tuple[int, List[BigMapData]]] = deque()
+        self._queue: Deque[List[BigMapData]] = deque()
 
-    def push(self, level: int, big_maps: List[BigMapData]):
-        self._queue.append((level, big_maps))
+    def push_big_maps(self, big_maps: List[BigMapData]):
+        self._queue.append(big_maps)
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         if self._queue:
             self._logger.info('Processing websocket queue')
         while self._queue:
-            level, big_maps = self._queue.popleft()
-            await self._process_level_big_maps(level, big_maps)
+            big_maps = self._queue.popleft()
+            await self._process_level_big_maps(big_maps)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -460,12 +460,18 @@ class BigMapIndex(Index):
             cache=cache,
         )
 
-        async for level, big_maps in fetcher.fetch_big_maps_by_level():
-            await self._process_level_big_maps(level, big_maps)
+        async for _, big_maps in fetcher.fetch_big_maps_by_level():
+            await self._process_level_big_maps(big_maps)
 
         await self._exit_sync_state(last_level)
 
-    async def _process_level_big_maps(self, level: int, big_maps: List[BigMapData]):
+    async def _process_level_big_maps(self, big_maps: List[BigMapData]):
+        # TODO: extract_level
+        batch_levels = tuple(set(big_map.level for big_map in big_maps))
+        if len(batch_levels) != 1:
+            raise RuntimeError(f'Operations in batch have different levels: {batch_levels}')
+        level = tuple(batch_levels)[0]
+
         if level <= self.state.level:
             raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
 

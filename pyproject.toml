@@ -40,7 +40,6 @@ pytezos = {version = "^3.2.4", optional = true}
 asyncclick = "^8.0.1"
 anyio = "^3.2.1"
 sqlparse = "^0.4.1"
-lru-dict = "^1.1.7"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
