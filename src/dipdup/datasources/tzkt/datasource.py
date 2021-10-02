@@ -76,7 +76,7 @@ class OperationFetcher:
         for origination in migration_originations or ():
             self._operations[origination.level].append(origination)
 
-    def _get_operations_head(self, operations: List[OperationData]) -> int:
+    def _get_operations_head(self, operations: Tuple[OperationData, ...]) -> int:
         """Get latest block level (head) of sorted operations batch"""
         for i in range(len(operations) - 1)[::-1]:
             if operations[i].level != operations[i + 1].level:
@@ -211,7 +211,7 @@ class BigMapFetcher:
         """
 
         offset = 0
-        big_maps = []
+        big_maps: Tuple[BigMapData, ...] = tuple()
 
         while True:
             fetched_big_maps = await self._datasource.get_big_maps(
@@ -222,7 +222,7 @@ class BigMapFetcher:
                 self._last_level,
                 cache=self._cache,
             )
-            big_maps += fetched_big_maps
+            big_maps = big_maps + fetched_big_maps
 
             while True:
                 for i in range(len(big_maps) - 1):
@@ -357,7 +357,7 @@ class TzktDatasource(IndexDatasource):
         )
         return self.convert_block(block_json)
 
-    async def get_migration_originations(self, first_level: int = 0) -> List[OperationData]:
+    async def get_migration_originations(self, first_level: int = 0) -> Tuple[OperationData, ...]:
         """Get contracts originated from migrations"""
         self._logger.info('Fetching contracts originated with migrations')
         # NOTE: Empty unwrapped request to ensure API supports migration originations
@@ -371,7 +371,7 @@ class TzktDatasource(IndexDatasource):
                 },
             )
         except ClientResponseError:
-            return []
+            return ()
 
         raw_migrations = await self._http.request(
             'get',
@@ -382,11 +382,11 @@ class TzktDatasource(IndexDatasource):
                 'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
             },
         )
-        return [self.convert_migration_origination(m) for m in raw_migrations]
+        return tuple(self.convert_migration_origination(m) for m in raw_migrations)
 
     async def get_originations(
         self, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
-    ) -> List[OperationData]:
+    ) -> Tuple[OperationData, ...]:
         raw_originations = []
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
         # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
@@ -407,16 +407,16 @@ class TzktDatasource(IndexDatasource):
                 cache=cache,
             )
 
-        originations = []
         for op in raw_originations:
             # NOTE: `type` field needs to be set manually when requesting operations by specific type
             op['type'] = 'origination'
-            originations.append(self.convert_operation(op))
+
+        originations = tuple(self.convert_operation(op) for op in raw_originations)
         return originations
 
     async def get_transactions(
         self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
-    ) -> List[OperationData]:
+    ) -> Tuple[OperationData, ...]:
         raw_transactions = await self._http.request(
             'get',
             url='v1/operations/transactions',
@@ -431,16 +431,16 @@ class TzktDatasource(IndexDatasource):
             },
             cache=cache,
         )
-        transactions = []
         for op in raw_transactions:
             # NOTE: type needs to be set manually when requesting operations by specific type
             op['type'] = 'transaction'
-            transactions.append(self.convert_operation(op))
+
+        transactions = tuple(self.convert_operation(op) for op in raw_transactions)
         return transactions
 
     async def get_big_maps(
         self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
-    ) -> List[BigMapData]:
+    ) -> Tuple[BigMapData, ...]:
         raw_big_maps = await self._http.request(
             'get',
             url='v1/bigmaps/updates',
@@ -454,9 +454,7 @@ class TzktDatasource(IndexDatasource):
             },
             cache=cache,
         )
-        big_maps = []
-        for bm in raw_big_maps:
-            big_maps.append(self.convert_big_map(bm))
+        big_maps = tuple(self.convert_big_map(bm) for bm in raw_big_maps)
         return big_maps
 
     async def get_quote(self, level: int) -> QuoteData:
@@ -470,7 +468,7 @@ class TzktDatasource(IndexDatasource):
         )
         return self.convert_quote(quote_json[0])
 
-    async def get_quotes(self, from_level: int, to_level: int) -> List[QuoteData]:
+    async def get_quotes(self, from_level: int, to_level: int) -> Tuple[QuoteData, ...]:
         """Get quotes for blocks"""
         self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
         quotes_json = await self._http.request(
@@ -483,7 +481,7 @@ class TzktDatasource(IndexDatasource):
             },
             cache=False,
         )
-        return [self.convert_quote(quote) for quote in quotes_json]
+        return tuple(self.convert_quote(quote) for quote in quotes_json)
 
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""

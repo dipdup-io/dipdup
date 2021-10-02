@@ -4,7 +4,7 @@
 
 ### Improved
 
-* Improved performance of initial index synchronization via REST.
+* Improved indexing performance.
 
 ### Fixed
 
