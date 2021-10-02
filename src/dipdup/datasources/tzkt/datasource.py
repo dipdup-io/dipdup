@@ -3,7 +3,6 @@ import logging
 from collections import defaultdict
 from datetime import datetime, timezone
 from decimal import Decimal
-from enum import Enum
 from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
@@ -21,55 +20,18 @@ from dipdup.config import (
     ResolvedIndexConfigT,
 )
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.tzkt.enums import TzktMessageType
+from dipdup.datasources.tzkt.enums import (
+    ORIGINATION_MIGRATION_FIELDS,
+    ORIGINATION_OPERATION_FIELDS,
+    TRANSACTION_OPERATION_FIELDS,
+    OperationFetcherRequest,
+    TzktMessageType,
+)
 from dipdup.enums import MessageType
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import groupby, split_by_chunks
 
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
-OPERATION_FIELDS = (
-    "type",
-    "id",
-    "level",
-    "timestamp",
-    "hash",
-    "counter",
-    "sender",
-    "nonce",
-    "target",
-    "initiator",
-    "amount",
-    "storage",
-    "status",
-    "hasInternals",
-    "diffs",
-)
-ORIGINATION_MIGRATION_FIELDS = (
-    "id",
-    "level",
-    "timestamp",
-    "storage",
-    "diffs",
-    "account",
-    "balanceChange",
-)
-ORIGINATION_OPERATION_FIELDS = (
-    *OPERATION_FIELDS,
-    "originatedContract",
-)
-TRANSACTION_OPERATION_FIELDS = (
-    *OPERATION_FIELDS,
-    "parameter",
-    "hasInternals",
-)
-
-
-class OperationFetcherChannel(Enum):
-    """Represents multiple TzKT calls to be merged into a single batch of operations"""
-
-    sender_transactions = 'sender_transactions'
-    target_transactions = 'target_transactions'
-    originations = 'originations'
 
 
 def dedup_operations(operations: List[OperationData]) -> List[OperationData]:
@@ -104,9 +66,9 @@ class OperationFetcher:
 
         self._logger = logging.getLogger('dipdup.tzkt')
         self._head: int = 0
-        self._heads: Dict[OperationFetcherChannel, int] = {}
-        self._offsets: Dict[OperationFetcherChannel, int] = {}
-        self._fetched: Dict[OperationFetcherChannel, bool] = {}
+        self._heads: Dict[OperationFetcherRequest, int] = {}
+        self._offsets: Dict[OperationFetcherRequest, int] = {}
+        self._fetched: Dict[OperationFetcherRequest, bool] = {}
 
         self._operations: DefaultDict[int, List[OperationData]]
         if migration_originations:
@@ -123,7 +85,7 @@ class OperationFetcher:
 
     async def _fetch_originations(self) -> None:
         """Fetch a single batch of originations, bump channel offset"""
-        key = OperationFetcherChannel.originations
+        key = OperationFetcherRequest.originations
         if not self._origination_addresses:
             self._fetched[key] = True
             self._heads[key] = self._last_level
@@ -157,7 +119,7 @@ class OperationFetcher:
 
     async def _fetch_transactions(self, field: str) -> None:
         """Fetch a single batch of transactions, bump channel offset"""
-        key = getattr(OperationFetcherChannel, field + '_transactions')
+        key = getattr(OperationFetcherRequest, field + '_transactions')
         if not self._transaction_addresses:
             self._fetched[key] = True
             self._heads[key] = self._last_level
@@ -193,9 +155,9 @@ class OperationFetcher:
     async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, List[OperationData]], None]:
         """Iterate by operations from multiple channels. Return is splitted by level, deduped/sorted and ready to be passeed to Matcher."""
         for type_ in (
-            OperationFetcherChannel.sender_transactions,
-            OperationFetcherChannel.target_transactions,
-            OperationFetcherChannel.originations,
+            OperationFetcherRequest.sender_transactions,
+            OperationFetcherRequest.target_transactions,
+            OperationFetcherRequest.originations,
         ):
             self._heads[type_] = 0
             self._offsets[type_] = 0
@@ -203,11 +165,11 @@ class OperationFetcher:
 
         while True:
             min_head = sorted(self._heads.items(), key=lambda x: x[1])[0][0]
-            if min_head == OperationFetcherChannel.originations:
+            if min_head == OperationFetcherRequest.originations:
                 await self._fetch_originations()
-            elif min_head == OperationFetcherChannel.target_transactions:
+            elif min_head == OperationFetcherRequest.target_transactions:
                 await self._fetch_transactions('target')
-            elif min_head == OperationFetcherChannel.sender_transactions:
+            elif min_head == OperationFetcherRequest.sender_transactions:
                 await self._fetch_transactions('sender')
             else:
                 raise RuntimeError
