@@ -1,22 +1,20 @@
 import asyncio
-from datetime import datetime
-from functools import partial
 import logging
+from datetime import datetime
 from os.path import dirname, join
-from types import MethodType
-from unittest import IsolatedAsyncioTestCase, skip
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest import IsolatedAsyncioTestCase
+from unittest.mock import MagicMock, patch
 
 from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.dipdup import DipDup, IndexDispatcher
+from dipdup.dipdup import DipDup
 from dipdup.index import OperationIndex
-from dipdup.models import BlockData, HeadBlockData
+from dipdup.models import HeadBlockData
 from dipdup.models import Index as State
 from dipdup.models import OperationData
 
-
 logging.basicConfig(level=logging.INFO)
+
 
 def _get_operation(hash_: str, level: int) -> OperationData:
     return OperationData(

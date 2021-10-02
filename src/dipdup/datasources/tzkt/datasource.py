@@ -653,6 +653,7 @@ class TzktDatasource(IndexDatasource):
         )
 
     async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
+        """"""
         # TODO: Docstring
         for item in message:
             tzkt_type = TzktMessageType(item['type'])

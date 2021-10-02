@@ -2,6 +2,7 @@ from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
 from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
+from lru import LRU
 from pydantic.error_wrappers import ValidationError
 
 import dipdup.models as models
@@ -27,7 +28,13 @@ from dipdup.utils.database import in_global_transaction
 # NOTE: Operations of a single contract call
 OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
 
-_cached_blocks: Dict[int, BlockData] = {}
+# NOTE: Message queue of OperationIndex
+SingleLevelRollback = namedtuple('SingleLevelRollback', ('level'))
+Operations = List[OperationData]
+OperationQueueItemT = Union[Operations, SingleLevelRollback]
+
+# NOTE: For initializing the index state on startup
+block_cache: Dict[int, BlockData] = LRU(10)
 
 
 class Index:
@@ -73,9 +80,9 @@ class Index:
         if not head:
             return
 
-        if head.level not in _cached_blocks:
-            _cached_blocks[head.level] = await self.datasource.get_block(head.level)
-        if head.hash != _cached_blocks[head.level].hash:
+        if head.level not in block_cache:
+            block_cache[head.level] = await self.datasource.get_block(head.level)
+        if head.hash != block_cache[head.level].hash:
             await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
 
     async def process(self) -> None:
@@ -130,29 +137,32 @@ class OperationIndex(Index):
 
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[Tuple[int, List[OperationData]]] = deque()
+        self._queue: Deque[OperationQueueItemT] = deque()
         self._contract_hashes: Dict[str, Tuple[int, int]] = {}
         self._rollback_level: Optional[int] = None
-        self._last_hashes: Set[str] = set()
+        self._head_hashes: Set[str] = set()
         self._migration_originations: Optional[Dict[str, OperationData]] = None
 
-    def push(self, level: int, operations: List[OperationData]) -> None:
-        self._queue.append((level, operations))
+    def push_operations(self, operations: List[OperationData]) -> None:
+        self._queue.append(operations)
 
-    async def single_level_rollback(self, from_level: int) -> None:
-        """Ensure next arrived block is the same as rolled back one
+    def push_rollback(self, level: int) -> None:
+        self._queue.append(SingleLevelRollback(level))
 
-        Called by IndexDispatcher in case index datasource reported a rollback.
+    async def single_level_rollback(self, level: int) -> None:
+        """Ensure next arrived block has all operations of the previous block. But it could also contain additional operations.
+
+        Called by IndexDispatcher when index datasource receive a single level rollback.
         """
         if self._rollback_level:
             raise RuntimeError('Index is already in rollback state')
 
-        if self.state.level < from_level:
-            print(self.state.level, from_level)
+        state_level = cast(int, self.state.level)
+        if state_level < level:
             self._logger.info('Index level is lower than rollback level, ignoring')
-        elif self.state.level == from_level:
+        elif state_level == level:
             self._logger.info('Single level rollback has been triggered')
-            self._rollback_level = from_level
+            self._rollback_level = level
         else:
             raise RuntimeError('Index level is higher than rollback level')
 
@@ -161,8 +171,13 @@ class OperationIndex(Index):
         if self._queue:
             self._logger.info('Processing websocket queue')
         while self._queue:
-            level, operations = self._queue.popleft()
-            await self._process_level_operations(level, operations)
+            message = self._queue.popleft()
+            if isinstance(message, SingleLevelRollback):
+                await self.single_level_rollback(message.level)
+            elif isinstance(message, list):
+                await self._process_operations(message)
+            else:
+                raise RuntimeError
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -191,12 +206,17 @@ class OperationIndex(Index):
             migration_originations=migration_originations,
         )
 
-        async for level, operations in fetcher.fetch_operations_by_level():
-            await self._process_level_operations(level, operations)
+        async for _, operations in fetcher.fetch_operations_by_level():
+            await self._process_level_operations(operations)
 
         await self._exit_sync_state(last_level)
 
-    async def _process_level_operations(self, level: int, operations: List[OperationData]) -> None:
+    async def _process_level_operations(self, operations: List[OperationData]) -> None:
+        batch_levels = tuple(set(operation.level for operation in operations))
+        if len(batch_levels) != 1:
+            raise RuntimeError(f'Operations in batch have different levels: {batch_levels}')
+        level = tuple(batch_levels)[0]
+
         if self._rollback_level:
             levels = {
                 'operations': level,
@@ -208,14 +228,14 @@ class OperationIndex(Index):
                 raise RuntimeError(f'Index is in a rollback state, but received operation batch with different levels: {levels_repr}')
 
             self._logger.info('Rolling back to previous level, verifying processed operations')
-            expected_hashes = set(self._last_hashes)
+            expected_hashes = set(self._head_hashes)
             received_hashes = set([op.hash for op in operations])
             reused_hashes = received_hashes & expected_hashes
             if reused_hashes != expected_hashes:
                 await self._ctx.reindex(ReindexingReason.ROLLBACK)
 
             self._rollback_level = None
-            self._last_hashes = set()
+            self._head_hashes = set()
             new_hashes = received_hashes - expected_hashes
             if not new_hashes:
                 return
@@ -265,12 +285,12 @@ class OperationIndex(Index):
 
     async def _process_operations(self, operations: List[OperationData]) -> None:
         """Try to match operations in cache with all patterns from indexes. Must be wrapped in transaction."""
-        self._last_hashes = set()
+        self._head_hashes = set()
         operation_subgroups: Dict[OperationSubgroup, List[OperationData]] = defaultdict(list)
         for operation in operations:
             key = OperationSubgroup(operation.hash, operation.counter)
             operation_subgroups[key].append(operation)
-            self._last_hashes.add(operation.hash)
+            self._head_hashes.add(operation.hash)
 
         for operation_subgroup, operations in operation_subgroups.items():
             self._logger.debug('Matching %s', key)
