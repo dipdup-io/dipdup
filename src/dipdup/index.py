@@ -130,6 +130,12 @@ class Index:
         self._logger.info('Index is synchronized to level %s', last_level)
         await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
 
+    def _extract_level(self, message: Union[List[OperationData], List[BigMapData]]) -> int:
+        batch_levels = tuple(set(item.level for item in message))
+        if len(batch_levels) != 1:
+            raise RuntimeError(f'Items in operation/big_map batch have different levels: {batch_levels}')
+        return tuple(batch_levels)[0]
+
 
 class OperationIndex(Index):
     _config: OperationIndexConfig
@@ -211,11 +217,7 @@ class OperationIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_operations(self, operations: List[OperationData]) -> None:
-        # TODO: extract_level
-        batch_levels = tuple(set(operation.level for operation in operations))
-        if len(batch_levels) != 1:
-            raise RuntimeError(f'Operations in batch have different levels: {batch_levels}')
-        level = tuple(batch_levels)[0]
+        level = self._extract_level(operations)
 
         if self._rollback_level:
             levels = {
@@ -241,9 +243,9 @@ class OperationIndex(Index):
                 return
             operations = [op for op in operations if op.hash in new_hashes]
 
-        # NOTE: le intended since it's not a single level rollback
-        elif level <= self.state.level:
-            raise RuntimeError(f'Level of operation batch must be higher than index state level: {level} <= {self.state.level}')
+        # NOTE: le operator because it could be a single level rollback
+        elif level < self.state.level:
+            raise RuntimeError(f'Level of operation batch must be higher than index state level: {level} < {self.state.level}')
 
         async with in_global_transaction():
             self._logger.info('Processing %s operations of level %s', len(operations), level)
@@ -466,12 +468,9 @@ class BigMapIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_big_maps(self, big_maps: List[BigMapData]):
-        # TODO: extract_level
-        batch_levels = tuple(set(big_map.level for big_map in big_maps))
-        if len(batch_levels) != 1:
-            raise RuntimeError(f'Operations in batch have different levels: {batch_levels}')
-        level = tuple(batch_levels)[0]
+        level = self._extract_level(big_maps)
 
+        # NOTE: le operator because single level rollbacks are not supported
         if level <= self.state.level:
             raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
 

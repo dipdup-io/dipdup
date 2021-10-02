@@ -153,7 +153,10 @@ class OperationFetcher:
             self._heads[key] = self._get_operations_head(transactions)
 
     async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, List[OperationData]], None]:
-        """Iterate by operations from multiple channels. Return is splitted by level, deduped/sorted and ready to be passeed to Matcher."""
+        """Iterate over operations fetched with multiple REST requests with different filters.
+
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
+        """
         for type_ in (
             OperationFetcherRequest.sender_transactions,
             OperationFetcherRequest.target_transactions,
@@ -206,7 +209,10 @@ class BigMapFetcher:
         self._cache = cache
 
     async def fetch_big_maps_by_level(self) -> AsyncGenerator[Tuple[int, List[BigMapData]], None]:
-        """Fetch big map diffs via Fetcher (not implemented yet) and pass to message callback"""
+        """Iterate over big map diffs fetched fetched from REST.
+
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by BigMapIndex.
+        """
 
         offset = 0
         big_maps = []
