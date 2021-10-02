@@ -160,7 +160,7 @@ class OperationIndex(Index):
         if state_level < level:
             self._logger.info('Index level is lower than rollback level, ignoring: %s < %s', state_level, level)
         elif state_level == level:
-            self._logger.info('Single level rollback has been triggered')
+            self._logger.info('Single level rollback, next block will be processed partially')
             self._rollback_level = level
         else:
             raise RuntimeError(f'Index level is higher than rollback level: {state_level} > {level}')

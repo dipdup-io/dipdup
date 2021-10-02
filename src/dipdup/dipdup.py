@@ -169,31 +169,33 @@ class IndexDispatcher:
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
         # NOTE: Zero difference between levels means we received no operations/big_maps on this level and thus channel level hasn't changed
-        is_single_level_rollback = from_level - to_level in (0, 1)
+        zero_level_rollback = from_level - to_level == 0
+        single_level_rollback = from_level - to_level == 1
 
-        if is_single_level_rollback:
+        if zero_level_rollback:
+            self._logger.info('Zero level rollback, ignoring')
+
+        elif single_level_rollback:
             # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
-            self._logger.info('Attempting a single level rollback')
-            matching_indexes = tuple(
-                filter(
-                    lambda index: index.datasource == datasource,
-                    self._indexes.values(),
-                )
-            )
-            all_indexes_are_operation = all(isinstance(index, OperationIndex) for index in matching_indexes)
+            self._logger.info('Checking if single level rollback is possible')
+            matching_indexes = tuple(i for i in self._indexes.values() if i.datasource == datasource)
+            matching_operation_indexes = tuple(i for i in matching_indexes if isinstance(i, OperationIndex))
             self._logger.info(
-                'Indexes: %s total, %s matching, all are `operation` is %s',
+                'Indexes: %s total, %s matching, %s support single level rollback',
                 len(self._indexes),
                 len(matching_indexes),
-                all_indexes_are_operation,
+                len(matching_operation_indexes),
             )
 
+            all_indexes_are_operation = len(matching_indexes) == len(matching_operation_indexes)
             if all_indexes_are_operation:
                 for index in cast(List[OperationIndex], matching_indexes):
                     await index.single_level_rollback(from_level)
-                return
+            else:
+                await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
 
-        await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
+        else:
+            await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
 
 
 class DipDup:
