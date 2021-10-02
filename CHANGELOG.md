@@ -10,7 +10,7 @@
 
 * Fixed processing zero- and single-level rollbacks.
 * Removed unnecessary file IO calls causing `PermissionError` exception in Docker environment.
-* Fixed possible atomicity issue during real-time indexing.
+* Fixed possible atomicity violation during real-time indexing.
 
 ## 3.0.3 - 2021-10-01
 
