@@ -179,10 +179,8 @@ class OperationIndex(Index):
             message = self._queue.popleft()
             if isinstance(message, SingleLevelRollback):
                 await self.single_level_rollback(message.level)
-            elif isinstance(message, list):
-                await self._process_level_operations(message)
             else:
-                raise RuntimeError
+                await self._process_level_operations(message)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""

@@ -4,7 +4,7 @@ from datetime import datetime
 from os.path import dirname, join
 from typing import Tuple
 from unittest import IsolatedAsyncioTestCase, skip
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -96,6 +96,11 @@ async def datasource_run_zero(self: TzktDatasource):
     await check_level(initial_level + 1)
 
 
+async def datasource_run_deep(self: TzktDatasource):
+    await emit_messages(self, (exact_operations), (), 1337)
+    await check_level(initial_level + 1)
+
+
 class RollbackTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.config = DipDupConfig.load([join(dirname(__file__), 'hic_et_nunc.yml')])
@@ -115,8 +120,16 @@ class RollbackTest(IsolatedAsyncioTestCase):
     @skip('FIXME')
     async def test_rollback_less(self):
         with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_less):
-            await self.dipdup.run(False, False, False)
+            with patch('dipdup.context.DipDupContext.reindex', AsyncMock()) as reindex_mock:
+                await self.dipdup.run(False, False, False)
+                assert reindex_mock.call_count == 1
 
     async def test_rollback_zero(self):
         with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_zero):
             await self.dipdup.run(False, False, False)
+
+    async def test_rollback_deep(self):
+        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_deep):
+            with patch('dipdup.context.DipDupContext.reindex', AsyncMock()) as reindex_mock:
+                await self.dipdup.run(False, False, False)
+                assert reindex_mock.call_count == 1
