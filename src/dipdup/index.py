@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
-from typing import Deque, Dict, List, Optional, Set, Tuple, Union, cast
+from typing import Deque, Dict, Iterable, List, Optional, Set, Tuple, Union, cast
 
 from pydantic.error_wrappers import ValidationError
 
@@ -285,10 +285,10 @@ class OperationIndex(Index):
         else:
             raise NotImplementedError
 
-    async def _process_operations(self, operations: List[OperationData]) -> None:
+    async def _process_operations(self, operations: Iterable[OperationData]) -> None:
         """Try to match operations in cache with all patterns from indexes. Must be wrapped in transaction."""
         self._head_hashes = set()
-        operation_subgroups: Dict[OperationSubgroup, List[OperationData]] = defaultdict(list)
+        operation_subgroups: Dict[OperationSubgroup, Deque[OperationData]] = defaultdict(deque)
         for operation in operations:
             key = OperationSubgroup(operation.hash, operation.counter)
             operation_subgroups[key].append(operation)
@@ -300,7 +300,7 @@ class OperationIndex(Index):
             for handler_config in self._config.handlers:
                 operation_idx = 0
                 pattern_idx = 0
-                matched_operations: List[Optional[OperationData]] = []
+                matched_operations: Deque[Optional[OperationData]] = deque()
 
                 # TODO: Ensure complex cases work, for ex. required argument after optional one
                 # TODO: Add None to matched_operations where applicable (pattern is optional and operation not found)
@@ -328,7 +328,7 @@ class OperationIndex(Index):
                     if pattern_idx == len(handler_config.pattern):
                         await self._on_match(operation_subgroup, handler_config, matched_operations)
 
-                        matched_operations = []
+                        matched_operations.clear()
                         pattern_idx = 0
 
                 if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
@@ -338,7 +338,7 @@ class OperationIndex(Index):
         self,
         operation_subgroup: OperationSubgroup,
         handler_config: OperationHandlerConfig,
-        matched_operations: List[Optional[OperationData]],
+        matched_operations: Deque[Optional[OperationData]],
     ):
         """Prepare handler arguments, parse parameter and storage. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
@@ -531,7 +531,7 @@ class BigMapIndex(Index):
             big_map_diff,
         )
 
-    async def _process_big_maps(self, big_maps: List[BigMapData]) -> None:
+    async def _process_big_maps(self, big_maps: Iterable[BigMapData]) -> None:
         """Try to match big map diffs in cache with all patterns from indexes."""
 
         for big_map in big_maps:

@@ -1,9 +1,9 @@
 import asyncio
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from typing import Any, AsyncGenerator, DefaultDict, Deque, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -660,23 +660,23 @@ class TzktDatasource(IndexDatasource):
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
         async for data in self._extract_message_data(MessageType.operation, message):
-            operations = []
+            operations: Deque[OperationData] = deque()
             for operation_json in data:
                 if operation_json['status'] != 'applied':
                     continue
                 operation = self.convert_operation(operation_json)
                 operations.append(operation)
             if operations:
-                await self.emit_operations(operations)
+                await self.emit_operations(tuple(operations))
 
     async def _on_big_maps_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
         async for data in self._extract_message_data(MessageType.big_map, message):
-            big_maps = []
+            big_maps: Deque[BigMapData] = deque()
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
                 big_maps.append(big_map)
-            await self.emit_big_maps(big_maps)
+            await self.emit_big_maps(tuple(big_maps))
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw head block from WS"""

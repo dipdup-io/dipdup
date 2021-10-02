@@ -1,13 +1,13 @@
 import asyncio
 from datetime import datetime
 from os.path import dirname, join
+from typing import Tuple
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup
-from dipdup.models import HeadBlockData
 from dipdup.models import Index as State
 from dipdup.models import OperationData
 
@@ -31,43 +31,48 @@ def _get_operation(hash_: str, level: int) -> OperationData:
     )
 
 
-# NOTE: Same level, different hash
-old_block = MagicMock(spec=HeadBlockData)
-old_block.hash = 'block_a'
-old_block.level = 1365001
-old_block.timestamp = datetime(2018, 1, 1)
-new_block = MagicMock(spec=HeadBlockData)
-new_block.hash = 'block_b'
-new_block.level = 1365001
-new_block.timestamp = datetime(2018, 1, 1)
+exact_operations = (
+    _get_operation('1', 1365001),
+    _get_operation('2', 1365001),
+    _get_operation('3', 1365001),
+)
+
+less_operations = (
+    _get_operation('1', 1365001),
+    _get_operation('2', 1365001),
+)
+
+more_operations = (
+    _get_operation('1', 1365001),
+    _get_operation('2', 1365001),
+    _get_operation('3', 1365001),
+    _get_operation('4', 1365001),
+)
 
 
-# NOTE: Emit operations, rollback, emit again, check state
-async def datasource_run(self: TzktDatasource):
-    await self.emit_operations(
-        [
-            _get_operation('1', 1365001),
-            _get_operation('2', 1365001),
-            _get_operation('3', 1365001),
-        ],
-    )
+async def check_level() -> None:
+    state = await State.filter(name='hen_mainnet').get()
+    assert state.level == 1365001, state.level
+
+
+async def emit_messages(
+    self: TzktDatasource,
+    old_block: Tuple[OperationData, ...],
+    new_block: Tuple[OperationData, ...],
+):
+    await self.emit_operations(old_block)
     await self.emit_rollback(
         from_level=1365001,
         to_level=1365000,
     )
-    await self.emit_operations(
-        [
-            _get_operation('1', 1365001),
-            _get_operation('2', 1365001),
-            _get_operation('3', 1365001),
-        ]
-    )
-
-    # NOTE: Assert while Tortoise is still running
-    state = await State.filter(name='hen_mainnet').get()
-    assert state.level == 1365001, state.level
+    await self.emit_operations(new_block)
 
     raise asyncio.CancelledError
+
+
+# NOTE: Emit operations, rollback, emit again, check state
+async def datasource_run(self: TzktDatasource):
+    await emit_messages(self, exact_operations, exact_operations)
 
 
 class RollbackTest(IsolatedAsyncioTestCase):
