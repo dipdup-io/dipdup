@@ -30,6 +30,7 @@ def _get_operation(hash_: str, level: int) -> OperationData:
         has_internals=False,
     )
 
+initial_level = 1365000
 
 exact_operations = (
     _get_operation('1', 1365001),
@@ -50,41 +51,41 @@ more_operations = (
 )
 
 
-async def check_level() -> None:
+async def check_level(level: int) -> None:
     state = await State.filter(name='hen_mainnet').get()
-    assert state.level == 1365001, state.level
+    assert state.level == level, state.level
 
 
 async def emit_messages(
     self: TzktDatasource,
     old_block: Tuple[OperationData, ...],
     new_block: Tuple[OperationData, ...],
+    level: int,
 ):
     await self.emit_operations(old_block)
     await self.emit_rollback(
         from_level=1365001,
-        to_level=1365000,
+        to_level=1365001 - level,
     )
     await self.emit_operations(new_block)
 
     raise asyncio.CancelledError
 
 
-# NOTE: Emit operations, rollback, emit again, check state
-async def datasource_run(self: TzktDatasource):
-    await emit_messages(self, exact_operations, exact_operations)
+async def datasource_run_exact(self: TzktDatasource):
+    await emit_messages(self, exact_operations, exact_operations, 1)
+    await check_level(initial_level + 1)
 
 
 class RollbackTest(IsolatedAsyncioTestCase):
+    async def asyncSetUp(self) -> None:
+        self.config = DipDupConfig.load([join(dirname(__file__), 'hic_et_nunc.yml')])
+        self.config.database.path = ':memory:'
+        self.config.indexes['hen_mainnet'].last_level = self.config.indexes['hen_mainnet'].first_level + 1
+        self.config.initialize()
+        self.dipdup = DipDup(self.config)
+
+
     async def test_rollback_ok(self):
-        # Arrange
-        config = DipDupConfig.load([join(dirname(__file__), 'hic_et_nunc.yml')])
-        config.database.path = ':memory:'
-        config.indexes['hen_mainnet'].last_level = config.indexes['hen_mainnet'].first_level + 1
-        config.initialize()
-
-        dipdup = DipDup(config)
-
-        # Act
-        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run):
-            await dipdup.run(False, False, False)
+        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_exact):
+            await self.dipdup.run(False, False, False)
