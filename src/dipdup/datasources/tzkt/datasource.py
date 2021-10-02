@@ -29,16 +29,18 @@ from dipdup.datasources.tzkt.enums import (
 )
 from dipdup.enums import MessageType
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData, QuoteData
-from dipdup.utils import groupby, split_by_chunks
+from dipdup.utils import split_by_chunks
 
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 
 
-def dedup_operations(operations: List[OperationData]) -> List[OperationData]:
+def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationData, ...]:
     """Merge operations from multiple endpoints"""
-    return sorted(
-        list(({op.id: op for op in operations}).values()),
-        key=lambda op: op.id,
+    return tuple(
+        sorted(
+            tuple(({op.id: op for op in operations}).values()),
+            key=lambda op: op.id,
+        )
     )
 
 
@@ -55,7 +57,7 @@ class OperationFetcher:
         transaction_addresses: Set[str],
         origination_addresses: Set[str],
         cache: bool = False,
-        migration_originations: List[OperationData] = None,
+        migration_originations: Tuple[OperationData, ...] = None,
     ) -> None:
         self._datasource = datasource
         self._first_level = first_level
@@ -70,11 +72,9 @@ class OperationFetcher:
         self._offsets: Dict[OperationFetcherRequest, int] = {}
         self._fetched: Dict[OperationFetcherRequest, bool] = {}
 
-        self._operations: DefaultDict[int, List[OperationData]]
-        if migration_originations:
-            self._operations = groupby(migration_originations, lambda op: op.level)
-        else:
-            self._operations = defaultdict(list)
+        self._operations: DefaultDict[int, Deque[OperationData]] = defaultdict(deque)
+        for origination in migration_originations or ():
+            self._operations[origination.level].append(origination)
 
     def _get_operations_head(self, operations: List[OperationData]) -> int:
         """Get latest block level (head) of sorted operations batch"""
@@ -104,8 +104,6 @@ class OperationFetcher:
 
         for op in originations:
             level = op.level
-            if level not in self._operations:
-                self._operations[level] = []
             self._operations[level].append(op)
 
         self._logger.debug('Got %s', len(originations))
@@ -139,8 +137,6 @@ class OperationFetcher:
 
         for op in transactions:
             level = op.level
-            if level not in self._operations:
-                self._operations[level] = []
             self._operations[level].append(op)
 
         self._logger.debug('Got %s', len(transactions))
@@ -152,7 +148,7 @@ class OperationFetcher:
             self._offsets[key] += self._datasource.request_limit
             self._heads[key] = self._get_operations_head(transactions)
 
-    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, List[OperationData]], None]:
+    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[OperationData, ...]], None]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
@@ -181,7 +177,7 @@ class OperationFetcher:
             while self._head <= head:
                 if self._head in self._operations:
                     operations = self._operations.pop(self._head)
-                    yield self._head, dedup_operations(operations)
+                    yield self._head, dedup_operations(tuple(operations))
                 self._head += 1
 
             if all(list(self._fetched.values())):
@@ -208,7 +204,7 @@ class BigMapFetcher:
         self._big_map_paths = big_map_paths
         self._cache = cache
 
-    async def fetch_big_maps_by_level(self) -> AsyncGenerator[Tuple[int, List[BigMapData]], None]:
+    async def fetch_big_maps_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[BigMapData, ...]], None]:
         """Iterate over big map diffs fetched fetched from REST.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by BigMapIndex.
@@ -231,7 +227,7 @@ class BigMapFetcher:
             while True:
                 for i in range(len(big_maps) - 1):
                     if big_maps[i].level != big_maps[i + 1].level:
-                        yield big_maps[i].level, big_maps[: i + 1]
+                        yield big_maps[i].level, tuple(big_maps[: i + 1])
                         big_maps = big_maps[i + 1 :]  # noqa: E203
                         break
                 else:
@@ -243,7 +239,7 @@ class BigMapFetcher:
             offset += self._datasource.request_limit
 
         if big_maps:
-            yield big_maps[0].level, big_maps[: i + 1]
+            yield big_maps[0].level, tuple(big_maps[: i + 1])
 
 
 class TzktDatasource(IndexDatasource):

@@ -29,7 +29,7 @@ OperationSubgroup = namedtuple('OperationSubgroup', ('hash', 'counter'))
 
 # NOTE: Message queue of OperationIndex
 SingleLevelRollback = namedtuple('SingleLevelRollback', ('level'))
-Operations = List[OperationData]
+Operations = Tuple[OperationData, ...]
 OperationQueueItemT = Union[Operations, SingleLevelRollback]
 
 # NOTE: For initializing the index state on startup
@@ -130,7 +130,7 @@ class Index:
         self._logger.info('Index is synchronized to level %s', last_level)
         await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
 
-    def _extract_level(self, message: Union[List[OperationData], List[BigMapData]]) -> int:
+    def _extract_level(self, message: Union[Tuple[OperationData, ...], Tuple[BigMapData, ...]]) -> int:
         batch_levels = tuple(set(item.level for item in message))
         if len(batch_levels) != 1:
             raise RuntimeError(f'Items in operation/big_map batch have different levels: {batch_levels}')
@@ -148,7 +148,7 @@ class OperationIndex(Index):
         self._head_hashes: Set[str] = set()
         self._migration_originations: Optional[Dict[str, OperationData]] = None
 
-    def push_operations(self, operations: List[OperationData]) -> None:
+    def push_operations(self, operations: Tuple[OperationData, ...]) -> None:
         self._queue.append(operations)
 
     def push_rollback(self, level: int) -> None:
@@ -192,9 +192,9 @@ class OperationIndex(Index):
         transaction_addresses = await self._get_transaction_addresses()
         origination_addresses = await self._get_origination_addresses()
 
-        migration_originations = []
+        migration_originations: Tuple[OperationData, ...] = ()
         if self._config.types and OperationType.migration in self._config.types:
-            migration_originations = await self._datasource.get_migration_originations(first_level)
+            migration_originations = tuple(await self._datasource.get_migration_originations(first_level))
             for op in migration_originations:
                 code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
                 op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
@@ -214,7 +214,7 @@ class OperationIndex(Index):
 
         await self._exit_sync_state(last_level)
 
-    async def _process_level_operations(self, operations: List[OperationData]) -> None:
+    async def _process_level_operations(self, operations: Tuple[OperationData, ...]) -> None:
         level = self._extract_level(operations)
 
         if self._rollback_level:
@@ -239,7 +239,7 @@ class OperationIndex(Index):
             new_hashes = received_hashes - expected_hashes
             if not new_hashes:
                 return
-            operations = [op for op in operations if op.hash in new_hashes]
+            operations = tuple(op for op in operations if op.hash in new_hashes)
 
         # NOTE: le operator because it could be a single level rollback
         elif level < self.state.level:
@@ -427,9 +427,9 @@ class BigMapIndex(Index):
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[List[BigMapData]] = deque()
+        self._queue: Deque[Tuple[BigMapData, ...]] = deque()
 
-    def push_big_maps(self, big_maps: List[BigMapData]):
+    def push_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         self._queue.append(big_maps)
 
     async def _process_queue(self) -> None:
@@ -465,7 +465,7 @@ class BigMapIndex(Index):
 
         await self._exit_sync_state(last_level)
 
-    async def _process_level_big_maps(self, big_maps: List[BigMapData]):
+    async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]):
         level = self._extract_level(big_maps)
 
         # NOTE: le operator because single level rollbacks are not supported

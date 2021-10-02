@@ -5,7 +5,7 @@ from collections import deque
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import partial
 from operator import ne
-from typing import Awaitable, Deque, Dict, List, Optional, Set, cast
+from typing import Awaitable, Deque, Dict, List, Optional, Set, Tuple, cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
@@ -156,12 +156,12 @@ class IndexDispatcher:
             )
         )
 
-    async def _on_operations(self, datasource: TzktDatasource, operations: List[OperationData]) -> None:
+    async def _on_operations(self, datasource: TzktDatasource, operations: Tuple[OperationData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, OperationIndex) and index.datasource == datasource:
                 index.push_operations(operations)
 
-    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData]) -> None:
+    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: Tuple[BigMapData]) -> None:
         for index in self._indexes.values():
             if isinstance(index, BigMapIndex) and index.datasource == datasource:
                 index.push_big_maps(big_maps)
