@@ -1,15 +1,18 @@
 import asyncio
+import logging
 from datetime import datetime
 from os.path import dirname, join
 from typing import Tuple
-from unittest import IsolatedAsyncioTestCase
+from unittest import IsolatedAsyncioTestCase, skip
 from unittest.mock import patch
 
-from dipdup.config import DipDupConfig, PostgresDatabaseConfig
+from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup
 from dipdup.models import Index as State
 from dipdup.models import OperationData
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def _get_operation(hash_: str, level: int) -> OperationData:
@@ -29,6 +32,7 @@ def _get_operation(hash_: str, level: int) -> OperationData:
         status='',
         has_internals=False,
     )
+
 
 initial_level = 1365000
 
@@ -82,6 +86,16 @@ async def datasource_run_more(self: TzktDatasource):
     await check_level(initial_level + 1)
 
 
+async def datasource_run_less(self: TzktDatasource):
+    await emit_messages(self, exact_operations, less_operations, 1)
+    await check_level(initial_level + 1)
+
+
+async def datasource_run_zero(self: TzktDatasource):
+    await emit_messages(self, (), (exact_operations), 0)
+    await check_level(initial_level + 1)
+
+
 class RollbackTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.config = DipDupConfig.load([join(dirname(__file__), 'hic_et_nunc.yml')])
@@ -90,11 +104,19 @@ class RollbackTest(IsolatedAsyncioTestCase):
         self.config.initialize()
         self.dipdup = DipDup(self.config)
 
-
     async def test_rollback_exact(self):
         with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_exact):
             await self.dipdup.run(False, False, False)
 
     async def test_rollback_more(self):
         with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_more):
+            await self.dipdup.run(False, False, False)
+
+    @skip('FIXME')
+    async def test_rollback_less(self):
+        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_less):
+            await self.dipdup.run(False, False, False)
+
+    async def test_rollback_zero(self):
+        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_zero):
             await self.dipdup.run(False, False, False)
