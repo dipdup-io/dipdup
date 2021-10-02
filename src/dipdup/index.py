@@ -180,7 +180,7 @@ class OperationIndex(Index):
             if isinstance(message, SingleLevelRollback):
                 await self.single_level_rollback(message.level)
             elif isinstance(message, list):
-                await self._process_operations(message)
+                await self._process_level_operations(message)
             else:
                 raise RuntimeError
 
