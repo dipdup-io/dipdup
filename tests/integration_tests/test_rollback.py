@@ -5,7 +5,7 @@ from typing import Tuple
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
-from dipdup.config import DipDupConfig
+from dipdup.config import DipDupConfig, PostgresDatabaseConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup
 from dipdup.models import Index as State
@@ -77,15 +77,24 @@ async def datasource_run_exact(self: TzktDatasource):
     await check_level(initial_level + 1)
 
 
+async def datasource_run_more(self: TzktDatasource):
+    await emit_messages(self, exact_operations, more_operations, 1)
+    await check_level(initial_level + 1)
+
+
 class RollbackTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.config = DipDupConfig.load([join(dirname(__file__), 'hic_et_nunc.yml')])
-        self.config.database.path = ':memory:'
-        self.config.indexes['hen_mainnet'].last_level = self.config.indexes['hen_mainnet'].first_level + 1
+        self.config.database.path = ':memory:'  # type: ignore
+        self.config.indexes['hen_mainnet'].last_level = self.config.indexes['hen_mainnet'].first_level + 1  # type: ignore
         self.config.initialize()
         self.dipdup = DipDup(self.config)
 
 
-    async def test_rollback_ok(self):
+    async def test_rollback_exact(self):
         with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_exact):
+            await self.dipdup.run(False, False, False)
+
+    async def test_rollback_more(self):
+        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_more):
             await self.dipdup.run(False, False, False)
