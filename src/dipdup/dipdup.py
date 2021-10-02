@@ -168,6 +168,8 @@ class IndexDispatcher:
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
+        self._logger.warning('Datasource `%s` rolled back: %s -> %s', datasource.name, from_level, to_level)
+
         # NOTE: Zero difference between levels means we received no operations/big_maps on this level and thus channel level hasn't changed
         zero_level_rollback = from_level - to_level == 0
         single_level_rollback = from_level - to_level == 1
