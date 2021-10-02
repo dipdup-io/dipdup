@@ -163,7 +163,7 @@ class OperationIndex(Index):
             self._logger.info('Single level rollback has been triggered')
             self._rollback_level = level
         else:
-            raise RuntimeError('Index level is higher than rollback level')
+            raise RuntimeError(f'Index level is higher than rollback level: {state_level} > {level}')
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""

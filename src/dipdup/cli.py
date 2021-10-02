@@ -113,6 +113,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     _config = DipDupConfig.load(config)
     init_sentry(_config)
 
+    # TODO: Raise InitRequiredError on failure
     await DipDupCodeGenerator(_config, {}).create_package()
 
     if _config.spec_version not in spec_version_mapping:
