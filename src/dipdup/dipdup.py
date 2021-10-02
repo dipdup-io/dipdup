@@ -5,7 +5,7 @@ from collections import deque
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import partial
 from operator import ne
-from typing import Awaitable, Deque, Dict, List, Optional, Set, Tuple
+from typing import Awaitable, Deque, Dict, List, Optional, Set, cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
@@ -167,11 +167,19 @@ class IndexDispatcher:
                 index.push_big_maps(big_maps)
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
-        if from_level - to_level == 1:
-            self._logger.info('Attempting a single level rollback')
+        """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
+        # NOTE: Zero difference between levels means we received no operations/big_maps on this level and thus channel level hasn't changed
+        is_single_level_rollback = from_level - to_level in (0, 1)
+
+        if is_single_level_rollback:
             # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
-            indexes = iter(self._indexes.values())
-            matching_indexes: Tuple[OperationIndex] = tuple(filter(lambda index: index.datasource == datasource, indexes))  # type: ignore
+            self._logger.info('Attempting a single level rollback')
+            matching_indexes = tuple(
+                filter(
+                    lambda index: index.datasource == datasource,
+                    self._indexes.values(),
+                )
+            )
             all_indexes_are_operation = all(isinstance(index, OperationIndex) for index in matching_indexes)
             self._logger.info(
                 'Indexes: %s total, %s matching, all are `operation` is %s',
@@ -181,7 +189,7 @@ class IndexDispatcher:
             )
 
             if all_indexes_are_operation:
-                for index in matching_indexes:
+                for index in cast(List[OperationIndex], matching_indexes):
                     await index.single_level_rollback(from_level)
                 return
 
