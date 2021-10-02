@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from datetime import datetime
 from os.path import dirname, join
 from typing import Tuple
@@ -12,7 +11,8 @@ from dipdup.dipdup import DipDup
 from dipdup.models import Index as State
 from dipdup.models import OperationData
 
-logging.basicConfig(level=logging.DEBUG)
+# import logging
+# logging.basicConfig(level=logging.DEBUG)
 
 
 def _get_operation(hash_: str, level: int) -> OperationData:
