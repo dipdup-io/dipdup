@@ -95,7 +95,9 @@ class Index:
             raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
 
         elif self.state.level < self._datasource.sync_level:
-            self._logger.info('Index is behind datasource, sync to datasource level')
+            self._logger.info(
+                'Index is behind datasource, sync to datasource level: %s -> %s', self.state.level, self._datasource.sync_level
+            )
             self._queue.clear()
             last_level = self._datasource.sync_level
             await self._synchronize(last_level)
@@ -154,7 +156,7 @@ class OperationIndex(Index):
     def push_rollback(self, level: int) -> None:
         self._queue.append(SingleLevelRollback(level))
 
-    async def single_level_rollback(self, level: int) -> None:
+    async def _single_level_rollback(self, level: int) -> None:
         """Ensure next arrived block has all operations of the previous block. But it could also contain additional operations.
 
         Called by IndexDispatcher when index datasource receive a single level rollback.
@@ -173,13 +175,13 @@ class OperationIndex(Index):
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
-        if self._queue:
-            self._logger.info('Processing websocket queue')
         while self._queue:
             message = self._queue.popleft()
             if isinstance(message, SingleLevelRollback):
-                await self.single_level_rollback(message.level)
+                self._logger.info('Processing rollback realtime message, %s left in queue', len(self._queue))
+                await self._single_level_rollback(message.level)
             else:
+                self._logger.info('Processing operations realtime message, %s left in queue', len(self._queue))
                 await self._process_level_operations(message)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
@@ -215,6 +217,8 @@ class OperationIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_operations(self, operations: Tuple[OperationData, ...]) -> None:
+        if not operations:
+            return
         level = self._extract_level(operations)
 
         if self._rollback_level:
@@ -229,16 +233,17 @@ class OperationIndex(Index):
 
             self._logger.info('Rolling back to previous level, verifying processed operations')
             expected_hashes = set(self._head_hashes)
-            received_hashes = set([op.hash for op in operations])
-            reused_hashes = received_hashes & expected_hashes
-            if reused_hashes != expected_hashes:
+            received_hashes = set(op.hash for op in operations)
+            new_hashes = received_hashes - expected_hashes
+            missing_hashes = expected_hashes - received_hashes
+
+            self._logger.info('Comparing hashes: %s new, %s missing', len(new_hashes), len(missing_hashes))
+            if missing_hashes:
+                self._logger.info('Some operations are backtracked: %s', ', '.join(missing_hashes))
                 await self._ctx.reindex(ReindexingReason.ROLLBACK)
 
             self._rollback_level = None
             self._head_hashes = set()
-            new_hashes = received_hashes - expected_hashes
-            if not new_hashes:
-                return
             operations = tuple(op for op in operations if op.hash in new_hashes)
 
         # NOTE: le operator because it could be a single level rollback

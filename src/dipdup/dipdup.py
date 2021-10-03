@@ -192,7 +192,7 @@ class IndexDispatcher:
             all_indexes_are_operation = len(matching_indexes) == len(matching_operation_indexes)
             if all_indexes_are_operation:
                 for index in cast(List[OperationIndex], matching_indexes):
-                    await index.single_level_rollback(from_level)
+                    index.push_rollback(from_level)
             else:
                 await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
 

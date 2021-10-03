@@ -1,18 +1,20 @@
 import asyncio
+from contextlib import ExitStack, contextmanager
 from datetime import datetime
 from os.path import dirname, join
-from typing import Tuple
-from unittest import IsolatedAsyncioTestCase, skip
-from unittest.mock import AsyncMock, patch
+from typing import Generator, Tuple
+from unittest import IsolatedAsyncioTestCase
+from unittest.mock import AsyncMock, Mock, patch
 
 from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup
+from dipdup.models import HeadBlockData
 from dipdup.models import Index as State
 from dipdup.models import OperationData
 
 # import logging
-# logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
 
 
 def _get_operation(hash_: str, level: int) -> OperationData:
@@ -35,23 +37,24 @@ def _get_operation(hash_: str, level: int) -> OperationData:
 
 
 initial_level = 1365000
+next_level = initial_level + 1
 
 exact_operations = (
-    _get_operation('1', 1365001),
-    _get_operation('2', 1365001),
-    _get_operation('3', 1365001),
+    _get_operation('1', next_level),
+    _get_operation('2', next_level),
+    _get_operation('3', next_level),
 )
 
 less_operations = (
-    _get_operation('1', 1365001),
-    _get_operation('2', 1365001),
+    _get_operation('1', next_level),
+    _get_operation('2', next_level),
 )
 
 more_operations = (
-    _get_operation('1', 1365001),
-    _get_operation('2', 1365001),
-    _get_operation('3', 1365001),
-    _get_operation('4', 1365001),
+    _get_operation('1', next_level),
+    _get_operation('2', next_level),
+    _get_operation('3', next_level),
+    _get_operation('4', next_level),
 )
 
 
@@ -68,10 +71,13 @@ async def emit_messages(
 ):
     await self.emit_operations(old_block)
     await self.emit_rollback(
-        from_level=1365001,
-        to_level=1365001 - level,
+        from_level=next_level,
+        to_level=next_level - level,
     )
     await self.emit_operations(new_block)
+
+    for _ in range(10):
+        await asyncio.sleep(0.1)
 
     raise asyncio.CancelledError
 
@@ -101,35 +107,60 @@ async def datasource_run_deep(self: TzktDatasource):
     await check_level(initial_level + 1)
 
 
-class RollbackTest(IsolatedAsyncioTestCase):
-    async def asyncSetUp(self) -> None:
-        self.config = DipDupConfig.load([join(dirname(__file__), 'hic_et_nunc.yml')])
-        self.config.database.path = ':memory:'  # type: ignore
-        self.config.indexes['hen_mainnet'].last_level = self.config.indexes['hen_mainnet'].first_level + 1  # type: ignore
-        self.config.initialize()
-        self.dipdup = DipDup(self.config)
+head = Mock(spec=HeadBlockData)
+head.level = initial_level
 
+
+@contextmanager
+def patch_dipdup(datasource_run) -> Generator:
+    with ExitStack() as stack:
+        stack.enter_context(patch('dipdup.index.OperationIndex._synchronize', AsyncMock()))
+        stack.enter_context(patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run))
+        stack.enter_context(patch('dipdup.context.DipDupContext.reindex', AsyncMock()))
+        stack.enter_context(patch('dipdup.datasources.tzkt.datasource.TzktDatasource.get_head_block', AsyncMock(return_value=head)))
+        yield
+
+
+def get_dipdup() -> DipDup:
+    config = DipDupConfig.load([join(dirname(__file__), 'hic_et_nunc.yml')])
+    config.database.path = ':memory:'  # type: ignore
+    config.indexes['hen_mainnet'].last_level = 0  # type: ignore
+    config.initialize()
+    return DipDup(config)
+
+
+class RollbackTest(IsolatedAsyncioTestCase):
     async def test_rollback_exact(self):
-        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_exact):
-            await self.dipdup.run(False, False, False)
+        with patch_dipdup(datasource_run_exact):
+            dipdup = get_dipdup()
+            await dipdup.run(False, False, False)
+
+            assert dipdup._ctx.reindex.call_count == 0
 
     async def test_rollback_more(self):
-        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_more):
-            await self.dipdup.run(False, False, False)
+        with patch_dipdup(datasource_run_more):
+            dipdup = get_dipdup()
+            await dipdup.run(False, False, False)
 
-    @skip('FIXME')
+            assert dipdup._ctx.reindex.call_count == 0
+
     async def test_rollback_less(self):
-        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_less):
-            with patch('dipdup.context.DipDupContext.reindex', AsyncMock()) as reindex_mock:
-                await self.dipdup.run(False, False, False)
-                assert reindex_mock.call_count == 1
+        with patch_dipdup(datasource_run_less):
+            dipdup = get_dipdup()
+            await dipdup.run(False, False, False)
+
+            assert dipdup._ctx.reindex.call_count == 1
 
     async def test_rollback_zero(self):
-        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_zero):
-            await self.dipdup.run(False, False, False)
+        with patch_dipdup(datasource_run_zero):
+            dipdup = get_dipdup()
+            await dipdup.run(False, False, False)
+
+            assert dipdup._ctx.reindex.call_count == 0
 
     async def test_rollback_deep(self):
-        with patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run_deep):
-            with patch('dipdup.context.DipDupContext.reindex', AsyncMock()) as reindex_mock:
-                await self.dipdup.run(False, False, False)
-                assert reindex_mock.call_count == 1
+        with patch_dipdup(datasource_run_deep):
+            dipdup = get_dipdup()
+            await dipdup.run(False, False, False)
+
+            assert dipdup._ctx.reindex.call_count == 1
