@@ -20,7 +20,7 @@ from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_ver
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDupError, MigrationRequiredError
+from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDupError, InitializationRequiredError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
 from dipdup.utils.database import set_decimal_context, tortoise_wrapper
@@ -113,8 +113,10 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     _config = DipDupConfig.load(config)
     init_sentry(_config)
 
-    # TODO: Raise InitRequiredError on failure
-    await DipDupCodeGenerator(_config, {}).create_package()
+    try:
+        await DipDupCodeGenerator(_config, {}).create_package()
+    except Exception as e:
+        raise InitializationRequiredError from e
 
     if _config.spec_version not in spec_version_mapping:
         raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
