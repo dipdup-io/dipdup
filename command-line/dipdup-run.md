@@ -41,7 +41,7 @@ DipDup will execute all the scripts from the `%project_root%/sql/**/*.sql` after
 
 ## Custom initialization
 
-DipDup generates a default configuration handler `on_configure` that can be filled with custom initialization logic:
+DipDup generates a default configuration hook `on_restart` that can be filled with custom initialization logic:
 
 {% tabs %}
 {% tab title="Python" %}
@@ -49,7 +49,7 @@ DipDup generates a default configuration handler `on_configure` that can be fill
 from dipdup.context import HandlerContext
 
 
-async def on_configure(ctx: HandlerContext) -> None:
+async def on_restart(ctx: HandlerContext) -> None:
     ...
 ```
 {% endtab %}

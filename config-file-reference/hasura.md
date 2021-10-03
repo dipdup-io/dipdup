@@ -16,6 +16,10 @@ Under the hood DipDup generates Hasura metadata file out from your DB schema and
 
 Metadata configuration is idempotent: each time you do `dipdup run` it queries the existing schema and do the merge if required.
 
+### Schema limitation
+
+The current version of Hasura GraphQL Engine treats `public` and other schemas differently. Table `schema.customer` becomes `schema_customer` root field \(or `schemaCustomer` if `camel_case` option is enabled in DipDup config\). Table `public.customer` becomes `customer` field, without schema prefix. There's no way to remove this prefix for now. You can track related [issue \(opens new window\)](https://github.com/hasura/graphql-engine/issues/5394)at Hasura's GitHub to know when the situation will change. Since 3.0.0-rc1 DipDup enforces `public` schema to avoid ambiguity and issues with the GenQL library. You can still use any schema name if Hasura integration is not enabled.
+
 ### Authentication
 
 DipDup sets READ only permissions for all tables and enables non-authorized access to the `/graphql` endpoint.
@@ -32,8 +36,6 @@ hasura:
 Note that with limits enabled you have to use either offset or cursor-based [pagination](../client-side/#pagination) on the client side.
 
 ### Disable aggregation queries
-
-
 
 ```yaml
 hasura:

@@ -29,18 +29,8 @@ One can optionally specify block levels DipDup has to start and stop indexing at
 ```yaml
 indexes:
   my_index:
-    first_block: 1000000
-    last_block: 2000000
-```
-
-## Stateless index
-
-The `stateless` flag indicates that the index contains no database operations and acts just as a factory for spawning other indexes in runtime.
-
-```yaml
-indexes:
-  factory_index:
-    stateless: true
+    first_level: 1000000
+    last_level: 2000000
 ```
 
 

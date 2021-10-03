@@ -3,7 +3,7 @@
 Generates type classes and handler templates based on the DipDup configuration file. This is an idempotent command meaning that it won't overwrite previously generated files and you can call it as many times as you want.
 
 ```text
-dipdup [-c path-to-config.yml] init
+dipdup [-c path-to-config.yml] init [--overwrite-types]
 ```
 
 DipDup will generate all the necessary folders and files containing type definitions and code templates that are to be filled by the developer. See [package](../config-file-reference/package.md#package-structure) docs to learn about the project structure.
@@ -57,7 +57,9 @@ from <package>.types.<typename>.parameter.<entry_point> import (
 {% endtab %}
 {% endtabs %}
 
-### Do not overwrite
+### Overwrite or not
+
+`init` command does not overwrite typeclasses that have been already generated. Use the `--overwrite-types` flag if it's not the desired behavior.
 
 In some cases you may want to make some manual changes in typeclasses and ensure they won't be lost on init. Let's say you want to reuse typename for multiple contracts providing the same interface \(like FA1.2 and FA2 tokens\) but having different storage structure. You can comment out differing fields which are not important for your index.
 
@@ -145,7 +147,7 @@ where `BigMapDiff` contains action \(allocate, update, or remove\) and nullable 
 If you use index templates your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same **`typename`** and raises an error otherwise.
 {% endhint %}
 
-### Default handlers
+### Default hooks
 
 There is a special handlers DipDup generates for all indexes. They covers network events and initialization hooks. Names of those handlers are reserved, you can't use them in config.
 
@@ -153,9 +155,15 @@ There is a special handlers DipDup generates for all indexes. They covers networ
 
 It tells DipDip how to handle chain reorgs, which is a purely application-specific logic especially if there are stateful entities. The default implementation does nothing if rollback size is 1 block and full reindexing otherwise.
 
-#### on\_configure.py
+#### on\_restart.py
 
 Executed before starting indexes. Allows to configure DipDup dynamically based on data from external sources. Datasources are already initialized at the time of execution and available at `ctx.datasources`. See [Handler context](../advanced/handler-context.md) for more details how to perform configuration.
+
+#### on\_reindex.py
+
+
+
+
 
 ## Models
 

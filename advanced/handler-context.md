@@ -4,21 +4,25 @@ An instance of the `HandlerContext` class is passed to every handler providing a
 
 ## Helpers
 
-### `.reindex()`
+### `.reindex() -> None`
 
 Drops the entire database and starts the indexing process from scratch. Currently used in the rollback handler.
 
-### `.add_contract(name, address, typename)`
+### `.add_contract(name, address, typename) -> Coroutine`
 
 Adds new contract to the inventory.
 
-### `.add_index(name, template, values)`
+### `.add_index(name, template, values) -> Coroutine`
 
 Adds new index to the current configuration.
 
-### `.commit()`
+### `.fire_hook(name, **kwargs) -> None`
 
-Tells DipDup dispatcher that there are pending dynamic indexes that have to be spawned. You will need this method only if you manually change the config \(not through the `add_index` helper\).
+You can trigger hook execution either from handler callback or by job schedule. Or even from another hook if you're brave enough.
+
+### `.execute_sql(filename) -> None`
+
+The `execute_sql` argument could be either name of a file/directory inside of the `sql` project directory or an absolute/relative path. If the path is a directory, all scripts having the `.sql` extension within it will be executed in alphabetical order.
 
 ## Properties
 
