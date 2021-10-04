@@ -4,13 +4,17 @@
 
 ### Improved
 
-* Improved indexing performance.
+* A significant increase in indexing speed.
 
 ### Fixed
 
-* Fixed processing zero- and single-level rollbacks.
-* Removed unnecessary file IO calls causing `PermissionError` exception in Docker environment.
-* Fixed possible atomicity violation during real-time indexing.
+* Fixed unexpected reindexing caused by the bug in processing zero- and single-level rollbacks.
+* Removed unnecessary file IO calls that could cause `PermissionError` exception in Docker environments.
+* Fixed possible violation of block-level atomicity during real-time indexing.
+
+### Changes
+
+* Public methods of `TzktDatasource` now return immutable sequences.
 
 ## 3.0.3 - 2021-10-01
 

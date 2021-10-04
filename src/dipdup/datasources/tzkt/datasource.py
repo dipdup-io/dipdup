@@ -228,7 +228,7 @@ class BigMapFetcher:
                 for i in range(len(big_maps) - 1):
                     if big_maps[i].level != big_maps[i + 1].level:
                         yield big_maps[i].level, tuple(big_maps[: i + 1])
-                        big_maps = big_maps[i + 1 :]  # noqa: E203
+                        big_maps = big_maps[i + 1 :]
                         break
                 else:
                     break
@@ -285,7 +285,7 @@ class TzktDatasource(IndexDatasource):
     def sync_level(self) -> Optional[int]:
         return self._sync_level
 
-    async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
+    async def get_similar_contracts(self, address: str, strict: bool = False) -> Tuple[str, ...]:
         """Get list of contracts sharing the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
@@ -298,9 +298,9 @@ class TzktDatasource(IndexDatasource):
                 limit=self.request_limit,
             ),
         )
-        return contracts
+        return tuple(c for c in contracts)
 
-    async def get_originated_contracts(self, address: str) -> List[str]:
+    async def get_originated_contracts(self, address: str) -> Tuple[str, ...]:
         """Get contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s', address)
         contracts = await self._http.request(
@@ -310,7 +310,7 @@ class TzktDatasource(IndexDatasource):
                 limit=self.request_limit,
             ),
         )
-        return [c['address'] for c in contracts]
+        return tuple(c['address'] for c in contracts)
 
     async def get_contract_summary(self, address: str) -> Dict[str, Any]:
         """Get contract summary"""
