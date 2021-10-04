@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## 3.0.4 - 2021-10-04
+
 ### Improved
 
 * A significant increase in indexing speed.
