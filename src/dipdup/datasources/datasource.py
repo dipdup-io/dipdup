@@ -1,6 +1,6 @@
 import logging
 from abc import abstractmethod
-from typing import Awaitable, Callable, List, Set
+from typing import Awaitable, Callable, Set, Tuple
 
 from dipdup.config import HTTPConfig
 from dipdup.http import HTTPGateway
@@ -11,8 +11,8 @@ _logger = logging.getLogger('dipdup.datasource')
 
 
 HeadCallbackT = Callable[['IndexDatasource', HeadBlockData], Awaitable[None]]
-OperationsCallbackT = Callable[['IndexDatasource', List[OperationData]], Awaitable[None]]
-BigMapsCallbackT = Callable[['IndexDatasource', List[BigMapData]], Awaitable[None]]
+OperationsCallbackT = Callable[['IndexDatasource', Tuple[OperationData, ...]], Awaitable[None]]
+BigMapsCallbackT = Callable[['IndexDatasource', Tuple[BigMapData, ...]], Awaitable[None]]
 RollbackCallbackT = Callable[['IndexDatasource', int, int], Awaitable[None]]
 
 
@@ -57,11 +57,11 @@ class IndexDatasource(Datasource):
         for fn in self._on_head:
             await fn(self, head)
 
-    async def emit_operations(self, operations: List[OperationData]) -> None:
+    async def emit_operations(self, operations: Tuple[OperationData, ...]) -> None:
         for fn in self._on_operations:
             await fn(self, operations)
 
-    async def emit_big_maps(self, big_maps: List[BigMapData]) -> None:
+    async def emit_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         for fn in self._on_big_maps:
             await fn(self, big_maps)
 

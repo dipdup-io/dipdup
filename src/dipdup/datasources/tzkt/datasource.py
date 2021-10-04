@@ -1,10 +1,9 @@
 import asyncio
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from datetime import datetime, timezone
 from decimal import Decimal
-from enum import Enum
-from typing import Any, AsyncGenerator, DefaultDict, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from typing import Any, AsyncGenerator, DefaultDict, Deque, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
@@ -21,62 +20,27 @@ from dipdup.config import (
     ResolvedIndexConfigT,
 )
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.tzkt.enums import TzktMessageType
+from dipdup.datasources.tzkt.enums import (
+    ORIGINATION_MIGRATION_FIELDS,
+    ORIGINATION_OPERATION_FIELDS,
+    TRANSACTION_OPERATION_FIELDS,
+    OperationFetcherRequest,
+    TzktMessageType,
+)
 from dipdup.enums import MessageType
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData, QuoteData
-from dipdup.utils import groupby, split_by_chunks
+from dipdup.utils import split_by_chunks
 
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
-OPERATION_FIELDS = (
-    "type",
-    "id",
-    "level",
-    "timestamp",
-    "hash",
-    "counter",
-    "sender",
-    "nonce",
-    "target",
-    "initiator",
-    "amount",
-    "storage",
-    "status",
-    "hasInternals",
-    "diffs",
-)
-ORIGINATION_MIGRATION_FIELDS = (
-    "id",
-    "level",
-    "timestamp",
-    "storage",
-    "diffs",
-    "account",
-    "balanceChange",
-)
-ORIGINATION_OPERATION_FIELDS = (
-    *OPERATION_FIELDS,
-    "originatedContract",
-)
-TRANSACTION_OPERATION_FIELDS = (
-    *OPERATION_FIELDS,
-    "parameter",
-    "hasInternals",
-)
 
 
-class OperationFetcherChannel(Enum):
-    """Represents multiple TzKT calls to be merged into a single batch of operations"""
-
-    sender_transactions = 'sender_transactions'
-    target_transactions = 'target_transactions'
-    originations = 'originations'
-
-
-def dedup_operations(operations: List[OperationData]) -> List[OperationData]:
+def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationData, ...]:
     """Merge operations from multiple endpoints"""
-    return sorted(
-        list(({op.id: op for op in operations}).values()),
-        key=lambda op: op.id,
+    return tuple(
+        sorted(
+            tuple(({op.id: op for op in operations}).values()),
+            key=lambda op: op.id,
+        )
     )
 
 
@@ -93,7 +57,7 @@ class OperationFetcher:
         transaction_addresses: Set[str],
         origination_addresses: Set[str],
         cache: bool = False,
-        migration_originations: List[OperationData] = None,
+        migration_originations: Tuple[OperationData, ...] = None,
     ) -> None:
         self._datasource = datasource
         self._first_level = first_level
@@ -104,17 +68,15 @@ class OperationFetcher:
 
         self._logger = logging.getLogger('dipdup.tzkt')
         self._head: int = 0
-        self._heads: Dict[OperationFetcherChannel, int] = {}
-        self._offsets: Dict[OperationFetcherChannel, int] = {}
-        self._fetched: Dict[OperationFetcherChannel, bool] = {}
+        self._heads: Dict[OperationFetcherRequest, int] = {}
+        self._offsets: Dict[OperationFetcherRequest, int] = {}
+        self._fetched: Dict[OperationFetcherRequest, bool] = {}
 
-        self._operations: DefaultDict[int, List[OperationData]]
-        if migration_originations:
-            self._operations = groupby(migration_originations, lambda op: op.level)
-        else:
-            self._operations = defaultdict(list)
+        self._operations: DefaultDict[int, Deque[OperationData]] = defaultdict(deque)
+        for origination in migration_originations or ():
+            self._operations[origination.level].append(origination)
 
-    def _get_operations_head(self, operations: List[OperationData]) -> int:
+    def _get_operations_head(self, operations: Tuple[OperationData, ...]) -> int:
         """Get latest block level (head) of sorted operations batch"""
         for i in range(len(operations) - 1)[::-1]:
             if operations[i].level != operations[i + 1].level:
@@ -123,7 +85,7 @@ class OperationFetcher:
 
     async def _fetch_originations(self) -> None:
         """Fetch a single batch of originations, bump channel offset"""
-        key = OperationFetcherChannel.originations
+        key = OperationFetcherRequest.originations
         if not self._origination_addresses:
             self._fetched[key] = True
             self._heads[key] = self._last_level
@@ -142,8 +104,6 @@ class OperationFetcher:
 
         for op in originations:
             level = op.level
-            if level not in self._operations:
-                self._operations[level] = []
             self._operations[level].append(op)
 
         self._logger.debug('Got %s', len(originations))
@@ -157,7 +117,7 @@ class OperationFetcher:
 
     async def _fetch_transactions(self, field: str) -> None:
         """Fetch a single batch of transactions, bump channel offset"""
-        key = getattr(OperationFetcherChannel, field + '_transactions')
+        key = getattr(OperationFetcherRequest, field + '_transactions')
         if not self._transaction_addresses:
             self._fetched[key] = True
             self._heads[key] = self._last_level
@@ -177,8 +137,6 @@ class OperationFetcher:
 
         for op in transactions:
             level = op.level
-            if level not in self._operations:
-                self._operations[level] = []
             self._operations[level].append(op)
 
         self._logger.debug('Got %s', len(transactions))
@@ -190,12 +148,15 @@ class OperationFetcher:
             self._offsets[key] += self._datasource.request_limit
             self._heads[key] = self._get_operations_head(transactions)
 
-    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, List[OperationData]], None]:
-        """Iterate by operations from multiple channels. Return is splitted by level, deduped/sorted and ready to be passeed to Matcher."""
+    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[OperationData, ...]], None]:
+        """Iterate over operations fetched with multiple REST requests with different filters.
+
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
+        """
         for type_ in (
-            OperationFetcherChannel.sender_transactions,
-            OperationFetcherChannel.target_transactions,
-            OperationFetcherChannel.originations,
+            OperationFetcherRequest.sender_transactions,
+            OperationFetcherRequest.target_transactions,
+            OperationFetcherRequest.originations,
         ):
             self._heads[type_] = 0
             self._offsets[type_] = 0
@@ -203,11 +164,11 @@ class OperationFetcher:
 
         while True:
             min_head = sorted(self._heads.items(), key=lambda x: x[1])[0][0]
-            if min_head == OperationFetcherChannel.originations:
+            if min_head == OperationFetcherRequest.originations:
                 await self._fetch_originations()
-            elif min_head == OperationFetcherChannel.target_transactions:
+            elif min_head == OperationFetcherRequest.target_transactions:
                 await self._fetch_transactions('target')
-            elif min_head == OperationFetcherChannel.sender_transactions:
+            elif min_head == OperationFetcherRequest.sender_transactions:
                 await self._fetch_transactions('sender')
             else:
                 raise RuntimeError
@@ -216,7 +177,7 @@ class OperationFetcher:
             while self._head <= head:
                 if self._head in self._operations:
                     operations = self._operations.pop(self._head)
-                    yield self._head, dedup_operations(operations)
+                    yield self._head, dedup_operations(tuple(operations))
                 self._head += 1
 
             if all(list(self._fetched.values())):
@@ -243,11 +204,14 @@ class BigMapFetcher:
         self._big_map_paths = big_map_paths
         self._cache = cache
 
-    async def fetch_big_maps_by_level(self) -> AsyncGenerator[Tuple[int, List[BigMapData]], None]:
-        """Fetch big map diffs via Fetcher (not implemented yet) and pass to message callback"""
+    async def fetch_big_maps_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[BigMapData, ...]], None]:
+        """Iterate over big map diffs fetched fetched from REST.
+
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by BigMapIndex.
+        """
 
         offset = 0
-        big_maps = []
+        big_maps: Tuple[BigMapData, ...] = tuple()
 
         while True:
             fetched_big_maps = await self._datasource.get_big_maps(
@@ -258,13 +222,13 @@ class BigMapFetcher:
                 self._last_level,
                 cache=self._cache,
             )
-            big_maps += fetched_big_maps
+            big_maps = big_maps + fetched_big_maps
 
             while True:
                 for i in range(len(big_maps) - 1):
                     if big_maps[i].level != big_maps[i + 1].level:
-                        yield big_maps[i].level, big_maps[: i + 1]
-                        big_maps = big_maps[i + 1 :]  # noqa: E203
+                        yield big_maps[i].level, tuple(big_maps[: i + 1])
+                        big_maps = big_maps[i + 1 :]
                         break
                 else:
                     break
@@ -275,7 +239,7 @@ class BigMapFetcher:
             offset += self._datasource.request_limit
 
         if big_maps:
-            yield big_maps[0].level, big_maps[: i + 1]
+            yield big_maps[0].level, tuple(big_maps[: i + 1])
 
 
 class TzktDatasource(IndexDatasource):
@@ -310,7 +274,7 @@ class TzktDatasource(IndexDatasource):
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
         self._ws_client: Optional[BaseHubConnection] = None
 
-        self._level: Optional[int] = None
+        self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
         self._sync_level: Optional[int] = None
 
     @property
@@ -321,7 +285,7 @@ class TzktDatasource(IndexDatasource):
     def sync_level(self) -> Optional[int]:
         return self._sync_level
 
-    async def get_similar_contracts(self, address: str, strict: bool = False) -> List[str]:
+    async def get_similar_contracts(self, address: str, strict: bool = False) -> Tuple[str, ...]:
         """Get list of contracts sharing the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
@@ -334,9 +298,9 @@ class TzktDatasource(IndexDatasource):
                 limit=self.request_limit,
             ),
         )
-        return contracts
+        return tuple(c for c in contracts)
 
-    async def get_originated_contracts(self, address: str) -> List[str]:
+    async def get_originated_contracts(self, address: str) -> Tuple[str, ...]:
         """Get contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s', address)
         contracts = await self._http.request(
@@ -346,7 +310,7 @@ class TzktDatasource(IndexDatasource):
                 limit=self.request_limit,
             ),
         )
-        return [c['address'] for c in contracts]
+        return tuple(c['address'] for c in contracts)
 
     async def get_contract_summary(self, address: str) -> Dict[str, Any]:
         """Get contract summary"""
@@ -393,7 +357,7 @@ class TzktDatasource(IndexDatasource):
         )
         return self.convert_block(block_json)
 
-    async def get_migration_originations(self, first_level: int = 0) -> List[OperationData]:
+    async def get_migration_originations(self, first_level: int = 0) -> Tuple[OperationData, ...]:
         """Get contracts originated from migrations"""
         self._logger.info('Fetching contracts originated with migrations')
         # NOTE: Empty unwrapped request to ensure API supports migration originations
@@ -407,7 +371,7 @@ class TzktDatasource(IndexDatasource):
                 },
             )
         except ClientResponseError:
-            return []
+            return ()
 
         raw_migrations = await self._http.request(
             'get',
@@ -418,11 +382,11 @@ class TzktDatasource(IndexDatasource):
                 'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
             },
         )
-        return [self.convert_migration_origination(m) for m in raw_migrations]
+        return tuple(self.convert_migration_origination(m) for m in raw_migrations)
 
     async def get_originations(
         self, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
-    ) -> List[OperationData]:
+    ) -> Tuple[OperationData, ...]:
         raw_originations = []
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
         # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
@@ -443,16 +407,16 @@ class TzktDatasource(IndexDatasource):
                 cache=cache,
             )
 
-        originations = []
         for op in raw_originations:
             # NOTE: `type` field needs to be set manually when requesting operations by specific type
             op['type'] = 'origination'
-            originations.append(self.convert_operation(op))
+
+        originations = tuple(self.convert_operation(op) for op in raw_originations)
         return originations
 
     async def get_transactions(
         self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
-    ) -> List[OperationData]:
+    ) -> Tuple[OperationData, ...]:
         raw_transactions = await self._http.request(
             'get',
             url='v1/operations/transactions',
@@ -467,16 +431,16 @@ class TzktDatasource(IndexDatasource):
             },
             cache=cache,
         )
-        transactions = []
         for op in raw_transactions:
             # NOTE: type needs to be set manually when requesting operations by specific type
             op['type'] = 'transaction'
-            transactions.append(self.convert_operation(op))
+
+        transactions = tuple(self.convert_operation(op) for op in raw_transactions)
         return transactions
 
     async def get_big_maps(
         self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
-    ) -> List[BigMapData]:
+    ) -> Tuple[BigMapData, ...]:
         raw_big_maps = await self._http.request(
             'get',
             url='v1/bigmaps/updates',
@@ -490,9 +454,7 @@ class TzktDatasource(IndexDatasource):
             },
             cache=cache,
         )
-        big_maps = []
-        for bm in raw_big_maps:
-            big_maps.append(self.convert_big_map(bm))
+        big_maps = tuple(self.convert_big_map(bm) for bm in raw_big_maps)
         return big_maps
 
     async def get_quote(self, level: int) -> QuoteData:
@@ -506,7 +468,7 @@ class TzktDatasource(IndexDatasource):
         )
         return self.convert_quote(quote_json[0])
 
-    async def get_quotes(self, from_level: int, to_level: int) -> List[QuoteData]:
+    async def get_quotes(self, from_level: int, to_level: int) -> Tuple[QuoteData, ...]:
         """Get quotes for blocks"""
         self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
         quotes_json = await self._http.request(
@@ -519,7 +481,7 @@ class TzktDatasource(IndexDatasource):
             },
             cache=False,
         )
-        return [self.convert_quote(quote) for quote in quotes_json]
+        return tuple(self.convert_quote(quote) for quote in quotes_json)
 
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
@@ -653,29 +615,38 @@ class TzktDatasource(IndexDatasource):
         )
 
     async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
-        # TODO: Docstring
+        """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         for item in message:
             tzkt_type = TzktMessageType(item['type'])
-            head_level = item['state']
+            level, current_level = item['state'], self._level[type_]
+            self._level[type_] = level
 
-            self._logger.info('Realtime message received: %s, %s', type_, tzkt_type)
+            self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
 
-            # NOTE: State messages will be replaced with WS negotiation some day
+            # NOTE: Ensure correctness, update sync level
             if tzkt_type == TzktMessageType.STATE:
-                if self._sync_level != head_level:
-                    self._logger.info('Datasource level set to %s', head_level)
-                    self._sync_level = head_level
-                    self._level = head_level
+                if self._sync_level < level:
+                    self._logger.info('Datasource sync level has been updated: %s -> %s', self._sync_level, level)
+                    self._sync_level = level
+                elif self._sync_level > level:
+                    raise RuntimeError('Attempt to set sync level to the lower value: %s -> %s', self._sync_level, level)
+                else:
+                    pass
 
+            # NOTE: Just yield data
             elif tzkt_type == TzktMessageType.DATA:
-                self._level = head_level
                 yield item['data']
 
+            # NOTE: Emit rollback, but not on `head` message
             elif tzkt_type == TzktMessageType.REORG:
-                if self._level is None:
-                    raise RuntimeError('Reorg message received but datasource is not connected')
-                self._logger.info('Emitting rollback from %s to %s', self._level, head_level)
-                await self.emit_rollback(self._level, head_level)
+                if current_level is None:
+                    raise RuntimeError('Reorg message received but level is not set')
+                # NOTE: operation/big_map channels have their own levels
+                if type_ == MessageType.head:
+                    return
+
+                self._logger.info('Emitting rollback from %s to %s', current_level, level)
+                await self.emit_rollback(current_level, level)
 
             else:
                 raise NotImplementedError
@@ -683,23 +654,23 @@ class TzktDatasource(IndexDatasource):
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
         async for data in self._extract_message_data(MessageType.operation, message):
-            operations = []
+            operations: Deque[OperationData] = deque()
             for operation_json in data:
                 if operation_json['status'] != 'applied':
                     continue
                 operation = self.convert_operation(operation_json)
                 operations.append(operation)
             if operations:
-                await self.emit_operations(operations)
+                await self.emit_operations(tuple(operations))
 
     async def _on_big_maps_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
         async for data in self._extract_message_data(MessageType.big_map, message):
-            big_maps = []
+            big_maps: Deque[BigMapData] = deque()
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
                 big_maps.append(big_map)
-            await self.emit_big_maps(big_maps)
+            await self.emit_big_maps(tuple(big_maps))
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw head block from WS"""

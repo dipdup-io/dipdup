@@ -1,8 +1,8 @@
 import textwrap
 import traceback
 from contextlib import contextmanager
-from dataclasses import dataclass
-from typing import Any, Iterator, Optional, Type
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterator, Optional, Type
 
 import sentry_sdk
 from tabulate import tabulate
@@ -137,12 +137,15 @@ class ReindexingRequiredError(DipDupError):
     """Unable to continue indexing with existing database"""
 
     reason: ReindexingReason
+    context: Dict[str, Any] = field(default_factory=dict)
 
     def _help(self) -> str:
         return f"""
             Reindexing required!
 
             Reason: {self.reason.value}
+
+            Additional context: {self.context}
 
             You may want to backup database before proceeding. After that perform one of the following actions:
 

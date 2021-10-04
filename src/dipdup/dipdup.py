@@ -5,7 +5,7 @@ from collections import deque
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import partial
 from operator import ne
-from typing import Awaitable, Deque, Dict, List, Optional, Set
+from typing import Awaitable, Deque, Dict, List, Optional, Set, Tuple, cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
@@ -31,7 +31,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException, DipDupException
 from dipdup.hasura import HasuraGateway
-from dipdup.index import BigMapIndex, Index, OperationIndex
+from dipdup.index import BigMapIndex, Index, OperationIndex, block_cache
 from dipdup.models import BigMapData, Contract, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
@@ -64,7 +64,7 @@ class IndexDispatcher:
             while self._tasks:
                 tasks.append(self._tasks.popleft())
 
-            async with slowdown(1.0):
+            async with slowdown(0.1):
                 await gather(*tasks)
 
             indexes_spawned = False
@@ -139,6 +139,8 @@ class IndexDispatcher:
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
 
+        block_cache.clear()
+
     async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
         self._tasks.append(
@@ -154,36 +156,48 @@ class IndexDispatcher:
             )
         )
 
-    async def _on_operations(self, datasource: TzktDatasource, operations: List[OperationData]) -> None:
-        assert len(set(op.level for op in operations)) == 1
-        level = operations[0].level
+    async def _on_operations(self, datasource: TzktDatasource, operations: Tuple[OperationData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, OperationIndex) and index.datasource == datasource:
-                index.push(level, operations)
+                index.push_operations(operations)
 
-    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: List[BigMapData]) -> None:
-        assert len(set(op.level for op in big_maps)) == 1
-        level = big_maps[0].level
+    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: Tuple[BigMapData]) -> None:
         for index in self._indexes.values():
             if isinstance(index, BigMapIndex) and index.datasource == datasource:
-                index.push(level, big_maps)
+                index.push_big_maps(big_maps)
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
-        # NOTE: Rollback could be received before head
-        if from_level - to_level in (0, 1):
-            # NOTE: Single level rollbacks are processed at Index level.
-            # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
-            for index in self._indexes.values():
-                if index.datasource == datasource:
-                    # NOTE: Continue to rollback with handler
-                    if not isinstance(index, OperationIndex):
-                        self._logger.info('Single level rollback is not supported by `%s` indexes', index._config.kind)
-                        break
-                    await index.single_level_rollback(from_level)
-            else:
-                return
+        """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
+        self._logger.warning('Datasource `%s` rolled back: %s -> %s', datasource.name, from_level, to_level)
 
-        await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
+        # NOTE: Zero difference between levels means we received no operations/big_maps on this level and thus channel level hasn't changed
+        zero_level_rollback = from_level - to_level == 0
+        single_level_rollback = from_level - to_level == 1
+
+        if zero_level_rollback:
+            self._logger.info('Zero level rollback, ignoring')
+
+        elif single_level_rollback:
+            # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
+            self._logger.info('Checking if single level rollback is possible')
+            matching_indexes = tuple(i for i in self._indexes.values() if i.datasource == datasource)
+            matching_operation_indexes = tuple(i for i in matching_indexes if isinstance(i, OperationIndex))
+            self._logger.info(
+                'Indexes: %s total, %s matching, %s support single level rollback',
+                len(self._indexes),
+                len(matching_indexes),
+                len(matching_operation_indexes),
+            )
+
+            all_indexes_are_operation = len(matching_indexes) == len(matching_operation_indexes)
+            if all_indexes_are_operation:
+                for index in cast(List[OperationIndex], matching_indexes):
+                    index.push_rollback(from_level)
+            else:
+                await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
+
+        else:
+            await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
 
 
 class DipDup:

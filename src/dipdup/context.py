@@ -90,22 +90,26 @@ class DipDupContext:
             sys.argv.remove('--reindex')
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None) -> None:
+    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> None:
         """Drop all tables or whole database and restart with the same CLI arguments"""
-        reason_str = reason.value if isinstance(reason, ReindexingReason) else 'unknown'
-        self.logger.warning('Reindexing initialized, reason: %s', reason_str)
-
-        if not reason or isinstance(reason, str):
+        if not reason:
             reason = ReindexingReason.MANUAL
+        elif isinstance(reason, str):
+            context['message'] = reason
+            reason = ReindexingReason.MANUAL
+
+        reason_str = reason.value + f' ({context["message"]})' if "message" in context else ''
+        self.logger.warning('Reindexing initialized, reason: %s', reason_str)
+        self.logger.info('Additional context: %s', context)
 
         if forbid_reindexing:
             schema = await Schema.filter().get()
             if schema.reindex:
-                raise ReindexingRequiredError(schema.reindex)
+                raise ReindexingRequiredError(schema.reindex, context)
 
             schema.reindex = reason
             await schema.save()
-            raise ReindexingRequiredError(schema.reindex)
+            raise ReindexingRequiredError(schema.reindex, context)
 
         database_config = self.config.database
         if isinstance(database_config, PostgresDatabaseConfig):
