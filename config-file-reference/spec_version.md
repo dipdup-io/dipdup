@@ -7,7 +7,7 @@ description: Header block
 DipDup specification version is used to determine the compatibility of the toolkit and configuration file format and/or features.
 
 ```yaml
-spec_version: 0.1
+spec_version: 1.2
 ```
 
 This table shows which DipDup file versions are supported by specific SDK releases.
