@@ -297,9 +297,7 @@ class OperationIndex(Index):
 
     async def _match_operations(self, operations: Iterable[OperationData]) -> Deque[MatchedOperationsT]:
         """Try to match operations in cache with all patterns from indexes. Must be wrapped in transaction."""
-        # FIXME: Side effect
-        self._head_hashes = set()
-
+        self._head_hashes.clear()
         matched_subgroups: Deque[MatchedOperationsT] = deque()
         operation_subgroups: Dict[OperationSubgroup, Deque[OperationData]] = defaultdict(deque)
         for operation in operations:
@@ -315,7 +313,7 @@ class OperationIndex(Index):
                 pattern_idx = 0
                 matched_operations: Deque[Optional[OperationData]] = deque()
 
-                # TODO: Ensure complex cases work, for ex. required argument after optional one
+                # TODO: Ensure complex cases work, e.g. when optional argument is followed by required one
                 # TODO: Add None to matched_operations where applicable (pattern is optional and operation not found)
                 while operation_idx < len(operations):
                     operation, pattern_config = operations[operation_idx], handler_config.pattern[pattern_idx]
