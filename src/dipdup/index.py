@@ -40,6 +40,10 @@ block_cache: Dict[int, BlockData] = {}
 
 
 class Index:
+    """Base class for index implementations
+
+    Provides common interface for managing index state and switching between sync and realtime modes.
+    """
     _queue: Deque
 
     def __init__(self, ctx: DipDupContext, config: ResolvedIndexConfigT, datasource: TzktDatasource) -> None:
@@ -404,7 +408,6 @@ class OperationIndex(Index):
     async def _call_matched_handler(
         self, handler_config: OperationHandlerConfig, operation_subgroup: OperationSubgroup, args: Sequence[OperationHandlerArgumentT]
     ) -> None:
-        # TODO: Docstring
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -564,7 +567,7 @@ class BigMapIndex(Index):
 
         return matched_big_maps
 
-    async def _call_matched_handler(self, handler_config: BigMapHandlerConfig, arg: BigMapDiff) -> None:
+    async def _call_matched_handler(self, handler_config: BigMapHandlerConfig, big_map_diff: BigMapDiff) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -574,7 +577,7 @@ class BigMapIndex(Index):
             self.datasource,
             # FIXME: missing `operation_id` field in API to identify operation
             None,
-            arg,
+            big_map_diff,
         )
 
     async def _get_big_map_addresses(self) -> Set[str]:
