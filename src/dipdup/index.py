@@ -259,13 +259,16 @@ class OperationIndex(Index):
 
         self._logger.info('Processing %s operations of level %s', len(operations), level)
         matched_subgroups = await self._match_operations(operations)
+
+        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_subgroups:
+            await self.state.update_status(level=level)
             return
 
         async with in_global_transaction():
             for operation_subgroup, handler_config, args in matched_subgroups:
                 await self._call_matched_handler(handler_config, operation_subgroup, args)
-            await self.state.update_status(self.state.status, level)
+            await self.state.update_status(level=level)
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
@@ -495,6 +498,8 @@ class BigMapIndex(Index):
         await self._exit_sync_state(last_level)
 
     async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]):
+        if not big_maps:
+            return
         level = self._extract_level(big_maps)
 
         # NOTE: le operator because single level rollbacks are not supported
@@ -503,7 +508,10 @@ class BigMapIndex(Index):
 
         self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
         matched_big_maps = await self._match_big_maps(big_maps)
+
+        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_big_maps:
+            await self.state.update_status(level=level)
             return
 
         async with in_global_transaction():
