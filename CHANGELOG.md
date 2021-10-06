@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Improved
+
+* Another bunch of performance optimizations. Reduced DB pressure, speeded up parallel processing of a large number of indexes.
+
 ## 3.0.4 - 2021-10-04
 
 ### Improved
