@@ -33,6 +33,7 @@ Operations = Tuple[OperationData, ...]
 OperationQueueItemT = Union[Operations, SingleLevelRollback]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
 MatchedOperationsT = Tuple[OperationSubgroup, OperationHandlerConfig, Deque[OperationHandlerArgumentT]]
+MatchedBigMapsT = Tuple[BigMapHandlerConfig, BigMapDiff]
 
 # NOTE: For initializing the index state on startup
 block_cache: Dict[int, BlockData] = {}
@@ -497,9 +498,14 @@ class BigMapIndex(Index):
         if level <= self.state.level:
             raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
 
+        self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
+        matched_big_maps = await self._match_big_maps(big_maps)
+        if not matched_big_maps:
+            return
+
         async with in_global_transaction():
-            self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
-            await self._process_big_maps(big_maps)
+            for handler_config, big_map_diff in matched_big_maps:
+                await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=level)
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
@@ -514,7 +520,7 @@ class BigMapIndex(Index):
         self,
         handler_config: BigMapHandlerConfig,
         matched_big_map: BigMapData,
-    ) -> None:
+    ) -> BigMapDiff:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
         if not handler_config.parent:
@@ -538,12 +544,29 @@ class BigMapIndex(Index):
         else:
             value = None
 
-        big_map_diff = BigMapDiff(  # type: ignore
+        return BigMapDiff(
             data=matched_big_map,
             action=matched_big_map.action,
             key=key,
             value=value,
         )
+
+    async def _match_big_maps(self, big_maps: Iterable[BigMapData]) -> Deque[MatchedBigMapsT]:
+        """Try to match big map diffs in cache with all patterns from indexes."""
+        matched_big_maps: Deque[MatchedBigMapsT] = deque()
+
+        for big_map in big_maps:
+            for handler_config in self._config.handlers:
+                big_map_matched = await self._match_big_map(handler_config, big_map)
+                if big_map_matched:
+                    arg = await self._prepare_handler_args(handler_config, big_map)
+                    matched_big_maps.append((handler_config, arg))
+
+        return matched_big_maps
+
+    async def _call_matched_handler(self, handler_config: BigMapHandlerConfig, arg: BigMapDiff) -> None:
+        if not handler_config.parent:
+            raise ConfigInitializationException
 
         await self._ctx.fire_handler(
             handler_config.callback,
@@ -551,17 +574,8 @@ class BigMapIndex(Index):
             self.datasource,
             # FIXME: missing `operation_id` field in API to identify operation
             None,
-            big_map_diff,
+            arg,
         )
-
-    async def _process_big_maps(self, big_maps: Iterable[BigMapData]) -> None:
-        """Try to match big map diffs in cache with all patterns from indexes."""
-
-        for big_map in big_maps:
-            for handler_config in self._config.handlers:
-                big_map_matched = await self._match_big_map(handler_config, big_map)
-                if big_map_matched:
-                    await self._prepare_handler_args(handler_config, big_map)
 
     async def _get_big_map_addresses(self) -> Set[str]:
         """Get addresses to fetch big map diffs from during initial synchronization"""
