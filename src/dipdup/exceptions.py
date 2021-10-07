@@ -1,13 +1,15 @@
 import textwrap
 import traceback
 from contextlib import contextmanager
-from dataclasses import dataclass
-from typing import Any, Iterator, Optional, Type
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterator, Optional, Type
 
+import sentry_sdk
 from tabulate import tabulate
 from tortoise.models import Model
 
 from dipdup import spec_version_mapping
+from dipdup.enums import ReindexingReason
 
 _tab = '\n\n' + ('_' * 80) + '\n\n'
 
@@ -64,6 +66,7 @@ class DipDupError(Exception):
         except DipDupError:
             raise
         except Exception as e:
+            sentry_sdk.capture_exception(e)
             raise DipDupError from e
 
 
@@ -116,7 +119,7 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
-        reindex = _tab + ReindexingRequiredError().help() if self.reindex else ''
+        reindex = _tab + ReindexingRequiredError(ReindexingReason.MIGRATION).help() if self.reindex else ''
         return f"""
             Project migration required!
 
@@ -131,16 +134,23 @@ class MigrationRequiredError(DipDupError):
 
 @dataclass(frozen=True, repr=False)
 class ReindexingRequiredError(DipDupError):
-    """Performed migration requires reindexing"""
+    """Unable to continue indexing with existing database"""
+
+    reason: ReindexingReason
+    context: Dict[str, Any] = field(default_factory=dict)
 
     def _help(self) -> str:
-        return """
+        return f"""
             Reindexing required!
 
-            Recent changes in the framework have made it necessary to reindex the project.
+            Reason: {self.reason.value}
 
-              1. Optionally backup a database
-              2. Run `dipdup run --reindex` 
+            Additional context: {self.context}
+
+            You may want to backup database before proceeding. After that perform one of the following actions:
+
+              * Eliminate the cause of reindexing and run `UPDATE dupdup_schema SET reindex = NULL;`
+              * Run `dipdup run --reindex` to truncate database and start indexing from scratch
         """
 
 

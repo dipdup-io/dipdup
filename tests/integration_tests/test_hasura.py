@@ -18,7 +18,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
     async def test_configure_hasura(self):
         config_path = join(dirname(__file__), 'hic_et_nunc.yml')
         config = DipDupConfig.load([config_path])
-        config.pre_initialize()
+        config.initialize(skip_imports=True)
 
         async with AsyncExitStack() as stack:
             postgres_container = PostgresContainer()
@@ -41,7 +41,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
             await dipdup._set_up_hooks()
             await dipdup._initialize_schema()
 
-            hasura_container = DbContainer('hasura/graphql-engine:v2.0.8').with_env(
+            hasura_container = DbContainer('hasura/graphql-engine:v2.0.9').with_env(
                 'HASURA_GRAPHQL_DATABASE_URL',
                 f'postgres://test:test@{postgres_ip}:5432',
             )

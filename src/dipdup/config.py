@@ -236,8 +236,15 @@ class CodegenMixin(ABC):
             yield f'from {package} import {cls}'
 
     def format_arguments(self) -> Iterator[str]:
-        for name, cls in self.iter_arguments():
-            yield f'{name}: {cls}'
+        arguments = list(self.iter_arguments())
+        i, counter = 0, Counter(name for name, _ in arguments)
+
+        for name, cls in arguments:
+            if counter[name] > 1:
+                yield f'{name}_{i}: {cls}'
+                i += 1
+            else:
+                yield f'{name}: {cls}'
 
     def locate_arguments(self) -> Dict[str, Optional[Type]]:
         kwargs: Dict[str, Optional[Type]] = {}
@@ -251,13 +258,13 @@ class PatternConfig(CodegenMixin, ABC):
     @classmethod
     def format_storage_import(cls, package: str, module_name: str) -> Tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
-        return f'from {package}.types.{module_name}.storage', storage_cls
+        return f'{package}.types.{module_name}.storage', storage_cls
 
     @classmethod
     def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> Tuple[str, str]:
         entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
-        return f'from {package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}', parameter_cls
+        return f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}', parameter_cls
 
     @classmethod
     def format_origination_argument(cls, module_name: str, optional: bool) -> Tuple[str, str]:
@@ -396,7 +403,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
             return
 
         module_name = self.destination_contract_config.module_name
-        yield 'from dipdup.models', 'Transaction'
+        yield 'dipdup.models', 'Transaction'
         yield self.format_parameter_import(package, module_name, self.entrypoint)
         yield self.format_storage_import(package, module_name)
 
@@ -459,7 +466,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             module_name = self.originated_contract_config.module_name
         else:
             raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
-        yield 'from dipdup.models', 'Origination'
+        yield 'dipdup.models', 'Origination'
         yield self.format_storage_import(package, module_name)
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
@@ -618,7 +625,6 @@ class OperationIndexConfig(IndexConfig):
 
     :param datasource: Alias of index datasource in `datasources` section
     :param contracts: Aliases of contracts being indexed in `contracts` section
-    :param stateless: Makes index dynamic. DipDup will synchronize index from the first block on every run
     :param first_level: First block to process (use with `--oneshot` run argument)
     :param last_level: Last block to process (use with `--oneshot` run argument)
     :param handlers: List of indexer handlers
@@ -629,7 +635,6 @@ class OperationIndexConfig(IndexConfig):
     types: Optional[List[OperationType]] = None
     contracts: Optional[List[Union[str, ContractConfig]]] = None
 
-    stateless: bool = False
     first_level: int = 0
     last_level: int = 0
 
@@ -666,13 +671,13 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     def format_key_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
         key_cls = f'{snake_to_pascal(module_name)}Key'
         key_module = f'{path}_key'
-        return f'from {package}.types.{module_name}.big_map.{key_module}', key_cls
+        return f'{package}.types.{module_name}.big_map.{key_module}', key_cls
 
     @classmethod
     def format_value_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
         value_cls = f'{snake_to_pascal(module_name)}Value'
         value_module = f'{path}_value'
-        return f'from {package}.types.{module_name}.big_map.{value_module}', value_cls
+        return f'{package}.types.{module_name}.big_map.{value_module}', value_cls
 
     @classmethod
     def format_big_map_diff_argument(cls, module_name: str) -> Tuple[str, str]:
@@ -737,7 +742,6 @@ class BigMapIndexConfig(IndexConfig):
     datasource: Union[str, TzktDatasourceConfig]
     handlers: List[BigMapHandlerConfig]
 
-    stateless: bool = False
     first_level: int = 0
     last_level: int = 0
 
@@ -888,6 +892,7 @@ class DipDupConfig:
         self._default_hooks: bool = False
         self._links_resolved: Set[str] = set()
         self._imports_resolved: Set[str] = set()
+        self._package_path: Optional[str] = None
 
     @property
     def environment(self) -> Dict[str, str]:
@@ -899,8 +904,17 @@ class DipDupConfig:
 
     @property
     def package_path(self) -> str:
-        package = importlib.import_module(self.package)
-        return dirname(package.__file__)
+        if not self._package_path:
+            package = importlib.import_module(self.package)
+            self._package_path = dirname(package.__file__)
+
+        return self._package_path
+
+    @package_path.setter
+    def package_path(self, value: str):
+        if self._package_path:
+            raise ConfigInitializationException
+        self._package_path = value
 
     @classmethod
     def load(
@@ -972,14 +986,14 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
-    def pre_initialize(self) -> None:
+    def initialize(self, skip_imports: bool = False) -> None:
         self._set_names()
         self._resolve_templates()
         self._resolve_links()
         self._validate()
 
-    def initialize(self) -> None:
-        self.pre_initialize()
+        if skip_imports:
+            return
 
         for index_config in self.indexes.values():
             if index_config.name in self._imports_resolved:
@@ -991,12 +1005,12 @@ class DipDupConfig:
                 raise ConfigInitializationException
 
             elif isinstance(index_config, OperationIndexConfig):
-                self._load_operation_index_types(index_config)
-                self._load_index_callbacks(index_config)
+                self._import_operation_index_types(index_config)
+                self._import_index_callbacks(index_config)
 
             elif isinstance(index_config, BigMapIndexConfig):
-                self._load_big_map_index_types(index_config)
-                self._load_index_callbacks(index_config)
+                self._import_big_map_index_types(index_config)
+                self._import_index_callbacks(index_config)
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1151,7 +1165,7 @@ class DipDupConfig:
             for name, config in named_configs.items():
                 config.name = name
 
-    def _load_operation_index_types(self, index_config: OperationIndexConfig) -> None:
+    def _import_operation_index_types(self, index_config: OperationIndexConfig) -> None:
         for handler_config in index_config.handlers:
             for pattern_config in handler_config.pattern:
                 if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
@@ -1165,11 +1179,11 @@ class DipDupConfig:
                 else:
                     raise NotImplementedError
 
-    def _load_index_callbacks(self, index_config: ResolvedIndexConfigT) -> None:
+    def _import_index_callbacks(self, index_config: ResolvedIndexConfigT) -> None:
         for handler_config in index_config.handlers:
             handler_config.initialize_callback_fn(self.package)
 
-    def _load_big_map_index_types(self, index_config: BigMapIndexConfig) -> None:
+    def _import_big_map_index_types(self, index_config: BigMapIndexConfig) -> None:
         for big_map_handler_config in index_config.handlers:
             big_map_handler_config.initialize_big_map_type(self.package)
 

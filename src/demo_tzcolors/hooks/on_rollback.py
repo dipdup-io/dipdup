@@ -1,5 +1,6 @@
 from dipdup.context import HookContext
 from dipdup.datasources.datasource import Datasource
+from dipdup.enums import ReindexingReason
 
 
 async def on_rollback(
@@ -9,4 +10,4 @@ async def on_rollback(
     to_level: int,
 ) -> None:
     await ctx.execute_sql('on_rollback')
-    await ctx.reindex(reason='reorg message received')
+    await ctx.reindex(ReindexingReason.ROLLBACK)
