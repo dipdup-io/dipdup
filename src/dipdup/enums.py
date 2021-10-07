@@ -10,6 +10,7 @@ class MessageType(Enum):
 class IndexType(Enum):
     operation = 'operation'
     big_map = 'big_map'
+    head = 'head'
 
 
 class IndexStatus(Enum):

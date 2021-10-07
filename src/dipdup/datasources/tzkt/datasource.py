@@ -17,6 +17,7 @@ from dipdup.config import (
     HTTPConfig,
     OperationHandlerOriginationPatternConfig,
     OperationIndexConfig,
+    HeadIndexConfig,
     ResolvedIndexConfigT,
 )
 from dipdup.datasources.datasource import IndexDatasource
@@ -501,6 +502,9 @@ class TzktDatasource(IndexDatasource):
                     self._big_map_subscriptions[address] = set()
                 if path not in self._big_map_subscriptions[address]:
                     self._big_map_subscriptions[address].add(path)
+
+        elif isinstance(index_config, HeadIndexConfig):
+            pass  # NOTE: head subscription is enabled by default
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

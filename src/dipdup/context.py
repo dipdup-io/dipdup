@@ -21,6 +21,7 @@ from dipdup.config import (
     HookConfig,
     IndexTemplateConfig,
     OperationIndexConfig,
+    HeadIndexConfig,
     PostgresDatabaseConfig,
     ResolvedIndexConfigT,
     TzktDatasourceConfig,
@@ -165,10 +166,10 @@ class DipDupContext:
         await self._spawn_index(name)
 
     async def _spawn_index(self, name: str) -> None:
-        from dipdup.index import BigMapIndex, OperationIndex
+        from dipdup.index import BigMapIndex, OperationIndex, HeadIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.indexes[name])
-        index: Union[OperationIndex, BigMapIndex]
+        index: Union[OperationIndex, BigMapIndex, HeadIndex]
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
         datasource = self.datasources[datasource_name]
         if not isinstance(datasource, TzktDatasource):
@@ -178,6 +179,8 @@ class DipDupContext:
             index = OperationIndex(self, index_config, datasource)
         elif isinstance(index_config, BigMapIndexConfig):
             index = BigMapIndex(self, index_config, datasource)
+        elif isinstance(index_config, HeadIndexConfig):
+            index = HeadIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 

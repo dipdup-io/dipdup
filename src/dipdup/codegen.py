@@ -22,6 +22,7 @@ from dipdup.config import (
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
+    HeadIndexConfig,
     TzktDatasourceConfig,
     default_hooks,
 )
@@ -207,6 +208,9 @@ class DipDupCodeGenerator:
                     big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_path}_value.json')
                     write(big_map_value_schema_path, json.dumps(big_map_value_schema, indent=4))
 
+            elif isinstance(index_config, HeadIndexConfig):
+                pass
+
             elif isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException
 
@@ -272,11 +276,7 @@ class DipDupCodeGenerator:
         """Generate handler stubs with typehints from templates if not exist"""
         handler_config: HandlerConfig
         for index_config in self._config.indexes.values():
-            if isinstance(index_config, OperationIndexConfig):
-                for handler_config in index_config.handlers:
-                    await self._generate_callback(handler_config)
-
-            elif isinstance(index_config, BigMapIndexConfig):
+            if isinstance(index_config, (OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig)):
                 for handler_config in index_config.handlers:
                     await self._generate_callback(handler_config)
 
