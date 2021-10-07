@@ -98,9 +98,8 @@ class DipDupContext:
             context['message'] = reason
             reason = ReindexingReason.MANUAL
 
-        reason_str = reason.value + f' ({context["message"]})' if "message" in context else ''
+        reason_str = reason.value + f' ({context["message"]})' if "message" in context else reason.value
         self.logger.warning('Reindexing initialized, reason: %s', reason_str)
-        self.logger.info('Additional context: %s', context)
 
         if forbid_reindexing:
             schema = await Schema.filter().get()

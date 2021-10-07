@@ -9,8 +9,8 @@ import sys
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from contextlib import suppress
-from copy import copy, deepcopy
-from dataclasses import asdict, field
+from copy import copy
+from dataclasses import field
 from enum import Enum
 from functools import reduce
 from os import environ as env
@@ -608,10 +608,14 @@ class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConf
         return self.datasource
 
     def hash(self) -> str:
-        config_json = asdict(self)
-        config_json['datasource']['http'] = None
+        config_json = json.dumps(self, default=pydantic_encoder)
 
-        config_hash = hashlib.sha256(str(config_json).encode()).hexdigest()
+        # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
+        config_dict = json.loads(config_json)
+        config_dict['datasource'].pop('http', None)
+
+        config_json = json.dumps(config_dict)
+        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
         return config_hash
 
     def hash_old(self) -> str:
