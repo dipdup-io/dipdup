@@ -42,12 +42,6 @@ image:
 	docker build . -t dipdup:${TAG}
 	docker build . -t dipdup:${TAG}-pytezos --build-arg PLUGINS=pytezos
 
-up:
-	docker-compose up -d hasura db
-
-down:
-	docker-compose down -v hasura db
-
 release-patch:
 	bumpversion patch
 	git push --tags
