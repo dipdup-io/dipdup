@@ -9,8 +9,8 @@ import sys
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from contextlib import suppress
-from copy import copy
-from dataclasses import field
+from copy import copy, deepcopy
+from dataclasses import asdict, field
 from enum import Enum
 from functools import reduce
 from os import environ as env
@@ -601,22 +601,23 @@ class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConf
         NameMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
 
-    def dumps(self) -> str:
-        return json.dumps(self, default=pydantic_encoder)
-
-    def json(self) -> Dict[str, Any]:
-        return json.loads(self.dumps())
-
-    def hash(self) -> str:
-        config_json = self.dumps()
-        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
-        return config_hash
-
     @property
     def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise ConfigInitializationException
         return self.datasource
+
+    def hash(self) -> str:
+        config_json = asdict(self)
+        config_json['datasource']['http'] = None
+
+        config_hash = hashlib.sha256(str(config_json).encode()).hexdigest()
+        return config_hash
+
+    def hash_old(self) -> str:
+        config_json = json.dumps(self, default=pydantic_encoder)
+        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
+        return config_hash
 
 
 @dataclass
