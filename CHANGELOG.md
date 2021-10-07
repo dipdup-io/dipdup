@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Fixed
+
+* Fixed index config hash calculation. Hashes of existing indexes in database will be updated during the first run.
+
 ## 3.0.4 - 2021-10-04
 
 ### Improved
