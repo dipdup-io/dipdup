@@ -18,10 +18,10 @@ from dipdup.config import (
     ContractConfig,
     DipDupConfig,
     HandlerConfig,
+    HeadIndexConfig,
     HookConfig,
     IndexTemplateConfig,
     OperationIndexConfig,
-    HeadIndexConfig,
     PostgresDatabaseConfig,
     ResolvedIndexConfigT,
     TzktDatasourceConfig,
@@ -166,7 +166,7 @@ class DipDupContext:
         await self._spawn_index(name)
 
     async def _spawn_index(self, name: str) -> None:
-        from dipdup.index import BigMapIndex, OperationIndex, HeadIndex
+        from dipdup.index import BigMapIndex, HeadIndex, OperationIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.indexes[name])
         index: Union[OperationIndex, BigMapIndex, HeadIndex]

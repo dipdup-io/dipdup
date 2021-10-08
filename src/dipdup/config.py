@@ -771,6 +771,7 @@ class HeadIndexConfig(IndexConfig):
 
 IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, IndexTemplateConfig]
 ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig]
+ContractIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig]
 HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
@@ -1052,7 +1053,7 @@ class DipDupConfig:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
         # NOTE: Duplicate contracts
-        contracts = [cast(ResolvedIndexConfigT, i).contracts for i in self.indexes.values() if hasattr(i, 'contracts')]
+        contracts = [cast(ContractIndexConfigT, i).contracts for i in self.indexes.values() if hasattr(i, 'contracts')]
         plain_contracts = reduce(operator.add, contracts) if contracts else []  # type: ignore
         # NOTE: After pre_initialize
         duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
@@ -1170,8 +1171,8 @@ class DipDupConfig:
             if isinstance(index_config.datasource, str):
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
-            for handler in index_config.handlers:
-                handler.parent = index_config
+            for head_handler_config in index_config.handlers:
+                head_handler_config.parent = index_config
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

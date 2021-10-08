@@ -14,10 +14,10 @@ from aiosignalrcore.transport.websockets.connection import ConnectionState  # ty
 from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
+    HeadIndexConfig,
     HTTPConfig,
     OperationHandlerOriginationPatternConfig,
     OperationIndexConfig,
-    HeadIndexConfig,
     ResolvedIndexConfigT,
 )
 from dipdup.datasources.datasource import IndexDatasource

@@ -31,7 +31,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException, DipDupException
 from dipdup.hasura import HasuraGateway
-from dipdup.index import BigMapIndex, Index, OperationIndex, HeadIndex, block_cache
+from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache
 from dipdup.models import BigMapData, Contract, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema

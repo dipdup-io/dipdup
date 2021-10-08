@@ -18,11 +18,11 @@ from dipdup.config import (
     DatasourceConfigT,
     DipDupConfig,
     HandlerConfig,
+    HeadIndexConfig,
     IndexTemplateConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
-    HeadIndexConfig,
     TzktDatasourceConfig,
     default_hooks,
 )

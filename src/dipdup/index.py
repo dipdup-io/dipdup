@@ -9,28 +9,19 @@ from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
     ContractConfig,
+    HeadIndexConfig,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerPatternConfigT,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
-    HeadIndexConfig,
     OperationType,
     ResolvedIndexConfigT,
 )
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, InvalidDataError, ReindexingReason
-from dipdup.models import (
-    BigMapData,
-    BigMapDiff,
-    BlockData,
-    IndexStatus,
-    OperationData,
-    Origination,
-    Transaction,
-    HeadBlockData,
-)
+from dipdup.models import BigMapData, BigMapDiff, BlockData, HeadBlockData, IndexStatus, OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
@@ -591,19 +582,14 @@ class HeadIndex(Index):
 
             level = head.level
             if level <= self.state.level:
-                raise RuntimeError(
-                    f'Level of head must be higher than index state level: {level} <= {self.state.level}')
+                raise RuntimeError(f'Level of head must be higher than index state level: {level} <= {self.state.level}')
 
             async with in_global_transaction():
                 self._logger.info('Processing head info of level %s', level)
                 for handler_config in self._config.handlers:
-                    await self._ctx.fire_handler(
-                        handler_config.callback,
-                        handler_config.parent.name,
-                        self.datasource,
-                        head.hash,
-                        head
-                    )
+                    if not handler_config.parent:
+                        raise ConfigInitializationException
+                    await self._ctx.fire_handler(handler_config.callback, handler_config.parent.name, self.datasource, head.hash, head)
                 await self.state.update_status(level=level)
 
     def push_head(self, head: HeadBlockData) -> None:
