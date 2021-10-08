@@ -9,6 +9,7 @@ from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
     ContractConfig,
+    HeadIndexConfig,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerPatternConfigT,
@@ -20,7 +21,7 @@ from dipdup.config import (
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, InvalidDataError, ReindexingReason
-from dipdup.models import BigMapData, BigMapDiff, BlockData, IndexStatus, OperationData, Origination, Transaction
+from dipdup.models import BigMapData, BigMapDiff, BlockData, HeadBlockData, IndexStatus, OperationData, Origination, Transaction
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
@@ -68,11 +69,16 @@ class Index:
         if self._state:
             raise RuntimeError('Index state is already initialized')
 
+        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.first_level:
+            level = self._config.first_level
+        else:
+            level = 0
+
         self._state, created = await models.Index.get_or_create(
             name=self._config.name,
             type=self._config.kind,
             defaults=dict(
-                level=self._config.first_level,
+                level=level,
                 config_hash=self._config.hash(),
                 template=self._config.parent.name if self._config.parent else None,
                 template_values=self._config.template_values,
@@ -93,7 +99,7 @@ class Index:
 
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied
-        if self._config.last_level:
+        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.last_level:
             last_level = self._config.last_level
             await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
@@ -601,3 +607,35 @@ class BigMapIndex(Index):
         for handler_config in self._config.handlers:
             paths.add(handler_config.path)
         return paths
+
+
+class HeadIndex(Index):
+    _config: HeadIndexConfig
+
+    def __init__(self, ctx: DipDupContext, config: HeadIndexConfig, datasource: TzktDatasource) -> None:
+        super().__init__(ctx, config, datasource)
+        self._queue: Deque[HeadBlockData] = deque()
+
+    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
+        self._logger.info('Setting index level to %s and moving on', last_level)
+        await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
+
+    async def _process_queue(self) -> None:
+        while self._queue:
+            head = self._queue.popleft()
+            self._logger.info('Processing head realtime message, %s left in queue', len(self._queue))
+
+            level = head.level
+            if level <= self.state.level:
+                raise RuntimeError(f'Level of head must be higher than index state level: {level} <= {self.state.level}')
+
+            async with in_global_transaction():
+                self._logger.info('Processing head info of level %s', level)
+                for handler_config in self._config.handlers:
+                    if not handler_config.parent:
+                        raise ConfigInitializationException
+                    await self._ctx.fire_handler(handler_config.callback, handler_config.parent.name, self.datasource, head.hash, head)
+                await self.state.update_status(level=level)
+
+    def push_head(self, head: HeadBlockData) -> None:
+        self._queue.append(head)

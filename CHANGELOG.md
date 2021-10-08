@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+* New index type `head` allowing to handle head (reduced block header info) updates
+
 ### Improved
 
 * Another bunch of performance optimizations. Reduced DB pressure, speeded up parallel processing of a large number of indexes.
