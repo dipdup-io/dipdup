@@ -62,7 +62,7 @@ class Index:
         if self._state:
             raise RuntimeError('Index state is already initialized')
 
-        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)):
+        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.first_level:
             level = self._config.first_level
         else:
             level = 0
@@ -92,7 +92,7 @@ class Index:
 
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied
-        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)):
+        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.last_level:
             last_level = self._config.last_level
             await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
