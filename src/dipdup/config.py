@@ -623,7 +623,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConf
 
     def hash_old(self) -> str:
         """Calculate hash to ensure config not changed since last run.
-        
+
         Old incorrect algorightm (false positives). Used only to update hash of existing indexes.
         """
         config_json = json.dumps(self, default=pydantic_encoder)
@@ -979,6 +979,12 @@ class DipDupConfig:
             return self.datasources[name]
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
+
+    def get_index(self, name: str) -> IndexConfigT:
+        try:
+            return self.indexes[name]
+        except KeyError as e:
+            raise ConfigurationError(f'Index `{name}` not found in `indexes` config section') from e
 
     def get_template(self, name: str) -> ResolvedIndexConfigT:
         try:

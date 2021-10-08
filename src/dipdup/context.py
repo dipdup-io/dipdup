@@ -166,7 +166,7 @@ class DipDupContext:
     async def _spawn_index(self, name: str) -> None:
         from dipdup.index import BigMapIndex, OperationIndex
 
-        index_config = cast(ResolvedIndexConfigT, self.config.indexes[name])
+        index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
         index: Union[OperationIndex, BigMapIndex]
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
         datasource = self.datasources[datasource_name]

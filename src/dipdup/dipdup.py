@@ -146,10 +146,11 @@ class IndexDispatcher:
                     await self._ctx.reindex(ReindexingReason.MISSING_INDEX_TEMPLATE)
                 await self._ctx.add_index(name, template, template_values)
 
-            # NOTE: Index config is missing
+            # NOTE: Index config is missing, possibly just commented-out
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
 
+        # NOTE: Cached blocks used only on index state init
         block_cache.clear()
 
     async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
