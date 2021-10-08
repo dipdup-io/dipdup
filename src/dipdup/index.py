@@ -9,6 +9,7 @@ from dipdup.config import (
     BigMapHandlerConfig,
     BigMapIndexConfig,
     ContractConfig,
+    HeadHandlerConfig,
     HeadIndexConfig,
     OperationHandlerConfig,
     OperationHandlerOriginationPatternConfig,
@@ -421,11 +422,11 @@ class OperationIndex(Index):
             raise ConfigInitializationException
 
         await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            self.datasource,
-            operation_subgroup.hash + ': {}',
-            *args,
+            name=handler_config.callback,
+            index=handler_config.parent.name,
+            datasource=self.datasource,
+            fmt=operation_subgroup.hash + ': {}',
+            args=args,
         )
 
     async def _get_transaction_addresses(self) -> Set[str]:
@@ -586,12 +587,12 @@ class BigMapIndex(Index):
             raise ConfigInitializationException
 
         await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            self.datasource,
+            name=handler_config.callback,
+            index=handler_config.parent.name,
+            datasource=self.datasource,
             # FIXME: missing `operation_id` field in API to identify operation
-            None,
-            big_map_diff,
+            fmt=None,
+            args=(big_map_diff,),
         )
 
     async def _get_big_map_addresses(self) -> Set[str]:
@@ -632,10 +633,20 @@ class HeadIndex(Index):
             async with in_global_transaction():
                 self._logger.info('Processing head info of level %s', level)
                 for handler_config in self._config.handlers:
-                    if not handler_config.parent:
-                        raise ConfigInitializationException
-                    await self._ctx.fire_handler(handler_config.callback, handler_config.parent.name, self.datasource, head.hash, head)
+                    await self._call_matched_handler(handler_config, head)
                 await self.state.update_status(level=level)
+
+    async def _call_matched_handler(self, handler_config: HeadHandlerConfig, head: HeadBlockData) -> None:
+        if not handler_config.parent:
+            raise ConfigInitializationException
+
+        await self._ctx.fire_handler(
+            name=handler_config.callback,
+            index=handler_config.parent.name,
+            datasource=self.datasource,
+            fmt=head.hash,
+            args=(head,),
+        )
 
     def push_head(self, head: HeadBlockData) -> None:
         self._queue.append(head)
