@@ -14,6 +14,7 @@ from aiosignalrcore.transport.websockets.connection import ConnectionState  # ty
 from dipdup.config import (
     BigMapIndexConfig,
     ContractConfig,
+    HeadIndexConfig,
     HTTPConfig,
     OperationHandlerOriginationPatternConfig,
     OperationIndexConfig,
@@ -501,6 +502,10 @@ class TzktDatasource(IndexDatasource):
                     self._big_map_subscriptions[address] = set()
                 if path not in self._big_map_subscriptions[address]:
                     self._big_map_subscriptions[address].add(path)
+
+        # NOTE: head subscription is enabled by default
+        elif isinstance(index_config, HeadIndexConfig):
+            pass
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
