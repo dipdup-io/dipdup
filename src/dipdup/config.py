@@ -608,10 +608,13 @@ class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConf
         return self.datasource
 
     def hash(self) -> str:
+        """Calculate hash to ensure config not changed since last run."""
         config_json = json.dumps(self, default=pydantic_encoder)
 
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
         config_dict = json.loads(config_json)
+
+        # NOTE: We need to preserve datasource URL but remove it's HTTP tunables to avoid false-positives.
         config_dict['datasource'].pop('http', None)
 
         config_json = json.dumps(config_dict)
@@ -619,6 +622,10 @@ class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConf
         return config_hash
 
     def hash_old(self) -> str:
+        """Calculate hash to ensure config not changed since last run.
+        
+        Old incorrect algorightm (false positives). Used only to update hash of existing indexes.
+        """
         config_json = json.dumps(self, default=pydantic_encoder)
         config_hash = hashlib.sha256(config_json.encode()).hexdigest()
         return config_hash
