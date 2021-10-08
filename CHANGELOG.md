@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+* New index type `head` allowing to handle head (reduced block header info) updates
+
 ## 3.0.4 - 2021-10-04
 
 ### Improved

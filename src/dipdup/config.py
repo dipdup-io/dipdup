@@ -750,8 +750,28 @@ class BigMapIndexConfig(IndexConfig):
         return list(set([cast(ContractConfig, handler_config.contract) for handler_config in self.handlers]))
 
 
-IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, IndexTemplateConfig]
-ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig]
+@dataclass
+class HeadHandlerConfig(HandlerConfig, kind='handler'):
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'HeadBlockData'
+        yield package, 'models as models'
+
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'head', 'HeadBlockData'
+
+
+@dataclass
+class HeadIndexConfig(IndexConfig):
+    kind: Literal['head']
+    datasource: Union[str, TzktDatasourceConfig]
+    handlers: List[HeadHandlerConfig]
+
+
+IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, IndexTemplateConfig]
+ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig]
+ContractIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig]
 HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
@@ -1012,6 +1032,9 @@ class DipDupConfig:
                 self._import_big_map_index_types(index_config)
                 self._import_index_callbacks(index_config)
 
+            elif isinstance(index_config, HeadIndexConfig):
+                self._import_index_callbacks(index_config)
+
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1030,7 +1053,7 @@ class DipDupConfig:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
         # NOTE: Duplicate contracts
-        contracts = [cast(ResolvedIndexConfigT, i).contracts for i in self.indexes.values() if cast(ResolvedIndexConfigT, i).contracts]
+        contracts = [cast(ContractIndexConfigT, i).contracts for i in self.indexes.values() if hasattr(i, 'contracts')]
         plain_contracts = reduce(operator.add, contracts) if contracts else []  # type: ignore
         # NOTE: After pre_initialize
         duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
@@ -1143,6 +1166,13 @@ class DipDupConfig:
                 # self._callback_patterns[handler.callback].append(handler.pattern)
                 if isinstance(handler.contract, str):
                     handler.contract = self.get_contract(handler.contract)
+
+        elif isinstance(index_config, HeadIndexConfig):
+            if isinstance(index_config.datasource, str):
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+
+            for head_handler_config in index_config.handlers:
+                head_handler_config.parent = index_config
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
