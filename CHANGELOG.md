@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+* New index type `head` allowing to handle head (reduced block header info) updates
+
 ### Fixed
 
 * Fixed index config hash calculation. Hashes of existing indexes in database will be updated during the first run.
