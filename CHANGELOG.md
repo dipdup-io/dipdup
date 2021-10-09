@@ -4,7 +4,11 @@
 
 ### Added
 
-* New index type `head` allowing to handle head (reduced block header info) updates
+* New index type `head` allowing to handle head (reduced block header info) updates.
+
+### Improved
+
+* Raise `DatabaseConfigurationError` exception when project models are not compatible with GraphQL.
 
 ## 3.0.4 - 2021-10-04
 
