@@ -1,9 +1,11 @@
 from contextlib import AsyncExitStack
+import logging
 from os.path import dirname, join
-from unittest import IsolatedAsyncioTestCase
+from unittest import IsolatedAsyncioTestCase, skip
 from unittest.mock import AsyncMock
 
 from tortoise.exceptions import ConfigurationError
+from tortoise.transactions import get_connection
 
 import dipdup.context as context
 from dipdup.config import DipDupConfig, SqliteDatabaseConfig
@@ -25,7 +27,7 @@ async def _create_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:
     return dipdup
 
 
-class ConfigTest(IsolatedAsyncioTestCase):
+class ReindexingTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.path = join(dirname(__file__), 'dipdup.yml')
 
@@ -84,3 +86,38 @@ class ConfigTest(IsolatedAsyncioTestCase):
             # Assert
             schema = await Schema.filter().get()
             self.assertEqual(ReindexingReason.MANUAL, schema.reindex)
+
+    async def test_reindex_schema_table_migration(self) -> None:
+        async with AsyncExitStack() as stack:
+            # Arrange
+            context.forbid_reindexing = True
+            config = DipDupConfig.load([self.path])
+            dipdup = await _create_dipdup(config, stack)
+            await dipdup._initialize_schema()
+
+            conn = get_connection(None)
+            await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{ReindexingReason.MANUAL.value}"')
+
+            # Act
+            with self.assertRaises(ReindexingRequiredError):
+                await dipdup._initialize_schema()
+
+            # Assert
+            schema = await Schema.filter().get()
+            self.assertEqual(ReindexingReason.MANUAL, schema.reindex)
+
+    @skip('FIXME: Exiting stack will kill in-memory database :(')
+    async def test_reindex_invalid_schema(self) -> None:
+        async with AsyncExitStack() as stack:
+            # Arrange
+            context.forbid_reindexing = True
+            config = DipDupConfig.load([self.path])
+            dipdup = await _create_dipdup(config, stack)
+            await dipdup._initialize_schema()
+
+            conn = get_connection(None)
+            await conn.execute_script(f'ALTER TABLE dipdup_index DROP COLUMN config_hash')
+
+            # Act
+            dipdup = await _create_dipdup(config, stack)
+            await dipdup._initialize_schema()

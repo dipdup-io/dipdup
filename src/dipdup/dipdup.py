@@ -12,17 +12,8 @@ from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import (
-    BcdDatasourceConfig,
-    CoinbaseDatasourceConfig,
-    ContractConfig,
-    DatasourceConfigT,
-    DipDupConfig,
-    IndexTemplateConfig,
-    PostgresDatabaseConfig,
-    TzktDatasourceConfig,
-    default_hooks,
-)
+from dipdup.config import (BcdDatasourceConfig, CoinbaseDatasourceConfig, ContractConfig, DatasourceConfigT, DipDupConfig,
+                           IndexTemplateConfig, PostgresDatabaseConfig, TzktDatasourceConfig, default_hooks)
 from dipdup.context import CallbackManager, DipDupContext, pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
@@ -322,13 +313,24 @@ class DipDup:
             schema_name = self._config.database.schema_name
             await set_schema(conn, schema_name)
 
+        # NOTE: Try to fetch existing schema
         try:
             self._schema = await Schema.get_or_none(name=schema_name)
+
+        # NOTE: No such table yet
         except OperationalError:
             self._schema = None
+
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError:
-            await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
+            try:
+                # NOTE: A small migration, ReindexingReason became ReversedEnum
+                for item in ReindexingReason:
+                    await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{item.name}" WHERE reindex = "{item.value}"')
+
+                self._schema = await Schema.get_or_none(name=schema_name)
+            except KeyError:
+                await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
         schema_hash = get_schema_hash(conn)
 
