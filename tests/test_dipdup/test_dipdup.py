@@ -3,16 +3,13 @@ from datetime import datetime
 from os.path import dirname, join
 from unittest import IsolatedAsyncioTestCase
 
-import dipdup.context as context
-from dipdup.exceptions import ReindexingRequiredError
-
-context.forbid_reindexing = True
 from pytz import UTC
 
 from dipdup.config import DipDupConfig, SqliteDatabaseConfig
 from dipdup.context import pending_indexes
 from dipdup.dipdup import DipDup, IndexDispatcher
 from dipdup.enums import IndexStatus, IndexType
+from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Index
 
 
@@ -22,7 +19,7 @@ async def _create_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:
 
     dipdup = DipDup(config)
     await dipdup._create_datasources()
-    await dipdup._set_up_database(stack, False)
+    await dipdup._set_up_database(stack)
     await dipdup._set_up_hooks()
     await dipdup._initialize_schema()
     return dipdup

@@ -133,34 +133,34 @@ class RollbackTest(IsolatedAsyncioTestCase):
     async def test_rollback_exact(self):
         with patch_dipdup(datasource_run_exact):
             dipdup = get_dipdup()
-            await dipdup.run(False, False, False)
+            await dipdup.run(False, False)
 
             assert dipdup._ctx.reindex.call_count == 0
 
     async def test_rollback_more(self):
         with patch_dipdup(datasource_run_more):
             dipdup = get_dipdup()
-            await dipdup.run(False, False, False)
+            await dipdup.run(False, False)
 
             assert dipdup._ctx.reindex.call_count == 0
 
     async def test_rollback_less(self):
         with patch_dipdup(datasource_run_less):
             dipdup = get_dipdup()
-            await dipdup.run(False, False, False)
+            await dipdup.run(False, False)
 
             assert dipdup._ctx.reindex.call_count == 1
 
     async def test_rollback_zero(self):
         with patch_dipdup(datasource_run_zero):
             dipdup = get_dipdup()
-            await dipdup.run(False, False, False)
+            await dipdup.run(False, False)
 
             assert dipdup._ctx.reindex.call_count == 0
 
     async def test_rollback_deep(self):
         with patch_dipdup(datasource_run_deep):
             dipdup = get_dipdup()
-            await dipdup.run(False, False, False)
+            await dipdup.run(False, False)
 
             assert dipdup._ctx.reindex.call_count == 1

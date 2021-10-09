@@ -4,19 +4,21 @@ import hashlib
 import importlib
 import logging
 from contextlib import asynccontextmanager
+from enum import Enum
 from os.path import dirname, join
 from pathlib import Path
-from typing import Any, AsyncIterator, Iterator, Optional, Tuple, Type
+from typing import Any, AsyncIterator, Iterator, List, Optional, Tuple, Type, Union
 
-from tortoise import Tortoise
+from tortoise import Model, Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient, TransactionContext
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
-from tortoise.models import Model
+from tortoise.fields.data import CharEnumType, CharField
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
 
+from dipdup.enums import ReversedEnum
 from dipdup.exceptions import DatabaseConfigurationError
 from dipdup.utils import pascal_to_snake
 
@@ -151,6 +153,24 @@ async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
     await conn.execute_script(f"SELECT truncate_schema('{name}')")
 
 
+async def wipe_schema(conn: BaseDBAsyncClient, name: str, immune_tables: Optional[List[str]]) -> None:
+    if isinstance(conn, SqliteClient):
+        raise NotImplementedError
+
+    immune_schema_name = f'{name}_immune'
+    if immune_tables:
+        await create_schema(conn, immune_schema_name)
+        for table in immune_tables:
+            await move_table(conn, table, name, immune_schema_name)
+
+    await truncate_schema(conn, name)
+
+    if immune_tables:
+        for table in immune_tables:
+            await move_table(conn, table, immune_schema_name, name)
+        await drop_schema(conn, immune_schema_name)
+
+
 async def drop_schema(conn: BaseDBAsyncClient, name: str) -> None:
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
@@ -189,3 +209,51 @@ def validate_models(package: str) -> None:
             # NOTE: Leads to GraphQL issues
             if field_name == table_name:
                 raise DatabaseConfigurationError('Model fields must differ from table name', model)
+
+
+class ReversedCharEnumFieldInstance(CharField):
+    def __init__(
+        self,
+        enum_type: Type[ReversedEnum],
+        description: Optional[str] = None,
+        max_length: int = 0,
+        **kwargs: Any,
+    ) -> None:
+
+        # Automatic description for the field if not specified by the user
+        if description is None:
+            description = "\n".join([f"{e.name}: {str(e.value)}" for e in enum_type])[:2048]
+
+        # Automatic CharField max_length
+        if max_length == 0:
+            for item in enum_type:
+                item_len = len(str(item.name))
+                if item_len > max_length:
+                    max_length = item_len
+
+        super().__init__(description=description, max_length=max_length, **kwargs)
+        self.enum_type = enum_type
+
+    def to_python_value(self, value: Union[Enum, str, None]) -> Union[Enum, None]:
+        if value is None:
+            return None
+        if isinstance(value, Enum):
+            return value
+        return self.enum_type[value]
+
+    def to_db_value(self, value: Optional[Any], instance: Union[Type[Model], Model]) -> Union[str, None]:
+        if value is None:
+            return None
+        if isinstance(value, Enum):
+            return value.name
+        return self.enum_type[value].name
+
+
+def ReversedCharEnumField(  # pylint: disable=invalid-name
+    enum_type: Type[CharEnumType],
+    description: Optional[str] = None,
+    max_length: int = 0,
+    **kwargs: Any,
+) -> CharEnumType:
+
+    return ReversedCharEnumFieldInstance(enum_type, description, max_length, **kwargs)  # type: ignore

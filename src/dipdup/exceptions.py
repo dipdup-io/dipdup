@@ -84,7 +84,6 @@ class ConfigurationError(DipDupError):
         """
 
 
-# TODO: Any cases besides model validation?
 @dataclass(frozen=True, repr=False)
 class DatabaseConfigurationError(ConfigurationError):
     """DipDup can't initialize database with given models and parameters"""
@@ -148,12 +147,12 @@ class ReindexingRequiredError(DipDupError):
 
             Additional context:
 
-              {additional_context}
+                {additional_context}
 
             You may want to backup database before proceeding. After that perform one of the following actions:
 
-              * Eliminate the cause of reindexing and run `UPDATE dupdup_schema SET reindex = NULL;`
-              * Run `dipdup run --reindex` to truncate database and start indexing from scratch
+                * Eliminate the cause of reindexing and run `dipdup schema approve`
+                * Run `dipdup schema wipe [--immune]` command to drop database and start indexing from scratch
         """
 
 
