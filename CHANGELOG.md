@@ -4,7 +4,15 @@
 
 ### Added
 
-* New index type `head` allowing to handle head (reduced block header info) updates
+* New index type `head` allowing to handle head (reduced block header info) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.
+
+### Changed
+
+* Values of `dipdup_schema.reindex` field updated to simplify querying database.
+
+### Fixed
+
+* Fixed `ReindexRequiredError` not being raised when running DipDup after reindexing was triggered.
 
 ## 3.0.4 - 2021-10-04
 

@@ -28,24 +28,25 @@ class ConfigTest(IsolatedAsyncioTestCase):
         self.path = join(dirname(__file__), 'dipdup.yml')
 
     async def test_reindex_manual_forbidden(self):
-        context.forbid_reindexing = True
-        config = DipDupConfig.load([self.path])
-
         async with AsyncExitStack() as stack:
+            # Arrange
+            context.forbid_reindexing = True
+            config = DipDupConfig.load([self.path])
             dipdup = await _create_dipdup(config, stack)
 
+            # Act
             with self.assertRaises(ReindexingRequiredError):
                 await dipdup._ctx.reindex()
 
+            # Assert
             schema = await Schema.filter().get()
             self.assertEqual(ReindexingReason.MANUAL, schema.reindex)
 
     async def test_reindex_manual_allowed(self):
-        context.forbid_reindexing = False
-        config = DipDupConfig.load([self.path])
-
         async with AsyncExitStack() as stack:
             # Arrange
+            context.forbid_reindexing = False
+            config = DipDupConfig.load([self.path])
             dipdup = await _create_dipdup(config, stack)
             dipdup._ctx.restart = AsyncMock()
 
@@ -63,13 +64,18 @@ class ConfigTest(IsolatedAsyncioTestCase):
             self.assertEqual(None, schema.reindex)
 
     async def test_reindex_field(self):
-        context.forbid_reindexing = True
-        config = DipDupConfig.load([self.path])
-
         async with AsyncExitStack() as stack:
+            # Arrange
+            context.forbid_reindexing = True
+            config = DipDupConfig.load([self.path])
             dipdup = await _create_dipdup(config, stack)
 
             await Schema.filter().update(reindex=ReindexingReason.MANUAL)
 
+            # Act
             with self.assertRaises(ReindexingRequiredError):
                 await dipdup._initialize_schema()
+
+            # Assert
+            schema = await Schema.filter().get()
+            self.assertEqual(ReindexingReason.MANUAL, schema.reindex)
