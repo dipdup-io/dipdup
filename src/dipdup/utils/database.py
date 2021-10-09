@@ -166,16 +166,26 @@ async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
 
-def validate_models(package: str) -> None:
-    """Validate project models"""
+def prepare_models(package: str) -> None:
     for _, model in iter_models(package):
-        # NOTE: Resolve missing table names before Tortoise does
-        if model._meta.db_table is None:
-            model._meta.db_table = pascal_to_snake(model.__name__)
+        # NOTE: Generate missing table names before Tortoise does
+        model._meta.db_table = model._meta.db_table or pascal_to_snake(model.__name__)
 
-        name = model._meta.db_table
-        if name != pascal_to_snake(name):
-            raise DatabaseConfigurationError('Table names should be in snake_case', model)
+
+def validate_models(package: str) -> None:
+    """Check project's models for common mistakes"""
+    for _, model in iter_models(package):
+        table_name = model._meta.db_table
+
+        if table_name != pascal_to_snake(table_name):
+            raise DatabaseConfigurationError('Table name must be in snake_case', model)
+
         for field in model._meta.fields_map.values():
-            if field.model_field_name != pascal_to_snake(field.model_field_name):
-                raise DatabaseConfigurationError('Column names should be in snake_case', model)
+            field_name = field.model_field_name
+
+            if field_name != pascal_to_snake(field_name):
+                raise DatabaseConfigurationError('Model fields must be in snake_case', model)
+
+            # NOTE: Leads to GraphQL issues
+            if field_name == table_name:
+                raise DatabaseConfigurationError('Model fields must differ from table name', model)
