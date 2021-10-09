@@ -422,11 +422,11 @@ class OperationIndex(Index):
             raise ConfigInitializationException
 
         await self._ctx.fire_handler(
-            name=handler_config.callback,
-            index=handler_config.parent.name,
-            datasource=self.datasource,
-            fmt=operation_subgroup.hash + ': {}',
-            args=args,
+            handler_config.callback,
+            handler_config.parent.name,
+            self.datasource,
+            operation_subgroup.hash + ': {}',
+            *args,
         )
 
     async def _get_transaction_addresses(self) -> Set[str]:
@@ -587,12 +587,12 @@ class BigMapIndex(Index):
             raise ConfigInitializationException
 
         await self._ctx.fire_handler(
-            name=handler_config.callback,
-            index=handler_config.parent.name,
-            datasource=self.datasource,
+            handler_config.callback,
+            handler_config.parent.name,
+            self.datasource,
             # FIXME: missing `operation_id` field in API to identify operation
-            fmt=None,
-            args=(big_map_diff,),
+            None,
+            big_map_diff
         )
 
     async def _get_big_map_addresses(self) -> Set[str]:
@@ -641,11 +641,11 @@ class HeadIndex(Index):
             raise ConfigInitializationException
 
         await self._ctx.fire_handler(
-            name=handler_config.callback,
-            index=handler_config.parent.name,
-            datasource=self.datasource,
-            fmt=head.hash,
-            args=(head,),
+            handler_config.callback,
+            handler_config.parent.name,
+            self.datasource,
+            head.hash,
+            (head,),
         )
 
     def push_head(self, head: HeadBlockData) -> None:
