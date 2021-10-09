@@ -46,6 +46,7 @@ class Index:
 
     Provides common interface for managing index state and switching between sync and realtime modes.
     """
+
     _queue: Deque
 
     def __init__(self, ctx: DipDupContext, config: ResolvedIndexConfigT, datasource: TzktDatasource) -> None:
@@ -592,7 +593,7 @@ class BigMapIndex(Index):
             self.datasource,
             # FIXME: missing `operation_id` field in API to identify operation
             None,
-            big_map_diff
+            big_map_diff,
         )
 
     async def _get_big_map_addresses(self) -> Set[str]:
