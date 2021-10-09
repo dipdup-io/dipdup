@@ -3,6 +3,8 @@ from os.path import dirname, join
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock
 
+from tortoise.exceptions import ConfigurationError
+
 import dipdup.context as context
 from dipdup.config import DipDupConfig, SqliteDatabaseConfig
 from dipdup.dipdup import DipDup
@@ -56,10 +58,13 @@ class ConfigTest(IsolatedAsyncioTestCase):
             # Assert
             dipdup._ctx.restart.assert_awaited()
 
-            with self.assertRaises(Exception):
+            # NOTE: We just dropped database. Let's ensure.
+            with self.assertRaises(ConfigurationError):
                 schema = await Schema.filter().get()
 
+            # NOTE: Enter DipDup context once again
             await _create_dipdup(config, stack)
+
             schema = await Schema.filter().get()
             self.assertEqual(None, schema.reindex)
 
