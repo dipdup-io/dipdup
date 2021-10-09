@@ -1,5 +1,4 @@
 from contextlib import AsyncExitStack
-import logging
 from os.path import dirname, join
 from unittest import IsolatedAsyncioTestCase, skip
 from unittest.mock import AsyncMock
@@ -116,7 +115,7 @@ class ReindexingTest(IsolatedAsyncioTestCase):
             await dipdup._initialize_schema()
 
             conn = get_connection(None)
-            await conn.execute_script(f'ALTER TABLE dipdup_index DROP COLUMN config_hash')
+            await conn.execute_script('ALTER TABLE dipdup_index DROP COLUMN config_hash')
 
             # Act
             dipdup = await _create_dipdup(config, stack)

@@ -14,6 +14,9 @@ from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from tortoise import Tortoise
+from tortoise.transactions import get_connection
+from tortoise.utils import get_schema_sql
 
 import dipdup.context as context
 from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_version_mapping
@@ -23,7 +26,8 @@ from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDupError, InitializationRequiredError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
-from dipdup.utils.database import set_decimal_context, tortoise_wrapper
+from dipdup.models import Schema
+from dipdup.utils.database import set_decimal_context, tortoise_wrapper, truncate_schema
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -231,3 +235,52 @@ async def hasura_configure(ctx):
     async with tortoise_wrapper(url, models):
         async with hasura_gateway:
             await hasura_gateway.configure()
+
+
+@cli.group(help='')
+@click.pass_context
+@cli_wrapper
+async def schema(ctx):
+    ...
+
+
+@schema.command(name='approve', help='')
+@click.pass_context
+@cli_wrapper
+async def schema_approve(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+
+    async with tortoise_wrapper(url, models):
+        await Schema.filter().update(reindex=None)
+
+
+@schema.command(name='wipe', help='')
+@click.pass_context
+@cli_wrapper
+async def schema_wipe(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+
+    async with tortoise_wrapper(url, models):
+        if isinstance(config.database, PostgresDatabaseConfig):
+            conn = get_connection(None)
+            await truncate_schema(conn, 'public')
+        else:
+            await Tortoise._drop_databases()
+
+
+@schema.command(name='export', help='')
+@click.pass_context
+@cli_wrapper
+async def schema_export(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+    async with tortoise_wrapper(url, models):
+        conn = get_connection(None)
+        print('_' * 80)
+        print(get_schema_sql(conn, False))
+        print('_' * 80)

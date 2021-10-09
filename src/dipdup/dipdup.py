@@ -12,8 +12,17 @@ from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import (BcdDatasourceConfig, CoinbaseDatasourceConfig, ContractConfig, DatasourceConfigT, DipDupConfig,
-                           IndexTemplateConfig, PostgresDatabaseConfig, TzktDatasourceConfig, default_hooks)
+from dipdup.config import (
+    BcdDatasourceConfig,
+    CoinbaseDatasourceConfig,
+    ContractConfig,
+    DatasourceConfigT,
+    DipDupConfig,
+    IndexTemplateConfig,
+    PostgresDatabaseConfig,
+    TzktDatasourceConfig,
+    default_hooks,
+)
 from dipdup.context import CallbackManager, DipDupContext, pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
