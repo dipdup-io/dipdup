@@ -152,8 +152,7 @@ class ReindexingRequiredError(DipDupError):
             You may want to backup database before proceeding. After that perform one of the following actions:
 
                 * Eliminate the cause of reindexing and run `dipdup schema approve`
-                * Start indexing from scratch with `dipdup run --reindex` command
-                * Run `dipdup schema wipe [--immune]` command to truncate an entire database 
+                * Run `dipdup schema wipe [--immune]` command to drop database and start indexing from scratch
         """
 
 

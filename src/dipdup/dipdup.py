@@ -255,12 +255,12 @@ class DipDup:
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)
 
-    async def run(self, reindex: bool, oneshot: bool, postpone_jobs: bool) -> None:
+    async def run(self, oneshot: bool, postpone_jobs: bool) -> None:
         """Run indexing process"""
         tasks: Set[Task] = set()
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
-            await self._set_up_database(stack, reindex)
+            await self._set_up_database(stack)
             await self._set_up_datasources(stack)
             await self._set_up_hooks()
 
@@ -364,7 +364,7 @@ class DipDup:
 
         await self._ctx.fire_hook('on_restart')
 
-    async def _set_up_database(self, stack: AsyncExitStack, reindex: bool) -> None:
+    async def _set_up_database(self, stack: AsyncExitStack) -> None:
         # NOTE: Must be called before entering Tortoise context
         prepare_models(self._config.package)
         validate_models(self._config.package)
@@ -373,9 +373,6 @@ class DipDup:
         timeout = self._config.database.connection_timeout if isinstance(self._config.database, PostgresDatabaseConfig) else None
         models = f'{self._config.package}.models'
         await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
-
-        if reindex:
-            await self._ctx.reindex(ReindexingReason.CLI_OPTION)
 
     async def _set_up_hooks(self) -> None:
         for hook_config in default_hooks.values():

@@ -28,7 +28,6 @@ class IndexStatus(Enum):
 class ReindexingReason(ReversedEnum):
     MANUAL = 'triggered manually from callback'
     MIGRATION = 'applied migration requires reindexing'
-    CLI_OPTION = 'run with `--reindex` option'
     ROLLBACK = 'reorg message received and can\'t be processed'
     CONFIG_HASH_MISMATCH = 'index config has been modified'
     SCHEMA_HASH_MISMATCH = 'database schema has been modified'

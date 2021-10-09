@@ -15,7 +15,7 @@ from dipdup.utils.database import tortoise_wrapper
 class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
 
-    async def test_configure_hasura(self):
+    async def test_configure_hasura(self) -> None:
         config_path = join(dirname(__file__), 'hic_et_nunc.yml')
         config = DipDupConfig.load([config_path])
         config.initialize(skip_imports=True)
@@ -37,7 +37,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
             )
             dipdup = DipDup(config)
             await stack.enter_async_context(tortoise_wrapper(config.database.connection_string, 'demo_hic_et_nunc.models'))
-            await dipdup._set_up_database(stack, False)
+            await dipdup._set_up_database(stack)
             await dipdup._set_up_hooks()
             await dipdup._initialize_schema()
 
