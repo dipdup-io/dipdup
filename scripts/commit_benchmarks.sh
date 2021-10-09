@@ -1,0 +1,1 @@
+cp tests/benchmarks/config.latest.json tests/benchmarks/config.json
