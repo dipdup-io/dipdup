@@ -8,7 +8,7 @@ class TLD(Model):
 
 class Expiry(Model):
     id = fields.CharField(max_length=255, pk=True)
-    expiry = fields.DatetimeField(null=True)
+    timestamp = fields.DatetimeField(null=True)
 
 
 class Domain(Model):
