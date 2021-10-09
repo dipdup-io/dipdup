@@ -1,6 +1,10 @@
 from enum import Enum
 
 
+class ReversedEnum(Enum):
+    ...
+
+
 class MessageType(Enum):
     operation = 'operation'
     big_map = 'big_map'
@@ -21,7 +25,7 @@ class IndexStatus(Enum):
     ONESHOT = 'ONESHOT'
 
 
-class ReindexingReason(Enum):
+class ReindexingReason(ReversedEnum):
     MANUAL = 'triggered manually from callback'
     MIGRATION = 'applied migration requires reindexing'
     CLI_OPTION = 'run with `--reindex` option'

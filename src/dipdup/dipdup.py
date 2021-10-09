@@ -29,7 +29,7 @@ from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
-from dipdup.exceptions import ConfigInitializationException, DipDupException
+from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache
 from dipdup.models import BigMapData, Contract, Head, HeadBlockData
@@ -335,6 +335,9 @@ class DipDup:
 
         elif self._schema.hash != schema_hash:
             await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
+
+        elif self._schema.reindex:
+            raise ReindexingRequiredError(self._schema.reindex)
 
         await self._ctx.fire_hook('on_restart')
 
