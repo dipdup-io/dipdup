@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased]
+## 3.1.0 - [unreleased]
 
 ### Added
 
@@ -13,6 +13,11 @@
 ### Fixed
 
 * Fixed `ReindexRequiredError` not being raised when running DipDup after reindexing was triggered.
+* Fixed index config hash calculation. Hashes of existing indexes in database will be updated during the first run.
+
+### Improved
+
+* Raise `DatabaseConfigurationError` exception when project models are not compatible with GraphQL.
 
 ## 3.0.4 - 2021-10-04
 

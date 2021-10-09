@@ -101,7 +101,6 @@ class DipDupContext:
 
         reason_str = reason.value + (f' ({context["message"]})' if "message" in context else '')
         self.logger.warning('Reindexing initialized, reason: %s', reason_str)
-        self.logger.info('Additional context: %s', context)
 
         if forbid_reindexing:
             schema = await Schema.filter().get()
@@ -168,8 +167,9 @@ class DipDupContext:
     async def _spawn_index(self, name: str) -> None:
         from dipdup.index import BigMapIndex, HeadIndex, OperationIndex
 
-        index_config = cast(ResolvedIndexConfigT, self.config.indexes[name])
+        index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
         index: Union[OperationIndex, BigMapIndex, HeadIndex]
+
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
         datasource = self.datasources[datasource_name]
         if not isinstance(datasource, TzktDatasource):
