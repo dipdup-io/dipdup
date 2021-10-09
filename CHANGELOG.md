@@ -4,16 +4,17 @@
 
 ### Added
 
-* New index type `head` allowing to handle head (reduced block header info) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.
+* New index class `HeadIndex` (configuration: [`dipdup.config.HeadIndexConfig`](https://github.com/dipdup-net/dipdup-py/blob/master/src/dipdup/config.py#L778)). Use this index type to handle head (limited block header content) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.
+* Added three new commands: `schema approve`, `schema wipe`, and `schema export`. Run `dipdup schema --help` command for details.
 
 ### Changed
 
-* Values of `dipdup_schema.reindex` field updated to simplify querying database.
+* Values of `dipdup_schema.reindex` field updated to simplify querying database. See [`dipdup.enums.ReindexingReason`](https://github.com/dipdup-net/dipdup-py/blob/master/src/dipdup/enums.py) class for possible values.
 
 ### Fixed
 
 * Fixed `ReindexRequiredError` not being raised when running DipDup after reindexing was triggered.
-* Fixed index config hash calculation. Hashes of existing indexes in database will be updated during the first run.
+* Fixed index config hash calculation. Hashes of existing indexes in a database will be updated during the first run.
 
 ### Improved
 

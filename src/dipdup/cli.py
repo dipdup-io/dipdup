@@ -27,7 +27,8 @@ from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDup
 from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
 from dipdup.models import Schema
-from dipdup.utils.database import set_decimal_context, tortoise_wrapper, truncate_schema
+from dipdup.utils import iter_files
+from dipdup.utils.database import set_decimal_context, tortoise_wrapper, wipe_schema
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -237,14 +238,14 @@ async def hasura_configure(ctx):
             await hasura_gateway.configure()
 
 
-@cli.group(help='')
+@cli.group(help='Manage database schema')
 @click.pass_context
 @cli_wrapper
 async def schema(ctx):
     ...
 
 
-@schema.command(name='approve', help='')
+@schema.command(name='approve', help='Continue indexing with the same schema after crashing with `ReindexingRequiredError`')
 @click.pass_context
 @cli_wrapper
 async def schema_approve(ctx):
@@ -256,23 +257,24 @@ async def schema_approve(ctx):
         await Schema.filter().update(reindex=None)
 
 
-@schema.command(name='wipe', help='')
+@schema.command(name='wipe', help='Drop all database tables, functions and views')
+@click.option('--immune', is_flag=True, help='Drop immune tables too')
 @click.pass_context
 @cli_wrapper
-async def schema_wipe(ctx):
+async def schema_wipe(ctx, immune: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
 
     async with tortoise_wrapper(url, models):
+        conn = get_connection(None)
         if isinstance(config.database, PostgresDatabaseConfig):
-            conn = get_connection(None)
-            await truncate_schema(conn, 'public')
+            await wipe_schema(conn, config.database.schema_name, config.database.immune_tables)
         else:
             await Tortoise._drop_databases()
 
 
-@schema.command(name='export', help='')
+@schema.command(name='export', help='Print schema SQL including `on_reindex` hook')
 @click.pass_context
 @cli_wrapper
 async def schema_export(ctx):
@@ -283,4 +285,6 @@ async def schema_export(ctx):
         conn = get_connection(None)
         print('_' * 80)
         print(get_schema_sql(conn, False))
+        for file in iter_files(join(config.package_path, 'sql', 'on_reindex')):
+            print(file.read())
         print('_' * 80)

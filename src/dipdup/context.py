@@ -39,7 +39,7 @@ from dipdup.exceptions import (
 )
 from dipdup.models import Contract, ReindexingReason, Schema
 from dipdup.utils import FormattedLogger, iter_files
-from dipdup.utils.database import create_schema, drop_schema, move_table, truncate_schema
+from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
 forbid_reindexing = False
@@ -112,24 +112,13 @@ class DipDupContext:
             raise ReindexingRequiredError(schema.reindex, context)
 
         database_config = self.config.database
+
+        conn = get_connection(None)
         if isinstance(database_config, PostgresDatabaseConfig):
-            conn = get_connection(None)
-            immune_schema_name = f'{database_config.schema_name}_immune'
-
-            if database_config.immune_tables:
-                await create_schema(conn, immune_schema_name)
-                for table in database_config.immune_tables:
-                    await move_table(conn, table, database_config.schema_name, immune_schema_name)
-
-            await truncate_schema(conn, database_config.schema_name)
-
-            if database_config.immune_tables:
-                for table in database_config.immune_tables:
-                    await move_table(conn, table, immune_schema_name, database_config.schema_name)
-                await drop_schema(conn, immune_schema_name)
-
+            await wipe_schema(conn, database_config.schema_name, database_config.immune_tables)
         else:
             await Tortoise._drop_databases()
+
         await self.restart()
 
     async def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
