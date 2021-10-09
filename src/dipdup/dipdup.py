@@ -37,7 +37,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
 from dipdup.utils import slowdown
-from dipdup.utils.database import generate_schema, get_schema_hash, set_schema, tortoise_wrapper, validate_models
+from dipdup.utils.database import generate_schema, get_schema_hash, prepare_models, set_schema, tortoise_wrapper, validate_models
 
 
 class IndexDispatcher:
@@ -351,7 +351,8 @@ class DipDup:
         await self._ctx.fire_hook('on_restart')
 
     async def _set_up_database(self, stack: AsyncExitStack, reindex: bool) -> None:
-        # NOTE: Must be called before Tortoise.init
+        # NOTE: Must be called before entering Tortoise context
+        prepare_models(self._config.package)
         validate_models(self._config.package)
 
         url = self._config.database.connection_string
