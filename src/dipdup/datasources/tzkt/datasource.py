@@ -240,7 +240,7 @@ class BigMapFetcher:
             offset += self._datasource.request_limit
 
         if big_maps:
-            yield big_maps[0].level, tuple(big_maps[: i + 1])
+            yield big_maps[0].level, tuple(big_maps[: i + 2])
 
 
 class TzktDatasource(IndexDatasource):
