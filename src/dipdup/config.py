@@ -601,22 +601,34 @@ class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConf
         NameMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
 
-    def dumps(self) -> str:
-        return json.dumps(self, default=pydantic_encoder)
-
-    def json(self) -> Dict[str, Any]:
-        return json.loads(self.dumps())
-
-    def hash(self) -> str:
-        config_json = self.dumps()
-        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
-        return config_hash
-
     @property
     def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise ConfigInitializationException
         return self.datasource
+
+    def hash(self) -> str:
+        """Calculate hash to ensure config not changed since last run."""
+        config_json = json.dumps(self, default=pydantic_encoder)
+
+        # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
+        config_dict = json.loads(config_json)
+
+        # NOTE: We need to preserve datasource URL but remove it's HTTP tunables to avoid false-positives.
+        config_dict['datasource'].pop('http', None)
+
+        config_json = json.dumps(config_dict)
+        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
+        return config_hash
+
+    def hash_old(self) -> str:
+        """Calculate hash to ensure config not changed since last run.
+
+        Old incorrect algorightm (false positives). Used only to update hash of existing indexes.
+        """
+        config_json = json.dumps(self, default=pydantic_encoder)
+        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
+        return config_hash
 
 
 @dataclass
@@ -987,6 +999,12 @@ class DipDupConfig:
             return self.datasources[name]
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
+
+    def get_index(self, name: str) -> IndexConfigT:
+        try:
+            return self.indexes[name]
+        except KeyError as e:
+            raise ConfigurationError(f'Index `{name}` not found in `indexes` config section') from e
 
     def get_template(self, name: str) -> ResolvedIndexConfigT:
         try:
