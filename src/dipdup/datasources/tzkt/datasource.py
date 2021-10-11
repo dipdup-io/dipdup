@@ -270,6 +270,7 @@ class TzktDatasource(IndexDatasource):
         super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = logging.getLogger('dipdup.tzkt')
 
+        self._request_limit = cast(int, self._http_config.batch_size)
         self._transaction_subscriptions: Set[str] = set()
         self._origination_subscriptions: bool = False
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
@@ -280,7 +281,8 @@ class TzktDatasource(IndexDatasource):
 
     @property
     def request_limit(self) -> int:
-        return cast(int, self._http_config.batch_size)
+        self._adjust_request_limit()
+        return self._request_limit
 
     @property
     def sync_level(self) -> Optional[int]:
@@ -836,3 +838,18 @@ class TzktDatasource(IndexDatasource):
     @classmethod
     def _parse_timestamp(cls, timestamp: str) -> datetime:
         return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
+
+    def _adjust_request_limit(self) -> None:
+        """Decrease request limit if datasource has too much subscriptions.
+
+        This should help with crazy RAM usage during sync. Make sure to request correct limit each time.
+        """
+        subscriptions = len(self._on_big_maps) + len(self._on_operations)
+
+        if self._request_limit > 5000 and subscriptions >= 100:
+            self._logger.warning('Too many subscriptions, adjusting request limit: %s -> 5000', self._request_limit)
+            self._request_limit = 5000
+
+        elif self._request_limit > 1000 and subscriptions >= 500:
+            self._logger.warning('Too many subscriptions, adjusting request limit: %s -> 1000', self._request_limit)
+            self._request_limit = 1000
