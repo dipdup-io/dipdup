@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from pydantic.error_wrappers import ValidationError
 from tortoise import Model, fields
+from typing_extensions import get_args
 
 from dipdup.enums import IndexStatus, IndexType
 from dipdup.exceptions import ConfigurationError, InvalidDataError, ReindexingReason
@@ -77,7 +78,6 @@ class OperationData:
         prefix: str = None,
     ) -> Dict[str, Any]:
         for key, field in storage_type.__fields__.items():
-
             if key == '__root__':
                 continue
 
@@ -95,8 +95,16 @@ class OperationData:
                     continue
                 raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists') from e
 
-            # FIXME: Pydantic bug. `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool]
-            if field.type_ != field.outer_type_ and field.type_ == bool:
+            # FIXME: Pydantic bug? I have no idea how does it work, this workaround is just a guess.
+            # FIXME: `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool], Dict[str, BaseModel], and possibly any other cases.
+            is_complex_type = field.type_ != field.outer_type_
+            try:
+                get_args(field.outer_type_)[1].__fields__
+                is_nested_dict_model = True
+            except Exception:
+                is_nested_dict_model = False
+
+            if is_complex_type and (field.type_ == bool or is_nested_dict_model):
                 annotation = field.outer_type_
             else:
                 annotation = field.type_

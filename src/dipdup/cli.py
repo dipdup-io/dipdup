@@ -89,7 +89,7 @@ def init_sentry(config: DipDupConfig) -> None:
     )
 
 
-@click.group(help='Docs: https://docs.dipdup.net')
+@click.group(help='Docs: https://docs.dipdup.net', context_settings=dict(max_content_width=120))
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
