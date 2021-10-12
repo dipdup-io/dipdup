@@ -19,6 +19,7 @@
 ### Improved
 
 * Raise `DatabaseConfigurationError` exception when project models are not compatible with GraphQL.
+* Another bunch of performance optimizations. Reduced DB pressure, speeded up parallel processing lots of indexes.
 
 ## 3.0.4 - 2021-10-04
 
