@@ -19,6 +19,7 @@
 * Fixed index config hash calculation. Hashes of existing indexes in a database will be updated during the first run.
 * Fixed issue in `BigMapIndex` causing the partial loss of big map diffs.
 * Fixed printing help for CLI commands.
+* Fixed merging storage which contains specific nested structures.
 
 ### Improved
 
