@@ -6,10 +6,9 @@ from collections import deque
 from contextlib import contextmanager, suppress
 from os.path import exists, join
 from pprint import pformat
-from typing import Any, Dict, Iterator, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterator, NoReturn, Optional, Tuple, Union, cast
 
 import sqlparse  # type: ignore
-from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
@@ -39,10 +38,8 @@ from dipdup.exceptions import (
 )
 from dipdup.models import Contract, ReindexingReason, Schema
 from dipdup.utils import FormattedLogger, iter_files
-from dipdup.utils.database import create_schema, drop_schema, move_table, truncate_schema
 
 pending_indexes = deque()  # type: ignore
-forbid_reindexing = False
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -91,7 +88,7 @@ class DipDupContext:
             sys.argv.remove('--reindex')
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> None:
+    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> NoReturn:
         """Drop all tables or whole database and restart with the same CLI arguments"""
         if not reason:
             reason = ReindexingReason.MANUAL
@@ -99,39 +96,14 @@ class DipDupContext:
             context['message'] = reason
             reason = ReindexingReason.MANUAL
 
-        reason_str = reason.value + f' ({context["message"]})' if "message" in context else ''
+        reason_str = reason.value + (f' ({context["message"]})' if "message" in context else '')
         self.logger.warning('Reindexing initialized, reason: %s', reason_str)
-        self.logger.info('Additional context: %s', context)
 
-        if forbid_reindexing:
-            schema = await Schema.filter().get()
-            if schema.reindex:
-                raise ReindexingRequiredError(schema.reindex, context)
-
+        schema = await Schema.filter().get()
+        if not schema.reindex:
             schema.reindex = reason
             await schema.save()
-            raise ReindexingRequiredError(schema.reindex, context)
-
-        database_config = self.config.database
-        if isinstance(database_config, PostgresDatabaseConfig):
-            conn = get_connection(None)
-            immune_schema_name = f'{database_config.schema_name}_immune'
-
-            if database_config.immune_tables:
-                await create_schema(conn, immune_schema_name)
-                for table in database_config.immune_tables:
-                    await move_table(conn, table, database_config.schema_name, immune_schema_name)
-
-            await truncate_schema(conn, database_config.schema_name)
-
-            if database_config.immune_tables:
-                for table in database_config.immune_tables:
-                    await move_table(conn, table, immune_schema_name, database_config.schema_name)
-                await drop_schema(conn, immune_schema_name)
-
-        else:
-            await Tortoise._drop_databases()
-        await self.restart()
+        raise ReindexingRequiredError(schema.reindex, context)
 
     async def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
@@ -168,8 +140,9 @@ class DipDupContext:
     async def _spawn_index(self, name: str) -> None:
         from dipdup.index import BigMapIndex, HeadIndex, OperationIndex
 
-        index_config = cast(ResolvedIndexConfigT, self.config.indexes[name])
+        index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
         index: Union[OperationIndex, BigMapIndex, HeadIndex]
+
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
         datasource = self.datasources[datasource_name]
         if not isinstance(datasource, TzktDatasource):

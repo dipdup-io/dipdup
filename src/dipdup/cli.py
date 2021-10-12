@@ -14,8 +14,10 @@ from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from tortoise import Tortoise
+from tortoise.transactions import get_connection
+from tortoise.utils import get_schema_sql
 
-import dipdup.context as context
 from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_version_mapping
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
 from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
@@ -23,7 +25,9 @@ from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDupError, InitializationRequiredError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
-from dipdup.utils.database import set_decimal_context, tortoise_wrapper
+from dipdup.models import Schema
+from dipdup.utils import iter_files
+from dipdup.utils.database import set_decimal_context, tortoise_wrapper, wipe_schema
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -85,7 +89,7 @@ def init_sentry(config: DipDupConfig) -> None:
     )
 
 
-@click.group(help='Docs: https://docs.dipdup.net')
+@click.group(help='Docs: https://docs.dipdup.net', context_settings=dict(max_content_width=120))
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
@@ -137,26 +141,20 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
 
 @cli.command(help='Run indexing')
-@click.option('--reindex', is_flag=True, help='Drop database and start indexing from scratch')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
-@click.option('--forbid-reindexing', is_flag=True, help='Raise exception instead of truncating database when reindexing is triggered')
 @click.pass_context
 @cli_wrapper
 async def run(
     ctx,
-    reindex: bool,
     oneshot: bool,
     postpone_jobs: bool,
-    forbid_reindexing: bool,
 ) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     set_decimal_context(config.package)
-    if forbid_reindexing:
-        context.forbid_reindexing = True
     dipdup = DipDup(config)
-    await dipdup.run(reindex, oneshot, postpone_jobs)
+    await dipdup.run(oneshot, postpone_jobs)
 
 
 @cli.command(help='Generate missing callbacks and types')
@@ -231,3 +229,55 @@ async def hasura_configure(ctx):
     async with tortoise_wrapper(url, models):
         async with hasura_gateway:
             await hasura_gateway.configure()
+
+
+@cli.group(help='Manage database schema')
+@click.pass_context
+@cli_wrapper
+async def schema(ctx):
+    ...
+
+
+@schema.command(name='approve', help='Continue indexing with the same schema after crashing with `ReindexingRequiredError`')
+@click.pass_context
+@cli_wrapper
+async def schema_approve(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+
+    async with tortoise_wrapper(url, models):
+        await Schema.filter().update(reindex=None)
+
+
+@schema.command(name='wipe', help='Drop all database tables, functions and views')
+@click.option('--immune', is_flag=True, help='Drop immune tables too')
+@click.pass_context
+@cli_wrapper
+async def schema_wipe(ctx, immune: bool):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+
+    async with tortoise_wrapper(url, models):
+        conn = get_connection(None)
+        if isinstance(config.database, PostgresDatabaseConfig):
+            await wipe_schema(conn, config.database.schema_name, config.database.immune_tables)
+        else:
+            await Tortoise._drop_databases()
+
+
+@schema.command(name='export', help='Print schema SQL including `on_reindex` hook')
+@click.pass_context
+@cli_wrapper
+async def schema_export(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+    async with tortoise_wrapper(url, models):
+        conn = get_connection(None)
+        print('_' * 80)
+        print(get_schema_sql(conn, False))
+        for file in iter_files(join(config.package_path, 'sql', 'on_reindex')):
+            print(file.read())
+        print('_' * 80)

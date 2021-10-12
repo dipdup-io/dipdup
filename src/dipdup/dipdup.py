@@ -29,7 +29,7 @@ from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource, IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
-from dipdup.exceptions import ConfigInitializationException, DipDupException
+from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache
 from dipdup.models import BigMapData, Contract, Head, HeadBlockData
@@ -37,7 +37,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
 from dipdup.utils import slowdown
-from dipdup.utils.database import generate_schema, get_schema_hash, set_schema, tortoise_wrapper, validate_models
+from dipdup.utils.database import generate_schema, get_schema_hash, prepare_models, set_schema, tortoise_wrapper, validate_models
 
 
 class IndexDispatcher:
@@ -126,8 +126,19 @@ class IndexDispatcher:
             if index_config := self._ctx.config.indexes.get(name):
                 if isinstance(index_config, IndexTemplateConfig):
                     raise ConfigInitializationException
-                if index_config.hash() != index_state.config_hash:
-                    await self._ctx.reindex(ReindexingReason.CONFIG_HASH_MISMATCH)
+
+                new_hash = index_config.hash()
+                if new_hash != index_state.config_hash:
+                    # NOTE: Try old hashing algorithm. Update if matches, reindex if not.
+                    old_hash = index_config.hash_old()
+                    if old_hash == index_state.config_hash:
+                        self._logger.warning('Updating config hash of index `%s`', name)
+                        index_state.config_hash = new_hash  # type: ignore
+                        await index_state.save()
+                    else:
+                        await self._ctx.reindex(
+                            ReindexingReason.CONFIG_HASH_MISMATCH, index_hash=index_state.config_hash, old_hash=old_hash, new_hash=new_hash
+                        )
 
             # NOTE: Templated index: recreate index config, verify hash
             elif template:
@@ -135,10 +146,11 @@ class IndexDispatcher:
                     await self._ctx.reindex(ReindexingReason.MISSING_INDEX_TEMPLATE)
                 await self._ctx.add_index(name, template, template_values)
 
-            # NOTE: Index config is missing
+            # NOTE: Index config is missing, possibly just commented-out
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
 
+        # NOTE: Cached blocks used only on index state init
         block_cache.clear()
 
     async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
@@ -243,12 +255,12 @@ class DipDup:
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)
 
-    async def run(self, reindex: bool, oneshot: bool, postpone_jobs: bool) -> None:
+    async def run(self, oneshot: bool, postpone_jobs: bool) -> None:
         """Run indexing process"""
         tasks: Set[Task] = set()
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
-            await self._set_up_database(stack, reindex)
+            await self._set_up_database(stack)
             await self._set_up_datasources(stack)
             await self._set_up_hooks()
 
@@ -310,13 +322,24 @@ class DipDup:
             schema_name = self._config.database.schema_name
             await set_schema(conn, schema_name)
 
+        # NOTE: Try to fetch existing schema
         try:
             self._schema = await Schema.get_or_none(name=schema_name)
+
+        # NOTE: No such table yet
         except OperationalError:
             self._schema = None
+
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError:
-            await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
+            try:
+                # NOTE: A small migration, ReindexingReason became ReversedEnum
+                for item in ReindexingReason:
+                    await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{item.name}" WHERE reindex = "{item.value}"')
+
+                self._schema = await Schema.get_or_none(name=schema_name)
+            except KeyError:
+                await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
         schema_hash = get_schema_hash(conn)
 
@@ -336,19 +359,20 @@ class DipDup:
         elif self._schema.hash != schema_hash:
             await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
+        elif self._schema.reindex:
+            raise ReindexingRequiredError(self._schema.reindex)
+
         await self._ctx.fire_hook('on_restart')
 
-    async def _set_up_database(self, stack: AsyncExitStack, reindex: bool) -> None:
-        # NOTE: Must be called before Tortoise.init
+    async def _set_up_database(self, stack: AsyncExitStack) -> None:
+        # NOTE: Must be called before entering Tortoise context
+        prepare_models(self._config.package)
         validate_models(self._config.package)
 
         url = self._config.database.connection_string
         timeout = self._config.database.connection_timeout if isinstance(self._config.database, PostgresDatabaseConfig) else None
         models = f'{self._config.package}.models'
         await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
-
-        if reindex:
-            await self._ctx.reindex(ReindexingReason.CLI_OPTION)
 
     async def _set_up_hooks(self) -> None:
         for hook_config in default_hooks.values():
