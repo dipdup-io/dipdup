@@ -1070,8 +1070,13 @@ class DipDupConfig:
             if name in default_hooks:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
-        # NOTE: Duplicate contracts
-        contracts = [cast(ContractIndexConfigT, i).contracts for i in self.indexes.values() if hasattr(i, 'contracts')]
+        # NOTE: Detect duplicate contracts
+        # FIXME: This code smells
+        contracts = [
+            cast(ContractIndexConfigT, i).contracts
+            for i in self.indexes.values()
+            if hasattr(i, 'contracts') and cast(ContractIndexConfigT, i).contracts
+        ]
         plain_contracts = reduce(operator.add, contracts) if contracts else []  # type: ignore
         # NOTE: After pre_initialize
         duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
