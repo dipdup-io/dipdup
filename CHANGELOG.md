@@ -9,17 +9,23 @@
 
 ### Changed
 
+* Triggering reindexing won't lead to dropping the database automatically anymore. `ReindexingRequiredError` is raised instead. `--forbid-reindexing` option has become default.
+* `--reindex` option is removed. Use `dipdup schema wipe` instead.
 * Values of `dipdup_schema.reindex` field updated to simplify querying database. See [`dipdup.enums.ReindexingReason`](https://github.com/dipdup-net/dipdup-py/blob/master/src/dipdup/enums.py) class for possible values.
 
 ### Fixed
 
 * Fixed `ReindexRequiredError` not being raised when running DipDup after reindexing was triggered.
 * Fixed index config hash calculation. Hashes of existing indexes in a database will be updated during the first run.
+* Fixed issue in `BigMapIndex` causing the partial loss of big map diffs.
+* Fixed printing help for CLI commands.
+* Fixed merging storage which contains specific nested structures.
 
 ### Improved
 
 * Raise `DatabaseConfigurationError` exception when project models are not compatible with GraphQL.
 * Another bunch of performance optimizations. Reduced DB pressure, speeded up parallel processing lots of indexes.
+* Added initial set of performance benchmarks (run: `./scripts/run_benchmarks.sh`)
 
 ## 3.0.4 - 2021-10-04
 
