@@ -26,6 +26,7 @@ from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup.exceptions import ConfigInitializationException, ConfigurationError
+from dipdup.interfaces.config import InterfaceConfig
 from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
 
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
@@ -903,6 +904,7 @@ class DipDupConfig:
     :param hasura: Hasura config
     :param jobs: Mapping of job aliases and job configs
     :param sentry: Sentry integration config
+    :param interfaces: Mapping of interfaces configs
     """
 
     spec_version: str
@@ -916,6 +918,7 @@ class DipDupConfig:
     hooks: Dict[str, HookConfig] = Field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
     sentry: Optional[SentryConfig] = None
+    interfaces: Optional[Dict[str, InterfaceConfig]] = Field(default_factory=dict)
 
     def __post_init_post_parse__(self):
         self._filenames: List[str] = []
@@ -1144,6 +1147,10 @@ class DipDupConfig:
         for job_config in self.jobs.values():
             if isinstance(job_config.hook, str):
                 job_config.hook = self.hooks[job_config.hook]
+
+        if self.interfaces:
+            for interface_config in self.interfaces.values():
+                interface_config.resolve_links(config=self)
 
     def _resolve_index_links(self, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""

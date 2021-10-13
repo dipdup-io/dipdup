@@ -29,6 +29,8 @@ from dipdup.config import (
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, ConfigurationError
+from dipdup.interfaces.factory import InterfacesModuleGeneratorFactory
+from dipdup.types import SchemasT
 from dipdup.utils import import_submodules, mkdir_p, pascal_to_snake, snake_to_pascal, touch, write
 
 DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
@@ -78,7 +80,7 @@ class DipDupCodeGenerator:
         self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
-        self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
+        self._schemas: SchemasT = {}
 
     async def init(self, overwrite_types: bool = False) -> None:
         self._logger.info('Initializing project')
@@ -87,6 +89,7 @@ class DipDupCodeGenerator:
         await self.generate_types(overwrite_types)
         await self.generate_hooks()
         await self.generate_handlers()
+        await self.generate_interfaces()
         await self.cleanup()
         await self.verify_package()
 
@@ -126,6 +129,8 @@ class DipDupCodeGenerator:
         self._logger.info('Creating `schemas` directory')
         schemas_path = join(self._config.package_path, 'schemas')
         mkdir_p(schemas_path)
+
+        # todo: fetch using also entrypoints set from interfaces section
 
         for index_config in self._config.indexes.values():
 
@@ -287,6 +292,14 @@ class DipDupCodeGenerator:
         for hook_configs in self._config.hooks.values(), default_hooks.values():
             for hook_config in hook_configs:
                 await self._generate_callback(hook_config, sql=True)
+
+    async def generate_interfaces(self) -> None:
+        interface_module_generator = InterfacesModuleGeneratorFactory(
+            config=self._config,
+            schemas=self._schemas,
+            logger=self._logger,
+        )
+        await interface_module_generator.generate()
 
     async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
         self._logger.info('Generating Docker template')

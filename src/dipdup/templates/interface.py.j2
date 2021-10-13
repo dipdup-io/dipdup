@@ -1,0 +1,18 @@
+{%- for import in data.imports %}
+from {{ import.module }} import {{ import.class_name }}
+{%- endfor %}
+
+
+class {{ data.interface.name }}:
+{%- for entrypoint in data.interface.methods %}
+
+{%- if entrypoint.decorators %}
+{%- for decorator in entrypoint.decorators %}
+    @{{ decorator }}
+{%- endfor %}
+{%- endif %}
+    async def {{ entrypoint.name }}({{ entrypoint.parameter }}) -> {{ entrypoint.return_type }}:
+{%- for line in entrypoint.code %}
+        {{ line }}
+{%- endfor %}
+{% endfor %}
