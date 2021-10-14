@@ -1,11 +1,13 @@
+from datetime import datetime
 from unittest import TestCase
 
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.models import OperationData
+from tests.test_dipdup.models import ResourceCollectorStorage
 
 
 class ModelsTest(TestCase):
-    def test_merged_storage(self):
+    def test_merged_storage(self) -> None:
         storage = {
             'store': {
                 'data': 15023,
@@ -76,7 +78,7 @@ class ModelsTest(TestCase):
             type='transaction',
             id=0,
             level=0,
-            timestamp=0,
+            timestamp=datetime.now(),
             hash='',
             counter=0,
             sender_address='',
@@ -88,3 +90,40 @@ class ModelsTest(TestCase):
         )
         merged_storage = operation_data.get_merged_storage(NameRegistryStorage)
         self.assertTrue('6672657175656e742d616e616c7973742e65646f' in merged_storage.store.records)
+
+    def test_merged_storage_dict_of_dicts(self) -> None:
+        storage = {
+            'paused': False,
+            'managers': ['tz1VPZyh4ZHjDDpgvznqQQXUCLcV7g91WGMz'],
+            'metadata': 43542,
+            'current_user': 'tz1VPZyh4ZHjDDpgvznqQQXUCLcV7g91WGMz',
+            'nft_registry': 'KT1SZ87ihAWc43YZxYjoRz8MQyAapUGbZigG',
+            'resource_map': {
+                'enr': {'id': '2', 'rate': '1875000'},
+                'mch': {'id': '3', 'rate': '625000'},
+                'min': {'id': '1', 'rate': '1250000'},
+                'uno': {'id': '0', 'rate': '1250'},
+            },
+            'administrator': 'tz1VPZyh4ZHjDDpgvznqQQXUCLcV7g91WGMz',
+            'generation_rate': '9',
+            'resource_registry': 'KT1SLaZNaDF7V6Lt8FXTbYNqkBS81gjHXMsP',
+            'default_start_time': '1630678200',
+            'tezotop_collection': 43543,
+        }
+        operation_data = OperationData(
+            storage=storage,
+            diffs=None,
+            type='transaction',
+            id=0,
+            level=0,
+            timestamp=datetime.now(),
+            hash='',
+            counter=0,
+            sender_address='',
+            target_address='',
+            initiator_address='',
+            amount=0,
+            status='',
+            has_internals=False,
+        )
+        operation_data.get_merged_storage(ResourceCollectorStorage)
