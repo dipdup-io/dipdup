@@ -16,14 +16,12 @@ $ pip install dipdup
 
 ## Write a configuration file
 
-Let's create an indexer for tzBTC token <link> FA1.2 contract.
-We will index all the tzBTC transfers and mints and store indexed data in the models representing token holders.
-
+Let's create an indexer for tzBTC token <link> FA1.2 contract. We want to save all the transfers and mints to the database. Our goal is to calculate some statistics of token holders' activity.
 
 Create a new file named `dipdup.yml` in your current working directory with the following content:
 
 ```yaml
-spec_version: 0.1
+spec_version: 1.2
 package: demo_tzbtc
 
 database:
@@ -57,6 +55,9 @@ indexes:
             entrypoint: mint
 ```
 
+
+
+<tzkt screenshot?>
 
 ## Generate types
 
