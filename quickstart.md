@@ -1,6 +1,6 @@
-# Quick start
+# Quickstart
 
-This page will guide you through the steps required to get your first selective indexer up and running in a few minutes without getting into the details.
+This page will guide you through the steps required to get your first selective indexer up and running in a few minutes without getting too deep into the details.
 
 ## Install framework
 

@@ -1,8 +1,54 @@
 # [Table of contents](null) 
 * [Overview](overview.md) 
+* [Quickstart](quickstart.md)
 
-* [Quick start](README.md) 
-* [Core concepts](core-concepts.md) 
+* [Getting started](getting-started/README.md)
+	* [Installation](getting-started/installation.md)
+	* [Core concepts](getting-started/core-concepts.md)
+	* [Managing project](null)
+	* [Preparing inventory](null)
+	* [Defining models](null)
+	* [Implementing handlers](null)
+
+* [Deployment](deployment/README.md) 
+	* [Docker](deployment/docker-compose.md) 
+
+* [Client side](client-side/README.md) 
+	* [Hasura integration]()
+	* [GenQL](client-side/genql.md) 
+
+* [Troubleshooting]()
+	* [Reporting issues]()
+	* []()
+
+* [Cookbook](cookbook/README.md) 
+	* [Spawning indexes at runtime](null)
+	* [Processing offchain data](null)
+
+
+
+
+* [Advanced usage](advanced-usage/README.md)
+	* [SQL hooks]()
+	* [TimescaleDB]()
+    * [Improving performance](advanced-usage/improving-performance.md)
+	* [Logging]
+	* [Monitoring]
+	* [Backups]
+
+### logging
+### Synchronizing multiple handlers
+
+
+
+* [Built with DipDup](built-with-dipdup.md) 
+
+* [Reference](null)
+	* [Configuration file](null)
+	* [CLI](null)
+
+
+
 * [Config file reference](config-file-reference/README.md) 
 	* [spec\_version](config-file-reference/spec_version.md) 
 	* [package](config-file-reference/package.md) 
@@ -27,10 +73,7 @@
 	* [dipdup migrate](command-line/dipdup-migrate.md) 
 	* [dipdup docker init](command-line/dipdup-docker-init.md) 
 	* [dipdup hasura configure](command-line/dipdup-hasura-configure.md) 
-* [Deployment](deployment/README.md) 
-	* [Docker](deployment/docker-compose.md) 
-* [Client side](client-side/README.md) 
-	* [GenQL](client-side/genql.md) 
+
 * [Advanced](advanced/README.md) 
 	* [Handler context](advanced/handler-context.md) 
 	* [Internal models](advanced/internal-models.md) 

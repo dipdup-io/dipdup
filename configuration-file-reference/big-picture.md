@@ -1,13 +1,11 @@
 # Core concepts
 
-
-
 ## Big picture
 
 DipDup is heavily inspired by [The Graph](https://thegraph.com/) Protocol but there are several important differences:
 
 * DipDup works with operation groups \(explicit operation and all internal ones\) and _Big\_map_ updates \(lazy hash map structures\) — until fully-fledged events are implemented in Tezos.
-* DipDup utilizes microservice approach and relies heavily on existing solutions which makes the SDK itself very lightweight and does not limit developer with a single programming language or a particular API engine.
+* DipDup utilizes microservice approach and relies heavily on existing solutions. That makes the SDK itself very lightweight and does not limit developer with a single programming language or a particular API engine.
 
 {% hint style="info" %}
 You can think of DipDup as a set of best practices for building custom backends for decentralized applications plus a toolkit that spares you from writing boilerplate code.
@@ -21,7 +19,7 @@ While you are free to use any database and API engine \(e.g. write your own API 
 
 ## How it works
 
-From the developer perspective there are three main steps for creating an indexer using DipDup framework:
+From the developer's perspective there are three main steps for creating an indexer using DipDup framework:
 
 1. Write a declarative configuration file containing all the inventory and indexing rules
 2. Describe your domain-specific data models
@@ -29,7 +27,7 @@ From the developer perspective there are three main steps for creating an indexe
 
 In the result you get a service responsible for filling the database with the indexed data.
 
-Within this service there can be multiple indexers running independently
+Within this service there can be multiple indexers running independently.
 
 ## Atomicity and persistency
 
