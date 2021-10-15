@@ -1,6 +1,46 @@
+<!-- TOC -->
+- [Installing DipDup](#installing-dipdup)
+- [Creating a configuration file](#creating-a-configuration-file)
+- [Initializing project](#initializing-project)
+- [Implementing handlers](#implementing-handlers)
+- [Running indexer](#running-indexer)
+- [Overview](#overview)
+- [Installation](#installation)
+    - [Requirements](#requirements)
+        - [Linux](#linux)
+        - [Python](#python)
+    - [Database backends](#database-backends)
+- [Installation](#installation)
+    - [poetry (recommended)](#poetry-recommended)
+    - [pip requirements.txt](#pip-requirementstxt)
+- [Big picture](#big-picture)
+- [Index](#index)
+- [Datasources](#datasources)
+- [Contracts](#contracts)
+- [Indexes](#indexes)
+    - [operation](#operation)
+    - [big_map](#big_map)
+- [Template](#template)
+- [Template](#template)
+- [Handler context](#handler-context)
+- [Hasura integration](#hasura-integration)
+- [GenQL](#genql)
+- [init](#init)
+- [migrate](#migrate)
+- [Spawning indexes at runtime](#spawning-indexes-at-runtime)
+- [Processing offchain data](#processing-offchain-data)
+    - [immune tables](#immune-tables)
+- [Performance tuning](#performance-tuning)
+    - [Database, datasources](#database-datasources)
+    - [logging](#logging)
+    - [Synchronizing multiple handlers](#synchronizing-multiple-handlers)
+- [Config](#config)
+- [Cli](#cli)
+<!-- /TOC -->
+
+
 # Overview
 
-DipDup is a tool that abstracts developer from the indexing and data serving workflow and let him focus on the business logic only. It also applies selective indexing techniques to ensure fast initial sync phase and the most efficient use of public API endpoints.
 
 # Quickstart
 
@@ -46,17 +86,23 @@ almost semantic, break queckly
 # Core concepts
 ## Big picture
 ## Index
+### Atomicity and persistency
 
 # Preparing inventory
-## Contract
-## Datasource
-## Index
+## Datasources
+## Contracts
+## Indexes
 order matters
+
+
 ### operation
 ### big_map
+### head
+
 ## Template
 
 # Defining models
+
 # Implementing app logic
 ## Template
 ## Handler context
@@ -64,6 +110,9 @@ order matters
 # Client-side
 ## Hasura integration
 ## GenQL
+
+# Deployment
+## Docker
 
 # Managing project
 
