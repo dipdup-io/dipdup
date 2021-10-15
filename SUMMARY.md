@@ -10,12 +10,12 @@
 	* [Defining models](null)
 	* [Implementing handlers](null)
 
-* [Deployment](deployment/README.md) 
-	* [Docker](deployment/docker-compose.md) 
-
 * [Client side](client-side/README.md) 
 	* [Hasura integration]()
 	* [GenQL](client-side/genql.md) 
+
+* [Deployment and operations](deployment/README.md) 
+	* [Docker](deployment/docker-compose.md) 
 
 * [Troubleshooting]()
 	* [Reporting issues]()
