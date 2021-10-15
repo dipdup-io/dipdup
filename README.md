@@ -1,22 +1,26 @@
----
-description: Get your selective indexer up & running in a few steps
----
-
 # Quick start
 
-## Install SDK
+This page will guide you through the steps required to get your first selective indexer up and running in a few minutes without getting into the details.
+
+## Install framework
 
 {% tabs %}
-{% tab title="Python" %}
+{% tab title="Bash" %}
 ```bash
-pip install dipdup
+$ python -m venv .venv
+$ source .venv/bin/activate
+$ pip install dipdup
 ```
 {% endtab %}
 {% endtabs %}
 
-## Write config file
+## Write a configuration file
 
-Make a new folder and create a configuration file `dipdup.yml` inside with the following content:
+Let's create an indexer for tzBTC token <link> FA1.2 contract.
+We will index all the tzBTC transfers and mints and store indexed data in the models representing token holders.
+
+
+Create a new file named `dipdup.yml` in your current working directory with the following content:
 
 ```yaml
 spec_version: 0.1
@@ -53,7 +57,6 @@ indexes:
             entrypoint: mint
 ```
 
-We will index all the tzBTC transfers and mints and store indexed data in the models representing token holders.
 
 ## Generate types
 
