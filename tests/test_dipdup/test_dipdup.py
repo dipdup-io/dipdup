@@ -5,24 +5,13 @@ from unittest import IsolatedAsyncioTestCase
 
 from pytz import UTC
 
-from dipdup.config import DipDupConfig, SqliteDatabaseConfig
+from dipdup.config import DipDupConfig
 from dipdup.context import pending_indexes
-from dipdup.dipdup import DipDup, IndexDispatcher
+from dipdup.dipdup import IndexDispatcher
 from dipdup.enums import IndexStatus, IndexType
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Index
-
-
-async def _create_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:
-    config.database = SqliteDatabaseConfig(kind='sqlite', path=':memory:')
-    config.initialize(skip_imports=True)
-
-    dipdup = DipDup(config)
-    await dipdup._create_datasources()
-    await dipdup._set_up_database(stack)
-    await dipdup._set_up_hooks()
-    await dipdup._initialize_schema()
-    return dipdup
+from dipdup.test import create_test_dipdup
 
 
 async def _create_index(hash_: str) -> None:
@@ -58,7 +47,7 @@ class IndexStateTest(IsolatedAsyncioTestCase):
     async def test_first_run(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await _create_dipdup(self.config, stack)
+            dipdup = await create_test_dipdup(self.config, stack)
             dispatcher = IndexDispatcher(dipdup._ctx)
 
             # Act
@@ -72,7 +61,7 @@ class IndexStateTest(IsolatedAsyncioTestCase):
     async def test_new_hash(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await _create_dipdup(self.config, stack)
+            dipdup = await create_test_dipdup(self.config, stack)
             dispatcher = IndexDispatcher(dipdup._ctx)
             await _create_index(self.new_hash)
 
@@ -86,7 +75,7 @@ class IndexStateTest(IsolatedAsyncioTestCase):
     async def test_old_hash(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await _create_dipdup(self.config, stack)
+            dipdup = await create_test_dipdup(self.config, stack)
             dispatcher = IndexDispatcher(dipdup._ctx)
             await _create_index(self.old_hash)
 
@@ -100,7 +89,7 @@ class IndexStateTest(IsolatedAsyncioTestCase):
     async def test_invalid_hash(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await _create_dipdup(self.config, stack)
+            dipdup = await create_test_dipdup(self.config, stack)
             dispatcher = IndexDispatcher(dipdup._ctx)
             await _create_index('hehehe')
 
