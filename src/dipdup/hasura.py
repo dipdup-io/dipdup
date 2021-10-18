@@ -8,7 +8,7 @@ from os.path import dirname, join
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
 import humps  # type: ignore
-from aiohttp import ClientConnectorError, ClientOSError
+from aiohttp import ClientConnectorError, ClientOSError, ServerDisconnectedError
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.transactions import get_connection
@@ -145,7 +145,7 @@ class HasuraGateway(HTTPGateway):
         self._logger.info('Waiting for Hasura instance to be ready')
         timeout = self._http_config.connection_timeout or 60
         for _ in range(timeout):
-            with suppress(ClientConnectorError, ClientOSError):
+            with suppress(ClientConnectorError, ClientOSError, ServerDisconnectedError):
                 response = await self._http._session.get(f'{self._hasura_config.url}/healthz')
                 if response.status == 200:
                     break

@@ -31,6 +31,7 @@ from dipdup.datasources.tzkt.enums import (
 from dipdup.enums import MessageType
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import split_by_chunks
+from dipdup.utils.watchdog import Watchdog
 
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 
@@ -266,9 +267,11 @@ class TzktDatasource(IndexDatasource):
         self,
         url: str,
         http_config: Optional[HTTPConfig] = None,
+        watchdog: Optional[Watchdog] = None,
     ) -> None:
         super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = logging.getLogger('dipdup.tzkt')
+        self._watchdog = watchdog
 
         self._transaction_subscriptions: Set[str] = set()
         self._origination_subscriptions: bool = False
@@ -546,11 +549,13 @@ class TzktDatasource(IndexDatasource):
         return self._ws_client
 
     async def run(self) -> None:
-        """Main loop. Sync indexes via REST, start WS connection"""
-        self._logger.info('Starting datasource')
+        self._logger.info('Establishing realtime connection')
+        tasks = [asyncio.create_task(self._get_ws_client().start())]
 
-        self._logger.info('Starting websocket client')
-        await self._get_ws_client().start()
+        if self._watchdog:
+            tasks.append(asyncio.create_task(self._watchdog.run()))
+
+        await asyncio.gather(*tasks)
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
@@ -680,6 +685,9 @@ class TzktDatasource(IndexDatasource):
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw head block from WS"""
         async for data in self._extract_message_data(MessageType.head, message):
+            if self._watchdog:
+                self._watchdog.reset()
+
             block = self.convert_head_block(data)
             await self.emit_head(block)
 
