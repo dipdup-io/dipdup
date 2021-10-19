@@ -1,5 +1,5 @@
-from asyncio import create_task, gather
 import logging
+from asyncio import create_task, gather
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -538,7 +538,7 @@ class TzktDatasource(IndexDatasource):
 
     async def run(self) -> None:
         self._logger.info('Establishing realtime connection')
-        tasks = [create_task(self._get_ws_client().start())]
+        tasks = [create_task(self._get_ws_client().run())]
 
         if self._watchdog:
             tasks.append(create_task(self._watchdog.run()))

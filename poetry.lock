@@ -35,7 +35,7 @@ description = "Async fork of Python SignalR Core client(json and messagepack), w
 category = "main"
 optional = false
 python-versions = "^3.7"
-develop = false
+develop = true
 
 [package.dependencies]
 aiohttp = "^3.7.4"
@@ -43,10 +43,8 @@ msgpack = "^1.0.2"
 websockets = "^8.1"
 
 [package.source]
-type = "git"
-url = "https://github.com/dipdup-net/aiosignalrcore.git"
-reference = "wip"
-resolved_reference = "a24504ec4e325e1929068da7bf3275fbe42c9d2f"
+type = "directory"
+url = "../aiosignalrcore"
 
 [[package]]
 name = "aiosqlite"
@@ -2094,7 +2092,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2964d5c5a99255ba2bc9c4b77c7db5fe949848f1bd3c2b8735d2e9bcdac5962f"
+content-hash = "f1e08d65639af364b2944f589619f4e8ff7a5710f90c81fe543ef94144321bb5"
 
 [metadata.files]
 aiohttp = [
