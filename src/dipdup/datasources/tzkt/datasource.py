@@ -529,7 +529,9 @@ class TzktDatasource(IndexDatasource):
         self._ws_client = SignalRClient(url=f'{self._http._url}/v1/events')
 
         self._ws_client.on_open(self._on_connect)
-        # self._ws_client.on_error(self._on_error)
+        self._ws_client.on_close(self._on_disconnect)
+        self._ws_client.on_error(self._on_error)
+
         self._ws_client.on('operations', self._on_operations_message)
         self._ws_client.on('bigmaps', self._on_big_maps_message)
         self._ws_client.on('head', self._on_head_message)
@@ -559,6 +561,10 @@ class TzktDatasource(IndexDatasource):
             await self._subscribe_to_originations()
         for address, paths in self._big_map_subscriptions.items():
             await self._subscribe_to_big_maps(address, paths)
+
+    async def _on_disconnect(self) -> None:
+        # TODO: Reset subscriptions
+        ...
 
     # TODO: Exception class
     def _on_error(self, message: CompletionMessage) -> NoReturn:

@@ -53,8 +53,9 @@ class IndexDispatcher:
 
     async def run(
         self,
-        spawn_datasources_event: Optional[Event],
-        start_scheduler_event: Optional[Event],
+        spawn_datasources_event: Optional[Event] = None,
+        start_scheduler_event: Optional[Event] = None,
+        early_realtime: bool = False,
     ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
@@ -73,14 +74,16 @@ class IndexDispatcher:
                 index = pending_indexes.popleft()
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
+
             if not indexes_spawned:
                 if self._every_index_is(IndexStatus.ONESHOT):
                     self.stop()
 
-                if spawn_datasources_event and not spawn_datasources_event.is_set():
+            if spawn_datasources_event is not None and not spawn_datasources_event.is_set():
+                if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
                     spawn_datasources_event.set()
 
-            if start_scheduler_event and not start_scheduler_event.is_set():
+            if start_scheduler_event is not None and not start_scheduler_event.is_set():
                 if self._every_index_is(IndexStatus.REALTIME):
                     start_scheduler_event.set()
 
