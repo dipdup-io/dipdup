@@ -27,7 +27,7 @@ from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
 from dipdup.models import Schema
 from dipdup.utils import iter_files
-from dipdup.utils.database import set_decimal_context, tortoise_wrapper, wipe_schema
+from dipdup.utils.database import get_schema_hash, set_decimal_context, tortoise_wrapper, wipe_schema
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -238,6 +238,9 @@ async def schema(ctx):
     ...
 
 
+from dipdup.enums import ReindexingReason
+
+
 @schema.command(name='approve', help='Continue indexing with the same schema after crashing with `ReindexingRequiredError`')
 @click.pass_context
 @cli_wrapper
@@ -247,7 +250,15 @@ async def schema_approve(ctx):
     models = f'{config.package}.models'
 
     async with tortoise_wrapper(url, models):
-        await Schema.filter().update(reindex=None)
+        schema = await Schema.filter().get()
+        if not schema.reindex:
+            return
+
+        if schema.reindex == ReindexingReason.SCHEMA_HASH_MISMATCH:
+            conn = get_connection(None)
+            schema.hash = get_schema_hash(conn)
+        schema.reindex = None
+        await schema.save()
 
 
 @schema.command(name='wipe', help='Drop all database tables, functions and views')

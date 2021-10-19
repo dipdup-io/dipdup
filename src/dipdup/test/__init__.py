@@ -1,10 +1,12 @@
 import logging
 from collections import deque
-from contextlib import contextmanager
+from contextlib import AsyncExitStack, contextmanager
 from typing import AsyncGenerator, Deque, Iterator, Tuple
 from unittest.mock import patch
 
+from dipdup.config import DipDupConfig, SqliteDatabaseConfig
 from dipdup.datasources.tzkt.datasource import OperationFetcher
+from dipdup.dipdup import DipDup
 from dipdup.index import OperationIndex
 from dipdup.models import OperationData
 
@@ -54,3 +56,15 @@ def with_operation_index_fuzzer(levels=100, repeats=100) -> Iterator[None]:
     with with_operation_fetcher_fuzzer(levels=levels, repeats=repeats):
         with patch('dipdup.index.OperationIndex', OperationIndexFuzzer):
             yield
+
+
+async def create_test_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:
+    config.database = SqliteDatabaseConfig(kind='sqlite', path=':memory:')
+    config.initialize(skip_imports=True)
+
+    dipdup = DipDup(config)
+    await dipdup._create_datasources()
+    await dipdup._set_up_database(stack)
+    await dipdup._set_up_hooks()
+    await dipdup._initialize_schema()
+    return dipdup

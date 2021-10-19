@@ -38,6 +38,7 @@ from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
 from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema, get_schema_hash, prepare_models, set_schema, tortoise_wrapper, validate_models
+from dipdup.utils.watchdog import Watchdog
 
 
 class IndexDispatcher:
@@ -293,6 +294,7 @@ class DipDup:
                 datasource = TzktDatasource(
                     url=datasource_config.url,
                     http_config=datasource_config.http,
+                    watchdog=Watchdog(120.0, self._ctx.restart),
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
