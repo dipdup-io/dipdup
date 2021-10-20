@@ -141,10 +141,10 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
 
 @cli.command(help='Run indexing')
-@click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
+@click.option('--oneshot', is_flag=True, help='Synchronize indexes and exit without starting a real-time connection')
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
 @click.option('--skip-hasura', is_flag=True, help='Do not update Hasura metadata')
-@click.option('--early-realtime', is_flag=True, help='Establish realtime connection before all indexes are synchronized')
+@click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
 @click.pass_context
 @cli_wrapper
 async def run(
