@@ -1,3 +1,4 @@
+from contextlib import suppress
 import logging
 from asyncio import create_task, gather
 from collections import defaultdict, deque
@@ -6,9 +7,9 @@ from decimal import Decimal
 from typing import Any, AsyncGenerator, DefaultDict, Deque, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
-from aiosignalrcore.client import SignalRClient
-from aiosignalrcore.messages import CompletionMessage  # type: ignore
-from aiosignalrcore.transport.abstract import ConnectionState  # type: ignore
+from pysignalr.client import SignalRClient
+from pysignalr.messages import CompletionMessage  # type: ignore
+from pysignalr.transport.abstract import ConnectionState  # type: ignore
 
 from dipdup.config import (
     BigMapIndexConfig,
@@ -512,7 +513,8 @@ class TzktDatasource(IndexDatasource):
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-        await self._on_connect()
+        # NOTE: Rare case, disconnected before completing connection callback
+        create_task(self._on_connect())
 
     async def set_sync_level(self) -> None:
         if self._sync_level:
@@ -549,9 +551,6 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
-        if self._get_ws_client()._transport._state != ConnectionState.connected:
-            return
-
         self._logger.info('Realtime connection established, subscribing to channels')
         await self._subscribe_to_head()
         for address in self._transaction_subscriptions:
@@ -625,7 +624,8 @@ class TzktDatasource(IndexDatasource):
             level, current_level = item['state'], self._level[type_]
             self._level[type_] = level
 
-            self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
+            if not (tzkt_type == TzktMessageType.STATE and current_level == level):
+                self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
 
             # NOTE: Ensure correctness, update sync level
             if tzkt_type == TzktMessageType.STATE:

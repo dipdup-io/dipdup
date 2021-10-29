@@ -304,7 +304,7 @@ class DipDup:
                 datasource = TzktDatasource(
                     url=datasource_config.url,
                     http_config=datasource_config.http,
-                    watchdog=Watchdog(120.0, self._ctx.restart),
+                    # watchdog=Watchdog(120.0, self._ctx.restart),
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(

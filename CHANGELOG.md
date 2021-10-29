@@ -13,7 +13,7 @@
 
 ### Improved
 
-* tzkt: Replaced aiosignalrcore library with ... 
+* tzkt: Replaced pysignalr library with ... 
 
 ## 3.1.1 - 2021-10-18
 
