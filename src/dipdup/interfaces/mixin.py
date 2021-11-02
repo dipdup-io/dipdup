@@ -1,0 +1,3 @@
+class InterfaceMixin:
+    def __init__(self):
+        ...

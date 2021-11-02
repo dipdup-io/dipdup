@@ -6,17 +6,22 @@ from dipdup.types import SchemasT
 
 
 class InterfacesModuleGeneratorFactory:
-    def __new__(
-        cls,
+    def __init__(
+        self,
         config: DipDupConfig,
         schemas: SchemasT,
         logger: Logger,
-    ) -> AbstractInterfacesPackageGenerator:
-        if not config.interfaces:
-            return NullInterfacesPackageGenerator(logger)
+    ) -> None:
+        self._config: DipDupConfig = config
+        self._schemas: SchemasT = schemas
+        self._logger: Logger = logger
+
+    def build(self) -> AbstractInterfacesPackageGenerator:
+        if not self._config.interfaces:
+            return NullInterfacesPackageGenerator(self._logger)
 
         return InterfacesPackageGenerator(
-            config=config,
-            schemas=schemas,
-            logger=logger,
+            config=self._config,
+            schemas=self._schemas,
+            logger=self._logger,
         )

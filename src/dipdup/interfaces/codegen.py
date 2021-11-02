@@ -2,19 +2,17 @@ from __future__ import annotations
 
 from logging import Logger
 from os.path import join
-from typing import List
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Set
 
-from humps import camelize
-from humps import decamelize
-from humps import pascalize
-from pydantic import Field
-from pydantic.dataclasses import dataclass
+from humps import decamelize, pascalize  # type: ignore
 
-if TYPE_CHECKING:
+from dipdup.interfaces.const import InterfaceCodegenConst
+from dipdup.interfaces.dto import ClassDefinitionDTO, EntrypointDTO, ImportDTO, InterfaceDTO, MethodDefinitionDTO, ParameterDTO, TemplateDTO
+
+if TYPE_CHECKING:  # pragma: no cover
     from dipdup.types import SchemasT
 
-from dipdup.config import DipDupConfig
+from dipdup.config import ContractConfig, DipDupConfig
 from dipdup.const import CodegenPath
 from dipdup.utils import mkdir_p, touch, write
 
@@ -54,20 +52,24 @@ class InterfacesPackageGenerator(AbstractInterfacesPackageGenerator):
 
     async def generate(self) -> None:
         self._logger.info('Creating `interfaces` package')
-        interfaces_path = join(self._config.package_path, CodegenPath.INTERFACES)
+        interfaces_path = join(self._config.package_path, CodegenPath.INTERFACES_DIR)
         mkdir_p(interfaces_path)
         init_path = join(interfaces_path, CodegenPath.INIT_FILE)
         touch(init_path)
 
+        assert isinstance(self._config.interfaces, dict)
         for interface_name, interface_config in self._config.interfaces.items():
-            types_module_path = '.'.join(
+            assert isinstance(interface_config.contract, ContractConfig)
+            assert isinstance(interface_config.contract.typename, str)
+            types_module_path = InterfaceCodegenConst.DOT_DELIMITER.join(
                 [
                     self._config.package,
-                    CodegenPath.TYPES,
+                    CodegenPath.TYPES_DIR,
                     interface_config.contract.typename,
-                    CodegenPath.PARAMETER,
+                    CodegenPath.PARAMETER_DIR,
                 ]
             )
+            assert isinstance(interface_config.entrypoints, set)
             interface_generator = InterfaceGenerator(
                 interface_name,
                 interfaces_path,
@@ -84,34 +86,52 @@ class InterfaceGenerator:
         interface_name: str,
         path: str,
         types_module_path: str,
-        entrypoints: set,
+        entrypoints: Set[str],
         logger: Logger,
     ) -> None:
         self._name: str = interface_name
         self._path: str = path
         self._types_module_path: str = types_module_path
-        self._entrypoints: set = entrypoints
+        self._entrypoints: Set[str] = entrypoints
         self._logger: Logger = logger
 
     async def generate(self) -> None:
         self._logger.info(f'Generating Interface `{self._name}`')
-        write(self.file_path, await self.render())
+        write(self.file_path, self.render())
 
-    async def render(self) -> str:
+    def render(self) -> str:
         from dipdup.codegen import load_template
-        template = load_template(CodegenPath.INTERFACE_TEMPLATE)
 
-        data = TemplateDTO(interface=InterfaceDTO(name=self.class_name))
+        template = load_template(CodegenPath.INTERFACE_TEMPLATE_FILE)
+
+        data = TemplateDTO(
+            interface=InterfaceDTO(
+                definition=ClassDefinitionDTO(
+                    name=self._name,
+                    parents=[InterfaceCodegenConst.MIXIN_NAME],
+                )
+            ),
+            imports=[
+                ImportDTO(
+                    module=InterfaceCodegenConst.MIXIN_MODULE,
+                    class_name=InterfaceCodegenConst.MIXIN_NAME,
+                )
+            ],
+        )
 
         for entrypoint_name in self._entrypoints:
             entrypoint = EntrypointDTO(
-                name=self.method_name(entrypoint_name),
-                parameter=ParameterDTO(
-                    name='parameter',
-                    type=self.parameter_type(entrypoint_name),
+                definition=MethodDefinitionDTO(
+                    name=entrypoint_name,
+                    parameters=[
+                        ParameterDTO(name=InterfaceCodegenConst.PARAMETER_SELF),
+                        ParameterDTO(
+                            name=InterfaceCodegenConst.DEFAULT_PARAMETER_NAME,
+                            type=self.parameter_type(entrypoint_name),
+                        ),
+                    ],
                 ),
-                code=['...'],
-                decorators=['staticmethod'],
+                code=[InterfaceCodegenConst.ELLIPSIS],
             )
             import_item = ImportDTO(
                 module=f'{self._types_module_path}.{self.parameter_name(entrypoint_name)}',
@@ -125,20 +145,12 @@ class InterfaceGenerator:
         return interface_code
 
     @property
-    def class_name(self) -> str:
-        return f'{pascalize(self._name)}Interface'
-
-    @property
     def file_name(self) -> str:
-        return f'{decamelize(self._name)}_interface.py'
+        return f'{decamelize(self._name)}{InterfaceCodegenConst.INTERFACE_FILENAME_POSTFIX}'
 
     @property
     def file_path(self) -> str:
         return join(self._path, self.file_name)
-
-    @staticmethod
-    def method_name(name: str) -> str:
-        return f'{camelize(name)}'
 
     @staticmethod
     def parameter_name(name: str) -> str:
@@ -146,43 +158,4 @@ class InterfaceGenerator:
 
     @staticmethod
     def parameter_type(name: str) -> str:
-        return f'{pascalize(name)}Parameter'
-
-
-@dataclass
-class ParameterDTO:
-    name: str
-    type: str = ''
-
-    def __str__(self) -> str:
-        if type:
-            return f'{self.name}: {self.type}'
-
-        return f'{self.name}'
-
-
-@dataclass
-class EntrypointDTO:
-    name: str
-    parameter: ParameterDTO
-    code: List[str] = Field(default_factory=list)
-    decorators: List[str] = Field(default_factory=list)
-    return_type: str = 'None'
-
-
-@dataclass
-class ImportDTO:
-    module: str
-    class_name: str
-
-
-@dataclass
-class InterfaceDTO:
-    name: str
-    methods: List[EntrypointDTO] = Field(default_factory=list)
-
-
-@dataclass
-class TemplateDTO:
-    interface: InterfaceDTO
-    imports: List[ImportDTO] = Field(default_factory=list)
+        return f'{pascalize(name)}{InterfaceCodegenConst.PARAMETER_TYPE_POSTFIX}'

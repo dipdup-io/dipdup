@@ -29,6 +29,7 @@ from dipdup.config import (
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, ConfigurationError
+from dipdup.interfaces.codegen import AbstractInterfacesPackageGenerator
 from dipdup.interfaces.factory import InterfacesModuleGeneratorFactory
 from dipdup.types import SchemasT
 from dipdup.utils import import_submodules, mkdir_p, pascal_to_snake, snake_to_pascal, touch, write
@@ -294,11 +295,11 @@ class DipDupCodeGenerator:
                 await self._generate_callback(hook_config, sql=True)
 
     async def generate_interfaces(self) -> None:
-        interface_module_generator = InterfacesModuleGeneratorFactory(
+        interface_module_generator: AbstractInterfacesPackageGenerator = InterfacesModuleGeneratorFactory(
             config=self._config,
             schemas=self._schemas,
             logger=self._logger,
-        )
+        ).build()
         await interface_module_generator.generate()
 
     async def generate_docker(self, image: str, tag: str, env_file: str) -> None:

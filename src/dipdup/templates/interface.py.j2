@@ -3,7 +3,7 @@ from {{ import.module }} import {{ import.class_name }}
 {%- endfor %}
 
 
-class {{ data.interface.name }}:
+{{ data.interface.definition }}
 {%- for entrypoint in data.interface.methods %}
 
 {%- if entrypoint.decorators %}
@@ -11,7 +11,7 @@ class {{ data.interface.name }}:
     @{{ decorator }}
 {%- endfor %}
 {%- endif %}
-    async def {{ entrypoint.name }}({{ entrypoint.parameter }}) -> {{ entrypoint.return_type }}:
+    {{ entrypoint.definition }}
 {%- for line in entrypoint.code %}
         {{ line }}
 {%- endfor %}
