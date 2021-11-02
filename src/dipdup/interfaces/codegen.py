@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+from ast import AST, AsyncFunctionDef, ClassDef, Constant, Expr, ImportFrom, Load, Module, Name, alias, arg, arguments, unparse
 from logging import Logger
 from os.path import join
 from typing import Set
 
-from humps import decamelize, pascalize  # type: ignore
+from black import Mode, TargetVersion, format_str
+from humps import camelize, decamelize, pascalize  # type: ignore
 
 from dipdup.config import ContractConfig, DipDupConfig
 from dipdup.const import CodegenPath
 from dipdup.interfaces.const import InterfaceCodegenConst
-from dipdup.interfaces.dto import ClassDefinitionDTO, EntrypointDTO, ImportDTO, InterfaceDTO, MethodDefinitionDTO, ParameterDTO, TemplateDTO
 from dipdup.utils import mkdir_p, touch, write
 
 
@@ -88,55 +89,80 @@ class InterfaceGenerator:
         self._types_module_path: str = types_module_path
         self._entrypoints: Set[str] = entrypoints
         self._logger: Logger = logger
+        self._code: str = ''
 
     async def generate(self) -> None:
         self._logger.info(f'Generating Interface `{self._name}`')
-        write(self.file_path, self.render())
+        await self._render()
+        await self._reformat()
+        write(self.file_path, self._code)
 
-    def render(self) -> str:
-        from dipdup.codegen import load_template
+    async def _render(self) -> None:
+        interface_ast: AST = await self._build_ast()
+        self._code: str = unparse(interface_ast)
 
-        template = load_template(CodegenPath.INTERFACE_TEMPLATE_FILE)
-
-        data = TemplateDTO(
-            interface=InterfaceDTO(
-                definition=ClassDefinitionDTO(
-                    name=self._name,
-                    parents=[InterfaceCodegenConst.MIXIN_NAME],
-                )
+    async def _build_ast(self) -> AST:
+        result_tree = Module(body=[], type_ignores=[])
+        import_tree_list = [
+            ImportFrom(
+                module=InterfaceCodegenConst.MIXIN_MODULE,
+                names=[alias(name=InterfaceCodegenConst.MIXIN_NAME)],
+                level=0
             ),
-            imports=[
-                ImportDTO(
-                    module=InterfaceCodegenConst.MIXIN_MODULE,
-                    class_name=InterfaceCodegenConst.MIXIN_NAME,
-                )
-            ],
+        ]
+        class_tree = ClassDef(
+            name=self.get_class_name(),
+            bases=[Name(id=InterfaceCodegenConst.MIXIN_NAME, ctx=Load())],
+            keywords=[],
+            body=[],
+            decorator_list=[],
         )
 
         for entrypoint_name in self._entrypoints:
-            entrypoint = EntrypointDTO(
-                definition=MethodDefinitionDTO(
-                    name=entrypoint_name,
-                    parameters=[
-                        ParameterDTO(name=InterfaceCodegenConst.PARAMETER_SELF),
-                        ParameterDTO(
-                            name=InterfaceCodegenConst.DEFAULT_PARAMETER_NAME,
-                            type=self.parameter_type(entrypoint_name),
-                        ),
+            entrypoint = AsyncFunctionDef(
+                lineno=None,
+                name=self.get_method_name(entrypoint_name),
+                args=arguments(
+                    posonlyargs=[],
+                    args=[
+                        arg(arg=InterfaceCodegenConst.PARAMETER_SELF),
+                        arg(
+                            arg=InterfaceCodegenConst.DEFAULT_PARAMETER_NAME,
+                            annotation=Name(id=self.get_parameter_type(entrypoint_name), ctx=Load()),
+                        )
                     ],
+                    kwonlyargs=[],
+                    kw_defaults=[],
+                    defaults=[]
                 ),
-                code=[InterfaceCodegenConst.ELLIPSIS],
+                body=[
+                    Expr(value=Constant(value=Ellipsis)),
+                ],
+                returns=Constant(value=None),
+                decorator_list=[],
             )
-            import_item = ImportDTO(
-                module=f'{self._types_module_path}.{self.parameter_name(entrypoint_name)}',
-                class_name=self.parameter_type(entrypoint_name),
+            import_tree = ImportFrom(
+                module=self.get_import_module(entrypoint_name),
+                names=[alias(name=self.get_parameter_type(entrypoint_name))],
+                level=0,
             )
-            data.interface.methods.append(entrypoint)
-            data.imports.append(import_item)
+            class_tree.body.append(entrypoint)
+            import_tree_list.append(import_tree)
 
-        interface_code = template.render(data=data)
+        result_tree.body += import_tree_list
+        result_tree.body.append(class_tree)
 
-        return interface_code
+        return result_tree
+
+    async def _reformat(self) -> None:
+        self._code: str = format_str(
+            src_contents=self._code,
+            mode=Mode(
+                target_versions={TargetVersion.PY38},
+                line_length=140,
+                string_normalization=False,
+            ),
+        )
 
     @property
     def file_name(self) -> str:
@@ -146,10 +172,20 @@ class InterfaceGenerator:
     def file_path(self) -> str:
         return join(self._path, self.file_name)
 
+    def get_import_module(self, name: str) -> str:
+        return f'{self._types_module_path}.{self.get_parameter_name(name)}'
+
+    def get_class_name(self) -> str:
+        return f'{pascalize(self._name)}{InterfaceCodegenConst.INTERFACE_CLASS_POSTFIX}'
+
     @staticmethod
-    def parameter_name(name: str) -> str:
+    def get_method_name(name) -> str:
+        return f'{camelize(name)}'
+
+    @staticmethod
+    def get_parameter_name(name: str) -> str:
         return f'{decamelize(name)}'
 
     @staticmethod
-    def parameter_type(name: str) -> str:
+    def get_parameter_type(name: str) -> str:
         return f'{pascalize(name)}{InterfaceCodegenConst.PARAMETER_TYPE_POSTFIX}'
