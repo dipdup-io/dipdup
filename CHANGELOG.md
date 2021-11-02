@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.2 - [unreleased]
+
+### Fixed
+
+* Fixed crash occurred during synchronization of big map indexes.
+
 ## 3.1.1 - 2021-10-18
 
 ### Fixed
