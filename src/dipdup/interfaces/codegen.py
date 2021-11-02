@@ -2,18 +2,14 @@ from __future__ import annotations
 
 from logging import Logger
 from os.path import join
-from typing import TYPE_CHECKING, Set
+from typing import Set
 
 from humps import decamelize, pascalize  # type: ignore
 
-from dipdup.interfaces.const import InterfaceCodegenConst
-from dipdup.interfaces.dto import ClassDefinitionDTO, EntrypointDTO, ImportDTO, InterfaceDTO, MethodDefinitionDTO, ParameterDTO, TemplateDTO
-
-if TYPE_CHECKING:  # pragma: no cover
-    from dipdup.types import SchemasT
-
 from dipdup.config import ContractConfig, DipDupConfig
 from dipdup.const import CodegenPath
+from dipdup.interfaces.const import InterfaceCodegenConst
+from dipdup.interfaces.dto import ClassDefinitionDTO, EntrypointDTO, ImportDTO, InterfaceDTO, MethodDefinitionDTO, ParameterDTO, TemplateDTO
 from dipdup.utils import mkdir_p, touch, write
 
 
@@ -43,10 +39,8 @@ class InterfacesPackageGenerator(AbstractInterfacesPackageGenerator):
     def __init__(
         self,
         config: DipDupConfig,
-        schemas: SchemasT,
         logger: Logger,
     ) -> None:
-        self._schemas: SchemasT = schemas
         self._config: DipDupConfig = config
         self._logger: Logger = logger
 

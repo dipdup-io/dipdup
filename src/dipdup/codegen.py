@@ -297,7 +297,6 @@ class DipDupCodeGenerator:
     async def generate_interfaces(self) -> None:
         interface_module_generator: AbstractInterfacesPackageGenerator = InterfacesModuleGeneratorFactory(
             config=self._config,
-            schemas=self._schemas,
             logger=self._logger,
         ).build()
         await interface_module_generator.generate()
