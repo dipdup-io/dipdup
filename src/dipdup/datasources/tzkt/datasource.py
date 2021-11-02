@@ -215,6 +215,7 @@ class BigMapFetcher:
         offset = 0
         big_maps: Tuple[BigMapData, ...] = tuple()
 
+        # TODO: Share code between this and OperationFetcher
         while True:
             fetched_big_maps = await self._datasource.get_big_maps(
                 self._big_map_addresses,
@@ -226,10 +227,14 @@ class BigMapFetcher:
             )
             big_maps = big_maps + fetched_big_maps
 
+            # NOTE: Yield big map slices by level except the last one
             while True:
                 for i in range(len(big_maps) - 1):
-                    if big_maps[i].level != big_maps[i + 1].level:
-                        yield big_maps[i].level, tuple(big_maps[: i + 1])
+                    curr_level, next_level = big_maps[i].level, big_maps[i + 1].level
+
+                    # NOTE: Level boundaries found. Exit for loop, stay in while.
+                    if curr_level != next_level:
+                        yield curr_level, big_maps[: i + 1]
                         big_maps = big_maps[i + 1 :]
                         break
                 else:
@@ -241,7 +246,7 @@ class BigMapFetcher:
             offset += self._datasource.request_limit
 
         if big_maps:
-            yield big_maps[0].level, tuple(big_maps[: i + 2])
+            yield big_maps[0].level, big_maps
 
 
 class TzktDatasource(IndexDatasource):

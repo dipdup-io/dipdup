@@ -13,7 +13,13 @@
 
 ### Improved
 
-* tzkt: Replaced pysignalr library with ... 
+* tzkt: Replaced aiosignalrcore library with pysignalr.
+
+## 3.1.2 - 2021-11-02
+
+### Fixed
+
+* Fixed crash occurred during synchronization of big map indexes.
 
 ## 3.1.1 - 2021-10-18
 
