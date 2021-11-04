@@ -1,4 +1,3 @@
-from contextlib import suppress
 import logging
 from asyncio import create_task, gather
 from collections import defaultdict, deque
@@ -9,7 +8,6 @@ from typing import Any, AsyncGenerator, DefaultDict, Deque, Dict, List, NoReturn
 from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage  # type: ignore
-from pysignalr.transport.abstract import ConnectionState  # type: ignore
 
 from dipdup.config import (
     BigMapIndexConfig,
