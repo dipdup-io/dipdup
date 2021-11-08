@@ -158,7 +158,12 @@ async def run(
     config.initialize()
     set_decimal_context(config.package)
     dipdup = DipDup(config)
-    await dipdup.run(oneshot, postpone_jobs, skip_hasura, early_realtime)
+    await dipdup.run(
+        oneshot=oneshot,
+        postpone_jobs=postpone_jobs or config.advanced.postpone_jobs,
+        skip_hasura=skip_hasura or config.advanced.skip_hasura,
+        early_realtime=early_realtime or config.advanced.early_realtime,
+    )
 
 
 @cli.command(help='Generate missing callbacks and types')

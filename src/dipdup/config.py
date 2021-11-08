@@ -25,6 +25,7 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
+from dipdup.enums import ReindexingAction, ReindexingReasonC
 from dipdup.exceptions import ConfigInitializationException, ConfigurationError
 from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
 
@@ -890,6 +891,14 @@ default_hooks = {
 
 
 @dataclass
+class AdvancedConfig:
+    postpone_jobs: bool = False
+    skip_hasura: bool = False
+    early_realtime: bool = False
+    reindex: Dict[ReindexingReasonC, ReindexingAction] = Field(default_factory=dict)
+
+
+@dataclass
 class DipDupConfig:
     """Main dapp config
 
@@ -903,6 +912,7 @@ class DipDupConfig:
     :param hasura: Hasura config
     :param jobs: Mapping of job aliases and job configs
     :param sentry: Sentry integration config
+    :param advanced: Advanced config
     """
 
     spec_version: str
@@ -916,6 +926,7 @@ class DipDupConfig:
     hooks: Dict[str, HookConfig] = Field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
     sentry: Optional[SentryConfig] = None
+    advanced: AdvancedConfig = AdvancedConfig()
 
     def __post_init_post_parse__(self):
         self._filenames: List[str] = []
