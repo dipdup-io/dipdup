@@ -1,5 +1,19 @@
 # Changelog
 
+## 3.1.2 - [unreleased]
+
+### Fixed
+
+* Fixed crash occurred during synchronization of big map indexes.
+
+## 3.1.1 - 2021-10-18
+
+### Fixed
+
+* Fixed loss of real-time subscriptions occurred after TzKT API outage.
+* Fixed updating schema hash in `schema approve` command.
+* Fixed possible crash occurred while Hasura is not ready.
+
 ## 3.1.0 - 2021-10-12
 
 ### Added
