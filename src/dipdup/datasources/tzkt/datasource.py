@@ -530,6 +530,9 @@ class TzktDatasource(IndexDatasource):
 
     async def subscribe(self) -> None:
         missing_subscriptions = self._subscriptions.missing_subscriptions
+        if not missing_subscriptions:
+            return
+
         self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
         for subscription in missing_subscriptions:
             if isinstance(subscription, TransactionSubscription):
