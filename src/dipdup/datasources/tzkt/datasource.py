@@ -19,6 +19,7 @@ from dipdup.config import (
     ResolvedIndexConfigT,
 )
 from dipdup.datasources.datasource import IndexDatasource
+from dipdup.datasources.subscription import BigMapSubscription, HeadSubscription, OriginationSubscription, TransactionSubscription
 from dipdup.datasources.tzkt.enums import (
     ORIGINATION_MIGRATION_FIELDS,
     ORIGINATION_OPERATION_FIELDS,
@@ -27,6 +28,7 @@ from dipdup.datasources.tzkt.enums import (
     TzktMessageType,
 )
 from dipdup.enums import MessageType
+from dipdup.exceptions import DatasourceError
 from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData, QuoteData
 from dipdup.utils import split_by_chunks
 from dipdup.utils.watchdog import Watchdog
@@ -271,16 +273,14 @@ class TzktDatasource(IndexDatasource):
         url: str,
         http_config: Optional[HTTPConfig] = None,
         watchdog: Optional[Watchdog] = None,
+        merge_subscriptions: bool = False,
     ) -> None:
         super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = logging.getLogger('dipdup.tzkt')
         self._watchdog = watchdog
+        self._merge_subscriptions = merge_subscriptions
 
-        self._transaction_subscriptions: Set[str] = set()
-        self._origination_subscriptions: bool = False
-        self._big_map_subscriptions: Dict[str, Set[str]] = {}
         self._ws_client: Optional[SignalRClient] = None
-
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
         self._sync_level: Optional[int] = None
 
@@ -494,22 +494,28 @@ class TzktDatasource(IndexDatasource):
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
 
         if isinstance(index_config, OperationIndexConfig):
-            for contract_config in index_config.contracts or []:
-                self._transaction_subscriptions.add(cast(ContractConfig, contract_config).address)
+            if self._merge_subscriptions:
+                self._subscriptions.add(TransactionSubscription())
+            else:
+                for contract_config in index_config.contracts or ():
+                    address = cast(ContractConfig, contract_config).address
+                    self._subscriptions.add(TransactionSubscription(address=address))
+
             for handler_config in index_config.handlers:
                 for pattern_config in handler_config.pattern:
                     if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        self._origination_subscriptions = True
+                        self._subscriptions.add(OriginationSubscription())
+                        break
 
         elif isinstance(index_config, BigMapIndexConfig):
-            for big_map_handler_config in index_config.handlers:
-                address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
-                if address not in self._big_map_subscriptions:
-                    self._big_map_subscriptions[address] = set()
-                if path not in self._big_map_subscriptions[address]:
-                    self._big_map_subscriptions[address].add(path)
+            if self._merge_subscriptions:
+                self._subscriptions.add(BigMapSubscription())
+            else:
+                for big_map_handler_config in index_config.handlers:
+                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                    self._subscriptions.add(BigMapSubscription(address=address, path=path))
 
-        # NOTE: head subscription is enabled by default
+        # NOTE: HeadSubscription is always enabled
         elif isinstance(index_config, HeadIndexConfig):
             pass
 
@@ -524,6 +530,24 @@ class TzktDatasource(IndexDatasource):
             return
         block = await self.get_head_block()
         self._sync_level = block.level
+
+    async def subscribe(self) -> None:
+        missing_subscriptions = self._subscriptions.missing_subscriptions
+        self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
+        for subscription in missing_subscriptions:
+            if isinstance(subscription, TransactionSubscription):
+                await self._subscribe_to_transactions(subscription.address)
+            elif isinstance(subscription, OriginationSubscription):
+                await self._subscribe_to_originations()
+            elif isinstance(subscription, HeadSubscription):
+                await self._subscribe_to_head()
+            elif isinstance(subscription, BigMapSubscription):
+                await self._subscribe_to_big_maps(subscription.address, subscription.path)
+            else:
+                raise NotImplementedError
+
+        self._subscriptions.apply()
+        self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
 
     def _get_ws_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
@@ -554,71 +578,48 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
-        self._logger.info('Realtime connection established, subscribing to channels')
-        await self._subscribe_to_head()
-        for address in self._transaction_subscriptions:
-            await self._subscribe_to_transactions(address)
-        # NOTE: All originations are passed to matcher
-        if self._origination_subscriptions:
-            await self._subscribe_to_originations()
-        for address, paths in self._big_map_subscriptions.items():
-            await self._subscribe_to_big_maps(address, paths)
+        await self.subscribe()
 
     async def _on_disconnect(self) -> None:
-        # TODO: Reset subscriptions
-        ...
+        self._subscriptions.reset()
 
-    # TODO: Exception class
     def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""
-        raise Exception(message.error)
+        raise DatasourceError(datasource=self.name, msg=cast(str, message.error))
 
-    async def _subscribe_to_transactions(self, address: str) -> None:
+    async def _subscribe_to_transactions(self, address: Optional[str] = None) -> None:
         """Subscribe to contract's operations on established WS connection"""
-        self._logger.debug('Subscribing to %s transactions', address)
-        await self._send(
-            'SubscribeToOperations',
-            [
-                {
-                    'address': address,
-                    'types': 'transaction',
-                }
-            ],
-        )
+        if address:
+            request = [{'types': 'transaction', 'address': address}]
+        else:
+            request = [{'types': 'transaction'}]
+
+        self._logger.debug('Subscribing to %s transactions', address or 'all')
+        await self._send('SubscribeToOperations', request)
 
     async def _subscribe_to_originations(self) -> None:
         """Subscribe to all originations on established WS connection"""
-        self._logger.debug('Subscribing to originations')
-        await self._send(
-            'SubscribeToOperations',
-            [
-                {
-                    'types': 'origination',
-                }
-            ],
-        )
+        request = [{'types': 'origination'}]
 
-    async def _subscribe_to_big_maps(self, address: str, paths: Set[str]) -> None:
+        self._logger.debug('Subscribing to all originations')
+        await self._send('SubscribeToOperations', request)
+
+    async def _subscribe_to_big_maps(self, address: Optional[str], path: Optional[str]) -> None:
         """Subscribe to contract's big map diffs on established WS connection"""
-        self._logger.debug('Subscribing to big map updates of %s, %s', address, paths)
-        for path in paths:
-            await self._send(
-                'SubscribeToBigMaps',
-                [
-                    {
-                        'address': address,
-                        'path': path,
-                    }
-                ],
-            )
+        if address and path:
+            log, request = f'{address}:{path}', [{'address': address, 'paths': [path]}]
+        elif not address and not path:
+            log, request = 'all', [{}]
+        else:
+            raise RuntimeError
+
+        self._logger.debug('Subscribing to %s big map updates', log)
+        await self._send('SubscribeToBigMaps', request)
 
     async def _subscribe_to_head(self) -> None:
         """Subscribe to head on established WS connection"""
-        self._logger.debug('Subscribing to head')
-        await self._send(
-            'SubscribeToHead',
-            [],
-        )
+        self._logger.debug('Subscribing to all head blocks')
+        await self._send('SubscribeToHead', [])
 
     async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""

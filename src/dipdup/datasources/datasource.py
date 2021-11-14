@@ -3,6 +3,7 @@ from abc import abstractmethod
 from typing import Awaitable, Callable, Set, Tuple
 
 from dipdup.config import HTTPConfig
+from dipdup.datasources.subscription import HeadSubscription, SubscriptionManager
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData, HeadBlockData, OperationData
 from dipdup.utils import FormattedLogger
@@ -36,10 +37,16 @@ class IndexDatasource(Datasource):
         self._on_operations: Set[OperationsCallbackT] = set()
         self._on_big_maps: Set[BigMapsCallbackT] = set()
         self._on_rollback: Set[RollbackCallbackT] = set()
+        self._subscriptions: SubscriptionManager = SubscriptionManager()
+        self._subscriptions.add(HeadSubscription())
 
     @property
     def name(self) -> str:
         return self._http._url
+
+    @abstractmethod
+    async def subscribe(self) -> None:
+        ...
 
     def on_head(self, fn: HeadCallbackT) -> None:
         self._on_head.add(fn)

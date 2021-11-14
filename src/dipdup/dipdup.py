@@ -52,8 +52,8 @@ class IndexDispatcher:
 
     async def run(
         self,
-        spawn_datasources_event: Optional[Event] = None,
-        start_scheduler_event: Optional[Event] = None,
+        spawn_datasources_event: Event,
+        start_scheduler_event: Event,
         early_realtime: bool = False,
     ) -> None:
         self._logger.info('Starting index dispatcher')
@@ -78,11 +78,15 @@ class IndexDispatcher:
                 if self._every_index_is(IndexStatus.ONESHOT):
                     self.stop()
 
-            if spawn_datasources_event is not None and not spawn_datasources_event.is_set():
+            if not spawn_datasources_event.is_set():
                 if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
                     spawn_datasources_event.set()
+            else:
+                index_datasources = (i.datasource for i in self._indexes.values())
+                for datasource in index_datasources:
+                    await datasource.subscribe()
 
-            if start_scheduler_event is not None and not start_scheduler_event.is_set():
+            if not start_scheduler_event.is_set():
                 if self._every_index_is(IndexStatus.REALTIME):
                     start_scheduler_event.set()
 
@@ -261,14 +265,9 @@ class DipDup:
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)
 
-    async def run(
-        self,
-        oneshot: bool = False,
-        postpone_jobs: bool = False,
-        skip_hasura: bool = False,
-        early_realtime: bool = False,
-    ) -> None:
+    async def run(self) -> None:
         """Run indexing process"""
+        advanced_config = self._config.advanced
         tasks: Set[Task] = set()
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
@@ -278,16 +277,16 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            if not skip_hasura:
+            if not advanced_config.skip_hasura:
                 await self._set_up_hasura(stack, tasks)
 
-            spawn_datasources_event: Optional[Event] = None
-            start_scheduler_event: Optional[Event] = None
-            if not oneshot:
+            if self._config.oneshot:
+                start_scheduler_event, spawn_datasources_event = Event(), Event()
+            else:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)
-                if not postpone_jobs:
+                if not advanced_config.postpone_jobs:
                     start_scheduler_event.set()
-                spawn_datasources_event = await self._spawn_datasources(tasks, early_realtime)
+                spawn_datasources_event = await self._spawn_datasources(tasks, advanced_config.early_realtime)
 
             for name in self._config.indexes:
                 await self._ctx._spawn_index(name)
@@ -416,11 +415,18 @@ class DipDup:
     async def _set_up_index_dispatcher(
         self,
         tasks: Set[Task],
-        spawn_datasources_event: Optional[Event],
-        start_scheduler_event: Optional[Event],
+        spawn_datasources_event: Event,
+        start_scheduler_event: Event,
     ) -> None:
         index_dispatcher = IndexDispatcher(self._ctx)
-        tasks.add(create_task(index_dispatcher.run(spawn_datasources_event, start_scheduler_event)))
+        tasks.add(
+            create_task(
+                index_dispatcher.run(
+                    spawn_datasources_event,
+                    start_scheduler_event,
+                )
+            )
+        )
 
     async def _spawn_datasources(self, tasks: Set[Task], early_realtime: bool = False) -> Event:
         event = Event()

@@ -5,7 +5,12 @@
 ### Fixed
 
 * tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
-* init: Fixed missing imports in handlers generated during init. 
+* tzkt: Adding huge number of indexes no longer leads to sending useless subscription requests.
+* codegen: Fixed missing imports in handlers generated during init. 
+
+### Changed
+
+* cli: `run --oneshot` option is deprecated and will be removed in the next major release. Oneshot mode applied automatically when `first_level` and `last_level` fields are set in index config.  
 
 ### Added
 

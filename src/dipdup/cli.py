@@ -145,6 +145,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
 @click.option('--skip-hasura', is_flag=True, help='Do not update Hasura metadata')
 @click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
+@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all updates instead of individual contracts')
 @click.pass_context
 @cli_wrapper
 async def run(
@@ -153,17 +154,21 @@ async def run(
     postpone_jobs: bool,
     skip_hasura: bool,
     early_realtime: bool,
+    merge_subscriptions: bool,
 ) -> None:
+    if oneshot:
+        _logger.warning('`oneshot` argument is deprecated: use `first_level` and `last_level` fields of index config instead')
     config: DipDupConfig = ctx.obj.config
     config.initialize()
+    config.advanced.postpone_jobs |= postpone_jobs
+    config.advanced.skip_hasura |= skip_hasura
+    config.advanced.early_realtime |= early_realtime
+    config.advanced.merge_subscriptions |= merge_subscriptions
+
     set_decimal_context(config.package)
+
     dipdup = DipDup(config)
-    await dipdup.run(
-        oneshot=oneshot,
-        postpone_jobs=postpone_jobs or config.advanced.postpone_jobs,
-        skip_hasura=skip_hasura or config.advanced.skip_hasura,
-        early_realtime=early_realtime or config.advanced.early_realtime,
-    )
+    await dipdup.run()
 
 
 @cli.command(help='Generate missing callbacks and types')

@@ -595,6 +595,8 @@ class IndexTemplateConfig(NameMixin):
     kind = 'template'
     template: str
     values: Dict[str, str]
+    first_level: Optional[int] = None
+    last_level: Optional[int] = None
 
 
 @dataclass
@@ -642,8 +644,8 @@ class OperationIndexConfig(IndexConfig):
 
     :param datasource: Alias of index datasource in `datasources` section
     :param contracts: Aliases of contracts being indexed in `contracts` section
-    :param first_level: First block to process (use with `--oneshot` run argument)
-    :param last_level: Last block to process (use with `--oneshot` run argument)
+    :param first_level: First block to process (one time sync)
+    :param last_level: Last block to process (one time sync)
     :param handlers: List of indexer handlers
     """
 
@@ -878,10 +880,12 @@ default_hooks = {
 
 @dataclass
 class AdvancedConfig:
+    reindex: Dict[ReindexingReasonC, ReindexingAction] = Field(default_factory=dict)
+    oneshot: bool = False
     postpone_jobs: bool = False
     skip_hasura: bool = False
     early_realtime: bool = False
-    reindex: Dict[ReindexingReasonC, ReindexingAction] = Field(default_factory=dict)
+    merge_subscriptions: bool = False
 
 
 @dataclass
@@ -944,6 +948,17 @@ class DipDupConfig:
         if self._package_path:
             raise ConfigInitializationException
         self._package_path = value
+
+    @property
+    def oneshot(self) -> bool:
+        syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, HeadIndexConfig))
+        oneshot_indexes = tuple(c for c in syncable_indexes if c.first_level or c.last_level)
+        if not oneshot_indexes:
+            return False
+        elif len(oneshot_indexes) == len(syncable_indexes):
+            return True
+        else:
+            raise ConfigurationError('Either all or none of indexes must have `first_level`/`last_level` fields set')
 
     @classmethod
     def load(
