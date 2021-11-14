@@ -522,9 +522,6 @@ class TzktDatasource(IndexDatasource):
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-        # NOTE: Rare case, disconnected before completing connection callback
-        create_task(self._on_connect())
-
     async def set_sync_level(self) -> None:
         if self._sync_level:
             return
