@@ -268,6 +268,10 @@ class PatternConfig(CodegenMixin, ABC):
         return f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}', parameter_cls
 
     @classmethod
+    def format_empty_operation_import(cls) -> Tuple[str, str]:
+        return 'dipdup.models', 'OperationData'
+
+    @classmethod
     def format_origination_argument(cls, module_name: str, optional: bool) -> Tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
@@ -400,20 +404,20 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
-        if not self.entrypoint:
-            return
-
-        module_name = self.destination_contract_config.module_name
-        yield 'dipdup.models', 'Transaction'
-        yield self.format_parameter_import(package, module_name, self.entrypoint)
-        yield self.format_storage_import(package, module_name)
+        if self.entrypoint:
+            module_name = self.destination_contract_config.module_name
+            yield 'dipdup.models', 'Transaction'
+            yield self.format_parameter_import(package, module_name, self.entrypoint)
+            yield self.format_storage_import(package, module_name)
+        else:
+            yield self.format_empty_operation_import()
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
-        if not self.entrypoint:
-            yield self.format_empty_operation_argument(self.transaction_id, self.optional)
-        else:
+        if self.entrypoint:
             module_name = self.destination_contract_config.module_name
             yield self.format_operation_argument(module_name, self.entrypoint, self.optional)
+        else:
+            yield self.format_empty_operation_argument(self.transaction_id, self.optional)
 
     @property
     def source_contract_config(self) -> ContractConfig:
@@ -650,24 +654,6 @@ class OperationIndexConfig(IndexConfig):
 
     first_level: int = 0
     last_level: int = 0
-
-    @property
-    def contract_configs(self) -> List[ContractConfig]:
-        if not self.contracts:
-            return []
-        for contract in self.contracts:
-            if not isinstance(contract, ContractConfig):
-                raise ConfigInitializationException
-        return cast(List[ContractConfig], self.contracts)
-
-    @property
-    def entrypoints(self) -> Set[str]:
-        entrypoints = set()
-        for handler in self.handlers:
-            for pattern in handler.pattern:
-                if isinstance(pattern, OperationHandlerTransactionPatternConfig) and pattern.entrypoint:
-                    entrypoints.add(pattern.entrypoint)
-        return entrypoints
 
 
 @dataclass

@@ -5,6 +5,7 @@
 ### Fixed
 
 * tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
+* init: Fixed missing imports in handlers generated during init. 
 
 ### Added
 
