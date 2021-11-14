@@ -1,6 +1,12 @@
 # Changelog
 
-## 3.1.2 - [unreleased]
+## 3.1.3 - [unreleased]
+
+### Fixed
+
+* Fixed missing imports in handlers generated during init. 
+
+## 3.1.2 - 2021-11-02
 
 ### Fixed
 
