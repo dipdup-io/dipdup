@@ -1476,13 +1476,13 @@ develop = false
 [package.dependencies]
 aiohttp = "^3.7.4"
 msgpack = "^1.0.2"
-websockets = "^10.0"
+websockets = "10.1"
 
 [package.source]
 type = "git"
 url = "https://github.com/baking-bad/pysignalr.git"
 reference = "initial-release"
-resolved_reference = "08b5f9b6b4d1743334b35ca83575811e03849686"
+resolved_reference = "c1240a82d21554f0c3047addaf0428606ea5e981"
 
 [[package]]
 name = "pysnooper"
