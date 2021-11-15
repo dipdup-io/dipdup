@@ -53,14 +53,14 @@ class SubscriptionManager:
     def missing_subscriptions(self) -> Set[Subscription]:
         return self._subscriptions - self._active_subscriptions
 
-    def add(self, subscription: Subscription) -> None:
-        if subscription in self._subscriptions:
+    def add(self, subscription: Subscription, log: bool = True) -> None:
+        if subscription in self._subscriptions and log:
             _logger.warning(f'Subscription already exists: {subscription}')
         else:
             self._subscriptions.add(subscription)
 
-    def remove(self, subscription: Subscription) -> None:
-        if subscription not in self._subscriptions:
+    def remove(self, subscription: Subscription, log: bool = True) -> None:
+        if subscription not in self._subscriptions and log:
             _logger.warning(f'Subscription does not exist: {subscription}')
         else:
             self._subscriptions.remove(subscription)

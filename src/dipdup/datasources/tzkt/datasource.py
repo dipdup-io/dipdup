@@ -495,16 +495,16 @@ class TzktDatasource(IndexDatasource):
 
         if isinstance(index_config, OperationIndexConfig):
             if self._merge_subscriptions:
-                self._subscriptions.add(TransactionSubscription())
+                self._subscriptions.add(TransactionSubscription(), log=False)
             else:
                 for contract_config in index_config.contracts or ():
                     address = cast(ContractConfig, contract_config).address
-                    self._subscriptions.add(TransactionSubscription(address=address))
+                    self._subscriptions.add(TransactionSubscription(address=address), log=bool(address))
 
             for handler_config in index_config.handlers:
                 for pattern_config in handler_config.pattern:
                     if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        self._subscriptions.add(OriginationSubscription())
+                        self._subscriptions.add(OriginationSubscription(), log=False)
                         break
 
         elif isinstance(index_config, BigMapIndexConfig):
@@ -513,7 +513,8 @@ class TzktDatasource(IndexDatasource):
             else:
                 for big_map_handler_config in index_config.handlers:
                     address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
-                    self._subscriptions.add(BigMapSubscription(address=address, path=path))
+                    log = bool(address) and bool(path)
+                    self._subscriptions.add(BigMapSubscription(address=address, path=path), log=log)
 
         # NOTE: HeadSubscription is always enabled
         elif isinstance(index_config, HeadIndexConfig):
