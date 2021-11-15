@@ -1,10 +1,11 @@
 # Changelog
 
-## 3.1.3 - [unreleased]
+## 3.1.3 - 2021-11-15
 
 ### Fixed
 
-* Fixed missing imports in handlers generated during init. 
+* codegen: Fixed missing imports in operation handlers. 
+* codegen: Fixed invalid imports and arguments in big_map handlers.
 
 ## 3.1.2 - 2021-11-02
 
