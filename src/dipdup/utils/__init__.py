@@ -44,7 +44,7 @@ async def slowdown(seconds: int):
 
 def snake_to_pascal(value: str) -> str:
     """humps wrapper for Python imports"""
-    return humps.pascalize(value)
+    return humps.pascalize(value.replace('.', '_'))
 
 
 def pascal_to_snake(value: str) -> str:
