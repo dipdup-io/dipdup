@@ -668,21 +668,21 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
     @classmethod
     def format_key_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
-        key_cls = f'{snake_to_pascal(module_name)}Key'
-        key_module = f'{path}_key'
+        key_cls = f'{snake_to_pascal(path)}Key'
+        key_module = f'{pascal_to_snake(path)}_key'
         return f'{package}.types.{module_name}.big_map.{key_module}', key_cls
 
     @classmethod
     def format_value_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
-        value_cls = f'{snake_to_pascal(module_name)}Value'
-        value_module = f'{path}_value'
+        value_cls = f'{snake_to_pascal(path)}Value'
+        value_module = f'{pascal_to_snake(path)}_value'
         return f'{package}.types.{module_name}.big_map.{value_module}', value_cls
 
     @classmethod
-    def format_big_map_diff_argument(cls, module_name: str) -> Tuple[str, str]:
-        key_cls = f'{snake_to_pascal(module_name)}Key'
-        value_cls = f'{snake_to_pascal(module_name)}Value'
-        return module_name, f'BigMapDiff[{key_cls}, {value_cls}]'
+    def format_big_map_diff_argument(cls, path: str) -> Tuple[str, str]:
+        key_cls = f'{snake_to_pascal(path)}Key'
+        value_cls = f'{snake_to_pascal(path)}Value'
+        return pascal_to_snake(path), f'BigMapDiff[{key_cls}, {value_cls}]'
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -694,7 +694,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield self.format_big_map_diff_argument(self.contract_config.module_name)
+        yield self.format_big_map_diff_argument(self.path)
 
     @property
     def contract_config(self) -> ContractConfig:

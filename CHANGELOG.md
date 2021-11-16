@@ -16,6 +16,13 @@
 
 * tzkt: Replaced `aiosignalrcore` library with `pysignalr`.
 
+## 3.1.3 - 2021-11-15
+
+### Fixed
+
+* codegen: Fixed missing imports in operation handlers. 
+* codegen: Fixed invalid imports and arguments in big_map handlers.
+
 ## 3.1.2 - 2021-11-02
 
 ### Fixed
