@@ -16,9 +16,9 @@ from dipdup.config import (
     OperationHandlerPatternConfigT,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
-    OperationType,
     ResolvedIndexConfigT,
 )
+from dipdup.const import OperationType
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
 from dipdup.exceptions import ConfigInitializationException, InvalidDataError, ReindexingReason

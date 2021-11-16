@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from pydantic.error_wrappers import ValidationError
 from tortoise import Model, fields
+from tortoise.fields import DatetimeField
 from typing_extensions import get_args
 
 from dipdup.enums import IndexStatus, IndexType
@@ -261,32 +262,34 @@ class QuoteData:
     eth: Decimal
 
 
-class Schema(Model):
+class TimestampAwareMixin:
+    created_at = DatetimeField(auto_now_add=True, index=True)
+    updated_at = DatetimeField(auto_now=True, index=True)
+
+    class Meta:
+        ordering = ['-created_at', '-updated_at']
+
+
+class Schema(Model, TimestampAwareMixin):
     name = fields.CharField(256, pk=True)
     hash = fields.CharField(256)
     reindex = ReversedCharEnumField(ReindexingReason, max_length=40, null=True)
-
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
         table = 'dipdup_schema'
 
 
-class Head(Model):
+class Head(Model, TimestampAwareMixin):
     name = fields.CharField(256, pk=True)
     level = fields.IntField()
     hash = fields.CharField(64)
     timestamp = fields.DatetimeField()
 
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
-
     class Meta:
         table = 'dipdup_head'
 
 
-class Index(Model):
+class Index(Model, TimestampAwareMixin):
     name = fields.CharField(256, pk=True)
     type = fields.CharEnumField(IndexType)
     status = fields.CharEnumField(IndexStatus, default=IndexStatus.NEW)
@@ -296,9 +299,6 @@ class Index(Model):
     template_values = fields.JSONField(null=True)
 
     level = fields.IntField(default=0)
-
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
 
     async def update_status(
         self,
@@ -323,3 +323,4 @@ class Contract(Model):
 
     class Meta:
         table = 'dipdup_contract'
+

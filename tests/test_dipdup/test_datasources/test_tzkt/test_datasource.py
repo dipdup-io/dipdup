@@ -15,8 +15,8 @@ from dipdup.config import (
     OperationHandlerConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
-    OperationType,
 )
+from dipdup.const import OperationType
 from dipdup.context import HandlerContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import DipDup

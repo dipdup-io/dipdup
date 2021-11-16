@@ -7,9 +7,28 @@ if TYPE_CHECKING:  # pragma: no cover
     from dipdup.config import DatasourceConfigT, DipDupConfig
 
 
+class WalletConfigInterface:
+    def get_public_key(self) -> str:
+        raise NotImplementedError
+
+    def get_private_key(self) -> str:
+        raise NotImplementedError
+
+
 @dataclass
-class Wallet:
-    pass
+class WalletConfig(WalletConfigInterface):
+    """
+    Naive Wallet realization
+    """
+
+    def get_public_key(self) -> str:
+        return self.public_key
+
+    def get_private_key(self) -> str:
+        return self.private_key
+
+    public_key: str
+    private_key: str
 
 
 @dataclass
@@ -18,7 +37,7 @@ class ExecutorConfig:
     Executor config
     """
 
-    wallet: Union[str, Wallet]
+    wallet: Union[str, WalletConfig]
     datasource: Union[str, DatasourceConfigT] = Field(default_factory=dict)
     rpc: Set[str] = Field(default_factory=set)
 

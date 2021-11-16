@@ -11,7 +11,6 @@ from collections import Counter, defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
-from enum import Enum
 from functools import reduce
 from os import environ as env
 from os.path import dirname
@@ -25,7 +24,10 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
+from dipdup.const import OperationType
 from dipdup.exceptions import ConfigInitializationException, ConfigurationError
+from dipdup.executors.config import ExecutorConfig
+from dipdup.executors.config import WalletConfig
 from dipdup.interfaces.config import InterfaceConfig
 from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
 
@@ -35,12 +37,6 @@ DEFAULT_RETRY_SLEEP = 1
 
 sys.path.append(os.getcwd())
 _logger = logging.getLogger('dipdup.config')
-
-
-class OperationType(Enum):
-    transaction = 'transaction'
-    origination = 'origination'
-    migration = 'migration'
 
 
 @dataclass
@@ -905,6 +901,7 @@ class DipDupConfig:
     :param jobs: Mapping of job aliases and job configs
     :param sentry: Sentry integration config
     :param interfaces: Mapping of interfaces configs
+    :param wallets: Mapping of wallets configs
     """
 
     spec_version: str
@@ -919,6 +916,8 @@ class DipDupConfig:
     hasura: Optional[HasuraConfig] = None
     sentry: Optional[SentryConfig] = None
     interfaces: Optional[Dict[str, InterfaceConfig]] = Field(default_factory=dict)
+    wallets: Optional[Dict[str, WalletConfig]] = Field(default_factory=dict)
+    executors: Optional[Dict[str, ExecutorConfig]] = Field(default_factory=dict)
 
     def __post_init_post_parse__(self):
         self._filenames: List[str] = []
@@ -1151,6 +1150,11 @@ class DipDupConfig:
         if self.interfaces:
             for interface_config in self.interfaces.values():
                 interface_config.resolve_links(config=self)
+
+        if self.executors:
+            for executors_config in self.executors.values():
+                executors_config.resolve_links(config=self)
+
 
     def _resolve_index_links(self, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""

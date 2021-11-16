@@ -1,0 +1,2 @@
+class InvalidStatusError(AssertionError):
+    pass

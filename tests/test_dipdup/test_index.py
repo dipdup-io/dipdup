@@ -7,9 +7,9 @@ from dipdup.config import (
     OperationHandlerConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
-    OperationType,
     TzktDatasourceConfig,
 )
+from dipdup.const import OperationType
 from dipdup.index import OperationIndex
 from dipdup.models import OperationData
 
