@@ -6,7 +6,6 @@
 
 * tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
 * tzkt: Adding huge number of indexes no longer leads to sending useless subscription requests.
-* codegen: Fixed missing imports in handlers generated during init. 
 
 ### Changed
 
@@ -20,6 +19,13 @@
 ### Improved
 
 * tzkt: Replaced `aiosignalrcore` library with `pysignalr`.
+
+## 3.1.3 - 2021-11-15
+
+### Fixed
+
+* codegen: Fixed missing imports in operation handlers. 
+* codegen: Fixed invalid imports and arguments in big_map handlers.
 
 ## 3.1.2 - 2021-11-02
 
