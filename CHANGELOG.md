@@ -18,6 +18,7 @@
 
 ### Improved
 
+* index: Time required to initialize indexes presented in database reduced by ~25%.
 * tzkt: Replaced `aiosignalrcore` library with `pysignalr`.
 
 ## 3.1.3 - 2021-11-15

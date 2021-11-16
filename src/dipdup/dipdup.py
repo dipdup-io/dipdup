@@ -31,7 +31,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache
+from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache, head_cache
 from dipdup.models import BigMapData, Contract, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
@@ -61,7 +61,7 @@ class IndexDispatcher:
         await self._load_index_states()
 
         while not self._stopped:
-            tasks: List[Awaitable] = [index.process() for index in self._indexes.values()]
+            tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
             while self._tasks:
                 tasks.append(self._tasks.popleft())
 
@@ -124,9 +124,8 @@ class IndexDispatcher:
             raise RuntimeError('Index states are already loaded')
 
         await self._fetch_contracts()
-        index_states = await IndexState.filter().all()
-        self._logger.info('%s indexes found in database', len(index_states))
-        for index_state in index_states:
+        self._logger.info('%s indexes found in database', await IndexState.all().count())
+        async for index_state in IndexState.all():
             name, template, template_values = index_state.name, index_state.template, index_state.template_values
 
             # NOTE: Index in config (templates are already resolved): just verify hash
@@ -153,8 +152,12 @@ class IndexDispatcher:
             # NOTE: Templated index: recreate index config, verify hash
             elif template:
                 if template not in self._ctx.config.templates:
-                    await self._ctx.reindex(ReindexingReason.MISSING_INDEX_TEMPLATE)
-                await self._ctx.add_index(name, template, template_values)
+                    await self._ctx.reindex(
+                        ReindexingReason.MISSING_INDEX_TEMPLATE,
+                        index_name=index_state.name,
+                        template=template,
+                    )
+                await self._ctx.add_index(name, template, template_values, index_state)
 
             # NOTE: Index config is missing, possibly just commented-out
             else:
@@ -162,6 +165,7 @@ class IndexDispatcher:
 
         # NOTE: Cached blocks used only on index state init
         block_cache.clear()
+        head_cache.clear()
 
     async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
@@ -291,7 +295,7 @@ class DipDup:
             for name in self._config.indexes:
                 await self._ctx._spawn_index(name)
 
-            await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event)
+            await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime)
 
             await gather(*tasks)
 
@@ -417,6 +421,7 @@ class DipDup:
         tasks: Set[Task],
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
+        early_realtime: bool,
     ) -> None:
         index_dispatcher = IndexDispatcher(self._ctx)
         tasks.add(
@@ -424,6 +429,7 @@ class DipDup:
                 index_dispatcher.run(
                     spawn_datasources_event,
                     start_scheduler_event,
+                    early_realtime,
                 )
             )
         )

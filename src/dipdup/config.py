@@ -952,7 +952,7 @@ class DipDupConfig:
     @property
     def oneshot(self) -> bool:
         syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, HeadIndexConfig))
-        oneshot_indexes = tuple(c for c in syncable_indexes if c.first_level or c.last_level)
+        oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
         if not oneshot_indexes:
             return False
         elif len(oneshot_indexes) == len(syncable_indexes):
@@ -1049,7 +1049,7 @@ class DipDupConfig:
             if index_config.name in self._imports_resolved:
                 continue
 
-            _logger.info('Loading callbacks and typeclasses of index `%s`', index_config.name)
+            _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
 
             if isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException

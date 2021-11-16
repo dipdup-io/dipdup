@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
-from typing import Deque, Dict, Iterable, Optional, Sequence, Set, Tuple, Union, cast
+from typing import DefaultDict, Deque, Dict, Iterable, Literal, Optional, Sequence, Set, Tuple, Union, cast
 
 from pydantic.error_wrappers import ValidationError
 
@@ -38,7 +38,8 @@ MatchedOperationsT = Tuple[OperationSubgroup, OperationHandlerConfig, Deque[Oper
 MatchedBigMapsT = Tuple[BigMapHandlerConfig, BigMapDiff]
 
 # NOTE: For initializing the index state on startup
-block_cache: Dict[int, BlockData] = {}
+block_cache: Dict[Tuple[str, int], BlockData] = {}
+head_cache: DefaultDict[str, Optional[Union[models.Head, Literal[False]]]] = defaultdict(lambda: False)
 
 
 class Index:
@@ -67,36 +68,43 @@ class Index:
             raise RuntimeError('Index state is not initialized')
         return self._state
 
-    async def initialize_state(self) -> None:
+    async def initialize_state(self, state: Optional[models.Index] = None) -> None:
+
         if self._state:
             raise RuntimeError('Index state is already initialized')
 
-        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.first_level:
-            level = self._config.first_level
+        if state is not None:
+            self._state, created = state, False
         else:
-            level = 0
+            if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.first_level:
+                level = self._config.first_level
+            else:
+                level = 0
 
-        self._state, created = await models.Index.get_or_create(
-            name=self._config.name,
-            type=self._config.kind,
-            defaults=dict(
-                level=level,
-                config_hash=self._config.hash(),
-                template=self._config.parent.name if self._config.parent else None,
-                template_values=self._config.template_values,
-            ),
-        )
+            self._state, created = await models.Index.get_or_create(
+                name=self._config.name,
+                type=self._config.kind,
+                defaults=dict(
+                    level=level,
+                    config_hash=self._config.hash(),
+                    template=self._config.parent.name if self._config.parent else None,
+                    template_values=self._config.template_values,
+                ),
+            )
 
         if created or not self._state.level:
             return
 
-        head = await models.Head.filter(name=self.datasource.name).order_by('-level').first()
+        head = head_cache.get(self.datasource.name)
+        if head is False:
+            head = head_cache[self.datasource.name] = await models.Head.filter(name=self.datasource.name).order_by('-level').first()
         if not head:
             return
 
-        if head.level not in block_cache:
-            block_cache[head.level] = await self.datasource.get_block(head.level)
-        if head.hash != block_cache[head.level].hash:
+        block = block_cache.get((self.datasource.name, head.level))
+        if not block:
+            block = block_cache[(head.name, head.level)] = await self.datasource.get_block(head.level)
+        if head.hash != block.hash:
             await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
 
     async def process(self) -> None:

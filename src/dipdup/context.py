@@ -38,7 +38,7 @@ from dipdup.exceptions import (
     InitializationRequiredError,
     ReindexingRequiredError,
 )
-from dipdup.models import Contract, ReindexingReason, Schema
+from dipdup.models import Contract, Index, ReindexingReason, Schema
 from dipdup.utils import FormattedLogger, iter_files
 from dipdup.utils.database import wipe_schema
 
@@ -146,7 +146,7 @@ class DipDupContext:
                 typename=contract_config.typename,
             ).save()
 
-    async def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
+    async def add_index(self, name: str, template: str, values: Dict[str, Any], state: Optional[Index] = None) -> None:
         self.logger.info('Creating index `%s` from template `%s`', name, template)
         if name in self.config.indexes:
             raise IndexAlreadyExistsError(self, name)
@@ -157,9 +157,9 @@ class DipDupContext:
         )
         self.config.initialize()
 
-        await self._spawn_index(name)
+        await self._spawn_index(name, state)
 
-    async def _spawn_index(self, name: str) -> None:
+    async def _spawn_index(self, name: str, state: Optional[Index] = None) -> None:
         from dipdup.index import BigMapIndex, HeadIndex, OperationIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
@@ -182,7 +182,7 @@ class DipDupContext:
         await datasource.add_index(index_config)
         for handler_config in index_config.handlers:
             self.callbacks.register_handler(handler_config)
-        await index.initialize_state()
+        await index.initialize_state(state)
 
         pending_indexes.append(index)
 
@@ -343,6 +343,8 @@ class CallbackManager:
             level = self._logger.info if diff > 1 else self._logger.debug
             level('`%s` %s callback executed in %s seconds', name, kind, diff)
         except Exception as e:
+            if isinstance(e, ReindexingRequiredError):
+                raise
             raise CallbackError(kind, name) from e
 
     @classmethod
