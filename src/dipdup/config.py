@@ -977,7 +977,7 @@ class DipDupConfig:
             with open(filename) as file:
                 raw_config = file.read()
 
-            _logger.info('Substituting environment variables')
+            _logger.debug('Substituting environment variables')
             for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
                 variable, default_value = match.group(1), match.group(2)
                 config_environment[variable] = default_value
@@ -1122,7 +1122,7 @@ class DipDupConfig:
                 )
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
-        _logger.info('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
+        _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
         template = self.get_template(template_config.template)
         raw_template = json.dumps(template, default=pydantic_encoder)

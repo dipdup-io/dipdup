@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import signal
@@ -12,6 +13,7 @@ import asyncclick as click
 import sentry_sdk
 from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
+from pydantic.json import pydantic_encoder
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from tortoise import Tortoise
@@ -190,6 +192,35 @@ async def migrate(ctx):
     config.initialize(skip_imports=True)
     migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
     await migrations.migrate()
+
+
+from dipdup.models import Index
+
+
+@cli.command(help='Show current status of indexes in database')
+@click.pass_context
+@cli_wrapper
+async def status(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+    async with tortoise_wrapper(url, models):
+        async for index in Index.all():
+            print(f'{index.name}\t{index.status.value}\t{index.level}')
+
+
+@cli.command(help='Show config')
+@click.pass_context
+@cli_wrapper
+async def config(ctx):
+    import ruamel.yaml as yaml
+
+    config: DipDupConfig = ctx.obj.config
+    config_json = json.dumps(config, default=pydantic_encoder)
+    config_yaml = yaml.dump(yaml.safe_load(config_json), indent=2, default_flow_style=False)
+    print('_' * 80)
+    print(config_yaml)
+    print('_' * 80)
 
 
 # TODO: "cache clear"?
