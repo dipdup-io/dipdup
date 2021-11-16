@@ -141,20 +141,29 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
 
 @cli.command(help='Run indexing')
-@click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
+@click.option('--oneshot', is_flag=True, help='Synchronize indexes and exit without starting a real-time connection')
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
+@click.option('--skip-hasura', is_flag=True, help='Do not update Hasura metadata')
+@click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
 @click.pass_context
 @cli_wrapper
 async def run(
     ctx,
     oneshot: bool,
     postpone_jobs: bool,
+    skip_hasura: bool,
+    early_realtime: bool,
 ) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     set_decimal_context(config.package)
     dipdup = DipDup(config)
-    await dipdup.run(oneshot, postpone_jobs)
+    await dipdup.run(
+        oneshot=oneshot,
+        postpone_jobs=postpone_jobs or config.advanced.postpone_jobs,
+        skip_hasura=skip_hasura or config.advanced.skip_hasura,
+        early_realtime=early_realtime or config.advanced.early_realtime,
+    )
 
 
 @cli.command(help='Generate missing callbacks and types')

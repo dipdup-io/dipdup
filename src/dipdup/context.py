@@ -6,9 +6,10 @@ from collections import deque
 from contextlib import contextmanager, suppress
 from os.path import exists, join
 from pprint import pformat
-from typing import Any, Dict, Iterator, NoReturn, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterator, Optional, Tuple, Union, cast
 
 import sqlparse  # type: ignore
+from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
@@ -27,6 +28,7 @@ from dipdup.config import (
 )
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.enums import ReindexingAction, ReindexingReasonC, reason_to_reasonc, reasonc_to_reason
 from dipdup.exceptions import (
     CallbackError,
     CallbackTypeError,
@@ -38,6 +40,7 @@ from dipdup.exceptions import (
 )
 from dipdup.models import Contract, ReindexingReason, Schema
 from dipdup.utils import FormattedLogger, iter_files
+from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
 
@@ -88,22 +91,41 @@ class DipDupContext:
             sys.argv.remove('--reindex')
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> NoReturn:
+    async def reindex(self, reason: Optional[Union[str, ReindexingReason, ReindexingReasonC]] = None, **context) -> None:
         """Drop all tables or whole database and restart with the same CLI arguments"""
         if not reason:
-            reason = ReindexingReason.MANUAL
+            reason = ReindexingReasonC.manual
         elif isinstance(reason, str):
             context['message'] = reason
-            reason = ReindexingReason.MANUAL
+            reason = ReindexingReasonC.manual
+        elif isinstance(reason, ReindexingReason):
+            reason = reason_to_reasonc[reason]
+        else:
+            raise NotImplementedError
 
-        reason_str = reason.value + (f' ({context["message"]})' if "message" in context else '')
-        self.logger.warning('Reindexing initialized, reason: %s', reason_str)
+        action = self.config.advanced.reindex.get(reason, ReindexingAction.exception)
+        self.logger.warning('Reindexing initialized, reason: %s, action: %s', reason.value, action.value)
 
-        schema = await Schema.filter().get()
-        if not schema.reindex:
-            schema.reindex = reason
-            await schema.save()
-        raise ReindexingRequiredError(schema.reindex, context)
+        if action == ReindexingAction.ignore:
+            return
+
+        elif action == ReindexingAction.exception:
+            schema = await Schema.filter().get()
+            if not schema.reindex:
+                schema.reindex = reasonc_to_reason[reason]
+                await schema.save()
+            raise ReindexingRequiredError(schema.reindex, context)
+
+        elif action == ReindexingAction.wipe:
+            conn = get_connection(None)
+            if isinstance(self.config.database, PostgresDatabaseConfig):
+                await wipe_schema(conn, self.config.database.schema_name, self.config.database.immune_tables)
+            else:
+                await Tortoise._drop_databases()
+            await self.restart()
+
+        else:
+            raise NotImplementedError
 
     async def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)

@@ -1,15 +1,13 @@
-import asyncio
 import logging
+from asyncio import create_task, gather
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, AsyncGenerator, DefaultDict, Deque, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
-from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
-from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
-from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
-from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
+from pysignalr.client import SignalRClient
+from pysignalr.messages import CompletionMessage  # type: ignore
 
 from dipdup.config import (
     BigMapIndexConfig,
@@ -281,7 +279,7 @@ class TzktDatasource(IndexDatasource):
         self._transaction_subscriptions: Set[str] = set()
         self._origination_subscriptions: bool = False
         self._big_map_subscriptions: Dict[str, Set[str]] = {}
-        self._ws_client: Optional[BaseHubConnection] = None
+        self._ws_client: Optional[SignalRClient] = None
 
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
         self._sync_level: Optional[int] = None
@@ -518,7 +516,8 @@ class TzktDatasource(IndexDatasource):
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-        await self._on_connect()
+        # NOTE: Rare case, disconnected before completing connection callback
+        create_task(self._on_connect())
 
     async def set_sync_level(self) -> None:
         if self._sync_level:
@@ -526,27 +525,18 @@ class TzktDatasource(IndexDatasource):
         block = await self.get_head_block()
         self._sync_level = block.level
 
-    def _get_ws_client(self) -> BaseHubConnection:
+    def _get_ws_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
         if self._ws_client:
             return self._ws_client
 
         self._logger.info('Creating websocket client')
-        self._ws_client = (
-            HubConnectionBuilder()
-            .with_url(self._http._url + '/v1/events')
-            .with_automatic_reconnect(
-                {
-                    "type": "raw",
-                    "keep_alive_interval": 10,
-                    "reconnect_interval": 5,
-                    "max_attempts": 5,
-                }
-            )
-        ).build()
+        self._ws_client = SignalRClient(url=f'{self._http._url}/v1/events')
 
         self._ws_client.on_open(self._on_connect)
+        self._ws_client.on_close(self._on_disconnect)
         self._ws_client.on_error(self._on_error)
+
         self._ws_client.on('operations', self._on_operations_message)
         self._ws_client.on('bigmaps', self._on_big_maps_message)
         self._ws_client.on('head', self._on_head_message)
@@ -555,18 +545,15 @@ class TzktDatasource(IndexDatasource):
 
     async def run(self) -> None:
         self._logger.info('Establishing realtime connection')
-        tasks = [asyncio.create_task(self._get_ws_client().start())]
+        tasks = [create_task(self._get_ws_client().run())]
 
         if self._watchdog:
-            tasks.append(asyncio.create_task(self._watchdog.run()))
+            tasks.append(create_task(self._watchdog.run()))
 
-        await asyncio.gather(*tasks)
+        await gather(*tasks)
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
-        if self._get_ws_client().transport.state != ConnectionState.connected:
-            return
-
         self._logger.info('Realtime connection established, subscribing to channels')
         await self._subscribe_to_head()
         for address in self._transaction_subscriptions:
@@ -576,6 +563,10 @@ class TzktDatasource(IndexDatasource):
             await self._subscribe_to_originations()
         for address, paths in self._big_map_subscriptions.items():
             await self._subscribe_to_big_maps(address, paths)
+
+    async def _on_disconnect(self) -> None:
+        # TODO: Reset subscriptions
+        ...
 
     # TODO: Exception class
     def _on_error(self, message: CompletionMessage) -> NoReturn:
@@ -636,7 +627,8 @@ class TzktDatasource(IndexDatasource):
             level, current_level = item['state'], self._level[type_]
             self._level[type_] = level
 
-            self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
+            if not (tzkt_type == TzktMessageType.STATE and current_level == level):
+                self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
 
             # NOTE: Ensure correctness, update sync level
             if tzkt_type == TzktMessageType.STATE:
@@ -842,8 +834,6 @@ class TzktDatasource(IndexDatasource):
 
     async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:
         client = self._get_ws_client()
-        while client.transport.state != ConnectionState.connected:
-            await asyncio.sleep(0.1)
         await client.send(method, arguments, on_invocation)
 
     @classmethod

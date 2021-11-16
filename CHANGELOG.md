@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.2.0 - [unreleased]
+
+### Fixed
+
+* tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
+* init: Fixed missing imports in handlers generated during init. 
+
+### Added
+
+* cli: `dipdip run --early-realtime` flag to establish a real-time connection before all indexes are synchronized.
+* cli: `dipdup run --skip-hasura` flag to skip updating Hasura metadata.
+
+### Improved
+
+* tzkt: Replaced `aiosignalrcore` library with `pysignalr`.
+
 ## 3.1.3 - 2021-11-15
 
 ### Fixed

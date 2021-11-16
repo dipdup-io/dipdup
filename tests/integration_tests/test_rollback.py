@@ -13,9 +13,6 @@ from dipdup.models import HeadBlockData
 from dipdup.models import Index as State
 from dipdup.models import OperationData
 
-# import logging
-# logging.basicConfig(level=logging.INFO)
-
 
 def _get_operation(hash_: str, level: int) -> OperationData:
     return OperationData(
@@ -83,26 +80,41 @@ async def emit_messages(
 
 
 async def datasource_run_exact(self: TzktDatasource):
+    # FIXME: Index dispatcher initialization race
+    await asyncio.sleep(0.5)
+
     await emit_messages(self, exact_operations, exact_operations, 1)
     await check_level(initial_level + 1)
 
 
 async def datasource_run_more(self: TzktDatasource):
+    # FIXME: Index dispatcher initialization race
+    await asyncio.sleep(0.5)
+
     await emit_messages(self, exact_operations, more_operations, 1)
     await check_level(initial_level + 1)
 
 
 async def datasource_run_less(self: TzktDatasource):
+    # FIXME: Index dispatcher initialization race
+    await asyncio.sleep(0.5)
+
     await emit_messages(self, exact_operations, less_operations, 1)
     await check_level(initial_level + 1)
 
 
 async def datasource_run_zero(self: TzktDatasource):
+    # FIXME: Index dispatcher initialization race
+    await asyncio.sleep(0.5)
+
     await emit_messages(self, (), (exact_operations), 0)
     await check_level(initial_level + 1)
 
 
 async def datasource_run_deep(self: TzktDatasource):
+    # FIXME: Index dispatcher initialization race
+    await asyncio.sleep(0.5)
+
     await emit_messages(self, (exact_operations), (), 1337)
     await check_level(initial_level + 1)
 
@@ -133,34 +145,34 @@ class RollbackTest(IsolatedAsyncioTestCase):
     async def test_rollback_exact(self):
         with patch_dipdup(datasource_run_exact):
             dipdup = get_dipdup()
-            await dipdup.run(False, False)
+            await dipdup.run(early_realtime=True)
 
             assert dipdup._ctx.reindex.call_count == 0
 
     async def test_rollback_more(self):
         with patch_dipdup(datasource_run_more):
             dipdup = get_dipdup()
-            await dipdup.run(False, False)
+            await dipdup.run(early_realtime=True)
 
             assert dipdup._ctx.reindex.call_count == 0
 
     async def test_rollback_less(self):
         with patch_dipdup(datasource_run_less):
             dipdup = get_dipdup()
-            await dipdup.run(False, False)
+            await dipdup.run(early_realtime=True)
 
             assert dipdup._ctx.reindex.call_count == 1
 
     async def test_rollback_zero(self):
         with patch_dipdup(datasource_run_zero):
             dipdup = get_dipdup()
-            await dipdup.run(False, False)
+            await dipdup.run(early_realtime=True)
 
             assert dipdup._ctx.reindex.call_count == 0
 
     async def test_rollback_deep(self):
         with patch_dipdup(datasource_run_deep):
             dipdup = get_dipdup()
-            await dipdup.run(False, False)
+            await dipdup.run(early_realtime=True)
 
             assert dipdup._ctx.reindex.call_count == 1

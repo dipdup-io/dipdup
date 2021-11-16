@@ -38,7 +38,6 @@ from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
 from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema, get_schema_hash, prepare_models, set_schema, tortoise_wrapper, validate_models
-from dipdup.utils.watchdog import Watchdog
 
 
 class IndexDispatcher:
@@ -53,8 +52,9 @@ class IndexDispatcher:
 
     async def run(
         self,
-        spawn_datasources_event: Optional[Event],
-        start_scheduler_event: Optional[Event],
+        spawn_datasources_event: Optional[Event] = None,
+        start_scheduler_event: Optional[Event] = None,
+        early_realtime: bool = False,
     ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
@@ -73,14 +73,16 @@ class IndexDispatcher:
                 index = pending_indexes.popleft()
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
+
             if not indexes_spawned:
                 if self._every_index_is(IndexStatus.ONESHOT):
                     self.stop()
 
-                if spawn_datasources_event and not spawn_datasources_event.is_set():
+            if spawn_datasources_event is not None and not spawn_datasources_event.is_set():
+                if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
                     spawn_datasources_event.set()
 
-            if start_scheduler_event and not start_scheduler_event.is_set():
+            if start_scheduler_event is not None and not start_scheduler_event.is_set():
                 if self._every_index_is(IndexStatus.REALTIME):
                     start_scheduler_event.set()
 
@@ -138,7 +140,10 @@ class IndexDispatcher:
                         await index_state.save()
                     else:
                         await self._ctx.reindex(
-                            ReindexingReason.CONFIG_HASH_MISMATCH, index_hash=index_state.config_hash, old_hash=old_hash, new_hash=new_hash
+                            ReindexingReason.CONFIG_HASH_MISMATCH,
+                            index_hash=index_state.config_hash,
+                            old_hash=old_hash,
+                            new_hash=new_hash,
                         )
 
             # NOTE: Templated index: recreate index config, verify hash
@@ -256,7 +261,13 @@ class DipDup:
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)
 
-    async def run(self, oneshot: bool, postpone_jobs: bool) -> None:
+    async def run(
+        self,
+        oneshot: bool = False,
+        postpone_jobs: bool = False,
+        skip_hasura: bool = False,
+        early_realtime: bool = False,
+    ) -> None:
         """Run indexing process"""
         tasks: Set[Task] = set()
         async with AsyncExitStack() as stack:
@@ -267,7 +278,8 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            await self._set_up_hasura(stack, tasks)
+            if not skip_hasura:
+                await self._set_up_hasura(stack, tasks)
 
             spawn_datasources_event: Optional[Event] = None
             start_scheduler_event: Optional[Event] = None
@@ -275,7 +287,7 @@ class DipDup:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)
                 if not postpone_jobs:
                     start_scheduler_event.set()
-                spawn_datasources_event = await self._spawn_datasources(tasks)
+                spawn_datasources_event = await self._spawn_datasources(tasks, early_realtime)
 
             for name in self._config.indexes:
                 await self._ctx._spawn_index(name)
@@ -294,7 +306,6 @@ class DipDup:
                 datasource = TzktDatasource(
                     url=datasource_config.url,
                     http_config=datasource_config.http,
-                    watchdog=Watchdog(120.0, self._ctx.restart),
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
@@ -411,14 +422,17 @@ class DipDup:
         index_dispatcher = IndexDispatcher(self._ctx)
         tasks.add(create_task(index_dispatcher.run(spawn_datasources_event, start_scheduler_event)))
 
-    async def _spawn_datasources(self, tasks: Set[Task]) -> Event:
+    async def _spawn_datasources(self, tasks: Set[Task], early_realtime: bool = False) -> Event:
         event = Event()
+        if early_realtime:
+            event.set()
 
         async def _event_wrapper():
-            self._logger.info('Waiting for an event to spawn datasources')
-            await event.wait()
-            self._logger.info('Spawning datasources')
+            if not early_realtime:
+                self._logger.info('Waiting for indexes to synchronize before spawning datasources')
+                await event.wait()
 
+            self._logger.info('Spawning datasources')
             _tasks = [create_task(d.run()) for d in self._datasources.values()]
             await gather(*_tasks)
 
