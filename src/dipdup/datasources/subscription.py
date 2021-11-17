@@ -1,6 +1,7 @@
 import logging
 from abc import abstractmethod
-from typing import Set
+from collections import defaultdict
+from typing import DefaultDict, Set
 
 from pydantic.dataclasses import dataclass
 from tortoise import Optional
@@ -48,6 +49,8 @@ class SubscriptionManager:
     def __init__(self) -> None:
         self._subscriptions: Set[Subscription] = set()
         self._active_subscriptions: Set[Subscription] = set()
+        self._initial_level: Optional[int] = None
+        self._sync_levels: DefaultDict[Subscription, Optional[int]] = defaultdict(lambda: None)
 
     @property
     def missing_subscriptions(self) -> Set[Subscription]:
@@ -70,3 +73,15 @@ class SubscriptionManager:
 
     def reset(self) -> None:
         self._active_subscriptions = set()
+        self._sync_levels.clear()
+
+    def set_sync_level(self, level: int, initial: bool = False) -> None:
+        if initial:
+            self._initial_level = level
+
+        for subscription in self._active_subscriptions:
+            if not self._sync_levels[subscription]:
+                self._sync_levels[subscription] = level
+
+    def get_sync_level(self, subscription: Subscription) -> Optional[int]:
+        return self._sync_levels[subscription] or self._initial_level

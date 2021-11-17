@@ -25,6 +25,7 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
+from dipdup.datasources.subscription import BigMapSubscription, OriginationSubscription, Subscription, TransactionSubscription
 from dipdup.enums import ReindexingAction, ReindexingReasonC
 from dipdup.exceptions import ConfigInitializationException, ConfigurationError
 from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
@@ -591,6 +592,16 @@ class TemplateValuesMixin:
 
 
 @dataclass
+class SubscriptionsMixin:
+    def __post_init_post_parse__(self) -> None:
+        self._subscriptions: Set[Subscription] = set()
+
+    @property
+    def subscriptions(self) -> Set[Subscription]:
+        return self._subscriptions
+
+
+@dataclass
 class IndexTemplateConfig(NameMixin):
     kind = 'template'
     template: str
@@ -600,12 +611,13 @@ class IndexTemplateConfig(NameMixin):
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConfigT']):
+class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigT']):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
+        SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
 
     @property
@@ -1151,11 +1163,47 @@ class DipDupConfig:
             if name in self._links_resolved:
                 continue
             self._resolve_index_links(index_config)
+            self._resolve_index_subscriptions(index_config)
             self._links_resolved.add(index_config.name)
 
         for job_config in self.jobs.values():
             if isinstance(job_config.hook, str):
                 job_config.hook = self.hooks[job_config.hook]
+
+    def _resolve_index_subscriptions(self, index_config: IndexConfigT) -> None:
+        if isinstance(index_config, IndexTemplateConfig):
+            return
+        if index_config.subscriptions:
+            return
+
+        if isinstance(index_config, OperationIndexConfig):
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(TransactionSubscription())
+            else:
+                for contract_config in index_config.contracts or ():
+                    address = cast(ContractConfig, contract_config).address
+                    index_config.subscriptions.add(TransactionSubscription(address=address))
+
+            for handler_config in index_config.handlers:
+                for pattern_config in handler_config.pattern:
+                    if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                        index_config.subscriptions.add(OriginationSubscription())
+                        break
+
+        elif isinstance(index_config, BigMapIndexConfig):
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(BigMapSubscription())
+            else:
+                for big_map_handler_config in index_config.handlers:
+                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                    index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
+
+        # NOTE: HeadSubscription is always enabled
+        elif isinstance(index_config, HeadIndexConfig):
+            pass
+
+        else:
+            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     def _resolve_index_links(self, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""

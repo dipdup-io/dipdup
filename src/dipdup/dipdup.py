@@ -61,6 +61,15 @@ class IndexDispatcher:
         await self._load_index_states()
 
         while not self._stopped:
+            if not spawn_datasources_event.is_set():
+                if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
+                    spawn_datasources_event.set()
+
+            if spawn_datasources_event.is_set():
+                index_datasources = (i.datasource for i in self._indexes.values())
+                for datasource in index_datasources:
+                    await datasource.subscribe()
+
             tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
             while self._tasks:
                 tasks.append(self._tasks.popleft())
@@ -78,16 +87,8 @@ class IndexDispatcher:
                 if self._every_index_is(IndexStatus.ONESHOT):
                     self.stop()
 
-            if not spawn_datasources_event.is_set():
-                if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
-                    spawn_datasources_event.set()
-            else:
-                index_datasources = (i.datasource for i in self._indexes.values())
-                for datasource in index_datasources:
-                    await datasource.subscribe()
-
             if not start_scheduler_event.is_set():
-                if self._every_index_is(IndexStatus.REALTIME):
+                if not indexes_spawned and self._every_index_is(IndexStatus.REALTIME):
                     start_scheduler_event.set()
 
     def stop(self) -> None:
@@ -290,7 +291,7 @@ class DipDup:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)
                 if not advanced_config.postpone_jobs:
                     start_scheduler_event.set()
-                spawn_datasources_event = await self._spawn_datasources(tasks, advanced_config.early_realtime)
+                spawn_datasources_event = await self._spawn_datasources(tasks)
 
             for name in self._config.indexes:
                 await self._ctx._spawn_index(name)
@@ -414,7 +415,8 @@ class DipDup:
     async def _initialize_datasources(self) -> None:
         for datasource in self._datasources.values():
             if isinstance(datasource, TzktDatasource):
-                await datasource.set_sync_level()
+                block = await datasource.get_head_block()
+                datasource.set_sync_level(block.level, initial=True)
 
     async def _set_up_index_dispatcher(
         self,
@@ -434,15 +436,12 @@ class DipDup:
             )
         )
 
-    async def _spawn_datasources(self, tasks: Set[Task], early_realtime: bool = False) -> Event:
+    async def _spawn_datasources(self, tasks: Set[Task]) -> Event:
         event = Event()
-        if early_realtime:
-            event.set()
 
         async def _event_wrapper():
-            if not early_realtime:
-                self._logger.info('Waiting for indexes to synchronize before spawning datasources')
-                await event.wait()
+            self._logger.info('Waiting for indexes to synchronize before spawning datasources')
+            await event.wait()
 
             self._logger.info('Spawning datasources')
             _tasks = [create_task(d.run()) for d in self._datasources.values()]

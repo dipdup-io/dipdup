@@ -114,16 +114,19 @@ class Index:
             await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
-        if self._datasource.sync_level is None:
+        sync_levels = set(self.datasource.get_sync_level(s) for s in self._config.subscriptions)
+        sync_level = sync_levels.pop()
+        if sync_levels:
+            raise Exception
+        level = self.state.level
+
+        if sync_level is None:
             raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
 
-        elif self.state.level < self._datasource.sync_level:
-            self._logger.info(
-                'Index is behind datasource, sync to datasource level: %s -> %s', self.state.level, self._datasource.sync_level
-            )
+        elif level < sync_level:
+            self._logger.info('Index is behind datasource, sync to datasource level: %s -> %s', level, sync_level)
             self._queue.clear()
-            last_level = self._datasource.sync_level
-            await self._synchronize(last_level)
+            await self._synchronize(sync_level)
 
         else:
             await self._process_queue()

@@ -9,15 +9,7 @@ from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage  # type: ignore
 
-from dipdup.config import (
-    BigMapIndexConfig,
-    ContractConfig,
-    HeadIndexConfig,
-    HTTPConfig,
-    OperationHandlerOriginationPatternConfig,
-    OperationIndexConfig,
-    ResolvedIndexConfigT,
-)
+from dipdup.config import HTTPConfig, ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.subscription import BigMapSubscription, HeadSubscription, OriginationSubscription, TransactionSubscription
 from dipdup.datasources.tzkt.enums import (
@@ -182,10 +174,11 @@ class OperationFetcher:
                     yield self._head, dedup_operations(tuple(operations))
                 self._head += 1
 
-            if all(list(self._fetched.values())):
+            if all(self._fetched.values()):
                 break
 
-        assert not self._operations
+        if self._operations:
+            raise RuntimeError('Operations left in queue')
 
 
 class BigMapFetcher:
@@ -282,42 +275,57 @@ class TzktDatasource(IndexDatasource):
 
         self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
-        self._sync_level: Optional[int] = None
 
     @property
     def request_limit(self) -> int:
         return cast(int, self._http_config.batch_size)
 
-    @property
-    def sync_level(self) -> Optional[int]:
-        return self._sync_level
-
     async def get_similar_contracts(self, address: str, strict: bool = False) -> Tuple[str, ...]:
         """Get list of contracts sharing the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'
-        self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
+        self._logger.info('Fetching %s contracts for address `%s`', entrypoint, address)
 
-        contracts = await self._http.request(
-            'get',
-            url=f'v1/contracts/{address}/{entrypoint}',
-            params=dict(
-                select='address',
-                limit=self.request_limit,
-            ),
-        )
-        return tuple(c for c in contracts)
+        size, offset = self.request_limit, 0
+        addresses: Tuple[str, ...] = tuple()
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/contracts/{address}/{entrypoint}',
+                params=dict(
+                    select='address',
+                    limit=self.request_limit,
+                    offset=offset,
+                ),
+            )
+            size = len(response)
+            addresses = addresses + tuple(response)
+            offset += self.request_limit
+
+        return addresses
 
     async def get_originated_contracts(self, address: str) -> Tuple[str, ...]:
         """Get contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s', address)
-        contracts = await self._http.request(
-            'get',
-            url=f'v1/accounts/{address}/contracts',
-            params=dict(
-                limit=self.request_limit,
-            ),
-        )
-        return tuple(c['address'] for c in contracts)
+
+        size, offset = self.request_limit, 0
+        addresses: Tuple[str, ...] = tuple()
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/contracts/{address}/contracts',
+                params=dict(
+                    select='address',
+                    limit=self.request_limit,
+                    offset=offset,
+                ),
+            )
+            size = len(response)
+            addresses = addresses + tuple(c['address'] for c in response)
+            offset += self.request_limit
+
+        return addresses
 
     async def get_contract_summary(self, address: str) -> Dict[str, Any]:
         """Get contract summary"""
@@ -492,42 +500,8 @@ class TzktDatasource(IndexDatasource):
 
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
-
-        if isinstance(index_config, OperationIndexConfig):
-            if self._merge_subscriptions:
-                self._subscriptions.add(TransactionSubscription(), log=False)
-            else:
-                for contract_config in index_config.contracts or ():
-                    address = cast(ContractConfig, contract_config).address
-                    self._subscriptions.add(TransactionSubscription(address=address), log=bool(address))
-
-            for handler_config in index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        self._subscriptions.add(OriginationSubscription(), log=False)
-                        break
-
-        elif isinstance(index_config, BigMapIndexConfig):
-            if self._merge_subscriptions:
-                self._subscriptions.add(BigMapSubscription())
-            else:
-                for big_map_handler_config in index_config.handlers:
-                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
-                    log = bool(address) and bool(path)
-                    self._subscriptions.add(BigMapSubscription(address=address, path=path), log=log)
-
-        # NOTE: HeadSubscription is always enabled
-        elif isinstance(index_config, HeadIndexConfig):
-            pass
-
-        else:
-            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
-
-    async def set_sync_level(self) -> None:
-        if self._sync_level:
-            return
-        block = await self.get_head_block()
-        self._sync_level = block.level
+        for subscription in index_config.subscriptions:
+            self._subscriptions.add(subscription, log=False)
 
     async def subscribe(self) -> None:
         missing_subscriptions = self._subscriptions.missing_subscriptions
@@ -634,15 +608,8 @@ class TzktDatasource(IndexDatasource):
             if not (tzkt_type == TzktMessageType.STATE and current_level == level):
                 self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
 
-            # NOTE: Ensure correctness, update sync level
             if tzkt_type == TzktMessageType.STATE:
-                if self._sync_level < level:
-                    self._logger.info('Datasource sync level has been updated: %s -> %s', self._sync_level, level)
-                    self._sync_level = level
-                elif self._sync_level > level:
-                    raise RuntimeError('Attempt to set sync level to the lower value: %s -> %s', self._sync_level, level)
-                else:
-                    pass
+                self.set_sync_level(level)
 
             # NOTE: Just yield data
             elif tzkt_type == TzktMessageType.DATA:

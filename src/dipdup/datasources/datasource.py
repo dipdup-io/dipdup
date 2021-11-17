@@ -1,9 +1,9 @@
 import logging
 from abc import abstractmethod
-from typing import Awaitable, Callable, Set, Tuple
+from typing import Awaitable, Callable, Optional, Set, Tuple
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.subscription import HeadSubscription, SubscriptionManager
+from dipdup.datasources.subscription import HeadSubscription, Subscription, SubscriptionManager
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData, HeadBlockData, OperationData
 from dipdup.utils import FormattedLogger
@@ -75,3 +75,9 @@ class IndexDatasource(Datasource):
     async def emit_rollback(self, from_level: int, to_level: int) -> None:
         for fn in self._on_rollback:
             await fn(self, from_level, to_level)
+
+    def set_sync_level(self, level: int, initial: bool = False) -> None:
+        self._subscriptions.set_sync_level(level, initial)
+
+    def get_sync_level(self, subscription: Subscription) -> Optional[int]:
+        return self._subscriptions.get_sync_level(subscription)
