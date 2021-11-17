@@ -132,7 +132,7 @@ class _HTTPGateway:
                 self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
                 await asyncio.sleep(ratelimit_sleep or retry_sleep)
                 attempt += 1
-                multiplier = 1 if ratelimit_sleep is None else self._config.retry_multiplier or 1
+                multiplier = 1 if ratelimit_sleep else self._config.retry_multiplier or 1
                 retry_sleep *= multiplier
 
     async def _request(self, method: str, url: str, weight: int = 1, **kwargs):
