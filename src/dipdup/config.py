@@ -1151,8 +1151,8 @@ class DipDupConfig:
         new_index_config.template_values = template_config.values
         new_index_config.parent = template
         new_index_config.name = template_config.name
-        new_index_config.first_level |= template_config.first_level
-        new_index_config.last_level |= template_config.last_level
+        new_index_config.first_level = new_index_config.first_level or template_config.first_level
+        new_index_config.last_level = template_config.last_level or new_index_config.last_level
         self.indexes[template_config.name] = new_index_config
 
     def _resolve_templates(self) -> None:
