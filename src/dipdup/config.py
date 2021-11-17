@@ -606,8 +606,8 @@ class IndexTemplateConfig(NameMixin):
     kind = 'template'
     template: str
     values: Dict[str, str]
-    first_level: Optional[int] = None
-    last_level: Optional[int] = None
+    first_level: int = 0
+    last_level: int = 0
 
 
 @dataclass
@@ -1151,8 +1151,9 @@ class DipDupConfig:
         new_index_config.template_values = template_config.values
         new_index_config.parent = template
         new_index_config.name = template_config.name
-        new_index_config.first_level = new_index_config.first_level or template_config.first_level
-        new_index_config.last_level = template_config.last_level or new_index_config.last_level
+        if not isinstance(new_index_config, HeadIndexConfig):
+            new_index_config.first_level |= template_config.first_level
+            new_index_config.last_level |= template_config.last_level
         self.indexes[template_config.name] = new_index_config
 
     def _resolve_templates(self) -> None:
