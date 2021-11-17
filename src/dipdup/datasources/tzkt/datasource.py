@@ -314,7 +314,7 @@ class TzktDatasource(IndexDatasource):
         while size == self.request_limit:
             response = await self._http.request(
                 'get',
-                url=f'v1/contracts/{address}/contracts',
+                url=f'v1/accounts/{address}/contracts',
                 params=dict(
                     select='address',
                     limit=self.request_limit,
