@@ -205,10 +205,14 @@ async def status(ctx):
     url = config.database.connection_string
     models = f'{config.package}.models'
     async with tortoise_wrapper(url, models):
+        # TODO: Formatting
+        print('_' * 80)
         async for index in Index.all():
             print(f'{index.name}\t{index.status.value}\t{index.level}')
+        print('_' * 80)
 
 
+# TODO: Docs, `--unsafe` argument to resolve env variables, default to not doing it
 @cli.command(help='Show config')
 @click.pass_context
 @cli_wrapper
