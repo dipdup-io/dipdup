@@ -970,7 +970,7 @@ class DipDupConfig:
         elif len(oneshot_indexes) == len(syncable_indexes):
             return True
         else:
-            raise ConfigurationError('Either all or none of indexes must have `first_level`/`last_level` fields set')
+            raise ConfigurationError('Either all or none of indexes can have `last_level` field set')
 
     @classmethod
     def load(
@@ -1151,6 +1151,8 @@ class DipDupConfig:
         new_index_config.template_values = template_config.values
         new_index_config.parent = template
         new_index_config.name = template_config.name
+        new_index_config.first_level |= template_config.first_level
+        new_index_config.last_level |= template_config.last_level
         self.indexes[template_config.name] = new_index_config
 
     def _resolve_templates(self) -> None:
@@ -1163,6 +1165,7 @@ class DipDupConfig:
             if name in self._links_resolved:
                 continue
             self._resolve_index_links(index_config)
+            # TODO: Not exactly link resolving, move somewhere else
             self._resolve_index_subscriptions(index_config)
             self._links_resolved.add(index_config.name)
 

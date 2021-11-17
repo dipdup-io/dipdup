@@ -146,6 +146,7 @@ class DipDupContext:
                 typename=contract_config.typename,
             ).save()
 
+    # TODO: first_level/last_level?
     async def add_index(self, name: str, template: str, values: Dict[str, Any], state: Optional[Index] = None) -> None:
         self.logger.info('Creating index `%s` from template `%s`', name, template)
         if name in self.config.indexes:

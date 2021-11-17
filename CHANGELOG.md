@@ -5,7 +5,8 @@
 ### Fixed
 
 * tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
-* tzkt: Adding huge number of indexes no longer leads to sending useless subscription requests.
+* tzkt: Adding many indexes in runtime no longer leads to sending useless subscription requests.
+* tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `batch_size` tunable.
 
 ### Changed
 
@@ -13,8 +14,11 @@
 
 ### Added
 
-* cli: `dipdip run --early-realtime` flag to establish a real-time connection before all indexes are synchronized.
-* cli: `dipdup run --skip-hasura` flag to skip updating Hasura metadata.
+* cli: New flag `dipdip run --early-realtime` to establish a real-time connection before all indexes are synchronized.
+* cli: New flag `dipdup run --skip-hasura` to skip updating Hasura metadata.
+* cli: New command `dipdup status` to print the current status of indexes from database
+* cli: New command `dipdup config` to print config after resolving all links and variables
+* config: Added optional fields `first_level` and `last_level` to `TemplateIndexConfig`. These limits are applied after ones from the template itself.
 
 ### Improved
 
