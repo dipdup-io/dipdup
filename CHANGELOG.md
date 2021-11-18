@@ -16,6 +16,12 @@
 
 * tzkt: Replaced `aiosignalrcore` library with `pysignalr`.
 
+## 3.1.4 - 2021-11-18
+
+### Fixed
+
+* coinbase: Candles caching disabled
+
 ## 3.1.3 - 2021-11-15
 
 ### Fixed
