@@ -1,9 +1,10 @@
+import asyncio
 import logging
-from asyncio import create_task, gather
+from asyncio import Event, create_task, gather
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, AsyncGenerator, DefaultDict, Deque, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from typing import Any, AsyncGenerator, Awaitable, Callable, DefaultDict, Deque, Dict, List, NoReturn, Optional, Set, Tuple, cast
 
 from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
@@ -11,7 +12,13 @@ from pysignalr.messages import CompletionMessage  # type: ignore
 
 from dipdup.config import HTTPConfig, ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.subscription import BigMapSubscription, HeadSubscription, OriginationSubscription, TransactionSubscription
+from dipdup.datasources.subscription import (
+    BigMapSubscription,
+    HeadSubscription,
+    OriginationSubscription,
+    Subscription,
+    TransactionSubscription,
+)
 from dipdup.datasources.tzkt.enums import (
     ORIGINATION_MIGRATION_FIELDS,
     ORIGINATION_OPERATION_FIELDS,
@@ -501,7 +508,7 @@ class TzktDatasource(IndexDatasource):
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
         for subscription in index_config.subscriptions:
-            self._subscriptions.add(subscription, log=False)
+            self._subscriptions.add(subscription)
 
     async def subscribe(self) -> None:
         missing_subscriptions = self._subscriptions.missing_subscriptions
@@ -509,20 +516,50 @@ class TzktDatasource(IndexDatasource):
             return
 
         self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
-        for subscription in missing_subscriptions:
-            if isinstance(subscription, TransactionSubscription):
-                await self._subscribe_to_transactions(subscription.address)
-            elif isinstance(subscription, OriginationSubscription):
-                await self._subscribe_to_originations()
-            elif isinstance(subscription, HeadSubscription):
-                await self._subscribe_to_head()
-            elif isinstance(subscription, BigMapSubscription):
-                await self._subscribe_to_big_maps(subscription.address, subscription.path)
-            else:
-                raise NotImplementedError
-
-        self._subscriptions.apply()
+        tasks = (self._subscribe(subscription) for subscription in missing_subscriptions)
+        await asyncio.gather(*tasks)
         self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
+
+    async def _subscribe(self, subscription: Subscription) -> None:
+        self._logger.debug('Subscribing to %s', subscription)
+        request: List[Dict[str, Any]]
+
+        if isinstance(subscription, TransactionSubscription):
+            method = 'SubscribeToOperations'
+            request = [{'types': 'transaction'}]
+            if subscription.address:
+                request[0]['address'] = subscription.address
+
+        elif isinstance(subscription, OriginationSubscription):
+            method = 'SubscribeToOperations'
+            request = [{'types': 'origination'}]
+
+        elif isinstance(subscription, HeadSubscription):
+            method, request = 'SubscribeToHead', []
+
+        elif isinstance(subscription, BigMapSubscription):
+            method = 'SubscribeToBigMaps'
+            if subscription.address and subscription.path:
+                request = [{'address': subscription.address, 'paths': [subscription.path]}]
+            elif not subscription.address and not subscription.path:
+                request = [{}]
+            else:
+                raise RuntimeError
+
+        else:
+            raise NotImplementedError
+
+        event = Event()
+
+        async def _on_subscribe(message: CompletionMessage) -> None:
+            if message.error:
+                await self._on_error(message)
+            level = cast(int, message.result)
+            self._subscriptions.set_sync_level(subscription, level)
+            event.set()
+
+        await self._send(method, request, _on_subscribe)
+        await event.wait()
 
     def _get_ws_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
@@ -554,65 +591,30 @@ class TzktDatasource(IndexDatasource):
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
         self._logger.info('Realtime connection established')
-        await self.subscribe()
+        # NOTE: Subscribing here will block WebSocket loop
+        # await self.subscribe()
 
     async def _on_disconnect(self) -> None:
         self._logger.info('Realtime connection lost')
         self._subscriptions.reset()
 
-    def _on_error(self, message: CompletionMessage) -> NoReturn:
+    async def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""
         raise DatasourceError(datasource=self.name, msg=cast(str, message.error))
-
-    async def _subscribe_to_transactions(self, address: Optional[str] = None) -> None:
-        """Subscribe to contract's operations on established WS connection"""
-        if address:
-            request = [{'types': 'transaction', 'address': address}]
-        else:
-            request = [{'types': 'transaction'}]
-
-        self._logger.debug('Subscribing to %s transactions', address or 'all')
-        await self._send('SubscribeToOperations', request)
-
-    async def _subscribe_to_originations(self) -> None:
-        """Subscribe to all originations on established WS connection"""
-        request = [{'types': 'origination'}]
-
-        self._logger.debug('Subscribing to all originations')
-        await self._send('SubscribeToOperations', request)
-
-    async def _subscribe_to_big_maps(self, address: Optional[str], path: Optional[str]) -> None:
-        """Subscribe to contract's big map diffs on established WS connection"""
-        if address and path:
-            log, request = f'{address}:{path}', [{'address': address, 'paths': [path]}]
-        elif not address and not path:
-            log, request = 'all', [{}]
-        else:
-            raise RuntimeError
-
-        self._logger.debug('Subscribing to %s big map updates', log)
-        await self._send('SubscribeToBigMaps', request)
-
-    async def _subscribe_to_head(self) -> None:
-        """Subscribe to head on established WS connection"""
-        self._logger.debug('Subscribing to all head blocks')
-        await self._send('SubscribeToHead', [])
 
     async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         for item in message:
             tzkt_type = TzktMessageType(item['type'])
+            if tzkt_type == TzktMessageType.STATE:
+                continue
+
             level, current_level = item['state'], self._level[type_]
             self._level[type_] = level
-
-            if not (tzkt_type == TzktMessageType.STATE and current_level == level):
-                self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
-
-            if tzkt_type == TzktMessageType.STATE:
-                self.set_sync_level(level)
+            self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
 
             # NOTE: Just yield data
-            elif tzkt_type == TzktMessageType.DATA:
+            if tzkt_type == TzktMessageType.DATA:
                 yield item['data']
 
             # NOTE: Emit rollback, but not on `head` message
@@ -803,7 +805,12 @@ class TzktDatasource(IndexDatasource):
             eth=Decimal(quote_json['eth']),
         )
 
-    async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:
+    async def _send(
+        self,
+        method: str,
+        arguments: List[Dict[str, Any]],
+        on_invocation: Optional[Callable[[CompletionMessage], Awaitable[None]]] = None,
+    ) -> None:
         client = self._get_ws_client()
         await client.send(method, arguments, on_invocation)
 

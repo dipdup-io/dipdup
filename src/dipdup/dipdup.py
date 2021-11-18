@@ -5,7 +5,7 @@ from collections import deque
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import partial
 from operator import ne
-from typing import Awaitable, Deque, Dict, List, Optional, Set, Tuple, cast
+from typing import Awaitable, Deque, Dict, List, Optional, Set, Tuple, Union, cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
@@ -32,7 +32,7 @@ from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache, head_cache
-from dipdup.models import BigMapData, Contract, Head, HeadBlockData
+from dipdup.models import BigMapData, BlockData, Contract, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
@@ -126,7 +126,8 @@ class IndexDispatcher:
 
         await self._fetch_contracts()
         self._logger.info('%s indexes found in database', await IndexState.all().count())
-        async for index_state in IndexState.all():
+
+        async def _process(index_state: IndexState) -> None:
             name, template, template_values = index_state.name, index_state.template, index_state.template_values
 
             # NOTE: Index in config (templates are already resolved): just verify hash
@@ -163,6 +164,9 @@ class IndexDispatcher:
             # NOTE: Index config is missing, possibly just commented-out
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
+
+        tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
+        await gather(*tasks)
 
         # NOTE: Cached blocks used only on index state init
         block_cache.clear()
@@ -293,8 +297,8 @@ class DipDup:
                     start_scheduler_event.set()
                 spawn_datasources_event = await self._spawn_datasources(tasks)
 
-            for name in self._config.indexes:
-                await self._ctx._spawn_index(name)
+            spawn_index_tasks = (create_task(self._ctx._spawn_index(name)) for name in self._config.indexes)
+            await gather(*spawn_index_tasks)
 
             await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime)
 
@@ -414,9 +418,25 @@ class DipDup:
 
     async def _initialize_datasources(self) -> None:
         for datasource in self._datasources.values():
-            if isinstance(datasource, TzktDatasource):
-                block = await datasource.get_head_block()
-                datasource.set_sync_level(block.level, initial=True)
+            if not isinstance(datasource, TzktDatasource):
+                continue
+
+            datasource.set_sync_level(
+                subscription=None,
+                level=(await datasource.get_head_block()).level,
+            )
+
+            db_head = await Head.filter(name=datasource.name).first()
+            if not db_head:
+                continue
+
+            actual_head = await datasource.get_block(db_head.level)
+            if db_head.hash != actual_head.hash:
+                await self._ctx.reindex(
+                    ReindexingReason.BLOCK_HASH_MISMATCH,
+                    hash=db_head.hash,
+                    actual_hash=actual_head.hash,
+                )
 
     async def _set_up_index_dispatcher(
         self,

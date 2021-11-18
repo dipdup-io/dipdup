@@ -1,7 +1,6 @@
 import logging
-from abc import abstractmethod
-from collections import defaultdict
-from typing import DefaultDict, Set
+from abc import ABC
+from typing import Dict, Set
 
 from pydantic.dataclasses import dataclass
 from tortoise import Optional
@@ -9,79 +8,65 @@ from tortoise import Optional
 _logger = logging.getLogger('dipdup.datasource')
 
 
-class Subscription:
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
+class Subscription(ABC):
+    ...
 
 
-@dataclass
+@dataclass(frozen=True)
 class HeadSubscription(Subscription):
-    def __hash__(self) -> int:
-        return hash('head')
+    type: str = 'head'
 
 
-@dataclass
+@dataclass(frozen=True)
 class OriginationSubscription(Subscription):
-    def __hash__(self) -> int:
-        return hash('origination')
+    type: str = 'origination'
 
 
-@dataclass
+@dataclass(frozen=True)
 class TransactionSubscription(Subscription):
+    type: str = 'transaction'
     address: Optional[str] = None
-
-    def __hash__(self) -> int:
-        return hash(f'transaction:{self.address}')
 
 
 # TODO: Add `ptr` and `tags` filters
-@dataclass
+@dataclass(frozen=True)
 class BigMapSubscription(Subscription):
+    type: str = 'big_map'
     address: Optional[str] = None
     path: Optional[str] = None
-
-    def __hash__(self) -> int:
-        return hash(f'big_map:{self.address}:{self.path}')
 
 
 class SubscriptionManager:
     def __init__(self) -> None:
-        self._subscriptions: Set[Subscription] = set()
-        self._active_subscriptions: Set[Subscription] = set()
-        self._initial_level: Optional[int] = None
-        self._sync_levels: DefaultDict[Subscription, Optional[int]] = defaultdict(lambda: None)
+        self._subscriptions: Dict[Optional[Subscription], Optional[int]] = {None: None}
 
     @property
     def missing_subscriptions(self) -> Set[Subscription]:
-        return self._subscriptions - self._active_subscriptions
+        return set(k for k, v in self._subscriptions.items() if k is not None and v is None)
 
-    def add(self, subscription: Subscription, log: bool = True) -> None:
-        if subscription in self._subscriptions and log:
+    def add(self, subscription: Subscription) -> None:
+        if subscription in self._subscriptions:
             _logger.warning(f'Subscription already exists: {subscription}')
         else:
-            self._subscriptions.add(subscription)
+            self._subscriptions[subscription] = None
 
-    def remove(self, subscription: Subscription, log: bool = True) -> None:
-        if subscription not in self._subscriptions and log:
+    def remove(self, subscription: Subscription) -> None:
+        if subscription not in self._subscriptions:
             _logger.warning(f'Subscription does not exist: {subscription}')
         else:
-            self._subscriptions.remove(subscription)
-
-    def apply(self) -> None:
-        self._active_subscriptions |= self._subscriptions
+            self._subscriptions.pop(subscription)
 
     def reset(self) -> None:
-        self._active_subscriptions = set()
-        self._sync_levels.clear()
+        self._subscriptions = dict.fromkeys(self._subscriptions, None)
 
-    def set_sync_level(self, level: int, initial: bool = False) -> None:
-        if initial:
-            self._initial_level = level
-
-        for subscription in self._active_subscriptions:
-            if not self._sync_levels[subscription]:
-                self._sync_levels[subscription] = level
+    def set_sync_level(self, subscription: Optional[Subscription], level: int) -> None:
+        if subscription not in self._subscriptions:
+            raise RuntimeError(f'Subscription does not exist: {subscription}')
+        if self._subscriptions[subscription]:
+            _logger.warning('%s sync level updated: %s -> %s', subscription, self._subscriptions[subscription], level)
+        self._subscriptions[subscription] = level
 
     def get_sync_level(self, subscription: Subscription) -> Optional[int]:
-        return self._sync_levels[subscription] or self._initial_level
+        if subscription not in self._subscriptions:
+            raise RuntimeError(f'Subscription does not exist: {subscription}')
+        return self._subscriptions[subscription] or self._subscriptions[None]

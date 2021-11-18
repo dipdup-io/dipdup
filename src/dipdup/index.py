@@ -69,43 +69,27 @@ class Index:
         return self._state
 
     async def initialize_state(self, state: Optional[models.Index] = None) -> None:
-
         if self._state:
             raise RuntimeError('Index state is already initialized')
 
-        if state is not None:
-            self._state, created = state, False
-        else:
-            if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.first_level:
-                level = self._config.first_level
-            else:
-                level = 0
-
-            self._state, created = await models.Index.get_or_create(
-                name=self._config.name,
-                type=self._config.kind,
-                defaults=dict(
-                    level=level,
-                    config_hash=self._config.hash(),
-                    template=self._config.parent.name if self._config.parent else None,
-                    template_values=self._config.template_values,
-                ),
-            )
-
-        if created or not self._state.level:
+        if state:
+            self._state = state
             return
 
-        head = head_cache.get(self.datasource.name)
-        if head is False:
-            head = head_cache[self.datasource.name] = await models.Head.filter(name=self.datasource.name).order_by('-level').first()
-        if not head:
-            return
+        level = 0
+        if not isinstance(self._config, HeadIndexConfig):
+            level |= self._config.first_level
 
-        block = block_cache.get((self.datasource.name, head.level))
-        if not block:
-            block = block_cache[(head.name, head.level)] = await self.datasource.get_block(head.level)
-        if head.hash != block.hash:
-            await self._ctx.reindex(ReindexingReason.BLOCK_HASH_MISMATCH)
+        self._state, _ = await models.Index.get_or_create(
+            name=self._config.name,
+            type=self._config.kind,
+            defaults=dict(
+                level=level,
+                config_hash=self._config.hash(),
+                template=self._config.parent.name if self._config.parent else None,
+                template_values=self._config.template_values,
+            ),
+        )
 
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied

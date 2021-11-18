@@ -76,8 +76,8 @@ class IndexDatasource(Datasource):
         for fn in self._on_rollback:
             await fn(self, from_level, to_level)
 
-    def set_sync_level(self, level: int, initial: bool = False) -> None:
-        self._subscriptions.set_sync_level(level, initial)
+    def set_sync_level(self, subscription: Optional[Subscription], level: int) -> None:
+        self._subscriptions.set_sync_level(subscription, level)
 
     def get_sync_level(self, subscription: Subscription) -> Optional[int]:
         return self._subscriptions.get_sync_level(subscription)
