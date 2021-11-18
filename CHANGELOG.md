@@ -5,7 +5,8 @@
 ### Fixed
 
 * tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
-* init: Fixed missing imports in handlers generated during init. 
+* init: Fixed missing imports in handlers generated during init.
+* coinbase: Candles caching disabled.
 
 ### Added
 
@@ -15,12 +16,6 @@
 ### Improved
 
 * tzkt: Replaced `aiosignalrcore` library with `pysignalr`.
-
-## 3.1.4 - 2021-11-18
-
-### Fixed
-
-* coinbase: Candles caching disabled
 
 ## 3.1.3 - 2021-11-15
 
