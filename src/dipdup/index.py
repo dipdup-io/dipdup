@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
+import logging
 from typing import DefaultDict, Deque, Dict, Iterable, Iterator, Literal, Optional, Sequence, Set, Tuple, Union, cast
 
 from pydantic.dataclasses import dataclass
@@ -27,6 +28,7 @@ from dipdup.models import BigMapData, BigMapDiff, BlockData, HeadBlockData, Inde
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
+_logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class OperationSubgroup:
@@ -72,7 +74,7 @@ def extract_operation_subgroups(operations: Iterable[OperationData]) -> Iterator
 
     for key, operations in operation_subgroups.items():
         hash_, counter = key
-        entrypoints = set(op.entrypoint for op in operations if isinstance(op, OperationHandlerTransactionPatternConfig))
+        entrypoints = set(op.entrypoint for op in operations)
         yield OperationSubgroup(
             hash=hash_,
             counter=counter,
@@ -86,11 +88,16 @@ def filter_operation_subgroups(
     entrypoints: Set[Optional[str]],
     lengths: Set[int],
 ) -> Iterator[OperationSubgroup]:
-    for operation_subgroup in operation_subgroups:
+    filtered = 0
+    for i, operation_subgroup in enumerate(operation_subgroups):
         if not operation_subgroup.entrypoints - entrypoints:
             yield operation_subgroup
         elif operation_subgroup.length in lengths:
             yield operation_subgroup
+        else:
+            filtered += 1
+    if filtered:
+        _logger.info('Filtered %d/%d operation subgroups', filtered, i + 1)
 
 
 class Index:

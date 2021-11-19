@@ -842,11 +842,15 @@ class JobConfig(NameMixin):
     hook: Union[str, 'HookConfig']
     crontab: Optional[str] = None
     interval: Optional[int] = None
+    daemon: bool = False
     args: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self):
-        if int(bool(self.crontab)) + int(bool(self.interval)) != 1:
-            raise ConfigurationError('Either `interval` or `crontab` field must be specified')
+        if self.crontab and self.interval:
+            raise ConfigurationError('Only one of `crontab` and `interval` can be specified')
+        elif not (self.crontab or self.interval or self.daemon):
+            raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
+
         NameMixin.__post_init_post_parse__(self)
 
     @property
