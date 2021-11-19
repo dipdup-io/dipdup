@@ -30,8 +30,8 @@ async def _create_index(hash_: str) -> None:
     )
 
 
-async def _spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
-    await dispatcher._ctx._spawn_index(name)
+async def spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
+    await dispatcher._ctx.spawn_index(name)
     dispatcher._indexes[name] = pending_indexes.pop()
 
 
@@ -51,7 +51,7 @@ class IndexStateTest(IsolatedAsyncioTestCase):
             dispatcher = IndexDispatcher(dipdup._ctx)
 
             # Act
-            await _spawn_index(dispatcher, 'hen_mainnet')
+            await spawn_index(dispatcher, 'hen_mainnet')
 
             # Assert
             index = await Index.filter().get()

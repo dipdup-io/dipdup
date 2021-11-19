@@ -146,7 +146,7 @@ class DipDupContext:
                 typename=contract_config.typename,
             ).save()
 
-    # TODO: first_level/last_level?
+    # TODO: Option to override first_level/last_level?
     async def add_index(self, name: str, template: str, values: Dict[str, Any], state: Optional[Index] = None) -> None:
         self.logger.info('Creating index `%s` from template `%s`', name, template)
         if name in self.config.indexes:
@@ -158,9 +158,9 @@ class DipDupContext:
         )
         self.config.initialize()
 
-        await self._spawn_index(name, state)
+        await self.spawn_index(name, state)
 
-    async def _spawn_index(self, name: str, state: Optional[Index] = None) -> None:
+    async def spawn_index(self, name: str, state: Optional[Index] = None) -> None:
         from dipdup.index import BigMapIndex, HeadIndex, OperationIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
@@ -185,6 +185,7 @@ class DipDupContext:
             self.callbacks.register_handler(handler_config)
         await index.initialize_state(state)
 
+        # NOTE: IndexDispatcher will handle further initialization when it's time
         pending_indexes.append(index)
 
 

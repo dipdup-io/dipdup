@@ -31,13 +31,13 @@ class Datasource(HTTPGateway):
 
 
 class IndexDatasource(Datasource):
-    def __init__(self, url: str, http_config: HTTPConfig) -> None:
+    def __init__(self, url: str, http_config: HTTPConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(url, http_config)
         self._on_head: Set[HeadCallbackT] = set()
         self._on_operations: Set[OperationsCallbackT] = set()
         self._on_big_maps: Set[BigMapsCallbackT] = set()
         self._on_rollback: Set[RollbackCallbackT] = set()
-        self._subscriptions: SubscriptionManager = SubscriptionManager()
+        self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
         self._subscriptions.add(HeadSubscription())
 
     @property

@@ -275,10 +275,13 @@ class TzktDatasource(IndexDatasource):
         watchdog: Optional[Watchdog] = None,
         merge_subscriptions: bool = False,
     ) -> None:
-        super().__init__(url, self._default_http_config.merge(http_config))
+        super().__init__(
+            url=url,
+            http_config=self._default_http_config.merge(http_config),
+            merge_subscriptions=merge_subscriptions,
+        )
         self._logger = logging.getLogger('dipdup.tzkt')
         self._watchdog = watchdog
-        self._merge_subscriptions = merge_subscriptions
 
         self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)

@@ -37,7 +37,8 @@ class BigMapSubscription(Subscription):
 
 
 class SubscriptionManager:
-    def __init__(self) -> None:
+    def __init__(self, merge_subscriptions: bool = False) -> None:
+        self._merge_subscriptions: bool = merge_subscriptions
         self._subscriptions: Dict[Optional[Subscription], Optional[int]] = {None: None}
 
     @property
@@ -46,7 +47,8 @@ class SubscriptionManager:
 
     def add(self, subscription: Subscription) -> None:
         if subscription in self._subscriptions:
-            _logger.warning(f'Subscription already exists: {subscription}')
+            if not self._merge_subscriptions:
+                _logger.warning(f'Subscription already exists: {subscription}')
         else:
             self._subscriptions[subscription] = None
 
@@ -62,8 +64,13 @@ class SubscriptionManager:
     def set_sync_level(self, subscription: Optional[Subscription], level: int) -> None:
         if subscription not in self._subscriptions:
             raise RuntimeError(f'Subscription does not exist: {subscription}')
+
         if self._subscriptions[subscription]:
+            # NOTE: Updating sync level with merge_subscriptions=True will cause resync
+            if self._merge_subscriptions:
+                return
             _logger.warning('%s sync level updated: %s -> %s', subscription, self._subscriptions[subscription], level)
+
         self._subscriptions[subscription] = level
 
     def get_sync_level(self, subscription: Subscription) -> Optional[int]:

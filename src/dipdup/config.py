@@ -12,7 +12,7 @@ from contextlib import suppress
 from copy import copy
 from dataclasses import field
 from enum import Enum
-from functools import reduce
+from functools import cached_property, reduce
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
@@ -668,6 +668,25 @@ class OperationIndexConfig(IndexConfig):
 
     first_level: int = 0
     last_level: int = 0
+
+    @cached_property
+    def entrypoint_filter(self) -> Set[Optional[str]]:
+        entrypoints = set()
+        for handler_config in self.handlers:
+            for pattern_config in handler_config.pattern:
+                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    entrypoints.add(pattern_config.entrypoint)
+        return set(entrypoints)
+
+    @cached_property
+    def length_filter(self) -> Set[int]:
+        min_length, max_length = 0, 0
+        for handler_config in self.handlers:
+            for pattern_config in handler_config.pattern:
+                if not (isinstance(pattern_config, OperationHandlerTransactionPatternConfig) and pattern_config.optional):
+                    min_length += 1
+                max_length += 1
+        return set(range(min_length, max_length + 1))
 
 
 @dataclass

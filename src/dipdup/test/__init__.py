@@ -7,7 +7,7 @@ from unittest.mock import patch
 from dipdup.config import DipDupConfig, SqliteDatabaseConfig
 from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.dipdup import DipDup
-from dipdup.index import OperationIndex
+from dipdup.index import OperationIndex, OperationSubgroup
 from dipdup.models import OperationData
 
 logging.basicConfig(level=logging.ERROR)
@@ -39,8 +39,9 @@ class OperationFetcherFuzzer(OperationFetcher):
 
 
 class OperationIndexFuzzer(OperationIndex):
-    async def _process_level_operations(self, operations: Tuple[OperationData, ...]) -> None:
-        await self._match_operations(operations)
+    async def _process_level_operations(self, operation_subgroups: Tuple[OperationSubgroup, ...]) -> None:
+        for operation_subgroup in operation_subgroups:
+            await self._match_operation_subgroup(operation_subgroup)
 
 
 @contextmanager

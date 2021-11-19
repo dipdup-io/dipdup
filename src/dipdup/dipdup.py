@@ -5,7 +5,7 @@ from collections import deque
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from functools import partial
 from operator import ne
-from typing import Awaitable, Deque, Dict, List, Optional, Set, Tuple, Union, cast
+from typing import Awaitable, Deque, Dict, List, Optional, Set, Tuple, cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
@@ -19,6 +19,7 @@ from dipdup.config import (
     DatasourceConfigT,
     DipDupConfig,
     IndexTemplateConfig,
+    OperationIndexConfig,
     PostgresDatabaseConfig,
     TzktDatasourceConfig,
     default_hooks,
@@ -31,8 +32,17 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache, head_cache
-from dipdup.models import BigMapData, BlockData, Contract, Head, HeadBlockData
+from dipdup.index import (
+    BigMapIndex,
+    HeadIndex,
+    Index,
+    OperationIndex,
+    block_cache,
+    extract_operation_subgroups,
+    filter_operation_subgroups,
+    head_cache,
+)
+from dipdup.models import BigMapData, Contract, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
 from dipdup.scheduler import add_job, create_scheduler
@@ -49,6 +59,9 @@ class IndexDispatcher:
         self._contracts: Set[ContractConfig] = set()
         self._stopped: bool = False
         self._tasks: Deque[asyncio.Task] = deque()
+
+        self._entrypoint_filter: Set[Optional[str]] = set()
+        self._length_filter: Set[int] = set()
 
     async def run(
         self,
@@ -79,9 +92,13 @@ class IndexDispatcher:
 
             indexes_spawned = False
             while pending_indexes:
-                index = pending_indexes.popleft()
-                self._indexes[index._config.name] = index
+                index_config = pending_indexes.popleft()
+                self._indexes[index_config._config.name] = index_config
                 indexes_spawned = True
+
+                # FIXME: _apply_filters called in two places
+                if isinstance(index_config, OperationIndexConfig):
+                    self._apply_filters(index_config)
 
             if not indexes_spawned:
                 if self._every_index_is(IndexStatus.ONESHOT):
@@ -93,6 +110,10 @@ class IndexDispatcher:
 
     def stop(self) -> None:
         self._stopped = True
+
+    def _apply_filters(self, index_config: OperationIndexConfig) -> None:
+        self._length_filter |= index_config.length_filter
+        self._entrypoint_filter |= index_config.entrypoint_filter
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         statuses = [i.state.status for i in self._indexes.values()]
@@ -151,6 +172,10 @@ class IndexDispatcher:
                             new_hash=new_hash,
                         )
 
+                # FIXME: _apply_filters called in two places
+                if isinstance(index_config, OperationIndexConfig):
+                    self._apply_filters(index_config)
+
             # NOTE: Templated index: recreate index config, verify hash
             elif template:
                 if template not in self._ctx.config.templates:
@@ -191,14 +216,25 @@ class IndexDispatcher:
                 index.push_head(head)
 
     async def _on_operations(self, datasource: TzktDatasource, operations: Tuple[OperationData, ...]) -> None:
-        for index in self._indexes.values():
-            if isinstance(index, OperationIndex) and index.datasource == datasource:
-                index.push_operations(operations)
+        operation_subgroups = tuple(
+            filter_operation_subgroups(
+                extract_operation_subgroups(operations),
+                entrypoints=self._entrypoint_filter,
+                lengths=self._length_filter,
+            )
+        )
+
+        if not operation_subgroups:
+            return
+
+        operation_indexes = (i for i in self._indexes.values() if isinstance(i, OperationIndex) and i.datasource == datasource)
+        for index in operation_indexes:
+            index.push_operations(operation_subgroups)
 
     async def _on_big_maps(self, datasource: TzktDatasource, big_maps: Tuple[BigMapData]) -> None:
-        for index in self._indexes.values():
-            if isinstance(index, BigMapIndex) and index.datasource == datasource:
-                index.push_big_maps(big_maps)
+        big_map_indexes = (i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource)
+        for index in big_map_indexes:
+            index.push_big_maps(big_maps)
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
@@ -297,7 +333,7 @@ class DipDup:
                     start_scheduler_event.set()
                 spawn_datasources_event = await self._spawn_datasources(tasks)
 
-            spawn_index_tasks = (create_task(self._ctx._spawn_index(name)) for name in self._config.indexes)
+            spawn_index_tasks = (create_task(self._ctx.spawn_index(name)) for name in self._config.indexes)
             await gather(*spawn_index_tasks)
 
             await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime)
@@ -314,6 +350,7 @@ class DipDup:
                 datasource = TzktDatasource(
                     url=datasource_config.url,
                     http_config=datasource_config.http,
+                    merge_subscriptions=self._config.advanced.merge_subscriptions,
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
