@@ -1482,7 +1482,7 @@ websockets = "10.1"
 type = "git"
 url = "https://github.com/baking-bad/pysignalr.git"
 reference = "initial-release"
-resolved_reference = "e51fee05103a99d5165fed9ed3cc3d31be8f26d3"
+resolved_reference = "257106ffab462f0426d62690648d9a9dff79d638"
 
 [[package]]
 name = "pysnooper"

@@ -248,7 +248,7 @@ class OperationIndex(Index):
             if isinstance(message, SingleLevelRollback):
                 self._logger.info('Processing rollback realtime message, %s left in queue', len(self._queue))
                 await self._single_level_rollback(message.level)
-            else:
+            elif message:
                 self._logger.info('Processing operations realtime message, %s left in queue', len(self._queue))
                 await self._process_level_operations(message)
 
@@ -287,15 +287,15 @@ class OperationIndex(Index):
                     lengths=self._config.length_filter,
                 )
             )
-            self._logger.info('Processing operations from level %s to %s', first_level, last_level)
-            await self._process_level_operations(operation_subgroups)
+            if operation_subgroups:
+                self._logger.info('Processing operations from level %s to %s', first_level, last_level)
+                await self._process_level_operations(operation_subgroups)
 
         await self._exit_sync_state(last_level)
 
-    async def _process_level_operations(
-        self,
-        operation_subgroups: Tuple[OperationSubgroup, ...],
-    ) -> None:
+    async def _process_level_operations(self, operation_subgroups: Tuple[OperationSubgroup, ...]) -> None:
+        if not operation_subgroups:
+            raise RuntimeError('No operations to process')
 
         level = operation_subgroups[0].operations[0].level
         if self._rollback_level:
@@ -309,18 +309,18 @@ class OperationIndex(Index):
                 raise RuntimeError(f'Index is in a rollback state, but received operation batch with different levels: {levels_repr}')
 
             self._logger.info('Rolling back to previous level, verifying processed operations')
-            expected_hashes = set(self._head_hashes)
-            received_hashes = set(subgroup.hash for subgroup in operation_subgroups)
-            new_hashes = received_hashes - expected_hashes
-            missing_hashes = expected_hashes - received_hashes
+            received_hashes = set(s.hash for s in operation_subgroups)
+            new_hashes = received_hashes - self._head_hashes
+            missing_hashes = self._head_hashes - received_hashes
 
             self._logger.info('Comparing hashes: %s new, %s missing', len(new_hashes), len(missing_hashes))
             if missing_hashes:
-                self._logger.info('Some operations are backtracked: %s', ', '.join(missing_hashes))
+                self._logger.info('Some operations were backtracked: %s', ', '.join(missing_hashes))
+                # TODO: More context
                 await self._ctx.reindex(ReindexingReason.ROLLBACK)
 
             self._rollback_level = None
-            self._head_hashes = set()
+            self._head_hashes.clear()
 
             operation_subgroups = tuple(filter(lambda subgroup: subgroup.hash in new_hashes, operation_subgroups))
 

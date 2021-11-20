@@ -87,7 +87,7 @@ class IndexDispatcher:
             while self._tasks:
                 tasks.append(self._tasks.popleft())
 
-            async with slowdown(0.1):
+            async with slowdown(1):
                 await gather(*tasks)
 
             indexes_spawned = False

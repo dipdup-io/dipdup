@@ -9,7 +9,7 @@ from typing import Any, AsyncGenerator, Awaitable, Callable, DefaultDict, Deque,
 from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage  # type: ignore
-
+from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 from dipdup.config import HTTPConfig, ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.subscription import (
@@ -570,7 +570,11 @@ class TzktDatasource(IndexDatasource):
             return self._ws_client
 
         self._logger.info('Creating websocket client')
-        self._ws_client = SignalRClient(url=f'{self._http._url}/v1/events')
+        self._ws_client = SignalRClient(
+            url=f'{self._http._url}/v1/events',
+            # NOTE: 1 MB default is not enough
+            max_size=DEFAULT_MAX_SIZE * 10,
+        )
 
         self._ws_client.on_open(self._on_connect)
         self._ws_client.on_close(self._on_disconnect)
