@@ -33,8 +33,8 @@ async def _match():
 
         with with_operation_index_fuzzer(10, 3):
             dipdup = DipDup(config)
-            with suppress(ReindexingRequiredError):
-                await dipdup.run(True, True)
+            with suppress(asyncio.CancelledError):
+                await dipdup.run()
 
 
 runner.bench_func('index_match_operations', lambda: asyncio.run(_match()))
