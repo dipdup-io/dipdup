@@ -32,16 +32,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.index import (
-    BigMapIndex,
-    HeadIndex,
-    Index,
-    OperationIndex,
-    block_cache,
-    extract_operation_subgroups,
-    filter_operation_subgroups,
-    head_cache,
-)
+from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache, extract_operation_subgroups, head_cache
 from dipdup.models import BigMapData, Contract, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
@@ -61,7 +52,7 @@ class IndexDispatcher:
         self._tasks: Deque[asyncio.Task] = deque()
 
         self._entrypoint_filter: Set[Optional[str]] = set()
-        self._length_filter: Set[int] = set()
+        self._address_filter: Set[str] = set()
 
     async def run(
         self,
@@ -112,7 +103,7 @@ class IndexDispatcher:
         self._stopped = True
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
-        self._length_filter |= index_config.length_filter
+        self._address_filter |= index_config.address_filter
         self._entrypoint_filter |= index_config.entrypoint_filter
 
     def _every_index_is(self, status: IndexStatus) -> bool:
@@ -217,10 +208,10 @@ class IndexDispatcher:
 
     async def _on_operations(self, datasource: TzktDatasource, operations: Tuple[OperationData, ...]) -> None:
         operation_subgroups = tuple(
-            filter_operation_subgroups(
-                extract_operation_subgroups(operations),
+            extract_operation_subgroups(
+                operations,
                 entrypoints=self._entrypoint_filter,
-                lengths=self._length_filter,
+                addresses=self._address_filter,
             )
         )
 

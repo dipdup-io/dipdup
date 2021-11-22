@@ -1,6 +1,6 @@
+import logging
 from abc import abstractmethod
 from collections import defaultdict, deque, namedtuple
-import logging
 from typing import DefaultDict, Deque, Dict, Iterable, Iterator, Literal, Optional, Sequence, Set, Tuple, Union, cast
 
 from pydantic.dataclasses import dataclass
@@ -29,6 +29,7 @@ from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
 _logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class OperationSubgroup:
@@ -60,17 +61,39 @@ block_cache: Dict[Tuple[str, int], BlockData] = {}
 head_cache: DefaultDict[str, Optional[Union[models.Head, Literal[False]]]] = defaultdict(lambda: False)
 
 
-def extract_operation_subgroups(operations: Iterable[OperationData]) -> Iterator[OperationSubgroup]:
+def extract_operation_subgroups(
+    operations: Iterable[OperationData],
+    addresses: Set[str],
+    entrypoints: Set[Optional[str]],
+) -> Iterator[OperationSubgroup]:
+    filtered: int = 0
     levels: Set[int] = set()
     operation_subgroups: DefaultDict[Tuple[str, int], Deque[OperationData]] = defaultdict(deque)
 
-    for operation in operations:
+    operation_index = -1
+    for operation_index, operation in enumerate(operations):
+        # NOTE: Filtering out operations that are not part of any index
+        if operation.type == 'transaction':
+            if operation.entrypoint not in entrypoints:
+                filtered += 1
+                continue
+            if operation.sender_address not in addresses and operation.target_address not in addresses:
+                filtered += 1
+                continue
+
         key = (operation.hash, int(operation.counter))
         operation_subgroups[key].append(operation)
         levels.add(operation.level)
 
     if len(levels) > 1:
         raise RuntimeError
+
+    _logger.info(
+        'Extracted %d subgroups (%d operations, %d filtered)',
+        len(operation_subgroups),
+        operation_index + 1,
+        filtered,
+    )
 
     for key, operations in operation_subgroups.items():
         hash_, counter = key
@@ -81,23 +104,6 @@ def extract_operation_subgroups(operations: Iterable[OperationData]) -> Iterator
             operations=tuple(operations),
             entrypoints=entrypoints,
         )
-
-
-def filter_operation_subgroups(
-    operation_subgroups: Iterable[OperationSubgroup],
-    entrypoints: Set[Optional[str]],
-    lengths: Set[int],
-) -> Iterator[OperationSubgroup]:
-    filtered = 0
-    for i, operation_subgroup in enumerate(operation_subgroups):
-        if not operation_subgroup.entrypoints - entrypoints:
-            yield operation_subgroup
-        elif operation_subgroup.length in lengths:
-            yield operation_subgroup
-        else:
-            filtered += 1
-    if filtered:
-        _logger.info('Filtered %d/%d operation subgroups', filtered, i + 1)
 
 
 class Index:
@@ -281,10 +287,10 @@ class OperationIndex(Index):
 
         async for _, operations in fetcher.fetch_operations_by_level():
             operation_subgroups = tuple(
-                filter_operation_subgroups(
-                    extract_operation_subgroups(operations),
+                extract_operation_subgroups(
+                    operations,
                     entrypoints=self._config.entrypoint_filter,
-                    lengths=self._config.length_filter,
+                    addresses=self._config.address_filter,
                 )
             )
             if operation_subgroups:

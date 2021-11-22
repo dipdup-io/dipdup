@@ -679,14 +679,16 @@ class OperationIndexConfig(IndexConfig):
         return set(entrypoints)
 
     @cached_property
-    def length_filter(self) -> Set[int]:
-        min_length, max_length = 0, 0
+    def address_filter(self) -> Set[str]:
+        addresses = set()
         for handler_config in self.handlers:
             for pattern_config in handler_config.pattern:
-                if not (isinstance(pattern_config, OperationHandlerTransactionPatternConfig) and pattern_config.optional):
-                    min_length += 1
-                max_length += 1
-        return set(range(min_length, max_length + 1))
+                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    if isinstance(pattern_config.source, ContractConfig):
+                        addresses.add(pattern_config.source.address)
+                    if isinstance(pattern_config.destination, ContractConfig):
+                        addresses.add(pattern_config.destination.address)
+        return addresses
 
 
 @dataclass

@@ -10,6 +10,7 @@ from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage  # type: ignore
 from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
+
 from dipdup.config import HTTPConfig, ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.subscription import (

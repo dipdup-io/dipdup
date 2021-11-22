@@ -6,7 +6,6 @@ import pyperf  # type: ignore
 
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ReindexingRequiredError
 from dipdup.test import with_operation_index_fuzzer
 
 
