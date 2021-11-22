@@ -55,7 +55,7 @@ class SqliteDatabaseConfig:
     kind: Literal['sqlite']
     path: str = ':memory:'
 
-    @property
+    @cached_property
     def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
 
@@ -83,7 +83,7 @@ class PostgresDatabaseConfig:
     immune_tables: List[str] = Field(default_factory=list)
     connection_timeout: int = 60
 
-    @property
+    @cached_property
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
@@ -148,7 +148,7 @@ class ContractConfig(NameMixin):
     def __hash__(self):
         return hash(f'{self.address}{self.typename or ""}')
 
-    @property
+    @cached_property
     def module_name(self) -> str:
         return self.typename if self.typename is not None else self.address
 
@@ -420,13 +420,13 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         else:
             yield self.format_empty_operation_argument(self.transaction_id, self.optional)
 
-    @property
+    @cached_property
     def source_contract_config(self) -> ContractConfig:
         if not isinstance(self.source, ContractConfig):
             raise ConfigInitializationException
         return self.source
 
-    @property
+    @cached_property
     def destination_contract_config(self) -> ContractConfig:
         if not isinstance(self.destination, ContractConfig):
             raise ConfigInitializationException
@@ -478,11 +478,11 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         yield self.format_origination_argument(self.module_name, self.optional)
 
-    @property
+    @cached_property
     def module_name(self) -> str:
         return self.contract_config.module_name
 
-    @property
+    @cached_property
     def contract_config(self) -> ContractConfig:
         if self.originated_contract:
             return self.originated_contract_config
@@ -492,19 +492,19 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             return self.source_contract_config
         raise RuntimeError
 
-    @property
+    @cached_property
     def source_contract_config(self) -> ContractConfig:
         if not isinstance(self.source, ContractConfig):
             raise ConfigInitializationException
         return self.source
 
-    @property
+    @cached_property
     def similar_to_contract_config(self) -> ContractConfig:
         if not isinstance(self.similar_to, ContractConfig):
             raise ConfigInitializationException
         return self.similar_to
 
-    @property
+    @cached_property
     def originated_contract_config(self) -> ContractConfig:
         if not isinstance(self.originated_contract, ContractConfig):
             raise ConfigInitializationException
@@ -620,7 +620,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
 
-    @property
+    @cached_property
     def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise ConfigInitializationException
@@ -737,7 +737,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         yield 'ctx', 'HandlerContext'
         yield self.format_big_map_diff_argument(self.path)
 
-    @property
+    @cached_property
     def contract_config(self) -> ContractConfig:
         if not isinstance(self.contract, ContractConfig):
             raise ConfigInitializationException
@@ -785,9 +785,9 @@ class BigMapIndexConfig(IndexConfig):
     first_level: int = 0
     last_level: int = 0
 
-    @property
-    def contracts(self) -> List[ContractConfig]:
-        return list(set([cast(ContractConfig, handler_config.contract) for handler_config in self.handlers]))
+    @cached_property
+    def contracts(self) -> Set[ContractConfig]:
+        return set(cast(ContractConfig, handler_config.contract) for handler_config in self.handlers)
 
 
 @dataclass
@@ -838,7 +838,7 @@ class HasuraConfig:
         if v != 'default':
             raise NotImplementedError('Multiple Hasura sources are not supported at the moment')
 
-    @property
+    @cached_property
     def headers(self) -> Dict[str, str]:
         if self.admin_secret:
             return {'X-Hasura-Admin-Secret': self.admin_secret}
@@ -861,7 +861,7 @@ class JobConfig(NameMixin):
 
         NameMixin.__post_init_post_parse__(self)
 
-    @property
+    @cached_property
     def hook_config(self) -> 'HookConfig':
         if not isinstance(self.hook, HookConfig):
             raise ConfigInitializationException
@@ -892,7 +892,7 @@ class HookConfig(CallbackMixin, kind='hook'):
                 package, obj = annotation.rsplit('.', 1)
                 yield package, obj
 
-    @property
+    @cached_property
     def _args_with_context(self) -> Dict[str, str]:
         return {
             'ctx': 'dipdup.context.HookContext',
@@ -978,19 +978,13 @@ class DipDupConfig:
     def filenames(self) -> List[str]:
         return self._filenames
 
-    @property
+    @cached_property
     def package_path(self) -> str:
         if not self._package_path:
             package = importlib.import_module(self.package)
             self._package_path = dirname(package.__file__)
 
         return self._package_path
-
-    @package_path.setter
-    def package_path(self, value: str):
-        if self._package_path:
-            raise ConfigInitializationException
-        self._package_path = value
 
     @property
     def oneshot(self) -> bool:

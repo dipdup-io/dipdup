@@ -1282,6 +1282,14 @@ optional = true
 python-versions = "*"
 
 [[package]]
+name = "pprofile"
+version = "2.1.0"
+description = "Line-granularity, thread-aware deterministic and statistic pure-python profiler"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "prance"
 version = "0.21.8.0"
 description = "Resolving Swagger/OpenAPI 2.0 and 3.0.0 Parser"
@@ -2150,7 +2158,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "bcbb2ee7373cc52e29eb9583dbae4951b1935e106feccecd50bd53d7a2acd691"
+content-hash = "9ed97a8f750a80cc47f48220078786991574b0f178fa9bd830fecee2995bd0ba"
 
 [metadata.files]
 aiohttp = [
@@ -3020,6 +3028,9 @@ pluggy = [
 ply = [
     {file = "ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"},
     {file = "ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3"},
+]
+pprofile = [
+    {file = "pprofile-2.1.0.tar.gz", hash = "sha256:b2bb56603dadf40c0bc0f61621f22c20e41638425f729945d9b7f8e4ae8cdd4a"},
 ]
 prance = [
     {file = "prance-0.21.8.0-py3-none-any.whl", hash = "sha256:51ec41d10b317bf5d4e74782a7f7f0c0488c6042433b5b4fde2a988cd069d235"},
