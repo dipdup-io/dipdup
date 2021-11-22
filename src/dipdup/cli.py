@@ -29,7 +29,7 @@ from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
 from dipdup.models import Schema
 from dipdup.utils import iter_files
-from dipdup.utils.database import get_schema_hash, set_decimal_context, tortoise_wrapper, wipe_schema
+from dipdup.utils.database import set_decimal_context, tortoise_wrapper, wipe_schema
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -287,13 +287,11 @@ async def schema(ctx):
     ...
 
 
-from dipdup.enums import ReindexingReason
-
-
 @schema.command(name='approve', help='Continue indexing with the same schema after crashing with `ReindexingRequiredError`')
+@click.option('--hashes', is_flag=True, help='Recalculate hashes of schema and index configs saved in database')
 @click.pass_context
 @cli_wrapper
-async def schema_approve(ctx):
+async def schema_approve(ctx, hashes: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -303,10 +301,11 @@ async def schema_approve(ctx):
         if not schema.reindex:
             return
 
-        if schema.reindex == ReindexingReason.SCHEMA_HASH_MISMATCH:
-            conn = get_connection(None)
-            schema.hash = get_schema_hash(conn)
-        schema.reindex = None
+        schema.reindex = None  # type: ignore
+        if hashes:
+            # FIXME: Non-nullable fields
+            schema.hash = ''  # type: ignore
+            await Index.filter().update(config_hash='')
         await schema.save()
 
 

@@ -2,7 +2,6 @@ import hashlib
 import importlib
 import json
 import logging.config
-import operator
 import os
 import re
 import sys
@@ -12,14 +11,14 @@ from contextlib import suppress
 from copy import copy
 from dataclasses import field
 from enum import Enum
-from functools import cached_property, reduce
+from functools import cached_property
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
 from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast
 from urllib.parse import urlparse
 
-from pydantic import Field, validator
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
@@ -80,7 +79,7 @@ class PostgresDatabaseConfig:
     port: int = 5432
     schema_name: str = 'public'
     password: str = ''
-    immune_tables: List[str] = Field(default_factory=list)
+    immune_tables: Tuple[str, ...] = field(default_factory=tuple)
     connection_timeout: int = 60
 
     @cached_property
@@ -538,7 +537,7 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
     :param pattern: Filters to match operations in group
     """
 
-    pattern: List[OperationHandlerPatternConfigT]
+    pattern: Tuple[OperationHandlerPatternConfigT, ...]
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -628,9 +627,9 @@ class OperationIndexConfig(IndexConfig):
     """
 
     kind: Literal["operation"]
-    handlers: List[OperationHandlerConfig]
-    types: Optional[List[OperationType]] = None
-    contracts: Optional[List[Union[str, ContractConfig]]] = None
+    handlers: Tuple[OperationHandlerConfig, ...]
+    types: Tuple[OperationType, ...] = (OperationType.transaction,)
+    contracts: List[Union[str, ContractConfig]] = field(default_factory=list)
 
     first_level: int = 0
     last_level: int = 0
@@ -738,14 +737,14 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 class BigMapIndexConfig(IndexConfig):
     kind: Literal['big_map']
     datasource: Union[str, TzktDatasourceConfig]
-    handlers: List[BigMapHandlerConfig]
+    handlers: Tuple[BigMapHandlerConfig, ...]
 
     first_level: int = 0
     last_level: int = 0
 
     @cached_property
     def contracts(self) -> Set[ContractConfig]:
-        return set(cast(ContractConfig, handler_config.contract) for handler_config in self.handlers)
+        return set(handler_config.contract_config for handler_config in self.handlers)
 
 
 @dataclass
@@ -764,7 +763,7 @@ class HeadHandlerConfig(HandlerConfig, kind='handler'):
 class HeadIndexConfig(IndexConfig):
     kind: Literal['head']
     datasource: Union[str, TzktDatasourceConfig]
-    handlers: List[HeadHandlerConfig]
+    handlers: Tuple[HeadHandlerConfig, ...]
 
 
 IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, IndexTemplateConfig]
@@ -881,7 +880,7 @@ default_hooks = {
 
 @dataclass
 class AdvancedConfig:
-    reindex: Dict[ReindexingReasonC, ReindexingAction] = Field(default_factory=dict)
+    reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
     oneshot: bool = False
     postpone_jobs: bool = False
     skip_hasura: bool = False
@@ -910,11 +909,11 @@ class DipDupConfig:
     package: str
     datasources: Dict[str, DatasourceConfigT]
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
-    contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
-    indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
-    templates: Dict[str, ResolvedIndexConfigT] = Field(default_factory=dict)
-    jobs: Dict[str, JobConfig] = Field(default_factory=dict)
-    hooks: Dict[str, HookConfig] = Field(default_factory=dict)
+    contracts: Dict[str, ContractConfig] = field(default_factory=dict)
+    indexes: Dict[str, IndexConfigT] = field(default_factory=dict)
+    templates: Dict[str, ResolvedIndexConfigT] = field(default_factory=dict)
+    jobs: Dict[str, JobConfig] = field(default_factory=dict)
+    hooks: Dict[str, HookConfig] = field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
     sentry: Optional[SentryConfig] = None
     advanced: AdvancedConfig = AdvancedConfig()
@@ -981,8 +980,8 @@ class DipDupConfig:
 
         try:
             config = cls(**json_config)
-            config._environment = config_environment
-            config._filenames = filenames
+            config.environment = config_environment
+            config.filenames = filenames
         except Exception as e:
             raise ConfigurationError(str(e)) from e
         return config
@@ -1120,9 +1119,10 @@ class DipDupConfig:
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(TransactionSubscription())
             else:
-                for contract_config in index_config.contracts or ():
-                    address = cast(ContractConfig, contract_config).address
-                    index_config.subscriptions.add(TransactionSubscription(address=address))
+                for contract_config in index_config.contracts:
+                    if not isinstance(contract_config, ContractConfig):
+                        raise ConfigInitializationException
+                    index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
 
             for handler_config in index_config.handlers:
                 for pattern_config in handler_config.pattern:

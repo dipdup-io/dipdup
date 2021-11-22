@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from enum import Enum
 from os.path import dirname, join
 from pathlib import Path
-from typing import Any, AsyncIterator, Iterator, List, Optional, Tuple, Type, Union
+from typing import Any, AsyncIterator, Iterator, Optional, Tuple, Type, Union
 
 from tortoise import Model, Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
@@ -153,7 +153,7 @@ async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
     await conn.execute_script(f"SELECT truncate_schema('{name}')")
 
 
-async def wipe_schema(conn: BaseDBAsyncClient, name: str, immune_tables: Optional[List[str]]) -> None:
+async def wipe_schema(conn: BaseDBAsyncClient, name: str, immune_tables: Tuple[str, ...]) -> None:
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
 

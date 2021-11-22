@@ -41,8 +41,7 @@ class IndexStateTest(IsolatedAsyncioTestCase):
         config_path = join(dirname(__file__), '..', 'integration_tests', name)
         self.config = DipDupConfig.load([config_path])
 
-        self.new_hash = '32e3aaf18a45acf090bea833fd89a71c9b50cefcc7d859ff7faf9e1d5ebb5938'
-        self.old_hash = '18e9a5816f5fa2653f193ce0d99fd157dcead67dcdf7c58e62e1f7c00cbe0152'
+        self.new_hash = '1ac841facf593f2ef2de2e747c7b547d4a05891a8633c4a238ad73c28a421f71'
 
     async def test_first_run(self) -> None:
         async with AsyncExitStack() as stack:
@@ -55,7 +54,6 @@ class IndexStateTest(IsolatedAsyncioTestCase):
 
             # Assert
             index = await Index.filter().get()
-            print(index.__dict__)
             self.assertEqual(self.new_hash, index.config_hash)
 
     async def test_new_hash(self) -> None:
@@ -64,20 +62,6 @@ class IndexStateTest(IsolatedAsyncioTestCase):
             dipdup = await create_test_dipdup(self.config, stack)
             dispatcher = IndexDispatcher(dipdup._ctx)
             await _create_index(self.new_hash)
-
-            # Act
-            await dispatcher._load_index_states()
-
-            # Assert
-            index = await Index.filter().get()
-            self.assertEqual(self.new_hash, index.config_hash)
-
-    async def test_old_hash(self) -> None:
-        async with AsyncExitStack() as stack:
-            # Arrange
-            dipdup = await create_test_dipdup(self.config, stack)
-            dispatcher = IndexDispatcher(dipdup._ctx)
-            await _create_index(self.old_hash)
 
             # Act
             await dispatcher._load_index_states()

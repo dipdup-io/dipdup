@@ -248,10 +248,10 @@ add_liquidity_operations = (
 index_config = OperationIndexConfig(
     datasource=TzktDatasourceConfig(kind='tzkt', url='https://api.tzkt.io', http=None),
     kind='operation',
-    handlers=[
+    handlers=(
         OperationHandlerConfig(
             callback='on_fa12_and_fa12_add_liquidity',
-            pattern=[
+            pattern=(
                 OperationHandlerTransactionPatternConfig(
                     type='transaction',
                     source=None,
@@ -280,10 +280,10 @@ index_config = OperationIndexConfig(
                     entrypoint='mint',
                     optional=False,
                 ),
-            ],
+            ),
         ),
-    ],
-    types=[OperationType.transaction, OperationType.origination],
+    ),
+    types=(OperationType.transaction, OperationType.origination),
     contracts=[ContractConfig(address='KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU', typename='plenty_smak_amm')],
     first_level=0,
     last_level=0,

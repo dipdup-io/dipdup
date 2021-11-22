@@ -496,9 +496,9 @@ class OperationIndex(Index):
 
     async def _get_transaction_addresses(self) -> Set[str]:
         """Get addresses to fetch transactions from during initial synchronization"""
-        if self._config.types and OperationType.transaction not in self._config.types:
+        if OperationType.transaction not in self._config.types:
             return set()
-        return set(cast(ContractConfig, c).address for c in self._config.contracts or [])
+        return set(contract.address for contract in self._config.contracts if isinstance(contract, ContractConfig))
 
     async def _get_origination_addresses(self) -> Set[str]:
         """Get addresses to fetch origination from during initial synchronization"""

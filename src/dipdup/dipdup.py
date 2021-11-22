@@ -151,20 +151,15 @@ class IndexDispatcher:
                     raise ConfigInitializationException
 
                 new_hash = index_config.hash()
-                if new_hash != index_state.config_hash:
-                    # NOTE: Try old hashing algorithm. Update if matches, reindex if not.
-                    old_hash = index_config.hash_old()
-                    if old_hash == index_state.config_hash:
-                        self._logger.warning('Updating config hash of index `%s`', name)
-                        index_state.config_hash = new_hash  # type: ignore
-                        await index_state.save()
-                    else:
-                        await self._ctx.reindex(
-                            ReindexingReason.CONFIG_HASH_MISMATCH,
-                            index_hash=index_state.config_hash,
-                            old_hash=old_hash,
-                            new_hash=new_hash,
-                        )
+                if not index_state.config_hash:
+                    index_state.config_hash = new_hash  # type: ignore
+                    await index_state.save()
+                elif new_hash != index_state.config_hash:
+                    await self._ctx.reindex(
+                        ReindexingReason.CONFIG_HASH_MISMATCH,
+                        old_hash=index_state.config_hash,
+                        new_hash=new_hash,
+                    )
 
             # NOTE: Templated index: recreate index config, verify hash
             elif template:
@@ -403,6 +398,10 @@ class DipDup:
                 await self._schema.save()
             except OperationalError:
                 await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
+
+        elif not self._schema.hash:
+            self._schema.hash = schema_hash  # type: ignore
+            await self._schema.save()
 
         elif self._schema.hash != schema_hash:
             await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)

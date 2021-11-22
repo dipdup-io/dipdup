@@ -1,9 +1,8 @@
 import asyncio
 import uuid
+
 from dipdup.config import DipDupConfig, SqliteDatabaseConfig
-
 from dipdup.dipdup import DipDup
-
 from dipdup.utils.database import tortoise_wrapper
 
 config = DipDupConfig.load(['tests/integration_tests/quipuswap.yml'])
@@ -13,6 +12,7 @@ dipdup = DipDup(config)
 
 url = config.database.connection_string
 models = f'{config.package}.models'
+
 
 async def main():
     async with tortoise_wrapper(url, models):
@@ -35,7 +35,8 @@ async def main():
                     'token_contract': str(i),
                     'symbol': str(i),
                     'decimals': 0,
-                }
+                },
             )
-        
+
+
 asyncio.run(main())
