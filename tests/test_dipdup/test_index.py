@@ -10,7 +10,7 @@ from dipdup.config import (
     OperationType,
     TzktDatasourceConfig,
 )
-from dipdup.index import OperationIndex
+from dipdup.index import OperationIndex, extract_operation_subgroups
 from dipdup.models import OperationData
 
 add_liquidity_operations = (
@@ -295,6 +295,19 @@ class MatcherTest(IsolatedAsyncioTestCase):
     async def test_match_smak_add_liquidity(self) -> None:
         index = OperationIndex(None, index_config, None)  # type: ignore
         index._prepare_handler_args = AsyncMock()  # type: ignore
-        matched_operations = await index._match_operations(add_liquidity_operations)
+
+        all_filtered = tuple(extract_operation_subgroups(add_liquidity_operations, set(), set()))
+        assert not all_filtered
+
+        operation_subgroups = tuple(
+            extract_operation_subgroups(
+                add_liquidity_operations,
+                addresses=index_config.address_filter,
+                entrypoints=index_config.entrypoint_filter,
+            )
+        )
+        assert len(operation_subgroups) == 1
+
+        matched_handlers = await index._match_operation_subgroup(operation_subgroups[0])
+        assert len(matched_handlers) == 1
         index._prepare_handler_args.assert_called()
-        self.assertEqual(len(matched_operations), 1)

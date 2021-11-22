@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import signal
@@ -12,6 +13,7 @@ import asyncclick as click
 import sentry_sdk
 from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
+from pydantic.json import pydantic_encoder
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from tortoise import Tortoise
@@ -145,6 +147,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
 @click.option('--skip-hasura', is_flag=True, help='Do not update Hasura metadata')
 @click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
+@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all updates instead of individual contracts')
 @click.pass_context
 @cli_wrapper
 async def run(
@@ -153,17 +156,21 @@ async def run(
     postpone_jobs: bool,
     skip_hasura: bool,
     early_realtime: bool,
+    merge_subscriptions: bool,
 ) -> None:
+    if oneshot:
+        _logger.warning('`oneshot` argument is deprecated: use `first_level` and `last_level` fields of index config instead')
     config: DipDupConfig = ctx.obj.config
     config.initialize()
+    config.advanced.postpone_jobs |= postpone_jobs
+    config.advanced.skip_hasura |= skip_hasura
+    config.advanced.early_realtime |= early_realtime
+    config.advanced.merge_subscriptions |= merge_subscriptions
+
     set_decimal_context(config.package)
+
     dipdup = DipDup(config)
-    await dipdup.run(
-        oneshot=oneshot,
-        postpone_jobs=postpone_jobs or config.advanced.postpone_jobs,
-        skip_hasura=skip_hasura or config.advanced.skip_hasura,
-        early_realtime=early_realtime or config.advanced.early_realtime,
-    )
+    await dipdup.run()
 
 
 @cli.command(help='Generate missing callbacks and types')
@@ -185,6 +192,39 @@ async def migrate(ctx):
     config.initialize(skip_imports=True)
     migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
     await migrations.migrate()
+
+
+from dipdup.models import Index
+
+
+@cli.command(help='Show current status of indexes in database')
+@click.pass_context
+@cli_wrapper
+async def status(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+    async with tortoise_wrapper(url, models):
+        # TODO: Formatting
+        print('_' * 80)
+        async for index in Index.all():
+            print(f'{index.name}\t{index.status.value}\t{index.level}')
+        print('_' * 80)
+
+
+# TODO: Docs, `--unsafe` argument to resolve env variables, default to not doing it
+@cli.command(help='Show config')
+@click.pass_context
+@cli_wrapper
+async def config(ctx):
+    import ruamel.yaml as yaml
+
+    config: DipDupConfig = ctx.obj.config
+    config_json = json.dumps(config, default=pydantic_encoder)
+    config_yaml = yaml.dump(yaml.safe_load(config_json), indent=2, default_flow_style=False)
+    print('_' * 80)
+    print(config_yaml)
+    print('_' * 80)
 
 
 # TODO: "cache clear"?

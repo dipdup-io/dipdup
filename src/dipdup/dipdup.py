@@ -19,6 +19,7 @@ from dipdup.config import (
     DatasourceConfigT,
     DipDupConfig,
     IndexTemplateConfig,
+    OperationIndexConfig,
     PostgresDatabaseConfig,
     TzktDatasourceConfig,
     default_hooks,
@@ -31,7 +32,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache
+from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache, extract_operation_subgroups, head_cache
 from dipdup.models import BigMapData, Contract, Head, HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus, OperationData, Schema
@@ -50,22 +51,38 @@ class IndexDispatcher:
         self._stopped: bool = False
         self._tasks: Deque[asyncio.Task] = deque()
 
+        self._entrypoint_filter: Set[Optional[str]] = set()
+        self._address_filter: Set[str] = set()
+
     async def run(
         self,
-        spawn_datasources_event: Optional[Event] = None,
-        start_scheduler_event: Optional[Event] = None,
+        spawn_datasources_event: Event,
+        start_scheduler_event: Event,
         early_realtime: bool = False,
     ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
         await self._load_index_states()
 
+        for index in self._indexes.values():
+            if isinstance(index, OperationIndex):
+                self._apply_filters(index._config)
+
         while not self._stopped:
-            tasks: List[Awaitable] = [index.process() for index in self._indexes.values()]
+            if not spawn_datasources_event.is_set():
+                if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
+                    spawn_datasources_event.set()
+
+            if spawn_datasources_event.is_set():
+                index_datasources = (i.datasource for i in self._indexes.values())
+                for datasource in index_datasources:
+                    await datasource.subscribe()
+
+            tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
             while self._tasks:
                 tasks.append(self._tasks.popleft())
 
-            async with slowdown(0.1):
+            async with slowdown(1):
                 await gather(*tasks)
 
             indexes_spawned = False
@@ -74,20 +91,23 @@ class IndexDispatcher:
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
 
+                if isinstance(index, OperationIndex):
+                    self._apply_filters(index._config)
+
             if not indexes_spawned:
                 if self._every_index_is(IndexStatus.ONESHOT):
                     self.stop()
 
-            if spawn_datasources_event is not None and not spawn_datasources_event.is_set():
-                if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
-                    spawn_datasources_event.set()
-
-            if start_scheduler_event is not None and not start_scheduler_event.is_set():
-                if self._every_index_is(IndexStatus.REALTIME):
+            if not start_scheduler_event.is_set():
+                if not indexes_spawned and self._every_index_is(IndexStatus.REALTIME):
                     start_scheduler_event.set()
 
     def stop(self) -> None:
         self._stopped = True
+
+    def _apply_filters(self, index_config: OperationIndexConfig) -> None:
+        self._address_filter.update(index_config.address_filter)
+        self._entrypoint_filter.update(index_config.entrypoint_filter)
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         statuses = [i.state.status for i in self._indexes.values()]
@@ -120,9 +140,9 @@ class IndexDispatcher:
             raise RuntimeError('Index states are already loaded')
 
         await self._fetch_contracts()
-        index_states = await IndexState.filter().all()
-        self._logger.info('%s indexes found in database', len(index_states))
-        for index_state in index_states:
+        self._logger.info('%s indexes found in database', await IndexState.all().count())
+
+        async def _process(index_state: IndexState) -> None:
             name, template, template_values = index_state.name, index_state.template, index_state.template_values
 
             # NOTE: Index in config (templates are already resolved): just verify hash
@@ -149,15 +169,23 @@ class IndexDispatcher:
             # NOTE: Templated index: recreate index config, verify hash
             elif template:
                 if template not in self._ctx.config.templates:
-                    await self._ctx.reindex(ReindexingReason.MISSING_INDEX_TEMPLATE)
-                await self._ctx.add_index(name, template, template_values)
+                    await self._ctx.reindex(
+                        ReindexingReason.MISSING_INDEX_TEMPLATE,
+                        index_name=index_state.name,
+                        template=template,
+                    )
+                await self._ctx.add_index(name, template, template_values, index_state)
 
             # NOTE: Index config is missing, possibly just commented-out
             else:
                 self._logger.warning('Index `%s` was removed from config, ignoring', name)
 
+        tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
+        await gather(*tasks)
+
         # NOTE: Cached blocks used only on index state init
         block_cache.clear()
+        head_cache.clear()
 
     async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
@@ -178,14 +206,25 @@ class IndexDispatcher:
                 index.push_head(head)
 
     async def _on_operations(self, datasource: TzktDatasource, operations: Tuple[OperationData, ...]) -> None:
-        for index in self._indexes.values():
-            if isinstance(index, OperationIndex) and index.datasource == datasource:
-                index.push_operations(operations)
+        operation_subgroups = tuple(
+            extract_operation_subgroups(
+                operations,
+                entrypoints=self._entrypoint_filter,
+                addresses=self._address_filter,
+            )
+        )
+
+        if not operation_subgroups:
+            return
+
+        operation_indexes = (i for i in self._indexes.values() if isinstance(i, OperationIndex) and i.datasource == datasource)
+        for index in operation_indexes:
+            index.push_operations(operation_subgroups)
 
     async def _on_big_maps(self, datasource: TzktDatasource, big_maps: Tuple[BigMapData]) -> None:
-        for index in self._indexes.values():
-            if isinstance(index, BigMapIndex) and index.datasource == datasource:
-                index.push_big_maps(big_maps)
+        big_map_indexes = (i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource)
+        for index in big_map_indexes:
+            index.push_big_maps(big_maps)
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
@@ -261,14 +300,9 @@ class DipDup:
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)
 
-    async def run(
-        self,
-        oneshot: bool = False,
-        postpone_jobs: bool = False,
-        skip_hasura: bool = False,
-        early_realtime: bool = False,
-    ) -> None:
+    async def run(self) -> None:
         """Run indexing process"""
+        advanced_config = self._config.advanced
         tasks: Set[Task] = set()
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
@@ -278,21 +312,21 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            if not skip_hasura:
+            if not advanced_config.skip_hasura:
                 await self._set_up_hasura(stack, tasks)
 
-            spawn_datasources_event: Optional[Event] = None
-            start_scheduler_event: Optional[Event] = None
-            if not oneshot:
+            if self._config.oneshot:
+                start_scheduler_event, spawn_datasources_event = Event(), Event()
+            else:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)
-                if not postpone_jobs:
+                if not advanced_config.postpone_jobs:
                     start_scheduler_event.set()
-                spawn_datasources_event = await self._spawn_datasources(tasks, early_realtime)
+                spawn_datasources_event = await self._spawn_datasources(tasks)
 
-            for name in self._config.indexes:
-                await self._ctx._spawn_index(name)
+            spawn_index_tasks = (create_task(self._ctx.spawn_index(name)) for name in self._config.indexes)
+            await gather(*spawn_index_tasks)
 
-            await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event)
+            await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime)
 
             await gather(*tasks)
 
@@ -306,6 +340,7 @@ class DipDup:
                 datasource = TzktDatasource(
                     url=datasource_config.url,
                     http_config=datasource_config.http,
+                    merge_subscriptions=self._config.advanced.merge_subscriptions,
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
                 datasource = BcdDatasource(
@@ -410,27 +445,50 @@ class DipDup:
 
     async def _initialize_datasources(self) -> None:
         for datasource in self._datasources.values():
-            if isinstance(datasource, TzktDatasource):
-                await datasource.set_sync_level()
+            if not isinstance(datasource, TzktDatasource):
+                continue
+
+            datasource.set_sync_level(
+                subscription=None,
+                level=(await datasource.get_head_block()).level,
+            )
+
+            db_head = await Head.filter(name=datasource.name).first()
+            if not db_head:
+                continue
+
+            actual_head = await datasource.get_block(db_head.level)
+            if db_head.hash != actual_head.hash:
+                await self._ctx.reindex(
+                    ReindexingReason.BLOCK_HASH_MISMATCH,
+                    hash=db_head.hash,
+                    actual_hash=actual_head.hash,
+                )
 
     async def _set_up_index_dispatcher(
         self,
         tasks: Set[Task],
-        spawn_datasources_event: Optional[Event],
-        start_scheduler_event: Optional[Event],
+        spawn_datasources_event: Event,
+        start_scheduler_event: Event,
+        early_realtime: bool,
     ) -> None:
         index_dispatcher = IndexDispatcher(self._ctx)
-        tasks.add(create_task(index_dispatcher.run(spawn_datasources_event, start_scheduler_event)))
+        tasks.add(
+            create_task(
+                index_dispatcher.run(
+                    spawn_datasources_event,
+                    start_scheduler_event,
+                    early_realtime,
+                )
+            )
+        )
 
-    async def _spawn_datasources(self, tasks: Set[Task], early_realtime: bool = False) -> Event:
+    async def _spawn_datasources(self, tasks: Set[Task]) -> Event:
         event = Event()
-        if early_realtime:
-            event.set()
 
         async def _event_wrapper():
-            if not early_realtime:
-                self._logger.info('Waiting for indexes to synchronize before spawning datasources')
-                await event.wait()
+            self._logger.info('Waiting for indexes to synchronize before spawning datasources')
+            await event.wait()
 
             self._logger.info('Spawning datasources')
             _tasks = [create_task(d.run()) for d in self._datasources.values()]

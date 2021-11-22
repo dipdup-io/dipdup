@@ -1,21 +1,31 @@
 # Changelog
 
-## 3.2.0 - [unreleased]
+## 4.0.0 - [unreleased]
 
 ### Fixed
 
 * tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
-* codegen: Fixed missing imports in handlers generated during init.
-* coinbase: Candles caching disabled.
+* tzkt: Adding many indexes in runtime no longer leads to sending useless subscription requests.
+* tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `batch_size` tunable.
 * index: Fixed head index callback invocation.
+* coinbase: Candles caching disabled.
+
+### Changed
+
+* cli: `run --oneshot` option is deprecated and will be removed in the next major release. Oneshot mode applied automatically when `first_level` and `last_level` fields are set in index config.  
+* codegen: Fixed missing imports in handlers generated during init.
 
 ### Added
 
-* cli: `dipdip run --early-realtime` flag to establish a real-time connection before all indexes are synchronized.
-* cli: `dipdup run --skip-hasura` flag to skip updating Hasura metadata.
+* cli: New flag `dipdip run --early-realtime` to establish a real-time connection before all indexes are synchronized.
+* cli: New flag `dipdup run --skip-hasura` to skip updating Hasura metadata.
+* cli: New command `dipdup status` to print the current status of indexes from database
+* cli: New command `dipdup config` to print config after resolving all links and variables
+* config: Added optional fields `first_level` and `last_level` to `TemplateIndexConfig`. These limits are applied after ones from the template itself.
 
 ### Improved
 
+* index: Time required to initialize indexes presented in database reduced by ~25%.
 * tzkt: Replaced `aiosignalrcore` library with `pysignalr`.
 
 ## 3.1.3 - 2021-11-15

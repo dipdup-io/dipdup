@@ -71,6 +71,21 @@ class DipDupError(Exception):
 
 
 @dataclass(frozen=True, repr=False)
+class DatasourceError(DipDupError):
+    """One of datasources returned an error"""
+
+    msg: str
+    datasource: str
+
+    def _help(self) -> str:
+        return f"""
+            `{self.datasource}` datasource returned an error: {self.msg}
+
+            Most likely, this is a DipDup bug. Please file a bug report at https://github.com/dipdup-net/dipdup/issues
+        """
+
+
+@dataclass(frozen=True, repr=False)
 class ConfigurationError(DipDupError):
     """DipDup YAML config is invalid"""
 
@@ -238,7 +253,7 @@ class IndexAlreadyExistsError(DipDupError):
 
 @dataclass(frozen=True, repr=False)
 class InvalidDataError(DipDupError):
-    """Failed to validate operation/big_map data against a generated type class"""
+    """Failed to validate datasource message against generated type class"""
 
     type_cls: Type
     data: Any
@@ -247,7 +262,7 @@ class InvalidDataError(DipDupError):
     def _help(self) -> str:
 
         return f"""
-            Failed to validate operation/big_map data against a generated type class.
+            Failed to validate datasource message against generated type class.
 
             Expected type:
             `{self.type_cls.__class__.__qualname__}`

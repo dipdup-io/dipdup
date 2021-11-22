@@ -1,4 +1,5 @@
 from contextlib import AsyncExitStack
+from datetime import datetime
 from functools import partial
 
 from apscheduler.executors.asyncio import AsyncIOExecutor  # type: ignore
@@ -10,6 +11,7 @@ from pytz import utc
 
 from dipdup.config import JobConfig
 from dipdup.context import DipDupContext, HookContext
+from dipdup.exceptions import ConfigurationError
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
@@ -44,22 +46,35 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConf
 
         async with AsyncExitStack() as stack:
             if hook_config.atomic:
+                # TODO: Detect earlier
+                if job_config.daemon:
+                    raise ConfigurationError('`atomic` and `daemon` are mutually exclusive')
+
                 await stack.enter_async_context(in_global_transaction())
+
             await job_ctx.fire_hook(hook_config.callback, *args, **kwargs)
+
+            if job_config.daemon:
+                raise ConfigurationError('Daemon jobs are intended to run forever')
 
     logger = FormattedLogger(
         name=f'dipdup.hooks.{hook_config.callback}',
         fmt=job_config.name + ': {}',
     )
     if job_config.crontab:
-        trigger = CronTrigger.from_crontab(job_config.crontab)
+        trigger, next_run_time = CronTrigger.from_crontab(job_config.crontab), None
     elif job_config.interval:
-        trigger = IntervalTrigger(seconds=job_config.interval)
+        trigger, next_run_time = IntervalTrigger(seconds=job_config.interval), None
+    elif job_config.daemon:
+        trigger, next_run_time = None, datetime.now()
+    else:
+        raise RuntimeError
 
     scheduler.add_job(
         func=partial(_job_wrapper, ctx=ctx),
         id=job_config.name,
         name=job_config.name,
         trigger=trigger,
+        next_run_time=next_run_time,
         kwargs=job_config.args,
     )

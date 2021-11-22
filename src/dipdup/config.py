@@ -12,7 +12,7 @@ from contextlib import suppress
 from copy import copy
 from dataclasses import field
 from enum import Enum
-from functools import reduce
+from functools import cached_property, reduce
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
@@ -25,6 +25,7 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
+from dipdup.datasources.subscription import BigMapSubscription, OriginationSubscription, Subscription, TransactionSubscription
 from dipdup.enums import ReindexingAction, ReindexingReasonC
 from dipdup.exceptions import ConfigInitializationException, ConfigurationError
 from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
@@ -591,19 +592,32 @@ class TemplateValuesMixin:
 
 
 @dataclass
+class SubscriptionsMixin:
+    def __post_init_post_parse__(self) -> None:
+        self._subscriptions: Set[Subscription] = set()
+
+    @property
+    def subscriptions(self) -> Set[Subscription]:
+        return self._subscriptions
+
+
+@dataclass
 class IndexTemplateConfig(NameMixin):
     kind = 'template'
     template: str
     values: Dict[str, str]
+    first_level: int = 0
+    last_level: int = 0
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConfigT']):
+class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigT']):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
+        SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
 
     @property
@@ -642,8 +656,8 @@ class OperationIndexConfig(IndexConfig):
 
     :param datasource: Alias of index datasource in `datasources` section
     :param contracts: Aliases of contracts being indexed in `contracts` section
-    :param first_level: First block to process (use with `--oneshot` run argument)
-    :param last_level: Last block to process (use with `--oneshot` run argument)
+    :param first_level: First block to process (one time sync)
+    :param last_level: Last block to process (one time sync)
     :param handlers: List of indexer handlers
     """
 
@@ -654,6 +668,33 @@ class OperationIndexConfig(IndexConfig):
 
     first_level: int = 0
     last_level: int = 0
+
+    @cached_property
+    def entrypoint_filter(self) -> Set[Optional[str]]:
+        entrypoints = set()
+        for handler_config in self.handlers:
+            for pattern_config in handler_config.pattern:
+                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    entrypoints.add(pattern_config.entrypoint)
+        return set(entrypoints)
+
+    @cached_property
+    def address_filter(self) -> Set[str]:
+        addresses = set()
+        for handler_config in self.handlers:
+            for pattern_config in handler_config.pattern:
+                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    if isinstance(pattern_config.source, ContractConfig):
+                        addresses.add(pattern_config.source.address)
+                    elif isinstance(pattern_config.source, str):
+                        raise ConfigInitializationException
+
+                    if isinstance(pattern_config.destination, ContractConfig):
+                        addresses.add(pattern_config.destination.address)
+                    elif isinstance(pattern_config.destination, str):
+                        raise ConfigInitializationException
+
+        return addresses
 
 
 @dataclass
@@ -809,11 +850,15 @@ class JobConfig(NameMixin):
     hook: Union[str, 'HookConfig']
     crontab: Optional[str] = None
     interval: Optional[int] = None
+    daemon: bool = False
     args: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self):
-        if int(bool(self.crontab)) + int(bool(self.interval)) != 1:
-            raise ConfigurationError('Either `interval` or `crontab` field must be specified')
+        if self.crontab and self.interval:
+            raise ConfigurationError('Only one of `crontab` and `interval` can be specified')
+        elif not (self.crontab or self.interval or self.daemon):
+            raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
+
         NameMixin.__post_init_post_parse__(self)
 
     @property
@@ -878,10 +923,12 @@ default_hooks = {
 
 @dataclass
 class AdvancedConfig:
+    reindex: Dict[ReindexingReasonC, ReindexingAction] = Field(default_factory=dict)
+    oneshot: bool = False
     postpone_jobs: bool = False
     skip_hasura: bool = False
     early_realtime: bool = False
-    reindex: Dict[ReindexingReasonC, ReindexingAction] = Field(default_factory=dict)
+    merge_subscriptions: bool = False
 
 
 @dataclass
@@ -945,6 +992,17 @@ class DipDupConfig:
             raise ConfigInitializationException
         self._package_path = value
 
+    @property
+    def oneshot(self) -> bool:
+        syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, HeadIndexConfig))
+        oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
+        if not oneshot_indexes:
+            return False
+        elif len(oneshot_indexes) == len(syncable_indexes):
+            return True
+        else:
+            raise ConfigurationError('Either all or none of indexes can have `last_level` field set')
+
     @classmethod
     def load(
         cls,
@@ -962,7 +1020,7 @@ class DipDupConfig:
             with open(filename) as file:
                 raw_config = file.read()
 
-            _logger.info('Substituting environment variables')
+            _logger.debug('Substituting environment variables')
             for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
                 variable, default_value = match.group(1), match.group(2)
                 config_environment[variable] = default_value
@@ -1034,7 +1092,7 @@ class DipDupConfig:
             if index_config.name in self._imports_resolved:
                 continue
 
-            _logger.info('Loading callbacks and typeclasses of index `%s`', index_config.name)
+            _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
 
             if isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException
@@ -1107,7 +1165,7 @@ class DipDupConfig:
                 )
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
-        _logger.info('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
+        _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
         template = self.get_template(template_config.template)
         raw_template = json.dumps(template, default=pydantic_encoder)
@@ -1124,6 +1182,9 @@ class DipDupConfig:
         new_index_config.template_values = template_config.values
         new_index_config.parent = template
         new_index_config.name = template_config.name
+        if not isinstance(new_index_config, HeadIndexConfig):
+            new_index_config.first_level |= template_config.first_level
+            new_index_config.last_level |= template_config.last_level
         self.indexes[template_config.name] = new_index_config
 
     def _resolve_templates(self) -> None:
@@ -1136,11 +1197,48 @@ class DipDupConfig:
             if name in self._links_resolved:
                 continue
             self._resolve_index_links(index_config)
+            # TODO: Not exactly link resolving, move somewhere else
+            self._resolve_index_subscriptions(index_config)
             self._links_resolved.add(index_config.name)
 
         for job_config in self.jobs.values():
             if isinstance(job_config.hook, str):
                 job_config.hook = self.hooks[job_config.hook]
+
+    def _resolve_index_subscriptions(self, index_config: IndexConfigT) -> None:
+        if isinstance(index_config, IndexTemplateConfig):
+            return
+        if index_config.subscriptions:
+            return
+
+        if isinstance(index_config, OperationIndexConfig):
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(TransactionSubscription())
+            else:
+                for contract_config in index_config.contracts or ():
+                    address = cast(ContractConfig, contract_config).address
+                    index_config.subscriptions.add(TransactionSubscription(address=address))
+
+            for handler_config in index_config.handlers:
+                for pattern_config in handler_config.pattern:
+                    if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                        index_config.subscriptions.add(OriginationSubscription())
+                        break
+
+        elif isinstance(index_config, BigMapIndexConfig):
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(BigMapSubscription())
+            else:
+                for big_map_handler_config in index_config.handlers:
+                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                    index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
+
+        # NOTE: HeadSubscription is always enabled
+        elif isinstance(index_config, HeadIndexConfig):
+            pass
+
+        else:
+            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     def _resolve_index_links(self, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
