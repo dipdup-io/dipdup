@@ -123,15 +123,11 @@ class NameMixin:
     def __post_init_post_parse__(self) -> None:
         self._name: Optional[str] = None
 
-    @property
+    @cached_property
     def name(self) -> str:
         if self._name is None:
             raise ConfigInitializationException
         return self._name
-
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name
 
 
 @dataclass
@@ -302,15 +298,11 @@ class StorageTypeMixin:
     def __post_init_post_parse__(self):
         self._storage_type_cls = None
 
-    @property
+    @cached_property
     def storage_type_cls(self) -> Type:
         if self._storage_type_cls is None:
             raise ConfigInitializationException
         return self._storage_type_cls
-
-    @storage_type_cls.setter
-    def storage_type_cls(self, typ: Type) -> None:
-        self._storage_type_cls = typ
 
     def initialize_storage_cls(self, package: str, module_name: str) -> None:
         _logger.debug('Registering `%s` storage type', module_name)
@@ -329,15 +321,9 @@ class ParentMixin(Generic[T]):
     def __post_init_post_parse__(self: 'ParentMixin') -> None:
         self._parent: Optional[T] = None
 
-    @property
+    @cached_property
     def parent(self) -> Optional[T]:
         return self._parent
-
-    @parent.setter
-    def parent(self, config: T) -> None:
-        if self._parent and config is not self._parent:
-            raise ConfigInitializationException
-        self._parent = config
 
 
 @dataclass
@@ -347,15 +333,11 @@ class ParameterTypeMixin:
     def __post_init_post_parse__(self):
         self._parameter_type_cls = None
 
-    @property
+    @cached_property
     def parameter_type_cls(self) -> Type:
         if self._parameter_type_cls is None:
             raise ConfigInitializationException
         return self._parameter_type_cls
-
-    @parameter_type_cls.setter
-    def parameter_type_cls(self, typ: Type) -> None:
-        self._parameter_type_cls = typ
 
     def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
         _logger.debug('Registering parameter type for entrypoint `%s`', entrypoint)
@@ -372,15 +354,11 @@ class TransactionIdMixin:
     def __post_init_post_parse__(self):
         self._transaction_id = None
 
-    @property
+    @cached_property
     def transaction_id(self) -> int:
         if self._transaction_id is None:
             raise ConfigInitializationException
         return self._transaction_id
-
-    @transaction_id.setter
-    def transaction_id(self, id_: int) -> None:
-        self._transaction_id = id_
 
 
 @dataclass
@@ -523,19 +501,15 @@ class CallbackMixin(CodegenMixin):
         if self.callback and self.callback != pascal_to_snake(self.callback):
             raise ConfigurationError('`callback` field must conform to snake_case naming style')
 
-    @property
+    @cached_property
     def kind(self) -> str:
         return self._kind  # type: ignore
 
-    @property
+    @cached_property
     def callback_fn(self) -> Callable:
         if self._callback_fn is None:
             raise ConfigInitializationException
         return self._callback_fn
-
-    @callback_fn.setter
-    def callback_fn(self, fn: Callable) -> None:
-        self._callback_fn = fn
 
     def initialize_callback_fn(self, package: str):
         if self._callback_fn:
@@ -582,23 +556,15 @@ class TemplateValuesMixin:
     def __post_init_post_parse__(self) -> None:
         self._template_values: Dict[str, str] = {}
 
-    @property
+    @cached_property
     def template_values(self) -> Dict[str, str]:
         return self._template_values
-
-    @template_values.setter
-    def template_values(self, value: Dict[str, str]) -> None:
-        self._template_values = value
 
 
 @dataclass
 class SubscriptionsMixin:
     def __post_init_post_parse__(self) -> None:
-        self._subscriptions: Set[Subscription] = set()
-
-    @property
-    def subscriptions(self) -> Set[Subscription]:
-        return self._subscriptions
+        self.subscriptions: Set[Subscription] = set()
 
 
 @dataclass
@@ -743,25 +709,17 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
             raise ConfigInitializationException
         return self.contract
 
-    @property
+    @cached_property
     def key_type_cls(self) -> Type:
         if self._key_type_cls is None:
             raise ConfigInitializationException
         return self._key_type_cls
 
-    @key_type_cls.setter
-    def key_type_cls(self, typ: Type) -> None:
-        self._key_type_cls = typ
-
-    @property
+    @cached_property
     def value_type_cls(self) -> Type:
         if self._value_type_cls is None:
             raise ConfigInitializationException
         return self._value_type_cls
-
-    @value_type_cls.setter
-    def value_type_cls(self, typ: Type) -> None:
-        self._value_type_cls = typ
 
     def initialize_big_map_type(self, package: str) -> None:
         _logger.debug('Registering big map types for path `%s`', self.path)
@@ -962,21 +920,13 @@ class DipDupConfig:
     advanced: AdvancedConfig = AdvancedConfig()
 
     def __post_init_post_parse__(self):
-        self._filenames: List[str] = []
-        self._environment: Dict[str, str] = {}
+        self.filenames: List[str] = []
+        self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
         self._default_hooks: bool = False
         self._links_resolved: Set[str] = set()
         self._imports_resolved: Set[str] = set()
         self._package_path: Optional[str] = None
-
-    @property
-    def environment(self) -> Dict[str, str]:
-        return self._environment
-
-    @property
-    def filenames(self) -> List[str]:
-        return self._filenames
 
     @cached_property
     def package_path(self) -> str:
@@ -1118,22 +1068,6 @@ class DipDupConfig:
                 raise ConfigurationError(f'`{name}` hook name must be equal to `callback` value.')
             if name in default_hooks:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
-
-        # NOTE: Detect duplicate contracts
-        # FIXME: This code smells
-        contracts = tuple(
-            cast(ContractIndexConfigT, i).contracts
-            for i in self.indexes.values()
-            if hasattr(i, 'contracts') and cast(ContractIndexConfigT, i).contracts
-        )
-        plain_contracts = reduce(operator.add, contracts) if contracts else ()  # type: ignore
-        # NOTE: After pre_initialize
-        duplicate_contracts = tuple(cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1)
-        if duplicate_contracts:
-            _logger.warning(
-                "The following contracts are used in more than one index: %s. Make sure you know what you're doing.",
-                ' '.join(duplicate_contracts),
-            )
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)

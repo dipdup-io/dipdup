@@ -20,7 +20,7 @@ async def main():
         await dipdup._initialize_schema()
         await dipdup._create_datasources()
 
-        for i in range(500):
+        for i in range(5000):
             address = 'KT' + str(uuid.uuid4())[:34]
             await dipdup._ctx.add_contract(
                 name=str(i),
