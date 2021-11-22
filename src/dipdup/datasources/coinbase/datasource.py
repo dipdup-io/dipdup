@@ -46,7 +46,6 @@ class CoinbaseDatasource(Datasource):
                     'end': _until.replace(tzinfo=timezone.utc).isoformat(),
                     'granularity': interval.seconds,
                 },
-                cache=True,
             )
             candles += [CandleData.from_json(c) for c in candles_json]
         return sorted(candles, key=lambda c: c.timestamp)
