@@ -1121,42 +1121,19 @@ class DipDupConfig:
 
         # NOTE: Detect duplicate contracts
         # FIXME: This code smells
-        contracts = [
+        contracts = (
             cast(ContractIndexConfigT, i).contracts
             for i in self.indexes.values()
             if hasattr(i, 'contracts') and cast(ContractIndexConfigT, i).contracts
-        ]
-        plain_contracts = reduce(operator.add, contracts) if contracts else []  # type: ignore
+        )
+        plain_contracts = reduce(operator.add, contracts) if contracts else ()  # type: ignore
         # NOTE: After pre_initialize
-        duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
+        duplicate_contracts = tuple(cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1)
         if duplicate_contracts:
             _logger.warning(
                 "The following contracts are used in more than one index: %s. Make sure you know what you're doing.",
                 ' '.join(duplicate_contracts),
             )
-
-        # NOTE: Callback uniqueness
-        # TODO: Refactor, cover all cases
-        for callback, pattern_items in self._callback_patterns.items():
-            if len(pattern_items) in (0, 1):
-                return
-
-            def get_pattern_type(pattern_items: Sequence[HandlerPatternConfigT]) -> str:
-                module_names = []
-                for pattern_config in pattern_items:
-                    if isinstance(pattern_config, OperationHandlerTransactionPatternConfig) and pattern_config.entrypoint:
-                        module_names.append(pattern_config.destination_contract_config.module_name)
-                    elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        module_names.append(pattern_config.module_name)
-                    # TODO: Check BigMapHandlerPatternConfig
-                return '::'.join(module_names)
-
-            pattern_types = list(map(get_pattern_type, pattern_items))
-            if any(map(lambda x: x != pattern_types[0], pattern_types)):
-                _logger.warning(
-                    'Callback `%s` used multiple times with different signatures. Make sure you have specified contract typenames',
-                    callback,
-                )
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
