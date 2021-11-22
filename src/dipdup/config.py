@@ -686,8 +686,14 @@ class OperationIndexConfig(IndexConfig):
                 if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                     if isinstance(pattern_config.source, ContractConfig):
                         addresses.add(pattern_config.source.address)
+                    elif isinstance(pattern_config.source, str):
+                        raise ConfigInitializationException
+
                     if isinstance(pattern_config.destination, ContractConfig):
                         addresses.add(pattern_config.destination.address)
+                    elif isinstance(pattern_config.destination, str):
+                        raise ConfigInitializationException
+
         return addresses
 
 

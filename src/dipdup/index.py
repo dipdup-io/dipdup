@@ -89,10 +89,12 @@ def extract_operation_subgroups(
         raise RuntimeError
 
     _logger.info(
-        'Extracted %d subgroups (%d operations, %d filtered)',
+        'Extracted %d subgroups (%d operations, %d filtered by %s entrypoints and %s addresses)',
         len(operation_subgroups),
         operation_index + 1,
         filtered,
+        len(entrypoints),
+        len(addresses),
     )
 
     for key, operations in operation_subgroups.items():

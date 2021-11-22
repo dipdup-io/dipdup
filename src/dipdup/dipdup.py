@@ -64,6 +64,10 @@ class IndexDispatcher:
         await self._subscribe_to_datasource_events()
         await self._load_index_states()
 
+        for index in self._indexes.values():
+            if isinstance(index, OperationIndex):
+                self._apply_filters(index._config)
+
         while not self._stopped:
             if not spawn_datasources_event.is_set():
                 if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
@@ -83,13 +87,12 @@ class IndexDispatcher:
 
             indexes_spawned = False
             while pending_indexes:
-                index_config = pending_indexes.popleft()
-                self._indexes[index_config._config.name] = index_config
+                index = pending_indexes.popleft()
+                self._indexes[index._config.name] = index
                 indexes_spawned = True
 
-                # FIXME: _apply_filters called in two places
-                if isinstance(index_config, OperationIndexConfig):
-                    self._apply_filters(index_config)
+                if isinstance(index, OperationIndex):
+                    self._apply_filters(index._config)
 
             if not indexes_spawned:
                 if self._every_index_is(IndexStatus.ONESHOT):
@@ -103,8 +106,8 @@ class IndexDispatcher:
         self._stopped = True
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
-        self._address_filter |= index_config.address_filter
-        self._entrypoint_filter |= index_config.entrypoint_filter
+        self._address_filter.update(index_config.address_filter)
+        self._entrypoint_filter.update(index_config.entrypoint_filter)
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         statuses = [i.state.status for i in self._indexes.values()]
@@ -162,10 +165,6 @@ class IndexDispatcher:
                             old_hash=old_hash,
                             new_hash=new_hash,
                         )
-
-                # FIXME: _apply_filters called in two places
-                if isinstance(index_config, OperationIndexConfig):
-                    self._apply_filters(index_config)
 
             # NOTE: Templated index: recreate index config, verify hash
             elif template:
