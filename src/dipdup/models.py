@@ -1,5 +1,4 @@
 import logging
-from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
@@ -60,23 +59,25 @@ class OperationData:
         if self.diffs is None:
             raise Exception('`bigmaps` field missing')
         _logger.debug(bigmap_name)
-        bigmapdiffs = [bm for bm in self.diffs if bm['path'] == bigmap_name]
+        bigmapdiffs = (bm for bm in self.diffs if bm['path'] == bigmap_name)
         bigmap_key = bigmap_name.split('.')[-1]
         for diff in bigmapdiffs:
+            if diff['action'] not in ('add_key', 'update_key'):
+                continue
+
             _logger.debug('Applying bigmapdiff: %s', diff)
-            if diff['action'] in ('add_key', 'update_key'):
-                key = diff['content']['key']
-                if array is True:
-                    storage_dict[bigmap_key].append({'key': key, 'value': diff['content']['value']})
-                else:
-                    storage_dict[bigmap_key][key] = diff['content']['value']
+            key = diff['content']['key']
+            if array is True:
+                storage_dict[bigmap_key].append({'key': key, 'value': diff['content']['value']})
+            else:
+                storage_dict[bigmap_key][key] = diff['content']['value']
 
     def _process_storage(
         self,
         storage_type: Type[StorageType],
         storage: Dict[str, Any],
         prefix: str = None,
-    ) -> Dict[str, Any]:
+    ) -> None:
         for key, field in storage_type.__fields__.items():
             if key == '__root__':
                 continue
@@ -88,12 +89,10 @@ class OperationData:
 
             # NOTE: TzKT could return bigmaps as object or as array of key-value objects. We need to guess this from storage.
             # TODO: This code should be a part of datasource module.
-            try:
-                value = storage[key]
-            except KeyError as e:
+            if (value := storage.get(key)) is None:
                 if not field.required:
                     continue
-                raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists') from e
+                raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists')
 
             # FIXME: Pydantic bug? I have no idea how does it work, this workaround is just a guess.
             # FIXME: `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool], Dict[str, BaseModel], and possibly any other cases.
@@ -119,28 +118,19 @@ class OperationData:
                     if self.diffs:
                         self._merge_bigmapdiffs(storage, bigmap_name, array=False)
             elif hasattr(annotation, '__fields__') and isinstance(storage[key], dict):
-                storage[key] = self._process_storage(annotation, storage[key], bigmap_name)
-
-        return storage
+                self._process_storage(annotation, storage[key], bigmap_name)
 
     def get_merged_storage(self, storage_type: Type[StorageType]) -> StorageType:
         """Merge big map diffs and deserialize raw storage into typeclass"""
         if self.storage is None:
             raise Exception('`storage` field missing')
 
-        storage = deepcopy(self.storage)
-        _logger.debug('Merging storage')
-        _logger.debug('Before: %s', storage)
-        _logger.debug('Diffs: %s', self.diffs)
-
-        storage = self._process_storage(storage_type, storage, None)
-
-        _logger.debug('After: %s', storage)
+        self._process_storage(storage_type, self.storage, None)
 
         try:
-            return storage_type.parse_obj(storage)
+            return storage_type.parse_obj(self.storage)
         except ValidationError as e:
-            raise InvalidDataError(storage_type, storage, self) from e
+            raise InvalidDataError(storage_type, self.storage, self) from e
 
 
 @dataclass
