@@ -5,8 +5,9 @@
 ### Fixed
 
 * tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
-* init: Fixed missing imports in handlers generated during init.
+* codegen: Fixed missing imports in handlers generated during init.
 * coinbase: Candles caching disabled.
+* index: Fixed head index callback invocation.
 
 ### Added
 
