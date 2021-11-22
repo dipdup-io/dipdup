@@ -1,16 +1,19 @@
 # Changelog
 
-## 3.2.0 - [unreleased]
+## 4.0.0 - [unreleased]
 
 ### Fixed
 
 * tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
 * tzkt: Adding many indexes in runtime no longer leads to sending useless subscription requests.
 * tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `batch_size` tunable.
+* index: Fixed head index callback invocation.
+* coinbase: Candles caching disabled.
 
 ### Changed
 
 * cli: `run --oneshot` option is deprecated and will be removed in the next major release. Oneshot mode applied automatically when `first_level` and `last_level` fields are set in index config.  
+* codegen: Fixed missing imports in handlers generated during init.
 
 ### Added
 

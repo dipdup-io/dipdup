@@ -710,7 +710,7 @@ class HeadIndex(Index):
             handler_config.parent.name,
             self.datasource,
             head.hash,
-            (head,),
+            head,
         )
 
     def push_head(self, head: HeadBlockData) -> None:
