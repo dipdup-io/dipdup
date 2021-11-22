@@ -1121,7 +1121,7 @@ class DipDupConfig:
 
         # NOTE: Detect duplicate contracts
         # FIXME: This code smells
-        contracts = (
+        contracts = tuple(
             cast(ContractIndexConfigT, i).contracts
             for i in self.indexes.values()
             if hasattr(i, 'contracts') and cast(ContractIndexConfigT, i).contracts
