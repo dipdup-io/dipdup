@@ -10,12 +10,14 @@ from os.path import dirname, exists, join
 from typing import List, cast
 
 import asyncclick as click
+import ruamel.yaml as yaml
 import sentry_sdk
 from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
 from pydantic.json import pydantic_encoder
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from tabulate import tabulate
 from tortoise import Tortoise
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
@@ -31,6 +33,7 @@ from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils.database import set_decimal_context, tortoise_wrapper, wipe_schema
 
+___ = '_' * 80
 _logger = logging.getLogger('dipdup.cli')
 
 
@@ -204,12 +207,15 @@ async def status(ctx):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
+
+    table = [('name', 'status', 'level')]
     async with tortoise_wrapper(url, models):
-        # TODO: Formatting
-        print('_' * 80)
         async for index in Index.all():
-            print(f'{index.name}\t{index.status.value}\t{index.level}')
-        print('_' * 80)
+            table.append((index.name, index.status.value, index.level))
+
+    print(___)
+    print(tabulate(table, tablefmt='plain'))
+    print(___)
 
 
 # TODO: Docs, `--unsafe` argument to resolve env variables, default to not doing it
@@ -217,14 +223,12 @@ async def status(ctx):
 @click.pass_context
 @cli_wrapper
 async def config(ctx):
-    import ruamel.yaml as yaml
-
     config: DipDupConfig = ctx.obj.config
     config_json = json.dumps(config, default=pydantic_encoder)
     config_yaml = yaml.dump(yaml.safe_load(config_json), indent=2, default_flow_style=False)
-    print('_' * 80)
+    print(___)
     print(config_yaml)
-    print('_' * 80)
+    print(___)
 
 
 # TODO: "cache clear"?
