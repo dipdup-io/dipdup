@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
@@ -20,6 +19,7 @@ KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
+# NOTE: typing_extensions introspection is pretty expensive
 _is_nested_dict: Dict[Type, bool] = {}
 
 
@@ -94,8 +94,8 @@ class OperationData:
                     continue
                 raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists')
 
-            # FIXME: Pydantic bug? I have no idea how does it work, this workaround is just a guess.
-            # FIXME: `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool], Dict[str, BaseModel], and possibly any other cases.
+            # NOTE: Pydantic bug? I have no idea how does it work, this workaround is just a guess.
+            # NOTE: `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool], Dict[str, BaseModel], and possibly any other cases.
             is_complex_type = field.type_ != field.outer_type_
             is_nested_dict_model = _is_nested_dict.get(field.outer_type_)
             if is_nested_dict_model is None:
