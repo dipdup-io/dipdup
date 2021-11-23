@@ -20,7 +20,6 @@ KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
-_logger = logging.getLogger('dipdup.models')
 _is_nested_dict: Dict[Type, bool] = {}
 
 
@@ -59,14 +58,14 @@ class OperationData:
         """Apply big map diffs of specific path to storage"""
         if self.diffs is None:
             raise Exception('`bigmaps` field missing')
-        _logger.debug(bigmap_name)
-        bigmapdiffs = (bm for bm in self.diffs if bm['path'] == bigmap_name)
+
         bigmap_key = bigmap_name.split('.')[-1]
-        for diff in bigmapdiffs:
+        for diff in self.diffs:
+            if diff['path'] != bigmap_name:
+                continue
             if diff['action'] not in ('add_key', 'update_key'):
                 continue
 
-            _logger.debug('Applying bigmapdiff: %s', diff)
             key = diff['content']['key']
             if array is True:
                 storage_dict[bigmap_key].append({'key': key, 'value': diff['content']['value']})
