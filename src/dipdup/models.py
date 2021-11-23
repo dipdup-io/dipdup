@@ -21,6 +21,7 @@ ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
 _logger = logging.getLogger('dipdup.models')
+_is_nested_dict: Dict[Type, bool] = {}
 
 
 @dataclass
@@ -97,11 +98,13 @@ class OperationData:
             # FIXME: Pydantic bug? I have no idea how does it work, this workaround is just a guess.
             # FIXME: `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool], Dict[str, BaseModel], and possibly any other cases.
             is_complex_type = field.type_ != field.outer_type_
-            try:
-                get_args(field.outer_type_)[1].__fields__
-                is_nested_dict_model = True
-            except Exception:
-                is_nested_dict_model = False
+            is_nested_dict_model = _is_nested_dict.get(field.outer_type_)
+            if is_nested_dict_model is None:
+                try:
+                    get_args(field.outer_type_)[1].__fields__
+                    is_nested_dict_model = _is_nested_dict[field.outer_type_] = True
+                except Exception:
+                    is_nested_dict_model = _is_nested_dict[field.outer_type_] = False
 
             if is_complex_type and (field.type_ == bool or is_nested_dict_model):
                 annotation = field.outer_type_
