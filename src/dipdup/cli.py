@@ -9,7 +9,6 @@ from functools import wraps
 from os import listdir
 from os.path import dirname, exists, join
 from typing import List, cast
-from dipdup.models import Index
 
 import asyncclick as click
 import sentry_sdk
@@ -29,7 +28,7 @@ from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDupError, InitializationRequiredError, MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
-from dipdup.models import Schema
+from dipdup.models import Index, Schema
 from dipdup.utils import iter_files
 from dipdup.utils.database import set_decimal_context, tortoise_wrapper, wipe_schema
 
@@ -203,8 +202,6 @@ async def migrate(ctx):
     config.initialize(skip_imports=True)
     migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
     await migrations.migrate()
-
-
 
 
 @cli.command(help='Show current status of indexes in database')

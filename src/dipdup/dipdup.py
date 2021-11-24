@@ -531,6 +531,5 @@ class DipDup:
             for job_config in self._config.jobs.values():
                 add_job(self._ctx, self._scheduler, job_config)
 
-
         tasks.add(create_task(_event_wrapper()))
         return event

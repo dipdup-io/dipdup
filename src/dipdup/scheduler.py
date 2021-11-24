@@ -70,7 +70,7 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConf
     else:
         raise RuntimeError
 
-    job = scheduler.add_job(
+    scheduler.add_job(
         func=partial(_job_wrapper, ctx=ctx),
         id=job_config.name,
         name=job_config.name,
