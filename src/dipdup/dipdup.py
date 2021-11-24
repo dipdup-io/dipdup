@@ -1,44 +1,77 @@
 import asyncio
 import logging
-from asyncio import CancelledError, Event, Task, create_task, gather
+from asyncio import CancelledError
+from asyncio import Event
+from asyncio import Task
+from asyncio import create_task
+from asyncio import gather
 from collections import deque
-from contextlib import AsyncExitStack, asynccontextmanager, suppress
+from contextlib import AsyncExitStack
+from contextlib import asynccontextmanager
+from contextlib import suppress
 from functools import partial
 from operator import ne
-from typing import Awaitable, Deque, Dict, List, Optional, Set, Tuple, cast
+from typing import Awaitable
+from typing import Deque
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import (
-    BcdDatasourceConfig,
-    CoinbaseDatasourceConfig,
-    ContractConfig,
-    DatasourceConfigT,
-    DipDupConfig,
-    IndexTemplateConfig,
-    OperationIndexConfig,
-    PostgresDatabaseConfig,
-    TzktDatasourceConfig,
-    default_hooks,
-)
-from dipdup.context import CallbackManager, DipDupContext, pending_indexes
+from dipdup.config import BcdDatasourceConfig
+from dipdup.config import CoinbaseDatasourceConfig
+from dipdup.config import ContractConfig
+from dipdup.config import DatasourceConfigT
+from dipdup.config import DipDupConfig
+from dipdup.config import IndexTemplateConfig
+from dipdup.config import OperationIndexConfig
+from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import TzktDatasourceConfig
+from dipdup.config import default_hooks
+from dipdup.context import CallbackManager
+from dipdup.context import DipDupContext
+from dipdup.context import pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
-from dipdup.datasources.datasource import Datasource, IndexDatasource
+from dipdup.datasources.datasource import Datasource
+from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
-from dipdup.exceptions import ConfigInitializationException, DipDupException, ReindexingRequiredError
+from dipdup.exceptions import ConfigInitializationException
+from dipdup.exceptions import DipDupException
+from dipdup.exceptions import ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.index import BigMapIndex, HeadIndex, Index, OperationIndex, block_cache, extract_operation_subgroups, head_cache
-from dipdup.models import BigMapData, Contract, Head, HeadBlockData
+from dipdup.index import BigMapIndex
+from dipdup.index import HeadIndex
+from dipdup.index import Index
+from dipdup.index import OperationIndex
+from dipdup.index import block_cache
+from dipdup.index import extract_operation_subgroups
+from dipdup.index import head_cache
+from dipdup.models import BigMapData
+from dipdup.models import Contract
+from dipdup.models import Head
+from dipdup.models import HeadBlockData
 from dipdup.models import Index as IndexState
-from dipdup.models import IndexStatus, OperationData, Schema
-from dipdup.scheduler import add_job, create_scheduler
+from dipdup.models import IndexStatus
+from dipdup.models import OperationData
+from dipdup.models import Schema
+from dipdup.scheduler import add_job
+from dipdup.scheduler import create_scheduler
 from dipdup.utils import slowdown
-from dipdup.utils.database import generate_schema, get_schema_hash, prepare_models, set_schema, tortoise_wrapper, validate_models
+from dipdup.utils.database import generate_schema
+from dipdup.utils.database import get_schema_hash
+from dipdup.utils.database import prepare_models
+from dipdup.utils.database import set_schema
+from dipdup.utils.database import tortoise_wrapper
+from dipdup.utils.database import validate_models
 
 
 class IndexDispatcher:

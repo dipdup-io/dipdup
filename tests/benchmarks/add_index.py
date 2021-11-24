@@ -1,7 +1,8 @@
 import asyncio
 import uuid
 
-from dipdup.config import DipDupConfig, SqliteDatabaseConfig
+from dipdup.config import DipDupConfig
+from dipdup.config import SqliteDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.utils.database import tortoise_wrapper
 

@@ -7,8 +7,11 @@ from contextlib import suppress
 from dataclasses import dataclass
 from functools import wraps
 from os import listdir
-from os.path import dirname, exists, join
-from typing import List, cast
+from os.path import dirname
+from os.path import exists
+from os.path import join
+from typing import List
+from typing import cast
 
 import asyncclick as click
 import sentry_sdk
@@ -21,16 +24,32 @@ from tortoise import Tortoise
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
-from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_version_mapping
-from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
-from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
+from dipdup import __spec_version__
+from dipdup import __version__
+from dipdup import spec_reindex_mapping
+from dipdup import spec_version_mapping
+from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE
+from dipdup.codegen import DEFAULT_DOCKER_IMAGE
+from dipdup.codegen import DEFAULT_DOCKER_TAG
+from dipdup.codegen import DipDupCodeGenerator
+from dipdup.config import DipDupConfig
+from dipdup.config import LoggingConfig
+from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDupError, InitializationRequiredError, MigrationRequiredError
+from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import DeprecatedHandlerError
+from dipdup.exceptions import DipDupError
+from dipdup.exceptions import InitializationRequiredError
+from dipdup.exceptions import MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
-from dipdup.models import Index, Schema
+from dipdup.migrations import DipDupMigrationManager
+from dipdup.migrations import deprecated_handlers
+from dipdup.models import Index
+from dipdup.models import Schema
 from dipdup.utils import iter_files
-from dipdup.utils.database import set_decimal_context, tortoise_wrapper, wipe_schema
+from dipdup.utils.database import set_decimal_context
+from dipdup.utils.database import tortoise_wrapper
+from dipdup.utils.database import wipe_schema
 
 _logger = logging.getLogger('dipdup.cli')
 

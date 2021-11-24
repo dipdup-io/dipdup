@@ -5,7 +5,8 @@ import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa12.parameter.withdraw_profit import WithdrawProfitParameter
 from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
 from dipdup.context import HandlerContext
-from dipdup.models import OperationData, Transaction
+from dipdup.models import OperationData
+from dipdup.models import Transaction
 
 
 async def on_fa12_withdraw_profit(

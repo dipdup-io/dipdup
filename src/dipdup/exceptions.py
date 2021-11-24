@@ -1,8 +1,13 @@
 import textwrap
 import traceback
 from contextlib import contextmanager
-from dataclasses import dataclass, field
-from typing import Any, Dict, Iterator, Optional, Type
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import Optional
+from typing import Type
 
 import sentry_sdk
 from tabulate import tabulate

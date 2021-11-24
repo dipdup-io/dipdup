@@ -3,9 +3,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
+from typing import Dict
+from typing import List
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
+from pydantic import Extra
 
 
 class Key(BaseModel):

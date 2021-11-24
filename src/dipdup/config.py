@@ -5,8 +5,10 @@ import logging.config
 import os
 import re
 import sys
-from abc import ABC, abstractmethod
-from collections import Counter, defaultdict
+from abc import ABC
+from abc import abstractmethod
+from collections import Counter
+from collections import defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
@@ -15,7 +17,20 @@ from functools import cached_property
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
-from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Generic
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Set
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
+from typing import cast
 from urllib.parse import urlparse
 
 import ruamel.yaml as yaml
@@ -25,10 +40,17 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
-from dipdup.datasources.subscription import BigMapSubscription, OriginationSubscription, Subscription, TransactionSubscription
-from dipdup.enums import ReindexingAction, ReindexingReasonC
-from dipdup.exceptions import ConfigInitializationException, ConfigurationError
-from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
+from dipdup.datasources.subscription import BigMapSubscription
+from dipdup.datasources.subscription import OriginationSubscription
+from dipdup.datasources.subscription import Subscription
+from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.enums import ReindexingAction
+from dipdup.enums import ReindexingReasonC
+from dipdup.exceptions import ConfigInitializationException
+from dipdup.exceptions import ConfigurationError
+from dipdup.utils import import_from
+from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
 
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 DEFAULT_RETRY_COUNT = 3

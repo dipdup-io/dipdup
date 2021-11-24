@@ -4,19 +4,31 @@ import logging
 import re
 from contextlib import suppress
 from json import dumps as dump_json
-from os.path import dirname, join
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
+from os.path import dirname
+from os.path import join
+from typing import Any
+from typing import Dict
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import humps  # type: ignore
-from aiohttp import ClientConnectorError, ClientOSError, ServerDisconnectedError
+from aiohttp import ClientConnectorError
+from aiohttp import ClientOSError
+from aiohttp import ServerDisconnectedError
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.transactions import get_connection
 
-from dipdup.config import HasuraConfig, HTTPConfig, PostgresDatabaseConfig
+from dipdup.config import HasuraConfig
+from dipdup.config import HTTPConfig
+from dipdup.config import PostgresDatabaseConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
-from dipdup.utils import iter_files, pascal_to_snake
+from dipdup.utils import iter_files
+from dipdup.utils import pascal_to_snake
 from dipdup.utils.database import iter_models
 
 _get_fields_query = '''

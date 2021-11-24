@@ -65,6 +65,7 @@ dipdup = 'dipdup.cli:cli'
 
 [tool.isort]
 line_length = 140
+force_single_line = true
 
 [tool.black]
 line-length = 140

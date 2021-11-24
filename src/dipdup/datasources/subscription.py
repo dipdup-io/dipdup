@@ -1,6 +1,7 @@
 import logging
 from abc import ABC
-from typing import Dict, Set
+from typing import Dict
+from typing import Set
 
 from pydantic.dataclasses import dataclass
 from tortoise import Optional

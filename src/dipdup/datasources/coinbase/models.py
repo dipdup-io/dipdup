@@ -1,7 +1,9 @@
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 from decimal import Decimal
 from enum import Enum
-from typing import List, Union
+from typing import List
+from typing import Union
 
 from pydantic.dataclasses import dataclass
 

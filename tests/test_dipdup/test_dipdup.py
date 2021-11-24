@@ -1,6 +1,7 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
-from os.path import dirname, join
+from os.path import dirname
+from os.path import join
 from unittest import IsolatedAsyncioTestCase
 
 from pytz import UTC
@@ -8,7 +9,8 @@ from pytz import UTC
 from dipdup.config import DipDupConfig
 from dipdup.context import pending_indexes
 from dipdup.dipdup import IndexDispatcher
-from dipdup.enums import IndexStatus, IndexType
+from dipdup.enums import IndexStatus
+from dipdup.enums import IndexType
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Index
 from dipdup.test import create_test_dipdup

@@ -1,35 +1,53 @@
 import asyncio
 import logging
-from asyncio import Event, create_task, gather
-from collections import defaultdict, deque
-from datetime import datetime, timezone
+from asyncio import Event
+from asyncio import create_task
+from asyncio import gather
+from collections import defaultdict
+from collections import deque
+from datetime import datetime
+from datetime import timezone
 from decimal import Decimal
-from typing import Any, AsyncGenerator, Awaitable, Callable, DefaultDict, Deque, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from typing import Any
+from typing import AsyncGenerator
+from typing import Awaitable
+from typing import Callable
+from typing import DefaultDict
+from typing import Deque
+from typing import Dict
+from typing import List
+from typing import NoReturn
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import cast
 
 from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage  # type: ignore
 from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 
-from dipdup.config import HTTPConfig, ResolvedIndexConfigT
+from dipdup.config import HTTPConfig
+from dipdup.config import ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.subscription import (
-    BigMapSubscription,
-    HeadSubscription,
-    OriginationSubscription,
-    Subscription,
-    TransactionSubscription,
-)
-from dipdup.datasources.tzkt.enums import (
-    ORIGINATION_MIGRATION_FIELDS,
-    ORIGINATION_OPERATION_FIELDS,
-    TRANSACTION_OPERATION_FIELDS,
-    OperationFetcherRequest,
-    TzktMessageType,
-)
+from dipdup.datasources.subscription import BigMapSubscription
+from dipdup.datasources.subscription import HeadSubscription
+from dipdup.datasources.subscription import OriginationSubscription
+from dipdup.datasources.subscription import Subscription
+from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.datasources.tzkt.enums import ORIGINATION_MIGRATION_FIELDS
+from dipdup.datasources.tzkt.enums import ORIGINATION_OPERATION_FIELDS
+from dipdup.datasources.tzkt.enums import TRANSACTION_OPERATION_FIELDS
+from dipdup.datasources.tzkt.enums import OperationFetcherRequest
+from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.enums import MessageType
 from dipdup.exceptions import DatasourceError
-from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData, QuoteData
+from dipdup.models import BigMapAction
+from dipdup.models import BigMapData
+from dipdup.models import BlockData
+from dipdup.models import HeadBlockData
+from dipdup.models import OperationData
+from dipdup.models import QuoteData
 from dipdup.utils import split_by_chunks
 from dipdup.utils.watchdog import Watchdog
 

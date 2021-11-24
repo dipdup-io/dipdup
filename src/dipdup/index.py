@@ -1,30 +1,52 @@
 import logging
 from abc import abstractmethod
-from collections import defaultdict, deque, namedtuple
-from typing import DefaultDict, Deque, Dict, Iterable, Iterator, Literal, Optional, Sequence, Set, Tuple, Union, cast
+from collections import defaultdict
+from collections import deque
+from collections import namedtuple
+from typing import DefaultDict
+from typing import Deque
+from typing import Dict
+from typing import Iterable
+from typing import Iterator
+from typing import Literal
+from typing import Optional
+from typing import Sequence
+from typing import Set
+from typing import Tuple
+from typing import Union
+from typing import cast
 
 from pydantic.dataclasses import dataclass
 from pydantic.error_wrappers import ValidationError
 
 import dipdup.models as models
-from dipdup.config import (
-    BigMapHandlerConfig,
-    BigMapIndexConfig,
-    ContractConfig,
-    HeadHandlerConfig,
-    HeadIndexConfig,
-    OperationHandlerConfig,
-    OperationHandlerOriginationPatternConfig,
-    OperationHandlerPatternConfigT,
-    OperationHandlerTransactionPatternConfig,
-    OperationIndexConfig,
-    OperationType,
-    ResolvedIndexConfigT,
-)
+from dipdup.config import BigMapHandlerConfig
+from dipdup.config import BigMapIndexConfig
+from dipdup.config import ContractConfig
+from dipdup.config import HeadHandlerConfig
+from dipdup.config import HeadIndexConfig
+from dipdup.config import OperationHandlerConfig
+from dipdup.config import OperationHandlerOriginationPatternConfig
+from dipdup.config import OperationHandlerPatternConfigT
+from dipdup.config import OperationHandlerTransactionPatternConfig
+from dipdup.config import OperationIndexConfig
+from dipdup.config import OperationType
+from dipdup.config import ResolvedIndexConfigT
 from dipdup.context import DipDupContext
-from dipdup.datasources.tzkt.datasource import BigMapFetcher, OperationFetcher, TzktDatasource
-from dipdup.exceptions import ConfigInitializationException, InvalidDataError, ReindexingReason
-from dipdup.models import BigMapData, BigMapDiff, BlockData, HeadBlockData, IndexStatus, OperationData, Origination, Transaction
+from dipdup.datasources.tzkt.datasource import BigMapFetcher
+from dipdup.datasources.tzkt.datasource import OperationFetcher
+from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.exceptions import ConfigInitializationException
+from dipdup.exceptions import InvalidDataError
+from dipdup.exceptions import ReindexingReason
+from dipdup.models import BigMapData
+from dipdup.models import BigMapDiff
+from dipdup.models import BlockData
+from dipdup.models import HeadBlockData
+from dipdup.models import IndexStatus
+from dipdup.models import OperationData
+from dipdup.models import Origination
+from dipdup.models import Transaction
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 

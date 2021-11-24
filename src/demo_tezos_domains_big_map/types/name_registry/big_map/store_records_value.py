@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict
+from typing import Optional
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
+from pydantic import Extra
 
 
 class StoreRecordsValue(BaseModel):

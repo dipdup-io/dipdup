@@ -1,12 +1,15 @@
 from contextlib import AsyncExitStack
-from os.path import dirname, join
+from os.path import dirname
+from os.path import join
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
 
 from testcontainers.core.generic import DbContainer  # type: ignore
 from testcontainers.postgres import PostgresContainer  # type: ignore
 
-from dipdup.config import DipDupConfig, HasuraConfig, PostgresDatabaseConfig
+from dipdup.config import DipDupConfig
+from dipdup.config import HasuraConfig
+from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.hasura import HasuraGateway
 from dipdup.utils.database import tortoise_wrapper

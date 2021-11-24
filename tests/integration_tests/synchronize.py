@@ -1,7 +1,9 @@
 import asyncio
-from os.path import dirname, join
+from os.path import dirname
+from os.path import join
 
-from dipdup.config import DipDupConfig, SqliteDatabaseConfig
+from dipdup.config import DipDupConfig
+from dipdup.config import SqliteDatabaseConfig
 from dipdup.dipdup import DipDup
 
 

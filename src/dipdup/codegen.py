@@ -4,32 +4,44 @@ import os
 import re
 import subprocess
 from copy import copy
-from os.path import basename, dirname, exists, join, relpath, splitext
+from os.path import basename
+from os.path import dirname
+from os.path import exists
+from os.path import join
+from os.path import relpath
+from os.path import splitext
 from shutil import rmtree
-from typing import Any, Dict, List, cast
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import cast
 
 from jinja2 import Template
 
 from dipdup import __version__
-from dipdup.config import (
-    BigMapIndexConfig,
-    CallbackMixin,
-    ContractConfig,
-    DatasourceConfigT,
-    DipDupConfig,
-    HandlerConfig,
-    HeadIndexConfig,
-    IndexTemplateConfig,
-    OperationHandlerOriginationPatternConfig,
-    OperationHandlerTransactionPatternConfig,
-    OperationIndexConfig,
-    TzktDatasourceConfig,
-    default_hooks,
-)
+from dipdup.config import BigMapIndexConfig
+from dipdup.config import CallbackMixin
+from dipdup.config import ContractConfig
+from dipdup.config import DatasourceConfigT
+from dipdup.config import DipDupConfig
+from dipdup.config import HandlerConfig
+from dipdup.config import HeadIndexConfig
+from dipdup.config import IndexTemplateConfig
+from dipdup.config import OperationHandlerOriginationPatternConfig
+from dipdup.config import OperationHandlerTransactionPatternConfig
+from dipdup.config import OperationIndexConfig
+from dipdup.config import TzktDatasourceConfig
+from dipdup.config import default_hooks
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.exceptions import ConfigInitializationException, ConfigurationError
-from dipdup.utils import import_submodules, mkdir_p, pascal_to_snake, snake_to_pascal, touch, write
+from dipdup.exceptions import ConfigInitializationException
+from dipdup.exceptions import ConfigurationError
+from dipdup.utils import import_submodules
+from dipdup.utils import mkdir_p
+from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
+from dipdup.utils import touch
+from dipdup.utils import write
 
 DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
     POSTGRES_USER="dipdup",

@@ -1,16 +1,26 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any
+from typing import Dict
+from typing import Generic
+from typing import List
+from typing import Optional
+from typing import Type
+from typing import TypeVar
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from pydantic.error_wrappers import ValidationError
-from tortoise import Model, fields
+from tortoise import Model
+from tortoise import fields
 from typing_extensions import get_args
 
-from dipdup.enums import IndexStatus, IndexType
-from dipdup.exceptions import ConfigurationError, InvalidDataError, ReindexingReason
+from dipdup.enums import IndexStatus
+from dipdup.enums import IndexType
+from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import InvalidDataError
+from dipdup.exceptions import ReindexingReason
 from dipdup.utils.database import ReversedCharEnumField
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)

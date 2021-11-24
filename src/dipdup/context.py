@@ -3,43 +3,54 @@ import os
 import sys
 import time
 from collections import deque
-from contextlib import contextmanager, suppress
-from os.path import exists, join
+from contextlib import contextmanager
+from contextlib import suppress
+from os.path import exists
+from os.path import join
 from pprint import pformat
-from typing import Any, Dict, Iterator, Optional, Tuple, Union, cast
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import Optional
+from typing import Tuple
+from typing import Union
+from typing import cast
 
 import sqlparse  # type: ignore
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
-from dipdup.config import (
-    BigMapIndexConfig,
-    ContractConfig,
-    DipDupConfig,
-    HandlerConfig,
-    HeadIndexConfig,
-    HookConfig,
-    IndexTemplateConfig,
-    OperationIndexConfig,
-    PostgresDatabaseConfig,
-    ResolvedIndexConfigT,
-    TzktDatasourceConfig,
-)
+from dipdup.config import BigMapIndexConfig
+from dipdup.config import ContractConfig
+from dipdup.config import DipDupConfig
+from dipdup.config import HandlerConfig
+from dipdup.config import HeadIndexConfig
+from dipdup.config import HookConfig
+from dipdup.config import IndexTemplateConfig
+from dipdup.config import OperationIndexConfig
+from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import ResolvedIndexConfigT
+from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.enums import ReindexingAction, ReindexingReasonC, reason_to_reasonc, reasonc_to_reason
-from dipdup.exceptions import (
-    CallbackError,
-    CallbackTypeError,
-    ConfigurationError,
-    ContractAlreadyExistsError,
-    IndexAlreadyExistsError,
-    InitializationRequiredError,
-    ReindexingRequiredError,
-)
-from dipdup.models import Contract, Index, ReindexingReason, Schema
-from dipdup.utils import FormattedLogger, iter_files
+from dipdup.enums import ReindexingAction
+from dipdup.enums import ReindexingReasonC
+from dipdup.enums import reason_to_reasonc
+from dipdup.enums import reasonc_to_reason
+from dipdup.exceptions import CallbackError
+from dipdup.exceptions import CallbackTypeError
+from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ContractAlreadyExistsError
+from dipdup.exceptions import IndexAlreadyExistsError
+from dipdup.exceptions import InitializationRequiredError
+from dipdup.exceptions import ReindexingRequiredError
+from dipdup.models import Contract
+from dipdup.models import Index
+from dipdup.models import ReindexingReason
+from dipdup.models import Schema
+from dipdup.utils import FormattedLogger
+from dipdup.utils import iter_files
 from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
@@ -161,7 +172,9 @@ class DipDupContext:
         await self.spawn_index(name, state)
 
     async def spawn_index(self, name: str, state: Optional[Index] = None) -> None:
-        from dipdup.index import BigMapIndex, HeadIndex, OperationIndex
+        from dipdup.index import BigMapIndex
+        from dipdup.index import HeadIndex
+        from dipdup.index import OperationIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
         index: Union[OperationIndex, BigMapIndex, HeadIndex]
