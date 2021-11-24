@@ -150,6 +150,7 @@ class ContractConfig(NameMixin):
 
     @validator('address', allow_reuse=True)
     def valid_address(cls, v):
+        # NOTE: Environment substitution disabled
         if '$' in v:
             return v
 
@@ -178,6 +179,7 @@ class TzktDatasourceConfig(NameMixin):
         if self.http and self.http.batch_size and self.http.batch_size > 10000:
             raise ConfigurationError('`batch_size` must be less than 10000')
         parsed_url = urlparse(self.url)
+        # NOTE: Environment substitution disabled
         if '$' in self.url:
             return
         if not (parsed_url.scheme and parsed_url.netloc):

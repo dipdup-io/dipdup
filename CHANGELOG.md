@@ -4,32 +4,64 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## 4.0.0-rc1 - [unreleased]
 
+### ⚠ Migration
+
+* Run `dipdup schema approve --hashes` command on every database you want to use with 4.0.0-rc1.
+
+### Added
+
+* cli: Added `dipdup run --skip-hasura` flag to skip updating Hasura metadata.
+* cli: Added `dipdip run --early-realtime` flag to establish a realtime connection before all indexes are synchronized.
+* cli: Added`dipdup run --merge-subscriptions`  flag to subscribe to all operations/big map diffs during realtime indexing. This flag helps to avoid reaching TzKT subscriptions limit (currently 10000 channels). 
+* cli: Added `dipdup status` command to print the current status of indexes from database
+* cli: Added `dipdup config export [--unsafe]` command to print config after resolving all links and variables. Add `--unsafe` option to substitute environment variables.
+* cli: Added `dipdup cache show` command to get information about file caches used by DipDup.
+* cli: Added `dipdup schema approve --hashes` flag to recalculate schema and index config hashes on the next run.
+* config: Added `first_level` and `last_level` optional fields to `TemplateIndexConfig`. These limits are applied after ones from the template itself.
+* config: Added `daemon` boolean field to `JobConfig` to run a single callback indefinitely. Conflicts with `crontab` and `interval` fields.
+* config: Added `advanced` top-level section with following fields:
+
+```yaml
+advanced:
+  early_realtime: False
+  merge_subscriptions: False
+  oneshot: False
+  postpone_jobs: False
+  reindex:
+    manual: exception
+    migration: wipe
+    rollback: ignore
+    config_modified: exception
+    schema_modified: wipe
+  skip_hasura: False
+```
+
+`ReindexingRequiredError` exception raised by default when reindexing is triggered. CLI flags have priority over self-titled `AdvancedConfig` fields.
+
 ### Fixed
 
 * cli: Fixed crashes and output inconsistency when piping DipDup commands.
 * codegen: Fixed missing imports in handlers generated during init.
-* coinbase: Caching is disabled for method `get_candles` as it's known to cause data inconsistency.
+* http: Fixed increasing sleep time between failed request attempts.
+* coinbase: Fixed possible data inconsistency caused by caching enabled for method `get_candles`.
 * index: Fixed invocation of head index callback.
+* index: Fixed `CallbackError` raised instead of `ReindexingRequiredError` in some cases.
 * tzkt: Fixed resubscribing when realtime connectivity is lost for a long time.
 * tzkt: Fixed sending useless subscription requests when adding indexes in runtime.
 * tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `HTTPConfig.batch_size` field.
+* tzkt: Fixed lots of SignalR bugs by replacing `aiosignalrcore` library with `pysignalr`.
 
 ### Deprecated
 
-* cli: `run --oneshot` option is deprecated and will be removed in the next major release. The oneshot mode applies automatically when `last_level` field is set in index config.
+* cli: `run --oneshot` option is deprecated and will be removed in the next major release. The oneshot mode applies automatically when `last_level` field is set in the index config.
+* cli: `clear-cache` command is deprecated and will be removed in the next major release. Use `cache clear` command instead.
 
-### Added
+### Performance
 
-* cli: New flag `dipdip run --early-realtime` to establish a realtime connection before all indexes are synchronized.
-* cli: New flag `dipdup run --skip-hasura` to skip updating Hasura metadata.
-* cli: New command `dipdup status` to print the current status of indexes from database
-* cli: New command `dipdup config` to print config after resolving all links and variables
-* config: Added optional fields `first_level` and `last_level` to `TemplateIndexConfig`. These limits are applied after ones from the template itself.
-
-### Improved
-
-* index: Time required to initialize indexes presented in database reduced by ~25%.
-* tzkt: Replaced `aiosignalrcore` library with `pysignalr`.
+* config: Configuration files are loaded 10x times faster.
+* index: Number of operations processed by matcher reduced by 40%-95% depending on number of addresses and entrypoints used.
+* tzkt: Rate limit was increased. Try to set `connection_timeout` to a higher value if requests fail with `ConnectionTimeout` exception.
+* tzkt: Improved performance of response deserialization. 
 
 ## 3.1.3 - 2021-11-15
 

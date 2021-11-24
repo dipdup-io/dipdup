@@ -26,9 +26,6 @@ class CoinbaseDatasource(Datasource):
     async def run(self) -> None:
         pass
 
-    async def resync(self) -> None:
-        pass
-
     async def get_oracle_prices(self) -> Dict[str, Any]:
         return await self._http.request(
             'get',

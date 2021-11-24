@@ -262,9 +262,9 @@ class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
         cache=True,
         retry_sleep=1,
-        retry_multiplier=1.1,
+        retry_multiplier=2,
         ratelimit_rate=100,
-        ratelimit_period=30,
+        ratelimit_period=1,
         connection_limit=25,
         batch_size=10000,
     )

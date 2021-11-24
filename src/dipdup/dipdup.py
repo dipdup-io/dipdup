@@ -522,15 +522,15 @@ class DipDup:
         async def _event_wrapper():
             self._logger.info('Waiting for an event to start scheduler')
             await event.wait()
-            self._logger.info('Starting scheduler')
 
+            self._logger.info('Starting scheduler')
+            self._scheduler.add_listener(_hook, EVENT_JOB_ERROR)
+            await stack.enter_async_context(_context())
             tasks.add(create_task(_watchdog()))
 
             for job_config in self._config.jobs.values():
                 add_job(self._ctx, self._scheduler, job_config)
 
-            self._scheduler.add_listener(_hook, EVENT_JOB_ERROR)
-            await stack.enter_async_context(_context())
 
         tasks.add(create_task(_event_wrapper()))
         return event

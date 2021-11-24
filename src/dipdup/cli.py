@@ -9,6 +9,7 @@ from functools import wraps
 from os import listdir
 from os.path import dirname, exists, join
 from typing import List, cast
+from dipdup.models import Index
 
 import asyncclick as click
 import sentry_sdk
@@ -157,7 +158,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
 @click.option('--skip-hasura', is_flag=True, help='Do not update Hasura metadata')
 @click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
-@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all updates instead of individual contracts')
+@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing')
 @click.pass_context
 @cli_wrapper
 async def run(
@@ -204,7 +205,6 @@ async def migrate(ctx):
     await migrations.migrate()
 
 
-from dipdup.models import Index
 
 
 @cli.command(help='Show current status of indexes in database')
@@ -364,7 +364,7 @@ async def schema_wipe(ctx, immune: bool):
             await Tortoise._drop_databases()
 
 
-@schema.command(name='export', help='click.echo schema SQL including `on_reindex` hook')
+@schema.command(name='export', help='Print schema SQL including `on_reindex` hook')
 @click.pass_context
 @cli_wrapper
 async def schema_export(ctx):
