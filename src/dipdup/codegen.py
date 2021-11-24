@@ -305,15 +305,15 @@ class DipDupCodeGenerator:
         write(join(docker_path, 'Dockerfile'), dockerfile_code, overwrite=True)
 
         mounts = {}
-        for filename in self._config.filenames:
-            filename_part = filename.split("/")[-1]
-            from_ = join(relpath(self._config.package_path, filename), filename_part)
-            to = f'/home/dipdup/{filename_part}'
+        for path in self._config.paths:
+            path_part = path.split("/")[-1]
+            from_ = join(relpath(self._config.package_path, path), path_part)
+            to = f'/home/dipdup/{path_part}'
             mounts[from_] = to
 
         command = []
-        for filename in self._config.filenames:
-            command += ['-c', filename.split("/")[-1]]
+        for path in self._config.paths:
+            command += ['-c', path.split("/")[-1]]
         command += ['run']
 
         docker_compose_code = docker_compose_template.render(

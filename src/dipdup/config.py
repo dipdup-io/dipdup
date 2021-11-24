@@ -18,6 +18,7 @@ from pydoc import locate
 from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast
 from urllib.parse import urlparse
 
+import ruamel.yaml as yaml
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -149,6 +150,9 @@ class ContractConfig(NameMixin):
 
     @validator('address', allow_reuse=True)
     def valid_address(cls, v):
+        if '$' in v:
+            return v
+
         # NOTE: Wallet addresses are allowed for debugging purposes (source field). Do we need a separate section?
         if not (v.startswith('KT') or v.startswith('tz')) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
@@ -174,6 +178,8 @@ class TzktDatasourceConfig(NameMixin):
         if self.http and self.http.batch_size and self.http.batch_size > 10000:
             raise ConfigurationError('`batch_size` must be less than 10000')
         parsed_url = urlparse(self.url)
+        if '$' in self.url:
+            return
         if not (parsed_url.scheme and parsed_url.netloc):
             raise ConfigurationError(f'`{self.url}` is not a valid datasource URL')
 
@@ -919,7 +925,7 @@ class DipDupConfig:
     advanced: AdvancedConfig = AdvancedConfig()
 
     def __post_init_post_parse__(self):
-        self.filenames: List[str] = []
+        self.paths: List[str] = []
         self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
         self._default_hooks: bool = False
@@ -949,29 +955,31 @@ class DipDupConfig:
     @classmethod
     def load(
         cls,
-        filenames: List[str],
+        paths: List[str],
+        environment: bool = True,
     ) -> 'DipDupConfig':
 
         current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
         config_environment: Dict[str, str] = {}
-        for filename in filenames:
-            filename = os.path.join(current_workdir, filename)
+        for path in paths:
+            path = os.path.join(current_workdir, path)
 
-            _logger.info('Loading config from %s', filename)
-            with open(filename) as file:
+            _logger.debug('Loading config from %s', path)
+            with open(path) as file:
                 raw_config = file.read()
 
-            _logger.debug('Substituting environment variables')
-            for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-                variable, default_value = match.group(1), match.group(2)
-                config_environment[variable] = default_value
-                value = env.get(variable)
-                if not default_value and not value:
-                    raise ConfigurationError(f'Environment variable `{variable}` is not set')
-                placeholder = '${' + variable + ':-' + default_value + '}'
-                raw_config = raw_config.replace(placeholder, value or default_value)
+            if environment:
+                _logger.debug('Substituting environment variables')
+                for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
+                    variable, default_value = match.group(1), match.group(2)
+                    config_environment[variable] = default_value
+                    value = env.get(variable)
+                    if not default_value and not value:
+                        raise ConfigurationError(f'Environment variable `{variable}` is not set')
+                    placeholder = '${' + variable + ':-' + default_value + '}'
+                    raw_config = raw_config.replace(placeholder, value or default_value)
 
             json_config = {
                 **json_config,
@@ -981,10 +989,21 @@ class DipDupConfig:
         try:
             config = cls(**json_config)
             config.environment = config_environment
-            config.filenames = filenames
+            config.paths = paths
         except Exception as e:
             raise ConfigurationError(str(e)) from e
         return config
+
+    def dump(self) -> str:
+        config_json = json.dumps(self, default=pydantic_encoder)
+        return cast(
+            str,
+            yaml.dump(
+                yaml.safe_load(config_json),
+                indent=2,
+                default_flow_style=False,
+            ),
+        )
 
     def get_contract(self, name: str) -> ContractConfig:
         try:
@@ -1248,13 +1267,13 @@ class LoggingConfig:
     @classmethod
     def load(
         cls,
-        filename: str,
+        path: str,
     ) -> 'LoggingConfig':
 
         current_workdir = os.path.join(os.getcwd())
-        filename = os.path.join(current_workdir, filename)
+        path = os.path.join(current_workdir, path)
 
-        with open(filename) as file:
+        with open(path) as file:
             return cls(config=YAML().load(file.read()))
 
     def apply(self):

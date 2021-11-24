@@ -1,23 +1,26 @@
 # Changelog
 
-## 4.0.0 - [unreleased]
+Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
+
+## 4.0.0-rc1 - [unreleased]
 
 ### Fixed
 
-* tzkt: Realtime connection watchdog is no longer triggered after TzKT outtage.
-* tzkt: Adding many indexes in runtime no longer leads to sending useless subscription requests.
-* tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `batch_size` tunable.
-* index: Fixed head index callback invocation.
-* coinbase: Candles caching disabled.
-
-### Changed
-
-* cli: `run --oneshot` option is deprecated and will be removed in the next major release. Oneshot mode applied automatically when `first_level` and `last_level` fields are set in index config.  
+* cli: Fixed crashes and output inconsistency when piping DipDup commands.
 * codegen: Fixed missing imports in handlers generated during init.
+* coinbase: Caching is disabled for method `get_candles` as it's known to cause data inconsistency.
+* index: Fixed invocation of head index callback.
+* tzkt: Fixed resubscribing when realtime connectivity is lost for a long time.
+* tzkt: Fixed sending useless subscription requests when adding indexes in runtime.
+* tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `HTTPConfig.batch_size` field.
+
+### Deprecated
+
+* cli: `run --oneshot` option is deprecated and will be removed in the next major release. The oneshot mode applies automatically when `last_level` field is set in index config.
 
 ### Added
 
-* cli: New flag `dipdip run --early-realtime` to establish a real-time connection before all indexes are synchronized.
+* cli: New flag `dipdip run --early-realtime` to establish a realtime connection before all indexes are synchronized.
 * cli: New flag `dipdup run --skip-hasura` to skip updating Hasura metadata.
 * cli: New command `dipdup status` to print the current status of indexes from database
 * cli: New command `dipdup config` to print config after resolving all links and variables
@@ -45,7 +48,7 @@
 
 ### Fixed
 
-* Fixed loss of real-time subscriptions occurred after TzKT API outage.
+* Fixed loss of realtime subscriptions occurred after TzKT API outage.
 * Fixed updating schema hash in `schema approve` command.
 * Fixed possible crash occurred while Hasura is not ready.
 
@@ -86,7 +89,7 @@
 
 * Fixed unexpected reindexing caused by the bug in processing zero- and single-level rollbacks.
 * Removed unnecessary file IO calls that could cause `PermissionError` exception in Docker environments.
-* Fixed possible violation of block-level atomicity during real-time indexing.
+* Fixed possible violation of block-level atomicity during realtime indexing.
 
 ### Changes
 
