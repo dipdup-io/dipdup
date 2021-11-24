@@ -42,8 +42,8 @@ advanced:
 
 * cli: Fixed crashes and output inconsistency when piping DipDup commands.
 * codegen: Fixed missing imports in handlers generated during init.
-* http: Fixed increasing sleep time between failed request attempts.
 * coinbase: Fixed possible data inconsistency caused by caching enabled for method `get_candles`.
+* http: Fixed increasing sleep time between failed request attempts.
 * index: Fixed invocation of head index callback.
 * index: Fixed `CallbackError` raised instead of `ReindexingRequiredError` in some cases.
 * tzkt: Fixed resubscribing when realtime connectivity is lost for a long time.
