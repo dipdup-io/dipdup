@@ -389,7 +389,12 @@ async def schema_wipe(ctx, immune: bool):
     async with tortoise_wrapper(url, models):
         conn = get_connection(None)
         if isinstance(config.database, PostgresDatabaseConfig):
-            await wipe_schema(conn, config.database.schema_name, config.database.immune_tables)
+            await wipe_schema(
+                conn=conn,
+                name=config.database.schema_name,
+                # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
+                immune_tables=config.database.immune_tables if not immune else (),
+            )
         else:
             await Tortoise._drop_databases()
 

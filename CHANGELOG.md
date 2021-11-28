@@ -40,6 +40,7 @@ advanced:
 ### Fixed
 
 * cli: Fixed crashes and output inconsistency when piping DipDup commands.
+* cli: Fixed `schema wipe --immune` flag being ignored.
 * codegen: Fixed missing imports in handlers generated during init.
 * coinbase: Fixed possible data inconsistency caused by caching enabled for method `get_candles`.
 * http: Fixed increasing sleep time between failed request attempts.
