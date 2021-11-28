@@ -1,4 +1,5 @@
-from os.path import dirname, join
+from os.path import dirname
+from os.path import join
 
 import pyperf  # type: ignore
 

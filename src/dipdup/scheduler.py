@@ -10,7 +10,8 @@ from apscheduler.triggers.interval import IntervalTrigger  # type: ignore
 from pytz import utc
 
 from dipdup.config import JobConfig
-from dipdup.context import DipDupContext, HookContext
+from dipdup.context import DipDupContext
+from dipdup.context import HookContext
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction

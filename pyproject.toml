@@ -55,6 +55,7 @@ pytest-cov = "^3.0.0"
 testcontainers = "^3.4.1"
 types-pytz = "^2021.1.2"
 types-tabulate = "^0.8.2"
+pprofile = "^2.1.0"
 
 [tool.poetry.extras]
 pytezos = ["pytezos"]
@@ -64,6 +65,7 @@ dipdup = 'dipdup.cli:cli'
 
 [tool.isort]
 line_length = 140
+force_single_line = true
 
 [tool.black]
 line-length = 140

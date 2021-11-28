@@ -1,37 +1,62 @@
 import asyncio
-import json
 import logging
 import os
 import signal
+import subprocess
+from contextlib import suppress
 from dataclasses import dataclass
 from functools import wraps
 from os import listdir
-from os.path import dirname, exists, join
-from typing import List, cast
+from os.path import dirname
+from os.path import exists
+from os.path import join
+from typing import List
+from typing import cast
 
 import asyncclick as click
 import sentry_sdk
 from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
-from pydantic.json import pydantic_encoder
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from tabulate import tabulate
 from tortoise import Tortoise
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
-from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_version_mapping
-from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
-from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
+from dipdup import __spec_version__
+from dipdup import __version__
+from dipdup import spec_reindex_mapping
+from dipdup import spec_version_mapping
+from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE
+from dipdup.codegen import DEFAULT_DOCKER_IMAGE
+from dipdup.codegen import DEFAULT_DOCKER_TAG
+from dipdup.codegen import DipDupCodeGenerator
+from dipdup.config import DipDupConfig
+from dipdup.config import LoggingConfig
+from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDupError, InitializationRequiredError, MigrationRequiredError
+from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import DeprecatedHandlerError
+from dipdup.exceptions import DipDupError
+from dipdup.exceptions import InitializationRequiredError
+from dipdup.exceptions import MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
+from dipdup.migrations import DipDupMigrationManager
+from dipdup.migrations import deprecated_handlers
+from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
-from dipdup.utils.database import get_schema_hash, set_decimal_context, tortoise_wrapper, wipe_schema
+from dipdup.utils.database import set_decimal_context
+from dipdup.utils.database import tortoise_wrapper
+from dipdup.utils.database import wipe_schema
 
 _logger = logging.getLogger('dipdup.cli')
+
+
+def echo(message: str) -> None:
+    with suppress(BrokenPipeError):
+        click.echo(message)
 
 
 @dataclass
@@ -99,7 +124,7 @@ def init_sentry(config: DipDupConfig) -> None:
 @click.pass_context
 @cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
-    # NOTE: Config from cwd, fallback to builtin
+    # NOTE: Search in current workdir, fallback to builtin configs
     try:
         path = join(os.getcwd(), logging_config)
         _logging_config = LoggingConfig.load(path)
@@ -107,6 +132,10 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         path = join(dirname(__file__), 'configs', logging_config)
         _logging_config = LoggingConfig.load(path)
     _logging_config.apply()
+
+    # NOTE: Nothing useful there
+    if 'tortoise' not in _logging_config.config['loggers']:
+        logging.getLogger('tortoise').setLevel(logging.WARNING)
 
     # NOTE: Apply env files before loading config
     for env_path in env_file:
@@ -147,7 +176,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
 @click.option('--skip-hasura', is_flag=True, help='Do not update Hasura metadata')
 @click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
-@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all updates instead of individual contracts')
+@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing')
 @click.pass_context
 @cli_wrapper
 async def run(
@@ -194,9 +223,6 @@ async def migrate(ctx):
     await migrations.migrate()
 
 
-from dipdup.models import Index
-
-
 @cli.command(help='Show current status of indexes in database')
 @click.pass_context
 @cli_wrapper
@@ -204,41 +230,69 @@ async def status(ctx):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
+
+    table = [('name', 'status', 'level')]
     async with tortoise_wrapper(url, models):
-        # TODO: Formatting
-        print('_' * 80)
-        async for index in Index.all():
-            print(f'{index.name}\t{index.status.value}\t{index.level}')
-        print('_' * 80)
+        async for index in Index.filter().order_by('name'):
+            table.append((index.name, index.status.value, index.level))
+
+    echo(tabulate(table, tablefmt='plain'))
 
 
-# TODO: Docs, `--unsafe` argument to resolve env variables, default to not doing it
-@cli.command(help='Show config')
+@cli.group(help='Commands to manage DipDup configuration')
 @click.pass_context
 @cli_wrapper
 async def config(ctx):
-    import ruamel.yaml as yaml
-
-    config: DipDupConfig = ctx.obj.config
-    config_json = json.dumps(config, default=pydantic_encoder)
-    config_yaml = yaml.dump(yaml.safe_load(config_json), indent=2, default_flow_style=False)
-    print('_' * 80)
-    print(config_yaml)
-    print('_' * 80)
+    ...
 
 
-# TODO: "cache clear"?
-@cli.command(help='Clear development request cache')
+@config.command(name='export', help='Dump DipDup configuration')
+@click.option('--unsafe', is_flag=True, help='')
 @click.pass_context
 @cli_wrapper
-async def clear_cache(ctx):
+async def config_export(ctx, unsafe: bool) -> None:
+    config_yaml = DipDupConfig.load(
+        paths=ctx.obj.config.paths,
+        environment=unsafe,
+    ).dump()
+    echo(config_yaml)
+
+
+@cli.group(help='Manage datasource caches')
+@click.pass_context
+@cli_wrapper
+async def cache(ctx):
+    ...
+
+
+@cache.command(name='clear', help='Clear datasource request caches')
+@click.pass_context
+@cli_wrapper
+async def cache_clear(ctx) -> None:
+    FileCache('dipdup', flag='cs').clear()
+
+
+@cache.command(name='show', help='Show datasource request caches size information')
+@click.pass_context
+@cli_wrapper
+async def cache_show(ctx) -> None:
+    cache = FileCache('dipdup', flag='cs')
+    size = subprocess.check_output(['du', '-sh', cache.cache_dir]).split()[0].decode('utf-8')
+    echo(f'{cache.cache_dir}: {len(cache)} items, {size}')
+
+
+@cli.command(help='Clear datasource request caches (deprecated `cache clear` alias)')
+@click.pass_context
+@cli_wrapper
+async def clear_cache(ctx) -> None:
+    _logger.warning('`clear-cache` command is deprecated, use `cache clear` instead')
     FileCache('dipdup', flag='cs').clear()
 
 
 @cli.group(help='Docker integration related commands')
 @click.pass_context
 @cli_wrapper
-async def docker(ctx):
+async def docker(ctx) -> None:
     ...
 
 
@@ -287,13 +341,11 @@ async def schema(ctx):
     ...
 
 
-from dipdup.enums import ReindexingReason
-
-
 @schema.command(name='approve', help='Continue indexing with the same schema after crashing with `ReindexingRequiredError`')
+@click.option('--hashes', is_flag=True, help='Recalculate hashes of schema and index configs saved in database')
 @click.pass_context
 @cli_wrapper
-async def schema_approve(ctx):
+async def schema_approve(ctx, hashes: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -303,10 +355,11 @@ async def schema_approve(ctx):
         if not schema.reindex:
             return
 
-        if schema.reindex == ReindexingReason.SCHEMA_HASH_MISMATCH:
-            conn = get_connection(None)
-            schema.hash = get_schema_hash(conn)
-        schema.reindex = None
+        schema.reindex = None  # type: ignore
+        if hashes:
+            # FIXME: Non-nullable fields
+            schema.hash = ''  # type: ignore
+            await Index.filter().update(config_hash='')
         await schema.save()
 
 
@@ -334,10 +387,10 @@ async def schema_export(ctx):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
+
     async with tortoise_wrapper(url, models):
         conn = get_connection(None)
-        print('_' * 80)
-        print(get_schema_sql(conn, False))
+        output = get_schema_sql(conn, False) + '\n'
         for file in iter_files(join(config.package_path, 'sql', 'on_reindex')):
-            print(file.read())
-        print('_' * 80)
+            output += file.read() + '\n'
+        echo(output)

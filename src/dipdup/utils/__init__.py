@@ -6,14 +6,29 @@ import time
 import types
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from functools import partial, reduce
+from functools import partial
+from functools import reduce
 from logging import Logger
-from os import listdir, makedirs
-from os.path import dirname, exists, getsize, join
-from typing import Any, Callable, DefaultDict, Dict, Iterator, List, Optional, Sequence, TextIO, TypeVar
+from os import listdir
+from os import makedirs
+from os.path import dirname
+from os.path import exists
+from os.path import getsize
+from os.path import join
+from typing import Any
+from typing import Callable
+from typing import DefaultDict
+from typing import Dict
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import TextIO
+from typing import TypeVar
 
 import humps  # type: ignore
-from genericpath import isdir, isfile
+from genericpath import isdir
+from genericpath import isfile
 
 from dipdup.exceptions import HandlerImportError
 

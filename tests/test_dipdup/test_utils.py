@@ -3,8 +3,10 @@ from unittest import IsolatedAsyncioTestCase
 
 from tortoise import Tortoise
 
-from dipdup.models import Index, IndexType
-from dipdup.utils.database import in_global_transaction, tortoise_wrapper
+from dipdup.models import Index
+from dipdup.models import IndexType
+from dipdup.utils.database import in_global_transaction
+from dipdup.utils.database import tortoise_wrapper
 
 
 class UtilsTest(IsolatedAsyncioTestCase):

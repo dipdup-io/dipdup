@@ -1,11 +1,19 @@
 import logging
 from abc import abstractmethod
-from typing import Awaitable, Callable, Optional, Set, Tuple
+from typing import Awaitable
+from typing import Callable
+from typing import Optional
+from typing import Set
+from typing import Tuple
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.subscription import HeadSubscription, Subscription, SubscriptionManager
+from dipdup.datasources.subscription import HeadSubscription
+from dipdup.datasources.subscription import Subscription
+from dipdup.datasources.subscription import SubscriptionManager
 from dipdup.http import HTTPGateway
-from dipdup.models import BigMapData, HeadBlockData, OperationData
+from dipdup.models import BigMapData
+from dipdup.models import HeadBlockData
+from dipdup.models import OperationData
 from dipdup.utils import FormattedLogger
 
 _logger = logging.getLogger('dipdup.datasource')

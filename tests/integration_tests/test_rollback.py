@@ -1,10 +1,16 @@
 import asyncio
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack
+from contextlib import contextmanager
 from datetime import datetime
-from os.path import dirname, join
-from typing import Generator, Tuple
-from unittest import IsolatedAsyncioTestCase, skip
-from unittest.mock import AsyncMock, Mock, patch
+from os.path import dirname
+from os.path import join
+from typing import Generator
+from typing import Tuple
+from unittest import IsolatedAsyncioTestCase
+from unittest import skip
+from unittest.mock import AsyncMock
+from unittest.mock import Mock
+from unittest.mock import patch
 
 from dipdup.config import DipDupConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource

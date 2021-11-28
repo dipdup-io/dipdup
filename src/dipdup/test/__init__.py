@@ -1,13 +1,19 @@
 import logging
 from collections import deque
-from contextlib import AsyncExitStack, contextmanager
-from typing import AsyncGenerator, Deque, Iterator, Tuple
+from contextlib import AsyncExitStack
+from contextlib import contextmanager
+from typing import AsyncGenerator
+from typing import Deque
+from typing import Iterator
+from typing import Tuple
 from unittest.mock import patch
 
-from dipdup.config import DipDupConfig, SqliteDatabaseConfig
+from dipdup.config import DipDupConfig
+from dipdup.config import SqliteDatabaseConfig
 from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.dipdup import DipDup
-from dipdup.index import OperationIndex, OperationSubgroup
+from dipdup.index import OperationIndex
+from dipdup.index import OperationSubgroup
 from dipdup.models import OperationData
 
 logging.basicConfig(level=logging.ERROR)
