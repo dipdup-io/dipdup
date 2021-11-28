@@ -1,25 +1,23 @@
-  version: 1
-  disable_existing_loggers: false
-  formatters:
-    brief:
-      format: "%(levelname)-8s %(name)-20s %(message)s"
-  handlers:
-    console:
-      level: DEBUG
-      formatter: brief
-      class: logging.StreamHandler
-      stream : ext://sys.stdout
-  loggers:
-    dipdup:
-      level: DEBUG
-
-    SignalRCoreClient:
-      formatter: brief
-    aiosqlite:
-      level: DEBUG
-    db_client:
-      level: DEBUG
-  root:
+version: 1
+disable_existing_loggers: false
+formatters:
+  brief:
+    format: "%(levelname)-8s %(name)-20s %(message)s"
+handlers:
+  console:
     level: DEBUG
-    handlers:
-      - console
+    formatter: brief
+    class: logging.StreamHandler
+    stream: ext://sys.stdout
+loggers:
+  dipdup:
+    level: DEBUG
+
+  aiosqlite:
+    level: DEBUG
+  db_client:
+    level: DEBUG
+root:
+  level: DEBUG
+  handlers:
+    - console
