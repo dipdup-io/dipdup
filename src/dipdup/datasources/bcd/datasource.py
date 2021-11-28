@@ -33,9 +33,6 @@ class BcdDatasource(Datasource):
     async def run(self) -> None:
         pass
 
-    async def resync(self) -> None:
-        pass
-
     async def get_tokens(self, address: str) -> List[Dict[str, Any]]:
         tokens, offset = [], 0
         while True:
