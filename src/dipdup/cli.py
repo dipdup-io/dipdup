@@ -10,6 +10,7 @@ from os import listdir
 from os.path import dirname
 from os.path import exists
 from os.path import join
+import sys
 from typing import List
 from typing import cast
 
@@ -341,8 +342,7 @@ async def schema(ctx):
     ...
 
 
-@schema.command(name='approve', help='Continue indexing with the same schema after crashing with `ReindexingRequiredError`')
-@click.option('--hashes', is_flag=True, help='Recalculate hashes of schema and index configs saved in database')
+@schema.command(name='approve', help='Continue to use existing schema after reindexing was triggered')
 @click.pass_context
 @cli_wrapper
 async def schema_approve(ctx, hashes: bool):
@@ -350,17 +350,19 @@ async def schema_approve(ctx, hashes: bool):
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    async with tortoise_wrapper(url, models):
-        schema = await Schema.filter().get()
-        if not schema.reindex:
-            return
+    _logger.info('Approving schema `%s`', url)
 
-        schema.reindex = None  # type: ignore
-        if hashes:
-            # FIXME: Non-nullable fields
-            schema.hash = ''  # type: ignore
-            await Index.filter().update(config_hash='')
-        await schema.save()
+    async with tortoise_wrapper(url, models):
+        # FIXME: Non-nullable fields
+        await Schema.filter().update(
+            reindex=None,
+            hash='',
+        )
+        await Index.filter().update(
+            config_hash='',
+        )
+
+    _logger.info('Schema approved')
 
 
 @schema.command(name='wipe', help='Drop all database tables, functions and views')
@@ -372,12 +374,27 @@ async def schema_wipe(ctx, immune: bool):
     url = config.database.connection_string
     models = f'{config.package}.models'
 
+
+    try:
+        assert sys.__stdin__.isatty()
+        click.confirm(f'You\'re about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?', abort=True)
+    except AssertionError:
+        click.echo('Not in a TTY, skipping confirmation')
+    # FIXME: Can't catch asyncio.CancelledError here
+    except click.Abort:
+        click.echo('Aborted')
+        return
+
+    _logger.info('Wiping schema `%s`', url)
+
     async with tortoise_wrapper(url, models):
         conn = get_connection(None)
         if isinstance(config.database, PostgresDatabaseConfig):
             await wipe_schema(conn, config.database.schema_name, config.database.immune_tables)
         else:
             await Tortoise._drop_databases()
+
+    _logger.info('Schema wiped')
 
 
 @schema.command(name='export', help='Print schema SQL including `on_reindex` hook')

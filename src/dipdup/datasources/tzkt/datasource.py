@@ -207,6 +207,7 @@ class OperationFetcher:
 
 class BigMapFetcher:
     """Fetches bigmap diffs from REST API, merges them and yields by level."""
+
     def __init__(
         self,
         datasource: 'TzktDatasource',

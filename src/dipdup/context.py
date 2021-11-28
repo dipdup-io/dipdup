@@ -118,6 +118,10 @@ class DipDupContext:
         self.logger.warning('Reindexing initialized, reason: %s, action: %s', reason.value, action.value)
 
         if action == ReindexingAction.ignore:
+            if reason == ReindexingReasonC.schema_modified:
+                await Schema.filter().update(hash='')
+            elif reason == ReindexingReasonC.config_modified:
+                await Index.filter().update(config_hash='')
             return
 
         elif action == ReindexingAction.exception:
