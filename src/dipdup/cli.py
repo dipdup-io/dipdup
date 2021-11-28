@@ -3,6 +3,7 @@ import logging
 import os
 import signal
 import subprocess
+import sys
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import wraps
@@ -10,7 +11,6 @@ from os import listdir
 from os.path import dirname
 from os.path import exists
 from os.path import join
-import sys
 from typing import List
 from typing import cast
 
@@ -373,7 +373,6 @@ async def schema_wipe(ctx, immune: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
-
 
     try:
         assert sys.__stdin__.isatty()
