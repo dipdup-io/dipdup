@@ -7,6 +7,7 @@ from apscheduler.jobstores.memory import MemoryJobStore  # type: ignore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
 from apscheduler.triggers.cron import CronTrigger  # type: ignore
 from apscheduler.triggers.interval import IntervalTrigger  # type: ignore
+from apscheduler.util import undefined  # type: ignore
 from pytz import utc
 
 from dipdup.config import JobConfig
@@ -59,9 +60,9 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConf
         fmt=job_config.name + ': {}',
     )
     if job_config.crontab:
-        trigger, next_run_time = CronTrigger.from_crontab(job_config.crontab), None
+        trigger, next_run_time = CronTrigger.from_crontab(job_config.crontab), undefined
     elif job_config.interval:
-        trigger, next_run_time = IntervalTrigger(seconds=job_config.interval), None
+        trigger, next_run_time = IntervalTrigger(seconds=job_config.interval), undefined
     elif job_config.daemon:
         trigger, next_run_time = None, datetime.now()
     else:
