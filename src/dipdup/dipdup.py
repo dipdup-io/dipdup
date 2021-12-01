@@ -542,7 +542,7 @@ class DipDup:
             finally:
                 self._scheduler.shutdown()
 
-        def _hook(event) -> None:
+        def _error_hook(event) -> None:
             nonlocal job_failed, exception
             exception = event.exception
             job_failed.set()
@@ -550,14 +550,16 @@ class DipDup:
         async def _watchdog() -> None:
             nonlocal job_failed
             await job_failed.wait()
-            raise exception  # type: ignore
+            if not isinstance(exception, Exception):
+                raise RuntimeError
+            raise exception
 
         async def _event_wrapper():
             self._logger.info('Waiting for an event to start scheduler')
             await event.wait()
 
             self._logger.info('Starting scheduler')
-            self._scheduler.add_listener(_hook, EVENT_JOB_ERROR)
+            self._scheduler.add_listener(_error_hook, EVENT_JOB_ERROR)
             await stack.enter_async_context(_context())
             tasks.add(create_task(_watchdog()))
 
