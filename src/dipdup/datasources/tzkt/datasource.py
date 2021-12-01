@@ -55,7 +55,7 @@ TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 
 
 def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationData, ...]:
-    """Merge operations from multiple endpoints"""
+    """Merge and sort operations fetched from multiple endpoints"""
     return tuple(
         sorted(
             tuple(({op.id: op for op in operations}).values()),
@@ -65,9 +65,7 @@ def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationDa
 
 
 class OperationFetcher:
-    """Fetches and merges history of operations from multiple requests (channels) tracking their states independently.
-    Created for each index while synchronizing via REST.
-    """
+    """Fetches operations from multiple REST API endpoints, merges them and yields by level. Offet of every endpoint is tracked separately."""
 
     def __init__(
         self,
@@ -208,6 +206,8 @@ class OperationFetcher:
 
 
 class BigMapFetcher:
+    """Fetches bigmap diffs from REST API, merges them and yields by level."""
+
     def __init__(
         self,
         datasource: 'TzktDatasource',
@@ -269,14 +269,6 @@ class BigMapFetcher:
 
 
 class TzktDatasource(IndexDatasource):
-    """Bridge between REST/WS TzKT endpoints and DipDup.
-
-    * Converts raw API data to models
-    * Handles WS interaction to manage subscriptions
-    * Calls Fetchers to synchronize indexes to current head
-    * Calls Matchers to match received operation groups with indexes' pattern and spawn callbacks on match
-    """
-
     _default_http_config = HTTPConfig(
         cache=True,
         retry_sleep=1,
@@ -310,7 +302,7 @@ class TzktDatasource(IndexDatasource):
         return cast(int, self._http_config.batch_size)
 
     async def get_similar_contracts(self, address: str, strict: bool = False) -> Tuple[str, ...]:
-        """Get list of contracts sharing the same code hash or type hash"""
+        """Get addresses of contracts that share the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching %s contracts for address `%s`', entrypoint, address)
 
@@ -334,7 +326,7 @@ class TzktDatasource(IndexDatasource):
         return addresses
 
     async def get_originated_contracts(self, address: str) -> Tuple[str, ...]:
-        """Get contracts originated from given address"""
+        """Get addresses of contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s', address)
 
         size, offset = self.request_limit, 0
@@ -451,11 +443,8 @@ class TzktDatasource(IndexDatasource):
                 cache=cache,
             )
 
-        for op in raw_originations:
-            # NOTE: `type` field needs to be set manually when requesting operations by specific type
-            op['type'] = 'origination'
-
-        originations = tuple(self.convert_operation(op) for op in raw_originations)
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        originations = tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
         return originations
 
     async def get_transactions(
@@ -475,11 +464,9 @@ class TzktDatasource(IndexDatasource):
             },
             cache=cache,
         )
-        for op in raw_transactions:
-            # NOTE: type needs to be set manually when requesting operations by specific type
-            op['type'] = 'transaction'
 
-        transactions = tuple(self.convert_operation(op) for op in raw_transactions)
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        transactions = tuple(self.convert_operation(op, type_='transaction') for op in raw_transactions)
         return transactions
 
     async def get_big_maps(
@@ -591,7 +578,7 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Creating websocket client')
         self._ws_client = SignalRClient(
             url=f'{self._http._url}/v1/events',
-            # NOTE: 1 MB default is not enough
+            # NOTE: 1 MB default is not enough for big blocks
             max_size=DEFAULT_MAX_SIZE * 10,
         )
 
@@ -688,7 +675,7 @@ class TzktDatasource(IndexDatasource):
             await self.emit_head(block)
 
     @classmethod
-    def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
+    def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:
         """Convert raw operation message from WS/REST into dataclass"""
         storage = operation_json.get('storage')
         # FIXME: Plain storage, has issues in codegen: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
@@ -696,7 +683,7 @@ class TzktDatasource(IndexDatasource):
             storage = {}
 
         return OperationData(
-            type=operation_json['type'],
+            type=type_ or operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
             timestamp=cls._parse_timestamp(operation_json['timestamp']),

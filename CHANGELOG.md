@@ -6,17 +6,16 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### ⚠ Migration
 
-* Run `dipdup schema approve --hashes` command on every database you want to use with 4.0.0-rc1.
+* Run `dipdup schema approve` command on every database you want to use with 4.0.0-rc1. Running `dipdup migrate` is not necessary since `spec_version` hasn't changed in this release.
 
 ### Added
 
-* cli: Added `dipdup run --skip-hasura` flag to skip updating Hasura metadata.
-* cli: Added `dipdip run --early-realtime` flag to establish a realtime connection before all indexes are synchronized.
-* cli: Added`dipdup run --merge-subscriptions`  flag to subscribe to all operations/big map diffs during realtime indexing. This flag helps to avoid reaching TzKT subscriptions limit (currently 10000 channels). 
-* cli: Added `dipdup status` command to print the current status of indexes from database
-* cli: Added `dipdup config export [--unsafe]` command to print config after resolving all links and variables. Add `--unsafe` option to substitute environment variables.
-* cli: Added `dipdup cache show` command to get information about file caches used by DipDup.
-* cli: Added `dipdup schema approve --hashes` flag to recalculate schema and index config hashes on the next run.
+* cli: Added `run --skip-hasura` flag to skip updating Hasura metadata.
+* cli: Added `run --early-realtime` flag to establish a realtime connection before all indexes are synchronized.
+* cli: Added`run --merge-subscriptions`  flag to subscribe to all operations/big map diffs during realtime indexing. This flag helps to avoid reaching TzKT subscriptions limit (currently 10000 channels).
+* cli: Added `status` command to print the current status of indexes from the database.
+* cli: Added `config export [--unsafe]` command to print config after resolving all links and variables. Add `--unsafe` option to substitute environment variables.
+* cli: Added `cache show` command to get information about file caches used by DipDup.
 * config: Added `first_level` and `last_level` optional fields to `TemplateIndexConfig`. These limits are applied after ones from the template itself.
 * config: Added `daemon` boolean field to `JobConfig` to run a single callback indefinitely. Conflicts with `crontab` and `interval` fields.
 * config: Added `advanced` top-level section with following fields:
@@ -36,11 +35,12 @@ advanced:
   skip_hasura: False
 ```
 
-`ReindexingRequiredError` exception raised by default when reindexing is triggered. CLI flags have priority over self-titled `AdvancedConfig` fields.
+`ReindexingRequiredError` exception is raised by default when reindexing is triggered. CLI flags have priority over self-titled `AdvancedConfig` fields.
 
 ### Fixed
 
 * cli: Fixed crashes and output inconsistency when piping DipDup commands.
+* cli: Fixed `schema wipe --immune` flag being ignored.
 * codegen: Fixed missing imports in handlers generated during init.
 * coinbase: Fixed possible data inconsistency caused by caching enabled for method `get_candles`.
 * http: Fixed increasing sleep time between failed request attempts.
@@ -51,6 +51,12 @@ advanced:
 * tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `HTTPConfig.batch_size` field.
 * tzkt: Fixed lots of SignalR bugs by replacing `aiosignalrcore` library with `pysignalr`.
 
+## Changed
+
+* cli: `dipdup schema wipe` command now requires confirmation when invoked in the interactive shell.
+* cli: `dipdup schema approve` command now also causes a recalculation of schema and index config hashes.
+* index: DipDup will recalculate respective hashes if reindexing is triggered with `config_modified: ignore` or `schema_modified: ignore` in advanced config.
+
 ### Deprecated
 
 * cli: `run --oneshot` option is deprecated and will be removed in the next major release. The oneshot mode applies automatically when `last_level` field is set in the index config.
@@ -59,7 +65,7 @@ advanced:
 ### Performance
 
 * config: Configuration files are loaded 10x times faster.
-* index: Number of operations processed by matcher reduced by 40%-95% depending on number of addresses and entrypoints used.
+* index: Number of operations processed by matcher reduced by 40%-95% depending on the number of addresses and entrypoints used.
 * tzkt: Rate limit was increased. Try to set `connection_timeout` to a higher value if requests fail with `ConnectionTimeout` exception.
 * tzkt: Improved performance of response deserialization. 
 
