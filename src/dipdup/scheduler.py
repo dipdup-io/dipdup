@@ -47,10 +47,6 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConf
 
         async with AsyncExitStack() as stack:
             if hook_config.atomic:
-                # TODO: Detect earlier
-                if job_config.daemon:
-                    raise ConfigurationError('`atomic` and `daemon` are mutually exclusive')
-
                 await stack.enter_async_context(in_global_transaction())
 
             await job_ctx.fire_hook(hook_config.callback, *args, **kwargs)

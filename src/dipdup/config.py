@@ -1150,7 +1150,10 @@ class DipDupConfig:
 
         for job_config in self.jobs.values():
             if isinstance(job_config.hook, str):
-                job_config.hook = self.hooks[job_config.hook]
+                hook_config = self.get_hook(job_config.hook)
+                if job_config.daemon and hook_config.atomic:
+                    raise ConfigurationError('`HookConfig.atomic` and `JobConifg.daemon` flags are mutually exclusive')
+                job_config.hook = hook_config
 
     def _resolve_index_subscriptions(self, index_config: IndexConfigT) -> None:
         if isinstance(index_config, IndexTemplateConfig):
