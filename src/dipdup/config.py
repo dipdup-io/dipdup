@@ -913,7 +913,6 @@ class AdvancedConfig:
     reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
     oneshot: bool = False
     postpone_jobs: bool = False
-    skip_hasura: bool = False
     early_realtime: bool = False
     merge_subscriptions: bool = False
 
@@ -956,6 +955,10 @@ class DipDupConfig:
         self._links_resolved: Set[str] = set()
         self._imports_resolved: Set[str] = set()
         self._package_path: Optional[str] = None
+
+    @cached_property
+    def schema_name(self) -> str:
+        return self.database.schema_name if isinstance(self.database, PostgresDatabaseConfig) else 'public'
 
     @cached_property
     def package_path(self) -> str:

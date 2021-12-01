@@ -340,8 +340,7 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            if not advanced_config.skip_hasura:
-                await self._set_up_hasura(stack, tasks)
+            await self._set_up_hasura(stack, tasks)
 
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
@@ -390,12 +389,10 @@ class DipDup:
 
     async def _initialize_schema(self) -> None:
         self._logger.info('Initializing database schema')
-        # TODO: Incorrect for sqlite, fix on the next major release
-        schema_name = 'public'
+        schema_name = self._config.schema_name
         conn = get_connection(None)
 
         if isinstance(self._config.database, PostgresDatabaseConfig):
-            schema_name = self._config.database.schema_name
             await set_schema(conn, schema_name)
 
         # NOTE: Try to fetch existing schema

@@ -10,7 +10,6 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
-* cli: Added `run --skip-hasura` flag to skip updating Hasura metadata.
 * cli: Added `run --early-realtime` flag to establish a realtime connection before all indexes are synchronized.
 * cli: Added`run --merge-subscriptions`  flag to subscribe to all operations/big map diffs during realtime indexing. This flag helps to avoid reaching TzKT subscriptions limit (currently 10000 channels).
 * cli: Added `status` command to print the current status of indexes from the database.
@@ -32,7 +31,6 @@ advanced:
     rollback: ignore
     config_modified: exception
     schema_modified: wipe
-  skip_hasura: False
 ```
 
 `ReindexingRequiredError` exception is raised by default when reindexing is triggered. CLI flags have priority over self-titled `AdvancedConfig` fields.

@@ -119,13 +119,13 @@ class DipDupContext:
 
         if action == ReindexingAction.ignore:
             if reason == ReindexingReasonC.schema_modified:
-                await Schema.filter().update(hash='')
+                await Schema.filter(name=self.config.schema_name).update(hash='')
             elif reason == ReindexingReasonC.config_modified:
                 await Index.filter().update(config_hash='')
             return
 
         elif action == ReindexingAction.exception:
-            schema = await Schema.filter().get()
+            schema = await Schema.filter(name=self.config.schema_name).get()
             if not schema.reindex:
                 schema.reindex = reasonc_to_reason[reason]
                 await schema.save()

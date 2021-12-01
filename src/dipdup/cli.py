@@ -175,7 +175,6 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @cli.command(help='Run indexing')
 @click.option('--oneshot', is_flag=True, help='Synchronize indexes and exit without starting a real-time connection')
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
-@click.option('--skip-hasura', is_flag=True, help='Do not update Hasura metadata')
 @click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
 @click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing')
 @click.pass_context
@@ -184,7 +183,6 @@ async def run(
     ctx,
     oneshot: bool,
     postpone_jobs: bool,
-    skip_hasura: bool,
     early_realtime: bool,
     merge_subscriptions: bool,
 ) -> None:
@@ -193,7 +191,6 @@ async def run(
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     config.advanced.postpone_jobs |= postpone_jobs
-    config.advanced.skip_hasura |= skip_hasura
     config.advanced.early_realtime |= early_realtime
     config.advanced.merge_subscriptions |= merge_subscriptions
 
@@ -354,7 +351,7 @@ async def schema_approve(ctx, hashes: bool):
 
     async with tortoise_wrapper(url, models):
         # FIXME: Non-nullable fields
-        await Schema.filter().update(
+        await Schema.filter(name=config.schema_name).update(
             reindex=None,
             hash='',
         )
