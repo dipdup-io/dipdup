@@ -2,7 +2,7 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## 4.0.0-rc1 - [unreleased]
+## 4.0.0-rc1 - 2021-12-02
 
 ### ⚠ Migration
 
@@ -41,6 +41,7 @@ advanced:
 * cli: Fixed `schema wipe --immune` flag being ignored.
 * codegen: Fixed missing imports in handlers generated during init.
 * coinbase: Fixed possible data inconsistency caused by caching enabled for method `get_candles`.
+* hasura: Fixed unnecessary reconfiguration in restart.
 * http: Fixed increasing sleep time between failed request attempts.
 * index: Fixed invocation of head index callback.
 * index: Fixed `CallbackError` raised instead of `ReindexingRequiredError` in some cases.
