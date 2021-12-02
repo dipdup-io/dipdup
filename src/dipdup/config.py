@@ -913,7 +913,6 @@ class AdvancedConfig:
     reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
     oneshot: bool = False
     postpone_jobs: bool = False
-    skip_hasura: bool = False
     early_realtime: bool = False
     merge_subscriptions: bool = False
 
@@ -956,6 +955,10 @@ class DipDupConfig:
         self._links_resolved: Set[str] = set()
         self._imports_resolved: Set[str] = set()
         self._package_path: Optional[str] = None
+
+    @cached_property
+    def schema_name(self) -> str:
+        return self.database.schema_name if isinstance(self.database, PostgresDatabaseConfig) else 'public'
 
     @cached_property
     def package_path(self) -> str:
@@ -1150,7 +1153,10 @@ class DipDupConfig:
 
         for job_config in self.jobs.values():
             if isinstance(job_config.hook, str):
-                job_config.hook = self.hooks[job_config.hook]
+                hook_config = self.get_hook(job_config.hook)
+                if job_config.daemon and hook_config.atomic:
+                    raise ConfigurationError('`HookConfig.atomic` and `JobConifg.daemon` flags are mutually exclusive')
+                job_config.hook = hook_config
 
     def _resolve_index_subscriptions(self, index_config: IndexConfigT) -> None:
         if isinstance(index_config, IndexTemplateConfig):

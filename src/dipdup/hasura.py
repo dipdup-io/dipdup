@@ -1,8 +1,11 @@
 import asyncio
+import hashlib
 import importlib
+import json
 import logging
 import re
 from contextlib import suppress
+from http import HTTPStatus
 from json import dumps as dump_json
 from os.path import dirname
 from os.path import join
@@ -27,6 +30,7 @@ from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.http import HTTPGateway
+from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 from dipdup.utils.database import iter_models
@@ -80,6 +84,7 @@ class HasuraError(RuntimeError):
 class HasuraGateway(HTTPGateway):
     _default_http_config = HTTPConfig(
         cache=False,
+        # NOTE: Does not apply to initial healthcheck
         retry_count=3,
         retry_sleep=1,
     )
@@ -105,6 +110,16 @@ class HasuraGateway(HTTPGateway):
 
         self._logger.info('Configuring Hasura')
         await self._healthcheck()
+
+        hasura_schema_name = f'hasura_{self._hasura_config.url}'
+        hasura_schema, _ = await Schema.get_or_create(name=hasura_schema_name, defaults={'hash': ''})
+        metadata = await self._fetch_metadata()
+        metadata_hash = self._hash_metadata(metadata)
+
+        if hasura_schema.hash == metadata_hash:
+            self._logger.info('Metadata is up to date, no action required')
+            return
+
         await self._reset_metadata()
         metadata = await self._fetch_metadata()
 
@@ -137,6 +152,11 @@ class HasuraGateway(HTTPGateway):
 
         await self._replace_metadata(metadata)
 
+        metadata = await self._fetch_metadata()
+        metadata_hash = self._hash_metadata(metadata)
+        hasura_schema.hash = metadata_hash  # type: ignore
+        await hasura_schema.save()
+
         self._logger.info('Hasura instance has been configured')
 
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
@@ -159,7 +179,7 @@ class HasuraGateway(HTTPGateway):
         for _ in range(timeout):
             with suppress(ClientConnectorError, ClientOSError, ServerDisconnectedError):
                 response = await self._http._session.get(f'{self._hasura_config.url}/healthz')
-                if response.status == 200:
+                if response.status == HTTPStatus.OK:
                     break
             await asyncio.sleep(1)
         else:
@@ -195,6 +215,9 @@ class HasuraGateway(HTTPGateway):
                 "args": {},
             },
         )
+
+    def _hash_metadata(self, metadata: Dict[str, Any]) -> str:
+        return hashlib.sha256(json.dumps(metadata).encode()).hexdigest()
 
     async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')

@@ -340,8 +340,7 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            if not advanced_config.skip_hasura:
-                await self._set_up_hasura(stack, tasks)
+            await self._set_up_hasura(stack, tasks)
 
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
@@ -390,12 +389,10 @@ class DipDup:
 
     async def _initialize_schema(self) -> None:
         self._logger.info('Initializing database schema')
-        # TODO: Incorrect for sqlite, fix on the next major release
-        schema_name = 'public'
+        schema_name = self._config.schema_name
         conn = get_connection(None)
 
         if isinstance(self._config.database, PostgresDatabaseConfig):
-            schema_name = self._config.database.schema_name
             await set_schema(conn, schema_name)
 
         # NOTE: Try to fetch existing schema
@@ -542,7 +539,7 @@ class DipDup:
             finally:
                 self._scheduler.shutdown()
 
-        def _hook(event) -> None:
+        def _error_hook(event) -> None:
             nonlocal job_failed, exception
             exception = event.exception
             job_failed.set()
@@ -550,14 +547,16 @@ class DipDup:
         async def _watchdog() -> None:
             nonlocal job_failed
             await job_failed.wait()
-            raise exception  # type: ignore
+            if not isinstance(exception, Exception):
+                raise RuntimeError
+            raise exception
 
         async def _event_wrapper():
             self._logger.info('Waiting for an event to start scheduler')
             await event.wait()
 
             self._logger.info('Starting scheduler')
-            self._scheduler.add_listener(_hook, EVENT_JOB_ERROR)
+            self._scheduler.add_listener(_error_hook, EVENT_JOB_ERROR)
             await stack.enter_async_context(_context())
             tasks.add(create_task(_watchdog()))
 
