@@ -359,7 +359,7 @@ class CallbackManager:
             start = time.perf_counter()
             yield
             diff = time.perf_counter() - start
-            level = self._logger.info if diff > 1 else self._logger.debug
+            level = self._logger.warning if diff > 1 else self._logger.debug
             level('`%s` %s callback executed in %s seconds', name, kind, diff)
         except Exception as e:
             if isinstance(e, ReindexingRequiredError):

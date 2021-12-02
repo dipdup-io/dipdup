@@ -2,7 +2,13 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## 4.0.0-rc1 - [unreleased]
+## 4.0.0-rc2 - [unreleased]
+
+### Fixed
+
+* index: Fixed incorrect log messages, remove duplicate ones.
+
+## 4.0.0-rc1 - 2021-12-02
 
 ### ⚠ Migration
 
