@@ -147,6 +147,8 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         load_dotenv(env_path, override=True)
 
     _config = DipDupConfig.load(config)
+    # NOTE: Imports will be loaded later if needed
+    _config.initialize(skip_imports=True)
     init_sentry(_config)
 
     try:
@@ -160,6 +162,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         reindex = spec_reindex_mapping[__spec_version__]
         raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
+    # NOTE: Ensure that no deprecated handlers left in project after migration to v3.0.0
     if ctx.invoked_subcommand != 'migrate':
         handlers_path = join(_config.package_path, 'handlers')
         if set(listdir(handlers_path)).intersection(set(deprecated_handlers)):
@@ -206,7 +209,6 @@ async def run(
 @cli_wrapper
 async def init(ctx, overwrite_types: bool):
     config: DipDupConfig = ctx.obj.config
-    config.initialize(skip_imports=True)
     dipdup = DipDup(config)
     await dipdup.init(overwrite_types)
 
@@ -216,7 +218,6 @@ async def init(ctx, overwrite_types: bool):
 @cli_wrapper
 async def migrate(ctx):
     config: DipDupConfig = ctx.obj.config
-    config.initialize(skip_imports=True)
     migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
     await migrations.migrate()
 

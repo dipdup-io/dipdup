@@ -6,6 +6,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
+* cli: Fixed config not being verified when invoking some commands
 * index: Fixed incorrect log messages, remove duplicate ones.
 
 ## 4.0.0-rc1 - 2021-12-02
