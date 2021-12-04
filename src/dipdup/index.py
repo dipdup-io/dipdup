@@ -110,7 +110,7 @@ def extract_operation_subgroups(
     if len(levels) > 1:
         raise RuntimeError
 
-    _logger.info(
+    _logger.debug(
         'Extracted %d subgroups (%d operations, %d filtered by %s entrypoints and %s addresses)',
         len(operation_subgroups),
         operation_index + 1,
@@ -276,10 +276,10 @@ class OperationIndex(Index):
         while self._queue:
             message = self._queue.popleft()
             if isinstance(message, SingleLevelRollback):
-                self._logger.info('Processing rollback realtime message, %s left in queue', len(self._queue))
+                self._logger.debug('Processing rollback realtime message, %s left in queue', len(self._queue))
                 await self._single_level_rollback(message.level)
             elif message:
-                self._logger.info('Processing operations realtime message, %s left in queue', len(self._queue))
+                self._logger.debug('Processing operations realtime message, %s left in queue', len(self._queue))
                 await self._process_level_operations(message)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
@@ -309,7 +309,7 @@ class OperationIndex(Index):
             migration_originations=migration_originations,
         )
 
-        async for _, operations in fetcher.fetch_operations_by_level():
+        async for level, operations in fetcher.fetch_operations_by_level():
             operation_subgroups = tuple(
                 extract_operation_subgroups(
                     operations,
@@ -318,7 +318,7 @@ class OperationIndex(Index):
                 )
             )
             if operation_subgroups:
-                self._logger.info('Processing operations from level %s to %s', first_level, last_level)
+                self._logger.info('Processing operations of level %s', level)
                 await self._process_level_operations(operation_subgroups)
 
         await self._exit_sync_state(last_level)
@@ -357,7 +357,7 @@ class OperationIndex(Index):
         elif level < self.state.level:
             raise RuntimeError(f'Level of operation batch must be higher than index state level: {level} < {self.state.level}')
 
-        self._logger.info('Processing %s operation subgroups of level %s', len(operation_subgroups), level)
+        self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), level)
         matched_handlers: Deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
             self._head_hashes.add(operation_subgroup.hash)
@@ -561,7 +561,7 @@ class BigMapIndex(Index):
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         if self._queue:
-            self._logger.info('Processing websocket queue')
+            self._logger.debug('Processing websocket queue')
         while self._queue:
             big_maps = self._queue.popleft()
             await self._process_level_big_maps(big_maps)
@@ -600,7 +600,7 @@ class BigMapIndex(Index):
         if level <= self.state.level:
             raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
 
-        self._logger.info('Processing %s big map diffs of level %s', len(big_maps), level)
+        self._logger.debug('Processing big map diffs of level %s', level)
         matched_handlers = await self._match_big_maps(big_maps)
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
@@ -711,14 +711,14 @@ class HeadIndex(Index):
     async def _process_queue(self) -> None:
         while self._queue:
             head = self._queue.popleft()
-            self._logger.info('Processing head realtime message, %s left in queue', len(self._queue))
+            self._logger.debug('Processing head realtime message, %s left in queue', len(self._queue))
 
             level = head.level
             if level <= self.state.level:
                 raise RuntimeError(f'Level of head must be higher than index state level: {level} <= {self.state.level}')
 
             async with in_global_transaction():
-                self._logger.info('Processing head info of level %s', level)
+                self._logger.debug('Processing head info of level %s', level)
                 for handler_config in self._config.handlers:
                     await self._call_matched_handler(handler_config, head)
                 await self.state.update_status(level=level)
