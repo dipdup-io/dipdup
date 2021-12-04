@@ -2,7 +2,13 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## 4.0.0-rc1 - [unreleased]
+## 4.0.0-rc2 - [unreleased]
+
+### Fixed
+
+* cli: Fixed config not being verified when invoking some commands
+
+## 4.0.0-rc1 - 2021-12-02
 
 ### ⚠ Migration
 
