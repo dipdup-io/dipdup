@@ -6,7 +6,8 @@
 	* [Installation](getting-started/installation.md)
 	* [Core concepts](getting-started/core-concepts.md)
 	* [Managing project](null)
-	* [Preparing inventory](null)
+	* [Preparing inventory](getting-started/preparing-inventory.md)
+	* [Templates and variables](getting-started/templates-and-variables.md)
 	* [Defining models](null)
 	* [Implementing handlers](null)
 
@@ -14,8 +15,11 @@
 	* [Hasura integration]()
 	* [GenQL](client-side/genql.md) 
 
-* [Deployment and operations](deployment/README.md) 
-	* [Docker](deployment/docker-compose.md) 
+* [Deployment and operations](deployment/README.md)
+	* [Building Docker images]()
+	* [Deploying with docker-compose](deployment/docker-compose.md) 
+	* [Monitoring]
+	* [Backups]
 
 * [Troubleshooting]()
 	* [Reporting issues]()
@@ -32,9 +36,6 @@
 	* [SQL hooks]()
 	* [TimescaleDB]()
     * [Improving performance](advanced-usage/improving-performance.md)
-	* [Logging]
-	* [Monitoring]
-	* [Backups]
 
 ### logging
 ### Synchronizing multiple handlers

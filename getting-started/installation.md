@@ -4,7 +4,7 @@
 #### Linux
 #### Python
 
-### Choosing a database backend
+### Choosing a database engine
 
 This table will help you chose a database backend that suits your needs.
 
