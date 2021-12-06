@@ -4,7 +4,6 @@ import json
 import logging.config
 import os
 import re
-import sys
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
@@ -56,7 +55,6 @@ ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 
-sys.path.append(os.getcwd())
 _logger = logging.getLogger('dipdup.config')
 
 
@@ -71,6 +69,7 @@ class SqliteDatabaseConfig:
     """
     SQLite connection config
 
+    :param kind: always 'sqlite'
     :param path: Path to .sqlite3 file, leave default for in-memory database
     """
 
@@ -86,6 +85,7 @@ class SqliteDatabaseConfig:
 class PostgresDatabaseConfig:
     """Postgres database connection config
 
+    :param kind: always 'postgres'
     :param host: Host
     :param port: Port
     :param user: User
@@ -93,6 +93,7 @@ class PostgresDatabaseConfig:
     :param database: Database name
     :param schema_name: Schema name
     :param immune_tables: List of tables to preserve during reindexing
+    :param connection_timeout: Connection timeout
     """
 
     kind: Literal['postgres']
@@ -121,6 +122,18 @@ class PostgresDatabaseConfig:
 
 @dataclass
 class HTTPConfig:
+    """Advanced configuration of HTTP client
+    
+    :param cache: Whether to cache responses
+    :param retry_count: Number of retries before giving up
+    :param retry_sleep: Sleep time between retries
+    :param retry_multiplier: Multiplier for sleep time between retries
+    :param ratelimit_rate: Number of requests per `ratelimit_period`
+    :param ratelimit_period: Time period for rate limiting
+    :param connection_limit: Number of simultaneous connections
+    :param connection_timeout: Connection timeout
+    :param batch_size: Number of items fetched in a single request 
+    """
     cache: Optional[bool] = None
     retry_count: Optional[int] = None
     retry_sleep: Optional[float] = None
@@ -186,7 +199,9 @@ class ContractConfig(NameMixin):
 class TzktDatasourceConfig(NameMixin):
     """TzKT datasource config
 
-    :param url: Base API url
+    :param kind: always 'tzkt'
+    :param url: Base API URL, e.g. https://api.tzkt.io/
+    :param http: HTTP client configuration
     """
 
     kind: Literal['tzkt']
@@ -212,7 +227,10 @@ class TzktDatasourceConfig(NameMixin):
 class BcdDatasourceConfig(NameMixin):
     """BCD datasource config
 
-    :param url: Base API url
+    :param kind: always 'bcd'
+    :param url: Base API URL
+    :param network: Network name, e.g. mainnet, hangzhounet, etc.
+    :param http: HTTP client configuration
     """
 
     kind: Literal['bcd']
@@ -233,6 +251,14 @@ class BcdDatasourceConfig(NameMixin):
 
 @dataclass
 class CoinbaseDatasourceConfig(NameMixin):
+    """Coinbase datasource config
+
+    :param kind: always 'coinbase'
+    :param api_key: API key
+    :param secret_key: API secret key
+    :param passphrase: API passphrase
+    :param http: HTTP client configuration
+    """
     kind: Literal['coinbase']
     api_key: Optional[str] = None
     secret_key: Optional[str] = None
@@ -394,8 +420,11 @@ class TransactionIdMixin:
 class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, ParameterTypeMixin, TransactionIdMixin):
     """Operation handler pattern config
 
-    :param destination: Alias of the contract to match
-    :param entrypoint: Contract entrypoint
+    :param type: always 'transaction'
+    :param source: Source contract alias to filter operations with
+    :param destination: Destination contract alias to filter operations with
+    :param entrypoint: Contract entrypoint to filter operations with
+    :param optional: Whether can operation be missing in operation group
     """
 
     type: Literal['transaction'] = 'transaction'
@@ -442,10 +471,15 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
 
 @dataclass
 class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
+    """Origination handler pattern config
+
+    :param source: Source contract alias to filter operations with
+    :param similar_to: Alias of contract having the same code/signature (depending on `strict` field)
+    """
+    type: Literal['origination'] = 'origination'
     source: Optional[Union[str, ContractConfig]] = None
     similar_to: Optional[Union[str, ContractConfig]] = None
     originated_contract: Optional[Union[str, ContractConfig]] = None
-    type: Literal['origination'] = 'origination'
     optional: bool = False
     strict: bool = False
 
