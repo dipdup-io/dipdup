@@ -6,8 +6,9 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
-* cli: Fixed config not being verified when invoking some commands
+* cli: Fixed config not being verified when invoking some commands.
 * index: Fixed incorrect log messages, remove duplicate ones.
+* tzkt: Fixed crash caused by empty list in storage.
 
 ## 4.0.0-rc1 - 2021-12-02
 

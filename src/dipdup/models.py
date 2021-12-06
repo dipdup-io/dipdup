@@ -142,6 +142,16 @@ class OperationData:
         try:
             return storage_type.parse_obj(self.storage)
         except ValidationError as e:
+            for error in e.errors():
+                if error['type'] == 'type_error.list':
+                    break
+            else:
+                raise InvalidDataError(storage_type, self.storage, self) from e
+
+        # FIXME: If we got here, storage is an empty list but TzKT returned None instead. No idea how does it work.
+        try:
+            return storage_type.parse_obj([])
+        except ValidationError as e:
             raise InvalidDataError(storage_type, self.storage, self) from e
 
 
