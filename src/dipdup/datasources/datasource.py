@@ -13,14 +13,14 @@ from dipdup.datasources.subscription import SubscriptionManager
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData
 from dipdup.models import HeadBlockData
-from dipdup.models import OperationData
+from dipdup.models import RawOperationData
 from dipdup.utils import FormattedLogger
 
 _logger = logging.getLogger('dipdup.datasource')
 
 
 HeadCallbackT = Callable[['IndexDatasource', HeadBlockData], Awaitable[None]]
-OperationsCallbackT = Callable[['IndexDatasource', Tuple[OperationData, ...]], Awaitable[None]]
+OperationsCallbackT = Callable[['IndexDatasource', Tuple[RawOperationData, ...]], Awaitable[None]]
 BigMapsCallbackT = Callable[['IndexDatasource', Tuple[BigMapData, ...]], Awaitable[None]]
 RollbackCallbackT = Callable[['IndexDatasource', int, int], Awaitable[None]]
 
@@ -72,7 +72,7 @@ class IndexDatasource(Datasource):
         for fn in self._on_head:
             await fn(self, head)
 
-    async def emit_operations(self, operations: Tuple[OperationData, ...]) -> None:
+    async def emit_operations(self, operations: Tuple[RawOperationData, ...]) -> None:
         for fn in self._on_operations:
             await fn(self, operations)
 

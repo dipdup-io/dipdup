@@ -36,6 +36,8 @@ from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.models import convert_operation_data
+from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import InvalidDataError
 from dipdup.exceptions import ReindexingReason
@@ -46,6 +48,7 @@ from dipdup.models import HeadBlockData
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Origination
+from dipdup.models import RawOperationData
 from dipdup.models import Transaction
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
@@ -292,7 +295,7 @@ class OperationIndex(Index):
         transaction_addresses = await self._get_transaction_addresses()
         origination_addresses = await self._get_origination_addresses()
 
-        migration_originations: Tuple[OperationData, ...] = ()
+        migration_originations: Tuple[RawOperationData, ...] = ()
         if self._config.types and OperationType.migration in self._config.types:
             migration_originations = tuple(await self._datasource.get_migration_originations(first_level))
             for op in migration_originations:
@@ -415,7 +418,7 @@ class OperationIndex(Index):
         for handler_config in self._config.handlers:
             operation_idx = 0
             pattern_idx = 0
-            matched_operations: Deque[Optional[OperationData]] = deque()
+            matched_operations: Deque[Optional[RawOperationData]] = deque()
 
             # TODO: Ensure complex cases work, e.g. when optional argument is followed by required one
             # TODO: Add None to matched_operations where applicable (pattern is optional and operation not found)
@@ -458,30 +461,31 @@ class OperationIndex(Index):
     async def _prepare_handler_args(
         self,
         handler_config: OperationHandlerConfig,
-        matched_operations: Deque[Optional[OperationData]],
+        matched_operations: Deque[Optional[RawOperationData]],
     ) -> Deque[OperationHandlerArgumentT]:
         """Prepare handler arguments, parse parameter and storage."""
         args: Deque[OperationHandlerArgumentT] = deque()
-        for pattern_config, operation in zip(handler_config.pattern, matched_operations):
-            if operation is None:
+        for pattern_config, operation_data in zip(handler_config.pattern, matched_operations):
+            if operation_data is None:
                 args.append(None)
 
             elif isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                 if not pattern_config.entrypoint:
-                    args.append(operation)
+                    args.append(convert_operation_data(operation_data, None))
                     continue
 
                 parameter_type = pattern_config.parameter_type_cls
                 try:
-                    parameter = parameter_type.parse_obj(operation.parameter_json) if parameter_type else None
+                    parameter = parameter_type.parse_obj(operation_data.parameter_json) if parameter_type else None
                 except ValidationError as e:
-                    raise InvalidDataError(parameter_type, operation.parameter_json, operation) from e
+                    raise InvalidDataError(parameter_type, operation_data.parameter_json, operation_data) from e
 
                 storage_type = pattern_config.storage_type_cls
-                storage = operation.get_merged_storage(storage_type)
+                converted_operation_data = convert_operation_data(operation_data, storage_type)
+                storage = deserialize_storage(converted_operation_data, storage_type)
 
                 transaction_context = Transaction(
-                    data=operation,
+                    data=converted_operation_data,
                     parameter=parameter,
                     storage=storage,
                 )
@@ -489,10 +493,11 @@ class OperationIndex(Index):
 
             elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                 storage_type = pattern_config.storage_type_cls
-                storage = operation.get_merged_storage(storage_type)
+                converted_operation_data = convert_operation_data(operation_data, storage_type)
+                storage = deserialize_storage(converted_operation_data, storage_type)
 
                 origination_context = Origination(
-                    data=operation,
+                    data=converted_operation_data,
                     storage=storage,
                 )
                 args.append(origination_context)

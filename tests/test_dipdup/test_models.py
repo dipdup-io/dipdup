@@ -1,9 +1,47 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import List
+from typing import Union
 from unittest import TestCase
 
+from pydantic import BaseModel
+from pydantic import Extra
+
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
-from dipdup.models import OperationData
+from dipdup.datasources.tzkt.models import convert_operation_data
+from dipdup.datasources.tzkt.models import deserialize_storage
+from dipdup.models import RawOperationData
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from tests.test_dipdup.models import ResourceCollectorStorage
+
+
+class SaleToken(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    token_for_sale_address: str
+    token_for_sale_token_id: str
+
+
+class Key(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    sale_seller: str
+    sale_token: SaleToken
+
+
+class BazaarMarketPlaceStorageItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    key: Key
+    value: str
+
+
+class BazaarMarketPlaceStorage(BaseModel):
+    __root__: Union[int, List[BazaarMarketPlaceStorageItem]]
 
 
 class ModelsTest(TestCase):
@@ -72,7 +110,7 @@ class ModelsTest(TestCase):
                 },
             },
         ]
-        operation_data = OperationData(
+        operation_data = RawOperationData(
             storage=storage,
             diffs=diffs,
             type='transaction',
@@ -88,7 +126,8 @@ class ModelsTest(TestCase):
             status='',
             has_internals=False,
         )
-        merged_storage = operation_data.get_merged_storage(NameRegistryStorage)
+        converted_operation_data = convert_operation_data(operation_data, NameRegistryStorage)
+        merged_storage = deserialize_storage(converted_operation_data, NameRegistryStorage)
         self.assertTrue('6672657175656e742d616e616c7973742e65646f' in merged_storage.store.records)
 
     def test_merged_storage_dict_of_dicts(self) -> None:
@@ -110,7 +149,7 @@ class ModelsTest(TestCase):
             'default_start_time': '1630678200',
             'tezotop_collection': 43543,
         }
-        operation_data = OperationData(
+        operation_data = RawOperationData(
             storage=storage,
             diffs=None,
             type='transaction',
@@ -126,4 +165,62 @@ class ModelsTest(TestCase):
             status='',
             has_internals=False,
         )
-        operation_data.get_merged_storage(ResourceCollectorStorage)
+        converted_operation_data = convert_operation_data(operation_data, ResourceCollectorStorage)
+        deserialize_storage(converted_operation_data, ResourceCollectorStorage)
+
+    def test_merged_storage_plain_list(self) -> None:
+        operation_data_json = {
+            "type": "transaction",
+            "id": 43285851,
+            "level": 1388947,
+            "timestamp": "2021-03-17T17:57:33Z",
+            "block": "BLWWxXoqEjZHsVZfKSh17TCvVa2ReJ6EMKNmpUbwsWJHNRSnC9J",
+            "hash": "opZ4CeGANGUW19i1HgxGh32qHaqL9FUg8GyqjYPcrgLjgBXbvDF",
+            "counter": 11744585,
+            "sender": {"address": "tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb"},
+            "gasLimit": 47114,
+            "gasUsed": 25646,
+            "storageLimit": 69,
+            "storageUsed": 69,
+            "bakerFee": 5061,
+            "storageFee": 17250,
+            "allocationFee": 0,
+            "target": {"address": "KT1E8Qzgx3C5AAE4iGuXvqSQjdd21LK2aXAk"},
+            "amount": 0,
+            "parameter": {
+                "entrypoint": "sell",
+                "value": {
+                    "sale_price": "1000000",
+                    "sale_token_param_tez": {
+                        "token_for_sale_address": "KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2",
+                        "token_for_sale_token_id": "0",
+                    },
+                },
+            },
+            "storage": 750,
+            "diffs": [
+                {
+                    "bigmap": 750,
+                    "path": "",
+                    "action": "add_key",
+                    "content": {
+                        "hash": "exprtkgkbpybdsS74tPVswD6MjtdMZksCF8NQjSPScrq1Qk1m9mGzR",
+                        "key": {
+                            "sale_token": {
+                                "token_for_sale_address": "KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2",
+                                "token_for_sale_token_id": "0",
+                            },
+                            "sale_seller": "tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb",
+                        },
+                        "value": "1000000",
+                    },
+                }
+            ],
+            "status": "applied",
+            "hasInternals": True,
+            "parameters": "{\"entrypoint\":\"sell\",\"value\":{\"prim\":\"Pair\",\"args\":[{\"int\":\"1000000\"},{\"prim\":\"Pair\",\"args\":[{\"string\":\"KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2\"},{\"int\":\"0\"}]}]}}",
+        }
+
+        operation_data = TzktDatasource.convert_operation(operation_data_json)
+        converted_operation_data = convert_operation_data(operation_data, BazaarMarketPlaceStorage)
+        deserialize_storage(converted_operation_data, BazaarMarketPlaceStorage)
