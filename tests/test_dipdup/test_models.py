@@ -1,54 +1,40 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List
-from typing import Union
+from typing import Any, Dict, List
 from unittest import TestCase
 
-from pydantic import BaseModel
-from pydantic import Extra
 
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
 from tests.test_dipdup.models import ResourceCollectorStorage
+from tests.test_dipdup.types import BazaarMarketPlaceStorage
 
 
-class SaleToken(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    token_for_sale_address: str
-    token_for_sale_token_id: str
-
-
-class Key(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    sale_seller: str
-    sale_token: SaleToken
-
-
-class BazaarMarketPlaceStorageItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    key: Key
-    value: str
-
-
-class BazaarMarketPlaceStorage(BaseModel):
-    __root__: Union[int, List[BazaarMarketPlaceStorageItem]]
-
-
-class BazaarMarketPlaceStorageTest(BaseModel):
-    __root__: BazaarMarketPlaceStorage
+def get_operation_data(storage: Any, diffs: List[Dict[str, Any]]) -> OperationData:
+    return OperationData(
+        storage=storage,
+        diffs=diffs,
+        type='transaction',
+        id=0,
+        level=0,
+        timestamp=datetime.now(),
+        hash='',
+        counter=0,
+        sender_address='',
+        target_address='',
+        initiator_address='',
+        amount=0,
+        status='',
+        has_internals=False,
+    )
 
 
 class ModelsTest(TestCase):
-    def test_merged_storage(self) -> None:
+    def test_deserialize_storage_dict(self) -> None:
+        # Arrange
         storage = {
             'store': {
                 'data': 15023,
@@ -113,26 +99,18 @@ class ModelsTest(TestCase):
                 },
             },
         ]
-        operation_data = OperationData(
-            storage=storage,
-            diffs=diffs,
-            type='transaction',
-            id=0,
-            level=0,
-            timestamp=datetime.now(),
-            hash='',
-            counter=0,
-            sender_address='',
-            target_address='',
-            initiator_address='',
-            amount=0,
-            status='',
-            has_internals=False,
-        )
-        merged_storage = deserialize_storage(operation_data, NameRegistryStorage)
-        self.assertTrue('6672657175656e742d616e616c7973742e65646f' in merged_storage.store.records)
+        operation_data = get_operation_data(storage, diffs)
 
-    def test_merged_storage_dict_of_dicts(self) -> None:
+        # Act
+        storage_obj = deserialize_storage(operation_data, NameRegistryStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, NameRegistryStorage)
+        self.assertIsInstance(storage_obj.store.records, dict)
+        self.assertIn('6672657175656e742d616e616c7973742e65646f', storage_obj.store.records)
+
+    def test_deserialize_storage_nested_dicts(self) -> None:
+        # Arrange
         storage = {
             'paused': False,
             'managers': ['tz1VPZyh4ZHjDDpgvznqQQXUCLcV7g91WGMz'],
@@ -151,77 +129,43 @@ class ModelsTest(TestCase):
             'default_start_time': '1630678200',
             'tezotop_collection': 43543,
         }
-        operation_data = OperationData(
-            storage=storage,
-            diffs=None,
-            type='transaction',
-            id=0,
-            level=0,
-            timestamp=datetime.now(),
-            hash='',
-            counter=0,
-            sender_address='',
-            target_address='',
-            initiator_address='',
-            amount=0,
-            status='',
-            has_internals=False,
-        )
-        deserialize_storage(operation_data, ResourceCollectorStorage)
+        operation_data = get_operation_data(storage, [])
 
-    def test_merged_storage_plain_list(self) -> None:
-        operation_data_json = {
-            "type": "transaction",
-            "id": 43285851,
-            "level": 1388947,
-            "timestamp": "2021-03-17T17:57:33Z",
-            "block": "BLWWxXoqEjZHsVZfKSh17TCvVa2ReJ6EMKNmpUbwsWJHNRSnC9J",
-            "hash": "opZ4CeGANGUW19i1HgxGh32qHaqL9FUg8GyqjYPcrgLjgBXbvDF",
-            "counter": 11744585,
-            "sender": {"address": "tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb"},
-            "gasLimit": 47114,
-            "gasUsed": 25646,
-            "storageLimit": 69,
-            "storageUsed": 69,
-            "bakerFee": 5061,
-            "storageFee": 17250,
-            "allocationFee": 0,
-            "target": {"address": "KT1E8Qzgx3C5AAE4iGuXvqSQjdd21LK2aXAk"},
-            "amount": 0,
-            "parameter": {
-                "entrypoint": "sell",
-                "value": {
-                    "sale_price": "1000000",
-                    "sale_token_param_tez": {
-                        "token_for_sale_address": "KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2",
-                        "token_for_sale_token_id": "0",
-                    },
-                },
-            },
-            "storage": 750,
-            "diffs": [
-                {
-                    "bigmap": 750,
-                    "path": "",
-                    "action": "add_key",
-                    "content": {
-                        "hash": "exprtkgkbpybdsS74tPVswD6MjtdMZksCF8NQjSPScrq1Qk1m9mGzR",
-                        "key": {
-                            "sale_token": {
-                                "token_for_sale_address": "KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2",
-                                "token_for_sale_token_id": "0",
-                            },
-                            "sale_seller": "tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb",
+        # Arc
+        storage_obj = deserialize_storage(operation_data, ResourceCollectorStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, ResourceCollectorStorage)
+        self.assertIsInstance(storage_obj.metadata, dict)
+        self.assertIsInstance(storage_obj.tezotop_collection, dict)
+        
+    def test_deserialize_storage_plain_list(self) -> None:
+        # Arrange
+        storage = 750
+        diffs = [
+            {
+                "bigmap": 750,
+                "path": "",
+                "action": "add_key",
+                "content": {
+                    "hash": "exprtkgkbpybdsS74tPVswD6MjtdMZksCF8NQjSPScrq1Qk1m9mGzR",
+                    "key": {
+                        "sale_token": {
+                            "token_for_sale_address": "KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2",
+                            "token_for_sale_token_id": "0",
                         },
-                        "value": "1000000",
+                        "sale_seller": "tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb",
                     },
-                }
-            ],
-            "status": "applied",
-            "hasInternals": True,
-            "parameters": "{\"entrypoint\":\"sell\",\"value\":{\"prim\":\"Pair\",\"args\":[{\"int\":\"1000000\"},{\"prim\":\"Pair\",\"args\":[{\"string\":\"KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2\"},{\"int\":\"0\"}]}]}}",
-        }
+                    "value": "1000000",
+                },
+            }
+        ]
+        operation_data = get_operation_data(storage, diffs)
 
-        operation_data = TzktDatasource.convert_operation(operation_data_json)
-        storage = deserialize_storage(operation_data, BazaarMarketPlaceStorage)
-        self.assertEqual('tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb', storage.__root__[0].key.sale_seller)  # type: ignore
+        # Act
+        storage_obj = deserialize_storage(operation_data, BazaarMarketPlaceStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, BazaarMarketPlaceStorage)
+        self.assertIsInstance(storage_obj.__root__, list)
+        self.assertEqual('tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb', storage_obj.__root__[0].key.sale_seller)  # type: ignore
