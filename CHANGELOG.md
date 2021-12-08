@@ -8,6 +8,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * cli: Fixed config not being verified when invoking some commands
 * index: Fixed incorrect log messages, remove duplicate ones.
+* index: Fixed processing of contracts with storage containing a single big map id
 
 ## 4.0.0-rc1 - 2021-12-02
 
