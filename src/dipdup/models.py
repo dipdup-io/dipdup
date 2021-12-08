@@ -7,7 +7,6 @@ from typing import Generic
 from typing import List
 from typing import Optional
 from typing import TypeVar
-from typing import Union
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
@@ -26,7 +25,7 @@ ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
 @dataclass
-class OperationDataMixin:
+class OperationData:
     type: str
     id: int
     level: int
@@ -39,34 +38,7 @@ class OperationDataMixin:
     amount: Optional[int]
     status: str
     has_internals: Optional[bool]
-
-
-@dataclass
-class RawOperationData(OperationDataMixin):
-    """Basic structure for operations from TzKT response before applying big map diffs"""
-
-    storage: Union[int, List[Dict[str, Any]], Dict[str, Any]]
-
-    diffs: Optional[List[Dict[str, Any]]] = None
-    block: Optional[str] = None
-    sender_alias: Optional[str] = None
-    nonce: Optional[int] = None
-    target_alias: Optional[str] = None
-    initiator_alias: Optional[str] = None
-    entrypoint: Optional[str] = None
-    parameter_json: Optional[Any] = None
-    originated_contract_address: Optional[str] = None
-    originated_contract_alias: Optional[str] = None
-    originated_contract_type_hash: Optional[int] = None
-    originated_contract_code_hash: Optional[int] = None
-
-
-@dataclass
-class OperationData(OperationDataMixin):
-    """Basic structure for operations from TzKT response with big map diffs applied"""
-
-    storage: Union[List[Dict[str, Any]], Dict[str, Any]]
-
+    storage: Any
     diffs: Optional[List[Dict[str, Any]]] = None
     block: Optional[str] = None
     sender_alias: Optional[str] = None

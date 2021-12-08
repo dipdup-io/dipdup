@@ -1,7 +1,6 @@
 from typing import Any
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Type
 
 from pydantic.error_wrappers import ValidationError
@@ -10,14 +9,13 @@ from typing_extensions import get_args
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import InvalidDataError
 from dipdup.models import OperationData
-from dipdup.models import RawOperationData
 from dipdup.models import StorageType
 
 # NOTE: typing_extensions introspection is pretty expensive
 _is_nested_dict: Dict[Type, bool] = {}
 
 
-def apply_bigmap_diffs(
+def _apply_bigmap_diffs(
     storage_dict: Dict[str, Any],
     bigmap_diffs: List[Dict[str, Any]],
     bigmap_name: str,
@@ -83,25 +81,44 @@ def _process_storage(
         if annotation not in (int, bool) and isinstance(value, int):
             is_array = hasattr(annotation, '__fields__') and 'key' in annotation.__fields__ and 'value' in annotation.__fields__
             storage_dict[key] = [] if is_array else {}
-            apply_bigmap_diffs(storage_dict, bigmap_diffs, bigmap_name, is_array)
+            _apply_bigmap_diffs(storage_dict, bigmap_diffs, bigmap_name, is_array)
 
         elif hasattr(annotation, '__fields__') and isinstance(storage_dict[key], dict):
             _process_storage(storage_dict[key], annotation, bigmap_diffs, bigmap_name)
 
 
-def convert_operation_data(operation_data: RawOperationData, storage_type: Optional[Type[StorageType]] = None) -> OperationData:
-    if storage_type:
+def _process_plain_storage(
+    storage_dict: Dict[str, Any],
+    storage_type: Type[StorageType],
+    bigmap_diffs: List[Dict[str, Any]],
+):
+    # NOTE: Plain storage is either an empty model with `Extra.allow` or `__root__: list`
+    is_array = '__root__' in storage_type.__fields__
+    storage_dict[''] = [] if is_array else {}
+    _apply_bigmap_diffs(storage_dict, bigmap_diffs, '', is_array)
+
+
+def deserialize_storage(operation_data: OperationData, storage_type: Type[StorageType]) -> StorageType:
+    """Merge big map diffs and deserialize raw storage into typeclass"""
+    if isinstance(operation_data.storage, dict):
         _process_storage(
             storage_dict=operation_data.storage,
             storage_type=storage_type,
             bigmap_diffs=operation_data.diffs or [],
             prefix=None,
         )
-    return OperationData(**{k: v for k, v in operation_data.__dict__.items() if not k.startswith('_')})
 
+    elif isinstance(operation_data.storage, int):
+        operation_data.storage = {'': operation_data.storage}
+        _process_plain_storage(
+            storage_dict=operation_data.storage,
+            storage_type=storage_type,
+            bigmap_diffs=operation_data.diffs or [],
+        )
+        operation_data.storage = operation_data.storage['']
 
-def deserialize_storage(operation_data: OperationData, storage_type: Type[StorageType]) -> StorageType:
-    """Merge big map diffs and deserialize raw storage into typeclass"""
+    else:
+        raise RuntimeError
 
     try:
         return storage_type.parse_obj(operation_data.storage)

@@ -47,15 +47,15 @@ from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BlockData
 from dipdup.models import HeadBlockData
+from dipdup.models import OperationData
 from dipdup.models import QuoteData
-from dipdup.models import RawOperationData
 from dipdup.utils import split_by_chunks
 from dipdup.utils.watchdog import Watchdog
 
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 
 
-def dedup_operations(operations: Tuple[RawOperationData, ...]) -> Tuple[RawOperationData, ...]:
+def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationData, ...]:
     """Merge and sort operations fetched from multiple endpoints"""
     return tuple(
         sorted(
@@ -76,7 +76,7 @@ class OperationFetcher:
         transaction_addresses: Set[str],
         origination_addresses: Set[str],
         cache: bool = False,
-        migration_originations: Tuple[RawOperationData, ...] = None,
+        migration_originations: Tuple[OperationData, ...] = None,
     ) -> None:
         self._datasource = datasource
         self._first_level = first_level
@@ -91,11 +91,11 @@ class OperationFetcher:
         self._offsets: Dict[OperationFetcherRequest, int] = {}
         self._fetched: Dict[OperationFetcherRequest, bool] = {}
 
-        self._operations: DefaultDict[int, Deque[RawOperationData]] = defaultdict(deque)
+        self._operations: DefaultDict[int, Deque[OperationData]] = defaultdict(deque)
         for origination in migration_originations or ():
             self._operations[origination.level].append(origination)
 
-    def _get_operations_head(self, operations: Tuple[RawOperationData, ...]) -> int:
+    def _get_operations_head(self, operations: Tuple[OperationData, ...]) -> int:
         """Get latest block level (head) of sorted operations batch"""
         for i in range(len(operations) - 1)[::-1]:
             if operations[i].level != operations[i + 1].level:
@@ -167,7 +167,7 @@ class OperationFetcher:
             self._offsets[key] += self._datasource.request_limit
             self._heads[key] = self._get_operations_head(transactions)
 
-    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[RawOperationData, ...]], None]:
+    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[OperationData, ...]], None]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
@@ -394,7 +394,7 @@ class TzktDatasource(IndexDatasource):
         )
         return self.convert_block(block_json)
 
-    async def get_migration_originations(self, first_level: int = 0) -> Tuple[RawOperationData, ...]:
+    async def get_migration_originations(self, first_level: int = 0) -> Tuple[OperationData, ...]:
         """Get contracts originated from migrations"""
         self._logger.info('Fetching contracts originated with migrations')
         # NOTE: Empty unwrapped request to ensure API supports migration originations
@@ -423,7 +423,7 @@ class TzktDatasource(IndexDatasource):
 
     async def get_originations(
         self, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
-    ) -> Tuple[RawOperationData, ...]:
+    ) -> Tuple[OperationData, ...]:
         raw_originations = []
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
         # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
@@ -450,7 +450,7 @@ class TzktDatasource(IndexDatasource):
 
     async def get_transactions(
         self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
-    ) -> Tuple[RawOperationData, ...]:
+    ) -> Tuple[OperationData, ...]:
         raw_transactions = await self._http.request(
             'get',
             url='v1/operations/transactions',
@@ -648,7 +648,7 @@ class TzktDatasource(IndexDatasource):
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
         async for data in self._extract_message_data(MessageType.operation, message):
-            operations: Deque[RawOperationData] = deque()
+            operations: Deque[OperationData] = deque()
             for operation_json in data:
                 if operation_json['status'] != 'applied':
                     continue
@@ -676,11 +676,11 @@ class TzktDatasource(IndexDatasource):
             await self.emit_head(block)
 
     @classmethod
-    def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> RawOperationData:
+    def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:
         """Convert raw operation message from WS/REST into dataclass"""
         storage = cast(Union[int, Dict[str, Any]], operation_json.get('storage'))
 
-        return RawOperationData(
+        return OperationData(
             type=type_ or operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
@@ -715,11 +715,9 @@ class TzktDatasource(IndexDatasource):
         )
 
     @classmethod
-    def convert_migration_origination(cls, migration_origination_json: Dict[str, Any]) -> RawOperationData:
+    def convert_migration_origination(cls, migration_origination_json: Dict[str, Any]) -> OperationData:
         """Convert raw migration message from REST into dataclass"""
-        storage = cast(Union[int, Dict[str, Any]], migration_origination_json.get('storage'))
-
-        fake_operation_data = RawOperationData(
+        fake_operation_data = OperationData(
             type='origination',
             id=migration_origination_json['id'],
             level=migration_origination_json['level'],
@@ -728,7 +726,7 @@ class TzktDatasource(IndexDatasource):
             originated_contract_address=migration_origination_json['account']['address'],
             originated_contract_alias=migration_origination_json['account'].get('alias'),
             amount=migration_origination_json['balanceChange'],
-            storage=storage,
+            storage=migration_origination_json.get('storage'),
             diffs=migration_origination_json.get('diffs'),
             status='applied',
             has_internals=False,

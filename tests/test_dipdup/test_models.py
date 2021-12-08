@@ -9,10 +9,9 @@ from pydantic import BaseModel
 from pydantic import Extra
 
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
-from dipdup.datasources.tzkt.models import convert_operation_data
-from dipdup.datasources.tzkt.models import deserialize_storage
-from dipdup.models import RawOperationData
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.models import deserialize_storage
+from dipdup.models import OperationData
 from tests.test_dipdup.models import ResourceCollectorStorage
 
 
@@ -42,6 +41,10 @@ class BazaarMarketPlaceStorageItem(BaseModel):
 
 class BazaarMarketPlaceStorage(BaseModel):
     __root__: Union[int, List[BazaarMarketPlaceStorageItem]]
+
+
+class BazaarMarketPlaceStorageTest(BaseModel):
+    __root__: BazaarMarketPlaceStorage
 
 
 class ModelsTest(TestCase):
@@ -110,7 +113,7 @@ class ModelsTest(TestCase):
                 },
             },
         ]
-        operation_data = RawOperationData(
+        operation_data = OperationData(
             storage=storage,
             diffs=diffs,
             type='transaction',
@@ -126,8 +129,7 @@ class ModelsTest(TestCase):
             status='',
             has_internals=False,
         )
-        converted_operation_data = convert_operation_data(operation_data, NameRegistryStorage)
-        merged_storage = deserialize_storage(converted_operation_data, NameRegistryStorage)
+        merged_storage = deserialize_storage(operation_data, NameRegistryStorage)
         self.assertTrue('6672657175656e742d616e616c7973742e65646f' in merged_storage.store.records)
 
     def test_merged_storage_dict_of_dicts(self) -> None:
@@ -149,7 +151,7 @@ class ModelsTest(TestCase):
             'default_start_time': '1630678200',
             'tezotop_collection': 43543,
         }
-        operation_data = RawOperationData(
+        operation_data = OperationData(
             storage=storage,
             diffs=None,
             type='transaction',
@@ -165,8 +167,7 @@ class ModelsTest(TestCase):
             status='',
             has_internals=False,
         )
-        converted_operation_data = convert_operation_data(operation_data, ResourceCollectorStorage)
-        deserialize_storage(converted_operation_data, ResourceCollectorStorage)
+        deserialize_storage(operation_data, ResourceCollectorStorage)
 
     def test_merged_storage_plain_list(self) -> None:
         operation_data_json = {
@@ -222,5 +223,6 @@ class ModelsTest(TestCase):
         }
 
         operation_data = TzktDatasource.convert_operation(operation_data_json)
-        converted_operation_data = convert_operation_data(operation_data, BazaarMarketPlaceStorage)
-        deserialize_storage(converted_operation_data, BazaarMarketPlaceStorage)
+        storage = deserialize_storage(operation_data, BazaarMarketPlaceStorage)
+        print(storage)
+        # self.assertEqual(storage)
