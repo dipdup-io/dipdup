@@ -20,7 +20,6 @@ from typing import NoReturn
 from typing import Optional
 from typing import Set
 from typing import Tuple
-from typing import Union
 from typing import cast
 
 from aiohttp import ClientResponseError
@@ -678,8 +677,6 @@ class TzktDatasource(IndexDatasource):
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:
         """Convert raw operation message from WS/REST into dataclass"""
-        storage = cast(Union[int, Dict[str, Any]], operation_json.get('storage'))
-
         return OperationData(
             type=type_ or operation_json['type'],
             id=operation_json['id'],
@@ -709,15 +706,14 @@ class TzktDatasource(IndexDatasource):
             originated_contract_code_hash=operation_json['originatedContract']['codeHash']
             if operation_json.get('originatedContract')
             else None,
-            storage=storage,
+            storage=operation_json.get('storage'),
             diffs=operation_json.get('diffs'),
-            originated_contract_alias=None,
         )
 
     @classmethod
     def convert_migration_origination(cls, migration_origination_json: Dict[str, Any]) -> OperationData:
         """Convert raw migration message from REST into dataclass"""
-        fake_operation_data = OperationData(
+        return OperationData(
             type='origination',
             id=migration_origination_json['id'],
             level=migration_origination_json['level'],
@@ -736,7 +732,6 @@ class TzktDatasource(IndexDatasource):
             target_address=None,
             initiator_address=None,
         )
-        return fake_operation_data
 
     @classmethod
     def convert_big_map(cls, big_map_json: Dict[str, Any]) -> BigMapData:
