@@ -11,7 +11,7 @@ from dipdup.exceptions import InvalidDataError
 from dipdup.models import OperationData
 from dipdup.models import StorageType
 
-# NOTE: typing_extensions introspection is pretty expensive
+# NOTE: typing_extensions introspection is pretty expensive, let's cache it's results
 _is_nested_dict: Dict[Type, bool] = {}
 
 
@@ -91,8 +91,8 @@ def _process_plain_storage(
     storage_dict: Dict[str, Any],
     storage_type: Type[StorageType],
     bigmap_diffs: List[Dict[str, Any]],
-):
-    # NOTE: Plain storage is either an empty model with `Extra.allow` or `__root__: list`
+) -> None:
+    # NOTE: Plain storage is either an empty model with `Extra.allow` or one with `__root__: list`
     is_array = '__root__' in storage_type.__fields__
     storage_dict[''] = [] if is_array else {}
     _apply_bigmap_diffs(storage_dict, bigmap_diffs, '', is_array)
@@ -118,7 +118,7 @@ def deserialize_storage(operation_data: OperationData, storage_type: Type[Storag
         operation_data.storage = operation_data.storage['']
 
     else:
-        raise RuntimeError
+        raise RuntimeError('Storage is neither dict nor int')
 
     try:
         return storage_type.parse_obj(operation_data.storage)
