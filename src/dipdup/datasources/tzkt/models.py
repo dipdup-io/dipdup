@@ -2,6 +2,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import Type
+from typing import Union
 
 from pydantic.error_wrappers import ValidationError
 from typing_extensions import get_args
@@ -32,7 +33,11 @@ def _is_array(storage_type) -> bool:
     f = storage_type.__fields__
     tzkt_array = 'key' in f and 'value' in f
     # FIXME: fuck it (╯°□°）╯︵ ┻━┻)
-    pydantic_array = get_origin(get_args(getattr(f.get('__root__'), 'type_', None))[1]) == list
+    try:
+        pydantic_array = get_origin(get_args(getattr(f.get('__root__'), 'type_', None))[1]) == list
+    except IndexError:
+        pydantic_array = False
+
     return tzkt_array or pydantic_array
 
 
@@ -45,6 +50,8 @@ def _apply_bigmap_diffs(
     """Apply big map diffs of specific path to storage"""
 
     for diff in bigmap_diffs:
+        bigmap_key: Union[int, str]
+
         # NOTE: Match by bigmap name
         if diff['path'] == bigmap_name:
             bigmap_key = bigmap_name.split('.')[-1]
@@ -58,14 +65,14 @@ def _apply_bigmap_diffs(
 
         key = diff['content']['key']
         if is_array:
-            bigmap_dict[bigmap_key].append(
+            bigmap_dict[bigmap_key].append(  # type: ignore
                 {
                     'key': key,
                     'value': diff['content']['value'],
                 }
             )
         else:
-            bigmap_dict[bigmap_key][key] = diff['content']['value']
+            bigmap_dict[bigmap_key][key] = diff['content']['value']  # type: ignore
 
 
 def _process_storage(

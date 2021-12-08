@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 from typing import Dict
-from typing import List
+from typing import Tuple
 from unittest import TestCase
 
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
@@ -14,7 +14,7 @@ from tests.test_dipdup.types import BazaarMarketPlaceStorage
 from tests.test_dipdup.types import ListOfMapsStorage
 
 
-def get_operation_data(storage: Any, diffs: List[Dict[str, Any]]) -> OperationData:
+def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> OperationData:
     return OperationData(
         storage=storage,
         diffs=diffs,
@@ -60,7 +60,7 @@ class ModelsTest(TestCase):
                 'KT1Mq1zd986PxK4C2y9S7UaJkhTBbY15AU32',
             ],
         }
-        diffs = [
+        diffs = (
             {
                 'bigmap': 15028,
                 'path': 'store.tzip12_tokens',
@@ -99,7 +99,7 @@ class ModelsTest(TestCase):
                     'value': '2024-02-29T15:45:49Z',
                 },
             },
-        ]
+        )
         operation_data = get_operation_data(storage, diffs)
 
         # Act
@@ -130,7 +130,7 @@ class ModelsTest(TestCase):
             'default_start_time': '1630678200',
             'tezotop_collection': 43543,
         }
-        operation_data = get_operation_data(storage, [])
+        operation_data = get_operation_data(storage, ())
 
         # Arc
         storage_obj = deserialize_storage(operation_data, ResourceCollectorStorage)
@@ -143,7 +143,7 @@ class ModelsTest(TestCase):
     def test_deserialize_storage_plain_list(self) -> None:
         # Arrange
         storage = 750
-        diffs = [
+        diffs = (
             {
                 "bigmap": 750,
                 "path": "",
@@ -159,8 +159,8 @@ class ModelsTest(TestCase):
                     },
                     "value": "1000000",
                 },
-            }
-        ]
+            },
+        )
         operation_data = get_operation_data(storage, diffs)
 
         # Act
@@ -174,7 +174,7 @@ class ModelsTest(TestCase):
     def test_deserialize_storage_list_of_maps(self) -> None:
         # Arrange
         storage = [164576, 164577, 164578]
-        diffs = [
+        diffs = (
             {"bigmap": 164578, "path": "2", "action": "allocate"},
             {
                 "bigmap": 164578,
@@ -196,7 +196,7 @@ class ModelsTest(TestCase):
                 "content": {"hash": "exprvNX6heZJnVkgZf8Xvq9DKEJE3mazxE69KxVSFxGi2RYQqNpKWz", "key": "test", "value": "123"},
             },
             {"bigmap": 164576, "path": "0", "action": "allocate"},
-        ]
+        )
         operation_data = get_operation_data(storage, diffs)
 
         # Act
@@ -205,4 +205,4 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, ListOfMapsStorage)
         self.assertIsInstance(storage_obj.__root__, list)
-        self.assertEqual(storage_obj.__root__[1]['test'], '123')
+        self.assertEqual(storage_obj.__root__[1]['test'], '123')  # type: ignore

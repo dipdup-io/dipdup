@@ -60,7 +60,6 @@ add_liquidity_operations = (
         originated_contract_alias=None,
         originated_contract_type_hash=None,
         originated_contract_code_hash=None,
-        diffs=None,
     ),
     OperationData(
         type='transaction',
@@ -100,7 +99,7 @@ add_liquidity_operations = (
         originated_contract_alias=None,
         originated_contract_type_hash=None,
         originated_contract_code_hash=None,
-        diffs=[
+        diffs=(
             {
                 'bigmap': 3943,
                 'path': 'balances',
@@ -138,7 +137,7 @@ add_liquidity_operations = (
                     'value': {'balance': '470000000000000000000', 'approvals': {}},
                 },
             },
-        ],
+        ),
     ),
     OperationData(
         type='transaction',
@@ -173,7 +172,7 @@ add_liquidity_operations = (
         originated_contract_alias=None,
         originated_contract_type_hash=None,
         originated_contract_code_hash=None,
-        diffs=[
+        diffs=(
             {
                 'bigmap': 1798,
                 'path': 'balances',
@@ -194,7 +193,7 @@ add_liquidity_operations = (
                     'value': {'balance': '16000000', 'approvals': {}},
                 },
             },
-        ],
+        ),
     ),
     OperationData(
         type='transaction',
@@ -229,7 +228,7 @@ add_liquidity_operations = (
         originated_contract_alias=None,
         originated_contract_type_hash=None,
         originated_contract_code_hash=None,
-        diffs=[
+        diffs=(
             {
                 'bigmap': 14107,
                 'path': 'balances',
@@ -239,8 +238,8 @@ add_liquidity_operations = (
                     'key': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4',
                     'value': {'balance': '86717933554615', 'approvals': {}},
                 },
-            }
-        ],
+            },
+        ),
     ),
 )
 
