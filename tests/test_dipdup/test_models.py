@@ -224,5 +224,4 @@ class ModelsTest(TestCase):
 
         operation_data = TzktDatasource.convert_operation(operation_data_json)
         storage = deserialize_storage(operation_data, BazaarMarketPlaceStorage)
-        print(storage)
-        # self.assertEqual(storage)
+        self.assertEqual('tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb', storage.__root__[0].key.sale_seller)  # type: ignore
