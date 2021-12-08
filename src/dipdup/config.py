@@ -905,6 +905,10 @@ default_hooks = {
     'on_reindex': HookConfig(
         callback='on_reindex',
     ),
+    # NOTE: All indexes are in REALTIME state. Default: nothing.
+    'on_synchronized': HookConfig(
+        callback='on_synchronized',
+    ),
 }
 
 

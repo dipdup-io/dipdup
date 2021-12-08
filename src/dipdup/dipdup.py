@@ -9,8 +9,6 @@ from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
-from functools import partial
-from operator import ne
 from typing import Awaitable
 from typing import Deque
 from typing import Dict
@@ -97,6 +95,8 @@ class IndexDispatcher:
         await self._subscribe_to_datasource_events()
         await self._load_index_states()
 
+        on_synchronized_fired = False
+
         for index in self._indexes.values():
             if isinstance(index, OperationIndex):
                 self._apply_filters(index._config)
@@ -107,7 +107,7 @@ class IndexDispatcher:
                     spawn_datasources_event.set()
 
             if spawn_datasources_event.is_set():
-                index_datasources = (i.datasource for i in self._indexes.values())
+                index_datasources = set(i.datasource for i in self._indexes.values())
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
@@ -127,13 +127,19 @@ class IndexDispatcher:
                 if isinstance(index, OperationIndex):
                     self._apply_filters(index._config)
 
-            if not indexes_spawned:
-                if self._every_index_is(IndexStatus.ONESHOT):
-                    self.stop()
+            if not indexes_spawned and self._every_index_is(IndexStatus.ONESHOT):
+                self.stop()
 
-            if not start_scheduler_event.is_set():
-                if not indexes_spawned and self._every_index_is(IndexStatus.REALTIME):
+            if self._every_index_is(IndexStatus.REALTIME) and not indexes_spawned:
+                if not on_synchronized_fired:
+                    on_synchronized_fired = True
+                    await self._ctx.fire_hook('on_synchronized')
+
+                if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
+            # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
+            else:
+                on_synchronized_fired = False
 
     def stop(self) -> None:
         self._stopped = True
@@ -143,8 +149,11 @@ class IndexDispatcher:
         self._entrypoint_filter.update(index_config.entrypoint_filter)
 
     def _every_index_is(self, status: IndexStatus) -> bool:
-        statuses = [i.state.status for i in self._indexes.values()]
-        return bool(statuses) and not bool(tuple(filter(partial(ne, status), statuses)))
+        if not self._indexes:
+            return False
+
+        statuses = set(i.state.status for i in self._indexes.values())
+        return statuses == {status}
 
     async def _fetch_contracts(self) -> None:
         """Add contracts spawned from context to config"""
