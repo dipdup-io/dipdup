@@ -4,11 +4,23 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## 4.0.0-rc2 - [unreleased]
 
+### ⚠ Migration
+
+* Run `dipdup init` command to generate `on_synchronized` hook stubs.
+
+### Added
+
+* hooks: Added `on_synchronized` hook, which fires each time all indexes reach realtime state.
+
 ### Fixed
 
 * cli: Fixed config not being verified when invoking some commands
 * index: Fixed incorrect log messages, remove duplicate ones.
 * index: Fixed crash while processing storage consisting of a single big map id.
+
+### Performance
+
+* index: Checks performed on each iteration of the main dipdup loop are slightly faster now.
 
 ## 4.0.0-rc1 - 2021-12-02
 
