@@ -1,11 +1,12 @@
+from dataclasses import field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any
 from typing import Dict
 from typing import Generic
-from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import TypeVar
 
 from pydantic import BaseModel
@@ -39,7 +40,7 @@ class OperationData:
     status: str
     has_internals: Optional[bool]
     storage: Any
-    diffs: Optional[List[Dict[str, Any]]] = None
+    diffs: Tuple[Dict[str, Any], ...] = field(default_factory=tuple)
     block: Optional[str] = None
     sender_alias: Optional[str] = None
     nonce: Optional[int] = None

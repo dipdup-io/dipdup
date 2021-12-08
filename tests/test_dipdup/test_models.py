@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
+from typing import Dict
+from typing import List
 from unittest import TestCase
 
-
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
-from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
 from tests.test_dipdup.models import ResourceCollectorStorage
 from tests.test_dipdup.types import BazaarMarketPlaceStorage
+from tests.test_dipdup.types import ListOfMapsStorage
 
 
 def get_operation_data(storage: Any, diffs: List[Dict[str, Any]]) -> OperationData:
@@ -138,7 +139,7 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj, ResourceCollectorStorage)
         self.assertIsInstance(storage_obj.metadata, dict)
         self.assertIsInstance(storage_obj.tezotop_collection, dict)
-        
+
     def test_deserialize_storage_plain_list(self) -> None:
         # Arrange
         storage = 750
@@ -169,3 +170,39 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj, BazaarMarketPlaceStorage)
         self.assertIsInstance(storage_obj.__root__, list)
         self.assertEqual('tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb', storage_obj.__root__[0].key.sale_seller)  # type: ignore
+
+    def test_deserialize_storage_list_of_maps(self) -> None:
+        # Arrange
+        storage = [164576, 164577, 164578]
+        diffs = [
+            {"bigmap": 164578, "path": "2", "action": "allocate"},
+            {
+                "bigmap": 164578,
+                "path": "2",
+                "action": "add_key",
+                "content": {"hash": "exprtsjEVVZk3Gm82U9wEs8kvwRiQwUT7zipJwvCeFMNsApe2tQ15s", "key": "hello", "value": "42"},
+            },
+            {
+                "bigmap": 164578,
+                "path": "2",
+                "action": "add_key",
+                "content": {"hash": "exprv9qnaSha415Hm49U3YxG2Q3EAyhabvky3avPRGG8AX9Nk69SbN", "key": "hi", "value": "100500"},
+            },
+            {"bigmap": 164577, "path": "1", "action": "allocate"},
+            {
+                "bigmap": 164577,
+                "path": "1",
+                "action": "add_key",
+                "content": {"hash": "exprvNX6heZJnVkgZf8Xvq9DKEJE3mazxE69KxVSFxGi2RYQqNpKWz", "key": "test", "value": "123"},
+            },
+            {"bigmap": 164576, "path": "0", "action": "allocate"},
+        ]
+        operation_data = get_operation_data(storage, diffs)
+
+        # Act
+        storage_obj = deserialize_storage(operation_data, ListOfMapsStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, ListOfMapsStorage)
+        self.assertIsInstance(storage_obj.__root__, list)
+        self.assertEqual(storage_obj.__root__[1]['test'], '123')

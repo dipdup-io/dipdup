@@ -1,6 +1,9 @@
-from typing import List, Union
+from typing import Dict
+from typing import List
+from typing import Union
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
+from pydantic import Extra
 
 
 class SaleToken(BaseModel):
@@ -31,5 +34,5 @@ class BazaarMarketPlaceStorage(BaseModel):
     __root__: Union[int, List[BazaarMarketPlaceStorageItem]]
 
 
-class BazaarMarketPlaceStorageTest(BaseModel):
-    __root__: BazaarMarketPlaceStorage
+class ListOfMapsStorage(BaseModel):
+    __root__: List[Union[int, Dict[str, str]]]
