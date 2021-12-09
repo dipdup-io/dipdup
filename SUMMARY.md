@@ -11,20 +11,6 @@
   * [Defining models](null)
   * [Implementing handlers](null)
 
-* [Deployment and operations](deployment/README.md)
-  * [Database engines](deployment/database-engines.md)
-  * [Building Docker images](deployment/docker.md)
-  * [Deploying with docker-compose](deployment/docker-compose.md)
-  * [Deploying with Docker Swarm](deployment/swarm.md)
-  * [Sentry integration](deployment/sentry.md)
-  * [Logging](deployment/logging.md)
-  * [Monitoring](deployment/monitoring.md)
-  * [Backup and restore](deployment/backups.md)
-
-* [Troubleshooting](troubleshooting/README.md)
-  * [Common issues](troubleshooting/common-issues.md)
-  * [Reporting bugs](troubleshooting/reporting-bugs.md)
-
 * [Advanced usage](advanced/README.md)
   * [Datasources](advanced/datasources.md)
   * [SQL hooks]()
@@ -35,6 +21,20 @@
   * [Handler context](advanced/handler-context.md)
   * [Internal models](advanced/internal-models.md)
   * [Spawning indexes at runtime](cookbook/index-factories.md)
+
+* [Troubleshooting](troubleshooting/README.md)
+  * [Common issues](troubleshooting/common-issues.md)
+  * [Reporting bugs](troubleshooting/reporting-bugs.md)
+
+* [Deployment and operations](deployment/README.md)
+  * [Database engines](deployment/database-engines.md)
+  * [Building Docker images](deployment/docker.md)
+  * [Deploying with docker-compose](deployment/docker-compose.md)
+  * [Deploying with Docker Swarm](deployment/swarm.md)
+  * [Sentry integration](deployment/sentry.md)
+  * [Logging](deployment/logging.md)
+  * [Monitoring](deployment/monitoring.md)
+  * [Backup and restore](deployment/backups.md)
 
 * [Cookbook](cookbook/README.md)
   * [Processing offchain data](cookbook/offchain-data.md)
