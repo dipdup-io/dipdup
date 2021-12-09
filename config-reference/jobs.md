@@ -4,7 +4,15 @@ description: Jobs block
 
 # jobs
 
-In some cases, it may come in handy to have an ability to run some code on schedule. For example, you want to calculate some statistics once per hour, not on every block. Add the following section to DipDup config:
+In some cases, it may come in handy to have the ability to run some code on schedule. For example, you want to calculate statistics once per hour instead of every time handler gets matched.
+
+Note that jobs are actually schedules for [hooks](hooks.md).
+
+
+
+Add the following section to DipDup config:
+
+
 
 ```yaml
 jobs:
@@ -20,9 +28,7 @@ jobs:
       major: False
 ```
 
-Note that jobs are actually schedules for [hooks](hooks.md).
-
-If you're not familiar with the crontab syntax, there's an online service [crontab.guru \(opens new window\)](https://crontab.guru/) that will help you to build a desired expression.
+If you're not familiar with the crontab syntax, there's an online service [crontab.guru](https://crontab.guru/) that will help you build the desired expression.
 
 ### Arguments typechecking
 

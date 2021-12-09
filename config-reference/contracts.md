@@ -6,12 +6,8 @@ description: Inventory block
 
 A list of the contract definitions you might use in the indexer patterns or templates. Each contract entry has two fields:
 
-* `address` — either originated or implicit account address, Base58 encoded.
-* `typename` — an alias for the particular contract script, meaning that two contracts sharing the same code must have the same type name.
-
-{% hint style="info" %}
-A typename is required when using index templates to ensure type consistency, but it's recommended to always set this field to improve auto-generated code readability.
-{% endhint %}
+* `address` — either originated or implicit account address encoded in base58.
+* `typename` — an alias for the particular contract script, meaning that two contracts sharing the same code can have the same type name.
 
 ```yaml
 contracts:
@@ -29,5 +25,6 @@ contracts:
     typename: tzbtc_token
 ```
 
-**NOTE** that contract entry does not contain information about the network, thus it's a good to include network name in the alias. The reason for this design choice is to provide a generic index parameterization via the single mechanism — [templates](templates.md).
-`1  
+A `typename` field is only required when using index templates, but it helps to improve the readability of auto-generated code.
+
+Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See [Templates and variables](templates-and-variables) section for details.

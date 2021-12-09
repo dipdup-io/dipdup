@@ -72,6 +72,7 @@
   * [spec_version](config-reference/spec_version.md)
   * [template](config-reference/indexes/template.md)
   * [templates](config-reference/templates.md)
+
 * [Command-line reference](cli-reference/README.md)
   * [init](cli-reference/init.md)
   * [run](cli-reference/run.md)

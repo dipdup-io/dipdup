@@ -7,7 +7,7 @@ This page will guide you through the steps required to get your first selective 
 {% tabs %}
 {% tab title="Bash" %}
 
-```bash
+```shell
 python -m venv .venv
 source .venv/bin/activate
 pip install dipdup
@@ -18,7 +18,7 @@ pip install dipdup
 
 ## Write a configuration file
 
-Let's create an indexer for tzBTC token <link> FA1.2 contract. We want to save all the transfers and mints to the database. Our goal is to calculate some statistics of token holders' activity.
+Let's create an indexer for [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database, then calculate some statistics of its' holders' activity.
 
 Create a new file named `dipdup.yml` in your current working directory with the following content:
 
@@ -57,39 +57,57 @@ indexes:
             entrypoint: mint
 ```
 
-<tzkt screenshot?>
+See [Config reference](config-reference) section for details.
 
-## Generate types
+## Initialize project tree
 
-```text
+Now it's time to generate typeclasses and callback stubs. Run the following command:
+
+```shell
 dipdup init
 ```
-
-This command will generate the following files:
+DipDup will create a Python package `demo_tzbtc` having the following structure:
 
 {% tabs %}
 {% tab title="Python" %}
 
-```text
-demo_tzbtc/
-├── models.py
+```
+demo_tzbtc
+├── graphql
 ├── handlers
-│   ├── on_transfer.py
+│   ├── __init__.py
 │   ├── on_mint.py
-│   ├── on_configure.py
-│   └── on_rollback.py
+│   └── on_transfer.py
+├── hooks
+│   ├── __init__.py
+│   ├── on_reindex.py
+│   ├── on_restart.py
+│   ├── on_rollback.py
+│   └── on_synchronized.py
+├── __init__.py
+├── models.py
+├── sql
+│   ├── on_reindex
+│   ├── on_restart
+│   ├── on_rollback
+│   └── on_synchronized
 └── types
+    ├── __init__.py
     └── tzbtc
-        ├── storage.py
-        └── parameter
-            └── transfer.py
-            └── mint.py
+        ├── __init__.py
+        ├── parameter
+        │   ├── __init__.py
+        │   ├── mint.py
+        │   └── transfer.py
+        └── storage.py
 ```
 
 {% endtab %}
 {% endtabs %}
 
-Let's fill them one by one.
+That's a lot of files and directories! But don't worry, for this guide, we will need only `models.py` module and `handlers` package.
+
+See [Project structure](getting-started/project-structure) section for details.
 
 ## Define data models
 
@@ -157,7 +175,7 @@ Now we need to handle two contract methods that can alter token balances — `tr
 {% tab title="Python" %}
 `on_transfer.py`
 
-```python
+```python#indent=4
 from typing import Optional
 from decimal import Decimal
 
@@ -176,11 +194,15 @@ async def on_transfer(
     transfer: Transaction[TransferParameter, TzbtcStorage],
 ) -> None:
     if transfer.parameter.from_ == transfer.parameter.to:
-        return  # tzBTC specific
+        # NOTE: Internal tzBTC transaction
+        return
+
     amount = Decimal(transfer.parameter.value) / (10 ** 8)
-    await on_balance_update(address=transfer.parameter.from_,
-                            balance_update=-amount,
-                            timestamp=transfer.data.timestamp)
+    await on_balance_update(
+        address=transfer.parameter.from_,
+        balance_update=-amount,
+        timestamp=transfer.data.timestamp,
+    )
     await on_balance_update(address=transfer.parameter.to,
                             balance_update=amount,
                             timestamp=transfer.data.timestamp)
