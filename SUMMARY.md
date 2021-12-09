@@ -32,13 +32,12 @@
     * [Optimizing database queries](advanced/performance/database.md)
   * [Handler context](advanced/handler-context.md)
   * [Internal models](advanced/internal-models.md)
-  * [Index factories](advanced/logging.md)
+  * [Spawning indexes at runtime](cookbook/index-factories.md)
 
 * [Cookbook](cookbook/README.md)
-  * [Spawning indexes at runtime](cookbook/index-factories.md)
   * [Processing offchain data](cookbook/offchain-data.md)
-  * [Reusing typename for different contracts](cookbook/reusing-typename.md)
-  * [Synchronizing multiple handlers]()
+  * [Reusing typename for different contracts](cookbook/reusing-typenames.md)
+  * [Synchronizing multiple handlers/hooks](cookbook/sync-callbacks.md)
 
 * [Client side](client-side/README.md)
   * [Hasura integration]()
