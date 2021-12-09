@@ -42,7 +42,7 @@ my_module_name/
             └── entrypoint_n.*
 ```
 
-You don't have to create this hierarchy yourself — all the folders and most of the files are generated automatically by the CLI.
+You don't have to create this hierarchy yourself — all the folders and most files are generated automatically by the CLI.
 
-`*` — is the according file extension \(_py_, _ts_, etc\)
+`*` — is an according file extension \(_py_, _ts_, etc\)
 
