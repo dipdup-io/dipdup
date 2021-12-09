@@ -8,7 +8,9 @@ This is an optional section used by the [metadata](https://github.com/dipdup-net
 
 Metadata configuration has two required sections: `settings` and `indexers`
 
-{% page-ref page="../../advanced/metadata-plugin.md" %}
+{% content-ref url="../../advanced/metadata-plugin.md" %}
+[metadata-plugin.md](../../advanced/metadata-plugin.md)
+{% endcontent-ref %}
 
 ## Settings
 
@@ -20,6 +22,11 @@ metadata:
     ipfs_timeout: 10
     http_timeout: 10
     max_retry_count_on_error: 3
+    max_cpu: 4
+    thumbnail:
+      max_file_size_mb: 100
+      workers: 20
+      size: 100
   indexers:
     ...
 ```
@@ -40,6 +47,22 @@ How long DipDup will wait for a HTTP server response. Default value is **10 seco
 
 If DipDup fails to get a response from IPFS gateway or HTTP server, it will try again after some time, until it runs out of attempts. Default value is **3 attempts**.
 
+**max\_cpu**
+
+Maximum number of CPUs that can be executing simultaneously. Default value is **all availiable CPUs**.
+
+**thumbnail.size**
+
+Created thumbnails size in pixels. Size n×n  Default: 100.
+
+**thumbnail.workers**
+
+Count of thumbnail service parallel workers
+
+**thumbnail.max\_file\_size\_mb**
+
+Maximum file size which be downloaded from IPFS. Default: 50.
+
 ## Indexers
 
 You can index several networks at once, or go with a single one. Indexer names are not standardized, but for clarity it's better to stick with some meaningful keys:
@@ -57,7 +80,7 @@ metadata:
         tzkt: tzkt_mainnet
 ```
 
-Each indexer object has two keys: `filters` and `datasources` \(required\).
+Each indexer object has two keys: `filters` and `datasources` (required).
 
 ### Filters
 

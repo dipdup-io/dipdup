@@ -6,9 +6,11 @@ description: Plugins block
 
 This is an optional section used by the [mempool](https://github.com/dipdup-net/mempool) indexer plugin. It uses [`contracts`](../contracts.md) and [`datasources`](../datasources.md) aliases as well as the [`database`](../database.md) connection.
 
-Mempool configuration has two sections: `settings` and `indexers` \(required\).
+Mempool configuration has two sections: `settings` and `indexers` (required).
 
-{% page-ref page="../../advanced/mempool-plugin.md" %}
+{% content-ref url="../../advanced/mempool-plugin.md" %}
+[mempool-plugin.md](../../advanced/mempool-plugin.md)
+{% endcontent-ref %}
 
 ## Settings
 
@@ -20,31 +22,26 @@ mempool:
     keep_operations_seconds: 172800
     expired_after_blocks: 60
     keep_in_chain_blocks: 10
-    mempool_request_interval_seconds: 10
-    rpc_timeout_seconds: 10
+    gas_stats_lifetime: 3600
   indexers:
     ...
 ```
 
 #### keep\_operations\_seconds
 
-How long to store operations that did not get into the chain. After that period such operations will be wiped from the database. Default value is **172800** **seconds** \(2 days\).
+How long to store operations that did not get into the chain. After that period such operations will be wiped from the database. Default value is **172800** **seconds** (2 days).
 
 #### expired\_after\_blocks
 
-When `level(head) - level(operation.branch) >= expired_after_blocks` and operation is still on in chain it's marked as expired. Default value is **60 blocks** \(~1 hour\).
+When `level(head) - level(operation.branch) >= expired_after_blocks` and operation is still on in chain it's marked as expired. Default value is **60 blocks** (\~1 hour).
 
 #### keep\_in\_chain\_blocks
 
-Since the main purpose of this plugin is to index mempool operations \(actually it's a rolling index\), all the operations that were included in the chain are removed from the database after specified period of time. Default value is **10 blocks** \(~10 minutes\).
+Since the main purpose of this plugin is to index mempool operations (actually it's a rolling index), all the operations that were included in the chain are removed from the database after specified period of time. Default value is **10 blocks** (\~10 minutes).
 
-#### mempool\_request\_interval\_seconds
+**gas\_stats\_lifetime**
 
-How often Tezos nodes should be polled for pending mempool operations. Default value is **10 seconds**.
-
-#### rpc\_timeout\_seconds
-
-Tezos node request timeout. Default value is **10 seconds**.
+How long to store gas stats for operations. After that period such stats will be wiped from the database. Default value is **3600** **seconds** (1 hour).
 
 ## Indexers
 
@@ -69,7 +66,7 @@ You can index several networks at once, or index different nodes independently. 
      florencenet: 
 ```
 
-Each indexer object has two keys: `filters` and `datasources` \(required\).
+Each indexer object has two keys: `filters` and `datasources` (required).
 
 ### Filters
 
@@ -77,7 +74,7 @@ An optional section specifying which mempool operations should be indexed. By de
 
 #### kinds
 
-Array of operations kinds, default value is `transaction` \(single item\).  
+Array of operations kinds, default value is `transaction` (single item).\
 The complete list of values allowed:
 
 * `activate_account`
@@ -91,12 +88,13 @@ The complete list of values allowed:
 * `reveal*`
 * `seed_nonce_revelation`
 * `transaction*`
+* `register_global_constant`
 
 `*`  — manager operations.
 
 #### accounts
 
-Array of [contract](../contracts.md) aliases used to filter operations by source or destination.  
+Array of [contract](../contracts.md) aliases used to filter operations by source or destination.\
 **NOTE**: applied to manager operations only.
 
 ### Datasources
@@ -109,5 +107,5 @@ An alias pointing to a [datasource](../datasources.md) of kind `tzkt` is expecte
 
 #### rpc
 
-An array of aliases pointing to [datasources](../datasources.md) of kind `tezos-node`  
+An array of aliases pointing to [datasources](../datasources.md) of kind `tezos-node`\
 Polling multiple nodes allows to detect more refused operations and makes indexing more robust in general.
