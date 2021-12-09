@@ -20,7 +20,7 @@ indexes:
 
 Each big\_map handler contains three required fields:
 
-* `callback` —  name of the _async_ function with a particular [**signature**](../../command-line/dipdup-init.md#handlers); DipDup will try to load it from the module with the same name `<package_name>.handlers.<callback>`
+* `callback` —  name of the _async_ function with a particular [**signature**](../../cli-reference/dipdup-init.md#handlers); DipDup will try to load it from the module with the same name `<package_name>.handlers.<callback>`
 * `contract` — Big map parent contract \(from the [inventory](../contracts.md)\)
 * `path` — path to the Big map in the contract storage \(use dot as a delimiter\)
 

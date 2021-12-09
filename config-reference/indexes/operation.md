@@ -44,7 +44,7 @@ Note, that in case of origination DipDup will query operations where either sour
 
 Each operation handler contains two required fields:
 
-* `callback` —  name of the _async_ function with a particular [**signature**](../../command-line/dipdup-init.md#handlers); DipDup will try to load it from the module with the same name `<package_name>.handlers.<callback>`
+* `callback` —  name of the _async_ function with a particular [**signature**](../../cli-reference/dipdup-init.md#handlers); DipDup will try to load it from the module with the same name `<package_name>.handlers.<callback>`
 * `pattern` — a non-empty list of items that have to be matched
 
 ```yaml

@@ -6,7 +6,7 @@ Generates type classes and handler templates based on the DipDup configuration f
 dipdup [-c path-to-config.yml] init [--overwrite-types]
 ```
 
-DipDup will generate all the necessary folders and files containing type definitions and code templates that are to be filled by the developer. See [package](../config-file-reference/package.md#package-structure) docs to learn about the project structure.
+DipDup will generate all the necessary folders and files containing type definitions and code templates that are to be filled by the developer. See [package](../config-reference/package.md#package-structure) docs to learn about the project structure.
 
 ## Type classes
 

@@ -12,7 +12,7 @@ By default Hasura generates three types of queries for each table in your schema
 
 * Generic query enabling filters by all columns
 * Single item query \(by primary key\)
-* Aggregation query \(can be [disabled](../config-file-reference/hasura.md#disable-aggregation-queries)\)
+* Aggregation query \(can be [disabled](../config-reference/hasura.md#disable-aggregation-queries)\)
 
 All the GQL features such as fragments, variables, aliases, directives are supported, as well as batching.  
 Read more in [Hasura docs](https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/index.html).
@@ -21,7 +21,7 @@ It's important to understand that GQL query is just a [POST request](https://gra
 
 ### Pagination
 
-By default Hasura does not restrict the number of rows returned per request which can lead to abuses and heavy load to your server. You can set up limits using the [according section](../config-file-reference/hasura.md#limit-number-of-rows) in the configuration file.  
+By default Hasura does not restrict the number of rows returned per request which can lead to abuses and heavy load to your server. You can set up limits using the [according section](../config-reference/hasura.md#limit-number-of-rows) in the configuration file.  
 But then you will face the need to [paginate](https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/pagination.html) over the items if response does not fit into the limits.
 
 ## Subscriptions
@@ -33,7 +33,7 @@ From [Hasura documentation](https://hasura.io/docs/latest/graphql/core/databases
 This is a very important feature that allows to avoid complex state management \(merging query results and subscription feed\). In most scenarios live queries is exactly what you need to be able to sync latest changed from the backend.
 
 {% hint style="warning" %}
-Note that if the live query has a large response that does not fit into the [limits](../config-file-reference/hasura.md#limit-number-of-rows), you need to either paginate with offset \(which is not convenient\) or use cursor-based pagination \(e.g. by an increasing unique id\) or narrow down the scope with filtering \(e.g. by timestamp or by level\).
+Note that if the live query has a large response that does not fit into the [limits](../config-reference/hasura.md#limit-number-of-rows), you need to either paginate with offset \(which is not convenient\) or use cursor-based pagination \(e.g. by an increasing unique id\) or narrow down the scope with filtering \(e.g. by timestamp or by level\).
 {% endhint %}
 
 Ultimately you can get "subscriptions" on top of live quires by requesting all the items having id greater than the maximum existing or all the items with timestamp greater than now.

@@ -39,7 +39,7 @@ Any index implementing a template has to have a value for each existing placehol
 DipDup allows to spawn new indexes from a template in runtime. There are two ways to do that:
 
 * From another index \(e.g. handling factory originations\)
-* From the [configuration handler](../command-line/dipdup-run.md#custom-initialization)
+* From the [configuration handler](../cli-reference/dipdup-run.md#custom-initialization)
 
 {% hint style="warning" %}
 Note that DipDup is currently not able to automatically generate types and handlers for template indexes unless there is at least one [static instance](indexes/template.md).

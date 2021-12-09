@@ -218,5 +218,4 @@ And that's all! We can run the indexer now.
 dipdup run
 ```
 
-DipDup will fetch all the historical data first, and then switch to real-time updates. You application data has been successfully indexed!
-
+DipDup will fetch all the historical data then switch to real-time updates. Your application data has been successfully indexed!
