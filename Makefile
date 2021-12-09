@@ -1,3 +1,6 @@
+serve:
+	mdbook serve -o
+
 wc:
 	find . -name \*.md -type f -exec wc {} \;
 

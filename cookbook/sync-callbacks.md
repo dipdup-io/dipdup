@@ -1,0 +1,1 @@
+# Synchronizing multiple handlers/hooks
