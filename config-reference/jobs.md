@@ -8,11 +8,7 @@ In some cases, it may come in handy to have the ability to run some code on sche
 
 Note that jobs are actually schedules for [hooks](hooks.md).
 
-
-
 Add the following section to DipDup config:
-
-
 
 ```yaml
 jobs:

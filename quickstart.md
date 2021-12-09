@@ -66,6 +66,7 @@ Now it's time to generate typeclasses and callback stubs. Run the following comm
 ```shell
 dipdup init
 ```
+
 DipDup will create a Python package `demo_tzbtc` having the following structure:
 
 {% tabs %}

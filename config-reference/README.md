@@ -1,26 +1,30 @@
 # Config file reference
 
-## Naming
+DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for `dipdup.yml` file in the current working directory, but you can provide any path with a `-c` CLI option:
 
-DipDup configuration file is usually stored on the top level of your project and has default name `dipdup.yml`. You can also have multiple configuration files and explicitly provide the target name via `-c` option when using CLI.
-
-```text
-dipdup -c custom-config.yml
+```shell
+dipdup -c configs/config.yml run
 ```
 
 ## General structure
 
-Configuration file consists of several logical blocks:
+DipDup configuration file consists of several logical blocks:
 
-|  | Top level sections |
-| :--- | :--- |
-| Header | `spec_version` `package` |
-| Inventory | `contracts` `datasources` |
-| Indexer specifications | `indexes` `templates*` |
-| Deployment options | `database` `sentry*` `hasura*` |
-| Plugin settings | `mempool*` `metadata*` |
+| | |
+|-|-|
+| Header               | `spec_version`* |
+|                      | `package`* |
+| Inventory            | `database`* |
+|                      | `contracts`* |
+|                      | `datasources`* |
+| Index definitions    | `indexes`* |
+|                      | `templates` |
+| Integrations         | `sentry`
+|                      | `hasura` |
+| Plugins              | `mempool` |
+|                      | `metadata` |
 
-`*`  — optional sections
+`*`  — required sections
 
 ## Environment variables
 
@@ -30,12 +34,12 @@ DipDup supports compose-style variable expansion with optional default value:
 field: ${ENV_VAR:-default_value}
 ```
 
-You can use environment variables throughout the configuration file except for the property names \(keys\).
+You can use environment variables throughout the configuration file, except for property names (YAML object keys).
 
-## Multiple config files
+## Merging config files
 
-DipDup allows you to customize configuration for a specific environment or a workflow. It works pretty much the same as in Docker Compose, but only for the top level sections \(i.e. you cannot override just a single nested property, you need to provide the entire new section\). In order to merge several DipDup files use `-c` command line option multiple times:
+DipDup allows you to customize the configuration for a specific environment or a workflow. It works similar to docker-compose, but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide `-c` command-line option multiple times:
 
-```text
+```shell
 dipdup -c dipdup.yml -c dipdup.prod.yml run
 ```
