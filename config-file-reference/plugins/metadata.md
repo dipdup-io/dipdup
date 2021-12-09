@@ -23,6 +23,10 @@ metadata:
     http_timeout: 10
     max_retry_count_on_error: 3
     max_cpu: 4
+    thumbnail:
+      max_file_size_mb: 100
+      workers: 20
+      size: 100
   indexers:
     ...
 ```
@@ -46,6 +50,18 @@ If DipDup fails to get a response from IPFS gateway or HTTP server, it will try 
 **max\_cpu**
 
 Maximum number of CPUs that can be executing simultaneously. Default value is **all availiable CPUs**.
+
+**thumbnail.size**
+
+Created thumbnails size in pixels. Size n×n  Default: 100.
+
+**thumbnail.workers**
+
+Count of thumbnail service parallel workers
+
+**thumbnail.max\_file\_size\_mb**
+
+Maximum file size which be downloaded from IPFS. Default: 50.
 
 ## Indexers
 
