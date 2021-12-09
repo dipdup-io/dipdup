@@ -1,11 +1,21 @@
 # Quickstart
 
-This page will guide you through the steps required to get your first selective indexer up and running in a few minutes without getting too deep into the details.
+This page will guide you through the steps to get your first selective indexer up and running in a few minutes without getting too deep into the details.
+
+Let's create an indexer for [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database, then calculate some statistics of its' holders' activity.
 
 ## Install framework
 
-{% tabs %}
-{% tab title="Bash" %}
+A Linux environment with Python 3.8+ installed is required to use DipDup.
+
+### poetry (recommended)
+
+```shell
+poetry init -n
+poetry add dipdup
+```
+
+### pip
 
 ```shell
 python -m venv .venv
@@ -13,12 +23,9 @@ source .venv/bin/activate
 pip install dipdup
 ```
 
-{% endtab %}
-{% endtabs %}
+See [Installation](getting-started/installation.md) section for details.
 
 ## Write a configuration file
-
-Let's create an indexer for [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database, then calculate some statistics of its' holders' activity.
 
 Create a new file named `dipdup.yml` in your current working directory with the following content:
 
