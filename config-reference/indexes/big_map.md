@@ -1,4 +1,4 @@
-# big\_map
+# big_map
 
 Big map index allows to query only updates of a specific Big map \(or several\) — in some cases it can drastically reduce the amount of data transferred and consequently speeds up the indexing process.
 
