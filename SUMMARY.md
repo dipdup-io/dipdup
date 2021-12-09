@@ -1,4 +1,4 @@
-# [Table of contents](SUMMARY.md)
+# [DipDup](SUMMARY.md)
 
 * [Overview](overview.md)
 * [Quickstart](quickstart.md)
@@ -15,9 +15,10 @@
   * [Building Docker images](deployment/docker.md)
   * [Deploying with docker-compose](deployment/docker-compose.md)
   * [Deploying with Docker Swarm](deployment/swarm.md)
-  * [Logging]()
-  * [Monitoring](null)
-  * [Backup and restore](null)
+  * [Sentry integration](deployment/sentry.md)
+  * [Logging](deployment/logging.md)
+  * [Monitoring](deployment/monitoring.md)
+  * [Backup and restore](deployment/backups.md)
 
 * [Troubleshooting](troubleshooting/README.md)
   * [Common issues](troubleshooting/common-issues.md)
@@ -38,6 +39,7 @@
   * [Processing offchain data](cookbook/offchain-data.md)
   * [Reusing typename for different contracts](cookbook/reusing-typenames.md)
   * [Synchronizing multiple handlers/hooks](cookbook/sync-callbacks.md)
+  * [Caching models](cookbook/caching-models.md)
 
 * [Client side](client-side/README.md)
   * [Hasura integration]()
