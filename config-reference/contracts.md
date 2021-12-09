@@ -27,4 +27,4 @@ contracts:
 
 A `typename` field is only required when using index templates, but it helps to improve the readability of auto-generated code.
 
-Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See [Templates and variables](templates-and-variables) section for details.
+Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See [Templates and variables](templates-and-variables) for details.

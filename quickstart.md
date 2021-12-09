@@ -23,11 +23,11 @@ source .venv/bin/activate
 pip install dipdup
 ```
 
-See [Installation](getting-started/installation.md) section for details.
+See [Installation](getting-started/installation.md) for details.
 
 ## Write a configuration file
 
-Create a new file named `dipdup.yml` in your current working directory with the following content:
+DipDup configuration is stored in YAML files of a specific format. Create a new file named `dipdup.yml` in your current working directory with the following content:
 
 ```yaml
 spec_version: 1.2
@@ -64,7 +64,7 @@ indexes:
             entrypoint: mint
 ```
 
-See [Config reference](config-reference) section for details.
+See [Config reference](config-reference/README.md) for details.
 
 ## Initialize project tree
 
@@ -75,9 +75,6 @@ dipdup init
 ```
 
 DipDup will create a Python package `demo_tzbtc` having the following structure:
-
-{% tabs %}
-{% tab title="Python" %}
 
 ```
 demo_tzbtc
@@ -110,12 +107,9 @@ demo_tzbtc
         └── storage.py
 ```
 
-{% endtab %}
-{% endtabs %}
+That's a lot of files and directories! But don't worry, in this guide, we will need only `models.py` and `handlers` modules.
 
-That's a lot of files and directories! But don't worry, for this guide, we will need only `models.py` module and `handlers` package.
-
-See [Project structure](getting-started/project-structure) section for details.
+See [Project structure](getting-started/project-structure.md) for details.
 
 ## Define data models
 
@@ -127,8 +121,7 @@ Our schema will consist of a single model `Holder` having several fields:
 * `tx_count` — number of transfers/mints
 * `last_seen` — time of the last transfer/mint
 
-{% tabs %}
-{% tab title="Python" %}
+Put the following content in `models.py` file:
 
 ```python
 from tortoise import Model, fields
@@ -142,16 +135,13 @@ class Holder(Model):
     last_seen = fields.DateTimeField(null=True)
 ```
 
-{% endtab %}
-{% endtabs %}
+See [Tortoise ORM docs](https://tortoise-orm.readthedocs.io/en/latest/models.html/) for details.
 
 ## Implement handlers
 
-Our task is to properly index all the balance updates, so we'll start with a helper method handling them.
+Everything's ready to implement an actual indexer logic.
 
-{% tabs %}
-{% tab title="Python" %}
-`on_balance_update.py`
+Our task is to index all the balance updates, so we'll start with a helper method to handle them. Create a file named `on_balance_update.py` in `handlers` package with the following content:
 
 ```python
 from decimal import Decimal
@@ -172,18 +162,14 @@ async def on_balance_update(
     await holder.save()
 ```
 
-{% endtab %}
-{% endtabs %}
+That was pretty straightforward 👍🏻
 
-That was pretty straightforward👍🏻
 
-Now we need to handle two contract methods that can alter token balances — `transfer` and `mint` \(there's also `burn`, but for simplicity we'll omit that in this tutorial\).
+Three methods of tzBTC contract can alter token balances — `transfer`, `mint` and `burn`. The last one is omitted in this tutorial for simplicity. Edit corresponding handlers to call `on_balance_update` method with data from matched operations:
 
-{% tabs %}
-{% tab title="Python" %}
 `on_transfer.py`
 
-```python#indent=4
+```python
 from typing import Optional
 from decimal import Decimal
 
@@ -237,20 +223,19 @@ async def on_mint(
     mint: Transaction[MintParameter, TzbtcStorage],
 ) -> None:
     amount = Decimal(mint.parameter.value) / (10 ** 8)
-    await on_balance_update(address=mint.parameter.to,
-                            balance_update=amount,
-                            timestamp=mint.data.timestamp)
+    await on_balance_update(
+        address=mint.parameter.to,
+        balance_update=amount,
+        timestamp=mint.data.timestamp
+    )
 
 ```
-
-{% endtab %}
-{% endtabs %}
 
 And that's all! We can run the indexer now.
 
 ## Run your indexer
 
-```text
+```shell
 dipdup run
 ```
 
