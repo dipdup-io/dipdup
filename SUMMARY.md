@@ -12,6 +12,7 @@
   * [Implementing handlers](null)
 
 * [Deployment and operations](deployment/README.md)
+  * [Database engines](deployment/database-engines.md)
   * [Building Docker images](deployment/docker.md)
   * [Deploying with docker-compose](deployment/docker-compose.md)
   * [Deploying with Docker Swarm](deployment/swarm.md)
