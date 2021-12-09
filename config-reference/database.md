@@ -73,4 +73,3 @@ database:
 {% hint style="danger" %}
 Note that in order to change the schema of an immune table you need to manually do a migration. DipDup will not drop the table nor automatically handle the update.
 {% endhint %}
-

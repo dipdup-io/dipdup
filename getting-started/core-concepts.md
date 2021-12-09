@@ -45,4 +45,3 @@ It's important for DipDup to be able to handle chain reorgs since reindexing fro
 * If the new block has the same subset of operations as the replaced one — do nothing;
 * If the new block has all the operation from the replaced one AND several new operations — process those new operations;
 * If the new block misses some operations from the replaced one: trigger full reindexing.
-

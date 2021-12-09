@@ -6,11 +6,13 @@ This page will guide you through the steps required to get your first selective 
 
 {% tabs %}
 {% tab title="Bash" %}
+
 ```bash
-$ python -m venv .venv
-$ source .venv/bin/activate
-$ pip install dipdup
+python -m venv .venv
+source .venv/bin/activate
+pip install dipdup
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -55,8 +57,6 @@ indexes:
             entrypoint: mint
 ```
 
-
-
 <tzkt screenshot?>
 
 ## Generate types
@@ -69,6 +69,7 @@ This command will generate the following files:
 
 {% tabs %}
 {% tab title="Python" %}
+
 ```text
 demo_tzbtc/
 ├── models.py
@@ -84,6 +85,7 @@ demo_tzbtc/
             └── transfer.py
             └── mint.py
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -101,6 +103,7 @@ Our schema will consist of a single model `Holder` having several fields:
 
 {% tabs %}
 {% tab title="Python" %}
+
 ```python
 from tortoise import Model, fields
 
@@ -112,6 +115,7 @@ class Holder(Model):
     tx_count = fields.BigIntField(default=0)
     last_seen = fields.DateTimeField(null=True)
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -141,6 +145,7 @@ async def on_balance_update(
     assert holder.balance >= 0, address
     await holder.save()
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -207,6 +212,7 @@ async def on_mint(
                             timestamp=mint.data.timestamp)
 
 ```
+
 {% endtab %}
 {% endtabs %}
 

@@ -5,4 +5,3 @@ Applies Hasura configuration without restarting the indexer. By default, DupDip 
 ```text
 dipdup hasura configure [--reset]
 ```
-

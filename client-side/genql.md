@@ -47,4 +47,3 @@ That's it! Now you only need to install dependencies and execute the build targe
 yarn
 yarn build
 ```
-

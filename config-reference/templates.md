@@ -48,4 +48,3 @@ Note that DipDup is currently not able to automatically generate types and handl
 DipDup exposes several context methods that extend current configuration with new contracts and template instances.
 
 {% page-ref page="../advanced/handler-context.md" %}
-

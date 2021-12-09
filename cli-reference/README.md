@@ -9,6 +9,7 @@ Python 3.8+ is required.
 ```bash
 pip install dipdup
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -28,7 +29,7 @@ dipdup -c path/to/config.yml -c path/to/override/config.yml COMMAND
 
 ## Advanced Python logging
 
-You may want to tune logging to get notifications on errors or enable debug messages. Specify path to a Python logging config in YAML format using `--logging-config` argument. 
+You may want to tune logging to get notifications on errors or enable debug messages. Specify path to a Python logging config in YAML format using `--logging-config` argument.
 
 Default config to start with:
 
@@ -56,8 +57,3 @@ version: 1
     handlers:
       - console
 ```
-
-
-
-
-

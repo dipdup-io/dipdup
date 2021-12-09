@@ -39,4 +39,3 @@ DipDup allows you to customize configuration for a specific environment or a wor
 ```text
 dipdup -c dipdup.yml -c dipdup.prod.yml run
 ```
-

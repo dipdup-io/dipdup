@@ -72,4 +72,3 @@ Metadata plugin is tightly coupled with [TzKT](../datasources.md#tzkt) provider.
 #### tzkt
 
 An alias pointing to a [datasource](../datasources.md) of kind `tzkt` is expected.
-

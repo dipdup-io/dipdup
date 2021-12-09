@@ -41,11 +41,13 @@ DipDup does not automatically handle name collisions, please use type aliases in
 
 {% tabs %}
 {% tab title="Python" %}
+
 ```python
 from <package>.types.<typename>.parameter.<entry_point> import (
     EntryPointParameter as Alias
 )
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -77,7 +79,7 @@ async def callback(
 
 where:
 
-*  `entry_point_1 ... entry_point_n` are items from the according handler pattern.
+* `entry_point_1 ... entry_point_n` are items from the according handler pattern.
 * `ctx: HandlerContext` provides useful helpers and contains internal state.
 * `Transaction` contains transaction amount, parameter, and storage **\(typed\)**.
 
@@ -134,10 +136,6 @@ Executed before starting indexes. Allows to configure DipDup dynamically based o
 
 #### `on_synchronized`
 
-
-
-
-
 ## Models
 
 In addition to types and handlers, DipDup also generates `models` file on the top level of the package that will contain all the database models. Models file name and location are restricted by the framework and cannot be changed.
@@ -158,4 +156,3 @@ class ExampleModel(Model):
 Check out Tortoise ORM [docs](https://tortoise-orm.readthedocs.io/en/latest/getting_started.html#tutorial) for more details.
 {% endtab %}
 {% endtabs %}
-

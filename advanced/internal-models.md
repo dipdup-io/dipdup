@@ -14,4 +14,3 @@ With help of these tables, you can set up monitoring of DipDup deployment to kno
 ```sql
 SELECT NOW() - timestamp FROM dipdup_head;
 ```
-

@@ -11,7 +11,3 @@ DipDup will generate all the necessary directories and files inside the project'
 `init` command does not overwrite typeclasses already generated. Use the `--overwrite-types` flag if it's not the desired behavior.
 
 TODO: note on `dipdup: ignore`, link to cookbook for details
-
-
-
-

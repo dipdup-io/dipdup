@@ -45,6 +45,7 @@ DipDup generates a default configuration hook `on_restart` that can be filled wi
 
 {% tabs %}
 {% tab title="Python" %}
+
 ```python
 from dipdup.context import HandlerContext
 
@@ -52,14 +53,10 @@ from dipdup.context import HandlerContext
 async def on_restart(ctx: HandlerContext) -> None:
     ...
 ```
+
 {% endtab %}
 {% endtabs %}
 
-It can be used for creating [dynamic indexes](../config-reference/templates.md#dynamic-instances) from predefined templates or other tasks. 
+It can be used for creating [dynamic indexes](../config-reference/templates.md#dynamic-instances) from predefined templates or other tasks.
 
 {% page-ref page="../config-reference/hasura.md" %}
-
-
-
-
-

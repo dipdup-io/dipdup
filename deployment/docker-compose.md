@@ -23,6 +23,7 @@ COPY . /demo
 ENTRYPOINT ["poetry", "run", "dipdup"]
 CMD ["-c", "dipdup.yml", "run"]
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -108,5 +109,4 @@ Note the hostnames \(will be resolved in the docker network\) and environment va
 docker-compose up -d --build
 ```
 
-We recommend [lazydocker](https://github.com/jesseduffield/lazydocker) for monitoring your application. 
-
+We recommend [lazydocker](https://github.com/jesseduffield/lazydocker) for monitoring your application.

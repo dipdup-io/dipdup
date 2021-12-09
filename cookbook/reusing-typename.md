@@ -14,5 +14,3 @@ class ContractStorage(BaseModel):
 ```
 
 Files starting with `# dipdup: ignore` won't be overwritten on init.
-
-

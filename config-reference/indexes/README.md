@@ -32,6 +32,3 @@ indexes:
     first_level: 1000000
     last_level: 2000000
 ```
-
-
-

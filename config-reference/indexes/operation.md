@@ -96,4 +96,3 @@ pattern:
 {% hint style="info" %}
 Depending on whether you specify \(or not\) _destination+entrypoint_ for transactions and _originated\_contract_ for originations you will get slightly different callback argument types. Namely, in the first case DipDup will be able to generate the dataclass for a particular entrypoint/storage, and in the second case not \(meaning you will have to handle dynamically typed parameters/storage updates\).
 {% endhint %}
-

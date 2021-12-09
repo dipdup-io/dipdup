@@ -15,4 +15,3 @@ For a static template instance \(specified in the DipDup config\) there are two 
 
 * `template` — template name \(from [templates](../templates.md) section\)
 * `values` — concrete values for each [placeholder](../templates.md#placeholders) used in a chosen template
-

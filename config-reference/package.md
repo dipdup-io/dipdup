@@ -45,4 +45,3 @@ my_module_name/
 You don't have to create this hierarchy yourself — all the folders and most files are generated automatically by the CLI.
 
 `*` — is an according file extension \(_py_, _ts_, etc\)
-

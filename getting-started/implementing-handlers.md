@@ -33,4 +33,3 @@ Use this instance for logging.
 ### `.template_values`
 
 You can access values used for initializing a template index.
-

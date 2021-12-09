@@ -111,4 +111,3 @@ An alias pointing to a [datasource](datasources.md) of kind `tzkt` is expected.
 
 An array of aliases pointing to [datasources](datasources.md) of kind `tezos-node`  
 Polling multiple nodes allows to detect more refused operations and makes indexing more robust in general.
-

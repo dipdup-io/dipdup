@@ -20,6 +20,6 @@ class Trade(Model):
     level = fields.BigIntField(index=True)
     timestamp = fields.DatetimeField(index=True)
 ```
+
 {% endtab %}
 {% endtabs %}
-

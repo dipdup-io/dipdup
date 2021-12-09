@@ -1,7 +1,9 @@
 ## Installation
+
 ### Requirements
 
 #### Linux
+
 #### Python
 
 ### Choosing a database engine
@@ -19,7 +21,9 @@ This table will help you chose a database backend that suits your needs.
 2 see hasura limitations
 
 ### poetry (recommended)
+
 install and configure poetry
 add dependency
 almost semantic, break queckly
+
 ### pip requirements.txt

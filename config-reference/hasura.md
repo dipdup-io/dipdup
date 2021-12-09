@@ -88,7 +88,7 @@ $ curl http://127.0.0.1:8080/api/rest/hicEtNuncHolder?address=tz1UBZUkXpKGhYsP5K
 }
 ```
 
-However, there's a limitation dictated by the way Hasura parses HTTP requests: only models with primary keys of basic types \(int, string and so on\) can be fetched with GET requests. An attempt to fetch model with BIGINT primary key will lead to error: `Expected bigint for variable id got Number`.   
+However, there's a limitation dictated by the way Hasura parses HTTP requests: only models with primary keys of basic types \(int, string and so on\) can be fetched with GET requests. An attempt to fetch model with BIGINT primary key will lead to error: `Expected bigint for variable id got Number`.
 A workaround to fetching any model is to send a POST request containing a JSON payload with a single key:
 
 ```javascript
@@ -135,4 +135,3 @@ You can also disable creation of REST endpoints in the config:
 hasura:
   rest: False
 ```
-

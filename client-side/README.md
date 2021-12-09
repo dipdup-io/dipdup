@@ -49,4 +49,3 @@ The purpose of DipDup is to create indexers, which means you can always reproduc
 However in some cases you might need to introduce a non-recoverable state and mix indexed and user-generated content. DipDup allows to mark these UGC tables "immune" which protects them from being wiped. In addition to that you will need to set up [Hasura Auth](https://hasura.io/docs/latest/graphql/core/auth/index.html) and adjust write permissions for the tables \(by default they are read-only\).
 
 Lastly, in order to modify the state from the client side you will need to execute GQL mutations, [read more](https://hasura.io/docs/latest/graphql/core/databases/postgres/mutations/index.html) about how to do that with Hasura.
-

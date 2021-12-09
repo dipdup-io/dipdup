@@ -13,4 +13,3 @@ sentry:
 ```
 
 Sentry DSN can be obtained from the web interface at _Settings -&gt; Projects -&gt; project\_name -&gt; Client Keys \(DSN\)_. Cool thing is that if you catch an exception and suspect there's a bug in DipDup you can share this event with us using a public link \(created at _Share_ menu\).
-

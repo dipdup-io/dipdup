@@ -16,4 +16,3 @@ Here are several minimal examples how to use various DipDup features for a real 
 * [NFTButton](https://github.com/bobobobob/nftbutton-backend)
 * [HicDEX](https://github.com/hicdex/hicdex)
 * [HomebaseDAO](https://github.com/dOrgTech/homebase-indexer)
-
