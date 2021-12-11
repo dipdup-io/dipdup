@@ -14,9 +14,11 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
-* cli: Fixed config not being verified when invoking some commands
+* cli: Fixed config not being verified when invoking some commands.
+* codegen: Fixed generating callback arguments for untyped operations.
 * index: Fixed incorrect log messages, remove duplicate ones.
 * index: Fixed crash while processing storage of some contracts.
+* index: Fixed matching of untyped operations filtered by `source` field ([@pravin-d](https://github.com/pravin-d)).
 
 ### Performance
 
