@@ -322,7 +322,7 @@ class PatternConfig(CodegenMixin, ABC):
         return f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}', parameter_cls
 
     @classmethod
-    def format_empty_operation_import(cls) -> Tuple[str, str]:
+    def format_untyped_operation_import(cls) -> Tuple[str, str]:
         return 'dipdup.models', 'OperationData'
 
     @classmethod
@@ -342,7 +342,7 @@ class PatternConfig(CodegenMixin, ABC):
         return pascal_to_snake(entrypoint), f'Transaction[{parameter_cls}, {storage_cls}]'
 
     @classmethod
-    def format_empty_operation_argument(cls, transaction_id: int, optional: bool) -> Tuple[str, str]:
+    def format_untyped_operation_argument(cls, transaction_id: int, optional: bool) -> Tuple[str, str]:
         if optional:
             return f'transaction_{transaction_id}', 'Optional[OperationData] = None'
         return f'transaction_{transaction_id}', 'OperationData'
@@ -449,14 +449,14 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
             yield self.format_parameter_import(package, module_name, self.entrypoint)
             yield self.format_storage_import(package, module_name)
         else:
-            yield self.format_empty_operation_import()
+            yield self.format_untyped_operation_import()
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         if self.entrypoint:
             module_name = self.destination_contract_config.module_name
             yield self.format_operation_argument(module_name, self.entrypoint, self.optional)
         else:
-            yield self.format_empty_operation_argument(self.transaction_id, self.optional)
+            yield self.format_untyped_operation_argument(self.transaction_id, self.optional)
 
     @cached_property
     def source_contract_config(self) -> ContractConfig:
@@ -1250,16 +1250,15 @@ class DipDupConfig:
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
                 self._callback_patterns[handler_config.callback].append(handler_config.pattern)
-                for pattern_config in handler_config.pattern:
-                    transaction_id = 0
+                for idx, pattern_config in enumerate(handler_config.pattern):
+                    # NOTE: Untyped operations are named as `transaction_N` based on their index
                     if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
                             pattern_config.destination = self.get_contract(pattern_config.destination)
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_contract(pattern_config.source)
                         if not pattern_config.entrypoint:
-                            pattern_config.transaction_id = transaction_id
-                            transaction_id += 1
+                            pattern_config.transaction_id = idx
 
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                         if isinstance(pattern_config.source, str):
