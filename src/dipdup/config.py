@@ -123,7 +123,7 @@ class PostgresDatabaseConfig:
 @dataclass
 class HTTPConfig:
     """Advanced configuration of HTTP client
-    
+
     :param cache: Whether to cache responses
     :param retry_count: Number of retries before giving up
     :param retry_sleep: Sleep time between retries
@@ -132,8 +132,9 @@ class HTTPConfig:
     :param ratelimit_period: Time period for rate limiting
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout
-    :param batch_size: Number of items fetched in a single request 
+    :param batch_size: Number of items fetched in a single request
     """
+
     cache: Optional[bool] = None
     retry_count: Optional[int] = None
     retry_sleep: Optional[float] = None
@@ -259,6 +260,7 @@ class CoinbaseDatasourceConfig(NameMixin):
     :param passphrase: API passphrase
     :param http: HTTP client configuration
     """
+
     kind: Literal['coinbase']
     api_key: Optional[str] = None
     secret_key: Optional[str] = None
@@ -476,6 +478,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     :param source: Source contract alias to filter operations with
     :param similar_to: Alias of contract having the same code/signature (depending on `strict` field)
     """
+
     type: Literal['origination'] = 'origination'
     source: Optional[Union[str, ContractConfig]] = None
     similar_to: Optional[Union[str, ContractConfig]] = None

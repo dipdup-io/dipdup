@@ -2,7 +2,7 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## 4.0.0-rc2 - [unreleased]
+## 4.0.0-rc2 - 2021-12-11
 
 ### ⚠ Migration
 
@@ -16,10 +16,11 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * cli: Fixed config not being verified when invoking some commands
 * index: Fixed incorrect log messages, remove duplicate ones.
+* index: Fixed crash while processing storage of some contracts.
 
 ### Performance
 
-* index: Checks performed on each iteration of the main dipdup loop are slightly faster now.
+* index: Checks performed on each iteration of the main DipDup loop are slightly faster now.
 
 ## 4.0.0-rc1 - 2021-12-02
 

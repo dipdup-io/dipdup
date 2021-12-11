@@ -24,7 +24,7 @@ from dipdup.models import OperationData
 def _get_operation(hash_: str, level: int) -> OperationData:
     return OperationData(
         storage={},
-        diffs=[],
+        diffs=(),
         type='transaction',
         id=0,
         level=level,
