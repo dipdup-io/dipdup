@@ -378,8 +378,9 @@ class OperationIndex(Index):
         """Match single operation with pattern"""
         # NOTE: Reversed conditions are intentional
         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-            if pattern_config.entrypoint != operation.entrypoint:
-                return False
+            if pattern_config.entrypoint:
+                if pattern_config.entrypoint != operation.entrypoint:
+                    return False
             if pattern_config.destination:
                 if pattern_config.destination_contract_config.address != operation.target_address:
                     return False
