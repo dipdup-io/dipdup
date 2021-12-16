@@ -8,7 +8,11 @@ Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space fo
 
 ## Installation
 
+To begin with, create a new directory for your project and enter it. Now choose one:
+
 ### poetry (recommended)
+
+Initialize a new PEP 518 project and add DipDip to dependencies.
 
 ```shell
 poetry init -n
@@ -16,6 +20,8 @@ poetry add dipdup
 ```
 
 ### pip
+
+Create a new virtual environment and install DipDup in it.
 
 ```shell
 python -m venv .venv
