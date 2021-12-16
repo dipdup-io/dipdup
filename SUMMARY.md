@@ -13,8 +13,9 @@
 
 * [Advanced usage](advanced/README.md)
   * [Datasources](advanced/datasources.md)
-  * [SQL hooks]()
-  * [TimescaleDB]()
+  * [Hooks](advanced/hooks.md)
+  * [SQL queries](advanced/sql.md)
+  * [TimescaleDB](advanced/timescaledb.md)
   * [Improving performance](advanced/performance/README.md)
     * [Tuning datasources](advanced/performance/datasources.md)
     * [Optimizing database queries](advanced/performance/database.md)

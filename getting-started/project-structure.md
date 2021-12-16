@@ -33,6 +33,14 @@ demo_tzbtc
         └── storage.py
 ```
 
+## `graphql`: queries for Hasura
+
+TODO: link to Hasura integration page
+
+## `handlers`
+## `hooks`
+## `models`
+## `sql`
 ## `types`: type classes
 
 DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) already in normalized form ([read more](https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/) about how TzKT handles Michelson expressions), but still as raw JSON. DipDup uses contract type information to generate data classes, which allow developers to work with strictly typed data.
@@ -47,21 +55,6 @@ The following models are created at `init`:
 ## Handlers
 
 TODO: moved to implementing handlers
-### Default hooks
-
-There is a special handlers DipDup generates for all indexes. They covers network events and initialization hooks. Names of those handlers are reserved, you can't use them in config.
-
-#### on\_rollback.py
-
-It tells DipDip how to handle chain reorgs, which is a purely application-specific logic especially if there are stateful entities. The default implementation does nothing if rollback size is 1 block and full reindexing otherwise.
-
-#### on\_restart.py
-
-Executed before starting indexes. Allows to configure DipDup dynamically based on data from external sources. Datasources are already initialized at the time of execution and available at `ctx.datasources`. See [Handler context](../advanced/handler-context.md) for more details how to perform configuration.
-
-#### on\_reindex.py
-
-#### `on_synchronized`
 
 ## Models
 
