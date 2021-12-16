@@ -4,11 +4,9 @@ Make sure you have [docker](https://docs.docker.com/get-docker/) and [docker-com
 
 **Step 1.** Create `Dockerfile` with the following content:
 
-{% tabs %}
-{% tab title="Python" %}
 Assuming you are using [poetry](https://python-poetry.org/) for managing the project:
 
-```text
+```dockerfile
 FROM python:3.9-slim-buster
 
 RUN pip install poetry
@@ -23,9 +21,6 @@ COPY . /demo
 ENTRYPOINT ["poetry", "run", "dipdup"]
 CMD ["-c", "dipdup.yml", "run"]
 ```
-
-{% endtab %}
-{% endtabs %}
 
  **Step 2.** Create `docker-compose.yml` with the following sections:
 

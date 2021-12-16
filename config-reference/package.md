@@ -10,11 +10,7 @@ This is a language-specific field used by the DipDup CLI tool to discover your i
 package: my_indexer_name
 ```
 
-{% tabs %}
-{% tab title="Python" %}
 DipDup will search for a module named `my_module_name` in **`PYTHONPATH`**
-{% endtab %}
-{% endtabs %}
 
 This allows to decouple DipDup configuration file from the indexer implementation and gives more flexibility in managing the source code.
 

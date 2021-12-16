@@ -2,20 +2,15 @@
 
 ## Installation
 
-{% tabs %}
-{% tab title="Python" %}
 Python 3.8+ is required.
 
-```bash
+```shell
 pip install dipdup
 ```
 
-{% endtab %}
-{% endtabs %}
-
 Check that DipDup CLI has been successfully installed:
 
-```text
+```shell
 dipdup --version
 ```
 
@@ -23,7 +18,7 @@ dipdup --version
 
 By default DipDup is looking for a file named `dipdup.yml` in the current working directory. You can override that by explicitly telling where to find the config \(one or many\):
 
-```text
+```shell
 dipdup -c path/to/config.yml -c path/to/override/config.yml COMMAND
 ```
 

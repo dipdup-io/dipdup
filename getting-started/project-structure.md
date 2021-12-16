@@ -4,22 +4,16 @@
 
 DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) already in normalised form \([read more](https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/) about how TzKT handles Michelson expressions\), but still as raw JSON. In order for the developer to work with typed data, DipDup uses contract type information to automatically generate data classes.
 
-{% tabs %}
-{% tab title="Python" %}
 In Python DipDup generates [Pydantic](https://pydantic-docs.helpmanual.io/datamodel_code_generator/) models out of JSONSchema.  
 You might need to install additional [plugins](https://pydantic-docs.helpmanual.io/pycharm_plugin/) for your IDE for convenient work with Pydantic
-{% endtab %}
-{% endtabs %}
 
 DipDup generates only necessary models:
 
-* For `operation` ****index it will generate storage type classes for all contracts met in handler patterns plus parameter type classes for all destination+entrypoint pairs.
+* For `operation` index it will generate storage type classes for all contracts met in handler patterns plus parameter type classes for all destination+entrypoint pairs.
 * For `big_map` index it will generate key and storage type classes for all big map paths in handler configs.
 
 ### Naming convensions
 
-{% tabs %}
-{% tab title="Python" %}
 In Python all file names are forcibly converted to snake case and all class names — to capitalized camel case.
 
 ```python
@@ -34,13 +28,9 @@ from <package>.types.name_registry.big_map.<path>_value import PathValue
 where `typename` is defined in the contract inventory, `entrypoint` is specified in the handler pattern, and `path` is in the according Big map handler.
 
 **NOTE** the "Storage" and "Parameter" affixes.
-{% endtab %}
-{% endtabs %}
 
 DipDup does not automatically handle name collisions, please use type aliases in case multiple contracts have entrypoints that share the same name.
 
-{% tabs %}
-{% tab title="Python" %}
 
 ```python
 from <package>.types.<typename>.parameter.<entry_point> import (
@@ -48,15 +38,10 @@ from <package>.types.<typename>.parameter.<entry_point> import (
 )
 ```
 
-{% endtab %}
-{% endtabs %}
-
 ## Handlers
 
 DipDup generates a separate file with handler method stub for each callback in every index specified in configuration file.
 
-{% tabs %}
-{% tab title="Python" %}
 Callback method signature is the following \(_transaction_ case\):
 
 ```python
@@ -113,8 +98,6 @@ async def on_update(
 where `BigMapDiff` contains action \(allocate, update, or remove\) and nullable key and value **\(typed\).**
 
 **NOTE** that you can safely change argument names \(e.g. in case of collisions\).
-{% endtab %}
-{% endtabs %}
 
 {% hint style="info" %}
 If you use index templates your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same **`typename`** and raises an error otherwise.
@@ -140,8 +123,6 @@ Executed before starting indexes. Allows to configure DipDup dynamically based o
 
 In addition to types and handlers, DipDup also generates `models` file on the top level of the package that will contain all the database models. Models file name and location are restricted by the framework and cannot be changed.
 
-{% tabs %}
-{% tab title="Python" %}
 Python SDK uses Tortoise ORM for working with the database. The expected `models.py` file looks like the following:
 
 ```python
@@ -154,5 +135,3 @@ class ExampleModel(Model):
 ```
 
 Check out Tortoise ORM [docs](https://tortoise-orm.readthedocs.io/en/latest/getting_started.html#tutorial) for more details.
-{% endtab %}
-{% endtabs %}
