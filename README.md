@@ -106,7 +106,7 @@ class Holder(Model):
     balance = fields.DecimalField(decimal_places=8, max_digits=20, default=0)
     volume = fields.DecimalField(decimal_places=8, max_digits=20, default=0)
     tx_count = fields.BigIntField(default=0)
-    last_seen = fields.DateTimeField(null=True)
+    last_seen = fields.DatetimeField(null=True)
 ```
 {% endtab %}
 {% endtabs %}
@@ -131,7 +131,6 @@ async def on_balance_update(
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=address)
     holder.balance += balance_update
-    holder.turnover += abs(balance_update)
     holder.tx_count += 1
     holder.last_seen = timestamp
     assert holder.balance >= 0, address
