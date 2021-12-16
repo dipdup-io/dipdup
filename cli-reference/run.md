@@ -1,16 +1,11 @@
 # dipdup run
 
-Configures API engine\(s\) \(if specified in the configuration file\) and runs the indexer. Can be gracefully killed with `Ctrl+C` or `SIGTERM`.
+Configures API connectors, initializes database and runs the indexer. Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
 
-```text
-dipdup [-c path-to-config.yml] run [--reindex] [--oneshot]
+```shell
+dipdup [-c dipdup.yml] run [--postpone-jobs] [--early-realtime] [--merge-subscriptions]
 ```
 
-DipDup will wait until database and API engines are accessible.
-
-Use `--reindex` flag if you want to drop the database and start indexing from scratch.
-
-Use `--oneshot` flag to just synchronize your indexes without switching to real-time updates \(useful for debugging together with `first_block` and `last_block` fields set\).
 
 ## Schema migration
 
