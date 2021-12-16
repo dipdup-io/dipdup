@@ -176,7 +176,6 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
 
 @cli.command(help='Run indexing')
-@click.option('--oneshot', is_flag=True, help='Synchronize indexes and exit without starting a real-time connection')
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
 @click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
 @click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing')
@@ -184,13 +183,10 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @cli_wrapper
 async def run(
     ctx,
-    oneshot: bool,
     postpone_jobs: bool,
     early_realtime: bool,
     merge_subscriptions: bool,
 ) -> None:
-    if oneshot:
-        _logger.warning('`oneshot` argument is deprecated: use `first_level` and `last_level` fields of index config instead')
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     config.advanced.postpone_jobs |= postpone_jobs
@@ -280,14 +276,6 @@ async def cache_show(ctx) -> None:
     echo(f'{cache.cache_dir}: {len(cache)} items, {size}')
 
 
-@cli.command(help='Clear datasource request caches (deprecated `cache clear` alias)')
-@click.pass_context
-@cli_wrapper
-async def clear_cache(ctx) -> None:
-    _logger.warning('`clear-cache` command is deprecated, use `cache clear` instead')
-    FileCache('dipdup', flag='cs').clear()
-
-
 @cli.group(help='Docker integration related commands')
 @click.pass_context
 @cli_wrapper
@@ -341,6 +329,7 @@ async def schema(ctx):
 
 
 @schema.command(name='approve', help='Continue to use existing schema after reindexing was triggered')
+@click.option('--hashes', is_flag=True, help='Recalculate all schema and config hashes')
 @click.pass_context
 @cli_wrapper
 async def schema_approve(ctx, hashes: bool):

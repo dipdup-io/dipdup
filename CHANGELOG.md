@@ -2,6 +2,17 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## 4.0.0 - [unrleased]
+
+### Fixed
+
+* Fixed missing `schema approve --hashes` argument.
+* Fixed regression in processing migration originations.
+
+### Removed
+
+* Removed deprecated `run --oneshot` argument and `clear-cache` command.
+
 ## 4.0.0-rc2 - 2021-12-11
 
 ### ⚠ Migration
