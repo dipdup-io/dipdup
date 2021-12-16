@@ -1,5 +1,7 @@
 # Installation
 
+This page covers the installation of DipDup in local environments. See [Building Docker images](../deployment/docker.md) to learn how use DipDup in containers.
+
 ## Host requirements
 
 A Linux environment with Python 3.8+ installed is required to use DipDup.
