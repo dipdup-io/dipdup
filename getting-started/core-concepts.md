@@ -7,11 +7,11 @@ DipDup is heavily inspired by [The Graph](https://thegraph.com/) Protocol, but t
 * DipDup works with operation groups (explicit operation and all internal ones) and _Big\_map_ updates (lazy hash map structures) — until fully-fledged events are implemented in Tezos.
 * DipDup utilizes a microservice approach and relies heavily on existing solutions. That makes the SDK itself very lightweight and allows to switch API engines on demand.
 
-You can think of DipDup as a set of best practices for building custom backends for decentralized applications plus a toolkit that spares you from writing boilerplate code.
+You can think of DipDup as a set of best practices for building custom backends for decentralized applications, plus a toolkit that spares you from writing boilerplate code.
 
 DipDup is currently tightly coupled with [TzKT API](http://api.tzkt.io/) but generally can use any data provider that implements a particular feature set. TzKT provides REST endpoints and Websocket subscriptions with flexible filters enabling selective indexing and returns "humanified" contract data, which means that you don't have to handle raw Michelson expressions.
 
-While you are free to use any database and API engine (e.g. write your own API backend). By default, DipDup offers PostgreSQL + Hasura GraphQL Engine combo to expose indexed data via REST and GraphQL with minimal configuration.
+DipDup offers PostgreSQL + Hasura GraphQL Engine combo out-of-the-box to expose indexed data via REST and GraphQL with minimal configuration. However, you are free to use any database and API engine (e.g. write your own API backend).
 
 ![Default DipDup setup and data flow](../.gitbook/assets/dipdup.svg)
 
