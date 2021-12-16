@@ -1,6 +1,39 @@
 # Project structure
 
-## Type classes
+The structure of DipDup project package is the following:
+
+```
+demo_tzbtc
+├── graphql
+├── handlers
+│   ├── __init__.py
+│   ├── on_mint.py
+│   └── on_transfer.py
+├── hooks
+│   ├── __init__.py
+│   ├── on_reindex.py
+│   ├── on_restart.py
+│   ├── on_rollback.py
+│   └── on_synchronized.py
+├── __init__.py
+├── models.py
+├── sql
+│   ├── on_reindex
+│   ├── on_restart
+│   ├── on_rollback
+│   └── on_synchronized
+└── types
+    ├── __init__.py
+    └── tzbtc
+        ├── __init__.py
+        ├── parameter
+        │   ├── __init__.py
+        │   ├── mint.py
+        │   └── transfer.py
+        └── storage.py
+```
+
+## `types`: type classes
 
 DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) already in normalized form ([read more](https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/) about how TzKT handles Michelson expressions), but still as raw JSON. DipDup uses contract type information to generate data classes, which allow developers to work with strictly typed data.
 
@@ -10,27 +43,6 @@ The following models are created at `init`:
 
 * `operation` indexes: storage type for all contracts met in handler patterns plus parameter type for all destination+entrypoint pairs.
 * `big_map` indexes: key and storage types for all big map paths in handler configs.
-
-### Naming convensions
-
-Python language requires all module and function names in snake case and all class names in pascal case.
-
-Typical imports section of big_map handler callback looks like this:
-
-```python
-from <package>.types.<typename>.storage import TypeNameStorage
-from <package>.types.<typename>.parameter.<entry_point> import EntryPointParameter
-from <package>.types.<typename>.big_map.<path>_key import PathKey
-from <package>.types.<typename>.big_map.<path>_value import PathValue
-```
-
-Here `typename` is defined in the contract inventory, `entrypoint` is specified in the handler pattern, and `path` is in the handler config.
-
-DipDup does not automatically handle name collisions. Use `import ... as` if multiple contracts have entrypoints that share the same name:
-
-```python
-from <package>.types.<typename>.parameter.<entry_point> import EntryPointParameter as Alias
-```
 
 ## Handlers
 

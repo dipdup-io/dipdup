@@ -58,3 +58,25 @@ where `BigMapDiff` contains action \(allocate, update, or remove\) and nullable 
 {% hint style="info" %}
 If you use index templates your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same **`typename`** and raises an error otherwise.
 {% endhint %}
+
+
+### Naming convensions
+
+Python language requires all module and function names in snake case and all class names in pascal case.
+
+Typical imports section of big_map handler callback looks like this:
+
+```python
+from <package>.types.<typename>.storage import TypeNameStorage
+from <package>.types.<typename>.parameter.<entry_point> import EntryPointParameter
+from <package>.types.<typename>.big_map.<path>_key import PathKey
+from <package>.types.<typename>.big_map.<path>_value import PathValue
+```
+
+Here `typename` is defined in the contract inventory, `entrypoint` is specified in the handler pattern, and `path` is in the handler config.
+
+DipDup does not automatically handle name collisions. Use `import ... as` if multiple contracts have entrypoints that share the same name:
+
+```python
+from <package>.types.<typename>.parameter.<entry_point> import EntryPointParameter as Alias
+```
