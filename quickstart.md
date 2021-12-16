@@ -135,7 +135,7 @@ class Holder(Model):
     last_seen = fields.DateTimeField(null=True)
 ```
 
-See [Tortoise ORM docs](https://tortoise-orm.readthedocs.io/en/latest/models.html/) for details.
+See [Defining models](getting-started/defining-models.md) for details.
 
 ## Implement handlers
 

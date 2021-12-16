@@ -8,7 +8,7 @@
   * [Preparing inventory](getting-started/preparing-inventory.md)
   * [Project structure](getting-started/project-structure.md)
   * [Templates and variables](getting-started/templates-and-variables.md)
-  * [Defining models](null)
+  * [Defining models](getting-started/defining-models.md)
   * [Implementing handlers](getting-started/implementing-handlers.md)
 
 * [Advanced usage](advanced/README.md)
