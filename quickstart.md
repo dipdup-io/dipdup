@@ -233,6 +233,9 @@ async def on_mint(
 
 And that's all! We can run the indexer now.
 
+See [Implementing handlers](getting-started/implementing-handlers.md) for details.
+
+
 ## Run your indexer
 
 ```shell
@@ -240,3 +243,5 @@ dipdup run
 ```
 
 DipDup will fetch all the historical data then switch to real-time updates. Your application data has been successfully indexed!
+
+See [Command-line reference](cli-reference/README.md) for details.
