@@ -9,7 +9,7 @@
   * [Project structure](getting-started/project-structure.md)
   * [Templates and variables](getting-started/templates-and-variables.md)
   * [Defining models](null)
-  * [Implementing handlers](null)
+  * [Implementing handlers](getting-started/implementing-handlers.md)
 
 * [Advanced usage](advanced/README.md)
   * [Datasources](advanced/datasources.md)
@@ -80,3 +80,4 @@
   * [migrate](cli-reference/migrate.md)
   * [docker init](cli-reference/docker-init.md)
   * [hasura configure](cli-reference/hasura-configure.md)
+  * [cache show](cli-reference/cache-show.md)
