@@ -2,107 +2,39 @@
 
 ## Type classes
 
-DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) already in normalised form \([read more](https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/) about how TzKT handles Michelson expressions\), but still as raw JSON. In order for the developer to work with typed data, DipDup uses contract type information to automatically generate data classes.
+DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) already in normalized form ([read more](https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/) about how TzKT handles Michelson expressions), but still as raw JSON. DipDup uses contract type information to generate data classes, which allow developers to work with strictly typed data.
 
-In Python DipDup generates [Pydantic](https://pydantic-docs.helpmanual.io/datamodel_code_generator/) models out of JSONSchema.  
-You might need to install additional [plugins](https://pydantic-docs.helpmanual.io/pycharm_plugin/) for your IDE for convenient work with Pydantic
+DipDup generates [Pydantic](https://pydantic-docs.helpmanual.io/datamodel_code_generator/) models out of JSONSchema. You might want to install additional plugins ([PyCharm](https://pydantic-docs.helpmanual.io/pycharm_plugin/), [mypy](https://pydantic-docs.helpmanual.io/mypy_plugin/)) for convenient work with this library.
 
-DipDup generates only necessary models:
+The following models are created at `init`:
 
-* For `operation` index it will generate storage type classes for all contracts met in handler patterns plus parameter type classes for all destination+entrypoint pairs.
-* For `big_map` index it will generate key and storage type classes for all big map paths in handler configs.
+* `operation` indexes: storage type for all contracts met in handler patterns plus parameter type for all destination+entrypoint pairs.
+* `big_map` indexes: key and storage types for all big map paths in handler configs.
 
 ### Naming convensions
 
-In Python all file names are forcibly converted to snake case and all class names — to capitalized camel case.
+Python language requires all module and function names in snake case and all class names in pascal case.
+
+Typical imports section of big_map handler callback looks like this:
 
 ```python
 from <package>.types.<typename>.storage import TypeNameStorage
-from <package>.types.<typename>.parameter.<entry_point> import (
-    EntryPointParameter
-)
+from <package>.types.<typename>.parameter.<entry_point> import EntryPointParameter
 from <package>.types.<typename>.big_map.<path>_key import PathKey
-from <package>.types.name_registry.big_map.<path>_value import PathValue
+from <package>.types.<typename>.big_map.<path>_value import PathValue
 ```
 
-where `typename` is defined in the contract inventory, `entrypoint` is specified in the handler pattern, and `path` is in the according Big map handler.
+Here `typename` is defined in the contract inventory, `entrypoint` is specified in the handler pattern, and `path` is in the handler config.
 
-**NOTE** the "Storage" and "Parameter" affixes.
-
-DipDup does not automatically handle name collisions, please use type aliases in case multiple contracts have entrypoints that share the same name.
-
+DipDup does not automatically handle name collisions. Use `import ... as` if multiple contracts have entrypoints that share the same name:
 
 ```python
-from <package>.types.<typename>.parameter.<entry_point> import (
-    EntryPointParameter as Alias
-)
+from <package>.types.<typename>.parameter.<entry_point> import EntryPointParameter as Alias
 ```
 
 ## Handlers
 
-DipDup generates a separate file with handler method stub for each callback in every index specified in configuration file.
-
-Callback method signature is the following \(_transaction_ case\):
-
-```python
-from <package>.types.<typename>.parameter.<entry_point_1> import (
-    EntryPoint1Parameter
-)
-from <package>.types.<typename>.parameter.<entry_point_n> import (
-    EntryPointNParameter
-)
-from <package>.types.<typename>.storage import TypeNameStorage
-
-
-async def callback(
-    ctx: HandlerContext,
-    entry_point_1: Transaction[EntryPoint1Parameter, TypeNameStorage],
-    entry_point_n: Transaction[EntryPointNParameter, TypeNameStorage]
-) -> None:
-    ...
-```
-
-where:
-
-* `entry_point_1 ... entry_point_n` are items from the according handler pattern.
-* `ctx: HandlerContext` provides useful helpers and contains internal state.
-* `Transaction` contains transaction amount, parameter, and storage **\(typed\)**.
-
-For the _origination_ case the handler signature will look similar:
-
-```python
-from <package>.types.<typename>.storage import TypeNameStorage
-
-
-async def on_origination(
-    ctx: HandlerContext,
-    origination: Origination[TypeNameStorage],
-)
-```
-
-where `Origination` contains origination script, initial storage **\(typed\)**, amount, delegate, etc.
-
-_Big map_ update handler will look like the following:
-
-```python
-from <package>.types.<typename>.big_map.<path>_key import PathKey
-from <package>.types.name_registry.big_map.<path>_value import PathValue
-
-
-async def on_update(
-    ctx: HandlerContext,
-    update: BigMapDiff[PathKey, PathValue],
-)
-```
-
-where `BigMapDiff` contains action \(allocate, update, or remove\) and nullable key and value **\(typed\).**
-
-**NOTE** that you can safely change argument names \(e.g. in case of collisions\).
-
-{% hint style="info" %}
-If you use index templates your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same **`typename`** and raises an error otherwise.
-{% endhint %}
-
+TODO: moved to implementing handlers
 ### Default hooks
 
 There is a special handlers DipDup generates for all indexes. They covers network events and initialization hooks. Names of those handlers are reserved, you can't use them in config.
