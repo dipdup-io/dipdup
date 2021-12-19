@@ -182,7 +182,7 @@ class ContractConfig(NameMixin):
 
     @cached_property
     def module_name(self) -> str:
-        return self.typename if self.typename is not None else self.address
+        return self.typename or self.name
 
     @validator('address', allow_reuse=True)
     def valid_address(cls, v):

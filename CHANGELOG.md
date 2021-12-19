@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* codegen: Fixed contract address used instead of an alias when typename is not set.
+
 ## 4.0.0-rc2 - 2021-12-11
 
 ### ⚠ Migration
