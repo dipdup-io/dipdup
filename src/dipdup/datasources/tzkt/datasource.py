@@ -728,7 +728,7 @@ class TzktDatasource(IndexDatasource):
             originated_contract_alias=migration_origination_json['account'].get('alias'),
             amount=migration_origination_json['balanceChange'],
             storage=migration_origination_json.get('storage'),
-            diffs=migration_origination_json.get('diffs', ()),
+            diffs=migration_origination_json.get('diffs') or (),
             status='applied',
             has_internals=False,
             hash='[none]',
