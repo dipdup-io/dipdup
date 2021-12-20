@@ -1,14 +1,12 @@
 # Client side
 
-{% hint style="warning" %}
-In this section we are assuming you use Hasura GQL engine to power your APIs
-{% endhint %}
+In this section we are assuming you use Hasura GraphQL Engine integration to power your API.
 
-Before starting to do client integration it's good to know the specifics of Hasura GraphQL protocol implementation and general state of the GQL ecosystem.
+Before starting to do client integration, it's good to know the specifics of Hasura GraphQL protocol implementation and general state of the GQL ecosystem.
 
 ## Queries
 
-By default Hasura generates three types of queries for each table in your schema:
+By default, Hasura generates three types of queries for each table in your schema:
 
 * Generic query enabling filters by all columns
 * Single item query \(by primary key\)
