@@ -1,6 +1,4 @@
-# Examples
-
-## Demo indexers
+# Demo projects
 
 Here are several minimal examples how to use various DipDup features for a real case scenario:
 
@@ -9,10 +7,3 @@ Here are several minimal examples how to use various DipDup features for a real 
 * [RegistryDAO](https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_registrydao)
 * [Tezos domains](https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_tezos_domains_big_map)
 * [Tzcolors](https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_tzcolors)
-
-## Community projects
-
-* [Tezos profiles](https://github.com/spruceid/tzprofiles/tree/main/api/indexer)
-* [NFTButton](https://github.com/bobobobob/nftbutton-backend)
-* [HicDEX](https://github.com/hicdex/hicdex)
-* [HomebaseDAO](https://github.com/dOrgTech/homebase-indexer)

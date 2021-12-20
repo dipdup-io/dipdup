@@ -52,8 +52,8 @@
   * [GenQL](client-side/genql.md)
 
 * [Examples](examples/README.md)
-  * [Demo projects](examples.md)
-  * [Built with DipDup](built-with-dipdup.md)
+  * [Demo projects](examples/demo-projects.md)
+  * [Built with DipDup](examples/built-with-dipdup.md)
 
 * [Plugins](plugins/README.md)
   * [mempool](plugins/mempool.md)

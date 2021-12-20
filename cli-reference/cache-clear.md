@@ -6,4 +6,4 @@ Clear request cache of DipDup datasources.
 dipdup cache clear
 ```
 
-To see the current status of DipDup caches, run [cache show](cache-show.md) command. 
+To see the current status of DipDup caches, run [cache show](cache-show.md) command.

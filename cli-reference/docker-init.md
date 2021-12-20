@@ -1,12 +1,12 @@
 # docker init
 
-A new command `dipdup docker init` is available to generate a compose-based setup.
+Generate a generic docker-compose deployment inside of the project package.
 
 ```text
-dipdup [-c dipdup.yml] docker init [-i dipdup/dipdup] [-t 2.0.0] [-e dipdup.env]
+dipdup docker init [-i dipdup/dipdup] [-t 4.0.0 [-e dipdup.env]
 ```
 
-The following files will be created:
+This command will create the following files:
 
 ```text
 docker
@@ -16,8 +16,9 @@ docker
 └── Dockerfile
 ```
 
-Environment files are generated using substitution expressions \(`${VARIABLE:-default_value}`\) from DipDup configs provided throught the `dipdup -c` option.  
-Now navigate to the created directory, edit the environment file and run the compose project:
+Environment files are generated using substitution expressions (`${VARIABLE:-default_value}`).
+
+To deploy created stack, navigate to the created directory, edit the environment file and run `docker-compose up`:
 
 ```text
 cd project/docker
@@ -26,6 +27,6 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-By default, PostgreSQL and Hasura are exposed to localhost only: `5432` and `8080` respectively. Edit `docker-compose.yml` file according to your needs.
+By default, PostgreSQL and Hasura are exposed to localhost only: `5432` and `8080` ports, respectively. Edit `docker-compose.yml` file according to your needs.
 
-Finally, all the demo projects in DipDup have Docker templates generated. In order to spin up a demo run `docker-compose up` in the `<demo_project>/docker` directory.
+All demo projects in the DipDup git repository already have docker-compose templates generated. To spin up a demo run `docker-compose up` in the `src/<demo_project>/docker` directory. See [Examples](../examples.md) for details.
