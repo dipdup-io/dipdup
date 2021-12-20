@@ -20,6 +20,7 @@
   * [SQL queries](advanced/sql.md)
   * [TimescaleDB](advanced/timescaledb.md)
   * [Improving performance](advanced/performance/README.md)
+    * [DipDup flags](advanced/performance/flags.md)
     * [Tuning datasources](advanced/performance/datasources.md)
     * [Optimizing database queries](advanced/performance/database.md)
   * [Handler context](advanced/handler-context.md)

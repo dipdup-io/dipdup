@@ -1,4 +1,4 @@
-# dipdup run
+# run
 
 Configures API connectors, initializes database and runs the indexer. Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
 
