@@ -1,2 +1,2 @@
-FROM dipdup/dipdup:3.1.3
+FROM dipdup/dipdup:4.0.0-rc3
 COPY demo_hic_et_nunc /home/dipdup/demo_hic_et_nunc
