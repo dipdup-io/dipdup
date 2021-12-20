@@ -16,6 +16,7 @@
 * [Advanced usage](advanced/README.md)
   * [Datasources](advanced/datasources.md)
   * [Hooks](advanced/hooks.md)
+  * [Reindexing](advanced/reindexing.md)
   * [SQL queries](advanced/sql.md)
   * [TimescaleDB](advanced/timescaledb.md)
   * [Improving performance](advanced/performance/README.md)
