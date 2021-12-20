@@ -242,6 +242,6 @@ See [Implementing handlers](getting-started/implementing-handlers.md) for detail
 dipdup run
 ```
 
-DipDup will fetch all the historical data then switch to real-time updates. Your application data has been successfully indexed!
+DipDup will fetch all the historical data then switch to realtime updates. Your application data has been successfully indexed!
 
 See [Command-line reference](cli-reference/README.md) for details.

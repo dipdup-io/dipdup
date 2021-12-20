@@ -1,6 +1,8 @@
 # [DipDup](SUMMARY.md)
 
 * [Overview](overview.md)
+* [Release Notes](release-notes/README.md)
+  * [4.0.0](release-notes/4.0.0.md)
 * [Quickstart](quickstart.md)
 * [Getting started](getting-started/README.md)
   * [Installation](getting-started/installation.md)
@@ -74,6 +76,7 @@
   * [spec_version](config-reference/spec_version.md)
   * [template](config-reference/indexes/template.md)
   * [templates](config-reference/templates.md)
+  * [advanced](config-reference/advanced.md)
 
 * [Command-line reference](cli-reference/README.md)
   * [init](cli-reference/init.md)
