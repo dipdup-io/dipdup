@@ -38,9 +38,13 @@ demo_tzbtc
 TODO: link to Hasura integration page
 
 ## `handlers`
+
 ## `hooks`
+
 ## `models`
+
 ## `sql`
+
 ## `types`: type classes
 
 DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) already in normalized form ([read more](https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/) about how TzKT handles Michelson expressions), but still as raw JSON. DipDup uses contract type information to generate data classes, which allow developers to work with strictly typed data.

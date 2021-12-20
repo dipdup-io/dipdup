@@ -6,7 +6,6 @@ Configures API connectors, initializes database and runs the indexer. Execution 
 dipdup [-c dipdup.yml] run [--postpone-jobs] [--early-realtime] [--merge-subscriptions]
 ```
 
-
 ## Schema migration
 
 DipDup does not support database schema migration: if there's any change in the models, it will reindex everything from scratch. The rationale behind is that it's easier and faster to start over rather than handle migrations that can be of arbitrary complexity and do not guarantee data consistency.

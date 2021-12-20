@@ -164,7 +164,6 @@ async def on_balance_update(
 
 That was pretty straightforward 👍🏻
 
-
 Three methods of tzBTC contract can alter token balances — `transfer`, `mint` and `burn`. The last one is omitted in this tutorial for simplicity. Edit corresponding handlers to call `on_balance_update` method with data from matched operations:
 
 `on_transfer.py`
@@ -234,7 +233,6 @@ async def on_mint(
 And that's all! We can run the indexer now.
 
 See [Implementing handlers](getting-started/implementing-handlers.md) for details.
-
 
 ## Run your indexer
 
