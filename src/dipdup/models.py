@@ -33,7 +33,7 @@ class OperationData:
     timestamp: datetime
     hash: str
     counter: int
-    sender_address: str
+    sender_address: Optional[str]
     target_address: Optional[str]
     initiator_address: Optional[str]
     amount: Optional[int]

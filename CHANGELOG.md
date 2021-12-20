@@ -2,12 +2,14 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## 4.0.0 - [unrleased]
+## [unreleased]
 
 ### Fixed
 
-* Fixed missing `schema approve --hashes` argument.
-* Fixed regression in processing migration originations.
+* cli: Fixed missing `schema approve --hashes` argument.
+* codegen: Fixed contract address used instead of an alias when typename is not set.
+* tzkt: Fixed processing operations with entrypoint `default`
+* tzkt: Fixed regression in processing migration originations.
 
 ### Removed
 
