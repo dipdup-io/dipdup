@@ -22,23 +22,23 @@ mempool:
     ...
 ```
 
-#### keep\_operations\_seconds
+### keep_operations_seconds
 
-How long to store operations that did not get into the chain. After that period such operations will be wiped from the database. Default value is **172800** **seconds** \(2 days\).
+How long to store operations that did not get into the chain. After that period, such operations will be wiped from the database. Default value is **172800** **seconds** \(2 days\).
 
-#### expired\_after\_blocks
+### expired_after_blocks
 
 When `level(head) - level(operation.branch) >= expired_after_blocks` and operation is still on in chain it's marked as expired. Default value is **60 blocks** \(~1 hour\).
 
-#### keep\_in\_chain\_blocks
+### keep_in_chain_blocks
 
 Since the main purpose of this plugin is to index mempool operations \(actually it's a rolling index\), all the operations that were included in the chain are removed from the database after specified period of time. Default value is **10 blocks** \(~10 minutes\).
 
-#### mempool\_request\_interval\_seconds
+### mempool_request_interval_seconds
 
 How often Tezos nodes should be polled for pending mempool operations. Default value is **10 seconds**.
 
-#### rpc\_timeout\_seconds
+### rpc_timeout_seconds
 
 Tezos node request timeout. Default value is **10 seconds**.
 

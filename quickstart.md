@@ -76,7 +76,7 @@ dipdup init
 
 DipDup will create a Python package `demo_tzbtc` having the following structure:
 
-```
+```text
 demo_tzbtc
 ├── graphql
 ├── handlers

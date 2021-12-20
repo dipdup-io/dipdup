@@ -10,6 +10,8 @@ This is a list of API endpoints used to retrieve data and pass it to your indexe
 * `bcd`
 * `tezos-node`
 
+## Datasources
+
 ### TzKT 😸
 
 [TzKT](https://api.tzkt.io/) provides REST endpoints to query historical data and SignalR \(Websocket\) subscriptions to get realtime updates. Flexible filters allow to request only what is needed for your application and drastically speed up the indexing process.

@@ -30,4 +30,3 @@ advanced:
     config_modified: exception
     schema_modified: exception
 ```
-

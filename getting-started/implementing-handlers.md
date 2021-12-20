@@ -56,10 +56,10 @@ where `BigMapDiff` contains action \(allocate, update, or remove\) and nullable 
 **NOTE** that you can safely change argument names \(e.g. in case of collisions\).
 
 {% hint style="info" %}
-If you use index templates your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same **`typename`** and raises an error otherwise.
+If you use index templates, your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same **`typename`** and raises an error otherwise.
 {% endhint %}
 
-### Naming convensions
+## Naming conventions
 
 Python language requires all module and function names in snake case and all class names in pascal case.
 
