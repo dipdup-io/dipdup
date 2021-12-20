@@ -477,7 +477,7 @@ class TzktDatasource(IndexDatasource):
             url='v1/bigmaps/updates',
             params={
                 "contract.in": ",".join(addresses),
-                "paths.in": ",".join(paths),
+                "path.in": ",".join(paths),
                 "offset": offset,
                 "limit": self.request_limit,
                 "level.gt": first_level,

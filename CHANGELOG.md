@@ -8,8 +8,9 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * cli: Fixed missing `schema approve --hashes` argument.
 * codegen: Fixed contract address used instead of an alias when typename is not set.
-* tzkt: Fixed processing operations with entrypoint `default`
+* tzkt: Fixed processing operations with entrypoint `default`.
 * tzkt: Fixed regression in processing migration originations.
+* tzkt: Fixed filtering of big map diffs by the path.
 
 ### Removed
 
