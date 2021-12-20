@@ -14,7 +14,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Removed
 
-* Removed deprecated `run --oneshot` argument and `clear-cache` command.
+* cli: Removed deprecated `run --oneshot` argument and `clear-cache` command.
 
 ## 4.0.0-rc2 - 2021-12-11
 
