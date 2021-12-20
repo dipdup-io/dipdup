@@ -42,16 +42,7 @@ database:
 You can use compose-style environment variable substitutions with default values for secrets \(and all fields in general\).
 {% endhint %}
 
-## Compatibility with API engines
-
-While DipDup itself \(actually the ORM used internally\) abstracts developer from particular DB engine implementation, when it comes to exposing API endpoints there are some limitations depending on your API engine choice.
-
-|  | Hasura | PostgREST |
-| :--- | :--- | :--- |
-| SQLite | ❌ | ❌ |
-| Postgres | ✅ | ✅ |
-
-## "Immune" tables
+## Immune tables
 
 DipDup can drop all the tables in several cases:
 
