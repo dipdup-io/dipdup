@@ -1,7 +1,7 @@
 # [DipDup](SUMMARY.md)
 
 * [Overview](overview.md)
-* [Release Notes](release-notes/README.md)
+* [Release notes](release-notes/README.md)
   * [4.0.0](release-notes/4.0.0.md)
 * [Quickstart](quickstart.md)
 * [Getting started](getting-started/README.md)

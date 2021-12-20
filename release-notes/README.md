@@ -1,5 +1,7 @@
-# Release Notes
+# Release notes
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+This section contains useful information about changes introduced with specific DipDup releases.
+
+[Jump to the latest release](4.0.0.md)
+
+[See full changelog on GitHub](https://github.com/dipdup-net/dipdup-py/blob/master/CHANGELOG.md)

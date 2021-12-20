@@ -12,6 +12,8 @@ This page is a brief overview of projects which use DipDup as an indexing soluti
 
 HicDEX is a Tezos indexer for hicetnunc.art marketplace. Indexed data is available with a public GraphQL endpoint. 
 
+* [Hicdex: the Hic Et Nunc indexer (Medium)](https://leonnicholls.medium.com/hicdex-the-hic-et-nunc-indexer-bd45f27a228f)
+
 ## Homebase
 
 [homepage](https://tezos-homebase.io/) | [github](https://github.com/dOrgTech/homebase-app)
