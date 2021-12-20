@@ -677,6 +677,17 @@ class TzktDatasource(IndexDatasource):
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:
         """Convert raw operation message from WS/REST into dataclass"""
+        sender_json = operation_json.get('sender') or {}
+        target_json = operation_json.get('target') or {}
+        initiator_json = operation_json.get('initiator') or {}
+        parameter_json = operation_json.get('parameter') or {}
+        originated_contract_json = operation_json.get('originatedContract') or {}
+
+        entrypoint, parameter = parameter_json.get('entrypoint'), parameter_json.get('value')
+        # NOTE: TzKT returns None for `default` entrypoint
+        if entrypoint is None and parameter_json:
+            entrypoint = 'default'
+
         return OperationData(
             type=type_ or operation_json['type'],
             id=operation_json['id'],
@@ -685,27 +696,21 @@ class TzktDatasource(IndexDatasource):
             block=operation_json.get('block'),
             hash=operation_json['hash'],
             counter=operation_json['counter'],
-            sender_address=operation_json['sender']['address'] if operation_json.get('sender') else None,
-            target_address=operation_json['target']['address'] if operation_json.get('target') else None,
-            initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
+            sender_address=sender_json.get('address'),
+            target_address=target_json.get('address'),
+            initiator_address=initiator_json.get('address'),
             amount=operation_json.get('amount') or operation_json.get('contractBalance'),
             status=operation_json['status'],
             has_internals=operation_json.get('hasInternals'),
             sender_alias=operation_json['sender'].get('alias'),
             nonce=operation_json.get('nonce'),
-            target_alias=operation_json['target'].get('alias') if operation_json.get('target') else None,
-            initiator_alias=operation_json['initiator'].get('alias') if operation_json.get('initiator') else None,
-            entrypoint=operation_json['parameter'].get('entrypoint') if operation_json.get('parameter') else None,
-            parameter_json=operation_json['parameter'].get('value') if operation_json.get('parameter') else None,
-            originated_contract_address=operation_json['originatedContract']['address']
-            if operation_json.get('originatedContract')
-            else None,
-            originated_contract_type_hash=operation_json['originatedContract']['typeHash']
-            if operation_json.get('originatedContract')
-            else None,
-            originated_contract_code_hash=operation_json['originatedContract']['codeHash']
-            if operation_json.get('originatedContract')
-            else None,
+            target_alias=target_json.get('alias'),
+            initiator_alias=initiator_json.get('alias'),
+            entrypoint=entrypoint,
+            parameter_json=parameter,
+            originated_contract_address=originated_contract_json.get('address'),
+            originated_contract_type_hash=originated_contract_json.get('typeHash'),
+            originated_contract_code_hash=originated_contract_json.get('codeHash'),
             storage=operation_json.get('storage'),
             diffs=operation_json.get('diffs') or (),
         )
