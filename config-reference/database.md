@@ -9,19 +9,17 @@ DipDup supports several database engines for development and production. The obl
 * `sqlite`
 * `postgres`
 
+[Database engines](../deployment/database-engines.md) article may help you choose a database that better suits your needs.
+
 ### SQLite
 
-Requires `path` to the sqlite3 file, either relative or absolute:
+`path` field must be either path to the .sqlite3 file or `:memory:` to keep database in memory only (default):
 
 ```yaml
 database:
   kind: sqlite
   path: db.sqlite3
 ```
-
-{% hint style="warning" %}
-**NOTE**: while it's sometimes convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines.
-{% endhint %}
 
 ### PostgreSQL
 
@@ -38,9 +36,7 @@ database:
   schema_name: custom
 ```
 
-{% hint style="info" %}
-You can use compose-style environment variable substitutions with default values for secrets \(and all fields in general\).
-{% endhint %}
+You can use compose-style environment variable substitutions with default values for secrets and other fields. See [Templates and variables](../getting-started/templates-and-variables.md#) for details.
 
 ## Immune tables
 
