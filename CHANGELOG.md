@@ -6,6 +6,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
+* codegen: Fixed contract address used instead of an alias when typename is not set.
 * tzkt: Fixed processing operations with entrypoint `default`
 
 ## 4.0.0-rc2 - 2021-12-11
