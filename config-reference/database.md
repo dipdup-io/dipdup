@@ -19,7 +19,7 @@ database:
 
 ## PostgreSQL
 
-Requires `host`, `port`, `user`, `password`, and `database` fields. Also it's possible to specify `schema_name` if it differs from _public_.
+Requires `host`, `port`, `user`, `password`, and `database` fields. You can set `schema_name` to values other than `public`, but Hasura integration won't be available.
 
 ```yaml
 database:
@@ -29,10 +29,10 @@ database:
   user: dipdup
   password: ${POSTGRES_PASSWORD:-changeme}
   database: dipdup
-  schema_name: custom
+  schema_name: public
 ```
 
-You can use compose-style environment variable substitutions with default values for secrets and other fields. See [Templates and variables](../getting-started/templates-and-variables.md#) for details.
+You can also use compose-style environment variable substitutions with default values for secrets and other fields. See [Templates and variables](../getting-started/templates-and-variables.md#) for details.
 
 ### Immune tables
 
