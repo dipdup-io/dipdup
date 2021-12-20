@@ -2,4 +2,4 @@
 
 > 🚧 **UNDER CONSTRUCTION**
 >
-> This page is yet to be written. Come back later.
+> This page or paragraph is yet to be written. Come back later.
