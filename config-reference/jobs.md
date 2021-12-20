@@ -1,7 +1,3 @@
----
-description: Jobs block
----
-
 # jobs
 
 In some cases, it may come in handy to have the ability to run some code on schedule. For example, you want to calculate statistics once per hour instead of every time handler gets matched.

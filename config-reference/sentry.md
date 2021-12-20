@@ -1,7 +1,3 @@
----
-description: Deployment block
----
-
 # sentry
 
 Sentry is an error tracking software which can be used both in cloud and on-premise. It greatly improves troubleshooting experience and requires nearly zero configuration. To start catching exceptions with Sentry in your project add the following section in `dipdup.yml` config:

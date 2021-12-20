@@ -1,7 +1,3 @@
----
-description: Header block
----
-
 # package
 
 This is a language-specific field used by the DipDup CLI tool to discover your implementation files.

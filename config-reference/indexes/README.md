@@ -1,7 +1,3 @@
----
-description: Indexes block
----
-
 # indexes
 
 _Index_ — is a basic DipDup entity connecting together the inventory and specifying data handling rules.

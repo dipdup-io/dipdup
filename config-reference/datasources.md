@@ -1,7 +1,3 @@
----
-description: Inventory block
----
-
 # datasources
 
 This is a list of API endpoints used to retrieve data and pass it to your indexer handlers. The obligatory field `kind` specifies which data adapter is to be used:

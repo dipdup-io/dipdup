@@ -1,7 +1,3 @@
----
-description: Deployment block
----
-
 # hasura
 
 This is an optional section used by DipDup executor to automatically configure Hasura engine to track your tables.

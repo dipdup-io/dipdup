@@ -1,7 +1,3 @@
----
-description: Indexes block
----
-
 # templates
 
 Templates allows you to reuse index configuration, e.g. for different networks \(mainnet/testnet\) or for multiple contracts sharing the same codebase. DipDup supports static and dynamic template instances.
