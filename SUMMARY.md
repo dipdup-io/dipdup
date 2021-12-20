@@ -54,8 +54,8 @@
   * [Built with DipDup](built-with-dipdup.md)
 
 * [Plugins](plugins/README.md)
-  * [Mempool plugin](plugins/mempool.md)
-  * [Metadata plugin](plugins/metadata.md)
+  * [mempool](plugins/mempool.md)
+  * [metadata](plugins/metadata.md)
 
 * [Config file reference](config-reference/README.md)
   * [advanced](config-reference/advanced.md)
@@ -71,7 +71,6 @@
     * [template](config-reference/indexes/template.md)
   * [jobs](config-reference/jobs.md)
   * [package](config-reference/package.md)
-  * [plugins](config-reference/plugins/README.md)
   * [sentry](config-reference/sentry.md)
   * [spec_version](config-reference/spec_version.md)
   * [templates](config-reference/templates.md)
