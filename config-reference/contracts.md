@@ -1,7 +1,3 @@
----
-description: Inventory block
----
-
 # contracts
 
 A list of the contract definitions you might use in the indexer patterns or templates. Each contract entry has two fields:
@@ -25,6 +21,8 @@ contracts:
     typename: tzbtc_token
 ```
 
-A `typename` field is only required when using index templates, but it helps to improve the readability of auto-generated code.
+A `typename` field is only required when using index templates, but it helps to improve the readability of auto-generated code and avoid repetition.
 
 Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See [Templates and variables](templates-and-variables) for details.
+
+If you have multiple contracts having the same interface but different code, see [Reusing typename for different contracts](cookbook/reusing-typenames.md).
