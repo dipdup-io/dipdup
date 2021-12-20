@@ -3,7 +3,7 @@
 DipDup supports several database engines for development and production. The obligatory field `kind` specifies which engine has to be used:
 
 * `sqlite`
-* `postgres`
+* `postgres` (and compatible engines)
 
 [Database engines](../deployment/database-engines.md) article may help you choose a database that better suits your needs.
 
@@ -47,6 +47,4 @@ database:
     - contract_metadata
 ```
 
-`immune_tables` is an optional array of table names. Those tables will survive reorgs, reindexing, and even schema changes.
-
-Note that to change the schema of an immune table, you need to perform a migration by yourself. DipDup will neither drop the table nor automatically handle the update.
+`immune_tables` is an optional array of table names. Those tables will be ignored during schema wipe. Note that to change the schema of an immune table, you need to perform a migration by yourself. DipDup will neither drop the table nor automatically handle the update.
