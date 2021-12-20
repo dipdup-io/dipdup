@@ -1,4 +1,4 @@
-# dipdup docker init
+# docker init
 
 A new command `dipdup docker init` is available to generate a compose-based setup.
 

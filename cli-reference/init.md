@@ -1,4 +1,4 @@
-# dipdup init
+# init
 
 This command generates type classes and handler templates based on the DipDup configuration file. It's an idempotent command meaning that it won't overwrite previously generated files unless asked explicitly.
 
