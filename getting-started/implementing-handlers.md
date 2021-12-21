@@ -5,22 +5,22 @@ DipDup generates a separate file with a callback stub for each handler in every 
 In case of `transaction` handler, callback method signature is the following:
 
 ```python
-from <package>.types.<typename>.parameter.<entry_point_1> import EntryPoint1Parameter
-from <package>.types.<typename>.parameter.<entry_point_n> import EntryPointNParameter
+from <package>.types.<typename>.parameter.<entrypoint_1> import EntryPoint1Parameter
+from <package>.types.<typename>.parameter.<entrypoint_n> import EntryPointNParameter
 from <package>.types.<typename>.storage import TypeNameStorage
 
 
 async def on_transaction(
     ctx: HandlerContext,
-    entry_point_1: Transaction[EntryPoint1Parameter, TypeNameStorage],
-    entry_point_n: Transaction[EntryPointNParameter, TypeNameStorage]
+    entrypoint_1: Transaction[EntryPoint1Parameter, TypeNameStorage],
+    entrypoint_n: Transaction[EntryPointNParameter, TypeNameStorage]
 ) -> None:
     ...
 ```
 
 where:
 
-* `entry_point_1 ... entry_point_n` are items from the according handler pattern.
+* `entrypoint_1 ... entrypoint_n` are items from the according handler pattern.
 * `ctx: HandlerContext` provides useful helpers and contains an internal state (see ).
 * `Transaction` contains transaction typed parameter and storage, plus other fieds.
 
@@ -67,7 +67,7 @@ Typical imports section of big_map handler callback looks like this:
 
 ```python
 from <package>.types.<typename>.storage import TypeNameStorage
-from <package>.types.<typename>.parameter.<entry_point> import EntryPointParameter
+from <package>.types.<typename>.parameter.<entrypoint> import EntryPointParameter
 from <package>.types.<typename>.big_map.<path>_key import PathKey
 from <package>.types.<typename>.big_map.<path>_value import PathValue
 ```
@@ -77,5 +77,5 @@ Here `typename` is defined in the contract inventory, `entrypoint` is specified 
 DipDup does not automatically handle name collisions. Use `import ... as` if multiple contracts have entrypoints that share the same name:
 
 ```python
-from <package>.types.<typename>.parameter.<entry_point> import EntryPointParameter as Alias
+from <package>.types.<typename>.parameter.<entrypoint> import EntryPointParameter as Alias
 ```
