@@ -43,4 +43,5 @@ DipDup allows you to customize the configuration for a specific environment or a
 ```shell
 dipdup -c dipdup.yml -c dipdup.prod.yml run
 ```
-Run [`config export`](../cli-reference/config-export.md) command if unsure about final config used by DipDup. 
+
+Run [`config export`](../cli-reference/config-export.md) command if unsure about final config used by DipDup.

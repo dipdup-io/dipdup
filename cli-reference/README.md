@@ -9,6 +9,7 @@ By default, DipDup looks for a file named `dipdup.yml` in the current working di
 ```shell
 dipdup -c configs/dipdup.yml -c configs/dipdup.prod.yml COMMAND
 ```
+
 See [Merging config files](../config-reference#merging-config-files) for details.
 
 ## Advanced Python logging

@@ -1,4 +1,4 @@
-# TimescaleDB
+# Working with time series
 
 > 🚧 **UNDER CONSTRUCTION**
 >

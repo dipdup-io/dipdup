@@ -1,6 +1,6 @@
 # package
 
-This is a language-specific field used by the DipDup CLI tool to discover your implementation files.
+DipDup uses this field to discover the Python package of your project.
 
 ```yaml
 package: my_indexer_name
@@ -8,11 +8,15 @@ package: my_indexer_name
 
 DipDup will search for a module named `my_module_name` in **`PYTHONPATH`**
 
-This allows to decouple DipDup configuration file from the indexer implementation and gives more flexibility in managing the source code.
+This field allows to decouple DipDup configuration file from the indexer implementation and gives more flexibility in managing the source code.
 
 ## Package structure
 
-DipDup expects a certain folder structure of the package — this is a framework requirement.
+> 🚧 **UNDER CONSTRUCTION**
+>
+> This page or paragraph is yet to be written. Come back later.
+
+DipDup expects an exact structure of the package — this is a framework requirement.
 
 ```bash
 my_module_name/
