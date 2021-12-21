@@ -1,30 +1,23 @@
 # Command-line reference
 
-## Installation
+If you have not installed DipDup yet refer to [Installation](../getting-started/installation.md) page.
 
-Python 3.8+ is required.
+## Specifying the path to config
 
-```shell
-pip install dipdup
-```
-
-Check that DipDup CLI has been successfully installed:
+By default, DipDup looks for a file named `dipdup.yml` in the current working directory. You can override that by explicitly specifying a path to config (one or many):
 
 ```shell
-dipdup --version
+dipdup -c configs/dipdup.yml -c configs/dipdup.prod.yml COMMAND
 ```
-
-## Custom config name
-
-By default DipDup is looking for a file named `dipdup.yml` in the current working directory. You can override that by explicitly telling where to find the config \(one or many\):
-
-```shell
-dipdup -c path/to/config.yml -c path/to/override/config.yml COMMAND
-```
+See [Merging config files](../config-reference#merging-config-files) for details.
 
 ## Advanced Python logging
 
-You may want to tune logging to get notifications on errors or enable debug messages. Specify path to a Python logging config in YAML format using `--logging-config` argument.
+> ⚠ WARNING
+>
+> This feature will be deprecated soon.
+
+You may want to tune logging to get notifications on errors or enable debug messages. Specify path to a Python logging config in YAML format using `-l` argument.
 
 Default config to start with:
 
