@@ -4,11 +4,11 @@
 >
 > This page or paragraph is yet to be written. Come back later.
 
-[GenQL](https://genql.vercel.app/) is a fantastic library and CLI tool allowing to automatically generate a fully typed SDK with a builtin GQL client. It works flawlessly with Hasura and is currently a recommended way to use DipDup on the client side.
+[GenQL](https://genql.vercel.app/) is a great library and CLI tool that automatically generates a fully typed SDK with a built-in GQL client. It works flawlessly with Hasura and is recommended for DipDup on the client-side.
 
 ## Project structure
 
-GenQL CLI generates a ready-to-use package, already compiled and prepared to be published to NPM. A typical setup is a mono repository containing several packages including the auto-generated SDK and your front-end application.
+GenQL CLI generates a ready-to-use package, compiled and prepared to publish to NPM. A typical setup is a mono repository containing several packages, including the auto-generated SDK and your front-end application.
 
 ```text
 project_root/
@@ -47,7 +47,7 @@ Your minimal _package.json_ file will look like the following:
 
 That's it! Now you only need to install dependencies and execute the build target:
 
-```bash
+```shell
 yarn
 yarn build
 ```

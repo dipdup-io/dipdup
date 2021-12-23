@@ -11,7 +11,7 @@ indexes:
       placeholder2: value2
 ```
 
-For a static template instance \(specified in the DipDup config\) there are two fields:
+For a static template instance (specified in the DipDup config) there are two fields:
 
-* `template` — template name \(from [templates](../templates.md) section\)
+* `template` — template name (from [templates](../templates.md) section)
 * `values` — concrete values for each [placeholder](../templates.md#placeholders) used in a chosen template

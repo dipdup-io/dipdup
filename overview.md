@@ -43,6 +43,6 @@ DipDup is a Python framework for building indexers of Tezos smart-contracts. It 
 
 \* - PostgreSQL-compatible databases like TimescaleDB should work fine too.
 
-\*\* - https://gitlab.com/nomadic-labs/tezos-indexer#hardware-requirements
+\*\* - [source](https://gitlab.com/nomadic-labs/tezos-indexer#hardware-requirements)
 
-\*\*\* - https://github.com/blockwatch-cc/tzindex
+\*\*\* - [source](https://github.com/blockwatch-cc/tzindex)

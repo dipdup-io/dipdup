@@ -1,9 +1,9 @@
 # hasura configure
 
-Configure Hasura GraphQL Engine instance. 
+Configure Hasura GraphQL Engine instance.
 
 ```text
 dipdup hasura configure
 ```
 
-See [Hasura integration](../advanced/graphql/hasura.md) for details.
+See [5.6.1. Hasura integration](../advanced/graphql/hasura.md) for details.

@@ -76,7 +76,7 @@ volumes:
 Recall that environment variables are expanded in the DipDup config file — in our case we are forwarding Postgres password and Hasura secret.
 {% endhint %}
 
-**Step 3.** Update `dipdup.yml` \(or create a dedicated config for docker deployment\):
+**Step 3.** Update `dipdup.yml` (or create a dedicated config for docker deployment):
 
 ```yaml
 database:
@@ -96,7 +96,7 @@ hasura:
   select_limit: 100
 ```
 
-Note the hostnames \(will be resolved in the docker network\) and environment variables \(will be expanded by DipDup\).
+Note the hostnames (resolved in the docker network) and environment variables (expanded by DipDup).
 
 **Step 4.** Build and run the containers:
 

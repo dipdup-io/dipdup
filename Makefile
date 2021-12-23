@@ -5,7 +5,7 @@ wc:
 	find . -name \*.md -type f -exec wc {} \;
 
 lint:
-	markdownlint -f . --disable="MD013"
+	markdownlint -f . --disable=MD013 --disable=MD033
 
 orphans:
 	cat SUMMARY.md | grep ".md" | cut -f2 -d"(" | cut -f1 -d")" | sort > mentioned.tmp

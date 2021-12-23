@@ -2,7 +2,7 @@
 
 The structure of DipDup project package is the following:
 
-```
+```text
 demo_tzbtc
 ├── graphql
 ├── handlers

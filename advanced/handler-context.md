@@ -1,35 +1,35 @@
 # Handler context
 
-## Handler context
+> 🚧 **UNDER CONSTRUCTION**
+>
+> This page or paragraph is yet to be written. Come back later.
 
 An instance of the `HandlerContext` class is passed to every handler providing a set of helper methods and read-only properties.
 
-### `.reindex() -> None`
+## `.reindex() -> None`
 
-Drops the entire database and starts the indexing process from scratch. Currently used in the rollback handler.
+Drops the entire database and starts the indexing process from scratch. `on_rollback` hook calls this helper by default.
 
-### `.add_contract(name, address, typename) -> Coroutine`
+## `.add_contract(name, address, typename) -> Coroutine`
 
-Adds new contract to the inventory.
+Add a new contract to the inventory.
 
-### `.add_index(name, template, values) -> Coroutine`
+## `.add_index(name, template, values) -> Coroutine`
 
-Adds new index to the current configuration.
+Add a new index to the current configuration.
 
-### `.fire_hook(name, **kwargs) -> None`
+## `.fire_hook(name, **kwargs) -> None`
 
 You can trigger hook execution either from handler callback or by job schedule. Or even from another hook if you're brave enough.
 
-### `.execute_sql(filename) -> None`
+## `.execute_sql(filename) -> None`
 
-The `execute_sql` argument could be either name of a file/directory inside of the `sql` project directory or an absolute/relative path. If the path is a directory, all scripts having the `.sql` extension within it will be executed in alphabetical order.
+The `execute_sql` argument could be either name of SQL script in `sql` directory or an absolute/relative path. If the path is a directory, all `.sql` scripts within it will be executed in alphabetical order.
 
-## Properties
-
-### `.logger`
+## `.logger`
 
 Use this instance for logging.
 
-### `.template_values`
+## `.template_values`
 
 You can access values used for initializing a template index.

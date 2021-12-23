@@ -1,6 +1,6 @@
 # Command-line reference
 
-If you have not installed DipDup yet refer to [Installation](../getting-started/installation.md) page.
+If you have not installed DipDup yet refer to [4.1. Installation](../getting-started/installation.md) page.
 
 ## Specifying the path to config
 
@@ -16,9 +16,9 @@ See [Merging config files](../config-reference#merging-config-files) for details
 
 > ⚠ WARNING
 >
-> This feature will be deprecated soon.
+> This feature will be deprecated soon. Consider configuring logging inside of `on_restart` hook.
 
-You may want to tune logging to get notifications on errors or enable debug messages. Specify path to a Python logging config in YAML format using `-l` argument.
+You may want to tune logging to get notifications on errors or enable debug messages. Specify the path to a Python logging config in YAML format using `-l` argument.
 
 Default config to start with:
 

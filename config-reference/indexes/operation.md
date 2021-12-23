@@ -1,10 +1,10 @@
 # operation
 
-Operation index allows to query only those operations that are related to your DApp and to do pattern matching on the operation content \(internal calls chain\). This is a closest thing to fully-fledged event logs.
+Operation index allows you to query only those operations related to your DApp and do pattern matching on its content (internal calls chain). It is the closest thing to fully-fledged event logs.
 
 ## Filters
 
-DipDup supports filtering operations by `kind`, `source`_,_ `destination` __\(if applicable\), and `originated_contracts` \(if applicable\).
+DipDup supports filtering operations by `kind`, `source`, `destination` (if applicable), and `originated_contract` (if applicable).
 
 DipDup fetches only _applied_ operations.
 
@@ -20,11 +20,11 @@ indexes:
       - contract2
 ```
 
-In this example DipDup will fetch all the operations where any of source and destination is equal to either _contract1_ or _contract2_ address. `contracts` field is obligatory, there has to be at least one contract alias \(from the [inventory](../contracts.md)\).
+In this example, DipDup will fetch all the operations where any of source and destination is equal to either _contract1_ or _contract2_ address. `contracts` field is obligatory, there has to be at least one contract alias (from the [inventory](../contracts.md)).
 
 ### types
 
-By default DipDup works only with transactions, but you can explicitly list operation types you want to subscribe to \(currently `transaction` and `origination` types are supported\):
+By default, DipDup works only with transactions, but you can explicitly list operation types you want to subscribe to (currently `transaction` and `origination` types are supported):
 
 ```yaml
 indexes:
@@ -61,22 +61,22 @@ indexes:
             entrypoint: call        
 ```
 
-You can think of operation pattern as a regular expression on a sequence of operations \(both external and internal\) with global flag enabled \(can be multiple matches\) and where various operation parameters \(type, source, destination, entrypoint, originated contract\) are used for matching.
+You can think of operation pattern as a regular expression on a sequence of operations (both external and internal) with global flag enabled (can be multiple matches) and where various operation parameters (type, source, destination, entrypoint, originated contract) are used for matching.
 
 ### Pattern
 
-Here are the supported filters for matching operations \(all optional\):
+Here are the supported filters for matching operations (all optional):
 
-* `type` __— \(either _transaction_ or _origination_\) usually inferred from the existence of other fields
-* `destination` — invoked contract alias \(from the [inventory](../contracts.md)\)
+* `type` — (either _transaction_ or _origination_) usually inferred from the existence of other fields
+* `destination` — invoked contract alias (from the [inventory](../contracts.md))
 * `entrypoint` — invoked entrypoint name
-* `source` — operation sender alias \(from the [inventory](../contracts.md)\)
-* `originated_contract` — originated contract alias \(from the [inventory](../contracts.md)\)
-* `similar_to` — originated contract has the same parameter and storage types as the reference one \(from the [inventory](../contracts.md)\)
+* `source` — operation sender alias (from the [inventory](../contracts.md))
+* `originated_contract` — originated contract alias (from the [inventory](../contracts.md))
+* `similar_to` — originated contract has the same parameter and storage types as the reference one (from the [inventory](../contracts.md))
 * `strict` — stronger the `similar_to` filter by comparing the entire code rather than just parameter+storage
-* `optional` — continue matching even if this item is not found \(with limitations, see below\)
+* `optional` — continue matching even if this item is not found (with limitations, see below)
 
-**NOTE** that it's not required to match the entire operation content, you can skip external/internal calls that are not relevant. However, there is a limitation: optional items cannot be followed by operations ignored by the pattern.
+It's unnecessary to match the entire operation content; you can skip external/internal calls that are not relevant. However, there is a limitation: optional items cannot be followed by operations ignored by the pattern.
 
 ```yaml
 pattern:
@@ -93,6 +93,4 @@ pattern:
     optional: true
 ```
 
-{% hint style="info" %}
-Depending on whether you specify \(or not\) _destination+entrypoint_ for transactions and _originated\_contract_ for originations you will get slightly different callback argument types. Namely, in the first case DipDup will be able to generate the dataclass for a particular entrypoint/storage, and in the second case not \(meaning you will have to handle dynamically typed parameters/storage updates\).
-{% endhint %}
+You will get slightly different callback argument types depending on whether you specify _destination+entrypoint_ for transactions and _originated\_contract_ for originations. Namely, in the first case, DipDup will generate the dataclass for a particular entrypoint/storage, and in the second case not (meaning you will have to handle untyped parameters/storage updates).

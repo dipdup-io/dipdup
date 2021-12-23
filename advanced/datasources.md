@@ -4,8 +4,4 @@
 >
 > This page or paragraph is yet to be written. Come back later.
 
-## TzKT
-
-## Better Call Dev
-
-## Coinbase
+See [11.4. datasources](../../config-reference/datasources.md) for details.

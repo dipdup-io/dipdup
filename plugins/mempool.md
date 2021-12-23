@@ -2,7 +2,7 @@
 
 This is an optional section used by the [mempool](https://github.com/dipdup-net/mempool) indexer plugin. It uses [`contracts`](contracts.md) and [`datasources`](datasources.md) aliases as well as the [`database`](database.md) connection.
 
-Mempool configuration has two sections: `settings` and `indexers` \(required\).
+Mempool configuration has two sections: `settings` and `indexers` (required).
 
 {% page-ref page="../advanced/mempool-plugin.md" %}
 
@@ -24,15 +24,15 @@ mempool:
 
 ### keep_operations_seconds
 
-How long to store operations that did not get into the chain. After that period, such operations will be wiped from the database. Default value is **172800** **seconds** \(2 days\).
+How long to store operations that did not get into the chain. After that period, such operations will be wiped from the database. Default value is **172800** **seconds** (2 days).
 
 ### expired_after_blocks
 
-When `level(head) - level(operation.branch) >= expired_after_blocks` and operation is still on in chain it's marked as expired. Default value is **60 blocks** \(~1 hour\).
+When `level(head) - level(operation.branch) >= expired_after_blocks` and operation is still on in chain it's marked as expired. Default value is **60 blocks** (~1 hour).
 
 ### keep_in_chain_blocks
 
-Since the main purpose of this plugin is to index mempool operations \(actually it's a rolling index\), all the operations that were included in the chain are removed from the database after specified period of time. Default value is **10 blocks** \(~10 minutes\).
+Since the main purpose of this plugin is to index mempool operations (actually it's a rolling index), all the operations that were included in the chain are removed from the database after specified period of time. Default value is **10 blocks** (~10 minutes).
 
 ### mempool_request_interval_seconds
 
@@ -65,7 +65,7 @@ You can index several networks at once, or index different nodes independently. 
      florencenet: 
 ```
 
-Each indexer object has two keys: `filters` and `datasources` \(required\).
+Each indexer object has two keys: `filters` and `datasources` (required).
 
 ### Filters
 
@@ -73,7 +73,7 @@ An optional section specifying which mempool operations should be indexed. By de
 
 #### kinds
 
-Array of operations kinds, default value is `transaction` \(single item\).  
+Array of operations kinds, default value is `transaction` (single item).  
 The complete list of values allowed:
 
 * `activate_account`

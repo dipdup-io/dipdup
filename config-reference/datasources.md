@@ -1,6 +1,6 @@
 # datasources
 
-This is a list of API endpoints used to retrieve data and pass it to your indexer handlers. The obligatory field `kind` specifies which data adapter is to be used:
+A list of API endpoints DipDup uses to retrieve data and pass it to your indexer handlers. The obligatory field `kind` specifies which data adapter is to be used:
 
 * `tzkt`
 * `bcd`
@@ -10,7 +10,7 @@ This is a list of API endpoints used to retrieve data and pass it to your indexe
 
 ### TzKT 😸
 
-[TzKT](https://api.tzkt.io/) provides REST endpoints to query historical data and SignalR \(Websocket\) subscriptions to get realtime updates. Flexible filters allow to request only what is needed for your application and drastically speed up the indexing process.
+[TzKT](https://api.tzkt.io/) provides REST endpoints to query historical data and SignalR (Websocket) subscriptions to get realtime updates. Flexible filters allow you to request only data needed for your application and drastically speed up the indexing process.
 
 ```yaml
 datasources:
@@ -19,11 +19,11 @@ datasources:
     url: https://api.tzkt.io
 ```
 
-**NOTE** that datasource entry is basically an alias for the endpoint URI, there's no mention of the network, thus it's a good practice to add network name to the datasource alias. The reason for this design choice is to provide a generic index parameterization via the single mechanism — [templates](templates.md).
+A datasource config entry is an alias for the endpoint URI; there's no network mention. Thus it's good to add a network name to the datasource alias. The reason behind this design choice is to provide a generic index parameterization via a single mechanism. See [4.5. Templates and variables](../getting-started/templates-and-variables.md) for details.
 
 ### Better Call Dev
 
-Better Call Dev is another blockchain explorer and API with functionality similar to TzKT. It can't be used as a main datasource for indexer and mempool/metadata plugins but you can call it from inside of handlers to gather additional data.
+Better Call Dev is another blockchain explorer and API with functionality similar to TzKT. It can't be used as a datasource for indexer and mempool/metadata plugins, but you can call it from inside of handlers to gather additional data.
 
 ```yaml
 datasources:
@@ -36,7 +36,7 @@ datasources:
 
 ### Tezos node
 
-Tezos RPC is a standard interface provided by the Tezos node. It's not suitable for indexing purposes, but is used for accessing mempool data and other things that are not available through TzKT.
+Tezos RPC is a standard interface provided by the Tezos node. It's not suitable for indexing purposes but used for accessing mempool data and other things that are not available through TzKT.
 
 ```yaml
 datasources:
@@ -47,7 +47,7 @@ datasources:
 
 ### Coinbase
 
-A connector for [Coinbase Pro API \(opens new window\)](https://docs.pro.coinbase.com/). Provides `get_candles` and `get_oracle_data` methods. May be useful in enriching indexes of DeFi contracts with off-chain data.
+A connector for [Coinbase Pro API (opens new window)](https://docs.pro.coinbase.com/). Provides `get_candles` and `get_oracle_data` methods. It may be useful in enriching indexes of DeFi contracts with off-chain data.
 
 ```yaml
 datasources:
@@ -55,7 +55,7 @@ datasources:
     kind: coinbase
 ```
 
-Please note that Coinbase can't be used as an index datasource instead of TzKT. It can be accessed via `ctx.datasources` mapping in either handlers or jobs.
+Please note that Coinbase can't replace TzKT being an index datasource. But you can access it via `ctx.datasources` mapping both within handler and job callbacks.
 
 ## Advanced HTTP settings
 
@@ -81,11 +81,11 @@ hasura:
     ...
 ```
 
-Each datasource has its own defaults. Usually there's no reason to alter these settings unless you use your own instance of TzKT or BCD.
+Each datasource has its defaults. Usually, there's no reason to alter these settings unless you use self-hosted instances of TzKT or BCD.
 
-By default, DipDup retries failed requests infinitely with exponentially increasing delay between attempts. Set `retry_count` parameter in order to limit the number of attempts.
+By default, DipDup retries failed requests infinitely exponentially increasing delay between attempts. Set `retry_count` parameter to limit the number of attempts.
 
-`batch_size` parameter is TzKT-specific. By default, DipDup limit requests to 10000 items, the maximum value allowed on public instances provided by Baking Bad. Decreasing this value will lead to reducing time required for TzKT to process a single request and thus reduce the load. Same effect but limited to synchronizing multiple indexes concurrently can be achieved with reducing `connection_limit` parameter.
+`batch_size` parameter is TzKT-specific. By default, DipDup limit requests to 10000 items, the maximum value allowed on public instances provided by Baking Bad. Decreasing this value will reduce the time required for TzKT to process a single request and thus reduce the load. You can achieve the same effect (but limited to synchronizing multiple indexes concurrently) by reducing `connection_limit` parameter.
 
 ## Compatibility with indexes and plugins
 

@@ -20,19 +20,19 @@ metadata:
     ...
 ```
 
-#### ipfs\_gateways
+### ipfs\_gateways
 
 An array of IPFS gateways. The indexer polls them sequentially until it gets a result or runs out of attempts. It is recommended to specify more than one gateway to overcome propagation issues, rate limits, and other problems.
 
-#### ipfs\_timeout
+### ipfs\_timeout
 
 How long DipDup will wait for a single IPFS gateway response. Default value is **10 seconds**.
 
-#### http\_timeout
+### http\_timeout
 
 How long DipDup will wait for a HTTP server response. Default value is **10 seconds**.
 
-#### max\_retry\_count\_on\_error
+### max\_retry\_count\_on\_error
 
 If DipDup fails to get a response from IPFS gateway or HTTP server, it will try again after some time, until it runs out of attempts. Default value is **3 attempts**.
 
@@ -53,7 +53,7 @@ metadata:
         tzkt: tzkt_mainnet
 ```
 
-Each indexer object has two keys: `filters` and `datasources` \(required\).
+Each indexer object has two keys: `filters` and `datasources` (required).
 
 ### Filters
 

@@ -24,9 +24,4 @@ Homebase is a web application that enables users to create and manage/use DAOs o
 
 ## Tezos Profiles
 
-[homepage](https://tzprofiles.com/)
-
-* [Tezos profiles](https://github.com/spruceid/tzprofiles/tree/main/api/indexer)
-* [NFTButton](https://github.com/bobobobob/nftbutton-backend)
-* [HicDEX](https://github.com/hicdex/hicdex)
-* [HomebaseDAO](https://github.com/dOrgTech/homebase-indexer)
+## NFTButton

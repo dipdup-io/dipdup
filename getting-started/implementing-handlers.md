@@ -36,7 +36,7 @@ async def on_origination(
 )
 ```
 
-where `Origination` contains origination script, initial storage **\(typed\)**, amount, delegate, etc.
+where `Origination` contains origination script, initial storage **(typed)**, amount, delegate, etc.
 
 _Big map_ update handler will look like the following:
 
@@ -51,13 +51,13 @@ async def on_update(
 )
 ```
 
-where `BigMapDiff` contains action \(allocate, update, or remove\) and nullable key and value **\(typed\).**
+where `BigMapDiff` contains action (allocate, update, or remove) and nullable key and value **(typed).**
 
-**NOTE** that you can safely change argument names \(e.g. in case of collisions\).
+You can safely change argument names (e.g., in case of collisions).
 
-{% hint style="info" %}
-If you use index templates, your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same **`typename`** and raises an error otherwise.
-{% endhint %}
+> 💡 **TIP**
+>
+> If you use index templates, your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same `typename` and raises an error otherwise.
 
 ## Naming conventions
 

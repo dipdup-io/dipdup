@@ -1,6 +1,6 @@
 # Installation
 
-This page covers the installation of DipDup in local environments. See [Building Docker images](../deployment/docker.md) to learn how use DipDup in containers.
+This page covers the installation of DipDup in local environments. See [7.2. Building Docker images](../deployment/docker.md) to learn how to use DipDup in containers.
 
 ## Host requirements
 
@@ -8,7 +8,7 @@ A Linux environment with Python 3.8+ installed is required to use DipDup.
 
 Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database.
 
-## Installation
+## Local installation
 
 To begin with, create a new directory for your project and enter it. Now choose one:
 
