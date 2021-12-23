@@ -1,9 +1,5 @@
 # GenQL
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
-
 [GenQL](https://genql.vercel.app/) is a great library and CLI tool that automatically generates a fully typed SDK with a built-in GQL client. It works flawlessly with Hasura and is recommended for DipDup on the client-side.
 
 ## Project structure
