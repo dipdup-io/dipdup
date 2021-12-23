@@ -58,7 +58,7 @@ The following models are created at `init`:
 
 ## Handlers
 
-TODO: moved to implementing handlers
+See [4.7. Implementing handlers](implementing-handlers.md) for details.
 
 ## Models
 
