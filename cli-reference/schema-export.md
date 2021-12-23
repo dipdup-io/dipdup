@@ -1,5 +1,9 @@
 # schema export
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+Print SQL schema including scripts from `on_reindex` hook.
+
+```shell
+dipdup schema export
+```
+
+This command may help you debug inconsistency between project models and expectable SQL schema.

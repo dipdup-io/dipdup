@@ -1,5 +1,7 @@
 # status
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+Show current status of indexes in database
+
+```shell
+dipdup status
+```

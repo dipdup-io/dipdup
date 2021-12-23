@@ -1,5 +1,13 @@
 # schema wipe
 
-> 🚧 **UNDER CONSTRUCTION**
+Drop all database tables, functions, and views.
+
+> ⚠ **WARNING**
 >
-> This page or paragraph is yet to be written. Come back later.
+> This action is irreversible! All indexed data will be lost!
+
+```shell
+dipdup schema wipe [--immune]
+```
+
+Add `--immune` flag to drop immune tables too. See [11.3. database](../config-reference/database.md#postgresql) to learn about immune tables.

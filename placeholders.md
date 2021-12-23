@@ -12,6 +12,6 @@
 
 ## Warning
 
-> ⚠ WARNING
+> ⚠ **WARNING**
 >
 > ...
