@@ -4,11 +4,9 @@ Make sure you have [docker](https://docs.docker.com/get-docker/) and [docker-com
 
 **Step 1.** Create `Dockerfile` with the following content:
 
-{% tabs %}
-{% tab title="Python" %}
 Assuming you are using [poetry](https://python-poetry.org/) for managing the project:
 
-```text
+```dockerfile
 FROM python:3.9-slim-buster
 
 RUN pip install poetry
@@ -23,8 +21,6 @@ COPY . /demo
 ENTRYPOINT ["poetry", "run", "dipdup"]
 CMD ["-c", "dipdup.yml", "run"]
 ```
-{% endtab %}
-{% endtabs %}
 
  **Step 2.** Create `docker-compose.yml` with the following sections:
 
@@ -80,7 +76,7 @@ volumes:
 Recall that environment variables are expanded in the DipDup config file — in our case we are forwarding Postgres password and Hasura secret.
 {% endhint %}
 
-**Step 3.** Update `dipdup.yml` \(or create a dedicated config for docker deployment\):
+**Step 3.** Update `dipdup.yml` (or create a dedicated config for docker deployment):
 
 ```yaml
 database:
@@ -100,7 +96,7 @@ hasura:
   select_limit: 100
 ```
 
-Note the hostnames \(will be resolved in the docker network\) and environment variables \(will be expanded by DipDup\).
+Note the hostnames (resolved in the docker network) and environment variables (expanded by DipDup).
 
 **Step 4.** Build and run the containers:
 
@@ -108,5 +104,4 @@ Note the hostnames \(will be resolved in the docker network\) and environment va
 docker-compose up -d --build
 ```
 
-We recommend [lazydocker](https://github.com/jesseduffield/lazydocker) for monitoring your application. 
-
+We recommend [lazydocker](https://github.com/jesseduffield/lazydocker) for monitoring your application.

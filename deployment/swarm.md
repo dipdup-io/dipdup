@@ -1,4 +1,4 @@
-# Deployment
+# Deploying with Docker Swarm
 
 > 🚧 **UNDER CONSTRUCTION**
 >

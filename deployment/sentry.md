@@ -1,4 +1,4 @@
-# Deployment
+# Sentry integration
 
 > 🚧 **UNDER CONSTRUCTION**
 >

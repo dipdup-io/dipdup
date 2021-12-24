@@ -1,4 +1,4 @@
-# Deployment
+# SQL hooks
 
 > 🚧 **UNDER CONSTRUCTION**
 >

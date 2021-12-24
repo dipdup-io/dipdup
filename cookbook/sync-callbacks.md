@@ -1,4 +1,4 @@
-# Deployment
+# Synchronizing multiple handlers/hooks
 
 > 🚧 **UNDER CONSTRUCTION**
 >

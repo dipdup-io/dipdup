@@ -1,4 +1,4 @@
-# Deployment
+# Reporting bugs
 
 > 🚧 **UNDER CONSTRUCTION**
 >
