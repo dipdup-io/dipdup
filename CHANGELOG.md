@@ -2,6 +2,10 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## 4.0.0 - 2021-12-24
+
+This release contains no changes except for the version number.
+
 ## 4.0.0-rc3 - 2021-12-20
 
 ### Fixed
@@ -47,29 +51,13 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Added
 
 * cli: Added `run --early-realtime` flag to establish a realtime connection before all indexes are synchronized.
-* cli: Added`run --merge-subscriptions`  flag to subscribe to all operations/big map diffs during realtime indexing. This flag helps to avoid reaching TzKT subscriptions limit (currently 10000 channels).
+* cli: Added `run --merge-subscriptions` flag to subscribe to all operations/big map diffs during realtime indexing.
 * cli: Added `status` command to print the current status of indexes from the database.
-* cli: Added `config export [--unsafe]` command to print config after resolving all links and variables. Add `--unsafe` option to substitute environment variables.
+* cli: Added `config export [--unsafe]` command to print config after resolving all links and variables.
 * cli: Added `cache show` command to get information about file caches used by DipDup.
 * config: Added `first_level` and `last_level` optional fields to `TemplateIndexConfig`. These limits are applied after ones from the template itself.
 * config: Added `daemon` boolean field to `JobConfig` to run a single callback indefinitely. Conflicts with `crontab` and `interval` fields.
-* config: Added `advanced` top-level section with following fields:
-
-```yaml
-advanced:
-  early_realtime: False
-  merge_subscriptions: False
-  oneshot: False
-  postpone_jobs: False
-  reindex:
-    manual: exception
-    migration: wipe
-    rollback: ignore
-    config_modified: exception
-    schema_modified: wipe
-```
-
-`ReindexingRequiredError` exception is raised by default when reindexing is triggered. CLI flags have priority over self-titled `AdvancedConfig` fields.
+* config: Added `advanced` top-level section.
 
 ### Fixed
 
