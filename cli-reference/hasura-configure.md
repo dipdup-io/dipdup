@@ -6,4 +6,4 @@ Configure Hasura GraphQL Engine instance.
 dipdup hasura configure
 ```
 
-See [5.6.1. Hasura integration](../advanced/graphql/hasura.md) for details.
+See [5.6.1. Hasura integration](../graphql/hasura.md) for details.

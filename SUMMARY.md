@@ -21,10 +21,6 @@
   * [Reindexing](advanced/reindexing.md)
   * [Feature flags](advanced/feature-flags.md)
   * [Executing SQL scripts](advanced/sql.md)
-  * [GraphQL API](advanced/graphql/README.md)
-    * [Hasura integration](advanced/graphql/hasura.md)
-    * [REST endpoints](advanced/graphql/rest.md)
-    * [GenQL](advanced/graphql/genql.md)
   * [Improving performance](advanced/performance/README.md)
     * [Working with time series](advanced/performance/time-series.md)
     * [Tuning datasources](advanced/performance/datasources.md)
@@ -32,6 +28,11 @@
   * [Handler context](advanced/handler-context.md)
   * [Internal models](advanced/internal-models.md)
   * [Spawning indexes at runtime](cookbook/index-factories.md)
+
+* [GraphQL API](graphql/README.md)
+  * [Hasura integration](graphql/hasura.md)
+  * [REST endpoints](graphql/rest.md)
+  * [GenQL](graphql/genql.md)
 
 * [Troubleshooting](troubleshooting/README.md)
   * [Common issues](troubleshooting/common-issues.md)

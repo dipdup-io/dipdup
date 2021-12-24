@@ -35,7 +35,7 @@ demo_tzbtc
 
 ## `graphql`: queries for Hasura
 
-See [5.6.1. Hasura integration](../advanced/graphql/hasura.md) for details.
+See [5.6.1. Hasura integration](../graphql/hasura.md) for details.
 
 ## `handlers`: index handler callbacks
 

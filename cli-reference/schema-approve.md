@@ -10,4 +10,4 @@ Add `--hashes` flag to recalculate all schema and config hashes.
 
 See [5.3. Reindexing](../advanced/reindexing.md) for details.
 
-See [11.1. advanced](../config-reference/advanced.md) for details.
+See [12.1. advanced](../config-reference/advanced.md) for details.

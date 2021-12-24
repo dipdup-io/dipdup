@@ -10,4 +10,4 @@ Drop all database tables, functions, and views.
 dipdup schema wipe [--immune]
 ```
 
-Add `--immune` flag to drop immune tables too. See [11.3. database](../config-reference/database.md#postgresql) to learn about immune tables.
+Add `--immune` flag to drop immune tables too. See [12.3. database](../config-reference/database.md#postgresql) to learn about immune tables.

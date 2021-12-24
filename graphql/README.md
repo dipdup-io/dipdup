@@ -19,7 +19,7 @@ It's important to understand that GraphQL query is just a [POST request](https:/
 
 ### Pagination
 
-By default, Hasura does not restrict the number of rows returned per request, which could lead to abuses and heavy load to your server. You can set up limits in the configuration file. See [11.5. hasura](../config-reference/hasura.md#limit-number-of-rows) for details. But then you will face the need to [paginate](https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/pagination.html) over the items if the response does not fit into the limits.
+By default, Hasura does not restrict the number of rows returned per request, which could lead to abuses and heavy load to your server. You can set up limits in the configuration file. See [12.5. hasura](../config-reference/hasura.md#limit-number-of-rows) for details. But then you will face the need to [paginate](https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/pagination.html) over the items if the response does not fit into the limits.
 
 ## Subscriptions
 
