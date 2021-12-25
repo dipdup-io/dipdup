@@ -1,10 +1,102 @@
 # Changelog
 
-## 3.1.3 - [unreleased]
+Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
+
+## 4.0.0 - 2021-12-24
+
+This release contains no changes except for the version number.
+
+## 4.0.0-rc3 - 2021-12-20
 
 ### Fixed
 
-* Fixed missing imports in handlers generated during init. 
+* cli: Fixed missing `schema approve --hashes` argument.
+* codegen: Fixed contract address used instead of an alias when typename is not set.
+* tzkt: Fixed processing operations with entrypoint `default`.
+* tzkt: Fixed regression in processing migration originations.
+* tzkt: Fixed filtering of big map diffs by the path.
+
+### Removed
+
+* cli: Removed deprecated `run --oneshot` argument and `clear-cache` command.
+
+## 4.0.0-rc2 - 2021-12-11
+
+### ⚠ Migration
+
+* Run `dipdup init` command to generate `on_synchronized` hook stubs.
+
+### Added
+
+* hooks: Added `on_synchronized` hook, which fires each time all indexes reach realtime state.
+
+### Fixed
+
+* cli: Fixed config not being verified when invoking some commands.
+* codegen: Fixed generating callback arguments for untyped operations.
+* index: Fixed incorrect log messages, remove duplicate ones.
+* index: Fixed crash while processing storage of some contracts.
+* index: Fixed matching of untyped operations filtered by `source` field ([@pravin-d](https://github.com/pravin-d)).
+
+### Performance
+
+* index: Checks performed on each iteration of the main DipDup loop are slightly faster now.
+
+## 4.0.0-rc1 - 2021-12-02
+
+### ⚠ Migration
+
+* Run `dipdup schema approve` command on every database you want to use with 4.0.0-rc1. Running `dipdup migrate` is not necessary since `spec_version` hasn't changed in this release.
+
+### Added
+
+* cli: Added `run --early-realtime` flag to establish a realtime connection before all indexes are synchronized.
+* cli: Added `run --merge-subscriptions` flag to subscribe to all operations/big map diffs during realtime indexing.
+* cli: Added `status` command to print the current status of indexes from the database.
+* cli: Added `config export [--unsafe]` command to print config after resolving all links and variables.
+* cli: Added `cache show` command to get information about file caches used by DipDup.
+* config: Added `first_level` and `last_level` optional fields to `TemplateIndexConfig`. These limits are applied after ones from the template itself.
+* config: Added `daemon` boolean field to `JobConfig` to run a single callback indefinitely. Conflicts with `crontab` and `interval` fields.
+* config: Added `advanced` top-level section.
+
+### Fixed
+
+* cli: Fixed crashes and output inconsistency when piping DipDup commands.
+* cli: Fixed `schema wipe --immune` flag being ignored.
+* codegen: Fixed missing imports in handlers generated during init.
+* coinbase: Fixed possible data inconsistency caused by caching enabled for method `get_candles`.
+* http: Fixed increasing sleep time between failed request attempts.
+* index: Fixed invocation of head index callback.
+* index: Fixed `CallbackError` raised instead of `ReindexingRequiredError` in some cases.
+* tzkt: Fixed resubscribing when realtime connectivity is lost for a long time.
+* tzkt: Fixed sending useless subscription requests when adding indexes in runtime.
+* tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `HTTPConfig.batch_size` field.
+* tzkt: Fixed lots of SignalR bugs by replacing `aiosignalrcore` library with `pysignalr`.
+
+## Changed
+
+* cli: `dipdup schema wipe` command now requires confirmation when invoked in the interactive shell.
+* cli: `dipdup schema approve` command now also causes a recalculation of schema and index config hashes.
+* index: DipDup will recalculate respective hashes if reindexing is triggered with `config_modified: ignore` or `schema_modified: ignore` in advanced config.
+
+### Deprecated
+
+* cli: `run --oneshot` option is deprecated and will be removed in the next major release. The oneshot mode applies automatically when `last_level` field is set in the index config.
+* cli: `clear-cache` command is deprecated and will be removed in the next major release. Use `cache clear` command instead.
+
+### Performance
+
+* config: Configuration files are loaded 10x times faster.
+* index: Number of operations processed by matcher reduced by 40%-95% depending on the number of addresses and entrypoints used.
+* tzkt: Rate limit was increased. Try to set `connection_timeout` to a higher value if requests fail with `ConnectionTimeout` exception.
+* tzkt: Improved performance of response deserialization. 
+
+## 3.1.3 - 2021-11-15
+
+### Fixed
+
+* codegen: Fixed missing imports in operation handlers. 
+* codegen: Fixed invalid imports and arguments in big_map handlers.
 
 ## 3.1.2 - 2021-11-02
 
@@ -16,7 +108,7 @@
 
 ### Fixed
 
-* Fixed loss of real-time subscriptions occurred after TzKT API outage.
+* Fixed loss of realtime subscriptions occurred after TzKT API outage.
 * Fixed updating schema hash in `schema approve` command.
 * Fixed possible crash occurred while Hasura is not ready.
 
@@ -57,7 +149,7 @@
 
 * Fixed unexpected reindexing caused by the bug in processing zero- and single-level rollbacks.
 * Removed unnecessary file IO calls that could cause `PermissionError` exception in Docker environments.
-* Fixed possible violation of block-level atomicity during real-time indexing.
+* Fixed possible violation of block-level atomicity during realtime indexing.
 
 ### Changes
 

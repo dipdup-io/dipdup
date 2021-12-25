@@ -1,18 +1,22 @@
-import logging
-from copy import deepcopy
+from dataclasses import field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any
+from typing import Dict
+from typing import Generic
+from typing import Optional
+from typing import Tuple
+from typing import TypeVar
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
-from pydantic.error_wrappers import ValidationError
-from tortoise import Model, fields
-from typing_extensions import get_args
+from tortoise import Model
+from tortoise import fields
 
-from dipdup.enums import IndexStatus, IndexType
-from dipdup.exceptions import ConfigurationError, InvalidDataError, ReindexingReason
+from dipdup.enums import IndexStatus
+from dipdup.enums import IndexType
+from dipdup.exceptions import ReindexingReason
 from dipdup.utils.database import ReversedCharEnumField
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
@@ -21,26 +25,22 @@ KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
-_logger = logging.getLogger('dipdup.models')
-
-
 @dataclass
 class OperationData:
-    """Basic structure for operations from TzKT response"""
-
     type: str
     id: int
     level: int
     timestamp: datetime
     hash: str
     counter: int
-    sender_address: str
+    sender_address: Optional[str]
     target_address: Optional[str]
     initiator_address: Optional[str]
     amount: Optional[int]
     status: str
     has_internals: Optional[bool]
-    storage: Dict[str, Any]
+    storage: Any
+    diffs: Tuple[Dict[str, Any], ...] = field(default_factory=tuple)
     block: Optional[str] = None
     sender_alias: Optional[str] = None
     nonce: Optional[int] = None
@@ -52,95 +52,6 @@ class OperationData:
     originated_contract_alias: Optional[str] = None
     originated_contract_type_hash: Optional[int] = None
     originated_contract_code_hash: Optional[int] = None
-    diffs: Optional[List[Dict[str, Any]]] = None
-
-    # TODO: Refactor this class, move storage processing methods to TzktDatasource
-    def _merge_bigmapdiffs(self, storage_dict: Dict[str, Any], bigmap_name: str, array: bool) -> None:
-        """Apply big map diffs of specific path to storage"""
-        if self.diffs is None:
-            raise Exception('`bigmaps` field missing')
-        _logger.debug(bigmap_name)
-        bigmapdiffs = [bm for bm in self.diffs if bm['path'] == bigmap_name]
-        bigmap_key = bigmap_name.split('.')[-1]
-        for diff in bigmapdiffs:
-            _logger.debug('Applying bigmapdiff: %s', diff)
-            if diff['action'] in ('add_key', 'update_key'):
-                key = diff['content']['key']
-                if array is True:
-                    storage_dict[bigmap_key].append({'key': key, 'value': diff['content']['value']})
-                else:
-                    storage_dict[bigmap_key][key] = diff['content']['value']
-
-    def _process_storage(
-        self,
-        storage_type: Type[StorageType],
-        storage: Dict[str, Any],
-        prefix: str = None,
-    ) -> Dict[str, Any]:
-        for key, field in storage_type.__fields__.items():
-            if key == '__root__':
-                continue
-
-            if field.alias:
-                key = field.alias
-
-            bigmap_name = key if prefix is None else f'{prefix}.{key}'
-
-            # NOTE: TzKT could return bigmaps as object or as array of key-value objects. We need to guess this from storage.
-            # TODO: This code should be a part of datasource module.
-            try:
-                value = storage[key]
-            except KeyError as e:
-                if not field.required:
-                    continue
-                raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists') from e
-
-            # FIXME: Pydantic bug? I have no idea how does it work, this workaround is just a guess.
-            # FIXME: `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool], Dict[str, BaseModel], and possibly any other cases.
-            is_complex_type = field.type_ != field.outer_type_
-            try:
-                get_args(field.outer_type_)[1].__fields__
-                is_nested_dict_model = True
-            except Exception:
-                is_nested_dict_model = False
-
-            if is_complex_type and (field.type_ == bool or is_nested_dict_model):
-                annotation = field.outer_type_
-            else:
-                annotation = field.type_
-
-            if annotation not in (int, bool) and isinstance(value, int):
-                if hasattr(annotation, '__fields__') and 'key' in annotation.__fields__ and 'value' in annotation.__fields__:
-                    storage[key] = []
-                    if self.diffs:
-                        self._merge_bigmapdiffs(storage, bigmap_name, array=True)
-                else:
-                    storage[key] = {}
-                    if self.diffs:
-                        self._merge_bigmapdiffs(storage, bigmap_name, array=False)
-            elif hasattr(annotation, '__fields__') and isinstance(storage[key], dict):
-                storage[key] = self._process_storage(annotation, storage[key], bigmap_name)
-
-        return storage
-
-    def get_merged_storage(self, storage_type: Type[StorageType]) -> StorageType:
-        """Merge big map diffs and deserialize raw storage into typeclass"""
-        if self.storage is None:
-            raise Exception('`storage` field missing')
-
-        storage = deepcopy(self.storage)
-        _logger.debug('Merging storage')
-        _logger.debug('Before: %s', storage)
-        _logger.debug('Diffs: %s', self.diffs)
-
-        storage = self._process_storage(storage_type, storage, None)
-
-        _logger.debug('After: %s', storage)
-
-        try:
-            return storage_type.parse_obj(storage)
-        except ValidationError as e:
-            raise InvalidDataError(storage_type, storage, self) from e
 
 
 @dataclass

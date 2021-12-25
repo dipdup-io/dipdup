@@ -1,12 +1,12 @@
 import asyncio
 from contextlib import suppress
-from os.path import dirname, join
+from os.path import dirname
+from os.path import join
 
 import pyperf  # type: ignore
 
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ReindexingRequiredError
 from dipdup.test import with_operation_index_fuzzer
 
 
@@ -33,8 +33,8 @@ async def _match():
 
         with with_operation_index_fuzzer(10, 3):
             dipdup = DipDup(config)
-            with suppress(ReindexingRequiredError):
-                await dipdup.run(True, True)
+            with suppress(asyncio.CancelledError):
+                await dipdup.run()
 
 
 runner.bench_func('index_match_operations', lambda: asyncio.run(_match()))

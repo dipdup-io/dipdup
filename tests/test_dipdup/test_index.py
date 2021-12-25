@@ -2,15 +2,14 @@ import datetime
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock
 
-from dipdup.config import (
-    ContractConfig,
-    OperationHandlerConfig,
-    OperationHandlerTransactionPatternConfig,
-    OperationIndexConfig,
-    OperationType,
-    TzktDatasourceConfig,
-)
+from dipdup.config import ContractConfig
+from dipdup.config import OperationHandlerConfig
+from dipdup.config import OperationHandlerTransactionPatternConfig
+from dipdup.config import OperationIndexConfig
+from dipdup.config import OperationType
+from dipdup.config import TzktDatasourceConfig
 from dipdup.index import OperationIndex
+from dipdup.index import extract_operation_subgroups
 from dipdup.models import OperationData
 
 add_liquidity_operations = (
@@ -61,7 +60,6 @@ add_liquidity_operations = (
         originated_contract_alias=None,
         originated_contract_type_hash=None,
         originated_contract_code_hash=None,
-        diffs=None,
     ),
     OperationData(
         type='transaction',
@@ -101,7 +99,7 @@ add_liquidity_operations = (
         originated_contract_alias=None,
         originated_contract_type_hash=None,
         originated_contract_code_hash=None,
-        diffs=[
+        diffs=(
             {
                 'bigmap': 3943,
                 'path': 'balances',
@@ -139,7 +137,7 @@ add_liquidity_operations = (
                     'value': {'balance': '470000000000000000000', 'approvals': {}},
                 },
             },
-        ],
+        ),
     ),
     OperationData(
         type='transaction',
@@ -174,7 +172,7 @@ add_liquidity_operations = (
         originated_contract_alias=None,
         originated_contract_type_hash=None,
         originated_contract_code_hash=None,
-        diffs=[
+        diffs=(
             {
                 'bigmap': 1798,
                 'path': 'balances',
@@ -195,7 +193,7 @@ add_liquidity_operations = (
                     'value': {'balance': '16000000', 'approvals': {}},
                 },
             },
-        ],
+        ),
     ),
     OperationData(
         type='transaction',
@@ -230,7 +228,7 @@ add_liquidity_operations = (
         originated_contract_alias=None,
         originated_contract_type_hash=None,
         originated_contract_code_hash=None,
-        diffs=[
+        diffs=(
             {
                 'bigmap': 14107,
                 'path': 'balances',
@@ -240,18 +238,18 @@ add_liquidity_operations = (
                     'key': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4',
                     'value': {'balance': '86717933554615', 'approvals': {}},
                 },
-            }
-        ],
+            },
+        ),
     ),
 )
 
 index_config = OperationIndexConfig(
     datasource=TzktDatasourceConfig(kind='tzkt', url='https://api.tzkt.io', http=None),
     kind='operation',
-    handlers=[
+    handlers=(
         OperationHandlerConfig(
             callback='on_fa12_and_fa12_add_liquidity',
-            pattern=[
+            pattern=(
                 OperationHandlerTransactionPatternConfig(
                     type='transaction',
                     source=None,
@@ -280,10 +278,10 @@ index_config = OperationIndexConfig(
                     entrypoint='mint',
                     optional=False,
                 ),
-            ],
+            ),
         ),
-    ],
-    types=[OperationType.transaction, OperationType.origination],
+    ),
+    types=(OperationType.transaction, OperationType.origination),
     contracts=[ContractConfig(address='KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU', typename='plenty_smak_amm')],
     first_level=0,
     last_level=0,
@@ -295,6 +293,19 @@ class MatcherTest(IsolatedAsyncioTestCase):
     async def test_match_smak_add_liquidity(self) -> None:
         index = OperationIndex(None, index_config, None)  # type: ignore
         index._prepare_handler_args = AsyncMock()  # type: ignore
-        matched_operations = await index._match_operations(add_liquidity_operations)
+
+        all_filtered = tuple(extract_operation_subgroups(add_liquidity_operations, set(), set()))
+        assert not all_filtered
+
+        operation_subgroups = tuple(
+            extract_operation_subgroups(
+                add_liquidity_operations,
+                addresses=index_config.address_filter,
+                entrypoints=index_config.entrypoint_filter,
+            )
+        )
+        assert len(operation_subgroups) == 1
+
+        matched_handlers = await index._match_operation_subgroup(operation_subgroups[0])
+        assert len(matched_handlers) == 1
         index._prepare_handler_args.assert_called()
-        self.assertEqual(len(matched_operations), 1)

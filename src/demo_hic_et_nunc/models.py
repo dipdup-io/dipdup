@@ -1,6 +1,7 @@
 from enum import IntEnum
 
-from tortoise import Model, fields
+from tortoise import Model
+from tortoise import fields
 
 
 class SwapStatus(IntEnum):

@@ -2,11 +2,17 @@ import asyncio
 import logging
 import os
 import signal
+import subprocess
+import sys
+from contextlib import suppress
 from dataclasses import dataclass
 from functools import wraps
 from os import listdir
-from os.path import dirname, exists, join
-from typing import List, cast
+from os.path import dirname
+from os.path import exists
+from os.path import join
+from typing import List
+from typing import cast
 
 import asyncclick as click
 import sentry_sdk
@@ -14,22 +20,44 @@ from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from tabulate import tabulate
 from tortoise import Tortoise
 from tortoise.transactions import get_connection
 from tortoise.utils import get_schema_sql
 
-from dipdup import __spec_version__, __version__, spec_reindex_mapping, spec_version_mapping
-from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE, DEFAULT_DOCKER_IMAGE, DEFAULT_DOCKER_TAG, DipDupCodeGenerator
-from dipdup.config import DipDupConfig, LoggingConfig, PostgresDatabaseConfig
+from dipdup import __spec_version__
+from dipdup import __version__
+from dipdup import spec_reindex_mapping
+from dipdup import spec_version_mapping
+from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE
+from dipdup.codegen import DEFAULT_DOCKER_IMAGE
+from dipdup.codegen import DEFAULT_DOCKER_TAG
+from dipdup.codegen import DipDupCodeGenerator
+from dipdup.config import DipDupConfig
+from dipdup.config import LoggingConfig
+from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.exceptions import ConfigurationError, DeprecatedHandlerError, DipDupError, InitializationRequiredError, MigrationRequiredError
+from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import DeprecatedHandlerError
+from dipdup.exceptions import DipDupError
+from dipdup.exceptions import InitializationRequiredError
+from dipdup.exceptions import MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.migrations import DipDupMigrationManager, deprecated_handlers
+from dipdup.migrations import DipDupMigrationManager
+from dipdup.migrations import deprecated_handlers
+from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
-from dipdup.utils.database import get_schema_hash, set_decimal_context, tortoise_wrapper, wipe_schema
+from dipdup.utils.database import set_decimal_context
+from dipdup.utils.database import tortoise_wrapper
+from dipdup.utils.database import wipe_schema
 
 _logger = logging.getLogger('dipdup.cli')
+
+
+def echo(message: str) -> None:
+    with suppress(BrokenPipeError):
+        click.echo(message)
 
 
 @dataclass
@@ -97,7 +125,7 @@ def init_sentry(config: DipDupConfig) -> None:
 @click.pass_context
 @cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
-    # NOTE: Config from cwd, fallback to builtin
+    # NOTE: Search in current workdir, fallback to builtin configs
     try:
         path = join(os.getcwd(), logging_config)
         _logging_config = LoggingConfig.load(path)
@@ -105,6 +133,10 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         path = join(dirname(__file__), 'configs', logging_config)
         _logging_config = LoggingConfig.load(path)
     _logging_config.apply()
+
+    # NOTE: Nothing useful there
+    if 'tortoise' not in _logging_config.config['loggers']:
+        logging.getLogger('tortoise').setLevel(logging.WARNING)
 
     # NOTE: Apply env files before loading config
     for env_path in env_file:
@@ -115,6 +147,8 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         load_dotenv(env_path, override=True)
 
     _config = DipDupConfig.load(config)
+    # NOTE: Imports will be loaded later if needed
+    _config.initialize(skip_imports=True)
     init_sentry(_config)
 
     try:
@@ -128,6 +162,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         reindex = spec_reindex_mapping[__spec_version__]
         raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
+    # NOTE: Ensure that no deprecated handlers left in project after migration to v3.0.0
     if ctx.invoked_subcommand != 'migrate':
         handlers_path = join(_config.package_path, 'handlers')
         if set(listdir(handlers_path)).intersection(set(deprecated_handlers)):
@@ -141,20 +176,27 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
 
 @cli.command(help='Run indexing')
-@click.option('--oneshot', is_flag=True, help='Synchronize indexes wia REST and exit without starting WS connection')
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
+@click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
+@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing')
 @click.pass_context
 @cli_wrapper
 async def run(
     ctx,
-    oneshot: bool,
     postpone_jobs: bool,
+    early_realtime: bool,
+    merge_subscriptions: bool,
 ) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
+    config.advanced.postpone_jobs |= postpone_jobs
+    config.advanced.early_realtime |= early_realtime
+    config.advanced.merge_subscriptions |= merge_subscriptions
+
     set_decimal_context(config.package)
+
     dipdup = DipDup(config)
-    await dipdup.run(oneshot, postpone_jobs)
+    await dipdup.run()
 
 
 @cli.command(help='Generate missing callbacks and types')
@@ -163,7 +205,6 @@ async def run(
 @cli_wrapper
 async def init(ctx, overwrite_types: bool):
     config: DipDupConfig = ctx.obj.config
-    config.initialize(skip_imports=True)
     dipdup = DipDup(config)
     await dipdup.init(overwrite_types)
 
@@ -173,23 +214,72 @@ async def init(ctx, overwrite_types: bool):
 @cli_wrapper
 async def migrate(ctx):
     config: DipDupConfig = ctx.obj.config
-    config.initialize(skip_imports=True)
     migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
     await migrations.migrate()
 
 
-# TODO: "cache clear"?
-@cli.command(help='Clear development request cache')
+@cli.command(help='Show current status of indexes in database')
 @click.pass_context
 @cli_wrapper
-async def clear_cache(ctx):
+async def status(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    models = f'{config.package}.models'
+
+    table = [('name', 'status', 'level')]
+    async with tortoise_wrapper(url, models):
+        async for index in Index.filter().order_by('name'):
+            table.append((index.name, index.status.value, index.level))
+
+    echo(tabulate(table, tablefmt='plain'))
+
+
+@cli.group(help='Commands to manage DipDup configuration')
+@click.pass_context
+@cli_wrapper
+async def config(ctx):
+    ...
+
+
+@config.command(name='export', help='Dump DipDup configuration')
+@click.option('--unsafe', is_flag=True, help='')
+@click.pass_context
+@cli_wrapper
+async def config_export(ctx, unsafe: bool) -> None:
+    config_yaml = DipDupConfig.load(
+        paths=ctx.obj.config.paths,
+        environment=unsafe,
+    ).dump()
+    echo(config_yaml)
+
+
+@cli.group(help='Manage datasource caches')
+@click.pass_context
+@cli_wrapper
+async def cache(ctx):
+    ...
+
+
+@cache.command(name='clear', help='Clear datasource request caches')
+@click.pass_context
+@cli_wrapper
+async def cache_clear(ctx) -> None:
     FileCache('dipdup', flag='cs').clear()
+
+
+@cache.command(name='show', help='Show datasource request caches size information')
+@click.pass_context
+@cli_wrapper
+async def cache_show(ctx) -> None:
+    cache = FileCache('dipdup', flag='cs')
+    size = subprocess.check_output(['du', '-sh', cache.cache_dir]).split()[0].decode('utf-8')
+    echo(f'{cache.cache_dir}: {len(cache)} items, {size}')
 
 
 @cli.group(help='Docker integration related commands')
 @click.pass_context
 @cli_wrapper
-async def docker(ctx):
+async def docker(ctx) -> None:
     ...
 
 
@@ -238,27 +328,28 @@ async def schema(ctx):
     ...
 
 
-from dipdup.enums import ReindexingReason
-
-
-@schema.command(name='approve', help='Continue indexing with the same schema after crashing with `ReindexingRequiredError`')
+@schema.command(name='approve', help='Continue to use existing schema after reindexing was triggered')
+@click.option('--hashes', is_flag=True, help='Recalculate all schema and config hashes')
 @click.pass_context
 @cli_wrapper
-async def schema_approve(ctx):
+async def schema_approve(ctx, hashes: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    async with tortoise_wrapper(url, models):
-        schema = await Schema.filter().get()
-        if not schema.reindex:
-            return
+    _logger.info('Approving schema `%s`', url)
 
-        if schema.reindex == ReindexingReason.SCHEMA_HASH_MISMATCH:
-            conn = get_connection(None)
-            schema.hash = get_schema_hash(conn)
-        schema.reindex = None
-        await schema.save()
+    async with tortoise_wrapper(url, models):
+        # FIXME: Non-nullable fields
+        await Schema.filter(name=config.schema_name).update(
+            reindex=None,
+            hash='',
+        )
+        await Index.filter().update(
+            config_hash='',
+        )
+
+    _logger.info('Schema approved')
 
 
 @schema.command(name='wipe', help='Drop all database tables, functions and views')
@@ -270,12 +361,31 @@ async def schema_wipe(ctx, immune: bool):
     url = config.database.connection_string
     models = f'{config.package}.models'
 
+    try:
+        assert sys.__stdin__.isatty()
+        click.confirm(f'You\'re about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?', abort=True)
+    except AssertionError:
+        click.echo('Not in a TTY, skipping confirmation')
+    # FIXME: Can't catch asyncio.CancelledError here
+    except click.Abort:
+        click.echo('Aborted')
+        return
+
+    _logger.info('Wiping schema `%s`', url)
+
     async with tortoise_wrapper(url, models):
         conn = get_connection(None)
         if isinstance(config.database, PostgresDatabaseConfig):
-            await wipe_schema(conn, config.database.schema_name, config.database.immune_tables)
+            await wipe_schema(
+                conn=conn,
+                name=config.database.schema_name,
+                # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
+                immune_tables=config.database.immune_tables if not immune else (),
+            )
         else:
             await Tortoise._drop_databases()
+
+    _logger.info('Schema wiped')
 
 
 @schema.command(name='export', help='Print schema SQL including `on_reindex` hook')
@@ -285,10 +395,10 @@ async def schema_export(ctx):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
+
     async with tortoise_wrapper(url, models):
         conn = get_connection(None)
-        print('_' * 80)
-        print(get_schema_sql(conn, False))
+        output = get_schema_sql(conn, False) + '\n'
         for file in iter_files(join(config.package_path, 'sql', 'on_reindex')):
-            print(file.read())
-        print('_' * 80)
+            output += file.read() + '\n'
+        echo(output)

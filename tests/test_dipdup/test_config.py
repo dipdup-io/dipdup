@@ -1,8 +1,12 @@
-from os.path import dirname, join
-from typing import Callable, Type
+from os.path import dirname
+from os.path import join
+from typing import Callable
+from typing import Type
 from unittest import IsolatedAsyncioTestCase
 
-from dipdup.config import ContractConfig, DipDupConfig, TzktDatasourceConfig
+from dipdup.config import ContractConfig
+from dipdup.config import DipDupConfig
+from dipdup.config import TzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 
 

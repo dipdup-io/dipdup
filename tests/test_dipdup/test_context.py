@@ -1,11 +1,13 @@
 from contextlib import AsyncExitStack
-from os.path import dirname, join
+from os.path import dirname
+from os.path import join
 from unittest import IsolatedAsyncioTestCase
 
 from tortoise.transactions import get_connection
 
 import dipdup.context as context
-from dipdup.config import DipDupConfig, SqliteDatabaseConfig
+from dipdup.config import DipDupConfig
+from dipdup.config import SqliteDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ReindexingRequiredError

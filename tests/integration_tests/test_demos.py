@@ -1,7 +1,8 @@
 import subprocess
 from contextlib import suppress
 from os import mkdir
-from os.path import dirname, join
+from os.path import dirname
+from os.path import join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
 
@@ -31,7 +32,6 @@ class DemosTest(IsolatedAsyncioTestCase):
                 '-c',
                 join(dirname(__file__), config),
                 'run',
-                '--oneshot',
             ],
             cwd='/tmp/dipdup',
             check=True,

@@ -1,9 +1,16 @@
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.coinbase.models import CandleData, CandleInterval
+from dipdup.datasources.coinbase.models import CandleData
+from dipdup.datasources.coinbase.models import CandleInterval
 from dipdup.datasources.datasource import Datasource
 
 CANDLES_REQUEST_LIMIT = 300
@@ -26,9 +33,6 @@ class CoinbaseDatasource(Datasource):
     async def run(self) -> None:
         pass
 
-    async def resync(self) -> None:
-        pass
-
     async def get_oracle_prices(self) -> Dict[str, Any]:
         return await self._http.request(
             'get',
@@ -46,7 +50,6 @@ class CoinbaseDatasource(Datasource):
                     'end': _until.replace(tzinfo=timezone.utc).isoformat(),
                     'granularity': interval.seconds,
                 },
-                cache=True,
             )
             candles += [CandleData.from_json(c) for c in candles_json]
         return sorted(candles, key=lambda c: c.timestamp)

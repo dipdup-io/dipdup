@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import Awaitable, Callable
+from typing import Awaitable
+from typing import Callable
 
 
 class Watchdog:

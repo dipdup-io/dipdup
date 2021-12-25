@@ -2,37 +2,59 @@ import hashlib
 import importlib
 import json
 import logging.config
-import operator
 import os
 import re
-import sys
-from abc import ABC, abstractmethod
-from collections import Counter, defaultdict
+from abc import ABC
+from abc import abstractmethod
+from collections import Counter
+from collections import defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
 from enum import Enum
-from functools import reduce
+from functools import cached_property
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
-from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Generic
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Set
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
+from typing import cast
 from urllib.parse import urlparse
 
-from pydantic import Field, validator
+import ruamel.yaml as yaml
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
-from dipdup.exceptions import ConfigInitializationException, ConfigurationError
-from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
+from dipdup.datasources.subscription import BigMapSubscription
+from dipdup.datasources.subscription import OriginationSubscription
+from dipdup.datasources.subscription import Subscription
+from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.enums import ReindexingAction
+from dipdup.enums import ReindexingReasonC
+from dipdup.exceptions import ConfigInitializationException
+from dipdup.exceptions import ConfigurationError
+from dipdup.utils import import_from
+from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
 
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 
-sys.path.append(os.getcwd())
 _logger = logging.getLogger('dipdup.config')
 
 
@@ -47,13 +69,14 @@ class SqliteDatabaseConfig:
     """
     SQLite connection config
 
+    :param kind: always 'sqlite'
     :param path: Path to .sqlite3 file, leave default for in-memory database
     """
 
     kind: Literal['sqlite']
     path: str = ':memory:'
 
-    @property
+    @cached_property
     def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
 
@@ -62,6 +85,7 @@ class SqliteDatabaseConfig:
 class PostgresDatabaseConfig:
     """Postgres database connection config
 
+    :param kind: always 'postgres'
     :param host: Host
     :param port: Port
     :param user: User
@@ -69,6 +93,7 @@ class PostgresDatabaseConfig:
     :param database: Database name
     :param schema_name: Schema name
     :param immune_tables: List of tables to preserve during reindexing
+    :param connection_timeout: Connection timeout
     """
 
     kind: Literal['postgres']
@@ -78,10 +103,10 @@ class PostgresDatabaseConfig:
     port: int = 5432
     schema_name: str = 'public'
     password: str = ''
-    immune_tables: List[str] = Field(default_factory=list)
+    immune_tables: Tuple[str, ...] = field(default_factory=tuple)
     connection_timeout: int = 60
 
-    @property
+    @cached_property
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
@@ -97,6 +122,19 @@ class PostgresDatabaseConfig:
 
 @dataclass
 class HTTPConfig:
+    """Advanced configuration of HTTP client
+
+    :param cache: Whether to cache responses
+    :param retry_count: Number of retries before giving up
+    :param retry_sleep: Sleep time between retries
+    :param retry_multiplier: Multiplier for sleep time between retries
+    :param ratelimit_rate: Number of requests per `ratelimit_period`
+    :param ratelimit_period: Time period for rate limiting
+    :param connection_limit: Number of simultaneous connections
+    :param connection_timeout: Connection timeout
+    :param batch_size: Number of items fetched in a single request
+    """
+
     cache: Optional[bool] = None
     retry_count: Optional[int] = None
     retry_sleep: Optional[float] = None
@@ -121,15 +159,11 @@ class NameMixin:
     def __post_init_post_parse__(self) -> None:
         self._name: Optional[str] = None
 
-    @property
+    @cached_property
     def name(self) -> str:
         if self._name is None:
             raise ConfigInitializationException
         return self._name
-
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name
 
 
 @dataclass
@@ -146,12 +180,16 @@ class ContractConfig(NameMixin):
     def __hash__(self):
         return hash(f'{self.address}{self.typename or ""}')
 
-    @property
+    @cached_property
     def module_name(self) -> str:
-        return self.typename if self.typename is not None else self.address
+        return self.typename or self.name
 
     @validator('address', allow_reuse=True)
     def valid_address(cls, v):
+        # NOTE: Environment substitution disabled
+        if '$' in v:
+            return v
+
         # NOTE: Wallet addresses are allowed for debugging purposes (source field). Do we need a separate section?
         if not (v.startswith('KT') or v.startswith('tz')) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
@@ -162,7 +200,9 @@ class ContractConfig(NameMixin):
 class TzktDatasourceConfig(NameMixin):
     """TzKT datasource config
 
-    :param url: Base API url
+    :param kind: always 'tzkt'
+    :param url: Base API URL, e.g. https://api.tzkt.io/
+    :param http: HTTP client configuration
     """
 
     kind: Literal['tzkt']
@@ -177,6 +217,9 @@ class TzktDatasourceConfig(NameMixin):
         if self.http and self.http.batch_size and self.http.batch_size > 10000:
             raise ConfigurationError('`batch_size` must be less than 10000')
         parsed_url = urlparse(self.url)
+        # NOTE: Environment substitution disabled
+        if '$' in self.url:
+            return
         if not (parsed_url.scheme and parsed_url.netloc):
             raise ConfigurationError(f'`{self.url}` is not a valid datasource URL')
 
@@ -185,7 +228,10 @@ class TzktDatasourceConfig(NameMixin):
 class BcdDatasourceConfig(NameMixin):
     """BCD datasource config
 
-    :param url: Base API url
+    :param kind: always 'bcd'
+    :param url: Base API URL
+    :param network: Network name, e.g. mainnet, hangzhounet, etc.
+    :param http: HTTP client configuration
     """
 
     kind: Literal['bcd']
@@ -206,6 +252,15 @@ class BcdDatasourceConfig(NameMixin):
 
 @dataclass
 class CoinbaseDatasourceConfig(NameMixin):
+    """Coinbase datasource config
+
+    :param kind: always 'coinbase'
+    :param api_key: API key
+    :param secret_key: API secret key
+    :param passphrase: API passphrase
+    :param http: HTTP client configuration
+    """
+
     kind: Literal['coinbase']
     api_key: Optional[str] = None
     secret_key: Optional[str] = None
@@ -267,7 +322,7 @@ class PatternConfig(CodegenMixin, ABC):
         return f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}', parameter_cls
 
     @classmethod
-    def format_empty_operation_import(cls) -> Tuple[str, str]:
+    def format_untyped_operation_import(cls) -> Tuple[str, str]:
         return 'dipdup.models', 'OperationData'
 
     @classmethod
@@ -287,7 +342,7 @@ class PatternConfig(CodegenMixin, ABC):
         return pascal_to_snake(entrypoint), f'Transaction[{parameter_cls}, {storage_cls}]'
 
     @classmethod
-    def format_empty_operation_argument(cls, transaction_id: int, optional: bool) -> Tuple[str, str]:
+    def format_untyped_operation_argument(cls, transaction_id: int, optional: bool) -> Tuple[str, str]:
         if optional:
             return f'transaction_{transaction_id}', 'Optional[OperationData] = None'
         return f'transaction_{transaction_id}', 'OperationData'
@@ -300,15 +355,11 @@ class StorageTypeMixin:
     def __post_init_post_parse__(self):
         self._storage_type_cls = None
 
-    @property
+    @cached_property
     def storage_type_cls(self) -> Type:
         if self._storage_type_cls is None:
             raise ConfigInitializationException
         return self._storage_type_cls
-
-    @storage_type_cls.setter
-    def storage_type_cls(self, typ: Type) -> None:
-        self._storage_type_cls = typ
 
     def initialize_storage_cls(self, package: str, module_name: str) -> None:
         _logger.debug('Registering `%s` storage type', module_name)
@@ -327,15 +378,9 @@ class ParentMixin(Generic[T]):
     def __post_init_post_parse__(self: 'ParentMixin') -> None:
         self._parent: Optional[T] = None
 
-    @property
+    @cached_property
     def parent(self) -> Optional[T]:
         return self._parent
-
-    @parent.setter
-    def parent(self, config: T) -> None:
-        if self._parent and config is not self._parent:
-            raise ConfigInitializationException
-        self._parent = config
 
 
 @dataclass
@@ -345,15 +390,11 @@ class ParameterTypeMixin:
     def __post_init_post_parse__(self):
         self._parameter_type_cls = None
 
-    @property
+    @cached_property
     def parameter_type_cls(self) -> Type:
         if self._parameter_type_cls is None:
             raise ConfigInitializationException
         return self._parameter_type_cls
-
-    @parameter_type_cls.setter
-    def parameter_type_cls(self, typ: Type) -> None:
-        self._parameter_type_cls = typ
 
     def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
         _logger.debug('Registering parameter type for entrypoint `%s`', entrypoint)
@@ -370,23 +411,22 @@ class TransactionIdMixin:
     def __post_init_post_parse__(self):
         self._transaction_id = None
 
-    @property
+    @cached_property
     def transaction_id(self) -> int:
         if self._transaction_id is None:
             raise ConfigInitializationException
         return self._transaction_id
-
-    @transaction_id.setter
-    def transaction_id(self, id_: int) -> None:
-        self._transaction_id = id_
 
 
 @dataclass
 class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, ParameterTypeMixin, TransactionIdMixin):
     """Operation handler pattern config
 
-    :param destination: Alias of the contract to match
-    :param entrypoint: Contract entrypoint
+    :param type: always 'transaction'
+    :param source: Source contract alias to filter operations with
+    :param destination: Destination contract alias to filter operations with
+    :param entrypoint: Contract entrypoint to filter operations with
+    :param optional: Whether can operation be missing in operation group
     """
 
     type: Literal['transaction'] = 'transaction'
@@ -409,22 +449,22 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
             yield self.format_parameter_import(package, module_name, self.entrypoint)
             yield self.format_storage_import(package, module_name)
         else:
-            yield self.format_empty_operation_import()
+            yield self.format_untyped_operation_import()
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         if self.entrypoint:
             module_name = self.destination_contract_config.module_name
             yield self.format_operation_argument(module_name, self.entrypoint, self.optional)
         else:
-            yield self.format_empty_operation_argument(self.transaction_id, self.optional)
+            yield self.format_untyped_operation_argument(self.transaction_id, self.optional)
 
-    @property
+    @cached_property
     def source_contract_config(self) -> ContractConfig:
         if not isinstance(self.source, ContractConfig):
             raise ConfigInitializationException
         return self.source
 
-    @property
+    @cached_property
     def destination_contract_config(self) -> ContractConfig:
         if not isinstance(self.destination, ContractConfig):
             raise ConfigInitializationException
@@ -433,10 +473,16 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
 
 @dataclass
 class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
+    """Origination handler pattern config
+
+    :param source: Source contract alias to filter operations with
+    :param similar_to: Alias of contract having the same code/signature (depending on `strict` field)
+    """
+
+    type: Literal['origination'] = 'origination'
     source: Optional[Union[str, ContractConfig]] = None
     similar_to: Optional[Union[str, ContractConfig]] = None
     originated_contract: Optional[Union[str, ContractConfig]] = None
-    type: Literal['origination'] = 'origination'
     optional: bool = False
     strict: bool = False
 
@@ -476,11 +522,11 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         yield self.format_origination_argument(self.module_name, self.optional)
 
-    @property
+    @cached_property
     def module_name(self) -> str:
         return self.contract_config.module_name
 
-    @property
+    @cached_property
     def contract_config(self) -> ContractConfig:
         if self.originated_contract:
             return self.originated_contract_config
@@ -490,19 +536,19 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             return self.source_contract_config
         raise RuntimeError
 
-    @property
+    @cached_property
     def source_contract_config(self) -> ContractConfig:
         if not isinstance(self.source, ContractConfig):
             raise ConfigInitializationException
         return self.source
 
-    @property
+    @cached_property
     def similar_to_contract_config(self) -> ContractConfig:
         if not isinstance(self.similar_to, ContractConfig):
             raise ConfigInitializationException
         return self.similar_to
 
-    @property
+    @cached_property
     def originated_contract_config(self) -> ContractConfig:
         if not isinstance(self.originated_contract, ContractConfig):
             raise ConfigInitializationException
@@ -521,19 +567,15 @@ class CallbackMixin(CodegenMixin):
         if self.callback and self.callback != pascal_to_snake(self.callback):
             raise ConfigurationError('`callback` field must conform to snake_case naming style')
 
-    @property
+    @cached_property
     def kind(self) -> str:
         return self._kind  # type: ignore
 
-    @property
+    @cached_property
     def callback_fn(self) -> Callable:
         if self._callback_fn is None:
             raise ConfigInitializationException
         return self._callback_fn
-
-    @callback_fn.setter
-    def callback_fn(self, fn: Callable) -> None:
-        self._callback_fn = fn
 
     def initialize_callback_fn(self, package: str):
         if self._callback_fn:
@@ -562,7 +604,7 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
     :param pattern: Filters to match operations in group
     """
 
-    pattern: List[OperationHandlerPatternConfigT]
+    pattern: Tuple[OperationHandlerPatternConfigT, ...]
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -580,13 +622,15 @@ class TemplateValuesMixin:
     def __post_init_post_parse__(self) -> None:
         self._template_values: Dict[str, str] = {}
 
-    @property
+    @cached_property
     def template_values(self) -> Dict[str, str]:
         return self._template_values
 
-    @template_values.setter
-    def template_values(self, value: Dict[str, str]) -> None:
-        self._template_values = value
+
+@dataclass
+class SubscriptionsMixin:
+    def __post_init_post_parse__(self) -> None:
+        self.subscriptions: Set[Subscription] = set()
 
 
 @dataclass
@@ -594,18 +638,21 @@ class IndexTemplateConfig(NameMixin):
     kind = 'template'
     template: str
     values: Dict[str, str]
+    first_level: int = 0
+    last_level: int = 0
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConfigT']):
+class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigT']):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
+        SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
 
-    @property
+    @cached_property
     def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise ConfigInitializationException
@@ -641,18 +688,45 @@ class OperationIndexConfig(IndexConfig):
 
     :param datasource: Alias of index datasource in `datasources` section
     :param contracts: Aliases of contracts being indexed in `contracts` section
-    :param first_level: First block to process (use with `--oneshot` run argument)
-    :param last_level: Last block to process (use with `--oneshot` run argument)
+    :param first_level: First block to process (one time sync)
+    :param last_level: Last block to process (one time sync)
     :param handlers: List of indexer handlers
     """
 
     kind: Literal["operation"]
-    handlers: List[OperationHandlerConfig]
-    types: Optional[List[OperationType]] = None
-    contracts: Optional[List[Union[str, ContractConfig]]] = None
+    handlers: Tuple[OperationHandlerConfig, ...]
+    types: Tuple[OperationType, ...] = (OperationType.transaction,)
+    contracts: List[Union[str, ContractConfig]] = field(default_factory=list)
 
     first_level: int = 0
     last_level: int = 0
+
+    @cached_property
+    def entrypoint_filter(self) -> Set[Optional[str]]:
+        entrypoints = set()
+        for handler_config in self.handlers:
+            for pattern_config in handler_config.pattern:
+                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    entrypoints.add(pattern_config.entrypoint)
+        return set(entrypoints)
+
+    @cached_property
+    def address_filter(self) -> Set[str]:
+        addresses = set()
+        for handler_config in self.handlers:
+            for pattern_config in handler_config.pattern:
+                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    if isinstance(pattern_config.source, ContractConfig):
+                        addresses.add(pattern_config.source.address)
+                    elif isinstance(pattern_config.source, str):
+                        raise ConfigInitializationException
+
+                    if isinstance(pattern_config.destination, ContractConfig):
+                        addresses.add(pattern_config.destination.address)
+                    elif isinstance(pattern_config.destination, str):
+                        raise ConfigInitializationException
+
+        return addresses
 
 
 @dataclass
@@ -667,21 +741,21 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
     @classmethod
     def format_key_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
-        key_cls = f'{snake_to_pascal(module_name)}Key'
-        key_module = f'{path}_key'
+        key_cls = f'{snake_to_pascal(path)}Key'
+        key_module = f'{pascal_to_snake(path)}_key'
         return f'{package}.types.{module_name}.big_map.{key_module}', key_cls
 
     @classmethod
     def format_value_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
-        value_cls = f'{snake_to_pascal(module_name)}Value'
-        value_module = f'{path}_value'
+        value_cls = f'{snake_to_pascal(path)}Value'
+        value_module = f'{pascal_to_snake(path)}_value'
         return f'{package}.types.{module_name}.big_map.{value_module}', value_cls
 
     @classmethod
-    def format_big_map_diff_argument(cls, module_name: str) -> Tuple[str, str]:
-        key_cls = f'{snake_to_pascal(module_name)}Key'
-        value_cls = f'{snake_to_pascal(module_name)}Value'
-        return module_name, f'BigMapDiff[{key_cls}, {value_cls}]'
+    def format_big_map_diff_argument(cls, path: str) -> Tuple[str, str]:
+        key_cls = f'{snake_to_pascal(path)}Key'
+        value_cls = f'{snake_to_pascal(path)}Value'
+        return pascal_to_snake(path), f'BigMapDiff[{key_cls}, {value_cls}]'
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -693,33 +767,25 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield self.format_big_map_diff_argument(self.contract_config.module_name)
+        yield self.format_big_map_diff_argument(self.path)
 
-    @property
+    @cached_property
     def contract_config(self) -> ContractConfig:
         if not isinstance(self.contract, ContractConfig):
             raise ConfigInitializationException
         return self.contract
 
-    @property
+    @cached_property
     def key_type_cls(self) -> Type:
         if self._key_type_cls is None:
             raise ConfigInitializationException
         return self._key_type_cls
 
-    @key_type_cls.setter
-    def key_type_cls(self, typ: Type) -> None:
-        self._key_type_cls = typ
-
-    @property
+    @cached_property
     def value_type_cls(self) -> Type:
         if self._value_type_cls is None:
             raise ConfigInitializationException
         return self._value_type_cls
-
-    @value_type_cls.setter
-    def value_type_cls(self, typ: Type) -> None:
-        self._value_type_cls = typ
 
     def initialize_big_map_type(self, package: str) -> None:
         _logger.debug('Registering big map types for path `%s`', self.path)
@@ -738,14 +804,14 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 class BigMapIndexConfig(IndexConfig):
     kind: Literal['big_map']
     datasource: Union[str, TzktDatasourceConfig]
-    handlers: List[BigMapHandlerConfig]
+    handlers: Tuple[BigMapHandlerConfig, ...]
 
     first_level: int = 0
     last_level: int = 0
 
-    @property
-    def contracts(self) -> List[ContractConfig]:
-        return list(set([cast(ContractConfig, handler_config.contract) for handler_config in self.handlers]))
+    @cached_property
+    def contracts(self) -> Set[ContractConfig]:
+        return set(handler_config.contract_config for handler_config in self.handlers)
 
 
 @dataclass
@@ -764,7 +830,7 @@ class HeadHandlerConfig(HandlerConfig, kind='handler'):
 class HeadIndexConfig(IndexConfig):
     kind: Literal['head']
     datasource: Union[str, TzktDatasourceConfig]
-    handlers: List[HeadHandlerConfig]
+    handlers: Tuple[HeadHandlerConfig, ...]
 
 
 IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, IndexTemplateConfig]
@@ -796,7 +862,7 @@ class HasuraConfig:
         if v != 'default':
             raise NotImplementedError('Multiple Hasura sources are not supported at the moment')
 
-    @property
+    @cached_property
     def headers(self) -> Dict[str, str]:
         if self.admin_secret:
             return {'X-Hasura-Admin-Secret': self.admin_secret}
@@ -808,14 +874,18 @@ class JobConfig(NameMixin):
     hook: Union[str, 'HookConfig']
     crontab: Optional[str] = None
     interval: Optional[int] = None
+    daemon: bool = False
     args: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self):
-        if int(bool(self.crontab)) + int(bool(self.interval)) != 1:
-            raise ConfigurationError('Either `interval` or `crontab` field must be specified')
+        if self.crontab and self.interval:
+            raise ConfigurationError('Only one of `crontab` and `interval` can be specified')
+        elif not (self.crontab or self.interval or self.daemon):
+            raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
+
         NameMixin.__post_init_post_parse__(self)
 
-    @property
+    @cached_property
     def hook_config(self) -> 'HookConfig':
         if not isinstance(self.hook, HookConfig):
             raise ConfigInitializationException
@@ -846,7 +916,7 @@ class HookConfig(CallbackMixin, kind='hook'):
                 package, obj = annotation.rsplit('.', 1)
                 yield package, obj
 
-    @property
+    @cached_property
     def _args_with_context(self) -> Dict[str, str]:
         return {
             'ctx': 'dipdup.context.HookContext',
@@ -872,7 +942,20 @@ default_hooks = {
     'on_reindex': HookConfig(
         callback='on_reindex',
     ),
+    # NOTE: All indexes are in REALTIME state. Default: nothing.
+    'on_synchronized': HookConfig(
+        callback='on_synchronized',
+    ),
 }
+
+
+@dataclass
+class AdvancedConfig:
+    reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
+    oneshot: bool = False
+    postpone_jobs: bool = False
+    early_realtime: bool = False
+    merge_subscriptions: bool = False
 
 
 @dataclass
@@ -889,38 +972,36 @@ class DipDupConfig:
     :param hasura: Hasura config
     :param jobs: Mapping of job aliases and job configs
     :param sentry: Sentry integration config
+    :param advanced: Advanced config
     """
 
     spec_version: str
     package: str
     datasources: Dict[str, DatasourceConfigT]
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
-    contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
-    indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
-    templates: Dict[str, ResolvedIndexConfigT] = Field(default_factory=dict)
-    jobs: Dict[str, JobConfig] = Field(default_factory=dict)
-    hooks: Dict[str, HookConfig] = Field(default_factory=dict)
+    contracts: Dict[str, ContractConfig] = field(default_factory=dict)
+    indexes: Dict[str, IndexConfigT] = field(default_factory=dict)
+    templates: Dict[str, ResolvedIndexConfigT] = field(default_factory=dict)
+    jobs: Dict[str, JobConfig] = field(default_factory=dict)
+    hooks: Dict[str, HookConfig] = field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
     sentry: Optional[SentryConfig] = None
+    advanced: AdvancedConfig = AdvancedConfig()
 
     def __post_init_post_parse__(self):
-        self._filenames: List[str] = []
-        self._environment: Dict[str, str] = {}
+        self.paths: List[str] = []
+        self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
         self._default_hooks: bool = False
         self._links_resolved: Set[str] = set()
         self._imports_resolved: Set[str] = set()
         self._package_path: Optional[str] = None
 
-    @property
-    def environment(self) -> Dict[str, str]:
-        return self._environment
+    @cached_property
+    def schema_name(self) -> str:
+        return self.database.schema_name if isinstance(self.database, PostgresDatabaseConfig) else 'public'
 
-    @property
-    def filenames(self) -> List[str]:
-        return self._filenames
-
-    @property
+    @cached_property
     def package_path(self) -> str:
         if not self._package_path:
             package = importlib.import_module(self.package)
@@ -928,38 +1009,45 @@ class DipDupConfig:
 
         return self._package_path
 
-    @package_path.setter
-    def package_path(self, value: str):
-        if self._package_path:
-            raise ConfigInitializationException
-        self._package_path = value
+    @property
+    def oneshot(self) -> bool:
+        syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, HeadIndexConfig))
+        oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
+        if not oneshot_indexes:
+            return False
+        elif len(oneshot_indexes) == len(syncable_indexes):
+            return True
+        else:
+            raise ConfigurationError('Either all or none of indexes can have `last_level` field set')
 
     @classmethod
     def load(
         cls,
-        filenames: List[str],
+        paths: List[str],
+        environment: bool = True,
     ) -> 'DipDupConfig':
 
         current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
         config_environment: Dict[str, str] = {}
-        for filename in filenames:
-            filename = os.path.join(current_workdir, filename)
+        for path in paths:
+            path = os.path.join(current_workdir, path)
 
-            _logger.info('Loading config from %s', filename)
-            with open(filename) as file:
+            _logger.debug('Loading config from %s', path)
+            with open(path) as file:
                 raw_config = file.read()
 
-            _logger.info('Substituting environment variables')
-            for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-                variable, default_value = match.group(1), match.group(2)
-                config_environment[variable] = default_value
-                value = env.get(variable)
-                if not default_value and not value:
-                    raise ConfigurationError(f'Environment variable `{variable}` is not set')
-                placeholder = '${' + variable + ':-' + default_value + '}'
-                raw_config = raw_config.replace(placeholder, value or default_value)
+            if environment:
+                _logger.debug('Substituting environment variables')
+                for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
+                    variable, default_value = match.group(1), match.group(2)
+                    config_environment[variable] = default_value
+                    value = env.get(variable)
+                    if not default_value and not value:
+                        raise ConfigurationError(f'Environment variable `{variable}` is not set')
+                    placeholder = '${' + variable + ':-' + default_value + '}'
+                    raw_config = raw_config.replace(placeholder, value or default_value)
 
             json_config = {
                 **json_config,
@@ -968,11 +1056,22 @@ class DipDupConfig:
 
         try:
             config = cls(**json_config)
-            config._environment = config_environment
-            config._filenames = filenames
+            config.environment = config_environment
+            config.paths = paths
         except Exception as e:
             raise ConfigurationError(str(e)) from e
         return config
+
+    def dump(self) -> str:
+        config_json = json.dumps(self, default=pydantic_encoder)
+        return cast(
+            str,
+            yaml.dump(
+                yaml.safe_load(config_json),
+                indent=2,
+                default_flow_style=False,
+            ),
+        )
 
     def get_contract(self, name: str) -> ContractConfig:
         try:
@@ -1023,7 +1122,7 @@ class DipDupConfig:
             if index_config.name in self._imports_resolved:
                 continue
 
-            _logger.info('Loading callbacks and typeclasses of index `%s`', index_config.name)
+            _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
 
             if isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException
@@ -1056,47 +1155,8 @@ class DipDupConfig:
             if name in default_hooks:
                 raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
 
-        # NOTE: Detect duplicate contracts
-        # FIXME: This code smells
-        contracts = [
-            cast(ContractIndexConfigT, i).contracts
-            for i in self.indexes.values()
-            if hasattr(i, 'contracts') and cast(ContractIndexConfigT, i).contracts
-        ]
-        plain_contracts = reduce(operator.add, contracts) if contracts else []  # type: ignore
-        # NOTE: After pre_initialize
-        duplicate_contracts = [cast(ContractConfig, item).name for item, count in Counter(plain_contracts).items() if count > 1]
-        if duplicate_contracts:
-            _logger.warning(
-                "The following contracts are used in more than one index: %s. Make sure you know what you're doing.",
-                ' '.join(duplicate_contracts),
-            )
-
-        # NOTE: Callback uniqueness
-        # TODO: Refactor, cover all cases
-        for callback, pattern_items in self._callback_patterns.items():
-            if len(pattern_items) in (0, 1):
-                return
-
-            def get_pattern_type(pattern_items: Sequence[HandlerPatternConfigT]) -> str:
-                module_names = []
-                for pattern_config in pattern_items:
-                    if isinstance(pattern_config, OperationHandlerTransactionPatternConfig) and pattern_config.entrypoint:
-                        module_names.append(pattern_config.destination_contract_config.module_name)
-                    elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        module_names.append(pattern_config.module_name)
-                    # TODO: Check BigMapHandlerPatternConfig
-                return '::'.join(module_names)
-
-            pattern_types = list(map(get_pattern_type, pattern_items))
-            if any(map(lambda x: x != pattern_types[0], pattern_types)):
-                _logger.warning(
-                    'Callback `%s` used multiple times with different signatures. Make sure you have specified contract typenames',
-                    callback,
-                )
-
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
-        _logger.info('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
+        _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
         template = self.get_template(template_config.template)
         raw_template = json.dumps(template, default=pydantic_encoder)
@@ -1113,6 +1173,9 @@ class DipDupConfig:
         new_index_config.template_values = template_config.values
         new_index_config.parent = template
         new_index_config.name = template_config.name
+        if not isinstance(new_index_config, HeadIndexConfig):
+            new_index_config.first_level |= template_config.first_level
+            new_index_config.last_level |= template_config.last_level
         self.indexes[template_config.name] = new_index_config
 
     def _resolve_templates(self) -> None:
@@ -1125,11 +1188,52 @@ class DipDupConfig:
             if name in self._links_resolved:
                 continue
             self._resolve_index_links(index_config)
+            # TODO: Not exactly link resolving, move somewhere else
+            self._resolve_index_subscriptions(index_config)
             self._links_resolved.add(index_config.name)
 
         for job_config in self.jobs.values():
             if isinstance(job_config.hook, str):
-                job_config.hook = self.hooks[job_config.hook]
+                hook_config = self.get_hook(job_config.hook)
+                if job_config.daemon and hook_config.atomic:
+                    raise ConfigurationError('`HookConfig.atomic` and `JobConifg.daemon` flags are mutually exclusive')
+                job_config.hook = hook_config
+
+    def _resolve_index_subscriptions(self, index_config: IndexConfigT) -> None:
+        if isinstance(index_config, IndexTemplateConfig):
+            return
+        if index_config.subscriptions:
+            return
+
+        if isinstance(index_config, OperationIndexConfig):
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(TransactionSubscription())
+            else:
+                for contract_config in index_config.contracts:
+                    if not isinstance(contract_config, ContractConfig):
+                        raise ConfigInitializationException
+                    index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
+
+            for handler_config in index_config.handlers:
+                for pattern_config in handler_config.pattern:
+                    if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                        index_config.subscriptions.add(OriginationSubscription())
+                        break
+
+        elif isinstance(index_config, BigMapIndexConfig):
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(BigMapSubscription())
+            else:
+                for big_map_handler_config in index_config.handlers:
+                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                    index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
+
+        # NOTE: HeadSubscription is always enabled
+        elif isinstance(index_config, HeadIndexConfig):
+            pass
+
+        else:
+            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     def _resolve_index_links(self, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
@@ -1146,16 +1250,15 @@ class DipDupConfig:
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
                 self._callback_patterns[handler_config.callback].append(handler_config.pattern)
-                for pattern_config in handler_config.pattern:
-                    transaction_id = 0
+                for idx, pattern_config in enumerate(handler_config.pattern):
+                    # NOTE: Untyped operations are named as `transaction_N` based on their index
                     if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
                             pattern_config.destination = self.get_contract(pattern_config.destination)
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_contract(pattern_config.source)
                         if not pattern_config.entrypoint:
-                            pattern_config.transaction_id = transaction_id
-                            transaction_id += 1
+                            pattern_config.transaction_id = idx
 
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                         if isinstance(pattern_config.source, str):
@@ -1234,13 +1337,13 @@ class LoggingConfig:
     @classmethod
     def load(
         cls,
-        filename: str,
+        path: str,
     ) -> 'LoggingConfig':
 
         current_workdir = os.path.join(os.getcwd())
-        filename = os.path.join(current_workdir, filename)
+        path = os.path.join(current_workdir, path)
 
-        with open(filename) as file:
+        with open(path) as file:
             return cls(config=YAML().load(file.read()))
 
     def apply(self):

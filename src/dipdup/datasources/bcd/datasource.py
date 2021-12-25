@@ -1,5 +1,8 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 from dipdup.config import HTTPConfig
 from dipdup.datasources.datasource import Datasource
@@ -28,9 +31,6 @@ class BcdDatasource(Datasource):
         self._network = network
 
     async def run(self) -> None:
-        pass
-
-    async def resync(self) -> None:
         pass
 
     async def get_tokens(self, address: str) -> List[Dict[str, Any]]:

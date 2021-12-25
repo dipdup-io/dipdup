@@ -1,6 +1,7 @@
 import sys
 from contextlib import suppress
-from os.path import dirname, join
+from os.path import dirname
+from os.path import join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
 

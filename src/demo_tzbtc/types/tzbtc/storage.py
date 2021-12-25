@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from typing import Dict
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel
+from pydantic import Extra
+from pydantic import Field
 
 
 class TzbtcStorage(BaseModel):

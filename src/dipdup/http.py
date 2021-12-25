@@ -6,7 +6,10 @@ import platform
 from abc import ABC
 from contextlib import suppress
 from http import HTTPStatus
-from typing import Mapping, Optional, Tuple, cast
+from typing import Mapping
+from typing import Optional
+from typing import Tuple
+from typing import cast
 
 import aiohttp
 from aiolimiter import AsyncLimiter
@@ -132,7 +135,7 @@ class _HTTPGateway:
                 self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
                 await asyncio.sleep(ratelimit_sleep or retry_sleep)
                 attempt += 1
-                multiplier = 1 if ratelimit_sleep is None else self._config.retry_multiplier or 1
+                multiplier = 1 if ratelimit_sleep else self._config.retry_multiplier or 1
                 retry_sleep *= multiplier
 
     async def _request(self, method: str, url: str, weight: int = 1, **kwargs):

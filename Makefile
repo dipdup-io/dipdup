@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: docs
+.PHONY: test
 .DEFAULT_GOAL: all
 
 DEV=1

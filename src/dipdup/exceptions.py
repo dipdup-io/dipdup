@@ -1,8 +1,13 @@
 import textwrap
 import traceback
 from contextlib import contextmanager
-from dataclasses import dataclass, field
-from typing import Any, Dict, Iterator, Optional, Type
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import Optional
+from typing import Type
 
 import sentry_sdk
 from tabulate import tabulate
@@ -68,6 +73,21 @@ class DipDupError(Exception):
         except Exception as e:
             sentry_sdk.capture_exception(e)
             raise DipDupError from e
+
+
+@dataclass(frozen=True, repr=False)
+class DatasourceError(DipDupError):
+    """One of datasources returned an error"""
+
+    msg: str
+    datasource: str
+
+    def _help(self) -> str:
+        return f"""
+            `{self.datasource}` datasource returned an error: {self.msg}
+
+            Most likely, this is a DipDup bug. Please file a bug report at https://github.com/dipdup-net/dipdup/issues
+        """
 
 
 @dataclass(frozen=True, repr=False)
@@ -151,8 +171,8 @@ class ReindexingRequiredError(DipDupError):
 
             You may want to backup database before proceeding. After that perform one of the following actions:
 
-                * Eliminate the cause of reindexing and run `dipdup schema approve`
-                * Run `dipdup schema wipe [--immune]` command to drop database and start indexing from scratch
+                * Eliminate the cause of reindexing and run `dipdup schema approve`.
+                * Drop database and start indexing from scratch with `dipdup schema wipe` command.
         """
 
 
@@ -238,7 +258,7 @@ class IndexAlreadyExistsError(DipDupError):
 
 @dataclass(frozen=True, repr=False)
 class InvalidDataError(DipDupError):
-    """Failed to validate operation/big_map data against a generated type class"""
+    """Failed to validate datasource message against generated type class"""
 
     type_cls: Type
     data: Any
@@ -247,7 +267,7 @@ class InvalidDataError(DipDupError):
     def _help(self) -> str:
 
         return f"""
-            Failed to validate operation/big_map data against a generated type class.
+            Failed to validate datasource message against generated type class.
 
             Expected type:
             `{self.type_cls.__class__.__qualname__}`

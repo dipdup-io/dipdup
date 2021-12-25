@@ -1,35 +1,53 @@
 import asyncio
 import logging
-from collections import defaultdict, deque
-from datetime import datetime, timezone
+from asyncio import Event
+from asyncio import create_task
+from asyncio import gather
+from collections import defaultdict
+from collections import deque
+from datetime import datetime
+from datetime import timezone
 from decimal import Decimal
-from typing import Any, AsyncGenerator, DefaultDict, Deque, Dict, List, NoReturn, Optional, Set, Tuple, cast
+from typing import Any
+from typing import AsyncGenerator
+from typing import Awaitable
+from typing import Callable
+from typing import DefaultDict
+from typing import Deque
+from typing import Dict
+from typing import List
+from typing import NoReturn
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import cast
 
 from aiohttp import ClientResponseError
-from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
-from aiosignalrcore.hub_connection_builder import HubConnectionBuilder  # type: ignore
-from aiosignalrcore.messages.completion_message import CompletionMessage  # type: ignore
-from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
+from pysignalr.client import SignalRClient
+from pysignalr.messages import CompletionMessage  # type: ignore
+from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 
-from dipdup.config import (
-    BigMapIndexConfig,
-    ContractConfig,
-    HeadIndexConfig,
-    HTTPConfig,
-    OperationHandlerOriginationPatternConfig,
-    OperationIndexConfig,
-    ResolvedIndexConfigT,
-)
+from dipdup.config import HTTPConfig
+from dipdup.config import ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.tzkt.enums import (
-    ORIGINATION_MIGRATION_FIELDS,
-    ORIGINATION_OPERATION_FIELDS,
-    TRANSACTION_OPERATION_FIELDS,
-    OperationFetcherRequest,
-    TzktMessageType,
-)
+from dipdup.datasources.subscription import BigMapSubscription
+from dipdup.datasources.subscription import HeadSubscription
+from dipdup.datasources.subscription import OriginationSubscription
+from dipdup.datasources.subscription import Subscription
+from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.datasources.tzkt.enums import ORIGINATION_MIGRATION_FIELDS
+from dipdup.datasources.tzkt.enums import ORIGINATION_OPERATION_FIELDS
+from dipdup.datasources.tzkt.enums import TRANSACTION_OPERATION_FIELDS
+from dipdup.datasources.tzkt.enums import OperationFetcherRequest
+from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.enums import MessageType
-from dipdup.models import BigMapAction, BigMapData, BlockData, HeadBlockData, OperationData, QuoteData
+from dipdup.exceptions import DatasourceError
+from dipdup.models import BigMapAction
+from dipdup.models import BigMapData
+from dipdup.models import BlockData
+from dipdup.models import HeadBlockData
+from dipdup.models import OperationData
+from dipdup.models import QuoteData
 from dipdup.utils import split_by_chunks
 from dipdup.utils.watchdog import Watchdog
 
@@ -37,7 +55,7 @@ TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 
 
 def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationData, ...]:
-    """Merge operations from multiple endpoints"""
+    """Merge and sort operations fetched from multiple endpoints"""
     return tuple(
         sorted(
             tuple(({op.id: op for op in operations}).values()),
@@ -47,9 +65,7 @@ def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationDa
 
 
 class OperationFetcher:
-    """Fetches and merges history of operations from multiple requests (channels) tracking their states independently.
-    Created for each index while synchronizing via REST.
-    """
+    """Fetches operations from multiple REST API endpoints, merges them and yields by level. Offet of every endpoint is tracked separately."""
 
     def __init__(
         self,
@@ -182,13 +198,16 @@ class OperationFetcher:
                     yield self._head, dedup_operations(tuple(operations))
                 self._head += 1
 
-            if all(list(self._fetched.values())):
+            if all(self._fetched.values()):
                 break
 
-        assert not self._operations
+        if self._operations:
+            raise RuntimeError('Operations left in queue')
 
 
 class BigMapFetcher:
+    """Fetches bigmap diffs from REST API, merges them and yields by level."""
+
     def __init__(
         self,
         datasource: 'TzktDatasource',
@@ -250,22 +269,14 @@ class BigMapFetcher:
 
 
 class TzktDatasource(IndexDatasource):
-    """Bridge between REST/WS TzKT endpoints and DipDup.
-
-    * Converts raw API data to models
-    * Handles WS interaction to manage subscriptions
-    * Calls Fetchers to synchronize indexes to current head
-    * Calls Matchers to match received operation groups with indexes' pattern and spawn callbacks on match
-    """
-
     _default_http_config = HTTPConfig(
         cache=True,
         retry_sleep=1,
-        retry_multiplier=1.1,
+        retry_multiplier=2,
         ratelimit_rate=100,
-        ratelimit_period=30,
+        ratelimit_period=1,
         connection_limit=25,
-        batch_size=10000,
+        batch_size=1000,
     )
 
     def __init__(
@@ -273,53 +284,69 @@ class TzktDatasource(IndexDatasource):
         url: str,
         http_config: Optional[HTTPConfig] = None,
         watchdog: Optional[Watchdog] = None,
+        merge_subscriptions: bool = False,
     ) -> None:
-        super().__init__(url, self._default_http_config.merge(http_config))
+        super().__init__(
+            url=url,
+            http_config=self._default_http_config.merge(http_config),
+            merge_subscriptions=merge_subscriptions,
+        )
         self._logger = logging.getLogger('dipdup.tzkt')
         self._watchdog = watchdog
 
-        self._transaction_subscriptions: Set[str] = set()
-        self._origination_subscriptions: bool = False
-        self._big_map_subscriptions: Dict[str, Set[str]] = {}
-        self._ws_client: Optional[BaseHubConnection] = None
-
+        self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
-        self._sync_level: Optional[int] = None
 
     @property
     def request_limit(self) -> int:
         return cast(int, self._http_config.batch_size)
 
-    @property
-    def sync_level(self) -> Optional[int]:
-        return self._sync_level
-
     async def get_similar_contracts(self, address: str, strict: bool = False) -> Tuple[str, ...]:
-        """Get list of contracts sharing the same code hash or type hash"""
+        """Get addresses of contracts that share the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'
-        self._logger.info('Fetching %s contracts for address `%s', entrypoint, address)
+        self._logger.info('Fetching %s contracts for address `%s`', entrypoint, address)
 
-        contracts = await self._http.request(
-            'get',
-            url=f'v1/contracts/{address}/{entrypoint}',
-            params=dict(
-                select='address',
-                limit=self.request_limit,
-            ),
-        )
-        return tuple(c for c in contracts)
+        size, offset = self.request_limit, 0
+        addresses: Tuple[str, ...] = tuple()
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/contracts/{address}/{entrypoint}',
+                params=dict(
+                    select='address',
+                    limit=self.request_limit,
+                    offset=offset,
+                ),
+            )
+            size = len(response)
+            addresses = addresses + tuple(response)
+            offset += self.request_limit
+
+        return addresses
 
     async def get_originated_contracts(self, address: str) -> Tuple[str, ...]:
-        """Get contracts originated from given address"""
+        """Get addresses of contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s', address)
-        contracts = await self._http.request(
-            'get',
-            url=f'v1/accounts/{address}/contracts',
-            params=dict(
-                limit=self.request_limit,
-            ),
-        )
-        return tuple(c['address'] for c in contracts)
+
+        size, offset = self.request_limit, 0
+        addresses: Tuple[str, ...] = tuple()
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/accounts/{address}/contracts',
+                params=dict(
+                    select='address',
+                    limit=self.request_limit,
+                    offset=offset,
+                ),
+            )
+            size = len(response)
+            addresses = addresses + tuple(c['address'] for c in response)
+            offset += self.request_limit
+
+        return addresses
 
     async def get_contract_summary(self, address: str) -> Dict[str, Any]:
         """Get contract summary"""
@@ -416,11 +443,8 @@ class TzktDatasource(IndexDatasource):
                 cache=cache,
             )
 
-        for op in raw_originations:
-            # NOTE: `type` field needs to be set manually when requesting operations by specific type
-            op['type'] = 'origination'
-
-        originations = tuple(self.convert_operation(op) for op in raw_originations)
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        originations = tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
         return originations
 
     async def get_transactions(
@@ -440,11 +464,9 @@ class TzktDatasource(IndexDatasource):
             },
             cache=cache,
         )
-        for op in raw_transactions:
-            # NOTE: type needs to be set manually when requesting operations by specific type
-            op['type'] = 'transaction'
 
-        transactions = tuple(self.convert_operation(op) for op in raw_transactions)
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        transactions = tuple(self.convert_operation(op, type_='transaction') for op in raw_transactions)
         return transactions
 
     async def get_big_maps(
@@ -455,7 +477,7 @@ class TzktDatasource(IndexDatasource):
             url='v1/bigmaps/updates',
             params={
                 "contract.in": ",".join(addresses),
-                "paths.in": ",".join(paths),
+                "path.in": ",".join(paths),
                 "offset": offset,
                 "limit": self.request_limit,
                 "level.gt": first_level,
@@ -494,59 +516,76 @@ class TzktDatasource(IndexDatasource):
 
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
+        for subscription in index_config.subscriptions:
+            self._subscriptions.add(subscription)
 
-        if isinstance(index_config, OperationIndexConfig):
-            for contract_config in index_config.contracts or []:
-                self._transaction_subscriptions.add(cast(ContractConfig, contract_config).address)
-            for handler_config in index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        self._origination_subscriptions = True
+    async def subscribe(self) -> None:
+        missing_subscriptions = self._subscriptions.missing_subscriptions
+        if not missing_subscriptions:
+            return
 
-        elif isinstance(index_config, BigMapIndexConfig):
-            for big_map_handler_config in index_config.handlers:
-                address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
-                if address not in self._big_map_subscriptions:
-                    self._big_map_subscriptions[address] = set()
-                if path not in self._big_map_subscriptions[address]:
-                    self._big_map_subscriptions[address].add(path)
+        self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
+        tasks = (self._subscribe(subscription) for subscription in missing_subscriptions)
+        await asyncio.gather(*tasks)
+        self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
 
-        # NOTE: head subscription is enabled by default
-        elif isinstance(index_config, HeadIndexConfig):
-            pass
+    async def _subscribe(self, subscription: Subscription) -> None:
+        self._logger.debug('Subscribing to %s', subscription)
+        request: List[Dict[str, Any]]
+
+        if isinstance(subscription, TransactionSubscription):
+            method = 'SubscribeToOperations'
+            request = [{'types': 'transaction'}]
+            if subscription.address:
+                request[0]['address'] = subscription.address
+
+        elif isinstance(subscription, OriginationSubscription):
+            method = 'SubscribeToOperations'
+            request = [{'types': 'origination'}]
+
+        elif isinstance(subscription, HeadSubscription):
+            method, request = 'SubscribeToHead', []
+
+        elif isinstance(subscription, BigMapSubscription):
+            method = 'SubscribeToBigMaps'
+            if subscription.address and subscription.path:
+                request = [{'address': subscription.address, 'paths': [subscription.path]}]
+            elif not subscription.address and not subscription.path:
+                request = [{}]
+            else:
+                raise RuntimeError
 
         else:
-            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+            raise NotImplementedError
 
-        await self._on_connect()
+        event = Event()
 
-    async def set_sync_level(self) -> None:
-        if self._sync_level:
-            return
-        block = await self.get_head_block()
-        self._sync_level = block.level
+        async def _on_subscribe(message: CompletionMessage) -> None:
+            if message.error:
+                await self._on_error(message)
+            level = cast(int, message.result)
+            self._subscriptions.set_sync_level(subscription, level)
+            event.set()
 
-    def _get_ws_client(self) -> BaseHubConnection:
+        await self._send(method, request, _on_subscribe)
+        await event.wait()
+
+    def _get_ws_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
         if self._ws_client:
             return self._ws_client
 
         self._logger.info('Creating websocket client')
-        self._ws_client = (
-            HubConnectionBuilder()
-            .with_url(self._http._url + '/v1/events')
-            .with_automatic_reconnect(
-                {
-                    "type": "raw",
-                    "keep_alive_interval": 10,
-                    "reconnect_interval": 5,
-                    "max_attempts": 5,
-                }
-            )
-        ).build()
+        self._ws_client = SignalRClient(
+            url=f'{self._http._url}/v1/events',
+            # NOTE: 1 MB default is not enough for big blocks
+            max_size=DEFAULT_MAX_SIZE * 10,
+        )
 
         self._ws_client.on_open(self._on_connect)
+        self._ws_client.on_close(self._on_disconnect)
         self._ws_client.on_error(self._on_error)
+
         self._ws_client.on('operations', self._on_operations_message)
         self._ws_client.on('bigmaps', self._on_big_maps_message)
         self._ws_client.on('head', self._on_head_message)
@@ -555,101 +594,40 @@ class TzktDatasource(IndexDatasource):
 
     async def run(self) -> None:
         self._logger.info('Establishing realtime connection')
-        tasks = [asyncio.create_task(self._get_ws_client().start())]
+        tasks = [create_task(self._get_ws_client().run())]
 
         if self._watchdog:
-            tasks.append(asyncio.create_task(self._watchdog.run()))
+            tasks.append(create_task(self._watchdog.run()))
 
-        await asyncio.gather(*tasks)
+        await gather(*tasks)
 
     async def _on_connect(self) -> None:
         """Subscribe to all required channels on established WS connection"""
-        if self._get_ws_client().transport.state != ConnectionState.connected:
-            return
+        self._logger.info('Realtime connection established')
+        # NOTE: Subscribing here will block WebSocket loop
+        # await self.subscribe()
 
-        self._logger.info('Realtime connection established, subscribing to channels')
-        await self._subscribe_to_head()
-        for address in self._transaction_subscriptions:
-            await self._subscribe_to_transactions(address)
-        # NOTE: All originations are passed to matcher
-        if self._origination_subscriptions:
-            await self._subscribe_to_originations()
-        for address, paths in self._big_map_subscriptions.items():
-            await self._subscribe_to_big_maps(address, paths)
+    async def _on_disconnect(self) -> None:
+        self._logger.info('Realtime connection lost')
+        self._subscriptions.reset()
 
-    # TODO: Exception class
-    def _on_error(self, message: CompletionMessage) -> NoReturn:
+    async def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""
-        raise Exception(message.error)
-
-    async def _subscribe_to_transactions(self, address: str) -> None:
-        """Subscribe to contract's operations on established WS connection"""
-        self._logger.debug('Subscribing to %s transactions', address)
-        await self._send(
-            'SubscribeToOperations',
-            [
-                {
-                    'address': address,
-                    'types': 'transaction',
-                }
-            ],
-        )
-
-    async def _subscribe_to_originations(self) -> None:
-        """Subscribe to all originations on established WS connection"""
-        self._logger.debug('Subscribing to originations')
-        await self._send(
-            'SubscribeToOperations',
-            [
-                {
-                    'types': 'origination',
-                }
-            ],
-        )
-
-    async def _subscribe_to_big_maps(self, address: str, paths: Set[str]) -> None:
-        """Subscribe to contract's big map diffs on established WS connection"""
-        self._logger.debug('Subscribing to big map updates of %s, %s', address, paths)
-        for path in paths:
-            await self._send(
-                'SubscribeToBigMaps',
-                [
-                    {
-                        'address': address,
-                        'path': path,
-                    }
-                ],
-            )
-
-    async def _subscribe_to_head(self) -> None:
-        """Subscribe to head on established WS connection"""
-        self._logger.debug('Subscribing to head')
-        await self._send(
-            'SubscribeToHead',
-            [],
-        )
+        raise DatasourceError(datasource=self.name, msg=cast(str, message.error))
 
     async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         for item in message:
             tzkt_type = TzktMessageType(item['type'])
+            if tzkt_type == TzktMessageType.STATE:
+                continue
+
             level, current_level = item['state'], self._level[type_]
             self._level[type_] = level
-
             self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
 
-            # NOTE: Ensure correctness, update sync level
-            if tzkt_type == TzktMessageType.STATE:
-                if self._sync_level < level:
-                    self._logger.info('Datasource sync level has been updated: %s -> %s', self._sync_level, level)
-                    self._sync_level = level
-                elif self._sync_level > level:
-                    raise RuntimeError('Attempt to set sync level to the lower value: %s -> %s', self._sync_level, level)
-                else:
-                    pass
-
             # NOTE: Just yield data
-            elif tzkt_type == TzktMessageType.DATA:
+            if tzkt_type == TzktMessageType.DATA:
                 yield item['data']
 
             # NOTE: Emit rollback, but not on `head` message
@@ -697,55 +675,50 @@ class TzktDatasource(IndexDatasource):
             await self.emit_head(block)
 
     @classmethod
-    def convert_operation(cls, operation_json: Dict[str, Any]) -> OperationData:
+    def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:
         """Convert raw operation message from WS/REST into dataclass"""
-        storage = operation_json.get('storage')
-        # FIXME: Plain storage, has issues in codegen: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
-        if not isinstance(storage, Dict):
-            storage = {}
+        sender_json = operation_json.get('sender') or {}
+        target_json = operation_json.get('target') or {}
+        initiator_json = operation_json.get('initiator') or {}
+        parameter_json = operation_json.get('parameter') or {}
+        originated_contract_json = operation_json.get('originatedContract') or {}
+
+        entrypoint, parameter = parameter_json.get('entrypoint'), parameter_json.get('value')
+        # NOTE: TzKT returns None for `default` entrypoint
+        if entrypoint is None and parameter_json:
+            entrypoint = 'default'
 
         return OperationData(
-            type=operation_json['type'],
+            type=type_ or operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
             timestamp=cls._parse_timestamp(operation_json['timestamp']),
             block=operation_json.get('block'),
             hash=operation_json['hash'],
             counter=operation_json['counter'],
-            sender_address=operation_json['sender']['address'] if operation_json.get('sender') else None,
-            target_address=operation_json['target']['address'] if operation_json.get('target') else None,
-            initiator_address=operation_json['initiator']['address'] if operation_json.get('initiator') else None,
+            sender_address=sender_json.get('address'),
+            target_address=target_json.get('address'),
+            initiator_address=initiator_json.get('address'),
             amount=operation_json.get('amount') or operation_json.get('contractBalance'),
             status=operation_json['status'],
             has_internals=operation_json.get('hasInternals'),
             sender_alias=operation_json['sender'].get('alias'),
             nonce=operation_json.get('nonce'),
-            target_alias=operation_json['target'].get('alias') if operation_json.get('target') else None,
-            initiator_alias=operation_json['initiator'].get('alias') if operation_json.get('initiator') else None,
-            entrypoint=operation_json['parameter'].get('entrypoint') if operation_json.get('parameter') else None,
-            parameter_json=operation_json['parameter'].get('value') if operation_json.get('parameter') else None,
-            originated_contract_address=operation_json['originatedContract']['address']
-            if operation_json.get('originatedContract')
-            else None,
-            originated_contract_type_hash=operation_json['originatedContract']['typeHash']
-            if operation_json.get('originatedContract')
-            else None,
-            originated_contract_code_hash=operation_json['originatedContract']['codeHash']
-            if operation_json.get('originatedContract')
-            else None,
-            storage=storage,
-            diffs=operation_json.get('diffs'),
+            target_alias=target_json.get('alias'),
+            initiator_alias=initiator_json.get('alias'),
+            entrypoint=entrypoint,
+            parameter_json=parameter,
+            originated_contract_address=originated_contract_json.get('address'),
+            originated_contract_type_hash=originated_contract_json.get('typeHash'),
+            originated_contract_code_hash=originated_contract_json.get('codeHash'),
+            storage=operation_json.get('storage'),
+            diffs=operation_json.get('diffs') or (),
         )
 
     @classmethod
     def convert_migration_origination(cls, migration_origination_json: Dict[str, Any]) -> OperationData:
         """Convert raw migration message from REST into dataclass"""
-        storage = migration_origination_json.get('storage')
-        # FIXME: Plain storage, has issues in codegen: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
-        if not isinstance(storage, Dict):
-            storage = {}
-
-        fake_operation_data = OperationData(
+        return OperationData(
             type='origination',
             id=migration_origination_json['id'],
             level=migration_origination_json['level'],
@@ -754,8 +727,8 @@ class TzktDatasource(IndexDatasource):
             originated_contract_address=migration_origination_json['account']['address'],
             originated_contract_alias=migration_origination_json['account'].get('alias'),
             amount=migration_origination_json['balanceChange'],
-            storage=storage,
-            diffs=migration_origination_json.get('diffs'),
+            storage=migration_origination_json.get('storage'),
+            diffs=migration_origination_json.get('diffs') or (),
             status='applied',
             has_internals=False,
             hash='[none]',
@@ -764,7 +737,6 @@ class TzktDatasource(IndexDatasource):
             target_address=None,
             initiator_address=None,
         )
-        return fake_operation_data
 
     @classmethod
     def convert_big_map(cls, big_map_json: Dict[str, Any]) -> BigMapData:
@@ -840,10 +812,13 @@ class TzktDatasource(IndexDatasource):
             eth=Decimal(quote_json['eth']),
         )
 
-    async def _send(self, method: str, arguments: List[Dict[str, Any]], on_invocation=None) -> None:
+    async def _send(
+        self,
+        method: str,
+        arguments: List[Dict[str, Any]],
+        on_invocation: Optional[Callable[[CompletionMessage], Awaitable[None]]] = None,
+    ) -> None:
         client = self._get_ws_client()
-        while client.transport.state != ConnectionState.connected:
-            await asyncio.sleep(0.1)
         await client.send(method, arguments, on_invocation)
 
     @classmethod
