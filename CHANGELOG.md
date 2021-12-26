@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+## Fixed
+
+* index: Fixed processing reindexing reason saved in the database.
+
 ## 4.0.0 - 2021-12-24
 
 This release contains no changes except for the version number.

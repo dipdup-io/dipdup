@@ -446,7 +446,7 @@ class DipDup:
             await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
         elif self._schema.reindex:
-            raise ReindexingRequiredError(self._schema.reindex)
+            await self._ctx.reindex(self._schema.reindex)
 
         await self._ctx.fire_hook('on_restart')
 
