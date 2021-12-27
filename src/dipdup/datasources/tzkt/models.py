@@ -66,6 +66,11 @@ def _extract_field_type(field: Type) -> Type:
     return field.type_
 
 
+@lru_cache(None)
+def _extract_root_type(storage_type: Type[StorageType]) -> Type[StorageType]:
+    return get_args(storage_type.__annotations__['__root__'])[0]
+
+
 def _preprocess_bigmap_diffs(diffs: Iterable[Dict[str, Any]]) -> Dict[int, Iterable[Dict[str, Any]]]:
     """Filter out bigmap diffs and group them by bigmap id"""
     return {
@@ -103,16 +108,18 @@ def _process_storage(
     storage_type: Type[StorageType],
     bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]],
 ) -> Any:
+    # NOTE: Bigmap pointer, apply diffs
     if isinstance(storage, int):
         is_array = _is_array(storage_type)  # type: ignore
         storage = _apply_bigmap_diffs(storage, bigmap_diffs, is_array)
 
+    # NOTE: List of something, apply diffs recursively if needed
     elif isinstance(storage, list):
-        is_bigmap_list = _is_bigmap_list(storage_type)  # type: ignore
-        if is_bigmap_list:
+        if _is_bigmap_list(storage_type):  # type: ignore
             for i, _ in enumerate(storage):
                 storage[i] = _process_storage(storage[i], storage_type, bigmap_diffs)
 
+    # NOTE: Regular dict, possibly nested: fire up introspection magic
     elif isinstance(storage, dict):
 
         for key, field in storage_type.__fields__.items():
@@ -132,22 +139,20 @@ def _process_storage(
                 raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists')
 
             field_type = _extract_field_type(field)
-            # FIXME: incompatible type "Type[Any]"; expected "Hashable"
             is_array = _is_array(field_type)  # type: ignore
-            # FIXME: I don't remember why boolean fields are included, must be some TzKT special case.
-            is_bigmap = field_type not in (int, bool) and isinstance(value, int)
-            is_bigmap_list = _is_bigmap_list(field_type)  # type: ignore
-            is_nested_model = hasattr(field_type, '__fields__') and isinstance(storage[key], dict)
 
-            if is_bigmap:
+            # NOTE: Bigmap, apply diffs
+            # NOTE: bool is a possible Pydantic bug, see note in _extract_field_type
+            if field_type not in (int, bool) and isinstance(value, int):
                 storage[key] = _apply_bigmap_diffs(value, bigmap_diffs, is_array)
 
-            elif is_nested_model:
+            # NOTE: Regular dict, process root type recursively
+            elif hasattr(field_type, '__fields__') and isinstance(storage[key], dict):
                 storage[key] = _process_storage(storage[key], field_type, bigmap_diffs)
 
-            elif is_bigmap_list:
-                storage_type = get_args(field_type.__annotations__['__root__'])[0]
-
+            # NOTE: List of bigmaps, apply diffs recursively
+            elif _is_bigmap_list(field_type):  # type: ignore
+                storage_type = _extract_root_type(field_type)  # type: ignore
                 for i, _ in enumerate(storage[key]):
                     storage[key][i] = _process_storage(storage[key][i], storage_type, bigmap_diffs)
 
