@@ -21,38 +21,6 @@ from dipdup.models import StorageType
 IntrospectionError = (KeyError, IndexError, AttributeError)
 
 
-def _unwrap(storage: Dict[str, Any]) -> Any:
-    """Unwrap plain storage"""
-    return storage['wrapped']
-
-
-def _wrap(storage: Any) -> Dict[str, Any]:
-    """Wrap plain storage"""
-    return {'wrapped': storage}
-
-
-@lru_cache(None)
-def _wrap_type(storage_type: Type[Any]) -> Type[Any]:
-    """Wrap plain storage type"""
-    # NOTE: Dark Pydantic magic, see https://github.com/samuelcolvin/pydantic/issues/1937
-    # NOTE: Name doesn't matter, types will have different hashes
-    wrapped_type: Type = create_model('WrappedStorageType')
-    wrapped_type.__fields__['wrapped'] = ModelField(
-        name='wrapped',
-        type_=storage_type,
-        class_validators=None,
-        model_config=BaseConfig,
-    )
-    wrapped_type.__schema_cache__.clear()
-    return wrapped_type
-
-
-@lru_cache(None)
-def _unwrap_type(storage_type: Type[Any]) -> Type[Any]:
-    """Unwrap plain storage type"""
-    return storage_type.__fields__['wrapped'].type_
-
-
 @lru_cache(None)
 def _is_bigmap_list(storage_type: Type[Any]) -> bool:
     # NOTE: is List[Union[int, Dict]
@@ -111,83 +79,99 @@ def _preprocess_bigmap_diffs(diffs: Iterable[Dict[str, Any]]) -> Dict[int, Itera
 
 
 def _process_storage(
-    storage_dict: Dict[str, Any],
+    storage: Any,
     storage_type: Type[StorageType],
     bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]],
-) -> None:
-    for key, field in storage_type.__fields__.items():
-        # NOTE: Plain Pydantic model, ignore
-        if key == '__root__':
-            continue
+) -> Any:
+    if isinstance(storage, int):
+        bigmap_id = storage
+        is_array = _is_array(storage_type)  # type: ignore
+        storage = [] if is_array else {}
 
-        # NOTE: Use field alias when present
-        if field.alias:
-            key = field.alias
+        for diff in bigmap_diffs.get(bigmap_id, ()):
+            bigmap_key, bigmap_value = diff['content']['key'], diff['content']['value']
+            if is_array:
+                storage.append(  # type: ignore
+                    {
+                        'key': bigmap_key,
+                        'value': bigmap_value,
+                    }
+                )
+            else:
+                storage[bigmap_key] = bigmap_value  # type: ignore
 
-        # NOTE: Ignore missing optional fields, raise on required
-        value = storage_dict.get(key)
-        if value is None:
-            if not field.required:
+    elif isinstance(storage, list):
+        is_bigmap_list = _is_bigmap_list(storage_type)  # type: ignore
+        if is_bigmap_list:
+            for i, _ in enumerate(storage):
+                storage[i] = _process_storage(storage[i], storage_type, bigmap_diffs)
+
+    elif isinstance(storage, dict):
+
+        for key, field in storage_type.__fields__.items():
+            # NOTE: Plain Pydantic model, ignore
+            if key == '__root__':
                 continue
-            raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists')
 
-        field_type = _extract_field_type(field)
-        # FIXME: incompatible type "Type[Any]"; expected "Hashable"
-        is_array = _is_array(field_type)  # type: ignore
-        # FIXME: I don't remember why boolean fields are included, must be some TzKT special case.
-        is_bigmap = field_type not in (int, bool) and isinstance(value, int)
-        is_bigmap_list = _is_bigmap_list(field_type)  # type: ignore
-        is_nested_model = hasattr(field_type, '__fields__') and isinstance(storage_dict[key], dict)
+            # NOTE: Use field alias when present
+            if field.alias:
+                key = field.alias
 
-        if is_bigmap:
-            storage_dict[key] = [] if is_array else {}
+            # NOTE: Ignore missing optional fields, raise on required
+            value = storage.get(key)
+            if value is None:
+                if not field.required:
+                    continue
+                raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists')
 
-            for diff in bigmap_diffs.get(value, ()):
-                bigmap_key, bigmap_value = diff['content']['key'], diff['content']['value']
-                if is_array:
-                    storage_dict[key].append(  # type: ignore
-                        {
-                            'key': bigmap_key,
-                            'value': bigmap_value,
-                        }
-                    )
-                else:
-                    storage_dict[key][bigmap_key] = bigmap_value  # type: ignore
+            field_type = _extract_field_type(field)
+            # FIXME: incompatible type "Type[Any]"; expected "Hashable"
+            is_array = _is_array(field_type)  # type: ignore
+            # FIXME: I don't remember why boolean fields are included, must be some TzKT special case.
+            is_bigmap = field_type not in (int, bool) and isinstance(value, int)
+            is_bigmap_list = _is_bigmap_list(field_type)  # type: ignore
+            is_nested_model = hasattr(field_type, '__fields__') and isinstance(storage[key], dict)
 
-        elif is_nested_model:
-            _process_storage(storage_dict[key], field_type, bigmap_diffs)
+            print(f'{field_type=} {is_array=} {is_bigmap=} {is_bigmap_list=} {is_nested_model=}')
 
-        elif is_bigmap_list:
-            storage_type = get_args(field_type.__annotations__['__root__'])[0]
+            if is_bigmap:
+                storage[key] = [] if is_array else {}
 
-            for i, _ in enumerate(storage_dict[key]):
-                storage_type = _wrap_type(storage_type)  # type: ignore
-                storage_dict[key][i] = _wrap(storage_dict[key][i])
+                for diff in bigmap_diffs.get(value, ()):
+                    bigmap_key, bigmap_value = diff['content']['key'], diff['content']['value']
+                    if is_array:
+                        storage[key].append(  # type: ignore
+                            {
+                                'key': bigmap_key,
+                                'value': bigmap_value,
+                            }
+                        )
+                    else:
+                        storage[key][bigmap_key] = bigmap_value  # type: ignore
 
-                _process_storage(storage_dict[key][i], storage_type, bigmap_diffs)
+            elif is_nested_model:
+                storage[key] = _process_storage(storage[key], field_type, bigmap_diffs)
 
-                storage_type = _unwrap_type(storage_type)  # type: ignore
-                storage_dict[key][i] = _unwrap(storage_dict[key][i])
+            elif is_bigmap_list:
+                storage_type = get_args(field_type.__annotations__['__root__'])[0]
 
+                for i, _ in enumerate(storage[key]):
+                    storage[key][i] = _process_storage(storage[key][i], storage_type, bigmap_diffs)
+
+    else:
+        raise NotImplementedError
+
+    return storage
 
 def deserialize_storage(operation_data: OperationData, storage_type: Type[StorageType]) -> StorageType:
     """Merge big map diffs and deserialize raw storage into typeclass"""
     bigmap_diffs = _preprocess_bigmap_diffs(operation_data.diffs)
-    plain_storage = not isinstance(operation_data.storage, dict)
 
-    if plain_storage:
-        storage_type = _wrap_type(storage_type)
-        operation_data.storage = _wrap(operation_data.storage)
-
-    _process_storage(
-        storage_dict=operation_data.storage,
+    operation_data.storage = _process_storage(
+        storage=operation_data.storage,
         storage_type=storage_type,
         bigmap_diffs=bigmap_diffs,
     )
-
-    if plain_storage:
-        storage_type = _unwrap_type(storage_type)
-        operation_data.storage = _unwrap(operation_data.storage)
 
     try:
         return storage_type.parse_obj(operation_data.storage)
