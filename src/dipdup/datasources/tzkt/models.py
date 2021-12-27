@@ -18,6 +18,8 @@ from dipdup.exceptions import InvalidDataError
 from dipdup.models import OperationData
 from dipdup.models import StorageType
 
+IntrospectionError = (KeyError, IndexError, AttributeError)
+
 
 def _unwrap(storage: Dict[str, Any]) -> Any:
     """Unwrap plain storage"""
@@ -52,6 +54,16 @@ def _unwrap_type(storage_type: Type[Any]) -> Type[Any]:
 
 
 @lru_cache(None)
+def _is_bigmap_list(storage_type: Type[Any]) -> bool:
+    # NOTE: is List[Union[int, Dict]
+    try:
+        root_type = storage_type.__annotations__['__root__']
+        return get_origin(get_args(get_args(root_type)[0])[1]) == dict
+    except IntrospectionError:
+        return False
+
+
+@lru_cache(None)
 def _is_array(storage_type: Type) -> bool:
     """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
     try:
@@ -67,7 +79,7 @@ def _is_array(storage_type: Type) -> bool:
     # NOTE: Pydantic array
     try:
         return get_origin(get_args(getattr(fields.get('__root__'), 'type_', None))[1]) == list
-    except (IndexError, AttributeError):
+    except IntrospectionError:
         return False
 
 
@@ -80,7 +92,7 @@ def _extract_field_type(field: Type) -> Type:
     # NOTE: `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool], Dict[str, BaseModel], and possibly in some other cases.
     if field.type_ == bool:
         return field.outer_type_
-    with suppress(IndexError, AttributeError):
+    with suppress(*IntrospectionError):
         get_args(field.outer_type_)[1].__fields__
         return field.outer_type_
 
@@ -123,11 +135,11 @@ def _process_storage(
         # FIXME: incompatible type "Type[Any]"; expected "Hashable"
         is_array = _is_array(field_type)  # type: ignore
         # FIXME: I don't remember why boolean fields are included, must be some TzKT special case.
-        is_bigmap_id = field_type not in (int, bool) and isinstance(value, int)
-        is_nested_dict = hasattr(field_type, '__fields__') and isinstance(storage_dict[key], dict)
-        is_nested_list = hasattr(field_type, '__fields__') and isinstance(storage_dict[key], list)
+        is_bigmap = field_type not in (int, bool) and isinstance(value, int)
+        is_bigmap_list = _is_bigmap_list(field_type)  # type: ignore
+        is_nested_model = hasattr(field_type, '__fields__') and isinstance(storage_dict[key], dict)
 
-        if is_bigmap_id:
+        if is_bigmap:
             storage_dict[key] = [] if is_array else {}
 
             for diff in bigmap_diffs.get(value, ()):
@@ -142,24 +154,20 @@ def _process_storage(
                 else:
                     storage_dict[key][bigmap_key] = bigmap_value  # type: ignore
 
-        elif is_nested_dict:
+        elif is_nested_model:
             _process_storage(storage_dict[key], field_type, bigmap_diffs)
 
-        elif is_nested_list:
-            for idx, bigmap_id in enumerate(storage_dict[key]):
-                storage_dict[key][idx] = [] if is_array else {}
+        elif is_bigmap_list:
+            storage_type = get_args(field_type.__annotations__['__root__'])[0]
 
-                for diff in bigmap_diffs.get(bigmap_id, ()):
-                    bigmap_key, bigmap_value = diff['content']['key'], diff['content']['value']
-                    if is_array:
-                        storage_dict[key][idx].append(  # type: ignore
-                            {
-                                'key': bigmap_key,
-                                'value': bigmap_value,
-                            }
-                        )
-                    else:
-                        storage_dict[key][idx][bigmap_key] = bigmap_value  # type: ignore
+            for i, _ in enumerate(storage_dict[key]):
+                storage_type = _wrap_type(storage_type)  # type: ignore
+                storage_dict[key][i] = _wrap(storage_dict[key][i])
+
+                _process_storage(storage_dict[key][i], storage_type, bigmap_diffs)
+
+                storage_type = _unwrap_type(storage_type)  # type: ignore
+                storage_dict[key][i] = _unwrap(storage_dict[key][i])
 
 
 def deserialize_storage(operation_data: OperationData, storage_type: Type[StorageType]) -> StorageType:
