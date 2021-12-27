@@ -194,17 +194,17 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "attrs"
-version = "20.3.0"
+version = "21.2.0"
 description = "Classes Without Boilerplate"
 category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.extras]
-dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface", "furo", "sphinx", "pre-commit"]
-docs = ["furo", "sphinx", "zope.interface"]
-tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface"]
-tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six"]
+dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit"]
+docs = ["furo", "sphinx", "zope.interface", "sphinx-notfound-page"]
+tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface"]
+tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
 
 [[package]]
 name = "backcall"
@@ -1471,14 +1471,14 @@ testing = ["fields", "hunter", "process-tests", "six", "pytest-xdist", "virtuale
 
 [[package]]
 name = "pytezos"
-version = "3.3.3"
+version = "3.3.4"
 description = "Python toolkit for Tezos"
 category = "main"
 optional = true
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-attrs = ">=20.3.0,<21.0.0"
+attrs = ">=21.2.0,<22.0.0"
 base58 = ">=1.0.3,<2.0.0"
 bson = ">=0.5.10,<0.6.0"
 cached-property = ">=1.5.2,<2.0.0"
@@ -1505,7 +1505,7 @@ secp256k1 = "0.13.2"
 simplejson = "*"
 strict_rfc3339 = "0.7"
 tabulate = ">=0.8.9,<0.9.0"
-testcontainers = ">=3.2.0,<4.0.0"
+testcontainers = ">=3.4.2,<4.0.0"
 tqdm = "*"
 typing-extensions = ">=3.7.4,<4.0.0"
 
@@ -1631,14 +1631,14 @@ use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
 name = "ruamel.yaml"
-version = "0.17.17"
+version = "0.17.19"
 description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
 category = "main"
 optional = false
 python-versions = ">=3"
 
 [package.dependencies]
-"ruamel.yaml.clib" = {version = ">=0.1.2", markers = "platform_python_implementation == \"CPython\" and python_version < \"3.10\""}
+"ruamel.yaml.clib" = {version = ">=0.2.6", markers = "platform_python_implementation == \"CPython\" and python_version < \"3.11\""}
 
 [package.extras]
 docs = ["ryd"]
@@ -2204,8 +2204,8 @@ atomicwrites = [
     {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
 ]
 attrs = [
-    {file = "attrs-20.3.0-py2.py3-none-any.whl", hash = "sha256:31b2eced602aa8423c2aea9c76a724617ed67cf9513173fd3a4f03e3a929c7e6"},
-    {file = "attrs-20.3.0.tar.gz", hash = "sha256:832aa3cde19744e49938b91fea06d69ecb9e649c93ba974535d08ad92164f700"},
+    {file = "attrs-21.2.0-py2.py3-none-any.whl", hash = "sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1"},
+    {file = "attrs-21.2.0.tar.gz", hash = "sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb"},
 ]
 backcall = [
     {file = "backcall-0.2.0-py2.py3-none-any.whl", hash = "sha256:fbbce6a29f263178a1f7915c1940bde0ec2b2a967566fe1c65c1dfb7422bd255"},
@@ -3070,8 +3070,8 @@ pytest-cov = [
     {file = "pytest_cov-3.0.0-py3-none-any.whl", hash = "sha256:578d5d15ac4a25e5f961c938b85a05b09fdaae9deef3bb6de9a6e766622ca7a6"},
 ]
 pytezos = [
-    {file = "pytezos-3.3.3-py3-none-any.whl", hash = "sha256:c72f5ab0e17d81710dd055003935a092bbba0eab03920f571e9216bda5c2c923"},
-    {file = "pytezos-3.3.3.tar.gz", hash = "sha256:650ed79b08ab1693537110fe24698bf070862eb19759531f4008e8f5f29653a1"},
+    {file = "pytezos-3.3.4-py3-none-any.whl", hash = "sha256:23ba8971fd797203f449e9547965e78ceb289aae28cacf6000dc3f38e1ba8f88"},
+    {file = "pytezos-3.3.4.tar.gz", hash = "sha256:2e05aa4ea429cdf11a54a059da39d66c445e89b8c0439df6462ba5997490261e"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
@@ -3259,8 +3259,8 @@ requests = [
     {file = "requests-2.26.0.tar.gz", hash = "sha256:b8aa58f8cf793ffd8782d3d8cb19e66ef36f7aba4353eec859e74678b01b07a7"},
 ]
 "ruamel.yaml" = [
-    {file = "ruamel.yaml-0.17.17-py3-none-any.whl", hash = "sha256:9af3ec5d7f8065582f3aa841305465025d0afd26c5fb54e15b964e11838fc74f"},
-    {file = "ruamel.yaml-0.17.17.tar.gz", hash = "sha256:9751de4cbb57d4bfbf8fc394e125ed4a2f170fbff3dc3d78abf50be85924f8be"},
+    {file = "ruamel.yaml-0.17.19-py3-none-any.whl", hash = "sha256:92ac00b312c9a83ff3253a8f7b86dfe6f9996b4082b103af84b8df99175945bc"},
+    {file = "ruamel.yaml-0.17.19.tar.gz", hash = "sha256:b9ce9a925d0f0c35a1dbba56b40f253c53cd526b0fa81cf7b1d24996f28fb1d7"},
 ]
 "ruamel.yaml.clib" = [
     {file = "ruamel.yaml.clib-0.2.6-cp35-cp35m-macosx_10_6_intel.whl", hash = "sha256:cfdb9389d888c5b74af297e51ce357b800dd844898af9d4a547ffc143fa56751"},
