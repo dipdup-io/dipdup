@@ -4,7 +4,9 @@ from itertools import groupby
 from typing import Any
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Type
+from typing import Union
 
 from pydantic.error_wrappers import ValidationError
 from typing_extensions import get_args
@@ -75,27 +77,35 @@ def _preprocess_bigmap_diffs(diffs: Iterable[Dict[str, Any]]) -> Dict[int, Itera
     }
 
 
+def _apply_bigmap_diffs(
+    bigmap_id: int,
+    bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]],
+    is_array: bool,
+) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
+    storage: Union[List[Dict[str, Any]], Dict[str, Any]] = [] if is_array else {}
+    for diff in bigmap_diffs.get(bigmap_id, ()):
+        bigmap_key, bigmap_value = diff['content']['key'], diff['content']['value']
+        if is_array:
+            storage.append(  # type: ignore
+                {
+                    'key': bigmap_key,
+                    'value': bigmap_value,
+                }
+            )
+        else:
+            storage[bigmap_key] = bigmap_value  # type: ignore
+
+    return storage
+
+
 def _process_storage(
     storage: Any,
     storage_type: Type[StorageType],
     bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]],
 ) -> Any:
     if isinstance(storage, int):
-        bigmap_id = storage
         is_array = _is_array(storage_type)  # type: ignore
-        storage = [] if is_array else {}
-
-        for diff in bigmap_diffs.get(bigmap_id, ()):
-            bigmap_key, bigmap_value = diff['content']['key'], diff['content']['value']
-            if is_array:
-                storage.append(  # type: ignore
-                    {
-                        'key': bigmap_key,
-                        'value': bigmap_value,
-                    }
-                )
-            else:
-                storage[bigmap_key] = bigmap_value  # type: ignore
+        storage = _apply_bigmap_diffs(storage, bigmap_diffs, is_array)
 
     elif isinstance(storage, list):
         is_bigmap_list = _is_bigmap_list(storage_type)  # type: ignore
@@ -130,19 +140,7 @@ def _process_storage(
             is_nested_model = hasattr(field_type, '__fields__') and isinstance(storage[key], dict)
 
             if is_bigmap:
-                storage[key] = [] if is_array else {}
-
-                for diff in bigmap_diffs.get(value, ()):
-                    bigmap_key, bigmap_value = diff['content']['key'], diff['content']['value']
-                    if is_array:
-                        storage[key].append(  # type: ignore
-                            {
-                                'key': bigmap_key,
-                                'value': bigmap_value,
-                            }
-                        )
-                    else:
-                        storage[key][bigmap_key] = bigmap_value  # type: ignore
+                storage[key] = _apply_bigmap_diffs(value, bigmap_diffs, is_array)
 
             elif is_nested_model:
                 storage[key] = _process_storage(storage[key], field_type, bigmap_diffs)
@@ -152,6 +150,9 @@ def _process_storage(
 
                 for i, _ in enumerate(storage[key]):
                     storage[key][i] = _process_storage(storage[key][i], storage_type, bigmap_diffs)
+
+            else:
+                pass
 
     else:
         raise NotImplementedError
