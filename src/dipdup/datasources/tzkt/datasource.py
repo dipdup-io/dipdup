@@ -684,9 +684,13 @@ class TzktDatasource(IndexDatasource):
         originated_contract_json = operation_json.get('originatedContract') or {}
 
         entrypoint, parameter = parameter_json.get('entrypoint'), parameter_json.get('value')
-        # NOTE: TzKT returns None for `default` entrypoint
-        if entrypoint is None and parameter_json:
-            entrypoint = 'default'
+        if target_json.get('address', '').startswith('KT1'):
+            # NOTE: TzKT returns None for `default` entrypoint
+            if entrypoint is None:
+                entrypoint = 'default'
+            # NOTE: Empty parameter in this case means `{"prim": "Unit"}`
+            if parameter is None:
+                parameter = {}
 
         return OperationData(
             type=type_ or operation_json['type'],

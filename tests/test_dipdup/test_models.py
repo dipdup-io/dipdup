@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
+from os.path import dirname
+from os.path import join
 from typing import Any
 from typing import Dict
 from typing import Tuple
 from unittest import TestCase
 
 from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
 from tests.test_dipdup.models import ResourceCollectorStorage
@@ -206,3 +210,17 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj, ListOfMapsStorage)
         self.assertIsInstance(storage_obj.__root__, list)
         self.assertEqual(storage_obj.__root__[1]['test'], '123')  # type: ignore
+
+    def test_convert_operation_with_default_entrypoint(self) -> None:
+        # Arrange
+        with open(join(dirname(__file__), 'ooQuCAKBHkmWy2VciDAV9c6CFTywuMLupLzVoKDwS1xvR4EdRng.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+
+        # Assert
+        self.assertEqual('default', operations[0].entrypoint)
+        self.assertEqual({}, operations[0].parameter_json)
+        self.assertEqual('deposit', operations[1].entrypoint)
+        self.assertNotEqual({}, operations[1].parameter_json)
