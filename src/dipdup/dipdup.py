@@ -44,7 +44,6 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
-from dipdup.exceptions import ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
@@ -446,7 +445,7 @@ class DipDup:
             await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
         elif self._schema.reindex:
-            raise ReindexingRequiredError(self._schema.reindex)
+            await self._ctx.reindex(self._schema.reindex)
 
         await self._ctx.fire_hook('on_restart')
 
