@@ -4,6 +4,7 @@ import json
 import logging.config
 import os
 import re
+import string
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
@@ -564,8 +565,8 @@ class CallbackMixin(CodegenMixin):
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
-        if self.callback and self.callback != pascal_to_snake(self.callback):
-            raise ConfigurationError('`callback` field must conform to snake_case naming style')
+        if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
+            raise ConfigurationError('`callback` field must be a valid Python module name')
 
     @cached_property
     def kind(self) -> str:

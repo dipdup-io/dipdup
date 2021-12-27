@@ -447,32 +447,39 @@ class DipDupCodeGenerator:
 
     async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
         subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
-        callback_path = join(subpackage_path, f'{callback_config.callback}.py')
-        if exists(callback_path):
-            return
+        sql_path = join(self._config.package_path, 'sql')
 
-        self._logger.info('Generating %s callback `%s`', callback_config.kind, callback_config.callback)
-        callback_template = load_template('callback.py')
+        subpackages = callback_config.callback.split('.')
+        subpackages, callback = subpackages[:-1], subpackages[-1]
+        subpackage_path = join(subpackage_path, *subpackages[:-1])
+        if not exists(subpackage_path):
+            mkdir_p(subpackage_path)
 
-        arguments = callback_config.format_arguments()
-        imports = set(callback_config.format_imports(self._config.package))
+        callback_path = join(subpackage_path, f'{callback}.py')
+        if not exists(callback_path):
+            self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
+            callback_template = load_template('callback.py')
 
-        code: List[str] = []
+            arguments = callback_config.format_arguments()
+            imports = set(callback_config.format_imports(self._config.package))
+
+            code: List[str] = []
+            if sql:
+                code.append(f"await ctx.execute_sql('{callback}')")
+                if callback == 'on_rollback':
+                    imports.add('from dipdup.enums import ReindexingReason')
+                    code.append('await ctx.reindex(ReindexingReason.ROLLBACK)')
+            else:
+                code.append('...')
+
+            callback_code = callback_template.render(
+                callback=callback,
+                arguments=tuple(dict.fromkeys(arguments)),
+                imports=tuple(dict.fromkeys(imports)),
+                code=code,
+            )
+            write(callback_path, callback_code)
+
         if sql:
-            code.append(f"await ctx.execute_sql('{callback_config.callback}')")
-            if callback_config.callback == 'on_rollback':
-                imports.add('from dipdup.enums import ReindexingReason')
-                code.append('await ctx.reindex(ReindexingReason.ROLLBACK)')
-        else:
-            code.append('...')
-
-        callback_code = callback_template.render(
-            callback=callback_config.callback,
-            arguments=tuple(dict.fromkeys(arguments)),
-            imports=tuple(dict.fromkeys(imports)),
-            code=code,
-        )
-        write(callback_path, callback_code)
-
-        if sql:
-            touch(join(self._config.package_path, 'sql', callback_config.callback, '.keep'))
+            # NOTE: Preserve the same structure as in `handlers`
+            touch(sql_path, *subpackages, callback, '.keep'))
