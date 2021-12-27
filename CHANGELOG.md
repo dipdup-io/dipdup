@@ -7,6 +7,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ## Fixed
 
 * index: Fixed processing reindexing reason saved in the database.
+* tzkt: Fixed processing operations with default entrypoint and empty parameter.
 
 ## 4.0.0 - 2021-12-24
 
