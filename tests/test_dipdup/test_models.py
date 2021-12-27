@@ -13,6 +13,7 @@ from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
+from tests.test_dipdup.models import FtzFunStorage
 from tests.test_dipdup.models import ResourceCollectorStorage
 from tests.test_dipdup.types import BazaarMarketPlaceStorage
 from tests.test_dipdup.types import ListOfMapsStorage
@@ -224,3 +225,18 @@ class ModelsTest(TestCase):
         self.assertEqual({}, operations[0].parameter_json)
         self.assertEqual('deposit', operations[1].entrypoint)
         self.assertNotEqual({}, operations[1].parameter_json)
+
+    def test_deserialize_storage_dict_key(self) -> None:
+        # Arrange
+        with open(join(dirname(__file__), 'op86LcibGm9cYzAojPw9Tn284QeKFZfJCZFW8JoKQtgDb94CH36.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], FtzFunStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, FtzFunStorage)
+        self.assertIsInstance(storage_obj.assets.operators, list)
+        self.assertEqual(storage_obj.assets.operators[0].key.address_0, 'tz1fMia93yL7vndY2fZ5rGAQPgex7RQHXV1m')  # type: ignore
+        self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore

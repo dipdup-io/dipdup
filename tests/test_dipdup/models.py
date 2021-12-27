@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -36,15 +37,44 @@ class ResourceCollectorStorage(BaseModel):
     tezotop_collection: Dict[str, str]
 
 
-# 'resource_map': {
-#     'type': 'object',
-#     'propertyNames': {'type': 'string', '$comment': 'string'},
-#     'additionalProperties': {
-#         'type': 'object',
-#         'properties': {'id': {'type': 'string', '$comment': 'nat'}, 'rate': {'type': 'string', '$comment': 'nat'}},
-#         'required': ['id', 'rate'],
-#         'additionalProperties': False,
-#         '$comment': 'pair',
-#     },
-#     '$comment': 'map',
-# },
+class Key(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    address_0: str
+    address_1: str
+    nat: str
+
+
+class Operator(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    key: Key
+    value: Dict[str, Any]
+
+
+class TokenMetadata(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    token_id: str
+    token_info: Dict[str, str]
+
+
+class Assets(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    ledger: Dict[str, str]
+    next_token_id: str
+    operators: List[Operator]
+    token_metadata: Dict[str, TokenMetadata]
+
+
+class FtzFunStorage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    assets: Assets
+    metadata: Dict[str, str]

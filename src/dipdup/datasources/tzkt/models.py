@@ -20,16 +20,20 @@ from dipdup.models import StorageType
 
 
 def _unwrap(storage: Dict[str, Any]) -> Any:
+    """Unwrap plain storage"""
     return storage['wrapped']
 
 
 def _wrap(storage: Any) -> Dict[str, Any]:
+    """Wrap plain storage"""
     return {'wrapped': storage}
 
 
 @lru_cache(None)
 def _wrap_type(storage_type: Type[Any]) -> Type[Any]:
+    """Wrap plain storage type"""
     # NOTE: Dark Pydantic magic, see https://github.com/samuelcolvin/pydantic/issues/1937
+    # NOTE: Name doesn't matter, types will have different hashes
     wrapped_type: Type = create_model('WrappedStorageType')
     wrapped_type.__fields__['wrapped'] = ModelField(
         name='wrapped',
@@ -43,12 +47,13 @@ def _wrap_type(storage_type: Type[Any]) -> Type[Any]:
 
 @lru_cache(None)
 def _unwrap_type(storage_type: Type[Any]) -> Type[Any]:
+    """Unwrap plain storage type"""
     return storage_type.__fields__['wrapped'].type_
 
 
 @lru_cache(None)
 def _is_array(storage_type: Type) -> bool:
-    """TzKT can return bigmaps as objects or as arrays of key-value objects. We need to guess it from storage type."""
+    """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
     try:
         fields = storage_type.__fields__
     # NOTE: Not a dataclass
@@ -68,6 +73,7 @@ def _is_array(storage_type: Type) -> bool:
 
 @lru_cache(None)
 def _extract_field_type(field: Type) -> Type:
+    """Get type of nested field keeping in mind Pydantic special cases"""
     if field.type_ == field.outer_type_:
         return field.type_
 
@@ -114,10 +120,9 @@ def _process_storage(
             raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists')
 
         field_type = _extract_field_type(field)
-
         # FIXME: incompatible type "Type[Any]"; expected "Hashable"
-        is_array = _is_array(field_type) # type: ignore
-        # FIXME: I don't remember why boolean fields are included, but it seems important, do not touch
+        is_array = _is_array(field_type)  # type: ignore
+        # FIXME: I don't remember why boolean fields are included, must be some TzKT special case.
         is_bigmap_id = field_type not in (int, bool) and isinstance(value, int)
         is_nested_dict = hasattr(field_type, '__fields__') and isinstance(storage_dict[key], dict)
         is_nested_list = hasattr(field_type, '__fields__') and isinstance(storage_dict[key], list)
