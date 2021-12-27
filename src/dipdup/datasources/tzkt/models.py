@@ -6,10 +6,7 @@ from typing import Dict
 from typing import Iterable
 from typing import Type
 
-from pydantic import BaseConfig
-from pydantic import create_model
 from pydantic.error_wrappers import ValidationError
-from pydantic.fields import ModelField
 from typing_extensions import get_args
 from typing_extensions import get_origin
 
@@ -132,8 +129,6 @@ def _process_storage(
             is_bigmap_list = _is_bigmap_list(field_type)  # type: ignore
             is_nested_model = hasattr(field_type, '__fields__') and isinstance(storage[key], dict)
 
-            print(f'{field_type=} {is_array=} {is_bigmap=} {is_bigmap_list=} {is_nested_model=}')
-
             if is_bigmap:
                 storage[key] = [] if is_array else {}
 
@@ -162,6 +157,7 @@ def _process_storage(
         raise NotImplementedError
 
     return storage
+
 
 def deserialize_storage(operation_data: OperationData, storage_type: Type[StorageType]) -> StorageType:
     """Merge big map diffs and deserialize raw storage into typeclass"""
