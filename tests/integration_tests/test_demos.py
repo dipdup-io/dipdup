@@ -4,7 +4,7 @@ from os import mkdir
 from os.path import dirname
 from os.path import join
 from shutil import rmtree
-from unittest import IsolatedAsyncioTestCase
+from unittest import IsolatedAsyncioTestCase, skip
 
 from tortoise.transactions import in_transaction
 
@@ -28,7 +28,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             [
                 'dipdup',
                 '-l',
-                'warning.yml',
+                'logging.yml',
                 '-c',
                 join(dirname(__file__), config),
                 'run',
@@ -77,6 +77,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(14, auctions)
             self.assertEqual(44, bids)
 
+    @skip('edonet is dead')
     async def test_tezos_domains(self):
         self.run_dipdup('tezos_domains.yml')
 
@@ -87,6 +88,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(5, tlds)
             self.assertEqual(237, domains)
 
+    @skip('edonet is dead')
     async def test_tezos_domains_big_map(self):
         self.run_dipdup('tezos_domains_big_map.yml')
 

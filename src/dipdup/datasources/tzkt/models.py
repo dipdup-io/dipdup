@@ -5,6 +5,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
+from typing import Optional
 from typing import Type
 from typing import Union
 
@@ -12,7 +13,6 @@ from pydantic.error_wrappers import ValidationError
 from typing_extensions import get_args
 from typing_extensions import get_origin
 
-from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import InvalidDataError
 from dipdup.models import OperationData
 from dipdup.models import StorageType
@@ -21,13 +21,17 @@ IntrospectionError = (KeyError, IndexError, AttributeError)
 
 
 @lru_cache(None)
-def _is_bigmap_list(storage_type: Type[Any]) -> bool:
-    # NOTE: is List[Union[int, Dict]
+def _extract_bigmap_list_type(storage_type: Type[Any]) -> Optional[Type[Any]]:
     try:
+        # NOTE: List[Union[int, Dict[...]]]
         root_type = storage_type.__annotations__['__root__']
-        return get_origin(get_args(get_args(root_type)[0])[1]) == dict
+        # NOTE: Dict[...]
+        dict_type = get_args(get_args(root_type)[0])[1]
+        if get_origin(dict_type) == dict:
+            return dict_type
+        return None
     except IntrospectionError:
-        return False
+        return None
 
 
 @lru_cache(None)
@@ -64,11 +68,6 @@ def _extract_field_type(field: Type) -> Type:
         return field.outer_type_
 
     return field.type_
-
-
-@lru_cache(None)
-def _extract_root_type(storage_type: Type[StorageType]) -> Type[StorageType]:
-    return get_args(storage_type.__annotations__['__root__'])[0]
 
 
 def _preprocess_bigmap_diffs(diffs: Iterable[Dict[str, Any]]) -> Dict[int, Iterable[Dict[str, Any]]]:
@@ -115,52 +114,44 @@ def _process_storage(
 
     # NOTE: List of something, apply diffs recursively if needed
     elif isinstance(storage, list):
-        if _is_bigmap_list(storage_type):  # type: ignore
+        bigmap_list_type = _extract_bigmap_list_type(storage_type)
+        if bigmap_list_type is not None:
             for i, _ in enumerate(storage):
-                storage[i] = _process_storage(storage[i], storage_type, bigmap_diffs)
+                storage[i] = _process_storage(storage[i], bigmap_list_type, bigmap_diffs)
 
     # NOTE: Regular dict, possibly nested: fire up introspection magic
     elif isinstance(storage, dict):
 
-        for key, field in storage_type.__fields__.items():
-            # NOTE: Plain Pydantic model, ignore
-            if key == '__root__':
-                continue
+        for key, value in storage.items():
+            field = storage_type.__fields__[key]
 
             # NOTE: Use field alias when present
             if field.alias:
                 key = field.alias
 
-            # NOTE: Ignore missing optional fields, raise on required
-            value = storage.get(key)
-            if value is None:
-                if not field.required:
-                    continue
-                raise ConfigurationError(f'Type `{storage_type.__name__}` is invalid: `{key}` field does not exists')
-
             field_type = _extract_field_type(field)
             is_array = _is_array(field_type)  # type: ignore
+            bigmap_list_type = _extract_bigmap_list_type(storage_type)
 
             # NOTE: Bigmap, apply diffs
             # NOTE: bool is a possible Pydantic bug, see note in _extract_field_type
-            if field_type not in (int, bool) and isinstance(value, int):
+            if isinstance(value, int) and field_type not in (int, bool):
                 storage[key] = _apply_bigmap_diffs(value, bigmap_diffs, is_array)
 
             # NOTE: Regular dict, process root type recursively
-            elif hasattr(field_type, '__fields__') and isinstance(storage[key], dict):
+            elif isinstance(storage[key], dict) and hasattr(field_type, '__fields__'):
                 storage[key] = _process_storage(storage[key], field_type, bigmap_diffs)
 
             # NOTE: List of bigmaps, apply diffs recursively
-            elif _is_bigmap_list(field_type):  # type: ignore
-                storage_type = _extract_root_type(field_type)  # type: ignore
+            elif isinstance(storage[key], list) and bigmap_list_type:
                 for i, _ in enumerate(storage[key]):
-                    storage[key][i] = _process_storage(storage[key][i], storage_type, bigmap_diffs)
+                    storage[key][i] = _process_storage(storage[i], bigmap_list_type, bigmap_diffs)
 
             else:
                 pass
 
     else:
-        raise NotImplementedError
+        pass
 
     return storage
 
