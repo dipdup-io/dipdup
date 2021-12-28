@@ -4,7 +4,8 @@ from os import mkdir
 from os.path import dirname
 from os.path import join
 from shutil import rmtree
-from unittest import IsolatedAsyncioTestCase, skip
+from unittest import IsolatedAsyncioTestCase
+from unittest import skip
 
 from tortoise.transactions import in_transaction
 

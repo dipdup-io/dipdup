@@ -21,20 +21,6 @@ IntrospectionError = (KeyError, IndexError, AttributeError)
 
 
 @lru_cache(None)
-def _extract_bigmap_list_type(storage_type: Type[Any]) -> Optional[Type[Any]]:
-    try:
-        # NOTE: List[Union[int, Dict[...]]]
-        root_type = storage_type.__annotations__['__root__']
-        # NOTE: Dict[...]
-        dict_type = get_args(get_args(root_type)[0])[1]
-        if get_origin(dict_type) == dict:
-            return dict_type
-        return None
-    except IntrospectionError:
-        return None
-
-
-@lru_cache(None)
 def _is_array(storage_type: Type) -> bool:
     """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
     try:
@@ -68,6 +54,17 @@ def _extract_field_type(field: Type) -> Type:
         return field.outer_type_
 
     return field.type_
+
+
+@lru_cache(None)
+def _extract_bigmap_list_type(storage_type: Type[Any]) -> Optional[Type[Any]]:
+    try:
+        # NOTE: List[Union[int, Dict[...]]]
+        root_type = storage_type.__annotations__['__root__']
+        # NOTE: Dict[...]
+        return get_args(get_args(root_type)[0])[1]
+    except IntrospectionError:
+        return None
 
 
 def _preprocess_bigmap_diffs(diffs: Iterable[Dict[str, Any]]) -> Dict[int, Iterable[Dict[str, Any]]]:
@@ -108,7 +105,7 @@ def _process_storage(
     bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]],
 ) -> Any:
     # NOTE: Bigmap pointer, apply diffs
-    if isinstance(storage, int):
+    if isinstance(storage, int) and storage_type not in (int, bool):
         is_array = _is_array(storage_type)  # type: ignore
         storage = _apply_bigmap_diffs(storage, bigmap_diffs, is_array)
 
@@ -125,7 +122,7 @@ def _process_storage(
         for key, value in storage.items():
             try:
                 field = storage_type.__fields__[key]
-            except KeyError:
+            except (KeyError, AttributeError):
                 continue
 
             # NOTE: Use field alias when present
@@ -133,25 +130,7 @@ def _process_storage(
                 key = field.alias
 
             field_type = _extract_field_type(field)
-            is_array = _is_array(field_type)  # type: ignore
-            bigmap_list_type = _extract_bigmap_list_type(storage_type)
-
-            # NOTE: Bigmap, apply diffs
-            # NOTE: bool is a possible Pydantic bug, see note in _extract_field_type
-            if isinstance(value, int) and field_type not in (int, bool):
-                storage[key] = _apply_bigmap_diffs(value, bigmap_diffs, is_array)
-
-            # NOTE: Regular dict, process root type recursively
-            elif isinstance(storage[key], dict) and hasattr(field_type, '__fields__'):
-                storage[key] = _process_storage(storage[key], field_type, bigmap_diffs)
-
-            # NOTE: List of bigmaps, apply diffs recursively
-            elif isinstance(storage[key], list) and bigmap_list_type:
-                for i, _ in enumerate(storage[key]):
-                    storage[key][i] = _process_storage(storage[i], bigmap_list_type, bigmap_diffs)
-
-            else:
-                pass
+            storage[key] = _process_storage(value, field_type, bigmap_diffs)
 
     else:
         pass
