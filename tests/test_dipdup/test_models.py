@@ -13,7 +13,7 @@ from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
-from tests.test_dipdup.models import FtzFunStorage
+from tests.test_dipdup.models import FtzFunStorage, TzbtcStorage
 from tests.test_dipdup.models import ResourceCollectorStorage
 from tests.test_dipdup.types import BazaarMarketPlaceStorage
 from tests.test_dipdup.types import ListOfMapsStorage
@@ -240,3 +240,32 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj.assets.operators, list)
         self.assertEqual(storage_obj.assets.operators[0].key.address_0, 'tz1fMia93yL7vndY2fZ5rGAQPgex7RQHXV1m')  # type: ignore
         self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore
+
+    def test_asdf(self) -> None:
+        with open(join(dirname(__file__), 'oog6KTn7Ltcr4ziLu5XG2RyDYXEgCYCg2n8ajgfmMBh1cznQCws.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], TzbtcStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, TzbtcStorage)
+        self.assertIsInstance(storage_obj.assets.operators, list)
+        self.assertEqual(storage_obj.assets.operators[0].key.address_0, 'tz1fMia93yL7vndY2fZ5rGAQPgex7RQHXV1m')  # type: ignore
+        self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore
+
+    def test_qwer(self) -> None:
+        with open(join(dirname(__file__), 'op8dWKoqAe3gE2uDGdopXp4UVbeRZGbhkrYXjbUSHmg65Q8qaoP.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], TzbtcStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, TzbtcStorage)
+        self.assertIsInstance(storage_obj.assets.operators, list)
+        self.assertEqual(storage_obj.assets.operators[0].key.address_0, 'tz1fMia93yL7vndY2fZ5rGAQPgex7RQHXV1m')  # type: ignore
+        self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore
+

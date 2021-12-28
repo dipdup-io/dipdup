@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Union
 from typing import Dict
 from typing import List
 from typing import Optional
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import Extra, Field
 
 
 class ResourceMap(BaseModel):
@@ -78,3 +78,31 @@ class FtzFunStorage(BaseModel):
 
     assets: Assets
     metadata: Dict[str, str]
+
+
+class TzbtcStorage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    big_map: Dict[str, str]
+    bool: bool
+    lambda_: str = Field(..., alias='lambda')
+    nat: str
+
+
+class QwerStorageItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    L: str
+
+
+class QwerStorageItem1(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    R: Optional[Union[int, Dict[str, str]]] = {}
+
+
+class QwerStorage(BaseModel):
+    __root__: List[List[Union[QwerStorageItem, QwerStorageItem1]]]
