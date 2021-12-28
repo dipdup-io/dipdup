@@ -80,7 +80,7 @@ class FtzFunStorage(BaseModel):
     metadata: Dict[str, str]
 
 
-class TzbtcStorage(BaseModel):
+class AsdfStorage(BaseModel):
     class Config:
         extra = Extra.forbid
 
