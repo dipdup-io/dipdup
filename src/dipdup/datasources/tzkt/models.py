@@ -123,7 +123,10 @@ def _process_storage(
     elif isinstance(storage, dict):
 
         for key, value in storage.items():
-            field = storage_type.__fields__[key]
+            try:
+                field = storage_type.__fields__[key]
+            except KeyError:
+                continue
 
             # NOTE: Use field alias when present
             if field.alias:
