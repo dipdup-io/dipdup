@@ -257,7 +257,7 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore
 
     def test_qwer(self) -> None:
-        with open(join(dirname(__file__), 'op8dWKoqAe3gE2uDGdopXp4UVbeRZGbhkrYXjbUSHmg65Q8qaoP.json')) as f:
+        with open(join(dirname(__file__), 'opRoqBoenjDL5TLdmQh7JELmeH6EAUmspEcV4kkKJE79yGPwVPw.json')) as f:
             operations_json = json.load(f)
 
         # Act
@@ -271,7 +271,7 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore
 
     def test_hjkl(self) -> None:
-        with open(join(dirname(__file__), 'opRoqBoenjDL5TLdmQh7JELmeH6EAUmspEcV4kkKJE79yGPwVPw.json')) as f:
+        with open(join(dirname(__file__), 'op8dWKoqAe3gE2uDGdopXp4UVbeRZGbhkrYXjbUSHmg65Q8qaoP.json')) as f:
             operations_json = json.load(f)
 
         # Act
