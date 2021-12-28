@@ -80,16 +80,6 @@ class FtzFunStorage(BaseModel):
     metadata: Dict[str, str]
 
 
-class AsdfStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    big_map: Dict[str, str]
-    bool: bool
-    lambda_: str = Field(..., alias='lambda')
-    nat: str
-
-
 class QwerStorageItem(BaseModel):
     class Config:
         extra = Extra.forbid
