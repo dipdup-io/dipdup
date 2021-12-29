@@ -1,0 +1,24 @@
+spec_version: 1.2
+package: asdf
+
+contracts:
+  asdf:
+    address: KT1DykwBRr4GGN88GNKNKzrTH4VjhRRUHrkg
+    typename: asdf
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.tzkt.io
+
+indexes:
+  asdf_holders_mainnet:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - asdf
+    handlers:
+      - callback: on_default
+        pattern:
+          - destination: asdf
+            entrypoint: default

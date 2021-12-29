@@ -3,39 +3,13 @@
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 
 from pydantic import BaseModel
-from pydantic import Extra, Field
-
-
-class ResourceMap(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    id: str
-    rate: str
-
-
-class ResourceCollectorStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    administrator: str
-    current_user: Optional[str]
-    default_start_time: str
-    generation_rate: str
-    managers: List[str]
-    metadata: Dict[str, str]
-    nft_registry: str
-    paused: bool
-    resource_map: Dict[str, ResourceMap]
-    resource_registry: str
-    tezotop_collection: Dict[str, str]
-
+from pydantic import Extra
 
 class Key(BaseModel):
     class Config:
@@ -44,6 +18,7 @@ class Key(BaseModel):
     address_0: str
     address_1: str
     nat: str
+
 
 
 class Operator(BaseModel):
@@ -78,21 +53,3 @@ class FtzFunStorage(BaseModel):
 
     assets: Assets
     metadata: Dict[str, str]
-
-
-class QwerStorageItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    L: str
-
-
-class QwerStorageItem1(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    R: Optional[Union[int, Dict[str, str]]] = {}
-
-
-class QwerStorage(BaseModel):
-    __root__: List[List[Union[QwerStorageItem, QwerStorageItem1]]]

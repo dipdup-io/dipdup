@@ -32,7 +32,3 @@ class BazaarMarketPlaceStorageItem(BaseModel):
 
 class BazaarMarketPlaceStorage(BaseModel):
     __root__: Union[int, List[BazaarMarketPlaceStorageItem]]
-
-
-class ListOfMapsStorage(BaseModel):
-    __root__: List[Union[int, Dict[str, str]]]

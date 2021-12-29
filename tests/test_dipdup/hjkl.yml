@@ -1,0 +1,24 @@
+spec_version: 1.2
+package: hjkl
+
+contracts:
+  hjkl:
+    address: KT1WvYvgUhxYEe4NhqqazwXUhUEhcjMcdjHA
+    typename: hjkl
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.tzkt.io
+
+indexes:
+  hjkl_holders_mainnet:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - hjkl
+    handlers:
+      - callback: on_default
+        pattern:
+          - destination: hjkl
+            entrypoint: default

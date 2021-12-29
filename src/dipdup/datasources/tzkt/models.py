@@ -59,10 +59,7 @@ def _extract_field_type(field: Type) -> Type:
 @lru_cache(None)
 def _extract_bigmap_list_type(storage_type: Type[Any]) -> Optional[Type[Any]]:
     try:
-        # NOTE: List[Union[int, Dict[...]]]
-        root_type = storage_type.__annotations__['__root__']
-        # NOTE: Dict[...]
-        return get_args(get_args(root_type)[0])[1]
+        return _extract_field_type(storage_type.__fields__['__root__'])
     except IntrospectionError:
         return None
 
@@ -120,6 +117,7 @@ def _process_storage(
     elif isinstance(storage, dict):
 
         for key, value in storage.items():
+            # NOTE: Typeclass was modified, field is missing.
             try:
                 field = storage_type.__fields__[key]
             except (KeyError, AttributeError):

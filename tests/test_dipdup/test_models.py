@@ -13,13 +13,13 @@ from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
-from tests.test_dipdup.storage_asdf import AsdfStorage
-
-from tests.test_dipdup.models import FtzFunStorage, QwerStorage
-from tests.test_dipdup.models import ResourceCollectorStorage
-from tests.test_dipdup.types import BazaarMarketPlaceStorage
-from tests.test_dipdup.types import ListOfMapsStorage
-from tests.test_dipdup.storage import HjklStorage
+from tests.test_dipdup.types.ftzfun.storage import FtzFunStorage
+from tests.test_dipdup.types.tezotop.storage import ResourceCollectorStorage
+from tests.test_dipdup.types.asdf.storage import AsdfStorage
+from tests.test_dipdup.types.bazaar.storage import BazaarMarketPlaceStorage
+from tests.test_dipdup.types.hjkl.storage import HjklStorage
+from tests.test_dipdup.types.listofmaps.storage import ListOfMapsStorage
+from tests.test_dipdup.types.qwer.storage import QwerStorage
 
 
 def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> OperationData:
@@ -231,7 +231,7 @@ class ModelsTest(TestCase):
 
     def test_deserialize_storage_dict_key(self) -> None:
         # Arrange
-        with open(join(dirname(__file__), 'op86LcibGm9cYzAojPw9Tn284QeKFZfJCZFW8JoKQtgDb94CH36.json')) as f:
+        with open(join(dirname(__file__), 'ftzfun.json')) as f:
             operations_json = json.load(f)
 
         # Act
@@ -282,4 +282,4 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj, HjklStorage)
         self.assertIsInstance(storage_obj.__root__, list)
         self.assertIsInstance(storage_obj.__root__[0].value.mr, dict)  # type: ignore
-
+        self.assertEqual(storage_obj.__root__[0].value.mr['111'], True)  # type: ignore
