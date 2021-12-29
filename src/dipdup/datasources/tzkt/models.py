@@ -27,6 +27,9 @@ def _get_root_type(storage_type: Type) -> Type:
 @lru_cache(None)
 def _is_array(storage_type: Type) -> bool:
     """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
+    if get_origin(storage_type) == list:
+        return True
+
     try:
         fields = storage_type.__fields__
     # NOTE: Not a dataclass
@@ -115,20 +118,23 @@ def _process_storage(
     elif isinstance(storage, dict):
 
         for key, value in storage.items():
-            # FIXME: Union[Model, Model]
+            if get_origin(storage_type) == dict:
+                value_type = get_args(storage_type)[1]
 
-            # NOTE: Typeclass was modified, field is missing.
-            try:
-                field = storage_type.__fields__[key]
-            except (KeyError, AttributeError):
-                continue
+            else:
+                # NOTE: Typeclass was modified, field is missing.
+                try:
+                    field = storage_type.__fields__[key]
+                except (KeyError, AttributeError):
+                    continue
 
-            # NOTE: Use field alias when present
-            if field.alias:
-                key = field.alias
+                # NOTE: Use field alias when present
+                if field.alias:
+                    key = field.alias
 
-            field_type = field.type_
-            storage[key] = _process_storage(value, field_type, bigmap_diffs)
+                value_type = field.type_
+
+            storage[key] = _process_storage(value, value_type, bigmap_diffs)
 
     else:
         pass

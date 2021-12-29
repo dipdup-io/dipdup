@@ -271,7 +271,7 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, AsdfStorage)
         self.assertIsInstance(storage_obj.__root__, list)
-        self.assertIsInstance(storage_obj.__root__[0]['pupa'], dict)  # type: ignore
+        self.assertIsInstance(storage_obj.__root__[0]['pupa'], list)  # type: ignore
 
     def test_hjkl(self) -> None:
         with open(join(dirname(__file__), 'hjkl.json')) as f:
