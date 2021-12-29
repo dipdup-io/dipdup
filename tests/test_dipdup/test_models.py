@@ -244,6 +244,7 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.assets.operators[0].key.address_0, 'tz1fMia93yL7vndY2fZ5rGAQPgex7RQHXV1m')  # type: ignore
         self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore
 
+    # FIXME: Bigmap id in R not resolved
     def test_qwer(self) -> None:
         with open(join(dirname(__file__), 'qwer.json')) as f:
             operations_json = json.load(f)
@@ -257,6 +258,7 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj.__root__, list)
         self.assertEqual(storage_obj.__root__[0][1].R, '1')  # type: ignore
 
+    # FIXME: value is not a valid list (type=type_error.list)
     def test_asdf(self) -> None:
         with open(join(dirname(__file__), 'asdf.json')) as f:
             operations_json = json.load(f)

@@ -41,17 +41,12 @@ def _is_array(storage_type: Type) -> bool:
 
 
 @lru_cache(None)
-def _extract_field_type(field: Type) -> Type:
-    """Get type of nested field keeping in mind Pydantic special cases"""
-    return field.type_
-
-
-@lru_cache(None)
 def _extract_bigmap_list_type(storage_type: Type[Any]) -> Optional[Type[Any]]:
-    try:
-        return _extract_field_type(storage_type.__fields__['__root__'])
-    except IntrospectionError:
-        return None
+    with suppress(*IntrospectionError):
+        return storage_type.__fields__['__root__'].type_  # type: ignore
+    with suppress(*IntrospectionError):
+        return get_args(storage_type)[0]
+    return None
 
 
 def _preprocess_bigmap_diffs(diffs: Iterable[Dict[str, Any]]) -> Dict[int, Iterable[Dict[str, Any]]]:
@@ -107,6 +102,8 @@ def _process_storage(
     elif isinstance(storage, dict):
 
         for key, value in storage.items():
+            # FIXME: Union[Model, Model]
+
             # NOTE: Typeclass was modified, field is missing.
             try:
                 field = storage_type.__fields__[key]
@@ -117,7 +114,7 @@ def _process_storage(
             if field.alias:
                 key = field.alias
 
-            field_type = _extract_field_type(field)
+            field_type = field.type_  # type: ignore
             storage[key] = _process_storage(value, field_type, bigmap_diffs)
 
     else:
