@@ -41,12 +41,15 @@ def _is_array(storage_type: Type) -> bool:
 
 
 @lru_cache(None)
-def _extract_bigmap_list_type(storage_type: Type[Any]) -> Optional[Type[Any]]:
+def _extract_list_types(storage_type: Type[Any]) -> Iterable[Type[Any]]:
     with suppress(*IntrospectionError):
-        return storage_type.__fields__['__root__'].type_  # type: ignore
+        return (storage_type.__fields__['__root__'].type_,)  # type: ignore
     with suppress(*IntrospectionError):
-        return get_args(storage_type)[0]
-    return None
+        nested_type = get_args(storage_type)[0]
+        if get_origin(nested_type) == Union:
+            return get_args(nested_type)
+        return (nested_type,)
+    return ()
 
 
 def _preprocess_bigmap_diffs(diffs: Iterable[Dict[str, Any]]) -> Dict[int, Iterable[Dict[str, Any]]]:
@@ -93,10 +96,10 @@ def _process_storage(
 
     # NOTE: List of something, apply diffs recursively if needed
     elif isinstance(storage, list):
-        bigmap_list_type = _extract_bigmap_list_type(storage_type)
-        if bigmap_list_type is not None:
-            for i, _ in enumerate(storage):
-                storage[i] = _process_storage(storage[i], bigmap_list_type, bigmap_diffs)
+        for nested_type in _extract_list_types(storage_type):
+            with suppress(*IntrospectionError):
+                for i, _ in enumerate(storage):
+                    storage[i] = _process_storage(storage[i], nested_type, bigmap_diffs)
 
     # NOTE: Regular dict, possibly nested: fire up introspection magic
     elif isinstance(storage, dict):
