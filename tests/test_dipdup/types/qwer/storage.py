@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Union
 
 from pydantic import BaseModel
@@ -23,7 +22,7 @@ class QwerStorageItem1(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    R: Optional[Union[int, Dict[str, str]]] = {}
+    R: Union[int, Dict[str, str]]
 
 
 class QwerStorage(BaseModel):

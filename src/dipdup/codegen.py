@@ -289,7 +289,6 @@ class DipDupCodeGenerator:
                     '--class-name',
                     name.lstrip('_'),
                     '--disable-timestamp',
-                    '--use-default',
                 ]
                 self._logger.debug(' '.join(args))
                 subprocess.run(args, check=True)
