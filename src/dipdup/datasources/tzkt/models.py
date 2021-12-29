@@ -19,6 +19,10 @@ from dipdup.models import StorageType
 IntrospectionError = (KeyError, IndexError, AttributeError)
 
 
+def _get_root_type(storage_type: Type) -> Type:
+    return storage_type.__fields__['__root__'].type_
+
+
 @lru_cache(None)
 def _is_array(storage_type: Type) -> bool:
     """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
@@ -34,20 +38,26 @@ def _is_array(storage_type: Type) -> bool:
 
     # NOTE: Pydantic array
     try:
-        return get_origin(get_args(getattr(fields.get('__root__'), 'type_', None))[1]) == list
+        root_type = _get_root_type(storage_type)
+        return get_origin(get_args(root_type)[1]) == list
     except IntrospectionError:
         return False
 
 
 @lru_cache(None)
 def _extract_list_types(storage_type: Type[Any]) -> Iterable[Type[Any]]:
+    # NOTE: Pydantic model with list root
     with suppress(*IntrospectionError):
-        return (storage_type.__fields__['__root__'].type_,)  # type: ignore
+        return (_get_root_type(storage_type),)  # type: ignore
+
+    # NOTE: Python list
     with suppress(*IntrospectionError):
         nested_type = get_args(storage_type)[0]
         if get_origin(nested_type) == Union:
             return get_args(nested_type)
         return (nested_type,)
+
+    # NOTE: Something else
     return ()
 
 
@@ -99,7 +109,6 @@ def _process_storage(
             for nested_type in _extract_list_types(storage_type):
                 with suppress(*IntrospectionError):
                     storage[i] = _process_storage(storage[i], nested_type, bigmap_diffs)
-                    break
 
     # NOTE: Regular dict, possibly nested: fire up introspection magic
     elif isinstance(storage, dict):
