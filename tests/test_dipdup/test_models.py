@@ -298,8 +298,8 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, ZxcvStorage)
         self.assertIsInstance(storage_obj.big_map, dict)
-        self.assertEqual(storage_obj.big_map['111'].L, '222')
-        self.assertEqual(storage_obj.map['happy'].R, 'new year')
-        self.assertEqual(storage_obj.map['merry'].L, 'christmas')
-        self.assertEqual(storage_obj.or_.R, '42')
+        self.assertEqual(storage_obj.big_map['111'].L, '222')  # type: ignore
+        self.assertEqual(storage_obj.map['happy'].R, 'new year')  # type: ignore
+        self.assertEqual(storage_obj.map['merry'].L, 'christmas')  # type: ignore
+        self.assertEqual(storage_obj.or_.R, '42')  # type: ignore
         self.assertEqual(storage_obj.unit, {})
