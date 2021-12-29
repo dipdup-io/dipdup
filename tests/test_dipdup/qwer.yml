@@ -12,7 +12,7 @@ datasources:
     url: https://api.tzkt.io
 
 indexes:
-  qwer_holders_mainnet:
+  qwer:
     kind: operation
     datasource: tzkt
     contracts:

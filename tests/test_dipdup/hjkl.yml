@@ -12,7 +12,7 @@ datasources:
     url: https://api.tzkt.io
 
 indexes:
-  hjkl_holders_mainnet:
+  hjkl:
     kind: operation
     datasource: tzkt
     contracts:

@@ -19,6 +19,7 @@ from tests.test_dipdup.types.ftzfun.storage import FtzFunStorage
 from tests.test_dipdup.types.hjkl.storage import HjklStorage
 from tests.test_dipdup.types.listofmaps.storage import ListOfMapsStorage
 from tests.test_dipdup.types.qwer.storage import QwerStorage
+from tests.test_dipdup.types.rewq.storage import RewqStorage
 from tests.test_dipdup.types.tezotop.storage import ResourceCollectorStorage
 from tests.test_dipdup.types.zxcv.storage import ZxcvStorage
 
@@ -303,3 +304,17 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.map['merry'].L, 'christmas')  # type: ignore
         self.assertEqual(storage_obj.or_.R, '42')  # type: ignore
         self.assertEqual(storage_obj.unit, {})
+
+    def test_rewq(self) -> None:
+        with open(join(dirname(__file__), 'rewq.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], RewqStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, RewqStorage)
+        self.assertIsInstance(storage_obj.map, dict)
+        self.assertIsInstance(storage_obj.map['try'].L, dict)
+        self.assertIsInstance(storage_obj.or_.L, dict)

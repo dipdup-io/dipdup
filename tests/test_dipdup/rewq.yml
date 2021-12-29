@@ -1,10 +1,10 @@
 spec_version: 1.2
-package: zxcv
+package: rewq
 
 contracts:
-  zxcv:
-    address: KT1M2tyRxLyD5svocpnzaKeDM3uUvFRTmkN3
-    typename: zxcv
+  rewq:
+    address: KT1T8Xvopnfr9n2jMV6wJHPBkB7VFi3rXAY9
+    typename: rewq
 
 datasources:
   tzkt:
@@ -12,13 +12,13 @@ datasources:
     url: https://api.hangzhou2net.tzkt.io
 
 indexes:
-  zxcv:
+  rewq:
     kind: operation
     datasource: tzkt
     contracts:
-      - zxcv
+      - rewq
     handlers:
       - callback: on_default
         pattern:
-          - destination: zxcv
+          - destination: rewq
             entrypoint: default
