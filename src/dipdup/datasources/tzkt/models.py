@@ -40,7 +40,7 @@ def _is_array(storage_type: Type) -> bool:
     # NOTE: Pydantic array
     try:
         root_type = _get_root_type(storage_type)
-        return get_origin(get_args(root_type)[1]) == list
+        return _is_array(root_type)  # type: ignore
     except IntrospectionError:
         return False
 
