@@ -20,6 +20,7 @@ from tests.test_dipdup.types.hjkl.storage import HjklStorage
 from tests.test_dipdup.types.listofmaps.storage import ListOfMapsStorage
 from tests.test_dipdup.types.qwer.storage import QwerStorage
 from tests.test_dipdup.types.tezotop.storage import ResourceCollectorStorage
+from tests.test_dipdup.types.zxcv.storage import ZxcvStorage
 
 
 def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> OperationData:
@@ -285,3 +286,20 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj.__root__, list)
         self.assertIsInstance(storage_obj.__root__[0].value.mr, dict)  # type: ignore
         self.assertEqual(storage_obj.__root__[0].value.mr['111'], True)  # type: ignore
+
+    def test_zxcv(self) -> None:
+        with open(join(dirname(__file__), 'zxcv.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], ZxcvStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, ZxcvStorage)
+        self.assertIsInstance(storage_obj.big_map, dict)
+        self.assertEqual(storage_obj.big_map['111'].L, '222')
+        self.assertEqual(storage_obj.map['happy'].R, 'new year')
+        self.assertEqual(storage_obj.map['merry'].L, 'christmas')
+        self.assertEqual(storage_obj.or_.R, '42')
+        self.assertEqual(storage_obj.unit, {})

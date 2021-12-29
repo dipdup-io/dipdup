@@ -64,6 +64,8 @@ _templates: Dict[str, Template] = {}
 def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
     """Preprocess bigmaps in JSONSchema. Those are unions as could be pointers.
     We resolve bigmaps from diffs so no need to include int in type signature."""
+    if not isinstance(schema, dict):
+        return schema
     if 'properties' in schema:
         return {
             **schema,
