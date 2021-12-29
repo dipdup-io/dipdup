@@ -6,10 +6,10 @@ from __future__ import annotations
 from typing import Any
 from typing import Dict
 from typing import List
-from typing import Optional
 
 from pydantic import BaseModel
 from pydantic import Extra
+
 
 class Key(BaseModel):
     class Config:
@@ -18,7 +18,6 @@ class Key(BaseModel):
     address_0: str
     address_1: str
     nat: str
-
 
 
 class Operator(BaseModel):

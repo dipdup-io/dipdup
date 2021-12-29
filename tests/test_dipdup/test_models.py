@@ -13,13 +13,13 @@ from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
-from tests.test_dipdup.types.ftzfun.storage import FtzFunStorage
-from tests.test_dipdup.types.tezotop.storage import ResourceCollectorStorage
 from tests.test_dipdup.types.asdf.storage import AsdfStorage
 from tests.test_dipdup.types.bazaar.storage import BazaarMarketPlaceStorage
+from tests.test_dipdup.types.ftzfun.storage import FtzFunStorage
 from tests.test_dipdup.types.hjkl.storage import HjklStorage
 from tests.test_dipdup.types.listofmaps.storage import ListOfMapsStorage
 from tests.test_dipdup.types.qwer.storage import QwerStorage
+from tests.test_dipdup.types.tezotop.storage import ResourceCollectorStorage
 
 
 def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> OperationData:
@@ -244,7 +244,6 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.assets.operators[0].key.address_0, 'tz1fMia93yL7vndY2fZ5rGAQPgex7RQHXV1m')  # type: ignore
         self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore
 
-    # FIXME: Bigmap id in R not resolved
     def test_qwer(self) -> None:
         with open(join(dirname(__file__), 'qwer.json')) as f:
             operations_json = json.load(f)

@@ -5,7 +5,6 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
-from typing import Optional
 from typing import Type
 from typing import Union
 
@@ -96,10 +95,11 @@ def _process_storage(
 
     # NOTE: List of something, apply diffs recursively if needed
     elif isinstance(storage, list):
-        for nested_type in _extract_list_types(storage_type):
-            with suppress(*IntrospectionError):
-                for i, _ in enumerate(storage):
+        for i, _ in enumerate(storage):
+            for nested_type in _extract_list_types(storage_type):
+                with suppress(*IntrospectionError):
                     storage[i] = _process_storage(storage[i], nested_type, bigmap_diffs)
+                    break
 
     # NOTE: Regular dict, possibly nested: fire up introspection magic
     elif isinstance(storage, dict):

@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -35,4 +34,3 @@ class ResourceCollectorStorage(BaseModel):
     resource_map: Dict[str, ResourceMap]
     resource_registry: str
     tezotop_collection: Dict[str, str]
-
