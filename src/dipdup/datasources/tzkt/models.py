@@ -7,6 +7,7 @@ from typing import Iterable
 from typing import List
 from typing import Type
 from typing import Union
+from typing import cast
 
 from pydantic.error_wrappers import ValidationError
 from typing_extensions import get_args
@@ -48,7 +49,7 @@ def _is_array(storage_type: Type) -> bool:
 def _extract_list_types(storage_type: Type[Any]) -> Iterable[Type[Any]]:
     # NOTE: Pydantic model with list root
     with suppress(*IntrospectionError):
-        return (_get_root_type(storage_type),)  # type: ignore
+        return (_get_root_type(storage_type),)
 
     # NOTE: Python list
     with suppress(*IntrospectionError):
@@ -81,14 +82,14 @@ def _apply_bigmap_diffs(
     for diff in bigmap_diffs.get(bigmap_id, ()):
         bigmap_key, bigmap_value = diff['content']['key'], diff['content']['value']
         if is_array:
-            storage.append(  # type: ignore
+            cast(list, storage).append(
                 {
                     'key': bigmap_key,
                     'value': bigmap_value,
                 }
             )
         else:
-            storage[bigmap_key] = bigmap_value  # type: ignore
+            storage[bigmap_key] = bigmap_value
 
     return storage
 
@@ -100,7 +101,7 @@ def _process_storage(
 ) -> Any:
     # NOTE: Bigmap pointer, apply diffs
     if isinstance(storage, int) and storage_type not in (int, bool):
-        is_array = _is_array(storage_type)  # type: ignore
+        is_array = _is_array(storage_type)
         storage = _apply_bigmap_diffs(storage, bigmap_diffs, is_array)
 
     # NOTE: List of something, apply diffs recursively if needed
@@ -126,7 +127,7 @@ def _process_storage(
             if field.alias:
                 key = field.alias
 
-            field_type = field.type_  # type: ignore
+            field_type = field.type_
             storage[key] = _process_storage(value, field_type, bigmap_diffs)
 
     else:
