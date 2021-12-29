@@ -61,13 +61,23 @@ DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
 _templates: Dict[str, Template] = {}
 
 
-def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
+def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
     """Preprocess bigmaps in JSONSchema. Those are unions as could be pointers.
     We resolve bigmaps from diffs so no need to include int in type signature."""
     if 'properties' in schema:
         return {
             **schema,
-            'properties': {prop: resolve_big_maps(sub_schema) for prop, sub_schema in schema['properties'].items()},
+            'properties': {prop: preprocess_storage_jsonschema(sub_schema) for prop, sub_schema in schema['properties'].items()},
+        }
+    elif 'items' in schema:
+        return {
+            **schema,
+            'items': preprocess_storage_jsonschema(schema['items']),
+        }
+    elif 'additionalProperties' in schema:
+        return {
+            **schema,
+            'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
     elif schema.get('$comment') == 'big_map':
         return schema['oneOf'][1]
@@ -165,8 +175,8 @@ class DipDupCodeGenerator:
                         mkdir_p(contract_schemas_path)
 
                         storage_schema_path = join(contract_schemas_path, 'storage.json')
+                        storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
 
-                        storage_schema = resolve_big_maps(contract_schemas['storageSchema'])
                         write(storage_schema_path, json.dumps(storage_schema, indent=4, sort_keys=True))
 
                         if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):

@@ -43,16 +43,6 @@ def _is_array(storage_type: Type) -> bool:
 @lru_cache(None)
 def _extract_field_type(field: Type) -> Type:
     """Get type of nested field keeping in mind Pydantic special cases"""
-    if field.type_ == field.outer_type_:
-        return field.type_
-
-    # NOTE: `BaseModel.type_` returns incorrect value when annotation is Dict[str, bool], Dict[str, BaseModel], and possibly in some other cases.
-    if field.type_ == bool:
-        return field.outer_type_
-    with suppress(*IntrospectionError):
-        get_args(field.outer_type_)[1].__fields__
-        return field.outer_type_
-
     return field.type_
 
 
