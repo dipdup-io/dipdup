@@ -3,7 +3,8 @@ from contextlib import suppress
 from os.path import dirname
 from os.path import join
 from shutil import rmtree
-from unittest import IsolatedAsyncioTestCase, skip
+from unittest import IsolatedAsyncioTestCase
+from unittest import skip
 
 from dipdup import __version__
 from dipdup.config import DipDupConfig

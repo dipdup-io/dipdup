@@ -1,7 +1,8 @@
 from contextlib import AsyncExitStack
 from os.path import dirname
 from os.path import join
-from unittest import IsolatedAsyncioTestCase, skip
+from unittest import IsolatedAsyncioTestCase
+from unittest import skip
 from unittest.mock import MagicMock
 
 from testcontainers.core.generic import DbContainer  # type: ignore
