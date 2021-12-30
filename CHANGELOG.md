@@ -6,8 +6,15 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## Fixed
 
+* codegen: Fixed generating storage typeclasses with `Union` fields.
+* codegen: Fixed preprocessing contract JSONSchema.
 * index: Fixed processing reindexing reason saved in the database.
 * tzkt: Fixed processing operations with default entrypoint and empty parameter.
+* tzkt: Fixed crash while recursively applying bigmap diffs to the storage.
+
+## Performance
+
+* tzkt: Increased speed of applying bigmap diffs to operation storage.
 
 ## 4.0.0 - 2021-12-24
 

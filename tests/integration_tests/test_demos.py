@@ -5,6 +5,7 @@ from os.path import dirname
 from os.path import join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
+from unittest import skip
 
 from tortoise.transactions import in_transaction
 
@@ -16,6 +17,7 @@ import demo_tzcolors.models
 from dipdup.utils.database import tortoise_wrapper
 
 
+@skip('FIXME: GitHub')
 class DemosTest(IsolatedAsyncioTestCase):
     # TODO: store cache in xdg_cache_home, keep databases and logs after last run
     def setUp(self):
@@ -77,6 +79,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(14, auctions)
             self.assertEqual(44, bids)
 
+    @skip('edonet is dead')
     async def test_tezos_domains(self):
         self.run_dipdup('tezos_domains.yml')
 
@@ -87,6 +90,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(5, tlds)
             self.assertEqual(237, domains)
 
+    @skip('edonet is dead')
     async def test_tezos_domains_big_map(self):
         self.run_dipdup('tezos_domains_big_map.yml')
 
