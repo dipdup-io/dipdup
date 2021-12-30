@@ -194,17 +194,17 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "attrs"
-version = "21.2.0"
+version = "21.4.0"
 description = "Classes Without Boilerplate"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.extras]
-dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit"]
+dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit", "cloudpickle"]
 docs = ["furo", "sphinx", "zope.interface", "sphinx-notfound-page"]
-tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface"]
-tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
+tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "cloudpickle"]
+tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "cloudpickle"]
 
 [[package]]
 name = "backcall"
@@ -1082,7 +1082,7 @@ test = ["pytest", "coverage", "requests", "nbval", "selenium", "pytest-cov", "re
 
 [[package]]
 name = "openapi-schema-validator"
-version = "0.1.5"
+version = "0.1.6"
 description = "OpenAPI schema validation for Python"
 category = "main"
 optional = false
@@ -1352,7 +1352,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "pyhumps"
-version = "3.0.2"
+version = "3.5.0"
 description = "🐫  Convert strings (and dictionary keys) between snake case, camel case and pascal case in Python. Inspired by Humps for Node"
 category = "main"
 optional = false
@@ -1914,7 +1914,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-tabulate"
-version = "0.8.3"
+version = "0.8.4"
 description = "Typing stubs for tabulate"
 category = "dev"
 optional = false
@@ -1933,7 +1933,7 @@ name = "typing-inspect"
 version = "0.6.0"
 description = "Runtime inspection utilities for typing module."
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -2041,7 +2041,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "9ed97a8f750a80cc47f48220078786991574b0f178fa9bd830fecee2995bd0ba"
+content-hash = "5073981013fcc6f440d926561aeb1a316de8cf5cf0ebc667c766394cdd9f5f6c"
 
 [metadata.files]
 aiohttp = [
@@ -2204,8 +2204,8 @@ atomicwrites = [
     {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
 ]
 attrs = [
-    {file = "attrs-21.2.0-py2.py3-none-any.whl", hash = "sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1"},
-    {file = "attrs-21.2.0.tar.gz", hash = "sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb"},
+    {file = "attrs-21.4.0-py2.py3-none-any.whl", hash = "sha256:2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4"},
+    {file = "attrs-21.4.0.tar.gz", hash = "sha256:626ba8234211db98e869df76230a137c4c40a12d72445c45d5f5b716f076e2fd"},
 ]
 backcall = [
     {file = "backcall-0.2.0-py2.py3-none-any.whl", hash = "sha256:fbbce6a29f263178a1f7915c1940bde0ec2b2a967566fe1c65c1dfb7422bd255"},
@@ -2846,9 +2846,9 @@ notebook = [
     {file = "notebook-6.4.6.tar.gz", hash = "sha256:7bcdf79bd1cda534735bd9830d2cbedab4ee34d8fe1df6e7b946b3aab0902ba3"},
 ]
 openapi-schema-validator = [
-    {file = "openapi-schema-validator-0.1.5.tar.gz", hash = "sha256:a4b2712020284cee880b4c55faa513fbc2f8f07f365deda6098f8ab943c9f0df"},
-    {file = "openapi_schema_validator-0.1.5-py2-none-any.whl", hash = "sha256:215b516d0942f4e8e2446cf3f7d4ff2ed71d102ebddcc30526d8a3f706ab1df6"},
-    {file = "openapi_schema_validator-0.1.5-py3-none-any.whl", hash = "sha256:b65d6c2242620bfe76d4c749b61cd9657e4528895a8f4fb6f916085b508ebd24"},
+    {file = "openapi-schema-validator-0.1.6.tar.gz", hash = "sha256:230db361c71a5b08b25ec926797ac8b59a8f499bbd7316bd15b6cd0fc9aea5df"},
+    {file = "openapi_schema_validator-0.1.6-py2-none-any.whl", hash = "sha256:8ef097b78c191c89d9a12cdf3d311b2ecf9d3b80bbe8610dbc67a812205a6a8d"},
+    {file = "openapi_schema_validator-0.1.6-py3-none-any.whl", hash = "sha256:af023ae0d16372cf8dd0d128c9f3eaa080dc3cd5dfc69e6a247579f25bd10503"},
 ]
 openapi-spec-validator = [
     {file = "openapi-spec-validator-0.3.1.tar.gz", hash = "sha256:3d70e6592754799f7e77a45b98c6a91706bdd309a425169d17d8e92173e198a2"},
@@ -2989,8 +2989,8 @@ pygments = [
     {file = "Pygments-2.10.0.tar.gz", hash = "sha256:f398865f7eb6874156579fdf36bc840a03cab64d1cde9e93d68f46a425ec52c6"},
 ]
 pyhumps = [
-    {file = "pyhumps-3.0.2-py3-none-any.whl", hash = "sha256:367b1aadcaa64f8196a3cd14f56559a5602950aeb8486f49318e7394f5e18052"},
-    {file = "pyhumps-3.0.2.tar.gz", hash = "sha256:042b4b6eec6c1f862f8310c0eebbae19293e9edab8cafb030ff78c890ef1aa34"},
+    {file = "pyhumps-3.5.0-py3-none-any.whl", hash = "sha256:2433eef13d1c258227a0bd5de9660ba17dd6a307e1255d2d20ec9287f8626d96"},
+    {file = "pyhumps-3.5.0.tar.gz", hash = "sha256:55e37f16846eaab26057200924cbdadd2152bf0a5d49175a42358464fa881c73"},
 ]
 pyparsing = [
     {file = "pyparsing-3.0.6-py3-none-any.whl", hash = "sha256:04ff808a5b90911829c55c4e26f75fa5ca8a2f5f36aa3a51f68e27033341d3e4"},
@@ -3494,8 +3494,8 @@ types-pytz = [
     {file = "types_pytz-2021.3.3-py3-none-any.whl", hash = "sha256:75859c64c9a97d68259af6da208e8f5aaf4be4536e4d431a82a6e8b848fc183d"},
 ]
 types-tabulate = [
-    {file = "types-tabulate-0.8.3.tar.gz", hash = "sha256:7c28ca3b35f13eedefdc2cddc0b73e4b3e67b353174d9294a0687c558d1d1d85"},
-    {file = "types_tabulate-0.8.3-py3-none-any.whl", hash = "sha256:f815bdcaa227777517edea91dcac85effe03f58dd350c7e19b8019f4fb14dacc"},
+    {file = "types-tabulate-0.8.4.tar.gz", hash = "sha256:0468fe4207e2924ebe8e2acd877c433185283b8dbcb91a1dcd414e2a8561ba04"},
+    {file = "types_tabulate-0.8.4-py3-none-any.whl", hash = "sha256:80fe86a06ae95825a98447cff8aefe30c6249cf8f1052abb07f2c269bd8c0db3"},
 ]
 typing-extensions = [
     {file = "typing_extensions-3.10.0.2-py2-none-any.whl", hash = "sha256:d8226d10bc02a29bcc81df19a26e56a9647f8b0a6d4a83924139f4a8b01f17b7"},

@@ -13,9 +13,15 @@ from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
-from tests.test_dipdup.models import ResourceCollectorStorage
-from tests.test_dipdup.types import BazaarMarketPlaceStorage
-from tests.test_dipdup.types import ListOfMapsStorage
+from tests.test_dipdup.types.asdf.storage import AsdfStorage
+from tests.test_dipdup.types.bazaar.storage import BazaarMarketPlaceStorage
+from tests.test_dipdup.types.ftzfun.storage import FtzFunStorage
+from tests.test_dipdup.types.hjkl.storage import HjklStorage
+from tests.test_dipdup.types.listofmaps.storage import ListOfMapsStorage
+from tests.test_dipdup.types.qwer.storage import QwerStorage
+from tests.test_dipdup.types.rewq.storage import RewqStorage
+from tests.test_dipdup.types.tezotop.storage import ResourceCollectorStorage
+from tests.test_dipdup.types.zxcv.storage import ZxcvStorage
 
 
 def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> OperationData:
@@ -224,3 +230,93 @@ class ModelsTest(TestCase):
         self.assertEqual({}, operations[0].parameter_json)
         self.assertEqual('deposit', operations[1].entrypoint)
         self.assertNotEqual({}, operations[1].parameter_json)
+
+    def test_deserialize_storage_dict_key(self) -> None:
+        # Arrange
+        with open(join(dirname(__file__), 'ftzfun.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], FtzFunStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, FtzFunStorage)
+        self.assertIsInstance(storage_obj.assets.operators, list)
+        self.assertEqual(storage_obj.assets.operators[0].key.address_0, 'tz1fMia93yL7vndY2fZ5rGAQPgex7RQHXV1m')  # type: ignore
+        self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore
+
+    def test_qwer(self) -> None:
+        with open(join(dirname(__file__), 'qwer.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], QwerStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, QwerStorage)
+        self.assertIsInstance(storage_obj.__root__, list)
+        self.assertEqual(storage_obj.__root__[0][1].R['1'], '1')  # type: ignore
+        self.assertEqual(storage_obj.__root__[0][1].R['2'], '2')  # type: ignore
+
+    # FIXME: value is not a valid list (type=type_error.list)
+    def test_asdf(self) -> None:
+        with open(join(dirname(__file__), 'asdf.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], AsdfStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, AsdfStorage)
+        self.assertIsInstance(storage_obj.__root__, list)
+        self.assertIsInstance(storage_obj.__root__[0]['pupa'], list)  # type: ignore
+
+    def test_hjkl(self) -> None:
+        with open(join(dirname(__file__), 'hjkl.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], HjklStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, HjklStorage)
+        self.assertIsInstance(storage_obj.__root__, list)
+        self.assertIsInstance(storage_obj.__root__[0].value.mr, dict)  # type: ignore
+        self.assertEqual(storage_obj.__root__[0].value.mr['111'], True)  # type: ignore
+
+    def test_zxcv(self) -> None:
+        with open(join(dirname(__file__), 'zxcv.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], ZxcvStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, ZxcvStorage)
+        self.assertIsInstance(storage_obj.big_map, dict)
+        self.assertEqual(storage_obj.big_map['111'].L, '222')  # type: ignore
+        self.assertEqual(storage_obj.map['happy'].R, 'new year')  # type: ignore
+        self.assertEqual(storage_obj.map['merry'].L, 'christmas')  # type: ignore
+        self.assertEqual(storage_obj.or_.R, '42')  # type: ignore
+        self.assertEqual(storage_obj.unit, {})
+
+    def test_rewq(self) -> None:
+        with open(join(dirname(__file__), 'rewq.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], RewqStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, RewqStorage)
+        self.assertIsInstance(storage_obj.map, dict)
+        self.assertIsInstance(storage_obj.map['try'].L, dict)  # type: ignore
+        self.assertEqual(storage_obj.map['try'].L['111'], '222')  # type: ignore
+        self.assertIsInstance(storage_obj.or_.L, dict)  # type: ignore
+        self.assertEqual(storage_obj.or_.L['333'], '444')  # type: ignore
