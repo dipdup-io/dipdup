@@ -458,13 +458,14 @@ class DipDupCodeGenerator:
 
     async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
         subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
-        sql_path = join(self._config.package_path, 'sql')
 
+        original_callback = callback_config.callback
         subpackages = callback_config.callback.split('.')
         subpackages, callback = subpackages[:-1], subpackages[-1]
-        subpackage_path = join(subpackage_path, *subpackages[:-1])
-        if not exists(subpackage_path):
-            mkdir_p(subpackage_path)
+        subpackage_path = join(subpackage_path, *subpackages)
+
+        init_path = join(subpackage_path, '__init__.py')
+        touch(init_path)
 
         callback_path = join(subpackage_path, f'{callback}.py')
         if not exists(callback_path):
@@ -476,7 +477,7 @@ class DipDupCodeGenerator:
 
             code: List[str] = []
             if sql:
-                code.append(f"await ctx.execute_sql('{callback}')")
+                code.append(f"await ctx.execute_sql('{original_callback}')")
                 if callback == 'on_rollback':
                     imports.add('from dipdup.enums import ReindexingReason')
                     code.append('await ctx.reindex(ReindexingReason.ROLLBACK)')
@@ -493,4 +494,5 @@ class DipDupCodeGenerator:
 
         if sql:
             # NOTE: Preserve the same structure as in `handlers`
-            touch(sql_path, *subpackages, callback, '.keep'))
+            sql_path = join(self._config.package_path, 'sql', *subpackages, callback, '.keep')
+            touch(sql_path)
