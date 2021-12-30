@@ -56,12 +56,29 @@ def _extract_list_types(storage_type: Type[Any]) -> Iterable[Type[Any]]:
 
     # NOTE: Python list
     with suppress(*IntrospectionError):
-        nested_type = get_args(storage_type)[0]
-        if get_origin(nested_type) == Union:
-            return get_args(nested_type)
-        return (nested_type,)
+        item_type = get_args(storage_type)[0]
+        if get_origin(item_type) == Union:
+            return get_args(item_type)
+        return (item_type,)
 
     # NOTE: Something else
+    return ()
+
+
+@lru_cache(None)
+def _extract_dict_types(storage_type: Type[Any], key: str) -> Iterable[Type[Any]]:
+    if get_origin(storage_type) == dict:
+        return (get_args(storage_type)[1],)
+
+    if get_origin(storage_type) == Union:
+        return get_args(storage_type)
+
+    with suppress(*IntrospectionError):
+        fields = storage_type.__fields__
+        for field in fields.values():
+            if key in (field.name, field.alias):
+                return (field.type_,)
+
     return ()
 
 
@@ -110,31 +127,17 @@ def _process_storage(
     # NOTE: List of something, apply diffs recursively if needed
     elif isinstance(storage, list):
         for i, _ in enumerate(storage):
-            for nested_type in _extract_list_types(storage_type):
+            for item_type in _extract_list_types(storage_type):
                 with suppress(*IntrospectionError):
-                    storage[i] = _process_storage(storage[i], nested_type, bigmap_diffs)
+                    storage[i] = _process_storage(storage[i], item_type, bigmap_diffs)
 
     # NOTE: Regular dict, possibly nested: fire up introspection magic
     elif isinstance(storage, dict):
 
         for key, value in storage.items():
-            if get_origin(storage_type) == dict:
-                value_type = get_args(storage_type)[1]
-
-            else:
-                # NOTE: Typeclass was modified, field is missing.
-                try:
-                    field = storage_type.__fields__[key]
-                except (KeyError, AttributeError):
-                    continue
-
-                # NOTE: Use field alias when present
-                if field.alias:
-                    key = field.alias
-
-                value_type = field.type_
-
-            storage[key] = _process_storage(value, value_type, bigmap_diffs)
+            for value_type in _extract_dict_types(storage_type, key):
+                with suppress(*IntrospectionError):
+                    storage[key] = _process_storage(value, value_type, bigmap_diffs)
 
     else:
         pass

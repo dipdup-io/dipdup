@@ -316,5 +316,7 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, RewqStorage)
         self.assertIsInstance(storage_obj.map, dict)
-        self.assertIsInstance(storage_obj.map['try'].L, dict)
-        self.assertIsInstance(storage_obj.or_.L, dict)
+        self.assertIsInstance(storage_obj.map['try'].L, dict)  # type: ignore
+        self.assertEqual(storage_obj.map['try'].L['111'], '222')  # type: ignore
+        self.assertIsInstance(storage_obj.or_.L, dict)  # type: ignore
+        self.assertEqual(storage_obj.or_.L['333'], '444')  # type: ignore

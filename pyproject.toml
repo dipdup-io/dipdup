@@ -40,7 +40,7 @@ sentry-sdk = "^1.1.0"
 sqlparse = "^0.4.1"
 tabulate = "^0.8.9"
 tortoise-orm = "0.17.8"
-typing-inspect = "^0.7.1"
+typing-inspect = "^0.6.0"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
