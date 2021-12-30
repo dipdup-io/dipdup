@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+## Added
+
+* config: Callbacks of handlers and hooks are considered nested packages if their name contains dots.
+
 ## 4.0.1 - 2021-12-30
 
 ## Fixed
