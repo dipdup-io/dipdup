@@ -29,7 +29,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             [
                 'dipdup',
                 '-l',
-                'logging.yml',
+                'warning.yml',
                 '-c',
                 join(dirname(__file__), config),
                 'run',

@@ -16,7 +16,7 @@ datasources:
     url: https://api.tzkt.io
 
 indexes:
-  tzbtc:
+  tzbtc_holders_mainnet:
     kind: operation
     datasource: tzkt
     contracts:
