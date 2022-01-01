@@ -9,6 +9,7 @@ from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
+import time
 from typing import Awaitable
 from typing import Deque
 from typing import Dict
@@ -238,6 +239,7 @@ class IndexDispatcher:
                 ),
             )
         )
+        metrics.datasource_head_updated.labels(datasource=datasource.name).set(time.time())
         for index in self._indexes.values():
             if isinstance(index, HeadIndex) and index.datasource == datasource:
                 index.push_head(head)
