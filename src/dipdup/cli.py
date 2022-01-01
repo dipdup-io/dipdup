@@ -52,6 +52,8 @@ from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
+from prometheus_client import start_http_server
+
 _logger = logging.getLogger('dipdup.cli')
 
 
@@ -192,6 +194,8 @@ async def run(
     config.advanced.postpone_jobs |= postpone_jobs
     config.advanced.early_realtime |= early_realtime
     config.advanced.merge_subscriptions |= merge_subscriptions
+
+    start_http_server(config.prometheus.port, config.prometheus.host)
 
     set_decimal_context(config.package)
 

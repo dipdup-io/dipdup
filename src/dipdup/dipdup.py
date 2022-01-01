@@ -69,7 +69,7 @@ from dipdup.utils.database import prepare_models
 from dipdup.utils.database import set_schema
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import validate_models
-
+import dipdup.prometheus as metrics
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
@@ -110,6 +110,7 @@ class IndexDispatcher:
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
+            metrics.active_indexes.set(len(self._indexes))
             tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
             while self._tasks:
                 tasks.append(self._tasks.popleft())
