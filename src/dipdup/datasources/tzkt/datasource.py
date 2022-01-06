@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from asyncio import Event
 from asyncio import create_task
 from asyncio import gather
@@ -24,6 +25,7 @@ from typing import cast
 
 from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
+from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage  # type: ignore
 from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 
@@ -594,7 +596,19 @@ class TzktDatasource(IndexDatasource):
 
     async def run(self) -> None:
         self._logger.info('Establishing realtime connection')
-        tasks = [create_task(self._get_ws_client().run())]
+        ws = self._get_ws_client()
+
+        async def _wrapper():
+            retry_sleep = self._http_config.retry_sleep
+            for _ in range(self._http_config.retry_count or sys.maxsize):
+                try:
+                    await ws.run()
+                except WebsocketConnectionError as e:
+                    self._logger.error('Websocket connection error: %s', e)
+                    await asyncio.sleep(retry_sleep)
+                    retry_sleep *= self._http_config.retry_multiplier
+
+        tasks = [create_task(_wrapper())]
 
         if self._watchdog:
             tasks.append(create_task(self._watchdog.run()))

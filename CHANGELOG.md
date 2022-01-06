@@ -4,17 +4,18 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## [unreleased]
 
-## Added
+### Added
 
 * tzkt: Added optional `delegate_address` and `delegate_alias` fields to `OperationData`.
 
-## Fixed
+### Fixed
 
-* tzkt: Fixed incorrect parsing of `OperationData.amount` field.
+* tzkt: Fixed crash due to unprocessed pysignalr exception.
+* tzkt: Fixed parsing `OperationData.amount` field.
 
 ## 4.0.1 - 2021-12-30
 
-## Fixed
+### Fixed
 
 * codegen: Fixed generating storage typeclasses with `Union` fields.
 * codegen: Fixed preprocessing contract JSONSchema.
@@ -22,7 +23,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * tzkt: Fixed processing operations with default entrypoint and empty parameter.
 * tzkt: Fixed crash while recursively applying bigmap diffs to the storage.
 
-## Performance
+### Performance
 
 * tzkt: Increased speed of applying bigmap diffs to operation storage.
 
