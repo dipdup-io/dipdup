@@ -18,6 +18,7 @@ import asyncclick as click
 import sentry_sdk
 from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
+from prometheus_client import start_http_server  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from tabulate import tabulate
@@ -51,8 +52,6 @@ from dipdup.utils import iter_files
 from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
-
-from prometheus_client import start_http_server
 
 _logger = logging.getLogger('dipdup.cli')
 

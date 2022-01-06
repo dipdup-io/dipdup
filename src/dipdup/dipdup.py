@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
@@ -9,7 +10,6 @@ from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
-import time
 from typing import Awaitable
 from typing import Deque
 from typing import Dict
@@ -23,6 +23,7 @@ from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
+import dipdup.prometheus as metrics
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import BcdDatasourceConfig
 from dipdup.config import CoinbaseDatasourceConfig
@@ -70,7 +71,7 @@ from dipdup.utils.database import prepare_models
 from dipdup.utils.database import set_schema
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import validate_models
-import dipdup.prometheus as metrics
+
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:

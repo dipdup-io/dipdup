@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-import time
 from collections import deque
 from contextlib import contextmanager
 from contextlib import suppress
@@ -54,6 +53,7 @@ from dipdup.utils import iter_files
 from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
+import dipdup.prometheus as metrics
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -296,7 +296,7 @@ class CallbackManager:
             handler_config=handler_config,
             datasource=datasource,
         )
-        with self._wrapper('handler', name):
+        with self._callback_wrapper('handler', name):
             await handler_config.callback_fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
@@ -317,7 +317,7 @@ class CallbackManager:
         )
 
         self._verify_arguments(new_ctx, *args, **kwargs)
-        with self._wrapper('hook', name):
+        with self._callback_wrapper('hook', name):
             await hook_config.callback_fn(ctx, *args, **kwargs)
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
@@ -354,13 +354,10 @@ class CallbackManager:
                     await connection.execute_script(statement)
 
     @contextmanager
-    def _wrapper(self, kind: str, name: str) -> Iterator[None]:
+    def _callback_wrapper(self, kind: str, name: str) -> Iterator[None]:
         try:
-            start = time.perf_counter()
-            yield
-            diff = time.perf_counter() - start
-            level = self._logger.warning if diff > 1 else self._logger.debug
-            level('`%s` %s callback executed in %s seconds', name, kind, diff)
+            with metrics.callback_execution_duration.labels(callback=name).time():
+                yield
         except Exception as e:
             if isinstance(e, ReindexingRequiredError):
                 raise
