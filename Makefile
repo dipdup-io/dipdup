@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: test
+.PHONY: test build
 .DEFAULT_GOAL: all
 
 DEV=1

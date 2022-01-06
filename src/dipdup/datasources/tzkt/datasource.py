@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from asyncio import Event
 from asyncio import create_task
 from asyncio import gather
@@ -24,6 +25,7 @@ from typing import cast
 
 from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
+from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage  # type: ignore
 from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 
@@ -594,7 +596,19 @@ class TzktDatasource(IndexDatasource):
 
     async def run(self) -> None:
         self._logger.info('Establishing realtime connection')
-        tasks = [create_task(self._get_ws_client().run())]
+        ws = self._get_ws_client()
+
+        async def _wrapper():
+            retry_sleep = self._http_config.retry_sleep
+            for _ in range(self._http_config.retry_count or sys.maxsize):
+                try:
+                    await ws.run()
+                except WebsocketConnectionError as e:
+                    self._logger.error('Websocket connection error: %s', e)
+                    await asyncio.sleep(retry_sleep)
+                    retry_sleep *= self._http_config.retry_multiplier
+
+        tasks = [create_task(_wrapper())]
 
         if self._watchdog:
             tasks.append(create_task(self._watchdog.run()))
@@ -680,6 +694,7 @@ class TzktDatasource(IndexDatasource):
         sender_json = operation_json.get('sender') or {}
         target_json = operation_json.get('target') or {}
         initiator_json = operation_json.get('initiator') or {}
+        delegate_json = operation_json.get('delegate') or {}
         parameter_json = operation_json.get('parameter') or {}
         originated_contract_json = operation_json.get('originatedContract') or {}
 
@@ -703,7 +718,7 @@ class TzktDatasource(IndexDatasource):
             sender_address=sender_json.get('address'),
             target_address=target_json.get('address'),
             initiator_address=initiator_json.get('address'),
-            amount=operation_json.get('amount') or operation_json.get('contractBalance'),
+            amount=operation_json.get('amount', operation_json.get('contractBalance')),
             status=operation_json['status'],
             has_internals=operation_json.get('hasInternals'),
             sender_alias=operation_json['sender'].get('alias'),
@@ -717,6 +732,8 @@ class TzktDatasource(IndexDatasource):
             originated_contract_code_hash=originated_contract_json.get('codeHash'),
             storage=operation_json.get('storage'),
             diffs=operation_json.get('diffs') or (),
+            delegate_address=delegate_json.get('address'),
+            delegate_alias=delegate_json.get('alias'),
         )
 
     @classmethod
