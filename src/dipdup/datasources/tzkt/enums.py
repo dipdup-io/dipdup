@@ -23,6 +23,7 @@ OPERATION_FIELDS = (
     "status",
     "hasInternals",
     "diffs",
+    "delegate",
 )
 ORIGINATION_MIGRATION_FIELDS = (
     "id",
