@@ -1403,7 +1403,7 @@ python-versions = "*"
 
 [[package]]
 name = "pysignalr"
-version = "0.1.0"
+version = "0.1.1"
 description = "Modern, reliable and async-ready client for SignalR protocol"
 category = "main"
 optional = false
@@ -2041,7 +2041,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "5073981013fcc6f440d926561aeb1a316de8cf5cf0ebc667c766394cdd9f5f6c"
+content-hash = "2d20a40b4f5a0da406d17e6602b4b1742e02d0dd21f320c17e6202a6af02a71f"
 
 [metadata.files]
 aiohttp = [
@@ -3051,8 +3051,8 @@ pysha3 = [
     {file = "pysha3-1.0.2.tar.gz", hash = "sha256:fe988e73f2ce6d947220624f04d467faf05f1bbdbc64b0a201296bb3af92739e"},
 ]
 pysignalr = [
-    {file = "pysignalr-0.1.0-py3-none-any.whl", hash = "sha256:aff25fa4cc2cf1ef5a8d855a9d95fb2cc55006146541dd76ad3117598a87d7d8"},
-    {file = "pysignalr-0.1.0.tar.gz", hash = "sha256:e18196a6374c1e809d80445052bb86e7fc71d42c4e692a9b447b681a677d743c"},
+    {file = "pysignalr-0.1.1-py3-none-any.whl", hash = "sha256:31823ec06903a9b7399d62cfac738e22ca1004ad2b312c36cca76d5c6810dcae"},
+    {file = "pysignalr-0.1.1.tar.gz", hash = "sha256:f25de7126e79d96bca0e628ec972784ca6f07cb126a67bda3237ac77a7f16c50"},
 ]
 pysnooper = [
     {file = "PySnooper-0.5.0-py2.py3-none-any.whl", hash = "sha256:7280fd86cd1da732fade981e00998bf01be39e9e4a58b418469f47203cc329b1"},
