@@ -16,6 +16,7 @@ from dipdup.models import OperationData
 from tests.test_dipdup.types.asdf.storage import AsdfStorage
 from tests.test_dipdup.types.bazaar.storage import BazaarMarketPlaceStorage
 from tests.test_dipdup.types.ftzfun.storage import FtzFunStorage
+from tests.test_dipdup.types.hen_subjkt.storage import HenSubjktStorage
 from tests.test_dipdup.types.hjkl.storage import HjklStorage
 from tests.test_dipdup.types.listofmaps.storage import ListOfMapsStorage
 from tests.test_dipdup.types.qwer.storage import QwerStorage
@@ -320,3 +321,16 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.map['try'].L['111'], '222')  # type: ignore
         self.assertIsInstance(storage_obj.or_.L, dict)  # type: ignore
         self.assertEqual(storage_obj.or_.L['333'], '444')  # type: ignore
+
+    def test_hen_subjkt(self) -> None:
+        with open(join(dirname(__file__), 'hen_subjkt.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], HenSubjktStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, HenSubjktStorage)
+        self.assertIsInstance(storage_obj.entries, dict)
+        self.assertEqual(storage_obj.entries['tz1Y1j7FK1X9Rrv2VdPz5bXoU7SszF8W1RnK'], True)  # type: ignore

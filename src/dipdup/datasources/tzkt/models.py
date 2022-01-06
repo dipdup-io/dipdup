@@ -131,7 +131,7 @@ def _process_storage(
 ) -> Any:
     """Replace bigmap pointers with actual data from diffs"""
     # NOTE: Bigmap pointer, apply diffs
-    if isinstance(storage, int) and storage_type not in (int, bool):
+    if isinstance(storage, int) and type(storage) != storage_type:
         is_array = _is_array(storage_type)
         storage = _apply_bigmap_diffs(storage, bigmap_diffs, is_array)
 
