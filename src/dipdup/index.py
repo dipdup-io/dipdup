@@ -20,6 +20,7 @@ from pydantic.dataclasses import dataclass
 from pydantic.error_wrappers import ValidationError
 
 import dipdup.models as models
+import dipdup.prometheus as metrics
 from dipdup.config import BigMapHandlerConfig
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
@@ -281,7 +282,8 @@ class OperationIndex(Index):
                 await self._single_level_rollback(message.level)
             elif message:
                 self._logger.debug('Processing operations realtime message, %s left in queue', len(self._queue))
-                await self._process_level_operations(message)
+                with metrics.level_indexing_duration.labels(index=self._config.name).time():
+                    await self._process_level_operations(message)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -320,7 +322,8 @@ class OperationIndex(Index):
             )
             if operation_subgroups:
                 self._logger.info('Processing operations of level %s', level)
-                await self._process_level_operations(operation_subgroups)
+                with metrics.level_indexing_duration.labels(index=self._config.name).time():
+                    await self._process_level_operations(operation_subgroups)
 
         await self._exit_sync_state(last_level)
 

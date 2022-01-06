@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from collections import deque
+from contextlib import AsyncExitStack
 from contextlib import contextmanager
 from contextlib import suppress
 from os.path import exists
@@ -50,6 +51,7 @@ from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.utils import FormattedLogger
 from dipdup.utils import iter_files
+from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
@@ -317,7 +319,13 @@ class CallbackManager:
         )
 
         self._verify_arguments(new_ctx, *args, **kwargs)
-        with self._callback_wrapper('hook', name):
+
+        async with AsyncExitStack() as stack:
+            stack.enter_context(metrics.hook_execution_duration.labels(hook=name).time())
+            stack.enter_context(self._callback_wrapper('hook', name))
+            if hook_config.atomic:
+                await stack.enter_async_context(in_global_transaction())
+
             await hook_config.callback_fn(ctx, *args, **kwargs)
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
