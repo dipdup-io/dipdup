@@ -694,6 +694,7 @@ class TzktDatasource(IndexDatasource):
         sender_json = operation_json.get('sender') or {}
         target_json = operation_json.get('target') or {}
         initiator_json = operation_json.get('initiator') or {}
+        delegate_json = operation_json.get('delegate') or {}
         parameter_json = operation_json.get('parameter') or {}
         originated_contract_json = operation_json.get('originatedContract') or {}
 
@@ -717,7 +718,7 @@ class TzktDatasource(IndexDatasource):
             sender_address=sender_json.get('address'),
             target_address=target_json.get('address'),
             initiator_address=initiator_json.get('address'),
-            amount=operation_json.get('amount') or operation_json.get('contractBalance'),
+            amount=operation_json.get('amount', operation_json.get('contractBalance')),
             status=operation_json['status'],
             has_internals=operation_json.get('hasInternals'),
             sender_alias=operation_json['sender'].get('alias'),
@@ -731,6 +732,8 @@ class TzktDatasource(IndexDatasource):
             originated_contract_code_hash=originated_contract_json.get('codeHash'),
             storage=operation_json.get('storage'),
             diffs=operation_json.get('diffs') or (),
+            delegate_address=delegate_json.get('address'),
+            delegate_alias=delegate_json.get('alias'),
         )
 
     @classmethod
