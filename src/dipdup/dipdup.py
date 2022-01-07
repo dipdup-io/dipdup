@@ -146,12 +146,20 @@ class IndexDispatcher:
         while True:
             await asyncio.sleep(2)
 
-            metrics.indexes_total.set(len(self._indexes))
-            metrics.indexes_synchronized.set(len([i for i in self._indexes.values() if i.synchronized]))
-            metrics.indexes_realtime.set(len([i for i in self._indexes.values() if i.realtime]))
+            total, synchronized, realtime = 0, 0, 0
 
             for name, index in self._indexes.items():
-                metrics.index_realtime_queue_size.labels(index=name).set(index.queue_size)
+                total += 1
+                if index.synchronized:
+                    synchronized += 1
+                if index.realtime:
+                    realtime += 1
+
+                metrics.index_queue_size.labels(index=name).set(index.queue_size)
+
+            metrics.indexes_total.set(total)
+            metrics.indexes_synchronized.set(synchronized)
+            metrics.indexes_realtime.set(realtime)
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)

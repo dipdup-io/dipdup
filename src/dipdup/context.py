@@ -321,7 +321,6 @@ class CallbackManager:
         self._verify_arguments(new_ctx, *args, **kwargs)
 
         async with AsyncExitStack() as stack:
-            stack.enter_context(metrics.hook_execution_duration.labels(hook=name).time())
             stack.enter_context(self._callback_wrapper('hook', name))
             if hook_config.atomic:
                 await stack.enter_async_context(in_global_transaction())
@@ -364,7 +363,7 @@ class CallbackManager:
     @contextmanager
     def _callback_wrapper(self, kind: str, name: str) -> Iterator[None]:
         try:
-            with metrics.callback_execution_duration.labels(callback=name).time():
+            with metrics.callback_duration.labels(callback=name).time():
                 yield
         except Exception as e:
             if isinstance(e, ReindexingRequiredError):

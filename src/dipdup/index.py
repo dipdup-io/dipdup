@@ -197,7 +197,7 @@ class Index:
         # NOTE: `--oneshot` flag implied
         if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.last_level:
             last_level = self._config.last_level
-            with metrics.sync_duration.labels(index=self._config.name).time():
+            with metrics.index_sync_duration.labels(index=self._config.name).time():
                 await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
@@ -213,7 +213,7 @@ class Index:
         elif level < sync_level:
             self._logger.info('Index is behind datasource, sync to datasource level: %s -> %s', level, sync_level)
             self._queue.clear()
-            with metrics.sync_duration.labels(index=self._config.name).time():
+            with metrics.index_sync_duration.labels(index=self._config.name).time():
                 await self._synchronize(sync_level)
 
         else:
@@ -296,7 +296,7 @@ class OperationIndex(Index):
                 await self._single_level_rollback(message.level)
             elif message:
                 self._logger.debug('Processing operations realtime message, %s left in queue', len(self._queue))
-                with metrics.level_indexing_duration.labels(index=self._config.name).time():
+                with metrics.index_level_duration.labels(index=self._config.name).time():
                     await self._process_level_operations(message)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
@@ -336,7 +336,7 @@ class OperationIndex(Index):
             )
             if operation_subgroups:
                 self._logger.info('Processing operations of level %s', level)
-                with metrics.level_indexing_duration.labels(index=self._config.name).time():
+                with metrics.index_level_duration.labels(index=self._config.name).time():
                     await self._process_level_operations(operation_subgroups)
 
         await self._exit_sync_state(last_level)
