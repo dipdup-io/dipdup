@@ -157,15 +157,7 @@ class IndexDispatcher:
             metrics.indexes_synced.set(synchronized)
             metrics.indexes_realtime.set(realtime)
 
-            if metrics.level_sync_durations:
-                metrics.index_level_sync_duration.labels(field='min').set(min(metrics.level_sync_durations))
-                metrics.index_level_sync_duration.labels(field='max').set(max(metrics.level_sync_durations))
-                metrics.index_level_sync_duration.labels(field='avg').set(sum(metrics.level_sync_durations) / len(metrics.level_sync_durations))
-
-            if metrics.level_realtime_durations:
-                metrics.index_level_realtime_duration.labels(field='min').set(min(metrics.level_realtime_durations))
-                metrics.index_level_realtime_duration.labels(field='max').set(max(metrics.level_realtime_durations))
-                metrics.index_level_realtime_duration.labels(field='avg').set(sum(metrics.level_realtime_durations) / len(metrics.level_realtime_durations))
+            metrics.refresh()
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)
