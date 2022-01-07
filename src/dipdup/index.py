@@ -185,7 +185,8 @@ class Index:
         # NOTE: `--oneshot` flag implied
         if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.last_level:
             last_level = self._config.last_level
-            await self._synchronize(last_level, cache=True)
+            with metrics.sync_duration.labels(index=self._config.name).time():
+                await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
         sync_levels = set(self.datasource.get_sync_level(s) for s in self._config.subscriptions)
@@ -200,7 +201,8 @@ class Index:
         elif level < sync_level:
             self._logger.info('Index is behind datasource, sync to datasource level: %s -> %s', level, sync_level)
             self._queue.clear()
-            await self._synchronize(sync_level)
+            with metrics.sync_duration.labels(index=self._config.name).time():
+                await self._synchronize(sync_level)
 
         else:
             await self._process_queue()
