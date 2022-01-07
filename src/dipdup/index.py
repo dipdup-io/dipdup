@@ -8,7 +8,6 @@ from typing import Deque
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
-from typing import Literal
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -43,7 +42,6 @@ from dipdup.exceptions import InvalidDataError
 from dipdup.exceptions import ReindexingReason
 from dipdup.models import BigMapData
 from dipdup.models import BigMapDiff
-from dipdup.models import BlockData
 from dipdup.models import HeadBlockData
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
