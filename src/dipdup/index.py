@@ -162,6 +162,14 @@ class Index:
     def queue_size(self) -> int:
         return len(self._queue)
 
+    @property
+    def synchronized(self) -> bool:
+        return self.state.status == IndexStatus.REALTIME
+
+    @property
+    def realtime(self) -> bool:
+        return self.state.status == IndexStatus.REALTIME and not self._queue
+
     async def initialize_state(self, state: Optional[models.Index] = None) -> None:
         if self._state:
             raise RuntimeError('Index state is already initialized')

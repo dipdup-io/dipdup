@@ -146,7 +146,10 @@ class IndexDispatcher:
         while True:
             await asyncio.sleep(2)
 
-            metrics.active_indexes.set(len(self._indexes))
+            metrics.indexes_total.set(len(self._indexes))
+            metrics.indexes_synchronized.set(len([i for i in self._indexes.values() if i.synchronized]))
+            metrics.indexes_realtime.set(len([i for i in self._indexes.values() if i.realtime]))
+
             for name, index in self._indexes.items():
                 metrics.index_realtime_queue_size.labels(index=name).set(index.queue_size)
 
