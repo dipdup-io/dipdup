@@ -51,9 +51,7 @@ from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
 from dipdup.index import Index
 from dipdup.index import OperationIndex
-from dipdup.index import block_cache
 from dipdup.index import extract_operation_subgroups
-from dipdup.index import head_cache
 from dipdup.models import BigMapData
 from dipdup.models import Contract
 from dipdup.models import Head
@@ -236,10 +234,6 @@ class IndexDispatcher:
 
         tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
         await gather(*tasks)
-
-        # NOTE: Cached blocks used only on index state init
-        block_cache.clear()
-        head_cache.clear()
 
     async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.

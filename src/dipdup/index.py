@@ -80,10 +80,6 @@ OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationDa
 MatchedOperationsT = Tuple[OperationSubgroup, OperationHandlerConfig, Deque[OperationHandlerArgumentT]]
 MatchedBigMapsT = Tuple[BigMapHandlerConfig, BigMapDiff]
 
-# NOTE: For initializing the index state on startup
-block_cache: Dict[Tuple[str, int], BlockData] = {}
-head_cache: DefaultDict[str, Optional[Union[models.Head, Literal[False]]]] = defaultdict(lambda: False)
-
 
 def extract_operation_subgroups(
     operations: Iterable[OperationData],
