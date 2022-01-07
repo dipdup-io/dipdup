@@ -85,12 +85,13 @@ class IndexDispatcher:
         self._entrypoint_filter: Set[Optional[str]] = set()
         self._address_filter: Set[str] = set()
 
-    async def run(
-        self,
-        spawn_datasources_event: Event,
-        start_scheduler_event: Event,
-        early_realtime: bool = False,
-    ) -> None:
+    async def run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
+        await gather(
+            self._run(spawn_datasources_event, start_scheduler_event, early_realtime),
+            self._expose_metrics(),
+        )
+
+    async def _run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
         await self._load_index_states()
@@ -111,7 +112,6 @@ class IndexDispatcher:
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
-            metrics.active_indexes.set(len(self._indexes))
             tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
             while self._tasks:
                 tasks.append(self._tasks.popleft())
@@ -141,6 +141,14 @@ class IndexDispatcher:
             # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
             else:
                 on_synchronized_fired = False
+
+    async def _expose_metrics(self) -> None:
+        while True:
+            await asyncio.sleep(2)
+
+            metrics.active_indexes.set(len(self._indexes))
+            for name, index in self._indexes.items():
+                metrics.index_realtime_queue_size.labels(index=name).set(index.queue_size)
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)
