@@ -153,10 +153,11 @@ class IndexDispatcher:
                 if index.realtime:
                     realtime += 1
 
-                metrics.index_queue_size.labels(index=name).set(index.queue_size)
+                # NOTE: index_levels_to_sync set in fetchers
+                metrics.index_levels_to_realtime.labels(index=name).set(index.queue_size)
 
             metrics.indexes_total.set(total)
-            metrics.indexes_synchronized.set(synchronized)
+            metrics.indexes_synced.set(synchronized)
             metrics.indexes_realtime.set(realtime)
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:

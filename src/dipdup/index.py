@@ -191,7 +191,7 @@ class Index:
         # NOTE: `--oneshot` flag implied
         if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.last_level:
             last_level = self._config.last_level
-            with metrics.index_sync_duration.labels(index=self._config.name).time():
+            with metrics.index_total_sync_duration.labels(index=self._config.name).time():
                 await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
@@ -207,7 +207,7 @@ class Index:
         elif level < sync_level:
             self._logger.info('Index is behind datasource, sync to datasource level: %s -> %s', level, sync_level)
             self._queue.clear()
-            with metrics.index_sync_duration.labels(index=self._config.name).time():
+            with metrics.index_total_sync_duration.labels(index=self._config.name).time():
                 await self._synchronize(sync_level)
 
         else:
@@ -238,6 +238,7 @@ class Index:
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
+        metrics.index_levels_to_sync.labels(index=self._config.name).set(0)
         await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
 
     def _extract_level(self, message: Union[Tuple[OperationData, ...], Tuple[BigMapData, ...]]) -> int:
@@ -290,7 +291,7 @@ class OperationIndex(Index):
                 await self._single_level_rollback(message.level)
             elif message:
                 self._logger.debug('Processing operations realtime message, %s left in queue', len(self._queue))
-                with metrics.index_level_duration.labels(index=self._config.name).time():
+                with metrics.index_level_realtime_duration.labels(index=self._config.name).time():
                     await self._process_level_operations(message)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
@@ -321,6 +322,8 @@ class OperationIndex(Index):
         )
 
         async for level, operations in fetcher.fetch_operations_by_level():
+            metrics.index_levels_to_sync.labels(index=self._config.name).set(last_level - level)
+
             operation_subgroups = tuple(
                 extract_operation_subgroups(
                     operations,
@@ -330,7 +333,7 @@ class OperationIndex(Index):
             )
             if operation_subgroups:
                 self._logger.info('Processing operations of level %s', level)
-                with metrics.index_level_duration.labels(index=self._config.name).time():
+                with metrics.index_level_sync_duration.labels(index=self._config.name).time():
                     await self._process_level_operations(operation_subgroups)
 
         await self._exit_sync_state(last_level)
@@ -599,7 +602,8 @@ class BigMapIndex(Index):
             cache=cache,
         )
 
-        async for _, big_maps in fetcher.fetch_big_maps_by_level():
+        async for level, big_maps in fetcher.fetch_big_maps_by_level():
+            metrics.index_levels_to_sync.labels(index=self._config.name).set(last_level - level)
             await self._process_level_big_maps(big_maps)
 
         await self._exit_sync_state(last_level)
