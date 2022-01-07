@@ -2,6 +2,17 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Added
+
+* prometheus: Added exposing of Prometheus metrics.
+* config: Added top-level config section `prometheus`. 
+
+### Fixed
+
+* context: Fixed `HookConfig.atomic` flag being ignored in `fire_hook` method.
+
 ## 4.0.2 - 2022-01-06
 
 ### Added
@@ -12,7 +23,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * tzkt: Fixed crash due to unprocessed pysignalr exception.
 * tzkt: Fixed parsing `OperationData.amount` field.
-* tzkt: Fixed parsing storage with top-level boolean fields
+* tzkt: Fixed parsing storage with top-level boolean fields.
 
 ## 4.0.1 - 2021-12-30
 

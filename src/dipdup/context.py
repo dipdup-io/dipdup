@@ -298,6 +298,7 @@ class CallbackManager:
             handler_config=handler_config,
             datasource=datasource,
         )
+        # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper('handler', name):
             await handler_config.callback_fn(new_ctx, *args, **kwargs)
 
