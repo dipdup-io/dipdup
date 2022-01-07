@@ -144,9 +144,9 @@ class IndexDispatcher:
         while True:
             await asyncio.sleep(2)
 
-            total, synchronized, realtime = 0, 0, 0
+            total, synchronized, realtime = len(pending_indexes), 0, 0
 
-            for index in self._indexes.values():
+            for index in tuple(self._indexes.values()) + tuple(pending_indexes):
                 total += 1
                 if index.synchronized:
                     synchronized += 1
