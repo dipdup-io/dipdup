@@ -294,7 +294,7 @@ class OperationIndex(Index):
                 await self._single_level_rollback(message.level)
             elif message:
                 self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
-                with metrics.index_level_realtime_duration.labels(index=self._config.name).time():
+                with metrics.wrap_level_realtime():
                     await self._process_level_operations(message)
         else:
             metrics.index_levels_to_realtime.labels(index=self._config.name).set(0)
@@ -338,7 +338,7 @@ class OperationIndex(Index):
             )
             if operation_subgroups:
                 self._logger.info('Processing operations of level %s', level)
-                with metrics.index_level_sync_duration.labels(index=self._config.name).time():
+                with metrics.wrap_level_sync():
                     await self._process_level_operations(operation_subgroups)
 
         await self._exit_sync_state(last_level)

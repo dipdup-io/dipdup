@@ -1,11 +1,33 @@
+from contextlib import contextmanager
+import time
 from prometheus_client import Gauge  # type: ignore
+from collections import deque
+
+level_sync_durations = deque(maxlen=100)
+level_realtime_durations = deque(maxlen=100)
+
+@contextmanager
+def wrap_level_sync():
+    start = time.perf_counter()
+    yield
+    end = time.perf_counter()
+    level_sync_durations.appendleft(end - start)
+
+
+@contextmanager
+def wrap_level_realtime():
+    start = time.perf_counter()
+    yield
+    end = time.perf_counter()
+    level_realtime_durations.appendleft(end - start)
+
 
 indexes_total = Gauge('dipdup_indexes_total', 'Total number of indexes')
 indexes_synced = Gauge('dipdup_indexes_synced', 'Number of synchronized indexes')
 indexes_realtime = Gauge('dipdup_indexes_realtime', 'Number of realtime indexes')
 
-index_level_sync_duration = Gauge('dipdup_index_level_sync_duration', 'Duration of indexing a single level', ['index'])
-index_level_realtime_duration = Gauge('dipdup_index_level_realtime_duration', 'Duration of last index syncronization', ['index'])
+index_level_sync_duration = Gauge('dipdup_index_level_sync_duration', 'Duration of indexing a single level', ['field'])
+index_level_realtime_duration = Gauge('dipdup_index_level_realtime_duration', 'Duration of last index syncronization', ['field'])
 
 index_total_sync_duration = Gauge('dipdup_index_total_sync_duration', 'Duration of the last index syncronization', ['index'])
 index_total_realtime_duration = Gauge(
