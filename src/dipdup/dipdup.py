@@ -146,15 +146,12 @@ class IndexDispatcher:
 
             total, synchronized, realtime = 0, 0, 0
 
-            for name, index in self._indexes.items():
+            for index in self._indexes.values():
                 total += 1
                 if index.synchronized:
                     synchronized += 1
                 if index.realtime:
                     realtime += 1
-
-                # NOTE: index_levels_to_sync set in fetchers
-                metrics.index_levels_to_realtime.labels(index=name).set(index.queue_size)
 
             metrics.indexes_total.set(total)
             metrics.indexes_synced.set(synchronized)

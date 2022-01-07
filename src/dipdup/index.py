@@ -211,7 +211,8 @@ class Index:
                 await self._synchronize(sync_level)
 
         else:
-            await self._process_queue()
+            with metrics.index_total_realtime_duration.labels(index=self._config.name).time():
+                await self._process_queue()
 
     @abstractmethod
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
@@ -286,13 +287,17 @@ class OperationIndex(Index):
         """Process WebSocket queue"""
         while self._queue:
             message = self._queue.popleft()
+            messages_left = len(self._queue)
+            metrics.index_levels_to_realtime.labels(index=self._config.name).set(messages_left)
             if isinstance(message, SingleLevelRollback):
-                self._logger.debug('Processing rollback realtime message, %s left in queue', len(self._queue))
+                self._logger.debug('Processing rollback realtime message, %s left in queue', messages_left)
                 await self._single_level_rollback(message.level)
             elif message:
-                self._logger.debug('Processing operations realtime message, %s left in queue', len(self._queue))
+                self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
                 with metrics.index_level_realtime_duration.labels(index=self._config.name).time():
                     await self._process_level_operations(message)
+        else:
+            metrics.index_levels_to_realtime.labels(index=self._config.name).set(0)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
