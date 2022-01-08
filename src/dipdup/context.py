@@ -47,8 +47,9 @@ from dipdup.models import Contract
 from dipdup.models import Index
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
-from dipdup.utils import FormattedLogger, restart
+from dipdup.utils import FormattedLogger
 from dipdup.utils import iter_files
+from dipdup.utils import restart
 from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore

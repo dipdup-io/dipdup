@@ -112,7 +112,7 @@ class HasuraGateway(HTTPGateway):
         await self._healthcheck()
 
         hasura_schema_name = f'hasura_{self._hasura_config.url}'
-        hasura_schema, _ = await Schema.get_or_create(name=hasura_schema_name, defaults={'hash': ''})
+        hasura_schema, _ = await Schema.get_or_create(name=hasura_schema_name, defaults={'hash': '', 'version': 0})
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
 

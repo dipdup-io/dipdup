@@ -58,10 +58,7 @@ class ProjectMigrationManager:
                 else:
                     print(line.rstrip())
 
-        _logger.warning('==================== WARNING =====================')
-        _logger.warning('Your project has been migrated to spec version %s.', spec_version)
-        _logger.warning('Review and commit changes before proceeding.')
-        _logger.warning('==================== WARNING =====================')
+        _logger.warning('Your project has been migrated to spec version %s. Review and commit changes before proceeding.', spec_version)
 
 
 class DatabaseMigrationManager:
@@ -79,11 +76,12 @@ class DatabaseMigrationManager:
         except KeyError:
             conn = get_connection(None)
             await conn.execute_script('ALTER TABLE dipdup_schema ADD COLUMN version INTEGER NOT NULL')
-            await conn.execute_script("UPDATE dipdup_index SET status = 'FINISHED' WHERE status IN ('ONESHOT', 'ROLLBACK')")
+            await conn.execute_script("UPDATE dipdup_index SET status = 'FINISHED' WHERE status = 'ONESHOT'")
             await self.approve()
-            return
-
-        if schema.version == __schema_version__:
-            _logger.info('Project is already at latest version, no further actions required')
         else:
-            raise DipDupError(f'Unknown schema version, use {__schema_version__} for new projects')
+            if schema.version == __schema_version__:
+                _logger.info('Project is already at latest version, no further actions required')
+            else:
+                raise DipDupError(f'Unknown schema version, use {__schema_version__} for new projects')
+
+        _logger.info('Database migration finished')

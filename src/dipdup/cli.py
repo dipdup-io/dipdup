@@ -328,6 +328,7 @@ async def schema(ctx):
     ...
 
 
+# TODO: Move from cli
 @schema.command(name='approve', help='Continue to use existing schema after reindexing was triggered')
 @click.option('--hashes', is_flag=True, help='Recalculate all schema and config hashes')
 @click.pass_context
