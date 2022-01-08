@@ -19,7 +19,6 @@ from pydantic.dataclasses import dataclass
 from pydantic.error_wrappers import ValidationError
 
 import dipdup.models as models
-import dipdup.prometheus as metrics
 from dipdup.config import BigMapHandlerConfig
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
@@ -47,6 +46,7 @@ from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Origination
 from dipdup.models import Transaction
+from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
@@ -191,7 +191,7 @@ class Index:
         # NOTE: `--oneshot` flag implied
         if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.last_level:
             last_level = self._config.last_level
-            with metrics.averaged_duration(metrics.total_sync_durations):
+            with Metrics.measure_total_sync_duration():
                 await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
@@ -207,11 +207,11 @@ class Index:
         elif level < sync_level:
             self._logger.info('Index is behind datasource, sync to datasource level: %s -> %s', level, sync_level)
             self._queue.clear()
-            with metrics.averaged_duration(metrics.total_sync_durations):
+            with Metrics.measure_total_sync_duration():
                 await self._synchronize(sync_level)
 
         elif self._queue:
-            with metrics.averaged_duration(metrics.total_realtime_durations):
+            with Metrics.measure_total_realtime_duration():
                 await self._process_queue()
 
     @abstractmethod
@@ -239,7 +239,7 @@ class Index:
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
-        metrics.levels_to_sync[self._config.name] = 0
+        Metrics.set_levels_to_sync(self._config.name, 0)
         await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
 
     def _extract_level(self, message: Union[Tuple[OperationData, ...], Tuple[BigMapData, ...]]) -> int:
@@ -262,7 +262,7 @@ class OperationIndex(Index):
 
     def push_operations(self, operation_subgroups: Tuple[OperationSubgroup, ...]) -> None:
         self._queue.append(operation_subgroups)
-        metrics.levels_to_realtime[self._config.name] = len(self._queue)
+        Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
 
     def push_rollback(self, level: int) -> None:
         self._queue.append(SingleLevelRollback(level))
@@ -289,16 +289,16 @@ class OperationIndex(Index):
         while self._queue:
             message = self._queue.popleft()
             messages_left = len(self._queue)
-            metrics.levels_to_realtime[self._config.name] = messages_left
+            Metrics.set_levels_to_realtime(self._config.name, messages_left)
             if isinstance(message, SingleLevelRollback):
                 self._logger.debug('Processing rollback realtime message, %s left in queue', messages_left)
                 await self._single_level_rollback(message.level)
             elif message:
                 self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
-                with metrics.averaged_duration(metrics.level_realtime_durations):
+                with Metrics.measure_level_realtime_duration():
                     await self._process_level_operations(message)
         else:
-            metrics.levels_to_realtime[self._config.name] = 0
+            Metrics.set_levels_to_realtime(self._config.name, 0)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -328,7 +328,7 @@ class OperationIndex(Index):
         )
 
         async for level, operations in fetcher.fetch_operations_by_level():
-            metrics.levels_to_sync[self._config.name] = last_level - level
+            Metrics.set_levels_to_sync(self._config.name, last_level - level)
 
             operation_subgroups = tuple(
                 extract_operation_subgroups(
@@ -339,7 +339,7 @@ class OperationIndex(Index):
             )
             if operation_subgroups:
                 self._logger.info('Processing operations of level %s', level)
-                with metrics.averaged_duration(metrics.level_sync_durations):
+                with Metrics.measure_level_sync():
                     await self._process_level_operations(operation_subgroups)
 
         await self._exit_sync_state(last_level)
@@ -609,7 +609,7 @@ class BigMapIndex(Index):
         )
 
         async for level, big_maps in fetcher.fetch_big_maps_by_level():
-            metrics.levels_to_sync[self._config.name] = last_level - level
+            Metrics.set_levels_to_sync(self._config.name, last_level - level)
             await self._process_level_big_maps(big_maps)
 
         await self._exit_sync_state(last_level)

@@ -6,61 +6,106 @@ from typing import Dict
 
 from prometheus_client import Gauge  # type: ignore
 
-level_sync_durations: Deque[float] = deque(maxlen=100)
-level_realtime_durations: Deque[float] = deque(maxlen=100)
-total_sync_durations: Deque[float] = deque(maxlen=100)
-total_realtime_durations: Deque[float] = deque(maxlen=100)
-levels_to_sync: Dict[str, int] = dict()
-levels_to_realtime: Dict[str, int] = dict()
+_level_sync_durations: Deque[float] = deque(maxlen=100)
+_level_realtime_durations: Deque[float] = deque(maxlen=100)
+_total_sync_durations: Deque[float] = deque(maxlen=100)
+_total_realtime_durations: Deque[float] = deque(maxlen=100)
+
+_levels_to_sync: Dict[str, int] = dict()
+_levels_to_realtime: Dict[str, int] = dict()
 
 
 @contextmanager
-def averaged_duration(queue: deque):
+def _average_duration(queue: deque):
     start = time.perf_counter()
     yield
     end = time.perf_counter()
     queue.appendleft(end - start)
 
 
-indexes_total = Gauge('dipdup_indexes_total', 'Total number of indexes')
-indexes_synced = Gauge('dipdup_indexes_synced', 'Number of synchronized indexes')
-indexes_realtime = Gauge('dipdup_indexes_realtime', 'Number of realtime indexes')
-
-index_level_sync_duration = Gauge('dipdup_index_level_sync_duration', 'Duration of indexing a single level', ['field'])
-index_level_realtime_duration = Gauge('dipdup_index_level_realtime_duration', 'Duration of last index syncronization', ['field'])
-
-index_total_sync_duration = Gauge('dipdup_index_total_sync_duration', 'Duration of the last index syncronization', ['field'])
-index_total_realtime_duration = Gauge(
-    'dipdup_index_total_realtime_duration', 'Duration of the last index realtime syncronization', ['field']
-)
-
-index_levels_to_sync = Gauge('dipdup_index_levels_to_sync', 'Number of levels to reach synced state')
-index_levels_to_realtime = Gauge('dipdup_index_levels_to_realtime', 'Number of levels to reach realtime state')
-
-datasource_head_updated = Gauge('dipdup_datasource_head_updated', 'Timestamp of the last head update', ['datasource'])
-callback_duration = Gauge('dipdup_callback_duration', 'Duration of callback execution', ['callback'])
+def _update_average_metric(queue: deque, metric: Gauge) -> None:
+    if not queue:
+        return
+    metric.labels(field='min').set(min(queue))
+    metric.labels(field='max').set(max(queue))
+    metric.labels(field='avg').set(sum(queue) / len(queue))
 
 
-def refresh():
-    if level_sync_durations:
-        index_level_sync_duration.labels(field='min').set(min(level_sync_durations))
-        index_level_sync_duration.labels(field='max').set(max(level_sync_durations))
-        index_level_sync_duration.labels(field='avg').set(sum(level_sync_durations) / len(level_sync_durations))
+class Metrics:
+    _indexes_total = Gauge('dipdup_indexes_total', 'Total number of indexes')
+    _indexes_synced = Gauge('dipdup_indexes_synced', 'Number of synchronized indexes')
+    _indexes_realtime = Gauge('dipdup_indexes_realtime', 'Number of realtime indexes')
 
-    if level_realtime_durations:
-        index_level_realtime_duration.labels(field='min').set(min(level_realtime_durations))
-        index_level_realtime_duration.labels(field='max').set(max(level_realtime_durations))
-        index_level_realtime_duration.labels(field='avg').set(sum(level_realtime_durations) / len(level_realtime_durations))
+    _index_level_sync_duration = Gauge('dipdup_index_level_sync_duration', 'Duration of indexing a single level', ['field'])
+    _index_level_realtime_duration = Gauge('dipdup_index_level_realtime_duration', 'Duration of last index syncronization', ['field'])
 
-    if total_sync_durations:
-        index_total_sync_duration.labels(field='min').set(min(total_sync_durations))
-        index_total_sync_duration.labels(field='max').set(max(total_sync_durations))
-        index_total_sync_duration.labels(field='avg').set(sum(total_sync_durations) / len(total_sync_durations))
+    _index_total_sync_duration = Gauge('dipdup_index_total_sync_duration', 'Duration of the last index syncronization', ['field'])
+    _index_total_realtime_duration = Gauge(
+        'dipdup_index_total_realtime_duration', 'Duration of the last index realtime syncronization', ['field']
+    )
 
-    if total_realtime_durations:
-        index_total_realtime_duration.labels(field='min').set(min(total_realtime_durations))
-        index_total_realtime_duration.labels(field='max').set(max(total_realtime_durations))
-        index_total_realtime_duration.labels(field='avg').set(sum(total_realtime_durations) / len(total_realtime_durations))
+    _index_levels_to_sync = Gauge('dipdup_index_levels_to_sync', 'Number of levels to reach synced state')
+    _index_levels_to_realtime = Gauge('dipdup_index_levels_to_realtime', 'Number of levels to reach realtime state')
 
-    index_levels_to_sync.set(sum(levels_to_sync.values()))
-    index_levels_to_realtime.set(sum(levels_to_realtime.values()))
+    _datasource_head_updated = Gauge('dipdup_datasource_head_updated', 'Timestamp of the last head update', ['datasource'])
+    _callback_duration = Gauge('dipdup_callback_duration', 'Duration of callback execution', ['callback'])
+
+    def __new__(cls):
+        raise TypeError('Metrics is a singleton')
+
+    @classmethod
+    def refresh(cls) -> None:
+        _update_average_metric(_level_sync_durations, cls._index_level_sync_duration)
+        _update_average_metric(_level_realtime_durations, cls._index_level_realtime_duration)
+        _update_average_metric(_total_sync_durations, cls._index_total_sync_duration)
+        _update_average_metric(_total_realtime_durations, cls._index_total_realtime_duration)
+        cls._index_levels_to_sync.set(sum(_levels_to_sync.values()))
+        cls._index_levels_to_realtime.set(sum(_levels_to_realtime.values()))
+
+    @classmethod
+    @contextmanager
+    def measure_level_sync(cls):
+        with _average_duration(_level_sync_durations):
+            yield
+
+    @classmethod
+    @contextmanager
+    def measure_level_realtime_duration(cls):
+        with _average_duration(_level_realtime_durations):
+            yield
+
+    @classmethod
+    @contextmanager
+    def measure_total_sync_duration(cls):
+        with _average_duration(_total_sync_durations):
+            yield
+
+    @classmethod
+    @contextmanager
+    def measure_total_realtime_duration(cls):
+        with _average_duration(_total_realtime_durations):
+            yield
+
+    @classmethod
+    @contextmanager
+    def measure_callback_duration(cls, name: str):
+        with cls._callback_duration.labels(callback=name).time():
+            yield
+
+    @classmethod
+    def set_indexes_count(cls, total: int, synced: int, realtime: int) -> None:
+        cls._indexes_total.set(total)
+        cls._indexes_synced.set(synced)
+        cls._indexes_realtime.set(realtime)
+
+    @classmethod
+    def set_datasource_head_updated(cls, name: str):
+        cls._datasource_head_updated.labels(datasource=name).set(time.time())
+
+    @classmethod
+    def set_levels_to_sync(cls, index: str, level: int):
+        _levels_to_sync[index] = level
+
+    @classmethod
+    def set_levels_to_realtime(cls, index: str, level: int):
+        _levels_to_realtime[index] = level

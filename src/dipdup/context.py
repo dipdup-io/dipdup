@@ -49,13 +49,13 @@ from dipdup.models import Contract
 from dipdup.models import Index
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
+from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils import iter_files
 from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
-import dipdup.prometheus as metrics
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -364,7 +364,7 @@ class CallbackManager:
     @contextmanager
     def _callback_wrapper(self, kind: str, name: str) -> Iterator[None]:
         try:
-            with metrics.callback_duration.labels(callback=name).time():
+            with Metrics.measure_callback_duration(name):
                 yield
         except Exception as e:
             if isinstance(e, ReindexingRequiredError):

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import time
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
@@ -23,7 +22,6 @@ from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
-import dipdup.prometheus as metrics
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import BcdDatasourceConfig
 from dipdup.config import CoinbaseDatasourceConfig
@@ -60,6 +58,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Schema
+from dipdup.prometheus import Metrics
 from dipdup.scheduler import add_job
 from dipdup.scheduler import create_scheduler
 from dipdup.utils import slowdown
@@ -144,20 +143,17 @@ class IndexDispatcher:
         while True:
             await asyncio.sleep(1)
 
-            total, synchronized, realtime = len(pending_indexes), 0, 0
+            total, synced, realtime = len(pending_indexes), 0, 0
 
             for index in tuple(self._indexes.values()) + tuple(pending_indexes):
                 total += 1
                 if index.synchronized:
-                    synchronized += 1
+                    synced += 1
                 if index.realtime:
                     realtime += 1
 
-            metrics.indexes_total.set(total)
-            metrics.indexes_synced.set(synchronized)
-            metrics.indexes_realtime.set(realtime)
-
-            metrics.refresh()
+            Metrics.set_indexes_count(total, synced, realtime)
+            Metrics.refresh()
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)
@@ -249,7 +245,7 @@ class IndexDispatcher:
                 ),
             )
         )
-        metrics.datasource_head_updated.labels(datasource=datasource.name).set(time.time())
+        Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
             if isinstance(index, HeadIndex) and index.datasource == datasource:
                 index.push_head(head)
