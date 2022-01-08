@@ -703,9 +703,10 @@ class TzktDatasource(IndexDatasource):
             # NOTE: TzKT returns None for `default` entrypoint
             if entrypoint is None:
                 entrypoint = 'default'
-            # NOTE: Empty parameter in this case means `{"prim": "Unit"}`
-            if parameter is None:
-                parameter = {}
+
+                # NOTE: Empty parameter in this case means `{"prim": "Unit"}`
+                if parameter is None:
+                    parameter = {}
 
         return OperationData(
             type=type_ or operation_json['type'],
