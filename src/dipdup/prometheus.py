@@ -48,6 +48,7 @@ class Metrics:
     _index_levels_to_realtime = Gauge('dipdup_index_levels_to_realtime', 'Number of levels to reach realtime state')
 
     _datasource_head_updated = Gauge('dipdup_datasource_head_updated', 'Timestamp of the last head update', ['datasource'])
+    _datasource_rollback_count = Gauge('dipdup_datasource_rollback_count', 'Number of rollbacks', ['datasource'])
     _callback_duration = Gauge('dipdup_callback_duration', 'Duration of callback execution', ['callback'])
 
     def __new__(cls):
@@ -101,6 +102,10 @@ class Metrics:
     @classmethod
     def set_datasource_head_updated(cls, name: str):
         cls._datasource_head_updated.labels(datasource=name).set(time.time())
+
+    @classmethod
+    def set_datasource_rollback(cls, name: str):
+        cls._datasource_rollback_count.labels(datasource=name).inc()
 
     @classmethod
     def set_levels_to_sync(cls, index: str, level: int):
