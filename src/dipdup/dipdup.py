@@ -44,6 +44,7 @@ from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
+from dipdup.exceptions import DatabaseMigrationRequiredError
 from dipdup.exceptions import DipDupException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex
@@ -416,14 +417,7 @@ class DipDup:
 
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError:
-            try:
-                # NOTE: A small migration, ReindexingReason became ReversedEnum
-                for item in ReindexingReason:
-                    await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{item.name}" WHERE reindex = "{item.value}"')
-
-                self._schema = await Schema.get_or_none(name=schema_name)
-            except KeyError:
-                await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
+            raise DatabaseMigrationRequiredError
 
         schema_hash = get_schema_hash(conn)
 

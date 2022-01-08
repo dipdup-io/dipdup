@@ -1,7 +1,9 @@
 import asyncio
 import importlib
 import logging
+import os
 import pkgutil
+import sys
 import time
 import types
 from collections import defaultdict
@@ -21,6 +23,7 @@ from typing import DefaultDict
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 from typing import TextIO
@@ -33,6 +36,10 @@ from genericpath import isfile
 from dipdup.exceptions import HandlerImportError
 
 _logger = logging.getLogger('dipdup.utils')
+
+
+def restart() -> NoReturn:
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 
 def import_submodules(package: str) -> Dict[str, types.ModuleType]:

@@ -152,32 +152,8 @@ class MigrationRequiredError(DipDupError):
 
 
 @dataclass(frozen=True, repr=False)
-class MigrationRequiredError(DipDupError):
-    """Schema requires migration"""
-
-    from_: int
-    to: int
-    reindex: bool = False
-
-    def _help(self) -> str:
-        version_table = tabulate(
-            [
-                ['current', self.from_, spec_version_to_dipdup[self.from_]],
-                ['required', self.to, spec_version_to_dipdup[self.to]],
-            ],
-            headers=['', 'spec_version', 'DipDup version'],
-        )
-        reindex = _tab + ReindexingRequiredError(ReindexingReason.MIGRATION).help() if self.reindex else ''
-        return f"""
-            Project migration required!
-
-            {version_table.strip()}
-
-              1. Run `dipdup migrate`
-              2. Review and commit changes
-
-            See https://baking-bad.org/blog/ for additional release information. {reindex}
-        """
+class DatabaseMigrationRequiredError(DipDupError):
+    ...
 
 
 @dataclass(frozen=True, repr=False)

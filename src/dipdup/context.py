@@ -1,6 +1,4 @@
 import logging
-import os
-import sys
 import time
 from collections import deque
 from contextlib import contextmanager
@@ -49,7 +47,7 @@ from dipdup.models import Contract
 from dipdup.models import Index
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
-from dipdup.utils import FormattedLogger
+from dipdup.utils import FormattedLogger, restart
 from dipdup.utils import iter_files
 from dipdup.utils.database import wipe_schema
 
@@ -98,10 +96,7 @@ class DipDupContext:
 
     async def restart(self) -> None:
         """Restart preserving CLI arguments"""
-        # NOTE: Remove --reindex from arguments to avoid reindexing loop
-        if '--reindex' in sys.argv:
-            sys.argv.remove('--reindex')
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        restart()
 
     async def reindex(self, reason: Optional[Union[str, ReindexingReason, ReindexingReasonC]] = None, **context) -> None:
         """Drop all tables or whole database and restart with the same CLI arguments"""

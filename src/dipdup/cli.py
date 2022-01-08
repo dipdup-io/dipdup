@@ -27,8 +27,8 @@ from tortoise.utils import get_schema_sql
 
 from dipdup import __spec_version__
 from dipdup import __version__
-from dipdup import spec_version_to_reindex
 from dipdup import spec_version_to_dipdup
+from dipdup import spec_version_to_reindex
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE
 from dipdup.codegen import DEFAULT_DOCKER_IMAGE
 from dipdup.codegen import DEFAULT_DOCKER_TAG

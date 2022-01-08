@@ -2,10 +2,16 @@ import fileinput
 import logging
 from typing import Iterable
 
+from tortoise.transactions import get_connection
+
+from dipdup import __schema_version__
 from dipdup import __spec_version__
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import DipDupError
+from dipdup.models import Schema
+from dipdup.utils.database import get_schema_hash
 
 deprecated_handlers = ('on_rollback.py', 'on_configure.py')
 
@@ -59,5 +65,25 @@ class ProjectMigrationManager:
 
 
 class DatabaseMigrationManager:
+    def __init__(self, schema_name: str) -> None:
+        self._schema_name = schema_name
+
+    async def approve(self) -> None:
+        conn = get_connection(None)
+        hash_ = get_schema_hash(conn)
+        await conn.execute_script(f"UPDATE dipdup_schema SET hash = '{hash_}' WHERE name = '{self._schema_name}'")
+
     async def migrate(self) -> None:
-        ...
+        try:
+            schema, _ = await Schema.get_or_create(name=self._schema_name, defaults={'version': __schema_version__})
+        except KeyError:
+            conn = get_connection(None)
+            await conn.execute_script('ALTER TABLE dipdup_schema ADD COLUMN version INTEGER NOT NULL')
+            await conn.execute_script("UPDATE dipdup_index SET status = 'FINISHED' WHERE status IN ('ONESHOT', 'ROLLBACK')")
+            await self.approve()
+            return
+
+        if schema.version == __schema_version__:
+            _logger.info('Project is already at latest version, no further actions required')
+        else:
+            raise DipDupError(f'Unknown schema version, use {__schema_version__} for new projects')
