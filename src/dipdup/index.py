@@ -355,7 +355,7 @@ class OperationIndex(Index):
                 self._logger.info('Processing operations of level %s', level)
                 with ExitStack() as stack:
                     if Metrics.enabled:
-                        stack.enter_context(Metrics.measure_level_sync())
+                        stack.enter_context(Metrics.measure_level_sync_duration())
                     await self._process_level_operations(operation_subgroups)
 
         await self._exit_sync_state(last_level)
@@ -599,13 +599,19 @@ class BigMapIndex(Index):
     def push_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         self._queue.append(big_maps)
 
+        if Metrics.enabled:
+            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         if self._queue:
             self._logger.debug('Processing websocket queue')
         while self._queue:
             big_maps = self._queue.popleft()
-            await self._process_level_big_maps(big_maps)
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_level_realtime_duration())
+                await self._process_level_big_maps(big_maps)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -628,9 +634,11 @@ class BigMapIndex(Index):
         )
 
         async for level, big_maps in fetcher.fetch_big_maps_by_level():
-            if Metrics.enabled:
-                Metrics.set_levels_to_sync(self._config.name, last_level - level)
-            await self._process_level_big_maps(big_maps)
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    Metrics.set_levels_to_sync(self._config.name, last_level - level)
+                    stack.enter_context(Metrics.measure_level_sync_duration())
+                await self._process_level_big_maps(big_maps)
 
         await self._exit_sync_state(last_level)
 

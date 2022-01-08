@@ -67,7 +67,7 @@ class Metrics:
 
     @classmethod
     @contextmanager
-    def measure_level_sync(cls):
+    def measure_level_sync_duration(cls):
         with _average_duration(cls._level_sync_durations):
             yield
 
