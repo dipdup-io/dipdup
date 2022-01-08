@@ -10,13 +10,14 @@ from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import cast
-from dipdup.prometheus import Metrics
+
 import aiohttp
 from aiolimiter import AsyncLimiter
 from fcache.cache import FileCache  # type: ignore
 
 from dipdup import __version__
 from dipdup.config import HTTPConfig  # type: ignore
+from dipdup.prometheus import Metrics
 
 safe_exceptions = (
     aiohttp.ClientConnectionError,

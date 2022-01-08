@@ -10,7 +10,6 @@ _level_sync_durations: Deque[float] = deque(maxlen=100)
 _level_realtime_durations: Deque[float] = deque(maxlen=100)
 _total_sync_durations: Deque[float] = deque(maxlen=100)
 _total_realtime_durations: Deque[float] = deque(maxlen=100)
-_index_hit_ratios: Deque[float] = deque(maxlen=100)
 
 _levels_to_sync: Dict[str, int] = dict()
 _levels_to_realtime: Dict[str, int] = dict()
@@ -27,7 +26,7 @@ _index_total_realtime_duration = Gauge(
 )
 _index_levels_to_sync = Gauge('dipdup_index_levels_to_sync', 'Number of levels to reach synced state')
 _index_levels_to_realtime = Gauge('dipdup_index_levels_to_realtime', 'Number of levels to reach realtime state')
-_index_hit_ratio = Gauge('dipdup_index_hit_ratio', 'Index hit ratio', ['field'])
+_index_total_matches = Gauge('dipdup_index_total_matches', 'Index total hits')
 
 _datasource_head_updated = Gauge('dipdup_datasource_head_updated', 'Timestamp of the last head update', ['datasource'])
 _datasource_rollback_count = Gauge('dipdup_datasource_rollback_count', 'Number of rollbacks', ['datasource'])
@@ -62,7 +61,6 @@ class Metrics:
         _update_average_metric(_level_realtime_durations, _index_level_realtime_duration)
         _update_average_metric(_total_sync_durations, _index_total_sync_duration)
         _update_average_metric(_total_realtime_durations, _index_total_realtime_duration)
-        _update_average_metric(_index_hit_ratios, _index_hit_ratio)
         _index_levels_to_sync.set(sum(_levels_to_sync.values()))
         _index_levels_to_realtime.set(sum(_levels_to_realtime.values()))
 
@@ -115,8 +113,8 @@ class Metrics:
         _http_errors.labels(url=url, status=status).inc()
 
     @classmethod
-    def set_index_hit_ratio(cls, ratio: float) -> None:
-        _index_hit_ratios.appendleft(ratio)
+    def set_index_total_matches(cls, amount: float) -> None:
+        _index_total_matches.inc(amount)
 
     @classmethod
     def set_levels_to_sync(cls, index: str, level: int):
