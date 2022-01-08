@@ -181,11 +181,10 @@ class Index:
         )
 
     async def process(self) -> None:
-        # NOTE: `--oneshot` flag implied
         if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.last_level:
             last_level = self._config.last_level
             await self._synchronize(last_level, cache=True)
-            await self.state.update_status(IndexStatus.ONESHOT, last_level)
+            await self.state.update_status(status=IndexStatus.FINISHED, level=last_level)
 
         sync_levels = set(self.datasource.get_sync_level(s) for s in self._config.subscriptions)
         sync_level = sync_levels.pop()
@@ -213,7 +212,7 @@ class Index:
         ...
 
     async def _enter_sync_state(self, last_level: int) -> Optional[int]:
-        if self.state.status == IndexStatus.ONESHOT:
+        if self.state.status == IndexStatus.FINISHED:
             return None
 
         first_level = self.state.level

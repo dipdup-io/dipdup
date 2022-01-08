@@ -3,13 +3,19 @@ import sys
 
 __version__ = '4.0.2'
 __spec_version__ = '1.2'
-spec_version_mapping = {
+__schema_version__ = '1.0'
+
+spec_version_to_dipdup = {
     '0.1': '<=0.4.3',
     '1.0': '>=1.0.0, <=1.1.2',
     '1.1': '>=2.0.0, <=2.0.9',
     '1.2': '>=3.0.0',
 }
-spec_reindex_mapping = {
+schema_version_to_dipdup = {
+    None: '<=4.0.3',
+    '1.0': '>=5.0.0',
+}
+spec_version_to_reindex = {
     '0.1': False,
     '1.0': False,
     '1.1': True,

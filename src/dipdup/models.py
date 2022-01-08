@@ -8,7 +8,7 @@ from typing import Generic
 from typing import Optional
 from typing import Tuple
 from typing import TypeVar
-
+from dipdup import __schema_version__
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import Model
@@ -178,6 +178,7 @@ class Schema(Model):
     name = fields.CharField(256, pk=True)
     hash = fields.CharField(256)
     reindex = ReversedCharEnumField(ReindexingReason, max_length=40, null=True)
+    version = fields.IntField(default=__schema_version__)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

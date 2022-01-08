@@ -195,7 +195,6 @@ async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema
 
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
-
 def prepare_models(package: str) -> None:
     for _, model in iter_models(package):
         # NOTE: Generate missing table names before Tortoise does

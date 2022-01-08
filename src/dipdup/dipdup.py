@@ -35,6 +35,7 @@ from dipdup.config import TzktDatasourceConfig
 from dipdup.config import default_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
+from dipdup.context import disabled_indexes
 from dipdup.context import pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
@@ -100,7 +101,7 @@ class IndexDispatcher:
             if isinstance(index, OperationIndex):
                 self._apply_filters(index._config)
 
-        while not self._stopped:
+        while True:
             if not spawn_datasources_event.is_set():
                 if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
                     spawn_datasources_event.set()
@@ -126,8 +127,13 @@ class IndexDispatcher:
                 if isinstance(index, OperationIndex):
                     self._apply_filters(index._config)
 
-            if not indexes_spawned and self._every_index_is(IndexStatus.ONESHOT):
-                self.stop()
+            while disabled_indexes:
+                index_name = disabled_indexes.popleft()
+                index = self._indexes[index_name]
+                await index.state.update_status(status=IndexStatus.FINISHED)
+
+            if not indexes_spawned and self._every_index_is(IndexStatus.FINISHED):
+                break
 
             if self._every_index_is(IndexStatus.REALTIME) and not indexes_spawned:
                 if not on_synchronized_fired:
@@ -139,9 +145,6 @@ class IndexDispatcher:
             # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
             else:
                 on_synchronized_fired = False
-
-    def stop(self) -> None:
-        self._stopped = True
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)

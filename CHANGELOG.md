@@ -2,6 +2,22 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Added
+
+* index: Added an ability to mix indexes with `last_level` and ones without in a single config. 
+* context: Added `ctx.disable_index` method to stop indexing with `FINISHED` status.
+
+### Changed
+
+* models: Renamed `IndexStatus.ONESHOT` enum member to `IndexStatus.FINISHED`
+
+### Removed
+
+* config: Removed unused `advanced.oneshot` option.
+* models: Removed unused `IndexStatus.ROLLBACK` enum member.
+
 ## 4.0.2 - 2022-01-06
 
 ### Added

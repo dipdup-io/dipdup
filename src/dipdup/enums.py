@@ -22,8 +22,7 @@ class IndexStatus(Enum):
     NEW = 'NEW'
     SYNCING = 'SYNCING'
     REALTIME = 'REALTIME'
-    ROLLBACK = 'ROLLBACK'
-    ONESHOT = 'ONESHOT'
+    FINISHED = 'FINISHED'
 
 
 class ReindexingReason(ReversedEnum):

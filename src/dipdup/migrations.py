@@ -12,7 +12,7 @@ deprecated_handlers = ('on_rollback.py', 'on_configure.py')
 _logger = logging.getLogger('dipdup.migrations')
 
 
-class DipDupMigrationManager:
+class ProjectMigrationManager:
     def __init__(self, config: DipDupConfig, config_paths: Iterable[str]) -> None:
         self._config = config
         self._config_paths = config_paths
@@ -56,3 +56,8 @@ class DipDupMigrationManager:
         _logger.warning('Your project has been migrated to spec version %s.', spec_version)
         _logger.warning('Review and commit changes before proceeding.')
         _logger.warning('==================== WARNING =====================')
+
+
+class DatabaseMigrationManager:
+    async def migrate(self) -> None:
+        ...

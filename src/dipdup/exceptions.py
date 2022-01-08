@@ -13,7 +13,7 @@ import sentry_sdk
 from tabulate import tabulate
 from tortoise.models import Model
 
-from dipdup import spec_version_mapping
+from dipdup import spec_version_to_dipdup
 from dipdup.enums import ReindexingReason
 
 _tab = '\n\n' + ('_' * 80) + '\n\n'
@@ -133,8 +133,37 @@ class MigrationRequiredError(DipDupError):
     def _help(self) -> str:
         version_table = tabulate(
             [
-                ['current', self.from_, spec_version_mapping[self.from_]],
-                ['required', self.to, spec_version_mapping[self.to]],
+                ['current', self.from_, spec_version_to_dipdup[self.from_]],
+                ['required', self.to, spec_version_to_dipdup[self.to]],
+            ],
+            headers=['', 'spec_version', 'DipDup version'],
+        )
+        reindex = _tab + ReindexingRequiredError(ReindexingReason.MIGRATION).help() if self.reindex else ''
+        return f"""
+            Project migration required!
+
+            {version_table.strip()}
+
+              1. Run `dipdup migrate`
+              2. Review and commit changes
+
+            See https://baking-bad.org/blog/ for additional release information. {reindex}
+        """
+
+
+@dataclass(frozen=True, repr=False)
+class MigrationRequiredError(DipDupError):
+    """Schema requires migration"""
+
+    from_: int
+    to: int
+    reindex: bool = False
+
+    def _help(self) -> str:
+        version_table = tabulate(
+            [
+                ['current', self.from_, spec_version_to_dipdup[self.from_]],
+                ['required', self.to, spec_version_to_dipdup[self.to]],
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )

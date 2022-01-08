@@ -54,6 +54,7 @@ from dipdup.utils import iter_files
 from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
+disabled_indexes = deque()  # type: ignore
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -204,6 +205,10 @@ class DipDupContext:
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
         pending_indexes.append(index)
+
+    async def disable_index(self, name: str) -> None:
+        self.logger.info('Disabling index `%s`', name)
+        disabled_indexes.append(name)
 
 
 class HookContext(DipDupContext):

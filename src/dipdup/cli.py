@@ -27,8 +27,8 @@ from tortoise.utils import get_schema_sql
 
 from dipdup import __spec_version__
 from dipdup import __version__
-from dipdup import spec_reindex_mapping
-from dipdup import spec_version_mapping
+from dipdup import spec_version_to_reindex
+from dipdup import spec_version_to_dipdup
 from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE
 from dipdup.codegen import DEFAULT_DOCKER_IMAGE
 from dipdup.codegen import DEFAULT_DOCKER_TAG
@@ -43,7 +43,7 @@ from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.migrations import DipDupMigrationManager
+from dipdup.migrations import ProjectMigrationManager
 from dipdup.migrations import deprecated_handlers
 from dipdup.models import Index
 from dipdup.models import Schema
@@ -156,10 +156,10 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     except Exception as e:
         raise InitializationRequiredError from e
 
-    if _config.spec_version not in spec_version_mapping:
-        raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
+    if _config.spec_version not in spec_version_to_dipdup:
+        raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_to_dipdup)}')
     if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
-        reindex = spec_reindex_mapping[__spec_version__]
+        reindex = spec_version_to_reindex[__spec_version__]
         raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
     # NOTE: Ensure that no deprecated handlers left in project after migration to v3.0.0
@@ -214,7 +214,7 @@ async def init(ctx, overwrite_types: bool):
 @cli_wrapper
 async def migrate(ctx):
     config: DipDupConfig = ctx.obj.config
-    migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
+    migrations = ProjectMigrationManager(config, ctx.obj.config_paths)
     await migrations.migrate()
 
 
