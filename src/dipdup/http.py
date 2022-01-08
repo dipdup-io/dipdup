@@ -10,7 +10,7 @@ from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import cast
-
+from dipdup.prometheus import Metrics
 import aiohttp
 from aiolimiter import AsyncLimiter
 from fcache.cache import FileCache  # type: ignore
@@ -102,6 +102,7 @@ class _HTTPGateway:
             raise RuntimeError('aiohttp session is closed')
         return self.__session
 
+    # TODO: Move to separate method to cover SignalR negotiations too
     async def _retry_request(self, method: str, url: str, weight: int = 1, **kwargs):
         """Retry a request in case of failure sleeping according to config"""
         attempt = 1
@@ -123,13 +124,18 @@ class _HTTPGateway:
                     raise e
 
                 ratelimit_sleep: Optional[float] = None
-                if isinstance(e, aiohttp.ClientResponseError) and e.status == HTTPStatus.TOO_MANY_REQUESTS:
-                    # NOTE: Sleep at least 5 seconds on ratelimit
-                    ratelimit_sleep = 5
-                    # TODO: Parse Retry-After in UTC date format
-                    with suppress(KeyError, ValueError):
-                        e.headers = cast(Mapping, e.headers)
-                        ratelimit_sleep = int(e.headers['Retry-After'])
+                if isinstance(e, aiohttp.ClientResponseError):
+                    Metrics.set_http_error(self._url, e.status)
+
+                    if e.status == HTTPStatus.TOO_MANY_REQUESTS:
+                        # NOTE: Sleep at least 5 seconds on ratelimit
+                        ratelimit_sleep = 5
+                        # TODO: Parse Retry-After in UTC date format
+                        with suppress(KeyError, ValueError):
+                            e.headers = cast(Mapping, e.headers)
+                            ratelimit_sleep = int(e.headers['Retry-After'])
+                else:
+                    Metrics.set_http_error(self._url, 0)
 
                 self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, e)
                 self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
