@@ -384,6 +384,8 @@ class OperationIndex(Index):
             self._head_hashes.add(operation_subgroup.hash)
             matched_handlers += await self._match_operation_subgroup(operation_subgroup)
 
+        Metrics.set_index_hit_ratio(len(matched_handlers) / len(operation_subgroups))
+
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
             await self.state.update_status(level=level)

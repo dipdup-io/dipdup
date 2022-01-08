@@ -10,9 +10,30 @@ _level_sync_durations: Deque[float] = deque(maxlen=100)
 _level_realtime_durations: Deque[float] = deque(maxlen=100)
 _total_sync_durations: Deque[float] = deque(maxlen=100)
 _total_realtime_durations: Deque[float] = deque(maxlen=100)
+_index_hit_ratios: Deque[float] = deque(maxlen=100)
 
 _levels_to_sync: Dict[str, int] = dict()
 _levels_to_realtime: Dict[str, int] = dict()
+
+_indexes_total = Gauge('dipdup_indexes_total', 'Total number of indexes')
+_indexes_synced = Gauge('dipdup_indexes_synced', 'Number of synchronized indexes')
+_indexes_realtime = Gauge('dipdup_indexes_realtime', 'Number of realtime indexes')
+
+_index_level_sync_duration = Gauge('dipdup_index_level_sync_duration', 'Duration of indexing a single level', ['field'])
+_index_level_realtime_duration = Gauge('dipdup_index_level_realtime_duration', 'Duration of last index syncronization', ['field'])
+_index_total_sync_duration = Gauge('dipdup_index_total_sync_duration', 'Duration of the last index syncronization', ['field'])
+_index_total_realtime_duration = Gauge(
+    'dipdup_index_total_realtime_duration', 'Duration of the last index realtime syncronization', ['field']
+)
+_index_levels_to_sync = Gauge('dipdup_index_levels_to_sync', 'Number of levels to reach synced state')
+_index_levels_to_realtime = Gauge('dipdup_index_levels_to_realtime', 'Number of levels to reach realtime state')
+_index_hit_ratio = Gauge('dipdup_index_hit_ratio', 'Index hit ratio', ['field'])
+
+_datasource_head_updated = Gauge('dipdup_datasource_head_updated', 'Timestamp of the last head update', ['datasource'])
+_datasource_rollback_count = Gauge('dipdup_datasource_rollback_count', 'Number of rollbacks', ['datasource'])
+
+_http_errors = Gauge('dipdup_http_errors', 'Number of http errors', ['url', 'status'])
+_callback_duration = Gauge('dipdup_callback_duration', 'Duration of callback execution', ['callback'])
 
 
 @contextmanager
@@ -32,36 +53,18 @@ def _update_average_metric(queue: deque, metric: Gauge) -> None:
 
 
 class Metrics:
-    _indexes_total = Gauge('dipdup_indexes_total', 'Total number of indexes')
-    _indexes_synced = Gauge('dipdup_indexes_synced', 'Number of synchronized indexes')
-    _indexes_realtime = Gauge('dipdup_indexes_realtime', 'Number of realtime indexes')
-
-    _index_level_sync_duration = Gauge('dipdup_index_level_sync_duration', 'Duration of indexing a single level', ['field'])
-    _index_level_realtime_duration = Gauge('dipdup_index_level_realtime_duration', 'Duration of last index syncronization', ['field'])
-    _index_total_sync_duration = Gauge('dipdup_index_total_sync_duration', 'Duration of the last index syncronization', ['field'])
-    _index_total_realtime_duration = Gauge(
-        'dipdup_index_total_realtime_duration', 'Duration of the last index realtime syncronization', ['field']
-    )
-    _index_levels_to_sync = Gauge('dipdup_index_levels_to_sync', 'Number of levels to reach synced state')
-    _index_levels_to_realtime = Gauge('dipdup_index_levels_to_realtime', 'Number of levels to reach realtime state')
-
-    _datasource_head_updated = Gauge('dipdup_datasource_head_updated', 'Timestamp of the last head update', ['datasource'])
-    _datasource_rollback_count = Gauge('dipdup_datasource_rollback_count', 'Number of rollbacks', ['datasource'])
-
-    _http_errors = Gauge('dipdup_http_errors', 'Number of http errors', ['url', 'status'])
-    _callback_duration = Gauge('dipdup_callback_duration', 'Duration of callback execution', ['callback'])
-
     def __new__(cls):
         raise TypeError('Metrics is a singleton')
 
     @classmethod
     def refresh(cls) -> None:
-        _update_average_metric(_level_sync_durations, cls._index_level_sync_duration)
-        _update_average_metric(_level_realtime_durations, cls._index_level_realtime_duration)
-        _update_average_metric(_total_sync_durations, cls._index_total_sync_duration)
-        _update_average_metric(_total_realtime_durations, cls._index_total_realtime_duration)
-        cls._index_levels_to_sync.set(sum(_levels_to_sync.values()))
-        cls._index_levels_to_realtime.set(sum(_levels_to_realtime.values()))
+        _update_average_metric(_level_sync_durations, _index_level_sync_duration)
+        _update_average_metric(_level_realtime_durations, _index_level_realtime_duration)
+        _update_average_metric(_total_sync_durations, _index_total_sync_duration)
+        _update_average_metric(_total_realtime_durations, _index_total_realtime_duration)
+        _update_average_metric(_index_hit_ratios, _index_hit_ratio)
+        _index_levels_to_sync.set(sum(_levels_to_sync.values()))
+        _index_levels_to_realtime.set(sum(_levels_to_realtime.values()))
 
     @classmethod
     @contextmanager
@@ -90,26 +93,30 @@ class Metrics:
     @classmethod
     @contextmanager
     def measure_callback_duration(cls, name: str):
-        with cls._callback_duration.labels(callback=name).time():
+        with _callback_duration.labels(callback=name).time():
             yield
 
     @classmethod
     def set_indexes_count(cls, total: int, synced: int, realtime: int) -> None:
-        cls._indexes_total.set(total)
-        cls._indexes_synced.set(synced)
-        cls._indexes_realtime.set(realtime)
+        _indexes_total.set(total)
+        _indexes_synced.set(synced)
+        _indexes_realtime.set(realtime)
 
     @classmethod
     def set_datasource_head_updated(cls, name: str):
-        cls._datasource_head_updated.labels(datasource=name).set(time.time())
+        _datasource_head_updated.labels(datasource=name).set(time.time())
 
     @classmethod
     def set_datasource_rollback(cls, name: str):
-        cls._datasource_rollback_count.labels(datasource=name).inc()
+        _datasource_rollback_count.labels(datasource=name).inc()
 
     @classmethod
     def set_http_error(cls, url: str, status: int) -> None:
-        cls._http_errors.labels(url=url, status=status).inc()
+        _http_errors.labels(url=url, status=status).inc()
+
+    @classmethod
+    def set_index_hit_ratio(cls, ratio: float) -> None:
+        _index_hit_ratios.appendleft(ratio)
 
     @classmethod
     def set_levels_to_sync(cls, index: str, level: int):
