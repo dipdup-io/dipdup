@@ -19,6 +19,7 @@ from typing import Tuple
 from typing import cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
+from prometheus_client import start_http_server  # type: ignore
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
@@ -68,8 +69,7 @@ from dipdup.utils.database import prepare_models
 from dipdup.utils.database import set_schema
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import validate_models
-from prometheus_client import start_http_server  # type: ignore
-from dipdup.prometheus import Metrics
+
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
@@ -141,7 +141,7 @@ class IndexDispatcher:
                 on_synchronized_fired = False
 
     async def _expose_metrics(self) -> None:
-        if not self._ctx.config.prometheus.enabled:
+        if not Metrics.enabled:
             return
 
         while True:
@@ -248,7 +248,8 @@ class IndexDispatcher:
                 ),
             )
         )
-        Metrics.set_datasource_head_updated(datasource.name)
+        if Metrics.enabled:
+            Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
             if isinstance(index, HeadIndex) and index.datasource == datasource:
                 index.push_head(head)
@@ -277,7 +278,8 @@ class IndexDispatcher:
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
         self._logger.warning('Datasource `%s` rolled back: %s -> %s', datasource.name, from_level, to_level)
-        Metrics.set_datasource_rollback(datasource.name)
+        if Metrics.enabled:
+            Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Zero difference between levels means we received no operations/big_maps on this level and thus channel level hasn't changed
         zero_level_rollback = from_level - to_level == 0
@@ -481,10 +483,9 @@ class DipDup:
 
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus.enabled:
+            Metrics.enabled = True
             Metrics.apply_sample_size(self._config.prometheus.sample_size)
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
-        else:
-            Metrics.disable()
 
     async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
         if not self._config.hasura:

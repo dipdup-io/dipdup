@@ -47,6 +47,7 @@ def _update_average_metric(queue: deque, metric: Gauge) -> None:
 
 
 class Metrics:
+    enabled = False
     _level_sync_durations: Deque[float] = deque(maxlen=100)
     _level_realtime_durations: Deque[float] = deque(maxlen=100)
     _total_sync_durations: Deque[float] = deque(maxlen=100)
@@ -54,10 +55,6 @@ class Metrics:
 
     def __new__(cls):
         raise TypeError('Metrics is a singleton')
-
-    @classmethod
-    def disable(cls):
-        cls.__getattr__ = lambda cls, _: lambda *a, **kw: None
 
     @classmethod
     def refresh(cls) -> None:

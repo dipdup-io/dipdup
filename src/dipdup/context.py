@@ -3,6 +3,7 @@ import os
 import sys
 from collections import deque
 from contextlib import AsyncExitStack
+from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
 from os.path import exists
@@ -364,7 +365,9 @@ class CallbackManager:
     @contextmanager
     def _callback_wrapper(self, kind: str, name: str) -> Iterator[None]:
         try:
-            with Metrics.measure_callback_duration(name):
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_callback_duration(name))
                 yield
         except Exception as e:
             if isinstance(e, ReindexingRequiredError):

@@ -126,7 +126,8 @@ class _HTTPGateway:
 
                 ratelimit_sleep: Optional[float] = None
                 if isinstance(e, aiohttp.ClientResponseError):
-                    Metrics.set_http_error(self._url, e.status)
+                    if Metrics.enabled:
+                        Metrics.set_http_error(self._url, e.status)
 
                     if e.status == HTTPStatus.TOO_MANY_REQUESTS:
                         # NOTE: Sleep at least 5 seconds on ratelimit
@@ -136,7 +137,8 @@ class _HTTPGateway:
                             e.headers = cast(Mapping, e.headers)
                             ratelimit_sleep = int(e.headers['Retry-After'])
                 else:
-                    Metrics.set_http_error(self._url, 0)
+                    if Metrics.enabled:
+                        Metrics.set_http_error(self._url, 0)
 
                 self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, e)
                 self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
