@@ -18,7 +18,6 @@ import asyncclick as click
 import sentry_sdk
 from dotenv import load_dotenv
 from fcache.cache import FileCache  # type: ignore
-from prometheus_client import start_http_server  # type: ignore
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from tabulate import tabulate
@@ -193,8 +192,6 @@ async def run(
     config.advanced.postpone_jobs |= postpone_jobs
     config.advanced.early_realtime |= early_realtime
     config.advanced.merge_subscriptions |= merge_subscriptions
-
-    start_http_server(config.prometheus.port, config.prometheus.host)
 
     set_decimal_context(config.package)
 

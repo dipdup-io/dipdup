@@ -6,11 +6,6 @@ from typing import Dict
 
 from prometheus_client import Gauge  # type: ignore
 
-_level_sync_durations: Deque[float] = deque(maxlen=100)
-_level_realtime_durations: Deque[float] = deque(maxlen=100)
-_total_sync_durations: Deque[float] = deque(maxlen=100)
-_total_realtime_durations: Deque[float] = deque(maxlen=100)
-
 _levels_to_sync: Dict[str, int] = dict()
 _levels_to_realtime: Dict[str, int] = dict()
 
@@ -52,40 +47,49 @@ def _update_average_metric(queue: deque, metric: Gauge) -> None:
 
 
 class Metrics:
+    _level_sync_durations: Deque[float] = deque(maxlen=100)
+    _level_realtime_durations: Deque[float] = deque(maxlen=100)
+    _total_sync_durations: Deque[float] = deque(maxlen=100)
+    _total_realtime_durations: Deque[float] = deque(maxlen=100)
+
     def __new__(cls):
         raise TypeError('Metrics is a singleton')
 
     @classmethod
+    def disable(cls):
+        cls.__getattr__ = lambda cls, _: lambda *a, **kw: None
+
+    @classmethod
     def refresh(cls) -> None:
-        _update_average_metric(_level_sync_durations, _index_level_sync_duration)
-        _update_average_metric(_level_realtime_durations, _index_level_realtime_duration)
-        _update_average_metric(_total_sync_durations, _index_total_sync_duration)
-        _update_average_metric(_total_realtime_durations, _index_total_realtime_duration)
+        _update_average_metric(cls._level_sync_durations, _index_level_sync_duration)
+        _update_average_metric(cls._level_realtime_durations, _index_level_realtime_duration)
+        _update_average_metric(cls._total_sync_durations, _index_total_sync_duration)
+        _update_average_metric(cls._total_realtime_durations, _index_total_realtime_duration)
         _index_levels_to_sync.set(sum(_levels_to_sync.values()))
         _index_levels_to_realtime.set(sum(_levels_to_realtime.values()))
 
     @classmethod
     @contextmanager
     def measure_level_sync(cls):
-        with _average_duration(_level_sync_durations):
+        with _average_duration(cls._level_sync_durations):
             yield
 
     @classmethod
     @contextmanager
     def measure_level_realtime_duration(cls):
-        with _average_duration(_level_realtime_durations):
+        with _average_duration(cls._level_realtime_durations):
             yield
 
     @classmethod
     @contextmanager
     def measure_total_sync_duration(cls):
-        with _average_duration(_total_sync_durations):
+        with _average_duration(cls._total_sync_durations):
             yield
 
     @classmethod
     @contextmanager
     def measure_total_realtime_duration(cls):
-        with _average_duration(_total_realtime_durations):
+        with _average_duration(cls._total_realtime_durations):
             yield
 
     @classmethod
@@ -123,3 +127,10 @@ class Metrics:
     @classmethod
     def set_levels_to_realtime(cls, index: str, level: int):
         _levels_to_realtime[index] = level
+
+    @classmethod
+    def apply_sample_size(cls, sample_size: int) -> None:
+        cls._level_sync_durations = deque(maxlen=sample_size)
+        cls._level_realtime_durations = deque(maxlen=sample_size)
+        cls._total_sync_durations = deque(maxlen=sample_size)
+        cls._total_realtime_durations = deque(maxlen=sample_size)

@@ -901,8 +901,11 @@ class SentryConfig:
 
 @dataclass
 class PrometheusConfig:
+    enabled: bool = False
     host: str = '127.0.0.1'
     port: int = 8000
+    update_interval: float = 1.0
+    sample_size: int = 100
 
 
 @dataclass

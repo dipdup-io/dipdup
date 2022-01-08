@@ -68,7 +68,8 @@ from dipdup.utils.database import prepare_models
 from dipdup.utils.database import set_schema
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import validate_models
-
+from prometheus_client import start_http_server  # type: ignore
+from dipdup.prometheus import Metrics
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
@@ -140,11 +141,13 @@ class IndexDispatcher:
                 on_synchronized_fired = False
 
     async def _expose_metrics(self) -> None:
+        if not self._ctx.config.prometheus.enabled:
+            return
+
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(self._ctx.config.prometheus.update_interval)
 
             total, synced, realtime = len(pending_indexes), 0, 0
-
             for index in tuple(self._indexes.values()) + tuple(pending_indexes):
                 total += 1
                 if index.synchronized:
@@ -355,6 +358,7 @@ class DipDup:
             await self._set_up_database(stack)
             await self._set_up_datasources(stack)
             await self._set_up_hooks()
+            await self._set_up_prometheus()
 
             await self._initialize_schema()
             await self._initialize_datasources()
@@ -474,6 +478,13 @@ class DipDup:
             self._ctx.callbacks.register_hook(hook_config)
         for hook_config in self._config.hooks.values():
             self._ctx.callbacks.register_hook(hook_config)
+
+    async def _set_up_prometheus(self) -> None:
+        if self._config.prometheus.enabled:
+            Metrics.apply_sample_size(self._config.prometheus.sample_size)
+            start_http_server(self._config.prometheus.port, self._config.prometheus.host)
+        else:
+            Metrics.disable()
 
     async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
         if not self._config.hasura:
