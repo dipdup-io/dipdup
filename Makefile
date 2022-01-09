@@ -30,7 +30,7 @@ mypy:
 	poetry run mypy src tests
 
 test:
-	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto --dist loadscope --ignore tests/test_dipdup/test_utils.py --ignore -v tests
+	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto --dist loadscope --ignore tests/integration_tests/test_hasura.py --ignore tests/test_dipdup/test_utils.py -v tests
 
 cover:
 	poetry run diff-cover coverage.xml
