@@ -7,13 +7,13 @@ database:
 
 contracts:
   registry:
-    address: KT1R8AZn5KG7mkbnJ5bzMuUw2isL8tMYkDVD
+    address: KT1JytEHBVBg27n9w85tNhSWUpbTvETD6rx6
     typename: registry
 
 datasources:
   tzkt:
     kind: tzkt
-    url: ${TZKT_URL:-https://api.edo2net.tzkt.io}
+    url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
 
