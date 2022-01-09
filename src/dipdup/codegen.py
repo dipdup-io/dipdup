@@ -293,7 +293,7 @@ class DipDupCodeGenerator:
                     '--disable-timestamp',
                 ]
                 self._logger.debug(' '.join(args))
-                subprocess.call(args)
+                subprocess.run(args, check=true)
 
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""

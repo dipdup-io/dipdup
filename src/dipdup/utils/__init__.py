@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import logging
+import os
 import pkgutil
 import time
 import types
@@ -25,11 +26,11 @@ from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
-import os
+from unittest import skip
+
 import humps  # type: ignore
 from genericpath import isdir
 from genericpath import isfile
-from unittest import skip
 
 from dipdup.exceptions import HandlerImportError
 
@@ -168,7 +169,6 @@ def remove_prefix(text: str, prefix: str) -> str:
     if text.startswith(prefix):
         text = text[len(prefix) :]
     return text.strip('_')
-
 
 
 def skip_ci(fn):

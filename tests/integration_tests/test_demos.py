@@ -13,8 +13,8 @@ import demo_quipuswap.models
 import demo_tezos_domains.models
 import demo_tezos_domains_big_map.models
 import demo_tzcolors.models
-from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils import skip_ci
+from dipdup.utils.database import tortoise_wrapper
 
 
 @skip_ci

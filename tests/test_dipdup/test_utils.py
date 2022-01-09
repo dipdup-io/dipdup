@@ -1,7 +1,7 @@
 from contextlib import suppress
 from unittest import IsolatedAsyncioTestCase
-
 from unittest import skip
+
 from tortoise import Tortoise
 
 from dipdup.models import Index

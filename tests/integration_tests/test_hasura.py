@@ -12,8 +12,8 @@ from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.hasura import HasuraGateway
-from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils import skip_ci
+from dipdup.utils.database import tortoise_wrapper
 
 
 @skip_ci
