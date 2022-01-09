@@ -13,6 +13,12 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * context: Fixed `HookConfig.atomic` flag being ignored in `fire_hook` method.
 
+## 4.0.3 - 2022-01-09
+
+### Fixed
+
+* tzkt: Fixed parsing parameter with an optional value.
+
 ## 4.0.2 - 2022-01-06
 
 ### Added
