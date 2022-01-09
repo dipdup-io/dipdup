@@ -57,6 +57,7 @@ testcontainers = "^3.4.1"
 types-pytz = "^2021.1.2"
 types-tabulate = "^0.8.2"
 pprofile = "^2.1.0"
+pytest-xdist = "^2.5.0"
 
 [tool.poetry.extras]
 pytezos = ["pytezos"]
