@@ -14,7 +14,7 @@ contracts:
     typename: name_registry
 
 datasources:
-  tzkt_edo:
+  tzkt:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
@@ -35,10 +35,10 @@ templates:
         path: store.expiry_map
 
 indexes:
-  tezos_domains_big_map_edo:
+  tezos_domains_big_map:
     template: tezos_domains_big_map
     values:
-      datasource: tzkt_edo
+      datasource: tzkt
       name_registry: name_registry
 
   tezos_domains_big_map_mainnet:

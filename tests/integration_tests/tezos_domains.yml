@@ -11,7 +11,7 @@ contracts:
     typename: name_registry
 
 datasources:
-  tzkt_edo:
+  tzkt:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
@@ -35,8 +35,8 @@ templates:
     last_level: 1450852
 
 indexes:
-  tezos_domains_edo:
+  tezos_domains:
     template: tezos_domains
     values:
-      datasource: tzkt_edo
+      datasource: tzkt
       name_registry: name_registry
