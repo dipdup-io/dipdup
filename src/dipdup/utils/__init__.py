@@ -29,6 +29,7 @@ from typing import TypeVar
 import humps  # type: ignore
 from genericpath import isdir
 from genericpath import isfile
+from unittest import skip
 
 from dipdup.exceptions import HandlerImportError
 
@@ -167,3 +168,13 @@ def remove_prefix(text: str, prefix: str) -> str:
     if text.startswith(prefix):
         text = text[len(prefix) :]
     return text.strip('_')
+
+
+
+def skip_ci(fn):
+
+    with open('/proc/self/cgroup') as procfile:
+        for line in procfile:
+            if 'docker' in line.strip().split('/'):
+                return skip('Docker container, skipping')(fn)
+    return fn

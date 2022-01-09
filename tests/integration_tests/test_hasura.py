@@ -13,8 +13,10 @@ from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.hasura import HasuraGateway
 from dipdup.utils.database import tortoise_wrapper
+from dipdup.utils import skip_ci
 
 
+@skip_ci
 class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
 

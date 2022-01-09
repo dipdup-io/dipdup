@@ -14,8 +14,10 @@ import demo_tezos_domains.models
 import demo_tezos_domains_big_map.models
 import demo_tzcolors.models
 from dipdup.utils.database import tortoise_wrapper
+from dipdup.utils import skip_ci
 
 
+@skip_ci
 class DemosTest(IsolatedAsyncioTestCase):
     # TODO: store cache in xdg_cache_home, keep databases and logs after last run
     def setUp(self):
