@@ -84,10 +84,10 @@ class IndexDispatcher:
         self._address_filter: Set[str] = set()
 
     async def run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
-        await gather(
-            self._run(spawn_datasources_event, start_scheduler_event, early_realtime),
-            self._expose_metrics(),
-        )
+        tasks = [self._run(spawn_datasources_event, start_scheduler_event, early_realtime)]
+        if self._ctx.config.prometheus:
+            tasks.append(self._update_metrics(self._ctx.config.prometheus.update_inderval))
+        await gather(*tasks)
 
     async def _run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
         self._logger.info('Starting index dispatcher')
@@ -140,12 +140,9 @@ class IndexDispatcher:
             else:
                 on_synchronized_fired = False
 
-    async def _expose_metrics(self) -> None:
-        if not Metrics.enabled:
-            return
-
+    async def _update_metrics(self, update_interval: float) -> None:
         while True:
-            await asyncio.sleep(self._ctx.config.prometheus.update_interval)
+            await asyncio.sleep(update_interval)
 
             total, synced, realtime = len(pending_indexes), 0, 0
             for index in tuple(self._indexes.values()) + tuple(pending_indexes):
@@ -482,7 +479,7 @@ class DipDup:
             self._ctx.callbacks.register_hook(hook_config)
 
     async def _set_up_prometheus(self) -> None:
-        if self._config.prometheus.enabled:
+        if self._config.prometheus:
             Metrics.enabled = True
             Metrics.apply_sample_size(self._config.prometheus.sample_size)
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
