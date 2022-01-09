@@ -16,7 +16,6 @@ from dipdup.hasura import HasuraGateway
 from dipdup.utils.database import tortoise_wrapper
 
 
-@skip('FIXME: GitHub')
 class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
 

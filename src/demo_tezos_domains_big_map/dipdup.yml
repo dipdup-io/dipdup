@@ -6,8 +6,8 @@ database:
   path: tezos_domains_big_map.sqlite3
 
 contracts:
-  edo_name_registry:
-    address: KT1JJbWfW8CHUY95hG9iq2CEMma1RiKhMHDR
+  name_registry:
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
     typename: name_registry
   mainnet_name_registry:
     address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
@@ -16,7 +16,7 @@ contracts:
 datasources:
   tzkt_edo:
     kind: tzkt
-    url: ${TZKT_URL:-https://api.edo2net.tzkt.io}
+    url: ${TZKT_URL:-https://api.tzkt.io}
 
   tzkt_mainnet:
     kind: tzkt
@@ -39,7 +39,7 @@ indexes:
     template: tezos_domains_big_map
     values:
       datasource: tzkt_edo
-      name_registry: edo_name_registry
+      name_registry: name_registry
 
   tezos_domains_big_map_mainnet:
     template: tezos_domains_big_map

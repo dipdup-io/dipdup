@@ -17,7 +17,6 @@ import demo_tzcolors.models
 from dipdup.utils.database import tortoise_wrapper
 
 
-@skip('FIXME: GitHub')
 class DemosTest(IsolatedAsyncioTestCase):
     # TODO: store cache in xdg_cache_home, keep databases and logs after last run
     def setUp(self):
@@ -79,7 +78,6 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(14, auctions)
             self.assertEqual(44, bids)
 
-    @skip('edonet is dead')
     async def test_tezos_domains(self):
         self.run_dipdup('tezos_domains.yml')
 
@@ -87,10 +85,9 @@ class DemosTest(IsolatedAsyncioTestCase):
             tlds = await demo_tezos_domains.models.TLD.filter().count()
             domains = await demo_tezos_domains.models.Domain.filter().count()
 
-            self.assertEqual(5, tlds)
-            self.assertEqual(237, domains)
+            self.assertEqual(1, tlds)
+            self.assertEqual(145, domains)
 
-    @skip('edonet is dead')
     async def test_tezos_domains_big_map(self):
         self.run_dipdup('tezos_domains_big_map.yml')
 
@@ -98,5 +95,5 @@ class DemosTest(IsolatedAsyncioTestCase):
             tlds = await demo_tezos_domains_big_map.models.TLD.filter().count()
             domains = await demo_tezos_domains_big_map.models.Domain.filter().count()
 
-            self.assertEqual(5, tlds)
-            self.assertEqual(237, domains)
+            self.assertEqual(1, tlds)
+            self.assertEqual(145, domains)

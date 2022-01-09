@@ -6,14 +6,14 @@ database:
   path: db.sqlite3
 
 contracts:
-  edo_name_registry:
-    address: KT1JJbWfW8CHUY95hG9iq2CEMma1RiKhMHDR
+  name_registry:
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
     typename: name_registry
 
 datasources:
   tzkt_edo:
     kind: tzkt
-    url: ${TZKT_URL:-https://api.edo2net.tzkt.io}
+    url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
   tezos_domains:
@@ -32,11 +32,11 @@ templates:
           - type: transaction
             destination: <name_registry>
             entrypoint: execute
-    last_level: 55363
+    last_level: 1450852
 
 indexes:
   tezos_domains_edo:
     template: tezos_domains
     values:
       datasource: tzkt_edo
-      name_registry: edo_name_registry
+      name_registry: name_registry

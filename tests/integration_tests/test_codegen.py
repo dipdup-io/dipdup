@@ -11,7 +11,6 @@ from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
 
 
-@skip('FIXME: GitHub')
 class CodegenTest(IsolatedAsyncioTestCase):
     async def test_codegen(self):
         for name in [
