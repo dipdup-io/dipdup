@@ -16,7 +16,7 @@ jobs:
         id: cache-venv
         with:
           path: .venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('**/poetry.lock') }}
+          key: ${{ runner.os }}-venv-${{ hashFiles('/home/runner/.cache/pypoetry/virtualenvs') }}
           restore-keys: |
             ${{ runner.os }}-venv-
 
