@@ -86,7 +86,7 @@ class IndexDispatcher:
     async def run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
         tasks = [self._run(spawn_datasources_event, start_scheduler_event, early_realtime)]
         if self._ctx.config.prometheus:
-            tasks.append(self._update_metrics(self._ctx.config.prometheus.update_inderval))
+            tasks.append(self._update_metrics(self._ctx.config.prometheus.update_interval))
         await gather(*tasks)
 
     async def _run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
