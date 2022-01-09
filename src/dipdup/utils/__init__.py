@@ -25,7 +25,7 @@ from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
-
+import os
 import humps  # type: ignore
 from genericpath import isdir
 from genericpath import isfile
@@ -172,9 +172,6 @@ def remove_prefix(text: str, prefix: str) -> str:
 
 
 def skip_ci(fn):
-
-    with open('/proc/self/cgroup') as procfile:
-        for line in procfile:
-            if 'docker' in line.strip().split('/'):
-                return skip('Docker container, skipping')(fn)
+    if os.environ.get('CI'):
+        return skip('CI environment, skipping')(fn)
     return fn
