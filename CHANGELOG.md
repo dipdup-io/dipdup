@@ -6,12 +6,12 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
-* prometheus: Added exposing of Prometheus metrics.
+* prometheus: Added ability to expose Prometheus metrics.
 * config: Added top-level config section `prometheus`. 
 
 ### Fixed
 
-* context: Fixed `HookConfig.atomic` flag being ignored in `fire_hook` method.
+* context: Fixed `HookConfig.atomic` flag, which was ignored in `fire_hook` method.
 
 ## 4.0.3 - 2022-01-09
 
