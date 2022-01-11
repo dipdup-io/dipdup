@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+[unreleased]
+
+### Added
+
+* cli: Added `schema init` command to initialize database schema.
+
 ## 4.0.3 - 2022-01-09
 
 ### Fixed
