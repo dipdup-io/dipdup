@@ -1,6 +1,6 @@
-# [DipDup](SUMMARY.md)
+# Table of contents
 
-* [Overview](overview.md)
+* [Overview](README.md)
 * [Release notes](release-notes/README.md)
   * [4.0.0](release-notes/4.0.0.md)
 * [Quickstart](quickstart.md)
@@ -12,7 +12,6 @@
   * [Templates and variables](getting-started/templates-and-variables.md)
   * [Defining models](getting-started/defining-models.md)
   * [Implementing handlers](getting-started/implementing-handlers.md)
-
 * [Advanced usage](advanced/README.md)
   * [Datasources](advanced/datasources.md)
   * [Hooks](advanced/hooks/README.md)
@@ -28,16 +27,13 @@
   * [Handler context](advanced/handler-context.md)
   * [Internal models](advanced/internal-models.md)
   * [Spawning indexes at runtime](cookbook/index-factories.md)
-
 * [GraphQL API](graphql/README.md)
   * [Hasura integration](graphql/hasura.md)
   * [REST endpoints](graphql/rest.md)
   * [GenQL](graphql/genql.md)
-
 * [Troubleshooting](troubleshooting/README.md)
   * [Common issues](troubleshooting/common-issues.md)
   * [Reporting bugs](troubleshooting/reporting-bugs.md)
-
 * [Deployment and operations](deployment/README.md)
   * [Database engines](deployment/database-engines.md)
   * [Building Docker images](deployment/docker.md)
@@ -47,21 +43,17 @@
   * [Logging](deployment/logging.md)
   * [Monitoring](deployment/monitoring.md)
   * [Backup and restore](deployment/backups.md)
-
 * [Cookbook](cookbook/README.md)
   * [Processing offchain data](cookbook/offchain-data.md)
   * [Reusing typename for different contracts](cookbook/reusing-typenames.md)
   * [Synchronizing multiple handlers/hooks](cookbook/sync-callbacks.md)
   * [Caching models](cookbook/caching-models.md)
-
 * [Examples](examples/README.md)
   * [Demo projects](examples/demo-projects.md)
   * [Built with DipDup](examples/built-with-dipdup.md)
-
 * [Plugins](plugins/README.md)
   * [mempool](plugins/mempool.md)
   * [metadata](plugins/metadata.md)
-
 * [Config file reference](config-reference/README.md)
   * [advanced](config-reference/advanced.md)
   * [contracts](config-reference/contracts.md)
@@ -70,16 +62,15 @@
   * [hasura](config-reference/hasura.md)
   * [hooks](config-reference/hooks.md)
   * [indexes](config-reference/indexes/README.md)
-    * [big_map](config-reference/indexes/big_map.md)
+    * [big\_map](config-reference/indexes/big\_map.md)
     * [head](config-reference/indexes/head.md)
     * [operation](config-reference/indexes/operation.md)
     * [template](config-reference/indexes/template.md)
   * [jobs](config-reference/jobs.md)
   * [package](config-reference/package.md)
   * [sentry](config-reference/sentry.md)
-  * [spec_version](config-reference/spec_version.md)
+  * [spec\_version](config-reference/spec\_version.md)
   * [templates](config-reference/templates.md)
-
 * [Command-line reference](cli-reference/README.md)
   * [cache clear](cli-reference/cache-clear.md)
   * [cache show](cli-reference/cache-show.md)

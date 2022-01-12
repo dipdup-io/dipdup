@@ -4,7 +4,9 @@ This is an optional section used by the [metadata](https://github.com/dipdup-net
 
 Metadata configuration has two required sections: `settings` and `indexers`
 
-{% page-ref page="../advanced/metadata-plugin.md" %}
+{% content-ref url="../advanced/metadata-plugin.md" %}
+[metadata-plugin.md](../advanced/metadata-plugin.md)
+{% endcontent-ref %}
 
 ## Settings
 
@@ -16,6 +18,8 @@ metadata:
     ipfs_timeout: 10
     http_timeout: 10
     max_retry_count_on_error: 3
+    contract_service_workers: 15
+    token_service_workers: 75
   indexers:
     ...
 ```
@@ -35,6 +39,14 @@ How long DipDup will wait for a HTTP server response. Default value is **10 seco
 ### max\_retry\_count\_on\_error
 
 If DipDup fails to get a response from IPFS gateway or HTTP server, it will try again after some time, until it runs out of attempts. Default value is **3 attempts**.
+
+### contract\_service\_workers
+
+Count of contract service workers which resolves contract metadata. Default value is 5.
+
+### token\_service\_workers
+
+Count of token service workers which resolves token metadata. Default value is 5.
 
 ## Indexers
 
