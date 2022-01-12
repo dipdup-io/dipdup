@@ -2,6 +2,18 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
+
+### Other
+
+* ci: Cache virtual environment in GitHub Actions.
+* ci: Detect CI environment and skip tests that fail in GitHub Actions.
+* ci: Execute tests in parallel with `pytest-xdist` when possible.
+
 ## 4.0.3 - 2022-01-09
 
 ### Fixed
