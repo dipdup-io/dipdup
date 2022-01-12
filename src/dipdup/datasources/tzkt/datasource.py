@@ -60,7 +60,7 @@ def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationDa
     """Merge and sort operations fetched from multiple endpoints"""
     return tuple(
         sorted(
-            tuple(({op.id: op for op in operations}).values()),
+            (({op.id: op for op in operations}).values()),
             key=lambda op: op.id,
         )
     )
@@ -234,7 +234,7 @@ class BigMapFetcher:
         """
 
         offset = 0
-        big_maps: Tuple[BigMapData, ...] = tuple()
+        big_maps: Tuple[BigMapData, ...] = ()
 
         # TODO: Share code between this and OperationFetcher
         while True:
@@ -309,17 +309,17 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Fetching %s contracts for address `%s`', entrypoint, address)
 
         size, offset = self.request_limit, 0
-        addresses: Tuple[str, ...] = tuple()
+        addresses: Tuple[str, ...] = ()
 
         while size == self.request_limit:
             response = await self._http.request(
                 'get',
                 url=f'v1/contracts/{address}/{entrypoint}',
-                params=dict(
-                    select='address',
-                    limit=self.request_limit,
-                    offset=offset,
-                ),
+                params={
+                    'select': 'address',
+                    'limit': self.request_limit,
+                    'offset': offset,
+                },
             )
             size = len(response)
             addresses = addresses + tuple(response)
@@ -332,17 +332,17 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Fetching originated contracts for address `%s', address)
 
         size, offset = self.request_limit, 0
-        addresses: Tuple[str, ...] = tuple()
+        addresses: Tuple[str, ...] = ()
 
         while size == self.request_limit:
             response = await self._http.request(
                 'get',
                 url=f'v1/accounts/{address}/contracts',
-                params=dict(
-                    select='address',
-                    limit=self.request_limit,
-                    offset=offset,
-                ),
+                params={
+                    'select': 'address',
+                    'limit': self.request_limit,
+                    'offset': offset,
+                },
             )
             size = len(response)
             addresses = addresses + tuple(c['address'] for c in response)
@@ -446,8 +446,7 @@ class TzktDatasource(IndexDatasource):
             )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
-        originations = tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
-        return originations
+        return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
 
     async def get_transactions(
         self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
@@ -468,8 +467,7 @@ class TzktDatasource(IndexDatasource):
         )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
-        transactions = tuple(self.convert_operation(op, type_='transaction') for op in raw_transactions)
-        return transactions
+        return tuple(self.convert_operation(op, type_='transaction') for op in raw_transactions)
 
     async def get_big_maps(
         self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
@@ -487,8 +485,7 @@ class TzktDatasource(IndexDatasource):
             },
             cache=cache,
         )
-        big_maps = tuple(self.convert_big_map(bm) for bm in raw_big_maps)
-        return big_maps
+        return tuple(self.convert_big_map(bm) for bm in raw_big_maps)
 
     async def get_quote(self, level: int) -> QuoteData:
         """Get quote for block"""

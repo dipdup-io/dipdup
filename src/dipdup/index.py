@@ -93,8 +93,8 @@ def extract_operation_subgroups(
     levels: Set[int] = set()
     operation_subgroups: DefaultDict[Tuple[str, int], Deque[OperationData]] = defaultdict(deque)
 
-    operation_index = -1
-    for operation_index, operation in enumerate(operations):
+    _operation_index = -1
+    for _operation_index, operation in enumerate(operations):
         # NOTE: Filtering out operations that are not part of any index
         if operation.type == 'transaction':
             if operation.entrypoint not in entrypoints:
@@ -114,7 +114,7 @@ def extract_operation_subgroups(
     _logger.debug(
         'Extracted %d subgroups (%d operations, %d filtered by %s entrypoints and %s addresses)',
         len(operation_subgroups),
-        operation_index + 1,
+        _operation_index + 1,
         filtered,
         len(entrypoints),
         len(addresses),
@@ -122,7 +122,7 @@ def extract_operation_subgroups(
 
     for key, operations in operation_subgroups.items():
         hash_, counter = key
-        entrypoints = set(op.entrypoint for op in operations)
+        entrypoints = {op.entrypoint for op in operations}
         yield OperationSubgroup(
             hash=hash_,
             counter=counter,
@@ -172,12 +172,12 @@ class Index:
         self._state, _ = await models.Index.get_or_create(
             name=self._config.name,
             type=self._config.kind,
-            defaults=dict(
-                level=level,
-                config_hash=self._config.hash(),
-                template=self._config.parent.name if self._config.parent else None,
-                template_values=self._config.template_values,
-            ),
+            defaults={
+                'level': level,
+                'config_hash': self._config.hash(),
+                'template': self._config.parent.name if self._config.parent else None,
+                'template_values': self._config.template_values,
+            },
         )
 
     async def process(self) -> None:
@@ -187,7 +187,7 @@ class Index:
             await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
-        sync_levels = set(self.datasource.get_sync_level(s) for s in self._config.subscriptions)
+        sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
         sync_level = sync_levels.pop()
         if sync_levels:
             raise Exception
@@ -232,7 +232,7 @@ class Index:
         await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
 
     def _extract_level(self, message: Union[Tuple[OperationData, ...], Tuple[BigMapData, ...]]) -> int:
-        batch_levels = set(item.level for item in message)
+        batch_levels = {item.level for item in message}
         if len(batch_levels) != 1:
             raise RuntimeError(f'Items in operation/big_map batch have different levels: {batch_levels}')
         return batch_levels.pop()
@@ -340,7 +340,7 @@ class OperationIndex(Index):
                 raise RuntimeError(f'Index is in a rollback state, but received operation batch with different levels: {levels_repr}')
 
             self._logger.info('Rolling back to previous level, verifying processed operations')
-            received_hashes = set(s.hash for s in operation_subgroups)
+            received_hashes = {s.hash for s in operation_subgroups}
             new_hashes = received_hashes - self._head_hashes
             missing_hashes = self._head_hashes - received_hashes
 
@@ -522,7 +522,7 @@ class OperationIndex(Index):
         """Get addresses to fetch transactions from during initial synchronization"""
         if OperationType.transaction not in self._config.types:
             return set()
-        return set(contract.address for contract in self._config.contracts if isinstance(contract, ContractConfig))
+        return {contract.address for contract in self._config.contracts if isinstance(contract, ContractConfig)}
 
     async def _get_origination_addresses(self) -> Set[str]:
         """Get addresses to fetch origination from during initial synchronization"""

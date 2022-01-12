@@ -49,7 +49,7 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
                     db_url=url,
                     modules=modules,  # type: ignore
                 )
-            except (OSError, ConnectionRefusedError):
+            except OSError:
                 _logger.warning('Can\'t establish database connection, attempt %s/%s', attempt, timeout)
                 if attempt == timeout - 1:
                     raise

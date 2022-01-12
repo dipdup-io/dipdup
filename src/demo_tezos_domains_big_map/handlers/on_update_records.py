@@ -23,19 +23,19 @@ async def on_update_records(
         return
 
     if store_records.value.level == "1":
-        await models.TLD.update_or_create(id=record_name, defaults=dict(owner=store_records.value.owner))
+        await models.TLD.update_or_create(id=record_name, defaults={'owner': store_records.value.owner})
     else:
         if store_records.value.level == "2":
             await models.Domain.update_or_create(
                 id=record_name,
-                defaults=dict(
-                    tld_id=record_path[-1],
-                    owner=store_records.value.owner,
-                    token_id=int(store_records.value.tzip12_token_id) if store_records.value.tzip12_token_id else None,
-                ),
+                defaults={
+                    'tld_id': record_path[-1],
+                    'owner': store_records.value.owner,
+                    'token_id': int(store_records.value.tzip12_token_id) if store_records.value.tzip12_token_id else None,
+                },
             )
 
         await models.Record.update_or_create(
             id=record_name,
-            defaults=dict(domain_id='.'.join(record_path[-2:]), address=store_records.value.address),
+            defaults={'domain_id': '.'.join(record_path[-2:]), 'address': store_records.value.address},
         )

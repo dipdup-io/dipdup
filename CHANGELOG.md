@@ -8,11 +8,16 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
 
+### Performance
+
+* dipdup: Minor overall performance improvements.
+
 ### Other
 
 * ci: Cache virtual environment in GitHub Actions.
 * ci: Detect CI environment and skip tests that fail in GitHub Actions.
 * ci: Execute tests in parallel with `pytest-xdist` when possible.
+* ci: More strict linting rules of `flake8`.
 
 ## 4.0.3 - 2022-01-09
 
