@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: test
+.PHONY: test build
 .DEFAULT_GOAL: all
 
 DEV=1
@@ -30,7 +30,7 @@ mypy:
 	poetry run mypy src tests
 
 test:
-	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -v tests
+	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto --dist loadscope -s -v tests
 
 cover:
 	poetry run diff-cover coverage.xml

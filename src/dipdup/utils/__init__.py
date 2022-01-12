@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import logging
+import os
 import pkgutil
 import time
 import types
@@ -25,6 +26,7 @@ from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
+from unittest import skip
 
 import humps  # type: ignore
 from genericpath import isdir
@@ -169,3 +171,9 @@ def remove_prefix(text: str, prefix: str) -> str:
     if text.startswith(prefix):
         text = text[len(prefix) :]
     return text.strip('_')
+
+
+def skip_ci(fn):
+    if os.environ.get('CI'):
+        return skip('CI environment, skipping')(fn)
+    return fn

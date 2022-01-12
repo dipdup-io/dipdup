@@ -13,7 +13,7 @@ contracts:
 datasources:
   tzkt:
     kind: tzkt
-    url: ${TZKT_URL:-https://api.edo2net.tzkt.io}
+    url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
 

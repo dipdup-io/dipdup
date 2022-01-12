@@ -4,14 +4,14 @@ from os.path import dirname
 from os.path import join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
-from unittest import skip
 
 from dipdup import __version__
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
+from dipdup.utils import skip_ci
 
 
-@skip('FIXME: GitHub')
+@skip_ci
 class CodegenTest(IsolatedAsyncioTestCase):
     async def test_codegen(self):
         for name in [

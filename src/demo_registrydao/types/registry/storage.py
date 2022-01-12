@@ -11,87 +11,62 @@ from pydantic import BaseModel
 from pydantic import Extra
 
 
+class Key(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    delegate: str
+    owner: str
+
+
+class Delegate(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    key: Key
+    value: Dict[str, Any]
+
+
 class FreezeHistory(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    current_period_num: str
+    current_stage_num: str
     current_unstaked: str
     past_unstaked: str
     staked: str
 
 
-class LastPeriodChange(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    changed_on: str
-    period_num: str
-
-
-class Key(BaseModel):
+class GovernanceToken(BaseModel):
     class Config:
         extra = Extra.forbid
 
     address: str
+    token_id: str
+
+
+class ProposalKeyListSortByLevelItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    bytes: str
     nat: str
-
-
-class LedgerItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    key: Key
-    value: str
-
-
-class MaxQuorumThreshold(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    denominator: str
-    numerator: str
-
-
-class MinQuorumThreshold(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    denominator: str
-    numerator: str
 
 
 class Key1(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    operator: str
-    owner: str
-
-
-class Operator(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    key: Key1
-    value: Dict[str, Any]
-
-
-class ProposalKeyListSortByDateItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    bytes: str
-    timestamp: str
+    address: str
+    bool: bool
 
 
 class Voter(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    vote_amount: str
-    vote_type: bool
-    voter_address: str
+    key: Key1
+    value: str
 
 
 class Proposals(BaseModel):
@@ -99,22 +74,23 @@ class Proposals(BaseModel):
         extra = Extra.forbid
 
     downvotes: str
-    metadata: Dict[str, str]
-    period_num: str
+    metadata: str
     proposer: str
-    proposer_fixed_fee_in_token: str
     proposer_frozen_token: str
-    start_date: str
+    quorum_threshold: str
+    start_level: str
     upvotes: str
     voters: List[Voter]
+    voting_stage_num: str
 
 
-class QuorumThreshold(BaseModel):
+class QuorumThresholdAtCycle(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    denominator: str
-    numerator: str
+    last_updated_cycle: str
+    quorum_threshold: str
+    staked: str
 
 
 class RegistryStorage(BaseModel):
@@ -124,28 +100,30 @@ class RegistryStorage(BaseModel):
     admin: str
     custom_entrypoints: Dict[str, str]
     decision_lambda: str
+    delegates: List[Delegate]
     extra: Dict[str, str]
     fixed_proposal_fee_in_token: str
     freeze_history: Dict[str, FreezeHistory]
     frozen_token_id: str
-    last_period_change: LastPeriodChange
-    ledger: List[LedgerItem]
+    frozen_total_supply: str
+    governance_token: GovernanceToken
+    governance_total_supply: str
+    guardian: str
     max_proposals: str
-    max_quorum_threshold: MaxQuorumThreshold
-    max_votes: str
-    max_voting_period: str
+    max_quorum_change: str
+    max_quorum_threshold: str
+    max_voters: str
     metadata: Dict[str, str]
-    min_quorum_threshold: MinQuorumThreshold
-    min_voting_period: str
-    operators: List[Operator]
+    min_quorum_threshold: str
     pending_owner: str
+    period: str
     permits_counter: str
     proposal_check: str
-    proposal_key_list_sort_by_date: List[ProposalKeyListSortByDateItem]
+    proposal_expired_level: str
+    proposal_flush_level: str
+    proposal_key_list_sort_by_level: List[ProposalKeyListSortByLevelItem]
     proposals: Dict[str, Proposals]
-    quorum_threshold: QuorumThreshold
-    rejected_proposal_return_value: str
-    token_address: str
-    total_supply: Dict[str, str]
-    unfrozen_token_id: str
-    voting_period: str
+    quorum_change: str
+    quorum_threshold_at_cycle: QuorumThresholdAtCycle
+    rejected_proposal_slash_value: str
+    start_level: str

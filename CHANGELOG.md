@@ -8,9 +8,37 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * config: Callbacks of handlers and hooks are considered nested packages if their name contains dots.
 
+### Fixed
+
+* demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
+
+### Other
+
+* ci: Cache virtual environment in GitHub Actions.
+* ci: Detect CI environment and skip tests that fail in GitHub Actions.
+* ci: Execute tests in parallel with `pytest-xdist` when possible.
+
+## 4.0.3 - 2022-01-09
+
+### Fixed
+
+* tzkt: Fixed parsing parameter with an optional value.
+
+## 4.0.2 - 2022-01-06
+
+### Added
+
+* tzkt: Added optional `delegate_address` and `delegate_alias` fields to `OperationData`.
+
+### Fixed
+
+* tzkt: Fixed crash due to unprocessed pysignalr exception.
+* tzkt: Fixed parsing `OperationData.amount` field.
+* tzkt: Fixed parsing storage with top-level boolean fields.
+
 ## 4.0.1 - 2021-12-30
 
-## Fixed
+### Fixed
 
 * codegen: Fixed generating storage typeclasses with `Union` fields.
 * codegen: Fixed preprocessing contract JSONSchema.
@@ -18,7 +46,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * tzkt: Fixed processing operations with default entrypoint and empty parameter.
 * tzkt: Fixed crash while recursively applying bigmap diffs to the storage.
 
-## Performance
+### Performance
 
 * tzkt: Increased speed of applying bigmap diffs to operation storage.
 
