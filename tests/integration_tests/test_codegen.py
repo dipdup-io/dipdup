@@ -8,8 +8,10 @@ from unittest import IsolatedAsyncioTestCase
 from dipdup import __version__
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
+from dipdup.utils import skip_ci
 
 
+@skip_ci
 class CodegenTest(IsolatedAsyncioTestCase):
     async def test_codegen(self):
         for name in [

@@ -44,7 +44,6 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
-from dipdup.exceptions import ReindexingRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
@@ -107,7 +106,7 @@ class IndexDispatcher:
                     spawn_datasources_event.set()
 
             if spawn_datasources_event.is_set():
-                index_datasources = set(i.datasource for i in self._indexes.values())
+                index_datasources = {i.datasource for i in self._indexes.values()}
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
@@ -152,7 +151,7 @@ class IndexDispatcher:
         if not self._indexes:
             return False
 
-        statuses = set(i.state.status for i in self._indexes.values())
+        statuses = {i.state.status for i in self._indexes.values()}
         return statuses == {status}
 
     async def _fetch_contracts(self) -> None:
@@ -230,11 +229,11 @@ class IndexDispatcher:
             asyncio.create_task(
                 Head.update_or_create(
                     name=datasource.name,
-                    defaults=dict(
-                        level=head.level,
-                        hash=head.hash,
-                        timestamp=head.timestamp,
-                    ),
+                    defaults={
+                        'level': head.level,
+                        'hash': head.hash,
+                        'timestamp': head.timestamp,
+                    },
                 ),
             )
         )
@@ -446,7 +445,7 @@ class DipDup:
             await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
         elif self._schema.reindex:
-            raise ReindexingRequiredError(self._schema.reindex)
+            await self._ctx.reindex(self._schema.reindex)
 
         await self._ctx.fire_hook('on_restart')
 
@@ -533,7 +532,7 @@ class DipDup:
             await gather(*_tasks)
 
         tasks.add(create_task(_event_wrapper()))
-        return event
+        return event  # noqa: R504
 
     async def _set_up_scheduler(self, stack: AsyncExitStack, tasks: Set[Task]) -> Event:
         job_failed = Event()
@@ -573,4 +572,4 @@ class DipDup:
                 add_job(self._ctx, self._scheduler, job_config)
 
         tasks.add(create_task(_event_wrapper()))
-        return event
+        return event  # noqa: R504

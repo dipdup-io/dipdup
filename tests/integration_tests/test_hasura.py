@@ -12,9 +12,11 @@ from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.hasura import HasuraGateway
+from dipdup.utils import skip_ci
 from dipdup.utils.database import tortoise_wrapper
 
 
+@skip_ci
 class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
 
@@ -25,6 +27,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
 
         async with AsyncExitStack() as stack:
             postgres_container = PostgresContainer()
+            # NOTE: Skip healthcheck
             postgres_container._connect = MagicMock()
             stack.enter_context(postgres_container)
             postgres_container._container.reload()

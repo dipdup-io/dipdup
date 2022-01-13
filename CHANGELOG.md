@@ -2,6 +2,56 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
+* hasura: Fixed missing relations for models with `ManyToManyField` fields.
+
+### Performance
+
+* dipdup: Minor overall performance improvements.
+
+### Other
+
+* ci: Cache virtual environment in GitHub Actions.
+* ci: Detect CI environment and skip tests that fail in GitHub Actions.
+* ci: Execute tests in parallel with `pytest-xdist` when possible.
+* ci: More strict linting rules of `flake8`.
+
+## 4.0.3 - 2022-01-09
+
+### Fixed
+
+* tzkt: Fixed parsing parameter with an optional value.
+
+## 4.0.2 - 2022-01-06
+
+### Added
+
+* tzkt: Added optional `delegate_address` and `delegate_alias` fields to `OperationData`.
+
+### Fixed
+
+* tzkt: Fixed crash due to unprocessed pysignalr exception.
+* tzkt: Fixed parsing `OperationData.amount` field.
+* tzkt: Fixed parsing storage with top-level boolean fields.
+
+## 4.0.1 - 2021-12-30
+
+### Fixed
+
+* codegen: Fixed generating storage typeclasses with `Union` fields.
+* codegen: Fixed preprocessing contract JSONSchema.
+* index: Fixed processing reindexing reason saved in the database.
+* tzkt: Fixed processing operations with default entrypoint and empty parameter.
+* tzkt: Fixed crash while recursively applying bigmap diffs to the storage.
+
+### Performance
+
+* tzkt: Increased speed of applying bigmap diffs to operation storage.
+
 ## 4.0.0 - 2021-12-24
 
 This release contains no changes except for the version number.

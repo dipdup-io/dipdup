@@ -18,5 +18,5 @@ async def on_update_expiry_map(
     record_name = bytes.fromhex(store_expiry_map.key.__root__).decode()
     await models.Expiry.update_or_create(
         id=record_name,
-        defaults=dict(timestamp=timestamp),
+        defaults={'timestamp': timestamp},
     )

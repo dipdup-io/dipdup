@@ -34,17 +34,3 @@ class ResourceCollectorStorage(BaseModel):
     resource_map: Dict[str, ResourceMap]
     resource_registry: str
     tezotop_collection: Dict[str, str]
-
-
-# 'resource_map': {
-#     'type': 'object',
-#     'propertyNames': {'type': 'string', '$comment': 'string'},
-#     'additionalProperties': {
-#         'type': 'object',
-#         'properties': {'id': {'type': 'string', '$comment': 'nat'}, 'rate': {'type': 'string', '$comment': 'nat'}},
-#         'required': ['id', 'rate'],
-#         'additionalProperties': False,
-#         '$comment': 'pair',
-#     },
-#     '$comment': 'map',
-# },

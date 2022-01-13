@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from asyncio import Event
 from asyncio import create_task
 from asyncio import gather
@@ -24,6 +25,7 @@ from typing import cast
 
 from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
+from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage  # type: ignore
 from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 
@@ -58,7 +60,7 @@ def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationDa
     """Merge and sort operations fetched from multiple endpoints"""
     return tuple(
         sorted(
-            tuple(({op.id: op for op in operations}).values()),
+            (({op.id: op for op in operations}).values()),
             key=lambda op: op.id,
         )
     )
@@ -232,7 +234,7 @@ class BigMapFetcher:
         """
 
         offset = 0
-        big_maps: Tuple[BigMapData, ...] = tuple()
+        big_maps: Tuple[BigMapData, ...] = ()
 
         # TODO: Share code between this and OperationFetcher
         while True:
@@ -307,17 +309,17 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Fetching %s contracts for address `%s`', entrypoint, address)
 
         size, offset = self.request_limit, 0
-        addresses: Tuple[str, ...] = tuple()
+        addresses: Tuple[str, ...] = ()
 
         while size == self.request_limit:
             response = await self._http.request(
                 'get',
                 url=f'v1/contracts/{address}/{entrypoint}',
-                params=dict(
-                    select='address',
-                    limit=self.request_limit,
-                    offset=offset,
-                ),
+                params={
+                    'select': 'address',
+                    'limit': self.request_limit,
+                    'offset': offset,
+                },
             )
             size = len(response)
             addresses = addresses + tuple(response)
@@ -330,17 +332,17 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Fetching originated contracts for address `%s', address)
 
         size, offset = self.request_limit, 0
-        addresses: Tuple[str, ...] = tuple()
+        addresses: Tuple[str, ...] = ()
 
         while size == self.request_limit:
             response = await self._http.request(
                 'get',
                 url=f'v1/accounts/{address}/contracts',
-                params=dict(
-                    select='address',
-                    limit=self.request_limit,
-                    offset=offset,
-                ),
+                params={
+                    'select': 'address',
+                    'limit': self.request_limit,
+                    'offset': offset,
+                },
             )
             size = len(response)
             addresses = addresses + tuple(c['address'] for c in response)
@@ -444,8 +446,7 @@ class TzktDatasource(IndexDatasource):
             )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
-        originations = tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
-        return originations
+        return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
 
     async def get_transactions(
         self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
@@ -466,8 +467,7 @@ class TzktDatasource(IndexDatasource):
         )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
-        transactions = tuple(self.convert_operation(op, type_='transaction') for op in raw_transactions)
-        return transactions
+        return tuple(self.convert_operation(op, type_='transaction') for op in raw_transactions)
 
     async def get_big_maps(
         self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
@@ -485,8 +485,7 @@ class TzktDatasource(IndexDatasource):
             },
             cache=cache,
         )
-        big_maps = tuple(self.convert_big_map(bm) for bm in raw_big_maps)
-        return big_maps
+        return tuple(self.convert_big_map(bm) for bm in raw_big_maps)
 
     async def get_quote(self, level: int) -> QuoteData:
         """Get quote for block"""
@@ -594,7 +593,19 @@ class TzktDatasource(IndexDatasource):
 
     async def run(self) -> None:
         self._logger.info('Establishing realtime connection')
-        tasks = [create_task(self._get_ws_client().run())]
+        ws = self._get_ws_client()
+
+        async def _wrapper():
+            retry_sleep = self._http_config.retry_sleep
+            for _ in range(self._http_config.retry_count or sys.maxsize):
+                try:
+                    await ws.run()
+                except WebsocketConnectionError as e:
+                    self._logger.error('Websocket connection error: %s', e)
+                    await asyncio.sleep(retry_sleep)
+                    retry_sleep *= self._http_config.retry_multiplier
+
+        tasks = [create_task(_wrapper())]
 
         if self._watchdog:
             tasks.append(create_task(self._watchdog.run()))
@@ -680,13 +691,19 @@ class TzktDatasource(IndexDatasource):
         sender_json = operation_json.get('sender') or {}
         target_json = operation_json.get('target') or {}
         initiator_json = operation_json.get('initiator') or {}
+        delegate_json = operation_json.get('delegate') or {}
         parameter_json = operation_json.get('parameter') or {}
         originated_contract_json = operation_json.get('originatedContract') or {}
 
         entrypoint, parameter = parameter_json.get('entrypoint'), parameter_json.get('value')
-        # NOTE: TzKT returns None for `default` entrypoint
-        if entrypoint is None and parameter_json:
-            entrypoint = 'default'
+        if target_json.get('address', '').startswith('KT1'):
+            # NOTE: TzKT returns None for `default` entrypoint
+            if entrypoint is None:
+                entrypoint = 'default'
+
+                # NOTE: Empty parameter in this case means `{"prim": "Unit"}`
+                if parameter is None:
+                    parameter = {}
 
         return OperationData(
             type=type_ or operation_json['type'],
@@ -699,7 +716,7 @@ class TzktDatasource(IndexDatasource):
             sender_address=sender_json.get('address'),
             target_address=target_json.get('address'),
             initiator_address=initiator_json.get('address'),
-            amount=operation_json.get('amount') or operation_json.get('contractBalance'),
+            amount=operation_json.get('amount', operation_json.get('contractBalance')),
             status=operation_json['status'],
             has_internals=operation_json.get('hasInternals'),
             sender_alias=operation_json['sender'].get('alias'),
@@ -713,6 +730,8 @@ class TzktDatasource(IndexDatasource):
             originated_contract_code_hash=originated_contract_json.get('codeHash'),
             storage=operation_json.get('storage'),
             diffs=operation_json.get('diffs') or (),
+            delegate_address=delegate_json.get('address'),
+            delegate_alias=delegate_json.get('alias'),
         )
 
     @classmethod

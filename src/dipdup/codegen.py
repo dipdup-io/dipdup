@@ -43,17 +43,17 @@ from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 from dipdup.utils import write
 
-DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
-    POSTGRES_USER="dipdup",
-    POSTGRES_DB="dipdup",
-    POSTGRES_PASSWORD="changeme",
-    HASURA_GRAPHQL_DATABASE_URL="postgres://dipdup:changeme@db:5432/dipdup",
-    HASURA_GRAPHQL_ENABLE_CONSOLE="true",
-    HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS="true",
-    HASURA_GRAPHQL_ENABLED_LOG_TYPES="startup, http-log, webhook-log, websocket-log, query-log",
-    HASURA_GRAPHQL_ADMIN_SECRET="changeme",
-    HASURA_GRAPHQL_UNAUTHORIZED_ROLE="user",
-)
+DEFAULT_DOCKER_ENV_FILE_CONTENT = {
+    'POSTGRES_USER': 'dipdup',
+    'POSTGRES_DB': 'dipdup',
+    'POSTGRES_PASSWORD': 'changeme',
+    'HASURA_GRAPHQL_DATABASE_URL': 'postgres://dipdup:changeme@db:5432/dipdup',
+    'HASURA_GRAPHQL_ENABLE_CONSOLE': 'true',
+    'HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS': 'true',
+    'HASURA_GRAPHQL_ENABLED_LOG_TYPES': 'startup, http-log, webhook-log, websocket-log, query-log',
+    'HASURA_GRAPHQL_ADMIN_SECRET': 'changeme',
+    'HASURA_GRAPHQL_UNAUTHORIZED_ROLE': 'user',
+}
 DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
 DEFAULT_DOCKER_TAG = __version__
 DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
@@ -61,13 +61,25 @@ DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
 _templates: Dict[str, Template] = {}
 
 
-def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
+def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
     """Preprocess bigmaps in JSONSchema. Those are unions as could be pointers.
     We resolve bigmaps from diffs so no need to include int in type signature."""
+    if not isinstance(schema, dict):
+        return schema
     if 'properties' in schema:
         return {
             **schema,
-            'properties': {prop: resolve_big_maps(sub_schema) for prop, sub_schema in schema['properties'].items()},
+            'properties': {prop: preprocess_storage_jsonschema(sub_schema) for prop, sub_schema in schema['properties'].items()},
+        }
+    elif 'items' in schema:
+        return {
+            **schema,
+            'items': preprocess_storage_jsonschema(schema['items']),
+        }
+    elif 'additionalProperties' in schema:
+        return {
+            **schema,
+            'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
     elif schema.get('$comment') == 'big_map':
         return schema['oneOf'][1]
@@ -165,8 +177,8 @@ class DipDupCodeGenerator:
                         mkdir_p(contract_schemas_path)
 
                         storage_schema_path = join(contract_schemas_path, 'storage.json')
+                        storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
 
-                        storage_schema = resolve_big_maps(contract_schemas['storageSchema'])
                         write(storage_schema_path, json.dumps(storage_schema, indent=4, sort_keys=True))
 
                         if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
@@ -279,7 +291,6 @@ class DipDupCodeGenerator:
                     '--class-name',
                     name.lstrip('_'),
                     '--disable-timestamp',
-                    '--use-default',
                 ]
                 self._logger.debug(' '.join(args))
                 subprocess.run(args, check=True)

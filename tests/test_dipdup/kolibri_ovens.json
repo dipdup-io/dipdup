@@ -1,0 +1,65 @@
+[
+    {
+        "type": "transaction",
+        "id": 44936407,
+        "level": 1416383,
+        "timestamp": "2021-04-05T22:44:41Z",
+        "block": "BLgbUHkPeeegP2jxEYBkY1Zf6erXmWckBNBK7kuZePUdQHSvFp9",
+        "hash": "oos6a4U5DhAEaSLqxLmuiytwpP6VZTwESWxosWRzAy6e5emhm8r",
+        "counter": 12504503,
+        "sender": {
+            "address": "tz1aD4DmnnGyqxL7neCZ5JMQ6UnpcrKCpajE"
+        },
+        "gasLimit": 15600,
+        "gasUsed": 14500,
+        "storageLimit": 0,
+        "storageUsed": 0,
+        "bakerFee": 1868,
+        "storageFee": 0,
+        "allocationFee": 0,
+        "target": {
+            "address": "KT1TdV4PMVk2ssQhEw8ch4PNnnVv11JqAzn7"
+        },
+        "amount": 0,
+        "parameter": {
+            "entrypoint": "setDelegate",
+            "value": null
+        },
+        "storage": {
+            "owner": "tz1aD4DmnnGyqxL7neCZ5JMQ6UnpcrKCpajE",
+            "isLiquidated": false,
+            "interestIndex": "1012163739772748415",
+            "borrowedTokens": "250000000000000000000",
+            "stabilityFeeTokens": "0",
+            "ovenProxyContractAddress": "KT1JdufSdfg3WyxWJcCRNsBFV9V3x9TQBkJ2"
+        },
+        "status": "applied",
+        "hasInternals": true,
+        "parameters": "{\"entrypoint\":\"setDelegate\",\"value\":{\"prim\":\"None\"}}"
+    },
+    {
+        "type": "delegation",
+        "id": 44936408,
+        "level": 1416383,
+        "timestamp": "2021-04-05T22:44:41Z",
+        "block": "BLgbUHkPeeegP2jxEYBkY1Zf6erXmWckBNBK7kuZePUdQHSvFp9",
+        "hash": "oos6a4U5DhAEaSLqxLmuiytwpP6VZTwESWxosWRzAy6e5emhm8r",
+        "counter": 12504503,
+        "initiator": {
+            "address": "tz1aD4DmnnGyqxL7neCZ5JMQ6UnpcrKCpajE"
+        },
+        "sender": {
+            "address": "KT1TdV4PMVk2ssQhEw8ch4PNnnVv11JqAzn7"
+        },
+        "nonce": 12,
+        "gasLimit": 0,
+        "gasUsed": 1000,
+        "bakerFee": 0,
+        "amount": 100000000,
+        "prevDelegate": {
+            "alias": "Tessellated Geometry",
+            "address": "tz1abmz7jiCV2GH2u81LRrGgAFFgvQgiDiaf"
+        },
+        "status": "applied"
+    }
+]
