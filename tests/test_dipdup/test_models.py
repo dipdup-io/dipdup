@@ -362,5 +362,5 @@ class ModelsTest(TestCase):
 
         # Assert
         self.assertIsInstance(storage_obj, YupanaStorage)
-        # self.assertIsInstance(storage_obj.__root__, dict)
-        # self.assertEqual(storage_obj.__root__['111'], '222')
+        self.assertIsInstance(storage_obj.storage.markets, dict)
+        self.assertEqual(storage_obj.storage.markets['tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw'], ['0'])  # type: ignore

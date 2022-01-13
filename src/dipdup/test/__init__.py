@@ -60,7 +60,7 @@ def with_operation_fetcher_fuzzer(levels=100, repeats=100) -> Iterator[None]:
 
 @contextmanager
 def with_operation_index_fuzzer(levels=100, repeats=100) -> Iterator[None]:
-    with with_operation_fetcher_fuzzer(levels=levels, repeats=repeats):  # noqa: SIM117
+    with with_operation_fetcher_fuzzer(levels=levels, repeats=repeats):
         with patch('dipdup.index.OperationIndex', OperationIndexFuzzer):
             yield
 

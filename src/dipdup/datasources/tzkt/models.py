@@ -46,7 +46,7 @@ def _is_array(storage_type: Type, dict_value: bool = False) -> bool:
     # NOTE: Pydantic model with __root__ field, dive into it
     with suppress(*IntrospectionError):
         root_type = _extract_root_type(storage_type)
-        return _is_array(root_type, False)  # type: ignore
+        return _is_array(root_type, dict_value=False)  # type: ignore
 
     # NOTE: Something else
     return False
