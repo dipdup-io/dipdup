@@ -340,7 +340,7 @@ class HasuraGateway(HTTPGateway):
             queries.append(self._format_rest_query(table_name, table_name, filter, fields))
 
         for query_name, query in self._iterate_graphql_queries():
-            queries.append(dict(name=query_name, query=query))
+            queries.append({'name': query_name, 'query': query})
 
         return queries
 

@@ -153,6 +153,14 @@ dev = ["pytest", "cogapp", "pre-commit", "wheel"]
 tests = ["pytest"]
 
 [[package]]
+name = "astor"
+version = "0.8.1"
+description = "Read/rewrite/write Python ASTs"
+category = "dev"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
+
+[[package]]
 name = "asttokens"
 version = "2.0.5"
 description = "Annotate AST trees with source code positions"
@@ -660,6 +668,63 @@ pycodestyle = ">=2.7.0,<2.8.0"
 pyflakes = ">=2.3.0,<2.4.0"
 
 [[package]]
+name = "flake8-bugbear"
+version = "22.1.11"
+description = "A plugin for flake8 finding likely bugs and design problems in your program. Contains warnings that don't belong in pyflakes and pycodestyle."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+attrs = ">=19.2.0"
+flake8 = ">=3.0.0"
+
+[package.extras]
+dev = ["coverage", "hypothesis", "hypothesmith (>=0.2)", "pre-commit"]
+
+[[package]]
+name = "flake8-comprehensions"
+version = "3.8.0"
+description = "A flake8 plugin to help you write better list/set/dict comprehensions."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+flake8 = ">=3.0,<3.2.0 || >3.2.0"
+
+[[package]]
+name = "flake8-plugin-utils"
+version = "1.3.2"
+description = "The package provides base classes and utils for flake8 plugin writing"
+category = "dev"
+optional = false
+python-versions = ">=3.6,<4.0"
+
+[[package]]
+name = "flake8-return"
+version = "1.1.3"
+description = "Flake8 plugin that checks return values"
+category = "dev"
+optional = false
+python-versions = ">=3.6,<4.0"
+
+[package.dependencies]
+flake8-plugin-utils = ">=1.0,<2.0"
+
+[[package]]
+name = "flake8-simplify"
+version = "0.14.5"
+description = "flake8 plugin which checks for code that can be simplified"
+category = "dev"
+optional = false
+python-versions = ">=3.6.1"
+
+[package.dependencies]
+astor = ">=0.1"
+flake8 = ">=3.7"
+
+[[package]]
 name = "flakehell"
 version = "0.9.0"
 description = "Flake8 wrapper to make it nice and configurable"
@@ -1088,7 +1153,7 @@ python-versions = "*"
 
 [[package]]
 name = "notebook"
-version = "6.4.6"
+version = "6.4.7"
 description = "A web-based notebook environment for interactive computing"
 category = "main"
 optional = true
@@ -2135,7 +2200,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "41edb76ddbcd1265130db9b2090131a188f45b0c7bd57a5a6bffbe52fda1eaa3"
+content-hash = "434489132622eb0638b60ad2f2d7c02b9861cb4a71b402531fa9758ae077b6be"
 
 [metadata.files]
 aiohttp = [
@@ -2270,6 +2335,10 @@ argon2-cffi-bindings = [
     {file = "argon2_cffi_bindings-21.2.0-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:20ef543a89dee4db46a1a6e206cd015360e5a75822f76df533845c3cbaf72670"},
     {file = "argon2_cffi_bindings-21.2.0-pp38-pypy38_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ed2937d286e2ad0cc79a7087d3c272832865f779430e0cc2b4f3718d3159b0cb"},
     {file = "argon2_cffi_bindings-21.2.0-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:5e00316dabdaea0b2dd82d141cc66889ced0cdcbfa599e8b471cf22c620c329a"},
+]
+astor = [
+    {file = "astor-0.8.1-py2.py3-none-any.whl", hash = "sha256:070a54e890cefb5b3739d19f30f5a5ec840ffc9c50ffa7d23cc9fc1a38ebbfc5"},
+    {file = "astor-0.8.1.tar.gz", hash = "sha256:6a6effda93f4e1ce9f618779b2dd1d9d84f1e32812c23a29b3fff6fd7f63fa5e"},
 ]
 asttokens = [
     {file = "asttokens-2.0.5-py2.py3-none-any.whl", hash = "sha256:0844691e88552595a6f4a4281a9f7f79b8dd45ca4ccea82e5e05b4bbdb76705c"},
@@ -2556,6 +2625,26 @@ fcache = [
 flake8 = [
     {file = "flake8-3.9.0-py2.py3-none-any.whl", hash = "sha256:12d05ab02614b6aee8df7c36b97d1a3b2372761222b19b58621355e82acddcff"},
     {file = "flake8-3.9.0.tar.gz", hash = "sha256:78873e372b12b093da7b5e5ed302e8ad9e988b38b063b61ad937f26ca58fc5f0"},
+]
+flake8-bugbear = [
+    {file = "flake8-bugbear-22.1.11.tar.gz", hash = "sha256:4c2a4136bd4ecb8bf02d5159af302ffc067642784c9d0488b33ce4610da825ee"},
+    {file = "flake8_bugbear-22.1.11-py3-none-any.whl", hash = "sha256:ce7ae44aaaf67ef192b8a6de94a5ac617144e1675ad0654fdea556f48dc18d9b"},
+]
+flake8-comprehensions = [
+    {file = "flake8-comprehensions-3.8.0.tar.gz", hash = "sha256:8e108707637b1d13734f38e03435984f6b7854fa6b5a4e34f93e69534be8e521"},
+    {file = "flake8_comprehensions-3.8.0-py3-none-any.whl", hash = "sha256:9406314803abe1193c064544ab14fdc43c58424c0882f6ff8a581eb73fc9bb58"},
+]
+flake8-plugin-utils = [
+    {file = "flake8-plugin-utils-1.3.2.tar.gz", hash = "sha256:20fa2a8ca2decac50116edb42e6af0a1253ef639ad79941249b840531889c65a"},
+    {file = "flake8_plugin_utils-1.3.2-py3-none-any.whl", hash = "sha256:1fe43e3e9acf3a7c0f6b88f5338cad37044d2f156c43cb6b080b5f9da8a76f06"},
+]
+flake8-return = [
+    {file = "flake8-return-1.1.3.tar.gz", hash = "sha256:13a31edeb0c6157dd4f77166cdaa6141703d2b8b24def5558ae659852a003cb4"},
+    {file = "flake8_return-1.1.3-py3-none-any.whl", hash = "sha256:4a266191f7ed69aa26b835ec90c5a5522fa8f79f5cf6363a877ac499f8eb418b"},
+]
+flake8-simplify = [
+    {file = "flake8_simplify-0.14.5-py3-none-any.whl", hash = "sha256:9b4b93d75b3c2046883d490df0e8e957b725fcdccf455c0ffe51436d1a098f6b"},
+    {file = "flake8_simplify-0.14.5.tar.gz", hash = "sha256:0bf8b1d60cf35d3e7cf8871194445589778f49ce81a35060f2fe3e0501f5792e"},
 ]
 flakehell = [
     {file = "flakehell-0.9.0-py3-none-any.whl", hash = "sha256:48a3a9b46136240e52b3b32a78a0826c45f6dcf7d980c30f758c1db5b1439c0b"},
@@ -2948,8 +3037,8 @@ netstruct = [
     {file = "netstruct-1.1.2.zip", hash = "sha256:70b6a5c73f5bbc7ab57b019369642adfb34dd8af41b948c400ce95f952b7df9a"},
 ]
 notebook = [
-    {file = "notebook-6.4.6-py3-none-any.whl", hash = "sha256:5cad068fa82cd4fb98d341c052100ed50cd69fbfb4118cb9b8ab5a346ef27551"},
-    {file = "notebook-6.4.6.tar.gz", hash = "sha256:7bcdf79bd1cda534735bd9830d2cbedab4ee34d8fe1df6e7b946b3aab0902ba3"},
+    {file = "notebook-6.4.7-py3-none-any.whl", hash = "sha256:968e9c09639fe4b9dbf4b9f028daf861b563c124d735a99d6d48c09317553f31"},
+    {file = "notebook-6.4.7.tar.gz", hash = "sha256:b01da66f11a203b3839d6afa4013674bcfff41c36552f9ad0fbcb2d93c92764a"},
 ]
 openapi-schema-validator = [
     {file = "openapi-schema-validator-0.1.6.tar.gz", hash = "sha256:230db361c71a5b08b25ec926797ac8b59a8f499bbd7316bd15b6cd0fc9aea5df"},
