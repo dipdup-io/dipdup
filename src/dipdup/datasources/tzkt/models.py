@@ -27,11 +27,12 @@ def _extract_root_type(storage_type: Type) -> Type:
 
 
 @lru_cache(None)
-def _is_array(storage_type: Type) -> bool:
+def _is_array(storage_type: Type, dict_value: bool = False) -> bool:
     """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
     # NOTE: List[...]
     if get_origin(storage_type) == list:
-        return True
+        if not dict_value or (dict_value and _is_array(get_args(storage_type)[0])):
+            return True
 
     # NOTE: Neither a list not Pydantic model, can't be an array
     fields: Optional[Dict[str, FieldInfo]] = getattr(storage_type, '__fields__', None)
@@ -45,7 +46,7 @@ def _is_array(storage_type: Type) -> bool:
     # NOTE: Pydantic model with __root__ field, dive into it
     with suppress(*IntrospectionError):
         root_type = _extract_root_type(storage_type)
-        return _is_array(root_type)  # type: ignore
+        return _is_array(root_type, False)  # type: ignore
 
     # NOTE: Something else
     return False
@@ -128,11 +129,12 @@ def _process_storage(
     storage: Any,
     storage_type: Type[StorageType],
     bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]],
+    dict_value: bool = False,
 ) -> Any:
     """Replace bigmap pointers with actual data from diffs"""
     # NOTE: Bigmap pointer, apply diffs
     if isinstance(storage, int) and type(storage) != storage_type:
-        is_array = _is_array(storage_type)
+        is_array = _is_array(storage_type, dict_value)
         storage = _apply_bigmap_diffs(storage, bigmap_diffs, is_array)
 
     # NOTE: List, process recursively
@@ -140,14 +142,14 @@ def _process_storage(
         for i, _ in enumerate(storage):
             for item_type in _extract_list_types(storage_type):
                 with suppress(*IntrospectionError):
-                    storage[i] = _process_storage(storage[i], item_type, bigmap_diffs)
+                    storage[i] = _process_storage(storage[i], item_type, bigmap_diffs, dict_value=True)
 
     # NOTE: Dict, process recursively
     elif isinstance(storage, dict):
         for key, value in storage.items():
             for value_type in _extract_dict_types(storage_type, key):
                 with suppress(*IntrospectionError):
-                    storage[key] = _process_storage(value, value_type, bigmap_diffs)
+                    storage[key] = _process_storage(value, value_type, bigmap_diffs, dict_value=True)
 
     else:
         pass

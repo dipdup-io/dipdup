@@ -1,6 +1,6 @@
 #$/bin/bash
 cd tests/test_dipdup
-for name in "asdf" "qwer" "hjkl" "zxcv" "rewq" "hen_subjkt" "kolibri_ovens"
+for name in "asdf" "qwer" "hjkl" "zxcv" "rewq" "hen_subjkt" "kolibri_ovens" "yupana"
 do
     dipdup -c $name.yml init
     mkdir -p types/$name/
