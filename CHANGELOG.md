@@ -7,6 +7,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
+* hasura: Fixed missing relations for models with `ManyToManyField` fields.
 
 ### Performance
 
