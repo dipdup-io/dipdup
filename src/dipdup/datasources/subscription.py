@@ -44,7 +44,7 @@ class SubscriptionManager:
 
     @property
     def missing_subscriptions(self) -> Set[Subscription]:
-        return set(k for k, v in self._subscriptions.items() if k is not None and v is None)
+        return {k for k, v in self._subscriptions.items() if k is not None and v is None}
 
     def add(self, subscription: Subscription) -> None:
         if subscription in self._subscriptions:

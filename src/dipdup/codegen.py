@@ -43,17 +43,17 @@ from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 from dipdup.utils import write
 
-DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
-    POSTGRES_USER="dipdup",
-    POSTGRES_DB="dipdup",
-    POSTGRES_PASSWORD="changeme",
-    HASURA_GRAPHQL_DATABASE_URL="postgres://dipdup:changeme@db:5432/dipdup",
-    HASURA_GRAPHQL_ENABLE_CONSOLE="true",
-    HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS="true",
-    HASURA_GRAPHQL_ENABLED_LOG_TYPES="startup, http-log, webhook-log, websocket-log, query-log",
-    HASURA_GRAPHQL_ADMIN_SECRET="changeme",
-    HASURA_GRAPHQL_UNAUTHORIZED_ROLE="user",
-)
+DEFAULT_DOCKER_ENV_FILE_CONTENT = {
+    'POSTGRES_USER': 'dipdup',
+    'POSTGRES_DB': 'dipdup',
+    'POSTGRES_PASSWORD': 'changeme',
+    'HASURA_GRAPHQL_DATABASE_URL': 'postgres://dipdup:changeme@db:5432/dipdup',
+    'HASURA_GRAPHQL_ENABLE_CONSOLE': 'true',
+    'HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS': 'true',
+    'HASURA_GRAPHQL_ENABLED_LOG_TYPES': 'startup, http-log, webhook-log, websocket-log, query-log',
+    'HASURA_GRAPHQL_ADMIN_SECRET': 'changeme',
+    'HASURA_GRAPHQL_UNAUTHORIZED_ROLE': 'user',
+}
 DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
 DEFAULT_DOCKER_TAG = __version__
 DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
