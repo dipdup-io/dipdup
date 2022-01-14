@@ -377,6 +377,51 @@ class TzktDatasource(IndexDatasource):
         self._logger.debug(jsonschemas)
         return jsonschemas
 
+    async def get_big_map(self, big_map_id: int, level: Optional[int] = None)
+        size, offset = self.request_limit, 0
+        big_maps: Tuple[Dict[str, Any], ...] = ()
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/bigmaps/{big_map_id}/keys',
+                params={
+                    'limit': self.request_limit,
+                    'offset': offset,
+                    'active': True,
+                },
+            )
+            size = len(response)
+            addresses = addresses + tuple(response)
+            offset += self.request_limit
+
+        return addresses
+
+    async def get_contract_big_map_ids(self, address: str) -> Tuple[str, ...]:
+        size, offset = self.request_limit, 0
+        big_map_ids: Tuple[int, ...] = ()
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/contracts/{address}/bigmaps',
+                params={
+                    'limit': self.request_limit,
+                    'offset': offset,
+                },
+            )
+            batch_ids = (bm['ptr'] for bm in response)
+            size = len(response)
+            big_map_ids = big_map_ids + tuple(batch_ids)
+            offset += self.request_limit
+
+        return big_map_ids
+  
+
+
+
+
+
     async def get_head_block(self) -> HeadBlockData:
         """Get latest block (head)"""
         self._logger.info('Fetching latest block')

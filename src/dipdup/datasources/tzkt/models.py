@@ -154,6 +154,25 @@ def _process_storage(
 
     return storage
 
+def _get_big_map_ids(storage: Any, storage_type: Type) -> List[int]:
+    """Get all bigmap ids from the storage"""
+    if isinstance(storage, int) and type(storage) != storage_type:
+        return [storage]
+
+    elif isinstance(storage, list):
+        return [
+            i, _ in enumerate(storage)
+        ]
+        for i, _ in enumerate(storage):
+            for item_type in _extract_list_types(storage_type):
+                with suppress(*IntrospectionError):
+                    storage[i] = _process_storage(storage[i], item_type, bigmap_diffs)
+
+    return [
+        bigmap_id
+        for bigmap_id, _ in OperationData.bigmap_diffs.items()
+    ]
+
 
 def deserialize_storage(operation_data: OperationData, storage_type: Type[StorageType]) -> StorageType:
     """Merge big map diffs and deserialize raw storage into typeclass"""
