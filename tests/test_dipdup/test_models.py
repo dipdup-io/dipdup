@@ -13,19 +13,19 @@ from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
-from tests.test_dipdup.types.asdf.storage import AsdfStorage
-from tests.test_dipdup.types.bazaar.storage import BazaarMarketPlaceStorage
-from tests.test_dipdup.types.ftzfun.storage import FtzFunStorage
-from tests.test_dipdup.types.hen_subjkt.storage import HenSubjktStorage
-from tests.test_dipdup.types.hjkl.storage import HjklStorage
-from tests.test_dipdup.types.kolibri_ovens.set_delegate import SetDelegateParameter
-from tests.test_dipdup.types.kolibri_ovens.storage import KolibriOvensStorage
-from tests.test_dipdup.types.listofmaps.storage import ListOfMapsStorage
-from tests.test_dipdup.types.qwer.storage import QwerStorage
-from tests.test_dipdup.types.rewq.storage import RewqStorage
-from tests.test_dipdup.types.tezotop.storage import ResourceCollectorStorage
-from tests.test_dipdup.types.yupana.storage import YupanaStorage
-from tests.test_dipdup.types.zxcv.storage import ZxcvStorage
+from tests.test_dipdup.types_test.asdf.storage import AsdfStorage
+from tests.test_dipdup.types_test.bazaar.storage import BazaarMarketPlaceStorage
+from tests.test_dipdup.types_test.ftzfun.storage import FtzFunStorage
+from tests.test_dipdup.types_test.hen_subjkt.storage import HenSubjktStorage
+from tests.test_dipdup.types_test.hjkl.storage import HjklStorage
+from tests.test_dipdup.types_test.kolibri_ovens.set_delegate import SetDelegateParameter
+from tests.test_dipdup.types_test.kolibri_ovens.storage import KolibriOvensStorage
+from tests.test_dipdup.types_test.listofmaps.storage import ListOfMapsStorage
+from tests.test_dipdup.types_test.qwer.storage import QwerStorage
+from tests.test_dipdup.types_test.rewq.storage import RewqStorage
+from tests.test_dipdup.types_test.tezotop.storage import ResourceCollectorStorage
+from tests.test_dipdup.types_test.yupana.storage import YupanaStorage
+from tests.test_dipdup.types_test.zxcv.storage import ZxcvStorage
 
 
 def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> OperationData:
