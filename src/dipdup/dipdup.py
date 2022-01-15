@@ -323,7 +323,7 @@ class DipDup:
             raise DipDupException('Schema is not initialized')
         return self._schema
 
-    async def init(self, overwrite_types: bool = True) -> None:
+    async def init(self, overwrite_types: bool = False, schemas: bool = False) -> None:
         """Create new or update existing dipdup project"""
         await self._create_datasources()
 
@@ -331,7 +331,7 @@ class DipDup:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            await self._codegen.init(overwrite_types)
+            await self._codegen.init(overwrite_types, schemas)
 
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)

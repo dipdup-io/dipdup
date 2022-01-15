@@ -92,7 +92,7 @@ def get_dict_value_type(dict_type: Type[Any], key: Optional[str] = None) -> Type
 def unwrap_union_type(union_type: Type) -> Tuple[bool, List[Type]]:
     """Check if the type is either optional or union and return arg types if so"""
     if get_origin(union_type) == Union:
-        return True, [arg for arg in get_args(union_type) if type(None) != arg]
+        return True, [arg for arg in get_args(union_type)]
 
     with suppress(*IntrospectionError):
         root_type = extract_root_outer_type(union_type)
@@ -142,7 +142,7 @@ def _process_storage(storage: Any, storage_type: Type[Any], bigmap_diffs: Dict[i
         # We have no way but trying every possible branch until first success
         # Reversed order is actually a HACK to handle Big Map as dict/list prior to int
         # FIXME: check why preprocess_storage_jsonschema didn't work for failing test cases
-        for arg_type in reversed(arg_types):
+        for arg_type in arg_types:
             with suppress(*IntrospectionError):
                 return _process_storage(storage, arg_type, bigmap_diffs)
 

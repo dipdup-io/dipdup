@@ -201,12 +201,13 @@ async def run(
 
 @cli.command(help='Generate missing callbacks and types')
 @click.option('--overwrite-types', is_flag=True, help='Regenerate existing types')
+@click.option('--schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
 @click.pass_context
 @cli_wrapper
-async def init(ctx, overwrite_types: bool):
+async def init(ctx, overwrite_types: bool, schemas: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(overwrite_types)
+    await dipdup.init(overwrite_types, schemas)
 
 
 @cli.command(help='Migrate project to the new spec version')

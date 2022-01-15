@@ -82,6 +82,7 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
             'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
     elif schema.get('$comment') == 'big_map':
+        print(schema)
         return schema['oneOf'][1]
     else:
         return schema
@@ -104,14 +105,15 @@ class DipDupCodeGenerator:
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
 
-    async def init(self, overwrite_types: bool = False) -> None:
+    async def init(self, overwrite_types: bool = False, schemas: bool = False) -> None:
         self._logger.info('Initializing project')
         await self.create_package()
         await self.fetch_schemas()
         await self.generate_types(overwrite_types)
         await self.generate_hooks()
         await self.generate_handlers()
-        await self.cleanup()
+        if not schemas:
+            await self.cleanup()
         await self.verify_package()
 
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
