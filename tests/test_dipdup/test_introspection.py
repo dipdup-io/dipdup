@@ -48,7 +48,9 @@ class IntrospectionTest(TestCase):
             __root__: Optional[List[str]]
 
         self.assertEqual(Union[int, Dict[str, str]], get_list_elt_type(ListOfMapsStorage))
-        self.assertEqual(str, get_list_elt_type(OptionalList))
+
+        with self.assertRaises(IntrospectionError):
+            get_list_elt_type(OptionalList)
 
         with self.assertRaises(IntrospectionError):
             get_list_elt_type(SomethingElse)
@@ -85,7 +87,8 @@ class IntrospectionTest(TestCase):
             __root__: Optional[Dict[str, str]]
 
         self.assertEqual(Union[int, Dict[str, str]], get_dict_value_type(DictOfMapsStorage))
-        self.assertEqual(str, get_dict_value_type(OptionalDict))
+        with self.assertRaises(IntrospectionError):
+            get_dict_value_type(OptionalDict)
 
         with self.assertRaises(IntrospectionError):
             get_dict_value_type(SomethingElse)
@@ -116,7 +119,7 @@ class IntrospectionTest(TestCase):
 
         self.assertTrue(is_array_type(List[str]))
         self.assertTrue(is_array_type(ListOfMapsStorage))
-        self.assertTrue(is_array_type(OptionalList))
+        self.assertFalse(is_array_type(OptionalList))
 
     def test_simple_union_unwrap(self):
         self.assertEqual((True, [str]), unwrap_union_type(Optional[str]))
