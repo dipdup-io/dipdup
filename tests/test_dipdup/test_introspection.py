@@ -1,23 +1,21 @@
-from typing import List
 from typing import Dict
-from typing import Tuple
+from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 from unittest import TestCase
 
-from typing import get_origin, get_args
-
 from pydantic import BaseModel
 
+from dipdup.datasources.tzkt.models import IntrospectionError
+from dipdup.datasources.tzkt.models import extract_root_outer_type
+from dipdup.datasources.tzkt.models import get_dict_value_type
+from dipdup.datasources.tzkt.models import get_list_elt_type
 from dipdup.datasources.tzkt.models import is_array_type
 from dipdup.datasources.tzkt.models import unwrap_union_type
-from dipdup.datasources.tzkt.models import get_list_elt_type
-from dipdup.datasources.tzkt.models import get_dict_value_type
-from dipdup.datasources.tzkt.models import IntrospectionError
 
 
 class IntrospectionTest(TestCase):
-
     def test_list_simple_args(self):
         self.assertEqual(str, get_list_elt_type(List[str]))
         self.assertEqual(int, get_list_elt_type(List[int]))
@@ -133,3 +131,13 @@ class IntrospectionTest(TestCase):
 
         self.assertEqual((True, [str]), unwrap_union_type(OptionalStr))
         self.assertEqual((True, [int, str]), unwrap_union_type(UnionIntStr))
+
+    def test_root_type_extraction(self):
+        class OptionalStr(BaseModel):
+            __root__: Optional[str]
+
+        class ListOfMapsStorage(BaseModel):
+            __root__: List[Union[int, Dict[str, str]]]
+
+        self.assertEqual(Optional[str], extract_root_outer_type(OptionalStr))
+        self.assertEqual(List[Union[int, Dict[str, str]]], extract_root_outer_type(ListOfMapsStorage))

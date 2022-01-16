@@ -7,9 +7,9 @@ from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Type
 from typing import Union
-from typing import Tuple
 
 from pydantic.error_wrappers import ValidationError
 from typing_extensions import get_args
@@ -22,11 +22,11 @@ from dipdup.models import StorageType
 IntrospectionError = (KeyError, IndexError, AttributeError)
 
 
-def _extract_root_outer_type(storage_type: Type) -> Type:
+def extract_root_outer_type(storage_type: Type) -> Type:
     """Extract Pydantic __root__ type"""
     root_field = storage_type.__fields__['__root__']
     if root_field.allow_none:
-        return typing.Optional[root_field.type_]
+        return typing.Optional[root_field.type_]  # type: ignore
     else:
         return root_field.outer_type_
 
@@ -40,8 +40,8 @@ def is_array_type(storage_type: Type) -> bool:
 
     # NOTE: Pydantic model with __root__ field subclassing List
     with suppress(*IntrospectionError):
-        root_type = _extract_root_outer_type(storage_type)
-        return is_array_type(root_type)
+        root_type = extract_root_outer_type(storage_type)
+        return is_array_type(root_type)  # type: ignore
 
     # NOTE: Something else
     return False
@@ -55,8 +55,8 @@ def get_list_elt_type(list_type: Type[Any]) -> Type[Any]:
         return get_args(list_type)[0]
 
     # NOTE: Pydantic model with __root__ field subclassing List
-    root_type = _extract_root_outer_type(list_type)
-    return get_list_elt_type(root_type)
+    root_type = extract_root_outer_type(list_type)
+    return get_list_elt_type(root_type)  # type: ignore
 
 
 @lru_cache(None)
@@ -68,8 +68,8 @@ def get_dict_value_type(dict_type: Type[Any], key: Optional[str] = None) -> Type
 
     # NOTE: Pydantic model with __root__ field subclassing Dict
     with suppress(*IntrospectionError):
-        root_type = _extract_root_outer_type(dict_type)
-        return get_dict_value_type(root_type, key)
+        root_type = extract_root_outer_type(dict_type)
+        return get_dict_value_type(root_type, key)  # type: ignore
 
     if key is None:
         raise KeyError('Key name or alias is required for object introspection')
@@ -80,9 +80,12 @@ def get_dict_value_type(dict_type: Type[Any], key: Optional[str] = None) -> Type
         if key in (field.name, field.alias):
             # NOTE: Pydantic does not preserve outer_type_ for Optional
             if field.allow_none:
-                return typing.Optional[field.type_]
+                return typing.Optional[field.type_]  # type: ignore
             else:
                 return field.outer_type_
+
+    # NOTE: typically when we try the wrong Union path
+    raise KeyError('Key not found')
 
 
 @lru_cache(None)
@@ -92,8 +95,8 @@ def unwrap_union_type(union_type: Type) -> Tuple[bool, List[Type]]:
         return True, [arg for arg in get_args(union_type) if type(None) != arg]
 
     with suppress(*IntrospectionError):
-        root_type = _extract_root_outer_type(union_type)
-        return unwrap_union_type(root_type)
+        root_type = extract_root_outer_type(union_type)
+        return unwrap_union_type(root_type)  # type: ignore
 
     return False, []
 
@@ -131,14 +134,10 @@ def _apply_bigmap_diffs(
         return dict_storage
 
 
-def _process_storage(
-    storage: Any,
-    storage_type: Type[Any],
-    bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]]
-) -> Any:
+def _process_storage(storage: Any, storage_type: Type[Any], bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]]) -> Any:
     """Replace bigmap pointers with actual data from diffs"""
     # Check if Union or Optional (== Union[Any, NoneType])
-    is_union, arg_types = unwrap_union_type(storage_type)
+    is_union, arg_types = unwrap_union_type(storage_type)  # type: ignore
     if is_union:
         # We have no way but trying every possible branch until first success
         # Reversed order is actually a HACK to handle Big Map as dict/list prior to int
@@ -149,19 +148,19 @@ def _process_storage(
 
     # NOTE: Bigmap pointer, apply diffs
     if isinstance(storage, int) and type(storage) != storage_type:
-        is_array = is_array_type(storage_type)
+        is_array = is_array_type(storage_type)  # type: ignore
         storage = _apply_bigmap_diffs(storage, bigmap_diffs, is_array)
 
     # NOTE: List, process recursively
     elif isinstance(storage, list):
-        elt_type = get_list_elt_type(storage_type)
+        elt_type = get_list_elt_type(storage_type)  # type: ignore
         for i, _ in enumerate(storage):
             storage[i] = _process_storage(storage[i], elt_type, bigmap_diffs)
 
     # NOTE: Dict, process recursively
     elif isinstance(storage, dict):
         for key, value in storage.items():
-            value_type = get_dict_value_type(storage_type, key)
+            value_type = get_dict_value_type(storage_type, key)  # type: ignore
             storage[key] = _process_storage(value, value_type, bigmap_diffs)
 
     else:
