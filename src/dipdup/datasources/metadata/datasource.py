@@ -36,13 +36,14 @@ class MetadataDatasource(GraphQLDatasource):
             return response[0]['metadata']
         return None
 
-    async def get_token_metadata(self, address: str) -> Optional[Dict[str, Any]]:
+    async def get_token_metadata(self, address: str, token_id: int) -> Optional[Dict[str, Any]]:
         response = await self._http.request(
             'get',
             url='api/rest/token_metadata',
             params={
                 'network': self._network.value,
                 'address': address,
+                'token_id': token_id,
             },
         )
         response = response['token_metadata']
