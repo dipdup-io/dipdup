@@ -106,14 +106,14 @@ class DipDupCodeGenerator:
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
 
-    async def init(self, overwrite_types: bool = False, schemas: bool = False) -> None:
+    async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         self._logger.info('Initializing project')
         await self.create_package()
         await self.fetch_schemas()
         await self.generate_types(overwrite_types)
         await self.generate_hooks()
         await self.generate_handlers()
-        if not schemas:
+        if not keep_schemas:
             await self.cleanup()
         await self.verify_package()
 

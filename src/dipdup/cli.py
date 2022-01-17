@@ -204,10 +204,10 @@ async def run(
 @click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
 @click.pass_context
 @cli_wrapper
-async def init(ctx, overwrite_types: bool, schemas: bool) -> None:
+async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(overwrite_types, schemas)
+    await dipdup.init(overwrite_types, keep_schemas)
 
 
 @cli.command(help='Migrate project to the new spec version')
