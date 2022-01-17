@@ -4,6 +4,10 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## [unreleased]
 
+### Added
+
+* metadata: Added `metadata` datasource.
+
 ### Fixed
 
 * demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
