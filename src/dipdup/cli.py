@@ -201,7 +201,7 @@ async def run(
 
 @cli.command(help='Generate missing callbacks and types')
 @click.option('--overwrite-types', is_flag=True, help='Regenerate existing types')
-@click.option('--schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
+@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
 @click.pass_context
 @cli_wrapper
 async def init(ctx, overwrite_types: bool, schemas: bool) -> None:

@@ -2,7 +2,7 @@
 cd tests/test_dipdup
 for name in "asdf" "qwer" "hjkl" "zxcv" "rewq" "hen_subjkt" "kolibri_ovens" "yupana"
 do
-    dipdup -c $name.yml init --schemas
+    dipdup -c $name.yml init --keep-schemas
     mkdir -p types/$name/
     mkdir -p schemas/$name/
     mv $name/types/$name/storage.py types/$name/storage.py

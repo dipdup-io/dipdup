@@ -6,7 +6,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
-* cli: Added `--schema` flag to `init` command to preserve JSONSchemas along with generated types.
+* cli: Added `--keep-schemas` flag to `init` command to preserve JSONSchemas along with generated types.
 
 ### Fixed
 
