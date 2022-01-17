@@ -14,6 +14,8 @@ from dipdup.datasources.tzkt.models import get_list_elt_type
 from dipdup.datasources.tzkt.models import is_array_type
 from dipdup.datasources.tzkt.models import unwrap_union_type
 
+NoneType = type(None)
+
 
 class IntrospectionTest(TestCase):
     def test_list_simple_args(self):
@@ -122,8 +124,8 @@ class IntrospectionTest(TestCase):
         self.assertFalse(is_array_type(OptionalList))
 
     def test_simple_union_unwrap(self):
-        self.assertEqual((True, [str]), unwrap_union_type(Optional[str]))
-        self.assertEqual((True, [int, str]), unwrap_union_type(Union[int, str]))
+        self.assertEqual((True, (str, NoneType)), unwrap_union_type(Optional[str]))
+        self.assertEqual((True, (int, str)), unwrap_union_type(Union[int, str]))
 
     def test_pydantic_optional_unwrap(self):
         class UnionIntStr(BaseModel):
@@ -132,8 +134,8 @@ class IntrospectionTest(TestCase):
         class OptionalStr(BaseModel):
             __root__: Optional[str]
 
-        self.assertEqual((True, [str]), unwrap_union_type(OptionalStr))
-        self.assertEqual((True, [int, str]), unwrap_union_type(UnionIntStr))
+        self.assertEqual((True, (str, NoneType)), unwrap_union_type(OptionalStr))
+        self.assertEqual((True, (int, str)), unwrap_union_type(UnionIntStr))
 
     def test_root_type_extraction(self):
         class OptionalStr(BaseModel):

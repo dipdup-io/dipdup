@@ -4,11 +4,15 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## [unreleased]
 
+### Added
+
+* cli: Added `--schema` flag to `init` command to preserve JSONSchemas along with generated types.
+
 ### Fixed
 
 * demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
 * hasura: Fixed missing relations for models with `ManyToManyField` fields.
-* tzkt: Fixed parsing storage with nested array fields.
+* tzkt: Fixed parsing storage with nested structures.
 
 ### Performance
 

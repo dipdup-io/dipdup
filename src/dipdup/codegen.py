@@ -68,12 +68,6 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
         return schema
     if 'oneOf' in schema:
         schema['oneOf'] = [preprocess_storage_jsonschema(sub_schema) for sub_schema in schema['oneOf']]
-        if schema['oneOf'][1].get('$comment') == 'big_map':
-            schema.pop('oneOf')
-            return {
-                **schema,
-                **schema['oneOf'][1],
-            }
     if 'properties' in schema:
         return {
             **schema,
@@ -90,7 +84,6 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
             'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
     elif schema.get('$comment') == 'big_map':
-        print(schema)
         return schema['oneOf'][1]
     else:
         return schema
