@@ -39,6 +39,7 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
+from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
@@ -54,6 +55,7 @@ from dipdup.utils import snake_to_pascal
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
+DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -271,7 +273,23 @@ class CoinbaseDatasourceConfig(NameMixin):
         return hash(self.kind)
 
 
-DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig, CoinbaseDatasourceConfig]
+@dataclass
+class MetadataDatasourceConfig(NameMixin):
+    kind: Literal['metadata']
+    network: MetadataNetwork
+    url: str = DEFAULT_METADATA_URL
+    http: Optional[HTTPConfig] = None
+
+    def __hash__(self):
+        return hash(self.kind)
+
+
+DatasourceConfigT = Union[
+    TzktDatasourceConfig,
+    BcdDatasourceConfig,
+    CoinbaseDatasourceConfig,
+    MetadataDatasourceConfig,
+]
 
 
 @dataclass
