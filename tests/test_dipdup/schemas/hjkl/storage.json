@@ -1,0 +1,76 @@
+{
+    "$comment": "map",
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "items": {
+        "additionalProperties": false,
+        "properties": {
+            "key": {
+                "$comment": "pair",
+                "additionalProperties": false,
+                "properties": {
+                    "nat": {
+                        "$comment": "nat",
+                        "type": "string"
+                    },
+                    "string": {
+                        "$comment": "string",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "string",
+                    "nat"
+                ],
+                "type": "object"
+            },
+            "value": {
+                "$comment": "pair",
+                "additionalProperties": false,
+                "properties": {
+                    "mr": {
+                        "$comment": "option",
+                        "oneOf": [
+                            {
+                                "additionalProperties": {
+                                    "$comment": "bool",
+                                    "type": "boolean"
+                                },
+                                "propertyNames": {
+                                    "$comment": "int",
+                                    "type": "string"
+                                },
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "sw": {
+                        "$comment": "option",
+                        "oneOf": [
+                            {
+                                "$comment": "int",
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "sw",
+                    "mr"
+                ],
+                "type": "object"
+            }
+        },
+        "required": [
+            "key",
+            "value"
+        ],
+        "type": "object"
+    },
+    "type": "array"
+}

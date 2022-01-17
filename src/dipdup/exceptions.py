@@ -270,7 +270,7 @@ class InvalidDataError(DipDupError):
             Failed to validate datasource message against generated type class.
 
             Expected type:
-            `{self.type_cls.__class__.__qualname__}`
+            `{self.type_cls.__name__}`
 
             Invalid data:
             {self.data}
