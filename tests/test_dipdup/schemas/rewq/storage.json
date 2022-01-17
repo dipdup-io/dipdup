@@ -12,25 +12,15 @@
                         "additionalProperties": false,
                         "properties": {
                             "L": {
-                                "$comment": "big_map",
-                                "default": {},
-                                "oneOf": [
-                                    {
-                                        "$comment": "int",
-                                        "type": "integer"
-                                    },
-                                    {
-                                        "additionalProperties": {
-                                            "$comment": "int",
-                                            "type": "string"
-                                        },
-                                        "propertyNames": {
-                                            "$comment": "int",
-                                            "type": "string"
-                                        },
-                                        "type": "object"
-                                    }
-                                ]
+                                "additionalProperties": {
+                                    "$comment": "int",
+                                    "type": "string"
+                                },
+                                "propertyNames": {
+                                    "$comment": "int",
+                                    "type": "string"
+                                },
+                                "type": "object"
                             }
                         },
                         "required": [
@@ -67,25 +57,15 @@
                     "additionalProperties": false,
                     "properties": {
                         "L": {
-                            "$comment": "big_map",
-                            "default": {},
-                            "oneOf": [
-                                {
-                                    "$comment": "int",
-                                    "type": "integer"
-                                },
-                                {
-                                    "additionalProperties": {
-                                        "$comment": "int",
-                                        "type": "string"
-                                    },
-                                    "propertyNames": {
-                                        "$comment": "int",
-                                        "type": "string"
-                                    },
-                                    "type": "object"
-                                }
-                            ]
+                            "additionalProperties": {
+                                "$comment": "int",
+                                "type": "string"
+                            },
+                            "propertyNames": {
+                                "$comment": "int",
+                                "type": "string"
+                            },
+                            "type": "object"
                         }
                     },
                     "required": [

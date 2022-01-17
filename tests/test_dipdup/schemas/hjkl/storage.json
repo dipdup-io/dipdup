@@ -31,25 +31,15 @@
                         "$comment": "option",
                         "oneOf": [
                             {
-                                "$comment": "big_map",
-                                "default": {},
-                                "oneOf": [
-                                    {
-                                        "$comment": "int",
-                                        "type": "integer"
-                                    },
-                                    {
-                                        "additionalProperties": {
-                                            "$comment": "bool",
-                                            "type": "boolean"
-                                        },
-                                        "propertyNames": {
-                                            "$comment": "int",
-                                            "type": "string"
-                                        },
-                                        "type": "object"
-                                    }
-                                ]
+                                "additionalProperties": {
+                                    "$comment": "bool",
+                                    "type": "boolean"
+                                },
+                                "propertyNames": {
+                                    "$comment": "int",
+                                    "type": "string"
+                                },
+                                "type": "object"
                             },
                             {
                                 "type": "null"

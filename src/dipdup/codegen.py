@@ -66,6 +66,14 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
     We resolve bigmaps from diffs so no need to include int in type signature."""
     if not isinstance(schema, dict):
         return schema
+    if 'oneOf' in schema:
+        schema['oneOf'] = [preprocess_storage_jsonschema(sub_schema) for sub_schema in schema['oneOf']]
+        if schema['oneOf'][1].get('$comment') == 'big_map':
+            schema.pop('oneOf')
+            return {
+                **schema,
+                **schema['oneOf'][1],
+            }
     if 'properties' in schema:
         return {
             **schema,
