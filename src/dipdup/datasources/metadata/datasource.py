@@ -42,7 +42,7 @@ class MetadataDatasource(GraphQLDatasource):
             url='api/rest/token_metadata',
             params={
                 'network': self._network.value,
-                'address': address,
+                'contract': address,
                 'token_id': token_id,
             },
         )
