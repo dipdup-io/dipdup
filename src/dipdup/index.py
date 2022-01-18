@@ -572,7 +572,7 @@ class BigMapIndex(Index):
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        if self._config.skip_sync:
+        if self._config.skip_history:
             await self._synchronize_now(last_level, cache)
             return
 
@@ -714,7 +714,7 @@ class BigMapIndex(Index):
             contract_big_maps = await self._datasource.get_contract_big_maps(address)
             for contract_big_map in contract_big_maps:
                 if contract_big_map['path'] in big_map_paths:
-                    big_map_ids += (int(contract_big_map['ptr']), contract_big_map['path']),
+                    big_map_ids += ((int(contract_big_map['ptr']), contract_big_map['path']),)
 
         for bigmap_id, path in big_map_ids:
             big_maps = await self._datasource.get_big_map(bigmap_id, last_level, self._config.skip_removed)
@@ -737,7 +737,6 @@ class BigMapIndex(Index):
 
         await self._process_level_big_maps(big_map_data)
         await self._exit_sync_state(last_level)
-
 
 
 class HeadIndex(Index):

@@ -19,7 +19,7 @@ templates:
   tezos_domains_big_map:
     kind: big_map
     datasource: <datasource>
-    skip_sync: True
+    skip_history: True
     skip_removed: True
     handlers:
       - callback: on_update_records

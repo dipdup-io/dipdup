@@ -804,7 +804,7 @@ class BigMapIndexConfig(IndexConfig):
     datasource: Union[str, TzktDatasourceConfig]
     handlers: Tuple[BigMapHandlerConfig, ...]
 
-    skip_sync: bool = False
+    skip_history: bool = False
     skip_removed: bool = False
 
     first_level: int = 0
