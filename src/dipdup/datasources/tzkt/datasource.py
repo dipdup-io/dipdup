@@ -802,6 +802,8 @@ class TzktDatasource(IndexDatasource):
     @classmethod
     def convert_big_map(cls, big_map_json: Dict[str, Any]) -> BigMapData:
         """Convert raw big map diff message from WS/REST into dataclass"""
+        action = BigMapAction(big_map_json['action'])
+        active = action not in (BigMapAction.REMOVE, BigMapAction.REMOVE_KEY)
         return BigMapData(
             id=big_map_json['id'],
             level=big_map_json['level'],
@@ -811,7 +813,8 @@ class TzktDatasource(IndexDatasource):
             bigmap=big_map_json['bigmap'],
             contract_address=big_map_json['contract']['address'],
             path=big_map_json['path'],
-            action=BigMapAction(big_map_json['action']),
+            action=action,
+            active=active,
             key=big_map_json.get('content', {}).get('key'),
             value=big_map_json.get('content', {}).get('value'),
         )

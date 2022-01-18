@@ -15,12 +15,14 @@ datasources:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
+advanced:
+  early_realtime: True
+
 templates:
   tezos_domains_big_map:
     kind: big_map
     datasource: <datasource>
-    skip_history: True
-    skip_removed: True
+    skip_history: once
     handlers:
       - callback: on_update_records
         contract: <name_registry>

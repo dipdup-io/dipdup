@@ -1,9 +1,9 @@
-from datetime import datetime
 import logging
 from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
 from collections import namedtuple
+from datetime import datetime
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
@@ -33,6 +33,7 @@ from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import OperationType
 from dipdup.config import ResolvedIndexConfigT
+from dipdup.config import SkipHistory
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
@@ -41,8 +42,8 @@ from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import InvalidDataError
 from dipdup.exceptions import ReindexingReason
-from dipdup.models import BigMapData, BigMapAction
-
+from dipdup.models import BigMapAction
+from dipdup.models import BigMapData
 from dipdup.models import BigMapDiff
 from dipdup.models import BlockData
 from dipdup.models import HeadBlockData
@@ -572,14 +573,23 @@ class BigMapIndex(Index):
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        if self._config.skip_history:
-            await self._synchronize_now(last_level, cache)
-            return
-
         first_level = await self._enter_sync_state(last_level)
         if first_level is None:
             return
 
+        if any(
+            (
+                self._config.skip_history == SkipHistory.always,
+                self._config.skip_history == SkipHistory.once and not self.state.level,
+            )
+        ):
+            await self._synchronize_level(last_level, cache)
+        else:
+            await self._synchronize_full(first_level, last_level, cache)
+
+        await self._exit_sync_state(last_level)
+
+    async def _synchronize_full(self, first_level: int, last_level: int, cache: bool = False) -> None:
         self._logger.info('Fetching big map diffs from level %s to %s', first_level, last_level)
 
         big_map_addresses = await self._get_big_map_addresses()
@@ -597,7 +607,38 @@ class BigMapIndex(Index):
         async for _, big_maps in fetcher.fetch_big_maps_by_level():
             await self._process_level_big_maps(big_maps)
 
-        await self._exit_sync_state(last_level)
+    async def _synchronize_level(self, last_level: int, cache: bool = False) -> None:
+        big_map_addresses = await self._get_big_map_addresses()
+        big_map_paths = await self._get_big_map_paths()
+        big_map_ids: Tuple[Tuple[int, str], ...] = ()
+        big_map_data: Tuple[BigMapData, ...] = ()
+
+        for address in big_map_addresses:
+            contract_big_maps = await self._datasource.get_contract_big_maps(address)
+            for contract_big_map in contract_big_maps:
+                if contract_big_map['path'] in big_map_paths:
+                    big_map_ids += ((int(contract_big_map['ptr']), contract_big_map['path']),)
+
+        for bigmap_id, path in big_map_ids:
+            big_maps = await self._datasource.get_big_map(bigmap_id, last_level)
+            big_map_data = big_map_data + tuple(
+                BigMapData(
+                    id=big_map['id'],
+                    level=last_level,
+                    operation_id=last_level,
+                    timestamp=datetime.now(),
+                    bigmap=bigmap_id,
+                    contract_address=address,
+                    path=path,
+                    action=BigMapAction.ADD_KEY,
+                    active=big_map['active'],
+                    key=big_map['key'],
+                    value=big_map['value'],
+                )
+                for big_map in big_maps
+            )
+
+        await self._process_level_big_maps(big_map_data)
 
     async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]):
         if not big_maps:
@@ -703,40 +744,6 @@ class BigMapIndex(Index):
         for handler_config in self._config.handlers:
             paths.add(handler_config.path)
         return paths
-
-    async def _synchronize_now(self, last_level: int, cache: bool = False) -> None:
-        big_map_addresses = await self._get_big_map_addresses()
-        big_map_paths = await self._get_big_map_paths()
-        big_map_ids: Tuple[Tuple[int, str], ...] = ()
-        big_map_data: Tuple[BigMapData, ...] = ()
-
-        for address in big_map_addresses:
-            contract_big_maps = await self._datasource.get_contract_big_maps(address)
-            for contract_big_map in contract_big_maps:
-                if contract_big_map['path'] in big_map_paths:
-                    big_map_ids += ((int(contract_big_map['ptr']), contract_big_map['path']),)
-
-        for bigmap_id, path in big_map_ids:
-            big_maps = await self._datasource.get_big_map(bigmap_id, last_level, self._config.skip_removed)
-            big_map_data = big_map_data + tuple(
-                # FIXME: Some fields are random values
-                BigMapData(
-                    id=big_map['id'],
-                    level=last_level,
-                    operation_id=0,
-                    timestamp=datetime.now(),
-                    bigmap=bigmap_id,
-                    contract_address=address,
-                    path=path,
-                    action=BigMapAction.ADD_KEY,
-                    key=big_map['key'],
-                    value=big_map['value'],
-                )
-                for big_map in big_maps
-            )
-
-        await self._process_level_big_maps(big_map_data)
-        await self._exit_sync_state(last_level)
 
 
 class HeadIndex(Index):

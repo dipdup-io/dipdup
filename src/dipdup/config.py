@@ -11,7 +11,6 @@ from collections import defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
-from enum import Enum
 from functools import cached_property
 from os import environ as env
 from os.path import dirname
@@ -43,8 +42,10 @@ from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReasonC
+from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import import_from
@@ -56,12 +57,6 @@ DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 
 _logger = logging.getLogger('dipdup.config')
-
-
-class OperationType(Enum):
-    transaction = 'transaction'
-    origination = 'origination'
-    migration = 'migration'
 
 
 @dataclass
@@ -804,8 +799,7 @@ class BigMapIndexConfig(IndexConfig):
     datasource: Union[str, TzktDatasourceConfig]
     handlers: Tuple[BigMapHandlerConfig, ...]
 
-    skip_history: bool = False
-    skip_removed: bool = False
+    skip_history: SkipHistory = SkipHistory.never
 
     first_level: int = 0
     last_level: int = 0
