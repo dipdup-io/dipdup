@@ -377,27 +377,30 @@ class TzktDatasource(IndexDatasource):
         self._logger.debug(jsonschemas)
         return jsonschemas
 
-    async def get_big_map(self, big_map_id: int, level: Optional[int] = None)
+    async def get_big_map(self, big_map_id: int, level: Optional[int] = None, active: bool = False) -> Tuple[Dict[str, Any], ...]:
+        self._logger.info('Fetching keys of bigmap `%s`', big_map_id)
         size, offset = self.request_limit, 0
         big_maps: Tuple[Dict[str, Any], ...] = ()
+        kwargs = {'active': active} if active else {}
 
         while size == self.request_limit:
             response = await self._http.request(
                 'get',
                 url=f'v1/bigmaps/{big_map_id}/keys',
                 params={
+                    **kwargs,
                     'limit': self.request_limit,
                     'offset': offset,
-                    'active': True,
+                    'level': level,
                 },
             )
             size = len(response)
-            addresses = addresses + tuple(response)
+            big_maps = big_maps + tuple(response)
             offset += self.request_limit
 
-        return addresses
+        return big_maps
 
-    async def get_contract_big_map_ids(self, address: str) -> Tuple[str, ...]:
+    async def get_contract_big_map_ids(self, address: str) -> Tuple[int, ...]:
         size, offset = self.request_limit, 0
         big_map_ids: Tuple[int, ...] = ()
 
@@ -410,7 +413,7 @@ class TzktDatasource(IndexDatasource):
                     'offset': offset,
                 },
             )
-            batch_ids = (bm['ptr'] for bm in response)
+            batch_ids = (int(bm['ptr']) for bm in response)
             size = len(response)
             big_map_ids = big_map_ids + tuple(batch_ids)
             offset += self.request_limit

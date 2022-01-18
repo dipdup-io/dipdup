@@ -41,7 +41,8 @@ from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import InvalidDataError
 from dipdup.exceptions import ReindexingReason
-from dipdup.models import BigMapData
+from dipdup.models import BigMapData, BigMapAction
+
 from dipdup.models import BigMapDiff
 from dipdup.models import BlockData
 from dipdup.models import HeadBlockData
@@ -571,6 +572,10 @@ class BigMapIndex(Index):
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
+        if self._config.skip_sync:
+            await self._synchronize_now(last_level, cache)
+            return
+
         first_level = await self._enter_sync_state(last_level)
         if first_level is None:
             return
@@ -699,65 +704,36 @@ class BigMapIndex(Index):
             paths.add(handler_config.path)
         return paths
 
-
-class BigMapRealtimeIndex(BigMapIndex):
-    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
+    async def _synchronize_now(self, last_level: int, cache: bool = False) -> None:
         # 1. get storage
         big_map_addresses = await self._get_big_map_addresses()
-        big_map_ids = ()
+        big_map_ids: Tuple[int, ...] = ()
+        big_map_data: Tuple[BigMapData, ...] = ()
+
         for address in big_map_addresses:
-            big_map_ids = big_map_ids + await self._datasource.get_contract_big_map_ids(address, level=last_level)
+            big_map_ids = big_map_ids + await self._datasource.get_contract_big_map_ids(address)
 
         for big_map_id in big_map_ids:
-            big_maps = big_maps + await self._datasource.get_big_map(big_map_id)
-        big_maps = sorted(big_maps, key=lambda x: x.level)
+            big_maps = await self._datasource.get_big_map(big_map_id, last_level, self._config.skip_removed)
+            big_map_data = big_map_data + tuple(
+                # FIXME: Some fields are random values
+                BigMapData(
+                    id=big_map['id'],
+                    level=last_level,
+                    operation_id=0,
+                    timestamp=datetime.now(),
+                    bigmap=big_map_id,
+                    contract_address=address,
+                    path='',
+                    action=BigMapAction.ADD_KEY,
+                    key=big_map['key'],
+                    value=big_map['value'],
+                )
+                for big_map in big_maps
+            )
 
-        for big_map in big_maps:
-            big_map_data = BigMapData(
-                id=big_map['id'],
-                level=last_level,
-                operation_id=0,
-                # FIXME
-                timestamp=datetime.now(),
-                bigmap: int
-                contract_address: str
-                path: str
-                action: BigMapAction
-                key: Optional[Any] = None
-                value: Optional[Any] = None
-
-
-        storage = await self._datasource.get_storage()
-        storage_type = self._config.storage_type_cls
-
-        for field in 
-        # 2. get bigmap state by ids
-        # 3. convert storage to bigmap diffs
-
-        
-        # """Fetch operations via Fetcher and pass to message callback"""
-        # first_level = await self._enter_sync_state(last_level)
-        # if first_level is None:
-        #     return
-
-        # self._logger.info('Fetching big map diffs from level %s to %s', first_level, last_level)
-
-        # big_map_addresses = await self._get_big_map_addresses()
-        # big_map_paths = await self._get_big_map_paths()
-
-        # fetcher = BigMapFetcher(
-        #     datasource=self._datasource,
-        #     first_level=first_level,
-        #     last_level=last_level,
-        #     big_map_addresses=big_map_addresses,
-        #     big_map_paths=big_map_paths,
-        #     cache=cache,
-        # )
-
-        # async for _, big_maps in fetcher.fetch_big_maps_by_level():
-        #     await self._process_level_big_maps(big_maps)
-
-        # await self._exit_sync_state(last_level)
+        await self._process_level_big_maps(big_map_data)
+        await self._exit_sync_state(last_level)
 
 
 

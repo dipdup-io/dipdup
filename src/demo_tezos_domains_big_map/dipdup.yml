@@ -26,6 +26,7 @@ templates:
   tezos_domains_big_map:
     kind: big_map
     datasource: <datasource>
+    skip_sync: True
     handlers:
       - callback: on_update_records
         contract: <name_registry>
