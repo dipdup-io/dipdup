@@ -662,6 +662,8 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
 
         # NOTE: We need to preserve datasource URL but remove it's HTTP tunables to avoid false-positives.
         config_dict['datasource'].pop('http', None)
+        # NOTE: Same for BigMapIndex tunables
+        config_dict.pop('skip_history', None)
 
         config_json = json.dumps(config_dict)
         return hashlib.sha256(config_json.encode()).hexdigest()
