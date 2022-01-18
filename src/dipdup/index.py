@@ -705,16 +705,19 @@ class BigMapIndex(Index):
         return paths
 
     async def _synchronize_now(self, last_level: int, cache: bool = False) -> None:
-        # 1. get storage
         big_map_addresses = await self._get_big_map_addresses()
-        big_map_ids: Tuple[int, ...] = ()
+        big_map_paths = await self._get_big_map_paths()
+        big_map_ids: Tuple[Tuple[int, str], ...] = ()
         big_map_data: Tuple[BigMapData, ...] = ()
 
         for address in big_map_addresses:
-            big_map_ids = big_map_ids + await self._datasource.get_contract_big_map_ids(address)
+            contract_big_maps = await self._datasource.get_contract_big_maps(address)
+            for contract_big_map in contract_big_maps:
+                if contract_big_map['path'] in big_map_paths:
+                    big_map_ids += (int(contract_big_map['ptr']), contract_big_map['path']),
 
-        for big_map_id in big_map_ids:
-            big_maps = await self._datasource.get_big_map(big_map_id, last_level, self._config.skip_removed)
+        for bigmap_id, path in big_map_ids:
+            big_maps = await self._datasource.get_big_map(bigmap_id, last_level, self._config.skip_removed)
             big_map_data = big_map_data + tuple(
                 # FIXME: Some fields are random values
                 BigMapData(
@@ -722,9 +725,9 @@ class BigMapIndex(Index):
                     level=last_level,
                     operation_id=0,
                     timestamp=datetime.now(),
-                    bigmap=big_map_id,
+                    bigmap=bigmap_id,
                     contract_address=address,
-                    path='',
+                    path=path,
                     action=BigMapAction.ADD_KEY,
                     key=big_map['key'],
                     value=big_map['value'],

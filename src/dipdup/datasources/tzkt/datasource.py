@@ -381,7 +381,7 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Fetching keys of bigmap `%s`', big_map_id)
         size, offset = self.request_limit, 0
         big_maps: Tuple[Dict[str, Any], ...] = ()
-        kwargs = {'active': active} if active else {}
+        kwargs = {'active': str(active).lower()} if active else {}
 
         while size == self.request_limit:
             response = await self._http.request(
@@ -400,9 +400,9 @@ class TzktDatasource(IndexDatasource):
 
         return big_maps
 
-    async def get_contract_big_map_ids(self, address: str) -> Tuple[int, ...]:
+    async def get_contract_big_maps(self, address: str) -> Tuple[Dict[str, Any], ...]:
         size, offset = self.request_limit, 0
-        big_map_ids: Tuple[int, ...] = ()
+        big_maps: Tuple[Dict[str, Any], ...] = ()
 
         while size == self.request_limit:
             response = await self._http.request(
@@ -413,17 +413,11 @@ class TzktDatasource(IndexDatasource):
                     'offset': offset,
                 },
             )
-            batch_ids = (int(bm['ptr']) for bm in response)
             size = len(response)
-            big_map_ids = big_map_ids + tuple(batch_ids)
+            big_maps = big_maps + tuple(response)
             offset += self.request_limit
 
-        return big_map_ids
-  
-
-
-
-
+        return big_maps
 
     async def get_head_block(self) -> HeadBlockData:
         """Get latest block (head)"""

@@ -6,18 +6,11 @@ database:
   path: tezos_domains_big_map.sqlite3
 
 contracts:
-  name_registry:
-    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
-    typename: name_registry
   mainnet_name_registry:
     address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
     typename: name_registry
 
 datasources:
-  tzkt:
-    kind: tzkt
-    url: ${TZKT_URL:-https://api.tzkt.io}
-
   tzkt_mainnet:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
@@ -27,6 +20,7 @@ templates:
     kind: big_map
     datasource: <datasource>
     skip_sync: True
+    skip_removed: True
     handlers:
       - callback: on_update_records
         contract: <name_registry>
@@ -36,12 +30,6 @@ templates:
         path: store.expiry_map
 
 indexes:
-  tezos_domains_big_map:
-    template: tezos_domains_big_map
-    values:
-      datasource: tzkt
-      name_registry: name_registry
-
   tezos_domains_big_map_mainnet:
     template: tezos_domains_big_map
     values:
