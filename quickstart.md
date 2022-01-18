@@ -13,6 +13,7 @@ A Linux environment with Python 3.8+ installed is required to use DipDup.
 ```shell
 poetry init -n
 poetry add dipdup
+poetry shell
 ```
 
 ### pip
@@ -64,7 +65,7 @@ indexes:
             entrypoint: mint
 ```
 
-See [Config reference](config-reference/README.md) for details.
+See [Config reference](config-reference/) for details.
 
 ## Initialize project tree
 
@@ -76,7 +77,7 @@ dipdup init
 
 DipDup will create a Python package `demo_tzbtc` having the following structure:
 
-```text
+```
 demo_tzbtc
 ├── graphql
 ├── handlers
@@ -226,7 +227,6 @@ async def on_mint(
         balance_update=amount,
         timestamp=mint.data.timestamp
     )
-
 ```
 
 And that's all! We can run the indexer now.
@@ -241,4 +241,4 @@ dipdup run
 
 DipDup will fetch all the historical data then switch to realtime updates. Your application data has been successfully indexed!
 
-See [Command-line reference](cli-reference/README.md) for details.
+See [Command-line reference](cli-reference/) for details.
