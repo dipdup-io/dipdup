@@ -1,0 +1,40 @@
+{
+    "$comment": "pair",
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "additionalProperties": false,
+    "properties": {
+        "borrowedTokens": {
+            "$comment": "nat",
+            "type": "string"
+        },
+        "interestIndex": {
+            "$comment": "int",
+            "type": "string"
+        },
+        "isLiquidated": {
+            "$comment": "bool",
+            "type": "boolean"
+        },
+        "ovenProxyContractAddress": {
+            "$comment": "address",
+            "type": "string"
+        },
+        "owner": {
+            "$comment": "address",
+            "type": "string"
+        },
+        "stabilityFeeTokens": {
+            "$comment": "int",
+            "type": "string"
+        }
+    },
+    "required": [
+        "borrowedTokens",
+        "interestIndex",
+        "isLiquidated",
+        "ovenProxyContractAddress",
+        "owner",
+        "stabilityFeeTokens"
+    ],
+    "type": "object"
+}

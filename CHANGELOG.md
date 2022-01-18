@@ -2,12 +2,17 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## [unreleased]
+## 4.0.4 - 2022-01-17
+
+### Added
+
+* cli: Added `--keep-schemas` flag to `init` command to preserve JSONSchemas along with generated types.
 
 ### Fixed
 
 * demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
 * hasura: Fixed missing relations for models with `ManyToManyField` fields.
+* tzkt: Fixed parsing storage with nested structures.
 
 ### Performance
 

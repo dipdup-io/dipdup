@@ -16,7 +16,7 @@ class MapItem(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    L: Union[int, Dict[str, str]]
+    L: Dict[str, str]
 
 
 class MapItem1(BaseModel):
@@ -30,7 +30,7 @@ class OrItem(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    L: Union[int, Dict[str, str]]
+    L: Dict[str, str]
 
 
 class OrItem1(BaseModel):
