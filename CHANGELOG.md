@@ -2,6 +2,13 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+[unreleased]
+
+### Added
+
+* config: Added `skip_history` field to `BigMapIndexConfig`.
+* index: Added an ability to skip historical data while synchronizing `big_map` indexes.
+
 ## 4.0.4 - 2022-01-17
 
 ### Added
