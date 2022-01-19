@@ -212,7 +212,7 @@ class TzktDatasourceConfig(NameMixin):
     http: Optional[HTTPConfig] = None
 
     def __hash__(self):
-        return hash(self.url)
+        return hash(self.kind + self.url)
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
@@ -242,7 +242,7 @@ class BcdDatasourceConfig(NameMixin):
     http: Optional[HTTPConfig] = None
 
     def __hash__(self):
-        return hash(self.url + self.network)
+        return hash(self.kind + self.url + self.network)
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):
@@ -281,7 +281,7 @@ class MetadataDatasourceConfig(NameMixin):
     http: Optional[HTTPConfig] = None
 
     def __hash__(self):
-        return hash(self.kind)
+        return hash(self.kind + self.url + self.network.value)
 
 
 DatasourceConfigT = Union[
