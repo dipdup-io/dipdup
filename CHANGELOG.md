@@ -2,7 +2,13 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## [unreleased]
+[unreleased]
+
+### Fixed
+
+* index: Fixed deserializing manually modified typeclasses.
+
+## 4.0.4 - 2022-01-17
 
 ### Added
 
