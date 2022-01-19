@@ -8,6 +8,10 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * cli: Added `--keep-schemas` flag to `init` command to preserve JSONSchemas along with generated types.
 
+## Added
+
+* config: Callbacks of handlers and hooks are considered nested packages if their name contains dots.
+
 ### Fixed
 
 * demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.

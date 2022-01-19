@@ -326,26 +326,15 @@ class CallbackManager:
             self._logger.warning('Skipping SQL hook `%s`: not supported on SQLite', name)
             return
 
-        sql_path = join(ctx.config.package_path, 'sql')
+        subpackages = name.split('.')
+        sql_path = join(ctx.config.package_path, 'sql', *subpackages)
         if not exists(sql_path):
-            raise InitializationRequiredError
-
-        paths = (
-            # NOTE: `sql` directory -> relative/absolute path
-            join(sql_path, name),
-            name,
-        )
-
-        try:
-            path = next(filter(exists, paths))
-        except StopIteration:
-            # NOTE: Not exactly this type of error
-            raise ConfigurationError(f'SQL file/directory `{name}` not exists')
+            raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 
         # NOTE: SQL hooks are executed on default connection
         connection = get_connection(None)
 
-        for file in iter_files(path, '.sql'):
+        for file in iter_files(sql_path, '.sql'):
             ctx.logger.info('Executing `%s`', file.name)
             sql = file.read()
             for statement in sqlparse.split(sql):
