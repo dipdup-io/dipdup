@@ -5,6 +5,8 @@ A list of API endpoints DipDup uses to retrieve data and pass it to your indexer
 * `tzkt`
 * `bcd`
 * `tezos-node`
+* `coinbase`
+* `metadata`
 
 ## Datasources
 
@@ -56,6 +58,18 @@ datasources:
 ```
 
 Please note that Coinbase can't replace TzKT being an index datasource. But you can access it via `ctx.datasources` mapping both within handler and job callbacks.
+
+### dipdup-metadata
+
+[dipdup-metadata](https://github.com/dipdup-net/metadata) is a standalone companion indexer for DipDup written in Go. Configure datasource in the following way:
+
+```yaml
+datasources:
+  metadata:
+    kind: metadata
+    url: https://metadata.dipdup.net
+    network: mainnet|handzhounet
+```
 
 ## Advanced HTTP settings
 
