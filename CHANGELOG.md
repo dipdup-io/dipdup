@@ -2,7 +2,18 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## [unreleased]
+[unreleased]
+
+### Added
+
+* cli: Added `schema init` command to initialize database schema.
+* config: Callbacks of handlers and hooks are considered nested packages if their name contains dots.
+
+## 4.0.4 - 2022-01-17
+
+### Added
+
+* cli: Added `--keep-schemas` flag to `init` command to preserve JSONSchemas along with generated types.
 
 ### Added
 
@@ -12,6 +23,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
 * hasura: Fixed missing relations for models with `ManyToManyField` fields.
+* tzkt: Fixed parsing storage with nested structures.
 
 ### Performance
 
@@ -23,6 +35,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * ci: Detect CI environment and skip tests that fail in GitHub Actions.
 * ci: Execute tests in parallel with `pytest-xdist` when possible.
 * ci: More strict linting rules of `flake8`.
+>>>>>>> master
 
 ## 4.0.3 - 2022-01-09
 

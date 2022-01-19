@@ -4,6 +4,7 @@ import os
 import signal
 import subprocess
 import sys
+from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import wraps
@@ -201,12 +202,13 @@ async def run(
 
 @cli.command(help='Generate missing callbacks and types')
 @click.option('--overwrite-types', is_flag=True, help='Regenerate existing types')
+@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
 @click.pass_context
 @cli_wrapper
-async def init(ctx, overwrite_types: bool):
+async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(overwrite_types)
+    await dipdup.init(overwrite_types, keep_schemas)
 
 
 @cli.command(help='Migrate project to the new spec version')
@@ -386,6 +388,24 @@ async def schema_wipe(ctx, immune: bool):
             await Tortoise._drop_databases()
 
     _logger.info('Schema wiped')
+
+
+@schema.command(name='init', help='Initialize database schema')
+@click.pass_context
+@cli_wrapper
+async def schema_init(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    dipdup = DipDup(config)
+
+    _logger.info('Initializing schema `%s`', url)
+
+    async with AsyncExitStack() as stack:
+        await dipdup._set_up_database(stack)
+        await dipdup._set_up_hooks()
+        await dipdup._initialize_schema()
+
+    _logger.info('Schema initialized')
 
 
 @schema.command(name='export', help='Print schema SQL including `on_reindex` hook')
