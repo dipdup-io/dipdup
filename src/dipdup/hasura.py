@@ -102,7 +102,7 @@ class HasuraGateway(HTTPGateway):
         self._hasura_config = hasura_config
         self._database_config = database_config
 
-    async def configure(self) -> None:
+    async def configure(self, force: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
         if self._database_config.schema_name != 'public':
@@ -116,7 +116,7 @@ class HasuraGateway(HTTPGateway):
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
 
-        if hasura_schema.hash == metadata_hash:
+        if not force and hasura_schema.hash == metadata_hash:
             self._logger.info('Metadata is up to date, no action required')
             return
 

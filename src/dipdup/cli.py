@@ -304,9 +304,10 @@ async def hasura(ctx):
 
 
 @hasura.command(name='configure', help='Configure Hasura GraphQL Engine')
+@click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured')
 @click.pass_context
 @cli_wrapper
-async def hasura_configure(ctx):
+async def hasura_configure(ctx, force: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -320,7 +321,7 @@ async def hasura_configure(ctx):
 
     async with tortoise_wrapper(url, models):
         async with hasura_gateway:
-            await hasura_gateway.configure()
+            await hasura_gateway.configure(force)
 
 
 @cli.group(help='Manage database schema')
