@@ -8,6 +8,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * cli: Added `schema init` command to initialize database schema.
 * config: Callbacks of handlers and hooks are considered nested packages if their name contains dots.
+* metadata: Added `metadata` datasource.
 
 ## 4.0.4 - 2022-01-17
 
