@@ -165,6 +165,7 @@ async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
         await set_schema(conn, name)
         await Tortoise.generate_schemas()
 
+        # NOTE: Apply built-in scripts before project ones
         sql_path = join(dirname(__file__), '..', 'sql', 'on_reindex')
         await execute_sql_scripts(conn, sql_path)
     else:
