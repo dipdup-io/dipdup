@@ -377,6 +377,48 @@ class TzktDatasource(IndexDatasource):
         self._logger.debug(jsonschemas)
         return jsonschemas
 
+    async def get_big_map(self, big_map_id: int, level: Optional[int] = None, active: bool = False) -> Tuple[Dict[str, Any], ...]:
+        self._logger.info('Fetching keys of bigmap `%s`', big_map_id)
+        size, offset = self.request_limit, 0
+        big_maps: Tuple[Dict[str, Any], ...] = ()
+        kwargs = {'active': str(active).lower()} if active else {}
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/bigmaps/{big_map_id}/keys',
+                params={
+                    **kwargs,
+                    'limit': self.request_limit,
+                    'offset': offset,
+                    'level': level,
+                },
+            )
+            size = len(response)
+            big_maps = big_maps + tuple(response)
+            offset += self.request_limit
+
+        return big_maps
+
+    async def get_contract_big_maps(self, address: str) -> Tuple[Dict[str, Any], ...]:
+        size, offset = self.request_limit, 0
+        big_maps: Tuple[Dict[str, Any], ...] = ()
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/contracts/{address}/bigmaps',
+                params={
+                    'limit': self.request_limit,
+                    'offset': offset,
+                },
+            )
+            size = len(response)
+            big_maps = big_maps + tuple(response)
+            offset += self.request_limit
+
+        return big_maps
+
     async def get_head_block(self) -> HeadBlockData:
         """Get latest block (head)"""
         self._logger.info('Fetching latest block')
@@ -760,6 +802,8 @@ class TzktDatasource(IndexDatasource):
     @classmethod
     def convert_big_map(cls, big_map_json: Dict[str, Any]) -> BigMapData:
         """Convert raw big map diff message from WS/REST into dataclass"""
+        action = BigMapAction(big_map_json['action'])
+        active = action not in (BigMapAction.REMOVE, BigMapAction.REMOVE_KEY)
         return BigMapData(
             id=big_map_json['id'],
             level=big_map_json['level'],
@@ -769,7 +813,8 @@ class TzktDatasource(IndexDatasource):
             bigmap=big_map_json['bigmap'],
             contract_address=big_map_json['contract']['address'],
             path=big_map_json['path'],
-            action=BigMapAction(big_map_json['action']),
+            action=action,
+            active=active,
             key=big_map_json.get('content', {}).get('key'),
             value=big_map_json.get('content', {}).get('value'),
         )

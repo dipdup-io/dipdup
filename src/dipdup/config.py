@@ -11,7 +11,6 @@ from collections import defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
-from enum import Enum
 from functools import cached_property
 from os import environ as env
 from os.path import dirname
@@ -44,8 +43,10 @@ from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReasonC
+from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import import_from
@@ -58,12 +59,6 @@ DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
 
 _logger = logging.getLogger('dipdup.config')
-
-
-class OperationType(Enum):
-    transaction = 'transaction'
-    origination = 'origination'
-    migration = 'migration'
 
 
 @dataclass
@@ -685,6 +680,8 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
 
         # NOTE: We need to preserve datasource URL but remove it's HTTP tunables to avoid false-positives.
         config_dict['datasource'].pop('http', None)
+        # NOTE: Same for BigMapIndex tunables
+        config_dict.pop('skip_history', None)
 
         config_json = json.dumps(config_dict)
         return hashlib.sha256(config_json.encode()).hexdigest()
@@ -821,6 +818,8 @@ class BigMapIndexConfig(IndexConfig):
     kind: Literal['big_map']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: Tuple[BigMapHandlerConfig, ...]
+
+    skip_history: SkipHistory = SkipHistory.never
 
     first_level: int = 0
     last_level: int = 0

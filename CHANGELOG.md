@@ -7,8 +7,10 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Added
 
 * cli: Added `schema init` command to initialize database schema.
-* config: Callbacks of handlers and hooks are considered nested packages if their name contains dots.
+* codegen: Added support for subpackages inside callback directories.
+* index: Added an ability to skip historical data while synchronizing `big_map` indexes.
 * metadata: Added `metadata` datasource.
+* tzkt: Added `get_big_map` and `get_contract_big_maps` datasource methods.
 
 ## 4.0.4 - 2022-01-17
 
@@ -32,7 +34,6 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * ci: Detect CI environment and skip tests that fail in GitHub Actions.
 * ci: Execute tests in parallel with `pytest-xdist` when possible.
 * ci: More strict linting rules of `flake8`.
->>>>>>> master
 
 ## 4.0.3 - 2022-01-09
 
