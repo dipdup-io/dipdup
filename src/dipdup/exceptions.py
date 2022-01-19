@@ -178,9 +178,13 @@ class ReindexingRequiredError(DipDupError):
 
 @dataclass(frozen=True, repr=False)
 class InitializationRequiredError(DipDupError):
+    message: str
+
     def _help(self) -> str:
-        return """
+        return f"""
             Project initialization required!
+
+            Reason: {self.message}
 
             1. Run `dipdup init`
             2. Review and commit changes
@@ -270,7 +274,7 @@ class InvalidDataError(DipDupError):
             Failed to validate datasource message against generated type class.
 
             Expected type:
-            `{self.type_cls.__class__.__qualname__}`
+            `{self.type_cls.__name__}`
 
             Invalid data:
             {self.data}

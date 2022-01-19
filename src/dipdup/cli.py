@@ -118,7 +118,7 @@ def init_sentry(config: DipDupConfig) -> None:
     )
 
 
-@click.group(help='Docs: https://docs.dipdup.net', context_settings=dict(max_content_width=120))
+@click.group(help='Docs: https://docs.dipdup.net', context_settings={'max_content_width': 120})
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
@@ -202,12 +202,13 @@ async def run(
 
 @cli.command(help='Generate missing callbacks and types')
 @click.option('--overwrite-types', is_flag=True, help='Regenerate existing types')
+@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
 @click.pass_context
 @cli_wrapper
-async def init(ctx, overwrite_types: bool):
+async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(overwrite_types)
+    await dipdup.init(overwrite_types, keep_schemas)
 
 
 @cli.command(help='Migrate project to the new spec version')

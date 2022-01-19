@@ -564,8 +564,8 @@ class CallbackMixin(CodegenMixin):
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
-        if self.callback and self.callback != pascal_to_snake(self.callback):
-            raise ConfigurationError('`callback` field must conform to snake_case naming style')
+        if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
+            raise ConfigurationError('`callback` field must be a valid Python module name')
 
     @cached_property
     def kind(self) -> str:
@@ -669,8 +669,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         config_dict['datasource'].pop('http', None)
 
         config_json = json.dumps(config_dict)
-        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
-        return config_hash
+        return hashlib.sha256(config_json.encode()).hexdigest()
 
     def hash_old(self) -> str:
         """Calculate hash to ensure config not changed since last run.
@@ -678,8 +677,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         Old incorrect algorightm (false positives). Used only to update hash of existing indexes.
         """
         config_json = json.dumps(self, default=pydantic_encoder)
-        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
-        return config_hash
+        return hashlib.sha256(config_json.encode()).hexdigest()
 
 
 @dataclass
@@ -811,7 +809,7 @@ class BigMapIndexConfig(IndexConfig):
 
     @cached_property
     def contracts(self) -> Set[ContractConfig]:
-        return set(handler_config.contract_config for handler_config in self.handlers)
+        return {handler_config.contract_config for handler_config in self.handlers}
 
 
 @dataclass
@@ -932,11 +930,11 @@ default_hooks = {
     # NOTE: On reorg message. Default: reindex.
     'on_rollback': HookConfig(
         callback='on_rollback',
-        args=dict(
-            datasource='dipdup.datasources.datasource.Datasource',
-            from_level='int',
-            to_level='int',
-        ),
+        args={
+            'datasource': 'dipdup.datasources.datasource.Datasource',
+            'from_level': 'int',
+            'to_level': 'int',
+        },
     ),
     # NOTE: After restart (important!) after ctx.reindex call. Default: nothing.
     'on_reindex': HookConfig(
@@ -1049,10 +1047,7 @@ class DipDupConfig:
                     placeholder = '${' + variable + ':-' + default_value + '}'
                     raw_config = raw_config.replace(placeholder, value or default_value)
 
-            json_config = {
-                **json_config,
-                **YAML(typ='base').load(raw_config),
-            }
+            json_config.update(YAML(typ='base').load(raw_config))
 
         try:
             config = cls(**json_config)

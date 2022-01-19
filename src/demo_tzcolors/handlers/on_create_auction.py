@@ -15,12 +15,12 @@ async def on_create_auction(
     token, _ = await models.Token.get_or_create(
         id=create_auction.parameter.token_id,
         address=create_auction.parameter.token_address,
-        defaults=dict(
-            amount=create_auction.parameter.token_amount,
-            holder=holder,
-            level=create_auction.data.level,
-            timestamp=create_auction.data.timestamp,
-        ),
+        defaults={
+            'amount': create_auction.parameter.token_amount,
+            'holder': holder,
+            'level': create_auction.data.level,
+            'timestamp': create_auction.data.timestamp,
+        },
     )
 
     auction = models.Auction(

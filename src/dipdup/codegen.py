@@ -43,17 +43,17 @@ from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 from dipdup.utils import write
 
-DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
-    POSTGRES_USER="dipdup",
-    POSTGRES_DB="dipdup",
-    POSTGRES_PASSWORD="changeme",
-    HASURA_GRAPHQL_DATABASE_URL="postgres://dipdup:changeme@db:5432/dipdup",
-    HASURA_GRAPHQL_ENABLE_CONSOLE="true",
-    HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS="true",
-    HASURA_GRAPHQL_ENABLED_LOG_TYPES="startup, http-log, webhook-log, websocket-log, query-log",
-    HASURA_GRAPHQL_ADMIN_SECRET="changeme",
-    HASURA_GRAPHQL_UNAUTHORIZED_ROLE="user",
-)
+DEFAULT_DOCKER_ENV_FILE_CONTENT = {
+    'POSTGRES_USER': 'dipdup',
+    'POSTGRES_DB': 'dipdup',
+    'POSTGRES_PASSWORD': 'changeme',
+    'HASURA_GRAPHQL_DATABASE_URL': 'postgres://dipdup:changeme@db:5432/dipdup',
+    'HASURA_GRAPHQL_ENABLE_CONSOLE': 'true',
+    'HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS': 'true',
+    'HASURA_GRAPHQL_ENABLED_LOG_TYPES': 'startup, http-log, webhook-log, websocket-log, query-log',
+    'HASURA_GRAPHQL_ADMIN_SECRET': 'changeme',
+    'HASURA_GRAPHQL_UNAUTHORIZED_ROLE': 'user',
+}
 DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
 DEFAULT_DOCKER_TAG = __version__
 DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
@@ -66,6 +66,8 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
     We resolve bigmaps from diffs so no need to include int in type signature."""
     if not isinstance(schema, dict):
         return schema
+    if 'oneOf' in schema:
+        schema['oneOf'] = [preprocess_storage_jsonschema(sub_schema) for sub_schema in schema['oneOf']]
     if 'properties' in schema:
         return {
             **schema,
@@ -104,14 +106,15 @@ class DipDupCodeGenerator:
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
 
-    async def init(self, overwrite_types: bool = False) -> None:
+    async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         self._logger.info('Initializing project')
         await self.create_package()
         await self.fetch_schemas()
         await self.generate_types(overwrite_types)
         await self.generate_hooks()
         await self.generate_handlers()
-        await self.cleanup()
+        if not keep_schemas:
+            await self.cleanup()
         await self.verify_package()
 
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
@@ -458,32 +461,41 @@ class DipDupCodeGenerator:
 
     async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
         subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
-        callback_path = join(subpackage_path, f'{callback_config.callback}.py')
-        if exists(callback_path):
-            return
 
-        self._logger.info('Generating %s callback `%s`', callback_config.kind, callback_config.callback)
-        callback_template = load_template('callback.py')
+        original_callback = callback_config.callback
+        subpackages = callback_config.callback.split('.')
+        subpackages, callback = subpackages[:-1], subpackages[-1]
+        subpackage_path = join(subpackage_path, *subpackages)
 
-        arguments = callback_config.format_arguments()
-        imports = set(callback_config.format_imports(self._config.package))
+        init_path = join(subpackage_path, '__init__.py')
+        touch(init_path)
 
-        code: List[str] = []
+        callback_path = join(subpackage_path, f'{callback}.py')
+        if not exists(callback_path):
+            self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
+            callback_template = load_template('callback.py')
+
+            arguments = callback_config.format_arguments()
+            imports = set(callback_config.format_imports(self._config.package))
+
+            code: List[str] = []
+            if sql:
+                code.append(f"await ctx.execute_sql('{original_callback}')")
+                if callback == 'on_rollback':
+                    imports.add('from dipdup.enums import ReindexingReason')
+                    code.append('await ctx.reindex(ReindexingReason.ROLLBACK)')
+            else:
+                code.append('...')
+
+            callback_code = callback_template.render(
+                callback=callback,
+                arguments=tuple(dict.fromkeys(arguments)),
+                imports=tuple(dict.fromkeys(imports)),
+                code=code,
+            )
+            write(callback_path, callback_code)
+
         if sql:
-            code.append(f"await ctx.execute_sql('{callback_config.callback}')")
-            if callback_config.callback == 'on_rollback':
-                imports.add('from dipdup.enums import ReindexingReason')
-                code.append('await ctx.reindex(ReindexingReason.ROLLBACK)')
-        else:
-            code.append('...')
-
-        callback_code = callback_template.render(
-            callback=callback_config.callback,
-            arguments=tuple(dict.fromkeys(arguments)),
-            imports=tuple(dict.fromkeys(imports)),
-            code=code,
-        )
-        write(callback_path, callback_code)
-
-        if sql:
-            touch(join(self._config.package_path, 'sql', callback_config.callback, '.keep'))
+            # NOTE: Preserve the same structure as in `handlers`
+            sql_path = join(self._config.package_path, 'sql', *subpackages, callback, '.keep')
+            touch(sql_path)
