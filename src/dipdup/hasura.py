@@ -342,6 +342,9 @@ class HasuraGateway(HTTPGateway):
         for query_name, query in self._iterate_graphql_queries():
             queries.append({'name': query_name, 'query': query})
 
+        # NOTE: This is the only view we add by ourselves and thus know all params. Won't work for any view.
+        queries.append(self._format_rest_heartbeat_query())
+
         return queries
 
     async def _generate_rest_endpoints_metadata(self, query_names: List[str]) -> List[Dict[str, Any]]:
@@ -453,6 +456,16 @@ class HasuraGateway(HTTPGateway):
         return {
             'name': name,
             'query': 'query ' + name + ' (' + query_arg + ') {' + table + '(' + query_filter + ') {' + query_fields + '}}',
+        }
+
+    def _format_rest_heartbeat_query(self) -> Dict[str, Any]:
+        name = 'dipdup_heartbeat'
+        if self._hasura_config.camel_case:
+            name = humps.camelize(name)
+
+        return {
+            'name': name,
+            'query': 'query ' + name + ' {' + name + '{name status}}',
         }
 
     def _format_rest_endpoint(self, query_name: str) -> Dict[str, Any]:
