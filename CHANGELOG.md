@@ -10,6 +10,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * codegen: Added support for subpackages inside callback directories.
 * index: Added an ability to skip historical data while synchronizing `big_map` indexes.
 * metadata: Added `metadata` datasource.
+* tzkt: Added `get_big_map` and `get_contract_big_maps` datasource methods.
 
 ## 4.0.4 - 2022-01-17
 
