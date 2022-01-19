@@ -29,6 +29,7 @@ from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
+from dipdup.config import MetadataDatasourceConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import TzktDatasourceConfig
@@ -40,6 +41,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
+from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
@@ -385,6 +387,12 @@ class DipDup:
                 )
             elif isinstance(datasource_config, CoinbaseDatasourceConfig):
                 datasource = CoinbaseDatasource(
+                    http_config=datasource_config.http,
+                )
+            elif isinstance(datasource_config, MetadataDatasourceConfig):
+                datasource = MetadataDatasource(
+                    url=datasource_config.url,
+                    network=datasource_config.network,
                     http_config=datasource_config.http,
                 )
             else:
