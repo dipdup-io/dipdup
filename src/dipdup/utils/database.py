@@ -4,6 +4,7 @@ import hashlib
 import importlib
 import logging
 from contextlib import asynccontextmanager
+from contextlib import suppress
 from enum import Enum
 from os.path import dirname
 from os.path import join
@@ -16,6 +17,7 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
+import sqlparse  # type: ignore
 from tortoise import Model
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
@@ -30,6 +32,7 @@ from tortoise.utils import get_schema_sql
 
 from dipdup.enums import ReversedEnum
 from dipdup.exceptions import DatabaseConfigurationError
+from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.database')
@@ -144,6 +147,16 @@ async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
     await conn.execute_script(_truncate_schema_sql)
 
 
+async def execute_sql_scripts(conn: BaseDBAsyncClient, path: str) -> None:
+    for file in iter_files(path, '.sql'):
+        _logger.info('Executing `%s`', file.name)
+        sql = file.read()
+        for statement in sqlparse.split(sql):
+            # NOTE: Ignore empty statements
+            with suppress(AttributeError):
+                await conn.execute_script(statement)
+
+
 async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
     if isinstance(conn, SqliteClient):
         await Tortoise.generate_schemas()
@@ -151,6 +164,9 @@ async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
         await create_schema(conn, name)
         await set_schema(conn, name)
         await Tortoise.generate_schemas()
+
+        sql_path = join(dirname(__file__), '..', 'sql', 'on_reindex')
+        await execute_sql_scripts(conn, sql_path)
     else:
         raise NotImplementedError
 

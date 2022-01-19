@@ -16,7 +16,6 @@ from typing import Tuple
 from typing import Union
 from typing import cast
 
-import sqlparse  # type: ignore
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
@@ -50,7 +49,7 @@ from dipdup.models import Index
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.utils import FormattedLogger
-from dipdup.utils import iter_files
+from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
@@ -333,14 +332,7 @@ class CallbackManager:
 
         # NOTE: SQL hooks are executed on default connection
         connection = get_connection(None)
-
-        for file in iter_files(sql_path, '.sql'):
-            ctx.logger.info('Executing `%s`', file.name)
-            sql = file.read()
-            for statement in sqlparse.split(sql):
-                # NOTE: Ignore empty statements
-                with suppress(AttributeError):
-                    await connection.execute_script(statement)
+        await execute_sql_scripts(connection, sql_path)
 
     @contextmanager
     def _wrapper(self, kind: str, name: str) -> Iterator[None]:
