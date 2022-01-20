@@ -7,7 +7,9 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Added
 
 * cli: Added `schema init` command to initialize database schema.
+* cli: Added `--force` flag to `hasura configure` command.
 * codegen: Added support for subpackages inside callback directories.
+* hasura: Added `dipdup_head_status` view and REST endpoint.
 * index: Added an ability to skip historical data while synchronizing `big_map` indexes.
 * metadata: Added `metadata` datasource.
 * tzkt: Added `get_big_map` and `get_contract_big_maps` datasource methods.

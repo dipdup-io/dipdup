@@ -102,7 +102,7 @@ class HasuraGateway(HTTPGateway):
         self._hasura_config = hasura_config
         self._database_config = database_config
 
-    async def configure(self) -> None:
+    async def configure(self, force: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
         if self._database_config.schema_name != 'public':
@@ -116,7 +116,7 @@ class HasuraGateway(HTTPGateway):
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
 
-        if hasura_schema.hash == metadata_hash:
+        if not force and hasura_schema.hash == metadata_hash:
             self._logger.info('Metadata is up to date, no action required')
             return
 
@@ -342,6 +342,9 @@ class HasuraGateway(HTTPGateway):
         for query_name, query in self._iterate_graphql_queries():
             queries.append({'name': query_name, 'query': query})
 
+        # NOTE: This is the only view we add by ourselves and thus know all params. Won't work for any view.
+        queries.append(self._format_rest_head_status_query())
+
         return queries
 
     async def _generate_rest_endpoints_metadata(self, query_names: List[str]) -> List[Dict[str, Any]]:
@@ -453,6 +456,16 @@ class HasuraGateway(HTTPGateway):
         return {
             'name': name,
             'query': 'query ' + name + ' (' + query_arg + ') {' + table + '(' + query_filter + ') {' + query_fields + '}}',
+        }
+
+    def _format_rest_head_status_query(self) -> Dict[str, Any]:
+        name = 'dipdup_head_status'
+        if self._hasura_config.camel_case:
+            name = humps.camelize(name)
+
+        return {
+            'name': name,
+            'query': 'query ' + name + ' ($name: String!) {' + name + '(where: {name: {_eq: $name}}) {status}}',
         }
 
     def _format_rest_endpoint(self, query_name: str) -> Dict[str, Any]:

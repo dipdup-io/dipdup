@@ -49,6 +49,7 @@ from dipdup.migrations import deprecated_handlers
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
+from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
@@ -304,9 +305,10 @@ async def hasura(ctx):
 
 
 @hasura.command(name='configure', help='Configure Hasura GraphQL Engine')
+@click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured')
 @click.pass_context
 @cli_wrapper
-async def hasura_configure(ctx):
+async def hasura_configure(ctx, force: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -320,7 +322,7 @@ async def hasura_configure(ctx):
 
     async with tortoise_wrapper(url, models):
         async with hasura_gateway:
-            await hasura_gateway.configure()
+            await hasura_gateway.configure(force)
 
 
 @cli.group(help='Manage database schema')
@@ -403,7 +405,13 @@ async def schema_init(ctx):
     async with AsyncExitStack() as stack:
         await dipdup._set_up_database(stack)
         await dipdup._set_up_hooks()
+        await dipdup._create_datasources()
         await dipdup._initialize_schema()
+
+        # NOTE: It's not necessary a reindex, but it's safe to execute built-in scripts to (re)create views.
+        conn = get_connection(None)
+        sql_path = join(dirname(__file__), 'sql', 'on_reindex')
+        await execute_sql_scripts(conn, sql_path)
 
     _logger.info('Schema initialized')
 
