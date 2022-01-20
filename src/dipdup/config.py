@@ -11,7 +11,6 @@ from collections import defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
-from enum import Enum
 from functools import cached_property
 from os import environ as env
 from os.path import dirname
@@ -39,12 +38,15 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
+from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReasonC
+from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import import_from
@@ -54,14 +56,9 @@ from dipdup.utils import snake_to_pascal
 ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
+DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
 
 _logger = logging.getLogger('dipdup.config')
-
-
-class OperationType(Enum):
-    transaction = 'transaction'
-    origination = 'origination'
-    migration = 'migration'
 
 
 @dataclass
@@ -210,7 +207,7 @@ class TzktDatasourceConfig(NameMixin):
     http: Optional[HTTPConfig] = None
 
     def __hash__(self):
-        return hash(self.url)
+        return hash(self.kind + self.url)
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
@@ -240,7 +237,7 @@ class BcdDatasourceConfig(NameMixin):
     http: Optional[HTTPConfig] = None
 
     def __hash__(self):
-        return hash(self.url + self.network)
+        return hash(self.kind + self.url + self.network)
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):
@@ -271,7 +268,23 @@ class CoinbaseDatasourceConfig(NameMixin):
         return hash(self.kind)
 
 
-DatasourceConfigT = Union[TzktDatasourceConfig, BcdDatasourceConfig, CoinbaseDatasourceConfig]
+@dataclass
+class MetadataDatasourceConfig(NameMixin):
+    kind: Literal['metadata']
+    network: MetadataNetwork
+    url: str = DEFAULT_METADATA_URL
+    http: Optional[HTTPConfig] = None
+
+    def __hash__(self):
+        return hash(self.kind + self.url + self.network.value)
+
+
+DatasourceConfigT = Union[
+    TzktDatasourceConfig,
+    BcdDatasourceConfig,
+    CoinbaseDatasourceConfig,
+    MetadataDatasourceConfig,
+]
 
 
 @dataclass
@@ -564,8 +577,8 @@ class CallbackMixin(CodegenMixin):
 
     def __post_init_post_parse__(self):
         self._callback_fn = None
-        if self.callback and self.callback != pascal_to_snake(self.callback):
-            raise ConfigurationError('`callback` field must conform to snake_case naming style')
+        if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
+            raise ConfigurationError('`callback` field must be a valid Python module name')
 
     @cached_property
     def kind(self) -> str:
@@ -667,10 +680,11 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
 
         # NOTE: We need to preserve datasource URL but remove it's HTTP tunables to avoid false-positives.
         config_dict['datasource'].pop('http', None)
+        # NOTE: Same for BigMapIndex tunables
+        config_dict.pop('skip_history', None)
 
         config_json = json.dumps(config_dict)
-        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
-        return config_hash
+        return hashlib.sha256(config_json.encode()).hexdigest()
 
     def hash_old(self) -> str:
         """Calculate hash to ensure config not changed since last run.
@@ -678,8 +692,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         Old incorrect algorightm (false positives). Used only to update hash of existing indexes.
         """
         config_json = json.dumps(self, default=pydantic_encoder)
-        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
-        return config_hash
+        return hashlib.sha256(config_json.encode()).hexdigest()
 
 
 @dataclass
@@ -806,12 +819,14 @@ class BigMapIndexConfig(IndexConfig):
     datasource: Union[str, TzktDatasourceConfig]
     handlers: Tuple[BigMapHandlerConfig, ...]
 
+    skip_history: SkipHistory = SkipHistory.never
+
     first_level: int = 0
     last_level: int = 0
 
     @cached_property
     def contracts(self) -> Set[ContractConfig]:
-        return set(handler_config.contract_config for handler_config in self.handlers)
+        return {handler_config.contract_config for handler_config in self.handlers}
 
 
 @dataclass
@@ -932,11 +947,11 @@ default_hooks = {
     # NOTE: On reorg message. Default: reindex.
     'on_rollback': HookConfig(
         callback='on_rollback',
-        args=dict(
-            datasource='dipdup.datasources.datasource.Datasource',
-            from_level='int',
-            to_level='int',
-        ),
+        args={
+            'datasource': 'dipdup.datasources.datasource.Datasource',
+            'from_level': 'int',
+            'to_level': 'int',
+        },
     ),
     # NOTE: After restart (important!) after ctx.reindex call. Default: nothing.
     'on_reindex': HookConfig(
@@ -1045,10 +1060,7 @@ class DipDupConfig:
                     placeholder = '${' + variable + ':-' + default_value + '}'
                     raw_config = raw_config.replace(placeholder, value or default_value)
 
-            json_config = {
-                **json_config,
-                **YAML(typ='base').load(raw_config),
-            }
+            json_config.update(YAML(typ='base').load(raw_config))
 
         try:
             config = cls(**json_config)

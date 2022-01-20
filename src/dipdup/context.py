@@ -14,7 +14,6 @@ from typing import Tuple
 from typing import Union
 from typing import cast
 
-import sqlparse  # type: ignore
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
@@ -48,8 +47,8 @@ from dipdup.models import Index
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.utils import FormattedLogger
-from dipdup.utils import iter_files
 from dipdup.utils import restart
+from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
@@ -327,32 +326,14 @@ class CallbackManager:
             self._logger.warning('Skipping SQL hook `%s`: not supported on SQLite', name)
             return
 
-        sql_path = join(ctx.config.package_path, 'sql')
+        subpackages = name.split('.')
+        sql_path = join(ctx.config.package_path, 'sql', *subpackages)
         if not exists(sql_path):
-            raise InitializationRequiredError
-
-        paths = (
-            # NOTE: `sql` directory -> relative/absolute path
-            join(sql_path, name),
-            name,
-        )
-
-        try:
-            path = next(filter(exists, paths))
-        except StopIteration:
-            # NOTE: Not exactly this type of error
-            raise ConfigurationError(f'SQL file/directory `{name}` not exists')
+            raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 
         # NOTE: SQL hooks are executed on default connection
         connection = get_connection(None)
-
-        for file in iter_files(path, '.sql'):
-            ctx.logger.info('Executing `%s`', file.name)
-            sql = file.read()
-            for statement in sqlparse.split(sql):
-                # NOTE: Ignore empty statements
-                with suppress(AttributeError):
-                    await connection.execute_script(statement)
+        await execute_sql_scripts(connection, sql_path)
 
     @contextmanager
     def _wrapper(self, kind: str, name: str) -> Iterator[None]:

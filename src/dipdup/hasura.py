@@ -102,7 +102,7 @@ class HasuraGateway(HTTPGateway):
         self._hasura_config = hasura_config
         self._database_config = database_config
 
-    async def configure(self) -> None:
+    async def configure(self, force: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
         if self._database_config.schema_name != 'public':
@@ -116,7 +116,7 @@ class HasuraGateway(HTTPGateway):
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
 
-        if hasura_schema.hash == metadata_hash:
+        if not force and hasura_schema.hash == metadata_hash:
             self._logger.info('Metadata is up to date, no action required')
             return
 
@@ -274,20 +274,53 @@ class HasuraGateway(HTTPGateway):
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
                     if not isinstance(field.related_name, str):
                         raise HasuraError(f'`related_name` of `{field}` must be set')
+
                     related_table_name = model_tables[field.model_name]
+                    field_name = field.model_field_name
                     metadata_tables[table_name]['object_relationships'].append(
                         self._format_object_relationship(
-                            name=field.model_field_name,
-                            column=field.model_field_name + '_id',
+                            name=field_name,
+                            column=field_name + '_id',
                         )
                     )
                     metadata_tables[related_table_name]['array_relationships'].append(
                         self._format_array_relationship(
                             related_name=field.related_name,
                             table=table_name,
-                            column=field.model_field_name + '_id',
+                            column=field_name + '_id',
                         )
                     )
+
+                elif isinstance(field, fields.relational.ManyToManyFieldInstance):
+                    if not isinstance(field.related_name, str):
+                        raise HasuraError(f'`related_name` of `{field}` must be set')
+
+                    related_table_name = model_tables[field.model_name]
+                    junction_table_name = field.through
+
+                    metadata_tables[junction_table_name] = self._format_table(junction_table_name)
+                    metadata_tables[junction_table_name]['object_relationships'].append(
+                        self._format_object_relationship(
+                            name=related_table_name,
+                            column=related_table_name + '_id',
+                        )
+                    )
+                    metadata_tables[junction_table_name]['object_relationships'].append(
+                        self._format_object_relationship(
+                            name=table_name,
+                            column=table_name + '_id',
+                        )
+                    )
+                    metadata_tables[related_table_name]['array_relationships'].append(
+                        self._format_array_relationship(
+                            related_name=f'{related_table_name}_{field.related_name}',
+                            table=junction_table_name,
+                            column=related_table_name + '_id',
+                        )
+                    )
+
+                else:
+                    pass
 
         return list(metadata_tables.values())
 
@@ -307,7 +340,10 @@ class HasuraGateway(HTTPGateway):
             queries.append(self._format_rest_query(table_name, table_name, filter, fields))
 
         for query_name, query in self._iterate_graphql_queries():
-            queries.append(dict(name=query_name, query=query))
+            queries.append({'name': query_name, 'query': query})
+
+        # NOTE: This is the only view we add by ourselves and thus know all params. Won't work for any view.
+        queries.append(self._format_rest_head_status_query())
 
         return queries
 
@@ -420,6 +456,16 @@ class HasuraGateway(HTTPGateway):
         return {
             'name': name,
             'query': 'query ' + name + ' (' + query_arg + ') {' + table + '(' + query_filter + ') {' + query_fields + '}}',
+        }
+
+    def _format_rest_head_status_query(self) -> Dict[str, Any]:
+        name = 'dipdup_head_status'
+        if self._hasura_config.camel_case:
+            name = humps.camelize(name)
+
+        return {
+            'name': name,
+            'query': 'query ' + name + ' ($name: String!) {' + name + '(where: {name: {_eq: $name}}) {status}}',
         }
 
     def _format_rest_endpoint(self, query_name: str) -> Dict[str, Any]:

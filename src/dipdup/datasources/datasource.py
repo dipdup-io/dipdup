@@ -38,6 +38,11 @@ class Datasource(HTTPGateway):
         self._logger = FormattedLogger(self._logger.name, name + ': {}')
 
 
+# TODO: Generic interface
+class GraphQLDatasource(Datasource):
+    ...
+
+
 class IndexDatasource(Datasource):
     def __init__(self, url: str, http_config: HTTPConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(url, http_config)

@@ -28,6 +28,7 @@ from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
+from unittest import skip
 
 import humps  # type: ignore
 from genericpath import isdir
@@ -69,9 +70,11 @@ def snake_to_pascal(value: str) -> str:
     return humps.pascalize(value.replace('.', '_'))
 
 
-def pascal_to_snake(value: str) -> str:
+def pascal_to_snake(value: str, strip_dots: bool = True) -> str:
     """humps wrapper for Python imports"""
-    return humps.depascalize(value.replace('.', '_')).replace('__', '_')
+    if strip_dots:
+        value = value.replace('.', '_')
+    return humps.depascalize(value).replace('__', '_')
 
 
 def split_by_chunks(input_: List[Any], size: int) -> Iterator[List[Any]]:
@@ -174,3 +177,9 @@ def remove_prefix(text: str, prefix: str) -> str:
     if text.startswith(prefix):
         text = text[len(prefix) :]
     return text.strip('_')
+
+
+def skip_ci(fn):
+    if os.environ.get('CI'):
+        return skip('CI environment, skipping')(fn)
+    return fn

@@ -18,6 +18,18 @@ class IndexType(Enum):
     head = 'head'
 
 
+class OperationType(Enum):
+    transaction = 'transaction'
+    origination = 'origination'
+    migration = 'migration'
+
+
+class SkipHistory(Enum):
+    never = 'never'
+    once = 'once'
+    always = 'always'
+
+
 class IndexStatus(Enum):
     NEW = 'NEW'
     SYNCING = 'SYNCING'

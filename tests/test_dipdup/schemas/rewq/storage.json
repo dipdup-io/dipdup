@@ -1,0 +1,98 @@
+{
+    "$comment": "pair",
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "additionalProperties": false,
+    "properties": {
+        "map": {
+            "$comment": "map",
+            "additionalProperties": {
+                "$comment": "or",
+                "oneOf": [
+                    {
+                        "additionalProperties": false,
+                        "properties": {
+                            "L": {
+                                "additionalProperties": {
+                                    "$comment": "int",
+                                    "type": "string"
+                                },
+                                "propertyNames": {
+                                    "$comment": "int",
+                                    "type": "string"
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "required": [
+                            "L"
+                        ],
+                        "type": "object"
+                    },
+                    {
+                        "additionalProperties": false,
+                        "properties": {
+                            "R": {
+                                "$comment": "unit",
+                                "additionalProperties": false,
+                                "type": "object"
+                            }
+                        },
+                        "required": [
+                            "R"
+                        ],
+                        "type": "object"
+                    }
+                ]
+            },
+            "propertyNames": {
+                "$comment": "string",
+                "type": "string"
+            },
+            "type": "object"
+        },
+        "or": {
+            "$comment": "or",
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "L": {
+                            "additionalProperties": {
+                                "$comment": "int",
+                                "type": "string"
+                            },
+                            "propertyNames": {
+                                "$comment": "int",
+                                "type": "string"
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "L"
+                    ],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "R": {
+                            "$comment": "unit",
+                            "additionalProperties": false,
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "R"
+                    ],
+                    "type": "object"
+                }
+            ]
+        }
+    },
+    "required": [
+        "map",
+        "or"
+    ],
+    "type": "object"
+}

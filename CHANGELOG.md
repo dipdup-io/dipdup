@@ -18,6 +18,54 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * config: Removed unused `advanced.oneshot` option.
 * models: Removed unused `IndexStatus.ROLLBACK` enum member.
 
+## [unreleased]
+
+### Added
+
+* cli: Added `schema init` command to initialize database schema.
+* cli: Added `--force` flag to `hasura configure` command.
+* codegen: Added support for subpackages inside callback directories.
+* hasura: Added `dipdup_head_status` view and REST endpoint.
+* index: Added an ability to skip historical data while synchronizing `big_map` indexes.
+* metadata: Added `metadata` datasource.
+* tzkt: Added `get_big_map` and `get_contract_big_maps` datasource methods.
+
+## 4.0.5 - 2022-01-20
+
+### Fixed
+
+* index: Fixed deserializing manually modified typeclasses.
+
+## 4.0.4 - 2022-01-17
+
+### Added
+
+* cli: Added `--keep-schemas` flag to `init` command to preserve JSONSchemas along with generated types.
+
+### Fixed
+
+* demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
+* hasura: Fixed missing relations for models with `ManyToManyField` fields.
+* tzkt: Fixed parsing storage with nested structures.
+
+### Performance
+
+* dipdup: Minor overall performance improvements.
+
+### Other
+
+* ci: Cache virtual environment in GitHub Actions.
+* ci: Detect CI environment and skip tests that fail in GitHub Actions.
+* ci: Execute tests in parallel with `pytest-xdist` when possible.
+* ci: More strict linting rules of `flake8`.
+
+## 4.0.3 - 2022-01-09
+
+### Fixed
+
+* tzkt: Fixed parsing parameter with an optional value.
+>>>>>>> master
+
 ## 4.0.2 - 2022-01-06
 
 ### Added
@@ -28,7 +76,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * tzkt: Fixed crash due to unprocessed pysignalr exception.
 * tzkt: Fixed parsing `OperationData.amount` field.
-* tzkt: Fixed parsing storage with top-level boolean fields
+* tzkt: Fixed parsing storage with top-level boolean fields.
 
 ## 4.0.1 - 2021-12-30
 

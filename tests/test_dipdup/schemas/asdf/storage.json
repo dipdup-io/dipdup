@@ -1,0 +1,49 @@
+{
+    "$comment": "list",
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "items": {
+        "$comment": "map",
+        "additionalProperties": {
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "key": {
+                        "$comment": "pair",
+                        "additionalProperties": false,
+                        "properties": {
+                            "nat": {
+                                "$comment": "nat",
+                                "type": "string"
+                            },
+                            "string": {
+                                "$comment": "string",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "string",
+                            "nat"
+                        ],
+                        "type": "object"
+                    },
+                    "value": {
+                        "$comment": "int",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "key",
+                    "value"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "propertyNames": {
+            "$comment": "string",
+            "type": "string"
+        },
+        "type": "object"
+    },
+    "type": "array"
+}

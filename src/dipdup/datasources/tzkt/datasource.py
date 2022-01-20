@@ -60,7 +60,7 @@ def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationDa
     """Merge and sort operations fetched from multiple endpoints"""
     return tuple(
         sorted(
-            tuple(({op.id: op for op in operations}).values()),
+            (({op.id: op for op in operations}).values()),
             key=lambda op: op.id,
         )
     )
@@ -234,7 +234,7 @@ class BigMapFetcher:
         """
 
         offset = 0
-        big_maps: Tuple[BigMapData, ...] = tuple()
+        big_maps: Tuple[BigMapData, ...] = ()
 
         # TODO: Share code between this and OperationFetcher
         while True:
@@ -309,17 +309,17 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Fetching %s contracts for address `%s`', entrypoint, address)
 
         size, offset = self.request_limit, 0
-        addresses: Tuple[str, ...] = tuple()
+        addresses: Tuple[str, ...] = ()
 
         while size == self.request_limit:
             response = await self._http.request(
                 'get',
                 url=f'v1/contracts/{address}/{entrypoint}',
-                params=dict(
-                    select='address',
-                    limit=self.request_limit,
-                    offset=offset,
-                ),
+                params={
+                    'select': 'address',
+                    'limit': self.request_limit,
+                    'offset': offset,
+                },
             )
             size = len(response)
             addresses = addresses + tuple(response)
@@ -332,17 +332,17 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Fetching originated contracts for address `%s', address)
 
         size, offset = self.request_limit, 0
-        addresses: Tuple[str, ...] = tuple()
+        addresses: Tuple[str, ...] = ()
 
         while size == self.request_limit:
             response = await self._http.request(
                 'get',
                 url=f'v1/accounts/{address}/contracts',
-                params=dict(
-                    select='address',
-                    limit=self.request_limit,
-                    offset=offset,
-                ),
+                params={
+                    'select': 'address',
+                    'limit': self.request_limit,
+                    'offset': offset,
+                },
             )
             size = len(response)
             addresses = addresses + tuple(c['address'] for c in response)
@@ -376,6 +376,48 @@ class TzktDatasource(IndexDatasource):
         )
         self._logger.debug(jsonschemas)
         return jsonschemas
+
+    async def get_big_map(self, big_map_id: int, level: Optional[int] = None, active: bool = False) -> Tuple[Dict[str, Any], ...]:
+        self._logger.info('Fetching keys of bigmap `%s`', big_map_id)
+        size, offset = self.request_limit, 0
+        big_maps: Tuple[Dict[str, Any], ...] = ()
+        kwargs = {'active': str(active).lower()} if active else {}
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/bigmaps/{big_map_id}/keys',
+                params={
+                    **kwargs,
+                    'limit': self.request_limit,
+                    'offset': offset,
+                    'level': level,
+                },
+            )
+            size = len(response)
+            big_maps = big_maps + tuple(response)
+            offset += self.request_limit
+
+        return big_maps
+
+    async def get_contract_big_maps(self, address: str) -> Tuple[Dict[str, Any], ...]:
+        size, offset = self.request_limit, 0
+        big_maps: Tuple[Dict[str, Any], ...] = ()
+
+        while size == self.request_limit:
+            response = await self._http.request(
+                'get',
+                url=f'v1/contracts/{address}/bigmaps',
+                params={
+                    'limit': self.request_limit,
+                    'offset': offset,
+                },
+            )
+            size = len(response)
+            big_maps = big_maps + tuple(response)
+            offset += self.request_limit
+
+        return big_maps
 
     async def get_head_block(self) -> HeadBlockData:
         """Get latest block (head)"""
@@ -446,8 +488,7 @@ class TzktDatasource(IndexDatasource):
             )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
-        originations = tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
-        return originations
+        return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
 
     async def get_transactions(
         self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
@@ -468,8 +509,7 @@ class TzktDatasource(IndexDatasource):
         )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
-        transactions = tuple(self.convert_operation(op, type_='transaction') for op in raw_transactions)
-        return transactions
+        return tuple(self.convert_operation(op, type_='transaction') for op in raw_transactions)
 
     async def get_big_maps(
         self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
@@ -487,8 +527,7 @@ class TzktDatasource(IndexDatasource):
             },
             cache=cache,
         )
-        big_maps = tuple(self.convert_big_map(bm) for bm in raw_big_maps)
-        return big_maps
+        return tuple(self.convert_big_map(bm) for bm in raw_big_maps)
 
     async def get_quote(self, level: int) -> QuoteData:
         """Get quote for block"""
@@ -703,9 +742,10 @@ class TzktDatasource(IndexDatasource):
             # NOTE: TzKT returns None for `default` entrypoint
             if entrypoint is None:
                 entrypoint = 'default'
-            # NOTE: Empty parameter in this case means `{"prim": "Unit"}`
-            if parameter is None:
-                parameter = {}
+
+                # NOTE: Empty parameter in this case means `{"prim": "Unit"}`
+                if parameter is None:
+                    parameter = {}
 
         return OperationData(
             type=type_ or operation_json['type'],
@@ -762,6 +802,8 @@ class TzktDatasource(IndexDatasource):
     @classmethod
     def convert_big_map(cls, big_map_json: Dict[str, Any]) -> BigMapData:
         """Convert raw big map diff message from WS/REST into dataclass"""
+        action = BigMapAction(big_map_json['action'])
+        active = action not in (BigMapAction.REMOVE, BigMapAction.REMOVE_KEY)
         return BigMapData(
             id=big_map_json['id'],
             level=big_map_json['level'],
@@ -771,7 +813,8 @@ class TzktDatasource(IndexDatasource):
             bigmap=big_map_json['bigmap'],
             contract_address=big_map_json['contract']['address'],
             path=big_map_json['path'],
-            action=BigMapAction(big_map_json['action']),
+            action=action,
+            active=active,
             key=big_map_json.get('content', {}).get('key'),
             value=big_map_json.get('content', {}).get('value'),
         )
