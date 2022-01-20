@@ -2,6 +2,7 @@
 
 * [Overview](README.md)
 * [Release notes](release-notes/README.md)
+  * [4.1.0](release-notes/4.1.0.md)
   * [4.0.0](release-notes/4.0.0.md)
 * [Quickstart](quickstart.md)
 * [Getting started](getting-started/README.md)
