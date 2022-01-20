@@ -24,6 +24,9 @@ datasources:
     kind: tzkt
     url: https://api.tzkt.io
 
+advanced:
+  early_realtime: True
+
 templates:
   quipuswap_fa12:
     kind: operation
