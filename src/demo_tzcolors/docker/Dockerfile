@@ -1,2 +1,2 @@
-FROM dipdup/dipdup:4.0.4
+FROM dipdup/dipdup:4.0.5
 COPY demo_tzcolors /home/dipdup/demo_tzcolors
