@@ -4,6 +4,7 @@ import os
 import signal
 import subprocess
 import sys
+from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import wraps
@@ -48,6 +49,7 @@ from dipdup.migrations import deprecated_handlers
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
+from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
@@ -117,7 +119,7 @@ def init_sentry(config: DipDupConfig) -> None:
     )
 
 
-@click.group(help='Docs: https://docs.dipdup.net', context_settings=dict(max_content_width=120))
+@click.group(help='Docs: https://docs.dipdup.net', context_settings={'max_content_width': 120})
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
@@ -201,12 +203,13 @@ async def run(
 
 @cli.command(help='Generate missing callbacks and types')
 @click.option('--overwrite-types', is_flag=True, help='Regenerate existing types')
+@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
 @click.pass_context
 @cli_wrapper
-async def init(ctx, overwrite_types: bool):
+async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(overwrite_types)
+    await dipdup.init(overwrite_types, keep_schemas)
 
 
 @cli.command(help='Migrate project to the new spec version')
@@ -302,9 +305,10 @@ async def hasura(ctx):
 
 
 @hasura.command(name='configure', help='Configure Hasura GraphQL Engine')
+@click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured')
 @click.pass_context
 @cli_wrapper
-async def hasura_configure(ctx):
+async def hasura_configure(ctx, force: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -318,7 +322,7 @@ async def hasura_configure(ctx):
 
     async with tortoise_wrapper(url, models):
         async with hasura_gateway:
-            await hasura_gateway.configure()
+            await hasura_gateway.configure(force)
 
 
 @cli.group(help='Manage database schema')
@@ -386,6 +390,30 @@ async def schema_wipe(ctx, immune: bool):
             await Tortoise._drop_databases()
 
     _logger.info('Schema wiped')
+
+
+@schema.command(name='init', help='Initialize database schema')
+@click.pass_context
+@cli_wrapper
+async def schema_init(ctx):
+    config: DipDupConfig = ctx.obj.config
+    url = config.database.connection_string
+    dipdup = DipDup(config)
+
+    _logger.info('Initializing schema `%s`', url)
+
+    async with AsyncExitStack() as stack:
+        await dipdup._set_up_database(stack)
+        await dipdup._set_up_hooks()
+        await dipdup._create_datasources()
+        await dipdup._initialize_schema()
+
+        # NOTE: It's not necessary a reindex, but it's safe to execute built-in scripts to (re)create views.
+        conn = get_connection(None)
+        sql_path = join(dirname(__file__), 'sql', 'on_reindex')
+        await execute_sql_scripts(conn, sql_path)
+
+    _logger.info('Schema initialized')
 
 
 @schema.command(name='export', help='Print schema SQL including `on_reindex` hook')

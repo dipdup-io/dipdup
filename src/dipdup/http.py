@@ -149,14 +149,14 @@ class _HTTPGateway:
 
     async def _request(self, method: str, url: str, weight: int = 1, **kwargs):
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        headers = {
-            **kwargs.pop('headers', {}),
-            'User-Agent': self.user_agent,
-        }
         if not url.startswith(self._url):
             url = self._url + '/' + url.lstrip('/')
+
+        headers = kwargs.pop('headers', {})
+        headers['User-Agent'] = self.user_agent
+
         params = kwargs.get('params', {})
-        params_string = '&'.join([f'{k}={v}' for k, v in params.items()])
+        params_string = '&'.join(f'{k}={v}' for k, v in params.items())
         request_string = f'{url}?{params_string}'.rstrip('?')
         self._logger.debug('Calling `%s`', request_string)
 
@@ -184,10 +184,9 @@ class _HTTPGateway:
             except KeyError:
                 response = await self._retry_request(method, url, weight, **kwargs)
                 self._cache[key] = response
-                return response
+                return response  # noqa: R504
         else:
-            response = await self._retry_request(method, url, weight, **kwargs)
-            return response
+            return await self._retry_request(method, url, weight, **kwargs)
 
     async def close_session(self) -> None:
         """Close aiohttp session"""

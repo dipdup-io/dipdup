@@ -4,6 +4,7 @@ from collections import defaultdict
 from collections import deque
 from collections import namedtuple
 from contextlib import ExitStack
+from datetime import datetime
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
@@ -32,6 +33,7 @@ from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import OperationType
 from dipdup.config import ResolvedIndexConfigT
+from dipdup.config import SkipHistory
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
@@ -40,6 +42,7 @@ from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import InvalidDataError
 from dipdup.exceptions import ReindexingReason
+from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BigMapDiff
 from dipdup.models import HeadBlockData
@@ -89,8 +92,8 @@ def extract_operation_subgroups(
     levels: Set[int] = set()
     operation_subgroups: DefaultDict[Tuple[str, int], Deque[OperationData]] = defaultdict(deque)
 
-    operation_index = -1
-    for operation_index, operation in enumerate(operations):
+    _operation_index = -1
+    for _operation_index, operation in enumerate(operations):
         # NOTE: Filtering out operations that are not part of any index
         if operation.type == 'transaction':
             if operation.entrypoint not in entrypoints:
@@ -110,7 +113,7 @@ def extract_operation_subgroups(
     _logger.debug(
         'Extracted %d subgroups (%d operations, %d filtered by %s entrypoints and %s addresses)',
         len(operation_subgroups),
-        operation_index + 1,
+        _operation_index + 1,
         filtered,
         len(entrypoints),
         len(addresses),
@@ -118,7 +121,7 @@ def extract_operation_subgroups(
 
     for key, operations in operation_subgroups.items():
         hash_, counter = key
-        entrypoints = set(op.entrypoint for op in operations)
+        entrypoints = {op.entrypoint for op in operations}
         yield OperationSubgroup(
             hash=hash_,
             counter=counter,
@@ -180,12 +183,12 @@ class Index:
         self._state, _ = await models.Index.get_or_create(
             name=self._config.name,
             type=self._config.kind,
-            defaults=dict(
-                level=level,
-                config_hash=self._config.hash(),
-                template=self._config.parent.name if self._config.parent else None,
-                template_values=self._config.template_values,
-            ),
+            defaults={
+                'level': level,
+                'config_hash': self._config.hash(),
+                'template': self._config.parent.name if self._config.parent else None,
+                'template_values': self._config.template_values,
+            },
         )
 
     async def process(self) -> None:
@@ -198,7 +201,7 @@ class Index:
                 await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
-        sync_levels = set(self.datasource.get_sync_level(s) for s in self._config.subscriptions)
+        sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
         sync_level = sync_levels.pop()
         if sync_levels:
             raise Exception
@@ -252,7 +255,7 @@ class Index:
         await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
 
     def _extract_level(self, message: Union[Tuple[OperationData, ...], Tuple[BigMapData, ...]]) -> int:
-        batch_levels = set(item.level for item in message)
+        batch_levels = {item.level for item in message}
         if len(batch_levels) != 1:
             raise RuntimeError(f'Items in operation/big_map batch have different levels: {batch_levels}')
         return batch_levels.pop()
@@ -376,7 +379,7 @@ class OperationIndex(Index):
                 raise RuntimeError(f'Index is in a rollback state, but received operation batch with different levels: {levels_repr}')
 
             self._logger.info('Rolling back to previous level, verifying processed operations')
-            received_hashes = set(s.hash for s in operation_subgroups)
+            received_hashes = {s.hash for s in operation_subgroups}
             new_hashes = received_hashes - self._head_hashes
             missing_hashes = self._head_hashes - received_hashes
 
@@ -561,7 +564,7 @@ class OperationIndex(Index):
         """Get addresses to fetch transactions from during initial synchronization"""
         if OperationType.transaction not in self._config.types:
             return set()
-        return set(contract.address for contract in self._config.contracts if isinstance(contract, ContractConfig))
+        return {contract.address for contract in self._config.contracts if isinstance(contract, ContractConfig)}
 
     async def _get_origination_addresses(self) -> Set[str]:
         """Get addresses to fetch origination from during initial synchronization"""
@@ -619,6 +622,19 @@ class BigMapIndex(Index):
         if first_level is None:
             return
 
+        if any(
+            (
+                self._config.skip_history == SkipHistory.always,
+                self._config.skip_history == SkipHistory.once and not self.state.level,
+            )
+        ):
+            await self._synchronize_level(last_level, cache)
+        else:
+            await self._synchronize_full(first_level, last_level, cache)
+
+        await self._exit_sync_state(last_level)
+
+    async def _synchronize_full(self, first_level: int, last_level: int, cache: bool = False) -> None:
         self._logger.info('Fetching big map diffs from level %s to %s', first_level, last_level)
 
         big_map_addresses = await self._get_big_map_addresses()
@@ -640,7 +656,38 @@ class BigMapIndex(Index):
                     stack.enter_context(Metrics.measure_level_sync_duration())
                 await self._process_level_big_maps(big_maps)
 
-        await self._exit_sync_state(last_level)
+    async def _synchronize_level(self, last_level: int, cache: bool = False) -> None:
+        big_map_addresses = await self._get_big_map_addresses()
+        big_map_paths = await self._get_big_map_paths()
+        big_map_ids: Tuple[Tuple[int, str], ...] = ()
+        big_map_data: Tuple[BigMapData, ...] = ()
+
+        for address in big_map_addresses:
+            contract_big_maps = await self._datasource.get_contract_big_maps(address)
+            for contract_big_map in contract_big_maps:
+                if contract_big_map['path'] in big_map_paths:
+                    big_map_ids += ((int(contract_big_map['ptr']), contract_big_map['path']),)
+
+        for bigmap_id, path in big_map_ids:
+            big_maps = await self._datasource.get_big_map(bigmap_id, last_level)
+            big_map_data = big_map_data + tuple(
+                BigMapData(
+                    id=big_map['id'],
+                    level=last_level,
+                    operation_id=last_level,
+                    timestamp=datetime.now(),
+                    bigmap=bigmap_id,
+                    contract_address=address,
+                    path=path,
+                    action=BigMapAction.ADD_KEY,
+                    active=big_map['active'],
+                    key=big_map['key'],
+                    value=big_map['value'],
+                )
+                for big_map in big_maps
+            )
+
+        await self._process_level_big_maps(big_map_data)
 
     async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]):
         if not big_maps:

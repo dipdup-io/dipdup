@@ -1,0 +1,47 @@
+{
+    "$comment": "list",
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "items": {
+        "$comment": "list",
+        "items": {
+            "$comment": "or",
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "L": {
+                            "$comment": "string",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "L"
+                    ],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "R": {
+                            "additionalProperties": {
+                                "$comment": "int",
+                                "type": "string"
+                            },
+                            "propertyNames": {
+                                "$comment": "int",
+                                "type": "string"
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "R"
+                    ],
+                    "type": "object"
+                }
+            ]
+        },
+        "type": "array"
+    },
+    "type": "array"
+}

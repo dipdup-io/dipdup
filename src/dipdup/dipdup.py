@@ -30,6 +30,7 @@ from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
+from dipdup.config import MetadataDatasourceConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import TzktDatasourceConfig
@@ -41,6 +42,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
+from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
@@ -106,7 +108,7 @@ class IndexDispatcher:
                     spawn_datasources_event.set()
 
             if spawn_datasources_event.is_set():
-                index_datasources = set(i.datasource for i in self._indexes.values())
+                index_datasources = {i.datasource for i in self._indexes.values()}
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
@@ -163,7 +165,7 @@ class IndexDispatcher:
         if not self._indexes:
             return False
 
-        statuses = set(i.state.status for i in self._indexes.values())
+        statuses = {i.state.status for i in self._indexes.values()}
         return statuses == {status}
 
     async def _fetch_contracts(self) -> None:
@@ -237,11 +239,11 @@ class IndexDispatcher:
             asyncio.create_task(
                 Head.update_or_create(
                     name=datasource.name,
-                    defaults=dict(
-                        level=head.level,
-                        hash=head.hash,
-                        timestamp=head.timestamp,
-                    ),
+                    defaults={
+                        'level': head.level,
+                        'hash': head.hash,
+                        'timestamp': head.timestamp,
+                    },
                 ),
             )
         )
@@ -335,7 +337,7 @@ class DipDup:
             raise DipDupException('Schema is not initialized')
         return self._schema
 
-    async def init(self, overwrite_types: bool = True) -> None:
+    async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         """Create new or update existing dipdup project"""
         await self._create_datasources()
 
@@ -343,7 +345,7 @@ class DipDup:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            await self._codegen.init(overwrite_types)
+            await self._codegen.init(overwrite_types, keep_schemas)
 
     async def docker_init(self, image: str, tag: str, env_file: str) -> None:
         await self._codegen.docker_init(image, tag, env_file)
@@ -398,6 +400,12 @@ class DipDup:
                 )
             elif isinstance(datasource_config, CoinbaseDatasourceConfig):
                 datasource = CoinbaseDatasource(
+                    http_config=datasource_config.http,
+                )
+            elif isinstance(datasource_config, MetadataDatasourceConfig):
+                datasource = MetadataDatasource(
+                    url=datasource_config.url,
+                    network=datasource_config.network,
                     http_config=datasource_config.http,
                 )
             else:
@@ -551,7 +559,7 @@ class DipDup:
             await gather(*_tasks)
 
         tasks.add(create_task(_event_wrapper()))
-        return event
+        return event  # noqa: R504
 
     async def _set_up_scheduler(self, stack: AsyncExitStack, tasks: Set[Task]) -> Event:
         job_failed = Event()
@@ -591,4 +599,4 @@ class DipDup:
                 add_job(self._ctx, self._scheduler, job_config)
 
         tasks.add(create_task(_event_wrapper()))
-        return event
+        return event  # noqa: R504

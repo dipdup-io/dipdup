@@ -103,6 +103,7 @@ class BigMapData:
     contract_address: str
     path: str
     action: BigMapAction
+    active: bool
     key: Optional[Any] = None
     value: Optional[Any] = None
 

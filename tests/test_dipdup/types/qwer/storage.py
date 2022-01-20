@@ -22,7 +22,7 @@ class QwerStorageItem1(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    R: Union[int, Dict[str, str]]
+    R: Dict[str, str]
 
 
 class QwerStorage(BaseModel):

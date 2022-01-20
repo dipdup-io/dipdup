@@ -6,8 +6,8 @@ from typing import Dict
 
 from prometheus_client import Gauge  # type: ignore
 
-_levels_to_sync: Dict[str, int] = dict()
-_levels_to_realtime: Dict[str, int] = dict()
+_levels_to_sync: Dict[str, int] = {}
+_levels_to_realtime: Dict[str, int] = {}
 
 _indexes_total = Gauge('dipdup_indexes_total', 'Total number of indexes')
 _indexes_synced = Gauge('dipdup_indexes_synced', 'Number of synchronized indexes')
