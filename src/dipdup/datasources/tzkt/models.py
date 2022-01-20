@@ -11,6 +11,7 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
+from pydantic import Extra
 from pydantic.error_wrappers import ValidationError
 from typing_extensions import get_args
 from typing_extensions import get_origin
@@ -72,7 +73,7 @@ def get_dict_value_type(dict_type: Type[Any], key: Optional[str] = None) -> Type
         return get_dict_value_type(root_type, key)  # type: ignore
 
     if key is None:
-        raise KeyError('Key name or alias is required for object introspection')
+        raise KeyError('Field name or alias is required for object introspection')
 
     # NOTE: Pydantic model, find corresponding field and return it's type
     fields = dict_type.__fields__
@@ -84,8 +85,8 @@ def get_dict_value_type(dict_type: Type[Any], key: Optional[str] = None) -> Type
             else:
                 return field.outer_type_
 
-    # NOTE: typically when we try the wrong Union path
-    raise KeyError('Key not found')
+    # NOTE: Either we try the wrong Union path or model was modifier by user
+    raise KeyError(f'Field `{key}` not found in {dict_type}')
 
 
 @lru_cache(None)
@@ -157,9 +158,16 @@ def _process_storage(storage: Any, storage_type: Type[Any], bigmap_diffs: Dict[i
 
     # NOTE: Dict, process recursively
     elif isinstance(storage, dict):
+        # NOTE: Ignore missing fields along with extra ones
+        ignore = getattr(getattr(storage_type, 'Config', None), 'extra', None) == Extra.ignore
+
         for key, value in storage.items():
-            value_type = get_dict_value_type(storage_type, key)  # type: ignore
-            storage[key] = _process_storage(value, value_type, bigmap_diffs)
+            try:
+                value_type = get_dict_value_type(storage_type, key)  # type: ignore
+                storage[key] = _process_storage(value, value_type, bigmap_diffs)
+            except IntrospectionError:
+                if not ignore:
+                    raise
 
     else:
         pass

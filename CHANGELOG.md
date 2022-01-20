@@ -14,6 +14,12 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## 4.0.4 - 2022-01-17
 
+### Fixed
+
+* index: Fixed deserializing manually modified typeclasses.
+
+## 4.0.4 - 2022-01-17
+
 ### Added
 
 * cli: Added `--keep-schemas` flag to `init` command to preserve JSONSchemas along with generated types.
