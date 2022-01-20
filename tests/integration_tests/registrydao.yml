@@ -7,7 +7,7 @@ database:
 
 contracts:
   registry:
-    address: KT1QMdCTqzmY4QKHntV1nZEinLPU1GbxUFQu
+    address: KT19CF3KKrvdW77ttFomCuin2k4uAVkryYqh
     typename: registry
 
 datasources:
