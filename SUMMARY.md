@@ -82,5 +82,6 @@
   * [run](cli-reference/run.md)
   * [schema approve](cli-reference/schema-approve.md)
   * [schema export](cli-reference/schema-export.md)
+  * [schema init](cli-reference/schema-init.md)
   * [schema wipe](cli-reference/schema-wipe.md)
   * [status](cli-reference/status.md)
