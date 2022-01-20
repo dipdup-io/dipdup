@@ -18,6 +18,9 @@ datasources:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
+advanced:
+  early_realtime: True
+
 indexes:
   hen_mainnet:
     kind: operation
