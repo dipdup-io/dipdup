@@ -12,6 +12,12 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * metadata: Added `metadata` datasource.
 * tzkt: Added `get_big_map` and `get_contract_big_maps` datasource methods.
 
+## 4.0.5 - 2022-01-20
+
+### Fixed
+
+* index: Fixed deserializing manually modified typeclasses.
+
 ## 4.0.4 - 2022-01-17
 
 ### Added
