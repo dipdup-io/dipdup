@@ -10,9 +10,12 @@ In some cases, you may want to make some manual changes in typeclasses and ensur
 ...
 
 class ContractStorage(BaseModel):
+    class Config:
+        extra = Extra.ignore
+
     some_common_big_map: Dict[str, str]
     # unique_big_map_a: Dict[str, str]
     # unique_big_map_b: Dict[str, str]
 ```
 
-Files starting with `# dipdup: ignore` won't be overwritten on init.
+Don't forget `Extra.ignore` Pydantic hint, otherwise indexing will fail. Files starting with `# dipdup: ignore` won't be overwritten on init.
