@@ -237,3 +237,29 @@ class Contract(Model):
 
     class Meta:
         table = 'dipdup_contract'
+
+
+class ContractMetadata(Model):
+    contract = fields.CharField(36, pk=True)
+    metadata = fields.JSONField()
+    update_id = fields.IntField()
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_contract_metadata'
+
+
+class TokenMetadata(Model):
+    contract = fields.CharField(36, pk=True)
+    # NOTE: Composite primary key created in `on_reindex` SQL hook
+    token_id = fields.IntField()
+    metadata = fields.JSONField()
+    update_id = fields.IntField()
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_token_metadata'
