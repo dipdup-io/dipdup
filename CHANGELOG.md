@@ -2,7 +2,6 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-<<<<<<< HEAD
 ## [unreleased]
 
 ### Added
@@ -13,8 +12,8 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * context: Fixed `HookConfig.atomic` flag, which was ignored in `fire_hook` method.
-=======
-[unreleased]
+
+## 4.1.0 - 2022-01-24
 
 ### Added
 
