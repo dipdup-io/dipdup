@@ -2,6 +2,16 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Added
+
+* metadata: Added `metadata_interface` feature flag to 
+
+### Fixed
+
+* database: create missing tables
+
 ## 4.1.0 - 2022-01-24
 
 ### Added

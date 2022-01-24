@@ -422,7 +422,8 @@ class DipDup:
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError:
             try:
-                # NOTE: A small migration, ReindexingReason became ReversedEnum
+                # TODO: Drop with major version bump
+                # NOTE: A small migration, ReindexingReason became ReversedEnum in 3.1.0
                 for item in ReindexingReason:
                     await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{item.name}" WHERE reindex = "{item.value}"')
 
@@ -430,6 +431,7 @@ class DipDup:
             except KeyError:
                 await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
+        # NOTE: Call even if Schema is present; there may be new tables 
         await generate_schema(conn, schema_name)
         schema_hash = get_schema_hash(conn)
 
