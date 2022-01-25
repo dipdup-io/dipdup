@@ -38,6 +38,7 @@ class IndexStatus(Enum):
     ONESHOT = 'ONESHOT'
 
 
+# TODO: Drop with the next major release
 class ReindexingReason(ReversedEnum):
     MANUAL = 'triggered manually from callback'
     MIGRATION = 'applied migration requires reindexing'

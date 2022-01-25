@@ -37,6 +37,7 @@ from dipdup.config import TzktDatasourceConfig
 from dipdup.config import default_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
+from dipdup.context import MetadataCursor
 from dipdup.context import pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
@@ -365,6 +366,9 @@ class DipDup:
             await self._initialize_datasources()
             await self._set_up_hasura(stack, tasks)
 
+            if advanced_config.metadata_interface:
+                await MetadataCursor.initialize()
+
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
             else:
@@ -435,7 +439,8 @@ class DipDup:
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError:
             try:
-                # NOTE: A small migration, ReindexingReason became ReversedEnum
+                # TODO: Drop with major version bump
+                # NOTE: A small migration, ReindexingReason became ReversedEnum in 3.1.0
                 for item in ReindexingReason:
                     await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{item.name}" WHERE reindex = "{item.value}"')
 
@@ -443,10 +448,11 @@ class DipDup:
             except KeyError:
                 await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
+        # NOTE: Call even if Schema is present; there may be new tables
+        await generate_schema(conn, schema_name)
         schema_hash = get_schema_hash(conn)
 
         if self._schema is None:
-            await generate_schema(conn, schema_name)
             await self._ctx.fire_hook('on_reindex')
 
             self._schema = Schema(

@@ -6,12 +6,18 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
-* prometheus: Added ability to expose Prometheus metrics.
 * config: Added top-level config section `prometheus`. 
+* metadata: Added `metadata_interface` feature flag to expose metadata in TzKT format.
+* prometheus: Added ability to expose Prometheus metrics.
 
 ### Fixed
 
 * context: Fixed `HookConfig.atomic` flag, which was ignored in `fire_hook` method.
+* database: Try to create missing tables even if `Schema` model is present.
+
+### Performance
+
+* dipdup: Use fast `orjson` library instead of built-in `json` where possible.
 
 ## 4.1.1 - 2022-01-25
 
