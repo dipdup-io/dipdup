@@ -117,26 +117,21 @@ class HasuraGateway(HTTPGateway):
             self._logger.info('Metadata is up to date, no action required')
             return
 
-        await self._reset_metadata()
-        metadata = await self._fetch_metadata()
-
-        # NOTE: Hasura metadata updated in three steps.
-        # NOTE: Order matters because queries must be generated after applying table customization to be valid.
-        # NOTE: 1. Generate and apply tables metadata.
-        source_tables_metadata = await self._generate_source_tables_metadata()
-
-        try:
-            metadata['sources'][0]['tables'] = source_tables_metadata
-        except IndexError as e:
-            raise HasuraError('No sources found in metadata') from e
-
+        # NOTE: Find chosen source and overwrite its tables
+        source_name = self._hasura_config.source
+        for source in metadata['sources']:
+            if source['name'] == source_name:
+                source['tables'] = await self._generate_source_tables_metadata()
+                break
+        else:
+            raise HasuraError(f'Source `{source_name}` not found in metadata')
         await self._replace_metadata(metadata)
 
-        # NOTE: 2. Apply table customization and refresh metadata
+        # NOTE: Apply table customizations before generating queries
         await self._apply_table_customization()
         metadata = await self._fetch_metadata()
 
-        # NOTE: 3. Generate and apply queries and rest endpoints
+        # NOTE: Generate and apply queries and REST endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
         self._logger.info('Adding %s generated and user-defined queries', len(query_collections_metadata))
         metadata['query_collections'] = [
@@ -154,6 +149,7 @@ class HasuraGateway(HTTPGateway):
 
         await self._replace_metadata(metadata)
 
+        # NOTE: Fetch metadata once again (to do: find out why is it necessary) and save its hash for future comparisons
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
         hasura_schema.hash = metadata_hash  # type: ignore
