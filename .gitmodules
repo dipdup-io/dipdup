@@ -1,3 +1,0 @@
-[submodule "tests/unit_tests/test_michelson/test_repl/tzt"]
-	path = tests/unit_tests/test_michelson/test_repl/tzt
-	url = https://gitlab.com/tezos/tzt-reference-test-suite.git

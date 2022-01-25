@@ -1,0 +1,127 @@
+{
+    "$comment": "pair",
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "additionalProperties": false,
+    "properties": {
+        "big_map": {
+            "additionalProperties": {
+                "$comment": "or",
+                "oneOf": [
+                    {
+                        "additionalProperties": false,
+                        "properties": {
+                            "L": {
+                                "$comment": "nat",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "L"
+                        ],
+                        "type": "object"
+                    },
+                    {
+                        "additionalProperties": false,
+                        "properties": {
+                            "R": {
+                                "$comment": "nat",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "R"
+                        ],
+                        "type": "object"
+                    }
+                ]
+            },
+            "propertyNames": {
+                "$comment": "int",
+                "type": "string"
+            },
+            "type": "object"
+        },
+        "map": {
+            "$comment": "map",
+            "additionalProperties": {
+                "$comment": "or",
+                "oneOf": [
+                    {
+                        "additionalProperties": false,
+                        "properties": {
+                            "L": {
+                                "$comment": "string",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "L"
+                        ],
+                        "type": "object"
+                    },
+                    {
+                        "additionalProperties": false,
+                        "properties": {
+                            "R": {
+                                "$comment": "string",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "R"
+                        ],
+                        "type": "object"
+                    }
+                ]
+            },
+            "propertyNames": {
+                "$comment": "string",
+                "type": "string"
+            },
+            "type": "object"
+        },
+        "or": {
+            "$comment": "or",
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "L": {
+                            "$comment": "int",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "L"
+                    ],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "R": {
+                            "$comment": "int",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "R"
+                    ],
+                    "type": "object"
+                }
+            ]
+        },
+        "unit": {
+            "$comment": "unit",
+            "additionalProperties": false,
+            "type": "object"
+        }
+    },
+    "required": [
+        "map",
+        "unit",
+        "or",
+        "big_map"
+    ],
+    "type": "object"
+}

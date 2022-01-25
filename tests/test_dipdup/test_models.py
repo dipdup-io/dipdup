@@ -24,6 +24,7 @@ from tests.test_dipdup.types.listofmaps.storage import ListOfMapsStorage
 from tests.test_dipdup.types.qwer.storage import QwerStorage
 from tests.test_dipdup.types.rewq.storage import RewqStorage
 from tests.test_dipdup.types.tezotop.storage import ResourceCollectorStorage
+from tests.test_dipdup.types.yupana.storage import YupanaStorage
 from tests.test_dipdup.types.zxcv.storage import ZxcvStorage
 
 
@@ -350,3 +351,16 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj, KolibriOvensStorage)
         self.assertIsInstance(parameter_obj, SetDelegateParameter)
         self.assertEqual(parameter_obj.__root__, None)
+
+    def test_yupana(self) -> None:
+        with open(join(dirname(__file__), 'yupana.json')) as f:
+            operations_json = json.load(f)
+
+        # Act
+        operations = [TzktDatasource.convert_operation(op) for op in operations_json]
+        storage_obj = deserialize_storage(operations[0], YupanaStorage)
+
+        # Assert
+        self.assertIsInstance(storage_obj, YupanaStorage)
+        self.assertIsInstance(storage_obj.storage.markets, dict)
+        self.assertEqual(storage_obj.storage.markets['tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw'], ['0'])  # type: ignore

@@ -2,12 +2,35 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## [unreleased]
+## 4.1.0 - 2022-01-24
+
+### Added
+
+* cli: Added `schema init` command to initialize database schema.
+* cli: Added `--force` flag to `hasura configure` command.
+* codegen: Added support for subpackages inside callback directories.
+* hasura: Added `dipdup_head_status` view and REST endpoint.
+* index: Added an ability to skip historical data while synchronizing `big_map` indexes.
+* metadata: Added `metadata` datasource.
+* tzkt: Added `get_big_map` and `get_contract_big_maps` datasource methods.
+
+## 4.0.5 - 2022-01-20
+
+### Fixed
+
+* index: Fixed deserializing manually modified typeclasses.
+
+## 4.0.4 - 2022-01-17
+
+### Added
+
+* cli: Added `--keep-schemas` flag to `init` command to preserve JSONSchemas along with generated types.
 
 ### Fixed
 
 * demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.
 * hasura: Fixed missing relations for models with `ManyToManyField` fields.
+* tzkt: Fixed parsing storage with nested structures.
 
 ### Performance
 

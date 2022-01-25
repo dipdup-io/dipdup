@@ -9,7 +9,7 @@ contracts:
 datasources:
   tzkt:
     kind: tzkt
-    url: https://api.tzkt.io
+    url: https://api.hangzhou2net.tzkt.io
 
 indexes:
   asdf:
