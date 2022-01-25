@@ -6,11 +6,15 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
-* metadata: Added `metadata_interface` feature flag to 
+* metadata: Added `metadata_interface` feature flag to expose metadata in TzKT format.
 
 ### Fixed
 
-* database: create missing tables
+* database: Try to create missing tables even if `Schema` model is present.
+
+### Performance
+
+* dipdup: Use fast `orjson` library instead of built-in `json` where possible.
 
 ## 4.1.0 - 2022-01-24
 
