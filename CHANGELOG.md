@@ -4,11 +4,14 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## [unreleased]
 
-## Fixed
+### Fixed
 
 * hasura: Fixed printing help messages on `HasuraError`.
 * hasura: Preserve list of sources in Hasura Cloud environments.
 * hasura: Fixed `HasuraConfig.source` config option.
+
+### Performance
+
 * hasura: Removed some useless requests.
 
 ## 4.1.0 - 2022-01-24
