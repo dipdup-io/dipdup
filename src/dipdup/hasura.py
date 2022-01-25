@@ -28,7 +28,7 @@ from tortoise.transactions import get_connection
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConfigurationError, HasuraError
 from dipdup.http import HTTPGateway
 from dipdup.models import Schema
 from dipdup.utils import iter_files
@@ -77,10 +77,6 @@ class Field:
         return humps.decamelize(self.name)
 
 
-class HasuraError(RuntimeError):
-    ...
-
-
 class HasuraGateway(HTTPGateway):
     _default_http_config = HTTPConfig(
         cache=False,
@@ -127,7 +123,12 @@ class HasuraGateway(HTTPGateway):
         # NOTE: Order matters because queries must be generated after applying table customization to be valid.
         # NOTE: 1. Generate and apply tables metadata.
         source_tables_metadata = await self._generate_source_tables_metadata()
-        metadata['sources'][0]['tables'] = source_tables_metadata
+
+        try:
+            metadata['sources'][0]['tables'] = source_tables_metadata
+        except IndexError as e:
+            raise HasuraError('No sources found in metadata') from e 
+
         await self._replace_metadata(metadata)
 
         # NOTE: 2. Apply table customization and refresh metadata
@@ -170,7 +171,7 @@ class HasuraGateway(HTTPGateway):
         )
         self._logger.debug('Response: %s', result)
         if 'error' in result or 'errors' in result:
-            raise HasuraError('Can\'t configure Hasura instance', result)
+            raise HasuraError(result)
         return result
 
     async def _healthcheck(self) -> None:
@@ -183,7 +184,7 @@ class HasuraGateway(HTTPGateway):
                     break
             await asyncio.sleep(1)
         else:
-            raise HasuraError(f'Hasura instance not responding for {timeout} seconds')
+            raise HasuraError(f'Not responding for {timeout} seconds')
 
         version_json = await (
             await self._http._session.get(
@@ -192,7 +193,7 @@ class HasuraGateway(HTTPGateway):
         ).json()
         version = version_json['version']
         if version.startswith('v1'):
-            raise HasuraError('Hasura v1 is not supported.')
+            raise HasuraError('v1 is not supported, upgrade to the latest stable version.')
 
         self._logger.info('Connected to Hasura %s', version)
 
@@ -273,7 +274,7 @@ class HasuraGateway(HTTPGateway):
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
                     if not isinstance(field.related_name, str):
-                        raise HasuraError(f'`related_name` of `{field}` must be set')
+                        raise HasuraError(f'`related_name` of `{field}` field must be set')
 
                     related_table_name = model_tables[field.model_name]
                     field_name = field.model_field_name
@@ -293,7 +294,7 @@ class HasuraGateway(HTTPGateway):
 
                 elif isinstance(field, fields.relational.ManyToManyFieldInstance):
                     if not isinstance(field.related_name, str):
-                        raise HasuraError(f'`related_name` of `{field}` must be set')
+                        raise HasuraError(f'`related_name` of `{field}` field must be set')
 
                     related_table_name = model_tables[field.model_name]
                     junction_table_name = field.through
