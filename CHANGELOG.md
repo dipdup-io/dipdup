@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Added
+
+* hooks: Added ability to configure `apscheduler` with `AdvancedConfig.scheduler` field.
+
 ## 4.1.0 - 2022-01-24
 
 ### Added
