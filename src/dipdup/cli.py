@@ -428,6 +428,11 @@ async def schema_export(ctx):
     async with tortoise_wrapper(url, models):
         conn = get_connection(None)
         output = get_schema_sql(conn, False) + '\n'
-        for file in iter_files(join(config.package_path, 'sql', 'on_reindex')):
-            output += file.read() + '\n'
+        dipdup_sql_path = join(dirname(__file__), 'sql', 'on_reindex')
+        project_sql_path = join(config.package_path, 'sql', 'on_reindex')
+
+        for sql_path in (dipdup_sql_path, project_sql_path):
+            for file in iter_files(sql_path):
+                output += file.read() + '\n'
+
         echo(output)

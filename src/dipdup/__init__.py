@@ -1,7 +1,7 @@
 import os
 import sys
 
-__version__ = '4.0.4'
+__version__ = '4.1.0'
 __spec_version__ = '1.2'
 __schema_version__ = '1.0'
 

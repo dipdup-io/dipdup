@@ -40,6 +40,7 @@ from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.exceptions import ConfigInitializationException
+from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import InvalidDataError
 from dipdup.exceptions import ReindexingReason
 from dipdup.models import BigMapAction
@@ -607,6 +608,10 @@ class BigMapIndex(Index):
             await self._process_level_big_maps(big_maps)
 
     async def _synchronize_level(self, last_level: int, cache: bool = False) -> None:
+        # NOTE: Checking late because feature flags could be modified after loading config
+        if not self._ctx.config.advanced.early_realtime:
+            raise ConfigurationError('`skip_history` requires `early_realtime` feature flag to be enabled')
+
         big_map_addresses = await self._get_big_map_addresses()
         big_map_paths = await self._get_big_map_paths()
         big_map_ids: Tuple[Tuple[int, str], ...] = ()

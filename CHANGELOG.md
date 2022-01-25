@@ -18,7 +18,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * config: Removed unused `advanced.oneshot` option.
 * models: Removed unused `IndexStatus.ROLLBACK` enum member.
 
-## [unreleased]
+## 4.1.0 - 2022-01-24
 
 ### Added
 
