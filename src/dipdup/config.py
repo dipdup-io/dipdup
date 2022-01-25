@@ -1041,7 +1041,6 @@ class DipDupConfig:
         paths: List[str],
         environment: bool = True,
     ) -> 'DipDupConfig':
-
         current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
@@ -1050,8 +1049,11 @@ class DipDupConfig:
             path = os.path.join(current_workdir, path)
 
             _logger.debug('Loading config from %s', path)
-            with open(path) as file:
-                raw_config = file.read()
+            try:
+                with open(path) as file:
+                    raw_config = file.read()
+            except OSError as e:
+                raise ConfigurationError(str(e))
 
             if environment:
                 _logger.debug('Substituting environment variables')
