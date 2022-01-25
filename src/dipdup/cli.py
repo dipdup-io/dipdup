@@ -1,4 +1,5 @@
 import asyncio
+import atexit
 import logging
 import os
 import signal
@@ -7,6 +8,7 @@ import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
+from functools import partial
 from functools import wraps
 from os import listdir
 from os.path import dirname
@@ -82,15 +84,13 @@ def cli_wrapper(fn):
         loop = asyncio.get_running_loop()
         loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(shutdown()))
         try:
-            with DipDupError.wrap():
-                await fn(*args, **kwargs)
+            await fn(*args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
-        except DipDupError as e:
-            # FIXME: No traceback in test logs
-            _logger.critical(e.__repr__())
-            _logger.info(e.format())
-            quit(1)
+        except Exception as e:
+            help_message = e.format() if isinstance(e, DipDupError) else DipDupError().format()
+            atexit.register(partial(click.echo, help_message, err=True))
+            raise
 
     return wrapper
 

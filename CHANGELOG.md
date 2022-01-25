@@ -2,6 +2,17 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* cli: Fixed stacktraces missing on exception.
+* cli: Fixed wrapping `OSError` with `ConfigurationError` during config loading.
+
+### Changed
+
+* cli: Unknown exceptions are no longer wrapped with `DipDupError`.
+
 ## 4.1.0 - 2022-01-24
 
 ### Added
