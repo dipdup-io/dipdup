@@ -872,11 +872,6 @@ class HasuraConfig:
             raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
         return v.rstrip('/')
 
-    @validator('source', allow_reuse=True)
-    def valid_source(cls, v):
-        if v != 'default':
-            raise NotImplementedError('Multiple Hasura sources are not supported at the moment')
-
     @cached_property
     def headers(self) -> Dict[str, str]:
         if self.admin_secret:

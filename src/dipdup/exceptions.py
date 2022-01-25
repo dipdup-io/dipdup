@@ -306,6 +306,7 @@ class CallbackTypeError(DipDupError):
         """
 
 
+# TODO: Drop in next major version
 @dataclass(frozen=True, repr=False)
 class DeprecatedHandlerError(DipDupError):
     """Default handlers need to be converted to hooks"""
@@ -322,4 +323,18 @@ class DeprecatedHandlerError(DipDupError):
 
               1. If you have any custom logic implemented in default handlers move it to corresponding hooks from the table above.
               2. Remove default handlers from project.
+        """
+
+
+@dataclass(frozen=True, repr=False)
+class HasuraError(DipDupError):
+    """Failed to configure Hasura instance"""
+
+    msg: str
+
+    def _help(self) -> str:
+        return f"""
+            Failed to configure Hasura: {self.msg}
+
+            GraphQL integration docs: https://docs.dipdup.net/graphql/
         """

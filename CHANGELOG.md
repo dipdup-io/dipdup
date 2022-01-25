@@ -8,10 +8,17 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * cli: Fixed stacktraces missing on exception.
 * cli: Fixed wrapping `OSError` with `ConfigurationError` during config loading.
+* hasura: Fixed printing help messages on `HasuraError`.
+* hasura: Preserve list of sources in Hasura Cloud environments.
+* hasura: Fixed `HasuraConfig.source` config option.
 
 ### Changed
 
 * cli: Unknown exceptions are no longer wrapped with `DipDupError`.
+
+### Performance
+
+* hasura: Removed some useless requests.
 
 ## 4.1.0 - 2022-01-24
 
