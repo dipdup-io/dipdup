@@ -34,7 +34,7 @@ from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.config import default_hooks
-from dipdup.context import CallbackManager
+from dipdup.context import CallbackManager, MetadataCursor
 from dipdup.context import DipDupContext
 from dipdup.context import pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
@@ -351,6 +351,9 @@ class DipDup:
             await self._initialize_schema()
             await self._initialize_datasources()
             await self._set_up_hasura(stack, tasks)
+
+            if advanced_config.metadata_interface:
+                await MetadataCursor.initialize()
 
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
