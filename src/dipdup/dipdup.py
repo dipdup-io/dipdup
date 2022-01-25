@@ -19,6 +19,7 @@ from typing import Tuple
 from typing import cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
+from prometheus_client import start_http_server  # type: ignore
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
@@ -51,9 +52,7 @@ from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
 from dipdup.index import Index
 from dipdup.index import OperationIndex
-from dipdup.index import block_cache
 from dipdup.index import extract_operation_subgroups
-from dipdup.index import head_cache
 from dipdup.models import BigMapData
 from dipdup.models import Contract
 from dipdup.models import Head
@@ -62,6 +61,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Schema
+from dipdup.prometheus import Metrics
 from dipdup.scheduler import add_job
 from dipdup.scheduler import create_scheduler
 from dipdup.utils import slowdown
@@ -80,18 +80,18 @@ class IndexDispatcher:
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
         self._contracts: Set[ContractConfig] = set()
-        self._stopped: bool = False
         self._tasks: Deque[asyncio.Task] = deque()
 
         self._entrypoint_filter: Set[Optional[str]] = set()
         self._address_filter: Set[str] = set()
 
-    async def run(
-        self,
-        spawn_datasources_event: Event,
-        start_scheduler_event: Event,
-        early_realtime: bool = False,
-    ) -> None:
+    async def run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
+        tasks = [self._run(spawn_datasources_event, start_scheduler_event, early_realtime)]
+        if self._ctx.config.prometheus:
+            tasks.append(self._update_metrics(self._ctx.config.prometheus.update_interval))
+        await gather(*tasks)
+
+    async def _run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
         await self._load_index_states()
@@ -102,7 +102,7 @@ class IndexDispatcher:
             if isinstance(index, OperationIndex):
                 self._apply_filters(index._config)
 
-        while not self._stopped:
+        while True:
             if not spawn_datasources_event.is_set():
                 if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
                     spawn_datasources_event.set()
@@ -129,7 +129,7 @@ class IndexDispatcher:
                     self._apply_filters(index._config)
 
             if not indexes_spawned and self._every_index_is(IndexStatus.ONESHOT):
-                self.stop()
+                break
 
             if self._every_index_is(IndexStatus.REALTIME) and not indexes_spawned:
                 if not on_synchronized_fired:
@@ -142,8 +142,20 @@ class IndexDispatcher:
             else:
                 on_synchronized_fired = False
 
-    def stop(self) -> None:
-        self._stopped = True
+    async def _update_metrics(self, update_interval: float) -> None:
+        while True:
+            await asyncio.sleep(update_interval)
+
+            total, synced, realtime = len(pending_indexes), 0, 0
+            for index in tuple(self._indexes.values()) + tuple(pending_indexes):
+                total += 1
+                if index.synchronized:
+                    synced += 1
+                if index.realtime:
+                    realtime += 1
+
+            Metrics.set_indexes_count(total, synced, realtime)
+            Metrics.refresh()
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)
@@ -221,10 +233,6 @@ class IndexDispatcher:
         tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
         await gather(*tasks)
 
-        # NOTE: Cached blocks used only on index state init
-        block_cache.clear()
-        head_cache.clear()
-
     async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
         self._tasks.append(
@@ -239,6 +247,8 @@ class IndexDispatcher:
                 ),
             )
         )
+        if Metrics.enabled:
+            Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
             if isinstance(index, HeadIndex) and index.datasource == datasource:
                 index.push_head(head)
@@ -267,6 +277,8 @@ class IndexDispatcher:
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
         self._logger.warning('Datasource `%s` rolled back: %s -> %s', datasource.name, from_level, to_level)
+        if Metrics.enabled:
+            Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Zero difference between levels means we received no operations/big_maps on this level and thus channel level hasn't changed
         zero_level_rollback = from_level - to_level == 0
@@ -347,6 +359,7 @@ class DipDup:
             await self._set_up_database(stack)
             await self._set_up_datasources(stack)
             await self._set_up_hooks()
+            await self._set_up_prometheus()
 
             await self._initialize_schema()
             await self._initialize_datasources()
@@ -472,6 +485,12 @@ class DipDup:
             self._ctx.callbacks.register_hook(hook_config)
         for hook_config in self._config.hooks.values():
             self._ctx.callbacks.register_hook(hook_config)
+
+    async def _set_up_prometheus(self) -> None:
+        if self._config.prometheus:
+            Metrics.enabled = True
+            Metrics.apply_sample_size(self._config.prometheus.sample_size)
+            start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
     async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
         if not self._config.hasura:

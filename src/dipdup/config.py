@@ -910,6 +910,14 @@ class SentryConfig:
 
 
 @dataclass
+class PrometheusConfig:
+    host: str
+    port: int = 8000
+    update_interval: float = 1.0
+    sample_size: int = 100
+
+
+@dataclass
 class HookConfig(CallbackMixin, kind='hook'):
     args: Dict[str, str] = field(default_factory=dict)
     atomic: bool = False
@@ -996,6 +1004,7 @@ class DipDupConfig:
     hooks: Dict[str, HookConfig] = field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
     sentry: Optional[SentryConfig] = None
+    prometheus: Optional[PrometheusConfig] = None
     advanced: AdvancedConfig = AdvancedConfig()
 
     def __post_init_post_parse__(self):

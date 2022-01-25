@@ -67,9 +67,6 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
 @asynccontextmanager
 async def in_global_transaction():
     """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
-    if list(Tortoise._connections.keys()) != ['default']:
-        raise RuntimeError('`in_global_transaction` wrapper works only with a single DB connection')
-
     async with in_transaction() as conn:
         conn: TransactionContext
         original_conn = Tortoise._connections['default']

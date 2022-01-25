@@ -1,8 +1,9 @@
 import logging
 import os
 import sys
-import time
 from collections import deque
+from contextlib import AsyncExitStack
+from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
 from os.path import exists
@@ -48,8 +49,10 @@ from dipdup.models import Contract
 from dipdup.models import Index
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
+from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import execute_sql_scripts
+from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import wipe_schema
 
 pending_indexes = deque()  # type: ignore
@@ -295,7 +298,8 @@ class CallbackManager:
             handler_config=handler_config,
             datasource=datasource,
         )
-        with self._wrapper('handler', name):
+        # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
+        with self._callback_wrapper('handler', name):
             await handler_config.callback_fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
@@ -316,7 +320,12 @@ class CallbackManager:
         )
 
         self._verify_arguments(new_ctx, *args, **kwargs)
-        with self._wrapper('hook', name):
+
+        async with AsyncExitStack() as stack:
+            stack.enter_context(self._callback_wrapper('hook', name))
+            if hook_config.atomic:
+                await stack.enter_async_context(in_global_transaction())
+
             await hook_config.callback_fn(ctx, *args, **kwargs)
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
@@ -335,13 +344,12 @@ class CallbackManager:
         await execute_sql_scripts(connection, sql_path)
 
     @contextmanager
-    def _wrapper(self, kind: str, name: str) -> Iterator[None]:
+    def _callback_wrapper(self, kind: str, name: str) -> Iterator[None]:
         try:
-            start = time.perf_counter()
-            yield
-            diff = time.perf_counter() - start
-            level = self._logger.warning if diff > 1 else self._logger.debug
-            level('`%s` %s callback executed in %s seconds', name, kind, diff)
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_callback_duration(name))
+                yield
         except Exception as e:
             if isinstance(e, ReindexingRequiredError):
                 raise

@@ -1346,7 +1346,7 @@ name = "prometheus-client"
 version = "0.12.0"
 description = "Python client for the Prometheus monitoring system."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [package.extras]
@@ -2206,7 +2206,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "434489132622eb0638b60ad2f2d7c02b9861cb4a71b402531fa9758ae077b6be"
+content-hash = "3cddbd08d665b0392d108c886486e3e1a1a5140858995c0bf8f57a753e62b9e2"
 
 [metadata.files]
 aiohttp = [
