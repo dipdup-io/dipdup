@@ -1,22 +1,18 @@
 import textwrap
-import traceback
-from contextlib import contextmanager
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 from typing import Dict
-from typing import Iterator
 from typing import Optional
 from typing import Type
 
-import sentry_sdk
 from tabulate import tabulate
 from tortoise.models import Model
 
 from dipdup import spec_version_mapping
 from dipdup.enums import ReindexingReason
 
-_tab = '\n\n' + ('_' * 80) + '\n\n'
+_tab = ('_' * 80) + '\n\n'
 
 
 def unindent(text: str) -> str:
@@ -48,6 +44,7 @@ class DipDupError(Exception):
         return f'{self.__class__.__name__}: {self.__doc__}'
 
     def _help(self) -> str:
+        # TODO: Update guide
         return """
             Unexpected error occurred!
 
@@ -61,18 +58,7 @@ class DipDupError(Exception):
         return unindent(self._help())
 
     def format(self) -> str:
-        exc = f'\n\n{traceback.format_exc()}'.rstrip()
-        return _tab.join([exc, self.help() + '\n'])
-
-    @contextmanager
-    def wrap(ctx: Optional[Any] = None) -> Iterator[None]:
-        try:
-            yield
-        except DipDupError:
-            raise
-        except Exception as e:
-            sentry_sdk.capture_exception(e)
-            raise DipDupError from e
+        return _tab + self.help() + '\n'
 
 
 @dataclass(frozen=True, repr=False)
@@ -138,7 +124,7 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
-        reindex = _tab + ReindexingRequiredError(ReindexingReason.MIGRATION).help() if self.reindex else ''
+        reindex = '\n\n' + _tab + ReindexingRequiredError(ReindexingReason.MIGRATION).help() if self.reindex else ''
         return f"""
             Project migration required!
 
