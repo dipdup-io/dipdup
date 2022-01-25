@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Added
+
+* context: Added `wait` argument to `fire_hook` method to escape current transaction context.
+
 ## 4.1.0 - 2022-01-24
 
 ### Added
