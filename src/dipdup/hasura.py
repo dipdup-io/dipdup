@@ -28,7 +28,8 @@ from tortoise.transactions import get_connection
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.exceptions import ConfigurationError, HasuraError
+from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import HasuraError
 from dipdup.http import HTTPGateway
 from dipdup.models import Schema
 from dipdup.utils import iter_files
@@ -127,7 +128,7 @@ class HasuraGateway(HTTPGateway):
         try:
             metadata['sources'][0]['tables'] = source_tables_metadata
         except IndexError as e:
-            raise HasuraError('No sources found in metadata') from e 
+            raise HasuraError('No sources found in metadata') from e
 
         await self._replace_metadata(metadata)
 

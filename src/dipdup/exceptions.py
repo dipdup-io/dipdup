@@ -343,6 +343,7 @@ class DeprecatedHandlerError(DipDupError):
 @dataclass(frozen=True, repr=False)
 class HasuraError(DipDupError):
     """Failed to configure Hasura instance"""
+
     msg: str
 
     def _help(self) -> str:
