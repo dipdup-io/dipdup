@@ -967,7 +967,7 @@ default_hooks = {
 @dataclass
 class AdvancedConfig:
     reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
-    scheduler: Dict[str, Any] = field(default_factory=dict)
+    scheduler: Optional[Dict[str, Any]] = None
     oneshot: bool = False
     postpone_jobs: bool = False
     early_realtime: bool = False

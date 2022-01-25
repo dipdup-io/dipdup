@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
 from apscheduler.triggers.cron import CronTrigger  # type: ignore
 from apscheduler.triggers.interval import IntervalTrigger  # type: ignore
 from apscheduler.util import undefined  # type: ignore
+
 from dipdup.config import JobConfig
 from dipdup.context import DipDupContext
 from dipdup.context import HookContext
@@ -17,13 +18,17 @@ from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
 DEFAULT_CONFIG = {
-    'apscheduler.jobstores.default': {
-        'class': 'apscheduler.jobstores.memory:MemoryJobStore',
+    'jobstores': {
+        'default': {
+            'class': 'apscheduler.jobstores.memory:MemoryJobStore',
+        },
     },
-    'apscheduler.executors.default': {
-        'class': 'apscheduler.executors.asyncio:AsyncIOExecutor',
+    'executors': {
+        'default': {
+            'class': 'dipdup.executors.asyncio:AsyncIOExecutor',
+        },
     },
-    'apscheduler.timezone': 'UTC',
+    'timezone': 'UTC',
 }
 
 
