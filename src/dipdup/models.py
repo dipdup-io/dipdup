@@ -252,8 +252,7 @@ class ContractMetadata(Model):
 
 
 class TokenMetadata(Model):
-    contract = fields.CharField(36, pk=True)
-    # NOTE: Composite primary key created in `on_reindex` SQL hook
+    contract = fields.CharField(36)
     token_id = fields.IntField()
     metadata = fields.JSONField()
     update_id = fields.IntField()
@@ -263,3 +262,4 @@ class TokenMetadata(Model):
 
     class Meta:
         table = 'dipdup_token_metadata'
+        unique_together = ('contract', 'token_id')

@@ -34,8 +34,9 @@ from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.config import default_hooks
-from dipdup.context import CallbackManager, MetadataCursor
+from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
+from dipdup.context import MetadataCursor
 from dipdup.context import pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
@@ -434,7 +435,7 @@ class DipDup:
             except KeyError:
                 await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
-        # NOTE: Call even if Schema is present; there may be new tables 
+        # NOTE: Call even if Schema is present; there may be new tables
         await generate_schema(conn, schema_name)
         schema_hash = get_schema_hash(conn)
 
