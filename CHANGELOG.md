@@ -2,6 +2,13 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* cli: Ignore `SIGINT` signal when shutdown is in progress.
+* sentry: Ignore exceptions when shutdown is in progress.
+
 ## 4.1.1 - 2022-01-25
 
 ### Fixed
