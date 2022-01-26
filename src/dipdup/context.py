@@ -69,9 +69,9 @@ class MetadataCursor:
 
     @classmethod
     async def initialize(cls) -> None:
-        if last_contract := await ContractMetadata.filter().order_by('-update_id').get_or_none():
+        if last_contract := await ContractMetadata.filter().order_by('-update_id').first():
             cls._contract = last_contract.update_id
-        if last_token := await TokenMetadata.filter().order_by('-update_id').get_or_none():
+        if last_token := await TokenMetadata.filter().order_by('-update_id').first():
             cls._token = last_token.update_id
 
     @classmethod
