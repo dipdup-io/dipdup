@@ -5,3 +5,5 @@
 ```shell
 $ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 ```
+
+See README.md in the generated project to learn about the next steps.
