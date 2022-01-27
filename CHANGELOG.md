@@ -2,6 +2,16 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Added
+
+* cli: Added `schema wipe --force` argument to skip confirmation promt.
+
+### Fixed
+
+* cli: Show warning about deprecated `--hashes` argument
+
 ## 4.1.1 - 2022-01-25
 
 ### Fixed

@@ -5,6 +5,7 @@ import os
 import signal
 import subprocess
 import sys
+import warnings
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
@@ -337,6 +338,9 @@ async def schema(ctx):
 @click.pass_context
 @cli_wrapper
 async def schema_approve(ctx, hashes: bool):
+    if hashes:
+        warnings.warn('`--hashes` option is deprecated and has no effect')
+
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -358,22 +362,24 @@ async def schema_approve(ctx, hashes: bool):
 
 @schema.command(name='wipe', help='Drop all database tables, functions and views')
 @click.option('--immune', is_flag=True, help='Drop immune tables too')
+@click.option('--force', is_flag=True, help='Skip confirmation prompt')
 @click.pass_context
 @cli_wrapper
-async def schema_wipe(ctx, immune: bool):
+async def schema_wipe(ctx, immune: bool, force: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    try:
-        assert sys.__stdin__.isatty()
-        click.confirm(f'You\'re about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?', abort=True)
-    except AssertionError:
-        click.echo('Not in a TTY, skipping confirmation')
-    # FIXME: Can't catch asyncio.CancelledError here
-    except click.Abort:
-        click.echo('Aborted')
-        return
+    if not force:
+        try:
+            assert sys.__stdin__.isatty()
+            click.confirm(f'You\'re about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?', abort=True)
+        except AssertionError:
+            click.echo('Not in a TTY, skipping confirmation')
+        # FIXME: Can't catch asyncio.CancelledError here
+        except click.Abort:
+            click.echo('Aborted')
+            return
 
     _logger.info('Wiping schema `%s`', url)
 
