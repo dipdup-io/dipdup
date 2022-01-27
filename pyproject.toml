@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "cookiecutter-dipdup"
+version = "0.1.0"
+description = "Cookiecutter template for a DipDup indexer"
+authors = ["Lev Gorodetskiy <github@droserasprout.space>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+cookiecutter = "^1.7.3"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
