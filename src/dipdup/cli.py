@@ -57,6 +57,7 @@ from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
 _logger = logging.getLogger('dipdup.cli')
+_is_shutting_down = False
 
 
 def echo(message: str) -> None:
@@ -72,6 +73,11 @@ class CLIContext:
 
 
 async def shutdown() -> None:
+    global _is_shutting_down
+    if _is_shutting_down:
+        return
+    _is_shutting_down = True
+
     _logger.info('Shutting down')
     tasks = filter(lambda t: t != asyncio.current_task(), asyncio.all_tasks())
     list(map(asyncio.Task.cancel, tasks))
@@ -95,6 +101,12 @@ def cli_wrapper(fn):
     return wrapper
 
 
+def _sentry_before_send(event, _):
+    if _is_shutting_down:
+        return None
+    return event
+
+
 def init_sentry(config: DipDupConfig) -> None:
     if not config.sentry:
         return
@@ -116,6 +128,7 @@ def init_sentry(config: DipDupConfig) -> None:
         integrations=integrations,
         release=__version__,
         attach_stacktrace=attach_stacktrace,
+        before_send=_sentry_before_send,
     )
 
 
