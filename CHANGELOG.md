@@ -4,8 +4,13 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## [unreleased]
 
+### Added
+
+* cli: Added `schema wipe --force` argument to skip confirmation promt.
+
 ### Fixed
 
+* cli: Show warning about deprecated `--hashes` argument
 * cli: Ignore `SIGINT` signal when shutdown is in progress.
 * sentry: Ignore exceptions when shutdown is in progress.
 
