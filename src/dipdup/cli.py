@@ -352,7 +352,7 @@ async def schema(ctx):
 @cli_wrapper
 async def schema_approve(ctx, hashes: bool):
     if hashes:
-        warnings.warn('`--hashes` option is deprecated and has no effect')
+        warnings.warn('`--hashes` option is deprecated and has no effect', DeprecationWarning)
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
