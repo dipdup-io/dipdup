@@ -11,6 +11,8 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * cli: Show warning about deprecated `--hashes` argument
+* cli: Ignore `SIGINT` signal when shutdown is in progress.
+* sentry: Ignore exceptions when shutdown is in progress.
 
 ## 4.1.1 - 2022-01-25
 

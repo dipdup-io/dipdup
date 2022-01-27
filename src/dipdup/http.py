@@ -80,7 +80,7 @@ class _HTTPGateway:
 
     async def __aexit__(self, exc_type, exc, tb):
         """Close underlying aiohttp session"""
-        self._logger.info('Closing gateway session (%s)', self._url)
+        self._logger.debug('Closing gateway session (%s)', self._url)
         await self.__session.close()
 
     @property
