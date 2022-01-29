@@ -12,7 +12,6 @@ class IpfsDatasource(Datasource):
     async def run(self) -> None:
         pass
 
-    """Download IPFS file by path"""
-
     async def get(self, path: str) -> Any:
+        """Download IPFS file by path"""
         return await self._http.request('get', url=path)
