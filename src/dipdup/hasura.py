@@ -159,7 +159,7 @@ class HasuraGateway(HTTPGateway):
 
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
-        result = await self._http.request(
+        result = await self.request(
             method='post',
             cache=False,
             url=f'{self._hasura_config.url}/v1/{endpoint}',
@@ -193,16 +193,6 @@ class HasuraGateway(HTTPGateway):
             raise HasuraError('v1 is not supported, upgrade to the latest stable version.')
 
         self._logger.info('Connected to Hasura %s', version)
-
-    async def _reset_metadata(self) -> None:
-        self._logger.info('Resetting metadata')
-        await self._hasura_request(
-            endpoint='metadata',
-            json={
-                "type": "clear_metadata",
-                "args": {},
-            },
-        )
 
     async def _fetch_metadata(self) -> Dict[str, Any]:
         self._logger.info('Fetching existing metadata')

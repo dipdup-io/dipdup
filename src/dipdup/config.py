@@ -686,14 +686,6 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         config_json = json.dumps(config_dict)
         return hashlib.sha256(config_json.encode()).hexdigest()
 
-    def hash_old(self) -> str:
-        """Calculate hash to ensure config not changed since last run.
-
-        Old incorrect algorightm (false positives). Used only to update hash of existing indexes.
-        """
-        config_json = json.dumps(self, default=pydantic_encoder)
-        return hashlib.sha256(config_json.encode()).hexdigest()
-
 
 @dataclass
 class OperationIndexConfig(IndexConfig):
@@ -925,13 +917,6 @@ class HookConfig(CallbackMixin, kind='hook'):
             with suppress(ValueError):
                 package, obj = annotation.rsplit('.', 1)
                 yield package, obj
-
-    @cached_property
-    def _args_with_context(self) -> Dict[str, str]:
-        return {
-            'ctx': 'dipdup.context.HookContext',
-            **self.args,
-        }
 
 
 default_hooks = {

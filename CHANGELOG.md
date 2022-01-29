@@ -2,6 +2,21 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Added
+
+* http: Added `request` method to send arbitrary requests (affects all datasources).
+
+### Fixed
+
+* http: Removed dangerous method `close_session`.
+* context: Fixed help message of `IndexAlreadyExistsError` exception.
+
+### Other
+
+* dipdup: Removed unused internal methods.
+
 ## 4.1.2 - 2022-01-27
 
 ### Added

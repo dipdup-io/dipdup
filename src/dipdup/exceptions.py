@@ -230,7 +230,7 @@ class IndexAlreadyExistsError(DipDupError):
     ctx: Any
     name: str
 
-    def format_help(self) -> str:
+    def _help(self) -> str:
         indexes_table = indent(
             tabulate(
                 [(c.name, c.kind) for c in self.ctx.config.indexes.values()],
