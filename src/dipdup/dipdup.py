@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import warnings
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
@@ -382,6 +383,7 @@ class DipDup:
                     merge_subscriptions=self._config.advanced.merge_subscriptions,
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
+                warnings.warn('Better Call Dev API is deprecated, use `MetadataDatasource` instead', DeprecationWarning)
                 datasource = BcdDatasource(
                     url=datasource_config.url,
                     network=datasource_config.network,

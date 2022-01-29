@@ -33,7 +33,6 @@ from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import TzktDatasourceConfig
-from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.ipfs.datasource import IpfsDatasource
@@ -220,9 +219,6 @@ class DipDupContext:
 
     def get_tzkt_datasource(self, name: str) -> TzktDatasource:
         return self._get_datasource(name, TzktDatasource)
-
-    def get_bcd_datasource(self, name: str) -> BcdDatasource:
-        return self._get_datasource(name, BcdDatasource)
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         return self._get_datasource(name, CoinbaseDatasource)
