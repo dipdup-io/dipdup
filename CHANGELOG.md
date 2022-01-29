@@ -6,6 +6,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
+* context: Added `ctx.get_<kind>_datasource` helpers to avoid type casting.
 * ipfs: Added `ipfs` datasource to download JSON and binary data from IPFS.
 
 ## 4.1.2 - 2022-01-27
