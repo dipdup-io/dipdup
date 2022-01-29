@@ -57,6 +57,7 @@ ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
+DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -193,6 +194,7 @@ class ContractConfig(NameMixin):
         return v
 
 
+# NOTE: Don't forget `http` in all datasource configs
 @dataclass
 class TzktDatasourceConfig(NameMixin):
     """TzKT datasource config
@@ -277,6 +279,13 @@ class MetadataDatasourceConfig(NameMixin):
 
     def __hash__(self):
         return hash(self.kind + self.url + self.network.value)
+
+
+@dataclass
+class IpfsDatasourceConfig(NameMixin):
+    kind: Literal['ipfs']
+    url: str = DEFAULT_IPFS_URL
+    http: Optional[HTTPConfig] = None
 
 
 DatasourceConfigT = Union[
