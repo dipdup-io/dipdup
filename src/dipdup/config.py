@@ -57,6 +57,7 @@ ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
+DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -193,6 +194,7 @@ class ContractConfig(NameMixin):
         return v
 
 
+# NOTE: Don't forget `http` in all datasource configs
 @dataclass
 class TzktDatasourceConfig(NameMixin):
     """TzKT datasource config
@@ -277,6 +279,13 @@ class MetadataDatasourceConfig(NameMixin):
 
     def __hash__(self):
         return hash(self.kind + self.url + self.network.value)
+
+
+@dataclass
+class IpfsDatasourceConfig(NameMixin):
+    kind: Literal['ipfs']
+    url: str = DEFAULT_IPFS_URL
+    http: Optional[HTTPConfig] = None
 
 
 DatasourceConfigT = Union[
@@ -686,14 +695,6 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         config_json = json.dumps(config_dict)
         return hashlib.sha256(config_json.encode()).hexdigest()
 
-    def hash_old(self) -> str:
-        """Calculate hash to ensure config not changed since last run.
-
-        Old incorrect algorightm (false positives). Used only to update hash of existing indexes.
-        """
-        config_json = json.dumps(self, default=pydantic_encoder)
-        return hashlib.sha256(config_json.encode()).hexdigest()
-
 
 @dataclass
 class OperationIndexConfig(IndexConfig):
@@ -872,11 +873,6 @@ class HasuraConfig:
             raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
         return v.rstrip('/')
 
-    @validator('source', allow_reuse=True)
-    def valid_source(cls, v):
-        if v != 'default':
-            raise NotImplementedError('Multiple Hasura sources are not supported at the moment')
-
     @cached_property
     def headers(self) -> Dict[str, str]:
         if self.admin_secret:
@@ -930,13 +926,6 @@ class HookConfig(CallbackMixin, kind='hook'):
             with suppress(ValueError):
                 package, obj = annotation.rsplit('.', 1)
                 yield package, obj
-
-    @cached_property
-    def _args_with_context(self) -> Dict[str, str]:
-        return {
-            'ctx': 'dipdup.context.HookContext',
-            **self.args,
-        }
 
 
 default_hooks = {
@@ -1042,7 +1031,6 @@ class DipDupConfig:
         paths: List[str],
         environment: bool = True,
     ) -> 'DipDupConfig':
-
         current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
@@ -1051,8 +1039,11 @@ class DipDupConfig:
             path = os.path.join(current_workdir, path)
 
             _logger.debug('Loading config from %s', path)
-            with open(path) as file:
-                raw_config = file.read()
+            try:
+                with open(path) as file:
+                    raw_config = file.read()
+            except OSError as e:
+                raise ConfigurationError(str(e))
 
             if environment:
                 _logger.debug('Substituting environment variables')

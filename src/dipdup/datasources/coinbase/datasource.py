@@ -34,7 +34,7 @@ class CoinbaseDatasource(Datasource):
         pass
 
     async def get_oracle_prices(self) -> Dict[str, Any]:
-        return await self._http.request(
+        return await self.request(
             'get',
             url='oracle',
         )
@@ -42,7 +42,7 @@ class CoinbaseDatasource(Datasource):
     async def get_candles(self, since: datetime, until: datetime, interval: CandleInterval, ticker: str = 'XTZ-USD') -> List[CandleData]:
         candles = []
         for _since, _until in self._split_candle_requests(since, until, interval):
-            candles_json = await self._http.request(
+            candles_json = await self.request(
                 'get',
                 url=f'products/{ticker}/candles',
                 params={
