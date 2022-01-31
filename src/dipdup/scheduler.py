@@ -1,14 +1,14 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
 from functools import partial
+from typing import Any
+from typing import Dict
+from typing import Optional
 
-from apscheduler.executors.asyncio import AsyncIOExecutor  # type: ignore
-from apscheduler.jobstores.memory import MemoryJobStore  # type: ignore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
 from apscheduler.triggers.cron import CronTrigger  # type: ignore
 from apscheduler.triggers.interval import IntervalTrigger  # type: ignore
 from apscheduler.util import undefined  # type: ignore
-from pytz import utc
 
 from dipdup.config import JobConfig
 from dipdup.context import DipDupContext
@@ -17,20 +17,23 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
-jobstores = {
-    'default': MemoryJobStore(),
-}
-executors = {
-    'default': AsyncIOExecutor(),
+DEFAULT_CONFIG = {
+    'jobstores': {
+        'default': {
+            'class': 'apscheduler.jobstores.memory:MemoryJobStore',
+        },
+    },
+    'executors': {
+        'default': {
+            'class': 'dipdup.executors.asyncio:AsyncIOExecutor',
+        },
+    },
+    'timezone': 'UTC',
 }
 
 
-def create_scheduler() -> AsyncIOScheduler:
-    return AsyncIOScheduler(
-        jobstores=jobstores,
-        executors=executors,
-        timezone=utc,
-    )
+def create_scheduler(config: Optional[Dict[str, Any]] = None) -> AsyncIOScheduler:
+    return AsyncIOScheduler(config or DEFAULT_CONFIG)
 
 
 def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConfig) -> None:

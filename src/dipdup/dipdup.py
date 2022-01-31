@@ -318,7 +318,7 @@ class DipDup:
             callbacks=self._callbacks,
         )
         self._index_dispatcher: Optional[IndexDispatcher] = None
-        self._scheduler = create_scheduler()
+        self._scheduler = create_scheduler(self._config.advanced.scheduler)
         self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         self._schema: Optional[Schema] = None
 
