@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## 4.2.1 - 2022-01-31
+
+### Fixed
+
+* ci: Added `black 21.12b0` dependency to avoid possible conflict with `datamodel-codegen-generator`.
+
 ## 4.2.0 - 2022-01-31
 
 ### Added
