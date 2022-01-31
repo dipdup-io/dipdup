@@ -349,7 +349,7 @@ class DipDup:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
             await self._set_up_datasources(stack)
-            await self._set_up_hooks()
+            await self._set_up_hooks(tasks)
 
             await self._initialize_schema()
             await self._initialize_datasources()
@@ -476,11 +476,13 @@ class DipDup:
         models = f'{self._config.package}.models'
         await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
 
-    async def _set_up_hooks(self) -> None:
+    async def _set_up_hooks(self, tasks: Optional[Set[Task]] = None) -> None:
         for hook_config in default_hooks.values():
             self._ctx.callbacks.register_hook(hook_config)
         for hook_config in self._config.hooks.values():
             self._ctx.callbacks.register_hook(hook_config)
+        if tasks:
+            tasks.add(create_task(self._ctx.callbacks.run()))
 
     async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
         if not self._config.hasura:

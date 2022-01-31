@@ -9,6 +9,8 @@ from os.path import exists
 from os.path import join
 from pprint import pformat
 from typing import Any
+from typing import Awaitable
+from typing import Deque
 from typing import Dict
 from typing import Iterator
 from typing import Optional
@@ -54,12 +56,14 @@ from dipdup.models import Index
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.utils import FormattedLogger
+from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import wipe_schema
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
-
+# NOTE: Dependency cycle
 pending_indexes = deque()  # type: ignore
+pending_hooks: Deque[Awaitable[None]] = deque()
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -82,6 +86,7 @@ class DipDupContext:
         self,
         name: str,
         fmt: Optional[str] = None,
+        wait: bool = True,
         *args,
         **kwargs: Any,
     ) -> None:
@@ -285,6 +290,12 @@ class CallbackManager:
         self._handlers: Dict[Tuple[str, str], HandlerConfig] = {}
         self._hooks: Dict[str, HookConfig] = {}
 
+    async def run(self) -> None:
+        while True:
+            async with slowdown(1):
+                while coro := pending_hooks.popleft():
+                    await coro
+
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
             raise RuntimeError('Handler must have a parent index')
@@ -320,7 +331,7 @@ class CallbackManager:
             handler_config=handler_config,
             datasource=datasource,
         )
-        with self._wrapper('handler', name):
+        with self._callback_wrapper('handler', name):
             await handler_config.callback_fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
@@ -328,6 +339,7 @@ class CallbackManager:
         ctx: 'DipDupContext',
         name: str,
         fmt: Optional[str] = None,
+        wait: bool = True,
         *args,
         **kwargs: Any,
     ) -> None:
@@ -341,8 +353,15 @@ class CallbackManager:
         )
 
         self._verify_arguments(new_ctx, *args, **kwargs)
-        with self._wrapper('hook', name):
-            await hook_config.callback_fn(ctx, *args, **kwargs)
+
+        async def _wrapper():
+            with self._callback_wrapper('hook', name):
+                await hook_config.callback_fn(ctx, *args, **kwargs)
+
+        if wait:
+            await _wrapper()
+        else:
+            pending_hooks.append(_wrapper())
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""
@@ -360,7 +379,7 @@ class CallbackManager:
         await execute_sql_scripts(connection, sql_path)
 
     @contextmanager
-    def _wrapper(self, kind: str, name: str) -> Iterator[None]:
+    def _callback_wrapper(self, kind: str, name: str) -> Iterator[None]:
         try:
             start = time.perf_counter()
             yield

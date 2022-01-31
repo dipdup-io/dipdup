@@ -6,6 +6,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
+* context: Added `wait` argument to `fire_hook` method to escape current transaction context.
 * context: Added `ctx.get_<kind>_datasource` helpers to avoid type casting.
 * hooks: Added ability to configure `apscheduler` with `AdvancedConfig.scheduler` field.
 * http: Added `request` method to send arbitrary requests (affects all datasources).
@@ -53,7 +54,6 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Performance
 
 * hasura: Removed some useless requests.
->>>>>>> master
 
 ## 4.1.0 - 2022-01-24
 
