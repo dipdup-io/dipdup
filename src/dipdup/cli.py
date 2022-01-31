@@ -1,12 +1,15 @@
 import asyncio
+import atexit
 import logging
 import os
 import signal
 import subprocess
 import sys
+import warnings
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
+from functools import partial
 from functools import wraps
 from os import listdir
 from os.path import dirname
@@ -55,6 +58,7 @@ from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
 _logger = logging.getLogger('dipdup.cli')
+_is_shutting_down = False
 
 
 def echo(message: str) -> None:
@@ -70,6 +74,11 @@ class CLIContext:
 
 
 async def shutdown() -> None:
+    global _is_shutting_down
+    if _is_shutting_down:
+        return
+    _is_shutting_down = True
+
     _logger.info('Shutting down')
     tasks = filter(lambda t: t != asyncio.current_task(), asyncio.all_tasks())
     list(map(asyncio.Task.cancel, tasks))
@@ -82,17 +91,21 @@ def cli_wrapper(fn):
         loop = asyncio.get_running_loop()
         loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(shutdown()))
         try:
-            with DipDupError.wrap():
-                await fn(*args, **kwargs)
+            await fn(*args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
-        except DipDupError as e:
-            # FIXME: No traceback in test logs
-            _logger.critical(e.__repr__())
-            _logger.info(e.format())
-            quit(1)
+        except Exception as e:
+            help_message = e.format() if isinstance(e, DipDupError) else DipDupError().format()
+            atexit.register(partial(click.echo, help_message, err=True))
+            raise
 
     return wrapper
+
+
+def _sentry_before_send(event, _):
+    if _is_shutting_down:
+        return None
+    return event
 
 
 def init_sentry(config: DipDupConfig) -> None:
@@ -116,6 +129,7 @@ def init_sentry(config: DipDupConfig) -> None:
         integrations=integrations,
         release=__version__,
         attach_stacktrace=attach_stacktrace,
+        before_send=_sentry_before_send,
     )
 
 
@@ -337,6 +351,9 @@ async def schema(ctx):
 @click.pass_context
 @cli_wrapper
 async def schema_approve(ctx, hashes: bool):
+    if hashes:
+        warnings.warn('`--hashes` option is deprecated and has no effect', DeprecationWarning)
+
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -358,22 +375,24 @@ async def schema_approve(ctx, hashes: bool):
 
 @schema.command(name='wipe', help='Drop all database tables, functions and views')
 @click.option('--immune', is_flag=True, help='Drop immune tables too')
+@click.option('--force', is_flag=True, help='Skip confirmation prompt')
 @click.pass_context
 @cli_wrapper
-async def schema_wipe(ctx, immune: bool):
+async def schema_wipe(ctx, immune: bool, force: bool):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    try:
-        assert sys.__stdin__.isatty()
-        click.confirm(f'You\'re about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?', abort=True)
-    except AssertionError:
-        click.echo('Not in a TTY, skipping confirmation')
-    # FIXME: Can't catch asyncio.CancelledError here
-    except click.Abort:
-        click.echo('Aborted')
-        return
+    if not force:
+        try:
+            assert sys.__stdin__.isatty()
+            click.confirm(f'You\'re about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?', abort=True)
+        except AssertionError:
+            click.echo('Not in a TTY, skipping confirmation')
+        # FIXME: Can't catch asyncio.CancelledError here
+        except click.Abort:
+            click.echo('Aborted')
+            return
 
     _logger.info('Wiping schema `%s`', url)
 

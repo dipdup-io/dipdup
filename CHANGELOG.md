@@ -7,6 +7,53 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Added
 
 * context: Added `wait` argument to `fire_hook` method to escape current transaction context.
+* context: Added `ctx.get_<kind>_datasource` helpers to avoid type casting.
+* hooks: Added ability to configure `apscheduler` with `AdvancedConfig.scheduler` field.
+* http: Added `request` method to send arbitrary requests (affects all datasources).
+* ipfs: Added `ipfs` datasource to download JSON and binary data from IPFS.
+
+### Fixed
+
+* http: Removed dangerous method `close_session`.
+* context: Fixed help message of `IndexAlreadyExistsError` exception.
+
+### Deprecated
+
+* bcd: Added deprecation notice.
+
+### Other
+
+* dipdup: Removed unused internal methods.
+
+## 4.1.2 - 2022-01-27
+
+### Added
+
+* cli: Added `schema wipe --force` argument to skip confirmation prompt.
+
+### Fixed
+
+* cli: Show warning about deprecated `--hashes` argument
+* cli: Ignore `SIGINT` signal when shutdown is in progress.
+* sentry: Ignore exceptions when shutdown is in progress.
+
+## 4.1.1 - 2022-01-25
+
+### Fixed
+
+* cli: Fixed stacktraces missing on exception.
+* cli: Fixed wrapping `OSError` with `ConfigurationError` during config loading.
+* hasura: Fixed printing help messages on `HasuraError`.
+* hasura: Preserve a list of sources in Hasura Cloud environments.
+* hasura: Fixed `HasuraConfig.source` config option.
+
+### Changed
+
+* cli: Unknown exceptions are no longer wrapped with `DipDupError`.
+
+### Performance
+
+* hasura: Removed some useless requests.
 
 ## 4.1.0 - 2022-01-24
 

@@ -15,6 +15,8 @@ from typing import Dict
 from typing import Iterator
 from typing import Optional
 from typing import Tuple
+from typing import Type
+from typing import TypeVar
 from typing import Union
 from typing import cast
 
@@ -33,7 +35,10 @@ from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import TzktDatasourceConfig
+from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
+from dipdup.datasources.ipfs.datasource import IpfsDatasource
+from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReasonC
@@ -55,6 +60,7 @@ from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import wipe_schema
 
+DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 # NOTE: Dependency cycle
 pending_indexes = deque()  # type: ignore
 pending_hooks: Deque[Awaitable[None]] = deque()
@@ -189,9 +195,7 @@ class DipDupContext:
         index: Union[OperationIndex, BigMapIndex, HeadIndex]
 
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
-        datasource = self.datasources[datasource_name]
-        if not isinstance(datasource, TzktDatasource):
-            raise RuntimeError(f'`{datasource_name}` is not a TzktDatasource')
+        datasource = self.get_tzkt_datasource(datasource_name)
 
         if isinstance(index_config, OperationIndexConfig):
             index = OperationIndex(self, index_config, datasource)
@@ -209,6 +213,26 @@ class DipDupContext:
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
         pending_indexes.append(index)
+
+    def _get_datasource(self, name: str, type_: Type[DatasourceT]) -> DatasourceT:
+        datasource = self.datasources.get(name)
+        if not datasource:
+            raise ConfigurationError(f'Datasource `{name}` is missing')
+        if not isinstance(datasource, type_):
+            raise ConfigurationError(f'Datasource `{name}` is not a `{type.__name__}`')
+        return datasource
+
+    def get_tzkt_datasource(self, name: str) -> TzktDatasource:
+        return self._get_datasource(name, TzktDatasource)
+
+    def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
+        return self._get_datasource(name, CoinbaseDatasource)
+
+    def get_metadata_datasource(self, name: str) -> MetadataDatasource:
+        return self._get_datasource(name, MetadataDatasource)
+
+    def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
+        return self._get_datasource(name, IpfsDatasource)
 
 
 class HookContext(DipDupContext):
