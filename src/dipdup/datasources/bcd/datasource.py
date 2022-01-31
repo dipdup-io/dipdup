@@ -36,7 +36,7 @@ class BcdDatasource(Datasource):
     async def get_tokens(self, address: str) -> List[Dict[str, Any]]:
         tokens, offset = [], 0
         while True:
-            tokens_batch = await self._http.request(
+            tokens_batch = await self.request(
                 'get',
                 url=f'v1/contract/{self._network}/{address}/tokens?offset={offset}',
             )
@@ -47,7 +47,7 @@ class BcdDatasource(Datasource):
         return tokens
 
     async def get_token(self, address: str, token_id: int) -> Optional[Dict[str, Any]]:
-        response = await self._http.request(
+        response = await self.request(
             'get',
             url=f'v1/contract/{self._network}/{address}/tokens?token_id={token_id}',
         )

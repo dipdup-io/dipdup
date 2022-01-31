@@ -7,11 +7,21 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Added
 
 * context: Added `ctx.get_<kind>_datasource` helpers to avoid type casting.
+* http: Added `request` method to send arbitrary requests (affects all datasources).
 * ipfs: Added `ipfs` datasource to download JSON and binary data from IPFS.
+
+### Fixed
+
+* http: Removed dangerous method `close_session`.
+* context: Fixed help message of `IndexAlreadyExistsError` exception.
 
 ### Deprecated
 
 * bcd: Added deprecation notice.
+
+### Other
+
+* dipdup: Removed unused internal methods.
 
 ## 4.1.2 - 2022-01-27
 
