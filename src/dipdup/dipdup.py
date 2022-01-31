@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import warnings
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
@@ -29,6 +30,7 @@ from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
+from dipdup.config import IpfsDatasourceConfig
 from dipdup.config import MetadataDatasourceConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -41,6 +43,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
+from dipdup.datasources.ipfs.datasource import IpfsDatasource
 from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
@@ -380,6 +383,7 @@ class DipDup:
                     merge_subscriptions=self._config.advanced.merge_subscriptions,
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
+                warnings.warn('Better Call Dev API is deprecated, use `MetadataDatasource` instead', DeprecationWarning)
                 datasource = BcdDatasource(
                     url=datasource_config.url,
                     network=datasource_config.network,
@@ -393,6 +397,11 @@ class DipDup:
                 datasource = MetadataDatasource(
                     url=datasource_config.url,
                     network=datasource_config.network,
+                    http_config=datasource_config.http,
+                )
+            elif isinstance(datasource_config, IpfsDatasourceConfig):
+                datasource = IpfsDatasource(
+                    url=datasource_config.url,
                     http_config=datasource_config.http,
                 )
             else:

@@ -6,12 +6,18 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
+* context: Added `ctx.get_<kind>_datasource` helpers to avoid type casting.
 * http: Added `request` method to send arbitrary requests (affects all datasources).
+* ipfs: Added `ipfs` datasource to download JSON and binary data from IPFS.
 
 ### Fixed
 
 * http: Removed dangerous method `close_session`.
 * context: Fixed help message of `IndexAlreadyExistsError` exception.
+
+### Deprecated
+
+* bcd: Added deprecation notice.
 
 ### Other
 
@@ -21,7 +27,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
-* cli: Added `schema wipe --force` argument to skip confirmation promt.
+* cli: Added `schema wipe --force` argument to skip confirmation prompt.
 
 ### Fixed
 
@@ -36,7 +42,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * cli: Fixed stacktraces missing on exception.
 * cli: Fixed wrapping `OSError` with `ConfigurationError` during config loading.
 * hasura: Fixed printing help messages on `HasuraError`.
-* hasura: Preserve list of sources in Hasura Cloud environments.
+* hasura: Preserve a list of sources in Hasura Cloud environments.
 * hasura: Fixed `HasuraConfig.source` config option.
 
 ### Changed

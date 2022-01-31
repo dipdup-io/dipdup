@@ -6,6 +6,7 @@ import platform
 from abc import ABC
 from contextlib import suppress
 from http import HTTPStatus
+from json import JSONDecodeError
 from typing import Any
 from typing import Mapping
 from typing import Optional
@@ -169,7 +170,10 @@ class _HTTPGateway:
             raise_for_status=True,
             **kwargs,
         ) as response:
-            return await response.json()
+            try:
+                return await response.json()
+            except (JSONDecodeError, aiohttp.ContentTypeError):
+                return await response.read()
 
     async def request(
         self,
