@@ -194,7 +194,7 @@ class ContractConfig(NameMixin):
         return v
 
 
-# NOTE: Don't forget `http` in all datasource configs
+# NOTE: Don't forget `http` and `__hash__` in all datasource configs
 @dataclass
 class TzktDatasourceConfig(NameMixin):
     """TzKT datasource config
@@ -287,12 +287,16 @@ class IpfsDatasourceConfig(NameMixin):
     url: str = DEFAULT_IPFS_URL
     http: Optional[HTTPConfig] = None
 
+    def __hash__(self):
+        return hash(self.kind + self.url)
+
 
 DatasourceConfigT = Union[
     TzktDatasourceConfig,
     BcdDatasourceConfig,
     CoinbaseDatasourceConfig,
     MetadataDatasourceConfig,
+    IpfsDatasourceConfig,
 ]
 
 
