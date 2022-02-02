@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* hasura: Fixed processing relation fields with missing `related_name`.
+
 ## 4.2.2 - 2022-02-01
 
 ### Fixed
