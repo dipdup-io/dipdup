@@ -159,7 +159,7 @@ class HasuraGateway(HTTPGateway):
 
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
-        result = await self._http.request(
+        result = await self.request(
             method='post',
             cache=False,
             url=f'{self._hasura_config.url}/v1/{endpoint}',
@@ -193,16 +193,6 @@ class HasuraGateway(HTTPGateway):
             raise HasuraError('v1 is not supported, upgrade to the latest stable version.')
 
         self._logger.info('Connected to Hasura %s', version)
-
-    async def _reset_metadata(self) -> None:
-        self._logger.info('Resetting metadata')
-        await self._hasura_request(
-            endpoint='metadata',
-            json={
-                "type": "clear_metadata",
-                "args": {},
-            },
-        )
 
     async def _fetch_metadata(self) -> Dict[str, Any]:
         self._logger.info('Fetching existing metadata')
@@ -270,9 +260,6 @@ class HasuraGateway(HTTPGateway):
 
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
-                    if not isinstance(field.related_name, str):
-                        raise HasuraError(f'`related_name` of `{field}` field must be set')
-
                     related_table_name = model_tables[field.model_name]
                     field_name = field.model_field_name
                     metadata_tables[table_name]['object_relationships'].append(
@@ -281,18 +268,16 @@ class HasuraGateway(HTTPGateway):
                             column=field_name + '_id',
                         )
                     )
-                    metadata_tables[related_table_name]['array_relationships'].append(
-                        self._format_array_relationship(
-                            related_name=field.related_name,
-                            table=table_name,
-                            column=field_name + '_id',
+                    if field.related_name:
+                        metadata_tables[related_table_name]['array_relationships'].append(
+                            self._format_array_relationship(
+                                related_name=field.related_name,
+                                table=table_name,
+                                column=field_name + '_id',
+                            )
                         )
-                    )
 
                 elif isinstance(field, fields.relational.ManyToManyFieldInstance):
-                    if not isinstance(field.related_name, str):
-                        raise HasuraError(f'`related_name` of `{field}` field must be set')
-
                     related_table_name = model_tables[field.model_name]
                     junction_table_name = field.through
 
@@ -309,13 +294,14 @@ class HasuraGateway(HTTPGateway):
                             column=table_name + '_id',
                         )
                     )
-                    metadata_tables[related_table_name]['array_relationships'].append(
-                        self._format_array_relationship(
-                            related_name=f'{related_table_name}_{field.related_name}',
-                            table=junction_table_name,
-                            column=related_table_name + '_id',
+                    if field.related_name:
+                        metadata_tables[related_table_name]['array_relationships'].append(
+                            self._format_array_relationship(
+                                related_name=f'{related_table_name}_{field.related_name}',
+                                table=junction_table_name,
+                                column=related_table_name + '_id',
+                            )
                         )
-                    )
 
                 else:
                     pass

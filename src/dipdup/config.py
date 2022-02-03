@@ -57,6 +57,7 @@ ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
+DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -193,6 +194,7 @@ class ContractConfig(NameMixin):
         return v
 
 
+# NOTE: Don't forget `http` and `__hash__` in all datasource configs
 @dataclass
 class TzktDatasourceConfig(NameMixin):
     """TzKT datasource config
@@ -279,11 +281,22 @@ class MetadataDatasourceConfig(NameMixin):
         return hash(self.kind + self.url + self.network.value)
 
 
+@dataclass
+class IpfsDatasourceConfig(NameMixin):
+    kind: Literal['ipfs']
+    url: str = DEFAULT_IPFS_URL
+    http: Optional[HTTPConfig] = None
+
+    def __hash__(self):
+        return hash(self.kind + self.url)
+
+
 DatasourceConfigT = Union[
     TzktDatasourceConfig,
     BcdDatasourceConfig,
     CoinbaseDatasourceConfig,
     MetadataDatasourceConfig,
+    IpfsDatasourceConfig,
 ]
 
 
@@ -686,14 +699,6 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         config_json = json.dumps(config_dict)
         return hashlib.sha256(config_json.encode()).hexdigest()
 
-    def hash_old(self) -> str:
-        """Calculate hash to ensure config not changed since last run.
-
-        Old incorrect algorightm (false positives). Used only to update hash of existing indexes.
-        """
-        config_json = json.dumps(self, default=pydantic_encoder)
-        return hashlib.sha256(config_json.encode()).hexdigest()
-
 
 @dataclass
 class OperationIndexConfig(IndexConfig):
@@ -926,13 +931,6 @@ class HookConfig(CallbackMixin, kind='hook'):
                 package, obj = annotation.rsplit('.', 1)
                 yield package, obj
 
-    @cached_property
-    def _args_with_context(self) -> Dict[str, str]:
-        return {
-            'ctx': 'dipdup.context.HookContext',
-            **self.args,
-        }
-
 
 default_hooks = {
     # NOTE: After schema initialization. Default: nothing.
@@ -962,6 +960,7 @@ default_hooks = {
 @dataclass
 class AdvancedConfig:
     reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
+    scheduler: Optional[Dict[str, Any]] = None
     # TODO: Drop in major version
     oneshot: bool = False
     postpone_jobs: bool = False
