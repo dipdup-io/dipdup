@@ -2218,11 +2218,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-<<<<<<< HEAD
 content-hash = "c6cf84d5de3d654505ada53d4a828e2b655704f7c7c2fa74b84d701572a10174"
-=======
-content-hash = "fa9dd0a0094f8ea799725de8642e8c185a8f117a6349b15d2e60c239da17de45"
->>>>>>> feat/metadata-for-tzkt
 
 [metadata.files]
 aiohttp = [
