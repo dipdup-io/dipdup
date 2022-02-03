@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import sys
@@ -5,13 +6,17 @@ import time
 from collections import deque
 from contextlib import contextmanager
 from contextlib import suppress
+from multiprocessing.pool import AsyncResult
+from multiprocessing.pool import Pool
 from os.path import exists
 from os.path import join
 from pprint import pformat
 from typing import Any
 from typing import Awaitable
+from typing import Callable
 from typing import Deque
 from typing import Dict
+from typing import Iterable
 from typing import Iterator
 from typing import Optional
 from typing import Tuple
@@ -64,6 +69,8 @@ DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 # NOTE: Dependency cycle
 pending_indexes = deque()  # type: ignore
 pending_hooks: Deque[Awaitable[None]] = deque()
+
+T = TypeVar('T')
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -213,6 +220,39 @@ class DipDupContext:
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
         pending_indexes.append(index)
+
+    async def pool_apply(
+        self,
+        cls: Type[Pool],
+        func: Callable[[Any], T],
+        timeout: Optional[int] = None,
+    ) -> T:
+        def _get(fut: AsyncResult[T]) -> T:
+            return fut.get(timeout)
+
+        with cls() as executor:
+            fut = executor.apply_async(func)
+            return await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: _get(fut),
+            )
+
+    async def pool_map(
+        self,
+        cls: Type[Pool],
+        func: Callable[[Any], T],
+        iterable: Iterable[Any],
+        timeout: Optional[int] = None,
+    ) -> T:
+        def _get(fut) -> T:
+            return fut.get(timeout)
+
+        with cls() as executor:
+            fut = executor.map_async(func, iterable)
+            return await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: _get(fut),
+            )
 
     def _get_datasource(self, name: str, type_: Type[DatasourceT]) -> DatasourceT:
         datasource = self.datasources.get(name)

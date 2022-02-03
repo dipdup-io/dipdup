@@ -23,11 +23,11 @@ async def on_fa12_invest_liquidity(
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
 
     assert invest_liquidity.data.amount is not None
-    tez_qty = Decimal(invest_liquidity.data.amount) / (10 ** 6)
-    token_qty = Decimal(transfer.parameter.value) / (10 ** decimals)
+    tez_qty = Decimal(invest_liquidity.data.amount) / (10**6)
+    token_qty = Decimal(transfer.parameter.value) / (10**decimals)
     new_shares_qty = int(storage.storage.ledger[trader].balance) + int(storage.storage.ledger[trader].frozen_balance)  # type: ignore
 
-    price = (Decimal(storage.storage.tez_pool) / (10 ** 6)) / (Decimal(storage.storage.token_pool) / (10 ** decimals))
+    price = (Decimal(storage.storage.tez_pool) / (10**6)) / (Decimal(storage.storage.token_pool) / (10**decimals))
     value = tez_qty + price * token_qty
     share_px = value / (new_shares_qty - position.shares_qty)
     assert share_px > 0, invest_liquidity.data.hash

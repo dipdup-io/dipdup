@@ -25,12 +25,12 @@ async def on_fa12_divest_liquidity(
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
 
     assert transaction_1.amount is not None
-    tez_qty = Decimal(transaction_1.amount) / (10 ** 6)
-    token_qty = Decimal(transfer.parameter.value) / (10 ** decimals)
+    tez_qty = Decimal(transaction_1.amount) / (10**6)
+    token_qty = Decimal(transfer.parameter.value) / (10**decimals)
     shares_qty = int(divest_liquidity.parameter.shares)
 
-    tez_pool = Decimal(storage.storage.tez_pool) / (10 ** 6)
-    token_pool = Decimal(storage.storage.token_pool) / (10 ** decimals)
+    tez_pool = Decimal(storage.storage.tez_pool) / (10**6)
+    token_pool = Decimal(storage.storage.token_pool) / (10**decimals)
 
     # NOTE: Empty pools mean exchange is not initialized yet
     if not tez_pool and not token_pool:

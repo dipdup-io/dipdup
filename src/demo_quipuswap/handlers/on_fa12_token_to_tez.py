@@ -20,10 +20,10 @@ async def on_fa12_token_to_tez(
     symbol = ctx.template_values['symbol']
     trader = token_to_tez_payment.data.sender_address
 
-    min_tez_quantity = Decimal(token_to_tez_payment.parameter.min_out) / (10 ** 6)
-    token_quantity = Decimal(token_to_tez_payment.parameter.amount) / (10 ** decimals)
+    min_tez_quantity = Decimal(token_to_tez_payment.parameter.min_out) / (10**6)
+    token_quantity = Decimal(token_to_tez_payment.parameter.amount) / (10**decimals)
     assert transaction_0.amount is not None
-    tez_quantity = Decimal(transaction_0.amount) / (10 ** 6)
+    tez_quantity = Decimal(transaction_0.amount) / (10**6)
     assert min_tez_quantity <= tez_quantity, token_to_tez_payment.data.hash
 
     trade = models.Trade(

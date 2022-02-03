@@ -4,6 +4,10 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## [unreleased]
 
+### Added
+
+* context: Added `pool_apply` and `pool_map` methods to execute blocking functions in `multiprocess` pools.
+
 ### Fixed
 
 * ci: Removed `black 21.12b0` dependency since bug in `datamodel-codegen-generator` is fixed.
