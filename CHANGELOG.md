@@ -12,6 +12,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * ci: Removed `black 21.12b0` dependency since bug in `datamodel-codegen-generator` is fixed.
 * config: Verify `advanced.scheduler` config for correctness unsupported features.
+* context: Fixed ignored `wait` argument of `fire_hook` method.
 * hasura: Fixed processing relation fields with missing `related_name`.
 * jobs: Fixed default `apscheduler` config.
 

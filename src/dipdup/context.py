@@ -97,7 +97,7 @@ class DipDupContext:
         *args,
         **kwargs: Any,
     ) -> None:
-        await self.callbacks.fire_hook(self, name, fmt, *args, **kwargs)
+        await self.callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
 
     async def fire_handler(
         self,
