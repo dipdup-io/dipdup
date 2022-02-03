@@ -968,8 +968,8 @@ default_hooks = {
 @dataclass
 class AdvancedConfig:
     reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
-    # TODO: Drop in major version
     scheduler: Optional[Dict[str, Any]] = None
+    # TODO: Drop in major version
     oneshot: bool = False
     postpone_jobs: bool = False
     early_realtime: bool = False

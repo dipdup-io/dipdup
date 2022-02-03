@@ -262,6 +262,7 @@ class DipDupContext:
             token_id=token_id,
             defaults={'metadata': metadata, 'update_id': update_id},
         )
+
     def _get_datasource(self, name: str, type_: Type[DatasourceT]) -> DatasourceT:
         datasource = self.datasources.get(name)
         if not datasource:

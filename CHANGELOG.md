@@ -134,7 +134,6 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * ci: Detect CI environment and skip tests that fail in GitHub Actions.
 * ci: Execute tests in parallel with `pytest-xdist` when possible.
 * ci: More strict linting rules of `flake8`.
->>>>>>> master
 
 ## 4.0.3 - 2022-01-09
 
