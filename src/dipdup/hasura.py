@@ -260,9 +260,6 @@ class HasuraGateway(HTTPGateway):
 
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
-                    if not isinstance(field.related_name, str):
-                        raise HasuraError(f'`related_name` of `{field}` field must be set')
-
                     related_table_name = model_tables[field.model_name]
                     field_name = field.model_field_name
                     metadata_tables[table_name]['object_relationships'].append(
@@ -271,18 +268,16 @@ class HasuraGateway(HTTPGateway):
                             column=field_name + '_id',
                         )
                     )
-                    metadata_tables[related_table_name]['array_relationships'].append(
-                        self._format_array_relationship(
-                            related_name=field.related_name,
-                            table=table_name,
-                            column=field_name + '_id',
+                    if field.related_name:
+                        metadata_tables[related_table_name]['array_relationships'].append(
+                            self._format_array_relationship(
+                                related_name=field.related_name,
+                                table=table_name,
+                                column=field_name + '_id',
+                            )
                         )
-                    )
 
                 elif isinstance(field, fields.relational.ManyToManyFieldInstance):
-                    if not isinstance(field.related_name, str):
-                        raise HasuraError(f'`related_name` of `{field}` field must be set')
-
                     related_table_name = model_tables[field.model_name]
                     junction_table_name = field.through
 
@@ -299,13 +294,14 @@ class HasuraGateway(HTTPGateway):
                             column=table_name + '_id',
                         )
                     )
-                    metadata_tables[related_table_name]['array_relationships'].append(
-                        self._format_array_relationship(
-                            related_name=f'{related_table_name}_{field.related_name}',
-                            table=junction_table_name,
-                            column=related_table_name + '_id',
+                    if field.related_name:
+                        metadata_tables[related_table_name]['array_relationships'].append(
+                            self._format_array_relationship(
+                                related_name=f'{related_table_name}_{field.related_name}',
+                                table=junction_table_name,
+                                column=related_table_name + '_id',
+                            )
                         )
-                    )
 
                 else:
                     pass
