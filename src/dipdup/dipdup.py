@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import warnings
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
@@ -30,6 +31,7 @@ from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
+from dipdup.config import IpfsDatasourceConfig
 from dipdup.config import MetadataDatasourceConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -43,6 +45,7 @@ from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
+from dipdup.datasources.ipfs.datasource import IpfsDatasource
 from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
@@ -328,7 +331,7 @@ class DipDup:
             callbacks=self._callbacks,
         )
         self._index_dispatcher: Optional[IndexDispatcher] = None
-        self._scheduler = create_scheduler()
+        self._scheduler = create_scheduler(self._config.advanced.scheduler)
         self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         self._schema: Optional[Schema] = None
 
@@ -359,7 +362,7 @@ class DipDup:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
             await self._set_up_datasources(stack)
-            await self._set_up_hooks()
+            await self._set_up_hooks(tasks)
             await self._set_up_prometheus()
 
             await self._initialize_schema()
@@ -397,6 +400,7 @@ class DipDup:
                     merge_subscriptions=self._config.advanced.merge_subscriptions,
                 )
             elif isinstance(datasource_config, BcdDatasourceConfig):
+                warnings.warn('Better Call Dev API is deprecated, use `MetadataDatasource` instead', DeprecationWarning)
                 datasource = BcdDatasource(
                     url=datasource_config.url,
                     network=datasource_config.network,
@@ -410,6 +414,11 @@ class DipDup:
                 datasource = MetadataDatasource(
                     url=datasource_config.url,
                     network=datasource_config.network,
+                    http_config=datasource_config.http,
+                )
+            elif isinstance(datasource_config, IpfsDatasourceConfig):
+                datasource = IpfsDatasource(
+                    url=datasource_config.url,
                     http_config=datasource_config.http,
                 )
             else:
@@ -486,11 +495,13 @@ class DipDup:
         models = f'{self._config.package}.models'
         await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
 
-    async def _set_up_hooks(self) -> None:
+    async def _set_up_hooks(self, tasks: Optional[Set[Task]] = None) -> None:
         for hook_config in default_hooks.values():
             self._ctx.callbacks.register_hook(hook_config)
         for hook_config in self._config.hooks.values():
             self._ctx.callbacks.register_hook(hook_config)
+        if tasks:
+            tasks.add(create_task(self._ctx.callbacks.run()))
 
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus:
