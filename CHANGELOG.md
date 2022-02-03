@@ -7,7 +7,9 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * ci: Removed `black 21.12b0` dependency since bug in `datamodel-codegen-generator` is fixed.
+* config: Verify `advanced.scheduler` config for correctness unsupported features.
 * hasura: Fixed processing relation fields with missing `related_name`.
+* jobs: Fixed default `apscheduler` config.
 
 ## 4.2.2 - 2022-02-01
 
