@@ -6,6 +6,8 @@ import platform
 from abc import ABC
 from contextlib import suppress
 from http import HTTPStatus
+from json import JSONDecodeError
+from typing import Any
 from typing import Mapping
 from typing import Optional
 from typing import Tuple
@@ -44,9 +46,16 @@ class HTTPGateway(ABC):
         """Close underlying aiohttp session"""
         await self._http.__aexit__(exc_type, exc, tb)
 
-    async def close_session(self) -> None:
-        """Close aiohttp session"""
-        await self._http.close_session()
+    async def request(
+        self,
+        method: str,
+        url: str,
+        cache: bool = False,
+        weight: int = 1,
+        **kwargs,
+    ) -> Any:
+        """Send arbitrary HTTP request"""
+        return await self._http.request(method, url, cache, weight, **kwargs)
 
     def set_user_agent(self, *args: str) -> None:
         """Add list of arguments to User-Agent header"""
@@ -81,7 +90,7 @@ class _HTTPGateway:
 
     async def __aexit__(self, exc_type, exc, tb):
         """Close underlying aiohttp session"""
-        self._logger.info('Closing gateway session (%s)', self._url)
+        self._logger.debug('Closing gateway session (%s)', self._url)
         await self.__session.close()
 
     @property
@@ -170,9 +179,19 @@ class _HTTPGateway:
             raise_for_status=True,
             **kwargs,
         ) as response:
-            return await response.json()
+            try:
+                return await response.json()
+            except (JSONDecodeError, aiohttp.ContentTypeError):
+                return await response.read()
 
-    async def request(self, method: str, url: str, cache: bool = False, weight: int = 1, **kwargs):
+    async def request(
+        self,
+        method: str,
+        url: str,
+        cache: bool = False,
+        weight: int = 1,
+        **kwargs,
+    ) -> Any:
         """Perform an HTTP request.
 
         Check for parameters in cache, if not found, perform retried request and cache result.
@@ -187,10 +206,6 @@ class _HTTPGateway:
                 return response  # noqa: R504
         else:
             return await self._retry_request(method, url, weight, **kwargs)
-
-    async def close_session(self) -> None:
-        """Close aiohttp session"""
-        await self._session.close()
 
     def set_user_agent(self, *args: str) -> None:
         """Add list of arguments to User-Agent header"""

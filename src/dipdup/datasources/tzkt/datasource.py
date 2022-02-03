@@ -312,7 +312,7 @@ class TzktDatasource(IndexDatasource):
         addresses: Tuple[str, ...] = ()
 
         while size == self.request_limit:
-            response = await self._http.request(
+            response = await self.request(
                 'get',
                 url=f'v1/contracts/{address}/{entrypoint}',
                 params={
@@ -335,7 +335,7 @@ class TzktDatasource(IndexDatasource):
         addresses: Tuple[str, ...] = ()
 
         while size == self.request_limit:
-            response = await self._http.request(
+            response = await self.request(
                 'get',
                 url=f'v1/accounts/{address}/contracts',
                 params={
@@ -353,7 +353,7 @@ class TzktDatasource(IndexDatasource):
     async def get_contract_summary(self, address: str) -> Dict[str, Any]:
         """Get contract summary"""
         self._logger.info('Fetching contract summary for address `%s', address)
-        return await self._http.request(
+        return await self.request(
             'get',
             url=f'v1/contracts/{address}',
         )
@@ -361,7 +361,7 @@ class TzktDatasource(IndexDatasource):
     async def get_contract_storage(self, address: str) -> Dict[str, Any]:
         """Get contract storage"""
         self._logger.info('Fetching contract storage for address `%s', address)
-        return await self._http.request(
+        return await self.request(
             'get',
             url=f'v1/contracts/{address}/storage',
         )
@@ -369,7 +369,7 @@ class TzktDatasource(IndexDatasource):
     async def get_jsonschemas(self, address: str) -> Dict[str, Any]:
         """Get JSONSchemas for contract's storage/parameter/bigmap types"""
         self._logger.info('Fetching jsonschemas for address `%s', address)
-        jsonschemas = await self._http.request(
+        jsonschemas = await self.request(
             'get',
             url=f'v1/contracts/{address}/interface',
             cache=True,
@@ -384,7 +384,7 @@ class TzktDatasource(IndexDatasource):
         kwargs = {'active': str(active).lower()} if active else {}
 
         while size == self.request_limit:
-            response = await self._http.request(
+            response = await self.request(
                 'get',
                 url=f'v1/bigmaps/{big_map_id}/keys',
                 params={
@@ -405,7 +405,7 @@ class TzktDatasource(IndexDatasource):
         big_maps: Tuple[Dict[str, Any], ...] = ()
 
         while size == self.request_limit:
-            response = await self._http.request(
+            response = await self.request(
                 'get',
                 url=f'v1/contracts/{address}/bigmaps',
                 params={
@@ -422,7 +422,7 @@ class TzktDatasource(IndexDatasource):
     async def get_head_block(self) -> HeadBlockData:
         """Get latest block (head)"""
         self._logger.info('Fetching latest block')
-        head_block_json = await self._http.request(
+        head_block_json = await self.request(
             'get',
             url='v1/head',
         )
@@ -431,7 +431,7 @@ class TzktDatasource(IndexDatasource):
     async def get_block(self, level: int) -> BlockData:
         """Get block by level"""
         self._logger.info('Fetching block %s', level)
-        block_json = await self._http.request(
+        block_json = await self.request(
             'get',
             url=f'v1/blocks/{level}',
         )
@@ -453,7 +453,7 @@ class TzktDatasource(IndexDatasource):
         except ClientResponseError:
             return ()
 
-        raw_migrations = await self._http.request(
+        raw_migrations = await self.request(
             'get',
             url='v1/operations/migrations',
             params={
@@ -472,7 +472,7 @@ class TzktDatasource(IndexDatasource):
         # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
         # NOTE: Other operation requests won't hit that limit.
         for addresses_chunk in split_by_chunks(list(addresses), TZKT_ORIGINATIONS_REQUEST_LIMIT):
-            raw_originations += await self._http.request(
+            raw_originations += await self.request(
                 'get',
                 url='v1/operations/originations',
                 params={
@@ -493,7 +493,7 @@ class TzktDatasource(IndexDatasource):
     async def get_transactions(
         self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
     ) -> Tuple[OperationData, ...]:
-        raw_transactions = await self._http.request(
+        raw_transactions = await self.request(
             'get',
             url='v1/operations/transactions',
             params={
@@ -514,7 +514,7 @@ class TzktDatasource(IndexDatasource):
     async def get_big_maps(
         self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
     ) -> Tuple[BigMapData, ...]:
-        raw_big_maps = await self._http.request(
+        raw_big_maps = await self.request(
             'get',
             url='v1/bigmaps/updates',
             params={
@@ -532,7 +532,7 @@ class TzktDatasource(IndexDatasource):
     async def get_quote(self, level: int) -> QuoteData:
         """Get quote for block"""
         self._logger.info('Fetching quotes for level %s', level)
-        quote_json = await self._http.request(
+        quote_json = await self.request(
             'get',
             url='v1/quotes',
             params={"level": level},
@@ -543,7 +543,7 @@ class TzktDatasource(IndexDatasource):
     async def get_quotes(self, from_level: int, to_level: int) -> Tuple[QuoteData, ...]:
         """Get quotes for blocks"""
         self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
-        quotes_json = await self._http.request(
+        quotes_json = await self.request(
             'get',
             url='v1/quotes',
             params={
@@ -655,10 +655,8 @@ class TzktDatasource(IndexDatasource):
         await gather(*tasks)
 
     async def _on_connect(self) -> None:
-        """Subscribe to all required channels on established WS connection"""
         self._logger.info('Realtime connection established')
         # NOTE: Subscribing here will block WebSocket loop
-        # await self.subscribe()
 
     async def _on_disconnect(self) -> None:
         self._logger.info('Realtime connection lost')

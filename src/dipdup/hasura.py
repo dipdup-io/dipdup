@@ -29,6 +29,7 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import HasuraError
 from dipdup.http import HTTPGateway
 from dipdup.models import Schema
 from dipdup.utils import iter_files
@@ -77,10 +78,6 @@ class Field:
         return humps.decamelize(self.name)
 
 
-class HasuraError(RuntimeError):
-    ...
-
-
 class HasuraGateway(HTTPGateway):
     _default_http_config = HTTPConfig(
         cache=False,
@@ -120,21 +117,21 @@ class HasuraGateway(HTTPGateway):
             self._logger.info('Metadata is up to date, no action required')
             return
 
-        await self._reset_metadata()
-        metadata = await self._fetch_metadata()
-
-        # NOTE: Hasura metadata updated in three steps.
-        # NOTE: Order matters because queries must be generated after applying table customization to be valid.
-        # NOTE: 1. Generate and apply tables metadata.
-        source_tables_metadata = await self._generate_source_tables_metadata()
-        metadata['sources'][0]['tables'] = source_tables_metadata
+        # NOTE: Find chosen source and overwrite its tables
+        source_name = self._hasura_config.source
+        for source in metadata['sources']:
+            if source['name'] == source_name:
+                source['tables'] = await self._generate_source_tables_metadata()
+                break
+        else:
+            raise HasuraError(f'Source `{source_name}` not found in metadata')
         await self._replace_metadata(metadata)
 
-        # NOTE: 2. Apply table customization and refresh metadata
+        # NOTE: Apply table customizations before generating queries
         await self._apply_table_customization()
         metadata = await self._fetch_metadata()
 
-        # NOTE: 3. Generate and apply queries and rest endpoints
+        # NOTE: Generate and apply queries and REST endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
         self._logger.info('Adding %s generated and user-defined queries', len(query_collections_metadata))
         metadata['query_collections'] = [
@@ -152,6 +149,7 @@ class HasuraGateway(HTTPGateway):
 
         await self._replace_metadata(metadata)
 
+        # NOTE: Fetch metadata once again (to do: find out why is it necessary) and save its hash for future comparisons
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
         hasura_schema.hash = metadata_hash  # type: ignore
@@ -161,7 +159,7 @@ class HasuraGateway(HTTPGateway):
 
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
-        result = await self._http.request(
+        result = await self.request(
             method='post',
             cache=False,
             url=f'{self._hasura_config.url}/v1/{endpoint}',
@@ -170,7 +168,7 @@ class HasuraGateway(HTTPGateway):
         )
         self._logger.debug('Response: %s', result)
         if 'error' in result or 'errors' in result:
-            raise HasuraError('Can\'t configure Hasura instance', result)
+            raise HasuraError(result)
         return result
 
     async def _healthcheck(self) -> None:
@@ -183,7 +181,7 @@ class HasuraGateway(HTTPGateway):
                     break
             await asyncio.sleep(1)
         else:
-            raise HasuraError(f'Hasura instance not responding for {timeout} seconds')
+            raise HasuraError(f'Not responding for {timeout} seconds')
 
         version_json = await (
             await self._http._session.get(
@@ -192,19 +190,9 @@ class HasuraGateway(HTTPGateway):
         ).json()
         version = version_json['version']
         if version.startswith('v1'):
-            raise HasuraError('Hasura v1 is not supported.')
+            raise HasuraError('v1 is not supported, upgrade to the latest stable version.')
 
         self._logger.info('Connected to Hasura %s', version)
-
-    async def _reset_metadata(self) -> None:
-        self._logger.info('Resetting metadata')
-        await self._hasura_request(
-            endpoint='metadata',
-            json={
-                "type": "clear_metadata",
-                "args": {},
-            },
-        )
 
     async def _fetch_metadata(self) -> Dict[str, Any]:
         self._logger.info('Fetching existing metadata')
@@ -272,9 +260,6 @@ class HasuraGateway(HTTPGateway):
 
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
-                    if not isinstance(field.related_name, str):
-                        raise HasuraError(f'`related_name` of `{field}` must be set')
-
                     related_table_name = model_tables[field.model_name]
                     field_name = field.model_field_name
                     metadata_tables[table_name]['object_relationships'].append(
@@ -283,18 +268,16 @@ class HasuraGateway(HTTPGateway):
                             column=field_name + '_id',
                         )
                     )
-                    metadata_tables[related_table_name]['array_relationships'].append(
-                        self._format_array_relationship(
-                            related_name=field.related_name,
-                            table=table_name,
-                            column=field_name + '_id',
+                    if field.related_name:
+                        metadata_tables[related_table_name]['array_relationships'].append(
+                            self._format_array_relationship(
+                                related_name=field.related_name,
+                                table=table_name,
+                                column=field_name + '_id',
+                            )
                         )
-                    )
 
                 elif isinstance(field, fields.relational.ManyToManyFieldInstance):
-                    if not isinstance(field.related_name, str):
-                        raise HasuraError(f'`related_name` of `{field}` must be set')
-
                     related_table_name = model_tables[field.model_name]
                     junction_table_name = field.through
 
@@ -311,13 +294,14 @@ class HasuraGateway(HTTPGateway):
                             column=table_name + '_id',
                         )
                     )
-                    metadata_tables[related_table_name]['array_relationships'].append(
-                        self._format_array_relationship(
-                            related_name=f'{related_table_name}_{field.related_name}',
-                            table=junction_table_name,
-                            column=related_table_name + '_id',
+                    if field.related_name:
+                        metadata_tables[related_table_name]['array_relationships'].append(
+                            self._format_array_relationship(
+                                related_name=f'{related_table_name}_{field.related_name}',
+                                table=junction_table_name,
+                                column=related_table_name + '_id',
+                            )
                         )
-                    )
 
                 else:
                     pass

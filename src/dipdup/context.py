@@ -10,10 +10,14 @@ from os.path import exists
 from os.path import join
 from pprint import pformat
 from typing import Any
+from typing import Awaitable
+from typing import Deque
 from typing import Dict
 from typing import Iterator
 from typing import Optional
 from typing import Tuple
+from typing import Type
+from typing import TypeVar
 from typing import Union
 from typing import cast
 
@@ -32,7 +36,10 @@ from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import TzktDatasourceConfig
+from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
+from dipdup.datasources.ipfs.datasource import IpfsDatasource
+from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReasonC
@@ -51,11 +58,15 @@ from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
+from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import wipe_schema
 
+DatasourceT = TypeVar('DatasourceT', bound=Datasource)
+# NOTE: Dependency cycle
 pending_indexes = deque()  # type: ignore
+pending_hooks: Deque[Awaitable[None]] = deque()
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -78,10 +89,11 @@ class DipDupContext:
         self,
         name: str,
         fmt: Optional[str] = None,
+        wait: bool = True,
         *args,
         **kwargs: Any,
     ) -> None:
-        await self.callbacks.fire_hook(self, name, fmt, *args, **kwargs)
+        await self.callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
 
     async def fire_handler(
         self,
@@ -186,9 +198,7 @@ class DipDupContext:
         index: Union[OperationIndex, BigMapIndex, HeadIndex]
 
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
-        datasource = self.datasources[datasource_name]
-        if not isinstance(datasource, TzktDatasource):
-            raise RuntimeError(f'`{datasource_name}` is not a TzktDatasource')
+        datasource = self.get_tzkt_datasource(datasource_name)
 
         if isinstance(index_config, OperationIndexConfig):
             index = OperationIndex(self, index_config, datasource)
@@ -206,6 +216,26 @@ class DipDupContext:
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
         pending_indexes.append(index)
+
+    def _get_datasource(self, name: str, type_: Type[DatasourceT]) -> DatasourceT:
+        datasource = self.datasources.get(name)
+        if not datasource:
+            raise ConfigurationError(f'Datasource `{name}` is missing')
+        if not isinstance(datasource, type_):
+            raise ConfigurationError(f'Datasource `{name}` is not a `{type.__name__}`')
+        return datasource
+
+    def get_tzkt_datasource(self, name: str) -> TzktDatasource:
+        return self._get_datasource(name, TzktDatasource)
+
+    def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
+        return self._get_datasource(name, CoinbaseDatasource)
+
+    def get_metadata_datasource(self, name: str) -> MetadataDatasource:
+        return self._get_datasource(name, MetadataDatasource)
+
+    def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
+        return self._get_datasource(name, IpfsDatasource)
 
 
 class HookContext(DipDupContext):
@@ -263,6 +293,12 @@ class CallbackManager:
         self._handlers: Dict[Tuple[str, str], HandlerConfig] = {}
         self._hooks: Dict[str, HookConfig] = {}
 
+    async def run(self) -> None:
+        while True:
+            async with slowdown(1):
+                while coro := pending_hooks.popleft():
+                    await coro
+
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
             raise RuntimeError('Handler must have a parent index')
@@ -307,6 +343,7 @@ class CallbackManager:
         ctx: 'DipDupContext',
         name: str,
         fmt: Optional[str] = None,
+        wait: bool = True,
         *args,
         **kwargs: Any,
     ) -> None:
@@ -321,12 +358,19 @@ class CallbackManager:
 
         self._verify_arguments(new_ctx, *args, **kwargs)
 
-        async with AsyncExitStack() as stack:
-            stack.enter_context(self._callback_wrapper('hook', name))
-            if hook_config.atomic:
-                await stack.enter_async_context(in_global_transaction())
+        async def _wrapper():
+            async with AsyncExitStack() as stack:
 
-            await hook_config.callback_fn(ctx, *args, **kwargs)
+                stack.enter_context(self._callback_wrapper('hook', name))
+                if hook_config.atomic:
+                    await stack.enter_async_context(in_global_transaction())
+
+                await hook_config.callback_fn(ctx, *args, **kwargs)
+
+        if wait:
+            await _wrapper()
+        else:
+            pending_hooks.append(_wrapper())
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""

@@ -1,7 +1,9 @@
+import logging
 import os
 import sys
+import warnings
 
-__version__ = '4.1.0'
+__version__ = '4.2.2'
 __spec_version__ = '1.2'
 spec_version_mapping = {
     '0.1': '<=0.4.3',
@@ -17,3 +19,6 @@ spec_reindex_mapping = {
 }
 
 sys.path.append(os.getcwd())
+logging.captureWarnings(True)
+warnings.simplefilter('always', DeprecationWarning)
+warnings.formatwarning = lambda msg, *a, **kw: str(msg)
