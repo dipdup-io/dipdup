@@ -6,6 +6,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
+* ci: Removed `black 21.12b0` dependency since bug in `datamodel-codegen-generator` is fixed.
 * hasura: Fixed processing relation fields with missing `related_name`.
 
 ## 4.2.2 - 2022-02-01

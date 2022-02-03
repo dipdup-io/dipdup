@@ -28,7 +28,7 @@ anyio = "^3.2.1"
 APScheduler = "^3.7.0"
 asyncclick = "^8.0.1"
 asyncpg = "^0.24.0"
-datamodel-code-generator = "^0.11.1"
+datamodel-code-generator = "^0.11.18"
 fcache = "^0.4.7"
 pydantic = "^1.8.1"
 pyhumps = "^3.0.2"
@@ -42,10 +42,8 @@ tabulate = "^0.8.9"
 tortoise-orm = "0.17.8"
 typing-inspect = "^0.6.0"
 
-# FIXME: https://github.com/koxudaxi/datamodel-code-generator/issues/700
-black = "21.12b0"
-
 [tool.poetry.dev-dependencies]
+black = "^22.1.0"
 bump2version = "^1.0.1"
 diff-cover = "^5.0.1"
 flake8 = "3.9.0"
