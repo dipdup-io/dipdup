@@ -1,3 +1,4 @@
+import json
 from contextlib import AsyncExitStack
 from datetime import datetime
 from functools import partial
@@ -18,22 +19,23 @@ from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
 DEFAULT_CONFIG = {
-    'jobstores': {
-        'default': {
-            'class': 'apscheduler.jobstores.memory:MemoryJobStore',
-        },
-    },
-    'executors': {
-        'default': {
-            'class': 'dipdup.executors.asyncio:AsyncIOExecutor',
-        },
-    },
-    'timezone': 'UTC',
+    'apscheduler.jobstores.default.class': 'apscheduler.jobstores.memory:MemoryJobStore',
+    'apscheduler.executors.default.class': 'apscheduler.executors.asyncio:AsyncIOExecutor',
+    'apscheduler.timezone': 'UTC',
 }
 
 
 def create_scheduler(config: Optional[Dict[str, Any]] = None) -> AsyncIOScheduler:
-    return AsyncIOScheduler(config or DEFAULT_CONFIG)
+    if not config:
+        return AsyncIOScheduler(DEFAULT_CONFIG)
+
+    json_config = json.dumps(config)
+    if 'apscheduler.executors.pool' in json_config:
+        raise ConfigurationError('`apscheduler.executors.pool` is not supported. If needed, create a pool inside a regular hook.')
+    for key in config:
+        if not key.startswith('apscheduler.'):
+            raise ConfigurationError('`advanced.scheduler` config keys must start with `apscheduler.`, see apscheduler library docs')
+    return AsyncIOScheduler(config)
 
 
 def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConfig) -> None:
