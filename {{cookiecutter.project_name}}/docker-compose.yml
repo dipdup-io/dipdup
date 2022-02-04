@@ -17,7 +17,7 @@ services:
   db:
     image: {{ cookiecutter.postgresql_version }}
     ports:
-      - 127.0.0.1:41432:5432
+      - 127.0.0.1:5432:5432
     volumes:
       - db:/var/lib/postgresql/data
     environment:
@@ -36,7 +36,7 @@ services:
   hasura:
     image: {{ cookiecutter.hasura_version }}
     ports:
-      - 127.0.0.1:41000:8080
+      - 127.0.0.1:8080:8080
     depends_on:
       - db
     restart: always
