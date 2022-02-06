@@ -683,11 +683,20 @@ class TzktDatasource(IndexDatasource):
 
             # NOTE: Emit rollback, but not on `head` message
             elif tzkt_type == TzktMessageType.REORG:
-                if current_level is None:
-                    raise RuntimeError('Reorg message received but level is not set')
                 # NOTE: operation/big_map channels have their own levels
                 if type_ == MessageType.head:
                     return
+
+                # NOTE: If no data messages were received since run, use sync level instead
+                if current_level is None:
+                    # NOTE: There's only one sync level for all channels, otherwise `Index.process` would fail
+                    current_level = self.get_sync_level(HeadSubscription())
+                    if not current_level:
+                        raise RuntimeError('Reorg message received, but neither current nor sync level is known')
+
+                    # NOTE: This rollback does not affect us, so we can safely ignore it
+                    if current_level <= level:
+                        return
 
                 self._logger.info('Emitting rollback from %s to %s', current_level, level)
                 await self.emit_rollback(current_level, level)

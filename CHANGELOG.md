@@ -11,6 +11,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * context: Fixed ignored `wait` argument of `fire_hook` method.
 * hasura: Fixed processing relation fields with missing `related_name`.
 * jobs: Fixed default `apscheduler` config.
+* tzkt: Fixed crash occurring when reorg message is the first one received by the datasource.
 
 ## 4.2.2 - 2022-02-01
 
