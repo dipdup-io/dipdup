@@ -2,6 +2,82 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* ci: Removed `black 21.12b0` dependency since bug in `datamodel-codegen-generator` is fixed.
+* config: Verify `advanced.scheduler` config for correctness unsupported features.
+* context: Fixed ignored `wait` argument of `fire_hook` method.
+* hasura: Fixed processing relation fields with missing `related_name`.
+* jobs: Fixed default `apscheduler` config.
+* tzkt: Fixed crash occurring when reorg message is the first one received by the datasource.
+
+## 4.2.2 - 2022-02-01
+
+### Fixed
+
+* config: Fixed `ipfs` datasource config.
+
+## 4.2.1 - 2022-01-31
+
+### Fixed
+
+* ci: Added `black 21.12b0` dependency to avoid possible conflict with `datamodel-codegen-generator`.
+
+## 4.2.0 - 2022-01-31
+
+### Added
+
+* context: Added `wait` argument to `fire_hook` method to escape current transaction context.
+* context: Added `ctx.get_<kind>_datasource` helpers to avoid type casting.
+* hooks: Added ability to configure `apscheduler` with `AdvancedConfig.scheduler` field.
+* http: Added `request` method to send arbitrary requests (affects all datasources).
+* ipfs: Added `ipfs` datasource to download JSON and binary data from IPFS.
+
+### Fixed
+
+* http: Removed dangerous method `close_session`.
+* context: Fixed help message of `IndexAlreadyExistsError` exception.
+
+### Deprecated
+
+* bcd: Added deprecation notice.
+
+### Other
+
+* dipdup: Removed unused internal methods.
+
+## 4.1.2 - 2022-01-27
+
+### Added
+
+* cli: Added `schema wipe --force` argument to skip confirmation prompt.
+
+### Fixed
+
+* cli: Show warning about deprecated `--hashes` argument
+* cli: Ignore `SIGINT` signal when shutdown is in progress.
+* sentry: Ignore exceptions when shutdown is in progress.
+
+## 4.1.1 - 2022-01-25
+
+### Fixed
+
+* cli: Fixed stacktraces missing on exception.
+* cli: Fixed wrapping `OSError` with `ConfigurationError` during config loading.
+* hasura: Fixed printing help messages on `HasuraError`.
+* hasura: Preserve a list of sources in Hasura Cloud environments.
+* hasura: Fixed `HasuraConfig.source` config option.
+
+### Changed
+
+* cli: Unknown exceptions are no longer wrapped with `DipDupError`.
+
+### Performance
+
+* hasura: Removed some useless requests.
+
 ## 4.1.0 - 2022-01-24
 
 ### Added

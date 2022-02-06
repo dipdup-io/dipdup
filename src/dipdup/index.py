@@ -194,7 +194,7 @@ class Index:
         sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
         sync_level = sync_levels.pop()
         if sync_levels:
-            raise Exception
+            raise RuntimeError(f'Multiple sync levels: {sync_levels}')
         level = self.state.level
 
         if sync_level is None:
