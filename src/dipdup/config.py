@@ -49,6 +49,7 @@ from dipdup.enums import ReindexingReasonC
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.utils import exclude_none
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -1072,10 +1073,12 @@ class DipDupConfig:
 
     def dump(self) -> str:
         config_json = json.dumps(self, default=pydantic_encoder)
+        config_yaml = yaml.safe_load(config_json)
+
         return cast(
             str,
             yaml.dump(
-                yaml.safe_load(config_json),
+                exclude_none(config_yaml),
                 indent=2,
                 default_flow_style=False,
             ),

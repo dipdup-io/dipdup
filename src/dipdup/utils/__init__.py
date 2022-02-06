@@ -177,3 +177,12 @@ def skip_ci(fn):
     if os.environ.get('CI'):
         return skip('CI environment, skipping')(fn)
     return fn
+
+
+def exclude_none(config_json):
+    if isinstance(config_json, (list, tuple)):
+        return [exclude_none(i) for i in config_json if i is not None]
+    elif isinstance(config_json, dict):
+        return {k: exclude_none(v) for k, v in config_json.items() if v is not None}
+    else:
+        return config_json
