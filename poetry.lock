@@ -1479,7 +1479,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "pyhumps"
-version = "3.5.0"
+version = "3.5.3"
 description = "🐫  Convert strings (and dictionary keys) between snake case, camel case and pascal case in Python. Inspired by Humps for Node"
 category = "main"
 optional = false
@@ -1737,7 +1737,7 @@ python-versions = "*"
 
 [[package]]
 name = "pywinpty"
-version = "2.0.1"
+version = "2.0.2"
 description = "Pseudo terminal support for Windows from Python."
 category = "main"
 optional = true
@@ -3204,8 +3204,8 @@ pygments = [
     {file = "Pygments-2.11.2.tar.gz", hash = "sha256:4e426f72023d88d03b2fa258de560726ce890ff3b630f88c21cbb8b2503b8c6a"},
 ]
 pyhumps = [
-    {file = "pyhumps-3.5.0-py3-none-any.whl", hash = "sha256:2433eef13d1c258227a0bd5de9660ba17dd6a307e1255d2d20ec9287f8626d96"},
-    {file = "pyhumps-3.5.0.tar.gz", hash = "sha256:55e37f16846eaab26057200924cbdadd2152bf0a5d49175a42358464fa881c73"},
+    {file = "pyhumps-3.5.3-py3-none-any.whl", hash = "sha256:8d7e9865d6ddb6e64a2e97d951b78b5cc827d3d66cda1297310fc83b2ddf51dc"},
+    {file = "pyhumps-3.5.3.tar.gz", hash = "sha256:0ecf7fee84503b45afdd3841ec769b529d32dfaed855e07046ff8babcc0ab831"},
 ]
 pyparsing = [
     {file = "pyparsing-3.0.7-py3-none-any.whl", hash = "sha256:a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484"},
@@ -3315,11 +3315,11 @@ pywin32 = [
     {file = "pywin32-227-cp39-cp39-win_amd64.whl", hash = "sha256:f27cec5e7f588c3d1051651830ecc00294f90728d19c3bf6916e6dba93ea357c"},
 ]
 pywinpty = [
-    {file = "pywinpty-2.0.1-cp310-none-win_amd64.whl", hash = "sha256:ec7d4841c82980519f31d2c61b7f93db4b773a66fce489a8a72377045fe04c4b"},
-    {file = "pywinpty-2.0.1-cp37-none-win_amd64.whl", hash = "sha256:29550aafda86962b3b68e3454c11e26c1b8cf646dfafec33a4325c8d70ab4f36"},
-    {file = "pywinpty-2.0.1-cp38-none-win_amd64.whl", hash = "sha256:dfdbcd0407c157c2024b0ea91b855caae25510fcf6c4da21c075253f05991a3a"},
-    {file = "pywinpty-2.0.1-cp39-none-win_amd64.whl", hash = "sha256:c7cd0b30da5edd3e0b967842baa2aef1d205d991aa63a13c05afdb95d0812e69"},
-    {file = "pywinpty-2.0.1.tar.gz", hash = "sha256:14e7321c6d43743af0de175fca9f111c5cc8d0a9f7c608c9e1cc69ec0d6ac146"},
+    {file = "pywinpty-2.0.2-cp310-none-win_amd64.whl", hash = "sha256:4b421379b407bf2f52a64a4c58f61deffe623b5add02d871acb290b771bb6227"},
+    {file = "pywinpty-2.0.2-cp37-none-win_amd64.whl", hash = "sha256:238b75fc456a6bc558761a89c9e6b3c8f2f54d79db03ae28997a68313c24b2ca"},
+    {file = "pywinpty-2.0.2-cp38-none-win_amd64.whl", hash = "sha256:344858a0b956fdc64a547d5e1980b0257b47f5433ed7cb89bf7b6268cb280c6c"},
+    {file = "pywinpty-2.0.2-cp39-none-win_amd64.whl", hash = "sha256:a4a066eaf2e30944d3028d946883ceb7883a499b53c4b89ca2d54bd7a4210550"},
+    {file = "pywinpty-2.0.2.tar.gz", hash = "sha256:20ec117183f79642eff555ce0dd1823f942618d65813fb6122d14b6e34b5d05a"},
 ]
 pyyaml = [
     {file = "PyYAML-6.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d4db7c7aef085872ef65a8fd7d6d09a14ae91f691dec3e87ee5ee0539d516f53"},
