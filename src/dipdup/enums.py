@@ -35,10 +35,11 @@ class IndexStatus(Enum):
     SYNCING = 'SYNCING'
     REALTIME = 'REALTIME'
     ROLLBACK = 'ROLLBACK'
+    # TODO: Drop in 5.0.0
     ONESHOT = 'ONESHOT'
 
 
-# TODO: Drop with the next major release
+# TODO: Drop in 5.0.0
 class ReindexingReason(ReversedEnum):
     MANUAL = 'triggered manually from callback'
     MIGRATION = 'applied migration requires reindexing'
@@ -49,7 +50,8 @@ class ReindexingReason(ReversedEnum):
     MISSING_INDEX_TEMPLATE = 'index template is missing, can\'t restore index state'
 
 
-class ReindexingReasonC(Enum):
+# NOTE: Used as a key in config, must inherit from str
+class ReindexingReasonC(str, Enum):
     manual = 'manual'
     migration = 'migration'
     rollback = 'rollback'

@@ -1,3 +1,4 @@
+import tempfile
 from os.path import dirname
 from os.path import join
 from typing import Callable
@@ -34,3 +35,14 @@ class ConfigTest(IsolatedAsyncioTestCase):
             ContractConfig(address='lalalalalalalalalalalalalalalalalala')
         with self.assertRaises(ConfigurationError):
             TzktDatasourceConfig(kind='tzkt', url='not_an_url')
+
+    async def test_dump(self):
+        config = DipDupConfig.load([self.path])
+        config.initialize()
+
+        tmp = tempfile.mkstemp()[1]
+        with open(tmp, 'w') as f:
+            f.write(config.dump())
+
+        config = DipDupConfig.load([tmp], environment=False)
+        config.initialize()
