@@ -8,15 +8,12 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * ci: Removed `black 21.12b0` dependency since bug in `datamodel-codegen-generator` is fixed.
 * cli: Fixed `config export` command crash when `advanced.reindex` dictionary is present.
+* cli: Removed optionals from `config export` output so the result can be loaded again.
 * config: Verify `advanced.scheduler` config for the correctness and unsupported features.
 * context: Fixed ignored `wait` argument of `fire_hook` method.
 * hasura: Fixed processing relation fields with missing `related_name`.
 * jobs: Fixed default `apscheduler` config.
 * tzkt: Fixed crash occurring when reorg message is the first one received by the datasource.
-
-### Improved
-
-* cli: Skip useless optionals in `config export` output.
 
 ## 4.2.2 - 2022-02-01
 
