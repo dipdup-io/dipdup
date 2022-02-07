@@ -7,7 +7,9 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * ci: Removed `black 21.12b0` dependency since bug in `datamodel-codegen-generator` is fixed.
-* config: Verify `advanced.scheduler` config for correctness unsupported features.
+* cli: Fixed `config export` command crash when `advanced.reindex` dictionary is present.
+* cli: Removed optionals from `config export` output so the result can be loaded again.
+* config: Verify `advanced.scheduler` config for the correctness and unsupported features.
 * context: Fixed ignored `wait` argument of `fire_hook` method.
 * hasura: Fixed processing relation fields with missing `related_name`.
 * jobs: Fixed default `apscheduler` config.
