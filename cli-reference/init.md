@@ -10,7 +10,7 @@ DipDup will generate all the necessary directories and files inside the project'
 
 `init` command does not overwrite typeclasses already generated. Use the `--overwrite-types` flag if it's not the desired behavior. Also, you can mark some files as immune from rewriting; see [8.2. Reusing typename for different contracts](../cookbook/reusing-typenames.md).
 
-### Nested packages for hooks and handlers
+## Nested packages for hooks and handlers
 
 Callback modules don't have to be in top-level `hooks`/`handlers` directories. Add one or multiple dots to callback name to define nested packages:
 
@@ -23,7 +23,7 @@ hooks:
 
 After running `init` command, you'll get the following directory tree (shortened for readability):
 
-```
+```text
 indexer
 ├── hooks
 │   ├── foo

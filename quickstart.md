@@ -13,8 +13,9 @@ A Linux environment with Python 3.8+ installed is required to use DipDup.
 Cookiecutter is a cool `jinja2` wrapper to initialize hello-world templates of various frameworks and toolkits interactively. Install `python-cookiecutter` package systemwide, then call:
 
 ```shell
-$ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
+cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 ```
+
 ### From scratch
 
 You need `poetry` package manager installed.
@@ -78,7 +79,7 @@ dipdup init
 
 DipDup will create a Python package `demo_tzbtc` having the following structure:
 
-```
+```text
 demo_tzbtc
 ├── graphql
 ├── handlers

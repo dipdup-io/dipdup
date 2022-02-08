@@ -7,7 +7,7 @@
 |  | `tzkt` | `tezos-node` | `bcd` | `coinbase` | `metadata` | `ipfs` |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | DipDup index | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Callback context (`ctx.datasources`) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | 
+| Callback context (`ctx.datasources`) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
 | `dipdup-mempool` plugin | ✅\* | ✅\* | ❌ | ❌ | ❌ | ❌ |
 | `dipdup-metadata` plugin | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
 
