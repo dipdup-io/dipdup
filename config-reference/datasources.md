@@ -26,6 +26,10 @@ A datasource config entry is an alias for the endpoint URI; there's no network m
 
 ### Better Call Dev
 
+> ⚠ **WARNING**
+>
+> Better Call Dev API is deprecated. Use `metadata` datasource instead.
+
 Better Call Dev is another blockchain explorer and API with functionality similar to TzKT. It can't be used as a datasource for indexer and mempool/metadata plugins, but you can call it from inside of handlers to gather additional data.
 
 ```yaml
@@ -50,7 +54,7 @@ datasources:
 
 ### Coinbase
 
-A connector for [Coinbase Pro API (opens new window)](https://docs.pro.coinbase.com/). Provides `get_candles` and `get_oracle_data` methods. It may be useful in enriching indexes of DeFi contracts with off-chain data.
+A connector for [Coinbase Pro API](https://docs.pro.coinbase.com/). Provides `get_candles` and `get_oracle_data` methods. It may be useful in enriching indexes of DeFi contracts with off-chain data.
 
 ```yaml
 datasources:
@@ -70,6 +74,29 @@ datasources:
     kind: metadata
     url: https://metadata.dipdup.net
     network: mainnet|handzhounet
+```
+
+### IPFS
+
+While working with contract/token metadata, a typical scenario is to fetch it from IPFS. DipDup now has a separate datasource to perform such requests.
+
+```yaml
+datasources:
+  ipfs:
+    kind: ipfs
+    url: https://ipfs.io/ipfs
+```
+
+You can use this datasource within any callback. Output is either JSON or binary data.
+
+```python
+ipfs = ctx.get_ipfs_datasource('ipfs')
+
+file = await ipfs.get('QmdCz7XGkBtd5DFmpDPDN3KFRmpkQHJsDgGiG16cgVbUYu')
+assert file[:4].decode()[1:] == 'PDF'
+
+file = await ipfs.get('QmSgSC7geYH3Ae4SpUHy4KutxqNH9ESKBGXoCN4JQdbtEz/package.json')
+assert file['name'] == 'json-buffer'
 ```
 
 ## Advanced HTTP settings
@@ -102,13 +129,19 @@ By default, DipDup retries failed requests infinitely exponentially increasing d
 
 `batch_size` parameter is TzKT-specific. By default, DipDup limit requests to 10000 items, the maximum value allowed on public instances provided by Baking Bad. Decreasing this value will reduce the time required for TzKT to process a single request and thus reduce the load. You can achieve the same effect (but limited to synchronizing multiple indexes concurrently) by reducing `connection_limit` parameter.
 
-## Compatibility table
+## Sending arbitrary requests
 
-|  | `tzkt` | `tezos-node` | `bcd` | `coinbase` | `metadata` | `ipfs` |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| DipDup index | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Callback context (`ctx.datasources`) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | 
-| `dipdup-mempool` plugin | ✅\* | ✅\* | ❌ | ❌ | ❌ | ❌ |
-| `dipdup-metadata` plugin | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
+DipDup datasources do not cover all available methods of underlying APIs. Let's say you want to fetch protocol of the chain you're currently indexing from TzKT:
 
-\* - required
+```python
+tzkt = ctx.get_tzkt_datasource('tzkt_mainnet')
+protocol_json = await tzkt.request(
+    method='get',
+    url='v1/protocols/current',
+    cache=False,
+    weigth=1,  # ratelimiter leaky-bucket drops
+)
+assert protocol_json['hash'] == 'PtHangz2aRngywmSRGGvrcTyMbbdpWdpFKuS4uMWxg2RaH9i1qx'
+```
+
+Datasource HTTP connection parameters (ratelimit, backoff, etc.) are applied on every request.
