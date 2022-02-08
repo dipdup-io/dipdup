@@ -2,6 +2,7 @@
 
 * [Overview](README.md)
 * [Release notes](release-notes/README.md)
+  * [4.2.0](release-notes/4.2.0.md)
   * [4.1.0](release-notes/4.1.0.md)
   * [4.0.0](release-notes/4.0.0.md)
 * [Quickstart](quickstart.md)
@@ -28,6 +29,7 @@
   * [Handler context](advanced/handler-context.md)
   * [Internal models](advanced/internal-models.md)
   * [Spawning indexes at runtime](cookbook/index-factories.md)
+  * [Scheduler configuration](advanced/scheduler.md)
 * [GraphQL API](graphql/README.md)
   * [Hasura integration](graphql/hasura.md)
   * [REST endpoints](graphql/rest.md)
@@ -49,6 +51,7 @@
   * [Reusing typename for different contracts](cookbook/reusing-typenames.md)
   * [Synchronizing multiple handlers/hooks](cookbook/sync-callbacks.md)
   * [Caching models](cookbook/caching-models.md)
+  * [Multiprocessing](cookbook/multiprocessing.md)
 * [Examples](examples/README.md)
   * [Demo projects](examples/demo-projects.md)
   * [Built with DipDup](examples/built-with-dipdup.md)

@@ -2,26 +2,28 @@
 
 This page will guide you through the steps to get your first selective indexer up and running in a few minutes without getting too deep into the details.
 
-Let's create an indexer for [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database, then calculate some statistics of its' holders' activity.
-
-## Install framework
+Let's create an indexer for [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database then calculate some statistics of its' holders' activity.
 
 A Linux environment with Python 3.8+ installed is required to use DipDup.
 
-### poetry (recommended)
+## Create a new project
+
+### From template
+
+Cookiecutter is a cool `jinja2` wrapper to initialize hello-world templates of various frameworks and toolkits interactively. Install `python-cookiecutter` package systemwide, then call:
+
+```shell
+cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
+```
+
+### From scratch
+
+You need `poetry` package manager installed.
 
 ```shell
 poetry init -n
 poetry add dipdup
 poetry shell
-```
-
-### pip
-
-```shell
-python -m venv .venv
-source .venv/bin/activate
-pip install dipdup
 ```
 
 See [Installation](getting-started/installation.md) for details.
@@ -77,7 +79,7 @@ dipdup init
 
 DipDup will create a Python package `demo_tzbtc` having the following structure:
 
-```
+```text
 demo_tzbtc
 ├── graphql
 ├── handlers

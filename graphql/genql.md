@@ -6,7 +6,7 @@
 
 GenQL CLI generates a ready-to-use package, compiled and prepared to publish to NPM. A typical setup is a mono repository containing several packages, including the auto-generated SDK and your front-end application.
 
-```
+```text
 project_root/
 ├── package.json
 └── packages/
@@ -58,7 +58,7 @@ Create a `package.json` file with
 
 And generate the client:
 
-```
+```shell
 yarn
 yarn build
 ```
@@ -78,13 +78,13 @@ client.chain.query
 
 We need some additional dependencies to run our sample:
 
-```
+```shell
 yarn add typescript ts-node
 ```
 
 Finally:
 
-```
+```shell
 npx ts-node index.ts
 ```
 

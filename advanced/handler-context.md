@@ -18,11 +18,11 @@ Add a new contract to the inventory.
 
 Add a new index to the current configuration.
 
-## `.fire_hook(name, **kwargs) -> None`
+## `.fire_hook(name, wait=True, **kwargs) -> None`
 
-You can trigger hook execution either from handler callback or by job schedule. Or even from another hook if you're brave enough.
+Trigger hook execution. Unset `wait` to execute hook outside of the current database transaction.
 
-## `.execute_sql(filename) -> None`
+## `.execute_sql(name) -> None`
 
 The `execute_sql` argument could be either name of SQL script in `sql` directory or an absolute/relative path. If the path is a directory, all `.sql` scripts within it will be executed in alphabetical order.
 
