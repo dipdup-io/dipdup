@@ -7,6 +7,7 @@ A list of API endpoints DipDup uses to retrieve data and pass it to your indexer
 * `tezos-node`
 * `coinbase`
 * `metadata`
+* `ipfs`
 
 ## Datasources
 
@@ -101,15 +102,13 @@ By default, DipDup retries failed requests infinitely exponentially increasing d
 
 `batch_size` parameter is TzKT-specific. By default, DipDup limit requests to 10000 items, the maximum value allowed on public instances provided by Baking Bad. Decreasing this value will reduce the time required for TzKT to process a single request and thus reduce the load. You can achieve the same effect (but limited to synchronizing multiple indexes concurrently) by reducing `connection_limit` parameter.
 
-## Compatibility with indexes and plugins
+## Compatibility table
 
-|  | TzKT | Tezos node | BCD | Coinbase |
-| :--- | :--- | :--- | :--- | :--- |
-| Operation index | ✅ | ❌ | ❌ | ❌ |
-| Big Map index | ✅ | ❌ | ❌ | ❌ |
-| Handlers \* | ✅ | ✅ | ✅ | ✅ |
-| Mempool plugin \*\* | ✅ | ✅ | ❌ | ❌ |
-| Metadata plugin | ✅ | ❌ | ❌ | ❌ |
+|  | `tzkt` | `tezos-node` | `bcd` | `coinbase` | `metadata` | `ipfs` |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| DipDup index | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Callback context (`ctx.datasources`) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | 
+| `dipdup-mempool` plugin | ✅\* | ✅\* | ❌ | ❌ | ❌ | ❌ |
+| `dipdup-metadata` plugin | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-\* Available at `ctx.datasources`  
-\*\* Mempool plugin requires both TzKT and Tezos node endpoints to operate.
+\* - required
