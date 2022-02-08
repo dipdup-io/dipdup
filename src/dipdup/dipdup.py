@@ -510,9 +510,11 @@ class DipDup:
             if not isinstance(datasource, TzktDatasource):
                 continue
 
+            head_block = await datasource.get_head_block()
+            datasource.set_network(head_block.chain)
             datasource.set_sync_level(
                 subscription=None,
-                level=(await datasource.get_head_block()).level,
+                level=head_block.level,
             )
 
             db_head = await Head.filter(name=datasource.name).first()

@@ -7,6 +7,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Added
 
 * metadata: Added `metadata_interface` feature flag to expose metadata in TzKT format.
+* tzkt: Added missing fields to the `HeadBlockData` model.
 
 ### Fixed
 
