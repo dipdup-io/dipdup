@@ -128,6 +128,7 @@ async def datasource_run_deep(self: TzktDatasource):
 
 head = Mock(spec=HeadBlockData)
 head.level = initial_level
+head.chain = 'mainnet'
 
 
 @contextmanager

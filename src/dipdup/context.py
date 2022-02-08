@@ -244,20 +244,33 @@ class DipDupContext:
         # NOTE: IndexDispatcher will handle further initialization when it's time
         pending_indexes.append(index)
 
-    async def update_contract_metadata(self, address: str, metadata: Dict[str, Any]) -> None:
+    async def update_contract_metadata(
+        self,
+        network: str,
+        address: str,
+        metadata: Dict[str, Any],
+    ) -> None:
         if not self.config.advanced.metadata_interface:
             return
         update_id = MetadataCursor.contract()
         await ContractMetadata.update_or_create(
+            network=network,
             contract=address,
             defaults={'metadata': metadata, 'update_id': update_id},
         )
 
-    async def update_token_metadata(self, address: str, token_id: int, metadata: Dict[str, Any]) -> None:
+    async def update_token_metadata(
+        self,
+        network: str,
+        address: str,
+        token_id: int,
+        metadata: Dict[str, Any],
+    ) -> None:
         if not self.config.advanced.metadata_interface:
             return
         update_id = MetadataCursor.token()
         await TokenMetadata.update_or_create(
+            network=network,
             contract=address,
             token_id=token_id,
             defaults={'metadata': metadata, 'update_id': update_id},
