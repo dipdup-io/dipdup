@@ -16,8 +16,7 @@ python = "^3.8"
 dipdup = "^{{ cookiecutter.dipdup_version }}"
 
 [tool.poetry.dev-dependencies]
-# FIXME: https://github.com/koxudaxi/datamodel-code-generator/issues/700
-# black = "21.12b0"
+black = "^22.1.0"
 bump2version = "^1.0.1"
 diff-cover = "^5.0.1"
 flake8 = "3.9.0"
