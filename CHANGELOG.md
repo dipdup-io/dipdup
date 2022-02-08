@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* index: Fixed loading handler callbacks from nested packages (@veqtor)
+
 ## 4.2.3 - 2022-02-08
 
 ### Fixed
