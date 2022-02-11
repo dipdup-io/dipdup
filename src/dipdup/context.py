@@ -38,6 +38,7 @@ from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
+from dipdup.datasources.datasource import HttpDatasource
 from dipdup.datasources.ipfs.datasource import IpfsDatasource
 from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -295,6 +296,9 @@ class DipDupContext:
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
         return self._get_datasource(name, IpfsDatasource)
+
+    def get_http_datasource(self, name: str) -> HttpDatasource:
+        return self._get_datasource(name, HttpDatasource)
 
 
 class HookContext(DipDupContext):
