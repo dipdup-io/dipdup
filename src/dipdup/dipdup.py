@@ -29,6 +29,7 @@ from dipdup.config import CoinbaseDatasourceConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
+from dipdup.config import HttpDatasourceConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import IpfsDatasourceConfig
 from dipdup.config import MetadataDatasourceConfig
@@ -42,6 +43,7 @@ from dipdup.context import pending_indexes
 from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
+from dipdup.datasources.datasource import HttpDatasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.ipfs.datasource import IpfsDatasource
 from dipdup.datasources.metadata.datasource import MetadataDatasource
@@ -401,6 +403,10 @@ class DipDup:
             elif isinstance(datasource_config, IpfsDatasourceConfig):
                 datasource = IpfsDatasource(
                     url=datasource_config.url,
+                    http_config=datasource_config.http,
+                )
+            elif isinstance(datasource_config, HttpDatasourceConfig):
+                datasource = HttpDatasource(
                     http_config=datasource_config.http,
                 )
             else:
