@@ -22,6 +22,12 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
+* index: Fixed loading handler callbacks from nested packages (@veqtor)
+
+## 4.2.3 - 2022-02-08
+
+### Fixed
+
 * ci: Removed `black 21.12b0` dependency since bug in `datamodel-codegen-generator` is fixed.
 * cli: Fixed `config export` command crash when `advanced.reindex` dictionary is present.
 * cli: Removed optionals from `config export` output so the result can be loaded again.
