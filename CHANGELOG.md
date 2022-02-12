@@ -15,6 +15,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * context: Fixed `HookConfig.atomic` flag, which was ignored in `fire_hook` method.
 * database: Try to create missing tables even if `Schema` model is present.
+* database: Fixed excess increasing of `decimal` context precision.
 
 ### Performance
 
