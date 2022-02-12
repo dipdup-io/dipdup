@@ -619,7 +619,7 @@ class CallbackMixin(CodegenMixin):
             return
         _logger.debug('Registering %s callback `%s`', self.kind, self.callback)
         module_name = f'{package}.{self.kind}s.{self.callback}'
-        fn_name = self.callback
+        fn_name = self.callback.rsplit('.', 1)[-1]
         self.callback_fn = import_from(module_name, fn_name)
 
 
