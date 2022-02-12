@@ -114,9 +114,11 @@ def set_decimal_context(package: str) -> None:
     for _, model in iter_models(package):
         for field in model._meta.fields_map.values():
             if isinstance(field, DecimalField):
-                context.prec = max(context.prec, field.max_digits + field.max_digits)
-    if prec < context.prec:
-        _logger.warning('Decimal context precision has been updated: %s -> %s', prec, context.prec)
+                prec = max(prec, field.max_digits)
+
+    if context.prec < prec:
+        _logger.warning('Decimal context precision has been updated: %s -> %s', context.prec, prec)
+        context.prec = prec
         # NOTE: DefaultContext used for new threads
         decimal.DefaultContext.prec = context.prec
         decimal.setcontext(context)

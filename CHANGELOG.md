@@ -12,6 +12,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * database: Try to create missing tables even if `Schema` model is present.
+* database: Fixed excess increasing of `decimal` context precision.
 
 ### Performance
 

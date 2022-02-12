@@ -260,11 +260,14 @@ class DipDupContext:
         self,
         network: str,
         address: str,
-        token_id: int,
+        token_id: str,
         metadata: Dict[str, Any],
     ) -> None:
         if not self.config.advanced.metadata_interface:
             return
+        if not all(str.isdigit(c) for c in token_id):
+            raise ValueError('`token_id` must be a number')
+
         update_id = MetadataCursor.token()
         await TokenMetadata.update_or_create(
             network=network,
