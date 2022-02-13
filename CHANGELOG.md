@@ -7,9 +7,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * context: Fixed CallbackManager pending_hooks loop when queue becomes empty
-
-### Fixed
-
+* context: Fixed `HookConfig.atomic` flag, which was ignored in `fire_hook` method.
 * index: Fixed loading handler callbacks from nested packages (@veqtor)
 
 ## 4.2.3 - 2022-02-08
