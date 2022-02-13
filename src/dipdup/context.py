@@ -296,8 +296,8 @@ class CallbackManager:
     async def run(self) -> None:
         while True:
             async with slowdown(1):
-                while coro := pending_hooks.popleft():
-                    await coro
+                while pending_hooks:
+                    await pending_hooks.popleft()
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
