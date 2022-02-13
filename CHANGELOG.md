@@ -6,11 +6,10 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
-* context: Fixed CallbackManager pending_hooks loop when queue becomes empty
-
-### Fixed
-
-* index: Fixed loading handler callbacks from nested packages (@veqtor)
+* context: Fixed crash when calling `fire_hook` method.
+* database: Create missing tables even if `Schema` model is present.
+* database: Fixed excess increasing of `decimal` context precision.
+* index: Fixed loading handler callbacks from nested packages ([@veqtor](https://github.com/veqtor)).
 
 ## 4.2.3 - 2022-02-08
 
