@@ -120,7 +120,7 @@ def set_decimal_context(package: str) -> None:
         _logger.warning('Decimal context precision has been updated: %s -> %s', context.prec, prec)
         context.prec = prec
         # NOTE: DefaultContext used for new threads
-        decimal.DefaultContext.prec = context.prec
+        decimal.DefaultContext.prec = prec
         decimal.setcontext(context)
 
 
