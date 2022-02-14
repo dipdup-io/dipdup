@@ -2,23 +2,18 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## 4.2.4 - 2022-02-14
+## [unreleased]
 
 ### Added
 
 * metadata: Added `metadata_interface` feature flag to expose metadata in TzKT format.
 * tzkt: Added missing fields to the `HeadBlockData` model.
 
-### Fixed
-
-* database: Try to create missing tables even if `Schema` model is present.
-* database: Fixed excess increasing of `decimal` context precision.
-
 ### Performance
 
 * dipdup: Use fast `orjson` library instead of built-in `json` where possible.
 
-[unreleased]
+## 4.2.4 - 2022-02-14
 
 ### Fixed
 
