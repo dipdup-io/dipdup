@@ -439,10 +439,11 @@ class DipDup:
             except KeyError:
                 await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
 
+        # NOTE: Call even if Schema is present; there may be new tables
+        await generate_schema(conn, schema_name)
         schema_hash = get_schema_hash(conn)
 
         if self._schema is None:
-            await generate_schema(conn, schema_name)
             await self._ctx.fire_hook('on_reindex')
 
             self._schema = Schema(
