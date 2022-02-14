@@ -6,9 +6,13 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
-* context: Fixed CallbackManager pending_hooks loop when queue becomes empty
+* context: Fixed crash when calling `fire_hook` method.
 * context: Fixed `HookConfig.atomic` flag, which was ignored in `fire_hook` method.
 * index: Fixed loading handler callbacks from nested packages (@veqtor)
+
+### Other
+
+* ci: Added GitHub Action to build and publish Docker images for each PR opened.
 
 ## 4.2.3 - 2022-02-08
 
