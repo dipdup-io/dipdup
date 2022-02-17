@@ -1176,9 +1176,15 @@ class DipDupConfig:
             self._imports_resolved.add(index_config.name)
 
     def _validate(self) -> None:
-        # NOTE: Hasura
-        if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
-            raise ConfigurationError('SQLite database engine is not supported by Hasura')
+        # NOTE: Hasura and metadata interface
+        if self.hasura:
+            if isinstance(self.database, SqliteDatabaseConfig):
+                raise ConfigurationError('SQLite database engine is not supported by Hasura')
+            if self.advanced.metadata_interface and self.hasura.camel_case:
+                raise ConfigurationError('`metadata_interface` flag is incompatible with `camel_case` one')
+        else:
+            if self.advanced.metadata_interface:
+                raise ConfigurationError('`metadata_interface` flag requires `hasura` section to be present')
 
         # NOTE: Reserved hooks
         for name, hook_config in self.hooks.items():

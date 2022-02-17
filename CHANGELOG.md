@@ -2,7 +2,7 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## 4.2.4 - 2022-02-14
+## [unreleased]
 
 ### Added
 
@@ -11,17 +11,11 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * prometheus: Added ability to expose Prometheus metrics.
 * tzkt: Added missing fields to the `HeadBlockData` model.
 
-### Fixed
-
-* context: Fixed `HookConfig.atomic` flag, which was ignored in `fire_hook` method.
-* database: Try to create missing tables even if `Schema` model is present.
-* database: Fixed excess increasing of `decimal` context precision.
-
 ### Performance
 
 * dipdup: Use fast `orjson` library instead of built-in `json` where possible.
 
-[unreleased]
+## 4.2.4 - 2022-02-14
 
 ### Fixed
 
