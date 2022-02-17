@@ -298,6 +298,7 @@ class TzktDatasource(IndexDatasource):
 
         self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
+        self._lagging_buffer: DefaultDict[int, List[Dict[str, Any]]] = defaultdict(list)
 
     @property
     def request_limit(self) -> int:
@@ -668,8 +669,10 @@ class TzktDatasource(IndexDatasource):
 
     async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
+        # NOTE: Parse messages and fill lagging buffer
         for item in message:
             tzkt_type = TzktMessageType(item['type'])
+            # NOTE: Sync level returned on negotiation now
             if tzkt_type == TzktMessageType.STATE:
                 continue
 
@@ -679,7 +682,7 @@ class TzktDatasource(IndexDatasource):
 
             # NOTE: Just yield data
             if tzkt_type == TzktMessageType.DATA:
-                yield item['data']
+                self._lagging_buffer[level].append(item['data'])
 
             # NOTE: Emit rollback, but not on `head` message
             elif tzkt_type == TzktMessageType.REORG:
@@ -703,6 +706,12 @@ class TzktDatasource(IndexDatasource):
 
             else:
                 raise NotImplementedError
+
+        # NOTE: Yield data from lagging buffer
+        buffered_levels = sorted(self._lagging_buffer.keys())
+        for level in buffered_levels[-0:]:
+            for data in self._lagging_buffer[level]:
+                yield data
 
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""

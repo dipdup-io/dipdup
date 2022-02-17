@@ -208,6 +208,7 @@ class TzktDatasourceConfig(NameMixin):
     kind: Literal['tzkt']
     url: str
     http: Optional[HTTPConfig] = None
+    realtime_lag: int = 0
 
     def __hash__(self):
         return hash(self.kind + self.url)
