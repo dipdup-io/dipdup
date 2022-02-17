@@ -619,33 +619,49 @@ class BigMapIndex(Index):
         big_map_data: Tuple[BigMapData, ...] = ()
 
         for address in big_map_addresses:
-            contract_big_maps = await self._datasource.get_contract_big_maps(address)
-            for contract_big_map in contract_big_maps:
-                if contract_big_map['path'] in big_map_paths:
-                    big_map_ids += ((int(contract_big_map['ptr']), contract_big_map['path']),)
+            size, offset = self._datasource.request_limit, 0
+            while size == self._datasource.request_limit:
+                contract_big_maps = await self._datasource.get_contract_big_maps(address, offset)
+                for contract_big_map in contract_big_maps:
+                    if contract_big_map['path'] in big_map_paths:
+                        big_map_ids += ((int(contract_big_map['ptr']), contract_big_map['path']),)
+            offset += self._datasource.request_limit
+            size = len(big_map_ids)
 
-        for bigmap_id, path in big_map_ids:
-            big_maps = await self._datasource.get_big_map(bigmap_id, last_level)
-            big_map_data = big_map_data + tuple(
-                BigMapData(
-                    id=big_map['id'],
-                    level=last_level,
-                    operation_id=last_level,
-                    timestamp=datetime.now(),
-                    bigmap=bigmap_id,
-                    contract_address=address,
-                    path=path,
-                    action=BigMapAction.ADD_KEY,
-                    active=big_map['active'],
-                    key=big_map['key'],
-                    value=big_map['value'],
+        matched_handlers: Deque[MatchedBigMapsT] = deque()
+
+        for big_map_id, path in big_map_ids:
+            size, offset = self._datasource.request_limit, 0
+            while size == self._datasource.request_limit:
+                big_maps = await self._datasource.get_big_map(big_map_id, offset, last_level)
+                big_map_data = big_map_data + tuple(
+                    BigMapData(
+                        id=big_map['id'],
+                        level=last_level,
+                        operation_id=last_level,
+                        timestamp=datetime.now(),
+                        bigmap=big_map_id,
+                        contract_address=address,
+                        path=path,
+                        action=BigMapAction.ADD_KEY,
+                        active=big_map['active'],
+                        key=big_map['key'],
+                        value=big_map['value'],
+                    )
+                    for big_map in big_maps
                 )
-                for big_map in big_maps
-            )
+                offset += self._datasource.request_limit
+                size = len(big_maps)
 
-        await self._process_level_big_maps(big_map_data)
+                matched_handlers = await self._process_level_big_maps(big_map_data)
 
-    async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]):
+                async with in_global_transaction():
+                    for handler_config, big_map_diff in matched_handlers:
+                        await self._call_matched_handler(handler_config, big_map_diff)
+                    await self.state.update_status(level=last_level)
+
+    # TODO: Return matched handlers
+    async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         if not big_maps:
             return
         level = self._extract_level(big_maps)
@@ -655,17 +671,7 @@ class BigMapIndex(Index):
             raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
 
         self._logger.debug('Processing big map diffs of level %s', level)
-        matched_handlers = await self._match_big_maps(big_maps)
-
-        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
-        if not matched_handlers:
-            await self.state.update_status(level=level)
-            return
-
-        async with in_global_transaction():
-            for handler_config, big_map_diff in matched_handlers:
-                await self._call_matched_handler(handler_config, big_map_diff)
-            await self.state.update_status(level=level)
+        return await self._match_big_maps(big_maps)
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""

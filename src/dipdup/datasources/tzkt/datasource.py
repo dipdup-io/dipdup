@@ -23,7 +23,6 @@ from typing import Set
 from typing import Tuple
 from typing import cast
 
-from aiohttp import ClientResponseError
 from pysignalr.client import SignalRClient
 from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage  # type: ignore
@@ -303,52 +302,43 @@ class TzktDatasource(IndexDatasource):
     def request_limit(self) -> int:
         return cast(int, self._http_config.batch_size)
 
-    async def get_similar_contracts(self, address: str, strict: bool = False) -> Tuple[str, ...]:
+    async def get_similar_contracts(
+        self,
+        address: str,
+        offset: int,
+        strict: bool = False,
+    ) -> Tuple[str, ...]:
         """Get addresses of contracts that share the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'
-        self._logger.info('Fetching %s contracts for address `%s`', entrypoint, address)
+        self._logger.info('Fetching `%s` contracts for address `%s`', entrypoint, address)
+        addresses = await self.request(
+            'get',
+            url=f'v1/contracts/{address}/{entrypoint}',
+            params={
+                'select': 'address',
+                'limit': self.request_limit,
+                'offset': offset,
+            },
+        )
+        return tuple(addresses)
 
-        size, offset = self.request_limit, 0
-        addresses: Tuple[str, ...] = ()
-
-        while size == self.request_limit:
-            response = await self.request(
-                'get',
-                url=f'v1/contracts/{address}/{entrypoint}',
-                params={
-                    'select': 'address',
-                    'limit': self.request_limit,
-                    'offset': offset,
-                },
-            )
-            size = len(response)
-            addresses = addresses + tuple(response)
-            offset += self.request_limit
-
-        return addresses
-
-    async def get_originated_contracts(self, address: str) -> Tuple[str, ...]:
+    async def get_originated_contracts(
+        self,
+        address: str,
+        offset: int,
+    ) -> Tuple[str, ...]:
         """Get addresses of contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s', address)
-
-        size, offset = self.request_limit, 0
-        addresses: Tuple[str, ...] = ()
-
-        while size == self.request_limit:
-            response = await self.request(
-                'get',
-                url=f'v1/accounts/{address}/contracts',
-                params={
-                    'select': 'address',
-                    'limit': self.request_limit,
-                    'offset': offset,
-                },
-            )
-            size = len(response)
-            addresses = addresses + tuple(c['address'] for c in response)
-            offset += self.request_limit
-
-        return addresses
+        response = await self.request(
+            'get',
+            url=f'v1/accounts/{address}/contracts',
+            params={
+                'select': 'address',
+                'limit': self.request_limit,
+                'offset': offset,
+            },
+        )
+        return tuple(c['address'] for c in response)
 
     async def get_contract_summary(self, address: str) -> Dict[str, Any]:
         """Get contract summary"""
@@ -369,55 +359,47 @@ class TzktDatasource(IndexDatasource):
     async def get_jsonschemas(self, address: str) -> Dict[str, Any]:
         """Get JSONSchemas for contract's storage/parameter/bigmap types"""
         self._logger.info('Fetching jsonschemas for address `%s', address)
-        jsonschemas = await self.request(
+        return await self.request(
             'get',
             url=f'v1/contracts/{address}/interface',
             cache=True,
         )
-        self._logger.debug(jsonschemas)
-        return jsonschemas
 
-    async def get_big_map(self, big_map_id: int, level: Optional[int] = None, active: bool = False) -> Tuple[Dict[str, Any], ...]:
+    async def get_big_map(
+        self,
+        big_map_id: int,
+        offset: int,
+        level: Optional[int] = None,
+        active: bool = False,
+    ) -> Tuple[Dict[str, Any], ...]:
         self._logger.info('Fetching keys of bigmap `%s`', big_map_id)
-        size, offset = self.request_limit, 0
-        big_maps: Tuple[Dict[str, Any], ...] = ()
         kwargs = {'active': str(active).lower()} if active else {}
+        big_maps = await self.request(
+            'get',
+            url=f'v1/bigmaps/{big_map_id}/keys',
+            params={
+                **kwargs,
+                'limit': self.request_limit,
+                'offset': offset,
+                'level': level,
+            },
+        )
+        return tuple(big_maps)
 
-        while size == self.request_limit:
-            response = await self.request(
-                'get',
-                url=f'v1/bigmaps/{big_map_id}/keys',
-                params={
-                    **kwargs,
-                    'limit': self.request_limit,
-                    'offset': offset,
-                    'level': level,
-                },
-            )
-            size = len(response)
-            big_maps = big_maps + tuple(response)
-            offset += self.request_limit
-
-        return big_maps
-
-    async def get_contract_big_maps(self, address: str) -> Tuple[Dict[str, Any], ...]:
-        size, offset = self.request_limit, 0
-        big_maps: Tuple[Dict[str, Any], ...] = ()
-
-        while size == self.request_limit:
-            response = await self.request(
-                'get',
-                url=f'v1/contracts/{address}/bigmaps',
-                params={
-                    'limit': self.request_limit,
-                    'offset': offset,
-                },
-            )
-            size = len(response)
-            big_maps = big_maps + tuple(response)
-            offset += self.request_limit
-
-        return big_maps
+    async def get_contract_big_maps(
+        self,
+        address: str,
+        offset: int,
+    ) -> Tuple[Dict[str, Any], ...]:
+        big_maps = await self.request(
+            'get',
+            url=f'v1/contracts/{address}/bigmaps',
+            params={
+                'limit': self.request_limit,
+                'offset': offset,
+            },
+        )
+        return tuple(big_maps)
 
     async def get_head_block(self) -> HeadBlockData:
         """Get latest block (head)"""
@@ -440,19 +422,6 @@ class TzktDatasource(IndexDatasource):
     async def get_migration_originations(self, first_level: int = 0) -> Tuple[OperationData, ...]:
         """Get contracts originated from migrations"""
         self._logger.info('Fetching contracts originated with migrations')
-        # NOTE: Empty unwrapped request to ensure API supports migration originations
-        try:
-            await self._http._request(
-                'get',
-                url='v1/operations/migrations',
-                params={
-                    'kind': 'origination',
-                    'limit': 0,
-                },
-            )
-        except ClientResponseError:
-            return ()
-
         raw_migrations = await self.request(
             'get',
             url='v1/operations/migrations',
@@ -465,7 +434,12 @@ class TzktDatasource(IndexDatasource):
         return tuple(self.convert_migration_origination(m) for m in raw_migrations)
 
     async def get_originations(
-        self, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
+        self,
+        addresses: Set[str],
+        offset: int,
+        first_level: int,
+        last_level: int,
+        cache: bool = False,
     ) -> Tuple[OperationData, ...]:
         raw_originations = []
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
@@ -491,7 +465,13 @@ class TzktDatasource(IndexDatasource):
         return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
 
     async def get_transactions(
-        self, field: str, addresses: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
+        self,
+        field: str,
+        addresses: Set[str],
+        offset: int,
+        first_level: int,
+        last_level: int,
+        cache: bool = False,
     ) -> Tuple[OperationData, ...]:
         raw_transactions = await self.request(
             'get',
@@ -512,7 +492,13 @@ class TzktDatasource(IndexDatasource):
         return tuple(self.convert_operation(op, type_='transaction') for op in raw_transactions)
 
     async def get_big_maps(
-        self, addresses: Set[str], paths: Set[str], offset: int, first_level: int, last_level: int, cache: bool = False
+        self,
+        addresses: Set[str],
+        paths: Set[str],
+        offset: int,
+        first_level: int,
+        last_level: int,
+        cache: bool = False,
     ) -> Tuple[BigMapData, ...]:
         raw_big_maps = await self.request(
             'get',
@@ -540,7 +526,12 @@ class TzktDatasource(IndexDatasource):
         )
         return self.convert_quote(quote_json[0])
 
-    async def get_quotes(self, from_level: int, to_level: int) -> Tuple[QuoteData, ...]:
+    async def get_quotes(
+        self,
+        from_level: int,
+        to_level: int,
+        offset: int,
+    ) -> Tuple[QuoteData, ...]:
         """Get quotes for blocks"""
         self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
         quotes_json = await self.request(
@@ -549,6 +540,7 @@ class TzktDatasource(IndexDatasource):
             params={
                 "level.ge": from_level,
                 "level.lt": to_level,
+                "offset": offset,
                 "limit": self.request_limit,
             },
             cache=False,
