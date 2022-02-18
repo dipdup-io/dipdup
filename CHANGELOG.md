@@ -10,8 +10,8 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
-* tzkt: Fixed possible OOM while calling some methods.
-* tzkt: Fixed possible loss of items in `get_originations` method.
+* tzkt: Fixed possible OOM while calling methods that support pagination.
+* tzkt: Fixed possible data loss in `get_originations` and `get_quotes` methods.
 
 ### Changed
 
