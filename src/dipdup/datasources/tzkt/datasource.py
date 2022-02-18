@@ -114,6 +114,7 @@ class OperationFetcher:
 
         self._logger.debug('Fetching originations of %s', self._origination_addresses)
 
+        # FIXME: No pagination because of URL length limit workaround
         originations = await self._datasource.get_originations(
             addresses=self._origination_addresses,
             first_level=self._first_level,
@@ -487,6 +488,7 @@ class TzktDatasource(IndexDatasource):
         ):
             yield batch
 
+    # FIXME: No pagination because of URL length limit workaround
     async def get_originations(
         self,
         addresses: Set[str],
