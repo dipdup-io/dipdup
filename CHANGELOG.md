@@ -2,6 +2,21 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Added
+
+* tzkt: Added `iter_...` methods to iterate over item batches.
+
+### Fixed
+
+* tzkt: Fixed possible OOM while calling some methods.
+* tzkt: Fixed possible loss of items in `get_originations` method.
+
+### Changed
+
+* tzkt: Added `offset` and `limit` arguments to all methods that support pagination.
+
 ## 4.2.4 - 2022-02-14
 
 ### Fixed

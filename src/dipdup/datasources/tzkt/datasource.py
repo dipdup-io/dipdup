@@ -297,16 +297,6 @@ class TzktDatasource(IndexDatasource):
     def request_limit(self) -> int:
         return cast(int, self._http_config.batch_size)
 
-    async def _iter_batches(self, fn, *args, **kwargs) -> AsyncIterator:
-        if 'offset' in kwargs or 'limit' in kwargs:
-            raise ValueError('`offset` and `limit` arguments are not allowed')
-        size, offset = self.request_limit, 0
-        while size == self.request_limit:
-            result = await fn(*args, offset=offset, **kwargs)
-            yield result
-            offset += self.request_limit
-            size = len(result)
-
     async def get_similar_contracts(
         self,
         address: str,
@@ -718,6 +708,16 @@ class TzktDatasource(IndexDatasource):
 
         await self._send(method, request, _on_subscribe)
         await event.wait()
+
+    async def _iter_batches(self, fn, *args, **kwargs) -> AsyncIterator:
+        if 'offset' in kwargs or 'limit' in kwargs:
+            raise ValueError('`offset` and `limit` arguments are not allowed')
+        size, offset = self.request_limit, 0
+        while size == self.request_limit:
+            result = await fn(*args, offset=offset, **kwargs)
+            yield result
+            offset += self.request_limit
+            size = len(result)
 
     def _get_ws_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
