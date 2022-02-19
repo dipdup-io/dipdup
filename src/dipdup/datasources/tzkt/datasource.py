@@ -160,7 +160,7 @@ class OperationFetcher:
             self._fetched[key] = True
             self._heads[key] = self._last_level
         else:
-            self._offsets[key] += self._datasource.request_limit
+            self._offsets[key] = transactions[-1].id
             self._heads[key] = self._get_operations_head(transactions)
 
     async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[OperationData, ...]], None]:
@@ -309,16 +309,16 @@ class TzktDatasource(IndexDatasource):
         offset, limit = offset or 0, limit or self.request_limit
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching `%s` contracts for address `%s`', entrypoint, address)
-        addresses = await self.request(
+        response = await self.request(
             'get',
             url=f'v1/contracts/{address}/{entrypoint}',
             params={
-                'select': 'address',
-                'offset': offset,
+                'select': 'id,address',
+                'offset.cr': offset,
                 'limit': limit,
             },
         )
-        return tuple(addresses)
+        return tuple(c['address'] for c in response)
 
     async def iter_similar_contracts(
         self,
@@ -341,8 +341,8 @@ class TzktDatasource(IndexDatasource):
             'get',
             url=f'v1/accounts/{address}/contracts',
             params={
-                'select': 'address',
-                'offset': offset,
+                'select': 'id,address',
+                'offset.cr': offset,
                 'limit': limit,
             },
         )
@@ -394,7 +394,7 @@ class TzktDatasource(IndexDatasource):
             params={
                 **kwargs,
                 'level': level,
-                'offset': offset,
+                'offset.cr': offset,
                 'limit': limit,
             },
         )
@@ -425,7 +425,7 @@ class TzktDatasource(IndexDatasource):
             'get',
             url=f'v1/contracts/{address}/bigmaps',
             params={
-                'offset': offset,
+                'offset.cr': offset,
                 'limit': limit,
             },
         )
@@ -472,7 +472,7 @@ class TzktDatasource(IndexDatasource):
                 'kind': 'origination',
                 'level.gt': first_level,
                 'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
-                'offset': offset,
+                'offset.cr': offset,
                 'limit': limit,
             },
         )
@@ -533,7 +533,7 @@ class TzktDatasource(IndexDatasource):
             url='v1/operations/transactions',
             params={
                 f"{field}.in": ','.join(addresses),
-                "offset": offset,
+                "offset.cr": offset,
                 "limit": limit,
                 "level.gt": first_level,
                 "level.le": last_level,
@@ -583,7 +583,7 @@ class TzktDatasource(IndexDatasource):
                 "path.in": ",".join(paths),
                 "level.gt": first_level,
                 "level.le": last_level,
-                "offset": offset,
+                "offset.cr": offset,
                 "limit": limit,
             },
             cache=cache,
@@ -635,7 +635,7 @@ class TzktDatasource(IndexDatasource):
             params={
                 "level.ge": from_level,
                 "level.lt": to_level,
-                "offset": offset,
+                "offset.cr": offset,
                 "limit": limit,
             },
             cache=False,
@@ -718,7 +718,7 @@ class TzktDatasource(IndexDatasource):
         while size == self.request_limit:
             result = await fn(*args, offset=offset, **kwargs)
             yield result
-            offset += self.request_limit
+            offset = result[-1]['id']
             size = len(result)
 
     def _get_ws_client(self) -> SignalRClient:
