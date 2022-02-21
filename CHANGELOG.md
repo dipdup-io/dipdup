@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* database: Do not add the `schema` argument to the PostgreSQL connection string when not needed.
+
 ## 4.2.4 - 2022-02-14
 
 ### Fixed
