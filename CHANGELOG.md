@@ -7,7 +7,13 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Added
 
 * prometheus: Added ability to expose Prometheus metrics.
-* config: Added top-level config section `prometheus`. 
+
+## 4.2.5 - 2022-02-21
+
+### Fixed
+
+* database: Do not add the `schema` argument to the PostgreSQL connection string when not needed.
+* hasura: Wait for Hasura to be configured before starting indexing.
 
 ## 4.2.4 - 2022-02-14
 

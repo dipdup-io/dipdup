@@ -129,14 +129,6 @@ def get_schema_hash(conn: BaseDBAsyncClient) -> str:
     return hashlib.sha256(processed_schema_sql).hexdigest()
 
 
-async def set_schema(conn: BaseDBAsyncClient, name: str) -> None:
-    """Set schema for the connection"""
-    if isinstance(conn, SqliteClient):
-        raise NotImplementedError
-
-    await conn.execute_script(f'SET search_path TO {name}')
-
-
 async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
@@ -161,7 +153,6 @@ async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
         await Tortoise.generate_schemas()
     elif isinstance(conn, AsyncpgDBClient):
         await create_schema(conn, name)
-        await set_schema(conn, name)
         await Tortoise.generate_schemas()
 
         # NOTE: Apply built-in scripts before project ones

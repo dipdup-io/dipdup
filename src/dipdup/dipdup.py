@@ -71,7 +71,6 @@ from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_schema_hash
 from dipdup.utils.database import prepare_models
-from dipdup.utils.database import set_schema
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import validate_models
 
@@ -366,7 +365,7 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            await self._set_up_hasura(stack, tasks)
+            await self._set_up_hasura(stack)
 
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
@@ -429,9 +428,6 @@ class DipDup:
         self._logger.info('Initializing database schema')
         schema_name = self._config.schema_name
         conn = get_connection(None)
-
-        if isinstance(self._config.database, PostgresDatabaseConfig):
-            await set_schema(conn, schema_name)
 
         # NOTE: Try to fetch existing schema
         try:
@@ -504,7 +500,7 @@ class DipDup:
             Metrics.apply_sample_size(self._config.prometheus.sample_size)
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
-    async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
+    async def _set_up_hasura(self, stack: AsyncExitStack) -> None:
         if not self._config.hasura:
             return
 
@@ -512,7 +508,7 @@ class DipDup:
             raise RuntimeError
         hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
         await stack.enter_async_context(hasura_gateway)
-        tasks.add(create_task(hasura_gateway.configure()))
+        await hasura_gateway.configure()
 
     async def _set_up_datasources(self, stack: AsyncExitStack) -> None:
         await self._create_datasources()
