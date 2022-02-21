@@ -7,6 +7,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * database: Do not add the `schema` argument to the PostgreSQL connection string when not needed.
+* hasura: Wait for Hasura to be configured before starting indexing.
 
 ## 4.2.4 - 2022-02-14
 

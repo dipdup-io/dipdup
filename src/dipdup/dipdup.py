@@ -352,7 +352,7 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            await self._set_up_hasura(stack, tasks)
+            await self._set_up_hasura(stack)
 
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
@@ -481,7 +481,7 @@ class DipDup:
         if tasks:
             tasks.add(create_task(self._ctx.callbacks.run()))
 
-    async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
+    async def _set_up_hasura(self, stack: AsyncExitStack) -> None:
         if not self._config.hasura:
             return
 
@@ -489,7 +489,7 @@ class DipDup:
             raise RuntimeError
         hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
         await stack.enter_async_context(hasura_gateway)
-        tasks.add(create_task(hasura_gateway.configure()))
+        await hasura_gateway.configure()
 
     async def _set_up_datasources(self, stack: AsyncExitStack) -> None:
         await self._create_datasources()
