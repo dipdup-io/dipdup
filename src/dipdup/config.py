@@ -54,11 +54,15 @@ from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
-ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
+ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'  # ${VARIABLE:-default}
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
+DEFAULT_POSTGRES_SCHEMA = 'public'
+DEFAULT_POSTGRES_USER = DEFAULT_POSTGRES_DATABASE = 'postgres'
+DEFAULT_POSTGRES_PORT = 5432
+DEFAULT_SQLITE_PATH = ':memory'
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -73,7 +77,7 @@ class SqliteDatabaseConfig:
     """
 
     kind: Literal['sqlite']
-    path: str = ':memory:'
+    path: str = DEFAULT_SQLITE_PATH
 
     @cached_property
     def connection_string(self) -> str:
@@ -97,10 +101,10 @@ class PostgresDatabaseConfig:
 
     kind: Literal['postgres']
     host: str
-    user: str = 'postgres'
-    database: str = 'postgres'
-    port: int = 5432
-    schema_name: str = 'public'
+    user: str = DEFAULT_POSTGRES_USER
+    database: str = DEFAULT_POSTGRES_DATABASE
+    port: int = DEFAULT_POSTGRES_PORT
+    schema_name: str = DEFAULT_POSTGRES_SCHEMA
     password: str = ''
     immune_tables: Tuple[str, ...] = field(default_factory=tuple)
     connection_timeout: int = 60
@@ -109,7 +113,10 @@ class PostgresDatabaseConfig:
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
-        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}&maxsize=1'
+        connection_string = f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?maxsize=1'
+        if self.schema_name != DEFAULT_POSTGRES_SCHEMA:
+            connection_string += f'&schema={self.schema_name}'
+        return connection_string
 
     @validator('immune_tables')
     def valid_immune_tables(cls, v):
@@ -1009,7 +1016,10 @@ class DipDupConfig:
 
     @cached_property
     def schema_name(self) -> str:
-        return self.database.schema_name if isinstance(self.database, PostgresDatabaseConfig) else 'public'
+        if isinstance(self.database, PostgresDatabaseConfig):
+            return self.database.schema_name
+        # NOTE: Not exactly correct; historical reason
+        return DEFAULT_POSTGRES_SCHEMA
 
     @cached_property
     def package_path(self) -> str:

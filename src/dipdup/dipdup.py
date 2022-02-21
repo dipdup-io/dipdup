@@ -71,7 +71,6 @@ from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_schema_hash
 from dipdup.utils.database import prepare_models
-from dipdup.utils.database import set_schema
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import validate_models
 
@@ -416,9 +415,6 @@ class DipDup:
         self._logger.info('Initializing database schema')
         schema_name = self._config.schema_name
         conn = get_connection(None)
-
-        if isinstance(self._config.database, PostgresDatabaseConfig):
-            await set_schema(conn, schema_name)
 
         # NOTE: Try to fetch existing schema
         try:

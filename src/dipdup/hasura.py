@@ -25,6 +25,7 @@ from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.transactions import get_connection
 
+from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -102,7 +103,8 @@ class HasuraGateway(HTTPGateway):
     async def configure(self, force: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
-        if self._database_config.schema_name != 'public':
+        # TODO: Validate during config parsing
+        if self._database_config.schema_name != DEFAULT_POSTGRES_SCHEMA:
             raise ConfigurationError('Hasura integration requires `schema_name` to be `public`')
 
         self._logger.info('Configuring Hasura')
