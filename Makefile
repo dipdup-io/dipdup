@@ -13,7 +13,6 @@ debug:
 	pip install . --force --no-deps
 
 install:
-	poetry env use python3.10
 	poetry install \
 	`if [ -n "${PLUGINS}" ]; then for i in ${PLUGINS}; do echo "-E $$i "; done; fi` \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
