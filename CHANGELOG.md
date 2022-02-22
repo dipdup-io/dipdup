@@ -2,12 +2,35 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## [unreleased]
+## 4.2.5 - 2022-02-21
+
+### Fixed
+
+* database: Do not add the `schema` argument to the PostgreSQL connection string when not needed.
+* hasura: Wait for Hasura to be configured before starting indexing.
+
+## 4.2.4 - 2022-02-14
+
+### Fixed
+
+* context: Fixed crash when calling `fire_hook` method.
+* context: Fixed `HookConfig.atomic` flag, which was ignored in `fire_hook` method.
+* database: Create missing tables even if `Schema` model is present.
+* database: Fixed excess increasing of `decimal` context precision.
+* index: Fixed loading handler callbacks from nested packages ([@veqtor](https://github.com/veqtor)).
+
+### Other
+
+* ci: Added GitHub Action to build and publish Docker images for each PR opened.
+
+## 4.2.3 - 2022-02-08
 
 ### Fixed
 
 * ci: Removed `black 21.12b0` dependency since bug in `datamodel-codegen-generator` is fixed.
-* config: Verify `advanced.scheduler` config for correctness unsupported features.
+* cli: Fixed `config export` command crash when `advanced.reindex` dictionary is present.
+* cli: Removed optionals from `config export` output so the result can be loaded again.
+* config: Verify `advanced.scheduler` config for the correctness and unsupported features.
 * context: Fixed ignored `wait` argument of `fire_hook` method.
 * hasura: Fixed processing relation fields with missing `related_name`.
 * jobs: Fixed default `apscheduler` config.

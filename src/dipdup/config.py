@@ -49,15 +49,20 @@ from dipdup.enums import ReindexingReasonC
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.utils import exclude_none
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
-ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'
+ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'  # ${VARIABLE:-default}
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
+DEFAULT_POSTGRES_SCHEMA = 'public'
+DEFAULT_POSTGRES_USER = DEFAULT_POSTGRES_DATABASE = 'postgres'
+DEFAULT_POSTGRES_PORT = 5432
+DEFAULT_SQLITE_PATH = ':memory'
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -72,7 +77,7 @@ class SqliteDatabaseConfig:
     """
 
     kind: Literal['sqlite']
-    path: str = ':memory:'
+    path: str = DEFAULT_SQLITE_PATH
 
     @cached_property
     def connection_string(self) -> str:
@@ -96,10 +101,10 @@ class PostgresDatabaseConfig:
 
     kind: Literal['postgres']
     host: str
-    user: str = 'postgres'
-    database: str = 'postgres'
-    port: int = 5432
-    schema_name: str = 'public'
+    user: str = DEFAULT_POSTGRES_USER
+    database: str = DEFAULT_POSTGRES_DATABASE
+    port: int = DEFAULT_POSTGRES_PORT
+    schema_name: str = DEFAULT_POSTGRES_SCHEMA
     password: str = ''
     immune_tables: Tuple[str, ...] = field(default_factory=tuple)
     connection_timeout: int = 60
@@ -108,7 +113,10 @@ class PostgresDatabaseConfig:
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
-        return f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?schema={self.schema_name}&maxsize=1'
+        connection_string = f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?maxsize=1'
+        if self.schema_name != DEFAULT_POSTGRES_SCHEMA:
+            connection_string += f'&schema={self.schema_name}'
+        return connection_string
 
     @validator('immune_tables')
     def valid_immune_tables(cls, v):
@@ -608,7 +616,7 @@ class CallbackMixin(CodegenMixin):
             return
         _logger.debug('Registering %s callback `%s`', self.kind, self.callback)
         module_name = f'{package}.{self.kind}s.{self.callback}'
-        fn_name = self.callback
+        fn_name = self.callback.rsplit('.', 1)[-1]
         self.callback_fn = import_from(module_name, fn_name)
 
 
@@ -1008,7 +1016,10 @@ class DipDupConfig:
 
     @cached_property
     def schema_name(self) -> str:
-        return self.database.schema_name if isinstance(self.database, PostgresDatabaseConfig) else 'public'
+        if isinstance(self.database, PostgresDatabaseConfig):
+            return self.database.schema_name
+        # NOTE: Not exactly correct; historical reason
+        return DEFAULT_POSTGRES_SCHEMA
 
     @cached_property
     def package_path(self) -> str:
@@ -1072,10 +1083,12 @@ class DipDupConfig:
 
     def dump(self) -> str:
         config_json = json.dumps(self, default=pydantic_encoder)
+        config_yaml = yaml.safe_load(config_json)
+
         return cast(
             str,
             yaml.dump(
-                yaml.safe_load(config_json),
+                exclude_none(config_yaml),
                 indent=2,
                 default_flow_style=False,
             ),

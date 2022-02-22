@@ -1,5 +1,4 @@
 import json
-from contextlib import AsyncExitStack
 from datetime import datetime
 from functools import partial
 from typing import Any
@@ -16,7 +15,6 @@ from dipdup.context import DipDupContext
 from dipdup.context import HookContext
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import FormattedLogger
-from dipdup.utils.database import in_global_transaction
 
 DEFAULT_CONFIG = {
     'apscheduler.jobstores.default.class': 'apscheduler.jobstores.memory:MemoryJobStore',
@@ -51,14 +49,10 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConf
             hook_config=hook_config,
         )
 
-        async with AsyncExitStack() as stack:
-            if hook_config.atomic:
-                await stack.enter_async_context(in_global_transaction())
+        await job_ctx.fire_hook(hook_config.callback, *args, **kwargs)
 
-            await job_ctx.fire_hook(hook_config.callback, *args, **kwargs)
-
-            if job_config.daemon:
-                raise ConfigurationError('Daemon jobs are intended to run forever')
+        if job_config.daemon:
+            raise ConfigurationError('Daemon jobs are intended to run forever')
 
     logger = FormattedLogger(
         name=f'dipdup.hooks.{hook_config.callback}',

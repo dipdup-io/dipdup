@@ -114,11 +114,13 @@ def set_decimal_context(package: str) -> None:
     for _, model in iter_models(package):
         for field in model._meta.fields_map.values():
             if isinstance(field, DecimalField):
-                context.prec = max(context.prec, field.max_digits + field.max_digits)
-    if prec < context.prec:
-        _logger.warning('Decimal context precision has been updated: %s -> %s', prec, context.prec)
+                prec = max(prec, field.max_digits)
+
+    if context.prec < prec:
+        _logger.warning('Decimal context precision has been updated: %s -> %s', context.prec, prec)
+        context.prec = prec
         # NOTE: DefaultContext used for new threads
-        decimal.DefaultContext.prec = context.prec
+        decimal.DefaultContext.prec = prec
         decimal.setcontext(context)
 
 
@@ -128,14 +130,6 @@ def get_schema_hash(conn: BaseDBAsyncClient) -> str:
     # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
     processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
     return hashlib.sha256(processed_schema_sql).hexdigest()
-
-
-async def set_schema(conn: BaseDBAsyncClient, name: str) -> None:
-    """Set schema for the connection"""
-    if isinstance(conn, SqliteClient):
-        raise NotImplementedError
-
-    await conn.execute_script(f'SET search_path TO {name}')
 
 
 async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
@@ -162,7 +156,6 @@ async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
         await Tortoise.generate_schemas()
     elif isinstance(conn, AsyncpgDBClient):
         await create_schema(conn, name)
-        await set_schema(conn, name)
         await Tortoise.generate_schemas()
 
         # NOTE: Apply built-in scripts before project ones

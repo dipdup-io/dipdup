@@ -3,6 +3,7 @@ import os
 import sys
 import time
 from collections import deque
+from contextlib import AsyncExitStack
 from contextlib import contextmanager
 from contextlib import suppress
 from os.path import exists
@@ -58,6 +59,7 @@ from dipdup.models import Schema
 from dipdup.utils import FormattedLogger
 from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
+from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import wipe_schema
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
@@ -293,8 +295,8 @@ class CallbackManager:
     async def run(self) -> None:
         while True:
             async with slowdown(1):
-                while coro := pending_hooks.popleft():
-                    await coro
+                while pending_hooks:
+                    await pending_hooks.popleft()
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
@@ -331,6 +333,7 @@ class CallbackManager:
             handler_config=handler_config,
             datasource=datasource,
         )
+        # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper('handler', name):
             await handler_config.callback_fn(new_ctx, *args, **kwargs)
 
@@ -355,7 +358,12 @@ class CallbackManager:
         self._verify_arguments(new_ctx, *args, **kwargs)
 
         async def _wrapper():
-            with self._callback_wrapper('hook', name):
+            async with AsyncExitStack() as stack:
+
+                stack.enter_context(self._callback_wrapper('hook', name))
+                if hook_config.atomic:
+                    await stack.enter_async_context(in_global_transaction())
+
                 await hook_config.callback_fn(ctx, *args, **kwargs)
 
         if wait:
