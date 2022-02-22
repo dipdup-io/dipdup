@@ -9,9 +9,7 @@ from prometheus_client import Gauge  # type: ignore
 _levels_to_sync: Dict[str, int] = {}
 _levels_to_realtime: Dict[str, int] = {}
 
-_indexes_total = Gauge('dipdup_indexes_total', 'Total number of indexes')
-_indexes_synced = Gauge('dipdup_indexes_synced', 'Number of synchronized indexes')
-_indexes_realtime = Gauge('dipdup_indexes_realtime', 'Number of realtime indexes')
+_indexes_total = Gauge('dipdup_indexes_total', 'Number of indexes in operation by status')
 
 _index_level_sync_duration = Gauge('dipdup_index_level_sync_duration', 'Duration of indexing a single level', ['field'])
 _index_level_realtime_duration = Gauge('dipdup_index_level_realtime_duration', 'Duration of last index syncronization', ['field'])
@@ -96,10 +94,10 @@ class Metrics:
             yield
 
     @classmethod
-    def set_indexes_count(cls, total: int, synced: int, realtime: int) -> None:
-        _indexes_total.set(total)
-        _indexes_synced.set(synced)
-        _indexes_realtime.set(realtime)
+    def set_indexes_count(cls, active: int, synced: int, realtime: int) -> None:
+        _indexes_total.labels(status='active').set(active)
+        _indexes_total.labels(status='synced').set(synced)
+        _indexes_total.labels(status='realtime').set(realtime)
 
     @classmethod
     def set_datasource_head_updated(cls, name: str):
