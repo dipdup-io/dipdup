@@ -4,28 +4,74 @@ from contextlib import contextmanager
 from typing import Deque
 from typing import Dict
 
-from prometheus_client import Gauge  # type: ignore
+from prometheus_client import Counter  # type: ignore
+from prometheus_client import Gauge
+from prometheus_client import Histogram
 
 _levels_to_sync: Dict[str, int] = {}
 _levels_to_realtime: Dict[str, int] = {}
 
-_indexes_total = Gauge('dipdup_indexes_total', 'Number of indexes in operation by status')
-
-_index_level_sync_duration = Gauge('dipdup_index_level_sync_duration', 'Duration of indexing a single level', ['field'])
-_index_level_realtime_duration = Gauge('dipdup_index_level_realtime_duration', 'Duration of last index syncronization', ['field'])
-_index_total_sync_duration = Gauge('dipdup_index_total_sync_duration', 'Duration of the last index syncronization', ['field'])
-_index_total_realtime_duration = Gauge(
-    'dipdup_index_total_realtime_duration', 'Duration of the last index realtime syncronization', ['field']
+_indexes_total = Gauge(
+    'dipdup_indexes_total',
+    'Number of indexes in operation by status',
+    ('status',),
 )
-_index_levels_to_sync = Gauge('dipdup_index_levels_to_sync', 'Number of levels to reach synced state')
-_index_levels_to_realtime = Gauge('dipdup_index_levels_to_realtime', 'Number of levels to reach realtime state')
-_index_total_matches = Gauge('dipdup_index_total_matches', 'Index total hits')
 
-_datasource_head_updated = Gauge('dipdup_datasource_head_updated', 'Timestamp of the last head update', ['datasource'])
-_datasource_rollback_count = Gauge('dipdup_datasource_rollback_count', 'Number of rollbacks', ['datasource'])
+_index_level_sync_duration = Histogram(
+    'dipdup_index_level_sync_duration_seconds',
+    'Duration of indexing a single level',
+    ['field'],
+)
+_index_level_realtime_duration = Histogram(
+    'dipdup_index_level_realtime_duration_seconds',
+    'Duration of last index syncronization',
+    ['field'],
+)
+_index_total_sync_duration = Histogram(
+    'dipdup_index_total_sync_duration_seconds',
+    'Duration of the last index syncronization',
+    ['field'],
+)
+_index_total_realtime_duration = Histogram(
+    'dipdup_index_total_realtime_duration_seconds',
+    'Duration of the last index realtime syncronization',
+    ['field'],
+)
 
-_http_errors = Gauge('dipdup_http_errors', 'Number of http errors', ['url', 'status'])
-_callback_duration = Gauge('dipdup_callback_duration', 'Duration of callback execution', ['callback'])
+_index_levels_to_sync = Histogram(
+    'dipdup_index_levels_to_sync_total',
+    'Number of levels to reach synced state',
+)
+_index_levels_to_realtime = Histogram(
+    'dipdup_index_levels_to_realtime_total',
+    'Number of levels to reach realtime state',
+)
+_index_handlers_matched = Gauge(
+    'dipdup_index_handlers_matched_total',
+    'Index total hits',
+)
+
+_datasource_head_updated = Histogram(
+    'dipdup_datasource_head_updated_timestamp',
+    'Timestamp of the last head update',
+    ['datasource'],
+)
+_datasource_rollbacks = Counter(
+    'dipdup_datasource_rollbacks_total',
+    'Number of rollbacks',
+    ['datasource'],
+)
+
+_http_errors = Counter(
+    'dipdup_http_errors_total',
+    'Number of http errors',
+    ['url', 'status'],
+)
+_callback_duration = Histogram(
+    'dipdup_callback_duration_seconds',
+    'Duration of callback execution',
+    ['callback'],
+)
 
 
 @contextmanager
@@ -39,9 +85,9 @@ def _average_duration(queue: deque):
 def _update_average_metric(queue: deque, metric: Gauge) -> None:
     if not queue:
         return
-    metric.labels(field='min').set(min(queue))
-    metric.labels(field='max').set(max(queue))
-    metric.labels(field='avg').set(sum(queue) / len(queue))
+    metric.labels(field='min').observe(min(queue))
+    metric.labels(field='max').observe(max(queue))
+    metric.labels(field='avg').observe(sum(queue) / len(queue))
 
 
 class Metrics:
@@ -60,8 +106,8 @@ class Metrics:
         _update_average_metric(cls._level_realtime_durations, _index_level_realtime_duration)
         _update_average_metric(cls._total_sync_durations, _index_total_sync_duration)
         _update_average_metric(cls._total_realtime_durations, _index_total_realtime_duration)
-        _index_levels_to_sync.set(sum(_levels_to_sync.values()))
-        _index_levels_to_realtime.set(sum(_levels_to_realtime.values()))
+        _index_levels_to_sync.observe(sum(_levels_to_sync.values()))
+        _index_levels_to_realtime.observe(sum(_levels_to_realtime.values()))
 
     @classmethod
     @contextmanager
@@ -101,19 +147,19 @@ class Metrics:
 
     @classmethod
     def set_datasource_head_updated(cls, name: str):
-        _datasource_head_updated.labels(datasource=name).set(time.time())
+        _datasource_head_updated.labels(datasource=name).observe(time.time())
 
     @classmethod
     def set_datasource_rollback(cls, name: str):
-        _datasource_rollback_count.labels(datasource=name).inc()
+        _datasource_rollbacks.labels(datasource=name).inc()
 
     @classmethod
     def set_http_error(cls, url: str, status: int) -> None:
         _http_errors.labels(url=url, status=status).inc()
 
     @classmethod
-    def set_index_total_matches(cls, amount: float) -> None:
-        _index_total_matches.inc(amount)
+    def set_index_handlers_matched(cls, amount: float) -> None:
+        _index_handlers_matched.inc(amount)
 
     @classmethod
     def set_levels_to_sync(cls, index: str, level: int):

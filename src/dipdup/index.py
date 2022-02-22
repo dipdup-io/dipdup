@@ -405,7 +405,7 @@ class OperationIndex(Index):
             matched_handlers += await self._match_operation_subgroup(operation_subgroup)
 
         if Metrics.enabled:
-            Metrics.set_index_total_matches(len(matched_handlers))
+            Metrics.set_index_handlers_matched(len(matched_handlers))
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
