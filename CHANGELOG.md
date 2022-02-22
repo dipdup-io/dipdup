@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* cli: Ensure that DipDup is running on Linux.
+
 ## 4.2.5 - 2022-02-21
 
 ### Fixed

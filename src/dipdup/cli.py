@@ -88,6 +88,10 @@ async def shutdown() -> None:
 def cli_wrapper(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs) -> None:
+        if sys.platform != 'linux':
+            echo('DipDup is only supported on Linux, exiting')
+            sys.exit(1)
+
         loop = asyncio.get_running_loop()
         loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(shutdown()))
         try:
