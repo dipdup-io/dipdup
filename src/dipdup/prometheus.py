@@ -1,15 +1,10 @@
 import time
 from collections import deque
 from contextlib import contextmanager
-from typing import Deque
-from typing import Dict
 
 from prometheus_client import Counter  # type: ignore
 from prometheus_client import Gauge
 from prometheus_client import Histogram
-
-_levels_to_sync: Dict[str, int] = {}
-_levels_to_realtime: Dict[str, int] = {}
 
 _indexes_total = Gauge(
     'dipdup_indexes_total',
@@ -82,32 +77,11 @@ def _average_duration(queue: deque):
     queue.appendleft(end - start)
 
 
-def _update_average_metric(queue: deque, metric: Gauge) -> None:
-    if not queue:
-        return
-    metric.labels(field='min').observe(min(queue))
-    metric.labels(field='max').observe(max(queue))
-    metric.labels(field='avg').observe(sum(queue) / len(queue))
-
-
 class Metrics:
     enabled = False
-    _level_sync_durations: Deque[float] = deque(maxlen=100)
-    _level_realtime_durations: Deque[float] = deque(maxlen=100)
-    _total_sync_durations: Deque[float] = deque(maxlen=100)
-    _total_realtime_durations: Deque[float] = deque(maxlen=100)
 
     def __new__(cls):
         raise TypeError('Metrics is a singleton')
-
-    @classmethod
-    def refresh(cls) -> None:
-        _update_average_metric(cls._level_sync_durations, _index_level_sync_duration)
-        _update_average_metric(cls._level_realtime_durations, _index_level_realtime_duration)
-        _update_average_metric(cls._total_sync_durations, _index_total_sync_duration)
-        _update_average_metric(cls._total_realtime_durations, _index_total_realtime_duration)
-        _index_levels_to_sync.observe(sum(_levels_to_sync.values()))
-        _index_levels_to_realtime.observe(sum(_levels_to_realtime.values()))
 
     @classmethod
     @contextmanager
@@ -162,16 +136,9 @@ class Metrics:
         _index_handlers_matched.inc(amount)
 
     @classmethod
-    def set_levels_to_sync(cls, index: str, level: int):
-        _levels_to_sync[index] = level
+    def set_levels_to_sync(cls, index: str, levels: int):
+        _index_levels_to_sync.labels(index=index).observe(levels)
 
     @classmethod
-    def set_levels_to_realtime(cls, index: str, level: int):
-        _levels_to_realtime[index] = level
-
-    @classmethod
-    def apply_sample_size(cls, sample_size: int) -> None:
-        cls._level_sync_durations = deque(maxlen=sample_size)
-        cls._level_realtime_durations = deque(maxlen=sample_size)
-        cls._total_sync_durations = deque(maxlen=sample_size)
-        cls._total_realtime_durations = deque(maxlen=sample_size)
+    def set_levels_to_realtime(cls, index: str, levels: int):
+        _index_levels_to_realtime.labels(index=index).observe(levels)

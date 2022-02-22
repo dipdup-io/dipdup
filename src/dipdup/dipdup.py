@@ -148,16 +148,15 @@ class IndexDispatcher:
         while True:
             await asyncio.sleep(update_interval)
 
-            total, synced, realtime = len(pending_indexes), 0, 0
+            active, synced, realtime = 0, 0, 0
             for index in tuple(self._indexes.values()) + tuple(pending_indexes):
-                total += 1
+                active += 1
                 if index.synchronized:
                     synced += 1
                 if index.realtime:
                     realtime += 1
 
-            Metrics.set_indexes_count(total, synced, realtime)
-            Metrics.refresh()
+            Metrics.set_indexes_count(active, synced, realtime)
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)
@@ -497,7 +496,6 @@ class DipDup:
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus:
             Metrics.enabled = True
-            Metrics.apply_sample_size(self._config.prometheus.sample_size)
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
     async def _set_up_hasura(self, stack: AsyncExitStack) -> None:
