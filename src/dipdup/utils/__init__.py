@@ -68,6 +68,9 @@ def pascal_to_snake(value: str, strip_dots: bool = True) -> str:
     """humps wrapper for Python imports"""
     if strip_dots:
         value = value.replace('.', '_')
+    # NOTE: Special case, humps returns uppercase otherwise
+    if value.isupper():
+        return value.lower()
     return humps.depascalize(value).replace('__', '_')
 
 
