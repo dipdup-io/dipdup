@@ -12,6 +12,7 @@ from contextlib import suppress
 from copy import copy
 from dataclasses import field
 from functools import cached_property
+from io import StringIO
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
@@ -31,7 +32,6 @@ from typing import Union
 from typing import cast
 from urllib.parse import urlparse
 
-import ruamel.yaml as yaml
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -1046,6 +1046,7 @@ class DipDupConfig:
         paths: List[str],
         environment: bool = True,
     ) -> 'DipDupConfig':
+        yaml = YAML(typ='base')
         current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
@@ -1071,7 +1072,7 @@ class DipDupConfig:
                     placeholder = '${' + variable + ':-' + default_value + '}'
                     raw_config = raw_config.replace(placeholder, value or default_value)
 
-            json_config.update(YAML(typ='base').load(raw_config))
+            json_config.update(yaml.load(raw_config))
 
         try:
             config = cls(**json_config)
@@ -1082,17 +1083,15 @@ class DipDupConfig:
         return config
 
     def dump(self) -> str:
-        config_json = json.dumps(self, default=pydantic_encoder)
-        config_yaml = yaml.safe_load(config_json)
+        yaml = YAML(typ='unsafe', pure=True)
+        yaml.default_flow_style = False
+        yaml.indent = 2
 
-        return cast(
-            str,
-            yaml.dump(
-                exclude_none(config_yaml),
-                indent=2,
-                default_flow_style=False,
-            ),
-        )
+        config_json = json.dumps(self, default=pydantic_encoder)
+        config_yaml = exclude_none(yaml.load(config_json))
+        buffer = StringIO()
+        yaml.dump(config_yaml, buffer)
+        return buffer.getvalue()
 
     def get_contract(self, name: str) -> ContractConfig:
         try:
