@@ -1,5 +1,7 @@
 import asyncio
+import hashlib
 import logging
+import pickle
 import platform
 from abc import ABC
 from contextlib import suppress
@@ -185,18 +187,18 @@ class _HTTPGateway:
 
         Check for parameters in cache, if not found, perform retried request and cache result.
         """
-        # FIXME: Invalid responses can be cached
-        # if self._config.cache and cache:
-        #     key = hashlib.sha256(pickle.dumps([method, url, kwargs])).hexdigest()
-        #     try:
-        #         return self._cache[key]
-        #     except KeyError:
-        #         response = await self._retry_request(method, url, weight, **kwargs)
-        #         self._cache[key] = response
-        #         return response  # noqa: R504
-        # else:
-        #     return await self._retry_request(method, url, weight, **kwargs)
-        return await self._retry_request(method, url, weight, **kwargs)
+        if self._config.cache and cache:
+            # NOTE: Don't forget to include base gateway URL in the cache key
+            key_data = (method, self._url, url, kwargs)
+            key = hashlib.sha256(pickle.dumps(key_data)).hexdigest()
+            try:
+                return self._cache[key]
+            except KeyError:
+                response = await self._retry_request(method, url, weight, **kwargs)
+                self._cache[key] = response
+                return response  # noqa: R504
+        else:
+            return await self._retry_request(method, url, weight, **kwargs)
 
     def set_user_agent(self, *args: str) -> None:
         """Add list of arguments to User-Agent header"""
