@@ -2,7 +2,7 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
-## [unreleased]
+## 4.2.6 - 2022-02-25
 
 ### Fixed
 
