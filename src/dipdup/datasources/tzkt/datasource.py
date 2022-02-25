@@ -706,23 +706,27 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
+        level_operations: DefaultDict[int, Deque[OperationData]] = defaultdict(deque)
         async for data in self._extract_message_data(MessageType.operation, message):
-            operations: Deque[OperationData] = deque()
             for operation_json in data:
                 if operation_json['status'] != 'applied':
                     continue
                 operation = self.convert_operation(operation_json)
-                operations.append(operation)
-            if operations:
-                await self.emit_operations(tuple(operations))
+                level_operations[operation.level].append(operation)
+
+        for _level, operations in level_operations.items():
+            await self.emit_operations(tuple(operations))
 
     async def _on_big_maps_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
+        level_big_maps: DefaultDict[int, Deque[BigMapData]] = defaultdict(deque)
         async for data in self._extract_message_data(MessageType.big_map, message):
             big_maps: Deque[BigMapData] = deque()
             for big_map_json in data:
                 big_map = self.convert_big_map(big_map_json)
-                big_maps.append(big_map)
+                level_big_maps[big_map.level].append(big_map)
+
+        for _level, big_maps in level_big_maps.items():
             await self.emit_big_maps(tuple(big_maps))
 
     async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
