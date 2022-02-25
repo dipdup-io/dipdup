@@ -232,32 +232,6 @@ class TzktDatasourceConfig(NameMixin):
 
 
 @dataclass
-class BcdDatasourceConfig(NameMixin):
-    """BCD datasource config
-
-    :param kind: always 'bcd'
-    :param url: Base API URL
-    :param network: Network name, e.g. mainnet, hangzhounet, etc.
-    :param http: HTTP client configuration
-    """
-
-    kind: Literal['bcd']
-    url: str
-    network: str
-    http: Optional[HTTPConfig] = None
-
-    def __hash__(self):
-        return hash(self.kind + self.url + self.network)
-
-    @validator('url', allow_reuse=True)
-    def valid_url(cls, v):
-        parsed_url = urlparse(v)
-        if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{v}` is not a valid datasource URL')
-        return v
-
-
-@dataclass
 class CoinbaseDatasourceConfig(NameMixin):
     """Coinbase datasource config
 
@@ -301,7 +275,6 @@ class IpfsDatasourceConfig(NameMixin):
 
 DatasourceConfigT = Union[
     TzktDatasourceConfig,
-    BcdDatasourceConfig,
     CoinbaseDatasourceConfig,
     MetadataDatasourceConfig,
     IpfsDatasourceConfig,

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import warnings
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
@@ -24,7 +23,6 @@ from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import BcdDatasourceConfig
 from dipdup.config import CoinbaseDatasourceConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
@@ -39,7 +37,6 @@ from dipdup.config import default_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import pending_indexes
-from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
@@ -380,13 +377,6 @@ class DipDup:
                     url=datasource_config.url,
                     http_config=datasource_config.http,
                     merge_subscriptions=self._config.advanced.merge_subscriptions,
-                )
-            elif isinstance(datasource_config, BcdDatasourceConfig):
-                warnings.warn('Better Call Dev API is deprecated, use `MetadataDatasource` instead', DeprecationWarning)
-                datasource = BcdDatasource(
-                    url=datasource_config.url,
-                    network=datasource_config.network,
-                    http_config=datasource_config.http,
                 )
             elif isinstance(datasource_config, CoinbaseDatasourceConfig):
                 datasource = CoinbaseDatasource(
