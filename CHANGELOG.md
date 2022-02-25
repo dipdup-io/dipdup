@@ -2,6 +2,12 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* database: Fixed generating table names from uppercase model names.
+
 ## 4.2.5 - 2022-02-21
 
 ### Fixed
