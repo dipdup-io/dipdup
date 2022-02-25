@@ -7,6 +7,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * database: Fixed generating table names from uppercase model names.
+* tzkt: Fixed processing realtime messages with data from multiple levels.
 
 ## 4.2.5 - 2022-02-21
 
