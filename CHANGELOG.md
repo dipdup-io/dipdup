@@ -8,6 +8,21 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * bcd: Removed `bcd` datasource and config section.
 
+## 4.2.6 - 2022-02-25
+
+### Fixed
+
+* database: Fixed generating table names from uppercase model names.
+* http: Fixed bug that leads to caching invalid responses on the disk.
+* tzkt: Fixed processing realtime messages with data from multiple levels.
+
+## 4.2.5 - 2022-02-21
+
+### Fixed
+
+* database: Do not add the `schema` argument to the PostgreSQL connection string when not needed.
+* hasura: Wait for Hasura to be configured before starting indexing.
+
 ## 4.2.4 - 2022-02-14
 
 ### Fixed
