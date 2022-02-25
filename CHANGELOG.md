@@ -6,7 +6,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Fixed
 
-* http: Fix bug that leads to caching invalid responses on the disk.
+* http: Fixed bug that leads to caching invalid responses on the disk.
 
 ## 4.2.5 - 2022-02-21
 
