@@ -54,7 +54,7 @@ from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
-ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'  # ${VARIABLE:-default}
+ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*))?\}'  # ${VARIABLE:-default} | ${VARIABLE}
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
@@ -983,6 +983,7 @@ class DipDupConfig:
     :param jobs: Mapping of job aliases and job configs
     :param sentry: Sentry integration config
     :param advanced: Advanced config
+    :param custom: User-defined Custom config
     """
 
     spec_version: str
@@ -998,6 +999,7 @@ class DipDupConfig:
     sentry: Optional[SentryConfig] = None
     prometheus: Optional[PrometheusConfig] = None
     advanced: AdvancedConfig = AdvancedConfig()
+    custom: Optional[Dict[str, Any]] = None
 
     def __post_init_post_parse__(self):
         self.paths: List[str] = []
@@ -1058,12 +1060,12 @@ class DipDupConfig:
             if environment:
                 _logger.debug('Substituting environment variables')
                 for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-                    variable, default_value = match.group(1), match.group(2)
-                    config_environment[variable] = default_value
-                    value = env.get(variable)
-                    if not default_value and not value:
+                    variable, default_value = match.group('var_name'), match.group('default_value')
+                    value = env.get(variable, default_value)
+                    if not value:
                         raise ConfigurationError(f'Environment variable `{variable}` is not set')
-                    placeholder = '${' + variable + ':-' + default_value + '}'
+                    config_environment[variable] = value
+                    placeholder = match.group(0)
                     raw_config = raw_config.replace(placeholder, value or default_value)
 
             json_config.update(yaml.load(raw_config))
