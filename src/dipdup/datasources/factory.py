@@ -1,13 +1,9 @@
-import warnings
-
-from dipdup.config import BcdDatasourceConfig
 from dipdup.config import CoinbaseDatasourceConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import HttpDatasourceConfig
 from dipdup.config import IpfsDatasourceConfig
 from dipdup.config import MetadataDatasourceConfig
 from dipdup.config import TzktDatasourceConfig
-from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.const import DatasourceKind
 from dipdup.datasources.datasource import Datasource
@@ -36,10 +32,6 @@ class DatasourceFactory:
             assert isinstance(datasource_config, TzktDatasourceConfig)
             return cls._build_tzkt_datasource(datasource_config, config)
 
-        if datasource_config.kind == DatasourceKind.bcd:
-            assert isinstance(datasource_config, BcdDatasourceConfig)
-            return cls._build_bcd_datasource(datasource_config)
-
         if datasource_config.kind == DatasourceKind.coinbase:
             assert isinstance(datasource_config, CoinbaseDatasourceConfig)
             return cls._build_coinbase_datasource(datasource_config)
@@ -65,16 +57,6 @@ class DatasourceFactory:
             url=datasource_config.url,
             http_config=datasource_config.http,
             merge_subscriptions=merge_subscriptions,
-        )
-
-    @classmethod
-    def _build_bcd_datasource(cls, datasource_config: BcdDatasourceConfig) -> BcdDatasource:
-        warnings.warn('Better Call Dev API is deprecated, use `MetadataDatasource` instead', DeprecationWarning)
-
-        return BcdDatasource(
-            url=datasource_config.url,
-            network=datasource_config.network,
-            http_config=datasource_config.http,
         )
 
     @classmethod

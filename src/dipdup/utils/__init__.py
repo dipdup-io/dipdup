@@ -26,6 +26,7 @@ from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
+from typing import Union
 from unittest import skip
 
 import humps  # type: ignore
@@ -61,13 +62,20 @@ async def slowdown(seconds: int):
 
 def snake_to_pascal(value: str) -> str:
     """humps wrapper for Python imports"""
-    return humps.pascalize(value.replace('.', '_'))
+    value = value.replace('.', '_')
+    # NOTE: Special case, humps returns uppercase otherwise
+    if value.isupper():
+        value = value.lower()
+    return humps.pascalize(value)
 
 
 def pascal_to_snake(value: str, strip_dots: bool = True) -> str:
     """humps wrapper for Python imports"""
     if strip_dots:
         value = value.replace('.', '_')
+    # NOTE: Special case, humps returns uppercase otherwise
+    if value.isupper():
+        value = value.lower()
     return humps.depascalize(value).replace('__', '_')
 
 
@@ -147,13 +155,15 @@ def touch(path: str) -> None:
         open(path, 'a').close()
 
 
-def write(path: str, content: str, overwrite: bool = False) -> bool:
+def write(path: str, content: Union[str, bytes], overwrite: bool = False) -> bool:
     """Write content to file, create directory tree if necessary"""
     mkdir_p(dirname(path))
     if exists(path) and not overwrite:
         return False
     _logger.info('Writing into file `%s`', path)
-    with open(path, 'w') as file:
+    with open(path, 'wb') as file:
+        if isinstance(content, str):
+            content = content.encode()
         file.write(content)
     return True
 

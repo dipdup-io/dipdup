@@ -12,6 +12,7 @@ from contextlib import suppress
 from copy import copy
 from dataclasses import field
 from functools import cached_property
+from io import StringIO
 from os import environ as env
 from os.path import dirname
 from pydoc import locate
@@ -31,7 +32,6 @@ from typing import Union
 from typing import cast
 from urllib.parse import urlparse
 
-import ruamel.yaml as yaml
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -232,32 +232,6 @@ class TzktDatasourceConfig(NameMixin):
 
 
 @dataclass
-class BcdDatasourceConfig(NameMixin):
-    """BCD datasource config
-
-    :param kind: always 'bcd'
-    :param url: Base API URL
-    :param network: Network name, e.g. mainnet, hangzhounet, etc.
-    :param http: HTTP client configuration
-    """
-
-    kind: Literal['bcd']
-    url: str
-    network: str
-    http: Optional[HTTPConfig] = None
-
-    def __hash__(self):
-        return hash(self.kind + self.url + self.network)
-
-    @validator('url', allow_reuse=True)
-    def valid_url(cls, v):
-        parsed_url = urlparse(v)
-        if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{v}` is not a valid datasource URL')
-        return v
-
-
-@dataclass
 class CoinbaseDatasourceConfig(NameMixin):
     """Coinbase datasource config
 
@@ -310,7 +284,6 @@ class HttpDatasourceConfig(NameMixin):
 
 DatasourceConfigT = Union[
     TzktDatasourceConfig,
-    BcdDatasourceConfig,
     CoinbaseDatasourceConfig,
     MetadataDatasourceConfig,
     IpfsDatasourceConfig,
@@ -979,10 +952,12 @@ default_hooks = {
 class AdvancedConfig:
     reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
     scheduler: Optional[Dict[str, Any]] = None
+    # TODO: Drop in major version
     oneshot: bool = False
     postpone_jobs: bool = False
     early_realtime: bool = False
     merge_subscriptions: bool = False
+    metadata_interface: bool = False
 
 
 @dataclass
@@ -1056,6 +1031,7 @@ class DipDupConfig:
         paths: List[str],
         environment: bool = True,
     ) -> 'DipDupConfig':
+        yaml = YAML(typ='base')
         current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
@@ -1081,7 +1057,7 @@ class DipDupConfig:
                     placeholder = '${' + variable + ':-' + default_value + '}'
                     raw_config = raw_config.replace(placeholder, value or default_value)
 
-            json_config.update(YAML(typ='base').load(raw_config))
+            json_config.update(yaml.load(raw_config))
 
         try:
             config = cls(**json_config)
@@ -1092,17 +1068,15 @@ class DipDupConfig:
         return config
 
     def dump(self) -> str:
-        config_json = json.dumps(self, default=pydantic_encoder)
-        config_yaml = yaml.safe_load(config_json)
+        yaml = YAML(typ='unsafe', pure=True)
+        yaml.default_flow_style = False
+        yaml.indent = 2
 
-        return cast(
-            str,
-            yaml.dump(
-                exclude_none(config_yaml),
-                indent=2,
-                default_flow_style=False,
-            ),
-        )
+        config_json = json.dumps(self, default=pydantic_encoder)
+        config_yaml = exclude_none(yaml.load(config_json))
+        buffer = StringIO()
+        yaml.dump(config_yaml, buffer)
+        return buffer.getvalue()
 
     def get_contract(self, name: str) -> ContractConfig:
         try:
@@ -1175,9 +1149,15 @@ class DipDupConfig:
             self._imports_resolved.add(index_config.name)
 
     def _validate(self) -> None:
-        # NOTE: Hasura
-        if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
-            raise ConfigurationError('SQLite database engine is not supported by Hasura')
+        # NOTE: Hasura and metadata interface
+        if self.hasura:
+            if isinstance(self.database, SqliteDatabaseConfig):
+                raise ConfigurationError('SQLite database engine is not supported by Hasura')
+            if self.advanced.metadata_interface and self.hasura.camel_case:
+                raise ConfigurationError('`metadata_interface` flag is incompatible with `camel_case` one')
+        else:
+            if self.advanced.metadata_interface:
+                raise ConfigurationError('`metadata_interface` flag requires `hasura` section to be present')
 
         # NOTE: Reserved hooks
         for name, hook_config in self.hooks.items():

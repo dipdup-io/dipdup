@@ -74,10 +74,17 @@ class IndexDatasource(Datasource):
         self._on_rollback: Set[RollbackCallbackT] = set()
         self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
         self._subscriptions.add(HeadSubscription())
+        self._network: Optional[str] = None
 
     @property
     def name(self) -> str:
         return self._http._url
+
+    @property
+    def network(self) -> str:
+        if not self._network:
+            raise RuntimeError('Network is not set')
+        return self._network
 
     @abstractmethod
     async def subscribe(self) -> None:
@@ -110,6 +117,11 @@ class IndexDatasource(Datasource):
     async def emit_rollback(self, from_level: int, to_level: int) -> None:
         for fn in self._on_rollback:
             await fn(self, from_level, to_level)
+
+    def set_network(self, network: str) -> None:
+        if self._network:
+            raise RuntimeError('Network is already set')
+        self._network = network
 
     def set_sync_level(self, subscription: Optional[Subscription], level: int) -> None:
         self._subscriptions.set_sync_level(subscription, level)

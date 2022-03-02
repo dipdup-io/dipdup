@@ -32,6 +32,7 @@ from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import default_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
+from dipdup.context import MetadataCursor
 from dipdup.context import pending_indexes
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
@@ -345,6 +346,9 @@ class DipDup:
             await self._initialize_datasources()
             await self._set_up_hasura(stack)
 
+            if advanced_config.metadata_interface:
+                await MetadataCursor.initialize()
+
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
             else:
@@ -387,7 +391,8 @@ class DipDup:
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError:
             try:
-                # NOTE: A small migration, ReindexingReason became ReversedEnum
+                # TODO: Drop with major version bump
+                # NOTE: A small migration, ReindexingReason became ReversedEnum in 3.1.0
                 for item in ReindexingReason:
                     await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{item.name}" WHERE reindex = "{item.value}"')
 
@@ -461,9 +466,11 @@ class DipDup:
             if not isinstance(datasource, TzktDatasource):
                 continue
 
+            head_block = await datasource.get_head_block()
+            datasource.set_network(head_block.chain)
             datasource.set_sync_level(
                 subscription=None,
-                level=(await datasource.get_head_block()).level,
+                level=head_block.level,
             )
 
             db_head = await Head.filter(name=datasource.name).first()
