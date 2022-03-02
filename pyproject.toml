@@ -42,6 +42,7 @@ sqlparse = "^0.4.1"
 tabulate = "^0.8.9"
 tortoise-orm = "0.17.8"
 typing-inspect = "^0.6.0"
+prometheus-client = "^0.12.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"

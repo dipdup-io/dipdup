@@ -7,6 +7,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Added
 
 * metadata: Added `metadata_interface` feature flag to expose metadata in TzKT format.
+* prometheus: Added ability to expose Prometheus metrics.
 * tzkt: Added missing fields to the `HeadBlockData` model.
 * tzkt: Added `iter_...` methods to iterate over item batches.
 

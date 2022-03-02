@@ -1,9 +1,9 @@
 import logging
 import os
 import sys
-import time
 from collections import deque
 from contextlib import AsyncExitStack
+from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
 from os.path import exists
@@ -59,6 +59,7 @@ from dipdup.models import Index
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
+from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
@@ -455,11 +456,10 @@ class CallbackManager:
     @contextmanager
     def _callback_wrapper(self, kind: str, name: str) -> Iterator[None]:
         try:
-            start = time.perf_counter()
-            yield
-            diff = time.perf_counter() - start
-            level = self._logger.warning if diff > 1 else self._logger.debug
-            level('`%s` %s callback executed in %s seconds', name, kind, diff)
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_callback_duration(name))
+                yield
         except Exception as e:
             if isinstance(e, ReindexingRequiredError):
                 raise
