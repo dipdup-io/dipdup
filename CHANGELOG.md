@@ -28,7 +28,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * dipdup: Use fast `orjson` library instead of built-in `json` where possible.
 
-## 4.2.6 - 2022-02-25
+## 5.0.0-rc1 - 2022-02-25
 
 ### Fixed
 
