@@ -190,7 +190,9 @@ class _HTTPGateway:
         Check for parameters in cache, if not found, perform retried request and cache result.
         """
         if self._config.cache and cache:
-            key = hashlib.sha256(pickle.dumps([method, url, kwargs])).hexdigest()
+            # NOTE: Don't forget to include base gateway URL in the cache key
+            key_data = (method, self._url, url, kwargs)
+            key = hashlib.sha256(pickle.dumps(key_data)).hexdigest()
             try:
                 return self._cache[key]
             except KeyError:
