@@ -4,6 +4,19 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## [unreleased]
 
+### Added
+
+* tzkt: Added `iter_...` methods to iterate over item batches.
+
+### Fixed
+
+* tzkt: Fixed possible OOM while calling methods that support pagination.
+* tzkt: Fixed possible data loss in `get_originations` and `get_quotes` methods.
+
+### Changed
+
+* tzkt: Added `offset` and `limit` arguments to all methods that support pagination.
+
 ### Removed
 
 * bcd: Removed `bcd` datasource and config section.
