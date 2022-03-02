@@ -40,6 +40,7 @@ _index_levels_to_sync = Histogram(
 _index_levels_to_realtime = Histogram(
     'dipdup_index_levels_to_realtime_total',
     'Number of levels to reach realtime state',
+    ['index'],
 )
 _index_handlers_matched = Gauge(
     'dipdup_index_handlers_matched_total',
