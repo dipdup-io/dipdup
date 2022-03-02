@@ -49,8 +49,8 @@ class HttpDatasource(Datasource):
         ratelimit_period=0,
     )
 
-    def __init__(self, http_config: Optional[HTTPConfig] = None) -> None:
-        super().__init__('', self._default_http_config.merge(http_config))
+    def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
+        super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = _logger
 
     async def get(self, url: str, cache: bool = False, weight: int = 1, **kwargs):

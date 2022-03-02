@@ -276,10 +276,11 @@ class IpfsDatasourceConfig(NameMixin):
 @dataclass
 class HttpDatasourceConfig(NameMixin):
     kind: Literal['http']
+    url: str
     http: Optional[HTTPConfig] = None
 
     def __hash__(self):
-        return hash(f'{self.kind}_{self._name}')
+        return hash(self.kind + self.url)
 
 
 DatasourceConfigT = Union[
