@@ -5,6 +5,8 @@ from tortoise import Tortoise
 
 from dipdup.models import Index
 from dipdup.models import IndexType
+from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
 from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import tortoise_wrapper
 
@@ -39,3 +41,20 @@ class UtilsTest(IsolatedAsyncioTestCase):
                     raise Exception
             count = await Index.filter().count()
             self.assertEqual(3, count)
+
+    async def test_humps_helpers(self) -> None:
+        self.assertEqual('foo_bar', pascal_to_snake('foo_bar', True))
+        self.assertEqual('foo_bar', pascal_to_snake('FooBar', True))
+        self.assertEqual('foo_bar', pascal_to_snake('Foo.Bar', True))
+        self.assertEqual('foobar', pascal_to_snake('FOOBAR', True))
+
+        self.assertEqual('foo_bar', pascal_to_snake('foo_bar', False))
+        self.assertEqual('foo_bar', pascal_to_snake('FooBar', False))
+        self.assertEqual('foo._bar', pascal_to_snake('Foo.Bar', False))
+        self.assertEqual('foobar', pascal_to_snake('FOOBAR', False))
+
+        self.assertEqual('FooBar', snake_to_pascal('fooBar'))
+        self.assertEqual('FooBar', snake_to_pascal('FooBar'))
+        self.assertEqual('Foobar', snake_to_pascal('foobar'))
+        self.assertEqual('FooBar', snake_to_pascal('foo__bar'))
+        self.assertEqual('Foobar', snake_to_pascal('FOOBAR'))

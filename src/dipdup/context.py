@@ -38,6 +38,7 @@ from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
+from dipdup.datasources.datasource import HttpDatasource
 from dipdup.datasources.ipfs.datasource import IpfsDatasource
 from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -53,9 +54,11 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
+from dipdup.models import ContractMetadata
 from dipdup.models import Index
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
+from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils import slowdown
@@ -67,6 +70,31 @@ DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 # NOTE: Dependency cycle
 pending_indexes = deque()  # type: ignore
 pending_hooks: Deque[Awaitable[None]] = deque()
+
+
+class MetadataCursor:
+    _contract = 0
+    _token = 0
+
+    def __new__(cls):
+        raise NotImplementedError
+
+    @classmethod
+    async def initialize(cls) -> None:
+        if last_contract := await ContractMetadata.filter().order_by('-update_id').first():
+            cls._contract = last_contract.update_id
+        if last_token := await TokenMetadata.filter().order_by('-update_id').first():
+            cls._token = last_token.update_id
+
+    @classmethod
+    def contract(cls) -> int:
+        cls._contract += 1
+        return cls._contract
+
+    @classmethod
+    def token(cls) -> int:
+        cls._token += 1
+        return cls._token
 
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
@@ -217,6 +245,41 @@ class DipDupContext:
         # NOTE: IndexDispatcher will handle further initialization when it's time
         pending_indexes.append(index)
 
+    async def update_contract_metadata(
+        self,
+        network: str,
+        address: str,
+        metadata: Dict[str, Any],
+    ) -> None:
+        if not self.config.advanced.metadata_interface:
+            return
+        update_id = MetadataCursor.contract()
+        await ContractMetadata.update_or_create(
+            network=network,
+            contract=address,
+            defaults={'metadata': metadata, 'update_id': update_id},
+        )
+
+    async def update_token_metadata(
+        self,
+        network: str,
+        address: str,
+        token_id: str,
+        metadata: Dict[str, Any],
+    ) -> None:
+        if not self.config.advanced.metadata_interface:
+            return
+        if not all(str.isdigit(c) for c in token_id):
+            raise ValueError('`token_id` must be a number')
+
+        update_id = MetadataCursor.token()
+        await TokenMetadata.update_or_create(
+            network=network,
+            contract=address,
+            token_id=token_id,
+            defaults={'metadata': metadata, 'update_id': update_id},
+        )
+
     def _get_datasource(self, name: str, type_: Type[DatasourceT]) -> DatasourceT:
         datasource = self.datasources.get(name)
         if not datasource:
@@ -236,6 +299,9 @@ class DipDupContext:
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
         return self._get_datasource(name, IpfsDatasource)
+
+    def get_http_datasource(self, name: str) -> HttpDatasource:
+        return self._get_datasource(name, HttpDatasource)
 
 
 class HookContext(DipDupContext):

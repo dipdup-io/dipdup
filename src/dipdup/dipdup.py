@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import warnings
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
@@ -25,27 +24,20 @@ from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import BcdDatasourceConfig
-from dipdup.config import CoinbaseDatasourceConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import IpfsDatasourceConfig
-from dipdup.config import MetadataDatasourceConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import TzktDatasourceConfig
 from dipdup.config import default_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
+from dipdup.context import MetadataCursor
 from dipdup.context import pending_indexes
-from dipdup.datasources.bcd.datasource import BcdDatasource
-from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.ipfs.datasource import IpfsDatasource
-from dipdup.datasources.metadata.datasource import MetadataDatasource
+from dipdup.datasources.factory import DatasourceFactory
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
@@ -366,6 +358,9 @@ class DipDup:
             await self._initialize_datasources()
             await self._set_up_hasura(stack)
 
+            if advanced_config.metadata_interface:
+                await MetadataCursor.initialize()
+
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
             else:
@@ -387,39 +382,8 @@ class DipDup:
             if name in self._datasources:
                 continue
 
-            if isinstance(datasource_config, TzktDatasourceConfig):
-                datasource = TzktDatasource(
-                    url=datasource_config.url,
-                    http_config=datasource_config.http,
-                    merge_subscriptions=self._config.advanced.merge_subscriptions,
-                )
-            elif isinstance(datasource_config, BcdDatasourceConfig):
-                warnings.warn('Better Call Dev API is deprecated, use `MetadataDatasource` instead', DeprecationWarning)
-                datasource = BcdDatasource(
-                    url=datasource_config.url,
-                    network=datasource_config.network,
-                    http_config=datasource_config.http,
-                )
-            elif isinstance(datasource_config, CoinbaseDatasourceConfig):
-                datasource = CoinbaseDatasource(
-                    http_config=datasource_config.http,
-                )
-            elif isinstance(datasource_config, MetadataDatasourceConfig):
-                datasource = MetadataDatasource(
-                    url=datasource_config.url,
-                    network=datasource_config.network,
-                    http_config=datasource_config.http,
-                )
-            elif isinstance(datasource_config, IpfsDatasourceConfig):
-                datasource = IpfsDatasource(
-                    url=datasource_config.url,
-                    http_config=datasource_config.http,
-                )
-            else:
-                raise NotImplementedError
+            datasource = DatasourceFactory.build(name, self._config)
 
-            datasource.set_logger(datasource_config.name)
-            datasource.set_user_agent(self._config.package)
             self._datasources[name] = datasource
             self._datasources_by_config[datasource_config] = datasource
 
@@ -439,7 +403,8 @@ class DipDup:
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError:
             try:
-                # NOTE: A small migration, ReindexingReason became ReversedEnum
+                # TODO: Drop with major version bump
+                # NOTE: A small migration, ReindexingReason became ReversedEnum in 3.1.0
                 for item in ReindexingReason:
                     await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{item.name}" WHERE reindex = "{item.value}"')
 
@@ -518,9 +483,11 @@ class DipDup:
             if not isinstance(datasource, TzktDatasource):
                 continue
 
+            head_block = await datasource.get_head_block()
+            datasource.set_network(head_block.chain)
             datasource.set_sync_level(
                 subscription=None,
-                level=(await datasource.get_head_block()).level,
+                level=head_block.level,
             )
 
             db_head = await Head.filter(name=datasource.name).first()

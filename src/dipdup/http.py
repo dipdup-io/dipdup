@@ -14,6 +14,7 @@ from typing import Tuple
 from typing import cast
 
 import aiohttp
+import orjson  # type: ignore
 from aiolimiter import AsyncLimiter
 from fcache.cache import FileCache  # type: ignore
 
@@ -84,6 +85,7 @@ class _HTTPGateway:
     async def __aenter__(self) -> None:
         """Create underlying aiohttp session"""
         self.__session = aiohttp.ClientSession(
+            json_serialize=lambda *a, **kw: orjson.dumps(*a, **kw).decode(),
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit or 100),
             timeout=aiohttp.ClientTimeout(connect=self._config.connection_timeout or 60),
         )
@@ -197,7 +199,9 @@ class _HTTPGateway:
         Check for parameters in cache, if not found, perform retried request and cache result.
         """
         if self._config.cache and cache:
-            key = hashlib.sha256(pickle.dumps([method, url, kwargs])).hexdigest()
+            # NOTE: Don't forget to include base gateway URL in the cache key
+            key_data = (method, self._url, url, kwargs)
+            key = hashlib.sha256(pickle.dumps(key_data)).hexdigest()
             try:
                 return self._cache[key]
             except KeyError:

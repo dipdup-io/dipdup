@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import importlib
-import json
 import logging
 import re
 from contextlib import suppress
@@ -18,6 +17,7 @@ from typing import Optional
 from typing import Tuple
 
 import humps  # type: ignore
+import orjson as json
 from aiohttp import ClientConnectorError
 from aiohttp import ClientOSError
 from aiohttp import ServerDisconnectedError
@@ -207,7 +207,7 @@ class HasuraGateway(HTTPGateway):
         )
 
     def _hash_metadata(self, metadata: Dict[str, Any]) -> str:
-        return hashlib.sha256(json.dumps(metadata).encode()).hexdigest()
+        return hashlib.sha256(json.dumps(metadata)).hexdigest()
 
     async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')
