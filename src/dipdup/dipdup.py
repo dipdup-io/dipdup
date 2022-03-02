@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import warnings
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
@@ -24,7 +23,6 @@ from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import BcdDatasourceConfig
 from dipdup.config import CoinbaseDatasourceConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
@@ -39,7 +37,6 @@ from dipdup.config import default_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import pending_indexes
-from dipdup.datasources.bcd.datasource import BcdDatasource
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
@@ -71,7 +68,6 @@ from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_schema_hash
 from dipdup.utils.database import prepare_models
-from dipdup.utils.database import set_schema
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import validate_models
 
@@ -353,7 +349,7 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            await self._set_up_hasura(stack, tasks)
+            await self._set_up_hasura(stack)
 
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
@@ -382,13 +378,6 @@ class DipDup:
                     http_config=datasource_config.http,
                     merge_subscriptions=self._config.advanced.merge_subscriptions,
                 )
-            elif isinstance(datasource_config, BcdDatasourceConfig):
-                warnings.warn('Better Call Dev API is deprecated, use `MetadataDatasource` instead', DeprecationWarning)
-                datasource = BcdDatasource(
-                    url=datasource_config.url,
-                    network=datasource_config.network,
-                    http_config=datasource_config.http,
-                )
             elif isinstance(datasource_config, CoinbaseDatasourceConfig):
                 datasource = CoinbaseDatasource(
                     http_config=datasource_config.http,
@@ -416,9 +405,6 @@ class DipDup:
         self._logger.info('Initializing database schema')
         schema_name = self._config.schema_name
         conn = get_connection(None)
-
-        if isinstance(self._config.database, PostgresDatabaseConfig):
-            await set_schema(conn, schema_name)
 
         # NOTE: Try to fetch existing schema
         try:
@@ -485,7 +471,7 @@ class DipDup:
         if tasks:
             tasks.add(create_task(self._ctx.callbacks.run()))
 
-    async def _set_up_hasura(self, stack: AsyncExitStack, tasks: Set[Task]) -> None:
+    async def _set_up_hasura(self, stack: AsyncExitStack) -> None:
         if not self._config.hasura:
             return
 
@@ -493,7 +479,7 @@ class DipDup:
             raise RuntimeError
         hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
         await stack.enter_async_context(hasura_gateway)
-        tasks.add(create_task(hasura_gateway.configure()))
+        await hasura_gateway.configure()
 
     async def _set_up_datasources(self, stack: AsyncExitStack) -> None:
         await self._create_datasources()
