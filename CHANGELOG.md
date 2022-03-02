@@ -44,6 +44,10 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## 4.2.4 - 2022-02-14
 
+### Added
+
+* config: Added `http` datasource to making arbitrary http requests.
+
 ### Fixed
 
 * context: Fixed crash when calling `fire_hook` method.

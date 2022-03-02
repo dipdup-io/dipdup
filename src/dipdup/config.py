@@ -273,11 +273,22 @@ class IpfsDatasourceConfig(NameMixin):
         return hash(self.kind + self.url)
 
 
+@dataclass
+class HttpDatasourceConfig(NameMixin):
+    kind: Literal['http']
+    url: str
+    http: Optional[HTTPConfig] = None
+
+    def __hash__(self):
+        return hash(self.kind + self.url)
+
+
 DatasourceConfigT = Union[
     TzktDatasourceConfig,
     CoinbaseDatasourceConfig,
     MetadataDatasourceConfig,
     IpfsDatasourceConfig,
+    HttpDatasourceConfig,
 ]
 
 
