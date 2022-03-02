@@ -3,13 +3,14 @@ from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
 from collections import namedtuple
+from contextlib import ExitStack
 from datetime import datetime
+from typing import Any
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
-from typing import Literal
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -46,12 +47,12 @@ from dipdup.exceptions import ReindexingReason
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BigMapDiff
-from dipdup.models import BlockData
 from dipdup.models import HeadBlockData
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Origination
 from dipdup.models import Transaction
+from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils.database import in_global_transaction
 
@@ -82,10 +83,6 @@ OperationQueueItemT = Union[Tuple[OperationSubgroup, ...], SingleLevelRollback]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
 MatchedOperationsT = Tuple[OperationSubgroup, OperationHandlerConfig, Deque[OperationHandlerArgumentT]]
 MatchedBigMapsT = Tuple[BigMapHandlerConfig, BigMapDiff]
-
-# NOTE: For initializing the index state on startup
-block_cache: Dict[Tuple[str, int], BlockData] = {}
-head_cache: DefaultDict[str, Optional[Union[models.Head, Literal[False]]]] = defaultdict(lambda: False)
 
 
 def extract_operation_subgroups(
@@ -161,6 +158,18 @@ class Index:
             raise RuntimeError('Index state is not initialized')
         return self._state
 
+    @property
+    def queue_size(self) -> int:
+        return len(self._queue)
+
+    @property
+    def synchronized(self) -> bool:
+        return self.state.status == IndexStatus.REALTIME
+
+    @property
+    def realtime(self) -> bool:
+        return self.state.status == IndexStatus.REALTIME and not self._queue
+
     async def initialize_state(self, state: Optional[models.Index] = None) -> None:
         if self._state:
             raise RuntimeError('Index state is already initialized')
@@ -188,7 +197,10 @@ class Index:
         # NOTE: `--oneshot` flag implied
         if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.last_level:
             last_level = self._config.last_level
-            await self._synchronize(last_level, cache=True)
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_total_sync_duration())
+                await self._synchronize(last_level, cache=True)
             await self.state.update_status(IndexStatus.ONESHOT, last_level)
 
         sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
@@ -203,10 +215,17 @@ class Index:
         elif level < sync_level:
             self._logger.info('Index is behind datasource, sync to datasource level: %s -> %s', level, sync_level)
             self._queue.clear()
-            await self._synchronize(sync_level)
 
-        else:
-            await self._process_queue()
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_total_sync_duration())
+                await self._synchronize(sync_level)
+
+        elif self._queue:
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_total_realtime_duration())
+                await self._process_queue()
 
     @abstractmethod
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
@@ -233,6 +252,8 @@ class Index:
 
     async def _exit_sync_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
+        if Metrics.enabled:
+            Metrics.set_levels_to_sync(self._config.name, 0)
         await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
 
     def _extract_level(self, message: Union[Tuple[OperationData, ...], Tuple[BigMapData, ...]]) -> int:
@@ -255,6 +276,8 @@ class OperationIndex(Index):
 
     def push_operations(self, operation_subgroups: Tuple[OperationSubgroup, ...]) -> None:
         self._queue.append(operation_subgroups)
+        if Metrics.enabled:
+            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
 
     def push_rollback(self, level: int) -> None:
         self._queue.append(SingleLevelRollback(level))
@@ -280,12 +303,20 @@ class OperationIndex(Index):
         """Process WebSocket queue"""
         while self._queue:
             message = self._queue.popleft()
+            messages_left = len(self._queue)
+            if Metrics.enabled:
+                Metrics.set_levels_to_realtime(self._config.name, messages_left)
             if isinstance(message, SingleLevelRollback):
-                self._logger.debug('Processing rollback realtime message, %s left in queue', len(self._queue))
+                self._logger.debug('Processing rollback realtime message, %s left in queue', messages_left)
                 await self._single_level_rollback(message.level)
             elif message:
-                self._logger.debug('Processing operations realtime message, %s left in queue', len(self._queue))
-                await self._process_level_operations(message)
+                self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
+                with ExitStack() as stack:
+                    if Metrics.enabled:
+                        stack.enter_context(Metrics.measure_level_realtime_duration())
+                    await self._process_level_operations(message)
+        else:
+            Metrics.set_levels_to_realtime(self._config.name, 0)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -315,6 +346,9 @@ class OperationIndex(Index):
         )
 
         async for level, operations in fetcher.fetch_operations_by_level():
+            if Metrics.enabled:
+                Metrics.set_levels_to_sync(self._config.name, last_level - level)
+
             operation_subgroups = tuple(
                 extract_operation_subgroups(
                     operations,
@@ -324,7 +358,10 @@ class OperationIndex(Index):
             )
             if operation_subgroups:
                 self._logger.info('Processing operations of level %s', level)
-                await self._process_level_operations(operation_subgroups)
+                with ExitStack() as stack:
+                    if Metrics.enabled:
+                        stack.enter_context(Metrics.measure_level_sync_duration())
+                    await self._process_level_operations(operation_subgroups)
 
         await self._exit_sync_state(last_level)
 
@@ -367,6 +404,9 @@ class OperationIndex(Index):
         for operation_subgroup in operation_subgroups:
             self._head_hashes.add(operation_subgroup.hash)
             matched_handlers += await self._match_operation_subgroup(operation_subgroup)
+
+        if Metrics.enabled:
+            Metrics.set_index_handlers_matched(len(matched_handlers))
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
@@ -564,13 +604,19 @@ class BigMapIndex(Index):
     def push_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         self._queue.append(big_maps)
 
+        if Metrics.enabled:
+            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         if self._queue:
             self._logger.debug('Processing websocket queue')
         while self._queue:
             big_maps = self._queue.popleft()
-            await self._process_level_big_maps(big_maps)
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_level_realtime_duration())
+                await self._process_level_big_maps(big_maps)
 
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -605,8 +651,12 @@ class BigMapIndex(Index):
             cache=cache,
         )
 
-        async for _, big_maps in fetcher.fetch_big_maps_by_level():
-            await self._process_level_big_maps(big_maps)
+        async for level, big_maps in fetcher.fetch_big_maps_by_level():
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    Metrics.set_levels_to_sync(self._config.name, last_level - level)
+                    stack.enter_context(Metrics.measure_level_sync_duration())
+                await self._process_level_big_maps(big_maps)
 
     async def _synchronize_level(self, last_level: int, cache: bool = False) -> None:
         # NOTE: Checking late because feature flags could be modified after loading config
@@ -615,24 +665,23 @@ class BigMapIndex(Index):
 
         big_map_addresses = await self._get_big_map_addresses()
         big_map_paths = await self._get_big_map_paths()
-        big_map_ids: Tuple[Tuple[int, str], ...] = ()
-        big_map_data: Tuple[BigMapData, ...] = ()
+        big_map_ids: Set[Tuple[int, str]] = set()
 
         for address in big_map_addresses:
-            contract_big_maps = await self._datasource.get_contract_big_maps(address)
-            for contract_big_map in contract_big_maps:
-                if contract_big_map['path'] in big_map_paths:
-                    big_map_ids += ((int(contract_big_map['ptr']), contract_big_map['path']),)
+            async for contract_big_maps in self._datasource.iter_contract_big_maps(address):
+                for contract_big_map in contract_big_maps:
+                    if contract_big_map['path'] in big_map_paths:
+                        big_map_ids.add((int(contract_big_map['ptr']), contract_big_map['path']))
 
-        for bigmap_id, path in big_map_ids:
-            big_maps = await self._datasource.get_big_map(bigmap_id, last_level)
-            big_map_data = big_map_data + tuple(
+        # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
+        async def _process_big_map_batch(big_maps: Tuple[Dict[str, Any], ...], path: str) -> None:
+            big_map_data = tuple(
                 BigMapData(
                     id=big_map['id'],
                     level=last_level,
                     operation_id=last_level,
                     timestamp=datetime.now(),
-                    bigmap=bigmap_id,
+                    bigmap=big_map_id,
                     contract_address=address,
                     path=path,
                     action=BigMapAction.ADD_KEY,
@@ -642,10 +691,18 @@ class BigMapIndex(Index):
                 )
                 for big_map in big_maps
             )
+            matched_handlers = await self._match_big_maps(big_map_data)
+            for handler_config, big_map_diff in matched_handlers:
+                await self._call_matched_handler(handler_config, big_map_diff)
 
-        await self._process_level_big_maps(big_map_data)
+        async with in_global_transaction():
+            for big_map_id, path in big_map_ids:
+                async for big_maps in self._datasource.iter_big_map(big_map_id, last_level):
+                    await _process_big_map_batch(big_maps, path)
 
-    async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]):
+            await self.state.update_status(level=last_level)
+
+    async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         if not big_maps:
             return
         level = self._extract_level(big_maps)

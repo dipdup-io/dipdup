@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import warnings
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
@@ -20,31 +19,25 @@ from typing import Tuple
 from typing import cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
+from prometheus_client import start_http_server  # type: ignore
 from tortoise.exceptions import OperationalError
 from tortoise.transactions import get_connection
 
 from dipdup.codegen import DipDupCodeGenerator
-from dipdup.config import BcdDatasourceConfig
-from dipdup.config import CoinbaseDatasourceConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import IpfsDatasourceConfig
-from dipdup.config import MetadataDatasourceConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import TzktDatasourceConfig
 from dipdup.config import default_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
+from dipdup.context import MetadataCursor
 from dipdup.context import pending_indexes
-from dipdup.datasources.bcd.datasource import BcdDatasource
-from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.ipfs.datasource import IpfsDatasource
-from dipdup.datasources.metadata.datasource import MetadataDatasource
+from dipdup.datasources.factory import DatasourceFactory
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
@@ -54,9 +47,7 @@ from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
 from dipdup.index import Index
 from dipdup.index import OperationIndex
-from dipdup.index import block_cache
 from dipdup.index import extract_operation_subgroups
-from dipdup.index import head_cache
 from dipdup.models import BigMapData
 from dipdup.models import Contract
 from dipdup.models import Head
@@ -65,6 +56,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Schema
+from dipdup.prometheus import Metrics
 from dipdup.scheduler import add_job
 from dipdup.scheduler import create_scheduler
 from dipdup.utils import slowdown
@@ -82,18 +74,18 @@ class IndexDispatcher:
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
         self._contracts: Set[ContractConfig] = set()
-        self._stopped: bool = False
         self._tasks: Deque[asyncio.Task] = deque()
 
         self._entrypoint_filter: Set[Optional[str]] = set()
         self._address_filter: Set[str] = set()
 
-    async def run(
-        self,
-        spawn_datasources_event: Event,
-        start_scheduler_event: Event,
-        early_realtime: bool = False,
-    ) -> None:
+    async def run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
+        tasks = [self._run(spawn_datasources_event, start_scheduler_event, early_realtime)]
+        if self._ctx.config.prometheus:
+            tasks.append(self._update_metrics(self._ctx.config.prometheus.update_interval))
+        await gather(*tasks)
+
+    async def _run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
         await self._load_index_states()
@@ -104,7 +96,7 @@ class IndexDispatcher:
             if isinstance(index, OperationIndex):
                 self._apply_filters(index._config)
 
-        while not self._stopped:
+        while True:
             if not spawn_datasources_event.is_set():
                 if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
                     spawn_datasources_event.set()
@@ -131,7 +123,7 @@ class IndexDispatcher:
                     self._apply_filters(index._config)
 
             if not indexes_spawned and self._every_index_is(IndexStatus.ONESHOT):
-                self.stop()
+                break
 
             if self._every_index_is(IndexStatus.REALTIME) and not indexes_spawned:
                 if not on_synchronized_fired:
@@ -144,8 +136,19 @@ class IndexDispatcher:
             else:
                 on_synchronized_fired = False
 
-    def stop(self) -> None:
-        self._stopped = True
+    async def _update_metrics(self, update_interval: float) -> None:
+        while True:
+            await asyncio.sleep(update_interval)
+
+            active, synced, realtime = 0, 0, 0
+            for index in tuple(self._indexes.values()) + tuple(pending_indexes):
+                active += 1
+                if index.synchronized:
+                    synced += 1
+                if index.realtime:
+                    realtime += 1
+
+            Metrics.set_indexes_count(active, synced, realtime)
 
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)
@@ -223,10 +226,6 @@ class IndexDispatcher:
         tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
         await gather(*tasks)
 
-        # NOTE: Cached blocks used only on index state init
-        block_cache.clear()
-        head_cache.clear()
-
     async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
         self._tasks.append(
@@ -241,6 +240,8 @@ class IndexDispatcher:
                 ),
             )
         )
+        if Metrics.enabled:
+            Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
             if isinstance(index, HeadIndex) and index.datasource == datasource:
                 index.push_head(head)
@@ -269,6 +270,8 @@ class IndexDispatcher:
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
         self._logger.warning('Datasource `%s` rolled back: %s -> %s', datasource.name, from_level, to_level)
+        if Metrics.enabled:
+            Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Zero difference between levels means we received no operations/big_maps on this level and thus channel level hasn't changed
         zero_level_rollback = from_level - to_level == 0
@@ -349,10 +352,14 @@ class DipDup:
             await self._set_up_database(stack)
             await self._set_up_datasources(stack)
             await self._set_up_hooks(tasks)
+            await self._set_up_prometheus()
 
             await self._initialize_schema()
             await self._initialize_datasources()
             await self._set_up_hasura(stack)
+
+            if advanced_config.metadata_interface:
+                await MetadataCursor.initialize()
 
             if self._config.oneshot:
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
@@ -375,39 +382,8 @@ class DipDup:
             if name in self._datasources:
                 continue
 
-            if isinstance(datasource_config, TzktDatasourceConfig):
-                datasource = TzktDatasource(
-                    url=datasource_config.url,
-                    http_config=datasource_config.http,
-                    merge_subscriptions=self._config.advanced.merge_subscriptions,
-                )
-            elif isinstance(datasource_config, BcdDatasourceConfig):
-                warnings.warn('Better Call Dev API is deprecated, use `MetadataDatasource` instead', DeprecationWarning)
-                datasource = BcdDatasource(
-                    url=datasource_config.url,
-                    network=datasource_config.network,
-                    http_config=datasource_config.http,
-                )
-            elif isinstance(datasource_config, CoinbaseDatasourceConfig):
-                datasource = CoinbaseDatasource(
-                    http_config=datasource_config.http,
-                )
-            elif isinstance(datasource_config, MetadataDatasourceConfig):
-                datasource = MetadataDatasource(
-                    url=datasource_config.url,
-                    network=datasource_config.network,
-                    http_config=datasource_config.http,
-                )
-            elif isinstance(datasource_config, IpfsDatasourceConfig):
-                datasource = IpfsDatasource(
-                    url=datasource_config.url,
-                    http_config=datasource_config.http,
-                )
-            else:
-                raise NotImplementedError
+            datasource = DatasourceFactory.build(name, self._config)
 
-            datasource.set_logger(datasource_config.name)
-            datasource.set_user_agent(self._config.package)
             self._datasources[name] = datasource
             self._datasources_by_config[datasource_config] = datasource
 
@@ -427,7 +403,8 @@ class DipDup:
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError:
             try:
-                # NOTE: A small migration, ReindexingReason became ReversedEnum
+                # TODO: Drop with major version bump
+                # NOTE: A small migration, ReindexingReason became ReversedEnum in 3.1.0
                 for item in ReindexingReason:
                     await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{item.name}" WHERE reindex = "{item.value}"')
 
@@ -481,6 +458,11 @@ class DipDup:
         if tasks:
             tasks.add(create_task(self._ctx.callbacks.run()))
 
+    async def _set_up_prometheus(self) -> None:
+        if self._config.prometheus:
+            Metrics.enabled = True
+            start_http_server(self._config.prometheus.port, self._config.prometheus.host)
+
     async def _set_up_hasura(self, stack: AsyncExitStack) -> None:
         if not self._config.hasura:
             return
@@ -501,9 +483,11 @@ class DipDup:
             if not isinstance(datasource, TzktDatasource):
                 continue
 
+            head_block = await datasource.get_head_block()
+            datasource.set_network(head_block.chain)
             datasource.set_sync_level(
                 subscription=None,
-                level=(await datasource.get_head_block()).level,
+                level=head_block.level,
             )
 
             db_head = await Head.filter(name=datasource.name).first()

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dipdup"
 description = "Python SDK for developing indexers of Tezos smart contracts inspired by The Graph"
-version = "4.2.5"
+version = "4.2.6"
 license = "MIT"
 authors = [
     "Lev Gorodetskiy <github@droserasprout.space>",
@@ -30,6 +30,8 @@ asyncclick = "^8.0.1"
 asyncpg = "^0.24.0"
 datamodel-code-generator = "^0.11.18"
 fcache = "^0.4.7"
+orjson = "^3.6.6"
+prometheus-client = "^0.12.0"
 pydantic = "^1.8.2"
 pyhumps = "^3.0.2"
 pysignalr = "^0.1.1"
