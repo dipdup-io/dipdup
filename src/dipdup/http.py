@@ -14,11 +14,12 @@ from typing import Tuple
 from typing import cast
 
 import aiohttp
+import orjson  # type: ignore
 from aiolimiter import AsyncLimiter
 from fcache.cache import FileCache  # type: ignore
 
 from dipdup import __version__
-from dipdup.config import HTTPConfig  # type: ignore
+from dipdup.config import HTTPConfig
 
 safe_exceptions = (
     aiohttp.ClientConnectionError,
@@ -83,6 +84,7 @@ class _HTTPGateway:
     async def __aenter__(self) -> None:
         """Create underlying aiohttp session"""
         self.__session = aiohttp.ClientSession(
+            json_serialize=lambda *a, **kw: orjson.dumps(*a, **kw).decode(),
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit or 100),
             timeout=aiohttp.ClientTimeout(connect=self._config.connection_timeout or 60),
         )

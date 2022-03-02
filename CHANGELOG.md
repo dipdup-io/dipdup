@@ -6,6 +6,8 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ### Added
 
+* metadata: Added `metadata_interface` feature flag to expose metadata in TzKT format.
+* tzkt: Added missing fields to the `HeadBlockData` model.
 * tzkt: Added `iter_...` methods to iterate over item batches.
 
 ### Fixed
@@ -20,6 +22,10 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Removed
 
 * bcd: Removed `bcd` datasource and config section.
+
+### Performance
+
+* dipdup: Use fast `orjson` library instead of built-in `json` where possible.
 
 ## 4.2.6 - 2022-02-25
 

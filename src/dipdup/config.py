@@ -942,10 +942,12 @@ default_hooks = {
 class AdvancedConfig:
     reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
     scheduler: Optional[Dict[str, Any]] = None
+    # TODO: Drop in major version
     oneshot: bool = False
     postpone_jobs: bool = False
     early_realtime: bool = False
     merge_subscriptions: bool = False
+    metadata_interface: bool = False
 
 
 @dataclass
@@ -1137,9 +1139,15 @@ class DipDupConfig:
             self._imports_resolved.add(index_config.name)
 
     def _validate(self) -> None:
-        # NOTE: Hasura
-        if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
-            raise ConfigurationError('SQLite database engine is not supported by Hasura')
+        # NOTE: Hasura and metadata interface
+        if self.hasura:
+            if isinstance(self.database, SqliteDatabaseConfig):
+                raise ConfigurationError('SQLite database engine is not supported by Hasura')
+            if self.advanced.metadata_interface and self.hasura.camel_case:
+                raise ConfigurationError('`metadata_interface` flag is incompatible with `camel_case` one')
+        else:
+            if self.advanced.metadata_interface:
+                raise ConfigurationError('`metadata_interface` flag requires `hasura` section to be present')
 
         # NOTE: Reserved hooks
         for name, hook_config in self.hooks.items():

@@ -962,10 +962,13 @@ class TzktDatasource(IndexDatasource):
     def convert_head_block(cls, head_block_json: Dict[str, Any]) -> HeadBlockData:
         """Convert raw head block message from WS/REST into dataclass"""
         return HeadBlockData(
+            chain=head_block_json['chain'],
+            chain_id=head_block_json['chainId'],
             cycle=head_block_json['cycle'],
             level=head_block_json['level'],
             hash=head_block_json['hash'],
             protocol=head_block_json['protocol'],
+            next_protocol=head_block_json['nextProtocol'],
             timestamp=cls._parse_timestamp(head_block_json['timestamp']),
             voting_epoch=head_block_json['votingEpoch'],
             voting_period=head_block_json['votingPeriod'],
@@ -980,6 +983,7 @@ class TzktDatasource(IndexDatasource):
             quote_jpy=Decimal(head_block_json['quoteJpy']),
             quote_krw=Decimal(head_block_json['quoteKrw']),
             quote_eth=Decimal(head_block_json['quoteEth']),
+            quote_gbp=Decimal(head_block_json['quoteGbp']),
         )
 
     @classmethod

@@ -195,6 +195,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
 @click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
 @click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing')
+@click.option('--metadata-interface', is_flag=True, help='Enable metadata interface')
 @click.pass_context
 @cli_wrapper
 async def run(
@@ -202,12 +203,14 @@ async def run(
     postpone_jobs: bool,
     early_realtime: bool,
     merge_subscriptions: bool,
+    metadata_interface: bool,
 ) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     config.advanced.postpone_jobs |= postpone_jobs
     config.advanced.early_realtime |= early_realtime
     config.advanced.merge_subscriptions |= merge_subscriptions
+    config.advanced.metadata_interface |= metadata_interface
 
     set_decimal_context(config.package)
 
