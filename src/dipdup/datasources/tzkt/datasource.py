@@ -228,19 +228,16 @@ class BigMapFetcher:
         Resulting data is splitted by level, deduped, sorted and ready to be processed by BigMapIndex.
         """
 
-        offset = 0
         big_maps: Tuple[BigMapData, ...] = ()
 
         # TODO: Share code between this and OperationFetcher
-        while True:
-            fetched_big_maps = await self._datasource.get_big_maps(
-                self._big_map_addresses,
-                self._big_map_paths,
-                self._first_level,
-                self._last_level,
-                cache=self._cache,
-                offset=offset,
-            )
+        big_map_iter = self._datasource.iter_big_maps(
+            self._big_map_addresses,
+            self._big_map_paths,
+            self._first_level,
+            self._last_level,
+        )
+        async for fetched_big_maps in big_map_iter:
             big_maps = big_maps + fetched_big_maps
 
             # NOTE: Yield big map slices by level except the last one
@@ -255,11 +252,6 @@ class BigMapFetcher:
                         break
                 else:
                     break
-
-            if len(fetched_big_maps) < self._datasource.request_limit:
-                break
-
-            offset += self._datasource.request_limit
 
         if big_maps:
             yield big_maps[0].level, big_maps
@@ -583,7 +575,7 @@ class TzktDatasource(IndexDatasource):
                 "path.in": ",".join(paths),
                 "level.gt": first_level,
                 "level.le": last_level,
-                "offset.cr": offset,
+                "offset": offset,
                 "limit": limit,
             },
             cache=cache,
@@ -605,6 +597,7 @@ class TzktDatasource(IndexDatasource):
             first_level,
             last_level,
             cache,
+            cursor=False,
         ):
             yield batch
 
