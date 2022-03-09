@@ -425,7 +425,7 @@ class TzktDatasource(IndexDatasource):
             'get',
             url=f'v1/contracts/{address}/bigmaps',
             params={
-                'offset.cr': offset,
+                'offset': offset,
                 'limit': limit,
             },
         )
@@ -435,7 +435,7 @@ class TzktDatasource(IndexDatasource):
         self,
         address: str,
     ) -> AsyncIterator[Tuple[Dict[str, Any], ...]]:
-        async for batch in self._iter_batches(self.get_contract_big_maps, address):
+        async for batch in self._iter_batches(self.get_contract_big_maps, address, cursor=False):
             yield batch
 
     async def get_head_block(self) -> HeadBlockData:
@@ -711,15 +711,19 @@ class TzktDatasource(IndexDatasource):
         await self._send(method, request, _on_subscribe)
         await event.wait()
 
-    async def _iter_batches(self, fn, *args, **kwargs) -> AsyncIterator:
+    async def _iter_batches(self, fn, *args, cursor: bool = True, **kwargs) -> AsyncIterator:
         if 'offset' in kwargs or 'limit' in kwargs:
             raise ValueError('`offset` and `limit` arguments are not allowed')
         size, offset = self.request_limit, 0
         while size == self.request_limit:
             result = await fn(*args, offset=offset, **kwargs)
             yield result
-            offset = result[-1]['id']
+
             size = len(result)
+            if cursor:
+                offset = result[-1]['id']
+            else:
+                offset += self.request_limit
 
     def _get_ws_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
