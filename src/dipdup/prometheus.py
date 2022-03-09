@@ -1,5 +1,4 @@
 import time
-from collections import deque
 from contextlib import contextmanager
 
 from prometheus_client import Counter  # type: ignore
@@ -15,27 +14,24 @@ _indexes_total = Gauge(
 _index_level_sync_duration = Histogram(
     'dipdup_index_level_sync_duration_seconds',
     'Duration of indexing a single level',
-    ['field'],
 )
 _index_level_realtime_duration = Histogram(
     'dipdup_index_level_realtime_duration_seconds',
     'Duration of last index syncronization',
-    ['field'],
 )
 _index_total_sync_duration = Histogram(
     'dipdup_index_total_sync_duration_seconds',
     'Duration of the last index syncronization',
-    ['field'],
 )
 _index_total_realtime_duration = Histogram(
     'dipdup_index_total_realtime_duration_seconds',
     'Duration of the last index realtime syncronization',
-    ['field'],
 )
 
 _index_levels_to_sync = Histogram(
     'dipdup_index_levels_to_sync_total',
     'Number of levels to reach synced state',
+    ['index'],
 )
 _index_levels_to_realtime = Histogram(
     'dipdup_index_levels_to_realtime_total',
@@ -70,14 +66,6 @@ _callback_duration = Histogram(
 )
 
 
-@contextmanager
-def _average_duration(queue: deque):
-    start = time.perf_counter()
-    yield
-    end = time.perf_counter()
-    queue.appendleft(end - start)
-
-
 class Metrics:
     enabled = False
 
@@ -87,25 +75,25 @@ class Metrics:
     @classmethod
     @contextmanager
     def measure_level_sync_duration(cls):
-        with _average_duration(cls._level_sync_durations):
+        with _index_level_sync_duration.time():
             yield
 
     @classmethod
     @contextmanager
     def measure_level_realtime_duration(cls):
-        with _average_duration(cls._level_realtime_durations):
+        with _index_level_realtime_duration.time():
             yield
 
     @classmethod
     @contextmanager
     def measure_total_sync_duration(cls):
-        with _average_duration(cls._total_sync_durations):
+        with _index_total_sync_duration.time():
             yield
 
     @classmethod
     @contextmanager
     def measure_total_realtime_duration(cls):
-        with _average_duration(cls._total_realtime_durations):
+        with _index_total_realtime_duration.time():
             yield
 
     @classmethod

@@ -7,6 +7,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * tzkt: Fixed crash in methods that do not support cursor pagination.
+* prometheus: Fixed invalid metric labels. 
 
 ## 5.0.0-rc1 - 2022-03-02
 
