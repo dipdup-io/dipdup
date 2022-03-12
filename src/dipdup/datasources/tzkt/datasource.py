@@ -710,6 +710,9 @@ class TzktDatasource(IndexDatasource):
         size, offset = self.request_limit, 0
         while size == self.request_limit:
             result = await fn(*args, offset=offset, **kwargs)
+            if not result:
+                return
+
             yield result
 
             size = len(result)
