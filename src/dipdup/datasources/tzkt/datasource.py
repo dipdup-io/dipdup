@@ -228,19 +228,16 @@ class BigMapFetcher:
         Resulting data is splitted by level, deduped, sorted and ready to be processed by BigMapIndex.
         """
 
-        offset = 0
         big_maps: Tuple[BigMapData, ...] = ()
 
         # TODO: Share code between this and OperationFetcher
-        while True:
-            fetched_big_maps = await self._datasource.get_big_maps(
-                self._big_map_addresses,
-                self._big_map_paths,
-                self._first_level,
-                self._last_level,
-                cache=self._cache,
-                offset=offset,
-            )
+        big_map_iter = self._datasource.iter_big_maps(
+            self._big_map_addresses,
+            self._big_map_paths,
+            self._first_level,
+            self._last_level,
+        )
+        async for fetched_big_maps in big_map_iter:
             big_maps = big_maps + fetched_big_maps
 
             # NOTE: Yield big map slices by level except the last one
@@ -255,11 +252,6 @@ class BigMapFetcher:
                         break
                 else:
                     break
-
-            if len(fetched_big_maps) < self._datasource.request_limit:
-                break
-
-            offset += self._datasource.request_limit
 
         if big_maps:
             yield big_maps[0].level, big_maps
@@ -425,7 +417,7 @@ class TzktDatasource(IndexDatasource):
             'get',
             url=f'v1/contracts/{address}/bigmaps',
             params={
-                'offset.cr': offset,
+                'offset': offset,
                 'limit': limit,
             },
         )
@@ -435,7 +427,7 @@ class TzktDatasource(IndexDatasource):
         self,
         address: str,
     ) -> AsyncIterator[Tuple[Dict[str, Any], ...]]:
-        async for batch in self._iter_batches(self.get_contract_big_maps, address):
+        async for batch in self._iter_batches(self.get_contract_big_maps, address, cursor=False):
             yield batch
 
     async def get_head_block(self) -> HeadBlockData:
@@ -583,7 +575,7 @@ class TzktDatasource(IndexDatasource):
                 "path.in": ",".join(paths),
                 "level.gt": first_level,
                 "level.le": last_level,
-                "offset.cr": offset,
+                "offset": offset,
                 "limit": limit,
             },
             cache=cache,
@@ -605,6 +597,7 @@ class TzktDatasource(IndexDatasource):
             first_level,
             last_level,
             cache,
+            cursor=False,
         ):
             yield batch
 
@@ -711,15 +704,22 @@ class TzktDatasource(IndexDatasource):
         await self._send(method, request, _on_subscribe)
         await event.wait()
 
-    async def _iter_batches(self, fn, *args, **kwargs) -> AsyncIterator:
+    async def _iter_batches(self, fn, *args, cursor: bool = True, **kwargs) -> AsyncIterator:
         if 'offset' in kwargs or 'limit' in kwargs:
             raise ValueError('`offset` and `limit` arguments are not allowed')
         size, offset = self.request_limit, 0
         while size == self.request_limit:
             result = await fn(*args, offset=offset, **kwargs)
+            if not result:
+                return
+
             yield result
-            offset = result[-1]['id']
+
             size = len(result)
+            if cursor:
+                offset = result[-1]['id']
+            else:
+                offset += self.request_limit
 
     def _get_ws_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
