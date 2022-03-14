@@ -1,4 +1,4 @@
-FROM python:3.8-slim-buster
+FROM python:3.10-slim-buster
 
 ARG PLUGINS
 
@@ -19,9 +19,11 @@ WORKDIR /home/dipdup/source
 RUN poetry config virtualenvs.create false
 RUN make install DEV=0 PLUGINS="${PLUGINS}"
 
-COPY --chown=dipdup inject_pyproject.sh /home/dipdup/inject_pyproject
-RUN chmod +x /home/dipdup/inject_pyproject
-RUN echo 'dipdup ALL = NOPASSWD: /home/dipdup/inject_pyproject' >> /etc/sudoers
+COPY --chown=dipdup inject_pyproject.sh /usr/bin/inject_pyproject.sh
+RUN echo 'sudo /usr/bin/inject_pyproject.sh' >> /usr/bin/inject_pyproject
+RUN echo 'dipdup ALL = NOPASSWD: /usr/bin/inject_pyproject.sh' >> /etc/sudoers
+RUN chmod +x /usr/bin/inject_pyproject.sh
+RUN chmod +x /usr/bin/inject_pyproject
 
 COPY --chown=dipdup src /home/dipdup/source/src
 

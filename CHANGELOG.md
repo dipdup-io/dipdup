@@ -2,6 +2,47 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## 5.0.0-rc2 - 2022-03-13
+
+### Fixed
+
+* tzkt: Fixed crash in methods that do not support cursor pagination.
+* prometheus: Fixed invalid metric labels. 
+
+## 5.0.0-rc1 - 2022-03-02
+
+### Added
+
+* metadata: Added `metadata_interface` feature flag to expose metadata in TzKT format.
+* prometheus: Added ability to expose Prometheus metrics.
+* tzkt: Added missing fields to the `HeadBlockData` model.
+* tzkt: Added `iter_...` methods to iterate over item batches.
+
+### Fixed
+
+* tzkt: Fixed possible OOM while calling methods that support pagination.
+* tzkt: Fixed possible data loss in `get_originations` and `get_quotes` methods.
+
+### Changed
+
+* tzkt: Added `offset` and `limit` arguments to all methods that support pagination.
+
+### Removed
+
+* bcd: Removed `bcd` datasource and config section.
+
+### Performance
+
+* dipdup: Use fast `orjson` library instead of built-in `json` where possible.
+
+## 4.2.6 - 2022-02-25
+
+### Fixed
+
+* database: Fixed generating table names from uppercase model names.
+* http: Fixed bug that leads to caching invalid responses on the disk.
+* tzkt: Fixed processing realtime messages with data from multiple levels.
+
 ## 4.2.5 - 2022-02-21
 
 ### Fixed
@@ -10,6 +51,10 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 * hasura: Wait for Hasura to be configured before starting indexing.
 
 ## 4.2.4 - 2022-02-14
+
+### Added
+
+* config: Added `http` datasource to making arbitrary http requests.
 
 ### Fixed
 

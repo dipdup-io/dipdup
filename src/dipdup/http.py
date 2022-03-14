@@ -14,11 +14,13 @@ from typing import Tuple
 from typing import cast
 
 import aiohttp
+import orjson  # type: ignore
 from aiolimiter import AsyncLimiter
 from fcache.cache import FileCache  # type: ignore
 
 from dipdup import __version__
 from dipdup.config import HTTPConfig  # type: ignore
+from dipdup.prometheus import Metrics
 
 safe_exceptions = (
     aiohttp.ClientConnectionError,
@@ -83,6 +85,7 @@ class _HTTPGateway:
     async def __aenter__(self) -> None:
         """Create underlying aiohttp session"""
         self.__session = aiohttp.ClientSession(
+            json_serialize=lambda *a, **kw: orjson.dumps(*a, **kw).decode(),
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit or 100),
             timeout=aiohttp.ClientTimeout(connect=self._config.connection_timeout or 60),
         )
@@ -111,6 +114,7 @@ class _HTTPGateway:
             raise RuntimeError('aiohttp session is closed')
         return self.__session
 
+    # TODO: Move to separate method to cover SignalR negotiations too
     async def _retry_request(self, method: str, url: str, weight: int = 1, **kwargs):
         """Retry a request in case of failure sleeping according to config"""
         attempt = 1
@@ -132,13 +136,20 @@ class _HTTPGateway:
                     raise e
 
                 ratelimit_sleep: Optional[float] = None
-                if isinstance(e, aiohttp.ClientResponseError) and e.status == HTTPStatus.TOO_MANY_REQUESTS:
-                    # NOTE: Sleep at least 5 seconds on ratelimit
-                    ratelimit_sleep = 5
-                    # TODO: Parse Retry-After in UTC date format
-                    with suppress(KeyError, ValueError):
-                        e.headers = cast(Mapping, e.headers)
-                        ratelimit_sleep = int(e.headers['Retry-After'])
+                if isinstance(e, aiohttp.ClientResponseError):
+                    if Metrics.enabled:
+                        Metrics.set_http_error(self._url, e.status)
+
+                    if e.status == HTTPStatus.TOO_MANY_REQUESTS:
+                        # NOTE: Sleep at least 5 seconds on ratelimit
+                        ratelimit_sleep = 5
+                        # TODO: Parse Retry-After in UTC date format
+                        with suppress(KeyError, ValueError):
+                            e.headers = cast(Mapping, e.headers)
+                            ratelimit_sleep = int(e.headers['Retry-After'])
+                else:
+                    if Metrics.enabled:
+                        Metrics.set_http_error(self._url, 0)
 
                 self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, e)
                 self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
@@ -188,7 +199,9 @@ class _HTTPGateway:
         Check for parameters in cache, if not found, perform retried request and cache result.
         """
         if self._config.cache and cache:
-            key = hashlib.sha256(pickle.dumps([method, url, kwargs])).hexdigest()
+            # NOTE: Don't forget to include base gateway URL in the cache key
+            key_data = (method, self._url, url, kwargs)
+            key = hashlib.sha256(pickle.dumps(key_data)).hexdigest()
             try:
                 return self._cache[key]
             except KeyError:

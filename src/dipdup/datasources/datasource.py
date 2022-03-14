@@ -6,6 +6,8 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 
+from aiohttp.hdrs import METH_GET
+
 from dipdup.config import HTTPConfig
 from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import Subscription
@@ -38,6 +40,26 @@ class Datasource(HTTPGateway):
         self._logger = FormattedLogger(self._logger.name, name + ': {}')
 
 
+class HttpDatasource(Datasource):
+    _default_http_config = HTTPConfig(
+        cache=True,
+        retry_count=5,
+        retry_sleep=1,
+        ratelimit_rate=0,
+        ratelimit_period=0,
+    )
+
+    def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
+        super().__init__(url, self._default_http_config.merge(http_config))
+        self._logger = _logger
+
+    async def get(self, url: str, cache: bool = False, weight: int = 1, **kwargs):
+        return await self.request(METH_GET, url, cache, weight, **kwargs)
+
+    async def run(self) -> None:
+        pass
+
+
 # TODO: Generic interface
 class GraphQLDatasource(Datasource):
     ...
@@ -52,10 +74,17 @@ class IndexDatasource(Datasource):
         self._on_rollback: Set[RollbackCallbackT] = set()
         self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
         self._subscriptions.add(HeadSubscription())
+        self._network: Optional[str] = None
 
     @property
     def name(self) -> str:
         return self._http._url
+
+    @property
+    def network(self) -> str:
+        if not self._network:
+            raise RuntimeError('Network is not set')
+        return self._network
 
     @abstractmethod
     async def subscribe(self) -> None:
@@ -88,6 +117,11 @@ class IndexDatasource(Datasource):
     async def emit_rollback(self, from_level: int, to_level: int) -> None:
         for fn in self._on_rollback:
             await fn(self, from_level, to_level)
+
+    def set_network(self, network: str) -> None:
+        if self._network:
+            raise RuntimeError('Network is already set')
+        self._network = network
 
     def set_sync_level(self, subscription: Optional[Subscription], level: int) -> None:
         self._subscriptions.set_sync_level(subscription, level)
