@@ -5,7 +5,6 @@ from collections import deque
 from collections import namedtuple
 from contextlib import ExitStack
 from datetime import datetime
-from typing import Any
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
@@ -674,31 +673,28 @@ class BigMapIndex(Index):
                         big_map_ids.add((int(contract_big_map['ptr']), contract_big_map['path']))
 
         # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
-        async def _process_big_map_batch(big_maps: Tuple[Dict[str, Any], ...], path: str) -> None:
-            big_map_data = tuple(
-                BigMapData(
-                    id=big_map['id'],
-                    level=last_level,
-                    operation_id=last_level,
-                    timestamp=datetime.now(),
-                    bigmap=big_map_id,
-                    contract_address=address,
-                    path=path,
-                    action=BigMapAction.ADD_KEY,
-                    active=big_map['active'],
-                    key=big_map['key'],
-                    value=big_map['value'],
-                )
-                for big_map in big_maps
-            )
-            matched_handlers = await self._match_big_maps(big_map_data)
-            for handler_config, big_map_diff in matched_handlers:
-                await self._call_matched_handler(handler_config, big_map_diff)
-
         async with in_global_transaction():
             for big_map_id, path in big_map_ids:
-                async for big_maps in self._datasource.iter_big_map(big_map_id, last_level):
-                    await _process_big_map_batch(big_maps, path)
+                async for big_map_keys in self._datasource.iter_big_map(big_map_id, last_level):
+                    big_map_data = tuple(
+                        BigMapData(
+                            id=big_map_key['id'],
+                            level=last_level,
+                            operation_id=last_level,
+                            timestamp=datetime.now(),
+                            bigmap=big_map_id,
+                            contract_address=address,
+                            path=path,
+                            action=BigMapAction.ADD_KEY,
+                            active=big_map_key['active'],
+                            key=big_map_key['key'],
+                            value=big_map_key['value'],
+                        )
+                        for big_map_key in big_map_keys
+                    )
+                    matched_handlers = await self._match_big_maps(big_map_data)
+                    for handler_config, big_map_diff in matched_handlers:
+                        await self._call_matched_handler(handler_config, big_map_diff)
 
             await self.state.update_status(level=last_level)
 
