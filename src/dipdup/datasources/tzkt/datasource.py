@@ -306,7 +306,7 @@ class TzktDatasource(IndexDatasource):
             url=f'v1/contracts/{address}/{entrypoint}',
             params={
                 'select': 'id,address',
-                'offset.cr': offset,
+                'offset': offset,
                 'limit': limit,
             },
         )
@@ -317,7 +317,7 @@ class TzktDatasource(IndexDatasource):
         address: str,
         strict: bool = False,
     ) -> AsyncIterator[Tuple[str, ...]]:
-        async for batch in self._iter_batches(self.get_similar_contracts, address, strict):
+        async for batch in self._iter_batches(self.get_similar_contracts, address, strict, cursor=False):
             yield batch
 
     async def get_originated_contracts(
@@ -334,14 +334,14 @@ class TzktDatasource(IndexDatasource):
             url=f'v1/accounts/{address}/contracts',
             params={
                 'select': 'id,address',
-                'offset.cr': offset,
+                'offset': offset,
                 'limit': limit,
             },
         )
         return tuple(c['address'] for c in response)
 
     async def iter_originated_contracts(self, address: str) -> AsyncIterator[Tuple[str, ...]]:
-        async for batch in self._iter_batches(self.get_originated_contracts, address):
+        async for batch in self._iter_batches(self.get_originated_contracts, address, cursor=False):
             yield batch
 
     async def get_contract_summary(self, address: str) -> Dict[str, Any]:
