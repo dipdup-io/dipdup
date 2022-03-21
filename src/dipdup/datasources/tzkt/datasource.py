@@ -386,7 +386,7 @@ class TzktDatasource(IndexDatasource):
             params={
                 **kwargs,
                 'level': level,
-                'offset.cr': offset,
+                'offset': offset,
                 'limit': limit,
             },
         )
@@ -403,6 +403,7 @@ class TzktDatasource(IndexDatasource):
             big_map_id,
             level,
             active,
+            cursor=False,
         ):
             yield batch
 
@@ -413,6 +414,7 @@ class TzktDatasource(IndexDatasource):
         limit: Optional[int] = None,
     ) -> Tuple[Dict[str, Any], ...]:
         offset, limit = offset or 0, limit or self.request_limit
+        # TODO: Can we cache it?
         big_maps = await self.request(
             'get',
             url=f'v1/contracts/{address}/bigmaps',
