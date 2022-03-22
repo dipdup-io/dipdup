@@ -305,12 +305,12 @@ class TzktDatasource(IndexDatasource):
             'get',
             url=f'v1/contracts/{address}/{entrypoint}',
             params={
-                'select': 'id,address',
+                'select': 'address',
                 'offset': offset,
                 'limit': limit,
             },
         )
-        return tuple(c['address'] for c in response)
+        return tuple(response)
 
     async def iter_similar_contracts(
         self,
