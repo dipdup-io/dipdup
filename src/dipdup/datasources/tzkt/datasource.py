@@ -333,12 +333,12 @@ class TzktDatasource(IndexDatasource):
             'get',
             url=f'v1/accounts/{address}/contracts',
             params={
-                'select': 'id,address',
+                'select': 'address',
                 'offset': offset,
                 'limit': limit,
             },
         )
-        return tuple(c['address'] for c in response)
+        return tuple(response)
 
     async def iter_originated_contracts(self, address: str) -> AsyncIterator[Tuple[str, ...]]:
         async for batch in self._iter_batches(self.get_originated_contracts, address, cursor=False):
