@@ -114,3 +114,51 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 'KT1BgezWwHBxA9NrczwK9x3zfgFnUkc7JJ4b',
                 contracts[1]['address'],
             )
+
+    @skip('')
+    async def test_get_contract_summary(self):
+        tzkt = TzktDatasource(
+            url='https://api.tzkt.io',
+            http_config=HTTPConfig(batch_size=1),
+        )
+
+        async with tzkt:
+            contract = await tzkt.get_contract_summary(
+                address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
+            )
+            self.assertEqual(
+                'KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
+                contract['address'],
+            )
+
+    @skip('')
+    async def test_get_contract_storage(self):
+        tzkt = TzktDatasource(
+            url='https://api.tzkt.io',
+            http_config=HTTPConfig(batch_size=1),
+        )
+
+        async with tzkt:
+            storage = await tzkt.get_contract_storage(
+                address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
+            )
+            self.assertEqual(
+                1451,
+                storage['token_lambdas'],
+            )
+
+    @skip('')
+    async def test_get_jsonschemas(self):
+        tzkt = TzktDatasource(
+            url='https://api.tzkt.io',
+            http_config=HTTPConfig(batch_size=1),
+        )
+
+        async with tzkt:
+            jsonschemas = await tzkt.get_jsonschemas(
+                address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
+            )
+            self.assertEqual(
+                'string',
+                jsonschemas['storageSchema']['properties']['baker_validator']['type'],
+            )
