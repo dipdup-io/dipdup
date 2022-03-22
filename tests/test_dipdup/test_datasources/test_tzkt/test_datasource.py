@@ -4,7 +4,8 @@ from unittest import IsolatedAsyncioTestCase
 
 from dipdup.config import HTTPConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from unittest import skip
+
+# from unittest import skip
 
 
 @asynccontextmanager
@@ -27,7 +28,7 @@ async def take_two(iterable: AsyncIterator):
 
 
 class TzktDatasourceTest(IsolatedAsyncioTestCase):
-    @skip('')
+    # @skip('')
     async def test_get_similar_contracts(self) -> None:
         async with with_tzkt(2) as tzkt:
             contracts = await tzkt.get_similar_contracts(
@@ -48,7 +49,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 contracts,
             )
 
-    @skip('')
+    # @skip('')
     async def test_iter_similar_contracts(self):
         async with with_tzkt(1) as tzkt:
             contracts = await take_two(
@@ -73,7 +74,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 contracts,
             )
 
-    @skip('')
+    # @skip('')
     async def test_get_originated_contracts(self) -> None:
         async with with_tzkt(2) as tzkt:
             contracts = await tzkt.get_originated_contracts(
@@ -88,7 +89,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 contracts[1]['address'],
             )
 
-    @skip('')
+    # @skip('')
     async def iter_originated_contracts(self):
         async with with_tzkt(1) as tzkt:
             contracts = await take_two(
@@ -105,7 +106,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 contracts[1]['address'],
             )
 
-    @skip('')
+    # @skip('')
     async def test_get_contract_summary(self):
         async with with_tzkt(1) as tzkt:
             contract = await tzkt.get_contract_summary(
@@ -116,7 +117,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 contract['address'],
             )
 
-    @skip('')
+    # @skip('')
     async def test_get_contract_storage(self):
         async with with_tzkt(1) as tzkt:
             storage = await tzkt.get_contract_storage(
@@ -127,7 +128,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 storage['token_lambdas'],
             )
 
-    @skip('')
+    # @skip('')
     async def test_get_jsonschemas(self):
         async with with_tzkt(1) as tzkt:
             jsonschemas = await tzkt.get_jsonschemas(
@@ -138,7 +139,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 jsonschemas['storageSchema']['properties']['baker_validator']['type'],
             )
 
-    @skip('')
+    # @skip('')
     async def test_get_big_map(self):
         async with with_tzkt(2) as tzkt:
             big_map_keys = await tzkt.get_big_map(
@@ -150,7 +151,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 (big_map_keys[0]['id'], big_map_keys[1]['id']),
             )
 
-    @skip('')
+    # @skip('')
     async def test_iter_big_map(self):
         async with with_tzkt(1) as tzkt:
             big_map_keys = await take_two(
@@ -164,7 +165,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 (big_map_keys[0]['id'], big_map_keys[1]['id']),
             )
 
-    @skip('')
+    # @skip('')
     async def test_get_contract_big_maps(self):
         async with with_tzkt(2) as tzkt:
             big_maps = await tzkt.get_contract_big_maps(
@@ -175,7 +176,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 (big_maps[0]['path'], big_maps[1]['path']),
             )
 
-    @skip('')
+    # @skip('')
     async def test_iter_contract_big_maps(self):
         async with with_tzkt(1) as tzkt:
             big_maps = await take_two(
@@ -187,3 +188,17 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 ('votes', 'voters'),
                 (big_maps[0]['path'], big_maps[1]['path']),
             )
+
+    # @skip('')
+    async def test_get_migration_originations(self):
+        async with with_tzkt(2) as tzkt:
+            originations = await tzkt.get_migration_originations()
+            self.assertEqual(67955553, originations[0].id)
+            self.assertEqual(67955554, originations[1].id)
+
+    # @skip('')
+    async def test_iter_migration_originations(self):
+        async with with_tzkt(1) as tzkt:
+            originations = await take_two(tzkt.iter_migration_originations())
+            self.assertEqual(67955553, originations[0].id)
+            self.assertEqual(67955554, originations[1].id)
