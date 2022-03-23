@@ -15,6 +15,6 @@ class TzbtcStorage(BaseModel):
         extra = Extra.forbid
 
     big_map: Dict[str, str]
-    bool: bool
     lambda_: str = Field(..., alias='lambda')
     nat: str
+    bool: bool

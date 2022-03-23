@@ -31,8 +31,8 @@ class Key1(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    operator: str
     owner: str
+    operator: str
     token_id: str
 
 

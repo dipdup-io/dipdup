@@ -15,8 +15,8 @@ class Key(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    delegate: str
     owner: str
+    delegate: str
 
 
 class Delegate(BaseModel):
@@ -49,8 +49,8 @@ class ProposalKeyListSortByLevelItem(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    bytes: str
     nat: str
+    bytes: str
 
 
 class Key1(BaseModel):
@@ -98,32 +98,32 @@ class RegistryStorage(BaseModel):
         extra = Extra.forbid
 
     admin: str
-    custom_entrypoints: Dict[str, str]
-    decision_lambda: str
     delegates: List[Delegate]
     extra: Dict[str, str]
-    fixed_proposal_fee_in_token: str
     freeze_history: Dict[str, FreezeHistory]
     frozen_token_id: str
     frozen_total_supply: str
     governance_token: GovernanceToken
-    governance_total_supply: str
     guardian: str
+    metadata: Dict[str, str]
+    pending_owner: str
+    permits_counter: str
+    proposal_key_list_sort_by_level: List[ProposalKeyListSortByLevelItem]
+    proposals: Dict[str, Proposals]
+    quorum_threshold_at_cycle: QuorumThresholdAtCycle
+    start_level: str
+    custom_entrypoints: Dict[str, str]
+    decision_lambda: str
+    fixed_proposal_fee_in_token: str
+    governance_total_supply: str
     max_proposals: str
     max_quorum_change: str
     max_quorum_threshold: str
     max_voters: str
-    metadata: Dict[str, str]
     min_quorum_threshold: str
-    pending_owner: str
     period: str
-    permits_counter: str
     proposal_check: str
     proposal_expired_level: str
     proposal_flush_level: str
-    proposal_key_list_sort_by_level: List[ProposalKeyListSortByLevelItem]
-    proposals: Dict[str, Proposals]
     quorum_change: str
-    quorum_threshold_at_cycle: QuorumThresholdAtCycle
     rejected_proposal_slash_value: str
-    start_level: str
