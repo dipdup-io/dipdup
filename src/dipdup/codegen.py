@@ -2,7 +2,6 @@ import logging
 import os
 import re
 import subprocess
-from copy import copy
 from os.path import basename
 from os.path import dirname
 from os.path import exists
@@ -329,43 +328,6 @@ class DipDupCodeGenerator:
             address_schemas_json = await datasource.get_jsonschemas(address)
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
-
-    async def migrate_handlers_to_v10(self) -> None:
-        remove_lines = [
-            'from dipdup.models import',
-            'from dipdup.context import',
-            'from dipdup.utils import reindex',
-        ]
-        add_lines = [
-            'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction',
-            'from dipdup.context import HandlerContext, HookContext',
-        ]
-        replace_table = {
-            'TransactionContext': 'Transaction',
-            'OriginationContext': 'Origination',
-            'BigMapContext': 'BigMapDiff',
-            'OperationHandlerContext': 'HandlerContext',
-            'BigMapHandlerContext': 'HandlerContext',
-        }
-        handlers_path = join(self._config.package_path, 'handlers')
-
-        for root, _, files in os.walk(handlers_path):
-            for filename in files:
-                if filename == '__init__.py' or not filename.endswith('.py'):
-                    continue
-                path = join(root, filename)
-                newfile = copy(add_lines)
-                with open(path) as file:
-                    for line in file.read().split('\n'):
-                        # Skip existing models imports
-                        if any(map(lambda l: l in line, remove_lines)):
-                            continue
-                        # Replace by table
-                        for from_, to in replace_table.items():
-                            line = line.replace(from_, to)
-                        newfile.append(line)
-                with open(path, 'w') as file:
-                    file.write('\n'.join(newfile))
 
     async def migrate_handlers_to_v11(self) -> None:
         replace_table = {

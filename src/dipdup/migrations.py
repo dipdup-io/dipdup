@@ -22,13 +22,6 @@ class DipDupMigrationManager:
         if self._config.spec_version == __spec_version__:
             _logger.info('Project is already at latest version, no further actions required')
 
-        elif self._config.spec_version == '0.1':
-            _logger.warning(
-                'Not updating default handlers: deprecated in favor of hooks introduced in 1.2 spec. See release notes for more information.'
-            )
-            await codegen.migrate_handlers_to_v10()
-            self._finish_migration('1.0')
-
         elif self._config.spec_version == '1.0':
             await codegen.migrate_handlers_to_v11()
             self._finish_migration('1.1')
