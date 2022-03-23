@@ -338,9 +338,6 @@ class DipDup:
 
             await self._codegen.init(overwrite_types, keep_schemas)
 
-    async def docker_init(self, image: str, tag: str, env_file: str) -> None:
-        await self._codegen.docker_init(image, tag, env_file)
-
     async def run(self) -> None:
         """Run indexing process"""
         advanced_config = self._config.advanced

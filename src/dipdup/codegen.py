@@ -7,7 +7,6 @@ from os.path import basename
 from os.path import dirname
 from os.path import exists
 from os.path import join
-from os.path import relpath
 from os.path import splitext
 from shutil import rmtree
 from typing import Any
@@ -18,7 +17,6 @@ from typing import cast
 import orjson as json
 from jinja2 import Template
 
-from dipdup import __version__
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
@@ -42,21 +40,6 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 from dipdup.utils import write
-
-DEFAULT_DOCKER_ENV_FILE_CONTENT = {
-    'POSTGRES_USER': 'dipdup',
-    'POSTGRES_DB': 'dipdup',
-    'POSTGRES_PASSWORD': 'changeme',
-    'HASURA_GRAPHQL_DATABASE_URL': 'postgres://dipdup:changeme@db:5432/dipdup',
-    'HASURA_GRAPHQL_ENABLE_CONSOLE': 'true',
-    'HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS': 'true',
-    'HASURA_GRAPHQL_ENABLED_LOG_TYPES': 'startup, http-log, webhook-log, websocket-log, query-log',
-    'HASURA_GRAPHQL_ADMIN_SECRET': 'changeme',
-    'HASURA_GRAPHQL_UNAUTHORIZED_ROLE': 'user',
-}
-DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
-DEFAULT_DOCKER_TAG = __version__
-DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
 
 _templates: Dict[str, Template] = {}
 
