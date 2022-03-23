@@ -62,7 +62,7 @@ DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 DEFAULT_POSTGRES_SCHEMA = 'public'
 DEFAULT_POSTGRES_USER = DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
-DEFAULT_SQLITE_PATH = ':memory'
+DEFAULT_SQLITE_PATH = ':memory:'
 
 _logger = logging.getLogger('dipdup.config')
 

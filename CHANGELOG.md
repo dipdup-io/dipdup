@@ -4,6 +4,12 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## [unreleased]
 
+### Fixed
+
+* config: Fixed default SQLite path (`:memory:`).
+* tzkt: Fixed pagination in several getter methods.
+* tzkt: Fixed data loss when `skip_history` option is enabled.
+
 ### Removed
 
 * config: Removed dummy `advanced.oneshot` flag.
