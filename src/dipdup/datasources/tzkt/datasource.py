@@ -707,9 +707,9 @@ class TzktDatasource(IndexDatasource):
         await event.wait()
 
     async def _iter_batches(self, fn, *args, cursor: bool = True, **kwargs) -> AsyncIterator:
-        # TODO: cr
-        if 'offset' in kwargs or 'limit' in kwargs:
+        if set(kwargs).intersection(('offset', 'offset.cr', 'limit')):
             raise ValueError('`offset` and `limit` arguments are not allowed')
+
         size, offset = self.request_limit, 0
         while size == self.request_limit:
             result = await fn(*args, offset=offset, **kwargs)
@@ -720,6 +720,7 @@ class TzktDatasource(IndexDatasource):
 
             size = len(result)
             if cursor:
+                # NOTE: Guess if response is already deserialized or not
                 try:
                     offset = result[-1]['id']
                 except TypeError:
