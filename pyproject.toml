@@ -56,8 +56,6 @@ flake8-simplify = "^0.14.5"
 flakehell = "^0.9.0"
 isort = "^5.9.3"
 mypy = "^0.910"
-pprofile = "^2.1.0"
-pyperf = "^2.3.0"
 pytest = "^6.2.5"
 pytest-cov = "^3.0.0"
 pytest-xdist = "^2.5.0"
@@ -77,7 +75,7 @@ force_single_line = true
 
 [tool.black]
 line-length = 140
-target-version = ['py38']
+target-version = ['py310']
 skip-string-normalization = true
 
 [tool.flakehell]
