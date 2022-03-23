@@ -73,7 +73,6 @@ class IndexDispatcher:
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
-        self._contracts: Set[ContractConfig] = set()
         self._tasks: Deque[asyncio.Task] = deque()
 
         self._entrypoint_filter: Set[Optional[str]] = set()
@@ -319,7 +318,6 @@ class DipDup:
             datasources=self._datasources,
             callbacks=self._callbacks,
         )
-        self._index_dispatcher: Optional[IndexDispatcher] = None
         self._scheduler = create_scheduler(self._config.advanced.scheduler)
         self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         self._schema: Optional[Schema] = None

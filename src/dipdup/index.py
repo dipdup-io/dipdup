@@ -68,10 +68,6 @@ class OperationSubgroup:
     operations: Tuple[OperationData, ...]
     entrypoints: Set[Optional[str]]
 
-    @property
-    def length(self) -> int:
-        return len(self.operations)
-
     def __hash__(self) -> int:
         return hash(f'{self.hash}:{self.counter}')
 
