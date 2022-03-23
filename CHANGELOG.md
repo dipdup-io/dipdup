@@ -2,6 +2,13 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Fixed
+
+* config: Fixed default SQLite path (`:memory:`).
+* tzkt: Fixed data loss when `skip_history` option is enabled.
+
 ## 4.2.6 - 2022-02-25
 
 ### Fixed

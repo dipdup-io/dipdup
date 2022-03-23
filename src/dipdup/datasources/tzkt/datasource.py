@@ -316,7 +316,7 @@ class TzktDatasource(IndexDatasource):
                 'get',
                 url=f'v1/contracts/{address}/{entrypoint}',
                 params={
-                    'select': 'address',
+                    'select': 'id,address',
                     'limit': self.request_limit,
                     'offset': offset,
                 },
@@ -339,7 +339,7 @@ class TzktDatasource(IndexDatasource):
                 'get',
                 url=f'v1/accounts/{address}/contracts',
                 params={
-                    'select': 'address',
+                    'select': 'id,address',
                     'limit': self.request_limit,
                     'offset': offset,
                 },
