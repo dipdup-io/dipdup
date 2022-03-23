@@ -7,8 +7,6 @@ from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.exceptions import ConfigurationError
 
-deprecated_handlers = ('on_rollback.py', 'on_configure.py')
-
 _logger = logging.getLogger('dipdup.migrations')
 
 

@@ -117,11 +117,6 @@ class DipDupCodeGenerator:
             await self.cleanup()
         await self.verify_package()
 
-    async def docker_init(self, image: str, tag: str, env_file: str) -> None:
-        self._logger.info('Initializing Docker inventory')
-        await self.generate_docker(image, tag, env_file)
-        await self.verify_package()
-
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
         try:
@@ -314,53 +309,6 @@ class DipDupCodeGenerator:
             for hook_config in hook_configs:
                 await self._generate_callback(hook_config, sql=True)
 
-    async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
-        self._logger.info('Generating Docker template')
-        docker_path = join(self._config.package_path, 'docker')
-        mkdir_p(docker_path)
-
-        dockerfile_template = load_template('docker/Dockerfile')
-        docker_compose_template = load_template('docker/docker-compose.yml')
-        dipdup_env_template = load_template('docker/dipdup.env')
-
-        dockerfile_code = dockerfile_template.render(
-            image=f'{image}:{tag}',
-            package=self._config.package,
-            package_path=self._config.package_path,
-        )
-        write(join(docker_path, 'Dockerfile'), dockerfile_code, overwrite=True)
-
-        mounts = {}
-        for path in self._config.paths:
-            path_part = path.split("/")[-1]
-            from_ = join(relpath(self._config.package_path, path), path_part)
-            to = f'/home/dipdup/{path_part}'
-            mounts[from_] = to
-
-        command = []
-        for path in self._config.paths:
-            command += ['-c', path.split("/")[-1]]
-        command += ['run']
-
-        docker_compose_code = docker_compose_template.render(
-            package=self._config.package,
-            mounts=mounts,
-            env_file=env_file,
-            command=command,
-        )
-        write(join(docker_path, 'docker-compose.yml'), docker_compose_code, overwrite=True)
-
-        dipdup_env_code = dipdup_env_template.render(
-            environment={
-                **DEFAULT_DOCKER_ENV_FILE_CONTENT,
-                **self._config.environment,
-            }
-        )
-        write(join(docker_path, 'dipdup.env.example'), dipdup_env_code, overwrite=True)
-        write(join(docker_path, 'dipdup.env'), dipdup_env_code, overwrite=False)
-
-        write(join(docker_path, '.gitignore'), '*.env')
-
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""
         self._logger.info('Cleaning up')
@@ -483,7 +431,7 @@ class DipDupCodeGenerator:
                 code.append(f"await ctx.execute_sql('{original_callback}')")
                 if callback == 'on_rollback':
                     imports.add('from dipdup.enums import ReindexingReason')
-                    code.append('await ctx.reindex(ReindexingReason.ROLLBACK)')
+                    code.append('await ctx.reindex(ReindexingReason.rollback)')
             else:
                 code.append('...')
 

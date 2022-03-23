@@ -2,6 +2,13 @@
 
 Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
 
+## [unreleased]
+
+### Removed
+
+* config: Removed dummy `advanced.oneshot` flag.
+* cli: Removed `docker init` command.
+
 ## 5.0.0-rc2 - 2022-03-13
 
 ### Fixed

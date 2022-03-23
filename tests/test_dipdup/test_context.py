@@ -3,8 +3,6 @@ from os.path import dirname
 from os.path import join
 from unittest import IsolatedAsyncioTestCase
 
-from tortoise.transactions import get_connection
-
 import dipdup.context as context
 from dipdup.config import DipDupConfig
 from dipdup.config import SqliteDatabaseConfig
@@ -43,7 +41,7 @@ class ReindexingTest(IsolatedAsyncioTestCase):
 
             # Assert
             schema = await Schema.filter().get()
-            self.assertEqual(ReindexingReason.MANUAL, schema.reindex)
+            self.assertEqual(ReindexingReason.manual, schema.reindex)
 
     async def test_reindex_field(self):
         async with AsyncExitStack() as stack:
@@ -51,7 +49,7 @@ class ReindexingTest(IsolatedAsyncioTestCase):
             config = DipDupConfig.load([self.path])
             dipdup = await _create_dipdup(config, stack)
 
-            await Schema.filter().update(reindex=ReindexingReason.MANUAL)
+            await Schema.filter().update(reindex=ReindexingReason.manual)
 
             # Act
             with self.assertRaises(ReindexingRequiredError):
@@ -59,22 +57,4 @@ class ReindexingTest(IsolatedAsyncioTestCase):
 
             # Assert
             schema = await Schema.filter().get()
-            self.assertEqual(ReindexingReason.MANUAL, schema.reindex)
-
-    async def test_reindex_schema_table_migration(self) -> None:
-        async with AsyncExitStack() as stack:
-            # Arrange
-            config = DipDupConfig.load([self.path])
-            dipdup = await _create_dipdup(config, stack)
-            await dipdup._initialize_schema()
-
-            conn = get_connection(None)
-            await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{ReindexingReason.MANUAL.value}"')
-
-            # Act
-            with self.assertRaises(ReindexingRequiredError):
-                await dipdup._initialize_schema()
-
-            # Assert
-            schema = await Schema.filter().get()
-            self.assertEqual(ReindexingReason.MANUAL, schema.reindex)
+            self.assertEqual(ReindexingReason.manual, schema.reindex)
