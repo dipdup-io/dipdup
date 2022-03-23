@@ -305,8 +305,8 @@ class CodegenMixin(ABC):
         ...
 
     def format_imports(self, package: str) -> Iterator[str]:
-        for package, cls in self.iter_imports(package):
-            yield f'from {package} import {cls}'
+        for package_name, cls in self.iter_imports(package):
+            yield f'from {package_name} import {cls}'
 
     def format_arguments(self) -> Iterator[str]:
         arguments = list(self.iter_arguments())
