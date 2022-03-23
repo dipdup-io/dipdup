@@ -305,19 +305,19 @@ class TzktDatasource(IndexDatasource):
             'get',
             url=f'v1/contracts/{address}/{entrypoint}',
             params={
-                'select': 'id,address',
-                'offset.cr': offset,
+                'select': 'address',
+                'offset': offset,
                 'limit': limit,
             },
         )
-        return tuple(c['address'] for c in response)
+        return tuple(response)
 
     async def iter_similar_contracts(
         self,
         address: str,
         strict: bool = False,
     ) -> AsyncIterator[Tuple[str, ...]]:
-        async for batch in self._iter_batches(self.get_similar_contracts, address, strict):
+        async for batch in self._iter_batches(self.get_similar_contracts, address, strict, cursor=False):
             yield batch
 
     async def get_originated_contracts(
@@ -333,15 +333,15 @@ class TzktDatasource(IndexDatasource):
             'get',
             url=f'v1/accounts/{address}/contracts',
             params={
-                'select': 'id,address',
-                'offset.cr': offset,
+                'select': 'address',
+                'offset': offset,
                 'limit': limit,
             },
         )
-        return tuple(c['address'] for c in response)
+        return tuple(response)
 
     async def iter_originated_contracts(self, address: str) -> AsyncIterator[Tuple[str, ...]]:
-        async for batch in self._iter_batches(self.get_originated_contracts, address):
+        async for batch in self._iter_batches(self.get_originated_contracts, address, cursor=False):
             yield batch
 
     async def get_contract_summary(self, address: str) -> Dict[str, Any]:
@@ -386,7 +386,7 @@ class TzktDatasource(IndexDatasource):
             params={
                 **kwargs,
                 'level': level,
-                'offset.cr': offset,
+                'offset': offset,
                 'limit': limit,
             },
         )
@@ -403,6 +403,7 @@ class TzktDatasource(IndexDatasource):
             big_map_id,
             level,
             active,
+            cursor=False,
         ):
             yield batch
 
@@ -413,6 +414,7 @@ class TzktDatasource(IndexDatasource):
         limit: Optional[int] = None,
     ) -> Tuple[Dict[str, Any], ...]:
         offset, limit = offset or 0, limit or self.request_limit
+        # TODO: Can we cache it?
         big_maps = await self.request(
             'get',
             url=f'v1/contracts/{address}/bigmaps',
@@ -705,8 +707,9 @@ class TzktDatasource(IndexDatasource):
         await event.wait()
 
     async def _iter_batches(self, fn, *args, cursor: bool = True, **kwargs) -> AsyncIterator:
-        if 'offset' in kwargs or 'limit' in kwargs:
+        if set(kwargs).intersection(('offset', 'offset.cr', 'limit')):
             raise ValueError('`offset` and `limit` arguments are not allowed')
+
         size, offset = self.request_limit, 0
         while size == self.request_limit:
             result = await fn(*args, offset=offset, **kwargs)
@@ -717,7 +720,11 @@ class TzktDatasource(IndexDatasource):
 
             size = len(result)
             if cursor:
-                offset = result[-1]['id']
+                # NOTE: Guess if response is already deserialized or not
+                try:
+                    offset = result[-1]['id']
+                except TypeError:
+                    offset = result[-1].id
             else:
                 offset += self.request_limit
 
