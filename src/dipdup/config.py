@@ -999,7 +999,7 @@ class DipDupConfig:
     sentry: Optional[SentryConfig] = None
     prometheus: Optional[PrometheusConfig] = None
     advanced: AdvancedConfig = AdvancedConfig()
-    custom: Optional[Dict[str, Any]] = None
+    custom: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self):
         self.paths: List[str] = []

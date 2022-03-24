@@ -49,7 +49,7 @@ custom:
         config = DipDupConfig.load([dummy_config_path], False)
         config.initialize(True)
         assert hasattr(config, 'custom')
-        assert config.custom is None
+        assert config.custom == {}
 
     @staticmethod
     def test_custom_section_items(config_with_custom_section_path: str):
@@ -103,5 +103,7 @@ custom:
     var_from_env: {value}
 """
         config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
-        with pytest.raises(ConfigurationError):
+        with pytest.raises(ConfigurationError) as exception_info:
             DipDupConfig.load([config_path], True)
+
+        assert str(exception_info.value) == 'Environment variable `DEFINITELY_NOT_DEFINED` is not set'
