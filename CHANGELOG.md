@@ -4,6 +4,10 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 ## [unreleased]
 
+### Added
+
+* config: Added `custom` section to store arbitrary user data.
+
 ### Fixed
 
 * config: Fixed default SQLite path (`:memory:`).
