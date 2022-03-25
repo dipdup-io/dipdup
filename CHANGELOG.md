@@ -1,7 +1,5 @@
 # Changelog
 
-Please use [this](https://docs.gitlab.com/ee/development/changelog.html) document as guidelines to keep a changelog.
-
 ## [unreleased]
 
 ### Added
