@@ -74,6 +74,7 @@
     * [template](config-reference/indexes/template.md)
   * [jobs](config-reference/jobs.md)
   * [package](config-reference/package.md)
+  * [prometheus](config-reference/prometheus.md)
   * [sentry](config-reference/sentry.md)
   * [spec\_version](config-reference/spec\_version.md)
   * [templates](config-reference/templates.md)
