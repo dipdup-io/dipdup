@@ -45,7 +45,7 @@ from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import TransactionSubscription
 from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
-from dipdup.enums import ReindexingReasonC
+from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
@@ -305,8 +305,8 @@ class CodegenMixin(ABC):
         ...
 
     def format_imports(self, package: str) -> Iterator[str]:
-        for package, cls in self.iter_imports(package):
-            yield f'from {package} import {cls}'
+        for package_name, cls in self.iter_imports(package):
+            yield f'from {package_name} import {cls}'
 
     def format_arguments(self) -> Iterator[str]:
         arguments = list(self.iter_arguments())
@@ -958,10 +958,8 @@ default_hooks = {
 
 @dataclass
 class AdvancedConfig:
-    reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
+    reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
     scheduler: Optional[Dict[str, Any]] = None
-    # TODO: Drop in major version
-    oneshot: bool = False
     postpone_jobs: bool = False
     early_realtime: bool = False
     merge_subscriptions: bool = False

@@ -2,12 +2,10 @@ import logging
 import os
 import re
 import subprocess
-from copy import copy
 from os.path import basename
 from os.path import dirname
 from os.path import exists
 from os.path import join
-from os.path import relpath
 from os.path import splitext
 from shutil import rmtree
 from typing import Any
@@ -18,7 +16,6 @@ from typing import cast
 import orjson as json
 from jinja2 import Template
 
-from dipdup import __version__
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
@@ -42,21 +39,6 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 from dipdup.utils import write
-
-DEFAULT_DOCKER_ENV_FILE_CONTENT = {
-    'POSTGRES_USER': 'dipdup',
-    'POSTGRES_DB': 'dipdup',
-    'POSTGRES_PASSWORD': 'changeme',
-    'HASURA_GRAPHQL_DATABASE_URL': 'postgres://dipdup:changeme@db:5432/dipdup',
-    'HASURA_GRAPHQL_ENABLE_CONSOLE': 'true',
-    'HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS': 'true',
-    'HASURA_GRAPHQL_ENABLED_LOG_TYPES': 'startup, http-log, webhook-log, websocket-log, query-log',
-    'HASURA_GRAPHQL_ADMIN_SECRET': 'changeme',
-    'HASURA_GRAPHQL_UNAUTHORIZED_ROLE': 'user',
-}
-DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
-DEFAULT_DOCKER_TAG = __version__
-DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
 
 _templates: Dict[str, Template] = {}
 
@@ -115,11 +97,6 @@ class DipDupCodeGenerator:
         await self.generate_handlers()
         if not keep_schemas:
             await self.cleanup()
-        await self.verify_package()
-
-    async def docker_init(self, image: str, tag: str, env_file: str) -> None:
-        self._logger.info('Initializing Docker inventory')
-        await self.generate_docker(image, tag, env_file)
         await self.verify_package()
 
     async def create_package(self) -> None:
@@ -314,53 +291,6 @@ class DipDupCodeGenerator:
             for hook_config in hook_configs:
                 await self._generate_callback(hook_config, sql=True)
 
-    async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
-        self._logger.info('Generating Docker template')
-        docker_path = join(self._config.package_path, 'docker')
-        mkdir_p(docker_path)
-
-        dockerfile_template = load_template('docker/Dockerfile')
-        docker_compose_template = load_template('docker/docker-compose.yml')
-        dipdup_env_template = load_template('docker/dipdup.env')
-
-        dockerfile_code = dockerfile_template.render(
-            image=f'{image}:{tag}',
-            package=self._config.package,
-            package_path=self._config.package_path,
-        )
-        write(join(docker_path, 'Dockerfile'), dockerfile_code, overwrite=True)
-
-        mounts = {}
-        for path in self._config.paths:
-            path_part = path.split("/")[-1]
-            from_ = join(relpath(self._config.package_path, path), path_part)
-            to = f'/home/dipdup/{path_part}'
-            mounts[from_] = to
-
-        command = []
-        for path in self._config.paths:
-            command += ['-c', path.split("/")[-1]]
-        command += ['run']
-
-        docker_compose_code = docker_compose_template.render(
-            package=self._config.package,
-            mounts=mounts,
-            env_file=env_file,
-            command=command,
-        )
-        write(join(docker_path, 'docker-compose.yml'), docker_compose_code, overwrite=True)
-
-        dipdup_env_code = dipdup_env_template.render(
-            environment={
-                **DEFAULT_DOCKER_ENV_FILE_CONTENT,
-                **self._config.environment,
-            }
-        )
-        write(join(docker_path, 'dipdup.env.example'), dipdup_env_code, overwrite=True)
-        write(join(docker_path, 'dipdup.env'), dipdup_env_code, overwrite=False)
-
-        write(join(docker_path, '.gitignore'), '*.env')
-
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""
         self._logger.info('Cleaning up')
@@ -398,43 +328,6 @@ class DipDupCodeGenerator:
             address_schemas_json = await datasource.get_jsonschemas(address)
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
-
-    async def migrate_handlers_to_v10(self) -> None:
-        remove_lines = [
-            'from dipdup.models import',
-            'from dipdup.context import',
-            'from dipdup.utils import reindex',
-        ]
-        add_lines = [
-            'from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction',
-            'from dipdup.context import HandlerContext, HookContext',
-        ]
-        replace_table = {
-            'TransactionContext': 'Transaction',
-            'OriginationContext': 'Origination',
-            'BigMapContext': 'BigMapDiff',
-            'OperationHandlerContext': 'HandlerContext',
-            'BigMapHandlerContext': 'HandlerContext',
-        }
-        handlers_path = join(self._config.package_path, 'handlers')
-
-        for root, _, files in os.walk(handlers_path):
-            for filename in files:
-                if filename == '__init__.py' or not filename.endswith('.py'):
-                    continue
-                path = join(root, filename)
-                newfile = copy(add_lines)
-                with open(path) as file:
-                    for line in file.read().split('\n'):
-                        # Skip existing models imports
-                        if any(map(lambda l: l in line, remove_lines)):
-                            continue
-                        # Replace by table
-                        for from_, to in replace_table.items():
-                            line = line.replace(from_, to)
-                        newfile.append(line)
-                with open(path, 'w') as file:
-                    file.write('\n'.join(newfile))
 
     async def migrate_handlers_to_v11(self) -> None:
         replace_table = {
@@ -483,7 +376,7 @@ class DipDupCodeGenerator:
                 code.append(f"await ctx.execute_sql('{original_callback}')")
                 if callback == 'on_rollback':
                     imports.add('from dipdup.enums import ReindexingReason')
-                    code.append('await ctx.reindex(ReindexingReason.ROLLBACK)')
+                    code.append('await ctx.reindex(ReindexingReason.rollback)')
             else:
                 code.append('...')
 

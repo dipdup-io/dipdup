@@ -43,9 +43,7 @@ from dipdup.datasources.ipfs.datasource import IpfsDatasource
 from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingAction
-from dipdup.enums import ReindexingReasonC
-from dipdup.enums import reason_to_reasonc
-from dipdup.enums import reasonc_to_reason
+from dipdup.enums import ReindexingReason
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
@@ -56,7 +54,6 @@ from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
 from dipdup.models import ContractMetadata
 from dipdup.models import Index
-from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
@@ -144,32 +141,28 @@ class DipDupContext:
             sys.argv.remove('--reindex')
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    async def reindex(self, reason: Optional[Union[str, ReindexingReason, ReindexingReasonC]] = None, **context) -> None:
+    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> None:
         """Drop all tables or whole database and restart with the same CLI arguments"""
         if not reason:
-            reason = ReindexingReasonC.manual
+            reason = ReindexingReason.manual
         elif isinstance(reason, str):
             context['message'] = reason
-            reason = ReindexingReasonC.manual
-        elif isinstance(reason, ReindexingReason):
-            reason = reason_to_reasonc[reason]
-        else:
-            raise NotImplementedError
+            reason = ReindexingReason.manual
 
         action = self.config.advanced.reindex.get(reason, ReindexingAction.exception)
         self.logger.warning('Reindexing initialized, reason: %s, action: %s', reason.value, action.value)
 
         if action == ReindexingAction.ignore:
-            if reason == ReindexingReasonC.schema_modified:
+            if reason == ReindexingReason.schema_modified:
                 await Schema.filter(name=self.config.schema_name).update(hash='')
-            elif reason == ReindexingReasonC.config_modified:
+            elif reason == ReindexingReason.config_modified:
                 await Index.filter().update(config_hash='')
             return
 
         elif action == ReindexingAction.exception:
             schema = await Schema.filter(name=self.config.schema_name).get()
             if not schema.reindex:
-                schema.reindex = reasonc_to_reason[reason]
+                schema.reindex = reason
                 await schema.save()
             raise ReindexingRequiredError(schema.reindex, context)
 

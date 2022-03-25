@@ -11,7 +11,6 @@ from contextlib import suppress
 from dataclasses import dataclass
 from functools import partial
 from functools import wraps
-from os import listdir
 from os.path import dirname
 from os.path import exists
 from os.path import join
@@ -33,22 +32,17 @@ from dipdup import __spec_version__
 from dipdup import __version__
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
-from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE
-from dipdup.codegen import DEFAULT_DOCKER_IMAGE
-from dipdup.codegen import DEFAULT_DOCKER_TAG
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config import LoggingConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import DeprecatedHandlerError
 from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager
-from dipdup.migrations import deprecated_handlers
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
@@ -178,12 +172,6 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         reindex = spec_reindex_mapping[__spec_version__]
         raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
-    # NOTE: Ensure that no deprecated handlers left in project after migration to v3.0.0
-    if ctx.invoked_subcommand != 'migrate':
-        handlers_path = join(_config.package_path, 'handlers')
-        if set(listdir(handlers_path)).intersection(set(deprecated_handlers)):
-            raise DeprecatedHandlerError
-
     ctx.obj = CLIContext(
         config_paths=config,
         config=_config,
@@ -294,24 +282,6 @@ async def cache_show(ctx) -> None:
     cache = FileCache('dipdup', flag='cs')
     size = subprocess.check_output(['du', '-sh', cache.cache_dir]).split()[0].decode('utf-8')
     echo(f'{cache.cache_dir}: {len(cache)} items, {size}')
-
-
-@cli.group(help='Docker integration related commands')
-@click.pass_context
-@cli_wrapper
-async def docker(ctx) -> None:
-    ...
-
-
-@docker.command(name='init', help='Generate Docker inventory in project directory')
-@click.option('--image', '-i', type=str, help='DipDup Docker image', default=DEFAULT_DOCKER_IMAGE)
-@click.option('--tag', '-t', type=str, help='DipDup Docker tag', default=DEFAULT_DOCKER_TAG)
-@click.option('--env-file', '-e', type=str, help='Path to env_file', default=DEFAULT_DOCKER_ENV_FILE)
-@click.pass_context
-@cli_wrapper
-async def docker_init(ctx, image: str, tag: str, env_file: str):
-    config: DipDupConfig = ctx.obj.config
-    await DipDupCodeGenerator(config, {}).generate_docker(image, tag, env_file)
 
 
 @cli.group(help='Hasura integration related commands')
