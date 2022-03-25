@@ -2,6 +2,7 @@
 
 * [Overview](README.md)
 * [Release notes](release-notes/README.md)
+  * [5.0.0](release-notes/5.0.0.md)
   * [4.2.0](release-notes/4.2.0.md)
   * [4.1.0](release-notes/4.1.0.md)
   * [4.0.0](release-notes/4.0.0.md)
@@ -43,6 +44,7 @@
   * [Deploying with docker-compose](deployment/docker-compose.md)
   * [Deploying with Docker Swarm](deployment/swarm.md)
   * [Sentry integration](deployment/sentry.md)
+  * [Prometheus integration](deployment/prometheus.md)
   * [Logging](deployment/logging.md)
   * [Monitoring](deployment/monitoring.md)
   * [Backup and restore](deployment/backups.md)
@@ -79,7 +81,6 @@
   * [cache clear](cli-reference/cache-clear.md)
   * [cache show](cli-reference/cache-show.md)
   * [config export](cli-reference/config-export.md)
-  * [docker init](cli-reference/docker-init.md)
   * [hasura configure](cli-reference/hasura-configure.md)
   * [init](cli-reference/init.md)
   * [migrate](cli-reference/migrate.md)
