@@ -280,6 +280,7 @@ class IpfsDatasourceConfig(NameMixin):
     :param url: IPFS node URL, e.g. https://ipfs.io/ipfs/
     :param http: HTTP client configuration
     """
+
     kind: Literal['ipfs']
     url: str = DEFAULT_IPFS_URL
     http: Optional[HTTPConfig] = None
@@ -291,11 +292,12 @@ class IpfsDatasourceConfig(NameMixin):
 @dataclass
 class HttpDatasourceConfig(NameMixin):
     """Generic HTTP datasource config
-    
+
     kind: always 'http'
     url: URL to fetch data from
     http: HTTP client configuration
     """
+
     kind: Literal['http']
     url: str
     http: Optional[HTTPConfig] = None
@@ -447,8 +449,8 @@ class ParameterTypeMixin:
 @dataclass
 class TransactionIdxMixin:
     """`transaction_idx` field to track index of operation in group
-    
-    :param transaction_idx: 
+
+    :param transaction_idx:
     """
 
     def __post_init_post_parse__(self):
@@ -605,9 +607,10 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
 @dataclass
 class CallbackMixin(CodegenMixin):
     """Mixin for callback configs
-    
+
     :param callback: Callback name
     """
+
     callback: str
 
     def __init_subclass__(cls, kind: str):
@@ -671,6 +674,7 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 @dataclass
 class TemplateValuesMixin:
     """`template_values` field"""
+
     def __post_init_post_parse__(self) -> None:
         self._template_values: Dict[str, str] = {}
 
@@ -682,6 +686,7 @@ class TemplateValuesMixin:
 @dataclass
 class SubscriptionsMixin:
     """`subscriptions` field"""
+
     def __post_init_post_parse__(self) -> None:
         self.subscriptions: Set[Subscription] = set()
 
@@ -689,13 +694,14 @@ class SubscriptionsMixin:
 @dataclass
 class IndexTemplateConfig(NameMixin):
     """Index template config
-    
+
     :param kind: always `template`
     :param name: Name of index template
     :param template_values: Values to be substituted in template (`<key>` -> `value`)
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at (DipDup will terminate at this level)
     """
+
     kind = 'template'
     template: str
     values: Dict[str, str]
@@ -706,9 +712,10 @@ class IndexTemplateConfig(NameMixin):
 @dataclass
 class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigT']):
     """Index config
-    
+
     :param datasource: Alias of index datasource in `datasources` section
     """
+
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
@@ -796,6 +803,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     :param contract: Contract to fetch big map from
     :param path: Path to big map (alphanumeric string with dots)
     """
+
     contract: Union[str, ContractConfig]
     path: str
 
@@ -877,6 +885,7 @@ class BigMapIndexConfig(IndexConfig):
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at (Dipdup will terminate at this level)
     """
+
     kind: Literal['big_map']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: Tuple[BigMapHandlerConfig, ...]
@@ -894,6 +903,7 @@ class BigMapIndexConfig(IndexConfig):
 @dataclass
 class HeadHandlerConfig(HandlerConfig, kind='handler'):
     """Head block handler config"""
+
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'HeadBlockData'
@@ -907,6 +917,7 @@ class HeadHandlerConfig(HandlerConfig, kind='handler'):
 @dataclass
 class HeadIndexConfig(IndexConfig):
     """Head block index config"""
+
     kind: Literal['head']
     datasource: Union[str, TzktDatasourceConfig]
     handlers: Tuple[HeadHandlerConfig, ...]
@@ -966,6 +977,7 @@ class JobConfig(NameMixin):
     :param daemon: Run hook as a daemon (never stops)
     :param args: Arguments to pass to the hook
     """
+
     hook: Union[str, 'HookConfig']
     crontab: Optional[str] = None
     interval: Optional[int] = None
@@ -991,11 +1003,12 @@ class JobConfig(NameMixin):
 @dataclass
 class SentryConfig:
     """Config for Sentry integration.
-    
+
     :param dsn: DSN of the Sentry instance
     :param environment: Environment to report to Sentry (informational only)
     :param debug: Catch warning messages and more context
     """
+
     dsn: str
     environment: Optional[str] = None
     debug: bool = False
@@ -1009,6 +1022,7 @@ class PrometheusConfig:
     :param port: Port to bind to
     :param update_interval: Interval to update some metrics in seconds
     """
+
     host: str
     port: int = 8000
     update_interval: float = 1.0
@@ -1017,10 +1031,11 @@ class PrometheusConfig:
 @dataclass
 class HookConfig(CallbackMixin, kind='hook'):
     """Hook config
-    
+
     :param args: Mapping of argument names and annotations (checked lazily when possible)
     :param atomic: Wrap hook in a single database transaction
     """
+
     args: Dict[str, str] = field(default_factory=dict)
     atomic: bool = False
 
@@ -1065,7 +1080,7 @@ default_hooks = {
 @dataclass
 class AdvancedConfig:
     """Feature flags and other advanced config.
-    
+
     :param reindex: Mapping of reindexing reasons and actions DipDup performs
     :param scheduler: `apscheduler` scheduler config
     :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
@@ -1073,6 +1088,7 @@ class AdvancedConfig:
     :param merge_subscriptions: Subscribe to all operations instead of exact channels
     :param metadata_interface: Expose metadata interface for TzKT
     """
+
     reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
     scheduler: Optional[Dict[str, Any]] = None
     postpone_jobs: bool = False

@@ -5,7 +5,6 @@ import os
 import signal
 import subprocess
 import sys
-import warnings
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
