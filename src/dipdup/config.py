@@ -45,7 +45,7 @@ from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import TransactionSubscription
 from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
-from dipdup.enums import ReindexingReasonC
+from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
@@ -54,7 +54,7 @@ from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
-ENV_VARIABLE_REGEX = r'\${([\w]*):-(.*)}'  # ${VARIABLE:-default}
+ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*))?\}'  # ${VARIABLE:-default} | ${VARIABLE}
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
@@ -62,7 +62,7 @@ DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 DEFAULT_POSTGRES_SCHEMA = 'public'
 DEFAULT_POSTGRES_USER = DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
-DEFAULT_SQLITE_PATH = ':memory'
+DEFAULT_SQLITE_PATH = ':memory:'
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -313,8 +313,8 @@ class CodegenMixin(ABC):
         ...
 
     def format_imports(self, package: str) -> Iterator[str]:
-        for package, cls in self.iter_imports(package):
-            yield f'from {package} import {cls}'
+        for package_name, cls in self.iter_imports(package):
+            yield f'from {package_name} import {cls}'
 
     def format_arguments(self) -> Iterator[str]:
         arguments = list(self.iter_arguments())
@@ -978,10 +978,8 @@ default_hooks = {
 
 @dataclass
 class AdvancedConfig:
-    reindex: Dict[ReindexingReasonC, ReindexingAction] = field(default_factory=dict)
+    reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
     scheduler: Optional[Dict[str, Any]] = None
-    # TODO: Drop in major version
-    oneshot: bool = False
     postpone_jobs: bool = False
     early_realtime: bool = False
     merge_subscriptions: bool = False
@@ -1003,6 +1001,7 @@ class DipDupConfig:
     :param jobs: Mapping of job aliases and job configs
     :param sentry: Sentry integration config
     :param advanced: Advanced config
+    :param custom: User-defined Custom config
     """
 
     spec_version: str
@@ -1018,6 +1017,7 @@ class DipDupConfig:
     sentry: Optional[SentryConfig] = None
     prometheus: Optional[PrometheusConfig] = None
     advanced: AdvancedConfig = AdvancedConfig()
+    custom: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self):
         self.paths: List[str] = []
@@ -1078,12 +1078,12 @@ class DipDupConfig:
             if environment:
                 _logger.debug('Substituting environment variables')
                 for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-                    variable, default_value = match.group(1), match.group(2)
-                    config_environment[variable] = default_value
-                    value = env.get(variable)
-                    if not default_value and not value:
+                    variable, default_value = match.group('var_name'), match.group('default_value')
+                    value = env.get(variable, default_value)
+                    if not value:
                         raise ConfigurationError(f'Environment variable `{variable}` is not set')
-                    placeholder = '${' + variable + ':-' + default_value + '}'
+                    config_environment[variable] = value
+                    placeholder = match.group(0)
                     raw_config = raw_config.replace(placeholder, value or default_value)
 
             json_config.update(yaml.load(raw_config))

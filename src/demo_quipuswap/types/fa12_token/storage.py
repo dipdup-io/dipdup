@@ -21,8 +21,8 @@ class TokenMetadata(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    map: Dict[str, str]
     nat: str
+    map: Dict[str, str]
 
 
 class Fa12TokenStorage(BaseModel):

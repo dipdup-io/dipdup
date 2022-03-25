@@ -17,7 +17,6 @@ from tortoise import fields
 from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.exceptions import ReindexingReason
-from dipdup.utils.database import ReversedCharEnumField
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -182,7 +181,7 @@ class QuoteData:
 class Schema(Model):
     name = fields.CharField(256, pk=True)
     hash = fields.CharField(256)
-    reindex = ReversedCharEnumField(ReindexingReason, max_length=40, null=True)
+    reindex = fields.CharEnumField(ReindexingReason, max_length=40, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

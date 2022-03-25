@@ -5,7 +5,6 @@ from collections import deque
 from collections import namedtuple
 from contextlib import ExitStack
 from datetime import datetime
-from typing import Any
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
@@ -67,10 +66,6 @@ class OperationSubgroup:
     counter: int
     operations: Tuple[OperationData, ...]
     entrypoints: Set[Optional[str]]
-
-    @property
-    def length(self) -> int:
-        return len(self.operations)
 
     def __hash__(self) -> int:
         return hash(f'{self.hash}:{self.counter}')
@@ -389,7 +384,7 @@ class OperationIndex(Index):
             if missing_hashes:
                 self._logger.info('Some operations were backtracked: %s', ', '.join(missing_hashes))
                 # TODO: More context
-                await self._ctx.reindex(ReindexingReason.ROLLBACK)
+                await self._ctx.reindex(ReindexingReason.rollback)
 
             self._rollback_level = None
             self._head_hashes.clear()
@@ -639,8 +634,8 @@ class BigMapIndex(Index):
     async def _synchronize_full(self, first_level: int, last_level: int, cache: bool = False) -> None:
         self._logger.info('Fetching big map diffs from level %s to %s', first_level, last_level)
 
-        big_map_addresses = await self._get_big_map_addresses()
-        big_map_paths = await self._get_big_map_paths()
+        big_map_addresses = self._get_big_map_addresses()
+        big_map_paths = self._get_big_map_paths()
 
         fetcher = BigMapFetcher(
             datasource=self._datasource,
@@ -663,42 +658,38 @@ class BigMapIndex(Index):
         if not self._ctx.config.advanced.early_realtime:
             raise ConfigurationError('`skip_history` requires `early_realtime` feature flag to be enabled')
 
-        big_map_addresses = await self._get_big_map_addresses()
-        big_map_paths = await self._get_big_map_paths()
-        big_map_ids: Set[Tuple[int, str]] = set()
+        big_map_pairs = self._get_big_map_pairs()
+        big_map_ids: Set[Tuple[int, str, str]] = set()
 
-        for address in big_map_addresses:
+        for address, path in big_map_pairs:
             async for contract_big_maps in self._datasource.iter_contract_big_maps(address):
                 for contract_big_map in contract_big_maps:
-                    if contract_big_map['path'] in big_map_paths:
-                        big_map_ids.add((int(contract_big_map['ptr']), contract_big_map['path']))
+                    if contract_big_map['path'] == path:
+                        big_map_ids.add((int(contract_big_map['ptr']), address, path))
 
         # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
-        async def _process_big_map_batch(big_maps: Tuple[Dict[str, Any], ...], path: str) -> None:
-            big_map_data = tuple(
-                BigMapData(
-                    id=big_map['id'],
-                    level=last_level,
-                    operation_id=last_level,
-                    timestamp=datetime.now(),
-                    bigmap=big_map_id,
-                    contract_address=address,
-                    path=path,
-                    action=BigMapAction.ADD_KEY,
-                    active=big_map['active'],
-                    key=big_map['key'],
-                    value=big_map['value'],
-                )
-                for big_map in big_maps
-            )
-            matched_handlers = await self._match_big_maps(big_map_data)
-            for handler_config, big_map_diff in matched_handlers:
-                await self._call_matched_handler(handler_config, big_map_diff)
-
         async with in_global_transaction():
-            for big_map_id, path in big_map_ids:
-                async for big_maps in self._datasource.iter_big_map(big_map_id, last_level):
-                    await _process_big_map_batch(big_maps, path)
+            for big_map_id, address, path in big_map_ids:
+                async for big_map_keys in self._datasource.iter_big_map(big_map_id, last_level):
+                    big_map_data = tuple(
+                        BigMapData(
+                            id=big_map_key['id'],
+                            level=last_level,
+                            operation_id=last_level,
+                            timestamp=datetime.now(),
+                            bigmap=big_map_id,
+                            contract_address=address,
+                            path=path,
+                            action=BigMapAction.ADD_KEY,
+                            active=big_map_key['active'],
+                            key=big_map_key['key'],
+                            value=big_map_key['value'],
+                        )
+                        for big_map_key in big_map_keys
+                    )
+                    matched_handlers = await self._match_big_maps(big_map_data)
+                    for handler_config, big_map_diff in matched_handlers:
+                        await self._call_matched_handler(handler_config, big_map_diff)
 
             await self.state.update_status(level=last_level)
 
@@ -771,8 +762,8 @@ class BigMapIndex(Index):
         """Try to match big map diffs in cache with all patterns from indexes."""
         matched_handlers: Deque[MatchedBigMapsT] = deque()
 
-        for big_map in big_maps:
-            for handler_config in self._config.handlers:
+        for handler_config in self._config.handlers:
+            for big_map in big_maps:
                 big_map_matched = await self._match_big_map(handler_config, big_map)
                 if big_map_matched:
                     arg = await self._prepare_handler_args(handler_config, big_map)
@@ -793,19 +784,31 @@ class BigMapIndex(Index):
             big_map_diff,
         )
 
-    async def _get_big_map_addresses(self) -> Set[str]:
+    def _get_big_map_addresses(self) -> Set[str]:
         """Get addresses to fetch big map diffs from during initial synchronization"""
         addresses = set()
         for handler_config in self._config.handlers:
             addresses.add(cast(ContractConfig, handler_config.contract).address)
         return addresses
 
-    async def _get_big_map_paths(self) -> Set[str]:
+    def _get_big_map_paths(self) -> Set[str]:
         """Get addresses to fetch big map diffs from during initial synchronization"""
         paths = set()
         for handler_config in self._config.handlers:
             paths.add(handler_config.path)
         return paths
+
+    def _get_big_map_pairs(self) -> Set[Tuple[str, str]]:
+        """Get address-path pairs for fetch big map diffs during sync with `skip_history`"""
+        pairs = set()
+        for handler_config in self._config.handlers:
+            pairs.add(
+                (
+                    cast(ContractConfig, handler_config.contract).address,
+                    handler_config.path,
+                )
+            )
+        return pairs
 
 
 class HeadIndex(Index):

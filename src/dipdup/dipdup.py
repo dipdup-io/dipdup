@@ -73,7 +73,6 @@ class IndexDispatcher:
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
-        self._contracts: Set[ContractConfig] = set()
         self._tasks: Deque[asyncio.Task] = deque()
 
         self._entrypoint_filter: Set[Optional[str]] = set()
@@ -204,7 +203,7 @@ class IndexDispatcher:
                     await index_state.save()
                 elif new_hash != index_state.config_hash:
                     await self._ctx.reindex(
-                        ReindexingReason.CONFIG_HASH_MISMATCH,
+                        ReindexingReason.config_modified,
                         old_hash=index_state.config_hash,
                         new_hash=new_hash,
                     )
@@ -213,7 +212,7 @@ class IndexDispatcher:
             elif template:
                 if template not in self._ctx.config.templates:
                     await self._ctx.reindex(
-                        ReindexingReason.MISSING_INDEX_TEMPLATE,
+                        ReindexingReason.config_modified,
                         index_name=index_state.name,
                         template=template,
                     )
@@ -319,7 +318,6 @@ class DipDup:
             datasources=self._datasources,
             callbacks=self._callbacks,
         )
-        self._index_dispatcher: Optional[IndexDispatcher] = None
         self._scheduler = create_scheduler(self._config.advanced.scheduler)
         self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         self._schema: Optional[Schema] = None
@@ -339,9 +337,6 @@ class DipDup:
                 await stack.enter_async_context(datasource)
 
             await self._codegen.init(overwrite_types, keep_schemas)
-
-    async def docker_init(self, image: str, tag: str, env_file: str) -> None:
-        await self._codegen.docker_init(image, tag, env_file)
 
     async def run(self) -> None:
         """Run indexing process"""
@@ -403,14 +398,9 @@ class DipDup:
         # TODO: Fix Tortoise ORM to raise more specific exception
         except KeyError:
             try:
-                # TODO: Drop with major version bump
-                # NOTE: A small migration, ReindexingReason became ReversedEnum in 3.1.0
-                for item in ReindexingReason:
-                    await conn.execute_script(f'UPDATE dipdup_schema SET reindex = "{item.name}" WHERE reindex = "{item.value}"')
-
                 self._schema = await Schema.get_or_none(name=schema_name)
             except KeyError:
-                await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
+                await self._ctx.reindex(ReindexingReason.schema_modified)
 
         # NOTE: Call even if Schema is present; there may be new tables
         await generate_schema(conn, schema_name)
@@ -426,14 +416,14 @@ class DipDup:
             try:
                 await self._schema.save()
             except OperationalError:
-                await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
+                await self._ctx.reindex(ReindexingReason.schema_modified)
 
         elif not self._schema.hash:
             self._schema.hash = schema_hash  # type: ignore
             await self._schema.save()
 
         elif self._schema.hash != schema_hash:
-            await self._ctx.reindex(ReindexingReason.SCHEMA_HASH_MISMATCH)
+            await self._ctx.reindex(ReindexingReason.schema_modified)
 
         elif self._schema.reindex:
             await self._ctx.reindex(self._schema.reindex)
@@ -497,7 +487,7 @@ class DipDup:
             actual_head = await datasource.get_block(db_head.level)
             if db_head.hash != actual_head.hash:
                 await self._ctx.reindex(
-                    ReindexingReason.BLOCK_HASH_MISMATCH,
+                    ReindexingReason.rollback,
                     hash=db_head.hash,
                     actual_hash=actual_head.hash,
                 )
