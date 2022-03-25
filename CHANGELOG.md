@@ -18,6 +18,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 
 * config: Removed dummy `advanced.oneshot` flag.
 * cli: Removed `docker init` command.
+* cli: Removed dummy `schema approve --hashes` flag.
 
 ## 5.0.0-rc2 - 2022-03-13
 
