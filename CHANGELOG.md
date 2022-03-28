@@ -1,6 +1,6 @@
 # Changelog
 
-## [unreleased]
+## 5.0.0-rc3 - 2022-03-28
 
 ### Added
 
