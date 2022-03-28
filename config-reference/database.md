@@ -49,7 +49,7 @@ database:
 | `immune_tables` | List of tables to preserve during reindexing |
 | `connection_timeout` | Connection timeout in seconds |
 
-[//]: # (TODO: Move to the upper level)
+<!-- TODO: Move to the upper level -->
 
 You can also use compose-style environment variable substitutions with default values for secrets and other fields. See [Templates and variables](../getting-started/templates-and-variables.md#) for details.
 

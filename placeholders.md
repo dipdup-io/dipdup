@@ -22,8 +22,9 @@
 
 > 🤓 **SEE ALSO**
 >
-> * [Command-line reference](cli-reference/)
+> * [13. Command-line reference](cli-reference/)
+> * [External link](https://google.com)
 
 ## Comments
 
-[//]: # (TODO: Move to the upper level)
+<!-- TODO: Move to the upper level -->

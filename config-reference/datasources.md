@@ -82,7 +82,7 @@ file = await ipfs.get('QmSgSC7geYH3Ae4SpUHy4KutxqNH9ESKBGXoCN4JQdbtEz/package.js
 assert file['name'] == 'json-buffer'
 ```
 
-[//]: # (TODO: Move to the upper level)
+<!-- TODO: Move to the upper level -->
 
 ## Advanced HTTP settings
 
