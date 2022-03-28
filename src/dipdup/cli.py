@@ -5,7 +5,6 @@ import os
 import signal
 import subprocess
 import sys
-import warnings
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
@@ -320,13 +319,9 @@ async def schema(ctx):
 
 
 @schema.command(name='approve', help='Continue to use existing schema after reindexing was triggered')
-@click.option('--hashes', is_flag=True, help='Recalculate all schema and config hashes')
 @click.pass_context
 @cli_wrapper
-async def schema_approve(ctx, hashes: bool):
-    if hashes:
-        warnings.warn('`--hashes` option is deprecated and has no effect', DeprecationWarning)
-
+async def schema_approve(ctx):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
