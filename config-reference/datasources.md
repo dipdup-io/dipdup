@@ -11,7 +11,7 @@ A list of API endpoints DipDup uses to retrieve data and pass it to your indexer
 
 ## Datasources
 
-### TzKT 😸
+### TzKT
 
 [TzKT](https://api.tzkt.io/) provides REST endpoints to query historical data and SignalR (Websocket) subscriptions to get realtime updates. Flexible filters allow you to request only data needed for your application and drastically speed up the indexing process.
 
@@ -23,23 +23,6 @@ datasources:
 ```
 
 A datasource config entry is an alias for the endpoint URI; there's no network mention. Thus it's good to add a network name to the datasource alias. The reason behind this design choice is to provide a generic index parameterization via a single mechanism. See [4.5. Templates and variables](../getting-started/templates-and-variables.md) for details.
-
-### Better Call Dev
-
-> ⚠ **WARNING**
->
-> Better Call Dev API is deprecated. Use `metadata` datasource instead.
-
-Better Call Dev is another blockchain explorer and API with functionality similar to TzKT. It can't be used as a datasource for indexer and mempool/metadata plugins, but you can call it from inside of handlers to gather additional data.
-
-```yaml
-datasources:
-  bcd_mainnet:
-    kind: bcd
-    url: https://api.better-call.dev
-    network: mainnet
-
-```
 
 ### Tezos node
 
@@ -99,6 +82,8 @@ file = await ipfs.get('QmSgSC7geYH3Ae4SpUHy4KutxqNH9ESKBGXoCN4JQdbtEz/package.js
 assert file['name'] == 'json-buffer'
 ```
 
+[//]: # (TODO: Move to the upper level)
+
 ## Advanced HTTP settings
 
 All datasources now share the same code under the hood to communicate with underlying APIs via HTTP. Configs of all datasources and also Hasura's one can contain an optional section `http` with any number of the following parameters set:
@@ -123,7 +108,19 @@ hasura:
     ...
 ```
 
-Each datasource has its defaults. Usually, there's no reason to alter these settings unless you use self-hosted instances of TzKT or BCD.
+| field | description |
+| - | - |
+| `cache` | Whether to cache responses |
+| `retry_count` | Number of retries after request failed before giving up |
+| `retry_sleep` | Sleep time between retries |
+| `retry_multiplier` | Multiplier for sleep time between retries |
+| `ratelimit_rate` | Number of requests per period ("drops" in leaky bucket) |
+| `ratelimit_period` | Time period for rate limiting in seconds |
+| `connection_limit` | Number of simultaneous connections |
+| `connection_timeout` | Connection timeout in seconds |
+| `batch_size` | Number of items fetched in a single paginated request (for some APIs) |
+
+Each datasource has its defaults. Usually, there's no reason to alter these settings unless you use self-hosted instances of TzKT or  other datasource.
 
 By default, DipDup retries failed requests infinitely exponentially increasing delay between attempts. Set `retry_count` parameter to limit the number of attempts.
 

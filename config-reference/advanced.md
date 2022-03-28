@@ -15,9 +15,17 @@ advanced:
 
 This config section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
-|field|description|
-|-|-|
-|`early_realtime`<br>`merge_subscriptions`<br>`postpone_jobs` |Another way to set [`run` command](../cli-reference/run.md) flags. Useful for maintaining per-deployment configurations. See [5.4. Feature flags](../advanced/performance/flags.md) for details. |
-|`reindex`|Configure action on reindexing triggered. See [5.3. Reindexing](../advanced/reindexing.md) for details.|
+| field | description |
+| - | - |
+| `reindex` | Mapping of reindexing reasons and actions DipDup performs |
+| `scheduler` | `apscheduler` scheduler config |
+| `postpone_jobs` | Do not start job scheduler until all indexes are in realtime state |
+| `early_realtime` | Establish realtime connection immediately after startup |
+| `merge_subscriptions` | Subscribe to all operations instead of exact channels |
+| `metadata_interface` | Expose metadata interface for TzKT |
+
+See [5.4. Feature flags](../advanced/performance/flags.md) for details.
+
+See [5.3. Reindexing](../advanced/reindexing.md) for details.
 
 CLI flags have priority over self-titled `AdvancedConfig` fields.

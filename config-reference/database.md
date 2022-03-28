@@ -17,6 +17,11 @@ database:
   path: db.sqlite3
 ```
 
+| field | description |
+| - | - |
+| `kind` | always 'sqlite' |
+| `path` | Path to .sqlite3 file, leave default for in-memory database |
+
 ## PostgreSQL
 
 Requires `host`, `port`, `user`, `password`, and `database` fields. You can set `schema_name` to values other than `public`, but Hasura integration won't be available.
@@ -31,6 +36,20 @@ database:
   database: dipdup
   schema_name: public
 ```
+
+| field | description |
+| - | - |
+| `kind` | always 'postgres' |
+| `host` | Host |
+| `port` | Port |
+| `user` | User |
+| `password` | Password |
+| `database` | Database name |
+| `schema_name` | Schema name |
+| `immune_tables` | List of tables to preserve during reindexing |
+| `connection_timeout` | Connection timeout in seconds |
+
+[//]: # (TODO: Move to the upper level)
 
 You can also use compose-style environment variable substitutions with default values for secrets and other fields. See [Templates and variables](../getting-started/templates-and-variables.md#) for details.
 
