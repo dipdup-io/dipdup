@@ -18,6 +18,7 @@ from typing import Type
 import sqlparse  # type: ignore
 from tortoise import Model
 from tortoise import Tortoise
+from tortoise import connections
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.backends.base.client import TransactionContext
@@ -47,6 +48,8 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
                     db_url=url,
                     modules=modules,  # type: ignore
                 )
+                # FIXME: Wait for connection to be ready, required since 0.19.0
+                await Tortoise.get_connection('default').execute_query('SELECT 1')
             except OSError:
                 _logger.warning('Can\'t establish database connection, attempt %s/%s', attempt, timeout)
                 if attempt == timeout - 1:
@@ -64,21 +67,14 @@ async def in_global_transaction():
     """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
     async with in_transaction() as conn:
         conn: TransactionContext
-        original_conn = Tortoise._connections['default']
-        Tortoise._connections['default'] = conn
+        original_conn = connections.get('default')
+        connections.set('default', conn)
 
-        if isinstance(original_conn, SqliteClient):
-            conn.filename = original_conn.filename
-            conn.pragmas = original_conn.pragmas
-        elif isinstance(original_conn, AsyncpgDBClient):
-            conn._pool = original_conn._pool
-            conn._template = original_conn._template
-        else:
-            raise NotImplementedError
+        # FIXME: SQLite rollbacks not working
 
         yield
 
-    Tortoise._connections['default'] = original_conn
+    connections.set('default', original_conn)
 
 
 def is_model_class(obj: Any) -> bool:

@@ -23,7 +23,7 @@ from typing import cast
 
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
-from tortoise.transactions import get_connection
+from tortoise.transactions import _get_connection
 
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
@@ -167,7 +167,7 @@ class DipDupContext:
             raise ReindexingRequiredError(schema.reindex, context)
 
         elif action == ReindexingAction.wipe:
-            conn = get_connection(None)
+            conn = _get_connection(None)
             if isinstance(self.config.database, PostgresDatabaseConfig):
                 await wipe_schema(conn, self.config.database.schema_name, self.config.database.immune_tables)
             else:
@@ -443,7 +443,7 @@ class CallbackManager:
             raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 
         # NOTE: SQL hooks are executed on default connection
-        connection = get_connection(None)
+        connection = _get_connection(None)
         await execute_sql_scripts(connection, sql_path)
 
     @contextmanager
