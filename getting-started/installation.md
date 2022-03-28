@@ -4,7 +4,7 @@ This page covers the installation of DipDup in local environments. See [7.2. Bui
 
 ## Host requirements
 
-A Linux environment with Python 3.8+ installed is required to use DipDup.
+A Linux environment with Python 3.10+ installed is required to use DipDup.
 
 Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database.
 

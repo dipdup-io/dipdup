@@ -4,7 +4,7 @@ This page will guide you through the steps to get your first selective indexer u
 
 Let's create an indexer for [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database then calculate some statistics of its' holders' activity.
 
-A Linux environment with Python 3.8+ installed is required to use DipDup.
+A Linux environment with Python 3.10+ installed is required to use DipDup.
 
 ## Create a new project
 
