@@ -18,6 +18,12 @@
 >
 > ...
 
+## See also
+
+> 🤓 **SEE ALSO**
+>
+> * [Command-line reference](cli-reference/)
+
 ## Comments
 
 [//]: # (TODO: Move to the upper level)
