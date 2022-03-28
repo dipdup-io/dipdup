@@ -24,8 +24,8 @@ This config section allows users to tune some system-wide options, either experi
 | `merge_subscriptions` | Subscribe to all operations instead of exact channels |
 | `metadata_interface` | Expose metadata interface for TzKT |
 
-See [5.4. Feature flags](../advanced/performance/flags.md) for details.
-
-See [5.3. Reindexing](../advanced/reindexing.md) for details.
-
 CLI flags have priority over self-titled `AdvancedConfig` fields.
+
+> 🤓 **SEE ALSO**
+> * [5.3. Reindexing](../advanced/reindexing.md)
+> * [5.4. Feature flags](../advanced/feature-flags.md)
