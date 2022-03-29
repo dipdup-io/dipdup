@@ -2,6 +2,8 @@
 
 This section contains information about changes introduced with specific DipDup releases.
 
-[Jump to the latest release](4.0.0.md)
+DipDup aims to follow semantic version - releases that introduce breaking changes bumped by first number.
 
-[See full changelog on GitHub](https://github.com/dipdup-net/dipdup-py/blob/master/CHANGELOG.md)
+> 🤓 **SEE ALSO**
+>
+> * [Full changelog on GitHub]([cli-reference/](https://github.com/dipdup-net/dipdup-py/blob/master/CHANGELOG.md))
