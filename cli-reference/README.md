@@ -14,7 +14,7 @@ See [Merging config files](../config-reference#merging-config-files) for details
 
 ## Advanced Python logging
 
-> ⚠ WARNING
+> ⚠ **WARNING**
 >
 > This feature will be deprecated soon. Consider configuring logging inside of `on_restart` hook.
 

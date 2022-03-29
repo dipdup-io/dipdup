@@ -18,4 +18,5 @@ sentry:
 You can obtain Sentry DSN from the web interface at _Settings -> Projects -> <project\_name> -> Client Keys (DSN)_. The cool thing is that if you catch an exception and suspect there's a bug in DipDup, you can share this event with us using a public link (created at _Share_ menu).
 
 > 🤓 **SEE ALSO**
+>
 > * [8.5. Sentry integration](../deployment/sentry.md)
