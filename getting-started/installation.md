@@ -8,10 +8,6 @@ A Linux environment with Python 3.10+ installed is required to use DipDup.
 
 Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database.
 
-> 🤓 **SEE ALSO**
->
-> * [5.6. Improving performance](advanced/performance/)
-
 ### Non-Linux environments
 
 Other UNIX-like systems (MacOS, FreeBSD etc.) should work, however not supported officially.
@@ -21,7 +17,8 @@ DipDup currently doesn't work in Windows environments due to incompabilities in 
 We aim to improve cross-platform compatibility in the future releases.
 
 > 🤓 **SEE ALSO**
->
+> 
+> * [5.6. Improving performance](advanced/performance/)
 > * [What is the Windows Subsystem for Linux?](https://docs.microsoft.com/en-us/windows/wsl/about)
 
 ## Local installation
