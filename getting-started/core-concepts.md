@@ -12,7 +12,7 @@ You can think of DipDup as a set of best practices for building custom backends 
 
 DipDup is tightly coupled with [TzKT API](http://api.tzkt.io/) but can generally use any data provider that implements a particular feature set. TzKT provides REST endpoints and Websocket subscriptions with flexible filters enabling selective indexing and returns "humanified" contract data, which means that you don't have to handle raw Michelson expressions.
 
-DipDup offers PostgreSQL + Hasura GraphQL Engine combo out-of-the-box to expose indexed data via REST and GraphQL with minimal configuration. However, you are free to use any database and API engine (e.g., write your own API backend).
+DipDup offers PostgreSQL + Hasura GraphQL Engine combo out-of-the-box to expose indexed data via REST and GraphQL with minimal configuration. However, you can use any database and API engine (e.g., write your own API backend).
 
 ![Default DipDup setup and data flow](../.gitbook/assets/dipdup.svg)
 
