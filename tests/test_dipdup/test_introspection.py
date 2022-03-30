@@ -18,7 +18,7 @@ NoneType = type(None)
 
 
 class IntrospectionTest(TestCase):
-    def test_list_simple_args(self):
+    def test_list_simple_args(self) -> None:
         self.assertEqual(str, get_list_elt_type(List[str]))
         self.assertEqual(int, get_list_elt_type(List[int]))
         self.assertEqual(bool, get_list_elt_type(List[bool]))
@@ -28,7 +28,7 @@ class IntrospectionTest(TestCase):
         self.assertEqual(List[str], get_list_elt_type(List[List[str]]))
         self.assertEqual(Dict[str, str], get_list_elt_type(List[Dict[str, str]]))
 
-    def test_list_complex_arg(self):
+    def test_list_complex_arg(self) -> None:
         class Class:
             ...
 
@@ -39,7 +39,7 @@ class IntrospectionTest(TestCase):
         self.assertEqual(List[Class], get_list_elt_type(List[List[Class]]))
         self.assertEqual(Dict[str, Class], get_list_elt_type(List[Dict[str, Class]]))
 
-    def test_pydantic_list_arg(self):
+    def test_pydantic_list_arg(self) -> None:
         class ListOfMapsStorage(BaseModel):
             __root__: List[Union[int, Dict[str, str]]]
 
@@ -57,7 +57,7 @@ class IntrospectionTest(TestCase):
         with self.assertRaises(IntrospectionError):
             get_list_elt_type(SomethingElse)
 
-    def test_dict_simple_args(self):
+    def test_dict_simple_args(self) -> None:
         self.assertEqual(str, get_dict_value_type(Dict[str, str]))
         self.assertEqual(int, get_dict_value_type(Dict[str, int]))
         self.assertEqual(bool, get_dict_value_type(Dict[str, bool]))
@@ -67,7 +67,7 @@ class IntrospectionTest(TestCase):
         self.assertEqual(List[str], get_dict_value_type(Dict[str, List[str]]))
         self.assertEqual(Dict[str, str], get_dict_value_type(Dict[str, Dict[str, str]]))
 
-    def test_dict_complex_arg(self):
+    def test_dict_complex_arg(self) -> None:
         class Class:
             ...
 
@@ -78,7 +78,7 @@ class IntrospectionTest(TestCase):
         self.assertEqual(List[Class], get_dict_value_type(Dict[str, List[Class]]))
         self.assertEqual(Dict[str, Class], get_dict_value_type(Dict[str, Dict[str, Class]]))
 
-    def test_pydantic_dict_arg(self):
+    def test_pydantic_dict_arg(self) -> None:
         class DictOfMapsStorage(BaseModel):
             __root__: Dict[str, Union[int, Dict[str, str]]]
 
@@ -95,7 +95,7 @@ class IntrospectionTest(TestCase):
         with self.assertRaises(IntrospectionError):
             get_dict_value_type(SomethingElse)
 
-    def test_pydantic_object_key(self):
+    def test_pydantic_object_key(self) -> None:
         class Storage(BaseModel):
             plain_str: str
             list_str: List[str]
@@ -109,7 +109,7 @@ class IntrospectionTest(TestCase):
         self.assertEqual(Optional[str], get_dict_value_type(Storage, 'optional_str'))
         self.assertEqual(Union[str, int], get_dict_value_type(Storage, 'union_arg'))
 
-    def test_is_array(self):
+    def test_is_array(self) -> None:
         class ListOfMapsStorage(BaseModel):
             __root__: List[Union[int, Dict[str, str]]]
 
@@ -123,11 +123,11 @@ class IntrospectionTest(TestCase):
         self.assertTrue(is_array_type(ListOfMapsStorage))
         self.assertFalse(is_array_type(OptionalList))
 
-    def test_simple_union_unwrap(self):
+    def test_simple_union_unwrap(self) -> None:
         self.assertEqual((True, (str, NoneType)), unwrap_union_type(Optional[str]))
         self.assertEqual((True, (int, str)), unwrap_union_type(Union[int, str]))
 
-    def test_pydantic_optional_unwrap(self):
+    def test_pydantic_optional_unwrap(self) -> None:
         class UnionIntStr(BaseModel):
             __root__: Union[int, str]
 
@@ -137,7 +137,7 @@ class IntrospectionTest(TestCase):
         self.assertEqual((True, (str, NoneType)), unwrap_union_type(OptionalStr))
         self.assertEqual((True, (int, str)), unwrap_union_type(UnionIntStr))
 
-    def test_root_type_extraction(self):
+    def test_root_type_extraction(self) -> None:
         class OptionalStr(BaseModel):
             __root__: Optional[str]
 

@@ -1,23 +1,26 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
+from typing import Tuple
+from typing import TypeVar
 from unittest import IsolatedAsyncioTestCase
 
 from dipdup.config import HTTPConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 
-# from unittest import skip
-
 
 @asynccontextmanager
-async def with_tzkt(batch_size: int):
+async def with_tzkt(batch_size: int) -> AsyncIterator[TzktDatasource]:
     config = HTTPConfig(batch_size=batch_size)
     datasource = TzktDatasource('https://api.tzkt.io', config)
     async with datasource:
         yield datasource
 
 
-async def take_two(iterable: AsyncIterator):
-    result = ()
+T = TypeVar('T')
+
+
+async def take_two(iterable: AsyncIterator[Tuple[T, ...]]) -> Tuple[T, ...]:
+    result: Tuple[T, ...] = ()
     left = 2
     async for batch in iterable:
         result = result + batch
@@ -48,7 +51,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 contracts,
             )
 
-    async def test_iter_similar_contracts(self):
+    async def test_iter_similar_contracts(self) -> None:
         async with with_tzkt(1) as tzkt:
             contracts = await take_two(
                 tzkt.iter_similar_contracts(
@@ -79,14 +82,14 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 'KT1X1LgNkQShpF9nRLYw3Dgdy4qp38MX617z',
-                contracts[0]['address'],
+                contracts[0],
             )
             self.assertEqual(
                 'KT1BgezWwHBxA9NrczwK9x3zfgFnUkc7JJ4b',
-                contracts[1]['address'],
+                contracts[1],
             )
 
-    async def iter_originated_contracts(self):
+    async def iter_originated_contracts(self) -> None:
         async with with_tzkt(1) as tzkt:
             contracts = await take_two(
                 tzkt.iter_originated_contracts(
@@ -95,14 +98,14 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 'KT1X1LgNkQShpF9nRLYw3Dgdy4qp38MX617z',
-                contracts[0]['address'],
+                contracts[0],
             )
             self.assertEqual(
                 'KT1BgezWwHBxA9NrczwK9x3zfgFnUkc7JJ4b',
-                contracts[1]['address'],
+                contracts[1],
             )
 
-    async def test_get_contract_summary(self):
+    async def test_get_contract_summary(self) -> None:
         async with with_tzkt(1) as tzkt:
             contract = await tzkt.get_contract_summary(
                 address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
@@ -112,7 +115,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 contract['address'],
             )
 
-    async def test_get_contract_storage(self):
+    async def test_get_contract_storage(self) -> None:
         async with with_tzkt(1) as tzkt:
             storage = await tzkt.get_contract_storage(
                 address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
@@ -122,7 +125,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 storage['token_lambdas'],
             )
 
-    async def test_get_jsonschemas(self):
+    async def test_get_jsonschemas(self) -> None:
         async with with_tzkt(1) as tzkt:
             jsonschemas = await tzkt.get_jsonschemas(
                 address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
@@ -132,7 +135,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 jsonschemas['storageSchema']['properties']['baker_validator']['type'],
             )
 
-    async def test_get_big_map(self):
+    async def test_get_big_map(self) -> None:
         async with with_tzkt(2) as tzkt:
             big_map_keys = await tzkt.get_big_map(
                 big_map_id=55031,
@@ -143,7 +146,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 (big_map_keys[0]['id'], big_map_keys[1]['id']),
             )
 
-    async def test_iter_big_map(self):
+    async def test_iter_big_map(self) -> None:
         async with with_tzkt(1) as tzkt:
             big_map_keys = await take_two(
                 tzkt.iter_big_map(
@@ -156,7 +159,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 (big_map_keys[0]['id'], big_map_keys[1]['id']),
             )
 
-    async def test_get_contract_big_maps(self):
+    async def test_get_contract_big_maps(self) -> None:
         async with with_tzkt(2) as tzkt:
             big_maps = await tzkt.get_contract_big_maps(
                 address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
@@ -166,7 +169,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 (big_maps[0]['path'], big_maps[1]['path']),
             )
 
-    async def test_iter_contract_big_maps(self):
+    async def test_iter_contract_big_maps(self) -> None:
         async with with_tzkt(1) as tzkt:
             big_maps = await take_two(
                 tzkt.iter_contract_big_maps(
@@ -178,13 +181,13 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
                 (big_maps[0]['path'], big_maps[1]['path']),
             )
 
-    async def test_get_migration_originations(self):
+    async def test_get_migration_originations(self) -> None:
         async with with_tzkt(2) as tzkt:
             originations = await tzkt.get_migration_originations()
             self.assertEqual(67955553, originations[0].id)
             self.assertEqual(67955554, originations[1].id)
 
-    async def test_iter_migration_originations(self):
+    async def test_iter_migration_originations(self) -> None:
         async with with_tzkt(1) as tzkt:
             originations = await take_two(tzkt.iter_migration_originations())
             self.assertEqual(67955553, originations[0].id)

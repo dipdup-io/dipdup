@@ -18,5 +18,5 @@ for name, member in config_module.__dict__.items():
             line = line.strip()
             if line.startswith(':param'):
                 parts = line.split(':')
-                param, desc = parts[1], parts[2].strip()
+                param, desc = parts[1], ':'.join(parts[2:]).strip()
                 print(f'| `{param[6:]}` | {desc} |')

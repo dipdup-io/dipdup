@@ -3,8 +3,8 @@ from unittest import IsolatedAsyncioTestCase
 
 from tortoise import Tortoise
 
+from dipdup.enums import IndexType
 from dipdup.models import Index
-from dipdup.models import IndexType
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 from dipdup.utils.database import in_global_transaction
@@ -12,7 +12,7 @@ from dipdup.utils.database import tortoise_wrapper
 
 
 class UtilsTest(IsolatedAsyncioTestCase):
-    async def test_in_global_transaction(self):
+    async def test_in_global_transaction(self) -> None:
         async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
 

@@ -183,7 +183,7 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, BazaarMarketPlaceStorage)
         self.assertIsInstance(storage_obj.__root__, list)
-        self.assertEqual('tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb', storage_obj.__root__[0].key.sale_seller)  # type: ignore
+        self.assertEqual('tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb', storage_obj.__root__[0].key.sale_seller)
 
     def test_deserialize_storage_list_of_maps(self) -> None:
         # Arrange
@@ -219,7 +219,7 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, ListOfMapsStorage)
         self.assertIsInstance(storage_obj.__root__, list)
-        self.assertEqual(storage_obj.__root__[1]['test'], '123')  # type: ignore
+        self.assertEqual(storage_obj.__root__[1]['test'], '123')
 
     def test_convert_operation_with_default_entrypoint(self) -> None:
         # Arrange
@@ -247,8 +247,8 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, FtzFunStorage)
         self.assertIsInstance(storage_obj.assets.operators, list)
-        self.assertEqual(storage_obj.assets.operators[0].key.address_0, 'tz1fMia93yL7vndY2fZ5rGAQPgex7RQHXV1m')  # type: ignore
-        self.assertEqual(storage_obj.assets.operators[0].value, {})  # type: ignore
+        self.assertEqual(storage_obj.assets.operators[0].key.address_0, 'tz1fMia93yL7vndY2fZ5rGAQPgex7RQHXV1m')
+        self.assertEqual(storage_obj.assets.operators[0].value, {})
 
     def test_qwer(self) -> None:
         with open(join(dirname(__file__), 'qwer.json')) as f:
@@ -276,7 +276,7 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, AsdfStorage)
         self.assertIsInstance(storage_obj.__root__, list)
-        self.assertIsInstance(storage_obj.__root__[0]['pupa'], list)  # type: ignore
+        self.assertIsInstance(storage_obj.__root__[0]['pupa'], list)
 
     def test_hjkl(self) -> None:
         with open(join(dirname(__file__), 'hjkl.json')) as f:
@@ -289,7 +289,7 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, HjklStorage)
         self.assertIsInstance(storage_obj.__root__, list)
-        self.assertIsInstance(storage_obj.__root__[0].value.mr, dict)  # type: ignore
+        self.assertIsInstance(storage_obj.__root__[0].value.mr, dict)
         self.assertEqual(storage_obj.__root__[0].value.mr['111'], True)  # type: ignore
 
     def test_zxcv(self) -> None:
@@ -336,7 +336,7 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, HenSubjktStorage)
         self.assertIsInstance(storage_obj.entries, dict)
-        self.assertEqual(storage_obj.entries['tz1Y1j7FK1X9Rrv2VdPz5bXoU7SszF8W1RnK'], True)  # type: ignore
+        self.assertEqual(storage_obj.entries['tz1Y1j7FK1X9Rrv2VdPz5bXoU7SszF8W1RnK'], True)
 
     def test_kolibri_ovens(self) -> None:
         with open(join(dirname(__file__), 'kolibri_ovens.json')) as f:
@@ -363,4 +363,4 @@ class ModelsTest(TestCase):
         # Assert
         self.assertIsInstance(storage_obj, YupanaStorage)
         self.assertIsInstance(storage_obj.storage.markets, dict)
-        self.assertEqual(storage_obj.storage.markets['tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw'], ['0'])  # type: ignore
+        self.assertEqual(storage_obj.storage.markets['tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw'], ['0'])
