@@ -17,8 +17,8 @@
       "timescale/timescaledb:latest-pg13"
     ],
     "hasura_version": [
-        "hasura/graphql-engine:v2.3.0",
-        "hasura/graphql-engine:v2.2.2"
+      "hasura/graphql-engine:v2.4.0",
+      "hasura/graphql-engine:v2.3.1"
     ],
 
     "🧹": "Code quality (press enter)",
