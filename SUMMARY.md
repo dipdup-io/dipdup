@@ -29,7 +29,7 @@
     * [Optimizing database queries](advanced/performance/database.md)
   * [Handler context](advanced/handler-context.md)
   * [Internal models](advanced/internal-models.md)
-  * [Spawning indexes at runtime](cookbook/index-factories.md)
+  * [Spawning indexes at runtime](advanced/index-factories.md)
   * [Scheduler configuration](advanced/scheduler.md)
 * [GraphQL API](graphql/README.md)
   * [Hasura integration](graphql/hasura.md)

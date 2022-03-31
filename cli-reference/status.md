@@ -1,6 +1,6 @@
 # status
 
-Show current status of indexes in database
+Show the current status of indexes in the database.
 
 ```shell
 dipdup status

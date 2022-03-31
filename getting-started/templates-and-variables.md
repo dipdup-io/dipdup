@@ -1,7 +1,5 @@
 # Templates and variables
 
-<!-- See [12.13. templates](../config-reference/templates.md) for details. -->
-
 Templates allow you to reuse index configuration, e.g., for different networks (mainnet/testnet) or multiple contracts sharing the same codebase. DipDup supports static and dynamic template instances.
 
 ```yaml
@@ -18,8 +16,6 @@ templates:
             entrypoint: call
 ```
 
-## Placeholders
-
 Templates have the same syntax as [indexes](indexes/README.md) of all kinds; the only difference is that they additionally support placeholders enabling parameterization:
 
 ```yaml
@@ -30,19 +26,7 @@ Any string value wrapped in angle brackets is treated as a placeholder, so make 
 
 Any index implementing a template must have a value for each existing placeholder; all those values are then accessible via the handler context.
 
-## Dynamic instances
-
-DipDup allows spawning new indexes from a template in runtime. There are two ways to do that:
-
-* From another index (e.g., handling factory originations)
-* In [`on_configure` hook](../cli-reference/dipdup-run.md#custom-initialization)
-
-> ⚠ **WARNING**
->
-> DipDup is currently not able to automatically generate types and handlers for template indexes unless there is at least one [static instance](indexes/template.md).
-
-DipDup exposes several context methods that extend the current configuration with new contracts and template instances. See [5.8. Handler context](../advanced/handler-context.md) for details.
-
 > 🤓 **SEE ALSO**
 >
+> * [5.9. Spawning indexes at runtime](../advanced/index-factories.md)
 > * [12.13. templates](../config-reference/templates.md)
