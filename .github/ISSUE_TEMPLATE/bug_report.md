@@ -19,6 +19,7 @@ about: Something doesn't work as expected
 * **Are you in docker?**
 * **Can you reproduce this issue on `master`?**
 
+<!---
 ### Attachment checklist
 
 - [ ] General: DipDup logs (~100 lines above stacktrace)
@@ -26,3 +27,4 @@ about: Something doesn't work as expected
 - [ ] General: `models.py`
 - [ ] SQL issues: `schema export` output
 - [ ] Hasura issues: Hasura container logs
+-->

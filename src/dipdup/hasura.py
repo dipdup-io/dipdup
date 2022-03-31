@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import importlib
-import json
 import logging
 import re
 from contextlib import suppress
@@ -18,6 +17,7 @@ from typing import Optional
 from typing import Tuple
 
 import humps  # type: ignore
+import orjson as json
 from aiohttp import ClientConnectorError
 from aiohttp import ClientOSError
 from aiohttp import ServerDisconnectedError
@@ -25,6 +25,7 @@ from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.transactions import get_connection
 
+from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -102,7 +103,8 @@ class HasuraGateway(HTTPGateway):
     async def configure(self, force: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
-        if self._database_config.schema_name != 'public':
+        # TODO: Validate during config parsing
+        if self._database_config.schema_name != DEFAULT_POSTGRES_SCHEMA:
             raise ConfigurationError('Hasura integration requires `schema_name` to be `public`')
 
         self._logger.info('Configuring Hasura')
@@ -205,7 +207,7 @@ class HasuraGateway(HTTPGateway):
         )
 
     def _hash_metadata(self, metadata: Dict[str, Any]) -> str:
-        return hashlib.sha256(json.dumps(metadata).encode()).hexdigest()
+        return hashlib.sha256(json.dumps(metadata)).hexdigest()
 
     async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')

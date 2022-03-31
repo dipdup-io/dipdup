@@ -20,12 +20,12 @@ from dipdup.utils.database import tortoise_wrapper
 @skip_ci
 class DemosTest(IsolatedAsyncioTestCase):
     # TODO: store cache in xdg_cache_home, keep databases and logs after last run
-    def setUp(self):
+    def setUp(self) -> None:
         with suppress(FileNotFoundError):
             rmtree('/tmp/dipdup')
         mkdir('/tmp/dipdup')
 
-    def run_dipdup(self, config: str):
+    def run_dipdup(self, config: str) -> None:
         subprocess.run(
             [
                 'dipdup',
@@ -39,7 +39,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             check=True,
         )
 
-    async def test_hic_et_nunc(self):
+    async def test_hic_et_nunc(self) -> None:
         self.run_dipdup('hic_et_nunc.yml')
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_hic_et_nunc.models'):
@@ -53,7 +53,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(20, swaps)
             self.assertEqual(24, trades)
 
-    async def test_quipuswap(self):
+    async def test_quipuswap(self) -> None:
         self.run_dipdup('quipuswap.yml')
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_quipuswap.models'):
@@ -65,7 +65,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(835, trades)
             self.assertEqual(214, positions)
 
-    async def test_tzcolors(self):
+    async def test_tzcolors(self) -> None:
         self.run_dipdup('tzcolors.yml')
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzcolors.models'):
@@ -79,7 +79,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(14, auctions)
             self.assertEqual(44, bids)
 
-    async def test_tezos_domains(self):
+    async def test_tezos_domains(self) -> None:
         self.run_dipdup('tezos_domains.yml')
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tezos_domains.models'):
@@ -89,7 +89,7 @@ class DemosTest(IsolatedAsyncioTestCase):
             self.assertEqual(1, tlds)
             self.assertEqual(145, domains)
 
-    async def test_tezos_domains_big_map(self):
+    async def test_tezos_domains_big_map(self) -> None:
         self.run_dipdup('tezos_domains_big_map.yml')
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tezos_domains_big_map.models'):

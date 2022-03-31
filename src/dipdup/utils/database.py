@@ -5,7 +5,6 @@ import importlib
 import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
-from enum import Enum
 from os.path import dirname
 from os.path import join
 from pathlib import Path
@@ -15,7 +14,6 @@ from typing import Iterator
 from typing import Optional
 from typing import Tuple
 from typing import Type
-from typing import Union
 
 import sqlparse  # type: ignore
 from tortoise import Model
@@ -25,12 +23,9 @@ from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.backends.base.client import TransactionContext
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
-from tortoise.fields.data import CharEnumType
-from tortoise.fields.data import CharField
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
 
-from dipdup.enums import ReversedEnum
 from dipdup.exceptions import DatabaseConfigurationError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
@@ -67,9 +62,6 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
 @asynccontextmanager
 async def in_global_transaction():
     """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
-    if list(Tortoise._connections.keys()) != ['default']:
-        raise RuntimeError('`in_global_transaction` wrapper works only with a single DB connection')
-
     async with in_transaction() as conn:
         conn: TransactionContext
         original_conn = Tortoise._connections['default']
@@ -132,14 +124,6 @@ def get_schema_hash(conn: BaseDBAsyncClient) -> str:
     return hashlib.sha256(processed_schema_sql).hexdigest()
 
 
-async def set_schema(conn: BaseDBAsyncClient, name: str) -> None:
-    """Set schema for the connection"""
-    if isinstance(conn, SqliteClient):
-        raise NotImplementedError
-
-    await conn.execute_script(f'SET search_path TO {name}')
-
-
 async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
@@ -164,7 +148,6 @@ async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
         await Tortoise.generate_schemas()
     elif isinstance(conn, AsyncpgDBClient):
         await create_schema(conn, name)
-        await set_schema(conn, name)
         await Tortoise.generate_schemas()
 
         # NOTE: Apply built-in scripts before project ones
@@ -238,51 +221,3 @@ def validate_models(package: str) -> None:
             # NOTE: Leads to GraphQL issues
             if field_name == table_name:
                 raise DatabaseConfigurationError('Model fields must differ from table name', model)
-
-
-class ReversedCharEnumFieldInstance(CharField):
-    def __init__(
-        self,
-        enum_type: Type[ReversedEnum],
-        description: Optional[str] = None,
-        max_length: int = 0,
-        **kwargs: Any,
-    ) -> None:
-
-        # Automatic description for the field if not specified by the user
-        if description is None:
-            description = "\n".join([f"{e.name}: {str(e.value)}" for e in enum_type])[:2048]
-
-        # Automatic CharField max_length
-        if max_length == 0:
-            for item in enum_type:
-                item_len = len(str(item.name))
-                if item_len > max_length:
-                    max_length = item_len
-
-        super().__init__(description=description, max_length=max_length, **kwargs)
-        self.enum_type = enum_type
-
-    def to_python_value(self, value: Union[Enum, str, None]) -> Union[Enum, None]:
-        if value is None:
-            return None
-        if isinstance(value, Enum):
-            return value
-        return self.enum_type[value]
-
-    def to_db_value(self, value: Optional[Any], instance: Union[Type[Model], Model]) -> Union[str, None]:
-        if value is None:
-            return None
-        if isinstance(value, Enum):
-            return value.name
-        return self.enum_type[value].name
-
-
-def ReversedCharEnumField(  # pylint: disable=invalid-name
-    enum_type: Type[CharEnumType],
-    description: Optional[str] = None,
-    max_length: int = 0,
-    **kwargs: Any,
-) -> CharEnumType:
-
-    return ReversedCharEnumFieldInstance(enum_type, description, max_length, **kwargs)  # type: ignore

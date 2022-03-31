@@ -13,7 +13,7 @@ from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Index
-from dipdup.test import create_test_dipdup
+from tests.test_dipdup import create_test_dipdup
 
 
 async def _create_index(hash_: str) -> None:

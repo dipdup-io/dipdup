@@ -9,7 +9,7 @@ Python SDK for developing indexers of [Tezos](https://tezos.com/) smart contract
 
 ## Quickstart
 
-Python 3.8+ is required for dipdup to run.
+Python 3.10+ is required for dipdup to run.
 
 ```shell
 $ pip install dipdup

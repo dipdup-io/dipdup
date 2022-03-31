@@ -1,9 +1,9 @@
 import logging
 import os
 import sys
-import time
 from collections import deque
 from contextlib import AsyncExitStack
+from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
 from os.path import exists
@@ -38,13 +38,12 @@ from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
+from dipdup.datasources.datasource import HttpDatasource
 from dipdup.datasources.ipfs.datasource import IpfsDatasource
 from dipdup.datasources.metadata.datasource import MetadataDatasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import ReindexingAction
-from dipdup.enums import ReindexingReasonC
-from dipdup.enums import reason_to_reasonc
-from dipdup.enums import reasonc_to_reason
+from dipdup.enums import ReindexingReason
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
@@ -53,9 +52,11 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
+from dipdup.models import ContractMetadata
 from dipdup.models import Index
-from dipdup.models import ReindexingReason
 from dipdup.models import Schema
+from dipdup.models import TokenMetadata
+from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
@@ -68,8 +69,41 @@ pending_indexes = deque()  # type: ignore
 pending_hooks: Deque[Awaitable[None]] = deque()
 
 
+class MetadataCursor:
+    _contract = 0
+    _token = 0
+
+    def __new__(cls):
+        raise NotImplementedError
+
+    @classmethod
+    async def initialize(cls) -> None:
+        if last_contract := await ContractMetadata.filter().order_by('-update_id').first():
+            cls._contract = last_contract.update_id
+        if last_token := await TokenMetadata.filter().order_by('-update_id').first():
+            cls._token = last_token.update_id
+
+    @classmethod
+    def contract(cls) -> int:
+        cls._contract += 1
+        return cls._contract
+
+    @classmethod
+    def token(cls) -> int:
+        cls._token += 1
+        return cls._token
+
+
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
 class DipDupContext:
+    """Class to store application context
+
+    :param datasources: Mapping of available datasources
+    :param config: DipDup configuration
+    :param callbacks: Low-level callback interface (intented for internal use)
+    :param logger: Context-aware logger instance
+    """
+
     def __init__(
         self,
         datasources: Dict[str, Datasource],
@@ -92,6 +126,12 @@ class DipDupContext:
         *args,
         **kwargs: Any,
     ) -> None:
+        """Fire hook with given name and arguments.
+
+        :param name: Hook name
+        :param fmt: Format string for `ctx.logger` messages
+        :param wait: Wait for hook to finish or fire and forget
+        """
         await self.callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
 
     async def fire_handler(
@@ -103,44 +143,48 @@ class DipDupContext:
         *args,
         **kwargs: Any,
     ) -> None:
+        """Fire handler with given name and arguments.
+
+        :param name: Handler name
+        :param index: Index name
+        :param datasource: An instance of datasource that triggered the handler
+        :param fmt: Format string for `ctx.logger` messages
+        """
         await self.callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
     async def execute_sql(self, name: str) -> None:
+        """Execute SQL script with given name
+
+        :param name: SQL script name within `<project>/sql` directory
+        """
         await self.callbacks.execute_sql(self, name)
 
     async def restart(self) -> None:
-        """Restart preserving CLI arguments"""
-        # NOTE: Remove --reindex from arguments to avoid reindexing loop
-        if '--reindex' in sys.argv:
-            sys.argv.remove('--reindex')
+        """Restart indexer preserving CLI arguments"""
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    async def reindex(self, reason: Optional[Union[str, ReindexingReason, ReindexingReasonC]] = None, **context) -> None:
-        """Drop all tables or whole database and restart with the same CLI arguments"""
+    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> None:
+        """Drop the whole database and restart with the same CLI arguments"""
         if not reason:
-            reason = ReindexingReasonC.manual
+            reason = ReindexingReason.manual
         elif isinstance(reason, str):
             context['message'] = reason
-            reason = ReindexingReasonC.manual
-        elif isinstance(reason, ReindexingReason):
-            reason = reason_to_reasonc[reason]
-        else:
-            raise NotImplementedError
+            reason = ReindexingReason.manual
 
         action = self.config.advanced.reindex.get(reason, ReindexingAction.exception)
         self.logger.warning('Reindexing initialized, reason: %s, action: %s', reason.value, action.value)
 
         if action == ReindexingAction.ignore:
-            if reason == ReindexingReasonC.schema_modified:
+            if reason == ReindexingReason.schema_modified:
                 await Schema.filter(name=self.config.schema_name).update(hash='')
-            elif reason == ReindexingReasonC.config_modified:
+            elif reason == ReindexingReason.config_modified:
                 await Index.filter().update(config_hash='')
             return
 
         elif action == ReindexingAction.exception:
             schema = await Schema.filter(name=self.config.schema_name).get()
             if not schema.reindex:
-                schema.reindex = reasonc_to_reason[reason]
+                schema.reindex = reason
                 await schema.save()
             raise ReindexingRequiredError(schema.reindex, context)
 
@@ -216,6 +260,41 @@ class DipDupContext:
         # NOTE: IndexDispatcher will handle further initialization when it's time
         pending_indexes.append(index)
 
+    async def update_contract_metadata(
+        self,
+        network: str,
+        address: str,
+        metadata: Dict[str, Any],
+    ) -> None:
+        if not self.config.advanced.metadata_interface:
+            return
+        update_id = MetadataCursor.contract()
+        await ContractMetadata.update_or_create(
+            network=network,
+            contract=address,
+            defaults={'metadata': metadata, 'update_id': update_id},
+        )
+
+    async def update_token_metadata(
+        self,
+        network: str,
+        address: str,
+        token_id: str,
+        metadata: Dict[str, Any],
+    ) -> None:
+        if not self.config.advanced.metadata_interface:
+            return
+        if not all(str.isdigit(c) for c in token_id):
+            raise ValueError('`token_id` must be a number')
+
+        update_id = MetadataCursor.token()
+        await TokenMetadata.update_or_create(
+            network=network,
+            contract=address,
+            token_id=token_id,
+            defaults={'metadata': metadata, 'update_id': update_id},
+        )
+
     def _get_datasource(self, name: str, type_: Type[DatasourceT]) -> DatasourceT:
         datasource = self.datasources.get(name)
         if not datasource:
@@ -235,6 +314,9 @@ class DipDupContext:
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
         return self._get_datasource(name, IpfsDatasource)
+
+    def get_http_datasource(self, name: str) -> HttpDatasource:
+        return self._get_datasource(name, HttpDatasource)
 
 
 class HookContext(DipDupContext):
@@ -389,11 +471,10 @@ class CallbackManager:
     @contextmanager
     def _callback_wrapper(self, kind: str, name: str) -> Iterator[None]:
         try:
-            start = time.perf_counter()
-            yield
-            diff = time.perf_counter() - start
-            level = self._logger.warning if diff > 1 else self._logger.debug
-            level('`%s` %s callback executed in %s seconds', name, kind, diff)
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_callback_duration(name))
+                yield
         except Exception as e:
             if isinstance(e, ReindexingRequiredError):
                 raise

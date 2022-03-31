@@ -17,6 +17,7 @@ from os.path import exists
 from os.path import getsize
 from os.path import join
 from typing import Any
+from typing import AsyncGenerator
 from typing import Callable
 from typing import DefaultDict
 from typing import Dict
@@ -26,9 +27,11 @@ from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
+from typing import Union
+from typing import cast
 from unittest import skip
 
-import humps  # type: ignore
+import humps
 from genericpath import isdir
 from genericpath import isfile
 
@@ -49,7 +52,7 @@ def import_submodules(package: str) -> Dict[str, types.ModuleType]:
 
 
 @asynccontextmanager
-async def slowdown(seconds: int):
+async def slowdown(seconds: int) -> AsyncGenerator[None, None]:
     """Sleep if nested block was executed faster than X seconds"""
     started_at = time.time()
     yield
@@ -61,13 +64,20 @@ async def slowdown(seconds: int):
 
 def snake_to_pascal(value: str) -> str:
     """humps wrapper for Python imports"""
-    return humps.pascalize(value.replace('.', '_'))
+    value = value.replace('.', '_')
+    # NOTE: Special case, humps returns uppercase otherwise
+    if value.isupper():
+        value = value.lower()
+    return cast(str, humps.pascalize(value))
 
 
 def pascal_to_snake(value: str, strip_dots: bool = True) -> str:
     """humps wrapper for Python imports"""
     if strip_dots:
         value = value.replace('.', '_')
+    # NOTE: Special case, humps returns uppercase otherwise
+    if value.isupper():
+        value = value.lower()
     return humps.depascalize(value).replace('__', '_')
 
 
@@ -98,12 +108,12 @@ class FormattedLogger(Logger):
         self.logger = logging.getLogger(name)
         self.fmt = fmt
 
-    def __getattr__(self, name: str) -> Callable:
+    def __getattr__(self, name: str) -> Any:
         if name == '_log':
             return self._log
         return getattr(self.logger, name)
 
-    def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, stacklevel=1):
+    def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, stacklevel=1) -> None:
         if self.fmt:
             msg = self.fmt.format(msg)
         self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
@@ -147,13 +157,15 @@ def touch(path: str) -> None:
         open(path, 'a').close()
 
 
-def write(path: str, content: str, overwrite: bool = False) -> bool:
+def write(path: str, content: Union[str, bytes], overwrite: bool = False) -> bool:
     """Write content to file, create directory tree if necessary"""
     mkdir_p(dirname(path))
     if exists(path) and not overwrite:
         return False
     _logger.info('Writing into file `%s`', path)
-    with open(path, 'w') as file:
+    with open(path, 'wb') as file:
+        if isinstance(content, str):
+            content = content.encode()
         file.write(content)
     return True
 
@@ -166,20 +178,13 @@ def import_from(module: str, obj: str) -> Any:
         raise HandlerImportError(module, obj) from e
 
 
-def remove_prefix(text: str, prefix: str) -> str:
-    """Remove prefix and strip underscores"""
-    if text.startswith(prefix):
-        text = text[len(prefix) :]
-    return text.strip('_')
-
-
-def skip_ci(fn):
+def skip_ci(fn) -> Callable[..., Any]:
     if os.environ.get('CI'):
         return skip('CI environment, skipping')(fn)
     return fn
 
 
-def exclude_none(config_json):
+def exclude_none(config_json: Any) -> Any:
     if isinstance(config_json, (list, tuple)):
         return [exclude_none(i) for i in config_json if i is not None]
     if isinstance(config_json, dict):

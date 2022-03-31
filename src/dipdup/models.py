@@ -16,8 +16,7 @@ from tortoise import fields
 
 from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
-from dipdup.exceptions import ReindexingReason
-from dipdup.utils.database import ReversedCharEnumField
+from dipdup.enums import ReindexingReason
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -140,10 +139,13 @@ class BlockData:
 class HeadBlockData:
     """Basic structure for head block from TzKT SignalR response"""
 
+    chain: str
+    chain_id: str
     cycle: int
     level: int
     hash: str
     protocol: str
+    next_protocol: str
     timestamp: datetime
     voting_epoch: int
     voting_period: int
@@ -158,6 +160,7 @@ class HeadBlockData:
     quote_jpy: Decimal
     quote_krw: Decimal
     quote_eth: Decimal
+    quote_gbp: Decimal
 
 
 @dataclass
@@ -178,7 +181,7 @@ class QuoteData:
 class Schema(Model):
     name = fields.CharField(256, pk=True)
     hash = fields.CharField(256)
-    reindex = ReversedCharEnumField(ReindexingReason, max_length=40, null=True)
+    reindex = fields.CharEnumField(ReindexingReason, max_length=40, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -237,3 +240,32 @@ class Contract(Model):
 
     class Meta:
         table = 'dipdup_contract'
+
+
+class ContractMetadata(Model):
+    network = fields.CharField(51)
+    contract = fields.CharField(36)
+    metadata = fields.JSONField()
+    update_id = fields.IntField()
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_contract_metadata'
+        unique_together = ('network', 'contract')
+
+
+class TokenMetadata(Model):
+    network = fields.CharField(51)
+    contract = fields.CharField(36)
+    token_id = fields.TextField()
+    metadata = fields.JSONField()
+    update_id = fields.IntField()
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_token_metadata'
+        unique_together = ('network', 'contract', 'token_id')
