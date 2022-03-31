@@ -285,7 +285,7 @@ class TzktDatasource(IndexDatasource):
 
         self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
-        self._lagging_buffer: DefaultDict[int, List[Dict[str, Any]]] = defaultdict(list)
+        self._buffer: DefaultDict[int, List[Dict[str, Any]]] = defaultdict(list)
 
     @property
     def request_limit(self) -> int:
@@ -797,9 +797,9 @@ class TzktDatasource(IndexDatasource):
             self._level[type_] = level
             self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
 
-            # NOTE: Just yield data
+            # NOTE: Put data messages to buffer by level
             if tzkt_type == TzktMessageType.DATA:
-                self._lagging_buffer[level].append(item['data'])
+                self._buffer[level].append(item['data'])
 
             # NOTE: Emit rollback, but not on `head` message
             elif tzkt_type == TzktMessageType.REORG:
@@ -818,16 +818,22 @@ class TzktDatasource(IndexDatasource):
                     if current_level <= level:
                         return
 
-                self._logger.info('Emitting rollback from %s to %s', current_level, level)
-                await self.emit_rollback(current_level, level)
+                rolled_back_levels = range(current_level, level, -1)
+                for rolled_back_level in rolled_back_levels:
+                    if not self._buffer.pop(rolled_back_level, None):
+                        self._logger.info('Emitting rollback from %s to %s', current_level, level)
+                        await self.emit_rollback(current_level, level)
+                        return
+
+                self._logger.info('Rollback within buffered levels, no action required')
 
             else:
                 raise NotImplementedError
 
         # NOTE: Yield data from lagging buffer
-        buffered_levels = sorted(self._lagging_buffer.keys())
-        for level in buffered_levels[-0:]:
-            for data in self._lagging_buffer[level]:
+        buffered_levels = sorted(self._buffer.keys())
+        for level in buffered_levels[:3]: # fixme
+            for data in self._buffer.pop(level):
                 yield data
 
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
