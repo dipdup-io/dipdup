@@ -1,5 +1,6 @@
 import time
 from contextlib import contextmanager
+from typing import Generator
 
 from prometheus_client import Counter  # type: ignore
 from prometheus_client import Gauge
@@ -74,31 +75,31 @@ class Metrics:
 
     @classmethod
     @contextmanager
-    def measure_level_sync_duration(cls):
+    def measure_level_sync_duration(cls) -> Generator[None, None, None]:
         with _index_level_sync_duration.time():
             yield
 
     @classmethod
     @contextmanager
-    def measure_level_realtime_duration(cls):
+    def measure_level_realtime_duration(cls) -> Generator[None, None, None]:
         with _index_level_realtime_duration.time():
             yield
 
     @classmethod
     @contextmanager
-    def measure_total_sync_duration(cls):
+    def measure_total_sync_duration(cls) -> Generator[None, None, None]:
         with _index_total_sync_duration.time():
             yield
 
     @classmethod
     @contextmanager
-    def measure_total_realtime_duration(cls):
+    def measure_total_realtime_duration(cls) -> Generator[None, None, None]:
         with _index_total_realtime_duration.time():
             yield
 
     @classmethod
     @contextmanager
-    def measure_callback_duration(cls, name: str):
+    def measure_callback_duration(cls, name: str) -> Generator[None, None, None]:
         with _callback_duration.labels(callback=name).time():
             yield
 
@@ -109,11 +110,11 @@ class Metrics:
         _indexes_total.labels(status='realtime').set(realtime)
 
     @classmethod
-    def set_datasource_head_updated(cls, name: str):
+    def set_datasource_head_updated(cls, name: str) -> None:
         _datasource_head_updated.labels(datasource=name).observe(time.time())
 
     @classmethod
-    def set_datasource_rollback(cls, name: str):
+    def set_datasource_rollback(cls, name: str) -> None:
         _datasource_rollbacks.labels(datasource=name).inc()
 
     @classmethod
@@ -125,9 +126,9 @@ class Metrics:
         _index_handlers_matched.inc(amount)
 
     @classmethod
-    def set_levels_to_sync(cls, index: str, levels: int):
+    def set_levels_to_sync(cls, index: str, levels: int) -> None:
         _index_levels_to_sync.labels(index=index).observe(levels)
 
     @classmethod
-    def set_levels_to_realtime(cls, index: str, levels: int):
+    def set_levels_to_realtime(cls, index: str, levels: int) -> None:
         _index_levels_to_realtime.labels(index=index).observe(levels)

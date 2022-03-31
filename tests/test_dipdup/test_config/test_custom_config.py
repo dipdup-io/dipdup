@@ -45,14 +45,14 @@ custom:
         return self.appended_config_path(dummy_config_path, tmp_path_factory, request.param)
 
     @staticmethod
-    def test_empty_custom_section(dummy_config_path: str):
+    def test_empty_custom_section(dummy_config_path: str) -> None:
         config = DipDupConfig.load([dummy_config_path], False)
         config.initialize(True)
         assert hasattr(config, 'custom')
         assert config.custom == {}
 
     @staticmethod
-    def test_custom_section_items(config_with_custom_section_path: str):
+    def test_custom_section_items(config_with_custom_section_path: str) -> None:
         config = DipDupConfig.load([config_with_custom_section_path], False)
         config.initialize(True)
 
@@ -76,7 +76,7 @@ custom:
             ('${DEFINITELY_NOT_DEFINED:- some_spaces_is_ok  }', 'some_spaces_is_ok'),
         ),
     )
-    def test_env_parsing_positive(self, value, expected, dummy_config_path, tmp_path_factory):
+    def test_env_parsing_positive(self, value, expected, dummy_config_path, tmp_path_factory) -> None:
         append_raw = f"""
 custom:
     var_from_env: {value}
@@ -97,7 +97,7 @@ custom:
             '${DEFINITELY_NOT_DEFINED:-}',
         ),
     )
-    def test_env_parsing_negative(self, value, dummy_config_path, tmp_path_factory):
+    def test_env_parsing_negative(self, value, dummy_config_path, tmp_path_factory) -> None:
         append_raw = f"""
 custom:
     var_from_env: {value}

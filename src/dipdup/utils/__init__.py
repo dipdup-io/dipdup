@@ -17,6 +17,7 @@ from os.path import exists
 from os.path import getsize
 from os.path import join
 from typing import Any
+from typing import AsyncGenerator
 from typing import Callable
 from typing import DefaultDict
 from typing import Dict
@@ -27,9 +28,10 @@ from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
 from typing import Union
+from typing import cast
 from unittest import skip
 
-import humps  # type: ignore
+import humps
 from genericpath import isdir
 from genericpath import isfile
 
@@ -50,7 +52,7 @@ def import_submodules(package: str) -> Dict[str, types.ModuleType]:
 
 
 @asynccontextmanager
-async def slowdown(seconds: int):
+async def slowdown(seconds: int) -> AsyncGenerator[None, None]:
     """Sleep if nested block was executed faster than X seconds"""
     started_at = time.time()
     yield
@@ -66,7 +68,7 @@ def snake_to_pascal(value: str) -> str:
     # NOTE: Special case, humps returns uppercase otherwise
     if value.isupper():
         value = value.lower()
-    return humps.pascalize(value)
+    return cast(str, humps.pascalize(value))
 
 
 def pascal_to_snake(value: str, strip_dots: bool = True) -> str:
@@ -106,12 +108,12 @@ class FormattedLogger(Logger):
         self.logger = logging.getLogger(name)
         self.fmt = fmt
 
-    def __getattr__(self, name: str) -> Callable:
+    def __getattr__(self, name: str) -> Any:
         if name == '_log':
             return self._log
         return getattr(self.logger, name)
 
-    def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, stacklevel=1):
+    def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, stacklevel=1) -> None:
         if self.fmt:
             msg = self.fmt.format(msg)
         self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
@@ -176,13 +178,13 @@ def import_from(module: str, obj: str) -> Any:
         raise HandlerImportError(module, obj) from e
 
 
-def skip_ci(fn):
+def skip_ci(fn) -> Callable[..., Any]:
     if os.environ.get('CI'):
         return skip('CI environment, skipping')(fn)
     return fn
 
 
-def exclude_none(config_json):
+def exclude_none(config_json: Any) -> Any:
     if isinstance(config_json, (list, tuple)):
         return [exclude_none(i) for i in config_json if i is not None]
     if isinstance(config_json, dict):

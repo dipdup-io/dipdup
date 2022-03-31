@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods response.
+
 ## 5.0.0-rc3 - 2022-03-28
 
 ### Added

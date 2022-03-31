@@ -72,7 +72,7 @@ async def emit_messages(
     old_block: Tuple[OperationData, ...],
     new_block: Tuple[OperationData, ...],
     level: int,
-):
+) -> None:
     await self.emit_operations(old_block)
     await self.emit_rollback(
         from_level=next_level,
@@ -86,7 +86,7 @@ async def emit_messages(
     raise asyncio.CancelledError
 
 
-async def datasource_run_exact(self: TzktDatasource):
+async def datasource_run_exact(self: TzktDatasource) -> None:
     # FIXME: Index dispatcher initialization race
     await asyncio.sleep(0.5)
 
@@ -94,7 +94,7 @@ async def datasource_run_exact(self: TzktDatasource):
     await check_level(next_level)
 
 
-async def datasource_run_more(self: TzktDatasource):
+async def datasource_run_more(self: TzktDatasource) -> None:
     # FIXME: Index dispatcher initialization race
     await asyncio.sleep(0.5)
 
@@ -102,7 +102,7 @@ async def datasource_run_more(self: TzktDatasource):
     await check_level(next_level)
 
 
-async def datasource_run_less(self: TzktDatasource):
+async def datasource_run_less(self: TzktDatasource) -> None:
     # FIXME: Index dispatcher initialization race
     await asyncio.sleep(0.5)
 
@@ -110,7 +110,7 @@ async def datasource_run_less(self: TzktDatasource):
     await check_level(next_level)
 
 
-async def datasource_run_zero(self: TzktDatasource):
+async def datasource_run_zero(self: TzktDatasource) -> None:
     # FIXME: Index dispatcher initialization race
     await asyncio.sleep(0.5)
 
@@ -118,7 +118,7 @@ async def datasource_run_zero(self: TzktDatasource):
     await check_level(next_level)
 
 
-async def datasource_run_deep(self: TzktDatasource):
+async def datasource_run_deep(self: TzktDatasource) -> None:
     # FIXME: Index dispatcher initialization race
     await asyncio.sleep(0.5)
 
@@ -132,7 +132,7 @@ head.chain = 'mainnet'
 
 
 @contextmanager
-def patch_dipdup(datasource_run) -> Generator:
+def patch_dipdup(datasource_run) -> Generator[None, None, None]:
     with ExitStack() as stack:
         stack.enter_context(patch('dipdup.datasources.tzkt.datasource.TzktDatasource.run', datasource_run))
         stack.enter_context(patch('dipdup.datasources.tzkt.datasource.TzktDatasource.get_head_block', AsyncMock(return_value=head)))
@@ -149,29 +149,29 @@ def get_dipdup() -> DipDup:
 
 
 class RollbackTest(IsolatedAsyncioTestCase):
-    async def test_rollback_exact(self):
+    async def test_rollback_exact(self) -> None:
         with patch_dipdup(datasource_run_exact):
             dipdup = get_dipdup()
             await dipdup.run()
 
-    async def test_rollback_more(self):
+    async def test_rollback_more(self) -> None:
         with patch_dipdup(datasource_run_more):
             dipdup = get_dipdup()
             await dipdup.run()
 
     @skip('FIXME: SingleLevelRollback message is not processed')
-    async def test_rollback_less(self):
+    async def test_rollback_less(self) -> None:
         with patch_dipdup(datasource_run_less):
             dipdup = get_dipdup()
             with self.assertRaises(ReindexingRequiredError):
                 await dipdup.run()
 
-    async def test_rollback_zero(self):
+    async def test_rollback_zero(self) -> None:
         with patch_dipdup(datasource_run_zero):
             dipdup = get_dipdup()
             await dipdup.run()
 
-    async def test_rollback_deep(self):
+    async def test_rollback_deep(self) -> None:
         with patch_dipdup(datasource_run_deep):
             dipdup = get_dipdup()
             with self.assertRaises(ReindexingRequiredError):
