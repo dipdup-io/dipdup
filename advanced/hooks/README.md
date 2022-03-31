@@ -1,5 +1,7 @@
 # Hooks
 
-Hooks are special callbacks you can execute either from another callback (with `ctx.fire_hook`) or using [job scheduler](jobs.md).
+Hooks are user-defined callbacks you can execute with a job scheduler or within another callback (with `ctx.fire_hook`).
 
-See [12.6. hooks](../../config-reference/hooks.md) for details.
+> 🤓 **SEE ALSO**
+>
+> * [12.6. hooks](../../config-reference/hooks.md)

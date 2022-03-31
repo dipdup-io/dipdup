@@ -1,6 +1,6 @@
 # Templates and variables
 
-Templates allow you to reuse index configuration, e.g., for different networks (mainnet/testnet) or multiple contracts sharing the same codebase. DipDup supports static and dynamic template instances.
+Templates allow you to reuse index configuration, e.g., for different networks (mainnet/testnet) or multiple contracts sharing the same codebase.
 
 ```yaml
 templates:
@@ -24,7 +24,7 @@ field: <placeholder>
 
 Any string value wrapped in angle brackets is treated as a placeholder, so make sure there are no collisions with the actual values. You can use a single placeholder multiple times.
 
-Any index implementing a template must have a value for each existing placeholder; all those values are then accessible via the handler context.
+Any index implementing a template must have a value for each existing placeholder; the exception raised otherwise. Those values are within the handler context at `ctx.template_values`.
 
 > 🤓 **SEE ALSO**
 >

@@ -42,7 +42,7 @@ _Big map_ update handler will look like the following:
 
 ```python
 from <package>.types.<typename>.big_map.<path>_key import PathKey
-from <package>.types.name_registry.big_map.<path>_value import PathValue
+from <package>.types.<typename>.big_map.<path>_value import PathValue
 
 
 async def on_update(
@@ -55,9 +55,13 @@ where `BigMapDiff` contains action (allocate, update, or remove) and nullable ke
 
 You can safely change argument names (e.g., in case of collisions).
 
+<!--
+TODO: Rewrite
+
 > 💡 **TIP**
 >
-> If you use index templates, your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same `typename` and raises an error otherwise.
+> If you use index templates, your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same `typename` and raises an error otherwise
+-->
 
 ## Naming conventions
 

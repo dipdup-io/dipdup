@@ -1,23 +1,38 @@
 # Default hooks
 
-There are special callbacks DipDup generates for all indexes; they fired on system-wide events and aren't linked to any index. Names of those hooks are reserved; you can't use them in config.
+Every DipDup project has multiple hooks called default; they fired on system-wide events and, like regular hooks, are not linked to any index. Names of those hooks are reserved; you can't use them in config.
 
 ## `on_rollback`
 
-It tells DipDip how to handle chain reorgs, a purely application-specific logic, especially if there are stateful entities. The default implementation does nothing if rollback size is one block and full reindexing otherwise.
+Fired when TzKT datasource has received a chain reorg message which can't be processed automatically.
 
-See [5.3. Reindexing](../../advanced/reindexing.md) for details.
+If your indexer is stateless, you can just drop DB data saved after `to_level` and continue indexing or implement more complex logic. By default, this hook triggers full reindexing.
 
 ## `on_restart`
 
-This hook executes right before starting indexing. It allows configuring DipDup in runtime based on data from external sources. Datasources are already initialized at the execution time and available at `ctx.datasources`. See [Handler context](../advanced/handler-context.md) for more details how to perform configuration.
+This hook executes right before starting indexing. It allows configuring DipDup in runtime based on data from external sources. Datasources are already initialized at the execution time and available at `ctx.datasources`. 
+
+* Configure logging
+* Add contracts and indexes
+
 
 ## `on_reindex`
 
 This hook fires after the database is re-initialized after reindexing (wipe).
 
-Useful modify schema with arbitrary SQL. See [5.5. Executing SQL scripts](../sql.md) for details.
+* Useful modify schema with arbitrary SQL.
+
 
 ## `on_synchronized`
 
 This hook fires when every active index reaches a realtime state.
+
+* Clear caches
+* Update state somewhere
+
+
+> 🤓 **SEE ALSO**
+>
+> * [5.3. Reindexing](../../advanced/reindexing.md)
+> * [5.5. Executing SQL scripts](../sql.md)
+> * [Handler context](../advanced/handler-context.md)

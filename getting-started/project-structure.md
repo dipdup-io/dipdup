@@ -43,7 +43,7 @@ demo_tzbtc
 | `types` | Codegened Pydantic typeclasses for contract storage/parameter |
 
 > 🤓 **SEE ALSO**
-
+>
 > * [4.6. Defining models](defining-models.md)
 > * [4.7. Implementing handlers](implementing-handlers.md)
 > * [5.2. Hooks](../advanced/hooks/README.md)
@@ -51,6 +51,8 @@ demo_tzbtc
 > * [5.6.1. Hasura integration](../graphql/hasura.md)
 
 ## `types`: type classes
+
+<!-- TODO: Move somewhere -->
 
 DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) already in normalized form ([read more](https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/) about how TzKT handles Michelson expressions), but still as raw JSON. DipDup uses contract type information to generate data classes, which allow developers to work with strictly typed data.
 
