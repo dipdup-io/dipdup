@@ -274,6 +274,7 @@ class TzktDatasource(IndexDatasource):
         http_config: Optional[HTTPConfig] = None,
         watchdog: Optional[Watchdog] = None,
         merge_subscriptions: bool = False,
+        buffer_size: int = 0,
     ) -> None:
         super().__init__(
             url=url,
@@ -282,10 +283,11 @@ class TzktDatasource(IndexDatasource):
         )
         self._logger = logging.getLogger('dipdup.tzkt')
         self._watchdog = watchdog
+        self._buffer_size = buffer_size
+        self._buffer: DefaultDict[int, List[Tuple[MessageType, Dict[str, Any]]]] = defaultdict(list)
 
         self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
-        self._buffer: DefaultDict[int, List[Dict[str, Any]]] = defaultdict(list)
 
     @property
     def request_limit(self) -> int:
@@ -786,22 +788,28 @@ class TzktDatasource(IndexDatasource):
 
     async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
-        # NOTE: Parse messages and fill lagging buffer
+        # NOTE: Parse messages and either buffer or yield data
         for item in message:
             tzkt_type = TzktMessageType(item['type'])
-            # NOTE: Sync level returned on negotiation now
+            # NOTE: Legacy, sync level returned by TzKT during negotiation
             if tzkt_type == TzktMessageType.STATE:
                 continue
 
-            level, current_level = item['state'], self._level[type_]
-            self._level[type_] = level
-            self._logger.info('Realtime message received: %s, %s, %s -> %s', type_.value, tzkt_type.name, current_level, level)
+            message_level, current_level = item['state'], self._level[type_]
+            self._level[type_] = message_level
+            self._logger.info(
+                'Realtime message received: %s, %s, %s -> %s',
+                type_.value,
+                tzkt_type.name,
+                current_level,
+                message_level,
+            )
 
             # NOTE: Put data messages to buffer by level
             if tzkt_type == TzktMessageType.DATA:
-                self._buffer[level].append(item['data'])
+                self._buffer[message_level].append((type_, item['data']))
 
-            # NOTE: Emit rollback, but not on `head` message
+            # NOTE: Try to process rollback automatically, emit if failed
             elif tzkt_type == TzktMessageType.REORG:
                 # NOTE: operation/big_map channels have their own levels
                 if type_ == MessageType.head:
@@ -815,14 +823,15 @@ class TzktDatasource(IndexDatasource):
                         raise RuntimeError('Reorg message received, but neither current nor sync level is known')
 
                     # NOTE: This rollback does not affect us, so we can safely ignore it
-                    if current_level <= level:
+                    if current_level <= message_level:
                         return
 
-                rolled_back_levels = range(current_level, level, -1)
+                # NOTE: Drop buffered messages with higher level until available
+                rolled_back_levels = range(current_level, message_level, -1)
                 for rolled_back_level in rolled_back_levels:
                     if not self._buffer.pop(rolled_back_level, None):
-                        self._logger.info('Emitting rollback from %s to %s', current_level, level)
-                        await self.emit_rollback(current_level, level)
+                        self._logger.info('Emitting rollback from %s to %s', current_level, message_level)
+                        await self.emit_rollback(current_level, message_level)
                         return
 
                 self._logger.info('Rollback within buffered levels, no action required')
@@ -832,9 +841,14 @@ class TzktDatasource(IndexDatasource):
 
         # NOTE: Yield data from lagging buffer
         buffered_levels = sorted(self._buffer.keys())
-        for level in buffered_levels[:3]: # fixme
-            for data in self._buffer.pop(level):
-                yield data
+        for level in buffered_levels[: -self._buffer_size]:
+            for idx, level_data in enumerate(self._buffer[level]):
+                level_message_type, level_message = level_data
+                if level_message_type == type_:
+                    yield level_message
+                    self._buffer[level].pop(idx)
+            if not self._buffer[level]:
+                self._buffer.pop(level)
 
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
