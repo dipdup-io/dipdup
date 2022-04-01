@@ -826,15 +826,19 @@ class TzktDatasource(IndexDatasource):
                     if current_level <= message_level:
                         return
 
+                self._logger.info('Rollback requested from %s to %s', current_level, message_level)
+
                 # NOTE: Drop buffered messages in reversed order while possible
                 rolled_back_levels = range(current_level, message_level, -1)
                 for rolled_back_level in rolled_back_levels:
-                    if not self._buffer.pop(rolled_back_level, None):
-                        self._logger.info('Emitting rollback from %s to %s', current_level, message_level)
+                    if self._buffer.pop(rolled_back_level, None):
+                        self._logger.info('Level %s is buffered', rolled_back_level)
+                    else:
+                        self._logger.info('Level %s is not buffered, emitting rollback', rolled_back_level)
                         await self.emit_rollback(current_level, message_level)
                         return
 
-                self._logger.info('Rollback within buffered levels, no action required')
+                self._logger.info('Rollback is not required, continuing')
 
             else:
                 raise NotImplementedError
