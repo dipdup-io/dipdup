@@ -839,9 +839,11 @@ class TzktDatasource(IndexDatasource):
             else:
                 raise NotImplementedError
 
-        # NOTE: Yield data from lagging buffer
+        # NOTE: Yield extensive data from buffer
         buffered_levels = sorted(self._buffer.keys())
-        for level in buffered_levels[: -self._buffer_size]:
+        emitted_levels = buffered_levels[: len(buffered_levels) - self._buffer_size]
+
+        for level in emitted_levels:
             for idx, level_data in enumerate(self._buffer[level]):
                 level_message_type, level_message = level_data
                 if level_message_type == type_:
