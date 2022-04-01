@@ -826,7 +826,7 @@ class TzktDatasource(IndexDatasource):
                     if current_level <= message_level:
                         return
 
-                # NOTE: Drop buffered messages with higher level until available
+                # NOTE: Drop buffered messages in reversed order while possible
                 rolled_back_levels = range(current_level, message_level, -1)
                 for rolled_back_level in rolled_back_levels:
                     if not self._buffer.pop(rolled_back_level, None):

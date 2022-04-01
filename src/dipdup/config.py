@@ -988,7 +988,7 @@ class JobConfig(NameMixin):
     args: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self):
-        schedules_enabled = map(lambda x: int(bool(x)), (self.crontab, self.interval, self.daemon))
+        schedules_enabled = sum(map(lambda x: int(bool(x)), (self.crontab, self.interval, self.daemon)))
         if schedules_enabled > 1:
             raise ConfigurationError('Only one of `crontab`, `interval` of `daemon` can be specified')
         elif not schedules_enabled:
