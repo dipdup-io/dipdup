@@ -1,10 +1,11 @@
 # Changelog
 
-## [unreleased]
+## 4.2.7 - 2022-03-02
 
 ### Fixed
 
 * config: Fixed `jobs` config section validation.
+* hasura: Fixed metadata generation for v2.3.0 and above.
 * tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods response.
 
 ## 5.0.0-rc3 - 2022-03-28
