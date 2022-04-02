@@ -7,6 +7,7 @@ Please use [this](https://docs.gitlab.com/ee/development/changelog.html) documen
 ### Fixed
 
 * config: Fixed default SQLite path (`:memory:`).
+* hasura: Fixed metadata generation for v2.3.0 and above.
 * tzkt: Fixed data loss when `skip_history` option is enabled.
 
 ## 4.2.6 - 2022-02-25

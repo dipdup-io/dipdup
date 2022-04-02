@@ -617,34 +617,33 @@ class BigMapIndex(Index):
         big_map_ids: Set[Tuple[int, str, str]] = set()
 
         for address, path in big_map_pairs:
-            async for contract_big_maps in self._datasource.iter_contract_big_maps(address):
-                for contract_big_map in contract_big_maps:
-                    if contract_big_map['path'] == path:
-                        big_map_ids.add((int(contract_big_map['ptr']), address, path))
+            for contract_big_map in await self._datasource.get_contract_big_maps(address):
+                if contract_big_map['path'] == path:
+                    big_map_ids.add((int(contract_big_map['ptr']), address, path))
 
         # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
         async with in_global_transaction():
             for big_map_id, address, path in big_map_ids:
-                async for big_map_keys in self._datasource.iter_big_map(big_map_id, last_level):
-                    big_map_data = tuple(
-                        BigMapData(
-                            id=big_map_key['id'],
-                            level=last_level,
-                            operation_id=last_level,
-                            timestamp=datetime.now(),
-                            bigmap=big_map_id,
-                            contract_address=address,
-                            path=path,
-                            action=BigMapAction.ADD_KEY,
-                            active=big_map_key['active'],
-                            key=big_map_key['key'],
-                            value=big_map_key['value'],
-                        )
-                        for big_map_key in big_map_keys
+                big_map_keys = await self._datasource.get_big_map(big_map_id, last_level)
+                big_map_data = tuple(
+                    BigMapData(
+                        id=big_map_key['id'],
+                        level=last_level,
+                        operation_id=last_level,
+                        timestamp=datetime.now(),
+                        bigmap=big_map_id,
+                        contract_address=address,
+                        path=path,
+                        action=BigMapAction.ADD_KEY,
+                        active=big_map_key['active'],
+                        key=big_map_key['key'],
+                        value=big_map_key['value'],
                     )
-                    matched_handlers = await self._match_big_maps(big_map_data)
-                    for handler_config, big_map_diff in matched_handlers:
-                        await self._call_matched_handler(handler_config, big_map_diff)
+                    for big_map_key in big_map_keys
+                )
+                matched_handlers = await self._match_big_maps(big_map_data)
+                for handler_config, big_map_diff in matched_handlers:
+                    await self._call_matched_handler(handler_config, big_map_diff)
 
     async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]):
         if not big_maps:
