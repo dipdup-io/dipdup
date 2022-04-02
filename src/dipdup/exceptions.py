@@ -316,5 +316,7 @@ class HasuraError(DipDupError):
         return f"""
             Failed to configure Hasura: {self.msg}
 
+            Check out Hasura logs for more information.
+
             GraphQL integration docs: https://docs.dipdup.net/graphql/
         """
