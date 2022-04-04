@@ -1,7 +1,12 @@
-[![PyPI version](https://badge.fury.io/py/dipdup.svg?)](https://badge.fury.io/py/dipdup)
-[![Tests](https://github.com/dipdup-net/dipdup-py/workflows/Tests/badge.svg?)](https://github.com/baking-bad/dipdup/actions?query=workflow%3ATests)
+![GitHub Repo stars](https://img.shields.io/github/stars/dipdup-net/dipdup-py)
+![PyPI](https://img.shields.io/pypi/v/dipdup)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/dipdup)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/dipdup-net/dipdup-py/Test)
+![GitHub issues](https://img.shields.io/github/issues/dipdup-net/dipdup-py)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/dipdup-net/dipdup-py)
 [![Made With](https://img.shields.io/badge/made%20with-python-blue.svg?)](ttps://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 ```text
         ____   _         ____              
@@ -21,6 +26,7 @@ DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/
 * **Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md) guide.
 
 * **Have a question?** Contact us at [Discord](https://discord.gg/JZKhv7uW), [Telegram](https://t.me/baking_bad_chat) or [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L)!
+
 
 This project is maintained by [Baking Bad](https://baking-bad.org/) team.  
 Development is supported by [Tezos Foundation](https://tezos.foundation/).
