@@ -211,6 +211,7 @@ class TzktDatasourceConfig(NameMixin):
     :param kind: always 'tzkt'
     :param url: Base API URL, e.g. https://api.tzkt.io/
     :param http: HTTP client configuration
+    :param buffer_size: Number of levels to keep in FIFO buffer before processing
     """
 
     kind: Literal['tzkt']
