@@ -211,11 +211,13 @@ class TzktDatasourceConfig(NameMixin):
     :param kind: always 'tzkt'
     :param url: Base API URL, e.g. https://api.tzkt.io/
     :param http: HTTP client configuration
+    :param buffer_size: Number of levels to keep in FIFO buffer before processing
     """
 
     kind: Literal['tzkt']
     url: str
     http: Optional[HTTPConfig] = None
+    buffer_size: int = 0
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url)
@@ -737,8 +739,10 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
         config_dict = json.loads(config_json)
 
-        # NOTE: We need to preserve datasource URL but remove it's HTTP tunables to avoid false-positives.
+        # NOTE: We need to preserve datasource URL but remove its HTTP tunables to avoid false-positives.
         config_dict['datasource'].pop('http', None)
+        # NOTE: TzKT tunable
+        config_dict['datasource'].pop('buffer_size', None)
         # NOTE: Same for BigMapIndex tunables
         config_dict.pop('skip_history', None)
 

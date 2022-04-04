@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+* tzkt: Ability to process realtime messages with lag.
+
 ## 4.2.7 - 2022-03-02
 
 ### Fixed
