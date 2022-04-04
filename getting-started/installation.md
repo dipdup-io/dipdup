@@ -17,7 +17,7 @@ DipDup currently doesn't work in Windows environments due to incompabilities in 
 We aim to improve cross-platform compatibility in the future releases.
 
 > 🤓 **SEE ALSO**
-> 
+>
 > * [5.6. Improving performance](advanced/performance/)
 > * [What is the Windows Subsystem for Linux?](https://docs.microsoft.com/en-us/windows/wsl/about)
 

@@ -37,7 +37,6 @@ datasources:
 
 ## Coinbase
 
-
 A connector for [Coinbase Pro API](https://docs.pro.coinbase.com/). Provides `get_candles` and `get_oracle_data` methods. It may be useful in enriching indexes of DeFi contracts with off-chain data.
 
 ```yaml
@@ -83,8 +82,6 @@ file = await ipfs.get('QmSgSC7geYH3Ae4SpUHy4KutxqNH9ESKBGXoCN4JQdbtEz/package.js
 assert file['name'] == 'json-buffer'
 ```
 
-
-
 ## Generic HTTP
 
 ## Sending arbitrary requests
@@ -107,4 +104,3 @@ Datasource HTTP connection parameters (ratelimit, backoff, etc.) are applied on 
 > 🤓 **SEE ALSO**
 >
 > * [12.4. datasources](../config/datasources.md)
-

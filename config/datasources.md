@@ -16,7 +16,7 @@ datasources:
 | field | description |
 | - | - |
 | `kind` | always 'tzkt' |
-| `url` | Base API URL, e.g. https://api.tzkt.io/ |
+| `url` | Base API URL, e.g. <https://api.tzkt.io/> |
 | `http` | HTTP client configuration |
 
 -------------------------
@@ -25,9 +25,7 @@ datasources:
 
 ### TzKT
 
-
 ### Coinbase
-
 
 ### dipdup-metadata
 
@@ -40,4 +38,3 @@ datasources:
 ```
 
 ### IPFS
-

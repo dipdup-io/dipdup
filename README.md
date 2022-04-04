@@ -3,7 +3,6 @@
 [![Made With](https://img.shields.io/badge/made%20with-python-blue.svg?)](ttps://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-
 ```text
         ____   _         ____              
        / __ \ (_)____   / __ \ __  __ ____ 
@@ -22,7 +21,6 @@ DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/
 * **Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md) guide.
 
 * **Have a question?** Contact us at [Discord](https://discord.gg/JZKhv7uW), [Telegram](https://t.me/baking_bad_chat) or [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L)!
-
 
 This project is maintained by [Baking Bad](https://baking-bad.org/) team.  
 Development is supported by [Tezos Foundation](https://tezos.foundation/).

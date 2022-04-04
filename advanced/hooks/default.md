@@ -12,7 +12,6 @@ If your indexer is stateless, you can just drop DB data saved after `to_level` a
 
 This hook executes right before starting indexing. It allows configuring DipDup in runtime based on data from external sources. Datasources are already initialized at the execution time and available at `ctx.datasources`. You can, for example, configure logging here or add contracts and indexes in runtime instead of from static config.
 
-
 ## `on_reindex`
 
 This hook fires after the database are re-initialized after reindexing (wipe). Helpful in modifying schema with arbitrary SQL scripts before indexing.
@@ -20,7 +19,6 @@ This hook fires after the database are re-initialized after reindexing (wipe). H
 ## `on_synchronized`
 
 This hook fires when every active index reaches a realtime state. Here you can clear caches internal caches or do other cleanups.
-
 
 > 🤓 **SEE ALSO**
 >

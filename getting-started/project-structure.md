@@ -39,7 +39,7 @@ demo_tzbtc
 | `handlers` | User-defined callbacks to process matched operations and big map diffs |
 | `hooks` | User-defined callbacks to run manually or by schedule |
 | `models.py` | Tortoise ORM models |
-| `sql` | SQL scripts to run from callbacks (`*.sql`) | 
+| `sql` | SQL scripts to run from callbacks (`*.sql`) |
 | `types` | Codegened Pydantic typeclasses for contract storage/parameter |
 
 > 🤓 **SEE ALSO**

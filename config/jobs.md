@@ -1,6 +1,5 @@
 # jobs
 
-
 Add the following section to DipDup config:
 
 ```yaml
