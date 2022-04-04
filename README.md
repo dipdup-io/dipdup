@@ -1,43 +1,28 @@
-# DipDup
-
 [![PyPI version](https://badge.fury.io/py/dipdup.svg?)](https://badge.fury.io/py/dipdup)
 [![Tests](https://github.com/dipdup-net/dipdup-py/workflows/Tests/badge.svg?)](https://github.com/baking-bad/dipdup/actions?query=workflow%3ATests)
 [![Made With](https://img.shields.io/badge/made%20with-python-blue.svg?)](ttps://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Python SDK for developing indexers of [Tezos](https://tezos.com/) smart contracts inspired by [The Graph](https://thegraph.com/).
 
-## Quickstart
-
-Python 3.10+ is required for dipdup to run.
-
-```shell
-$ pip install dipdup
+```text
+        ____   _         ____              
+       / __ \ (_)____   / __ \ __  __ ____ 
+      / / / // // __ \ / / / // / / // __ \
+     / /_/ // // /_/ // /_/ // /_/ // /_/ /
+    /_____//_// .___//_____/ \__,_// .___/ 
+             /_/                  /_/      
 ```
 
-* Read the rest of the tutorial: [docs.dipdup.net](https://docs.dipdup.net/)  
-* Check out [demo projects](https://github.com/dipdup-net/dipdup-py/tree/master/src)
+DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/) smart-contracts. It helps developers focus on the business logic instead of writing data storing and serving boilerplate. DipDup-based indexers are selective, which means only required data is requested. This approach allows to achieve faster indexing times and decreased load on APIs DipDup uses.
 
-## Contribution
+* **Ready to build your first indexer?** Head to [Quickstart](https://docs.dipdup.net/quickstart)
 
-To set up development environment you need to install [poetry](https://python-poetry.org/docs/#installation) package manager and GNU Make. Then run one of the following commands at project's root:
+* **Looking for examples?** Check out [demo projects](https://github.com/dipdup-net/dipdup-py/tree/master/src)
 
-```shell
-$ # install project dependencies
-$ make install
-$ # run linters
-$ make lint
-$ # run tests
-$ make test cover
-$ # run full CI pipeline
-$ make
-```
+* **Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md) guide.
 
-## Contact
-* Telegram chat: [@baking_bad_chat](https://t.me/baking_bad_chat)
-* Slack channel: [#baking-bad](https://tezos-dev.slack.com/archives/CV5NX7F2L)
-* Discord group: [Baking Bad](https://discord.gg/JZKhv7uW)
+* **Have a question?** Contact us at [Discord](https://discord.gg/JZKhv7uW), [Telegram](https://t.me/baking_bad_chat) or [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L)!
 
-## About
+
 This project is maintained by [Baking Bad](https://baking-bad.org/) team.  
 Development is supported by [Tezos Foundation](https://tezos.foundation/).
