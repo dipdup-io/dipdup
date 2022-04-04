@@ -4,9 +4,12 @@
 .DEFAULT_GOAL: all
 
 ##
-DEV=1           ## Install dev dependencies
-PLUGINS=""      ## Install extras (`pytezos` only)
-TAG=latest      ## Docker tag for images built
+## DEV=1           Install dev dependencies
+DEV=1
+## PLUGINS=""      Install extras (`pytezos` only)
+PLUGINS=""
+## TAG=latest      Docker tag for images built
+TAG=latest
 ##
 
 all:            ## Run a whole CI pipeline (default)
