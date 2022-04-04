@@ -10,7 +10,7 @@ By default, Hasura generates three types of queries for each table in your schem
 
 * Generic query enabling filters by all columns
 * Single item query (by primary key)
-* Aggregation query (can be [disabled](../config-reference/hasura.md#disable-aggregation-queries))
+* Aggregation query (can be [disabled](../config/hasura.md#disable-aggregation-queries))
 
 All the GQL features such as fragments, variables, aliases, directives are supported, as well as batching.  
 Read more in [Hasura docs](https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/index.html).
@@ -19,7 +19,7 @@ It's important to understand that GraphQL query is just a [POST request](https:/
 
 ### Pagination
 
-By default, Hasura does not restrict the number of rows returned per request, which could lead to abuses and heavy load to your server. You can set up limits in the configuration file. See [12.5. hasura](../config-reference/hasura.md#limit-number-of-rows) for details. But then you will face the need to [paginate](https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/pagination.html) over the items if the response does not fit into the limits.
+By default, Hasura does not restrict the number of rows returned per request, which could lead to abuses and heavy load to your server. You can set up limits in the configuration file. See [12.5. hasura](../config/hasura.md#limit-number-of-rows) for details. But then you will face the need to [paginate](https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/pagination.html) over the items if the response does not fit into the limits.
 
 ## Subscriptions
 
@@ -31,7 +31,7 @@ This feature is essential to avoid complex state management (merging query resul
 
 > ⚠ **WARNING**
 >
-> If the live query has a significant response size that does not fit into the [limits](../config-reference/hasura.md#limit-number-of-rows), you need one of the following:
+> If the live query has a significant response size that does not fit into the [limits](../config/hasura.md#limit-number-of-rows), you need one of the following:
 >
 > 1. Paginate with offset (which is not convenient)
 > 2. Use cursor-based pagination (e.g., by an increasing unique id).

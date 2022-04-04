@@ -22,7 +22,7 @@
 
 > 🤓 **SEE ALSO**
 >
-> * [13. Command-line reference](cli-reference/)
+> * [13. Command-line reference](cli/)
 > * [External link](https://google.com)
 
 ## Comments

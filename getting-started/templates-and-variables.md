@@ -29,4 +29,4 @@ Any index implementing a template must have a value for each existing placeholde
 > 🤓 **SEE ALSO**
 >
 > * [5.9. Spawning indexes at runtime](../advanced/index-factories.md)
-> * [12.13. templates](../config-reference/templates.md)
+> * [12.13. templates](../config/templates.md)

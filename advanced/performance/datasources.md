@@ -49,4 +49,4 @@ By default, DipDup retries failed requests infinitely, exponentially increasing 
 > * [8.9. Backup and restore](../deployment/backups.md)
 
 
-See [12.4. datasources](../../config-reference/datasources.md) for details.
+See [12.4. datasources](../../config/datasources.md) for details.

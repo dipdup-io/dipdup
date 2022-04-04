@@ -4,4 +4,4 @@ Hooks are user-defined callbacks you can execute with a job scheduler or within 
 
 > 🤓 **SEE ALSO**
 >
-> * [12.6. hooks](../../config-reference/hooks.md)
+> * [12.6. hooks](../../config/hooks.md)
