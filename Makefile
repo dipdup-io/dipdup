@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: test build
+.PHONY: test build docs
 .DEFAULT_GOAL: all
 
 DEV=1
@@ -56,3 +56,6 @@ release-major:
 	bumpversion major
 	git push --tags
 	git push
+
+docs:
+	cd docs; rm -r _build; make install
