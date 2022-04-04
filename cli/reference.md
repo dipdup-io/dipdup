@@ -21,31 +21,31 @@
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-e">
 <span id="cmdoption-dipdup-env-file"></span><span class="sig-name descname"><span class="pre">-e</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--env-file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;env_file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-e" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to .env file</p>
+<dd><p>Path to .env file with KEY=value strings</p>
 </dd></dl>
 
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-l">
 <span id="cmdoption-dipdup-logging-config"></span><span class="sig-name descname"><span class="pre">-l</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--logging-config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;logging_config&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-l" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to logging YAML config</p>
+<dd><p>Path to Python logging YAML config</p>
 </dd></dl>
 
 <section id="dipdup-cache">
 <h2>cache<a class="headerlink" href="#dipdup-cache" title="Permalink to this headline">¶</a></h2>
-<p>Manage datasource caches</p>
+<p>Manage internal cache</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
 <section id="dipdup-cache-clear">
 <h3>clear<a class="headerlink" href="#dipdup-cache-clear" title="Permalink to this headline">¶</a></h3>
-<p>Clear datasource request caches</p>
+<p>Clear cache</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache clear <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
 <section id="dipdup-cache-show">
 <h3>show<a class="headerlink" href="#dipdup-cache-show" title="Permalink to this headline">¶</a></h3>
-<p>Show datasource request caches size information</p>
+<p>Show cache size information</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache show <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
@@ -59,7 +59,7 @@
 </div>
 <section id="dipdup-config-export">
 <h3>export<a class="headerlink" href="#dipdup-config-export" title="Permalink to this headline">¶</a></h3>
-<p>Dump DipDup configuration</p>
+<p>Dump DipDup configuration after resolving templates</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="nb">export</span> <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
@@ -94,7 +94,7 @@
 </section>
 <section id="dipdup-init">
 <h2>init<a class="headerlink" href="#dipdup-init" title="Permalink to this headline">¶</a></h2>
-<p>Generate missing callbacks and types</p>
+<p>Generate project tree and missing callbacks and types</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup init <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
@@ -173,7 +173,7 @@
 </section>
 <section id="dipdup-schema-init">
 <h3>init<a class="headerlink" href="#dipdup-schema-init" title="Permalink to this headline">¶</a></h3>
-<p>Initialize database schema</p>
+<p>Initialize database schema and trigger <cite>on_reindex</cite></p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema init <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
