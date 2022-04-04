@@ -28,3 +28,4 @@ install:
 	make html
 	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > ../../dipdup-docs/cli/reference.md
 	tail -n '+33' _build/html/config-reference.html | head -n '-63' > ../../dipdup-docs/config/reference.md
+	cp ../CHANGELOG.md ../../dipdup-docs/release-notes/changelog.md
