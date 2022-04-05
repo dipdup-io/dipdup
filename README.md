@@ -6,7 +6,7 @@
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/dipdup-net/dipdup-py/Test)
 ![GitHub issues](https://img.shields.io/github/issues/dipdup-net/dipdup-py)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/dipdup-net/dipdup-py)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![License: MIT](https://img.shields.io/github/license/dipdup-net/dipdup-py)
 
 ```text
         ____   _         ____              
