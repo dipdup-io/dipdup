@@ -1,15 +1,13 @@
 # Datasources
 
-lalala
-
-Compatibility table
+Datasources are DipDup connectors to various APIs. TzKT data is used for indexing, other sources are complimentary.
 
 |  | `tzkt` | `tezos-node` | `coinbase` | `metadata` | `ipfs` | `http` |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | Callback context (via `ctx.datasources`) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
 | DipDup index | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `dipdup-mempool` plugin | ✅\* | ✅\* | ❌ | ❌ | ❌ | ❌ |
-| `dipdup-metadata` plugin | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `dipdup-mempool` service | ✅\* | ✅\* | ❌ | ❌ | ❌ | ❌ |
+| `dipdup-metadata` service | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 \* - required
 
@@ -81,8 +79,6 @@ assert file[:4].decode()[1:] == 'PDF'
 file = await ipfs.get('QmSgSC7geYH3Ae4SpUHy4KutxqNH9ESKBGXoCN4JQdbtEz/package.json')
 assert file['name'] == 'json-buffer'
 ```
-
-## Generic HTTP
 
 ## Sending arbitrary requests
 
