@@ -1,12 +1,13 @@
-[![Made With](https://img.shields.io/badge/made%20with-python-blue.svg?)](ttps://www.python.org)
-![GitHub Repo stars](https://img.shields.io/github/stars/dipdup-net/dipdup-py)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/dipdup-net/dipdup-py?label=stable)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/dipdup-net/dipdup-py?include_prereleases&label=latest)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/dipdup)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/dipdup-net/dipdup-py/Test)
-![GitHub issues](https://img.shields.io/github/issues/dipdup-net/dipdup-py)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/dipdup-net/dipdup-py)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/made%20with-python-blue.svg?)](https://www.python.org)
+[![GitHub stars](https://img.shields.io/github/stars/dipdup-net/dipdup-py)](https://github.com/dipdup-net/dipdup-py)
+[![Latest stable release](https://img.shields.io/github/v/release/dipdup-net/dipdup-py?label=stable)](https://github.com/dipdup-net/dipdup-py/releases)
+[![Latest pre-release)](https://img.shields.io/github/v/release/dipdup-net/dipdup-py?include_prereleases&label=latest)](https://github.com/dipdup-net/dipdup-py/releases)
+[![PyPI monthly downloads](https://img.shields.io/pypi/dm/dipdup)](https://pypi.org/project/dipdup/)
+<br>
+[![GitHub tests](https://img.shields.io/github/workflow/status/dipdup-net/dipdup-py/Test)](https://github.com/dipdup-net/dipdup-py/actions)
+[![GitHub issues](https://img.shields.io/github/issues/dipdup-net/dipdup-py)](https://github.com/dipdup-net/dipdup-py/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/dipdup-net/dipdup-py)](https://github.com/dipdup-net/dipdup-py/pulls)
+[![License: MIT](https://img.shields.io/github/license/dipdup-net/dipdup-py)](https://github.com/dipdup-net/dipdup-py/blob/master/LICENSE)
 
 ```text
         ____   _         ____              
@@ -23,7 +24,7 @@ DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/
 
 * **Looking for examples?** Check out [Demo Projects](https://github.com/dipdup-net/dipdup-py/tree/master/src).
 
-* **Want to contribute?** See [Contribution Guide](https://github.com/dipdup-net/dipdup-py/tree/master/CONTRIBUTING.md) guide.
+* **Want to contribute?** See [Contribution Guide](https://github.com/dipdup-net/dipdup-py/tree/master/CONTRIBUTING.md).
 
 * **Have a question?** Contact us at [Discord](https://discord.gg/JZKhv7uW), [Telegram](https://t.me/baking_bad_chat) or [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L)!
 
