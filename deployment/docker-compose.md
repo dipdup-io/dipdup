@@ -67,7 +67,6 @@ Environment variables are expanded in the DipDup config file; Postgres password 
 
 Create a separate `dipdup.<environment>.yml` file for this stack:
 
-
 ```yaml
 database:
   kind: postgres
