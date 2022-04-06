@@ -1,4 +1,4 @@
-# Handler context
+# Callback context (`ctx`)
 
 > 🚧 **UNDER CONSTRUCTION**
 >
