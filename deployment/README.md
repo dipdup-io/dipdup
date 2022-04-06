@@ -1,5 +1,3 @@
-# Deployment
+# Deployment and operations
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+This section contains recipes to deploy and maintain DipDup instances.

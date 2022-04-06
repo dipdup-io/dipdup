@@ -1,28 +1,8 @@
 # Docker compose
 
-Make sure you have [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) installed.
+Make sure you have [docker](https://docs.docker.com/get-docker/) run and [docker-compose](https://docs.docker.com/compose/install/) installed.
 
-**Step 1.** Create `Dockerfile` with the following content:
-
-Assuming you are using [poetry](https://python-poetry.org/) for managing the project:
-
-```dockerfile
-FROM python:3.9-slim-buster
-
-RUN pip install poetry
-
-WORKDIR /demo
-COPY poetry.lock pyproject.toml /demo/
-
-RUN poetry config virtualenvs.create false && poetry install --no-dev
-
-COPY . /demo
-
-ENTRYPOINT ["poetry", "run", "dipdup"]
-CMD ["-c", "dipdup.yml", "run"]
-```
-
- **Step 2.** Create `docker-compose.yml` with the following sections:
+Example `docker-compose.yml` file:
 
 ```yaml
 version: "3.8"
@@ -32,18 +12,25 @@ services:
     build: .
     depends_on:
       - db
-      - hasura
+    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     restart: "no"
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+    volumes:
+      - ./dipdup.yml:/home/dipdup/dipdup.yml
+      - ./dipdup.prod.yml:/home/dipdup/dipdup.prod.yml
+      - ./indexer:/home/dipdup/indexer
+    ports:
+      - 127.0.0.1:9000:9000
 
   db:
-    image: postgres:13
-    restart: always
+    image: timescale/timescaledb:latest-pg13
+    ports:
+      - 127.0.0.1:5432:5432
     volumes:
-      - db:/var/lib/postgres/data
-    environment: 
+      - db:/var/lib/postgresql/data
+    environment:
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -52,31 +39,34 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      mode: replicated
+      replicas: 1
 
   hasura:
-    image: hasura/graphql-engine:v2.0.1
+    image: hasura/graphql-engine:v2.4.0
     ports:
-      - 127.0.0.1:42000:8080
+      - 127.0.0.1:8080:8080
     depends_on:
       - db
     restart: always
     environment:
       - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
-      - HASURA_GRAPHQL_ENABLE_CONSOLE=false
-      - HASURA_GRAPHQL_DEV_MODE=false
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=true
+      - HASURA_GRAPHQL_DEV_MODE=true
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
       - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
-  
+      - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
+
 volumes:
   db:
 ```
 
-{% hint style="info" %}
-Recall that environment variables are expanded in the DipDup config file — in our case we are forwarding Postgres password and Hasura secret.
-{% endhint %}
+Environment variables are expanded in the DipDup config file; Postgres password and Hasura secret are forwarded in this example.
 
-**Step 3.** Update `dipdup.yml` (or create a dedicated config for docker deployment):
+Create a separate `dipdup.<environment>.yml` file for this stack:
+
 
 ```yaml
 database:
@@ -98,9 +88,9 @@ hasura:
 
 Note the hostnames (resolved in the docker network) and environment variables (expanded by DipDup).
 
-**Step 4.** Build and run the containers:
+Build and run the containers:
 
-```text
+```shell
 docker-compose up -d --build
 ```
 

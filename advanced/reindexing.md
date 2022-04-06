@@ -8,7 +8,7 @@ In some cases, DipDup can't proceed with indexing without a full wipe. Several r
 |`migration`|Applied migration requires reindexing. Check release notes before switching between major DipDup versions to be prepared.|
 |`rollback`|Reorg message received from TzKT can not be processed.|
 |`config_modified`|One of the index configs has been modified.|
-|`schema_modified`|Database schema has been modified. Try to avoid manual schema modifications in favor of [SQL hooks](../advanced/sql.md).|
+|`schema_modified`|Database schema has been modified. Try to avoid manual schema modifications in favor of [SQL scripts](../advanced/sql.md).|
 
 It is possible to configure desirable action on reindexing triggered by the specific reason.
 
