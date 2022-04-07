@@ -5,7 +5,7 @@ from dipdup.datasources.ipfs.datasource import IpfsDatasource
 
 
 class IpfsDatasourceTest(IsolatedAsyncioTestCase):
-    async def test_ipfs_datasource(self):
+    async def test_ipfs_datasource(self) -> None:
         ipfs = IpfsDatasource(DEFAULT_IPFS_URL, IpfsDatasource._default_http_config)
         async with ipfs:
             file = await ipfs.get('QmdCz7XGkBtd5DFmpDPDN3KFRmpkQHJsDgGiG16cgVbUYu')

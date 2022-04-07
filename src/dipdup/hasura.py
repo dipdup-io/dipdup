@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import importlib
-import json
 import logging
 import re
 from contextlib import suppress
@@ -18,13 +17,16 @@ from typing import Optional
 from typing import Tuple
 
 import humps  # type: ignore
+import orjson as json
 from aiohttp import ClientConnectorError
 from aiohttp import ClientOSError
+from aiohttp import ClientResponseError
 from aiohttp import ServerDisconnectedError
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.transactions import get_connection
 
+from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -102,7 +104,8 @@ class HasuraGateway(HTTPGateway):
     async def configure(self, force: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
-        if self._database_config.schema_name != 'public':
+        # TODO: Validate during config parsing
+        if self._database_config.schema_name != DEFAULT_POSTGRES_SCHEMA:
             raise ConfigurationError('Hasura integration requires `schema_name` to be `public`')
 
         self._logger.info('Configuring Hasura')
@@ -159,16 +162,21 @@ class HasuraGateway(HTTPGateway):
 
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
-        result = await self.request(
-            method='post',
-            cache=False,
-            url=f'{self._hasura_config.url}/v1/{endpoint}',
-            json=json,
-            headers=self._hasura_config.headers,
-        )
+        try:
+            result = await self.request(
+                method='post',
+                cache=False,
+                url=f'{self._hasura_config.url}/v1/{endpoint}',
+                json=json,
+                headers=self._hasura_config.headers,
+            )
+        except ClientResponseError as e:
+            raise HasuraError(f'{e.status} {e.message}') from e
+
         self._logger.debug('Response: %s', result)
-        if 'error' in result or 'errors' in result:
-            raise HasuraError(result)
+        if errors := result.get('error') or result.get('errors'):
+            raise HasuraError(errors)
+
         return result
 
     async def _healthcheck(self) -> None:
@@ -205,13 +213,16 @@ class HasuraGateway(HTTPGateway):
         )
 
     def _hash_metadata(self, metadata: Dict[str, Any]) -> str:
-        return hashlib.sha256(json.dumps(metadata).encode()).hexdigest()
+        return hashlib.sha256(json.dumps(metadata)).hexdigest()
 
     async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')
         endpoint, json = 'query', {
-            "type": "replace_metadata",
-            "args": metadata,
+            'type': 'replace_metadata',
+            'args': {
+                'metadata': metadata,
+                'allow_inconsistent_metadata': True,
+            },
         }
         await self._hasura_request(endpoint, json)
 

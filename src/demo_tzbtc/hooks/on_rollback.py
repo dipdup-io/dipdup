@@ -10,4 +10,4 @@ async def on_rollback(
     to_level: int,
 ) -> None:
     await ctx.execute_sql('on_rollback')
-    await ctx.reindex(ReindexingReason.ROLLBACK)
+    await ctx.reindex(ReindexingReason.rollback)

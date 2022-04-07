@@ -5,13 +5,11 @@ import os
 import signal
 import subprocess
 import sys
-import warnings
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import partial
 from functools import wraps
-from os import listdir
 from os.path import dirname
 from os.path import exists
 from os.path import join
@@ -33,22 +31,17 @@ from dipdup import __spec_version__
 from dipdup import __version__
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
-from dipdup.codegen import DEFAULT_DOCKER_ENV_FILE
-from dipdup.codegen import DEFAULT_DOCKER_IMAGE
-from dipdup.codegen import DEFAULT_DOCKER_TAG
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config import LoggingConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import DeprecatedHandlerError
 from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager
-from dipdup.migrations import deprecated_handlers
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
@@ -178,12 +171,6 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         reindex = spec_reindex_mapping[__spec_version__]
         raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
-    # NOTE: Ensure that no deprecated handlers left in project after migration to v3.0.0
-    if ctx.invoked_subcommand != 'migrate':
-        handlers_path = join(_config.package_path, 'handlers')
-        if set(listdir(handlers_path)).intersection(set(deprecated_handlers)):
-            raise DeprecatedHandlerError
-
     ctx.obj = CLIContext(
         config_paths=config,
         config=_config,
@@ -195,6 +182,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 @click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
 @click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
 @click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing')
+@click.option('--metadata-interface', is_flag=True, help='Enable metadata interface')
 @click.pass_context
 @cli_wrapper
 async def run(
@@ -202,12 +190,14 @@ async def run(
     postpone_jobs: bool,
     early_realtime: bool,
     merge_subscriptions: bool,
+    metadata_interface: bool,
 ) -> None:
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     config.advanced.postpone_jobs |= postpone_jobs
     config.advanced.early_realtime |= early_realtime
     config.advanced.merge_subscriptions |= merge_subscriptions
+    config.advanced.metadata_interface |= metadata_interface
 
     set_decimal_context(config.package)
 
@@ -293,24 +283,6 @@ async def cache_show(ctx) -> None:
     echo(f'{cache.cache_dir}: {len(cache)} items, {size}')
 
 
-@cli.group(help='Docker integration related commands')
-@click.pass_context
-@cli_wrapper
-async def docker(ctx) -> None:
-    ...
-
-
-@docker.command(name='init', help='Generate Docker inventory in project directory')
-@click.option('--image', '-i', type=str, help='DipDup Docker image', default=DEFAULT_DOCKER_IMAGE)
-@click.option('--tag', '-t', type=str, help='DipDup Docker tag', default=DEFAULT_DOCKER_TAG)
-@click.option('--env-file', '-e', type=str, help='Path to env_file', default=DEFAULT_DOCKER_ENV_FILE)
-@click.pass_context
-@cli_wrapper
-async def docker_init(ctx, image: str, tag: str, env_file: str):
-    config: DipDupConfig = ctx.obj.config
-    await DipDupCodeGenerator(config, {}).generate_docker(image, tag, env_file)
-
-
 @cli.group(help='Hasura integration related commands')
 @click.pass_context
 @cli_wrapper
@@ -347,13 +319,9 @@ async def schema(ctx):
 
 
 @schema.command(name='approve', help='Continue to use existing schema after reindexing was triggered')
-@click.option('--hashes', is_flag=True, help='Recalculate all schema and config hashes')
 @click.pass_context
 @cli_wrapper
-async def schema_approve(ctx, hashes: bool):
-    if hashes:
-        warnings.warn('`--hashes` option is deprecated and has no effect', DeprecationWarning)
-
+async def schema_approve(ctx):
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
