@@ -119,7 +119,7 @@ class PostgresDatabaseConfig:
         return connection_string
 
     @validator('immune_tables')
-    def _valid_immune_tables(cls, v):
+    def _valid_immune_tables(cls, v) -> None:
         for table in v:
             if table.startswith('dipdup'):
                 raise ConfigurationError('Tables with `dipdup` prefix can\'t be immune')
@@ -184,7 +184,7 @@ class ContractConfig(NameMixin):
     address: str
     typename: Optional[str] = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(f'{self.address}{self.typename or ""}')
 
     @cached_property
@@ -192,7 +192,7 @@ class ContractConfig(NameMixin):
         return self.typename or self.name
 
     @validator('address', allow_reuse=True)
-    def _valid_address(cls, v):
+    def _valid_address(cls, v: str) -> str:
         # NOTE: Environment substitution was disabled during export, skip validation
         if '$' in v:
             return v
@@ -211,13 +211,15 @@ class TzktDatasourceConfig(NameMixin):
     :param kind: always 'tzkt'
     :param url: Base API URL, e.g. https://api.tzkt.io/
     :param http: HTTP client configuration
+    :param buffer_size: Number of levels to keep in FIFO buffer before processing
     """
 
     kind: Literal['tzkt']
     url: str
     http: Optional[HTTPConfig] = None
+    buffer_size: int = 0
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.kind + self.url)
 
     def __post_init_post_parse__(self) -> None:
@@ -249,7 +251,7 @@ class CoinbaseDatasourceConfig(NameMixin):
     passphrase: Optional[str] = None
     http: Optional[HTTPConfig] = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.kind)
 
 
@@ -268,7 +270,7 @@ class MetadataDatasourceConfig(NameMixin):
     url: str = DEFAULT_METADATA_URL
     http: Optional[HTTPConfig] = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.kind + self.url + self.network.value)
 
 
@@ -285,7 +287,7 @@ class IpfsDatasourceConfig(NameMixin):
     url: str = DEFAULT_IPFS_URL
     http: Optional[HTTPConfig] = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.kind + self.url)
 
 
@@ -302,7 +304,7 @@ class HttpDatasourceConfig(NameMixin):
     url: str
     http: Optional[HTTPConfig] = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.kind + self.url)
 
 
@@ -344,7 +346,7 @@ class CodegenMixin(ABC):
 
     def locate_arguments(self) -> Dict[str, Optional[Type]]:
         """Try to resolve scope annotations for arguments"""
-        kwargs: Dict[str, Optional[Type]] = {}
+        kwargs: Dict[str, Optional[Type[Any]]] = {}
         for name, cls in self.iter_arguments():
             cls = cls.split(' as ')[0]
             kwargs[name] = cast(Optional[Type], locate(cls))
@@ -394,11 +396,11 @@ class PatternConfig(CodegenMixin, ABC):
 class StorageTypeMixin:
     """`storage_type_cls` field"""
 
-    def __post_init_post_parse__(self):
-        self._storage_type_cls = None
+    def __post_init_post_parse__(self) -> None:
+        self._storage_type_cls: Optional[Type[Any]] = None
 
     @cached_property
-    def storage_type_cls(self) -> Type:
+    def storage_type_cls(self) -> Type[Any]:
         if self._storage_type_cls is None:
             raise ConfigInitializationException
         return self._storage_type_cls
@@ -429,7 +431,7 @@ class ParentMixin(Generic[T]):
 class ParameterTypeMixin:
     """`parameter_type_cls` field"""
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         self._parameter_type_cls = None
 
     @cached_property
@@ -737,8 +739,10 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
         config_dict = json.loads(config_json)
 
-        # NOTE: We need to preserve datasource URL but remove it's HTTP tunables to avoid false-positives.
+        # NOTE: We need to preserve datasource URL but remove its HTTP tunables to avoid false-positives.
         config_dict['datasource'].pop('http', None)
+        # NOTE: TzKT tunable
+        config_dict['datasource'].pop('buffer_size', None)
         # NOTE: Same for BigMapIndex tunables
         config_dict.pop('skip_history', None)
 
@@ -809,8 +813,8 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
     def __post_init_post_parse__(self):
         super().__post_init_post_parse__()
-        self._key_type_cls = None
-        self._value_type_cls = None
+        self._key_type_cls: Optional[Type[Any]] = None
+        self._value_type_cls: Optional[Type[Any]] = None
 
     @classmethod
     def format_key_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
@@ -985,7 +989,7 @@ class JobConfig(NameMixin):
     args: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self):
-        schedules_enabled = map(lambda x: int(bool(x)), (self.crontab, self.interval, self.daemon))
+        schedules_enabled = sum(map(lambda x: int(bool(x)), (self.crontab, self.interval, self.daemon)))
         if schedules_enabled > 1:
             raise ConfigurationError('Only one of `crontab`, `interval` of `daemon` can be specified')
         elif not schedules_enabled:

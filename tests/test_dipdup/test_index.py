@@ -6,8 +6,8 @@ from dipdup.config import ContractConfig
 from dipdup.config import OperationHandlerConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
-from dipdup.config import OperationType
 from dipdup.config import TzktDatasourceConfig
+from dipdup.enums import OperationType
 from dipdup.index import OperationIndex
 from dipdup.index import extract_operation_subgroups
 from dipdup.models import OperationData

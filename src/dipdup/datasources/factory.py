@@ -32,6 +32,7 @@ class DatasourceFactory:
                 url=datasource_config.url,
                 http_config=datasource_config.http,
                 merge_subscriptions=config.advanced.merge_subscriptions,
+                buffer_size=datasource_config.buffer_size,
             )
 
         if isinstance(datasource_config, CoinbaseDatasourceConfig):

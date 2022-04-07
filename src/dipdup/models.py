@@ -16,7 +16,7 @@ from tortoise import fields
 
 from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
-from dipdup.exceptions import ReindexingReason
+from dipdup.enums import ReindexingReason
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)

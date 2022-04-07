@@ -96,6 +96,14 @@ class MetadataCursor:
 
 # TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
 class DipDupContext:
+    """Class to store application context
+
+    :param datasources: Mapping of available datasources
+    :param config: DipDup configuration
+    :param callbacks: Low-level callback interface (intented for internal use)
+    :param logger: Context-aware logger instance
+    """
+
     def __init__(
         self,
         datasources: Dict[str, Datasource],
@@ -118,6 +126,12 @@ class DipDupContext:
         *args,
         **kwargs: Any,
     ) -> None:
+        """Fire hook with given name and arguments.
+
+        :param name: Hook name
+        :param fmt: Format string for `ctx.logger` messages
+        :param wait: Wait for hook to finish or fire and forget
+        """
         await self.callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
 
     async def fire_handler(
@@ -129,20 +143,28 @@ class DipDupContext:
         *args,
         **kwargs: Any,
     ) -> None:
+        """Fire handler with given name and arguments.
+
+        :param name: Handler name
+        :param index: Index name
+        :param datasource: An instance of datasource that triggered the handler
+        :param fmt: Format string for `ctx.logger` messages
+        """
         await self.callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
     async def execute_sql(self, name: str) -> None:
+        """Execute SQL script with given name
+
+        :param name: SQL script name within `<project>/sql` directory
+        """
         await self.callbacks.execute_sql(self, name)
 
     async def restart(self) -> None:
-        """Restart preserving CLI arguments"""
-        # NOTE: Remove --reindex from arguments to avoid reindexing loop
-        if '--reindex' in sys.argv:
-            sys.argv.remove('--reindex')
+        """Restart indexer preserving CLI arguments"""
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> None:
-        """Drop all tables or whole database and restart with the same CLI arguments"""
+        """Drop the whole database and restart with the same CLI arguments"""
         if not reason:
             reason = ReindexingReason.manual
         elif isinstance(reason, str):

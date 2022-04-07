@@ -1,10 +1,10 @@
 import logging
 from abc import ABC
 from typing import Dict
+from typing import Optional
 from typing import Set
 
 from pydantic.dataclasses import dataclass
-from tortoise import Optional
 
 _logger = logging.getLogger('dipdup.datasource')
 

@@ -3,7 +3,6 @@ from os.path import dirname
 from os.path import join
 from unittest import IsolatedAsyncioTestCase
 
-import dipdup.context as context
 from dipdup.config import DipDupConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.dipdup import DipDup
@@ -25,13 +24,12 @@ async def _create_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:
 
 
 class ReindexingTest(IsolatedAsyncioTestCase):
-    async def asyncSetUp(self):
+    async def asyncSetUp(self) -> None:
         self.path = join(dirname(__file__), 'dipdup.yml')
 
-    async def test_reindex_manual(self):
+    async def test_reindex_manual(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            context.forbid_reindexing = True
             config = DipDupConfig.load([self.path])
             dipdup = await _create_dipdup(config, stack)
 
@@ -43,7 +41,7 @@ class ReindexingTest(IsolatedAsyncioTestCase):
             schema = await Schema.filter().get()
             self.assertEqual(ReindexingReason.manual, schema.reindex)
 
-    async def test_reindex_field(self):
+    async def test_reindex_field(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
             config = DipDupConfig.load([self.path])

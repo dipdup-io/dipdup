@@ -12,7 +12,7 @@ from dipdup.utils import skip_ci
 
 @skip_ci
 class CodegenTest(IsolatedAsyncioTestCase):
-    async def test_codegen(self):
+    async def test_codegen(self) -> None:
         for name in [
             'hic_et_nunc.yml',
             'quipuswap.yml',

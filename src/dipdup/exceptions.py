@@ -28,7 +28,7 @@ def indent(text: str, indent: int = 2) -> str:
 class DipDupException(Exception):
     message: str
 
-    def __init__(self, *args) -> None:
+    def __init__(self, *args: Any) -> None:
         super().__init__(self.message, *args)
 
 
@@ -250,7 +250,7 @@ class IndexAlreadyExistsError(DipDupError):
 class InvalidDataError(DipDupError):
     """Failed to validate datasource message against generated type class"""
 
-    type_cls: Type
+    type_cls: Type[Any]
     data: Any
     parsed_object: Any
 
@@ -291,8 +291,8 @@ class CallbackTypeError(DipDupError):
     name: str
 
     arg: str
-    type_: Type
-    expected_type: Type
+    type_: Type[Any]
+    expected_type: Type[Any]
 
     def _help(self) -> str:
         return f"""
@@ -315,6 +315,8 @@ class HasuraError(DipDupError):
     def _help(self) -> str:
         return f"""
             Failed to configure Hasura: {self.msg}
+
+            Check out Hasura logs for more information.
 
             GraphQL integration docs: https://docs.dipdup.net/graphql/
         """
