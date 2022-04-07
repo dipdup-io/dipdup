@@ -38,13 +38,14 @@ line_length = {{ cookiecutter.line_length }}
 
 [tool.black]
 line-length = {{ cookiecutter.line_length }}
-target-version = ['py38']
+target-version = ['py310']
 skip-string-normalization = true
 
 [tool.flakehell]
 format = "colored"
 max_line_length = {{ cookiecutter.line_length }}
 show_source = true
+extended_default_ignore = []
 
 [tool.flakehell.plugins]
 pyflakes = ["+*"]
