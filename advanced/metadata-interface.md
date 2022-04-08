@@ -1,6 +1,8 @@
 # Metadata Interface
 
-When issuing a token on Tezos blockchain there is an important yet not enough covered aspect related to how various ecosystem applications (wallets, explorers, marketplaces, and others) will display and interact with it. It's about token metadata, which is stored fully or partially on-chain but is intended for off-chain use only.  
+When issuing a token on Tezos blockchain there is an important yet not enough covered aspect related to how various ecosystem applications (wallets, explorers, marketplaces, and others) will display and interact with it. It's about token metadata, which is stored fully or partially on-chain but is intended for off-chain use only.
+
+## Token metadata standards
 
 There are several standards regulating the metadata file format and the way it can be stored and exposed to consumers:
 * [TZIP-21 | Rich Metadata](https://tzip.tezosagora.org/proposal/tzip-21/) — describes a metadata schema and standards for contracts and tokens
