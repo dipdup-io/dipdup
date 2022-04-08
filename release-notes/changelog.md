@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.0.0 - 2022-04-08
+
+This release contains no changes except for the version number.
+
 ## 5.0.0-rc4 - 2022-04-04
 
 ### Added
