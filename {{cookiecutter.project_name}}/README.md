@@ -10,4 +10,4 @@
 * Generate types and handlers with `dipdup init`
 * Run full CI pipeline with `make`
 * Commit your code with `git init && git add -A && git commit -m 'Initial commit'` 
-* Spawn compose stack with `docker-compose up`
+* Spawn a Docker Compose stack with `docker-compose up`

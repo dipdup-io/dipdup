@@ -8,7 +8,7 @@
     "author": "John Smith <johnsmith@example.com>",
 
     "🚧": "Software versions (press enter)",
-    "dipdup_version": "4.2.4",
+    "dipdup_version": "5.0.0",
     "dipdup_spec_version": "1.2",
     "postgresql_version": [
       "postgres:14",
@@ -17,12 +17,12 @@
       "timescale/timescaledb:latest-pg13"
     ],
     "hasura_version": [
-        "hasura/graphql-engine:v2.2.0",
-        "hasura/graphql-engine:v2.0.10"
+      "hasura/graphql-engine:v2.4.0",
+      "hasura/graphql-engine:v2.3.1"
     ],
 
     "🧹": "Code quality (press enter)",
     "line_length": "140",
 
-    "🥳": "Everything's ready! See README.md to learn how to initialize project (press enter)"
+    "🥳": "Everything's ready! See README.md inside the project for the next steps (press enter)"
 }

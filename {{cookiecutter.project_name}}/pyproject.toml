@@ -12,21 +12,21 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 dipdup = "^{{ cookiecutter.dipdup_version }}"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
 bump2version = "^1.0.1"
 diff-cover = "^5.0.1"
-flake8 = "3.9.0"
+flake8 = "^3.9.2"
 flake8-return = "^1.1.3"
 flake8-comprehensions = "^3.8.0"
 flake8-bugbear = "^22.1.11"
 flake8-simplify = "^0.14.5"
 flakehell = "^0.9.0"
-isort = "^5.7.0"
-mypy = "^0.900"
+isort = "^5.9.3"
+mypy = "^0.910"
 pytest = "^6.2.5"
 pytest-cov = "^3.0.0"
 pytest-xdist = "^2.5.0"
@@ -38,13 +38,14 @@ line_length = {{ cookiecutter.line_length }}
 
 [tool.black]
 line-length = {{ cookiecutter.line_length }}
-target-version = ['py38']
+target-version = ['py310']
 skip-string-normalization = true
 
 [tool.flakehell]
 format = "colored"
 max_line_length = {{ cookiecutter.line_length }}
 show_source = true
+extended_default_ignore = []
 
 [tool.flakehell.plugins]
 pyflakes = ["+*"]
