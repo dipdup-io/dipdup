@@ -15,4 +15,4 @@ This table shows which specific SDK releases support which DipDup file versions.
 | 1.1 | >=2.0.0, <=2.0.9 |
 | 1.2 | >=3.0.0 |
 
-If you're getting `MigrationRequiredError` after updating the framework, run [`dipdup migrate`](../cli-reference/migrate.md) command to perform project migration.
+If you're getting `MigrationRequiredError` after updating the framework, run [`dipdup migrate`](../cli/migrate.md) command to perform project migration.

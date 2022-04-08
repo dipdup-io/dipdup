@@ -33,40 +33,26 @@ demo_tzbtc
         └── storage.py
 ```
 
-## `graphql`: queries for Hasura
+| path | description |
+| - | - |
+| `graphql` | GraphQL queries for Hasura (`*.graphql`) |
+| `handlers` | User-defined callbacks to process matched operations and big map diffs |
+| `hooks` | User-defined callbacks to run manually or by schedule |
+| `models.py` | Tortoise ORM models |
+| `sql` | SQL scripts to run from callbacks (`*.sql`) |
+| `types` | Codegened Pydantic typeclasses for contract storage/parameter |
 
-See [5.6.1. Hasura integration](../graphql/hasura.md) for details.
-
-## `handlers`: index handler callbacks
-
-See [4.7. Implementing handlers](implementing-handlers.md) for details.
-
-## `hooks`: hook callbacks
-
-See [5.2. Hooks](../advanced/hooks/README.md) for details.
-
-## `models.py`: ORM models
-
-DipDup generates `models.py` file on the top level of the package that will contain all the database models. Models file name and location are restricted by the framework and cannot be changed.
-
-Python SDK uses Tortoise ORM for working with the database. The expected `models.py` file looks like the following:
-
-```python
-from tortoise import Model, fields
-
-
-class ExampleModel(Model):
-    id = fields.IntField(pk=True)
-    ...
-```
-
-Check out Tortoise ORM [docs](https://tortoise-orm.readthedocs.io/en/latest/getting_started.html#tutorial) for more details.
-
-## `sql`: SQL scripts
-
-See [5.5. Executing SQL scripts](../advanced/sql.md) for details.
+> 🤓 **SEE ALSO**
+>
+> * [4.6. Defining models](defining-models.md)
+> * [4.7. Implementing handlers](implementing-handlers.md)
+> * [5.2. Hooks](../advanced/hooks/README.md)
+> * [5.5. Executing SQL scripts](../advanced/sql.md)
+> * [5.6.1. Hasura integration](../graphql/hasura.md)
 
 ## `types`: type classes
+
+<!-- TODO: Move somewhere -->
 
 DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) already in normalized form ([read more](https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/) about how TzKT handles Michelson expressions), but still as raw JSON. DipDup uses contract type information to generate data classes, which allow developers to work with strictly typed data.
 

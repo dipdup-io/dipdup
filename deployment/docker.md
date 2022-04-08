@@ -1,5 +1,12 @@
 # Building Docker images
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+```Dockerfile
+FROM dipdup/dipdup:5.0.0
+
+# Uncomment if you have an additional dependencies in pyproject.toml
+# COPY pyproject.toml poetry.lock ./
+# RUN inject_pyproject
+
+COPY indexer indexer
+COPY dipdup.yml dipdup.prod.yml ./
+```

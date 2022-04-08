@@ -4,7 +4,7 @@ This page will guide you through the steps to get your first selective indexer u
 
 Let's create an indexer for [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database then calculate some statistics of its' holders' activity.
 
-A Linux environment with Python 3.8+ installed is required to use DipDup.
+A Linux environment with Python 3.10+ installed is required to use DipDup.
 
 ## Create a new project
 
@@ -26,7 +26,10 @@ poetry add dipdup
 poetry shell
 ```
 
-See [Installation](getting-started/installation.md) for details.
+> 🤓 **SEE ALSO**
+>
+> * [4.1. Installation](getting-started/installation.md)
+> * [Poetry documentation](https://python-poetry.org/docs/)
 
 ## Write a configuration file
 
@@ -67,7 +70,10 @@ indexes:
             entrypoint: mint
 ```
 
-See [Config reference](config-reference/) for details.
+> 🤓 **SEE ALSO**
+>
+> * [4.5. Templates and variables](getting-started/templates-and-variables.md)
+> * [12. Config file reference](config/)
 
 ## Initialize project tree
 
@@ -112,7 +118,10 @@ demo_tzbtc
 
 That's a lot of files and directories! But don't worry, in this guide, we will need only `models.py` and `handlers` modules.
 
-See [Project structure](getting-started/project-structure.md) for details.
+> 🤓 **SEE ALSO**
+>
+> * [4.4. Project structure](getting-started/project-structure.md)
+> * [13.5. init](cli/init.md)
 
 ## Define data models
 
@@ -138,7 +147,11 @@ class Holder(Model):
     last_seen = fields.DatetimeField(null=True)
 ```
 
-See [Defining models](getting-started/defining-models.md) for details.
+> 🤓 **SEE ALSO**
+>
+> * [4.6. Defining models](getting-started/defining-models.md)
+> * [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
+> * [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)
 
 ## Implement handlers
 
@@ -163,8 +176,6 @@ async def on_balance_update(
     assert holder.balance >= 0, address
     await holder.save()
 ```
-
-That was pretty straightforward 👍🏻
 
 Three methods of tzBTC contract can alter token balances — `transfer`, `mint` and `burn`. The last one is omitted in this tutorial for simplicity. Edit corresponding handlers to call `on_balance_update` method with data from matched operations:
 
@@ -233,7 +244,9 @@ async def on_mint(
 
 And that's all! We can run the indexer now.
 
-See [Implementing handlers](getting-started/implementing-handlers.md) for details.
+> 🤓 **SEE ALSO**
+>
+> * [4.7. Implementing handlers](getting-started/implementing-handlers.md)
 
 ## Run your indexer
 
@@ -243,4 +256,6 @@ dipdup run
 
 DipDup will fetch all the historical data then switch to realtime updates. Your application data has been successfully indexed!
 
-See [Command-line reference](cli-reference/) for details.
+> 🤓 **SEE ALSO**
+>
+> * [13. Command-line reference](cli/)

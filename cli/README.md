@@ -10,11 +10,11 @@ By default, DipDup looks for a file named `dipdup.yml` in the current working di
 dipdup -c configs/dipdup.yml -c configs/dipdup.prod.yml COMMAND
 ```
 
-See [Merging config files](../config-reference#merging-config-files) for details.
+See [Merging config files](../config#merging-config-files) for details.
 
 ## Advanced Python logging
 
-> ⚠ WARNING
+> ⚠ **WARNING**
 >
 > This feature will be deprecated soon. Consider configuring logging inside of `on_restart` hook.
 

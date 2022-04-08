@@ -18,7 +18,7 @@ DipDup applies all updates atomically block by block. In case of emergency shut 
 
 ## Hasura setup
 
-If [hasura](../config-reference/hasura.md) section is present in configuration file, DipDup will do basic setup:
+If [hasura](../config/hasura.md) section is present in configuration file, DipDup will do basic setup:
 
 * Ensure all tables are tracked by Hasura engine
 * Enable public access to the GraphQL endpoint
@@ -48,4 +48,4 @@ async def on_restart(ctx: HandlerContext) -> None:
     ...
 ```
 
-It can be used for creating [dynamic indexes](../config-reference/templates.md#dynamic-instances) from predefined templates or other tasks.
+It can be used for creating [dynamic indexes](../config/templates.md#dynamic-instances) from predefined templates or other tasks.

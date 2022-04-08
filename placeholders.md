@@ -17,3 +17,14 @@
 > ⚠ **WARNING**
 >
 > ...
+
+## See also
+
+> 🤓 **SEE ALSO**
+>
+> * [13. Command-line reference](cli/)
+> * [External link](https://google.com)
+
+## Comments
+
+<!-- TODO: Move to the upper level -->

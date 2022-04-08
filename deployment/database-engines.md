@@ -7,11 +7,11 @@ DipDup officially supports the following databases: SQLite, PostgreSQL, Timescal
 | Supported versions | any | any | any |
 | When to use | early development | general usage | working with timeseries
 | Performance | good | better | great in some scenarios |
-| SQL hooks | ❌ | ✅ | ✅ |
+| SQL scripts | ❌ | ✅ | ✅ |
 | Immune tables\* | ❌ | ✅ | ✅ |
 | Hasura integration | ❌ | ✅\*\*| ✅\*\*|
 
-\* — see [`immune_tables` config reference](../config-reference/database.md#immune-tables) for details.
+\* — see [`immune_tables` config reference](../config/database.md#immune-tables) for details.
 
 \*\* — schema name must be `public`
 
