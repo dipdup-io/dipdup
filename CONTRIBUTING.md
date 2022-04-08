@@ -13,7 +13,7 @@
 
 ## Releases
 
-* Release versions SHOULD conform to semantic version. Releases that introduce breaking changes MUST be major (bump the first number).
+* Release versions SHOULD conform to [Semantic Versioning](https://semver.org/). Releases that introduce breaking changes MUST be major ones.
 
 ## Documentation
 

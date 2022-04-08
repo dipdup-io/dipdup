@@ -249,7 +249,7 @@ async def config(ctx):
 
 
 @config.command(name='export', help='Dump DipDup configuration after resolving templates')
-@click.option('--unsafe', is_flag=True, help='')
+@click.option('--unsafe', is_flag=True, help='Resolve environment variables; output may contain secrets')
 @click.pass_context
 @cli_wrapper
 async def config_export(ctx, unsafe: bool) -> None:
