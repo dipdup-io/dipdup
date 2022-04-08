@@ -67,7 +67,8 @@
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-config-export-unsafe">
 <span class="sig-name descname"><span class="pre">--unsafe</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-config-export-unsafe" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Resolve environment variables; output may contain secrets</p>
+</dd></dl>
 
 </section>
 </section>
