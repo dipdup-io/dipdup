@@ -1,9 +1,5 @@
 # Built with DipDup
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
-
 This page is a brief overview of projects which use DipDup as an indexing solution.
 
 ## HicDEX
@@ -20,8 +16,14 @@ HicDEX is a Tezos indexer for hicetnunc.art marketplace. Indexed data is availab
 
 Homebase is a web application that enables users to create and manage/use DAOs on the Tezos blockchain. This application aims to help empower community members and developers to launch and participate in Tezos-based DAOs.
 
-## youves
-
 ## Tezos Profiles
 
-## NFTButton
+[homepage](https://tzprofiles.com/) | [API](https://dipdup.net/sandbox.html?service=tzprofiles) | [github](https://github.com/spruceid/tzprofiles)
+
+Tezos Profiles enables you to associate your online identity with your Tezos account.
+
+## Juster
+
+[homepage](https://app.juster.fi) | [API](https://dipdup.net/sandbox.html?service=juster) | [github](https://github.com/juster-finance/juster-dipdup)
+
+Juster is an on-chain smart contract platform allowing users to take part in an automated betting market by creating events, providing liquidity to them, and making bets.

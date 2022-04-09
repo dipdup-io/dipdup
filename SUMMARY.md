@@ -33,6 +33,7 @@
   * [Internal models](advanced/internal-models.md)
   * [Spawning indexes at runtime](advanced/index-factories.md)
   * [Scheduler configuration](advanced/scheduler.md)
+  * [Metadata interface](advanced/metadata-interface.md)
 * [GraphQL API](graphql/README.md)
   * [Hasura integration](graphql/hasura.md)
   * [REST endpoints](graphql/rest.md)

@@ -26,6 +26,14 @@ Trigger hook execution. Unset `wait` to execute hook outside of the current data
 
 The `execute_sql` argument could be either name of SQL script in `sql` directory or an absolute/relative path. If the path is a directory, all `.sql` scripts within it will be executed in alphabetical order.
 
+## `.update_contract_metadata(network, address, token_id, metadata) -> None`
+
+Inserts or updates the corresponding row in the service `dipdup_contract_metadata` table used for exposing the [5.11 Metadata interface](../metadata-interface.md)
+
+## `.update_token_metadata(network, address, token_id, metadata) -> None`
+
+Inserts or updates the corresponding row in the service `dipdup_token_metadata` table used for exposing the [5.11 Metadata interface](../metadata-interface.md)
+
 ## `.logger`
 
 Use this instance for logging.

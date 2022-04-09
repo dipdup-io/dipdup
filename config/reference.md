@@ -297,7 +297,7 @@ http: HTTP client configuration</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>hook</strong> – Name of hook to run</p></li>
-<li><p><strong>crontab</strong> – Schedule with crontab syntax (<cite>** ** *</cite>)</p></li>
+<li><p><strong>crontab</strong> – Schedule with crontab syntax (<cite>**** *</cite>)</p></li>
 <li><p><strong>interval</strong> – Schedule with interval in seconds</p></li>
 <li><p><strong>daemon</strong> – Run hook as a daemon (never stops)</p></li>
 <li><p><strong>args</strong> – Arguments to pass to the hook</p></li>
