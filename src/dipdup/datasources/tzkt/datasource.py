@@ -51,6 +51,7 @@ from dipdup.models import BlockData
 from dipdup.models import HeadBlockData
 from dipdup.models import OperationData
 from dipdup.models import QuoteData
+from dipdup.models import TokenTransferData
 from dipdup.utils import split_by_chunks
 from dipdup.utils.watchdog import Watchdog
 
@@ -256,6 +257,28 @@ class BigMapFetcher:
 
         if big_maps:
             yield big_maps[0].level, big_maps
+
+
+class TokenTransferFetcher:
+    def __init__(
+        self,
+        datasource: 'TzktDatasource',
+        first_level: int,
+        last_level: int,
+        token_addresses: Set[str],
+        token_ids: Set[int],
+        cache: bool = False,
+    ) -> None:
+        self._logger = logging.getLogger('dipdup.tzkt')
+        self._datasource = datasource
+        self._first_level = first_level
+        self._last_level = last_level
+        self._token_addresses = token_addresses
+        self._token_ids = token_ids
+        self._cache = cache
+
+    async def fetch_token_transfers_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[TokenTransferData, ...]], None]:
+        raise NotImplementedError
 
 
 class TzktDatasource(IndexDatasource):
@@ -669,6 +692,44 @@ class TzktDatasource(IndexDatasource):
         ):
             yield batch
 
+    async def get_token_transfers(
+        self,
+        addresses: Set[str],
+        token_ids: Optional[Set[str]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Tuple[TokenTransferData, ...]:
+        """Get token transfers for contract"""
+        offset, limit = offset or 0, limit or self.request_limit
+        params = {}
+        if token_ids:
+            params['token.tokenId.in'] = ','.join(token_ids)
+
+        raw_token_transfers = await self.request(
+            'get',
+            url='v1/operations/tokens/transfers',
+            params={
+                **params,
+                'token.contract.in': ','.join(addresses),
+                'offset': offset,
+                'limit': limit,
+            },
+        )
+        return tuple(self.convert_token_transfer(item) for item in raw_token_transfers)
+
+    async def iter_token_transfers(
+        self,
+        addresses: Set[str],
+        token_ids: Optional[Set[str]] = None,
+    ) -> AsyncIterator[Tuple[TokenTransferData, ...]]:
+        """Iterate token transfers for contract"""
+        async for batch in self._iter_batches(
+            self.get_token_transfers,
+            addresses,
+            token_ids,
+        ):
+            yield batch
+
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
         for subscription in index_config.subscriptions:
@@ -1069,6 +1130,34 @@ class TzktDatasource(IndexDatasource):
             jpy=Decimal(quote_json['jpy']),
             krw=Decimal(quote_json['krw']),
             eth=Decimal(quote_json['eth']),
+        )
+
+    @classmethod
+    def convert_token_transfer(cls, token_transfer_json: Dict[str, Any]) -> TokenTransferData:
+        """Convert raw token transfer message from REST or WS into dataclass"""
+        token_json = token_transfer_json.get('token') or {}
+        contract_json = token_json.get('contract') or {}
+        from_json = token_transfer_json.get('from') or {}
+        to_json = token_transfer_json.get('to') or {}
+
+        return TokenTransferData(
+            id=token_transfer_json['id'],
+            level=token_transfer_json['level'],
+            timestamp=cls._parse_timestamp(token_transfer_json['timestamp']),
+            tzkt_token_id=token_json['id'],
+            contract_address=contract_json.get('address'),
+            contract_alias=contract_json.get('alias'),
+            token_id=token_json.get('tokenId'),
+            standard=token_json.get('standard'),
+            metadata=token_json.get('metadata'),
+            from_alias=from_json.get('alias'),
+            from_address=from_json.get('address'),
+            to_alias=to_json.get('alias'),
+            to_address=to_json.get('address'),
+            amount=token_transfer_json.get('amount'),
+            tzkt_transaction_id=token_transfer_json.get('transactionId'),
+            tzkt_origination_id=token_transfer_json.get('originationId'),
+            tzkt_migration_id=token_transfer_json.get('migrationId'),
         )
 
     async def _send(

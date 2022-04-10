@@ -47,3 +47,8 @@ class ReindexingAction(Enum):
     exception = 'exception'
     wipe = 'wipe'
     ignore = 'ignore'
+
+
+class TokenStandard(Enum):
+    FA12 = 'fa1.2'
+    FA2 = 'fa2'

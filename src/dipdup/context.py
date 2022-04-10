@@ -35,6 +35,7 @@ from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigT
+from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
@@ -51,6 +52,7 @@ from dipdup.exceptions import ContractAlreadyExistsError
 from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
+from dipdup.index import TokenTransferIndex
 from dipdup.models import Contract
 from dipdup.models import ContractMetadata
 from dipdup.models import Index
@@ -240,7 +242,7 @@ class DipDupContext:
         from dipdup.index import OperationIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
-        index: Union[OperationIndex, BigMapIndex, HeadIndex]
+        index: Union[OperationIndex, BigMapIndex, HeadIndex, TokenTransferIndex]
 
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
         datasource = self.get_tzkt_datasource(datasource_name)
@@ -251,6 +253,8 @@ class DipDupContext:
             index = BigMapIndex(self, index_config, datasource)
         elif isinstance(index_config, HeadIndexConfig):
             index = HeadIndex(self, index_config, datasource)
+        elif isinstance(index_config, TokenTransferIndexConfig):
+            index = TokenTransferIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 

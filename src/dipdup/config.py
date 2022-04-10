@@ -42,6 +42,7 @@ from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
+from dipdup.datasources.subscription import TokenTransferSubscription
 from dipdup.datasources.subscription import TransactionSubscription
 from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
@@ -931,9 +932,47 @@ class HeadIndexConfig(IndexConfig):
     handlers: Tuple[HeadHandlerConfig, ...]
 
 
-IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, IndexTemplateConfig]
-ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig]
-ContractIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig]
+@dataclass
+class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
+    contract: Union[str, ContractConfig]
+    token_id: Optional[int] = None
+
+    @cached_property
+    def contract_config(self) -> ContractConfig:
+        if not isinstance(self.contract, ContractConfig):
+            raise ConfigInitializationException
+        return self.contract
+
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'TokenTransferData'
+        yield package, 'models as models'
+
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'token_transfer', 'TokenTransferData'
+
+
+@dataclass
+class TokenTransferIndexConfig(IndexConfig):
+    """Token index config"""
+
+    kind: Literal['token_transfer']
+    datasource: Union[str, TzktDatasourceConfig]
+    handlers: Tuple[TokenTransferHandlerConfig, ...]
+
+    first_level: int = 0
+    last_level: int = 0
+
+
+IndexConfigT = Union[
+    OperationIndexConfig,
+    BigMapIndexConfig,
+    HeadIndexConfig,
+    TokenTransferIndexConfig,
+    IndexTemplateConfig,
+]
+ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, TokenTransferIndexConfig]
 HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
@@ -1295,6 +1334,9 @@ class DipDupConfig:
             elif isinstance(index_config, HeadIndexConfig):
                 self._import_index_callbacks(index_config)
 
+            elif isinstance(index_config, TokenTransferIndexConfig):
+                self._import_index_callbacks(index_config)
+
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1395,6 +1437,14 @@ class DipDupConfig:
         elif isinstance(index_config, HeadIndexConfig):
             pass
 
+        elif isinstance(index_config, TokenTransferIndexConfig):
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(TokenTransferSubscription())
+            else:
+                for token_transfer_handler_config in index_config.handlers:
+                    address, token_id = token_transfer_handler_config.contract_config.address, token_transfer_handler_config.token_id
+                    index_config.subscriptions.add(TokenTransferSubscription(address=address, token_id=token_id))
+
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1448,6 +1498,15 @@ class DipDupConfig:
 
             for head_handler_config in index_config.handlers:
                 head_handler_config.parent = index_config
+
+        elif isinstance(index_config, TokenTransferIndexConfig):
+            if isinstance(index_config.datasource, str):
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+
+            for token_transfer_handler_config in index_config.handlers:
+                token_transfer_handler_config.parent = index_config
+                if isinstance(token_transfer_handler_config.contract, str):
+                    token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

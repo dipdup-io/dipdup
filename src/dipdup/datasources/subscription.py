@@ -37,6 +37,13 @@ class BigMapSubscription(Subscription):
     path: Optional[str] = None
 
 
+@dataclass(frozen=True)
+class TokenTransferSubscription(Subscription):
+    type: str = 'token_transfer'
+    address: Optional[str] = None
+    token_id: Optional[int] = None
+
+
 class SubscriptionManager:
     def __init__(self, merge_subscriptions: bool = False) -> None:
         self._merge_subscriptions: bool = merge_subscriptions

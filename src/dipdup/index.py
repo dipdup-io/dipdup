@@ -34,9 +34,11 @@ from dipdup.config import OperationIndexConfig
 from dipdup.config import OperationType
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import SkipHistory
+from dipdup.config import TokenTransferIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
+from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.exceptions import ConfigInitializationException
@@ -50,6 +52,7 @@ from dipdup.models import HeadBlockData
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Origination
+from dipdup.models import TokenTransferData
 from dipdup.models import Transaction
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
@@ -860,3 +863,59 @@ class HeadIndex(Index):
 
     def push_head(self, head: HeadBlockData) -> None:
         self._queue.append(head)
+
+
+class TokenTransferIndex(Index):
+    _config: TokenTransferIndexConfig
+
+    def __init__(self, ctx: DipDupContext, config: TokenTransferIndexConfig, datasource: TzktDatasource) -> None:
+        super().__init__(ctx, config, datasource)
+        self._queue: Deque[Tuple[TokenTransferData, ...]] = deque()
+
+    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
+        """Fetch operations via Fetcher and pass to message callback"""
+        first_level = await self._enter_sync_state(last_level)
+        if first_level is None:
+            return
+
+        self._logger.info('Fetching token transfers from level %s to %s', first_level, last_level)
+
+        token_addresses = self._get_token_addresses()
+        token_ids = self._get_token_ids()
+
+        fetcher = TokenTransferFetcher(
+            datasource=self._datasource,
+            first_level=first_level,
+            last_level=last_level,
+            token_addresses=token_addresses,
+            token_ids=token_ids,
+            cache=cache,
+        )
+
+        async for level, token_transfers in fetcher.fetch_token_transfers_by_level():
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    Metrics.set_levels_to_sync(self._config.name, last_level - level)
+                    stack.enter_context(Metrics.measure_level_sync_duration())
+                await self._process_level_token_transfers(token_transfers)
+
+    async def _process_level_token_transfers(self, token_transfers: Iterable[TokenTransferData]) -> None:
+        raise NotImplementedError
+
+    async def _process_queue(self) -> None:
+        raise NotImplementedError
+
+    def _get_token_addresses(self) -> Set[str]:
+        """Get addresses to fetch big map diffs from during initial synchronization"""
+        addresses = set()
+        for handler_config in self._config.handlers:
+            addresses.add(cast(ContractConfig, handler_config.contract).address)
+        return addresses
+
+    def _get_token_ids(self) -> Set[int]:
+        """Get addresses to fetch big map diffs from during initial synchronization"""
+        ids = set()
+        for handler_config in self._config.handlers:
+            if handler_config.token_id is not None:
+                ids.add(handler_config.token_id)
+        return ids
