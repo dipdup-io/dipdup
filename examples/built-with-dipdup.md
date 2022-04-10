@@ -3,7 +3,7 @@
 This page is a brief overview of projects which use DipDup as an indexing solution.
 
 Want to see your project at this page? Create an issue on [GitHub](https://github.com/dipdup-net/dipdup-docs/issues)!
-xx
+
 ## HicDEX
 
 [Homepage](https://hicdex.com/) | [API](https://api.hicdex.com/graphiql/) | [GitHub](https://github.com/hicdex/hicdex)
