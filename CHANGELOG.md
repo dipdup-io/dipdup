@@ -6,6 +6,7 @@
 
 * cli: Fixed `schema init` command crash with SQLite databases.
 * index: Fixed spawning datasources in oneshot mode.
+* tzkt: Fix realtime message processing.
 
 ## 5.0.0 - 2022-04-08
 
