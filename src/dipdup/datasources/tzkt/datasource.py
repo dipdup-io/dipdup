@@ -835,20 +835,25 @@ class TzktDatasource(IndexDatasource):
                 raise NotImplementedError('Unknown message type')
 
         # NOTE: Yield extensive data from buffer
-        for item in self._emit_from_buffer(type_):
+        for item in self._yield_from_buffer(type_):
             yield item
 
-    def _emit_from_buffer(self, type_: MessageType) -> Generator[Dict, None, None]:
+    def _yield_from_buffer(self, type_: MessageType) -> Generator[Dict, None, None]:
         buffered_levels = sorted(self._buffer.keys())
         emitted_levels = buffered_levels[: len(buffered_levels) - self._buffer_size]
 
         for level in emitted_levels:
+            is_empty = True
+
             for idx, level_data in enumerate(self._buffer[level]):
                 level_message_type, level_message = level_data
                 if level_message_type == type_:
                     yield level_message
                     self._buffer[level].pop(idx)
-            if not self._buffer[level]:
+                else:
+                    is_empty = False
+
+            if is_empty:
                 self._buffer.pop(level)
 
     async def _process_data_message(self, type_: MessageType, message_level: int, message_data: Dict[str, Any]) -> None:
@@ -871,7 +876,11 @@ class TzktDatasource(IndexDatasource):
             if self._buffer.pop(rolled_back_level, None):
                 self._logger.info('Level %s is buffered', rolled_back_level)
             else:
-                self._logger.info('Level %s is not buffered, emitting rollback', rolled_back_level)
+                self._logger.info(
+                    'Level %s is not buffered, emitting rollback to %s',
+                    rolled_back_level,
+                    message_level,
+                )
                 await self.emit_rollback(channel_level, message_level)
                 return
         else:
