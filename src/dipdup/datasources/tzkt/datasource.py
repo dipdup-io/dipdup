@@ -825,11 +825,11 @@ class TzktDatasource(IndexDatasource):
 
             # NOTE: Put data messages to buffer by level
             if tzkt_type == TzktMessageType.DATA:
-                self._process_data_message(type_, message_level, item['data'])
+                await self._process_data_message(type_, message_level, item['data'])
 
             # NOTE: Try to process rollback automatically, emit if failed
             elif tzkt_type == TzktMessageType.REORG:
-                self._process_reorg_message(type_, channel_level, message_level)
+                await self._process_reorg_message(type_, channel_level, message_level)
 
             else:
                 raise NotImplementedError('Unknown message type')
