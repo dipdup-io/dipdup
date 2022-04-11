@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* cli: Fixed `schema init` command crash with SQLite databases.
+
 ## 5.0.0 - 2022-04-08
 
 This release contains no changes except for the version number.
