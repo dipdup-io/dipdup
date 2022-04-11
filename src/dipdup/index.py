@@ -962,7 +962,15 @@ class TokenTransferIndex(Index):
         return True
 
     async def _process_queue(self) -> None:
-        raise NotImplementedError
+        """Process WebSocket queue"""
+        if self._queue:
+            self._logger.debug('Processing websocket queue')
+        while self._queue:
+            token_transfers = self._queue.popleft()
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_level_realtime_duration())
+                await self._process_level_token_transfers(token_transfers)
 
     def _get_token_addresses(self) -> Set[str]:
         """Get addresses to fetch big map diffs from during initial synchronization"""
