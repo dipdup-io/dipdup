@@ -5,12 +5,14 @@ class MessageType(Enum):
     operation = 'operation'
     big_map = 'big_map'
     head = 'head'
+    token_transfer = 'token_transfer'
 
 
 class IndexType(Enum):
     operation = 'operation'
     big_map = 'big_map'
     head = 'head'
+    token_transfer = 'token_transfer'
 
 
 class OperationType(Enum):

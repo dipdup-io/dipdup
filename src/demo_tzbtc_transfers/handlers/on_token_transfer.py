@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from demo_tzbtc.handlers.on_balance_update import on_balance_update
+from demo_tzbtc_transfers.handlers.on_balance_update import on_balance_update
 from dipdup.context import HandlerContext
 from dipdup.models import TokenTransferData
 

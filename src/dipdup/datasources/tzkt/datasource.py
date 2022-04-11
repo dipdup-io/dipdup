@@ -37,6 +37,7 @@ from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
+from dipdup.datasources.subscription import TokenTransferSubscription
 from dipdup.datasources.subscription import TransactionSubscription
 from dipdup.datasources.tzkt.enums import ORIGINATION_MIGRATION_FIELDS
 from dipdup.datasources.tzkt.enums import ORIGINATION_OPERATION_FIELDS
@@ -278,7 +279,33 @@ class TokenTransferFetcher:
         self._cache = cache
 
     async def fetch_token_transfers_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[TokenTransferData, ...]], None]:
-        raise NotImplementedError
+        token_transfers: Tuple[TokenTransferData, ...] = ()
+
+        # TODO: Share code between this and OperationFetcher
+        token_transfer_iter = self._datasource.iter_token_transfers(
+            self._token_addresses,
+            self._token_ids,
+            self._first_level,
+            self._last_level,
+        )
+        async for fetched_token_transfers in token_transfer_iter:
+            token_transfers = token_transfers + fetched_token_transfers
+
+            # NOTE: Yield token transfer slices by level except the last one
+            while True:
+                for i in range(len(token_transfers) - 1):
+                    curr_level, next_level = token_transfers[i].level, token_transfers[i + 1].level
+
+                    # NOTE: Level boundaries found. Exit for loop, stay in while.
+                    if curr_level != next_level:
+                        yield curr_level, token_transfers[: i + 1]
+                        token_transfers = token_transfers[i + 1 :]
+                        break
+                else:
+                    break
+
+        if token_transfers:
+            yield token_transfers[0].level, token_transfers
 
 
 class TzktDatasource(IndexDatasource):
@@ -658,20 +685,20 @@ class TzktDatasource(IndexDatasource):
 
     async def get_quotes(
         self,
-        from_level: int,
-        to_level: int,
+        first_level: int,
+        last_level: int,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[QuoteData, ...]:
         """Get quotes for blocks"""
         offset, limit = offset or 0, limit or self.request_limit
-        self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
+        self._logger.info('Fetching quotes for levels %s-%s', first_level, last_level)
         quotes_json = await self.request(
             'get',
             url='v1/quotes',
             params={
-                "level.ge": from_level,
-                "level.lt": to_level,
+                "level.ge": first_level,
+                "level.lt": last_level,
                 "offset.cr": offset,
                 "limit": limit,
             },
@@ -681,21 +708,23 @@ class TzktDatasource(IndexDatasource):
 
     async def iter_quotes(
         self,
-        from_level: int,
-        to_level: int,
+        first_level: int,
+        last_level: int,
     ) -> AsyncIterator[Tuple[QuoteData, ...]]:
         """Iterate quotes for blocks"""
         async for batch in self._iter_batches(
             self.get_quotes,
-            from_level,
-            to_level,
+            first_level,
+            last_level,
         ):
             yield batch
 
     async def get_token_transfers(
         self,
         addresses: Set[str],
-        token_ids: Optional[Set[str]] = None,
+        token_ids: Set[str],
+        first_level: int,
+        last_level: int,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[TokenTransferData, ...]:
@@ -707,9 +736,11 @@ class TzktDatasource(IndexDatasource):
 
         raw_token_transfers = await self.request(
             'get',
-            url='v1/operations/tokens/transfers',
+            url='v1/tokens/transfers',
             params={
                 **params,
+                'level.ge': first_level,
+                'level.lt': last_level,
                 'token.contract.in': ','.join(addresses),
                 'offset': offset,
                 'limit': limit,
@@ -720,13 +751,18 @@ class TzktDatasource(IndexDatasource):
     async def iter_token_transfers(
         self,
         addresses: Set[str],
-        token_ids: Optional[Set[str]] = None,
+        token_ids: Set[int],
+        first_level: int,
+        last_level: int,
     ) -> AsyncIterator[Tuple[TokenTransferData, ...]]:
         """Iterate token transfers for contract"""
         async for batch in self._iter_batches(
             self.get_token_transfers,
             addresses,
             token_ids,
+            first_level,
+            last_level,
+            cursor=False,
         ):
             yield batch
 
@@ -770,6 +806,14 @@ class TzktDatasource(IndexDatasource):
                 request = [{}]
             else:
                 raise RuntimeError
+
+        elif isinstance(subscription, TokenTransferSubscription):
+            method = 'SubscribeToTokenTransfers'
+            request = [{}]
+            if subscription.address:
+                request[0]['token.address'] = subscription.address
+            if subscription.token_id:
+                request[0]['token.tokenId'] = subscription.token_id
 
         else:
             raise NotImplementedError

@@ -52,7 +52,6 @@ from dipdup.exceptions import ContractAlreadyExistsError
 from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
-from dipdup.index import TokenTransferIndex
 from dipdup.models import Contract
 from dipdup.models import ContractMetadata
 from dipdup.models import Index
@@ -237,9 +236,11 @@ class DipDupContext:
         await self.spawn_index(name, state)
 
     async def spawn_index(self, name: str, state: Optional[Index] = None) -> None:
+        # NOTE: Avoiding circular import
         from dipdup.index import BigMapIndex
         from dipdup.index import HeadIndex
         from dipdup.index import OperationIndex
+        from dipdup.index import TokenTransferIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
         index: Union[OperationIndex, BigMapIndex, HeadIndex, TokenTransferIndex]
