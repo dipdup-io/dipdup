@@ -840,21 +840,19 @@ class TzktDatasource(IndexDatasource):
 
     def _yield_from_buffer(self, type_: MessageType) -> Generator[Dict, None, None]:
         buffered_levels = sorted(self._buffer.keys())
-        emitted_levels = buffered_levels[: len(buffered_levels) - self._buffer_size]
+        if len(buffered_levels) < self._buffer_size:
+            return
 
-        for level in emitted_levels:
-            is_empty = True
-
+        yielded_levels = buffered_levels[: len(buffered_levels) - self._buffer_size]
+        for level in yielded_levels:
             for idx, level_data in enumerate(self._buffer[level]):
                 level_message_type, level_message = level_data
                 if level_message_type == type_:
                     yield level_message
                     self._buffer[level].pop(idx)
-                else:
-                    is_empty = False
 
-            if is_empty:
-                self._buffer.pop(level)
+            if not self._buffer[level]:
+                del self._buffer[level]
 
     async def _process_data_message(self, type_: MessageType, message_level: int, message_data: Dict[str, Any]) -> None:
         self._buffer[message_level].append((type_, message_data))
