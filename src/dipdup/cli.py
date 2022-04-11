@@ -45,7 +45,7 @@ from dipdup.migrations import DipDupMigrationManager
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
-from dipdup.utils.database import execute_sql_scripts
+from dipdup.utils.database import generate_schema
 from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
@@ -397,8 +397,7 @@ async def schema_init(ctx):
 
         # NOTE: It's not necessary a reindex, but it's safe to execute built-in scripts to (re)create views.
         conn = get_connection(None)
-        sql_path = join(dirname(__file__), 'sql', 'on_reindex')
-        await execute_sql_scripts(conn, sql_path)
+        await generate_schema(conn, config.database.schema_name)
 
     _logger.info('Schema initialized')
 

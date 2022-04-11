@@ -1,5 +1,12 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* cli: Fixed `schema init` command crash with SQLite databases.
+* index: Fixed spawning datasources in oneshot mode.
+
 ## 5.0.0 - 2022-04-08
 
 This release contains no changes except for the version number.

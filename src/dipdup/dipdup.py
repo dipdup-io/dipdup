@@ -97,7 +97,7 @@ class IndexDispatcher:
 
         while True:
             if not spawn_datasources_event.is_set():
-                if self._every_index_is(IndexStatus.REALTIME) or early_realtime:
+                if (self._every_index_is(IndexStatus.REALTIME) or early_realtime) and not self._ctx.config.oneshot:
                     spawn_datasources_event.set()
 
             if spawn_datasources_event.is_set():
