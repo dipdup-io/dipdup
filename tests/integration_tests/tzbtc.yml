@@ -1,0 +1,34 @@
+spec_version: 1.2
+package: demo_tzbtc
+
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+contracts:
+  tzbtc_mainnet:
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: tzbtc
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.tzkt.io
+
+indexes:
+  tzbtc_holders_mainnet:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - tzbtc_mainnet
+    handlers:
+      - callback: on_transfer
+        pattern:
+          - destination: tzbtc_mainnet
+            entrypoint: transfer
+      - callback: on_mint
+        pattern:
+          - destination: tzbtc_mainnet
+            entrypoint: mint
+    first_level: 1365000
+    last_level: 1366000

@@ -195,7 +195,7 @@ class Index:
 
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied
-        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig)) and self._config.last_level:
+        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig, TokenTransferIndexConfig)) and self._config.last_level:
             last_level = self._config.last_level
             with ExitStack() as stack:
                 if Metrics.enabled:
@@ -715,9 +715,8 @@ class BigMapIndex(Index):
             return
         level = self._extract_level(big_maps)
 
-        # NOTE: le operator because single level rollbacks are not supported
-        if level <= self.state.level:
-            raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
+        if level < self.state.level:
+            raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} < {self.state.level}')
 
         self._logger.debug('Processing big map diffs of level %s', level)
         matched_handlers = await self._match_big_maps(big_maps)
@@ -845,8 +844,8 @@ class HeadIndex(Index):
             self._logger.debug('Processing head realtime message, %s left in queue', len(self._queue))
 
             level = head.level
-            if level <= self.state.level:
-                raise RuntimeError(f'Level of head must be higher than index state level: {level} <= {self.state.level}')
+            if level < self.state.level:
+                raise RuntimeError(f'Level of head must be higher than index state level: {level} < {self.state.level}')
 
             async with in_global_transaction():
                 self._logger.debug('Processing head info of level %s', level)
@@ -904,14 +903,15 @@ class TokenTransferIndex(Index):
                     stack.enter_context(Metrics.measure_level_sync_duration())
                 await self._process_level_token_transfers(token_transfers)
 
+        await self._exit_sync_state(last_level)
+
     async def _process_level_token_transfers(self, token_transfers: Iterable[TokenTransferData]) -> None:
         if not token_transfers:
             return
         level = self._extract_level(tuple(token_transfers))
 
-        # NOTE: le operator because single level rollbacks are not supported
-        if level <= self.state.level:
-            raise RuntimeError(f'Level of token transfer batch must be higher than index state level: {level} <= {self.state.level}')
+        if level < self.state.level:
+            raise RuntimeError(f'Level of token transfer batch must be higher than index state level: {level} < {self.state.level}')
 
         self._logger.debug('Processing token transfers of level %s', level)
         matched_handlers = await self._match_token_transfers(token_transfers)
@@ -948,6 +948,7 @@ class TokenTransferIndex(Index):
                 token_transfer_matched = await self._match_token_transfer(handler_config, token_transfer)
                 if token_transfer_matched:
                     # NOTE: No argument preparation required
+                    self._logger.info('%s: `%s` handler matched!', token_transfer.id, handler_config.callback)
                     matched_handlers.append((handler_config, token_transfer))
 
         return matched_handlers

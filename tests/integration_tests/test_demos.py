@@ -1,5 +1,6 @@
 import subprocess
 from contextlib import suppress
+from decimal import Decimal
 from os import mkdir
 from os.path import dirname
 from os.path import join
@@ -12,6 +13,8 @@ import demo_hic_et_nunc.models
 import demo_quipuswap.models
 import demo_tezos_domains.models
 import demo_tezos_domains_big_map.models
+import demo_tzbtc.models
+import demo_tzbtc_transfers.models
 import demo_tzcolors.models
 from dipdup.utils import skip_ci
 from dipdup.utils.database import tortoise_wrapper
@@ -98,3 +101,23 @@ class DemosTest(IsolatedAsyncioTestCase):
 
             self.assertEqual(1, tlds)
             self.assertEqual(145, domains)
+
+    async def test_tzbtc(self) -> None:
+        self.run_dipdup('tzbtc.yml')
+
+        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzbtc.models'):
+            holders = await demo_tzbtc.models.Holder.filter().count()
+            random_balance = (await demo_tzbtc.models.Holder.first()).balance  # type: ignore
+
+            self.assertEqual(4, holders)
+            self.assertEqual(Decimal('-0.01912431'), random_balance)
+
+    async def test_tzbtc_transfers(self) -> None:
+        self.run_dipdup('tzbtc_transfers.yml')
+
+        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzbtc_transfers.models'):
+            holders = await demo_tzbtc_transfers.models.Holder.filter().count()
+            random_balance = (await demo_tzbtc_transfers.models.Holder.first()).balance  # type: ignore
+
+            self.assertEqual(4, holders)
+            self.assertEqual(Decimal('-0.01912431'), random_balance)
