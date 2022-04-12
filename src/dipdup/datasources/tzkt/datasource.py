@@ -17,6 +17,7 @@ from typing import Callable
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
+from typing import Generator
 from typing import List
 from typing import NoReturn
 from typing import Optional
@@ -292,6 +293,21 @@ class TzktDatasource(IndexDatasource):
     @property
     def request_limit(self) -> int:
         return cast(int, self._http_config.batch_size)
+
+    def get_channel_level(self, message_type: MessageType) -> int:
+        """Get current level of the channel, or sync level is no messages were received yet."""
+        channel_level = self._level[message_type]
+        if channel_level is None:
+            # NOTE: If no data messages were received since run, use sync level instead
+            # NOTE: There's only one sync level for all channels, otherwise `Index.process` would fail
+            channel_level = self.get_sync_level(HeadSubscription())
+            if channel_level is None:
+                raise RuntimeError('Neither current nor sync level is known')
+
+        return channel_level
+
+    def _set_channel_level(self, message_type: MessageType, level: int) -> None:
+        self._level[message_type] = level
 
     async def get_similar_contracts(
         self,
@@ -795,66 +811,78 @@ class TzktDatasource(IndexDatasource):
             if tzkt_type == TzktMessageType.STATE:
                 continue
 
-            message_level, current_level = item['state'], self._level[type_]
-            self._level[type_] = message_level
+            message_level = item['state']
+            channel_level = self.get_channel_level(type_)
+            self._set_channel_level(type_, message_level)
+
             self._logger.info(
                 'Realtime message received: %s, %s, %s -> %s',
                 type_.value,
                 tzkt_type.name,
-                current_level,
+                channel_level,
                 message_level,
             )
 
             # NOTE: Put data messages to buffer by level
             if tzkt_type == TzktMessageType.DATA:
-                self._buffer[message_level].append((type_, item['data']))
+                await self._process_data_message(type_, message_level, item['data'])
 
             # NOTE: Try to process rollback automatically, emit if failed
             elif tzkt_type == TzktMessageType.REORG:
-                # NOTE: operation/big_map channels have their own levels
-                if type_ == MessageType.head:
-                    return
-
-                # NOTE: If no data messages were received since run, use sync level instead
-                if current_level is None:
-                    # NOTE: There's only one sync level for all channels, otherwise `Index.process` would fail
-                    current_level = self.get_sync_level(HeadSubscription())
-                    if not current_level:
-                        raise RuntimeError('Reorg message received, but neither current nor sync level is known')
-
-                    # NOTE: This rollback does not affect us, so we can safely ignore it
-                    if current_level <= message_level:
-                        return
-
-                self._logger.info('Rollback requested from %s to %s', current_level, message_level)
-
-                # NOTE: Drop buffered messages in reversed order while possible
-                rolled_back_levels = range(current_level, message_level, -1)
-                for rolled_back_level in rolled_back_levels:
-                    if self._buffer.pop(rolled_back_level, None):
-                        self._logger.info('Level %s is buffered', rolled_back_level)
-                    else:
-                        self._logger.info('Level %s is not buffered, emitting rollback', rolled_back_level)
-                        await self.emit_rollback(current_level, message_level)
-                        return
-
-                self._logger.info('Rollback is not required, continuing')
+                await self._process_reorg_message(type_, channel_level, message_level)
 
             else:
-                raise NotImplementedError
+                raise NotImplementedError('Unknown message type')
 
         # NOTE: Yield extensive data from buffer
-        buffered_levels = sorted(self._buffer.keys())
-        emitted_levels = buffered_levels[: len(buffered_levels) - self._buffer_size]
+        for item in self._yield_from_buffer(type_):
+            yield item
 
-        for level in emitted_levels:
+    def _yield_from_buffer(self, type_: MessageType) -> Generator[Dict, None, None]:
+        buffered_levels = sorted(self._buffer.keys())
+        if len(buffered_levels) < self._buffer_size:
+            return
+
+        yielded_levels = buffered_levels[: len(buffered_levels) - self._buffer_size]
+        for level in yielded_levels:
             for idx, level_data in enumerate(self._buffer[level]):
                 level_message_type, level_message = level_data
                 if level_message_type == type_:
                     yield level_message
                     self._buffer[level].pop(idx)
+
             if not self._buffer[level]:
-                self._buffer.pop(level)
+                del self._buffer[level]
+
+    async def _process_data_message(self, type_: MessageType, message_level: int, message_data: Dict[str, Any]) -> None:
+        self._buffer[message_level].append((type_, message_data))
+
+    async def _process_reorg_message(self, type_: MessageType, channel_level: int, message_level: int) -> None:
+        # NOTE: No action required for this channel
+        if type_ == MessageType.head:
+            return
+
+        # NOTE: This rollback does not affect us, so we can safely ignore it
+        if channel_level <= message_level:
+            return
+
+        self._logger.info('Rollback requested from %s to %s', channel_level, message_level)
+
+        # NOTE: Drop buffered messages in reversed order while possible
+        rolled_back_levels = range(channel_level, message_level, -1)
+        for rolled_back_level in rolled_back_levels:
+            if self._buffer.pop(rolled_back_level, None):
+                self._logger.info('Level %s is buffered', rolled_back_level)
+            else:
+                self._logger.info(
+                    'Level %s is not buffered, emitting rollback to %s',
+                    rolled_back_level,
+                    message_level,
+                )
+                await self.emit_rollback(channel_level, message_level)
+                return
+        else:
+            self._logger.info('Rollback is not required, continuing')
 
     async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
