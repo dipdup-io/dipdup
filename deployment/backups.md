@@ -53,7 +53,7 @@ services:
 
 ## Automatic restore on rollback
 
-This awesome code was contributed by [@852Kerfunkle](https://github.com/852Kerfunkle), author of [tz1nd](https://github.com/tz1and/) project.
+This awesome code was contributed by [@852Kerfunkle](https://github.com/852Kerfunkle), author of [tz1and](https://github.com/tz1and/) project.
 
 `<project>/backups.py`
 
