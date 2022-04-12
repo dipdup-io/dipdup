@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.1 - 2022-04-12
+
+### Fixed
+
+* cli: Fixed `schema init` command crash with SQLite databases.
+* index: Fixed spawning datasources in oneshot mode.
+* tzkt: Fixed processing realtime messages.
+
 ## 5.0.0 - 2022-04-08
 
 This release contains no changes except for the version number.

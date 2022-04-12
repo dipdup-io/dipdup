@@ -4,7 +4,6 @@ DipDup has no built-in functionality to backup and restore database at the momen
 
 This page contains several recipes for backup/restore.
 
-
 ## Scheduled backup to S3
 
 This example is for Swarm deployments. We use this solution to backup our services in production. Adapt it to your needs if needed.
@@ -57,6 +56,7 @@ services:
 This awesome code was contributed by [@852Kerfunkle](https://github.com/852Kerfunkle), author of [tz1nd](https://github.com/tz1and/) project.
 
 `<project>/backups.py`
+
 ```python
 ...
 
@@ -95,6 +95,7 @@ def delete_old_backups():
 ```
 
 `<project>/hooks/on_rollback.py`
+
 ```python
 ...
 
@@ -133,6 +134,7 @@ async def on_rollback(
 ```
 
 `<project>/hooks/run_backups.py`
+
 ```python
 ...
 
@@ -154,6 +156,7 @@ async def run_backups(
 ```
 
 `<project>/hooks/simulate_reorg.py`
+
 ```python
 ...
 
