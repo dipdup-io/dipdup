@@ -45,6 +45,7 @@ from dipdup.datasources.tzkt.enums import TRANSACTION_OPERATION_FIELDS
 from dipdup.datasources.tzkt.enums import OperationFetcherRequest
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.enums import MessageType
+from dipdup.enums import TokenStandard
 from dipdup.exceptions import DatasourceError
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
@@ -1183,6 +1184,7 @@ class TzktDatasource(IndexDatasource):
         contract_json = token_json.get('contract') or {}
         from_json = token_transfer_json.get('from') or {}
         to_json = token_transfer_json.get('to') or {}
+        standard = token_json.get('standard')
 
         return TokenTransferData(
             id=token_transfer_json['id'],
@@ -1192,7 +1194,7 @@ class TzktDatasource(IndexDatasource):
             contract_address=contract_json.get('address'),
             contract_alias=contract_json.get('alias'),
             token_id=token_json.get('tokenId'),
-            standard=token_json.get('standard'),
+            standard=TokenStandard(standard) if standard else None,
             metadata=token_json.get('metadata'),
             from_alias=from_json.get('alias'),
             from_address=from_json.get('address'),

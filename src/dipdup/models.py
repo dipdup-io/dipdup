@@ -17,6 +17,7 @@ from tortoise import fields
 from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.enums import ReindexingReason
+from dipdup.enums import TokenStandard
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -187,7 +188,7 @@ class TokenTransferData:
     contract_address: Optional[str] = None
     contract_alias: Optional[str] = None
     token_id: Optional[int] = None
-    standard: Optional[str] = None
+    standard: Optional[TokenStandard] = None
     metadata: Optional[Dict[str, Any]] = None
     from_alias: Optional[str] = None
     from_address: Optional[str] = None
