@@ -407,8 +407,9 @@ class OperationIndex(Index):
 
             operation_subgroups = tuple(filter(lambda subgroup: subgroup.hash in unprocessed_hashes, operation_subgroups))
 
+        # NOTE: Equal level is ok since it could be a single level rollback
         elif level < self.state.level:
-            raise RuntimeError(f'Level of operation batch must be higher than index state level: {level} < {self.state.level}')
+            raise RuntimeError(f'Level of operation batch must be not lower than index state level: {level} < {self.state.level}')
 
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), level)
         matched_handlers: Deque[MatchedOperationsT] = deque()
@@ -715,8 +716,8 @@ class BigMapIndex(Index):
             return
         level = self._extract_level(big_maps)
 
-        if level < self.state.level:
-            raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} < {self.state.level}')
+        if level <= self.state.level:
+            raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
 
         self._logger.debug('Processing big map diffs of level %s', level)
         matched_handlers = await self._match_big_maps(big_maps)
@@ -844,8 +845,8 @@ class HeadIndex(Index):
             self._logger.debug('Processing head realtime message, %s left in queue', len(self._queue))
 
             level = head.level
-            if level < self.state.level:
-                raise RuntimeError(f'Level of head must be higher than index state level: {level} < {self.state.level}')
+            if level <= self.state.level:
+                raise RuntimeError(f'Level of head must be higher than index state level: {level} <= {self.state.level}')
 
             async with in_global_transaction():
                 self._logger.debug('Processing head info of level %s', level)
@@ -910,8 +911,8 @@ class TokenTransferIndex(Index):
             return
         level = self._extract_level(tuple(token_transfers))
 
-        if level < self.state.level:
-            raise RuntimeError(f'Level of token transfer batch must be higher than index state level: {level} < {self.state.level}')
+        if level <= self.state.level:
+            raise RuntimeError(f'Level of token transfer batch must be higher than index state level: {level} <= {self.state.level}')
 
         self._logger.debug('Processing token transfers of level %s', level)
         matched_handlers = await self._match_token_transfers(token_transfers)
