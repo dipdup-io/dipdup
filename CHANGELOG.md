@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Improved
+
+* tzkt: Do not request reindexing if missing subgroups matched no handlers.
+
 ## 5.0.1 - 2022-04-12
 
 ### Fixed
