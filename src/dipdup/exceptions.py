@@ -36,7 +36,7 @@ class ConfigInitializationException(DipDupException):
     message = 'Config is not initialized. Some stage was skipped. Call `pre_initialize` or `initialize`.'
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class DipDupError(Exception):
     """Unknown DipDup error"""
 
@@ -68,7 +68,7 @@ class DipDupError(Exception):
         return _tab + self.help() + '\n'
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class DatasourceError(DipDupError):
     """One of datasources returned an error"""
 
@@ -83,7 +83,7 @@ class DatasourceError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class ConfigurationError(DipDupError):
     """DipDup YAML config is invalid"""
 
@@ -97,7 +97,7 @@ class ConfigurationError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class DatabaseConfigurationError(ConfigurationError):
     """DipDup can't initialize database with given models and parameters"""
 
@@ -115,7 +115,7 @@ class DatabaseConfigurationError(ConfigurationError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class MigrationRequiredError(DipDupError):
     """Project and DipDup spec versions don't match"""
 
@@ -146,7 +146,7 @@ class MigrationRequiredError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class ReindexingRequiredError(DipDupError):
     """Unable to continue indexing with existing database"""
 
@@ -175,7 +175,7 @@ class ReindexingRequiredError(DipDupError):
         )
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class InitializationRequiredError(DipDupError):
     message: str
 
@@ -190,7 +190,7 @@ class InitializationRequiredError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class HandlerImportError(DipDupError):
     """Can't perform import from handler module"""
 
@@ -212,7 +212,7 @@ class HandlerImportError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class ContractAlreadyExistsError(DipDupError):
     """Attemp to add a contract with alias or address which is already in use"""
 
@@ -236,7 +236,7 @@ class ContractAlreadyExistsError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class IndexAlreadyExistsError(DipDupError):
     """Attemp to add an index with alias which is already in use"""
 
@@ -259,7 +259,7 @@ class IndexAlreadyExistsError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class InvalidDataError(DipDupError):
     """Failed to validate datasource message against generated type class"""
 
@@ -283,20 +283,24 @@ class InvalidDataError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class CallbackError(DipDupError):
     """An error occured during callback execution"""
 
-    kind: str
-    name: str
+    module: str
+    exc: Exception
 
     def _help(self) -> str:
         return f"""
-            `{self.name}` {self.kind} callback execution failed.
+            `{self.module}` callback execution failed.
+
+              {self.exc.__class__.__name__}{self.exc}
+            
+            Eliminate the reason of failure and restart DipDup.
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class CallbackTypeError(DipDupError):
     """Agrument of invalid type was passed to a callback"""
 
@@ -319,7 +323,7 @@ class CallbackTypeError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class HasuraError(DipDupError):
     """Failed to configure Hasura instance"""
 
