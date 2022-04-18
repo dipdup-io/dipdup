@@ -165,16 +165,18 @@ class DipDupContext:
 
     async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> None:
         """Drop the whole database and restart with the same CLI arguments"""
-        if not reason:
+        if reason is None:
             reason = ReindexingReason.manual
-        elif isinstance(reason, str):
+        # NOTE: Do not check for `str`!
+        elif not isinstance(reason, ReindexingReason):
             context['message'] = reason
             reason = ReindexingReason.manual
 
         action = self.config.advanced.reindex.get(reason, ReindexingAction.exception)
-        self.logger.warning('Reindexing initialized, reason: %s, action: %s', reason.value, action.value)
+        self.logger.warning('Reindexing requested: reason `%s`, action `%s`', reason.value, action.value)
 
         if action == ReindexingAction.ignore:
+            # NOTE: Recalculate hashes on the next run
             if reason == ReindexingReason.schema_modified:
                 await Schema.filter(name=self.config.schema_name).update(hash='')
             elif reason == ReindexingReason.config_modified:

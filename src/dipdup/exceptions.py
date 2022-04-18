@@ -40,14 +40,21 @@ class ConfigInitializationException(DipDupException):
 class DipDupError(Exception):
     """Unknown DipDup error"""
 
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}: {self.__doc__}'
+    def __str__(self) -> str:
+        if not self.__doc__:
+            raise NotImplementedError(f'{self.__class__.__name__} has no docstring')
+        return self.__doc__
 
     def _help(self) -> str:
-        # TODO: Update guide
-        return """
-            Unexpected error occurred!
+        # FIXME: Indentation hell
+        prefix = '\n' + ' ' * 14
+        context = prefix.join(str(self.args))
+        if context:
+            context = '{prefix}{context}\n'.format(prefix=prefix, context=context)
 
+        return """
+            An unexpected error has occurred!
+              {context}
             Please file a bug report at https://github.com/dipdup-net/dipdup/issues and attach the following:
 
               * `dipdup.yml` config. Make sure to remove sensitive information.
@@ -130,10 +137,12 @@ class MigrationRequiredError(DipDupError):
 
             {version_table.strip()}
 
-              1. Run `dipdup migrate`
-              2. Review and commit changes
+            Perform the following actions:
 
-            See https://baking-bad.org/blog/ for additional release information. {reindex}
+              1. Run `dipdup migrate`.
+              2. Review and commit changes.
+
+            See https://docs.dipdup.net/release-notes for more information. {reindex}
         """
 
 
@@ -145,21 +154,25 @@ class ReindexingRequiredError(DipDupError):
     context: Dict[str, Any] = field(default_factory=dict)
 
     def _help(self) -> str:
-        additional_context = '\n              '.join(f'{k}: {v}' for k, v in self.context.items())
-        return f"""
-            Reindexing required!
+        # FIXME: Indentation hell
+        prefix = '\n' + ' ' * 14
+        context = prefix.join(f'{k}: {v}' for k, v in self.context.items())
+        if context:
+            context = '{prefix}{context}\n'.format(prefix=prefix, context=context)
 
-            Reason: {self.reason.value}
-
-            Additional context:
-
-                {additional_context}
-
+        return """
+            Reindexing required! Reason: {reason}.
+              {context}
             You may want to backup database before proceeding. After that perform one of the following actions:
 
-                * Eliminate the cause of reindexing and run `dipdup schema approve`.
-                * Drop database and start indexing from scratch with `dipdup schema wipe` command.
-        """
+              * Eliminate the cause of reindexing and run `dipdup schema approve`.
+              * Drop database and start indexing from scratch with `dipdup schema wipe` command.
+
+            See https://docs.dipdup.net/advanced/reindexing for more information.
+        """.format(
+            reason=self.reason.value,
+            context=context,
+        )
 
 
 @dataclass(frozen=True, repr=False)
@@ -168,12 +181,12 @@ class InitializationRequiredError(DipDupError):
 
     def _help(self) -> str:
         return f"""
-            Project initialization required!
+            Project initialization required! Reason: {self.message}.
 
-            Reason: {self.message}
+            Perform the following actions:
 
-            1. Run `dipdup init`
-            2. Review and commit changes
+              * Run `dipdup init`.
+              * Review and commit changes.
         """
 
 

@@ -376,7 +376,12 @@ class DipDupCodeGenerator:
                 code.append(f"await ctx.execute_sql('{original_callback}')")
                 if callback == 'on_rollback':
                     imports.add('from dipdup.enums import ReindexingReason')
-                    code.append('await ctx.reindex(ReindexingReason.rollback)')
+                    code.append('await ctx.reindex(')
+                    code.append('    ReindexingReason.rollback,')
+                    code.append('    datasource=datasource.name,')
+                    code.append('    from_level=from_level,')
+                    code.append('    to_level=to_level,')
+                    code.append(')')
             else:
                 code.append('...')
 

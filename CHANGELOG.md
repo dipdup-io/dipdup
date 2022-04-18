@@ -1,5 +1,16 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* context: Fixed reporting incorrect reindexing reason.
+
+### Improved
+
+* codegen: Refined `on_rollback` hook template.
+* exceptions: Updated help messages for known exceptions.
+
 ## 5.0.1 - 2022-04-12
 
 ### Fixed
