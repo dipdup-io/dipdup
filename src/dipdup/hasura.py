@@ -225,7 +225,8 @@ class HasuraGateway(HTTPGateway):
                                     "host": self._database_config.host,
                                     "port": self._database_config.port
                                 }
-                            }
+                            },
+                            "use_prepared_statements": True,
                         }
                     },
                     "replace_configuration": True,
