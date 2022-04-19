@@ -209,6 +209,7 @@ class HasuraGateway(HTTPGateway):
     async def _add_source(self) -> Dict[str, Any]:
         self._logger.info(f'Adding source `{self._hasura_config.source}`')
         # NOTE: Using default settings
+        db_config = self._database_config
         return await self._hasura_request(
             endpoint='metadata',
             json={
@@ -217,15 +218,7 @@ class HasuraGateway(HTTPGateway):
                     "name": self._hasura_config.source,
                     "configuration": {
                         "connection_info": {
-                            "database_url": {
-                                "connection_parameters" : {
-                                    "username": self._database_config.user,
-                                    "password": self._database_config.password,
-                                    "database": self._database_config.database,
-                                    "host": self._database_config.host,
-                                    "port": self._database_config.port
-                                }
-                            },
+                            "database_url": f'postgresql://{db_config.user}:{db_config.password}@{db_config.host}:{db_config.port}/{db_config.database}',
                             "use_prepared_statements": True,
                         }
                     },
