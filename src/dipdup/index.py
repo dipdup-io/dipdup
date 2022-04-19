@@ -885,15 +885,10 @@ class TokenTransferIndex(Index):
 
         self._logger.info('Fetching token transfers from level %s to %s', first_level, last_level)
 
-        token_addresses = self._get_token_addresses()
-        token_ids = self._get_token_ids()
-
         fetcher = TokenTransferFetcher(
             datasource=self._datasource,
             first_level=first_level,
             last_level=last_level,
-            token_addresses=token_addresses,
-            token_ids=token_ids,
             cache=cache,
         )
 
@@ -911,8 +906,12 @@ class TokenTransferIndex(Index):
             return
         level = self._extract_level(tuple(token_transfers))
 
-        if level <= self.state.level:
-            raise RuntimeError(f'Level of token transfer batch must be higher than index state level: {level} <= {self.state.level}')
+        if self.state.status == IndexStatus.SYNCING:
+            if level < self.state.level:
+                raise RuntimeError(f'Level of token transfer batch must be not lower than index state level: {level} < {self.state.level}')
+        else:
+            if level <= self.state.level:
+                raise RuntimeError(f'Level of token transfer batch must be higher than index state level: {level} <= {self.state.level}')
 
         self._logger.debug('Processing token transfers of level %s', level)
         matched_handlers = await self._match_token_transfers(token_transfers)
@@ -946,21 +945,9 @@ class TokenTransferIndex(Index):
         matched_handlers: List[Tuple[TokenTransferHandlerConfig, TokenTransferData]] = []
         for token_transfer in token_transfers:
             for handler_config in self._config.handlers:
-                token_transfer_matched = await self._match_token_transfer(handler_config, token_transfer)
-                if token_transfer_matched:
-                    # NOTE: No argument preparation required
-                    self._logger.info('%s: `%s` handler matched!', token_transfer.id, handler_config.callback)
-                    matched_handlers.append((handler_config, token_transfer))
+                matched_handlers.append((handler_config, token_transfer))
 
         return matched_handlers
-
-    async def _match_token_transfer(self, handler_config: TokenTransferHandlerConfig, token_transfer: TokenTransferData) -> bool:
-        """Match single token transfer with pattern"""
-        if handler_config.token_id and handler_config.token_id != token_transfer.token_id:
-            return False
-        if handler_config.contract_config.address != token_transfer.contract_address:
-            return False
-        return True
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
@@ -975,15 +962,23 @@ class TokenTransferIndex(Index):
 
     def _get_token_addresses(self) -> Set[str]:
         """Get addresses to fetch big map diffs from during initial synchronization"""
-        addresses = set()
+        addresses: set[str] = set()
         for handler_config in self._config.handlers:
+            if isinstance(handler_config, TokenTransferHandlerConfig):
+                continue
+            if not hasattr(handler_config, 'contract'):
+                continue
             addresses.add(cast(ContractConfig, handler_config.contract).address)
         return addresses
 
     def _get_token_ids(self) -> Set[int]:
         """Get addresses to fetch big map diffs from during initial synchronization"""
-        ids = set()
+        ids: set[int] = set()
         for handler_config in self._config.handlers:
+            if isinstance(handler_config, TokenTransferHandlerConfig):
+                continue
+            if not hasattr(handler_config, 'token_id'):
+                continue
             if handler_config.token_id is not None:
                 ids.add(handler_config.token_id)
         return ids

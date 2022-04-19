@@ -203,7 +203,7 @@ class ContractConfig(NameMixin):
             return v
 
         # NOTE: Wallet addresses are allowed for debugging purposes (source field). Do we need a separate section?
-        if not (v.startswith('KT') or v.startswith('tz')) or len(v) != 36:
+        if not (v.startswith('KT1') or v.startswith(('tz1', 'tz2', 'tz3'))) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
 
@@ -427,9 +427,13 @@ class ParentMixin(Generic[T]):
     def __post_init_post_parse__(self: 'ParentMixin') -> None:
         self._parent: Optional[T] = None
 
-    @cached_property
+    @property
     def parent(self) -> Optional[T]:
         return self._parent
+
+    @parent.setter
+    def parent(self, value: T) -> None:
+        self._parent = value
 
 
 @dataclass
@@ -437,13 +441,17 @@ class ParameterTypeMixin:
     """`parameter_type_cls` field"""
 
     def __post_init_post_parse__(self) -> None:
-        self._parameter_type_cls = None
+        self._parameter_type_cls: Optional[Type] = None
 
-    @cached_property
+    @property
     def parameter_type_cls(self) -> Type:
         if self._parameter_type_cls is None:
             raise ConfigInitializationException
         return self._parameter_type_cls
+
+    @parameter_type_cls.setter
+    def parameter_type_cls(self, value: Type) -> None:
+        self._parameter_type_cls = value
 
     def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
         _logger.debug('Registering parameter type for entrypoint `%s`', entrypoint)
@@ -461,13 +469,17 @@ class TransactionIdxMixin:
     """
 
     def __post_init_post_parse__(self):
-        self._transaction_idx = None
+        self._transaction_idx: Optional[int] = None
 
-    @cached_property
+    @property
     def transaction_idx(self) -> int:
         if self._transaction_idx is None:
             raise ConfigInitializationException
         return self._transaction_idx
+
+    @transaction_idx.setter
+    def transaction_idx(self, value: int) -> None:
+        self._transaction_idx = value
 
 
 @dataclass
@@ -723,6 +735,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
     :param datasource: Alias of index datasource in `datasources` section
     """
 
+    kind: str
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
@@ -934,15 +947,6 @@ class HeadIndexConfig(IndexConfig):
 
 @dataclass
 class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
-    contract: Union[str, ContractConfig]
-    token_id: Optional[int] = None
-
-    @cached_property
-    def contract_config(self) -> ContractConfig:
-        if not isinstance(self.contract, ContractConfig):
-            raise ConfigInitializationException
-        return self.contract
-
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'TokenTransferData'
@@ -959,7 +963,7 @@ class TokenTransferIndexConfig(IndexConfig):
 
     kind: Literal['token_transfer']
     datasource: Union[str, TzktDatasourceConfig]
-    handlers: Tuple[TokenTransferHandlerConfig, ...]
+    handlers: Tuple[TokenTransferHandlerConfig, ...] = field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0
@@ -1438,12 +1442,7 @@ class DipDupConfig:
             pass
 
         elif isinstance(index_config, TokenTransferIndexConfig):
-            if self.advanced.merge_subscriptions:
-                index_config.subscriptions.add(TokenTransferSubscription())
-            else:
-                for token_transfer_handler_config in index_config.handlers:
-                    address, token_id = token_transfer_handler_config.contract_config.address, token_transfer_handler_config.token_id
-                    index_config.subscriptions.add(TokenTransferSubscription(address=address, token_id=token_id))
+            index_config.subscriptions.add(TokenTransferSubscription())
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1471,7 +1470,7 @@ class DipDupConfig:
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_contract(pattern_config.source)
                         if not pattern_config.entrypoint:
-                            pattern_config.transaction_idx = idx
+                            pattern_config._transaction_idx = idx
 
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                         if isinstance(pattern_config.source, str):
@@ -1505,8 +1504,6 @@ class DipDupConfig:
 
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
-                if isinstance(token_transfer_handler_config.contract, str):
-                    token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

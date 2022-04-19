@@ -1,4 +1,5 @@
 from decimal import Decimal
+from decimal import InvalidOperation
 
 from demo_tzbtc_transfers.handlers.on_balance_update import on_balance_update
 from dipdup.context import HandlerContext
@@ -12,7 +13,10 @@ async def on_token_transfer(
     from_, to = token_transfer.from_address, token_transfer.to_address
     if not from_ or not to or from_ == to:
         return
-    amount = Decimal(token_transfer.amount or 0) / (10**8)
+    try:
+        amount = Decimal(token_transfer.amount or 0) / (10**8)
+    except InvalidOperation:
+        return
     if not amount:
         return
 

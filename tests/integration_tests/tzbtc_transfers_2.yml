@@ -16,5 +16,5 @@ indexes:
     datasource: tzkt
     handlers:
       - callback: on_token_transfer
-    first_level: 1364999
-    last_level: 1366000
+    first_level: 1366824
+    last_level: 1366999

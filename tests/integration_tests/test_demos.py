@@ -5,8 +5,8 @@ from os import mkdir
 from os.path import dirname
 from os.path import join
 from shutil import rmtree
-from unittest import IsolatedAsyncioTestCase
 
+import pytest
 from tortoise.transactions import in_transaction
 
 import demo_hic_et_nunc.models
@@ -16,14 +16,12 @@ import demo_tezos_domains_big_map.models
 import demo_tzbtc.models
 import demo_tzbtc_transfers.models
 import demo_tzcolors.models
-from dipdup.utils import skip_ci
 from dipdup.utils.database import tortoise_wrapper
 
 
-@skip_ci
-class DemosTest(IsolatedAsyncioTestCase):
-    # TODO: store cache in xdg_cache_home, keep databases and logs after last run
-    def setUp(self) -> None:
+class TestDemos:
+    @pytest.fixture(autouse=True)
+    def prepare_dir(self) -> None:
         with suppress(FileNotFoundError):
             rmtree('/tmp/dipdup')
         mkdir('/tmp/dipdup')
@@ -51,10 +49,10 @@ class DemosTest(IsolatedAsyncioTestCase):
             swaps = await demo_hic_et_nunc.models.Swap.filter().count()
             trades = await demo_hic_et_nunc.models.Trade.filter().count()
 
-            self.assertEqual(22, holders)
-            self.assertEqual(29, tokens)
-            self.assertEqual(20, swaps)
-            self.assertEqual(24, trades)
+            assert 22 == holders
+            assert 29 == tokens
+            assert 20 == swaps
+            assert 24 == trades
 
     async def test_quipuswap(self) -> None:
         self.run_dipdup('quipuswap.yml')
@@ -64,9 +62,9 @@ class DemosTest(IsolatedAsyncioTestCase):
             positions = await demo_quipuswap.models.Position.filter().count()
             async with in_transaction() as conn:
                 symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
-            self.assertEqual(2, symbols)
-            self.assertEqual(835, trades)
-            self.assertEqual(214, positions)
+            assert 2 == symbols
+            assert 835 == trades
+            assert 214 == positions
 
     async def test_tzcolors(self) -> None:
         self.run_dipdup('tzcolors.yml')
@@ -77,10 +75,10 @@ class DemosTest(IsolatedAsyncioTestCase):
             auctions = await demo_tzcolors.models.Auction.filter().count()
             bids = await demo_tzcolors.models.Bid.filter().count()
 
-            self.assertEqual(9, addresses)
-            self.assertEqual(14, tokens)
-            self.assertEqual(14, auctions)
-            self.assertEqual(44, bids)
+            assert 9 == addresses
+            assert 14 == tokens
+            assert 14 == auctions
+            assert 44 == bids
 
     async def test_tezos_domains(self) -> None:
         self.run_dipdup('tezos_domains.yml')
@@ -89,8 +87,8 @@ class DemosTest(IsolatedAsyncioTestCase):
             tlds = await demo_tezos_domains.models.TLD.filter().count()
             domains = await demo_tezos_domains.models.Domain.filter().count()
 
-            self.assertEqual(1, tlds)
-            self.assertEqual(145, domains)
+            assert 1 == tlds
+            assert 145 == domains
 
     async def test_tezos_domains_big_map(self) -> None:
         self.run_dipdup('tezos_domains_big_map.yml')
@@ -99,8 +97,8 @@ class DemosTest(IsolatedAsyncioTestCase):
             tlds = await demo_tezos_domains_big_map.models.TLD.filter().count()
             domains = await demo_tezos_domains_big_map.models.Domain.filter().count()
 
-            self.assertEqual(1, tlds)
-            self.assertEqual(145, domains)
+            assert 1 == tlds
+            assert 145 == domains
 
     async def test_tzbtc(self) -> None:
         self.run_dipdup('tzbtc.yml')
@@ -109,15 +107,23 @@ class DemosTest(IsolatedAsyncioTestCase):
             holders = await demo_tzbtc.models.Holder.filter().count()
             random_balance = (await demo_tzbtc.models.Holder.first()).balance  # type: ignore
 
-            self.assertEqual(4, holders)
-            self.assertEqual(Decimal('-0.01912431'), random_balance)
+            assert 4 == holders
+            assert Decimal('-0.01912431') == random_balance
 
-    async def test_tzbtc_transfers(self) -> None:
-        self.run_dipdup('tzbtc_transfers.yml')
+    @pytest.mark.parametrize(
+        'config_file, expected_holders, expected_balance',
+        [
+            ('tzbtc_transfers.yml', 115, '-91396645150.66341801'),
+            ('tzbtc_transfers_2.yml', 66, '-21379464893.89105268'),
+            ('tzbtc_transfers_3.yml', 502, '-0.00000043'),
+        ],
+    )
+    async def test_tzbtc_transfers(self, config_file, expected_holders, expected_balance) -> None:
+        self.run_dipdup(config_file)
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzbtc_transfers.models'):
             holders = await demo_tzbtc_transfers.models.Holder.filter().count()
             random_balance = (await demo_tzbtc_transfers.models.Holder.first()).balance  # type: ignore
 
-            self.assertEqual(4, holders)
-            self.assertEqual(Decimal('-0.01912431'), random_balance)
+            assert holders == expected_holders
+            assert f'{random_balance:f}' == expected_balance
