@@ -111,6 +111,10 @@ class HasuraGateway(HTTPGateway):
         self._logger.info('Configuring Hasura')
         await self._healthcheck()
 
+        # NOTE: Add source if it should be added
+        if self._hasura_config.add_source:
+            await self._add_source()
+
         hasura_schema_name = f'hasura_{self._hasura_config.url}'
         hasura_schema, _ = await Schema.get_or_create(name=hasura_schema_name, defaults={'hash': ''})
         metadata = await self._fetch_metadata()
@@ -131,7 +135,7 @@ class HasuraGateway(HTTPGateway):
         await self._replace_metadata(metadata)
 
         # NOTE: Apply table customizations before generating queries
-        await self._apply_table_customization()
+        await self._apply_table_customization(metadata)
         metadata = await self._fetch_metadata()
 
         # NOTE: Generate and apply queries and REST endpoints
@@ -201,6 +205,33 @@ class HasuraGateway(HTTPGateway):
             raise HasuraError('v1 is not supported, upgrade to the latest stable version.')
 
         self._logger.info('Connected to Hasura %s', version)
+
+    async def _add_source(self) -> Dict[str, Any]:
+        self._logger.info(f'Adding source `{self._hasura_config.source}`')
+        # NOTE: Using default settings
+        return await self._hasura_request(
+            endpoint='metadata',
+            json={
+                "type": "pg_add_source",
+                "args": {
+                    "name": self._hasura_config.source,
+                    "configuration": {
+                        "connection_info": {
+                            "database_url": {
+                                "connection_parameters" : {
+                                    "username": self._database_config.user,
+                                    "password": self._database_config.password,
+                                    "database": self._database_config.database,
+                                    "host": self._database_config.host,
+                                    "port": self._database_config.port
+                                }
+                            }
+                        }
+                    },
+                    "replace_configuration": True,
+                }
+            }
+        )
 
     async def _fetch_metadata(self) -> Dict[str, Any]:
         self._logger.info('Fetching existing metadata')
@@ -398,7 +429,7 @@ class HasuraGateway(HTTPGateway):
 
         return fields
 
-    async def _apply_table_customization(self) -> None:
+    async def _apply_table_customization(self, metadata: Dict[str, Any]) -> None:
         """Convert table and column names to camelCase.
 
         Based on https://github.com/m-rgba/hasura-snake-to-camel
@@ -406,9 +437,21 @@ class HasuraGateway(HTTPGateway):
 
         tables = await self._get_fields()
 
+        # NOTE: Build a set of table names for our source
+        metadata_tables: set[str] = set()
+        source_name = self._hasura_config.source
+        for source in metadata['sources']:
+            if source['name'] == source_name:
+                for tbl in source['tables']:
+                    metadata_tables.add(tbl['table']['name'])
+
         # TODO: Bulk request
         for table in tables:
-            custom_root_fields = self._format_custom_root_fields(table)
+            if table.root not in metadata_tables:
+                self._logger.info(f'Table `{table.root}` not in metadata. Skipping customization.')
+                continue
+
+            custom_root_fields = self._format_custom_root_fields(table.root)
             columns = await self._get_fields(table.root)
             custom_column_names = self._format_custom_column_names(columns)
             args: Dict[str, Any] = {
@@ -477,9 +520,7 @@ class HasuraGateway(HTTPGateway):
             "comment": None,
         }
 
-    def _format_custom_root_fields(self, table: Field) -> Dict[str, Any]:
-        table_name = table.root
-
+    def _format_custom_root_fields(self, table_name: str) -> Dict[str, Any]:
         def _fmt(fmt: str) -> str:
             if self._hasura_config.camel_case:
                 return humps.camelize(fmt.format(table_name))
