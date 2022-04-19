@@ -943,6 +943,7 @@ class HasuraConfig:
 
     :param url: URL of the Hasura instance.
     :param admin_secret: Admin secret of the Hasura instance.
+    :param add_source: Whether source should be added to Hasura.
     :param source: Hasura source for DipDup to configure, others will be left untouched.
     :param select_limit: Row limit for unauthenticated queries.
     :param allow_aggregations: Whether to allow aggregations in unauthenticated queries.
@@ -953,6 +954,7 @@ class HasuraConfig:
 
     url: str
     admin_secret: Optional[str] = None
+    add_source: bool = False
     source: str = 'default'
     select_limit: int = 100
     allow_aggregations: bool = True
