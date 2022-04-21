@@ -385,9 +385,14 @@ class OperationIndex(Index):
 
             self._logger.info('Comparing hashes: %s new, %s missing', len(unprocessed_hashes), len(missing_hashes))
             if missing_hashes:
-                self._logger.info('Some operations were backtracked: %s', ', '.join(missing_hashes))
-                # TODO: More context
-                await self._ctx.reindex(ReindexingReason.rollback)
+                self._logger.info('Some operations were backtracked, requesting reindexing')
+                await self._ctx.reindex(
+                    ReindexingReason.rollback,
+                    datasource=self._datasource.name,
+                    from_level=level + 1,
+                    to_level=level,
+                    missing_hashes=', '.join(missing_hashes),
+                )
 
             self._rollback_level = None
             self._head_hashes.clear()
