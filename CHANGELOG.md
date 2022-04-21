@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* jobs: Fixed graceful shutdown of daemon jobs.
+
 ## 5.0.1 - 2022-04-12
 
 ### Fixed

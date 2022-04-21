@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime
 from functools import partial
@@ -48,11 +49,13 @@ def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConf
             logger=logger,
             hook_config=hook_config,
         )
-
-        await job_ctx.fire_hook(hook_config.callback, *args, **kwargs)
-
-        if job_config.daemon:
-            raise ConfigurationError('Daemon jobs are intended to run forever')
+        try:
+            await job_ctx.fire_hook(hook_config.callback, *args, **kwargs)
+        except asyncio.CancelledError:
+            pass
+        else:
+            if job_config.daemon:
+                raise ConfigurationError('Daemon jobs are intended to run forever')
 
     logger = FormattedLogger(
         name=f'dipdup.hooks.{hook_config.callback}',
