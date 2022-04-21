@@ -266,7 +266,7 @@ class OperationIndex(Index):
         self._queue: Deque[OperationQueueItemT] = deque()
         self._contract_hashes: Dict[str, Tuple[int, int]] = {}
         self._rollback_level: Optional[int] = None
-        self._head_hashes: Set[str] = set()
+        self._head_hashes: Dict[str, bool] = {}
         self._migration_originations: Optional[Dict[str, OperationData]] = None
 
     def push_operations(self, operation_subgroups: Tuple[OperationSubgroup, ...]) -> None:
@@ -375,12 +375,15 @@ class OperationIndex(Index):
                 levels_repr = ', '.join(f'{k}={v}' for k, v in levels.items())
                 raise RuntimeError(f'Index is in a rollback state, but received operation batch with different levels: {levels_repr}')
 
-            self._logger.info('Rolling back to previous level, verifying processed operations')
-            received_hashes = {s.hash for s in operation_subgroups}
-            new_hashes = received_hashes - self._head_hashes
-            missing_hashes = self._head_hashes - received_hashes
+            self._logger.info('Rolling back to the previous level, verifying processed operations')
+            old_head_hashes = set(self._head_hashes)
+            old_head_matched_hashes = {k for k, v in self._head_hashes.items() if v}
+            new_head_hashes = {s.hash for s in operation_subgroups}
+            unprocessed_hashes = new_head_hashes - old_head_hashes
+            # NOTE: We can ignore subgroups that don't match any handlers
+            missing_hashes = old_head_matched_hashes - new_head_hashes
 
-            self._logger.info('Comparing hashes: %s new, %s missing', len(new_hashes), len(missing_hashes))
+            self._logger.info('Comparing hashes: %s new, %s missing', len(unprocessed_hashes), len(missing_hashes))
             if missing_hashes:
                 self._logger.info('Some operations were backtracked, requesting reindexing')
                 await self._ctx.reindex(
@@ -394,7 +397,7 @@ class OperationIndex(Index):
             self._rollback_level = None
             self._head_hashes.clear()
 
-            operation_subgroups = tuple(filter(lambda subgroup: subgroup.hash in new_hashes, operation_subgroups))
+            operation_subgroups = tuple(filter(lambda subgroup: subgroup.hash in unprocessed_hashes, operation_subgroups))
 
         elif level < self.state.level:
             raise RuntimeError(f'Level of operation batch must be higher than index state level: {level} < {self.state.level}')
@@ -402,8 +405,9 @@ class OperationIndex(Index):
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), level)
         matched_handlers: Deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
-            self._head_hashes.add(operation_subgroup.hash)
-            matched_handlers += await self._match_operation_subgroup(operation_subgroup)
+            subgroup_matched_handlers = await self._match_operation_subgroup(operation_subgroup)
+            matched_handlers += subgroup_matched_handlers
+            self._head_hashes[operation_subgroup.hash] = bool(subgroup_matched_handlers)
 
         if Metrics.enabled:
             Metrics.set_index_handlers_matched(len(matched_handlers))
