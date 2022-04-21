@@ -4,7 +4,15 @@
 
 ### Fixed
 
+* context: Fixed reporting incorrect reindexing reason.
+* exceptions: Fixed crash with `FrozenInstanceError` when exception is raised from callback.
 * jobs: Fixed graceful shutdown of daemon jobs.
+
+### Improved
+
+* codegen: Refined `on_rollback` hook template.
+* exceptions: Updated help messages for known exceptions.
+* tzkt: Do not request reindexing if missing subgroups matched no handlers.
 
 ## 5.0.1 - 2022-04-12
 

@@ -36,18 +36,25 @@ class ConfigInitializationException(DipDupException):
     message = 'Config is not initialized. Some stage was skipped. Call `pre_initialize` or `initialize`.'
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class DipDupError(Exception):
     """Unknown DipDup error"""
 
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}: {self.__doc__}'
+    def __str__(self) -> str:
+        if not self.__doc__:
+            raise NotImplementedError(f'{self.__class__.__name__} has no docstring')
+        return self.__doc__
 
     def _help(self) -> str:
-        # TODO: Update guide
-        return """
-            Unexpected error occurred!
+        # FIXME: Indentation hell
+        prefix = '\n' + ' ' * 14
+        context = prefix.join(str(self.args))
+        if context:
+            context = '{prefix}{context}\n'.format(prefix=prefix, context=context)
 
+        return """
+            An unexpected error has occurred!
+              {context}
             Please file a bug report at https://github.com/dipdup-net/dipdup/issues and attach the following:
 
               * `dipdup.yml` config. Make sure to remove sensitive information.
@@ -61,7 +68,7 @@ class DipDupError(Exception):
         return _tab + self.help() + '\n'
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class DatasourceError(DipDupError):
     """One of datasources returned an error"""
 
@@ -76,7 +83,7 @@ class DatasourceError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class ConfigurationError(DipDupError):
     """DipDup YAML config is invalid"""
 
@@ -90,7 +97,7 @@ class ConfigurationError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class DatabaseConfigurationError(ConfigurationError):
     """DipDup can't initialize database with given models and parameters"""
 
@@ -108,7 +115,7 @@ class DatabaseConfigurationError(ConfigurationError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class MigrationRequiredError(DipDupError):
     """Project and DipDup spec versions don't match"""
 
@@ -130,14 +137,16 @@ class MigrationRequiredError(DipDupError):
 
             {version_table.strip()}
 
-              1. Run `dipdup migrate`
-              2. Review and commit changes
+            Perform the following actions:
 
-            See https://baking-bad.org/blog/ for additional release information. {reindex}
+              1. Run `dipdup migrate`.
+              2. Review and commit changes.
+
+            See https://docs.dipdup.net/release-notes for more information. {reindex}
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class ReindexingRequiredError(DipDupError):
     """Unable to continue indexing with existing database"""
 
@@ -145,39 +154,43 @@ class ReindexingRequiredError(DipDupError):
     context: Dict[str, Any] = field(default_factory=dict)
 
     def _help(self) -> str:
-        additional_context = '\n              '.join(f'{k}: {v}' for k, v in self.context.items())
-        return f"""
-            Reindexing required!
+        # FIXME: Indentation hell
+        prefix = '\n' + ' ' * 14
+        context = prefix.join(f'{k}: {v}' for k, v in self.context.items())
+        if context:
+            context = '{prefix}{context}\n'.format(prefix=prefix, context=context)
 
-            Reason: {self.reason.value}
-
-            Additional context:
-
-                {additional_context}
-
+        return """
+            Reindexing required! Reason: {reason}.
+              {context}
             You may want to backup database before proceeding. After that perform one of the following actions:
 
-                * Eliminate the cause of reindexing and run `dipdup schema approve`.
-                * Drop database and start indexing from scratch with `dipdup schema wipe` command.
-        """
+              * Eliminate the cause of reindexing and run `dipdup schema approve`.
+              * Drop database and start indexing from scratch with `dipdup schema wipe` command.
+
+            See https://docs.dipdup.net/advanced/reindexing for more information.
+        """.format(
+            reason=self.reason.value,
+            context=context,
+        )
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class InitializationRequiredError(DipDupError):
     message: str
 
     def _help(self) -> str:
         return f"""
-            Project initialization required!
+            Project initialization required! Reason: {self.message}.
 
-            Reason: {self.message}
+            Perform the following actions:
 
-            1. Run `dipdup init`
-            2. Review and commit changes
+              * Run `dipdup init`.
+              * Review and commit changes.
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class HandlerImportError(DipDupError):
     """Can't perform import from handler module"""
 
@@ -199,7 +212,7 @@ class HandlerImportError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class ContractAlreadyExistsError(DipDupError):
     """Attemp to add a contract with alias or address which is already in use"""
 
@@ -223,7 +236,7 @@ class ContractAlreadyExistsError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class IndexAlreadyExistsError(DipDupError):
     """Attemp to add an index with alias which is already in use"""
 
@@ -246,7 +259,7 @@ class IndexAlreadyExistsError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class InvalidDataError(DipDupError):
     """Failed to validate datasource message against generated type class"""
 
@@ -270,20 +283,24 @@ class InvalidDataError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class CallbackError(DipDupError):
     """An error occured during callback execution"""
 
-    kind: str
-    name: str
+    module: str
+    exc: Exception
 
     def _help(self) -> str:
         return f"""
-            `{self.name}` {self.kind} callback execution failed.
+            `{self.module}` callback execution failed.
+
+              {self.exc.__class__.__name__}{self.exc}
+            
+            Eliminate the reason of failure and restart DipDup.
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class CallbackTypeError(DipDupError):
     """Agrument of invalid type was passed to a callback"""
 
@@ -306,7 +323,7 @@ class CallbackTypeError(DipDupError):
         """
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(repr=False)
 class HasuraError(DipDupError):
     """Failed to configure Hasura instance"""
 

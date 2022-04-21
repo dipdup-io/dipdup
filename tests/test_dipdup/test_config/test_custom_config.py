@@ -103,7 +103,11 @@ custom:
     var_from_env: {value}
 """
         config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
-        with pytest.raises(ConfigurationError) as exception_info:
-            DipDupConfig.load([config_path], True)
 
-        assert str(exception_info.value) == 'Environment variable `DEFINITELY_NOT_DEFINED` is not set'
+        try:
+            DipDupConfig.load([config_path], True)
+        except ConfigurationError as exc:
+            assert str(exc) == 'DipDup YAML config is invalid'
+            assert exc.args[0] == 'Environment variable `DEFINITELY_NOT_DEFINED` is not set'
+        else:
+            raise AssertionError('ConfigurationError not raised')
