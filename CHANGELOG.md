@@ -6,6 +6,7 @@
 
 * context: Fixed reporting incorrect reindexing reason.
 * exceptions: Fixed crash with `FrozenInstanceError` when exception is raised from callback.
+* jobs: Fixed graceful shutdown of daemon jobs.
 
 ### Improved
 
