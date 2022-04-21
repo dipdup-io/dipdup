@@ -1071,7 +1071,7 @@ default_hooks = {
     'on_rollback': HookConfig(
         callback='on_rollback',
         args={
-            'datasource': 'dipdup.datasources.datasource.Datasource',
+            'datasource': 'dipdup.datasources.datasource.IndexDatasource',
             'from_level': 'int',
             'to_level': 'int',
         },
