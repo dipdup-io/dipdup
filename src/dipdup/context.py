@@ -165,16 +165,18 @@ class DipDupContext:
 
     async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> None:
         """Drop the whole database and restart with the same CLI arguments"""
-        if not reason:
+        if reason is None:
             reason = ReindexingReason.manual
-        elif isinstance(reason, str):
+        # NOTE: Do not check for `str`!
+        elif not isinstance(reason, ReindexingReason):
             context['message'] = reason
             reason = ReindexingReason.manual
 
         action = self.config.advanced.reindex.get(reason, ReindexingAction.exception)
-        self.logger.warning('Reindexing initialized, reason: %s, action: %s', reason.value, action.value)
+        self.logger.warning('Reindexing requested: reason `%s`, action `%s`', reason.value, action.value)
 
         if action == ReindexingAction.ignore:
+            # NOTE: Recalculate hashes on the next run
             if reason == ReindexingReason.schema_modified:
                 await Schema.filter(name=self.config.schema_name).update(hash='')
             elif reason == ReindexingReason.config_modified:
@@ -406,17 +408,18 @@ class CallbackManager:
         *args,
         **kwargs: Any,
     ) -> None:
+        module = f'{self._package}.handlers.{name}'
         handler_config = self._get_handler(name, index)
         new_ctx = HandlerContext(
             datasources=ctx.datasources,
             config=ctx.config,
             callbacks=ctx.callbacks,
-            logger=FormattedLogger(f'dipdup.handlers.{name}', fmt),
+            logger=FormattedLogger(module, fmt),
             handler_config=handler_config,
             datasource=datasource,
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
-        with self._callback_wrapper('handler', name):
+        with self._callback_wrapper(module):
             await handler_config.callback_fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
@@ -428,12 +431,13 @@ class CallbackManager:
         *args,
         **kwargs: Any,
     ) -> None:
+        module = f'{self._package}.hooks.{name}'
         hook_config = self._get_hook(name)
         new_ctx = HookContext(
             datasources=ctx.datasources,
             config=ctx.config,
             callbacks=ctx.callbacks,
-            logger=FormattedLogger(f'dipdup.hooks.{name}', fmt),
+            logger=FormattedLogger(module, fmt),
             hook_config=hook_config,
         )
 
@@ -441,8 +445,7 @@ class CallbackManager:
 
         async def _wrapper():
             async with AsyncExitStack() as stack:
-
-                stack.enter_context(self._callback_wrapper('hook', name))
+                stack.enter_context(self._callback_wrapper(module))
                 if hook_config.atomic:
                     await stack.enter_async_context(in_global_transaction())
 
@@ -469,16 +472,16 @@ class CallbackManager:
         await execute_sql_scripts(connection, sql_path)
 
     @contextmanager
-    def _callback_wrapper(self, kind: str, name: str) -> Iterator[None]:
+    def _callback_wrapper(self, module: str) -> Iterator[None]:
         try:
             with ExitStack() as stack:
                 if Metrics.enabled:
-                    stack.enter_context(Metrics.measure_callback_duration(name))
+                    stack.enter_context(Metrics.measure_callback_duration(module))
                 yield
         except Exception as e:
             if isinstance(e, ReindexingRequiredError):
                 raise
-            raise CallbackError(kind, name) from e
+            raise CallbackError(module, e) from e
 
     @classmethod
     def _verify_arguments(cls, ctx: HookContext, *args, **kwargs) -> None:

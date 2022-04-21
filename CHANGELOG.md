@@ -1,5 +1,17 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* context: Fixed reporting incorrect reindexing reason.
+* exceptions: Fixed crash with `FrozenInstanceError` when exception is raised from callback.
+
+### Improved
+
+* codegen: Refined `on_rollback` hook template.
+* exceptions: Updated help messages for known exceptions.
+
 ## 5.0.1 - 2022-04-12
 
 ### Fixed

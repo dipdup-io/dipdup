@@ -484,12 +484,15 @@ class DipDup:
             if not db_head:
                 continue
 
+            # NOTE: Ensure that no reorgs happened while we were offline
             actual_head = await datasource.get_block(db_head.level)
             if db_head.hash != actual_head.hash:
                 await self._ctx.reindex(
                     ReindexingReason.rollback,
-                    hash=db_head.hash,
-                    actual_hash=actual_head.hash,
+                    datasource=datasource.name,
+                    level=db_head.level,
+                    stored_block_hash=db_head.hash,
+                    actual_block_hash=actual_head.hash,
                 )
 
     async def _set_up_index_dispatcher(
