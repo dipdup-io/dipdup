@@ -11,6 +11,17 @@ datasources:
   tzkt:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      cache: false
+      retry_count:  # retry infinetely
+      retry_sleep:
+      retry_multiplier:
+      ratelimit_rate:
+      ratelimit_period:
+      connection_limit: 100
+      connection_timeout: 60
+      batch_size: 10000
+    buffer_size: 0
 ```
 
 ## coinbase

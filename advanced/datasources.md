@@ -22,6 +22,31 @@ datasources:
     url: https://api.tzkt.io
 ```
 
+TzKT datasource is based on generic HTTP datasource and thus inherits its settings (optional):
+
+```yaml
+datasources:
+  tzkt_mainnet:
+    http:
+      cache: false
+      retry_count:  # retry infinetely
+      retry_sleep:
+      retry_multiplier:
+      ratelimit_rate:
+      ratelimit_period:
+      connection_limit: 100
+      connection_timeout: 60
+      batch_size: 10000
+```
+
+Also you can wait for several block confirmations before processing the operations, e.g. to mitigate chain reorgs:
+
+```yaml
+datasources:
+  tzkt_mainnet:
+    buffer_size: 1  # indexing with single block lag
+```
+
 ## Tezos node
 
 Tezos RPC is a standard interface provided by the Tezos node. It's not suitable for indexing purposes but used for accessing mempool data and other things that are not available through TzKT.
