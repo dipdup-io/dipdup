@@ -222,9 +222,6 @@ class Index:
                     stack.enter_context(Metrics.measure_total_realtime_duration())
                 await self._process_queue()
 
-        elif index_level > sync_level:
-            raise RuntimeError(f'Index level {index_level} is already above sync level {sync_level}')
-
     @abstractmethod
     async def _synchronize(self, head_level: int, cache: bool = False) -> None:
         ...
