@@ -54,6 +54,8 @@ from dipdup.utils import exclude_none
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+from dipdup.utils.database import in_global_transaction
+from dipdup.utils.database import null_global_transaction
 
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*))?\}'  # ${VARIABLE:-default} | ${VARIABLE}
 DEFAULT_RETRY_COUNT = 3
@@ -737,12 +739,16 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
 
     kind: str
     datasource: Union[str, TzktDatasourceConfig]
+    disable_lock_database: Optional[bool]
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
         SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
+
+        self.level_transaction = null_global_transaction if self.disable_lock_database else in_global_transaction
+
 
     @cached_property
     def datasource_config(self) -> TzktDatasourceConfig:

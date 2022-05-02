@@ -81,6 +81,11 @@ async def in_global_transaction():
     Tortoise._connections['default'] = original_conn
 
 
+@asynccontextmanager
+async def null_global_transaction():
+    yield
+
+
 def is_model_class(obj: Any) -> bool:
     """Is subclass of tortoise.Model, but not the base class"""
     return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)

@@ -921,7 +921,7 @@ class TokenTransferIndex(Index):
             await self.state.update_status(level=level)
             return
 
-        async with in_global_transaction():
+        async with self._config.level_transaction():
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=level)
