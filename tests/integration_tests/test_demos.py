@@ -116,6 +116,7 @@ class TestDemos:
             ('tzbtc_transfers.yml', 115, '-91396645150.66341801'),
             ('tzbtc_transfers_2.yml', 66, '-21379464893.89105268'),
             ('tzbtc_transfers_3.yml', 502, '-0.00000043'),
+            ('tzbtc_transfers_4.yml', 32, '-0.00000001'),
         ],
     )
     async def test_tzbtc_transfers(self, config_file, expected_holders, expected_balance) -> None:

@@ -1160,7 +1160,7 @@ class TzktDatasource(IndexDatasource):
         from_json = token_transfer_json.get('from') or {}
         to_json = token_transfer_json.get('to') or {}
         standard = token_json.get('standard')
-
+        metadata = token_json.get('metadata')
         return TokenTransferData(
             id=token_transfer_json['id'],
             level=token_transfer_json['level'],
@@ -1170,7 +1170,7 @@ class TzktDatasource(IndexDatasource):
             contract_alias=contract_json.get('alias'),
             token_id=token_json.get('tokenId'),
             standard=TokenStandard(standard) if standard else None,
-            metadata=token_json.get('metadata'),
+            metadata=metadata if isinstance(metadata, dict) else {},
             from_alias=from_json.get('alias'),
             from_address=from_json.get('address'),
             to_alias=to_json.get('alias'),
