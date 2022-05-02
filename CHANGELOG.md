@@ -1,18 +1,25 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* tzkt: Fixed inconsistent behavior of `first_level`/`last_level` arguments in different getter methods.
+* index: Fixed setting initial index level when `IndexConfig.first_level` is set.
+
 ## 5.0.2 - 2022-04-21
 
 ### Fixed
 
 * context: Fixed reporting incorrect reindexing reason.
-* exceptions: Fixed crash with `FrozenInstanceError` when exception is raised from callback.
+* exceptions: Fixed crash with `FrozenInstanceError` when an exception is raised from a callback.
 * jobs: Fixed graceful shutdown of daemon jobs.
 
 ### Improved
 
 * codegen: Refined `on_rollback` hook template.
 * exceptions: Updated help messages for known exceptions.
-* tzkt: Do not request reindexing if missing subgroups matched no handlers.
+* tzkt: Do not request reindexing if missing subgroups have matched no handlers.
 
 ## 5.0.1 - 2022-04-12
 
