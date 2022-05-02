@@ -375,17 +375,12 @@ class OperationIndex(Index):
 
         batch_level = operation_subgroups[0].operations[0].level
         index_level = self.state.level
+        if batch_level < index_level:
+            raise RuntimeError(f'Batch level is lower than index level: {batch_level} < {index_level}')
+
         if head_level := self._next_head_level:
-            levels = {
-                'batch': batch_level,
-                'head': head_level,
-                'index': index_level,
-            }
-            if len(set(levels.values())) != 1:
-                levels_repr = ', '.join(f'{k}={v}' for k, v in levels.items())
-                raise RuntimeError(
-                    f'Index is in a single-level rollback state, but received operation batch with different levels: {levels_repr}'
-                )
+            if head_level != index_level:
+                raise RuntimeError(f'New head level is not equal to index level: {head_level} != {index_level}')
 
             self._logger.info('Rolling back to the previous level, verifying processed operations')
             old_head_hashes = set(self._head_hashes)
@@ -411,9 +406,6 @@ class OperationIndex(Index):
             self._head_hashes.clear()
 
             operation_subgroups = tuple(filter(lambda subgroup: subgroup.hash in unprocessed_hashes, operation_subgroups))
-
-        elif batch_level < index_level:
-            raise RuntimeError(f'Level of operation batch must be higher than index state level: {batch_level} < {index_level}')
 
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: Deque[MatchedOperationsT] = deque()
