@@ -54,6 +54,7 @@ from dipdup.models import BlockData
 from dipdup.models import HeadBlockData
 from dipdup.models import OperationData
 from dipdup.models import QuoteData
+from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
 from dipdup.utils.watchdog import Watchdog
 
@@ -270,16 +271,19 @@ class BufferedMessage(NamedTuple):
 
 
 class MessageBuffer:
+    """Buffers realtime TzKT messages and yields them in by level."""
+
     def __init__(self, size: int) -> None:
-        self._logger = logging.getLogger('dipdup.tzkt.buffer')
+        self._logger = logging.getLogger('dipdup.tzkt')
         self._size = size
         self._messages: DefaultDict[int, List[BufferedMessage]] = defaultdict(list)
 
     def add(self, type_: MessageType, level: int, data: MessageData) -> None:
+        """Add a message to the buffer."""
         self._messages[level].append(BufferedMessage(type_, data))
 
     def rollback(self, type_: MessageType, channel_level: int, message_level: int) -> bool:
-        """Drop buffered messages in reversed order while possible"""
+        """Drop buffered messages in reversed order while possible, return if successful."""
         # NOTE: No action required for this channel
         if type_ == MessageType.head:
             return True
@@ -288,6 +292,7 @@ class MessageBuffer:
         if channel_level <= message_level:
             return True
 
+        self._logger.info('Rollback requested from %s to %s', type_.value, channel_level, message_level)
         levels = range(channel_level, message_level, -1)
         for level in levels:
             if not self._messages.pop(level, None):
@@ -298,10 +303,8 @@ class MessageBuffer:
         return True
 
     def yield_from(self) -> Generator[BufferedMessage, None, None]:
+        """Yield extensively buffered messages by level"""
         buffered_levels = sorted(self._messages.keys())
-        if len(buffered_levels) < self._size:
-            return
-
         yielded_levels = buffered_levels[: len(buffered_levels) - self._size]
         for level in yielded_levels:
             for buffered_message in self._messages.pop(level):
@@ -342,6 +345,10 @@ class TzktDatasource(IndexDatasource):
     @property
     def request_limit(self) -> int:
         return cast(int, self._http_config.batch_size)
+
+    def set_logger(self, name: str) -> None:
+        super().set_logger(name)
+        self._buffer._logger = FormattedLogger(self._buffer._logger.name, name + ': {}')
 
     def get_channel_level(self, message_type: MessageType) -> int:
         """Get current level of the channel, or sync level is no messages were received yet."""
@@ -875,10 +882,12 @@ class TzktDatasource(IndexDatasource):
             # NOTE: Put data messages to buffer by level
             if tzkt_type == TzktMessageType.DATA:
                 self._buffer.add(type_, message_level, item['data'])
+
             # NOTE: Try to process rollback automatically, emit if failed
             elif tzkt_type == TzktMessageType.REORG:
                 if not self._buffer.rollback(type_, channel_level, message_level):
                     await self.emit_rollback(channel_level, message_level)
+
             else:
                 raise NotImplementedError(f'Unknown message type: {tzkt_type}')
 

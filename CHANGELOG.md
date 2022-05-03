@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* tzkt: Fixed delayed emitting of buffered realtime messages.
+
 ## 5.0.2 - 2022-04-21
 
 ### Fixed
