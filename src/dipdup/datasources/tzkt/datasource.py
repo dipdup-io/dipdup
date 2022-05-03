@@ -60,11 +60,6 @@ from dipdup.utils.watchdog import Watchdog
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 
 
-class BufferedMessage(NamedTuple):
-    type: MessageType
-    data: Union[Dict[str, Any], List[Dict[str, Any]]]
-
-
 def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationData, ...]:
     """Merge and sort operations fetched from multiple endpoints"""
     return tuple(
@@ -266,6 +261,53 @@ class BigMapFetcher:
             yield big_maps[0].level, big_maps
 
 
+MessageData = Union[Dict[str, Any], List[Dict[str, Any]]]
+
+
+class BufferedMessage(NamedTuple):
+    type: MessageType
+    data: MessageData
+
+
+class MessageBuffer:
+    def __init__(self, size: int) -> None:
+        self._logger = logging.getLogger('dipdup.tzkt.buffer')
+        self._size = size
+        self._messages: DefaultDict[int, List[BufferedMessage]] = defaultdict(list)
+
+    def add(self, type_: MessageType, level: int, data: MessageData) -> None:
+        self._messages[level].append(BufferedMessage(type_, data))
+
+    def rollback(self, type_: MessageType, channel_level: int, message_level: int) -> bool:
+        """Drop buffered messages in reversed order while possible"""
+        # NOTE: No action required for this channel
+        if type_ == MessageType.head:
+            return True
+
+        # NOTE: This rollback does not affect us, so we can safely ignore it
+        if channel_level <= message_level:
+            return True
+
+        levels = range(channel_level, message_level, -1)
+        for level in levels:
+            if not self._messages.pop(level, None):
+                self._logger.info('Level %s is not buffered, can\'t avoid rollback', level)
+                return False
+
+        self._logger.info('All rolled back levels are buffered, no action required')
+        return True
+
+    def yield_from(self) -> Generator[BufferedMessage, None, None]:
+        buffered_levels = sorted(self._messages.keys())
+        if len(buffered_levels) < self._size:
+            return
+
+        yielded_levels = buffered_levels[: len(buffered_levels) - self._size]
+        for level in yielded_levels:
+            for buffered_message in self._messages.pop(level):
+                yield buffered_message
+
+
 class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
         cache=True,
@@ -292,8 +334,7 @@ class TzktDatasource(IndexDatasource):
         )
         self._logger = logging.getLogger('dipdup.tzkt')
         self._watchdog = watchdog
-        self._buffer_size = buffer_size
-        self._buffer: DefaultDict[int, List[BufferedMessage]] = defaultdict(list)
+        self._buffer = MessageBuffer(buffer_size)
 
         self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
@@ -810,46 +851,6 @@ class TzktDatasource(IndexDatasource):
         """Raise exception from WS server's error message"""
         raise DatasourceError(datasource=self.name, msg=cast(str, message.error))
 
-    def _yield_from_buffer(self) -> Generator[BufferedMessage, None, None]:
-        buffered_levels = sorted(self._buffer.keys())
-        if len(buffered_levels) < self._buffer_size:
-            return
-
-        yielded_levels = buffered_levels[: len(buffered_levels) - self._buffer_size]
-        for level in yielded_levels:
-            for buffered_message in self._buffer.pop(level):
-                yield buffered_message
-
-    async def _process_data_message(self, type_: MessageType, message_level: int, message_data: Dict[str, Any]) -> None:
-        self._buffer[message_level].append(BufferedMessage(type_, message_data))
-
-    async def _process_reorg_message(self, type_: MessageType, message_level: int, channel_level: int) -> None:
-        # NOTE: No action required for this channel
-        if type_ == MessageType.head:
-            return
-
-        # NOTE: This rollback does not affect us, so we can safely ignore it
-        if channel_level <= message_level:
-            return
-
-        self._logger.info('Rollback requested from %s to %s', channel_level, message_level)
-
-        # NOTE: Drop buffered messages in reversed order while possible
-        rolled_back_levels = range(channel_level, message_level, -1)
-        for rolled_back_level in rolled_back_levels:
-            if self._buffer.pop(rolled_back_level, None):
-                self._logger.info('Level %s is buffered', rolled_back_level)
-            else:
-                self._logger.info(
-                    'Level %s is not buffered, emitting rollback to %s',
-                    rolled_back_level,
-                    message_level,
-                )
-                await self.emit_rollback(channel_level, message_level)
-                return
-        else:
-            self._logger.info('Rollback is not required, continuing')
-
     async def _on_message(self, type_: MessageType, message: List[Dict[str, Any]]) -> None:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         # NOTE: Parse messages and either buffer or yield data
@@ -873,15 +874,16 @@ class TzktDatasource(IndexDatasource):
 
             # NOTE: Put data messages to buffer by level
             if tzkt_type == TzktMessageType.DATA:
-                await self._process_data_message(type_, message_level, item['data'])
+                self._buffer.add(type_, message_level, item['data'])
             # NOTE: Try to process rollback automatically, emit if failed
             elif tzkt_type == TzktMessageType.REORG:
-                await self._process_reorg_message(type_, message_level, channel_level)
+                if not self._buffer.rollback(type_, channel_level, message_level):
+                    await self.emit_rollback(channel_level, message_level)
             else:
                 raise NotImplementedError(f'Unknown message type: {tzkt_type}')
 
         # NOTE: Process extensive data from buffer
-        for buffered_message in self._yield_from_buffer():
+        for buffered_message in self._buffer.yield_from():
             if buffered_message.type == MessageType.operation:
                 await self._process_operations_data(cast(list, buffered_message.data))
             elif buffered_message.type == MessageType.big_map:
