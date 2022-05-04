@@ -539,7 +539,7 @@ class TzktDatasource(IndexDatasource):
             url='v1/operations/migrations',
             params={
                 'kind': 'origination',
-                'level.gt': first_level,
+                'level.ge': first_level,
                 'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
                 'offset.cr': offset,
                 'limit': limit,
@@ -575,7 +575,7 @@ class TzktDatasource(IndexDatasource):
                 url='v1/operations/originations',
                 params={
                     "originatedContract.in": ','.join(addresses_chunk),
-                    "level.gt": first_level,
+                    "level.ge": first_level,
                     "level.le": last_level,
                     "select": ','.join(ORIGINATION_OPERATION_FIELDS),
                     "status": "applied",
@@ -604,7 +604,7 @@ class TzktDatasource(IndexDatasource):
                 f"{field}.in": ','.join(addresses),
                 "offset.cr": offset,
                 "limit": limit,
-                "level.gt": first_level,
+                "level.ge": first_level,
                 "level.le": last_level,
                 "select": ','.join(TRANSACTION_OPERATION_FIELDS),
                 "status": "applied",
@@ -650,7 +650,7 @@ class TzktDatasource(IndexDatasource):
             params={
                 "contract.in": ",".join(addresses),
                 "path.in": ",".join(paths),
-                "level.gt": first_level,
+                "level.ge": first_level,
                 "level.le": last_level,
                 "offset": offset,
                 "limit": limit,
@@ -691,20 +691,20 @@ class TzktDatasource(IndexDatasource):
 
     async def get_quotes(
         self,
-        from_level: int,
-        to_level: int,
+        first_level: int,
+        last_level: int,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[QuoteData, ...]:
         """Get quotes for blocks"""
         offset, limit = offset or 0, limit or self.request_limit
-        self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
+        self._logger.info('Fetching quotes for levels %s-%s', first_level, last_level)
         quotes_json = await self.request(
             'get',
             url='v1/quotes',
             params={
-                "level.ge": from_level,
-                "level.lt": to_level,
+                "level.ge": first_level,
+                "level.le": last_level,
                 "offset.cr": offset,
                 "limit": limit,
             },
@@ -714,14 +714,14 @@ class TzktDatasource(IndexDatasource):
 
     async def iter_quotes(
         self,
-        from_level: int,
-        to_level: int,
+        first_level: int,
+        last_level: int,
     ) -> AsyncIterator[Tuple[QuoteData, ...]]:
         """Iterate quotes for blocks"""
         async for batch in self._iter_batches(
             self.get_quotes,
-            from_level,
-            to_level,
+            first_level,
+            last_level,
         ):
             yield batch
 
