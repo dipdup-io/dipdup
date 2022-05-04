@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* exceptions: Fixed incorrect formatting and broken links in help messages.
+
 ## 5.0.3 - 2022-05-04
 
 ### Fixed
