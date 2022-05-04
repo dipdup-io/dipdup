@@ -1373,11 +1373,14 @@ class DipDupConfig:
         if isinstance(index_config, OperationIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(TransactionSubscription())
-            else:
-                for contract_config in index_config.contracts:
-                    if not isinstance(contract_config, ContractConfig):
-                        raise ConfigInitializationException
-                    index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
+                return
+
+            if not index_config.contracts:
+                raise ConfigurationError('`OperationIndexConfig.contracts` must be set when `merge_subscriptions` flag is disabled')
+            for contract_config in index_config.contracts:
+                if not isinstance(contract_config, ContractConfig):
+                    raise ConfigInitializationException
+                index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
 
             for handler_config in index_config.handlers:
                 for pattern_config in handler_config.pattern:
@@ -1388,10 +1391,11 @@ class DipDupConfig:
         elif isinstance(index_config, BigMapIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(BigMapSubscription())
-            else:
-                for big_map_handler_config in index_config.handlers:
-                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
-                    index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
+                return
+
+            for big_map_handler_config in index_config.handlers:
+                address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
 
         # NOTE: HeadSubscription is always enabled
         elif isinstance(index_config, HeadIndexConfig):

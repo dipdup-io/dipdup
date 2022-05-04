@@ -9,6 +9,7 @@ from collections import deque
 from datetime import datetime
 from datetime import timezone
 from decimal import Decimal
+from functools import partial
 from typing import Any
 from typing import AsyncGenerator
 from typing import AsyncIterator
@@ -19,10 +20,12 @@ from typing import Deque
 from typing import Dict
 from typing import Generator
 from typing import List
+from typing import NamedTuple
 from typing import NoReturn
 from typing import Optional
 from typing import Set
 from typing import Tuple
+from typing import Union
 from typing import cast
 
 from pysignalr.client import SignalRClient
@@ -51,6 +54,7 @@ from dipdup.models import BlockData
 from dipdup.models import HeadBlockData
 from dipdup.models import OperationData
 from dipdup.models import QuoteData
+from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
 from dipdup.utils.watchdog import Watchdog
 
@@ -258,6 +262,55 @@ class BigMapFetcher:
             yield big_maps[0].level, big_maps
 
 
+MessageData = Union[Dict[str, Any], List[Dict[str, Any]]]
+
+
+class BufferedMessage(NamedTuple):
+    type: MessageType
+    data: MessageData
+
+
+class MessageBuffer:
+    """Buffers realtime TzKT messages and yields them in by level."""
+
+    def __init__(self, size: int) -> None:
+        self._logger = logging.getLogger('dipdup.tzkt')
+        self._size = size
+        self._messages: DefaultDict[int, List[BufferedMessage]] = defaultdict(list)
+
+    def add(self, type_: MessageType, level: int, data: MessageData) -> None:
+        """Add a message to the buffer."""
+        self._messages[level].append(BufferedMessage(type_, data))
+
+    def rollback(self, type_: MessageType, channel_level: int, message_level: int) -> bool:
+        """Drop buffered messages in reversed order while possible, return if successful."""
+        # NOTE: No action required for this channel
+        if type_ == MessageType.head:
+            return True
+
+        # NOTE: This rollback does not affect us, so we can safely ignore it
+        if channel_level <= message_level:
+            return True
+
+        self._logger.info('Rollback requested from %s to %s', type_.value, channel_level, message_level)
+        levels = range(channel_level, message_level, -1)
+        for level in levels:
+            if not self._messages.pop(level, None):
+                self._logger.info('Level %s is not buffered, can\'t avoid rollback', level)
+                return False
+
+        self._logger.info('All rolled back levels are buffered, no action required')
+        return True
+
+    def yield_from(self) -> Generator[BufferedMessage, None, None]:
+        """Yield extensively buffered messages by level"""
+        buffered_levels = sorted(self._messages.keys())
+        yielded_levels = buffered_levels[: len(buffered_levels) - self._size]
+        for level in yielded_levels:
+            for buffered_message in self._messages.pop(level):
+                yield buffered_message
+
+
 class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
         cache=True,
@@ -284,8 +337,7 @@ class TzktDatasource(IndexDatasource):
         )
         self._logger = logging.getLogger('dipdup.tzkt')
         self._watchdog = watchdog
-        self._buffer_size = buffer_size
-        self._buffer: DefaultDict[int, List[Tuple[MessageType, Dict[str, Any]]]] = defaultdict(list)
+        self._buffer = MessageBuffer(buffer_size)
 
         self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
@@ -293,6 +345,10 @@ class TzktDatasource(IndexDatasource):
     @property
     def request_limit(self) -> int:
         return cast(int, self._http_config.batch_size)
+
+    def set_logger(self, name: str) -> None:
+        super().set_logger(name)
+        self._buffer._logger = FormattedLogger(self._buffer._logger.name, name + ': {}')
 
     def get_channel_level(self, message_type: MessageType) -> int:
         """Get current level of the channel, or sync level is no messages were received yet."""
@@ -483,7 +539,7 @@ class TzktDatasource(IndexDatasource):
             url='v1/operations/migrations',
             params={
                 'kind': 'origination',
-                'level.gt': first_level,
+                'level.ge': first_level,
                 'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
                 'offset.cr': offset,
                 'limit': limit,
@@ -519,7 +575,7 @@ class TzktDatasource(IndexDatasource):
                 url='v1/operations/originations',
                 params={
                     "originatedContract.in": ','.join(addresses_chunk),
-                    "level.gt": first_level,
+                    "level.ge": first_level,
                     "level.le": last_level,
                     "select": ','.join(ORIGINATION_OPERATION_FIELDS),
                     "status": "applied",
@@ -548,7 +604,7 @@ class TzktDatasource(IndexDatasource):
                 f"{field}.in": ','.join(addresses),
                 "offset.cr": offset,
                 "limit": limit,
-                "level.gt": first_level,
+                "level.ge": first_level,
                 "level.le": last_level,
                 "select": ','.join(TRANSACTION_OPERATION_FIELDS),
                 "status": "applied",
@@ -594,7 +650,7 @@ class TzktDatasource(IndexDatasource):
             params={
                 "contract.in": ",".join(addresses),
                 "path.in": ",".join(paths),
-                "level.gt": first_level,
+                "level.ge": first_level,
                 "level.le": last_level,
                 "offset": offset,
                 "limit": limit,
@@ -635,20 +691,20 @@ class TzktDatasource(IndexDatasource):
 
     async def get_quotes(
         self,
-        from_level: int,
-        to_level: int,
+        first_level: int,
+        last_level: int,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[QuoteData, ...]:
         """Get quotes for blocks"""
         offset, limit = offset or 0, limit or self.request_limit
-        self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
+        self._logger.info('Fetching quotes for levels %s-%s', first_level, last_level)
         quotes_json = await self.request(
             'get',
             url='v1/quotes',
             params={
-                "level.ge": from_level,
-                "level.lt": to_level,
+                "level.ge": first_level,
+                "level.le": last_level,
                 "offset.cr": offset,
                 "limit": limit,
             },
@@ -658,14 +714,14 @@ class TzktDatasource(IndexDatasource):
 
     async def iter_quotes(
         self,
-        from_level: int,
-        to_level: int,
+        first_level: int,
+        last_level: int,
     ) -> AsyncIterator[Tuple[QuoteData, ...]]:
         """Iterate quotes for blocks"""
         async for batch in self._iter_batches(
             self.get_quotes,
-            from_level,
-            to_level,
+            first_level,
+            last_level,
         ):
             yield batch
 
@@ -763,9 +819,9 @@ class TzktDatasource(IndexDatasource):
         self._ws_client.on_close(self._on_disconnect)
         self._ws_client.on_error(self._on_error)
 
-        self._ws_client.on('operations', self._on_operations_message)
-        self._ws_client.on('bigmaps', self._on_big_maps_message)
-        self._ws_client.on('head', self._on_head_message)
+        self._ws_client.on('operations', partial(self._on_message, MessageType.operation))
+        self._ws_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
+        self._ws_client.on('head', partial(self._on_message, MessageType.head))
 
         return self._ws_client
 
@@ -802,7 +858,7 @@ class TzktDatasource(IndexDatasource):
         """Raise exception from WS server's error message"""
         raise DatasourceError(datasource=self.name, msg=cast(str, message.error))
 
-    async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
+    async def _on_message(self, type_: MessageType, message: List[Dict[str, Any]]) -> None:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         # NOTE: Parse messages and either buffer or yield data
         for item in message:
@@ -825,98 +881,59 @@ class TzktDatasource(IndexDatasource):
 
             # NOTE: Put data messages to buffer by level
             if tzkt_type == TzktMessageType.DATA:
-                await self._process_data_message(type_, message_level, item['data'])
+                self._buffer.add(type_, message_level, item['data'])
 
             # NOTE: Try to process rollback automatically, emit if failed
             elif tzkt_type == TzktMessageType.REORG:
-                await self._process_reorg_message(type_, channel_level, message_level)
+                if not self._buffer.rollback(type_, channel_level, message_level):
+                    await self.emit_rollback(channel_level, message_level)
 
             else:
-                raise NotImplementedError('Unknown message type')
+                raise NotImplementedError(f'Unknown message type: {tzkt_type}')
 
-        # NOTE: Yield extensive data from buffer
-        for item in self._yield_from_buffer(type_):
-            yield item
-
-    def _yield_from_buffer(self, type_: MessageType) -> Generator[Dict, None, None]:
-        buffered_levels = sorted(self._buffer.keys())
-        if len(buffered_levels) < self._buffer_size:
-            return
-
-        yielded_levels = buffered_levels[: len(buffered_levels) - self._buffer_size]
-        for level in yielded_levels:
-            for idx, level_data in enumerate(self._buffer[level]):
-                level_message_type, level_message = level_data
-                if level_message_type == type_:
-                    yield level_message
-                    self._buffer[level].pop(idx)
-
-            if not self._buffer[level]:
-                del self._buffer[level]
-
-    async def _process_data_message(self, type_: MessageType, message_level: int, message_data: Dict[str, Any]) -> None:
-        self._buffer[message_level].append((type_, message_data))
-
-    async def _process_reorg_message(self, type_: MessageType, channel_level: int, message_level: int) -> None:
-        # NOTE: No action required for this channel
-        if type_ == MessageType.head:
-            return
-
-        # NOTE: This rollback does not affect us, so we can safely ignore it
-        if channel_level <= message_level:
-            return
-
-        self._logger.info('Rollback requested from %s to %s', channel_level, message_level)
-
-        # NOTE: Drop buffered messages in reversed order while possible
-        rolled_back_levels = range(channel_level, message_level, -1)
-        for rolled_back_level in rolled_back_levels:
-            if self._buffer.pop(rolled_back_level, None):
-                self._logger.info('Level %s is buffered', rolled_back_level)
+        # NOTE: Process extensive data from buffer
+        for buffered_message in self._buffer.yield_from():
+            if buffered_message.type == MessageType.operation:
+                await self._process_operations_data(cast(list, buffered_message.data))
+            elif buffered_message.type == MessageType.big_map:
+                await self._process_big_maps_data(cast(list, buffered_message.data))
+            elif buffered_message.type == MessageType.head:
+                await self._process_head_data(cast(dict, buffered_message.data))
             else:
-                self._logger.info(
-                    'Level %s is not buffered, emitting rollback to %s',
-                    rolled_back_level,
-                    message_level,
-                )
-                await self.emit_rollback(channel_level, message_level)
-                return
-        else:
-            self._logger.info('Rollback is not required, continuing')
+                raise NotImplementedError(f'Unknown message type: {buffered_message.type}')
 
-    async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _process_operations_data(self, data: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
         level_operations: DefaultDict[int, Deque[OperationData]] = defaultdict(deque)
-        async for data in self._extract_message_data(MessageType.operation, message):
-            for operation_json in data:
-                if operation_json['status'] != 'applied':
-                    continue
-                operation = self.convert_operation(operation_json)
-                level_operations[operation.level].append(operation)
+
+        for operation_json in data:
+            if operation_json['status'] != 'applied':
+                continue
+            operation = self.convert_operation(operation_json)
+            level_operations[operation.level].append(operation)
 
         for _level, operations in level_operations.items():
             await self.emit_operations(tuple(operations))
 
-    async def _on_big_maps_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _process_big_maps_data(self, data: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
         level_big_maps: DefaultDict[int, Deque[BigMapData]] = defaultdict(deque)
-        async for data in self._extract_message_data(MessageType.big_map, message):
-            big_maps: Deque[BigMapData] = deque()
-            for big_map_json in data:
-                big_map = self.convert_big_map(big_map_json)
-                level_big_maps[big_map.level].append(big_map)
+
+        big_maps: Deque[BigMapData] = deque()
+        for big_map_json in data:
+            big_map = self.convert_big_map(big_map_json)
+            level_big_maps[big_map.level].append(big_map)
 
         for _level, big_maps in level_big_maps.items():
             await self.emit_big_maps(tuple(big_maps))
 
-    async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _process_head_data(self, data: Dict[str, Any]) -> None:
         """Parse and emit raw head block from WS"""
-        async for data in self._extract_message_data(MessageType.head, message):
-            if self._watchdog:
-                self._watchdog.reset()
+        if self._watchdog:
+            self._watchdog.reset()
 
-            block = self.convert_head_block(data)
-            await self.emit_head(block)
+        block = self.convert_head_block(data)
+        await self.emit_head(block)
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:
