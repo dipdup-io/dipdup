@@ -4,9 +4,10 @@
 
 ### Fixed
 
-* tzkt: Fixed inconsistent behavior of `first_level`/`last_level` arguments in different getter methods.
 * index: Fixed crash when no block with the same level arrived after a single-level rollback.
 * index: Fixed setting initial index level when `IndexConfig.first_level` is set.
+* tzkt: Fixed delayed emitting of buffered realtime messages.
+* tzkt: Fixed inconsistent behavior of `first_level`/`last_level` arguments in different getter methods.
 
 ## 5.0.2 - 2022-04-21
 

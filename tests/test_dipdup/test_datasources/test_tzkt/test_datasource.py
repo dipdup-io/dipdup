@@ -213,7 +213,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             level = tzkt.get_channel_level(MessageType.operation)
             self.assertEqual(1, level)
 
-            await tzkt._on_operations_message([message])
+            await tzkt._on_message(MessageType.operation, [message])
 
             level = tzkt.get_channel_level(MessageType.operation)
             self.assertEqual(2, level)
