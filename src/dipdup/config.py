@@ -40,6 +40,7 @@ from typing_extensions import Literal
 
 from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import BigMapSubscription
+from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import TransactionSubscription
@@ -1397,9 +1398,8 @@ class DipDupConfig:
                 address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
                 index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
 
-        # NOTE: HeadSubscription is always enabled
         elif isinstance(index_config, HeadIndexConfig):
-            pass
+            index_config.subscriptions.add(HeadSubscription())
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

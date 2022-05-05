@@ -1,5 +1,12 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* index: Fixed crash when the only index in config is `head`.
+* index: Fixed fetching originations during initial sync.
+
 ## 5.0.3 - 2022-05-04
 
 ### Fixed
