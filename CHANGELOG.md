@@ -1,9 +1,10 @@
 # Changelog
 
-## [unreleased]
+## 5.0.4 - 2022-05-05
 
 ### Fixed
 
+* exceptions: Fixed incorrect formatting and broken links in help messages.
 * index: Fixed crash when the only index in config is `head`.
 * index: Fixed fetching originations during initial sync.
 
