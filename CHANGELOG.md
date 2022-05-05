@@ -5,6 +5,8 @@
 ### Fixed
 
 * exceptions: Fixed incorrect formatting and broken links in help messages.
+* index: Fixed crash when the only index in config is `head`.
+* index: Fixed fetching originations during initial sync.
 
 ## 5.0.3 - 2022-05-04
 
