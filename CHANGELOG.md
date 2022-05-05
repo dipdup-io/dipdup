@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* index: Fixed fetching originations during initial sync.
+
 ## 5.0.3 - 2022-05-04
 
 ### Fixed

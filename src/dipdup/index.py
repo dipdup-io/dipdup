@@ -579,18 +579,22 @@ class OperationIndex(Index):
         addresses = set()
         for handler_config in self._config.handlers:
             for pattern_config in handler_config.pattern:
-                if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                    if pattern_config.originated_contract:
-                        addresses.add(pattern_config.originated_contract_config.address)
-                    if pattern_config.source:
-                        for address in await self._datasource.get_originated_contracts(pattern_config.source_contract_config.address):
-                            addresses.add(address)
-                    if pattern_config.similar_to:
-                        for address in await self._datasource.get_similar_contracts(
-                            address=pattern_config.similar_to_contract_config.address,
-                            strict=pattern_config.strict,
-                        ):
-                            addresses.add(address)
+                if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                    continue
+
+                if pattern_config.originated_contract:
+                    addresses.add(pattern_config.originated_contract_config.address)
+
+                if pattern_config.source:
+                    source_address = pattern_config.source_contract_config.address
+                    async for batch in self._datasource.iter_originated_contracts(source_address):
+                        addresses.update(batch)
+
+                if pattern_config.similar_to:
+                    similar_address = pattern_config.similar_to_contract_config.address
+                    async for batch in self._datasource.iter_similar_contracts(similar_address, pattern_config.strict):
+                        addresses.update(batch)
+
         return addresses
 
     async def _get_contract_hashes(self, address: str) -> Tuple[int, int]:
