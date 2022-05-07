@@ -187,3 +187,23 @@ class RollbackTest(IsolatedAsyncioTestCase):
         dispatcher._ctx.fire_hook.assert_not_awaited()  # type: ignore
         self.assertEqual(1, len(operation_index._queue))
         self.assertEqual(20, operation_index._queue[0].from_level)  # type: ignore
+
+    async def test_single_level_not_supported(self) -> None:
+        index_level, from_level, to_level = 20, 20, 19
+        dispatcher = _get_index_dispatcher()
+        big_map_index = _get_big_map_index(level=index_level)
+        dispatcher._indexes = {
+            'big_map': big_map_index,
+        }
+        await dispatcher._on_rollback(
+            datasource=big_map_index.datasource,
+            from_level=from_level,
+            to_level=to_level,
+        )
+        dispatcher._ctx.fire_hook.assert_awaited_with(  # type: ignore
+            'on_rollback',
+            datasource=big_map_index.datasource,
+            from_level=from_level,
+            to_level=to_level,
+        )
+        self.assertEqual(0, len(big_map_index._queue))
