@@ -322,7 +322,7 @@ class IndexDispatcher:
             self._logger.info('Performing a single-level rollback for %s indexes', len(single_level_indexes))
             for index_name in single_level_indexes:
                 if not isinstance(index := self._indexes[index_name], OperationIndex):
-                    raise RuntimeError(f'Attempt to single-level rollback non-operation index: {index_name}')
+                    raise RuntimeError(f'Attempt to single-level rollback non-operation index: {index_name}')  # pragma: no cover
                 index.push_rollback(from_level)
 
         self._logger.info('Rollback complete')
