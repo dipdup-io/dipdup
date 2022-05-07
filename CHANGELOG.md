@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* index: Fixed fetching `migration` operations.
+
 ## 5.0.4 - 2022-05-05
 
 ### Fixed
