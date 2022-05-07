@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+* cli: `config env` command to export env-file with default values.
+
 ## 5.0.4 - 2022-05-05
 
 ### Fixed
