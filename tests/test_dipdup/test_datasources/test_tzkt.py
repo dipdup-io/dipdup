@@ -201,7 +201,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertEqual(67955554, originations[1].id)
 
     async def test_on_operation_message_data(self) -> None:
-        with open(join(dirname(__file__), '..', '..', 'ftzfun.json')) as f:
+        with open(join(dirname(__file__), '..', 'ftzfun.json')) as f:
             operations_json = json.load(f)
 
         message = {'type': 1, 'state': 2, 'data': operations_json}
