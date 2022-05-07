@@ -5,6 +5,7 @@
 ### Fixed
 
 * index: Fixed fetching `migration` operations.
+* tzkt: Fixed possible data corruption when using `buffer_size` option.
 
 ## 5.0.4 - 2022-05-05
 

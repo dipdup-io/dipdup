@@ -101,13 +101,7 @@ class DipDupCodeGenerator:
 
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
-        try:
-            package_path = self._config.package_path
-        except ImportError:
-            self._logger.info('Creating package `%s`', self._config.package)
-            package_path = join(os.getcwd(), self._config.package)
-
-        mkdir_p(package_path)
+        package_path = self._config.package_path
         touch(join(package_path, '__init__.py'))
 
         models_path = join(package_path, 'models.py')

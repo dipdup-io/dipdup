@@ -1148,7 +1148,6 @@ class DipDupConfig:
         self._default_hooks: bool = False
         self._links_resolved: Set[str] = set()
         self._imports_resolved: Set[str] = set()
-        self._package_path: Optional[str] = None
 
     @cached_property
     def schema_name(self) -> str:
@@ -1157,15 +1156,14 @@ class DipDupConfig:
         # NOTE: Not exactly correct; historical reason
         return DEFAULT_POSTGRES_SCHEMA
 
-    # NOTE: Do not cache!
-    @property
+    @cached_property
     def package_path(self) -> str:
         """Absolute path to indexer package"""
-        if not self._package_path:
+        try:
             package = importlib.import_module(self.package)
-            self._package_path = dirname(package.__file__)
-
-        return self._package_path
+            return dirname(package.__file__)
+        except ImportError:
+            return os.path.join(os.getcwd(), self.package)
 
     @property
     def oneshot(self) -> bool:
