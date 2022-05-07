@@ -1,12 +1,8 @@
 from unittest import IsolatedAsyncioTestCase
 
-# from dipdup.datasources.tzkt.datasource import MessageData
 from dipdup.datasources.tzkt.datasource import MessageBuffer
 from dipdup.datasources.tzkt.datasource import MessageType
 
-
-import logging
-logging.basicConfig(level=logging.DEBUG)
 
 class MessageBufferTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:

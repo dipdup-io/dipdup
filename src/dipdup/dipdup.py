@@ -12,11 +12,9 @@ from contextlib import suppress
 from typing import Awaitable
 from typing import Deque
 from typing import Dict
-from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
-from typing import cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from prometheus_client import start_http_server  # type: ignore
@@ -268,38 +266,66 @@ class IndexDispatcher:
 
     async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
+        if from_level <= to_level:
+            raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
+
         self._logger.warning('Datasource `%s` rolled back: %s -> %s', datasource.name, from_level, to_level)
         if Metrics.enabled:
             Metrics.set_datasource_rollback(datasource.name)
 
-        # NOTE: Zero difference between levels means we received no operations/big_maps on this level and thus channel level hasn't changed
-        zero_level_rollback = from_level - to_level == 0
-        single_level_rollback = from_level - to_level == 1
+        # NOTE: Choose action for each index
+        ignored_indexes: Set[str] = set()
+        single_level_indexes: Set[str] = set()
+        unprocessed_indexes: Set[str] = set()
 
-        if zero_level_rollback:
-            self._logger.info('Zero level rollback, ignoring')
+        for index_name, index in self._indexes.items():
+            index_level = index.state.level
 
-        elif single_level_rollback:
-            # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
-            self._logger.info('Checking if single level rollback is possible')
-            matching_indexes = tuple(i for i in self._indexes.values() if i.datasource == datasource)
-            matching_operation_indexes = tuple(i for i in matching_indexes if isinstance(i, OperationIndex))
-            self._logger.info(
-                'Indexes: %s total, %s matching, %s support single level rollback',
-                len(self._indexes),
-                len(matching_indexes),
-                len(matching_operation_indexes),
+            if index.datasource != datasource:
+                self._logger.debug('%s: another datasource, skipping', index_name)
+                ignored_indexes.add(index_name)
+
+            elif to_level >= index_level or isinstance(index, HeadIndex):
+                self._logger.debug('%s: not affected, skipping', index_name)
+                ignored_indexes.add(index_name)
+
+            elif from_level - to_level == 1:
+                if isinstance(index, OperationIndex):
+                    self._logger.debug('%s: single-level, supported', index_name)
+                    single_level_indexes.add(index_name)
+                else:
+                    self._logger.debug('%s: single-level, not supported', index_name)
+                    unprocessed_indexes.add(index_name)
+
+            else:
+                self._logger.debug('%s: unprocessed', index_name)
+                unprocessed_indexes.add(index_name)
+
+        self._logger.info(
+            '%s indexes, %s ignored, %s single-level, %s unprocessed',
+            len(self._indexes),
+            len(ignored_indexes),
+            len(single_level_indexes),
+            len(unprocessed_indexes),
+        )
+
+        if unprocessed_indexes:
+            self._logger.warning('Can\'t process %s indexes, firing `on_rollback` hook', len(unprocessed_indexes))
+            await self._ctx.fire_hook(
+                'on_rollback',
+                datasource=datasource,
+                from_level=from_level,
+                to_level=to_level,
             )
 
-            all_indexes_are_operation = len(matching_indexes) == len(matching_operation_indexes)
-            if all_indexes_are_operation:
-                for index in cast(List[OperationIndex], matching_indexes):
-                    index.push_rollback(from_level)
-            else:
-                await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
+        elif single_level_indexes:
+            self._logger.info('Performing a single-level rollback for %s indexes', len(single_level_indexes))
+            for index_name in single_level_indexes:
+                if not isinstance(index := self._indexes[index_name], OperationIndex):
+                    raise RuntimeError(f'Attempt to single-level rollback non-operation index: {index_name}')
+                index.push_rollback(from_level)
 
-        else:
-            await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
+        self._logger.info('Rollback complete')
 
 
 class DipDup:

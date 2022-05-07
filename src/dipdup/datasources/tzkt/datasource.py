@@ -278,6 +278,9 @@ class MessageBuffer:
         self._size = size
         self._messages: DefaultDict[int, List[BufferedMessage]] = defaultdict(list)
 
+    def __len__(self) -> int:
+        return len(self._messages)
+
     def add(self, type_: MessageType, level: int, data: MessageData) -> None:
         """Add a message to the buffer."""
         self._messages[level].append(BufferedMessage(type_, data))
@@ -288,16 +291,14 @@ class MessageBuffer:
         if type_ == MessageType.head:
             return True
 
-        # NOTE: This rollback does not affect us, so we can safely ignore it
-        if channel_level <= message_level:
-            return True
-
-        self._logger.info('Rollback requested from %s to %s', type_.value, channel_level, message_level)
+        self._logger.info('`%s` rollback requested from %s to %s', type_.value, channel_level, message_level)
         levels = range(channel_level, message_level, -1)
         for level in levels:
             if not self._messages.pop(level, None):
                 self._logger.info('Level %s is not buffered, can\'t avoid rollback', level)
                 return False
+            else:
+                self._logger.debug('Level %s is buffered, dropped', level)
 
         self._logger.info('All rolled back levels are buffered, no action required')
         return True
