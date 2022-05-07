@@ -1,10 +1,7 @@
-import sys
-from contextlib import suppress
 from os.path import dirname
 from os.path import join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import patch
 
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup

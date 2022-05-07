@@ -107,6 +107,7 @@ class DipDupCodeGenerator:
             self._logger.info('Creating package `%s`', self._config.package)
             package_path = join(os.getcwd(), self._config.package)
 
+        mkdir_p(package_path)
         touch(join(package_path, '__init__.py'))
 
         models_path = join(package_path, 'models.py')
@@ -116,13 +117,13 @@ class DipDupCodeGenerator:
             write(models_path, models_code)
 
         for subpackage in ('handlers', 'hooks'):
-            subpackage_path = join(self._config.package_path, subpackage)
+            subpackage_path = join(package_path, subpackage)
             touch(join(subpackage_path, '__init__.py'))
 
-        sql_path = join(self._config.package_path, 'sql')
+        sql_path = join(package_path, 'sql')
         touch(join(sql_path, '.keep'))
 
-        graphql_path = join(self._config.package_path, 'graphql')
+        graphql_path = join(package_path, 'graphql')
         touch(join(graphql_path, '.keep'))
 
     async def fetch_schemas(self) -> None:

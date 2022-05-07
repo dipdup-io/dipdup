@@ -1157,7 +1157,8 @@ class DipDupConfig:
         # NOTE: Not exactly correct; historical reason
         return DEFAULT_POSTGRES_SCHEMA
 
-    @cached_property
+    # NOTE: Do not cache!
+    @property
     def package_path(self) -> str:
         """Absolute path to indexer package"""
         if not self._package_path:
