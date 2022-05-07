@@ -269,7 +269,7 @@ class IndexDispatcher:
         if from_level <= to_level:
             raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
 
-        self._logger.warning('Datasource `%s` rolled back: %s -> %s', datasource.name, from_level, to_level)
+        self._logger.warning('Datasource `%s` has rolled back: %s -> %s', datasource.name, from_level, to_level)
         if Metrics.enabled:
             Metrics.set_datasource_rollback(datasource.name)
 

@@ -16,7 +16,6 @@ from dipdup.dipdup import IndexDispatcher
 from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
 from dipdup.index import OperationIndex
-from dipdup.models import HeadBlockData
 
 
 def _get_index_dispatcher() -> IndexDispatcher:
@@ -94,11 +93,6 @@ def _get_head_index(level: int) -> HeadIndex:
     return index
 
 
-head = Mock(spec=HeadBlockData)
-head.level = 10
-head.chain = 'mainnet'
-
-
 class RollbackTest(IsolatedAsyncioTestCase):
     async def test_forward_rollback(self) -> None:
         from_level, to_level = 20, 30
@@ -123,6 +117,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
             to_level=to_level,
         )
         self.assertIsNone(operation_index._next_head_level)
+        dispatcher._ctx.fire_hook.assert_not_awaited()  # type: ignore
+        self.assertEqual(0, len(operation_index._queue))
 
     async def test_not_affected_by_datasource(self) -> None:
         other_datasource = Mock(spec=TzktDatasource)
@@ -138,6 +134,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
             to_level=to_level,
         )
         self.assertIsNone(operation_index._next_head_level)
+        dispatcher._ctx.fire_hook.assert_not_awaited()  # type: ignore
+        self.assertEqual(0, len(operation_index._queue))
 
     async def test_not_affected_head(self) -> None:
         index_level, from_level, to_level = 20, 20, 15
@@ -151,3 +149,41 @@ class RollbackTest(IsolatedAsyncioTestCase):
             from_level=from_level,
             to_level=to_level,
         )
+        dispatcher._ctx.fire_hook.assert_not_awaited()  # type: ignore
+        self.assertEqual(0, len(head_index._queue))
+
+    async def test_unprocessed(self) -> None:
+        index_level, from_level, to_level = 20, 20, 15
+        dispatcher = _get_index_dispatcher()
+        operation_index = _get_operation_index(level=index_level)
+        dispatcher._indexes = {
+            'operation': operation_index,
+        }
+        await dispatcher._on_rollback(
+            datasource=operation_index.datasource,
+            from_level=from_level,
+            to_level=to_level,
+        )
+        dispatcher._ctx.fire_hook.assert_awaited_with(  # type: ignore
+            'on_rollback',
+            datasource=operation_index.datasource,
+            from_level=from_level,
+            to_level=to_level,
+        )
+        self.assertEqual(0, len(operation_index._queue))
+
+    async def test_single_level_supported(self) -> None:
+        index_level, from_level, to_level = 20, 20, 19
+        dispatcher = _get_index_dispatcher()
+        operation_index = _get_operation_index(level=index_level)
+        dispatcher._indexes = {
+            'operation': operation_index,
+        }
+        await dispatcher._on_rollback(
+            datasource=operation_index.datasource,
+            from_level=from_level,
+            to_level=to_level,
+        )
+        dispatcher._ctx.fire_hook.assert_not_awaited()  # type: ignore
+        self.assertEqual(1, len(operation_index._queue))
+        self.assertEqual(20, operation_index._queue[0].from_level)  # type: ignore
