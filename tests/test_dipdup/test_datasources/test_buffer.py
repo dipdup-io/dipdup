@@ -1,5 +1,6 @@
 from unittest import IsolatedAsyncioTestCase
 
+from dipdup.datasources.tzkt.datasource import BufferedMessage
 from dipdup.datasources.tzkt.datasource import MessageBuffer
 from dipdup.datasources.tzkt.datasource import MessageType
 
@@ -34,7 +35,9 @@ class MessageBufferTest(IsolatedAsyncioTestCase):
 
         self.assertEqual(2, len(self.buffer))
 
+        self.assertIsInstance(messages[0], BufferedMessage)
         self.assertEqual(MessageType.head, messages[0].type)
+        self.assertIsInstance(messages[1], BufferedMessage)
         self.assertEqual(MessageType.operation, messages[1].type)
 
     async def test_rollback(self) -> None:
@@ -46,13 +49,8 @@ class MessageBufferTest(IsolatedAsyncioTestCase):
         self.buffer.add(MessageType.operation, 4, [{}])
 
         self.assertEqual(True, self.buffer.rollback(MessageType.head, 4, 3))
-        self.assertEqual(3, len(self.buffer))
-
         self.assertEqual(True, self.buffer.rollback(MessageType.operation, 4, 3))
-        self.assertEqual(2, len(self.buffer))
-
         self.assertEqual(True, self.buffer.rollback(MessageType.operation, 3, 1))
-        self.assertEqual(0, len(self.buffer))
-
+        self.assertEqual(True, self.buffer.rollback(MessageType.head, 3, 1))
         self.assertEqual(False, self.buffer.rollback(MessageType.operation, 1, 0))
-        self.assertEqual(0, len(self.buffer))
+        self.assertEqual(False, self.buffer.rollback(MessageType.head, 1, 0))
