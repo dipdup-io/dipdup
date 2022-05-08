@@ -150,8 +150,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
             to_level=to_level,
         )
         dispatcher._ctx.fire_hook.assert_awaited_with(  # type: ignore
-            'on_rollback',
-            datasource=head_index.datasource,
+            'on_index_rollback',
+            index=head_index,
             from_level=from_level,
             to_level=to_level,
         )
@@ -170,8 +170,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
             to_level=to_level,
         )
         dispatcher._ctx.fire_hook.assert_awaited_with(  # type: ignore
-            'on_rollback',
-            datasource=operation_index.datasource,
+            'on_index_rollback',
+            index=operation_index,
             from_level=from_level,
             to_level=to_level,
         )
@@ -206,8 +206,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
             to_level=to_level,
         )
         dispatcher._ctx.fire_hook.assert_awaited_with(  # type: ignore
-            'on_rollback',
-            datasource=big_map_index.datasource,
+            'on_index_rollback',
+            index=big_map_index,
             from_level=from_level,
             to_level=to_level,
         )

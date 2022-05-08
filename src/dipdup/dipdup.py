@@ -309,21 +309,20 @@ class IndexDispatcher:
             len(unprocessed_indexes),
         )
 
-        if unprocessed_indexes:
-            self._logger.warning('Can\'t process %s indexes, firing `on_rollback` hook', len(unprocessed_indexes))
+        for index_name in unprocessed_indexes:
+            self._logger.warning('`%s`: can\'t process, firing `on_index_rollback` hook', index_name)
             await self._ctx.fire_hook(
-                'on_rollback',
-                datasource=datasource,
+                'on_index_rollback',
+                index=self._indexes[index_name],
                 from_level=from_level,
                 to_level=to_level,
             )
 
-        elif single_level_indexes:
-            self._logger.info('Performing a single-level rollback for %s indexes', len(single_level_indexes))
-            for index_name in single_level_indexes:
-                if not isinstance(index := self._indexes[index_name], OperationIndex):
-                    raise RuntimeError(f'Attempt to single-level rollback non-operation index: {index_name}')  # pragma: no cover
-                index.push_rollback(from_level)
+        for index_name in single_level_indexes:
+            self._logger.info('`%s`: performing a single-level rollback', index_name)
+            if not isinstance(index := self._indexes[index_name], OperationIndex):
+                raise RuntimeError(f'Attempt to single-level rollback non-operation index: {index_name}')  # pragma: no cover
+            index.push_rollback(from_level)
 
         self._logger.info('Rollback complete')
 

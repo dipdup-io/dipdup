@@ -144,6 +144,10 @@ class Index:
         self._state: Optional[models.Index] = None
 
     @property
+    def name(self) -> str:
+        return self._config.name
+
+    @property
     def datasource(self) -> TzktDatasource:
         return self._datasource
 
