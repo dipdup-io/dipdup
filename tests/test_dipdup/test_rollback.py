@@ -137,7 +137,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         dispatcher._ctx.fire_hook.assert_not_awaited()  # type: ignore
         self.assertEqual(0, len(operation_index._queue))
 
-    async def test_not_affected_head(self) -> None:
+    async def test_unprocessed_head(self) -> None:
         index_level, from_level, to_level = 20, 20, 15
         dispatcher = _get_index_dispatcher()
         head_index = _get_head_index(level=index_level)
@@ -149,7 +149,12 @@ class RollbackTest(IsolatedAsyncioTestCase):
             from_level=from_level,
             to_level=to_level,
         )
-        dispatcher._ctx.fire_hook.assert_not_awaited()  # type: ignore
+        dispatcher._ctx.fire_hook.assert_awaited_with(  # type: ignore
+            'on_rollback',
+            datasource=head_index.datasource,
+            from_level=from_level,
+            to_level=to_level,
+        )
         self.assertEqual(0, len(head_index._queue))
 
     async def test_unprocessed(self) -> None:

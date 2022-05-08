@@ -285,7 +285,7 @@ class IndexDispatcher:
                 self._logger.debug('%s: another datasource, skipping', index_name)
                 ignored_indexes.add(index_name)
 
-            elif to_level >= index_level or isinstance(index, HeadIndex):
+            elif to_level >= index_level:
                 self._logger.debug('%s: not affected, skipping', index_name)
                 ignored_indexes.add(index_name)
 
