@@ -461,7 +461,6 @@ class OperationIndex(Index):
 
     async def _match_operation_subgroup(self, operation_subgroup: OperationSubgroup) -> Deque[MatchedOperationsT]:
         """Try to match operation subgroup with all patterns from indexes."""
-        self._logger.debug('Matching %s', operation_subgroup)
         matched_handlers: Deque[MatchedOperationsT] = deque()
         operations = operation_subgroup.operations
 
