@@ -1096,6 +1096,7 @@ class AdvancedConfig:
     :param early_realtime: Establish realtime connection immediately after startup
     :param merge_subscriptions: Subscribe to all operations instead of exact channels
     :param metadata_interface: Expose metadata interface for TzKT
+    :param skip_version_check: Do not check for new DipDup versions on startup
     """
 
     reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -1104,6 +1105,7 @@ class AdvancedConfig:
     early_realtime: bool = False
     merge_subscriptions: bool = False
     metadata_interface: bool = False
+    skip_version_check: bool = False
 
 
 @dataclass

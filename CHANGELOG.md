@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+* cli: Show warning when running an outdated version of DipDup.
+
 ### Fixed
 
 * index: Fixed fetching `migration` operations.

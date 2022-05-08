@@ -16,6 +16,7 @@ from os.path import join
 from typing import List
 from typing import cast
 
+import aiohttp
 import asyncclick as click
 import sentry_sdk
 from dotenv import load_dotenv
@@ -126,6 +127,18 @@ def _init_sentry(config: DipDupConfig) -> None:
     )
 
 
+async def _check_version() -> None:
+    async with AsyncExitStack() as stack:
+        stack.enter_context(suppress(Exception))
+        session = await stack.enter_async_context(aiohttp.ClientSession())
+        response = await session.get('https://api.github.com/repos/dipdup-net/dipdup-py/releases/latest')
+        response_json = await response.json()
+        latest_version = response_json['tag_name']
+        if __version__ != latest_version:
+            _logger.warning('You are running an outdated version of DipDup. Please update to the latest version.')
+            _logger.info('Set `skip_version_check` flag in config to hide this message.')
+
+
 @click.group(help='Docs: https://docs.dipdup.net', context_settings={'max_content_width': 120})
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
@@ -159,6 +172,9 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
     _init_sentry(_config)
+
+    if not _config.advanced.skip_version_check:
+        asyncio.ensure_future(_check_version())
 
     try:
         await DipDupCodeGenerator(_config, {}).create_package()
