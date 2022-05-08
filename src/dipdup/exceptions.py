@@ -331,3 +331,23 @@ class HasuraError(DipDupError):
 
             GraphQL integration docs: https://docs.dipdup.net/graphql/
         """
+
+
+@dataclass(repr=False)
+class DeprecatedHookError(DipDupError):
+    """Project contains deprecated hooks"""
+
+    package: str
+    hook: str
+    version: str
+    msg: str
+
+    def _help(self) -> str:
+        return f"""
+            `{self.hook}` hook has been deprecated in {self.version}:
+
+              * {self.msg}
+              * Remove the `{self.package}.hooks.{self.hook}` module after performing a migration.
+
+            Release notes: https://docs.dipdup.net/release-notes/{self.version}/
+        """
