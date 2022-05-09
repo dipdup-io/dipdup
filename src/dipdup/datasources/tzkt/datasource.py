@@ -309,8 +309,7 @@ class MessageBuffer:
         yielded_levels = buffered_levels[: len(buffered_levels) - self._size]
         for level in yielded_levels:
             for buffered_message in self._messages.pop(level):
-                if isinstance(buffered_message, BufferedMessage):
-                    yield buffered_message
+                yield buffered_message
 
 
 class TzktDatasource(IndexDatasource):

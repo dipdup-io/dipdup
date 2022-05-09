@@ -1162,7 +1162,7 @@ class DipDupConfig:
 
     @cached_property
     def package_path(self) -> str:
-        """Absolute path to indexer package"""
+        """Absolute path to the indexer package, existing or default"""
         try:
             package = importlib.import_module(self.package)
             return dirname(package.__file__)
