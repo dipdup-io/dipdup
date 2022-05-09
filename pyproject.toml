@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cookiecutter-dipdup"
-version = "0.1.0"
+version = "6.0.0"
 description = "Cookiecutter template for a DipDup indexer"
 authors = ["Lev Gorodetskiy <github@droserasprout.space>"]
 license = "MIT"

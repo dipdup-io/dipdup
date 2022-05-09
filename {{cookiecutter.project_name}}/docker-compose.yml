@@ -51,4 +51,3 @@ services:
 
 volumes:
   db:
-  cache:
