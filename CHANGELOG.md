@@ -4,7 +4,12 @@
 
 ### Added
 
+* ci: Push `X` and `X.Y` tags to the Docker Hub on release.
 * cli: Added `config env` command to export env-file with default values.
+
+### Fixed
+
+* index: Fixed fetching `migration` operations.
 
 ## 5.0.4 - 2022-05-05
 

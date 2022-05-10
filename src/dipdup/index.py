@@ -330,11 +330,12 @@ class OperationIndex(Index):
         origination_addresses = await self._get_origination_addresses()
 
         migration_originations: Tuple[OperationData, ...] = ()
-        if self._config.types and OperationType.migration in self._config.types:
-            migration_originations = tuple(await self._datasource.get_migration_originations(head_level))
-            for op in migration_originations:
-                code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
-                op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
+        if OperationType.migration in self._config.types:
+            async for batch in self._datasource.iter_migration_originations(first_level):
+                for op in batch:
+                    code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
+                    op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
+                    migration_originations += (op,)
 
         fetcher = OperationFetcher(
             datasource=self._datasource,
@@ -576,6 +577,7 @@ class OperationIndex(Index):
 
     async def _get_origination_addresses(self) -> Set[str]:
         """Get addresses to fetch origination from during initial synchronization"""
+        # FIXME: Missing `OperationType.origination` in config is ignored
         addresses = set()
         for handler_config in self._config.handlers:
             for pattern_config in handler_config.pattern:
