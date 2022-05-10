@@ -40,6 +40,7 @@ from typing_extensions import Literal
 
 from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import BigMapSubscription
+from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import TokenTransferSubscription
@@ -1138,6 +1139,7 @@ class AdvancedConfig:
     :param early_realtime: Establish realtime connection immediately after startup
     :param merge_subscriptions: Subscribe to all operations instead of exact channels
     :param metadata_interface: Expose metadata interface for TzKT
+    :param skip_version_check: Do not check for new DipDup versions on startup
     """
 
     reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -1146,6 +1148,7 @@ class AdvancedConfig:
     early_realtime: bool = False
     merge_subscriptions: bool = False
     metadata_interface: bool = False
+    skip_version_check: bool = False
 
 
 @dataclass
@@ -1227,30 +1230,15 @@ class DipDupConfig:
         environment: bool = True,
     ) -> 'DipDupConfig':
         yaml = YAML(typ='base')
-        current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
         config_environment: Dict[str, str] = {}
         for path in paths:
-            path = os.path.join(current_workdir, path)
-
-            _logger.debug('Loading config from %s', path)
-            try:
-                with open(path) as file:
-                    raw_config = file.read()
-            except OSError as e:
-                raise ConfigurationError(str(e))
+            raw_config = cls._load_raw_config(path)
 
             if environment:
-                _logger.debug('Substituting environment variables')
-                for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-                    variable, default_value = match.group('var_name'), match.group('default_value')
-                    value = env.get(variable, default_value)
-                    if not value:
-                        raise ConfigurationError(f'Environment variable `{variable}` is not set')
-                    config_environment[variable] = value
-                    placeholder = match.group(0)
-                    raw_config = raw_config.replace(placeholder, value or default_value)
+                raw_config, raw_config_environment = cls._substitute_env_variables(raw_config)
+                config_environment.update(raw_config_environment)
 
             json_config.update(yaml.load(raw_config))
 
@@ -1346,6 +1334,32 @@ class DipDupConfig:
 
             self._imports_resolved.add(index_config.name)
 
+    @classmethod
+    def _load_raw_config(cls, path: str) -> str:
+        path = os.path.join(os.getcwd(), path)
+        _logger.debug('Loading config from %s', path)
+        try:
+            with open(path) as file:
+                return file.read()
+        except OSError as e:
+            raise ConfigurationError(str(e)) from e
+
+    @classmethod
+    def _substitute_env_variables(cls, raw_config: str) -> Tuple[str, Dict[str, str]]:
+        _logger.debug('Substituting environment variables')
+        environment: Dict[str, str] = {}
+
+        for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
+            variable, default_value = match.group('var_name'), match.group('default_value')
+            value = env.get(variable, default_value)
+            if not value:
+                raise ConfigurationError(f'Environment variable `{variable}` is not set')
+            environment[variable] = value
+            placeholder = match.group(0)
+            raw_config = raw_config.replace(placeholder, value or default_value)
+
+        return raw_config, environment
+
     def _validate(self) -> None:
         # NOTE: Hasura and metadata interface
         if self.hasura:
@@ -1417,11 +1431,14 @@ class DipDupConfig:
         if isinstance(index_config, OperationIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(TransactionSubscription())
-            else:
-                for contract_config in index_config.contracts:
-                    if not isinstance(contract_config, ContractConfig):
-                        raise ConfigInitializationException
-                    index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
+                return
+
+            if not index_config.contracts:
+                raise ConfigurationError('`OperationIndexConfig.contracts` must be set when `merge_subscriptions` flag is disabled')
+            for contract_config in index_config.contracts:
+                if not isinstance(contract_config, ContractConfig):
+                    raise ConfigInitializationException
+                index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
 
             for handler_config in index_config.handlers:
                 for pattern_config in handler_config.pattern:
@@ -1432,14 +1449,14 @@ class DipDupConfig:
         elif isinstance(index_config, BigMapIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(BigMapSubscription())
-            else:
-                for big_map_handler_config in index_config.handlers:
-                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
-                    index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
+                return
 
-        # NOTE: HeadSubscription is always enabled
+            for big_map_handler_config in index_config.handlers:
+                address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
+
         elif isinstance(index_config, HeadIndexConfig):
-            pass
+            index_config.subscriptions.add(HeadSubscription())
 
         elif isinstance(index_config, TokenTransferIndexConfig):
             index_config.subscriptions.add(TokenTransferSubscription())

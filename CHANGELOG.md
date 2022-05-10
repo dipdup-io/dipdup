@@ -1,18 +1,47 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+* ci: Push `X` and `X.Y` tags to the Docker Hub on release.
+* cli: Added `config env` command to export env-file with default values.
+* cli: Show warning when running an outdated version of DipDup.
+
+### Fixed
+
+* index: Fixed fetching `migration` operations.
+
+## 5.0.4 - 2022-05-05
+
+### Fixed
+
+* exceptions: Fixed incorrect formatting and broken links in help messages.
+* index: Fixed crash when the only index in config is `head`.
+* index: Fixed fetching originations during initial sync.
+
+## 5.0.3 - 2022-05-04
+
+### Fixed
+
+* index: Fixed crash when no block with the same level arrived after a single-level rollback.
+* index: Fixed setting initial index level when `IndexConfig.first_level` is set.
+* tzkt: Fixed delayed emitting of buffered realtime messages.
+* tzkt: Fixed inconsistent behavior of `first_level`/`last_level` arguments in different getter methods.
+
 ## 5.0.2 - 2022-04-21
 
 ### Fixed
 
 * context: Fixed reporting incorrect reindexing reason.
-* exceptions: Fixed crash with `FrozenInstanceError` when exception is raised from callback.
+* exceptions: Fixed crash with `FrozenInstanceError` when an exception is raised from a callback.
 * jobs: Fixed graceful shutdown of daemon jobs.
 
 ### Improved
 
 * codegen: Refined `on_rollback` hook template.
 * exceptions: Updated help messages for known exceptions.
-* tzkt: Do not request reindexing if missing subgroups matched no handlers.
+* tzkt: Do not request reindexing if missing subgroups have matched no handlers.
 
 ## 5.0.1 - 2022-04-12
 

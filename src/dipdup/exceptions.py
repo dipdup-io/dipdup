@@ -46,19 +46,10 @@ class DipDupError(Exception):
         return self.__doc__
 
     def _help(self) -> str:
-        # FIXME: Indentation hell
-        prefix = '\n' + ' ' * 14
-        context = prefix.join(str(self.args))
-        if context:
-            context = '{prefix}{context}\n'.format(prefix=prefix, context=context)
-
         return """
             An unexpected error has occurred!
-              {context}
-            Please file a bug report at https://github.com/dipdup-net/dipdup/issues and attach the following:
 
-              * `dipdup.yml` config. Make sure to remove sensitive information.
-              * Reasonable amount of logs before the crash.
+            Please file a bug report at https://github.com/dipdup-net/dipdup/issues
         """
 
     def help(self) -> str:
@@ -79,7 +70,7 @@ class DatasourceError(DipDupError):
         return f"""
             `{self.datasource}` datasource returned an error: {self.msg}
 
-            Most likely, this is a DipDup bug. Please file a bug report at https://github.com/dipdup-net/dipdup/issues
+            Please file a bug report at https://github.com/dipdup-net/dipdup/issues
         """
 
 
@@ -93,7 +84,7 @@ class ConfigurationError(DipDupError):
         return f"""
             {self.msg}
 
-            DipDup config reference: https://docs.dipdup.net/config-file-reference
+            DipDup config reference: https://docs.dipdup.net/config
         """
 
 
@@ -107,11 +98,11 @@ class DatabaseConfigurationError(ConfigurationError):
         return f"""
             {self.msg}
 
-            Model: `{self.model.__class__.__name__}`
+            Model: `{self.model._meta._model.__name__}`
             Table: `{self.model._meta.db_table}`
 
             Tortoise ORM examples: https://tortoise-orm.readthedocs.io/en/latest/examples.html
-            DipDup config reference: https://docs.dipdup.net/config-file-reference/database
+            DipDup config reference: https://docs.dipdup.net/config/database
         """
 
 
@@ -177,6 +168,8 @@ class ReindexingRequiredError(DipDupError):
 
 @dataclass(repr=False)
 class InitializationRequiredError(DipDupError):
+    """Project initialization required"""
+
     message: str
 
     def _help(self) -> str:
@@ -198,23 +191,22 @@ class HandlerImportError(DipDupError):
     obj: Optional[str] = None
 
     def _help(self) -> str:
-        what = f'`{self.obj}` from ' if self.obj else ''
+        what = f'`{self.obj}` from' if self.obj else ''
         return f"""
             Failed to import {what} module `{self.module}`.
 
             Reasons in order of possibility:
 
-            1. `init` command was not called after modifying config
-            2. Name of handler module and handler function inside it don't match
-            2. Invalid `package` config value, reusing name of existing package
-            3. Something's wrong with PYTHONPATH env variable
-
+              1. `init` command was not called after modifying config
+              2. Name of handler module and handler function inside it don't match
+              3. Invalid `package` config value, reusing name of existing package
+              4. Something's wrong with `PYTHONPATH` env variable
         """
 
 
 @dataclass(repr=False)
 class ContractAlreadyExistsError(DipDupError):
-    """Attemp to add a contract with alias or address which is already in use"""
+    """Attempt to add a contract with alias or address already in use"""
 
     ctx: Any
     name: str
@@ -238,7 +230,7 @@ class ContractAlreadyExistsError(DipDupError):
 
 @dataclass(repr=False)
 class IndexAlreadyExistsError(DipDupError):
-    """Attemp to add an index with alias which is already in use"""
+    """Attemp to add an index with an alias already in use"""
 
     ctx: Any
     name: str
@@ -292,9 +284,9 @@ class CallbackError(DipDupError):
 
     def _help(self) -> str:
         return f"""
-            `{self.module}` callback execution failed.
+            `{self.module}` callback execution failed:
 
-              {self.exc.__class__.__name__}{self.exc}
+              {self.exc.__class__.__name__}: {self.exc}
             
             Eliminate the reason of failure and restart DipDup.
         """
@@ -331,7 +323,9 @@ class HasuraError(DipDupError):
 
     def _help(self) -> str:
         return f"""
-            Failed to configure Hasura: {self.msg}
+            Failed to configure Hasura:
+
+              {self.msg}
 
             Check out Hasura logs for more information.
 

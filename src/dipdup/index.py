@@ -77,7 +77,7 @@ class OperationSubgroup:
 
 
 # NOTE: Message queue of OperationIndex
-SingleLevelRollback = namedtuple('SingleLevelRollback', ('level'))
+SingleLevelRollback = namedtuple('SingleLevelRollback', ('head_level'))
 Operations = Tuple[OperationData, ...]
 OperationQueueItemT = Union[Tuple[OperationSubgroup, ...], SingleLevelRollback]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
@@ -110,7 +110,7 @@ def extract_operation_subgroups(
         levels.add(operation.level)
 
     if len(levels) > 1:
-        raise RuntimeError
+        raise RuntimeError('Operations in batch are not in the same level')
 
     _logger.debug(
         'Extracted %d subgroups (%d operations, %d filtered by %s entrypoints and %s addresses)',
@@ -178,15 +178,16 @@ class Index:
             self._state = state
             return
 
-        level = 0
-        if not isinstance(self._config, HeadIndexConfig):
-            level |= self._config.first_level
+        index_level = 0
+        if not isinstance(self._config, HeadIndexConfig) and self._config.first_level:
+            # NOTE: Be careful there: index has not reached the first level yet
+            index_level = self._config.first_level - 1
 
         self._state, _ = await models.Index.get_or_create(
             name=self._config.name,
             type=self._config.kind,
             defaults={
-                'level': level,
+                'level': index_level,
                 'config_hash': self._config.hash(),
                 'template': self._config.parent.name if self._config.parent else None,
                 'template_values': self._config.template_values,
@@ -195,25 +196,24 @@ class Index:
 
     async def process(self) -> None:
         # NOTE: `--oneshot` flag implied
-        if isinstance(self._config, (OperationIndexConfig, BigMapIndexConfig, TokenTransferIndexConfig)) and self._config.last_level:
-            last_level = self._config.last_level
+        if not isinstance(self._config, HeadIndexConfig) and self._config.last_level:
+            head_level = self._config.last_level
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_total_sync_duration())
-                await self._synchronize(last_level, cache=True)
-            await self.state.update_status(IndexStatus.ONESHOT, last_level)
+                await self._synchronize(head_level, cache=True)
+            await self.state.update_status(IndexStatus.ONESHOT, head_level)
 
         sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
         sync_level = sync_levels.pop()
-        if sync_levels:
-            raise RuntimeError(f'Multiple sync levels: {sync_levels}')
-        level = self.state.level
-
         if sync_level is None:
             raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
+        if sync_levels:
+            raise RuntimeError(f'Multiple sync levels: {sync_level}, {sync_levels}')
+        index_level = self.state.level
 
-        elif level < sync_level:
-            self._logger.info('Index is behind datasource, sync to datasource level: %s -> %s', level, sync_level)
+        if index_level < sync_level:
+            self._logger.info('Index is behind datasource level, syncing: %s -> %s', index_level, sync_level)
             self._queue.clear()
 
             with ExitStack() as stack:
@@ -228,33 +228,34 @@ class Index:
                 await self._process_queue()
 
     @abstractmethod
-    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
         ...
 
     @abstractmethod
     async def _process_queue(self) -> None:
         ...
 
-    async def _enter_sync_state(self, last_level: int) -> Optional[int]:
+    async def _enter_sync_state(self, head_level: int) -> Optional[int]:
+        # NOTE: Final state for indexes with `last_level`
         if self.state.status == IndexStatus.ONESHOT:
             return None
 
-        first_level = self.state.level
+        index_level = self.state.level
 
-        if first_level == last_level:
+        if index_level == head_level:
             return None
-        if first_level > last_level:
-            raise RuntimeError(f'Attempt to synchronize index from level {first_level} to level {last_level}')
+        if index_level > head_level:
+            raise RuntimeError(f'Attempt to synchronize index from level {index_level} to level {head_level}')
 
-        self._logger.info('Synchronizing index to level %s', last_level)
-        await self.state.update_status(status=IndexStatus.SYNCING, level=first_level)
-        return first_level
+        self._logger.info('Synchronizing index to level %s', head_level)
+        await self.state.update_status(status=IndexStatus.SYNCING, level=index_level)
+        return index_level
 
-    async def _exit_sync_state(self, last_level: int) -> None:
-        self._logger.info('Index is synchronized to level %s', last_level)
+    async def _exit_sync_state(self, head_level: int) -> None:
+        self._logger.info('Index is synchronized to level %s', head_level)
         if Metrics.enabled:
             Metrics.set_levels_to_sync(self._config.name, 0)
-        await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
+        await self.state.update_status(status=IndexStatus.REALTIME, level=head_level)
 
     def _extract_level(
         self,
@@ -273,7 +274,7 @@ class OperationIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[OperationQueueItemT] = deque()
         self._contract_hashes: Dict[str, Tuple[int, int]] = {}
-        self._rollback_level: Optional[int] = None
+        self._next_head_level: Optional[int] = None
         self._head_hashes: Dict[str, bool] = {}
         self._migration_originations: Optional[Dict[str, OperationData]] = None
 
@@ -282,25 +283,25 @@ class OperationIndex(Index):
         if Metrics.enabled:
             Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
 
-    def push_rollback(self, level: int) -> None:
-        self._queue.append(SingleLevelRollback(level))
+    def push_rollback(self, head_level: int) -> None:
+        self._queue.append(SingleLevelRollback(head_level))
 
-    async def _single_level_rollback(self, level: int) -> None:
-        """Ensure next arrived block has all operations of the previous block. But it could also contain additional operations.
+    async def _single_level_rollback(self, head_level: int) -> None:
+        """Ensure the next arrived block has all operations of the previous one. But it could also contain additional operations we need to process.
 
         Called by IndexDispatcher when index datasource receive a single level rollback.
         """
-        if self._rollback_level:
-            raise RuntimeError('Index is already in rollback state')
+        if self._next_head_level:
+            raise RuntimeError('Index is already in a single-level rollback state')
 
-        state_level = cast(int, self.state.level)
-        if state_level < level:
-            self._logger.info('Index level is lower than rollback level, ignoring: %s < %s', state_level, level)
-        elif state_level == level:
+        index_level = cast(int, self.state.level)
+        if index_level < head_level:
+            self._logger.info('Index level is lower than new head level, ignoring: %s < %s', index_level, head_level)
+        elif index_level == head_level:
             self._logger.info('Single level rollback, next block will be processed partially')
-            self._rollback_level = level
+            self._next_head_level = head_level
         else:
-            raise RuntimeError(f'Index level is higher than rollback level: {state_level} > {level}')
+            raise RuntimeError(f'Index level is higher than new head level: {index_level} > {head_level}')
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
@@ -311,37 +312,43 @@ class OperationIndex(Index):
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
             if isinstance(message, SingleLevelRollback):
                 self._logger.debug('Processing rollback realtime message, %s left in queue', messages_left)
-                await self._single_level_rollback(message.level)
+                await self._single_level_rollback(message.head_level)
             elif message:
                 self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
                 with ExitStack() as stack:
                     if Metrics.enabled:
                         stack.enter_context(Metrics.measure_level_realtime_duration())
                     await self._process_level_operations(message)
+            else:
+                raise RuntimeError('Got empty message from realtime queue')
         else:
-            Metrics.set_levels_to_realtime(self._config.name, 0)
+            if Metrics.enabled:
+                Metrics.set_levels_to_realtime(self._config.name, 0)
 
-    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        first_level = await self._enter_sync_state(last_level)
-        if first_level is None:
+        index_level = await self._enter_sync_state(head_level)
+        if index_level is None:
             return
 
-        self._logger.info('Fetching operations from level %s to %s', first_level, last_level)
+        first_level = index_level + 1
+
+        self._logger.info('Fetching operations from level %s to %s', first_level, head_level)
         transaction_addresses = await self._get_transaction_addresses()
         origination_addresses = await self._get_origination_addresses()
 
         migration_originations: Tuple[OperationData, ...] = ()
-        if self._config.types and OperationType.migration in self._config.types:
-            migration_originations = tuple(await self._datasource.get_migration_originations(first_level))
-            for op in migration_originations:
-                code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
-                op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
+        if OperationType.migration in self._config.types:
+            async for batch in self._datasource.iter_migration_originations(first_level):
+                for op in batch:
+                    code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
+                    op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
+                    migration_originations += (op,)
 
         fetcher = OperationFetcher(
             datasource=self._datasource,
             first_level=first_level,
-            last_level=last_level,
+            last_level=head_level,
             transaction_addresses=transaction_addresses,
             origination_addresses=origination_addresses,
             cache=cache,
@@ -350,7 +357,7 @@ class OperationIndex(Index):
 
         async for level, operations in fetcher.fetch_operations_by_level():
             if Metrics.enabled:
-                Metrics.set_levels_to_sync(self._config.name, last_level - level)
+                Metrics.set_levels_to_sync(self._config.name, head_level - level)
 
             operation_subgroups = tuple(
                 extract_operation_subgroups(
@@ -366,22 +373,20 @@ class OperationIndex(Index):
                         stack.enter_context(Metrics.measure_level_sync_duration())
                     await self._process_level_operations(operation_subgroups)
 
-        await self._exit_sync_state(last_level)
+        await self._exit_sync_state(head_level)
 
     async def _process_level_operations(self, operation_subgroups: Tuple[OperationSubgroup, ...]) -> None:
         if not operation_subgroups:
             raise RuntimeError('No operations to process')
 
-        level = operation_subgroups[0].operations[0].level
-        if self._rollback_level:
-            levels = {
-                'operations': level,
-                'rollback': self._rollback_level,
-                'index': self.state.level,
-            }
-            if len(set(levels.values())) != 1:
-                levels_repr = ', '.join(f'{k}={v}' for k, v in levels.items())
-                raise RuntimeError(f'Index is in a rollback state, but received operation batch with different levels: {levels_repr}')
+        batch_level = operation_subgroups[0].operations[0].level
+        index_level = self.state.level
+        if batch_level < index_level:
+            raise RuntimeError(f'Batch level is lower than index level: {batch_level} < {index_level}')
+
+        if head_level := self._next_head_level:
+            if head_level != index_level:
+                raise RuntimeError(f'New head level is not equal to index level: {head_level} != {index_level}')
 
             self._logger.info('Rolling back to the previous level, verifying processed operations')
             old_head_hashes = set(self._head_hashes)
@@ -397,21 +402,18 @@ class OperationIndex(Index):
                 await self._ctx.reindex(
                     ReindexingReason.rollback,
                     datasource=self._datasource.name,
-                    from_level=level + 1,
-                    to_level=level,
+                    from_level=head_level,
+                    # NOTE: Index level is not decreased on a single-level rollback
+                    to_level=head_level - 1,
                     missing_hashes=', '.join(missing_hashes),
                 )
 
-            self._rollback_level = None
+            self._next_head_level = None
             self._head_hashes.clear()
 
             operation_subgroups = tuple(filter(lambda subgroup: subgroup.hash in unprocessed_hashes, operation_subgroups))
 
-        # NOTE: Equal level is ok since it could be a single level rollback
-        elif level < self.state.level:
-            raise RuntimeError(f'Level of operation batch must be not lower than index state level: {level} < {self.state.level}')
-
-        self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), level)
+        self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: Deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
             subgroup_matched_handlers = await self._match_operation_subgroup(operation_subgroup)
@@ -423,13 +425,13 @@ class OperationIndex(Index):
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
-            await self.state.update_status(level=level)
+            await self.state.update_status(level=batch_level)
             return
 
         async with in_global_transaction():
             for operation_subgroup, handler_config, args in matched_handlers:
                 await self._call_matched_handler(handler_config, operation_subgroup, args)
-            await self.state.update_status(level=level)
+            await self.state.update_status(level=batch_level)
 
     async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
         """Match single operation with pattern"""
@@ -583,21 +585,26 @@ class OperationIndex(Index):
 
     async def _get_origination_addresses(self) -> Set[str]:
         """Get addresses to fetch origination from during initial synchronization"""
+        # FIXME: Missing `OperationType.origination` in config is ignored
         addresses = set()
         for handler_config in self._config.handlers:
             for pattern_config in handler_config.pattern:
-                if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                    if pattern_config.originated_contract:
-                        addresses.add(pattern_config.originated_contract_config.address)
-                    if pattern_config.source:
-                        for address in await self._datasource.get_originated_contracts(pattern_config.source_contract_config.address):
-                            addresses.add(address)
-                    if pattern_config.similar_to:
-                        for address in await self._datasource.get_similar_contracts(
-                            address=pattern_config.similar_to_contract_config.address,
-                            strict=pattern_config.strict,
-                        ):
-                            addresses.add(address)
+                if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                    continue
+
+                if pattern_config.originated_contract:
+                    addresses.add(pattern_config.originated_contract_config.address)
+
+                if pattern_config.source:
+                    source_address = pattern_config.source_contract_config.address
+                    async for batch in self._datasource.iter_originated_contracts(source_address):
+                        addresses.update(batch)
+
+                if pattern_config.similar_to:
+                    similar_address = pattern_config.similar_to_contract_config.address
+                    async for batch in self._datasource.iter_similar_contracts(similar_address, pattern_config.strict):
+                        addresses.update(batch)
+
         return addresses
 
     async def _get_contract_hashes(self, address: str) -> Tuple[int, int]:
@@ -631,10 +638,10 @@ class BigMapIndex(Index):
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_big_maps(big_maps)
 
-    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        first_level = await self._enter_sync_state(last_level)
-        if first_level is None:
+        index_level = await self._enter_sync_state(head_level)
+        if index_level is None:
             return
 
         if any(
@@ -643,14 +650,15 @@ class BigMapIndex(Index):
                 self._config.skip_history == SkipHistory.once and not self.state.level,
             )
         ):
-            await self._synchronize_level(last_level, cache)
+            await self._synchronize_level(head_level)
         else:
-            await self._synchronize_full(first_level, last_level, cache)
+            await self._synchronize_full(index_level, head_level, cache)
 
-        await self._exit_sync_state(last_level)
+        await self._exit_sync_state(head_level)
 
-    async def _synchronize_full(self, first_level: int, last_level: int, cache: bool = False) -> None:
-        self._logger.info('Fetching big map diffs from level %s to %s', first_level, last_level)
+    async def _synchronize_full(self, index_level: int, head_level: int, cache: bool = False) -> None:
+        first_level = index_level + 1
+        self._logger.info('Fetching big map diffs from level %s to %s', first_level, head_level)
 
         big_map_addresses = self._get_big_map_addresses()
         big_map_paths = self._get_big_map_paths()
@@ -658,7 +666,7 @@ class BigMapIndex(Index):
         fetcher = BigMapFetcher(
             datasource=self._datasource,
             first_level=first_level,
-            last_level=last_level,
+            last_level=head_level,
             big_map_addresses=big_map_addresses,
             big_map_paths=big_map_paths,
             cache=cache,
@@ -667,11 +675,11 @@ class BigMapIndex(Index):
         async for level, big_maps in fetcher.fetch_big_maps_by_level():
             with ExitStack() as stack:
                 if Metrics.enabled:
-                    Metrics.set_levels_to_sync(self._config.name, last_level - level)
+                    Metrics.set_levels_to_sync(self._config.name, head_level - level)
                     stack.enter_context(Metrics.measure_level_sync_duration())
                 await self._process_level_big_maps(big_maps)
 
-    async def _synchronize_level(self, last_level: int, cache: bool = False) -> None:
+    async def _synchronize_level(self, head_level: int) -> None:
         # NOTE: Checking late because feature flags could be modified after loading config
         if not self._ctx.config.advanced.early_realtime:
             raise ConfigurationError('`skip_history` requires `early_realtime` feature flag to be enabled')
@@ -688,12 +696,12 @@ class BigMapIndex(Index):
         # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
         async with in_global_transaction():
             for big_map_id, address, path in big_map_ids:
-                async for big_map_keys in self._datasource.iter_big_map(big_map_id, last_level):
+                async for big_map_keys in self._datasource.iter_big_map(big_map_id, head_level):
                     big_map_data = tuple(
                         BigMapData(
                             id=big_map_key['id'],
-                            level=last_level,
-                            operation_id=last_level,
+                            level=head_level,
+                            operation_id=head_level,
                             timestamp=datetime.now(),
                             bigmap=big_map_id,
                             contract_address=address,
@@ -709,28 +717,30 @@ class BigMapIndex(Index):
                     for handler_config, big_map_diff in matched_handlers:
                         await self._call_matched_handler(handler_config, big_map_diff)
 
-            await self.state.update_status(level=last_level)
+            await self.state.update_status(level=head_level)
 
     async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         if not big_maps:
             return
-        level = self._extract_level(big_maps)
+        batch_level = self._extract_level(big_maps)
+        index_level = self.state.level
 
-        if level <= self.state.level:
-            raise RuntimeError(f'Level of big map batch must be higher than index state level: {level} <= {self.state.level}')
+        # NOTE: le operator because single level rollbacks are not supported
+        if batch_level <= index_level:
+            raise RuntimeError(f'Level of big map batch must be higher than index state level: {batch_level} <= {index_level}')
 
-        self._logger.debug('Processing big map diffs of level %s', level)
+        self._logger.debug('Processing big map diffs of level %s', batch_level)
         matched_handlers = await self._match_big_maps(big_maps)
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
-            await self.state.update_status(level=level)
+            await self.state.update_status(level=batch_level)
             return
 
         async with in_global_transaction():
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
-            await self.state.update_status(level=level)
+            await self.state.update_status(level=batch_level)
 
     async def _match_big_map(self, handler_config: BigMapHandlerConfig, big_map: BigMapData) -> bool:
         """Match single big map diff with pattern"""
@@ -835,24 +845,26 @@ class HeadIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[HeadBlockData] = deque()
 
-    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
-        self._logger.info('Setting index level to %s and moving on', last_level)
-        await self.state.update_status(status=IndexStatus.REALTIME, level=last_level)
+    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
+        self._logger.info('Setting index level to %s and moving on', head_level)
+        await self.state.update_status(status=IndexStatus.REALTIME, level=head_level)
 
     async def _process_queue(self) -> None:
         while self._queue:
             head = self._queue.popleft()
             self._logger.debug('Processing head realtime message, %s left in queue', len(self._queue))
 
-            level = head.level
-            if level <= self.state.level:
-                raise RuntimeError(f'Level of head must be higher than index state level: {level} <= {self.state.level}')
+            batch_level = head.level
+            index_level = self.state.level
+
+            if batch_level <= index_level:
+                raise RuntimeError(f'Level of head must be higher than index state level: {batch_level} <= {index_level}')
 
             async with in_global_transaction():
-                self._logger.debug('Processing head info of level %s', level)
+                self._logger.debug('Processing head info of level %s', batch_level)
                 for handler_config in self._config.handlers:
                     await self._call_matched_handler(handler_config, head)
-                await self.state.update_status(level=level)
+                await self.state.update_status(level=batch_level)
 
     async def _call_matched_handler(self, handler_config: HeadHandlerConfig, head: HeadBlockData) -> None:
         if not handler_config.parent:
