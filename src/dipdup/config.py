@@ -1087,6 +1087,17 @@ default_hooks = {
     'on_synchronized': HookConfig(
         callback='on_synchronized',
     ),
+    # TODO: Deprecated; remove in 6.0
+    # NOTE: Fires on rollback when `on_index_rollback` hook is not presented
+    # NOTE: Default: reindex.
+    'on_rollback': HookConfig(
+        callback='on_rollback',
+        args={
+            'index': 'dipdup.datasources.datasource.IndexDatasource',
+            'from_level': 'int',
+            'to_level': 'int',
+        },
+    ),
 }
 
 
