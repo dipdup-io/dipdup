@@ -284,6 +284,9 @@ class DipDupCodeGenerator:
     async def generate_hooks(self) -> None:
         for hook_configs in self._config.hooks.values(), default_hooks.values():
             for hook_config in hook_configs:
+                # TODO: Skipping deprecated hook, remove in 6.0
+                if hook_config.callback == 'on_rollback':
+                    continue
                 await self._generate_callback(hook_config, sql=True)
 
     async def cleanup(self) -> None:
