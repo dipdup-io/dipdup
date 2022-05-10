@@ -5,6 +5,7 @@
 ### Added
 
 * ci: Push `X` and `X.Y` tags to the Docker Hub on release.
+* cli: Added `config env` command to export env-file with default values.
 
 ### Fixed
 

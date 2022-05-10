@@ -260,6 +260,18 @@ async def config_export(ctx, unsafe: bool) -> None:
     echo(config_yaml)
 
 
+@config.command(name='env', help='Dump environment variables used in DipDup config')
+@click.pass_context
+@cli_wrapper
+async def config_env(ctx) -> None:
+    config = DipDupConfig.load(
+        paths=ctx.obj.config.paths,
+        environment=True,
+    )
+    for key, value in config.environment.items():
+        echo(f'{key}={value}')
+
+
 @cli.group(help='Manage internal cache')
 @click.pass_context
 @cli_wrapper
