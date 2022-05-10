@@ -15,16 +15,16 @@ class Key(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    nat: str
     string: str
+    nat: str
 
 
 class Value(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    mr: Optional[Dict[str, bool]]
     sw: Optional[str]
+    mr: Optional[Dict[str, bool]]
 
 
 class HjklStorageItem(BaseModel):
