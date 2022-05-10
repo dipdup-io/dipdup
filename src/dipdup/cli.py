@@ -37,16 +37,13 @@ from dipdup.config import LoggingConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import DeprecatedHookError
 from dipdup.exceptions import DipDupError
-from dipdup.exceptions import HandlerImportError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
 from dipdup.hasura import HasuraGateway
 from dipdup.migrations import DipDupMigrationManager
 from dipdup.models import Index
 from dipdup.models import Schema
-from dipdup.utils import import_from
 from dipdup.utils import iter_files
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import set_decimal_context
@@ -168,19 +165,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     except Exception as e:
         raise InitializationRequiredError from e
 
-    # NOTE: 6.0 migration, can't be performed automatically
-    try:
-        import_from(f'{_config.package}.hooks.on_rollback', 'on_rollback')
-    except HandlerImportError:
-        pass
-    else:
-        raise DeprecatedHookError(
-            package=_config.package,
-            hook='on_rollback',
-            version='6.0.0',
-            msg='Please, move rollback logic to the `on_index_rollback` hook. Default behavior has not changed.',
-        )
-
+    # NOTE: Ensure that `spec_version` is valid and supported
     if _config.spec_version not in spec_version_mapping:
         raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
     if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
