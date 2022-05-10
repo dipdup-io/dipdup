@@ -31,7 +31,6 @@ from typing import cast
 from pysignalr.client import SignalRClient
 from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage  # type: ignore
-from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT
@@ -892,8 +891,8 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Creating websocket client')
         self._ws_client = SignalRClient(
             url=f'{self._http._url}/v1/events',
-            # NOTE: 1 MB default is not enough for big blocks
-            max_size=DEFAULT_MAX_SIZE * 10,
+            # NOTE: It's safe. Remove comment after updating pysignalr.
+            max_size=None,  # type: ignore
         )
 
         self._ws_client.on_open(self._on_connect)

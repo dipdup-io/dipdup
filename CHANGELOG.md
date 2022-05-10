@@ -11,6 +11,7 @@
 ### Fixed
 
 * index: Fixed fetching `migration` operations.
+* tzkt: Fixed reconnection due to `websockets` message size limit.
 
 ## 5.0.4 - 2022-05-05
 
