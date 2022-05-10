@@ -1,4 +1,6 @@
 from unittest import IsolatedAsyncioTestCase
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
 from unittest.mock import Mock
 
 from dipdup import models
@@ -13,9 +15,12 @@ from dipdup.config import OperationIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import IndexDispatcher
+from dipdup.enums import ReindexingReason
 from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
 from dipdup.index import OperationIndex
+from dipdup.index import OperationSubgroup
+from dipdup.utils.database import tortoise_wrapper
 
 
 def _get_index_dispatcher() -> IndexDispatcher:
@@ -28,6 +33,9 @@ def _get_operation_index(level: int) -> OperationIndex:
     config = OperationIndexConfig(
         kind='operation',
         datasource='',
+        contracts=[
+            ContractConfig(address='KT1000000000000000000000000000000000'),
+        ],
         handlers=(
             OperationHandlerConfig(
                 callback='',
@@ -41,6 +49,8 @@ def _get_operation_index(level: int) -> OperationIndex:
             ),
         ),
     )
+    config.handlers[0].pattern[0].parameter_type_cls = MagicMock()  # type: ignore
+    config.handlers[0].pattern[0].storage_type_cls = MagicMock()
     config.name = 'operation'
     index = OperationIndex(
         ctx=Mock(spec=DipDupContext),
@@ -48,6 +58,10 @@ def _get_operation_index(level: int) -> OperationIndex:
         config=config,
     )
     index._state = models.Index(level=level)
+    index._state.save = AsyncMock()  # type: ignore
+    index._call_matched_handler = AsyncMock()  # type: ignore
+    index._ctx.reindex = AsyncMock()  # type: ignore
+
     return index
 
 
@@ -91,6 +105,25 @@ def _get_head_index(level: int) -> HeadIndex:
     )
     index._state = models.Index(level=level)
     return index
+
+
+def _get_subgroup(level: int, id_: int = 0, matched: int = 0) -> OperationSubgroup:
+    op = MagicMock(spec=models.OperationData)
+    op.type = 'transaction'
+    op.level = level
+    op.hash = id_
+    op.counter = id_
+    op.entrypoint = 'yes' if matched else 'no'
+    op.target_address = 'KT1000000000000000000000000000000000'
+    op.diffs = []
+    op.storage = {}
+
+    return OperationSubgroup(
+        operations=(op,),
+        hash=str(id_),
+        counter=id_,
+        entrypoints={'yes' if matched else 'no'},  # type: ignore
+    )
 
 
 class RollbackTest(IsolatedAsyncioTestCase):
@@ -212,3 +245,174 @@ class RollbackTest(IsolatedAsyncioTestCase):
             to_level=to_level,
         )
         self.assertEqual(0, len(big_map_index._queue))
+
+    async def test_single_level_new_head_equal(self) -> None:
+        index_level, from_level, to_level = 20, 20, 19
+        operation_index = _get_operation_index(level=index_level)
+        dispatcher = _get_index_dispatcher()
+        dispatcher._indexes = {
+            'operation': operation_index,
+        }
+
+        async with tortoise_wrapper('sqlite://:memory:'):
+            await operation_index._process_level_operations(
+                (
+                    _get_subgroup(level=index_level, id_=0, matched=True),
+                    _get_subgroup(level=index_level, id_=1, matched=True),
+                    _get_subgroup(level=index_level, id_=2, matched=False),
+                )
+            )
+            assert operation_index._head_hashes == {'0': True, '1': True, '2': False}
+
+            await dispatcher._on_rollback(
+                datasource=operation_index.datasource,
+                from_level=from_level,
+                to_level=to_level,
+            )
+            assert len(operation_index._queue) == 1
+
+            await operation_index._process_queue()
+            assert operation_index._next_head_level == from_level
+
+            await operation_index._process_level_operations(
+                (
+                    _get_subgroup(level=index_level, id_=0, matched=True),
+                    _get_subgroup(level=index_level, id_=1, matched=True),
+                    _get_subgroup(level=index_level, id_=2, matched=False),
+                )
+            )
+            await operation_index._process_queue()
+            assert operation_index._next_head_level is None
+            assert operation_index.state.level == from_level
+            operation_index._ctx.reindex.assert_not_awaited()
+            assert operation_index._call_matched_handler.await_count == 2
+
+    async def test_single_level_new_head_less(self) -> None:
+        index_level, from_level, to_level = 20, 20, 19
+        operation_index = _get_operation_index(level=index_level)
+        dispatcher = _get_index_dispatcher()
+        dispatcher._indexes = {
+            'operation': operation_index,
+        }
+
+        async with tortoise_wrapper('sqlite://:memory:'):
+            await operation_index._process_level_operations(
+                (
+                    _get_subgroup(level=index_level, id_=0, matched=True),
+                    _get_subgroup(level=index_level, id_=1, matched=True),
+                    _get_subgroup(level=index_level, id_=2, matched=False),
+                )
+            )
+            assert operation_index._head_hashes == {'0': True, '1': True, '2': False}
+
+            await dispatcher._on_rollback(
+                datasource=operation_index.datasource,
+                from_level=from_level,
+                to_level=to_level,
+            )
+            assert len(operation_index._queue) == 1
+
+            await operation_index._process_queue()
+            assert operation_index._next_head_level == from_level
+
+            await operation_index._process_level_operations(
+                (
+                    _get_subgroup(level=index_level, id_=0, matched=True),
+                    _get_subgroup(level=index_level, id_=2, matched=False),
+                )
+            )
+            await operation_index._process_queue()
+            assert operation_index._next_head_level is None
+            assert operation_index.state.level == from_level
+
+            operation_index._ctx.reindex.assert_awaited_with(
+                ReindexingReason.rollback,
+                datasource=operation_index.datasource.name,
+                from_level=from_level,
+                to_level=to_level,
+                missing_hashes='1',
+            )
+            assert operation_index._call_matched_handler.await_count == 2
+
+    async def test_single_level_new_head_less_not_matched(self) -> None:
+        index_level, from_level, to_level = 20, 20, 19
+        operation_index = _get_operation_index(level=index_level)
+        dispatcher = _get_index_dispatcher()
+        dispatcher._indexes = {
+            'operation': operation_index,
+        }
+
+        async with tortoise_wrapper('sqlite://:memory:'):
+            await operation_index._process_level_operations(
+                (
+                    _get_subgroup(level=index_level, id_=0, matched=True),
+                    _get_subgroup(level=index_level, id_=1, matched=True),
+                    _get_subgroup(level=index_level, id_=2, matched=False),
+                )
+            )
+            assert operation_index._head_hashes == {'0': True, '1': True, '2': False}
+
+            await dispatcher._on_rollback(
+                datasource=operation_index.datasource,
+                from_level=from_level,
+                to_level=to_level,
+            )
+            assert len(operation_index._queue) == 1
+
+            await operation_index._process_queue()
+            assert operation_index._next_head_level == from_level
+
+            await operation_index._process_level_operations(
+                (
+                    _get_subgroup(level=index_level, id_=0, matched=True),
+                    _get_subgroup(level=index_level, id_=1, matched=True),
+                )
+            )
+            await operation_index._process_queue()
+            assert operation_index._next_head_level is None
+            assert operation_index.state.level == from_level
+            operation_index._ctx.reindex.assert_not_awaited()
+            assert operation_index._call_matched_handler.await_count == 2
+
+    async def test_single_level_new_head_more(self) -> None:
+        index_level, from_level, to_level = 20, 20, 19
+        operation_index = _get_operation_index(level=index_level)
+        dispatcher = _get_index_dispatcher()
+        dispatcher._indexes = {
+            'operation': operation_index,
+        }
+
+        async with tortoise_wrapper('sqlite://:memory:'):
+            await operation_index._process_level_operations(
+                (
+                    _get_subgroup(level=index_level, id_=0, matched=True),
+                    _get_subgroup(level=index_level, id_=1, matched=True),
+                    _get_subgroup(level=index_level, id_=2, matched=False),
+                )
+            )
+            assert operation_index._head_hashes == {'0': True, '1': True, '2': False}
+
+            await dispatcher._on_rollback(
+                datasource=operation_index.datasource,
+                from_level=from_level,
+                to_level=to_level,
+            )
+            assert len(operation_index._queue) == 1
+
+            await operation_index._process_queue()
+            assert operation_index._next_head_level == from_level
+
+            await operation_index._process_level_operations(
+                (
+                    _get_subgroup(level=index_level, id_=0, matched=True),
+                    _get_subgroup(level=index_level, id_=1, matched=True),
+                    _get_subgroup(level=index_level, id_=2, matched=False),
+                    _get_subgroup(level=index_level, id_=3, matched=True),
+                )
+            )
+            await operation_index._process_queue()
+
+            assert operation_index._next_head_level is None
+            assert operation_index.state.level == from_level
+            operation_index._ctx.reindex.assert_not_awaited()
+            assert operation_index._call_matched_handler.await_count == 3
