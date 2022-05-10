@@ -17,6 +17,7 @@ from tortoise import fields
 from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.enums import ReindexingReason
+from dipdup.enums import TokenStandard
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -176,6 +177,27 @@ class QuoteData:
     jpy: Decimal
     krw: Decimal
     eth: Decimal
+
+
+@dataclass
+class TokenTransferData:
+    id: int
+    level: int
+    timestamp: datetime
+    tzkt_token_id: int
+    contract_address: Optional[str] = None
+    contract_alias: Optional[str] = None
+    token_id: Optional[int] = None
+    standard: Optional[TokenStandard] = None
+    metadata: Optional[Dict[str, Any]] = None
+    from_alias: Optional[str] = None
+    from_address: Optional[str] = None
+    to_alias: Optional[str] = None
+    to_address: Optional[str] = None
+    amount: Optional[int] = None
+    tzkt_transaction_id: Optional[int] = None
+    tzkt_origination_id: Optional[int] = None
+    tzkt_migration_id: Optional[int] = None
 
 
 class Schema(Model):

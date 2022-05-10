@@ -6,8 +6,8 @@
 ##
 ## DEV=1           Install dev dependencies
 DEV=1
-## PLUGINS=""      Install extras (`pytezos` only)
-PLUGINS=""
+## EXTRAS=""       Install extras (`pytezos` only)
+EXTRAS=""
 ## TAG=latest      Docker tag for images built
 TAG=latest
 ##
@@ -17,7 +17,7 @@ all:            ## Run a whole CI pipeline (default)
 
 install:        ## Install project
 	poetry install \
-	`if [ -n "${PLUGINS}" ]; then for i in ${PLUGINS}; do echo "-E $$i "; done; fi` \
+	`if [ -n "${EXTRAS}" ]; then for i in ${EXTRAS}; do echo "-E $$i "; done; fi` \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
 
 lint:           ## Lint with all tools
@@ -46,7 +46,7 @@ build:          ## Build wheel Python package
 
 image:          ## Build Docker image
 	docker build . -t dipdup:${TAG}
-	docker build . -t dipdup:${TAG}-pytezos --build-arg PLUGINS=pytezos
+	docker build . -t dipdup:${TAG}-pytezos --build-arg EXTRAS=pytezos
 
 release-patch:  ## Release patch version
 	bumpversion patch
