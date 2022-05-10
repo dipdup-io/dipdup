@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+* ci: Push `X` and `X.Y` tags to the Docker Hub on release.
+
 ### Fixed
 
 * index: Fixed fetching `migration` operations.
