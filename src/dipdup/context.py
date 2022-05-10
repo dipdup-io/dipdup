@@ -35,6 +35,7 @@ from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigT
+from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
@@ -235,12 +236,14 @@ class DipDupContext:
         await self.spawn_index(name, state)
 
     async def spawn_index(self, name: str, state: Optional[Index] = None) -> None:
+        # NOTE: Avoiding circular import
         from dipdup.index import BigMapIndex
         from dipdup.index import HeadIndex
         from dipdup.index import OperationIndex
+        from dipdup.index import TokenTransferIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
-        index: Union[OperationIndex, BigMapIndex, HeadIndex]
+        index: Union[OperationIndex, BigMapIndex, HeadIndex, TokenTransferIndex]
 
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
         datasource = self.get_tzkt_datasource(datasource_name)
@@ -251,6 +254,8 @@ class DipDupContext:
             index = BigMapIndex(self, index_config, datasource)
         elif isinstance(index_config, HeadIndexConfig):
             index = HeadIndex(self, index_config, datasource)
+        elif isinstance(index_config, TokenTransferIndexConfig):
+            index = TokenTransferIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 

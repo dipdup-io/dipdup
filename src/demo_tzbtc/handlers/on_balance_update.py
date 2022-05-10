@@ -10,5 +10,4 @@ async def on_balance_update(address: str, balance_update: Decimal, timestamp: da
     holder.turnover += abs(balance_update)  # type: ignore
     holder.tx_count += 1  # type: ignore
     holder.last_seen = timestamp  # type: ignore
-    assert holder.balance >= 0, address
     await holder.save()

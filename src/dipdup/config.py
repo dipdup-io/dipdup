@@ -43,6 +43,7 @@ from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
+from dipdup.datasources.subscription import TokenTransferSubscription
 from dipdup.datasources.subscription import TransactionSubscription
 from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
@@ -203,7 +204,7 @@ class ContractConfig(NameMixin):
             return v
 
         # NOTE: Wallet addresses are allowed for debugging purposes (source field). Do we need a separate section?
-        if not (v.startswith('KT') or v.startswith('tz')) or len(v) != 36:
+        if not (v.startswith('KT1') or v.startswith(('tz1', 'tz2', 'tz3'))) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
 
@@ -427,9 +428,13 @@ class ParentMixin(Generic[T]):
     def __post_init_post_parse__(self: 'ParentMixin') -> None:
         self._parent: Optional[T] = None
 
-    @cached_property
+    @property
     def parent(self) -> Optional[T]:
         return self._parent
+
+    @parent.setter
+    def parent(self, value: T) -> None:
+        self._parent = value
 
 
 @dataclass
@@ -437,13 +442,17 @@ class ParameterTypeMixin:
     """`parameter_type_cls` field"""
 
     def __post_init_post_parse__(self) -> None:
-        self._parameter_type_cls = None
+        self._parameter_type_cls: Optional[Type] = None
 
-    @cached_property
+    @property
     def parameter_type_cls(self) -> Type:
         if self._parameter_type_cls is None:
             raise ConfigInitializationException
         return self._parameter_type_cls
+
+    @parameter_type_cls.setter
+    def parameter_type_cls(self, value: Type) -> None:
+        self._parameter_type_cls = value
 
     def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
         _logger.debug('Registering parameter type for entrypoint `%s`', entrypoint)
@@ -461,13 +470,17 @@ class TransactionIdxMixin:
     """
 
     def __post_init_post_parse__(self):
-        self._transaction_idx = None
+        self._transaction_idx: Optional[int] = None
 
-    @cached_property
+    @property
     def transaction_idx(self) -> int:
         if self._transaction_idx is None:
             raise ConfigInitializationException
         return self._transaction_idx
+
+    @transaction_idx.setter
+    def transaction_idx(self, value: int) -> None:
+        self._transaction_idx = value
 
 
 @dataclass
@@ -723,6 +736,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
     :param datasource: Alias of index datasource in `datasources` section
     """
 
+    kind: str
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
@@ -932,9 +946,38 @@ class HeadIndexConfig(IndexConfig):
     handlers: Tuple[HeadHandlerConfig, ...]
 
 
-IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, IndexTemplateConfig]
-ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig]
-ContractIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig]
+@dataclass
+class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'TokenTransferData'
+        yield package, 'models as models'
+
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'token_transfer', 'TokenTransferData'
+
+
+@dataclass
+class TokenTransferIndexConfig(IndexConfig):
+    """Token index config"""
+
+    kind: Literal['token_transfer']
+    datasource: Union[str, TzktDatasourceConfig]
+    handlers: Tuple[TokenTransferHandlerConfig, ...] = field(default_factory=tuple)
+
+    first_level: int = 0
+    last_level: int = 0
+
+
+IndexConfigT = Union[
+    OperationIndexConfig,
+    BigMapIndexConfig,
+    HeadIndexConfig,
+    TokenTransferIndexConfig,
+    IndexTemplateConfig,
+]
+ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, TokenTransferIndexConfig]
 HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
@@ -1283,6 +1326,9 @@ class DipDupConfig:
             elif isinstance(index_config, HeadIndexConfig):
                 self._import_index_callbacks(index_config)
 
+            elif isinstance(index_config, TokenTransferIndexConfig):
+                self._import_index_callbacks(index_config)
+
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1412,6 +1458,9 @@ class DipDupConfig:
         elif isinstance(index_config, HeadIndexConfig):
             index_config.subscriptions.add(HeadSubscription())
 
+        elif isinstance(index_config, TokenTransferIndexConfig):
+            index_config.subscriptions.add(TokenTransferSubscription())
+
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1438,7 +1487,7 @@ class DipDupConfig:
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_contract(pattern_config.source)
                         if not pattern_config.entrypoint:
-                            pattern_config.transaction_idx = idx
+                            pattern_config._transaction_idx = idx
 
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                         if isinstance(pattern_config.source, str):
@@ -1465,6 +1514,13 @@ class DipDupConfig:
 
             for head_handler_config in index_config.handlers:
                 head_handler_config.parent = index_config
+
+        elif isinstance(index_config, TokenTransferIndexConfig):
+            if isinstance(index_config.datasource, str):
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+
+            for token_transfer_handler_config in index_config.handlers:
+                token_transfer_handler_config.parent = index_config
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

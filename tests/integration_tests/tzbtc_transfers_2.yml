@@ -1,0 +1,20 @@
+spec_version: 1.2
+package: demo_tzbtc_transfers
+
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.tzkt.io
+
+indexes:
+  tzbtc_holders_mainnet:
+    kind: token_transfer
+    datasource: tzkt
+    handlers:
+      - callback: on_token_transfer
+    first_level: 1366824
+    last_level: 1366999

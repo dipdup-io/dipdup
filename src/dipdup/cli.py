@@ -139,7 +139,7 @@ async def _check_version() -> None:
         response = await session.get('https://api.github.com/repos/dipdup-net/dipdup-py/releases/latest')
         response_json = await response.json()
         latest_version = response_json['tag_name']
-            
+
         if __version__ != latest_version:
             _logger.warning('You are running an outdated version of DipDup. Please update to the latest version.')
             _logger.info('Set `skip_version_check` flag in config to hide this message.')

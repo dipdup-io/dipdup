@@ -27,6 +27,7 @@ from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationHandlerOriginationPatternConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
+from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.config import default_hooks
 from dipdup.datasources.datasource import Datasource
@@ -215,6 +216,9 @@ class DipDupCodeGenerator:
             elif isinstance(index_config, HeadIndexConfig):
                 pass
 
+            elif isinstance(index_config, TokenTransferIndexConfig):
+                pass
+
             elif isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException
 
@@ -279,7 +283,7 @@ class DipDupCodeGenerator:
         """Generate handler stubs with typehints from templates if not exist"""
         handler_config: HandlerConfig
         for index_config in self._config.indexes.values():
-            if isinstance(index_config, (OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig)):
+            if isinstance(index_config, (OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, TokenTransferIndexConfig)):
                 for handler_config in index_config.handlers:
                     await self._generate_callback(handler_config)
 
