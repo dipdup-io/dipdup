@@ -1187,30 +1187,15 @@ class DipDupConfig:
         environment: bool = True,
     ) -> 'DipDupConfig':
         yaml = YAML(typ='base')
-        current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
         config_environment: Dict[str, str] = {}
         for path in paths:
-            path = os.path.join(current_workdir, path)
-
-            _logger.debug('Loading config from %s', path)
-            try:
-                with open(path) as file:
-                    raw_config = file.read()
-            except OSError as e:
-                raise ConfigurationError(str(e))
+            raw_config = cls._load_raw_config(path)
 
             if environment:
-                _logger.debug('Substituting environment variables')
-                for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-                    variable, default_value = match.group('var_name'), match.group('default_value')
-                    value = env.get(variable, default_value)
-                    if not value:
-                        raise ConfigurationError(f'Environment variable `{variable}` is not set')
-                    config_environment[variable] = value
-                    placeholder = match.group(0)
-                    raw_config = raw_config.replace(placeholder, value or default_value)
+                raw_config, raw_config_environment = cls._substitute_env_variables(raw_config)
+                config_environment.update(raw_config_environment)
 
             json_config.update(yaml.load(raw_config))
 
@@ -1302,6 +1287,32 @@ class DipDupConfig:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
             self._imports_resolved.add(index_config.name)
+
+    @classmethod
+    def _load_raw_config(cls, path: str) -> str:
+        path = os.path.join(os.getcwd(), path)
+        _logger.debug('Loading config from %s', path)
+        try:
+            with open(path) as file:
+                return file.read()
+        except OSError as e:
+            raise ConfigurationError(str(e)) from e
+
+    @classmethod
+    def _substitute_env_variables(cls, raw_config: str) -> Tuple[str, Dict[str, str]]:
+        _logger.debug('Substituting environment variables')
+        environment: Dict[str, str] = {}
+
+        for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
+            variable, default_value = match.group('var_name'), match.group('default_value')
+            value = env.get(variable, default_value)
+            if not value:
+                raise ConfigurationError(f'Environment variable `{variable}` is not set')
+            environment[variable] = value
+            placeholder = match.group(0)
+            raw_config = raw_config.replace(placeholder, value or default_value)
+
+        return raw_config, environment
 
     def _validate(self) -> None:
         # NOTE: Hasura and metadata interface
