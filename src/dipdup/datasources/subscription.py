@@ -1,6 +1,7 @@
 import logging
 from abc import ABC
 from typing import Dict
+from typing import Literal
 from typing import Optional
 from typing import Set
 
@@ -10,7 +11,7 @@ _logger = logging.getLogger('dipdup.datasource')
 
 
 class Subscription(ABC):
-    ...
+    type: str
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,11 @@ class BigMapSubscription(Subscription):
     type: str = 'big_map'
     address: Optional[str] = None
     path: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class TokenTransferSubscription(Subscription):
+    type: Literal['token_transfer'] = 'token_transfer'
 
 
 class SubscriptionManager:

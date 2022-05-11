@@ -16,6 +16,7 @@ from os.path import join
 from typing import List
 from typing import cast
 
+import aiohttp
 import asyncclick as click
 import sentry_sdk
 from dotenv import load_dotenv
@@ -45,7 +46,7 @@ from dipdup.migrations import DipDupMigrationManager
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
-from dipdup.utils.database import execute_sql_scripts
+from dipdup.utils.database import generate_schema
 from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
@@ -66,7 +67,7 @@ class CLIContext:
     logging_config: LoggingConfig
 
 
-async def shutdown() -> None:
+async def _shutdown() -> None:
     global _is_shutting_down
     if _is_shutting_down:
         return
@@ -82,7 +83,7 @@ def cli_wrapper(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs) -> None:
         loop = asyncio.get_running_loop()
-        loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(shutdown()))
+        loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(_shutdown()))
         try:
             await fn(*args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
@@ -101,7 +102,7 @@ def _sentry_before_send(event, _):
     return event
 
 
-def init_sentry(config: DipDupConfig) -> None:
+def _init_sentry(config: DipDupConfig) -> None:
     if not config.sentry:
         return
     if config.sentry.debug:
@@ -126,11 +127,29 @@ def init_sentry(config: DipDupConfig) -> None:
     )
 
 
+async def _check_version() -> None:
+    if 'rc' in __version__:
+        _logger.warning('You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.')
+        _logger.info('Set `skip_version_check` flag in config to hide this message.')
+        return
+
+    async with AsyncExitStack() as stack:
+        stack.enter_context(suppress(Exception))
+        session = await stack.enter_async_context(aiohttp.ClientSession())
+        response = await session.get('https://api.github.com/repos/dipdup-net/dipdup-py/releases/latest')
+        response_json = await response.json()
+        latest_version = response_json['tag_name']
+
+        if __version__ != latest_version:
+            _logger.warning('You are running an outdated version of DipDup. Please update to the latest version.')
+            _logger.info('Set `skip_version_check` flag in config to hide this message.')
+
+
 @click.group(help='Docs: https://docs.dipdup.net', context_settings={'max_content_width': 120})
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
-@click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file', default=[])
-@click.option('--logging-config', '-l', type=str, help='Path to logging YAML config', default='logging.yml')
+@click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file with KEY=value strings', default=[])
+@click.option('--logging-config', '-l', type=str, help='Path to Python logging YAML config', default='logging.yml')
 @click.pass_context
 @cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
@@ -158,7 +177,10 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     _config = DipDupConfig.load(config)
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
-    init_sentry(_config)
+    _init_sentry(_config)
+
+    if not _config.advanced.skip_version_check:
+        asyncio.ensure_future(_check_version())
 
     try:
         await DipDupCodeGenerator(_config, {}).create_package()
@@ -205,7 +227,7 @@ async def run(
     await dipdup.run()
 
 
-@cli.command(help='Generate missing callbacks and types')
+@cli.command(help='Generate project tree and missing callbacks and types')
 @click.option('--overwrite-types', is_flag=True, help='Regenerate existing types')
 @click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
 @click.pass_context
@@ -248,8 +270,8 @@ async def config(ctx):
     ...
 
 
-@config.command(name='export', help='Dump DipDup configuration')
-@click.option('--unsafe', is_flag=True, help='')
+@config.command(name='export', help='Dump DipDup configuration after resolving templates')
+@click.option('--unsafe', is_flag=True, help='Resolve environment variables; output may contain secrets')
 @click.pass_context
 @cli_wrapper
 async def config_export(ctx, unsafe: bool) -> None:
@@ -260,21 +282,33 @@ async def config_export(ctx, unsafe: bool) -> None:
     echo(config_yaml)
 
 
-@cli.group(help='Manage datasource caches')
+@config.command(name='env', help='Dump environment variables used in DipDup config')
+@click.pass_context
+@cli_wrapper
+async def config_env(ctx) -> None:
+    config = DipDupConfig.load(
+        paths=ctx.obj.config.paths,
+        environment=True,
+    )
+    for key, value in config.environment.items():
+        echo(f'{key}={value}')
+
+
+@cli.group(help='Manage internal cache')
 @click.pass_context
 @cli_wrapper
 async def cache(ctx):
     ...
 
 
-@cache.command(name='clear', help='Clear datasource request caches')
+@cache.command(name='clear', help='Clear cache')
 @click.pass_context
 @cli_wrapper
 async def cache_clear(ctx) -> None:
     FileCache('dipdup', flag='cs').clear()
 
 
-@cache.command(name='show', help='Show datasource request caches size information')
+@cache.command(name='show', help='Show cache size information')
 @click.pass_context
 @cli_wrapper
 async def cache_show(ctx) -> None:
@@ -379,7 +413,7 @@ async def schema_wipe(ctx, immune: bool, force: bool):
     _logger.info('Schema wiped')
 
 
-@schema.command(name='init', help='Initialize database schema')
+@schema.command(name='init', help='Initialize database schema and trigger `on_reindex`')
 @click.pass_context
 @cli_wrapper
 async def schema_init(ctx):
@@ -397,8 +431,7 @@ async def schema_init(ctx):
 
         # NOTE: It's not necessary a reindex, but it's safe to execute built-in scripts to (re)create views.
         conn = connections.get('default')
-        sql_path = join(dirname(__file__), 'sql', 'on_reindex')
-        await execute_sql_scripts(conn, sql_path)
+        await generate_schema(conn, config.database.schema_name)
 
     _logger.info('Schema initialized')
 

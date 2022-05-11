@@ -1,11 +1,18 @@
+import json
 from contextlib import asynccontextmanager
+from os.path import dirname
+from os.path import join
 from typing import AsyncIterator
 from typing import Tuple
 from typing import TypeVar
 from unittest import IsolatedAsyncioTestCase
+from unittest.mock import AsyncMock
 
 from dipdup.config import HTTPConfig
+from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.enums import MessageType
+from dipdup.models import OperationData
 
 
 @asynccontextmanager
@@ -192,3 +199,22 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             originations = await take_two(tzkt.iter_migration_originations())
             self.assertEqual(67955553, originations[0].id)
             self.assertEqual(67955554, originations[1].id)
+
+    async def test_on_operation_message_data(self) -> None:
+        with open(join(dirname(__file__), '..', '..', 'ftzfun.json')) as f:
+            operations_json = json.load(f)
+
+        message = {'type': 1, 'state': 2, 'data': operations_json}
+        async with with_tzkt(1) as tzkt:
+            emit_mock = AsyncMock()
+            tzkt.on_operations(emit_mock)
+            tzkt.set_sync_level(HeadSubscription(), 1)
+
+            level = tzkt.get_channel_level(MessageType.operation)
+            self.assertEqual(1, level)
+
+            await tzkt._on_message(MessageType.operation, [message])
+
+            level = tzkt.get_channel_level(MessageType.operation)
+            self.assertEqual(2, level)
+            self.assertIsInstance(emit_mock.await_args_list[0][0][1][0], OperationData)

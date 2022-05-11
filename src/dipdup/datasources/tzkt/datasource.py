@@ -9,6 +9,7 @@ from collections import deque
 from datetime import datetime
 from datetime import timezone
 from decimal import Decimal
+from functools import partial
 from typing import Any
 from typing import AsyncGenerator
 from typing import AsyncIterator
@@ -17,17 +18,19 @@ from typing import Callable
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
+from typing import Generator
 from typing import List
+from typing import NamedTuple
 from typing import NoReturn
 from typing import Optional
 from typing import Set
 from typing import Tuple
+from typing import Union
 from typing import cast
 
 from pysignalr.client import SignalRClient
 from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage  # type: ignore
-from pysignalr.transport.websocket import DEFAULT_MAX_SIZE
 
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT
@@ -36,6 +39,7 @@ from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
+from dipdup.datasources.subscription import TokenTransferSubscription
 from dipdup.datasources.subscription import TransactionSubscription
 from dipdup.datasources.tzkt.enums import ORIGINATION_MIGRATION_FIELDS
 from dipdup.datasources.tzkt.enums import ORIGINATION_OPERATION_FIELDS
@@ -43,6 +47,7 @@ from dipdup.datasources.tzkt.enums import TRANSACTION_OPERATION_FIELDS
 from dipdup.datasources.tzkt.enums import OperationFetcherRequest
 from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.enums import MessageType
+from dipdup.enums import TokenStandard
 from dipdup.exceptions import DatasourceError
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
@@ -50,6 +55,8 @@ from dipdup.models import BlockData
 from dipdup.models import HeadBlockData
 from dipdup.models import OperationData
 from dipdup.models import QuoteData
+from dipdup.models import TokenTransferData
+from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
 from dipdup.utils.watchdog import Watchdog
 
@@ -257,6 +264,97 @@ class BigMapFetcher:
             yield big_maps[0].level, big_maps
 
 
+class TokenTransferFetcher:
+    def __init__(
+        self,
+        datasource: 'TzktDatasource',
+        first_level: int,
+        last_level: int,
+        cache: bool = False,
+    ) -> None:
+        self._logger = logging.getLogger('dipdup.tzkt')
+        self._datasource = datasource
+        self._first_level = first_level
+        self._last_level = last_level
+        self._cache = cache
+
+    async def fetch_token_transfers_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[TokenTransferData, ...]], None]:
+        token_transfers: Tuple[TokenTransferData, ...] = ()
+
+        # TODO: Share code between this and OperationFetcher
+        token_transfer_iter = self._datasource.iter_token_transfers(
+            self._first_level,
+            self._last_level,
+        )
+        async for fetched_token_transfers in token_transfer_iter:
+            token_transfers = token_transfers + fetched_token_transfers
+
+            # NOTE: Yield token transfer slices by level except the last one
+            while True:
+                for i in range(len(token_transfers) - 1):
+                    curr_level, next_level = token_transfers[i].level, token_transfers[i + 1].level
+
+                    # NOTE: Level boundaries found. Exit for loop, stay in while.
+                    if curr_level != next_level:
+                        yield curr_level, token_transfers[: i + 1]
+                        token_transfers = token_transfers[i + 1 :]
+                        break
+                else:
+                    break
+
+        if token_transfers:
+            yield token_transfers[0].level, token_transfers
+
+
+MessageData = Union[Dict[str, Any], List[Dict[str, Any]]]
+
+
+class BufferedMessage(NamedTuple):
+    type: MessageType
+    data: MessageData
+
+
+class MessageBuffer:
+    """Buffers realtime TzKT messages and yields them in by level."""
+
+    def __init__(self, size: int) -> None:
+        self._logger = logging.getLogger('dipdup.tzkt')
+        self._size = size
+        self._messages: DefaultDict[int, List[BufferedMessage]] = defaultdict(list)
+
+    def add(self, type_: MessageType, level: int, data: MessageData) -> None:
+        """Add a message to the buffer."""
+        self._messages[level].append(BufferedMessage(type_, data))
+
+    def rollback(self, type_: MessageType, channel_level: int, message_level: int) -> bool:
+        """Drop buffered messages in reversed order while possible, return if successful."""
+        # NOTE: No action required for this channel
+        if type_ == MessageType.head:
+            return True
+
+        # NOTE: This rollback does not affect us, so we can safely ignore it
+        if channel_level <= message_level:
+            return True
+
+        self._logger.info('Rollback requested from %s to %s', type_.value, channel_level, message_level)
+        levels = range(channel_level, message_level, -1)
+        for level in levels:
+            if not self._messages.pop(level, None):
+                self._logger.info('Level %s is not buffered, can\'t avoid rollback', level)
+                return False
+
+        self._logger.info('All rolled back levels are buffered, no action required')
+        return True
+
+    def yield_from(self) -> Generator[BufferedMessage, None, None]:
+        """Yield extensively buffered messages by level"""
+        buffered_levels = sorted(self._messages.keys())
+        yielded_levels = buffered_levels[: len(buffered_levels) - self._size]
+        for level in yielded_levels:
+            for buffered_message in self._messages.pop(level):
+                yield buffered_message
+
+
 class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
         cache=True,
@@ -283,8 +381,7 @@ class TzktDatasource(IndexDatasource):
         )
         self._logger = logging.getLogger('dipdup.tzkt')
         self._watchdog = watchdog
-        self._buffer_size = buffer_size
-        self._buffer: DefaultDict[int, List[Tuple[MessageType, Dict[str, Any]]]] = defaultdict(list)
+        self._buffer = MessageBuffer(buffer_size)
 
         self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
@@ -292,6 +389,25 @@ class TzktDatasource(IndexDatasource):
     @property
     def request_limit(self) -> int:
         return cast(int, self._http_config.batch_size)
+
+    def set_logger(self, name: str) -> None:
+        super().set_logger(name)
+        self._buffer._logger = FormattedLogger(self._buffer._logger.name, name + ': {}')
+
+    def get_channel_level(self, message_type: MessageType) -> int:
+        """Get current level of the channel, or sync level is no messages were received yet."""
+        channel_level = self._level[message_type]
+        if channel_level is None:
+            # NOTE: If no data messages were received since run, use sync level instead
+            # NOTE: There's only one sync level for all channels, otherwise `Index.process` would fail
+            channel_level = self.get_sync_level(HeadSubscription())
+            if channel_level is None:
+                raise RuntimeError('Neither current nor sync level is known')
+
+        return channel_level
+
+    def _set_channel_level(self, message_type: MessageType, level: int) -> None:
+        self._level[message_type] = level
 
     async def get_similar_contracts(
         self,
@@ -467,7 +583,7 @@ class TzktDatasource(IndexDatasource):
             url='v1/operations/migrations',
             params={
                 'kind': 'origination',
-                'level.gt': first_level,
+                'level.ge': first_level,
                 'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
                 'offset.cr': offset,
                 'limit': limit,
@@ -503,7 +619,7 @@ class TzktDatasource(IndexDatasource):
                 url='v1/operations/originations',
                 params={
                     "originatedContract.in": ','.join(addresses_chunk),
-                    "level.gt": first_level,
+                    "level.ge": first_level,
                     "level.le": last_level,
                     "select": ','.join(ORIGINATION_OPERATION_FIELDS),
                     "status": "applied",
@@ -532,7 +648,7 @@ class TzktDatasource(IndexDatasource):
                 f"{field}.in": ','.join(addresses),
                 "offset.cr": offset,
                 "limit": limit,
-                "level.gt": first_level,
+                "level.ge": first_level,
                 "level.le": last_level,
                 "select": ','.join(TRANSACTION_OPERATION_FIELDS),
                 "status": "applied",
@@ -578,7 +694,7 @@ class TzktDatasource(IndexDatasource):
             params={
                 "contract.in": ",".join(addresses),
                 "path.in": ",".join(paths),
-                "level.gt": first_level,
+                "level.ge": first_level,
                 "level.le": last_level,
                 "offset": offset,
                 "limit": limit,
@@ -619,20 +735,20 @@ class TzktDatasource(IndexDatasource):
 
     async def get_quotes(
         self,
-        from_level: int,
-        to_level: int,
+        first_level: int,
+        last_level: int,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[QuoteData, ...]:
         """Get quotes for blocks"""
         offset, limit = offset or 0, limit or self.request_limit
-        self._logger.info('Fetching quotes for levels %s-%s', from_level, to_level)
+        self._logger.info('Fetching quotes for levels %s-%s', first_level, last_level)
         quotes_json = await self.request(
             'get',
             url='v1/quotes',
             params={
-                "level.ge": from_level,
-                "level.lt": to_level,
+                "level.ge": first_level,
+                "level.le": last_level,
                 "offset.cr": offset,
                 "limit": limit,
             },
@@ -642,14 +758,46 @@ class TzktDatasource(IndexDatasource):
 
     async def iter_quotes(
         self,
-        from_level: int,
-        to_level: int,
+        first_level: int,
+        last_level: int,
     ) -> AsyncIterator[Tuple[QuoteData, ...]]:
         """Iterate quotes for blocks"""
         async for batch in self._iter_batches(
             self.get_quotes,
-            from_level,
-            to_level,
+            first_level,
+            last_level,
+        ):
+            yield batch
+
+    async def get_token_transfers(
+        self,
+        first_level: int,
+        last_level: int,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Tuple[TokenTransferData, ...]:
+        """Get token transfers for contract"""
+        offset, limit = offset or 0, limit or self.request_limit
+        params: dict = {}
+
+        raw_token_transfers = await self.request(
+            'get',
+            url='v1/tokens/transfers',
+            params={**params, 'level.ge': first_level, 'level.lt': last_level, 'offset': offset, 'limit': limit, 'sort.asc': 'level'},
+        )
+        return tuple(self.convert_token_transfer(item) for item in raw_token_transfers)
+
+    async def iter_token_transfers(
+        self,
+        first_level: int,
+        last_level: int,
+    ) -> AsyncIterator[Tuple[TokenTransferData, ...]]:
+        """Iterate token transfers for contract"""
+        async for batch in self._iter_batches(
+            self.get_token_transfers,
+            first_level,
+            last_level,
+            cursor=False,
         ):
             yield batch
 
@@ -693,6 +841,10 @@ class TzktDatasource(IndexDatasource):
                 request = [{}]
             else:
                 raise RuntimeError
+
+        elif isinstance(subscription, TokenTransferSubscription):
+            method = 'SubscribeToTokenTransfers'
+            request = [{}]
 
         else:
             raise NotImplementedError
@@ -739,17 +891,17 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Creating websocket client')
         self._ws_client = SignalRClient(
             url=f'{self._http._url}/v1/events',
-            # NOTE: 1 MB default is not enough for big blocks
-            max_size=DEFAULT_MAX_SIZE * 10,
+            # NOTE: It's safe. Remove comment after updating pysignalr.
+            max_size=None,  # type: ignore
         )
 
         self._ws_client.on_open(self._on_connect)
         self._ws_client.on_close(self._on_disconnect)
         self._ws_client.on_error(self._on_error)
 
-        self._ws_client.on('operations', self._on_operations_message)
-        self._ws_client.on('bigmaps', self._on_big_maps_message)
-        self._ws_client.on('head', self._on_head_message)
+        self._ws_client.on('operations', partial(self._on_message, MessageType.operation))
+        self._ws_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
+        self._ws_client.on('head', partial(self._on_message, MessageType.head))
 
         return self._ws_client
 
@@ -786,7 +938,7 @@ class TzktDatasource(IndexDatasource):
         """Raise exception from WS server's error message"""
         raise DatasourceError(datasource=self.name, msg=cast(str, message.error))
 
-    async def _extract_message_data(self, type_: MessageType, message: List[Any]) -> AsyncGenerator[Dict, None]:
+    async def _on_message(self, type_: MessageType, message: List[Dict[str, Any]]) -> None:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         # NOTE: Parse messages and either buffer or yield data
         for item in message:
@@ -795,100 +947,73 @@ class TzktDatasource(IndexDatasource):
             if tzkt_type == TzktMessageType.STATE:
                 continue
 
-            message_level, current_level = item['state'], self._level[type_]
-            self._level[type_] = message_level
+            message_level = item['state']
+            channel_level = self.get_channel_level(type_)
+            self._set_channel_level(type_, message_level)
+
             self._logger.info(
                 'Realtime message received: %s, %s, %s -> %s',
                 type_.value,
                 tzkt_type.name,
-                current_level,
+                channel_level,
                 message_level,
             )
 
             # NOTE: Put data messages to buffer by level
             if tzkt_type == TzktMessageType.DATA:
-                self._buffer[message_level].append((type_, item['data']))
+                self._buffer.add(type_, message_level, item['data'])
 
             # NOTE: Try to process rollback automatically, emit if failed
             elif tzkt_type == TzktMessageType.REORG:
-                # NOTE: operation/big_map channels have their own levels
-                if type_ == MessageType.head:
-                    return
-
-                # NOTE: If no data messages were received since run, use sync level instead
-                if current_level is None:
-                    # NOTE: There's only one sync level for all channels, otherwise `Index.process` would fail
-                    current_level = self.get_sync_level(HeadSubscription())
-                    if not current_level:
-                        raise RuntimeError('Reorg message received, but neither current nor sync level is known')
-
-                    # NOTE: This rollback does not affect us, so we can safely ignore it
-                    if current_level <= message_level:
-                        return
-
-                self._logger.info('Rollback requested from %s to %s', current_level, message_level)
-
-                # NOTE: Drop buffered messages in reversed order while possible
-                rolled_back_levels = range(current_level, message_level, -1)
-                for rolled_back_level in rolled_back_levels:
-                    if self._buffer.pop(rolled_back_level, None):
-                        self._logger.info('Level %s is buffered', rolled_back_level)
-                    else:
-                        self._logger.info('Level %s is not buffered, emitting rollback', rolled_back_level)
-                        await self.emit_rollback(current_level, message_level)
-                        return
-
-                self._logger.info('Rollback is not required, continuing')
+                if not self._buffer.rollback(type_, channel_level, message_level):
+                    await self.emit_rollback(channel_level, message_level)
 
             else:
-                raise NotImplementedError
+                raise NotImplementedError(f'Unknown message type: {tzkt_type}')
 
-        # NOTE: Yield extensive data from buffer
-        buffered_levels = sorted(self._buffer.keys())
-        emitted_levels = buffered_levels[: len(buffered_levels) - self._buffer_size]
+        # NOTE: Process extensive data from buffer
+        for buffered_message in self._buffer.yield_from():
+            if buffered_message.type == MessageType.operation:
+                await self._process_operations_data(cast(list, buffered_message.data))
+            elif buffered_message.type == MessageType.big_map:
+                await self._process_big_maps_data(cast(list, buffered_message.data))
+            elif buffered_message.type == MessageType.head:
+                await self._process_head_data(cast(dict, buffered_message.data))
+            else:
+                raise NotImplementedError(f'Unknown message type: {buffered_message.type}')
 
-        for level in emitted_levels:
-            for idx, level_data in enumerate(self._buffer[level]):
-                level_message_type, level_message = level_data
-                if level_message_type == type_:
-                    yield level_message
-                    self._buffer[level].pop(idx)
-            if not self._buffer[level]:
-                self._buffer.pop(level)
-
-    async def _on_operations_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _process_operations_data(self, data: List[Dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
         level_operations: DefaultDict[int, Deque[OperationData]] = defaultdict(deque)
-        async for data in self._extract_message_data(MessageType.operation, message):
-            for operation_json in data:
-                if operation_json['status'] != 'applied':
-                    continue
-                operation = self.convert_operation(operation_json)
-                level_operations[operation.level].append(operation)
+
+        for operation_json in data:
+            if operation_json['status'] != 'applied':
+                continue
+            operation = self.convert_operation(operation_json)
+            level_operations[operation.level].append(operation)
 
         for _level, operations in level_operations.items():
             await self.emit_operations(tuple(operations))
 
-    async def _on_big_maps_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _process_big_maps_data(self, data: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
         level_big_maps: DefaultDict[int, Deque[BigMapData]] = defaultdict(deque)
-        async for data in self._extract_message_data(MessageType.big_map, message):
-            big_maps: Deque[BigMapData] = deque()
-            for big_map_json in data:
-                big_map = self.convert_big_map(big_map_json)
-                level_big_maps[big_map.level].append(big_map)
+
+        big_maps: Deque[BigMapData] = deque()
+        for big_map_json in data:
+            big_map = self.convert_big_map(big_map_json)
+            level_big_maps[big_map.level].append(big_map)
 
         for _level, big_maps in level_big_maps.items():
             await self.emit_big_maps(tuple(big_maps))
 
-    async def _on_head_message(self, message: List[Dict[str, Any]]) -> None:
+    async def _process_head_data(self, data: Dict[str, Any]) -> None:
         """Parse and emit raw head block from WS"""
-        async for data in self._extract_message_data(MessageType.head, message):
-            if self._watchdog:
-                self._watchdog.reset()
+        if self._watchdog:
+            self._watchdog.reset()
 
-            block = self.convert_head_block(data)
-            await self.emit_head(block)
+        block = self.convert_head_block(data)
+        await self.emit_head(block)
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:
@@ -1041,6 +1166,35 @@ class TzktDatasource(IndexDatasource):
             jpy=Decimal(quote_json['jpy']),
             krw=Decimal(quote_json['krw']),
             eth=Decimal(quote_json['eth']),
+        )
+
+    @classmethod
+    def convert_token_transfer(cls, token_transfer_json: Dict[str, Any]) -> TokenTransferData:
+        """Convert raw token transfer message from REST or WS into dataclass"""
+        token_json = token_transfer_json.get('token') or {}
+        contract_json = token_json.get('contract') or {}
+        from_json = token_transfer_json.get('from') or {}
+        to_json = token_transfer_json.get('to') or {}
+        standard = token_json.get('standard')
+        metadata = token_json.get('metadata')
+        return TokenTransferData(
+            id=token_transfer_json['id'],
+            level=token_transfer_json['level'],
+            timestamp=cls._parse_timestamp(token_transfer_json['timestamp']),
+            tzkt_token_id=token_json['id'],
+            contract_address=contract_json.get('address'),
+            contract_alias=contract_json.get('alias'),
+            token_id=token_json.get('tokenId'),
+            standard=TokenStandard(standard) if standard else None,
+            metadata=metadata if isinstance(metadata, dict) else {},
+            from_alias=from_json.get('alias'),
+            from_address=from_json.get('address'),
+            to_alias=to_json.get('alias'),
+            to_address=to_json.get('address'),
+            amount=token_transfer_json.get('amount'),
+            tzkt_transaction_id=token_transfer_json.get('transactionId'),
+            tzkt_origination_id=token_transfer_json.get('originationId'),
+            tzkt_migration_id=token_transfer_json.get('migrationId'),
         )
 
     async def _send(
