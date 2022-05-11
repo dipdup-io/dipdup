@@ -13,7 +13,7 @@ from functools import wraps
 from os.path import dirname
 from os.path import exists
 from os.path import join
-from typing import List
+from typing import List, Optional
 from typing import cast
 
 import aiohttp
@@ -284,15 +284,20 @@ async def config_export(ctx, unsafe: bool) -> None:
 
 
 @config.command(name='env', help='Dump environment variables used in DipDup config')
+@click.option('--file', '-f', type=str, default=None, help='Output to file instead of stdout')
 @click.pass_context
 @cli_wrapper
-async def config_env(ctx) -> None:
+async def config_env(ctx, file: Optional[str]) -> None:
     config = DipDupConfig.load(
         paths=ctx.obj.config.paths,
         environment=True,
     )
-    for key, value in config.environment.items():
-        echo(f'{key}={value}')
+    content = '\n'.join(f'{k}={v}' for k, v in config.environment.items())
+    if file:
+        with open(file, 'w') as f:
+            f.write(content)
+    else:
+        echo(content)
 
 
 @cli.group(help='Manage internal cache')
