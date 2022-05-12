@@ -13,7 +13,8 @@ from functools import wraps
 from os.path import dirname
 from os.path import exists
 from os.path import join
-from typing import List, Optional
+from typing import List
+from typing import Optional
 from typing import cast
 
 import aiohttp
