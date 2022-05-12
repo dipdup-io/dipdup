@@ -8,6 +8,13 @@ database:
 
 hasura:
   url: http://hasura:8080
-  admin_secret: ${ADMIN_SECRET:-changeme}
+  admin_secret: ${HASURA_SECRET:-changeme}
   allow_aggregations: false
   camel_case: true
+
+sentry:
+  dsn: ${SENTRY_DSN:-""}
+  environment: ${SENTRY_ENVIRONMENT:-prod}
+
+prometheus:
+  url: 0.0.0.0
