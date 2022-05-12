@@ -1,4 +1,4 @@
-import sys
+import os
 from contextlib import suppress
 from os.path import dirname
 from os.path import join
@@ -9,33 +9,29 @@ from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
 from dipdup.utils import skip_ci
 
+configs = [
+    'hic_et_nunc',
+    'quipuswap',
+    'tzcolors',
+    'tezos_domains_big_map',
+    'registrydao',
+]
+
 
 @skip_ci
 class CodegenTest(IsolatedAsyncioTestCase):
+    async def asyncTearDown(self) -> None:
+        for name in configs:
+            with suppress(FileNotFoundError):
+                package_path = join(os.getcwd(), f'demo_{name}_tmp')
+                rmtree(package_path)
+
     async def test_codegen(self) -> None:
-        for name in [
-            'hic_et_nunc.yml',
-            'quipuswap.yml',
-            'tzcolors.yml',
-            'tezos_domains_big_map.yml',
-            'registrydao.yml',
-        ]:
-            with self.subTest(name):
-                config_path = join(dirname(__file__), name)
-                config = DipDupConfig.load([config_path])
-                config.initialize(skip_imports=True)
-                config.package = 'tmp_test_dipdup'
+        for name in configs:
+            config_path = join(dirname(__file__), name + '.yml')
+            config = DipDupConfig.load([config_path])
+            config.package += '_tmp'
+            config.initialize(skip_imports=True)
 
-                if config.package in sys.modules:
-                    del sys.modules[config.package]
-
-                try:
-                    dipdup = DipDup(config)
-                    await dipdup.init()
-                except Exception as exc:
-                    with suppress(FileNotFoundError):
-                        rmtree('tmp_test_dipdup')
-                    raise exc
-                else:
-                    with suppress(FileNotFoundError):
-                        rmtree('tmp_test_dipdup')
+            dipdup = DipDup(config)
+            await dipdup.init()

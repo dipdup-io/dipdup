@@ -19,6 +19,22 @@ class Key(BaseModel):
     nat: str
 
 
+class LedgerItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    key: Key
+    value: str
+
+
+class Key1(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    address: str
+    nat: str
+
+
 class Value(BaseModel):
     class Config:
         extra = Extra.forbid
@@ -32,11 +48,11 @@ class Account(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    key: Key
+    key: Key1
     value: Value
 
 
-class KeyItem(BaseModel):
+class MainTokenItem(BaseModel):
     class Config:
         extra = Extra.forbid
 
@@ -51,35 +67,33 @@ class FA2(BaseModel):
     nat: str
 
 
-class KeyItem1(BaseModel):
+class MainTokenItem1(BaseModel):
     class Config:
         extra = Extra.forbid
 
     fA2: FA2
 
 
-class Asset(BaseModel):
+class Tokens(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    key: Union[KeyItem, KeyItem1]
-    value: str
-
-
-class Key1(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    address: str
-    nat: str
-
-
-class LedgerItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    key: Key1
-    value: str
+    mainToken: Union[MainTokenItem, MainTokenItem1]
+    interestRateModel: str
+    interestUpdateTime: str
+    priceUpdateTime: str
+    totalBorrowsF: str
+    totalLiquidF: str
+    totalSupplyF: str
+    totalReservesF: str
+    borrowIndex: str
+    maxBorrowRate: str
+    collateralFactorF: str
+    reserveFactorF: str
+    lastPrice: str
+    borrowPause: bool
+    isInterestUpdating: bool
+    threshold: str
 
 
 class TokenMetadata(BaseModel):
@@ -90,7 +104,7 @@ class TokenMetadata(BaseModel):
     tokens: Dict[str, str]
 
 
-class MainTokenItem(BaseModel):
+class KeyItem(BaseModel):
     class Config:
         extra = Extra.forbid
 
@@ -105,53 +119,39 @@ class FA21(BaseModel):
     nat: str
 
 
-class MainTokenItem1(BaseModel):
+class KeyItem1(BaseModel):
     class Config:
         extra = Extra.forbid
 
     fA2: FA21
 
 
-class Tokens(BaseModel):
+class Asset(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    borrowIndex: str
-    borrowPause: bool
-    collateralFactorF: str
-    interestRateModel: str
-    interestUpdateTime: str
-    isInterestUpdating: bool
-    lastPrice: str
-    mainToken: Union[MainTokenItem, MainTokenItem1]
-    maxBorrowRate: str
-    priceUpdateTime: str
-    reserveFactorF: str
-    threshold: str
-    totalBorrowsF: str
-    totalLiquidF: str
-    totalReservesF: str
-    totalSupplyF: str
+    key: Union[KeyItem, KeyItem1]
+    value: str
 
 
 class Storage(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    accounts: List[Account]
     admin: str
-    assets: List[Asset]
-    borrows: Dict[str, List[str]]
-    closeFactorF: str
-    lastTokenId: str
     ledger: List[LedgerItem]
+    accounts: List[Account]
+    tokens: Dict[str, Tokens]
+    metadata: Dict[str, str]
+    tokenMetadata: Dict[str, TokenMetadata]
+    lastTokenId: str
+    priceFeedProxy: str
+    closeFactorF: str
     liqIncentiveF: str
     markets: Dict[str, List[str]]
+    borrows: Dict[str, List[str]]
     maxMarkets: str
-    metadata: Dict[str, str]
-    priceFeedProxy: str
-    tokenMetadata: Dict[str, TokenMetadata]
-    tokens: Dict[str, Tokens]
+    assets: List[Asset]
 
 
 class YupanaStorage(BaseModel):

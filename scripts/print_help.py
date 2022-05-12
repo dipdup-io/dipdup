@@ -13,13 +13,14 @@ example_exceptions = (
         {'foo': 'bar', 'asdf': 'qwer'},
     ),
     exc.InitializationRequiredError('Missing handler'),
-    exc.HandlerImportError('demo_tzbtz.handlers.on_mint', 'on_mint'),
+    exc.ProjectImportError('demo_tzbtz.handlers.on_mint', 'on_mint'),
     exc.ContractAlreadyExistsError(MagicMock(), 'test', 'tz1deadbeafdeadbeafdeadbeafdeadbeafdeadbeaf'),
     exc.IndexAlreadyExistsError(MagicMock(), 'test'),
     exc.InvalidDataError(models.BigMapData, 'foo', {'foo': 'bar'}),
     exc.CallbackError('demo_tzbtc.handlers.on_mint', ValueError('foo')),
     exc.CallbackTypeError('handler', 'on_mint', 'foo', int, str),
     exc.HasuraError('Invalid query'),
+    exc.ConflictingHooksError('on_rollback', 'on_index_rollback')
 )
 
 for e in example_exceptions:

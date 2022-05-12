@@ -7,6 +7,7 @@ import time
 import types
 from collections import defaultdict
 from contextlib import asynccontextmanager
+from contextlib import suppress
 from functools import partial
 from functools import reduce
 from logging import Logger
@@ -35,7 +36,7 @@ import humps
 from genericpath import isdir
 from genericpath import isfile
 
-from dipdup.exceptions import HandlerImportError
+from dipdup.exceptions import ProjectImportError
 
 _logger = logging.getLogger('dipdup.utils')
 
@@ -171,11 +172,19 @@ def write(path: str, content: Union[str, bytes], overwrite: bool = False) -> boo
 
 
 def import_from(module: str, obj: str) -> Any:
-    """Import object from module, raise HandlerImportError on failure"""
+    """Import object from module, raise ProjectImportError on failure"""
     try:
         return getattr(importlib.import_module(module), obj)
     except (ImportError, AttributeError) as e:
-        raise HandlerImportError(module, obj) from e
+        raise ProjectImportError(module, obj) from e
+
+
+def is_importable(module: str, obj: str) -> bool:
+    """Check if object can be imported from module"""
+    with suppress(ProjectImportError):
+        import_from(module, obj)
+        return True
+    return False
 
 
 def skip_ci(fn) -> Callable[..., Any]:

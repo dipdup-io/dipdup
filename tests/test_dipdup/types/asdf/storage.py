@@ -14,8 +14,8 @@ class Key(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    nat: str
     string: str
+    nat: str
 
 
 class AsdfStorageItem(BaseModel):

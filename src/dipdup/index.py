@@ -10,6 +10,7 @@ from typing import Deque
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -34,9 +35,12 @@ from dipdup.config import OperationIndexConfig
 from dipdup.config import OperationType
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import SkipHistory
+from dipdup.config import TokenTransferHandlerConfig
+from dipdup.config import TokenTransferIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
+from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.exceptions import ConfigInitializationException
@@ -50,6 +54,7 @@ from dipdup.models import HeadBlockData
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Origination
+from dipdup.models import TokenTransferData
 from dipdup.models import Transaction
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
@@ -72,7 +77,7 @@ class OperationSubgroup:
 
 
 # NOTE: Message queue of OperationIndex
-SingleLevelRollback = namedtuple('SingleLevelRollback', ('head_level'))
+SingleLevelRollback = namedtuple('SingleLevelRollback', ('from_level'))
 Operations = Tuple[OperationData, ...]
 OperationQueueItemT = Union[Tuple[OperationSubgroup, ...], SingleLevelRollback]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
@@ -142,6 +147,10 @@ class Index:
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
         self._state: Optional[models.Index] = None
+
+    @property
+    def name(self) -> str:
+        return self._config.name
 
     @property
     def datasource(self) -> TzktDatasource:
@@ -252,10 +261,13 @@ class Index:
             Metrics.set_levels_to_sync(self._config.name, 0)
         await self.state.update_status(status=IndexStatus.REALTIME, level=head_level)
 
-    def _extract_level(self, message: Union[Tuple[OperationData, ...], Tuple[BigMapData, ...]]) -> int:
+    def _extract_level(
+        self,
+        message: Union[Tuple[OperationData, ...], Tuple[BigMapData, ...], Tuple[TokenTransferData, ...]],
+    ) -> int:
         batch_levels = {item.level for item in message}
         if len(batch_levels) != 1:
-            raise RuntimeError(f'Items in operation/big_map batch have different levels: {batch_levels}')
+            raise RuntimeError(f'Items in data batch have different levels: {batch_levels}')
         return batch_levels.pop()
 
 
@@ -275,10 +287,10 @@ class OperationIndex(Index):
         if Metrics.enabled:
             Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
 
-    def push_rollback(self, head_level: int) -> None:
-        self._queue.append(SingleLevelRollback(head_level))
+    def push_rollback(self, from_level: int) -> None:
+        self._queue.append(SingleLevelRollback(from_level))
 
-    async def _single_level_rollback(self, head_level: int) -> None:
+    async def _single_level_rollback(self, from_level: int) -> None:
         """Ensure the next arrived block has all operations of the previous one. But it could also contain additional operations we need to process.
 
         Called by IndexDispatcher when index datasource receive a single level rollback.
@@ -287,13 +299,13 @@ class OperationIndex(Index):
             raise RuntimeError('Index is already in a single-level rollback state')
 
         index_level = cast(int, self.state.level)
-        if index_level < head_level:
-            self._logger.info('Index level is lower than new head level, ignoring: %s < %s', index_level, head_level)
-        elif index_level == head_level:
+        if index_level < from_level:
+            self._logger.info('Index level is lower than new head level, ignoring: %s < %s', index_level, from_level)
+        elif index_level == from_level:
             self._logger.info('Single level rollback, next block will be processed partially')
-            self._next_head_level = head_level
+            self._next_head_level = from_level
         else:
-            raise RuntimeError(f'Index level is higher than new head level: {index_level} > {head_level}')
+            raise RuntimeError(f'Index level is higher than new head level: {index_level} > {from_level}')
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
@@ -304,7 +316,7 @@ class OperationIndex(Index):
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
             if isinstance(message, SingleLevelRollback):
                 self._logger.debug('Processing rollback realtime message, %s left in queue', messages_left)
-                await self._single_level_rollback(message.head_level)
+                await self._single_level_rollback(message.from_level)
             elif message:
                 self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
                 with ExitStack() as stack:
@@ -330,11 +342,12 @@ class OperationIndex(Index):
         origination_addresses = await self._get_origination_addresses()
 
         migration_originations: Tuple[OperationData, ...] = ()
-        if self._config.types and OperationType.migration in self._config.types:
-            migration_originations = tuple(await self._datasource.get_migration_originations(head_level))
-            for op in migration_originations:
-                code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
-                op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
+        if OperationType.migration in self._config.types:
+            async for batch in self._datasource.iter_migration_originations(first_level):
+                for op in batch:
+                    code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
+                    op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
+                    migration_originations += (op,)
 
         fetcher = OperationFetcher(
             datasource=self._datasource,
@@ -460,7 +473,6 @@ class OperationIndex(Index):
 
     async def _match_operation_subgroup(self, operation_subgroup: OperationSubgroup) -> Deque[MatchedOperationsT]:
         """Try to match operation subgroup with all patterns from indexes."""
-        self._logger.debug('Matching %s', operation_subgroup)
         matched_handlers: Deque[MatchedOperationsT] = deque()
         operations = operation_subgroup.operations
 
@@ -576,6 +588,7 @@ class OperationIndex(Index):
 
     async def _get_origination_addresses(self) -> Set[str]:
         """Get addresses to fetch origination from during initial synchronization"""
+        # FIXME: Missing `OperationType.origination` in config is ignored
         addresses = set()
         for handler_config in self._config.handlers:
             for pattern_config in handler_config.pattern:
@@ -870,3 +883,117 @@ class HeadIndex(Index):
 
     def push_head(self, head: HeadBlockData) -> None:
         self._queue.append(head)
+
+
+class TokenTransferIndex(Index):
+    _config: TokenTransferIndexConfig
+
+    def __init__(self, ctx: DipDupContext, config: TokenTransferIndexConfig, datasource: TzktDatasource) -> None:
+        super().__init__(ctx, config, datasource)
+        self._queue: Deque[Tuple[TokenTransferData, ...]] = deque()
+
+    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
+        """Fetch operations via Fetcher and pass to message callback"""
+        first_level = await self._enter_sync_state(last_level)
+        if first_level is None:
+            return
+
+        self._logger.info('Fetching token transfers from level %s to %s', first_level, last_level)
+
+        fetcher = TokenTransferFetcher(
+            datasource=self._datasource,
+            first_level=first_level,
+            last_level=last_level,
+            cache=cache,
+        )
+
+        async for level, token_transfers in fetcher.fetch_token_transfers_by_level():
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    Metrics.set_levels_to_sync(self._config.name, last_level - level)
+                    stack.enter_context(Metrics.measure_level_sync_duration())
+                await self._process_level_token_transfers(token_transfers)
+
+        await self._exit_sync_state(last_level)
+
+    async def _process_level_token_transfers(self, token_transfers: Iterable[TokenTransferData]) -> None:
+        if not token_transfers:
+            return
+        level = self._extract_level(tuple(token_transfers))
+
+        if self.state.status == IndexStatus.SYNCING:
+            if level < self.state.level:
+                raise RuntimeError(f'Level of token transfer batch must be not lower than index state level: {level} < {self.state.level}')
+        else:
+            if level <= self.state.level:
+                raise RuntimeError(f'Level of token transfer batch must be higher than index state level: {level} <= {self.state.level}')
+
+        self._logger.debug('Processing token transfers of level %s', level)
+        matched_handlers = await self._match_token_transfers(token_transfers)
+
+        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
+        if not matched_handlers:
+            await self.state.update_status(level=level)
+            return
+
+        async with in_global_transaction():
+            for handler_config, big_map_diff in matched_handlers:
+                await self._call_matched_handler(handler_config, big_map_diff)
+            await self.state.update_status(level=level)
+
+    async def _call_matched_handler(self, handler_config: TokenTransferHandlerConfig, token_transfer: TokenTransferData) -> None:
+        if not handler_config.parent:
+            raise ConfigInitializationException
+
+        await self._ctx.fire_handler(
+            handler_config.callback,
+            handler_config.parent.name,
+            self.datasource,
+            # FIXME: missing `operation_id` field in API to identify operation
+            None,
+            token_transfer,
+        )
+
+    async def _match_token_transfers(
+        self, token_transfers: Iterable[TokenTransferData]
+    ) -> List[Tuple[TokenTransferHandlerConfig, TokenTransferData]]:
+        matched_handlers: List[Tuple[TokenTransferHandlerConfig, TokenTransferData]] = []
+        for token_transfer in token_transfers:
+            for handler_config in self._config.handlers:
+                matched_handlers.append((handler_config, token_transfer))
+
+        return matched_handlers
+
+    async def _process_queue(self) -> None:
+        """Process WebSocket queue"""
+        if self._queue:
+            self._logger.debug('Processing websocket queue')
+        while self._queue:
+            token_transfers = self._queue.popleft()
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_level_realtime_duration())
+                await self._process_level_token_transfers(token_transfers)
+
+    def _get_token_addresses(self) -> Set[str]:
+        """Get addresses to fetch big map diffs from during initial synchronization"""
+        addresses: set[str] = set()
+        for handler_config in self._config.handlers:
+            if isinstance(handler_config, TokenTransferHandlerConfig):
+                continue
+            if not hasattr(handler_config, 'contract'):
+                continue
+            addresses.add(cast(ContractConfig, handler_config.contract).address)
+        return addresses
+
+    def _get_token_ids(self) -> Set[int]:
+        """Get addresses to fetch big map diffs from during initial synchronization"""
+        ids: set[int] = set()
+        for handler_config in self._config.handlers:
+            if isinstance(handler_config, TokenTransferHandlerConfig):
+                continue
+            if not hasattr(handler_config, 'token_id'):
+                continue
+            if handler_config.token_id is not None:
+                ids.add(handler_config.token_id)
+        return ids

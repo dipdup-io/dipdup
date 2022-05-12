@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dipdup"
 description = "Python SDK for developing indexers of Tezos smart contracts inspired by The Graph"
-version = "5.0.4"
+version = "5.1.0"
 license = "MIT"
 authors = [
     "Lev Gorodetskiy <github@droserasprout.space>",
@@ -65,6 +65,7 @@ sphinx-markdown-builder = "^0.5.5"
 testcontainers = "^3.4.2"
 types-pytz = "^2021.1.2"
 types-tabulate = "^0.8.2"
+pytest-asyncio = "^0.18.3"
 
 [tool.poetry.extras]
 pytezos = ["pytezos"]
@@ -96,3 +97,6 @@ flake8-simplify = ["-SIM106"]
 [build-system]
 requires = ["poetry_core>=1.0.0", "cryptography==3.3.2", "wheel"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
