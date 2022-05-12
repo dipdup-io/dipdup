@@ -1,2 +1,2 @@
-FROM dipdup/dipdup:5.0.4
+FROM dipdup/dipdup:5.1.0
 COPY demo_tezos_domains /home/dipdup/demo_tezos_domains
