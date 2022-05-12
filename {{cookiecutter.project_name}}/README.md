@@ -5,7 +5,7 @@
 ## First steps
 
 * Install Poetry and GNU Make
-* Enter project's directory with `cd {{cookiecutter.project_name}}`
+* Enter the project's directory with `cd {{cookiecutter.project_name}}`
 * Install required dependencies with `make install`
 * Generate types and handlers with `dipdup init`
 * Run full CI pipeline with `make`
