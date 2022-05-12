@@ -57,6 +57,20 @@
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
+<section id="dipdup-config-env">
+<h3>env<a class="headerlink" href="#dipdup-config-env" title="Permalink to this headline">¶</a></h3>
+<p>Dump environment variables used in DipDup config</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config env <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-config-env-f">
+<span id="cmdoption-dipdup-config-env-file"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-config-env-f" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output to file instead of stdout</p>
+</dd></dl>
+
+</section>
 <section id="dipdup-config-export">
 <h3>export<a class="headerlink" href="#dipdup-config-export" title="Permalink to this headline">¶</a></h3>
 <p>Dump DipDup configuration after resolving templates</p>
