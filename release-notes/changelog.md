@@ -12,12 +12,12 @@
 ### Fixed
 
 * index: Fixed fetching `migration` operations.
-* tzkt: Fixed possible data corruption when using `buffer_size` option.
+* tzkt: Fixed possible data corruption when using the `buffer_size` option.
 * tzkt: Fixed reconnection due to `websockets` message size limit.
 
 ### Deprecated
 
-* hooks: The `on_rollback` default hook is superceeded by `on_index_rollback` and weill be removed later.
+* hooks: The `on_rollback` default hook is superseded by `on_index_rollback` and will be removed later.
 
 ## 5.0.4 - 2022-05-05
 
