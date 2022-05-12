@@ -320,28 +320,29 @@ class MessageBuffer:
     def __init__(self, size: int) -> None:
         self._logger = logging.getLogger('dipdup.tzkt')
         self._size = size
-        self._messages: DefaultDict[int, List[BufferedMessage]] = defaultdict(list)
+        self._messages: Dict[int, List[BufferedMessage]] = {}
+
+    def __len__(self) -> int:
+        return len(self._messages)
 
     def add(self, type_: MessageType, level: int, data: MessageData) -> None:
         """Add a message to the buffer."""
+        if not level in self._messages:
+            self._messages[level] = []
         self._messages[level].append(BufferedMessage(type_, data))
 
     def rollback(self, type_: MessageType, channel_level: int, message_level: int) -> bool:
         """Drop buffered messages in reversed order while possible, return if successful."""
-        # NOTE: No action required for this channel
-        if type_ == MessageType.head:
-            return True
-
-        # NOTE: This rollback does not affect us, so we can safely ignore it
-        if channel_level <= message_level:
-            return True
-
-        self._logger.info('Rollback requested from %s to %s', type_.value, channel_level, message_level)
+        self._logger.info('`%s` rollback requested: %s -> %s', type_.value, channel_level, message_level)
         levels = range(channel_level, message_level, -1)
         for level in levels:
-            if not self._messages.pop(level, None):
+            if level not in self._messages:
                 self._logger.info('Level %s is not buffered, can\'t avoid rollback', level)
                 return False
+
+            for i, message in enumerate(self._messages[level]):
+                if message.type == type_:
+                    del self._messages[level][i]
 
         self._logger.info('All rolled back levels are buffered, no action required')
         return True

@@ -184,8 +184,8 @@ class InitializationRequiredError(DipDupError):
 
 
 @dataclass(repr=False)
-class HandlerImportError(DipDupError):
-    """Can't perform import from handler module"""
+class ProjectImportError(DipDupError):
+    """Can't import type or callback from the project package"""
 
     module: str
     obj: Optional[str] = None
@@ -197,10 +197,10 @@ class HandlerImportError(DipDupError):
 
             Reasons in order of possibility:
 
-              1. `init` command was not called after modifying config
-              2. Name of handler module and handler function inside it don't match
-              3. Invalid `package` config value, reusing name of existing package
-              4. Something's wrong with `PYTHONPATH` env variable
+              1. `init` command has not been called after modifying the config
+              2. Type or callback has been renamed or removed manually
+              3. `package` name is occupied by existing non-DipDup package
+              4. Package exists, but not discoverable - check `$PYTHONPATH`
         """
 
 
@@ -330,4 +330,24 @@ class HasuraError(DipDupError):
             Check out Hasura logs for more information.
 
             GraphQL integration docs: https://docs.dipdup.net/graphql/
+        """
+
+
+@dataclass(repr=False)
+class ConflictingHooksError(DipDupError):
+    """Project contains hooks that conflict with each other"""
+
+    old: str
+    new: str
+
+    def _help(self) -> str:
+        return f"""
+            `{self.old}` hook was superseded by the `{self.new}` one; they can't be used together.
+
+            Perform one of the following actions:
+
+              * Follow the docs to migrate to the `{self.new}` hook, then remove `{self.old}` hook from the project.
+              * Remove `{self.new}` hook from the project to preserve current behavior.
+
+            Release notes: https://docs.dipdup.net/release-notes/
         """

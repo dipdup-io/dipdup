@@ -1,49 +1,49 @@
 {
-    "$comment": "list",
-    "$schema": "http://json-schema.org/draft/2019-09/schema#",
-    "items": {
-        "$comment": "map",
-        "additionalProperties": {
-            "items": {
-                "additionalProperties": false,
-                "properties": {
-                    "key": {
-                        "$comment": "pair",
-                        "additionalProperties": false,
-                        "properties": {
-                            "nat": {
-                                "$comment": "nat",
-                                "type": "string"
-                            },
-                            "string": {
-                                "$comment": "string",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "string",
-                            "nat"
-                        ],
-                        "type": "object"
-                    },
-                    "value": {
-                        "$comment": "int",
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "key",
-                    "value"
-                ],
-                "type": "object"
-            },
-            "type": "array"
-        },
-        "propertyNames": {
-            "$comment": "string",
-            "type": "string"
-        },
-        "type": "object"
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "propertyNames": {
+      "type": "string",
+      "$comment": "string"
     },
-    "type": "array"
+    "additionalProperties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "object",
+            "properties": {
+              "string": {
+                "type": "string",
+                "$comment": "string"
+              },
+              "nat": {
+                "type": "string",
+                "$comment": "nat"
+              }
+            },
+            "required": [
+              "string",
+              "nat"
+            ],
+            "additionalProperties": false,
+            "$comment": "pair"
+          },
+          "value": {
+            "type": "string",
+            "$comment": "int"
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$comment": "map"
+  },
+  "$comment": "list"
 }

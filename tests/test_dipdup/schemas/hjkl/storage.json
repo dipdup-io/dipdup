@@ -1,76 +1,76 @@
 {
-    "$comment": "map",
-    "$schema": "http://json-schema.org/draft/2019-09/schema#",
-    "items": {
-        "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "key": {
+        "type": "object",
         "properties": {
-            "key": {
-                "$comment": "pair",
-                "additionalProperties": false,
-                "properties": {
-                    "nat": {
-                        "$comment": "nat",
-                        "type": "string"
-                    },
-                    "string": {
-                        "$comment": "string",
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "string",
-                    "nat"
-                ],
-                "type": "object"
-            },
-            "value": {
-                "$comment": "pair",
-                "additionalProperties": false,
-                "properties": {
-                    "mr": {
-                        "$comment": "option",
-                        "oneOf": [
-                            {
-                                "additionalProperties": {
-                                    "$comment": "bool",
-                                    "type": "boolean"
-                                },
-                                "propertyNames": {
-                                    "$comment": "int",
-                                    "type": "string"
-                                },
-                                "type": "object"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ]
-                    },
-                    "sw": {
-                        "$comment": "option",
-                        "oneOf": [
-                            {
-                                "$comment": "int",
-                                "type": "string"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ]
-                    }
-                },
-                "required": [
-                    "sw",
-                    "mr"
-                ],
-                "type": "object"
-            }
+          "string": {
+            "type": "string",
+            "$comment": "string"
+          },
+          "nat": {
+            "type": "string",
+            "$comment": "nat"
+          }
         },
         "required": [
-            "key",
-            "value"
+          "string",
+          "nat"
         ],
-        "type": "object"
+        "additionalProperties": false,
+        "$comment": "pair"
+      },
+      "value": {
+        "type": "object",
+        "properties": {
+          "sw": {
+            "oneOf": [
+              {
+                "type": "string",
+                "$comment": "int"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "$comment": "option"
+          },
+          "mr": {
+            "oneOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "$comment": "int"
+                },
+                "additionalProperties": {
+                  "type": "boolean",
+                  "$comment": "bool"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "$comment": "option"
+          }
+        },
+        "required": [
+          "sw",
+          "mr"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      }
     },
-    "type": "array"
+    "required": [
+      "key",
+      "value"
+    ],
+    "additionalProperties": false
+  },
+  "$comment": "map"
 }

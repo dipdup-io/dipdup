@@ -264,7 +264,6 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.__root__[0][1].R['1'], '1')  # type: ignore
         self.assertEqual(storage_obj.__root__[0][1].R['2'], '2')  # type: ignore
 
-    # FIXME: value is not a valid list (type=type_error.list)
     def test_asdf(self) -> None:
         with open(join(dirname(__file__), 'asdf.json')) as f:
             operations_json = json.load(f)

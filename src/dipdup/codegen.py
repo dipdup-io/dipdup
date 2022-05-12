@@ -102,12 +102,7 @@ class DipDupCodeGenerator:
 
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
-        try:
-            package_path = self._config.package_path
-        except ImportError:
-            self._logger.info('Creating package `%s`', self._config.package)
-            package_path = join(os.getcwd(), self._config.package)
-
+        package_path = self._config.package_path
         touch(join(package_path, '__init__.py'))
 
         models_path = join(package_path, 'models.py')
@@ -117,13 +112,13 @@ class DipDupCodeGenerator:
             write(models_path, models_code)
 
         for subpackage in ('handlers', 'hooks'):
-            subpackage_path = join(self._config.package_path, subpackage)
+            subpackage_path = join(package_path, subpackage)
             touch(join(subpackage_path, '__init__.py'))
 
-        sql_path = join(self._config.package_path, 'sql')
+        sql_path = join(package_path, 'sql')
         touch(join(sql_path, '.keep'))
 
-        graphql_path = join(self._config.package_path, 'graphql')
+        graphql_path = join(package_path, 'graphql')
         touch(join(graphql_path, '.keep'))
 
     async def fetch_schemas(self) -> None:
@@ -293,6 +288,9 @@ class DipDupCodeGenerator:
     async def generate_hooks(self) -> None:
         for hook_configs in self._config.hooks.values(), default_hooks.values():
             for hook_config in hook_configs:
+                # TODO: Skipping deprecated hook, remove in 6.0
+                if hook_config.callback == 'on_rollback':
+                    continue
                 await self._generate_callback(hook_config, sql=True)
 
     async def cleanup(self) -> None:
@@ -378,11 +376,12 @@ class DipDupCodeGenerator:
             code: List[str] = []
             if sql:
                 code.append(f"await ctx.execute_sql('{original_callback}')")
-                if callback == 'on_rollback':
+                if callback == 'on_index_rollback':
                     imports.add('from dipdup.enums import ReindexingReason')
                     code.append('await ctx.reindex(')
                     code.append('    ReindexingReason.rollback,')
-                    code.append('    datasource=datasource.name,')
+                    code.append('    index=index.name,')
+                    code.append('    datasource=index.datasource.name,')
                     code.append('    from_level=from_level,')
                     code.append('    to_level=to_level,')
                     code.append(')')

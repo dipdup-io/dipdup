@@ -12,20 +12,6 @@ from pydantic import Extra
 from pydantic import Field
 
 
-class BigMapItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    L: str
-
-
-class BigMapItem1(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    R: str
-
-
 class MapItem(BaseModel):
     class Config:
         extra = Extra.forbid
@@ -54,11 +40,25 @@ class OrItem1(BaseModel):
     R: str
 
 
+class BigMapItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    L: str
+
+
+class BigMapItem1(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    R: str
+
+
 class ZxcvStorage(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    big_map: Dict[str, Union[BigMapItem, BigMapItem1]]
     map: Dict[str, Union[MapItem, MapItem1]]
-    or_: Union[OrItem, OrItem1] = Field(..., alias='or')
     unit: Dict[str, Any]
+    or_: Union[OrItem, OrItem1] = Field(..., alias='or')
+    big_map: Dict[str, Union[BigMapItem, BigMapItem1]]
