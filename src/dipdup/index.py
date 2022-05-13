@@ -43,6 +43,7 @@ from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
+from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import InvalidDataError
@@ -138,6 +139,7 @@ class Index:
     Provides common interface for managing index state and switching between sync and realtime modes.
     """
 
+    message_type: MessageType
     _queue: Deque
 
     def __init__(self, ctx: DipDupContext, config: ResolvedIndexConfigT, datasource: TzktDatasource) -> None:
@@ -272,6 +274,7 @@ class Index:
 
 
 class OperationIndex(Index):
+    message_type = MessageType.operation
     _config: OperationIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
@@ -618,6 +621,7 @@ class OperationIndex(Index):
 
 
 class BigMapIndex(Index):
+    message_type = MessageType.big_map
     _config: BigMapIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
@@ -842,6 +846,7 @@ class BigMapIndex(Index):
 
 
 class HeadIndex(Index):
+    message_type: MessageType = MessageType.head
     _config: HeadIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: HeadIndexConfig, datasource: TzktDatasource) -> None:
@@ -886,6 +891,7 @@ class HeadIndex(Index):
 
 
 class TokenTransferIndex(Index):
+    message_type = MessageType.token_transfer
     _config: TokenTransferIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: TokenTransferIndexConfig, datasource: TzktDatasource) -> None:

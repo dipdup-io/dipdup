@@ -4,6 +4,7 @@
 
 ### Fixed
 
+* index: Ignore indexes with different message types on rollback.
 * metadata: Add `ithacanet` to available networks.
 
 ## 5.1.0 - 2022-05-12

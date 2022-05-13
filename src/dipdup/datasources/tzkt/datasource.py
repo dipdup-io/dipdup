@@ -967,7 +967,7 @@ class TzktDatasource(IndexDatasource):
             # NOTE: Try to process rollback automatically, emit if failed
             elif tzkt_type == TzktMessageType.REORG:
                 if not self._buffer.rollback(type_, channel_level, message_level):
-                    await self.emit_rollback(channel_level, message_level)
+                    await self.emit_rollback(type_, channel_level, message_level)
 
             else:
                 raise NotImplementedError(f'Unknown message type: {tzkt_type}')
