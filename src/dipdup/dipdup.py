@@ -37,6 +37,7 @@ from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConflictingHooksError
@@ -269,12 +270,13 @@ class IndexDispatcher:
         for index in big_map_indexes:
             index.push_big_maps(big_maps)
 
-    async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
+    async def _on_rollback(self, datasource: TzktDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
         if from_level <= to_level:
             raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
 
-        self._logger.warning('Datasource `%s` has rolled back: %s -> %s', datasource.name, from_level, to_level)
+        channel = f'{datasource.name}:{type_.value}'
+        self._logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
         if Metrics.enabled:
             Metrics.set_datasource_rollback(datasource.name)
 
@@ -286,12 +288,16 @@ class IndexDispatcher:
         for index_name, index in self._indexes.items():
             index_level = index.state.level
 
-            if index.datasource != datasource:
-                self._logger.debug('%s: another datasource, skipping', index_name)
+            if index.message_type != type_:
+                self._logger.debug('%s: different channel, skipping', index_name)
+                ignored_indexes.add(index_name)
+
+            elif index.datasource != datasource:
+                self._logger.debug('%s: different datasource, skipping', index_name)
                 ignored_indexes.add(index_name)
 
             elif to_level >= index_level:
-                self._logger.debug('%s: not affected, skipping', index_name)
+                self._logger.debug('%s: level is too low, skipping', index_name)
                 ignored_indexes.add(index_name)
 
             elif from_level - to_level == 1:
@@ -321,7 +327,7 @@ class IndexDispatcher:
             index.push_rollback(from_level)
 
         if not unprocessed_indexes:
-            self._logger.info('Rollback complete')
+            self._logger.info('`%s` rollback complete', channel)
             return
 
         if self._index_rollback:
