@@ -12,6 +12,7 @@ from dipdup.config import HTTPConfig
 from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import SubscriptionManager
+from dipdup.enums import MessageType
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData
 from dipdup.models import HeadBlockData
@@ -24,7 +25,7 @@ _logger = logging.getLogger('dipdup.datasource')
 HeadCallbackT = Callable[['IndexDatasource', HeadBlockData], Awaitable[None]]
 OperationsCallbackT = Callable[['IndexDatasource', Tuple[OperationData, ...]], Awaitable[None]]
 BigMapsCallbackT = Callable[['IndexDatasource', Tuple[BigMapData, ...]], Awaitable[None]]
-RollbackCallbackT = Callable[['IndexDatasource', int, int], Awaitable[None]]
+RollbackCallbackT = Callable[['IndexDatasource', MessageType, int, int], Awaitable[None]]
 
 
 class Datasource(HTTPGateway):
@@ -114,9 +115,9 @@ class IndexDatasource(Datasource):
         for fn in self._on_big_maps:
             await fn(self, big_maps)
 
-    async def emit_rollback(self, from_level: int, to_level: int) -> None:
+    async def emit_rollback(self, type_: MessageType, from_level: int, to_level: int) -> None:
         for fn in self._on_rollback:
-            await fn(self, from_level, to_level)
+            await fn(self, type_, from_level, to_level)
 
     def set_network(self, network: str) -> None:
         if self._network:

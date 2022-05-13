@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* index: Ignore indexes with different message types on rollback.
+
 ## 5.1.0 - 2022-05-12
 
 ### Added

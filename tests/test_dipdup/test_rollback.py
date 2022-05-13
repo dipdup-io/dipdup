@@ -15,6 +15,7 @@ from dipdup.config import OperationIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import IndexDispatcher
+from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
 from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
@@ -133,6 +134,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         with self.assertRaises(RuntimeError):
             await dispatcher._on_rollback(
                 datasource=Mock(spec=TzktDatasource),
+                type_=MessageType.operation,
                 from_level=from_level,
                 to_level=to_level,
             )
@@ -146,6 +148,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         }
         await dispatcher._on_rollback(
             datasource=operation_index.datasource,
+            type_=MessageType.operation,
             from_level=from_level,
             to_level=to_level,
         )
@@ -163,6 +166,24 @@ class RollbackTest(IsolatedAsyncioTestCase):
         }
         await dispatcher._on_rollback(
             datasource=other_datasource,
+            type_=MessageType.operation,
+            from_level=from_level,
+            to_level=to_level,
+        )
+        self.assertIsNone(operation_index._next_head_level)
+        dispatcher._ctx.fire_hook.assert_not_awaited()  # type: ignore
+        self.assertEqual(0, len(operation_index._queue))
+
+    async def test_not_affected_by_type(self) -> None:
+        index_level, from_level, to_level = 20, 20, 15
+        dispatcher = _get_index_dispatcher()
+        operation_index = _get_operation_index(level=index_level)
+        dispatcher._indexes = {
+            'operation': operation_index,
+        }
+        await dispatcher._on_rollback(
+            datasource=operation_index.datasource,
+            type_=MessageType.head,
             from_level=from_level,
             to_level=to_level,
         )
@@ -179,6 +200,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         }
         await dispatcher._on_rollback(
             datasource=head_index.datasource,
+            type_=MessageType.head,
             from_level=from_level,
             to_level=to_level,
         )
@@ -199,6 +221,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         }
         await dispatcher._on_rollback(
             datasource=operation_index.datasource,
+            type_=MessageType.operation,
             from_level=from_level,
             to_level=to_level,
         )
@@ -219,6 +242,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         }
         await dispatcher._on_rollback(
             datasource=operation_index.datasource,
+            type_=MessageType.operation,
             from_level=from_level,
             to_level=to_level,
         )
@@ -235,6 +259,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         }
         await dispatcher._on_rollback(
             datasource=big_map_index.datasource,
+            type_=MessageType.big_map,
             from_level=from_level,
             to_level=to_level,
         )
@@ -266,6 +291,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
 
             await dispatcher._on_rollback(
                 datasource=operation_index.datasource,
+                type_=MessageType.operation,
                 from_level=from_level,
                 to_level=to_level,
             )
@@ -307,6 +333,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
 
             await dispatcher._on_rollback(
                 datasource=operation_index.datasource,
+                type_=MessageType.operation,
                 from_level=from_level,
                 to_level=to_level,
             )
@@ -354,6 +381,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
 
             await dispatcher._on_rollback(
                 datasource=operation_index.datasource,
+                type_=MessageType.operation,
                 from_level=from_level,
                 to_level=to_level,
             )
@@ -394,6 +422,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
 
             await dispatcher._on_rollback(
                 datasource=operation_index.datasource,
+                type_=MessageType.operation,
                 from_level=from_level,
                 to_level=to_level,
             )
