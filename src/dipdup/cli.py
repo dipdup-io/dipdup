@@ -25,7 +25,6 @@ from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from tabulate import tabulate
 from tortoise import Tortoise
-from tortoise.connection import connections
 from tortoise.utils import get_schema_sql
 
 from dipdup import __spec_version__
@@ -47,6 +46,7 @@ from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils.database import generate_schema
+from dipdup.utils.database import get_connection
 from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
@@ -399,7 +399,7 @@ async def schema_wipe(ctx, immune: bool, force: bool):
     _logger.info('Wiping schema `%s`', url)
 
     async with tortoise_wrapper(url, models):
-        conn = connections.get('default')
+        conn = get_connection()
         if isinstance(config.database, PostgresDatabaseConfig):
             await wipe_schema(
                 conn=conn,
@@ -430,7 +430,7 @@ async def schema_init(ctx):
         await dipdup._initialize_schema()
 
         # NOTE: It's not necessary a reindex, but it's safe to execute built-in scripts to (re)create views.
-        conn = connections.get('default')
+        conn = get_connection()
         await generate_schema(conn, config.database.schema_name)
 
     _logger.info('Schema initialized')
@@ -445,7 +445,7 @@ async def schema_export(ctx):
     models = f'{config.package}.models'
 
     async with tortoise_wrapper(url, models):
-        conn = connections.get('default')
+        conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
         dipdup_sql_path = join(dirname(__file__), 'sql', 'on_reindex')
         project_sql_path = join(config.package_path, 'sql', 'on_reindex')

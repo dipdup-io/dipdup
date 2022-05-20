@@ -20,7 +20,6 @@ from typing import cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from prometheus_client import start_http_server  # type: ignore
-from tortoise.connection import connections
 from tortoise.exceptions import OperationalError
 
 from dipdup.codegen import DipDupCodeGenerator
@@ -61,6 +60,7 @@ from dipdup.scheduler import add_job
 from dipdup.scheduler import create_scheduler
 from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
+from dipdup.utils.database import get_connection
 from dipdup.utils.database import get_schema_hash
 from dipdup.utils.database import prepare_models
 from dipdup.utils.database import tortoise_wrapper
@@ -385,7 +385,7 @@ class DipDup:
     async def _initialize_schema(self) -> None:
         self._logger.info('Initializing database schema')
         schema_name = self._config.schema_name
-        conn = connections.get('default')
+        conn = get_connection()
 
         # NOTE: Try to fetch existing schema
         try:

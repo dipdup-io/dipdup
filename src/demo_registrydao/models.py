@@ -1,3 +1,4 @@
+from tortoise import ForeignKeyFieldInstance
 from tortoise import Model
 from tortoise import fields
 
@@ -16,7 +17,7 @@ class Address(Model):
 
 class Proposal(Model):
     id = fields.IntField(pk=True)
-    dao = fields.ForeignKeyField('models.DAO', 'proposals')
+    dao: ForeignKeyFieldInstance[DAO] = fields.ForeignKeyField('models.DAO', 'proposals')
     # upvotes = fields.IntField(default=0)
     # downvotes = fields.IntField(default=0)
     # start_date = fields.DatetimeField()
@@ -29,7 +30,7 @@ class Proposal(Model):
 
 class Vote(Model):
     id = fields.IntField(pk=True)
-    proposal = fields.ForeignKeyField('models.Proposal', 'votes')
+    proposal: ForeignKeyFieldInstance[Proposal] = fields.ForeignKeyField('models.Proposal', 'votes')
     amount = fields.IntField()
 
     class Meta:

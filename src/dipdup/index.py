@@ -508,7 +508,7 @@ class OperationIndex(Index):
                     matched_operations.clear()
                     pattern_idx = 0
 
-            if len(matched_operations) >= sum(map(lambda x: 0 if x.optional else 1, handler_config.pattern)):
+            if len(matched_operations) >= sum(0 if x.optional else 1 for x in handler_config.pattern):
                 self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
                 args = await self._prepare_handler_args(handler_config, matched_operations)
