@@ -1,102 +1,102 @@
 {
-    "$comment": "pair",
-    "$schema": "http://json-schema.org/draft/2019-09/schema#",
-    "additionalProperties": false,
-    "properties": {
-        "entries": {
-            "additionalProperties": {
-                "$comment": "bool",
-                "type": "boolean"
-            },
-            "propertyNames": {
-                "$comment": "address",
-                "type": "string"
-            },
-            "type": "object"
-        },
-        "invoices": {
-            "additionalProperties": {
-                "$comment": "pair",
-                "additionalProperties": false,
-                "properties": {
-                    "invoice": {
-                        "$comment": "bytes",
-                        "type": "string"
-                    },
-                    "subjkt": {
-                        "$comment": "bytes",
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "invoice",
-                    "subjkt"
-                ],
-                "type": "object"
-            },
-            "propertyNames": {
-                "$comment": "address",
-                "type": "string"
-            },
-            "type": "object"
-        },
-        "manager": {
-            "$comment": "address",
-            "type": "string"
-        },
-        "metadata": {
-            "additionalProperties": {
-                "$comment": "bytes",
-                "type": "string"
-            },
-            "propertyNames": {
-                "$comment": "string",
-                "type": "string"
-            },
-            "type": "object"
-        },
-        "registries": {
-            "additionalProperties": {
-                "$comment": "bytes",
-                "type": "string"
-            },
-            "propertyNames": {
-                "$comment": "address",
-                "type": "string"
-            },
-            "type": "object"
-        },
-        "subjkts": {
-            "additionalProperties": {
-                "$comment": "bool",
-                "type": "boolean"
-            },
-            "propertyNames": {
-                "$comment": "bytes",
-                "type": "string"
-            },
-            "type": "object"
-        },
-        "subjkts_metadata": {
-            "additionalProperties": {
-                "$comment": "bytes",
-                "type": "string"
-            },
-            "propertyNames": {
-                "$comment": "bytes",
-                "type": "string"
-            },
-            "type": "object"
-        }
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "entries": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "address"
+      },
+      "additionalProperties": {
+        "type": "boolean",
+        "$comment": "bool"
+      }
     },
-    "required": [
-        "entries",
-        "invoices",
-        "manager",
-        "metadata",
-        "registries",
-        "subjkts",
-        "subjkts_metadata"
-    ],
-    "type": "object"
+    "invoices": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "address"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "invoice": {
+            "type": "string",
+            "$comment": "bytes"
+          },
+          "subjkt": {
+            "type": "string",
+            "$comment": "bytes"
+          }
+        },
+        "required": [
+          "invoice",
+          "subjkt"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      }
+    },
+    "manager": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "metadata": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "bytes"
+      }
+    },
+    "registries": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "address"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "bytes"
+      }
+    },
+    "subjkts": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "bytes"
+      },
+      "additionalProperties": {
+        "type": "boolean",
+        "$comment": "bool"
+      }
+    },
+    "subjkts_metadata": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "bytes"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "bytes"
+      }
+    }
+  },
+  "required": [
+    "entries",
+    "invoices",
+    "manager",
+    "metadata",
+    "registries",
+    "subjkts",
+    "subjkts_metadata"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
 }

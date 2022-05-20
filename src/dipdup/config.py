@@ -1105,26 +1105,41 @@ class HookConfig(CallbackMixin, kind='hook'):
 
 
 default_hooks = {
-    # NOTE: After schema initialization. Default: nothing.
+    # NOTE: Fires on every run after datasources and schema are initialized.
+    # NOTE: Default: nothing.
     'on_restart': HookConfig(
         callback='on_restart',
     ),
-    # NOTE: On reorg message. Default: reindex.
-    'on_rollback': HookConfig(
-        callback='on_rollback',
+    # NOTE: Fires on rollback which affects specific index and can't be processed unattended.
+    # NOTE: Default: reindex.
+    'on_index_rollback': HookConfig(
+        callback='on_index_rollback',
         args={
-            'datasource': 'dipdup.datasources.datasource.IndexDatasource',
+            'index': 'dipdup.index.Index',
             'from_level': 'int',
             'to_level': 'int',
         },
     ),
-    # NOTE: After restart (important!) after ctx.reindex call. Default: nothing.
+    # NOTE: Fires when DipDup runs with empty schema, right after schema is initialized.
+    # NOTE: Default: nothing.
     'on_reindex': HookConfig(
         callback='on_reindex',
     ),
-    # NOTE: All indexes are in REALTIME state. Default: nothing.
+    # NOTE: Fires when all indexes reach REALTIME state.
+    # NOTE: Default: nothing.
     'on_synchronized': HookConfig(
         callback='on_synchronized',
+    ),
+    # TODO: Deprecated; remove in 6.0
+    # NOTE: Fires on rollback when `on_index_rollback` hook is not presented
+    # NOTE: Default: reindex.
+    'on_rollback': HookConfig(
+        callback='on_rollback',
+        args={
+            'index': 'dipdup.datasources.datasource.IndexDatasource',
+            'from_level': 'int',
+            'to_level': 'int',
+        },
     ),
 }
 
@@ -1193,7 +1208,6 @@ class DipDupConfig:
         self._default_hooks: bool = False
         self._links_resolved: Set[str] = set()
         self._imports_resolved: Set[str] = set()
-        self._package_path: Optional[str] = None
 
     @cached_property
     def schema_name(self) -> str:
@@ -1204,12 +1218,12 @@ class DipDupConfig:
 
     @cached_property
     def package_path(self) -> str:
-        """Absolute path to indexer package"""
-        if not self._package_path:
+        """Absolute path to the indexer package, existing or default"""
+        try:
             package = importlib.import_module(self.package)
-            self._package_path = dirname(package.__file__)
-
-        return self._package_path
+            return dirname(package.__file__)
+        except ImportError:
+            return os.path.join(os.getcwd(), self.package)
 
     @property
     def oneshot(self) -> bool:
@@ -1433,8 +1447,6 @@ class DipDupConfig:
                 index_config.subscriptions.add(TransactionSubscription())
                 return
 
-            if not index_config.contracts:
-                raise ConfigurationError('`OperationIndexConfig.contracts` must be set when `merge_subscriptions` flag is disabled')
             for contract_config in index_config.contracts:
                 if not isinstance(contract_config, ContractConfig):
                     raise ConfigInitializationException

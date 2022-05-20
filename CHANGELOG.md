@@ -1,17 +1,30 @@
 # Changelog
 
-## [unreleased]
+## 5.1.1 - 2022-05-13
+
+### Fixed
+
+* index: Ignore indexes with different message types on rollback.
+* metadata: Add `ithacanet` to available networks.
+
+## 5.1.0 - 2022-05-12
 
 ### Added
 
 * ci: Push `X` and `X.Y` tags to the Docker Hub on release.
 * cli: Added `config env` command to export env-file with default values.
 * cli: Show warning when running an outdated version of DipDup.
+* hooks: Added new hook `on_index_rollback` to perform per-index rollbacks.
 
 ### Fixed
 
 * index: Fixed fetching `migration` operations.
+* tzkt: Fixed possible data corruption when using the `buffer_size` option.
 * tzkt: Fixed reconnection due to `websockets` message size limit.
+
+### Deprecated
+
+* hooks: The `on_rollback` default hook is superseded by `on_index_rollback` and will be removed later.
 
 ## 5.0.4 - 2022-05-05
 

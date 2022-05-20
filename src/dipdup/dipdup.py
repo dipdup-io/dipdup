@@ -12,11 +12,9 @@ from contextlib import suppress
 from typing import Awaitable
 from typing import Deque
 from typing import Dict
-from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
-from typing import cast
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from prometheus_client import start_http_server  # type: ignore
@@ -38,9 +36,13 @@ from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
+from dipdup.exceptions import ConflictingHooksError
 from dipdup.exceptions import DipDupException
+from dipdup.exceptions import InitializationRequiredError
+from dipdup.exceptions import ProjectImportError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
@@ -58,6 +60,7 @@ from dipdup.models import Schema
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import add_job
 from dipdup.scheduler import create_scheduler
+from dipdup.utils import is_importable
 from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
@@ -68,8 +71,9 @@ from dipdup.utils.database import validate_models
 
 
 class IndexDispatcher:
-    def __init__(self, ctx: DipDupContext) -> None:
+    def __init__(self, ctx: DipDupContext, index_rollback: bool = True) -> None:
         self._ctx = ctx
+        self._index_rollback = index_rollback
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
@@ -266,40 +270,85 @@ class IndexDispatcher:
         for index in big_map_indexes:
             index.push_big_maps(big_maps)
 
-    async def _on_rollback(self, datasource: TzktDatasource, from_level: int, to_level: int) -> None:
+    async def _on_rollback(self, datasource: TzktDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
-        self._logger.warning('Datasource `%s` rolled back: %s -> %s', datasource.name, from_level, to_level)
+        if from_level <= to_level:
+            raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
+
+        channel = f'{datasource.name}:{type_.value}'
+        self._logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
         if Metrics.enabled:
             Metrics.set_datasource_rollback(datasource.name)
 
-        # NOTE: Zero difference between levels means we received no operations/big_maps on this level and thus channel level hasn't changed
-        zero_level_rollback = from_level - to_level == 0
-        single_level_rollback = from_level - to_level == 1
+        # NOTE: Choose action for each index
+        ignored_indexes: Set[str] = set()
+        single_level_indexes: Set[str] = set()
+        unprocessed_indexes: Set[str] = set()
 
-        if zero_level_rollback:
-            self._logger.info('Zero level rollback, ignoring')
+        for index_name, index in self._indexes.items():
+            index_level = index.state.level
 
-        elif single_level_rollback:
-            # NOTE: Notify all indexes which use rolled back datasource to drop duplicated operations from the next block
-            self._logger.info('Checking if single level rollback is possible')
-            matching_indexes = tuple(i for i in self._indexes.values() if i.datasource == datasource)
-            matching_operation_indexes = tuple(i for i in matching_indexes if isinstance(i, OperationIndex))
-            self._logger.info(
-                'Indexes: %s total, %s matching, %s support single level rollback',
-                len(self._indexes),
-                len(matching_indexes),
-                len(matching_operation_indexes),
-            )
+            if index.message_type != type_:
+                self._logger.debug('%s: different channel, skipping', index_name)
+                ignored_indexes.add(index_name)
 
-            all_indexes_are_operation = len(matching_indexes) == len(matching_operation_indexes)
-            if all_indexes_are_operation:
-                for index in cast(List[OperationIndex], matching_indexes):
-                    index.push_rollback(from_level)
+            elif index.datasource != datasource:
+                self._logger.debug('%s: different datasource, skipping', index_name)
+                ignored_indexes.add(index_name)
+
+            elif to_level >= index_level:
+                self._logger.debug('%s: level is too low, skipping', index_name)
+                ignored_indexes.add(index_name)
+
+            elif from_level - to_level == 1:
+                if isinstance(index, OperationIndex):
+                    self._logger.debug('%s: single-level, supported', index_name)
+                    single_level_indexes.add(index_name)
+                else:
+                    self._logger.debug('%s: single-level, not supported', index_name)
+                    unprocessed_indexes.add(index_name)
+
             else:
-                await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
+                self._logger.debug('%s: unprocessed', index_name)
+                unprocessed_indexes.add(index_name)
 
+        self._logger.info(
+            '%s indexes, %s ignored, %s single-level, %s unprocessed',
+            len(self._indexes),
+            len(ignored_indexes),
+            len(single_level_indexes),
+            len(unprocessed_indexes),
+        )
+
+        for index_name in single_level_indexes:
+            self._logger.info('`%s`: performing a single-level rollback', index_name)
+            if not isinstance(index := self._indexes[index_name], OperationIndex):
+                raise RuntimeError(f'Attempt to single-level rollback non-operation index: {index_name}')  # pragma: no cover
+            index.push_rollback(from_level)
+
+        if not unprocessed_indexes:
+            self._logger.info('`%s` rollback complete', channel)
+            return
+
+        if self._index_rollback:
+            hook_name = 'on_index_rollback'
+            for index_name in unprocessed_indexes:
+                self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
+                await self._ctx.fire_hook(
+                    hook_name,
+                    index=self._indexes[index_name],
+                    from_level=from_level,
+                    to_level=to_level,
+                )
         else:
-            await self._ctx.fire_hook('on_rollback', datasource=datasource, from_level=from_level, to_level=to_level)
+            hook_name = 'on_rollback'
+            self._logger.warning('`%s`: can\'t process, firing `%s` hook', datasource.name, hook_name)
+            await self._ctx.fire_hook(
+                hook_name,
+                datasource=datasource,
+                from_level=from_level,
+                to_level=to_level,
+            )
 
 
 class DipDup:
@@ -442,9 +491,18 @@ class DipDup:
 
     async def _set_up_hooks(self, tasks: Optional[Set[Task]] = None) -> None:
         for hook_config in default_hooks.values():
-            self._ctx.callbacks.register_hook(hook_config)
+            try:
+                self._ctx.callbacks.register_hook(hook_config)
+            except ProjectImportError:
+                if hook_config.callback in ('on_rollback', 'on_index_rollback'):
+                    self._logger.info(f'Hook {hook_config.callback} is not available')
+                else:
+                    raise
+
         for hook_config in self._config.hooks.values():
             self._ctx.callbacks.register_hook(hook_config)
+
+        # FIXME: Why does `is not None` check break oneshot mode?
         if tasks:
             tasks.add(create_task(self._ctx.callbacks.run()))
 
@@ -502,7 +560,17 @@ class DipDup:
         start_scheduler_event: Event,
         early_realtime: bool,
     ) -> None:
-        index_dispatcher = IndexDispatcher(self._ctx)
+        # NOTE: Decide how to handle rollbacks depending on hooks presence
+        # TODO: Remove in 6.0
+        old_hook, new_hook = 'on_rollback', 'on_index_rollback'
+        has_old_hook = is_importable(f'{self._config.package}.hooks.{old_hook}', old_hook)
+        has_new_hook = is_importable(f'{self._config.package}.hooks.{new_hook}', new_hook)
+        if has_old_hook and has_new_hook:
+            raise ConflictingHooksError(old_hook, new_hook)
+        elif not has_old_hook and not has_new_hook:
+            raise InitializationRequiredError('none of `on_rollback` or `on_index_rollback` hooks found')
+
+        index_dispatcher = IndexDispatcher(self._ctx, index_rollback=has_new_hook)
         tasks.add(
             create_task(
                 index_dispatcher.run(

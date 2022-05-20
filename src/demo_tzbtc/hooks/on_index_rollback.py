@@ -1,18 +1,19 @@
 from dipdup.context import HookContext
-from dipdup.datasources.datasource import IndexDatasource
 from dipdup.enums import ReindexingReason
+from dipdup.index import Index
 
 
-async def on_rollback(
+async def on_index_rollback(
     ctx: HookContext,
-    datasource: IndexDatasource,
+    index: Index,
     from_level: int,
     to_level: int,
 ) -> None:
-    await ctx.execute_sql('on_rollback')
+    await ctx.execute_sql('on_index_rollback')
     await ctx.reindex(
         ReindexingReason.rollback,
-        datasource=datasource.name,
+        index=index.name,
+        datasource=index.datasource.name,
         from_level=from_level,
         to_level=to_level,
     )

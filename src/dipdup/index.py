@@ -43,6 +43,7 @@ from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
+from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import InvalidDataError
@@ -77,7 +78,7 @@ class OperationSubgroup:
 
 
 # NOTE: Message queue of OperationIndex
-SingleLevelRollback = namedtuple('SingleLevelRollback', ('head_level'))
+SingleLevelRollback = namedtuple('SingleLevelRollback', ('from_level'))
 Operations = Tuple[OperationData, ...]
 OperationQueueItemT = Union[Tuple[OperationSubgroup, ...], SingleLevelRollback]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
@@ -138,6 +139,7 @@ class Index:
     Provides common interface for managing index state and switching between sync and realtime modes.
     """
 
+    message_type: MessageType
     _queue: Deque
 
     def __init__(self, ctx: DipDupContext, config: ResolvedIndexConfigT, datasource: TzktDatasource) -> None:
@@ -147,6 +149,10 @@ class Index:
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
         self._state: Optional[models.Index] = None
+
+    @property
+    def name(self) -> str:
+        return self._config.name
 
     @property
     def datasource(self) -> TzktDatasource:
@@ -268,6 +274,7 @@ class Index:
 
 
 class OperationIndex(Index):
+    message_type = MessageType.operation
     _config: OperationIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
@@ -283,10 +290,10 @@ class OperationIndex(Index):
         if Metrics.enabled:
             Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
 
-    def push_rollback(self, head_level: int) -> None:
-        self._queue.append(SingleLevelRollback(head_level))
+    def push_rollback(self, from_level: int) -> None:
+        self._queue.append(SingleLevelRollback(from_level))
 
-    async def _single_level_rollback(self, head_level: int) -> None:
+    async def _single_level_rollback(self, from_level: int) -> None:
         """Ensure the next arrived block has all operations of the previous one. But it could also contain additional operations we need to process.
 
         Called by IndexDispatcher when index datasource receive a single level rollback.
@@ -295,13 +302,13 @@ class OperationIndex(Index):
             raise RuntimeError('Index is already in a single-level rollback state')
 
         index_level = cast(int, self.state.level)
-        if index_level < head_level:
-            self._logger.info('Index level is lower than new head level, ignoring: %s < %s', index_level, head_level)
-        elif index_level == head_level:
+        if index_level < from_level:
+            self._logger.info('Index level is lower than new head level, ignoring: %s < %s', index_level, from_level)
+        elif index_level == from_level:
             self._logger.info('Single level rollback, next block will be processed partially')
-            self._next_head_level = head_level
+            self._next_head_level = from_level
         else:
-            raise RuntimeError(f'Index level is higher than new head level: {index_level} > {head_level}')
+            raise RuntimeError(f'Index level is higher than new head level: {index_level} > {from_level}')
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
@@ -312,7 +319,7 @@ class OperationIndex(Index):
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
             if isinstance(message, SingleLevelRollback):
                 self._logger.debug('Processing rollback realtime message, %s left in queue', messages_left)
-                await self._single_level_rollback(message.head_level)
+                await self._single_level_rollback(message.from_level)
             elif message:
                 self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
                 with ExitStack() as stack:
@@ -469,7 +476,6 @@ class OperationIndex(Index):
 
     async def _match_operation_subgroup(self, operation_subgroup: OperationSubgroup) -> Deque[MatchedOperationsT]:
         """Try to match operation subgroup with all patterns from indexes."""
-        self._logger.debug('Matching %s', operation_subgroup)
         matched_handlers: Deque[MatchedOperationsT] = deque()
         operations = operation_subgroup.operations
 
@@ -615,6 +621,7 @@ class OperationIndex(Index):
 
 
 class BigMapIndex(Index):
+    message_type = MessageType.big_map
     _config: BigMapIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
@@ -839,6 +846,7 @@ class BigMapIndex(Index):
 
 
 class HeadIndex(Index):
+    message_type: MessageType = MessageType.head
     _config: HeadIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: HeadIndexConfig, datasource: TzktDatasource) -> None:
@@ -883,6 +891,7 @@ class HeadIndex(Index):
 
 
 class TokenTransferIndex(Index):
+    message_type = MessageType.token_transfer
     _config: TokenTransferIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: TokenTransferIndexConfig, datasource: TzktDatasource) -> None:

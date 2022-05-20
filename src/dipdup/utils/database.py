@@ -132,7 +132,7 @@ async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
         raise NotImplementedError
 
     await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
-    # FIXME: Oh...
+    # NOTE: Recreate `truncate_schema` function on fresh schema
     await conn.execute_script(_truncate_schema_sql)
 
 

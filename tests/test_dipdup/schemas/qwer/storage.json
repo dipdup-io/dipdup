@@ -1,47 +1,47 @@
 {
-    "$comment": "list",
-    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "array",
+  "items": {
+    "type": "array",
     "items": {
-        "$comment": "list",
-        "items": {
-            "$comment": "or",
-            "oneOf": [
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "L": {
-                            "$comment": "string",
-                            "type": "string"
-                        }
-                    },
-                    "required": [
-                        "L"
-                    ],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "R": {
-                            "additionalProperties": {
-                                "$comment": "int",
-                                "type": "string"
-                            },
-                            "propertyNames": {
-                                "$comment": "int",
-                                "type": "string"
-                            },
-                            "type": "object"
-                        }
-                    },
-                    "required": [
-                        "R"
-                    ],
-                    "type": "object"
-                }
-            ]
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "L": {
+              "type": "string",
+              "$comment": "string"
+            }
+          },
+          "required": [
+            "L"
+          ],
+          "additionalProperties": false
         },
-        "type": "array"
+        {
+          "type": "object",
+          "properties": {
+            "R": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "$comment": "int"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "$comment": "int"
+              }
+            }
+          },
+          "required": [
+            "R"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "$comment": "or"
     },
-    "type": "array"
+    "$comment": "list"
+  },
+  "$comment": "list"
 }

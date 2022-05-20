@@ -1,40 +1,40 @@
 {
-    "$comment": "pair",
-    "$schema": "http://json-schema.org/draft/2019-09/schema#",
-    "additionalProperties": false,
-    "properties": {
-        "borrowedTokens": {
-            "$comment": "nat",
-            "type": "string"
-        },
-        "interestIndex": {
-            "$comment": "int",
-            "type": "string"
-        },
-        "isLiquidated": {
-            "$comment": "bool",
-            "type": "boolean"
-        },
-        "ovenProxyContractAddress": {
-            "$comment": "address",
-            "type": "string"
-        },
-        "owner": {
-            "$comment": "address",
-            "type": "string"
-        },
-        "stabilityFeeTokens": {
-            "$comment": "int",
-            "type": "string"
-        }
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "borrowedTokens": {
+      "type": "string",
+      "$comment": "nat"
     },
-    "required": [
-        "borrowedTokens",
-        "interestIndex",
-        "isLiquidated",
-        "ovenProxyContractAddress",
-        "owner",
-        "stabilityFeeTokens"
-    ],
-    "type": "object"
+    "interestIndex": {
+      "type": "string",
+      "$comment": "int"
+    },
+    "isLiquidated": {
+      "type": "boolean",
+      "$comment": "bool"
+    },
+    "ovenProxyContractAddress": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "owner": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "stabilityFeeTokens": {
+      "type": "string",
+      "$comment": "int"
+    }
+  },
+  "required": [
+    "borrowedTokens",
+    "interestIndex",
+    "isLiquidated",
+    "ovenProxyContractAddress",
+    "owner",
+    "stabilityFeeTokens"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
 }
