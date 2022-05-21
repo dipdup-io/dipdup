@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+* tzkt: Added `originated_contract_tzips` field to `OperationData`.
+
 ## 5.1.1 - 2022-05-13
 
 ### Fixed
