@@ -120,6 +120,3 @@ class SchedulerManager:
         if event.job_id in self._daemons:
             event.exception = ConfigurationError('Daemon jobs are intended to run forever')
             self._on_error(event)
-
-    async def _watchdog(self) -> NoReturn:
-        """Throw expection in the main loop if any job has failed"""
