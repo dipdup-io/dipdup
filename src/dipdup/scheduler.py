@@ -4,12 +4,12 @@ import logging
 from functools import partial
 from typing import Any
 from typing import Dict
-from typing import NoReturn
 from typing import Optional
 from typing import Set
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from apscheduler.events import EVENT_JOB_EXECUTED
+from apscheduler.events import JobEvent  # type: ignore
 from apscheduler.job import Job  # type: ignore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
 from apscheduler.triggers.cron import CronTrigger  # type: ignore
@@ -39,7 +39,7 @@ def _verify_config(config: Dict[str, Any]) -> None:
 
 
 class SchedulerManager:
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         if config:
             _verify_config(config)
         self._logger = logging.getLogger('dipdup.jobs')
@@ -112,11 +112,11 @@ class SchedulerManager:
             kwargs=job_config.args,
         )
 
-    def _on_error(self, event) -> None:
+    def _on_error(self, event: JobEvent) -> None:
         self._exception = event.exception
         self._exception_event.set()
 
-    def _on_executed(self, event) -> None:
+    def _on_executed(self, event: JobEvent) -> None:
         if event.job_id in self._daemons:
             event.exception = ConfigurationError('Daemon jobs are intended to run forever')
             self._on_error(event)
