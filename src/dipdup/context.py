@@ -382,6 +382,7 @@ class CallbackManager:
         self._hooks: Dict[str, HookConfig] = {}
 
     async def run(self) -> None:
+        self._logger.debug('Starting CallbackManager loop')
         while True:
             async with slowdown(1):
                 while pending_hooks:

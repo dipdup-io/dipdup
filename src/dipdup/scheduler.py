@@ -1,15 +1,19 @@
 import asyncio
 import json
-from datetime import datetime
+import logging
 from functools import partial
 from typing import Any
 from typing import Dict
+from typing import NoReturn
 from typing import Optional
+from typing import Set
 
+from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
+from apscheduler.events import EVENT_JOB_EXECUTED
+from apscheduler.job import Job  # type: ignore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
 from apscheduler.triggers.cron import CronTrigger  # type: ignore
 from apscheduler.triggers.interval import IntervalTrigger  # type: ignore
-from apscheduler.util import undefined  # type: ignore
 
 from dipdup.config import JobConfig
 from dipdup.context import DipDupContext
@@ -24,57 +28,98 @@ DEFAULT_CONFIG = {
 }
 
 
-def create_scheduler(config: Optional[Dict[str, Any]] = None) -> AsyncIOScheduler:
-    if not config:
-        return AsyncIOScheduler(DEFAULT_CONFIG)
-
+def _verify_config(config: Dict[str, Any]) -> None:
+    """Ensure that dict is a valid `apscheduler` config"""
     json_config = json.dumps(config)
     if 'apscheduler.executors.pool' in json_config:
         raise ConfigurationError('`apscheduler.executors.pool` is not supported. If needed, create a pool inside a regular hook.')
     for key in config:
         if not key.startswith('apscheduler.'):
             raise ConfigurationError('`advanced.scheduler` config keys must start with `apscheduler.`, see apscheduler library docs')
-    return AsyncIOScheduler(config)
 
 
-def add_job(ctx: DipDupContext, scheduler: AsyncIOScheduler, job_config: JobConfig) -> None:
-    hook_config = job_config.hook_config
+class SchedulerManager:
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        if config:
+            _verify_config(config)
+        self._logger = logging.getLogger('dipdup.jobs')
+        self._scheduler = AsyncIOScheduler(config or DEFAULT_CONFIG)
+        self._scheduler.add_listener(self._on_error, EVENT_JOB_ERROR)
+        self._scheduler.add_listener(self._on_executed, EVENT_JOB_EXECUTED)
+        self._exception: Optional[Exception] = None
+        self._exception_event: asyncio.Event = asyncio.Event()
+        self._daemons: Set[str] = set()
 
-    async def _job_wrapper(ctx: DipDupContext, *args, **kwargs) -> None:
-        nonlocal job_config, hook_config
-        job_ctx = HookContext(
-            config=ctx.config,
-            datasources=ctx.datasources,
-            callbacks=ctx.callbacks,
-            logger=logger,
-            hook_config=hook_config,
-        )
+    async def run(self, event: asyncio.Event) -> None:
+        self._logger.info('Waiting for an event to start scheduler')
+        await event.wait()
+
+        self._logger.info('Starting scheduler')
         try:
-            await job_ctx.fire_hook(hook_config.callback, *args, **kwargs)
+            self._scheduler.start()
+            await self._exception_event.wait()
+            if self._exception is None:
+                raise RuntimeError('Job has failed but exception is not set')
+            raise self._exception
         except asyncio.CancelledError:
             pass
+        finally:
+            self._scheduler.shutdown()
+
+    def add_job(self, ctx: DipDupContext, job_config: JobConfig) -> Job:
+        if job_config.daemon:
+            self._daemons.add(job_config.name)
+
+        hook_config = job_config.hook_config
+
+        logger = FormattedLogger(
+            name=f'dipdup.hooks.{hook_config.callback}',
+            fmt=job_config.name + ': {}',
+        )
+
+        async def _job_wrapper(ctx: DipDupContext, *args, **kwargs) -> None:
+            nonlocal job_config, hook_config
+            job_ctx = HookContext(
+                config=ctx.config,
+                datasources=ctx.datasources,
+                callbacks=ctx.callbacks,
+                logger=logger,
+                hook_config=hook_config,
+            )
+            try:
+                await job_ctx.fire_hook(
+                    hook_config.callback,
+                    *args,
+                    **kwargs,
+                )
+            except asyncio.CancelledError:
+                pass
+
+        if job_config.crontab:
+            trigger = CronTrigger.from_crontab(job_config.crontab)
+        elif job_config.interval:
+            trigger = IntervalTrigger(seconds=job_config.interval)
+        elif job_config.daemon:
+            trigger = None
         else:
-            if job_config.daemon:
-                raise ConfigurationError('Daemon jobs are intended to run forever')
+            raise RuntimeError
 
-    logger = FormattedLogger(
-        name=f'dipdup.hooks.{hook_config.callback}',
-        fmt=job_config.name + ': {}',
-    )
-    if job_config.crontab:
-        trigger, next_run_time = CronTrigger.from_crontab(job_config.crontab), undefined
-    elif job_config.interval:
-        trigger, next_run_time = IntervalTrigger(seconds=job_config.interval), undefined
-    elif job_config.daemon:
-        trigger, next_run_time = None, datetime.now()
-    else:
-        raise RuntimeError
+        return self._scheduler.add_job(
+            func=partial(_job_wrapper, ctx=ctx),
+            id=job_config.name,
+            name=job_config.name,
+            trigger=trigger,
+            kwargs=job_config.args,
+        )
 
-    scheduler.add_job(
-        func=partial(_job_wrapper, ctx=ctx),
-        id=job_config.name,
-        name=job_config.name,
-        trigger=trigger,
-        next_run_time=next_run_time,
-        kwargs=job_config.args,
-    )
+    def _on_error(self, event) -> None:
+        self._exception = event.exception
+        self._exception_event.set()
+
+    def _on_executed(self, event) -> None:
+        if event.job_id in self._daemons:
+            event.exception = ConfigurationError('Daemon jobs are intended to run forever')
+            self._on_error(event)
+
+    async def _watchdog(self) -> NoReturn:
+        """Throw expection in the main loop if any job has failed"""

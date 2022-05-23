@@ -1,5 +1,12 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* jobs: Fixed jobs with `daemon` schedule never start.
+* jobs: Fixed failed jobs not throwing exceptions into the main loop.
+
 ## 5.1.1 - 2022-05-13
 
 ### Fixed
