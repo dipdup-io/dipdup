@@ -1,5 +1,15 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+* tzkt: Added `originated_contract_tzips` field to `OperationData`.
+
+### Other
+
+* database: Tortoise ORM updated to `0.19.1`.
+
 ## 5.1.1 - 2022-05-13
 
 ### Fixed

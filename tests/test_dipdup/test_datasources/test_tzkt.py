@@ -16,9 +16,9 @@ from dipdup.models import OperationData
 
 
 @asynccontextmanager
-async def with_tzkt(batch_size: int) -> AsyncIterator[TzktDatasource]:
+async def with_tzkt(batch_size: int, url: str | None = None) -> AsyncIterator[TzktDatasource]:
     config = HTTPConfig(batch_size=batch_size)
-    datasource = TzktDatasource('https://api.tzkt.io', config)
+    datasource = TzktDatasource(url or 'https://api.tzkt.io', config)
     async with datasource:
         yield datasource
 
@@ -199,6 +199,12 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             originations = await take_two(tzkt.iter_migration_originations())
             self.assertEqual(67955553, originations[0].id)
             self.assertEqual(67955554, originations[1].id)
+
+    async def test_get_originations(self) -> None:
+        async with with_tzkt(1, 'https://tzkt-mainnet.dipdup.net') as tzkt:
+            originations = await tzkt.get_originations({'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'}, 889027, 889027)
+            self.assertEqual(23812803, originations[0].id)
+            self.assertEqual(('fa12',), originations[0].originated_contract_tzips)
 
     async def test_on_operation_message_data(self) -> None:
         with open(join(dirname(__file__), '..', 'ftzfun.json')) as f:
