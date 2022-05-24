@@ -233,7 +233,7 @@ class Index(Model):
 
     config_hash = fields.CharField(256)
     template = fields.CharField(256, null=True)
-    template_values = fields.JSONField(null=True)
+    template_values: Dict[str, Any] = fields.JSONField(null=True)
 
     level = fields.IntField(default=0)
 

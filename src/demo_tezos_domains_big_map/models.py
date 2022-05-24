@@ -1,3 +1,4 @@
+from tortoise import ForeignKeyFieldInstance
 from tortoise import Model
 from tortoise import fields
 
@@ -14,12 +15,12 @@ class Expiry(Model):
 
 class Domain(Model):
     id = fields.CharField(max_length=255, pk=True)
-    tld = fields.ForeignKeyField('models.TLD', 'domains')
+    tld: ForeignKeyFieldInstance[TLD] = fields.ForeignKeyField('models.TLD', 'domains')
     owner = fields.CharField(max_length=36)
     token_id = fields.BigIntField(null=True)
 
 
 class Record(Model):
     id = fields.CharField(max_length=255, pk=True)
-    domain = fields.ForeignKeyField('models.Domain', 'records')
+    domain: ForeignKeyFieldInstance[Domain] = fields.ForeignKeyField('models.Domain', 'records')
     address = fields.CharField(max_length=36, null=True)
