@@ -1,2 +1,2 @@
-FROM dipdup/dipdup:5.1.1
+FROM dipdup/dipdup:5.1.2
 COPY demo_tezos_domains_big_map /home/dipdup/demo_tezos_domains_big_map
