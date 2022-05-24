@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+* tzkt: Added `originated_contract_tzips` field to `OperationData`.
+
 ### Fixed
 
 * jobs: Fixed jobs with `daemon` schedule never start.

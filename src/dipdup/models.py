@@ -52,6 +52,7 @@ class OperationData:
     originated_contract_alias: Optional[str] = None
     originated_contract_type_hash: Optional[int] = None
     originated_contract_code_hash: Optional[int] = None
+    originated_contract_tzips: Optional[Tuple[str, ...]] = None
     delegate_address: Optional[str] = None
     delegate_alias: Optional[str] = None
 
