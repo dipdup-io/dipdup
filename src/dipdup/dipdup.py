@@ -7,7 +7,6 @@ from asyncio import create_task
 from asyncio import gather
 from collections import deque
 from contextlib import AsyncExitStack
-from contextlib import asynccontextmanager
 from contextlib import suppress
 from typing import Awaitable
 from typing import Deque
@@ -16,7 +15,6 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 
-from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from prometheus_client import start_http_server  # type: ignore
 from tortoise.exceptions import OperationalError
 
@@ -58,8 +56,7 @@ from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Schema
 from dipdup.prometheus import Metrics
-from dipdup.scheduler import add_job
-from dipdup.scheduler import create_scheduler
+from dipdup.scheduler import SchedulerManager
 from dipdup.utils import is_importable
 from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
@@ -367,7 +364,6 @@ class DipDup:
             datasources=self._datasources,
             callbacks=self._callbacks,
         )
-        self._scheduler = create_scheduler(self._config.advanced.scheduler)
         self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         self._schema: Optional[Schema] = None
 
@@ -492,19 +488,19 @@ class DipDup:
     async def _set_up_hooks(self, tasks: Optional[Set[Task]] = None) -> None:
         for hook_config in default_hooks.values():
             try:
-                self._ctx.callbacks.register_hook(hook_config)
+                self._callbacks.register_hook(hook_config)
             except ProjectImportError:
                 if hook_config.callback in ('on_rollback', 'on_index_rollback'):
-                    self._logger.info(f'Hook {hook_config.callback} is not available')
+                    self._logger.info(f'Hook `{hook_config.callback}` is not available')
                 else:
                     raise
 
         for hook_config in self._config.hooks.values():
-            self._ctx.callbacks.register_hook(hook_config)
+            self._callbacks.register_hook(hook_config)
 
         # FIXME: Why does `is not None` check break oneshot mode?
         if tasks:
-            tasks.add(create_task(self._ctx.callbacks.run()))
+            tasks.add(create_task(self._callbacks.run()))
 
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus:
@@ -596,41 +592,14 @@ class DipDup:
         return event  # noqa: R504
 
     async def _set_up_scheduler(self, stack: AsyncExitStack, tasks: Set[Task]) -> Event:
-        job_failed = Event()
+        # NOTE: Prepare SchedulerManager
         event = Event()
-        exception: Optional[Exception] = None
+        scheduler = SchedulerManager(self._config.advanced.scheduler)
+        run_task = create_task(scheduler.run(event))
+        tasks.add(run_task)
 
-        @asynccontextmanager
-        async def _context():
-            try:
-                self._scheduler.start()
-                yield
-            finally:
-                self._scheduler.shutdown()
+        # NOTE: Register jobs
+        for job_config in self._config.jobs.values():
+            scheduler.add_job(self._ctx, job_config)
 
-        def _error_hook(event) -> None:
-            nonlocal job_failed, exception
-            exception = event.exception
-            job_failed.set()
-
-        async def _watchdog() -> None:
-            nonlocal job_failed
-            await job_failed.wait()
-            if not isinstance(exception, Exception):
-                raise RuntimeError
-            raise exception
-
-        async def _event_wrapper():
-            self._logger.info('Waiting for an event to start scheduler')
-            await event.wait()
-
-            self._logger.info('Starting scheduler')
-            self._scheduler.add_listener(_error_hook, EVENT_JOB_ERROR)
-            await stack.enter_async_context(_context())
-            tasks.add(create_task(_watchdog()))
-
-            for job_config in self._config.jobs.values():
-                add_job(self._ctx, self._scheduler, job_config)
-
-        tasks.add(create_task(_event_wrapper()))
         return event  # noqa: R504

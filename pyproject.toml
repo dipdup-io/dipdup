@@ -90,7 +90,7 @@ extended_default_ignore = []
 
 [tool.flakehell.plugins]
 pyflakes = ["+*"]
-"flake8-*" = ["+*"]
+"flake8-*" = ["+*", "-C417"]
 flake8-docstrings = ["-*"]
 flake8-simplify = ["-SIM106"]
 
