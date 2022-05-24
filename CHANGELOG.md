@@ -14,7 +14,6 @@
 ### Other
 
 * database: Tortoise ORM updated to `0.19.1`.
-* tzkt: PySignalR updated to `0.1.1`.
 
 ## 5.1.1 - 2022-05-13
 

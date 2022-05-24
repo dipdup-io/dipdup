@@ -1592,23 +1592,16 @@ python-versions = "*"
 
 [[package]]
 name = "pysignalr"
-version = "0.1.1"
+version = "0.1.2"
 description = "Modern, reliable and async-ready client for SignalR protocol"
 category = "main"
 optional = false
-python-versions = "^3.8"
-develop = false
+python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
-aiohttp = "^3.7.4"
-msgpack = "^1.0.2"
+aiohttp = ">=3.7.4,<4.0.0"
+msgpack = ">=1.0.2,<2.0.0"
 websockets = "10.3"
-
-[package.source]
-type = "git"
-url = "https://github.com/baking-bad/pysignalr.git"
-reference = "fix/max-size"
-resolved_reference = "10c4916975dc0588bfe7d464bee1acae51b5bbe0"
 
 [[package]]
 name = "pysnooper"
@@ -2471,7 +2464,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "226e1d2a3302e4d0a6c0764b874bcbdc1d94a1e8a547b64eae272636ba020811"
+content-hash = "bb59f1d71bdfb3c950510088e43d2a32e608f00c9d0a3f9102775cc27e7eb460"
 
 [metadata.files]
 aiohttp = [
@@ -3518,7 +3511,10 @@ pysha3 = [
     {file = "pysha3-1.0.2-cp36-cp36m-win_amd64.whl", hash = "sha256:0060a66be16665d90c432f55a0ba1f6480590cfb7d2ad389e688a399183474f0"},
     {file = "pysha3-1.0.2.tar.gz", hash = "sha256:fe988e73f2ce6d947220624f04d467faf05f1bbdbc64b0a201296bb3af92739e"},
 ]
-pysignalr = []
+pysignalr = [
+    {file = "pysignalr-0.1.2-py3-none-any.whl", hash = "sha256:71500f8c299224251ecc74e24e22aee82e1f6f87870ad3eb3a3d52b17be01056"},
+    {file = "pysignalr-0.1.2.tar.gz", hash = "sha256:4d919d3e4a89c28c427d881ac7239f3ec73f8d731266308bcbc88143d6cf085d"},
+]
 pysnooper = [
     {file = "PySnooper-1.1.1-py2.py3-none-any.whl", hash = "sha256:378f13d731a3e04d3d0350e5f295bdd0f1b49fc8a8b8bf2067fe1e5290bd20be"},
     {file = "PySnooper-1.1.1.tar.gz", hash = "sha256:d17dc91cca1593c10230dce45e46b1d3ff0f8910f0c38e941edf6ba1260b3820"},

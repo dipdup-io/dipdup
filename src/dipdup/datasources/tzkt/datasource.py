@@ -892,8 +892,7 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Creating websocket client')
         self._ws_client = SignalRClient(
             url=f'{self._http._url}/v1/events',
-            # NOTE: It's safe. Remove comment after updating pysignalr.
-            max_size=None,  # type: ignore
+            max_size=None,
         )
 
         self._ws_client.on_open(self._on_connect)
