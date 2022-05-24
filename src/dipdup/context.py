@@ -31,7 +31,6 @@ from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import HookConfig
-from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigT
@@ -49,7 +48,6 @@ from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import ContractAlreadyExistsError
-from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
@@ -223,16 +221,7 @@ class DipDupContext:
 
     # TODO: Option to override first_level/last_level?
     async def add_index(self, name: str, template: str, values: Dict[str, Any], state: Optional[Index] = None) -> None:
-        self.logger.info('Creating index `%s` from template `%s`', name, template)
-        if name in self.config.indexes:
-            raise IndexAlreadyExistsError(self, name)
-
-        self.config.indexes[name] = IndexTemplateConfig(
-            template=template,
-            values=values,
-        )
-        self.config.initialize()
-
+        self.config.add_index(name, template, values)
         await self.spawn_index(name, state)
 
     async def spawn_index(self, name: str, state: Optional[Index] = None) -> None:
