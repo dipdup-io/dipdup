@@ -1401,8 +1401,7 @@ class DipDupConfig:
             value_regex = r'<[ ]*' + key + r'[ ]*>'
             raw_template = re.sub(value_regex, value, raw_template)
 
-        with suppress(AttributeError):
-            missing_value = re.search(r'<*>', raw_template).search(0)  # type: ignore
+        if missing_value := re.search(r'<*>', raw_template):
             raise ConfigurationError(f'`{template_config.name}` index config is missing required template value `{missing_value}`')
 
         json_template = json.loads(raw_template)

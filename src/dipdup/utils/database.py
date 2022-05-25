@@ -10,13 +10,17 @@ from os.path import join
 from pathlib import Path
 from typing import Any
 from typing import AsyncIterator
+from typing import Dict
+from typing import Iterable
 from typing import Iterator
 from typing import Optional
 from typing import Tuple
 from typing import Type
+from typing import Union
 
 import sqlparse  # type: ignore
 from tortoise import Model
+from tortoise import ModuleType
 from tortoise import Tortoise
 from tortoise import connections
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
@@ -47,7 +51,7 @@ def _set_connection(conn: BaseDBAsyncClient) -> None:
 @asynccontextmanager
 async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int = 60) -> AsyncIterator:
     """Initialize Tortoise with internal and project models, close connections when done"""
-    modules = {'int_models': ['dipdup.models']}
+    modules: Dict[str, Iterable[Union[str, ModuleType]]] = {'int_models': ['dipdup.models']}
     if models:
         modules['models'] = [models]
     try:
@@ -55,7 +59,7 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
             try:
                 await Tortoise.init(
                     db_url=url,
-                    modules=modules,  # type: ignore
+                    modules=modules,
                 )
                 # FIXME: Wait for the connection to be ready, required since 0.19.0
                 conn = get_connection()

@@ -15,11 +15,11 @@ async def on_fa12_transfer(
     value = int(transfer.parameter.value)
 
     from_position, _ = await models.Position.get_or_create(trader=from_address, symbol=symbol)
-    from_position.shares_qty -= value  # type: ignore
+    from_position.shares_qty -= value
     assert from_position.shares_qty >= 0, transfer.data.hash
     await from_position.save()
 
     to_position, _ = await models.Position.get_or_create(trader=to_address, symbol=symbol)
-    to_position.shares_qty += value  # type: ignore
+    to_position.shares_qty += value
     assert to_position.shares_qty >= 0, transfer.data.hash
     await to_position.save()

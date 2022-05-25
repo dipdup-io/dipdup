@@ -30,7 +30,7 @@ from typing import cast
 
 from pysignalr.client import SignalRClient
 from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
-from pysignalr.messages import CompletionMessage  # type: ignore
+from pysignalr.messages import CompletionMessage
 
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT

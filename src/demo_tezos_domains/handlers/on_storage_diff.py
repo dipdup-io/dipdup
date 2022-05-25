@@ -4,7 +4,7 @@ from dipdup.context import HandlerContext
 
 
 async def on_storage_diff(ctx: HandlerContext, storage: NameRegistryStorage) -> None:
-    for name, item in storage.store.records.items():  # type: ignore
+    for name, item in storage.store.records.items():
         record_name = bytes.fromhex(name).decode()
         record_path = record_name.split('.')
         ctx.logger.info('Processing `%s`', record_name)
@@ -22,7 +22,7 @@ async def on_storage_diff(ctx: HandlerContext, storage: NameRegistryStorage) -> 
                     defaults={
                         'tld_id': record_path[-1],
                         'owner': item.owner,
-                        'expiry': storage.store.expiry_map.get(item.expiry_key) if item.expiry_key else None,  # type: ignore
+                        'expiry': storage.store.expiry_map.get(item.expiry_key) if item.expiry_key else None,
                         'token_id': int(item.tzip12_token_id) if item.tzip12_token_id else None,
                     },
                 )
