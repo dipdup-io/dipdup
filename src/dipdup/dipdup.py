@@ -391,7 +391,7 @@ class DipDup:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
             await self._set_up_datasources(stack)
-            await self._set_up_hooks(tasks)
+            await self._set_up_hooks(tasks, run=not self._config.oneshot)
             await self._set_up_prometheus()
 
             await self._initialize_schema()
@@ -485,7 +485,7 @@ class DipDup:
         models = f'{self._config.package}.models'
         await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
 
-    async def _set_up_hooks(self, tasks: Optional[Set[Task]] = None) -> None:
+    async def _set_up_hooks(self, tasks: Set[Task], run: bool = False) -> None:
         for hook_config in default_hooks.values():
             try:
                 self._callbacks.register_hook(hook_config)
@@ -498,8 +498,7 @@ class DipDup:
         for hook_config in self._config.hooks.values():
             self._callbacks.register_hook(hook_config)
 
-        # FIXME: Why does `is not None` check break oneshot mode?
-        if tasks:
+        if run:
             tasks.add(create_task(self._callbacks.run()))
 
     async def _set_up_prometheus(self) -> None:
