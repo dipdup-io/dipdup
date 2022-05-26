@@ -27,7 +27,7 @@ aiolimiter = "^1.0.0-beta.1"
 anyio = "^3.3.2"
 APScheduler = "^3.8.0"
 asyncclick = "^8.0.1"
-asyncpg = "^0.24.0"
+asyncpg = "^0.25.0"
 datamodel-code-generator = "^0.12.1"
 fcache = "^0.4.7"
 orjson = "^3.6.6"
@@ -90,6 +90,7 @@ extended_default_ignore = []
 
 [tool.flakeheaven.plugins]
 pyflakes = ["+*"]
+pylint = ["-*"]
 "flake8-*" = ["+*", "-C417"]
 flake8-docstrings = ["-*"]
 flake8-simplify = ["-SIM106"]
