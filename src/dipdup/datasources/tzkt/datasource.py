@@ -420,7 +420,7 @@ class TzktDatasource(IndexDatasource):
         """Get addresses of contracts that share the same code hash or type hash"""
         offset, limit = offset or 0, limit or self.request_limit
         entrypoint = 'same' if strict else 'similar'
-        self._logger.info('Fetching `%s` contracts for address `%s`', entrypoint, address)
+        self._logger.debug('Fetching `%s` contracts for address `%s`', entrypoint, address)
         response = await self.request(
             'get',
             url=f'v1/contracts/{address}/{entrypoint}',
@@ -447,7 +447,7 @@ class TzktDatasource(IndexDatasource):
         limit: Optional[int] = None,
     ) -> Tuple[str, ...]:
         """Get addresses of contracts originated from given address"""
-        self._logger.info('Fetching originated contracts for address `%s', address)
+        self._logger.debug('Fetching originated contracts for address `%s', address)
         offset, limit = offset or 0, limit or self.request_limit
         response = await self.request(
             'get',

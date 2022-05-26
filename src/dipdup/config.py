@@ -1166,6 +1166,7 @@ class AdvancedConfig:
     merge_subscriptions: bool = False
     metadata_interface: bool = False
     skip_version_check: bool = False
+    sequential_indexing: bool = False
 
 
 @dataclass

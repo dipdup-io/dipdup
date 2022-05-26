@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from abc import abstractmethod
 from collections import defaultdict
@@ -253,7 +254,7 @@ class Index:
         if index_level > head_level:
             raise RuntimeError(f'Attempt to synchronize index from level {index_level} to level {head_level}')
 
-        self._logger.info('Synchronizing index to level %s', head_level)
+        self._logger.debug('Synchronizing index to level %s', head_level)
         await self.state.update_status(status=IndexStatus.SYNCING, level=index_level)
         return index_level
 
@@ -340,7 +341,7 @@ class OperationIndex(Index):
 
         first_level = index_level + 1
 
-        self._logger.info('Fetching operations from level %s to %s', first_level, head_level)
+        self._logger.debug('Fetching operations from level %s to %s', first_level, head_level)
         transaction_addresses = await self._get_transaction_addresses()
         origination_addresses = await self._get_origination_addresses()
 
@@ -665,7 +666,7 @@ class BigMapIndex(Index):
 
     async def _synchronize_full(self, index_level: int, head_level: int, cache: bool = False) -> None:
         first_level = index_level + 1
-        self._logger.info('Fetching big map diffs from level %s to %s', first_level, head_level)
+        self._logger.debug('Fetching big map diffs from level %s to %s', first_level, head_level)
 
         big_map_addresses = self._get_big_map_addresses()
         big_map_paths = self._get_big_map_paths()
@@ -904,7 +905,7 @@ class TokenTransferIndex(Index):
         if first_level is None:
             return
 
-        self._logger.info('Fetching token transfers from level %s to %s', first_level, last_level)
+        self._logger.debug('Fetching token transfers from level %s to %s', first_level, last_level)
 
         fetcher = TokenTransferFetcher(
             datasource=self._datasource,

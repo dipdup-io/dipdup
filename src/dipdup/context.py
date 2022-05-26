@@ -201,7 +201,7 @@ class DipDupContext:
             raise NotImplementedError
 
     async def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
-        self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
+        self.logger.debug('Creating contract `%s` with typename `%s`', name, typename)
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(self, name, address)
 
@@ -221,6 +221,7 @@ class DipDupContext:
 
     # TODO: Option to override first_level/last_level?
     async def add_index(self, name: str, template: str, values: Dict[str, Any], state: Optional[Index] = None) -> None:
+        self.logger.debug('Creating index `%s` from template `%s`', name, template)
         self.config.add_index(name, template, values)
         await self.spawn_index(name, state)
 

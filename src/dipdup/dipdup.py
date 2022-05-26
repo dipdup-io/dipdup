@@ -79,13 +79,32 @@ class IndexDispatcher:
         self._entrypoint_filter: Set[Optional[str]] = set()
         self._address_filter: Set[str] = set()
 
-    async def run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
-        tasks = [self._run(spawn_datasources_event, start_scheduler_event, early_realtime)]
+    async def run(
+        self,
+        spawn_datasources_event: Event,
+        start_scheduler_event: Event,
+        early_realtime: bool = False,
+        sequential_indexing: bool = False,
+    ) -> None:
+        tasks = [
+            self._run(
+                spawn_datasources_event,
+                start_scheduler_event,
+                early_realtime,
+                sequential_indexing,
+            )
+        ]
         if self._ctx.config.prometheus:
             tasks.append(self._update_metrics(self._ctx.config.prometheus.update_interval))
         await gather(*tasks)
 
-    async def _run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
+    async def _run(
+        self,
+        spawn_datasources_event: Event,
+        start_scheduler_event: Event,
+        early_realtime: bool = False,
+        sequential_indexing: bool = False,
+    ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
         await self._load_index_states()
@@ -111,7 +130,11 @@ class IndexDispatcher:
                 tasks.append(self._tasks.popleft())
 
             async with slowdown(1):
-                await gather(*tasks)
+                if sequential_indexing:
+                    for task in tasks:
+                        await task
+                else:
+                    await gather(*tasks)
 
             indexes_spawned = False
             while pending_indexes:
@@ -410,7 +433,13 @@ class DipDup:
             spawn_index_tasks = (create_task(self._ctx.spawn_index(name)) for name in self._config.indexes)
             await gather(*spawn_index_tasks)
 
-            await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime)
+            await self._set_up_index_dispatcher(
+                tasks,
+                spawn_datasources_event,
+                start_scheduler_event,
+                advanced_config.early_realtime,
+                advanced_config.sequential_indexing,
+            )
 
             await gather(*tasks)
 
@@ -552,6 +581,7 @@ class DipDup:
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
+        sequential_indexing: bool,
     ) -> None:
         # NOTE: Decide how to handle rollbacks depending on hooks presence
         # TODO: Remove in 6.0
@@ -570,6 +600,7 @@ class DipDup:
                     spawn_datasources_event,
                     start_scheduler_event,
                     early_realtime,
+                    sequential_indexing,
                 )
             )
         )
