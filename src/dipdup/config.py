@@ -1221,7 +1221,7 @@ class DipDupConfig:
         """Absolute path to the indexer package, existing or default"""
         try:
             package = importlib.import_module(self.package)
-            return dirname(package.__file__)
+            return dirname(cast(str, package.__file__))
         except ImportError:
             return os.path.join(os.getcwd(), self.package)
 

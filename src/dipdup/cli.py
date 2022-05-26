@@ -186,7 +186,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     try:
         await DipDupCodeGenerator(_config, {}).create_package()
     except Exception as e:
-        raise InitializationRequiredError from e
+        raise InitializationRequiredError('Failed to create a project package.') from e
 
     # NOTE: Ensure that `spec_version` is valid and supported
     if _config.spec_version not in spec_version_mapping:
