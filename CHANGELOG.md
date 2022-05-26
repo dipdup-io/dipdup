@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* database: Fixed special characters in password not being URL encoded.
+
 ## 5.1.2 - 2022-05-24
 
 ### Added

@@ -30,6 +30,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 from typing import cast
+from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
 from pydantic import validator
@@ -119,7 +120,7 @@ class PostgresDatabaseConfig:
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
-        connection_string = f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?maxsize=1'
+        connection_string = f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}?maxsize=1'
         if self.schema_name != DEFAULT_POSTGRES_SCHEMA:
             connection_string += f'&schema={self.schema_name}'
         return connection_string
