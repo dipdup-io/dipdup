@@ -124,6 +124,16 @@ class PostgresDatabaseConfig:
             connection_string += f'&schema={self.schema_name}'
         return connection_string
 
+    @cached_property
+    def hasura_connection_parameters(self) -> Dict[str, Any]:
+        return {
+            'username': self.user,
+            'password': self.password,
+            'database': self.database,
+            'host': self.host,
+            'port': self.port,
+        }
+
     @validator('immune_tables')
     def _valid_immune_tables(cls, v) -> None:
         for table in v:
@@ -987,7 +997,7 @@ class HasuraConfig:
 
     :param url: URL of the Hasura instance.
     :param admin_secret: Admin secret of the Hasura instance.
-    :param add_source: Whether source should be added to Hasura.
+    :param create_source: Whether source should be added to Hasura if missing.
     :param source: Hasura source for DipDup to configure, others will be left untouched.
     :param select_limit: Row limit for unauthenticated queries.
     :param allow_aggregations: Whether to allow aggregations in unauthenticated queries.
@@ -998,7 +1008,7 @@ class HasuraConfig:
 
     url: str
     admin_secret: Optional[str] = None
-    add_source: bool = False
+    create_source: bool = False
     source: str = 'default'
     select_limit: int = 100
     allow_aggregations: bool = True
