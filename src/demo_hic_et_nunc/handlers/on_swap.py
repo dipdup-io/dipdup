@@ -11,7 +11,7 @@ async def on_swap(
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=swap.data.sender_address)
     swap_model = models.Swap(
-        id=int(swap.storage.swap_id) - 1,  # type: ignore
+        id=int(swap.storage.swap_id) - 1,
         creator=holder,
         price=swap.parameter.xtz_per_objkt,
         amount=swap.parameter.objkt_amount,

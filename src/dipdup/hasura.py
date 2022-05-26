@@ -16,7 +16,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-import humps  # type: ignore
+import humps
 import orjson as json
 from aiohttp import ClientConnectorError
 from aiohttp import ClientOSError
@@ -155,7 +155,7 @@ class HasuraGateway(HTTPGateway):
         # NOTE: Fetch metadata once again (to do: find out why is it necessary) and save its hash for future comparisons
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
-        hasura_schema.hash = metadata_hash  # type: ignore
+        hasura_schema.hash = metadata_hash
         await hasura_schema.save()
 
         self._logger.info('Hasura instance has been configured')

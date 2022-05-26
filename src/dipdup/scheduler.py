@@ -9,7 +9,7 @@ from typing import Set
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from apscheduler.events import EVENT_JOB_EXECUTED
-from apscheduler.events import JobEvent  # type: ignore
+from apscheduler.events import JobEvent
 from apscheduler.job import Job  # type: ignore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
 from apscheduler.triggers.cron import CronTrigger  # type: ignore

@@ -105,7 +105,9 @@ class TestDemos:
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzbtc.models'):
             holders = await demo_tzbtc.models.Holder.filter().count()
-            random_balance = (await demo_tzbtc.models.Holder.first()).balance  # type: ignore
+            holder = await demo_tzbtc.models.Holder.first()
+            assert holder
+            random_balance = holder.balance
 
             assert 4 == holders
             assert Decimal('-0.01912431') == random_balance
@@ -124,7 +126,9 @@ class TestDemos:
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzbtc_transfers.models'):
             holders = await demo_tzbtc_transfers.models.Holder.filter().count()
-            random_balance = (await demo_tzbtc_transfers.models.Holder.first()).balance  # type: ignore
+            holder = await demo_tzbtc_transfers.models.Holder.first()
+            assert holder
+            random_balance = holder.balance
 
             assert holders == expected_holders
             assert f'{random_balance:f}' == expected_balance

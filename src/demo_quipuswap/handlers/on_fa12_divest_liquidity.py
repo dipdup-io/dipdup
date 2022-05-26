@@ -40,7 +40,7 @@ async def on_fa12_divest_liquidity(
     share_px = (tez_qty + price * token_qty) / shares_qty
 
     position.realized_pl += shares_qty * (share_px - position.avg_share_px)
-    position.shares_qty -= shares_qty  # type: ignore
+    position.shares_qty -= shares_qty
     assert position.shares_qty >= 0, divest_liquidity.data.hash
 
     await position.save()

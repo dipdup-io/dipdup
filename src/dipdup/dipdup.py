@@ -176,12 +176,10 @@ class IndexDispatcher:
         for datasource in self._ctx.datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
-            # NOTE: No need to subscribe to head, handled by datasource itself
-            # FIXME: mypy tricks, ignore first argument
-            datasource.on_head(self._on_head)  # type: ignore
-            datasource.on_operations(self._on_operations)  # type: ignore
-            datasource.on_big_maps(self._on_big_maps)  # type: ignore
-            datasource.on_rollback(self._on_rollback)  # type: ignore
+            datasource.on_head(self._on_head)
+            datasource.on_operations(self._on_operations)
+            datasource.on_big_maps(self._on_big_maps)
+            datasource.on_rollback(self._on_rollback)
 
     async def _load_index_states(self) -> None:
         if self._indexes:
@@ -200,7 +198,7 @@ class IndexDispatcher:
 
                 new_hash = index_config.hash()
                 if not index_state.config_hash:
-                    index_state.config_hash = new_hash  # type: ignore
+                    index_state.config_hash = new_hash
                     await index_state.save()
                 elif new_hash != index_state.config_hash:
                     await self._ctx.reindex(
@@ -226,7 +224,7 @@ class IndexDispatcher:
         tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
         await gather(*tasks)
 
-    async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
+    async def _on_head(self, datasource: IndexDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
         self._tasks.append(
             asyncio.create_task(
@@ -246,7 +244,7 @@ class IndexDispatcher:
             if isinstance(index, HeadIndex) and index.datasource == datasource:
                 index.push_head(head)
 
-    async def _on_operations(self, datasource: TzktDatasource, operations: Tuple[OperationData, ...]) -> None:
+    async def _on_operations(self, datasource: IndexDatasource, operations: Tuple[OperationData, ...]) -> None:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
@@ -262,12 +260,12 @@ class IndexDispatcher:
         for index in operation_indexes:
             index.push_operations(operation_subgroups)
 
-    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: Tuple[BigMapData]) -> None:
+    async def _on_big_maps(self, datasource: IndexDatasource, big_maps: Tuple[BigMapData, ...]) -> None:
         big_map_indexes = (i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource)
         for index in big_map_indexes:
             index.push_big_maps(big_maps)
 
-    async def _on_rollback(self, datasource: TzktDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
+    async def _on_rollback(self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
         if from_level <= to_level:
             raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
@@ -464,7 +462,7 @@ class DipDup:
                 await self._ctx.reindex(ReindexingReason.schema_modified)
 
         elif not self._schema.hash:
-            self._schema.hash = schema_hash  # type: ignore
+            self._schema.hash = schema_hash
             await self._schema.save()
 
         elif self._schema.hash != schema_hash:

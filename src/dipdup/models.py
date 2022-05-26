@@ -246,7 +246,7 @@ class Index(Model):
         level: Optional[int] = None,
     ) -> None:
         self.status = status or self.status
-        self.level = level or self.level  # type: ignore
+        self.level = level or self.level
         await self.save()
 
     class Meta:
