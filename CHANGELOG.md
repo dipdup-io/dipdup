@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Fixed
+
+* database: Fixed special characters in password not being URL encoded.
+
 ### Performance
 
 * context: Do not reinitialize config when adding a single index.
