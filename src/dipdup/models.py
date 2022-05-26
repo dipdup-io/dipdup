@@ -52,6 +52,7 @@ class OperationData:
     originated_contract_alias: Optional[str] = None
     originated_contract_type_hash: Optional[int] = None
     originated_contract_code_hash: Optional[int] = None
+    originated_contract_tzips: Optional[Tuple[str, ...]] = None
     delegate_address: Optional[str] = None
     delegate_alias: Optional[str] = None
 
@@ -232,7 +233,7 @@ class Index(Model):
 
     config_hash = fields.CharField(256)
     template = fields.CharField(256, null=True)
-    template_values = fields.JSONField(null=True)
+    template_values: Dict[str, Any] = fields.JSONField(null=True)
 
     level = fields.IntField(default=0)
 

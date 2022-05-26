@@ -1,5 +1,6 @@
 from enum import IntEnum
 
+from tortoise import ForeignKeyFieldInstance
 from tortoise import Model
 from tortoise import fields
 
@@ -16,7 +17,7 @@ class Holder(Model):
 
 class Token(Model):
     id = fields.BigIntField(pk=True)
-    creator = fields.ForeignKeyField('models.Holder', 'tokens')
+    creator: ForeignKeyFieldInstance[Holder] = fields.ForeignKeyField('models.Holder', 'tokens')
     supply = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
@@ -24,7 +25,7 @@ class Token(Model):
 
 class Swap(Model):
     id = fields.BigIntField(pk=True)
-    creator = fields.ForeignKeyField('models.Holder', 'swaps')
+    creator: ForeignKeyFieldInstance[Holder] = fields.ForeignKeyField('models.Holder', 'swaps')
     price = fields.BigIntField()
     amount = fields.BigIntField()
     amount_left = fields.BigIntField()
@@ -35,9 +36,9 @@ class Swap(Model):
 
 class Trade(Model):
     id = fields.BigIntField(pk=True)
-    swap = fields.ForeignKeyField('models.Swap', 'trades')
-    seller = fields.ForeignKeyField('models.Holder', 'sales')
-    buyer = fields.ForeignKeyField('models.Holder', 'purchases')
+    swap: ForeignKeyFieldInstance[Swap] = fields.ForeignKeyField('models.Swap', 'trades')
+    seller: ForeignKeyFieldInstance[Holder] = fields.ForeignKeyField('models.Holder', 'sales')
+    buyer: ForeignKeyFieldInstance[Holder] = fields.ForeignKeyField('models.Holder', 'purchases')
     amount = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()

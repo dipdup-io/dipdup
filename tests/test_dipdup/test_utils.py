@@ -11,6 +11,10 @@ from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import tortoise_wrapper
 
 
+class SomeException(Exception):
+    ...
+
+
 class UtilsTest(IsolatedAsyncioTestCase):
     async def test_in_global_transaction(self) -> None:
         async with tortoise_wrapper('sqlite://:memory:'):
@@ -28,17 +32,17 @@ class UtilsTest(IsolatedAsyncioTestCase):
             self.assertEqual(2, count)
 
             # 3. Not rolled back query without transaction
-            with suppress(Exception):
+            with suppress(SomeException):
                 await Index(name='3', type=IndexType.operation, config_hash='').save()
-                raise Exception
+                raise SomeException
             count = await Index.filter().count()
             self.assertEqual(3, count)
 
             # 4. Rolled back query within transaction
-            with suppress(Exception):
+            with suppress(SomeException):
                 async with in_global_transaction():
                     await Index(name='4', type=IndexType.operation, config_hash='').save()
-                    raise Exception
+                    raise SomeException
             count = await Index.filter().count()
             self.assertEqual(3, count)
 

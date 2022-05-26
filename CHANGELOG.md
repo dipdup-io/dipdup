@@ -10,6 +10,21 @@
 
 * hasura: Do not apply table customizations to tables from other sources.
 
+## 5.1.2 - 2022-05-24
+
+### Added
+
+* tzkt: Added `originated_contract_tzips` field to `OperationData`.
+
+### Fixed
+
+* jobs: Fixed jobs with `daemon` schedule never start.
+* jobs: Fixed failed jobs not throwing exceptions into the main loop.
+
+### Other
+
+* database: Tortoise ORM updated to `0.19.1`.
+
 ## 5.1.1 - 2022-05-13
 
 ### Fixed

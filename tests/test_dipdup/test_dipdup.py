@@ -18,17 +18,15 @@ from tests.test_dipdup import create_test_dipdup
 
 async def _create_index(hash_: str) -> None:
     await Index.create(
-        **{
-            'level': 1365000,
-            'name': 'hen_mainnet',
-            'template': None,
-            'config_hash': hash_,
-            'created_at': datetime(2021, 10, 8, 18, 43, 35, 744412, tzinfo=UTC),
-            'template_values': {},
-            'status': IndexStatus.NEW,
-            'updated_at': datetime(2021, 10, 8, 18, 43, 35, 744449, tzinfo=UTC),
-            'type': IndexType.operation,
-        }
+        level=1365000,
+        name='hen_mainnet',
+        template=None,
+        config_hash=hash_,
+        created_at=datetime(2021, 10, 8, 18, 43, 35, 744412, tzinfo=UTC),
+        template_values={},
+        status=IndexStatus.NEW,
+        updated_at=datetime(2021, 10, 8, 18, 43, 35, 744449, tzinfo=UTC),
+        type=IndexType.operation,
     )
 
 

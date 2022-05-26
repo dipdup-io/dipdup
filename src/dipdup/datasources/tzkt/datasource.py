@@ -892,8 +892,7 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Creating websocket client')
         self._ws_client = SignalRClient(
             url=f'{self._http._url}/v1/events',
-            # NOTE: It's safe. Remove comment after updating pysignalr.
-            max_size=None,  # type: ignore
+            max_size=None,
         )
 
         self._ws_client.on_open(self._on_connect)
@@ -1059,6 +1058,7 @@ class TzktDatasource(IndexDatasource):
             originated_contract_address=originated_contract_json.get('address'),
             originated_contract_type_hash=originated_contract_json.get('typeHash'),
             originated_contract_code_hash=originated_contract_json.get('codeHash'),
+            originated_contract_tzips=originated_contract_json.get('tzips'),
             storage=operation_json.get('storage'),
             diffs=operation_json.get('diffs') or (),
             delegate_address=delegate_json.get('address'),

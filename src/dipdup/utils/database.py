@@ -18,9 +18,9 @@ from typing import Type
 import sqlparse  # type: ignore
 from tortoise import Model
 from tortoise import Tortoise
+from tortoise import connections
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
-from tortoise.backends.base.client import TransactionContext
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
 from tortoise.transactions import in_transaction
@@ -32,6 +32,16 @@ from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.database')
 _truncate_schema_sql = Path(join(dirname(__file__), 'truncate_schema.sql')).read_text()
+
+DEFAULT_CONNECTION_NAME = 'default'
+
+
+def get_connection() -> BaseDBAsyncClient:
+    return connections.get(DEFAULT_CONNECTION_NAME)
+
+
+def _set_connection(conn: BaseDBAsyncClient) -> None:
+    connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
 @asynccontextmanager
@@ -47,6 +57,9 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
                     db_url=url,
                     modules=modules,  # type: ignore
                 )
+                # FIXME: Wait for the connection to be ready, required since 0.19.0
+                conn = get_connection()
+                await conn.execute_query('SELECT 1')
             except OSError:
                 _logger.warning('Can\'t establish database connection, attempt %s/%s', attempt, timeout)
                 if attempt == timeout - 1:
@@ -62,23 +75,13 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
 @asynccontextmanager
 async def in_global_transaction():
     """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
-    async with in_transaction() as conn:
-        conn: TransactionContext
-        original_conn = Tortoise._connections['default']
-        Tortoise._connections['default'] = conn
-
-        if isinstance(original_conn, SqliteClient):
-            conn.filename = original_conn.filename
-            conn.pragmas = original_conn.pragmas
-        elif isinstance(original_conn, AsyncpgDBClient):
-            conn._pool = original_conn._pool
-            conn._template = original_conn._template
-        else:
-            raise NotImplementedError
-
-        yield
-
-    Tortoise._connections['default'] = original_conn
+    try:
+        original_conn = get_connection()
+        async with in_transaction() as conn:
+            _set_connection(conn)
+            yield
+    finally:
+        _set_connection(original_conn)
 
 
 def is_model_class(obj: Any) -> bool:
