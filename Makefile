@@ -16,7 +16,7 @@ all:            ## Run a whole CI pipeline (default)
 	make install lint test cover
 
 install:        ## Install project
-	poetry install \
+	poetry install --remove-untracked \
 	`if [ -n "${EXTRAS}" ]; then for i in ${EXTRAS}; do echo "-E $$i "; done; fi` \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
 

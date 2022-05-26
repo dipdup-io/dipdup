@@ -2448,7 +2448,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "6cdba5fe9a42bb85803933f16a65c7c935f72f4457fdd02fd827829cf9cb8667"
+content-hash = "2431d7f4d1f65b30c5a5200ab2c9f0c0253d8c7a85d79b97002a62510dce3126"
 
 [metadata.files]
 aiohttp = [
