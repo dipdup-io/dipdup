@@ -19,7 +19,7 @@ install:        ## Install project
 	poetry install \
 	`if [ -n "${EXTRAS}" ]; then for i in ${EXTRAS}; do echo "-E $$i "; done; fi` \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
-	poetry run pip uninstall -y flakehell | true
+	poetry run pip uninstall -y flakehell || true
 
 lint:           ## Lint with all tools
 	make isort black flake mypy
