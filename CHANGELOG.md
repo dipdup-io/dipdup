@@ -1,5 +1,15 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+* config: Added `hasura.create_source` flag to create PostgreSQL source if missing.
+
+### Fixed
+
+* hasura: Do not apply table customizations to tables from other sources.
+
 ## 5.1.1 - 2022-05-13
 
 ### Fixed
