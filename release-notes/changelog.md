@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.1.3 - 2022-05-26
+
+### Fixed
+
+* database: Fixed special characters in password not being URL encoded.
+
+### Performance
+
+* context: Do not reinitialize config when adding a single index.
+
 ## 5.1.2 - 2022-05-24
 
 ### Added
