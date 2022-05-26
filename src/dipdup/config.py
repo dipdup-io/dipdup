@@ -52,6 +52,7 @@ from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.utils import exclude_none
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
@@ -1207,8 +1208,6 @@ class DipDupConfig:
         self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
         self._default_hooks: bool = False
-        self._links_resolved: Set[str] = set()
-        self._imports_resolved: Set[str] = set()
 
     @cached_property
     def schema_name(self) -> str:
@@ -1312,6 +1311,29 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
+    def _import_index(self, index_config: IndexConfigT) -> None:
+        _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
+
+        if isinstance(index_config, IndexTemplateConfig):
+            raise ConfigInitializationException
+
+        elif isinstance(index_config, OperationIndexConfig):
+            self._import_operation_index_types(index_config)
+            self._import_index_callbacks(index_config)
+
+        elif isinstance(index_config, BigMapIndexConfig):
+            self._import_big_map_index_types(index_config)
+            self._import_index_callbacks(index_config)
+
+        elif isinstance(index_config, HeadIndexConfig):
+            self._import_index_callbacks(index_config)
+
+        elif isinstance(index_config, TokenTransferIndexConfig):
+            self._import_index_callbacks(index_config)
+
+        else:
+            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
     def initialize(self, skip_imports: bool = False) -> None:
         self._set_names()
         self._resolve_templates()
@@ -1322,32 +1344,22 @@ class DipDupConfig:
             return
 
         for index_config in self.indexes.values():
-            if index_config.name in self._imports_resolved:
-                continue
+            self._import_index(index_config)
 
-            _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
-
-            if isinstance(index_config, IndexTemplateConfig):
-                raise ConfigInitializationException
-
-            elif isinstance(index_config, OperationIndexConfig):
-                self._import_operation_index_types(index_config)
-                self._import_index_callbacks(index_config)
-
-            elif isinstance(index_config, BigMapIndexConfig):
-                self._import_big_map_index_types(index_config)
-                self._import_index_callbacks(index_config)
-
-            elif isinstance(index_config, HeadIndexConfig):
-                self._import_index_callbacks(index_config)
-
-            elif isinstance(index_config, TokenTransferIndexConfig):
-                self._import_index_callbacks(index_config)
-
-            else:
-                raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
-
-            self._imports_resolved.add(index_config.name)
+    def add_index(self, name: str, template: str, values: Dict[str, str]) -> None:
+        if name in self.indexes:
+            raise IndexAlreadyExistsError(self, name)
+        template_config = IndexTemplateConfig(
+            template=template,
+            values=values,
+        )
+        template_config.name = name
+        self._resolve_template(template_config)
+        index_config = cast(ResolvedIndexConfigT, self.indexes[name])
+        self._resolve_index_links(index_config)
+        self._resolve_index_subscriptions(index_config)
+        index_config.name = name
+        self._import_index(index_config)
 
     @classmethod
     def _load_raw_config(cls, path: str) -> str:
@@ -1422,13 +1434,10 @@ class DipDupConfig:
                 self._resolve_template(index_config)
 
     def _resolve_links(self) -> None:
-        for name, index_config in self.indexes.items():
-            if name in self._links_resolved:
-                continue
+        for index_config in self.indexes.values():
             self._resolve_index_links(index_config)
             # TODO: Not exactly link resolving, move somewhere else
             self._resolve_index_subscriptions(index_config)
-            self._links_resolved.add(index_config.name)
 
         for job_config in self.jobs.values():
             if isinstance(job_config.hook, str):

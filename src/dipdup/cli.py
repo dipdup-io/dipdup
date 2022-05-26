@@ -432,7 +432,7 @@ async def schema_init(ctx):
 
     async with AsyncExitStack() as stack:
         await dipdup._set_up_database(stack)
-        await dipdup._set_up_hooks()
+        await dipdup._set_up_hooks(set())
         await dipdup._create_datasources()
         await dipdup._initialize_schema()
 
