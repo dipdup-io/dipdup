@@ -213,7 +213,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
         message = {'type': 1, 'state': 2, 'data': operations_json}
         async with with_tzkt(1) as tzkt:
             emit_mock = AsyncMock()
-            tzkt.on_operations(emit_mock)
+            tzkt.call_on_operations(emit_mock)
             tzkt.set_sync_level(HeadSubscription(), 1)
 
             level = tzkt.get_channel_level(MessageType.operation)

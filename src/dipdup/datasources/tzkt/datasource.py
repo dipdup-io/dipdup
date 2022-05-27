@@ -895,8 +895,8 @@ class TzktDatasource(IndexDatasource):
             max_size=None,
         )
 
-        self._ws_client.on_open(self._on_connect)
-        self._ws_client.on_close(self._on_disconnect)
+        self._ws_client.on_open(self._on_connected)
+        self._ws_client.on_close(self._on_disconnected)
         self._ws_client.on_error(self._on_error)
 
         self._ws_client.on('operations', partial(self._on_message, MessageType.operation))
@@ -926,13 +926,15 @@ class TzktDatasource(IndexDatasource):
 
         await gather(*tasks)
 
-    async def _on_connect(self) -> None:
+    async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
         # NOTE: Subscribing here will block WebSocket loop
+        await self.emit_connected()
 
-    async def _on_disconnect(self) -> None:
+    async def _on_disconnected(self) -> None:
         self._logger.info('Realtime connection lost')
         self._subscriptions.reset()
+        await self.emit_disconnected()
 
     async def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""

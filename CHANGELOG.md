@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* index: Fixes crash with `RuntimeError` after continuous realtime connection loss.
+
 ## 5.1.3 - 2022-05-26
 
 ### Fixed
