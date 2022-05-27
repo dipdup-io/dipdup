@@ -5,20 +5,23 @@ on:
       - master
 
 jobs:
-  build:
-    name: Build
+  docs:
+    name: Docs
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, 'GitBook')"
     steps:
     - uses: actions/checkout@master
     - name: Set up Nodejs and yarn
       uses: actions/setup-node@v1
       with:
         node-version: '11.x'
-    - name: Install dependencies
-      run: npm i
-    - name: Build static files
-      run: npm run build      
+    - name: Set up mdBook
+      uses: peaceiris/actions-mdbook@v1
+      with:
+        mdbook-version: '0.4.18'
+
+    - name: Build docs
+      run: make docs
+
     - name: Deploy to GH Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
