@@ -19,18 +19,14 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-patch:
-	cp ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py.bak
-	echo "import asyncclick as click" > ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py
-	cat ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py.bak | grep -v 'import click' >> ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py
-
 install:
 	make html
-	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > ../../dipdup-docs/cli/reference.md
-	tail -n '+33' _build/html/config-reference.html | head -n '-63' > ../../dipdup-docs/config/reference.md
-	tail -n '+33' _build/html/context-reference.html | head -n '-63' > ../../dipdup-docs/advanced/context/reference.md
-	cp ../CHANGELOG.md ../../dipdup-docs/release-notes/changelog.md
-	cp ../README.md ../../dipdup-docs/README.md
+	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > cli/reference.md
+	tail -n '+33' _build/html/config-reference.html | head -n '-63' > config/reference.md
+	tail -n '+33' _build/html/context-reference.html | head -n '-63' > advanced/context/reference.md
+	cp ../CHANGELOG.md release-notes/changelog.md
+	cp ../README.md README.md
+
 serve:
 	mdbook serve -o
 

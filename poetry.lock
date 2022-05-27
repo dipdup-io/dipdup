@@ -1987,16 +1987,23 @@ test = ["pytest", "pytest-cov", "html5lib", "cython", "typed-ast"]
 
 [[package]]
 name = "sphinx-click"
-version = "4.0.3"
+version = "4.0.4.dev4"
 description = "Sphinx extension that automatically documents click applications"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
+develop = false
 
 [package.dependencies]
 click = ">=7.0"
 docutils = "*"
 sphinx = ">=2.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/droserasprout/sphinx-click.git"
+reference = "fix/asyncclick"
+resolved_reference = "b6e6dbe7bd4bd7564714a3e7c0160f92ff3dc905"
 
 [[package]]
 name = "sphinx-markdown-builder"
@@ -2448,7 +2455,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "56a9f799a4607c051fe77f4ef8a5d9f6e04bfc0d5374f306efd5ae779d10d70b"
+content-hash = "2da81c4d952cc6b7b8c65cf01e13d0820ccfdf55fcf4de22c214f8e956a54dcc"
 
 [metadata.files]
 aiohttp = [
@@ -3896,10 +3903,7 @@ sphinx = [
     {file = "Sphinx-4.5.0-py3-none-any.whl", hash = "sha256:ebf612653238bcc8f4359627a9b7ce44ede6fdd75d9d30f68255c7383d3a6226"},
     {file = "Sphinx-4.5.0.tar.gz", hash = "sha256:7bf8ca9637a4ee15af412d1a1d9689fec70523a68ca9bb9127c2f3eeb344e2e6"},
 ]
-sphinx-click = [
-    {file = "sphinx-click-4.0.3.tar.gz", hash = "sha256:a1aacf00cfe11550a2211014617c426a94af8638f1ce735b5d9998cccf1a1edb"},
-    {file = "sphinx_click-4.0.3-py3-none-any.whl", hash = "sha256:4c4b43386ff6304e47ae0467da9c980786eb3c1317cd6f488524c18931627c04"},
-]
+sphinx-click = []
 sphinx-markdown-builder = [
     {file = "sphinx-markdown-builder-0.5.5.tar.gz", hash = "sha256:6ead53c08d8835329e32418dcdbac4db710a1c4e5e8db687d23b9e88882d9d16"},
     {file = "sphinx_markdown_builder-0.5.5-py2.py3-none-any.whl", hash = "sha256:3c8909579dfa83ce5a8fb48e2d01dc257fc0676931170cb92cd528f9fceee76f"},

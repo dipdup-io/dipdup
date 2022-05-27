@@ -64,8 +64,8 @@ release-major:  ## Release major version
 	git push --tags
 	git push
 
-docs:           ## Build config/CLI references and copy to ../dipdup-docs
-	cd docs; rm -r _build; make install
+docs:           ## Build docs
+	cd docs; rm -r _build; make install lint
 
 help:           ## Show this help
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
