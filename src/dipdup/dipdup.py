@@ -139,7 +139,7 @@ class IndexDispatcher:
                 else:
                     await index.process()
 
-            tasks += deque(_run(index, sync_limit) for index in self._indexes.values())
+            tasks += deque(asyncio.create_task(_run(index, sync_limit)) for index in self._indexes.values())
 
             async with slowdown(1):
                 await gather(*tasks)
