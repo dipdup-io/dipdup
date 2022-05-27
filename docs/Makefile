@@ -46,3 +46,4 @@ orphans:
 	cat mentioned.tmp | uniq | sort -o mentioned.tmp
 	find . | grep ".md" | cut -c "3-" | sort > existing.tmp
 	diff --color mentioned.tmp existing.tmp
+	rm mentioned.tmp existing.tmp
