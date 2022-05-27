@@ -1,6 +1,6 @@
 # cookiecutter-dipdup
 
-[Cookiecutter](https://cookiecutter.readthedocs.io/en/stable/README.html) template for [DipDup]() projects.
+[Cookiecutter](https://cookiecutter.readthedocs.io/en/stable/README.html) template for [DipDup](https://github.com/dipdup-net/dipdup-py) projects.
 
 ```shell
 $ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
