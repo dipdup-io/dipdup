@@ -19,13 +19,14 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-install:
+build:
 	make html
 	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > cli/reference.md
 	tail -n '+33' _build/html/config-reference.html | head -n '-63' > config/reference.md
 	tail -n '+33' _build/html/context-reference.html | head -n '-63' > advanced/context/reference.md
 	cp ../CHANGELOG.md release-notes/changelog.md
 	cp ../README.md README.md
+	mdbook build
 
 serve:
 	mdbook serve -o
