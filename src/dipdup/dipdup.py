@@ -84,14 +84,14 @@ class IndexDispatcher:
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool = False,
-        sequential_indexing: bool = False,
+        sync_limit: int = 0,
     ) -> None:
         tasks = [
             self._run(
                 spawn_datasources_event,
                 start_scheduler_event,
                 early_realtime,
-                sequential_indexing,
+                sync_limit,
             )
         ]
         if self._ctx.config.prometheus:
@@ -103,7 +103,7 @@ class IndexDispatcher:
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool = False,
-        sequential_indexing: bool = False,
+        sync_limit: int = 0,
     ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
@@ -125,16 +125,24 @@ class IndexDispatcher:
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
-            tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
+            tasks: Deque[Awaitable] = deque()
             while self._tasks:
                 tasks.append(self._tasks.popleft())
 
-            async with slowdown(1):
-                if sequential_indexing:
-                    for task in tasks:
-                        await task
+            sync_limit = self._ctx.config.advanced.sync_limit
+            sync_limit_semaphore = asyncio.Semaphore(sync_limit)
+
+            async def _run(index: Index, limit: int) -> None:
+                if limit:
+                    async with sync_limit_semaphore:
+                        await index.process()
                 else:
-                    await gather(*tasks)
+                    await index.process()
+
+            tasks += deque(_run(index, sync_limit) for index in self._indexes.values())
+
+            async with slowdown(1):
+                await gather(*tasks)
 
             indexes_spawned = False
             while pending_indexes:
@@ -438,7 +446,7 @@ class DipDup:
                 spawn_datasources_event,
                 start_scheduler_event,
                 advanced_config.early_realtime,
-                advanced_config.sequential_indexing,
+                advanced_config.sync_limit,
             )
 
             await gather(*tasks)
@@ -581,7 +589,7 @@ class DipDup:
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
-        sequential_indexing: bool,
+        sync_limit: int,
     ) -> None:
         # NOTE: Decide how to handle rollbacks depending on hooks presence
         # TODO: Remove in 6.0
@@ -600,7 +608,7 @@ class DipDup:
                     spawn_datasources_event,
                     start_scheduler_event,
                     early_realtime,
-                    sequential_indexing,
+                    sync_limit,
                 )
             )
         )
