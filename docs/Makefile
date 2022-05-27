@@ -41,6 +41,8 @@ clean:
 	git clean -Xdf
 
 orphans:
-	cat SUMMARY.md | grep ".md" | cut -f2 -d"(" | cut -f1 -d")" | sort > mentioned.tmp
+	cat SUMMARY.md | grep ".md" > mentioned.tmp
+	sed -i -E 's@^.*\[(.*)\]\((.*)\).*$$@\2@p' mentioned.tmp
+	cat mentioned.tmp | uniq | sort -o mentioned.tmp
 	find . | grep ".md" | cut -c "3-" | sort > existing.tmp
 	diff --color mentioned.tmp existing.tmp
