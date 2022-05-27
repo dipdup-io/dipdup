@@ -65,7 +65,10 @@ release-major:  ## Release major version
 	git push
 
 docs:           ## Build docs
-	cd docs; rm -r _build; make install lint
+	cd docs; make clean install lint orphans
+
+clean:			## Remove all files and directories ignored by git
+	git clean -xdf --exclude=".venv"
 
 help:           ## Show this help
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'

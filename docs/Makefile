@@ -34,7 +34,10 @@ wc:
 	find . -name \*.md -type f -exec wc {} \;
 
 lint:
-	markdownlint -f . --disable=MD013 --disable=MD033
+	markdownlint -f . --disable=MD013 --disable=MD033  || true
+
+clean:
+	git clean -Xdf
 
 orphans:
 	cat SUMMARY.md | grep ".md" | cut -f2 -d"(" | cut -f1 -d")" | sort > mentioned.tmp
