@@ -65,7 +65,7 @@ release-major:  ## Release major version
 	git push
 
 docs:           ## Build docs
-	cd docs; make clean build lint orphans
+	cd docs; npm i; npm run buid; make build lint orphans
 
 clean:			## Remove all files and directories ignored by git
 	git clean -xdf --exclude=".venv"
