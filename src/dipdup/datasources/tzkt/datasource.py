@@ -360,7 +360,7 @@ class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
         cache=True,
         retry_sleep=1,
-        retry_multiplier=2,
+        retry_multiplier=1.1,
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
@@ -916,6 +916,7 @@ class TzktDatasource(IndexDatasource):
                     await ws.run()
                 except WebsocketConnectionError as e:
                     self._logger.error('Websocket connection error: %s', e)
+                    await self.emit_disconnected()
                     await asyncio.sleep(retry_sleep)
                     retry_sleep *= self._http_config.retry_multiplier
 
