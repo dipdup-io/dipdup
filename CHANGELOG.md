@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* index: Allow mixing oneshot and regular indexes in a single config.
+
 ## 5.1.3 - 2022-05-26
 
 ### Fixed
