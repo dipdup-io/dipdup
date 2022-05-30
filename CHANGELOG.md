@@ -45,7 +45,7 @@
 * ci: Push `X` and `X.Y` tags to the Docker Hub on release.
 * cli: Added `config env` command to export env-file with default values.
 * cli: Show warning when running an outdated version of DipDup.
-* hooks: Added a new hook `on_index_rollback`` to perform per-index rollbacks.
+* hooks: Added a new hook `on_index_rollback` to perform per-index rollbacks.
 
 ### Fixed
 
