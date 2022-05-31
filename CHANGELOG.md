@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Performance
+
+* ci: Decrease the size of generic and `-pytezos` Docker images by 11% and 16%, respectively.
+
 ## 5.1.3 - 2022-05-26
 
 ### Fixed
