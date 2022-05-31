@@ -445,7 +445,7 @@ cython = ["cython"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.12.1"
+version = "0.12.3"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
@@ -866,7 +866,7 @@ test = ["pytest (>=6.0)", "pytest-cov", "flaky", "ipyparallel", "pre-commit", "p
 
 [[package]]
 name = "ipython"
-version = "8.3.0"
+version = "8.4.0"
 description = "IPython: Productive Interactive Computing"
 category = "main"
 optional = true
@@ -1987,23 +1987,16 @@ test = ["pytest", "pytest-cov", "html5lib", "cython", "typed-ast"]
 
 [[package]]
 name = "sphinx-click"
-version = "4.0.4.dev4"
+version = "4.1.0"
 description = "Sphinx extension that automatically documents click applications"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
-develop = false
 
 [package.dependencies]
 click = ">=7.0"
 docutils = "*"
 sphinx = ">=2.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/droserasprout/sphinx-click.git"
-reference = "fix/asyncclick"
-resolved_reference = "b6e6dbe7bd4bd7564714a3e7c0160f92ff3dc905"
 
 [[package]]
 name = "sphinx-markdown-builder"
@@ -2286,7 +2279,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "types-python-dateutil"
-version = "2.8.16"
+version = "2.8.17"
 description = "Typing stubs for python-dateutil"
 category = "main"
 optional = true
@@ -2455,7 +2448,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "2da81c4d952cc6b7b8c65cf01e13d0820ccfdf55fcf4de22c214f8e956a54dcc"
+content-hash = "3d7a26c0ba197f793460cc35dd33f4a596e7c880f2fa0a99161b2bab5f863285"
 
 [metadata.files]
 aiohttp = [
@@ -2825,8 +2818,8 @@ cytoolz = [
     {file = "cytoolz-0.11.2.tar.gz", hash = "sha256:ea23663153806edddce7e4153d1d407d62357c05120a4e8485bddf1bd5ab22b4"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.12.1.tar.gz", hash = "sha256:e1c4a66fc2665ae91f509407cf5444a506961ca5056a3aef0ef4f916333eb94d"},
-    {file = "datamodel_code_generator-0.12.1-py3-none-any.whl", hash = "sha256:eadfc87b783f322996cf1b95ac6533077b52e78d14add349e26e2838be3f8568"},
+    {file = "datamodel-code-generator-0.12.3.tar.gz", hash = "sha256:18cc50914252586c471d56ee5f6c5bfab6344921eb797a13a12139c742bb71a2"},
+    {file = "datamodel_code_generator-0.12.3-py3-none-any.whl", hash = "sha256:cd667c030ae925d1577fbc28869ee2e7c390ee375788f3ba6c28ed7598b86060"},
 ]
 debugpy = [
     {file = "debugpy-1.6.0-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:eb1946efac0c0c3d411cea0b5ac772fbde744109fd9520fb0c5a51979faf05ad"},
@@ -3041,8 +3034,8 @@ ipykernel = [
     {file = "ipykernel-6.13.0.tar.gz", hash = "sha256:0e28273e290858393e86e152b104e5506a79c13d25b951ac6eca220051b4be60"},
 ]
 ipython = [
-    {file = "ipython-8.3.0-py3-none-any.whl", hash = "sha256:341456643a764c28f670409bbd5d2518f9b82c013441084ff2c2fc999698f83b"},
-    {file = "ipython-8.3.0.tar.gz", hash = "sha256:807ae3cf43b84693c9272f70368440a9a7eaa2e7e6882dad943c32fbf7e51402"},
+    {file = "ipython-8.4.0-py3-none-any.whl", hash = "sha256:7ca74052a38fa25fe9bedf52da0be7d3fdd2fb027c3b778ea78dfe8c212937d1"},
+    {file = "ipython-8.4.0.tar.gz", hash = "sha256:f2db3a10254241d9b447232cec8b424847f338d9d36f9a577a6192c332a46abd"},
 ]
 ipython-genutils = [
     {file = "ipython_genutils-0.2.0-py2.py3-none-any.whl", hash = "sha256:72dd37233799e619666c9f639a9da83c34013a73e8bbc79a7a6348d93c61fab8"},
@@ -3903,7 +3896,10 @@ sphinx = [
     {file = "Sphinx-4.5.0-py3-none-any.whl", hash = "sha256:ebf612653238bcc8f4359627a9b7ce44ede6fdd75d9d30f68255c7383d3a6226"},
     {file = "Sphinx-4.5.0.tar.gz", hash = "sha256:7bf8ca9637a4ee15af412d1a1d9689fec70523a68ca9bb9127c2f3eeb344e2e6"},
 ]
-sphinx-click = []
+sphinx-click = [
+    {file = "sphinx-click-4.1.0.tar.gz", hash = "sha256:fedebd39991243ec5cfa1c9e483db7ea2621b3df2012315c89c6f1f3722f192b"},
+    {file = "sphinx_click-4.1.0-py3-none-any.whl", hash = "sha256:60d6507bf623e20e9cbab732d19fc4890cc36a394c82ba8e2320f9f9fdc4571e"},
+]
 sphinx-markdown-builder = [
     {file = "sphinx-markdown-builder-0.5.5.tar.gz", hash = "sha256:6ead53c08d8835329e32418dcdbac4db710a1c4e5e8db687d23b9e88882d9d16"},
     {file = "sphinx_markdown_builder-0.5.5-py2.py3-none-any.whl", hash = "sha256:3c8909579dfa83ce5a8fb48e2d01dc257fc0676931170cb92cd528f9fceee76f"},
@@ -4052,8 +4048,8 @@ typed-ast = [
     {file = "typed_ast-1.5.4.tar.gz", hash = "sha256:39e21ceb7388e4bb37f4c679d72707ed46c2fbf2a5609b8b8ebc4b067d977df2"},
 ]
 types-python-dateutil = [
-    {file = "types-python-dateutil-2.8.16.tar.gz", hash = "sha256:3aaac4c138eb6b8ecbc2550996ec25d6e45b5d32887d1e693d0842ee2fa659d2"},
-    {file = "types_python_dateutil-2.8.16-py3-none-any.whl", hash = "sha256:0e7286436d049d2732ba2f01552f84c52184b955552359156fc8835c10714f2a"},
+    {file = "types-python-dateutil-2.8.17.tar.gz", hash = "sha256:6c54265a221681dd87f61df6743bd5eab060cf1b4086ff65c1a8fd763ed6370e"},
+    {file = "types_python_dateutil-2.8.17-py3-none-any.whl", hash = "sha256:0be7435b4d382d1cd00b8c55a8a90f4e515aaad8a96f8f0bc20c22df046792e5"},
 ]
 types-pytz = [
     {file = "types-pytz-2021.3.8.tar.gz", hash = "sha256:41253a3a2bf028b6a3f17b58749a692d955af0f74e975de94f6f4d2d3cd01dbd"},
