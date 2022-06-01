@@ -327,7 +327,7 @@ class MessageBuffer:
 
     def add(self, type_: MessageType, level: int, data: MessageData) -> None:
         """Add a message to the buffer."""
-        if not level in self._messages:
+        if level not in self._messages:
             self._messages[level] = []
         self._messages[level].append(BufferedMessage(type_, data))
 
@@ -352,8 +352,7 @@ class MessageBuffer:
         buffered_levels = sorted(self._messages.keys())
         yielded_levels = buffered_levels[: len(buffered_levels) - self._size]
         for level in yielded_levels:
-            for buffered_message in self._messages.pop(level):
-                yield buffered_message
+            yield from self._messages.pop(level)
 
 
 class TzktDatasource(IndexDatasource):
