@@ -201,7 +201,6 @@ class Index:
         )
 
     async def process(self) -> None:
-        # NOTE: `--oneshot` flag implied
         if not isinstance(self._config, HeadIndexConfig) and self._config.last_level:
             head_level = self._config.last_level
             with ExitStack() as stack:
