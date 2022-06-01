@@ -22,6 +22,7 @@ from dipdup.utils import FormattedLogger
 _logger = logging.getLogger('dipdup.datasource')
 
 
+EmptyCallbackT = Callable[[], Awaitable[None]]
 HeadCallbackT = Callable[['IndexDatasource', HeadBlockData], Awaitable[None]]
 OperationsCallbackT = Callable[['IndexDatasource', Tuple[OperationData, ...]], Awaitable[None]]
 BigMapsCallbackT = Callable[['IndexDatasource', Tuple[BigMapData, ...]], Awaitable[None]]
@@ -69,10 +70,12 @@ class GraphQLDatasource(Datasource):
 class IndexDatasource(Datasource):
     def __init__(self, url: str, http_config: HTTPConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(url, http_config)
-        self._on_head: Set[HeadCallbackT] = set()
-        self._on_operations: Set[OperationsCallbackT] = set()
-        self._on_big_maps: Set[BigMapsCallbackT] = set()
-        self._on_rollback: Set[RollbackCallbackT] = set()
+        self._on_connected_callbacks: Set[EmptyCallbackT] = set()
+        self._on_disconnected_callbacks: Set[EmptyCallbackT] = set()
+        self._on_head_callbacks: Set[HeadCallbackT] = set()
+        self._on_operations_callbacks: Set[OperationsCallbackT] = set()
+        self._on_big_maps_callbacks: Set[BigMapsCallbackT] = set()
+        self._on_rollback_callbacks: Set[RollbackCallbackT] = set()
         self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
         self._subscriptions.add(HeadSubscription())
         self._network: Optional[str] = None
@@ -91,33 +94,47 @@ class IndexDatasource(Datasource):
     async def subscribe(self) -> None:
         ...
 
-    def on_head(self, fn: HeadCallbackT) -> None:
-        self._on_head.add(fn)
+    def call_on_head(self, fn: HeadCallbackT) -> None:
+        self._on_head_callbacks.add(fn)
 
-    def on_operations(self, fn: OperationsCallbackT) -> None:
-        self._on_operations.add(fn)
+    def call_on_operations(self, fn: OperationsCallbackT) -> None:
+        self._on_operations_callbacks.add(fn)
 
-    def on_big_maps(self, fn: BigMapsCallbackT) -> None:
-        self._on_big_maps.add(fn)
+    def call_on_big_maps(self, fn: BigMapsCallbackT) -> None:
+        self._on_big_maps_callbacks.add(fn)
 
-    def on_rollback(self, fn: RollbackCallbackT) -> None:
-        self._on_rollback.add(fn)
+    def call_on_rollback(self, fn: RollbackCallbackT) -> None:
+        self._on_rollback_callbacks.add(fn)
+
+    def call_on_connected(self, fn: EmptyCallbackT) -> None:
+        self._on_connected_callbacks.add(fn)
+
+    def call_on_disconnected(self, fn: EmptyCallbackT) -> None:
+        self._on_disconnected_callbacks.add(fn)
 
     async def emit_head(self, head: HeadBlockData) -> None:
-        for fn in self._on_head:
+        for fn in self._on_head_callbacks:
             await fn(self, head)
 
     async def emit_operations(self, operations: Tuple[OperationData, ...]) -> None:
-        for fn in self._on_operations:
+        for fn in self._on_operations_callbacks:
             await fn(self, operations)
 
     async def emit_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
-        for fn in self._on_big_maps:
+        for fn in self._on_big_maps_callbacks:
             await fn(self, big_maps)
 
     async def emit_rollback(self, type_: MessageType, from_level: int, to_level: int) -> None:
-        for fn in self._on_rollback:
+        for fn in self._on_rollback_callbacks:
             await fn(self, type_, from_level, to_level)
+
+    async def emit_connected(self) -> None:
+        for fn in self._on_connected_callbacks:
+            await fn()
+
+    async def emit_disconnected(self) -> None:
+        for fn in self._on_disconnected_callbacks:
+            await fn()
 
     def set_network(self, network: str) -> None:
         if self._network:

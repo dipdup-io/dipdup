@@ -6,6 +6,7 @@
 
 * index: Allow mixing oneshot and regular indexes in a single config.
 * index: Call rollback hook instead of triggering reindex when single-level rollback has failed.
+* index: Fixed crash with `RuntimeError` after continuous realtime connection loss.
 * index: Fixed `OperationIndexConfig.types` field being partially ignored.
 * tzkt: Fixed `origination` subscription missing when `merge_subscriptions` flag is set.
 
