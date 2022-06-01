@@ -49,10 +49,10 @@ class TestDemos:
             swaps = await demo_hic_et_nunc.models.Swap.filter().count()
             trades = await demo_hic_et_nunc.models.Trade.filter().count()
 
-            assert 22 == holders
-            assert 29 == tokens
-            assert 20 == swaps
-            assert 24 == trades
+            assert holders == 22
+            assert tokens == 29
+            assert swaps == 20
+            assert trades == 24
 
     async def test_quipuswap(self) -> None:
         self.run_dipdup('quipuswap.yml')
@@ -62,9 +62,9 @@ class TestDemos:
             positions = await demo_quipuswap.models.Position.filter().count()
             async with in_transaction() as conn:
                 symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
-            assert 2 == symbols
-            assert 835 == trades
-            assert 214 == positions
+            assert symbols == 2
+            assert trades == 835
+            assert positions == 214
 
     async def test_tzcolors(self) -> None:
         self.run_dipdup('tzcolors.yml')
@@ -75,10 +75,10 @@ class TestDemos:
             auctions = await demo_tzcolors.models.Auction.filter().count()
             bids = await demo_tzcolors.models.Bid.filter().count()
 
-            assert 9 == addresses
-            assert 14 == tokens
-            assert 14 == auctions
-            assert 44 == bids
+            assert addresses == 9
+            assert tokens == 14
+            assert auctions == 14
+            assert bids == 44
 
     async def test_tezos_domains(self) -> None:
         self.run_dipdup('tezos_domains.yml')
@@ -87,8 +87,8 @@ class TestDemos:
             tlds = await demo_tezos_domains.models.TLD.filter().count()
             domains = await demo_tezos_domains.models.Domain.filter().count()
 
-            assert 1 == tlds
-            assert 145 == domains
+            assert tlds == 1
+            assert domains == 145
 
     async def test_tezos_domains_big_map(self) -> None:
         self.run_dipdup('tezos_domains_big_map.yml')
@@ -97,8 +97,8 @@ class TestDemos:
             tlds = await demo_tezos_domains_big_map.models.TLD.filter().count()
             domains = await demo_tezos_domains_big_map.models.Domain.filter().count()
 
-            assert 1 == tlds
-            assert 145 == domains
+            assert tlds == 1
+            assert domains == 145
 
     async def test_tzbtc(self) -> None:
         self.run_dipdup('tzbtc.yml')
@@ -109,8 +109,8 @@ class TestDemos:
             assert holder
             random_balance = holder.balance
 
-            assert 4 == holders
-            assert Decimal('-0.01912431') == random_balance
+            assert holders == 4
+            assert random_balance == Decimal('-0.01912431')
 
     @pytest.mark.parametrize(
         'config_file, expected_holders, expected_balance',

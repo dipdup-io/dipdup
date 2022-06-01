@@ -1,10 +1,12 @@
 # Changelog
 
-[unreleased]
+## [unreleased]
 
 ### Fixed
 
 * index: Call rollback hook instead of triggering reindex when single-level rollback has failed.
+* index: Fixed `OperationIndexConfig.types` field being partially ignored.
+* tzkt: Fixed `origination` subscription missing when `merge_subscriptions` flag is set.
 
 ## 5.1.3 - 2022-05-26
 

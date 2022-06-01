@@ -155,7 +155,8 @@ def touch(path: str) -> None:
     mkdir_p(dirname(path))
     if not exists(path):
         _logger.info('Creating file `%s`', path)
-        open(path, 'a').close()
+        with open(path, 'a'):
+            pass
 
 
 def write(path: str, content: Union[str, bytes], overwrite: bool = False) -> bool:

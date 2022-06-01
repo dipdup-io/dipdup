@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from contextlib import suppress
 from functools import partial
 from typing import Any
 from typing import Dict
@@ -86,14 +87,12 @@ class SchedulerManager:
                 logger=logger,
                 hook_config=hook_config,
             )
-            try:
+            with suppress(asyncio.CancelledError):
                 await job_ctx.fire_hook(
                     hook_config.callback,
                     *args,
                     **kwargs,
                 )
-            except asyncio.CancelledError:
-                pass
 
         if job_config.crontab:
             trigger = CronTrigger.from_crontab(job_config.crontab)
