@@ -9,6 +9,10 @@
 * index: Fixed `OperationIndexConfig.types` field being partially ignored.
 * tzkt: Fixed `origination` subscription missing when `merge_subscriptions` flag is set.
 
+### Performance
+
+* ci: Decrease the size of generic and `-pytezos` Docker images by 11% and 16%, respectively.
+
 ## 5.1.3 - 2022-05-26
 
 ### Fixed
