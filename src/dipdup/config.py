@@ -1242,6 +1242,8 @@ class DipDupConfig:
             return True
         elif old_hook:
             return False
+        else:
+            raise RuntimeError
 
     @property
     def oneshot(self) -> bool:
