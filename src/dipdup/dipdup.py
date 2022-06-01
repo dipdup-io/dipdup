@@ -407,6 +407,8 @@ class DipDup:
                 await MetadataCursor.initialize()
 
             if self._config.oneshot:
+                if self._config.jobs:
+                    self._logger.warning('Running in oneshot mode; `jobs` are ignored')
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
             else:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)

@@ -1230,12 +1230,9 @@ class DipDupConfig:
         """Whether all indexes have `last_level` field set"""
         syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, HeadIndexConfig))
         oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
-        if not oneshot_indexes:
-            return False
-        elif len(oneshot_indexes) == len(syncable_indexes):
+        if len(oneshot_indexes) == len(syncable_indexes):
             return True
-        else:
-            raise ConfigurationError('Either all or none of indexes can have `last_level` field set')
+        return False
 
     @classmethod
     def load(
