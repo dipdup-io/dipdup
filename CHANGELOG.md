@@ -1,5 +1,12 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* index: Fixed `OperationIndexConfig.types` field being partially ignored.
+* tzkt: Fixed `origination` subscription missing when `merge_subscriptions` flag is set.
+
 ## 5.1.3 - 2022-05-26
 
 ### Fixed
