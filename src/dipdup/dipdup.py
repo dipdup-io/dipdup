@@ -68,9 +68,8 @@ from dipdup.utils.database import validate_models
 
 
 class IndexDispatcher:
-    def __init__(self, ctx: DipDupContext, index_rollback: bool = True) -> None:
+    def __init__(self, ctx: DipDupContext) -> None:
         self._ctx = ctx
-        self._index_rollback = index_rollback
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
@@ -332,7 +331,7 @@ class IndexDispatcher:
             self._logger.info('`%s` rollback complete', channel)
             return
 
-        if self._index_rollback:
+        if self._ctx.config.per_index_rollback:
             hook_name = 'on_index_rollback'
             for index_name in unprocessed_indexes:
                 self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
@@ -562,17 +561,7 @@ class DipDup:
         start_scheduler_event: Event,
         early_realtime: bool,
     ) -> None:
-        # NOTE: Decide how to handle rollbacks depending on hooks presence
-        # TODO: Remove in 6.0
-        old_hook, new_hook = 'on_rollback', 'on_index_rollback'
-        has_old_hook = is_importable(f'{self._config.package}.hooks.{old_hook}', old_hook)
-        has_new_hook = is_importable(f'{self._config.package}.hooks.{new_hook}', new_hook)
-        if has_old_hook and has_new_hook:
-            raise ConflictingHooksError(old_hook, new_hook)
-        elif not has_old_hook and not has_new_hook:
-            raise InitializationRequiredError('none of `on_rollback` or `on_index_rollback` hooks found')
-
-        index_dispatcher = IndexDispatcher(self._ctx, index_rollback=has_new_hook)
+        index_dispatcher = IndexDispatcher(self._ctx)
         tasks.add(
             create_task(
                 index_dispatcher.run(

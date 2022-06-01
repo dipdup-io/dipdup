@@ -52,9 +52,12 @@ from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConflictingHooksError
 from dipdup.exceptions import IndexAlreadyExistsError
+from dipdup.exceptions import InitializationRequiredError
 from dipdup.utils import exclude_none
 from dipdup.utils import import_from
+from dipdup.utils import is_importable
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -1224,6 +1227,23 @@ class DipDupConfig:
             return dirname(cast(str, package.__file__))
         except ImportError:
             return os.path.join(os.getcwd(), self.package)
+
+    # TODO: Remove in 6.0
+    @cached_property
+    def per_index_rollback(self) -> bool:
+        """Check if package has `on_index_rollback` hook"""
+        new_hook = is_importable(f'{self.package}.hooks.on_index_rollback', 'on_index_rollback')
+        old_hook = is_importable(f'{self.package}.hooks.on_rollback', 'on_rollback')
+        if new_hook and new_hook:
+            raise ConflictingHooksError('on_rollback', 'on_index_rollback')
+        elif not new_hook and not old_hook:
+            raise InitializationRequiredError('none of `on_rollback` or `on_index_rollback` hooks found')
+        elif new_hook:
+            return True
+        elif old_hook:
+            return False
+        else:
+            raise RuntimeError
 
     @property
     def oneshot(self) -> bool:

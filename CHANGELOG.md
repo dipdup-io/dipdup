@@ -5,6 +5,7 @@
 ### Fixed
 
 * index: Allow mixing oneshot and regular indexes in a single config.
+* index: Call rollback hook instead of triggering reindex when single-level rollback has failed.
 * index: Fixed crash with `RuntimeError` after continuous realtime connection loss.
 * index: Fixed `OperationIndexConfig.types` field being partially ignored.
 * tzkt: Fixed `origination` subscription missing when `merge_subscriptions` flag is set.
@@ -52,7 +53,7 @@
 * ci: Push `X` and `X.Y` tags to the Docker Hub on release.
 * cli: Added `config env` command to export env-file with default values.
 * cli: Show warning when running an outdated version of DipDup.
-* hooks: Added new hook `on_index_rollback` to perform per-index rollbacks.
+* hooks: Added a new hook `on_index_rollback` to perform per-index rollbacks.
 
 ### Fixed
 
@@ -70,7 +71,7 @@
 
 * exceptions: Fixed incorrect formatting and broken links in help messages.
 * index: Fixed crash when the only index in config is `head`.
-* index: Fixed fetching originations during initial sync.
+* index: Fixed fetching originations during the initial sync.
 
 ## 5.0.3 - 2022-05-04
 

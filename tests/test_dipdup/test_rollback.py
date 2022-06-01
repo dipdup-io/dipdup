@@ -25,9 +25,12 @@ from dipdup.utils.database import tortoise_wrapper
 
 
 def _get_index_dispatcher() -> IndexDispatcher:
-    return IndexDispatcher(
-        ctx=Mock(spec=DipDupContext),
+    index_dispatcher = IndexDispatcher(
+        ctx=MagicMock(spec=DipDupContext),
     )
+    index_dispatcher._ctx.reindex = AsyncMock()  # type: ignore
+    index_dispatcher._ctx.config = AsyncMock()  # type: ignore
+    return index_dispatcher
 
 
 def _get_operation_index(level: int) -> OperationIndex:
@@ -62,6 +65,7 @@ def _get_operation_index(level: int) -> OperationIndex:
     index._state.save = AsyncMock()  # type: ignore
     index._call_matched_handler = AsyncMock()  # type: ignore
     index._ctx.reindex = AsyncMock()  # type: ignore
+    index._ctx.config = MagicMock()
 
     return index
 
@@ -352,12 +356,11 @@ class RollbackTest(IsolatedAsyncioTestCase):
             assert operation_index._next_head_level is None
             assert operation_index.state.level == from_level
 
-            operation_index._ctx.reindex.assert_awaited_with(
-                ReindexingReason.rollback,
-                datasource=operation_index.datasource.name,
+            operation_index._ctx.fire_hook.assert_awaited_with(
+                'on_index_rollback',
+                index=operation_index,
                 from_level=from_level,
                 to_level=to_level,
-                missing_hashes='1',
             )
             assert operation_index._call_matched_handler.await_count == 2
 
