@@ -4,6 +4,7 @@
 
 ### Fixed
 
+* index: Allow mixing oneshot and regular indexes in a single config.
 * index: Fixed `OperationIndexConfig.types` field being partially ignored.
 * tzkt: Fixed `origination` subscription missing when `merge_subscriptions` flag is set.
 
