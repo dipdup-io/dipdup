@@ -46,8 +46,8 @@ build:          ## Build wheel Python package
 	poetry build
 
 image:          ## Build Docker image
-	DOCKER_BUILDKIT=1 docker build . -t dipdup:${TAG}
-	DOCKER_BUILDKIT=1 docker build . -t dipdup:${TAG}-pytezos --build-arg EXTRAS=pytezos
+	docker buildx build . -t dipdup:${TAG}
+	docker buildx build . -t dipdup:${TAG}-pytezos --build-arg EXTRAS=pytezos
 
 release-patch:  ## Release patch version
 	bumpversion patch
