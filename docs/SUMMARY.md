@@ -2,7 +2,7 @@
 
 * [Overview](README.md)
 * [Release notes](release-notes/README.md)
-  * [Changelog](release-notes/changelog.md)
+  * [Changelog](CHANGELOG.md)
   * [5.1.0](release-notes/5.1.0.md)
   * [5.0.0](release-notes/5.0.0.md)
   * [4.2.0](release-notes/4.2.0.md)

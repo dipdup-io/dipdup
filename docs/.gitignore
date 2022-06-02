@@ -1,6 +1,5 @@
 node_modules/
 dist/
 book/
-docs/
 *.tmp
 .vscode

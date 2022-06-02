@@ -145,7 +145,7 @@ This release contains no changes except for the version number.
 ### Fixed
 
 * tzkt: Fixed crash in methods that do not support cursor pagination.
-* prometheus: Fixed invalid metric labels. 
+* prometheus: Fixed invalid metric labels.
 
 ## 5.0.0-rc1 - 2022-03-02
 
@@ -444,13 +444,13 @@ This release contains no changes except for the version number.
 * config: Configuration files are loaded 10x times faster.
 * index: Number of operations processed by matcher reduced by 40%-95% depending on the number of addresses and entrypoints used.
 * tzkt: Rate limit was increased. Try to set `connection_timeout` to a higher value if requests fail with `ConnectionTimeout` exception.
-* tzkt: Improved performance of response deserialization. 
+* tzkt: Improved performance of response deserialization.
 
 ## 3.1.3 - 2021-11-15
 
 ### Fixed
 
-* codegen: Fixed missing imports in operation handlers. 
+* codegen: Fixed missing imports in operation handlers.
 * codegen: Fixed invalid imports and arguments in big_map handlers.
 
 ## 3.1.2 - 2021-11-02
@@ -523,7 +523,7 @@ This release contains no changes except for the version number.
 * Human-readable `CHANGELOG.md` 🕺
 * Two new options added to `dipdup run` command:
   * `--forbid-reindexing` – raise `ReindexingRequiredError` instead of truncating database when reindexing is triggered for any reason. To continue indexing with existing database run `UPDATE dipdup_schema SET reindex = NULL;`
-  * `--postpone-jobs` – job scheduler won't start until all indexes are synchronized. 
+  * `--postpone-jobs` – job scheduler won't start until all indexes are synchronized.
 
 ### Changed
 
