@@ -43,7 +43,7 @@ build:          ## Build wheel Python package
 	poetry build
 
 image:          ## Build Docker image
-	docker build . -t {{ cookiecutter.project_name }}:${TAG}
+	docker buildx build . -t {{ cookiecutter.project_name }}:${TAG}
 
 release-patch:  ## Release patch version
 	bumpversion patch
