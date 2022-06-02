@@ -40,6 +40,8 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+          flavor: |
+            latest=false
 
       - name: Publish image on GHCR
         uses: docker/build-push-action@v2

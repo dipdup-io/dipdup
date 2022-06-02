@@ -32,6 +32,8 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: dipdup/dipdup
+          flavor: |
+            latest=false
           tags: |
             type=pep440,pattern={{version}}
             type=pep440,pattern={{major}}
@@ -42,6 +44,8 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: dipdup/dipdup
+          flavor: |
+            latest=false
           tags: |
             type=pep440,pattern={{version}}-pytezos
             type=pep440,pattern={{major}}-pytezos
