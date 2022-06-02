@@ -1,27 +1,27 @@
-## ==> DipDup makefile
 .ONESHELL:
-.PHONY: test build docs
-
+.PHONY: $(MAKECMDGOALS)
 ##
-## DEV=1           Install dev dependencies
+##    🚧 DipDup developer tools
+##
+## DEV=1           Whether to install dev dependencies
 DEV=1
-## EXTRAS=""       Install extras (`pytezos` only)
+## EXTRAS=""       Extras to install (`pytezos` or none)
 EXTRAS=""
-## TAG=latest      Docker tag for images built
+## TAG=latest      Tag for the `image` command
 TAG=latest
+
 ##
 
 help:           ## Show this help (default)
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-all:            ## Run a whole CI pipeline
+all:            ## Run a whole CI pipeline: lint, run tests, build docs
 	make install lint test docs
 
-install:        ## Install project
+install:        ## Install project dependencies
 	poetry install \
 	`if [ -n "${EXTRAS}" ]; then for i in ${EXTRAS}; do echo "-E $$i "; done; fi` \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
-	poetry run pip uninstall -y flakehell || true
 
 lint:           ## Lint with all tools
 	make isort black flake mypy
@@ -37,7 +37,6 @@ docs:           ## Build docs
 
 ##
 
-
 isort:          ## Lint with isort
 	poetry run isort src tests
 
@@ -50,11 +49,10 @@ flake:          ## Lint with flake8
 mypy:           ## Lint with mypy
 	poetry run mypy src tests
 
-
 cover:          ## Print coverage for the current branch
 	poetry run diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml
 
-build:          ## Build wheel Python package
+build:          ## Build Python wheel package
 	poetry build
 
 image:          ## Build Docker image
@@ -76,5 +74,7 @@ release-major:  ## Release major version
 	git push --tags
 	git push
 
-clean:          ## Remove all files and directories ignored by git
+clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
+
+##
