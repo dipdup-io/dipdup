@@ -37,10 +37,10 @@ docs:           ## Build docs
 
 ##
 
-isort:          ## Lint with isort
+isort:          ## Format with isort
 	poetry run isort src tests
 
-black:          ## Lint with black
+black:          ## Format with black
 	poetry run black src tests
 
 flake:          ## Lint with flake8
