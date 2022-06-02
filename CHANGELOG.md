@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Performance
+
+* cli: Lazy import jinja2 to speed up startup.
+
 ## 5.1.4 - 2022-06-02
 
 ### Fixed
