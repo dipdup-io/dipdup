@@ -68,9 +68,8 @@ from dipdup.utils.database import validate_models
 
 
 class IndexDispatcher:
-    def __init__(self, ctx: DipDupContext, index_rollback: bool = True) -> None:
+    def __init__(self, ctx: DipDupContext) -> None:
         self._ctx = ctx
-        self._index_rollback = index_rollback
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
@@ -172,15 +171,6 @@ class IndexDispatcher:
                 self._ctx.config.contracts[contract.name] = contract_config
         self._ctx.config.initialize(skip_imports=True)
 
-    async def _subscribe_to_datasource_events(self) -> None:
-        for datasource in self._ctx.datasources.values():
-            if not isinstance(datasource, IndexDatasource):
-                continue
-            datasource.on_head(self._on_head)
-            datasource.on_operations(self._on_operations)
-            datasource.on_big_maps(self._on_big_maps)
-            datasource.on_rollback(self._on_rollback)
-
     async def _load_index_states(self) -> None:
         if self._indexes:
             raise RuntimeError('Index states are already loaded')
@@ -223,6 +213,22 @@ class IndexDispatcher:
 
         tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
         await gather(*tasks)
+
+    async def _subscribe_to_datasource_events(self) -> None:
+        for datasource in self._ctx.datasources.values():
+            if not isinstance(datasource, IndexDatasource):
+                continue
+            datasource.call_on_disconnected(self._on_disconnected)
+            datasource.call_on_head(self._on_head)
+            datasource.call_on_operations(self._on_operations)
+            datasource.call_on_big_maps(self._on_big_maps)
+            datasource.call_on_rollback(self._on_rollback)
+
+    async def _on_disconnected(self) -> None:
+        # NOTE: Invalidate realtime queues; sync level will be reset
+        self._logger.info('Datasource disconnected, dropping realtime queues')
+        for index in self._indexes.values():
+            index._queue.clear()
 
     async def _on_head(self, datasource: IndexDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
@@ -325,7 +331,7 @@ class IndexDispatcher:
             self._logger.info('`%s` rollback complete', channel)
             return
 
-        if self._index_rollback:
+        if self._ctx.config.per_index_rollback:
             hook_name = 'on_index_rollback'
             for index_name in unprocessed_indexes:
                 self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
@@ -400,6 +406,8 @@ class DipDup:
                 await MetadataCursor.initialize()
 
             if self._config.oneshot:
+                if self._config.jobs:
+                    self._logger.warning('Running in oneshot mode; `jobs` are ignored')
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
             else:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)
@@ -553,17 +561,7 @@ class DipDup:
         start_scheduler_event: Event,
         early_realtime: bool,
     ) -> None:
-        # NOTE: Decide how to handle rollbacks depending on hooks presence
-        # TODO: Remove in 6.0
-        old_hook, new_hook = 'on_rollback', 'on_index_rollback'
-        has_old_hook = is_importable(f'{self._config.package}.hooks.{old_hook}', old_hook)
-        has_new_hook = is_importable(f'{self._config.package}.hooks.{new_hook}', new_hook)
-        if has_old_hook and has_new_hook:
-            raise ConflictingHooksError(old_hook, new_hook)
-        elif not has_old_hook and not has_new_hook:
-            raise InitializationRequiredError('none of `on_rollback` or `on_index_rollback` hooks found')
-
-        index_dispatcher = IndexDispatcher(self._ctx, index_rollback=has_new_hook)
+        index_dispatcher = IndexDispatcher(self._ctx)
         tasks.add(
             create_task(
                 index_dispatcher.run(

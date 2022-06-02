@@ -8,6 +8,9 @@ from unittest import IsolatedAsyncioTestCase
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import TzktDatasourceConfig
+from dipdup.datasources.subscription import OriginationSubscription
+from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.enums import OperationType
 from dipdup.exceptions import ConfigurationError
 
 
@@ -27,6 +30,34 @@ class ConfigTest(IsolatedAsyncioTestCase):
         )
         self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].callback_fn, Callable)
         self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)
+
+    async def test_subscriptions(self) -> None:
+        config = DipDupConfig.load([self.path])
+        config.advanced.merge_subscriptions = False
+        config.initialize()
+
+        self.assertEqual(
+            {TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9')},
+            config.indexes['hen_mainnet'].subscriptions,  # type: ignore
+        )
+
+        config = DipDupConfig.load([self.path])
+        config.advanced.merge_subscriptions = True
+        config.initialize()
+
+        self.assertEqual(
+            {TransactionSubscription()},
+            config.indexes['hen_mainnet'].subscriptions,  # type: ignore
+        )
+
+        config = DipDupConfig.load([self.path])
+        config.indexes['hen_mainnet'].types = config.indexes['hen_mainnet'].types + (OperationType.origination,)  # type: ignore
+        config.initialize()
+
+        self.assertEqual(
+            {TransactionSubscription(), OriginationSubscription()},
+            config.indexes['hen_mainnet'].subscriptions,  # type: ignore
+        )
 
     async def test_validators(self):
         with self.assertRaises(ConfigurationError):

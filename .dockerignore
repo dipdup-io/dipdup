@@ -1,13 +1,16 @@
+# Ignore all
 *
 
+# Add build files
 !Makefile
 !pyproject.toml
 !poetry.lock
 !README.md
-!src/**
 !inject_pyproject.sh
 
-__pycache__
-*.pyc
-*.pyo
-*.pyd
+# Add code
+!src/dipdup/
+
+# Ignore caches
+**/.mypy_cache
+**/__pycache__

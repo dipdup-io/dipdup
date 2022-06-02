@@ -327,7 +327,7 @@ class MessageBuffer:
 
     def add(self, type_: MessageType, level: int, data: MessageData) -> None:
         """Add a message to the buffer."""
-        if not level in self._messages:
+        if level not in self._messages:
             self._messages[level] = []
         self._messages[level].append(BufferedMessage(type_, data))
 
@@ -352,15 +352,14 @@ class MessageBuffer:
         buffered_levels = sorted(self._messages.keys())
         yielded_levels = buffered_levels[: len(buffered_levels) - self._size]
         for level in yielded_levels:
-            for buffered_message in self._messages.pop(level):
-                yield buffered_message
+            yield from self._messages.pop(level)
 
 
 class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
         cache=True,
         retry_sleep=1,
-        retry_multiplier=2,
+        retry_multiplier=1.1,
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
@@ -895,8 +894,8 @@ class TzktDatasource(IndexDatasource):
             max_size=None,
         )
 
-        self._ws_client.on_open(self._on_connect)
-        self._ws_client.on_close(self._on_disconnect)
+        self._ws_client.on_open(self._on_connected)
+        self._ws_client.on_close(self._on_disconnected)
         self._ws_client.on_error(self._on_error)
 
         self._ws_client.on('operations', partial(self._on_message, MessageType.operation))
@@ -916,6 +915,7 @@ class TzktDatasource(IndexDatasource):
                     await ws.run()
                 except WebsocketConnectionError as e:
                     self._logger.error('Websocket connection error: %s', e)
+                    await self.emit_disconnected()
                     await asyncio.sleep(retry_sleep)
                     retry_sleep *= self._http_config.retry_multiplier
 
@@ -926,13 +926,15 @@ class TzktDatasource(IndexDatasource):
 
         await gather(*tasks)
 
-    async def _on_connect(self) -> None:
+    async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
         # NOTE: Subscribing here will block WebSocket loop
+        await self.emit_connected()
 
-    async def _on_disconnect(self) -> None:
+    async def _on_disconnected(self) -> None:
         self._logger.info('Realtime connection lost')
         self._subscriptions.reset()
+        await self.emit_disconnected()
 
     async def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""

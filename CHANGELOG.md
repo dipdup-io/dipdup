@@ -1,5 +1,19 @@
 # Changelog
 
+## 5.1.4 - 2022-06-02
+
+### Fixed
+
+* config: Fixed `OperationIndexConfig.types` field being partially ignored.
+* index: Allow mixing oneshot and regular indexes in a single config.
+* index: Call rollback hook instead of triggering reindex when single-level rollback has failed.
+* index: Fixed crash with `RuntimeError` after continuous realtime connection loss.
+* tzkt: Fixed `origination` subscription missing when `merge_subscriptions` flag is set.
+
+### Performance
+
+* ci: Decrease the size of generic and `-pytezos` Docker images by 11% and 16%, respectively.
+
 ## 5.1.3 - 2022-05-26
 
 ### Fixed
@@ -39,7 +53,7 @@
 * ci: Push `X` and `X.Y` tags to the Docker Hub on release.
 * cli: Added `config env` command to export env-file with default values.
 * cli: Show warning when running an outdated version of DipDup.
-* hooks: Added new hook `on_index_rollback` to perform per-index rollbacks.
+* hooks: Added a new hook `on_index_rollback` to perform per-index rollbacks.
 
 ### Fixed
 
@@ -57,7 +71,7 @@
 
 * exceptions: Fixed incorrect formatting and broken links in help messages.
 * index: Fixed crash when the only index in config is `head`.
-* index: Fixed fetching originations during initial sync.
+* index: Fixed fetching originations during the initial sync.
 
 ## 5.0.3 - 2022-05-04
 
