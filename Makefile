@@ -1,7 +1,6 @@
 ## ==> DipDup makefile
 .ONESHELL:
 .PHONY: test build docs
-.DEFAULT_GOAL: all
 
 ##
 ## DEV=1           Install dev dependencies
@@ -12,8 +11,11 @@ EXTRAS=""
 TAG=latest
 ##
 
-all:            ## Run a whole CI pipeline (default)
-	make install lint test cover
+help:           ## Show this help (default)
+	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
+
+all:            ## Run a whole CI pipeline
+	make install lint test docs
 
 install:        ## Install project
 	poetry install \
@@ -23,6 +25,18 @@ install:        ## Install project
 
 lint:           ## Lint with all tools
 	make isort black flake mypy
+
+test:           ## Run test suite
+	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto --dist loadscope -s -v tests
+
+docs:           ## Build docs
+	cd docs
+	npm i
+	npm run build
+	poetry run make lint orphans build
+
+##
+
 
 isort:          ## Lint with isort
 	poetry run isort src tests
@@ -36,8 +50,6 @@ flake:          ## Lint with flake8
 mypy:           ## Lint with mypy
 	poetry run mypy src tests
 
-test:           ## Run test suite
-	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto --dist loadscope -s -v tests
 
 cover:          ## Print coverage for the current branch
 	poetry run diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml
@@ -64,11 +76,5 @@ release-major:  ## Release major version
 	git push --tags
 	git push
 
-docs:           ## Build docs
-	cd docs; npm i; npm run buid; make build lint orphans
-
-clean:			## Remove all files and directories ignored by git
+clean:          ## Remove all files and directories ignored by git
 	git clean -xdf --exclude=".venv"
-
-help:           ## Show this help
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'

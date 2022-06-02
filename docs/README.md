@@ -34,5 +34,6 @@ DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/
 
 * **Have a question?** Contact us at [Discord](https://discord.com/invite/RcPGSdcVSx), [Telegram](https://t.me/baking_bad_chat) or [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L)!
 
+
 This project is maintained by [Baking Bad](https://baking-bad.org/) team.  
 Development is supported by [Tezos Foundation](https://tezos.foundation/).

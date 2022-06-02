@@ -26,7 +26,7 @@ build:
 	tail -n '+33' _build/html/context-reference.html | head -n '-63' > advanced/context/reference.md
 	cp ../CHANGELOG.md release-notes/changelog.md
 	cp ../README.md README.md
-	mdbook build
+	mdbook build  --dest-dir=dist/docs
 
 serve:
 	mdbook serve -o
@@ -44,6 +44,6 @@ orphans:
 	cat SUMMARY.md | grep ".md" > mentioned.tmp
 	sed -i -E 's@^.*\[(.*)\]\((.*)\).*$$@\2@p' mentioned.tmp
 	cat mentioned.tmp | uniq | sort -o mentioned.tmp
-	find . | grep ".md" | grep -v -e "node_modules/" -e " book/" | cut -c "3-" | sort -o existing.tmp
+	find . | grep ".md" | grep -v -e "node_modules/" -e " book/" -e "placeholders.md" -e "SUMMARY.md" | cut -c "3-" | sort -o existing.tmp
 	diff --color mentioned.tmp existing.tmp
 	rm mentioned.tmp existing.tmp
