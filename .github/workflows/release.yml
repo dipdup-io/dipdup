@@ -11,15 +11,25 @@ jobs:
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     steps:
-      - uses: actions/checkout@v2
+      - name: Check out the repo
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          install: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
           python-version: "3.10.x"
-      - uses: snok/install-poetry@v1
+
+      - name: Set up Poetry
+        uses: snok/install-poetry@v1
         with:
-          version: "1.1.11"
+          version: "1.1.13"
 
       - name: Install project
         run: make install
@@ -28,7 +38,8 @@ jobs:
       - name: Run tests
         run: make test
 
-      - uses: paulhatch/semantic-version@v4.0.2
+      - name: Generate semver labels
+        uses: paulhatch/semantic-version@v4.0.2
         id: version
         with:
           tag_prefix: ""
