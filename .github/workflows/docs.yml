@@ -85,7 +85,7 @@ jobs:
     - name: Deploy to GH Pages (next)
       if: >-
         contains(github.ref_name, 'master,aux/docs')
-      uses: peaceiris/actions-gh-pages@v3s
+      uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/dist/docs
