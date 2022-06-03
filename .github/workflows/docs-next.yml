@@ -27,8 +27,7 @@ jobs:
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
-        exclude_assets: '.github,dist/docs'
+        publish_dir: ./docs/dist
         cname: dipdup.net
   
   docs-next:
