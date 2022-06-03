@@ -1,6 +1,0 @@
-[book]
-authors = ["Baking Bad"]
-language = "en"
-multilingual = false
-src = "."
-title = "DipDup framework"
