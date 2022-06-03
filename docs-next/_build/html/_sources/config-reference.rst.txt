@@ -1,0 +1,2 @@
+.. automodule:: dipdup.config
+   :members:

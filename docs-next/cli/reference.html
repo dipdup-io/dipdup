@@ -1,0 +1,384 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Full reference - DipDup framework</title>
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../index.html"><strong aria-hidden="true">1.</strong> Overview</a></li><li class="chapter-item expanded "><a href="../release-notes/index.html"><strong aria-hidden="true">2.</strong> Release notes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../CHANGELOG.html"><strong aria-hidden="true">2.1.</strong> Changelog</a></li><li class="chapter-item expanded "><a href="../release-notes/5.1.0.html"><strong aria-hidden="true">2.2.</strong> 5.1.0</a></li><li class="chapter-item expanded "><a href="../release-notes/5.0.0.html"><strong aria-hidden="true">2.3.</strong> 5.0.0</a></li><li class="chapter-item expanded "><a href="../release-notes/4.2.0.html"><strong aria-hidden="true">2.4.</strong> 4.2.0</a></li><li class="chapter-item expanded "><a href="../release-notes/4.1.0.html"><strong aria-hidden="true">2.5.</strong> 4.1.0</a></li><li class="chapter-item expanded "><a href="../release-notes/4.0.0.html"><strong aria-hidden="true">2.6.</strong> 4.0.0</a></li></ol></li><li class="chapter-item expanded "><a href="../quickstart.html"><strong aria-hidden="true">3.</strong> Quickstart</a></li><li class="chapter-item expanded "><a href="../getting-started/index.html"><strong aria-hidden="true">4.</strong> Getting started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../getting-started/installation.html"><strong aria-hidden="true">4.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="../getting-started/core-concepts.html"><strong aria-hidden="true">4.2.</strong> Core concepts</a></li><li class="chapter-item expanded "><a href="../getting-started/preparing-inventory.html"><strong aria-hidden="true">4.3.</strong> Preparing inventory</a></li><li class="chapter-item expanded "><a href="../getting-started/project-structure.html"><strong aria-hidden="true">4.4.</strong> Project structure</a></li><li class="chapter-item expanded "><a href="../getting-started/templates-and-variables.html"><strong aria-hidden="true">4.5.</strong> Templates and variables</a></li><li class="chapter-item expanded "><a href="../getting-started/defining-models.html"><strong aria-hidden="true">4.6.</strong> Defining models</a></li><li class="chapter-item expanded "><a href="../getting-started/implementing-handlers.html"><strong aria-hidden="true">4.7.</strong> Implementing handlers</a></li></ol></li><li class="chapter-item expanded "><a href="../advanced/index.html"><strong aria-hidden="true">5.</strong> Advanced usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../advanced/datasources.html"><strong aria-hidden="true">5.1.</strong> Datasources</a></li><li class="chapter-item expanded "><a href="../advanced/hooks/index.html"><strong aria-hidden="true">5.2.</strong> Hooks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../advanced/hooks/default.html"><strong aria-hidden="true">5.2.1.</strong> Default hooks</a></li><li class="chapter-item expanded "><a href="../advanced/hooks/jobs.html"><strong aria-hidden="true">5.2.2.</strong> Job scheduler</a></li></ol></li><li class="chapter-item expanded "><a href="../advanced/reindexing.html"><strong aria-hidden="true">5.3.</strong> Reindexing</a></li><li class="chapter-item expanded "><a href="../advanced/feature-flags.html"><strong aria-hidden="true">5.4.</strong> Feature flags</a></li><li class="chapter-item expanded "><a href="../advanced/sql.html"><strong aria-hidden="true">5.5.</strong> Executing SQL scripts</a></li><li class="chapter-item expanded "><a href="../advanced/performance/index.html"><strong aria-hidden="true">5.6.</strong> Improving performance</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../advanced/performance/time-series.html"><strong aria-hidden="true">5.6.1.</strong> Working with time series</a></li><li class="chapter-item expanded "><a href="../advanced/performance/datasources.html"><strong aria-hidden="true">5.6.2.</strong> Tuning datasources</a></li><li class="chapter-item expanded "><a href="../advanced/performance/database.html"><strong aria-hidden="true">5.6.3.</strong> Optimizing database queries</a></li></ol></li><li class="chapter-item expanded "><a href="../advanced/context/index.html"><strong aria-hidden="true">5.7.</strong> Callback context (ctx)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../advanced/context/reference.html"><strong aria-hidden="true">5.7.1.</strong> Full reference</a></li></ol></li><li class="chapter-item expanded "><a href="../advanced/internal-models.html"><strong aria-hidden="true">5.8.</strong> Internal models</a></li><li class="chapter-item expanded "><a href="../advanced/index-factories.html"><strong aria-hidden="true">5.9.</strong> Spawning indexes at runtime</a></li><li class="chapter-item expanded "><a href="../advanced/scheduler.html"><strong aria-hidden="true">5.10.</strong> Scheduler configuration</a></li><li class="chapter-item expanded "><a href="../advanced/metadata-interface.html"><strong aria-hidden="true">5.11.</strong> Metadata interface</a></li></ol></li><li class="chapter-item expanded "><a href="../graphql/index.html"><strong aria-hidden="true">6.</strong> GraphQL API</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../graphql/hasura.html"><strong aria-hidden="true">6.1.</strong> Hasura integration</a></li><li class="chapter-item expanded "><a href="../graphql/rest.html"><strong aria-hidden="true">6.2.</strong> REST endpoints</a></li><li class="chapter-item expanded "><a href="../graphql/genql.html"><strong aria-hidden="true">6.3.</strong> GenQL</a></li></ol></li><li class="chapter-item expanded "><a href="../troubleshooting/index.html"><strong aria-hidden="true">7.</strong> Troubleshooting</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../troubleshooting/common-issues.html"><strong aria-hidden="true">7.1.</strong> Common issues</a></li><li class="chapter-item expanded "><a href="../troubleshooting/reporting-bugs.html"><strong aria-hidden="true">7.2.</strong> Reporting bugs</a></li></ol></li><li class="chapter-item expanded "><a href="../deployment/index.html"><strong aria-hidden="true">8.</strong> Deployment and operations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../deployment/database-engines.html"><strong aria-hidden="true">8.1.</strong> Database engines</a></li><li class="chapter-item expanded "><a href="../deployment/docker.html"><strong aria-hidden="true">8.2.</strong> Building Docker images</a></li><li class="chapter-item expanded "><a href="../deployment/docker-compose.html"><strong aria-hidden="true">8.3.</strong> Deploying with docker-compose</a></li><li class="chapter-item expanded "><a href="../deployment/swarm.html"><strong aria-hidden="true">8.4.</strong> Deploying with Docker Swarm</a></li><li class="chapter-item expanded "><a href="../deployment/sentry.html"><strong aria-hidden="true">8.5.</strong> Sentry integration</a></li><li class="chapter-item expanded "><a href="../deployment/prometheus.html"><strong aria-hidden="true">8.6.</strong> Prometheus integration</a></li><li class="chapter-item expanded "><a href="../deployment/logging.html"><strong aria-hidden="true">8.7.</strong> Logging</a></li><li class="chapter-item expanded "><a href="../deployment/monitoring.html"><strong aria-hidden="true">8.8.</strong> Monitoring</a></li><li class="chapter-item expanded "><a href="../deployment/backups.html"><strong aria-hidden="true">8.9.</strong> Backup and restore</a></li></ol></li><li class="chapter-item expanded "><a href="../cookbook/index.html"><strong aria-hidden="true">9.</strong> Cookbook</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../cookbook/offchain-data.html"><strong aria-hidden="true">9.1.</strong> Processing offchain data</a></li><li class="chapter-item expanded "><a href="../cookbook/reusing-typenames.html"><strong aria-hidden="true">9.2.</strong> Reusing typename for different contracts</a></li><li class="chapter-item expanded "><a href="../cookbook/sync-callbacks.html"><strong aria-hidden="true">9.3.</strong> Synchronizing multiple handlers/hooks</a></li><li class="chapter-item expanded "><a href="../cookbook/caching-models.html"><strong aria-hidden="true">9.4.</strong> Caching models</a></li><li class="chapter-item expanded "><a href="../cookbook/multiprocessing.html"><strong aria-hidden="true">9.5.</strong> Multiprocessing</a></li></ol></li><li class="chapter-item expanded "><a href="../examples/index.html"><strong aria-hidden="true">10.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../examples/demo-projects.html"><strong aria-hidden="true">10.1.</strong> Demo projects</a></li><li class="chapter-item expanded "><a href="../examples/built-with-dipdup.html"><strong aria-hidden="true">10.2.</strong> Built with DipDup</a></li></ol></li><li class="chapter-item expanded "><a href="../services/index.html"><strong aria-hidden="true">11.</strong> Services (plugins)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../services/mempool.html"><strong aria-hidden="true">11.1.</strong> mempool</a></li><li class="chapter-item expanded "><a href="../services/metadata.html"><strong aria-hidden="true">11.2.</strong> metadata</a></li></ol></li><li class="chapter-item expanded "><a href="../config/index.html"><strong aria-hidden="true">12.</strong> Config file reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../config/reference.html"><strong aria-hidden="true">12.1.</strong> Full reference</a></li><li class="chapter-item expanded "><a href="../config/advanced.html"><strong aria-hidden="true">12.2.</strong> advanced</a></li><li class="chapter-item expanded "><a href="../config/contracts.html"><strong aria-hidden="true">12.3.</strong> contracts</a></li><li class="chapter-item expanded "><a href="../config/database.html"><strong aria-hidden="true">12.4.</strong> database</a></li><li class="chapter-item expanded "><a href="../config/datasources.html"><strong aria-hidden="true">12.5.</strong> datasources</a></li><li class="chapter-item expanded "><a href="../config/hasura.html"><strong aria-hidden="true">12.6.</strong> hasura</a></li><li class="chapter-item expanded "><a href="../config/hooks.html"><strong aria-hidden="true">12.7.</strong> hooks</a></li><li class="chapter-item expanded "><a href="../config/indexes/index.html"><strong aria-hidden="true">12.8.</strong> indexes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../config/indexes/big_map.html"><strong aria-hidden="true">12.8.1.</strong> big_map</a></li><li class="chapter-item expanded "><a href="../config/indexes/head.html"><strong aria-hidden="true">12.8.2.</strong> head</a></li><li class="chapter-item expanded "><a href="../config/indexes/operation.html"><strong aria-hidden="true">12.8.3.</strong> operation</a></li><li class="chapter-item expanded "><a href="../config/indexes/template.html"><strong aria-hidden="true">12.8.4.</strong> template</a></li></ol></li><li class="chapter-item expanded "><a href="../config/jobs.html"><strong aria-hidden="true">12.9.</strong> jobs</a></li><li class="chapter-item expanded "><a href="../config/package.html"><strong aria-hidden="true">12.10.</strong> package</a></li><li class="chapter-item expanded "><a href="../config/prometheus.html"><strong aria-hidden="true">12.11.</strong> prometheus</a></li><li class="chapter-item expanded "><a href="../config/sentry.html"><strong aria-hidden="true">12.12.</strong> sentry</a></li><li class="chapter-item expanded "><a href="../config/spec_version.html"><strong aria-hidden="true">12.13.</strong> spec_version</a></li><li class="chapter-item expanded "><a href="../config/templates.html"><strong aria-hidden="true">12.14.</strong> templates</a></li></ol></li><li class="chapter-item expanded "><a href="../cli/index.html"><strong aria-hidden="true">13.</strong> Command-line reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../cli/reference.html" class="active"><strong aria-hidden="true">13.1.</strong> Full reference</a></li><li class="chapter-item expanded "><a href="../cli/cache-clear.html"><strong aria-hidden="true">13.2.</strong> cache clear</a></li><li class="chapter-item expanded "><a href="../cli/cache-show.html"><strong aria-hidden="true">13.3.</strong> cache show</a></li><li class="chapter-item expanded "><a href="../cli/config-export.html"><strong aria-hidden="true">13.4.</strong> config export</a></li><li class="chapter-item expanded "><a href="../cli/hasura-configure.html"><strong aria-hidden="true">13.5.</strong> hasura configure</a></li><li class="chapter-item expanded "><a href="../cli/init.html"><strong aria-hidden="true">13.6.</strong> init</a></li><li class="chapter-item expanded "><a href="../cli/migrate.html"><strong aria-hidden="true">13.7.</strong> migrate</a></li><li class="chapter-item expanded "><a href="../cli/run.html"><strong aria-hidden="true">13.8.</strong> run</a></li><li class="chapter-item expanded "><a href="../cli/schema-approve.html"><strong aria-hidden="true">13.9.</strong> schema approve</a></li><li class="chapter-item expanded "><a href="../cli/schema-export.html"><strong aria-hidden="true">13.10.</strong> schema export</a></li><li class="chapter-item expanded "><a href="../cli/schema-init.html"><strong aria-hidden="true">13.11.</strong> schema init</a></li><li class="chapter-item expanded "><a href="../cli/schema-wipe.html"><strong aria-hidden="true">13.12.</strong> schema wipe</a></li><li class="chapter-item expanded "><a href="../cli/status.html"><strong aria-hidden="true">13.13.</strong> status</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">DipDup framework</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <section id="dipdup">
+<h1 id="dipdup"><a class="header" href="#dipdup">dipdup<a class="headerlink" href="#dipdup" title="Permalink to this headline">¶</a></a></h1>
+<p>Docs: <a class="reference external" href="https://docs.dipdup.net">https://docs.dipdup.net</a></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-version">
+<span class="sig-name descname"><span class="pre">--version</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show the version and exit.</p>
+</dd></dl>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-c">
+<span id="cmdoption-dipdup-config"></span><span class="sig-name descname"><span class="pre">-c</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;config&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-c" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to dipdup YAML config</p>
+</dd></dl>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-e">
+<span id="cmdoption-dipdup-env-file"></span><span class="sig-name descname"><span class="pre">-e</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--env-file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;env_file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-e" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to .env file with KEY=value strings</p>
+</dd></dl>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-l">
+<span id="cmdoption-dipdup-logging-config"></span><span class="sig-name descname"><span class="pre">-l</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--logging-config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;logging_config&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-l" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to Python logging YAML config</p>
+</dd></dl>
+<section id="dipdup-cache">
+<h2 id="cache"><a class="header" href="#cache">cache<a class="headerlink" href="#dipdup-cache" title="Permalink to this headline">¶</a></a></h2>
+<p>Manage internal cache</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="dipdup-cache-clear">
+<h3 id="clear"><a class="header" href="#clear">clear<a class="headerlink" href="#dipdup-cache-clear" title="Permalink to this headline">¶</a></a></h3>
+<p>Clear cache</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache clear <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="dipdup-cache-show">
+<h3 id="show"><a class="header" href="#show">show<a class="headerlink" href="#dipdup-cache-show" title="Permalink to this headline">¶</a></a></h3>
+<p>Show cache size information</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache show <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="dipdup-config">
+<h2 id="config"><a class="header" href="#config">config<a class="headerlink" href="#dipdup-config" title="Permalink to this headline">¶</a></a></h2>
+<p>Commands to manage DipDup configuration</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="dipdup-config-env">
+<h3 id="env"><a class="header" href="#env">env<a class="headerlink" href="#dipdup-config-env" title="Permalink to this headline">¶</a></a></h3>
+<p>Dump environment variables used in DipDup config</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config env <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-config-env-f">
+<span id="cmdoption-dipdup-config-env-file"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-config-env-f" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output to file instead of stdout</p>
+</dd></dl>
+</section>
+<section id="dipdup-config-export">
+<h3 id="export"><a class="header" href="#export">export<a class="headerlink" href="#dipdup-config-export" title="Permalink to this headline">¶</a></a></h3>
+<p>Dump DipDup configuration after resolving templates</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="nb">export</span> <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-config-export-unsafe">
+<span class="sig-name descname"><span class="pre">--unsafe</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-config-export-unsafe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve environment variables; output may contain secrets</p>
+</dd></dl>
+</section>
+</section>
+<section id="dipdup-hasura">
+<h2 id="hasura"><a class="header" href="#hasura">hasura<a class="headerlink" href="#dipdup-hasura" title="Permalink to this headline">¶</a></a></h2>
+<p>Hasura integration related commands</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup hasura <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="dipdup-hasura-configure">
+<h3 id="configure"><a class="header" href="#configure">configure<a class="headerlink" href="#dipdup-hasura-configure" title="Permalink to this headline">¶</a></a></h3>
+<p>Configure Hasura GraphQL Engine</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup hasura configure <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-hasura-configure-force">
+<span class="sig-name descname"><span class="pre">--force</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-hasura-configure-force" title="Permalink to this definition">¶</a></dt>
+<dd><p>Proceed even if Hasura is already configured</p>
+</dd></dl>
+</section>
+</section>
+<section id="dipdup-init">
+<h2 id="init"><a class="header" href="#init">init<a class="headerlink" href="#dipdup-init" title="Permalink to this headline">¶</a></a></h2>
+<p>Generate project tree and missing callbacks and types</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup init <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-init-overwrite-types">
+<span class="sig-name descname"><span class="pre">--overwrite-types</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-init-overwrite-types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regenerate existing types</p>
+</dd></dl>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-init-keep-schemas">
+<span class="sig-name descname"><span class="pre">--keep-schemas</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-init-keep-schemas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do not remove JSONSchemas after generating types</p>
+</dd></dl>
+</section>
+<section id="dipdup-migrate">
+<h2 id="migrate"><a class="header" href="#migrate">migrate<a class="headerlink" href="#dipdup-migrate" title="Permalink to this headline">¶</a></a></h2>
+<p>Migrate project to the new spec version</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup migrate <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="dipdup-run">
+<h2 id="run"><a class="header" href="#run">run<a class="headerlink" href="#dipdup-run" title="Permalink to this headline">¶</a></a></h2>
+<p>Run indexing</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup run <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-run-postpone-jobs">
+<span class="sig-name descname"><span class="pre">--postpone-jobs</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-run-postpone-jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do not start job scheduler until all indexes are synchronized</p>
+</dd></dl>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-run-early-realtime">
+<span class="sig-name descname"><span class="pre">--early-realtime</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-run-early-realtime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Establish a realtime connection before all indexes are synchronized</p>
+</dd></dl>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-run-merge-subscriptions">
+<span class="sig-name descname"><span class="pre">--merge-subscriptions</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-run-merge-subscriptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subscribe to all operations/big map diffs during realtime indexing</p>
+</dd></dl>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-run-metadata-interface">
+<span class="sig-name descname"><span class="pre">--metadata-interface</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-run-metadata-interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable metadata interface</p>
+</dd></dl>
+</section>
+<section id="dipdup-schema">
+<h2 id="schema"><a class="header" href="#schema">schema<a class="headerlink" href="#dipdup-schema" title="Permalink to this headline">¶</a></a></h2>
+<p>Manage database schema</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="dipdup-schema-approve">
+<h3 id="approve"><a class="header" href="#approve">approve<a class="headerlink" href="#dipdup-schema-approve" title="Permalink to this headline">¶</a></a></h3>
+<p>Continue to use existing schema after reindexing was triggered</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema approve <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="dipdup-schema-export">
+<h3 id="export-1"><a class="header" href="#export-1">export<a class="headerlink" href="#dipdup-schema-export" title="Permalink to this headline">¶</a></a></h3>
+<p>Print schema SQL including <cite>on_reindex</cite> hook</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema <span class="nb">export</span> <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="dipdup-schema-init">
+<h3 id="init-1"><a class="header" href="#init-1">init<a class="headerlink" href="#dipdup-schema-init" title="Permalink to this headline">¶</a></a></h3>
+<p>Initialize database schema and trigger <cite>on_reindex</cite></p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema init <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="dipdup-schema-wipe">
+<h3 id="wipe"><a class="header" href="#wipe">wipe<a class="headerlink" href="#dipdup-schema-wipe" title="Permalink to this headline">¶</a></a></h3>
+<p>Drop all database tables, functions and views</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema wipe <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-schema-wipe-immune">
+<span class="sig-name descname"><span class="pre">--immune</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-schema-wipe-immune" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop immune tables too</p>
+</dd></dl>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-schema-wipe-force">
+<span class="sig-name descname"><span class="pre">--force</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-schema-wipe-force" title="Permalink to this definition">¶</a></dt>
+<dd><p>Skip confirmation prompt</p>
+</dd></dl>
+</section>
+</section>
+<section id="dipdup-status">
+<h2 id="status"><a class="header" href="#status">status<a class="headerlink" href="#dipdup-status" title="Permalink to this headline">¶</a></a></h2>
+<p>Show current status of indexes in database</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup status <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../cli/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="../cli/cache-clear.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../cli/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="../cli/cache-clear.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+    </body>
+</html>
