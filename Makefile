@@ -3,11 +3,11 @@
 ##
 ##    🚧 DipDup developer tools
 ##
-## DEV=1           Whether to install dev dependencies
+## DEV=1                Whether to install dev dependencies
 DEV=1
-## EXTRAS=""       Extras to install (`pytezos` or none)
+## EXTRAS=""            Extras to install (`pytezos` or none)
 EXTRAS=""
-## TAG=latest      Tag for the `image` command
+## TAG=latest           Tag for the `image` command
 TAG=latest
 
 ##
@@ -31,9 +31,11 @@ test:           ## Run test suite
 
 docs:           ## Build docs
 	cd docs
-	npm i
-	npm run build
-	poetry run make lint orphans build
+	poetry run make lint orphans docs
+
+homepage:       ## Build homepage
+	cd docs
+	make homepage
 
 ##
 

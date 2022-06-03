@@ -19,7 +19,7 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-build:
+docs:
 	make html
 	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > cli/reference.md
 	tail -n '+33' _build/html/config-reference.html | head -n '-63' > config/reference.md
@@ -27,6 +27,10 @@ build:
 	cp ../CHANGELOG.md CHANGELOG.md
 	cp ../README.md README.md
 	mdbook build  --dest-dir=dist/docs
+
+homepage:
+	npm i
+	npm run build
 
 serve:
 	mdbook serve -o

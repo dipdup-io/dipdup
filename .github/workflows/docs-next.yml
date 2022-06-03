@@ -1,0 +1,57 @@
+name: Docs
+on:
+  push:
+    branches:
+      - master
+      - aux/docs
+
+jobs:
+  homepage:
+    name: Homepage
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Nodejs and yarn
+      uses: actions/setup-node@v1
+      with:
+        node-version: '11.x'
+
+    - name: Build homepage
+      run: make homepage
+
+    - name: Deploy to GH Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+        exclude_assets: '.github,dist/docs'
+        cname: dipdup.net
+  
+  docs-next:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up mdBook
+      uses: peaceiris/actions-mdbook@v1
+      with:
+        mdbook-version: '0.4.18'
+
+    - name: Build docs
+      run: make docs
+
+    - name: Deploy to GH Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist/docs
+        destination_dir: docs-next
+        cname: docs-next.dipdup.net
