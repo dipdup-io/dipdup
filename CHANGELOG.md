@@ -4,7 +4,7 @@
 
 ### Performance
 
-* cli: Lazy import jinja2 to speed up startup.
+* cli: Lazy import dependencies to speed up startup.
 
 ## 5.1.4 - 2022-06-02
 
