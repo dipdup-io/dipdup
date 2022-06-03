@@ -73,7 +73,7 @@ jobs:
       run: make docs
 
     - name: Deploy to GH Pages
-      if: github.ref_name not in ['master', 'aux/docs']
+      if: ${{ !contains(['master', 'aux/docs'], github.ref_name) }}
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -82,7 +82,7 @@ jobs:
         cname: docs.dipdup.net
 
     - name: Deploy to GH Pages (next)
-      if: github.ref_name in ['master', 'aux/docs']
+      if: ${{ contains(['master', 'aux/docs'], github.ref_name) }}
       uses: peaceiris/actions-gh-pages@v3s
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
