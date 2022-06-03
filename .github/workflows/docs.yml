@@ -74,7 +74,7 @@ jobs:
 
     - name: Deploy to GH Pages
       if: >-
-        !contains(['master', 'aux/docs'], github.ref_name)
+        !contains(github.ref_name, 'master,aux/docs')
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -84,7 +84,7 @@ jobs:
 
     - name: Deploy to GH Pages (next)
       if: >-
-        contains(['master', 'aux/docs'], github.ref_name)
+        contains(github.ref_name, 'master,aux/docs')
       uses: peaceiris/actions-gh-pages@v3s
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
