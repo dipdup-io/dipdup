@@ -31,7 +31,7 @@ test:           ## Run test suite
 
 docs:           ## Build docs
 	cd docs
-	poetry run make lint orphans docs
+	poetry run make docs
 
 homepage:       ## Build homepage
 	cd docs
