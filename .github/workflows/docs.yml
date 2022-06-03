@@ -7,6 +7,8 @@ on:
     branches:
       - aux/docs
       - master
+    paths:
+      - 'docs/**'
 
 jobs:
   homepage:
