@@ -82,7 +82,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/dist/docs
         destination_dir: docs
-        cname: docs.dipdup.net
+        keep_files: true
 
     - name: Deploy to GH Pages (next)
       if: startsWith(github.ref, 'refs/heads')
@@ -91,4 +91,4 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/dist/docs
         destination_dir: docs-next
-        cname: docs-next.dipdup.net
+        keep_files: true
