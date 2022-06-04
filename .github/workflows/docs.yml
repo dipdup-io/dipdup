@@ -82,7 +82,6 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/dist/docs
         destination_dir: docs
-        keep_files: true
 
     - name: Deploy to GH Pages (next)
       if: startsWith(github.ref, 'refs/heads')
@@ -91,4 +90,3 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/dist/docs
         destination_dir: docs-next
-        keep_files: true
