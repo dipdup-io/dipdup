@@ -14,7 +14,7 @@ DipDup is tightly coupled with [TzKT API](http://api.tzkt.io/) but can generally
 
 DipDup offers PostgreSQL + Hasura GraphQL Engine combo out-of-the-box to expose indexed data via REST and GraphQL with minimal configuration. However, you can use any database and API engine (e.g., write your own API backend).
 
-![Default DipDup setup and data flow](../.gitbook/assets/dipdup.svg)
+![Default DipDup setup and data flow](../assets/dipdup.svg)
 
 ## How it works
 
