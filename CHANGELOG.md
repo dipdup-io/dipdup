@@ -1,6 +1,8 @@
 # Changelog
 
-## [unreleased]
+## 5.1.5 - 2022-06-05
+
+### Fixed
 
 * config: Fixed crash when rollback hook is about to be called.
 
