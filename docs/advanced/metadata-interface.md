@@ -115,4 +115,4 @@ TzKT can be configured to subscribe to one or multiple DipDup metadata sources, 
 * Tezos Domains metadata indexer [Github](https://github.com/dipdup-net/tezos-domains) | [Playground](https://dipdup.net/sandbox.html?service=domains)
 * Ubisoft Quartz metadata indexer [Github](https://github.com/dipdup-net/quartz-metadata) | [Playground](https://dipdup.net/sandbox.html?service=quartz)
 
-![TzKT token metadata flow](../.gitbook/assets/metadata_interface.svg)
+![TzKT token metadata flow](../assets/metadata_interface.svg)
