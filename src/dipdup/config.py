@@ -1234,7 +1234,7 @@ class DipDupConfig:
         """Check if package has `on_index_rollback` hook"""
         new_hook = is_importable(f'{self.package}.hooks.on_index_rollback', 'on_index_rollback')
         old_hook = is_importable(f'{self.package}.hooks.on_rollback', 'on_rollback')
-        if new_hook and new_hook:
+        if new_hook and old_hook:
             raise ConflictingHooksError('on_rollback', 'on_index_rollback')
         elif not new_hook and not old_hook:
             raise InitializationRequiredError('none of `on_rollback` or `on_index_rollback` hooks found')
