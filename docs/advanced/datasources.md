@@ -6,8 +6,8 @@ Datasources are DipDup connectors to various APIs. TzKT data is used for indexin
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | Callback context (via `ctx.datasources`) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
 | DipDup index | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `dipdup-mempool` service | ✅\* | ✅\* | ❌ | ❌ | ❌ | ❌ |
-| `dipdup-metadata` service | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `mempool` service | ✅\* | ✅\* | ❌ | ❌ | ❌ | ❌ |
+| `metadata` service | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 \* - required
 
