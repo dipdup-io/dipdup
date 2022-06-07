@@ -135,8 +135,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="defining-models"><a class="header" href="#defining-models">Defining models</a></h1>
-<p>DipDup uses Tortoise ORM library to cover database operations. During initialization DipDup generates <code>models.py</code> file on the top level of the package that will contain all the database models. The name and location of this file cannot be changed.</p>
-<p>Typical <code>models.py</code> file looks like the following:</p>
+<p>DipDup uses the Tortoise ORM library to cover database operations. During initialization, DipDup generates a <code>models.py</code> file on the top level of the package that will contain all database models. The name and location of this file cannot be changed.</p>
+<p>A typical <code>models.py</code> file looks like the following:</p>
 <pre><code class="language-python">from tortoise import Tortoise, fields
 from tortoise.models import Model
 
@@ -150,8 +150,8 @@ class Event(Model):
 <h2 id="limitations"><a class="header" href="#limitations">Limitations</a></h2>
 <p>There are some limitations introduced to make Hasura GraphQL integration easier.</p>
 <ul>
-<li>Table names must be in snake_case</li>
-<li>Model fields must be in snake_case</li>
+<li>Table names must be in <code>snake_case</code></li>
+<li>Model fields must be in <code>snake_case</code></li>
 <li>Model fields must differ from table name</li>
 </ul>
 <blockquote>

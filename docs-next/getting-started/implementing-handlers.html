@@ -136,7 +136,7 @@
                     <main>
                         <h1 id="implementing-handlers"><a class="header" href="#implementing-handlers">Implementing handlers</a></h1>
 <p>DipDup generates a separate file with a callback stub for each handler in every index specified in the configuration file.</p>
-<p>In case of <code>transaction</code> handler, callback method signature is the following:</p>
+<p>In the case of the <code>transaction</code> handler, the callback method signature is the following:</p>
 <pre><code class="language-python">from &lt;package&gt;.types.&lt;typename&gt;.parameter.&lt;entrypoint_1&gt; import EntryPoint1Parameter
 from &lt;package&gt;.types.&lt;typename&gt;.parameter.&lt;entrypoint_n&gt; import EntryPointNParameter
 from &lt;package&gt;.types.&lt;typename&gt;.storage import TypeNameStorage
@@ -151,11 +151,11 @@ async def on_transaction(
 </code></pre>
 <p>where:</p>
 <ul>
-<li><code>entrypoint_1 ... entrypoint_n</code> are items from the according handler pattern.</li>
+<li><code>entrypoint_1 ... entrypoint_n</code> are items from the according to handler pattern.</li>
 <li><code>ctx: HandlerContext</code> provides useful helpers and contains an internal state (see ).</li>
-<li><code>Transaction</code> contains transaction typed parameter and storage, plus other fieds.</li>
+<li><code>Transaction</code> contains transaction typed parameter and storage, plus other fields.</li>
 </ul>
-<p>For the <em>origination</em> case the handler signature will look similar:</p>
+<p>For the <em>origination</em> case, the handler signature will look similar:</p>
 <pre><code class="language-python">from &lt;package&gt;.types.&lt;typename&gt;.storage import TypeNameStorage
 
 
@@ -165,7 +165,7 @@ async def on_origination(
 )
 </code></pre>
 <p>where <code>Origination</code> contains origination script, initial storage <strong>(typed)</strong>, amount, delegate, etc.</p>
-<p><em>Big map</em> update handler will look like the following:</p>
+<p>A <em>Big_map</em> update handler will look like the following:</p>
 <pre><code class="language-python">from &lt;package&gt;.types.&lt;typename&gt;.big_map.&lt;path&gt;_key import PathKey
 from &lt;package&gt;.types.&lt;typename&gt;.big_map.&lt;path&gt;_value import PathValue
 
@@ -175,18 +175,18 @@ async def on_update(
     update: BigMapDiff[PathKey, PathValue],
 )
 </code></pre>
-<p>where <code>BigMapDiff</code> contains action (allocate, update, or remove) and nullable key and value <strong>(typed).</strong></p>
+<p><code>BigMapDiff</code> contains action (allocate, update, or remove), nullable key and value (typed).</p>
 <p>You can safely change argument names (e.g., in case of collisions).</p>
 <!--
 TODO: Rewrite
 
 > 💡 **TIP**
 >
-> If you use index templates, your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same `typename` and raises an error otherwise
+> If you use index templates, your callback methods will be reused for potentially different contract addresses. DipDup checks that all those contracts have the same `typename` and raise an error otherwise.
 -->
 <h2 id="naming-conventions"><a class="header" href="#naming-conventions">Naming conventions</a></h2>
 <p>Python language requires all module and function names in snake case and all class names in pascal case.</p>
-<p>Typical imports section of big_map handler callback looks like this:</p>
+<p>A typical imports section of <code>big_map</code> handler callback looks like this:</p>
 <pre><code class="language-python">from &lt;package&gt;.types.&lt;typename&gt;.storage import TypeNameStorage
 from &lt;package&gt;.types.&lt;typename&gt;.parameter.&lt;entrypoint&gt; import EntryPointParameter
 from &lt;package&gt;.types.&lt;typename&gt;.big_map.&lt;path&gt;_key import PathKey
