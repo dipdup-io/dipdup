@@ -932,7 +932,7 @@ class TzktDatasource(IndexDatasource):
         await self.emit_connected()
 
     async def _on_disconnected(self) -> None:
-        self._logger.info('Realtime connection lost')
+        self._logger.info('Realtime connection lost, resetting subscriptions')
         self._subscriptions.reset()
         await self.emit_disconnected()
 
