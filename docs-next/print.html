@@ -167,22 +167,22 @@
 <p><strong>Want to contribute?</strong> See <a href="https://github.com/dipdup-net/dipdup-py/tree/master/CONTRIBUTING.md">Contribution Guide</a>.</p>
 </li>
 <li>
-<p><strong>Have a question?</strong> Contact us at <a href="https://discord.com/invite/RcPGSdcVSx">Discord</a>, <a href="https://t.me/baking_bad_chat">Telegram</a> or <a href="https://tezos-dev.slack.com/archives/CV5NX7F2L">Slack</a>!</p>
+<p><strong>Have a question?</strong> Contact us on [Discord, <a href="https://t.me/baking_bad_chat">Telegram</a>, or <a href="https://tezos-dev.slack.com/archives/CV5NX7F2L">Slack</a>!</p>
 </li>
 </ul>
-<p>This project is maintained by <a href="https://baking-bad.org/">Baking Bad</a> team.<br />
+<p>This project is maintained by <a href="https://baking-bad.org/">Baking Bad</a> team.
 Development is supported by <a href="https://tezos.foundation/">Tezos Foundation</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="quickstart"><a class="header" href="#quickstart">Quickstart</a></h1>
 <p>This page will guide you through the steps to get your first selective indexer up and running in a few minutes without getting too deep into the details.</p>
-<p>Let's create an indexer for <a href="https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/">tzBTC FA1.2 token contract</a>. Our goal is to save all token transfers to the database then calculate some statistics of its' holders' activity.</p>
+<p>Let's create an indexer for the <a href="https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/">tzBTC FA1.2 token contract</a>. Our goal is to save all token transfers to the database and then calculate some statistics of its holders' activity.</p>
 <p>A Linux environment with Python 3.10+ installed is required to use DipDup.</p>
 <h2 id="create-a-new-project"><a class="header" href="#create-a-new-project">Create a new project</a></h2>
 <h3 id="from-template"><a class="header" href="#from-template">From template</a></h3>
 <p>Cookiecutter is a cool <code>jinja2</code> wrapper to initialize hello-world templates of various frameworks and toolkits interactively. Install <code>python-cookiecutter</code> package systemwide, then call:</p>
-<pre><code class="language-shell">cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
+<pre><code class="language-shell">$ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 </code></pre>
 <h3 id="from-scratch"><a class="header" href="#from-scratch">From scratch</a></h3>
-<p>You need <code>poetry</code> package manager installed.</p>
+<p>You need the <code>poetry</code> package manager installed.</p>
 <pre><code class="language-shell">poetry init -n
 poetry add dipdup
 poetry shell
@@ -270,7 +270,7 @@ indexes:
         │   └── transfer.py
         └── storage.py
 </code></pre>
-<p>That's a lot of files and directories! But don't worry, in this guide, we will need only <code>models.py</code> and <code>handlers</code> modules.</p>
+<p>That's a lot of files and directories! But don't worry, we will need only <code>models.py</code> and <code>handlers</code> modules in this guide.</p>
 <blockquote>
 <p>🤓 <strong>SEE ALSO</strong></p>
 <ul>
@@ -287,7 +287,7 @@ indexes:
 <li><code>tx_count</code> — number of transfers/mints</li>
 <li><code>last_seen</code> — time of the last transfer/mint</li>
 </ul>
-<p>Put the following content in <code>models.py</code> file:</p>
+<p>Put the following content in the <code>models.py</code> file:</p>
 <pre><code class="language-python">from tortoise import Model, fields
 
 
@@ -308,7 +308,7 @@ class Holder(Model):
 </blockquote>
 <h2 id="implement-handlers"><a class="header" href="#implement-handlers">Implement handlers</a></h2>
 <p>Everything's ready to implement an actual indexer logic.</p>
-<p>Our task is to index all the balance updates, so we'll start with a helper method to handle them. Create a file named <code>on_balance_update.py</code> in <code>handlers</code> package with the following content:</p>
+<p>Our task is to index all the balance updates, so we'll start with a helper method to handle them. Create a file named <code>on_balance_update.py</code> in the <code>handlers</code> package with the following content:</p>
 <pre><code class="language-python">from decimal import Decimal
 import demo_tzbtc.models as models
 
@@ -325,7 +325,7 @@ async def on_balance_update(
     assert holder.balance &gt;= 0, address
     await holder.save()
 </code></pre>
-<p>Three methods of tzBTC contract can alter token balances — <code>transfer</code>, <code>mint</code> and <code>burn</code>. The last one is omitted in this tutorial for simplicity. Edit corresponding handlers to call <code>on_balance_update</code> method with data from matched operations:</p>
+<p>Three methods of tzBTC contract can alter token balances — <code>transfer</code>, <code>mint</code>, and <code>burn</code>. The last one is omitted in this tutorial for simplicity. Edit corresponding handlers to call the <code>on_balance_update</code> method with data from matched operations:</p>
 <p><code>on_transfer.py</code></p>
 <pre><code class="language-python">from typing import Optional
 from decimal import Decimal
@@ -393,7 +393,7 @@ async def on_mint(
 <h2 id="run-your-indexer"><a class="header" href="#run-your-indexer">Run your indexer</a></h2>
 <pre><code class="language-shell">dipdup run
 </code></pre>
-<p>DipDup will fetch all the historical data then switch to realtime updates. Your application data has been successfully indexed!</p>
+<p>DipDup will fetch all the historical data and then switch to realtime updates. Your application data has been successfully indexed!</p>
 <blockquote>
 <p>🤓 <strong>SEE ALSO</strong></p>
 <ul>
