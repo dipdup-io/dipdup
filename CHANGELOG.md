@@ -1,5 +1,15 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+* config: Added `logging` config field.
+
+### Deprecated
+
+* cli: `--logging-config` option is deprecated.
+
 ## 5.1.5 - 2022-06-05
 
 ### Fixed

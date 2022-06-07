@@ -171,3 +171,5 @@ indexes:
       token_contract: hdao_token_mainnet
       symbol: hDAO
       decimals: 6
+
+logging: quiet

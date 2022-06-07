@@ -30,8 +30,6 @@ class TestDemos:
         subprocess.run(
             [
                 'dipdup',
-                '-l',
-                'warning.yml',
                 '-c',
                 join(dirname(__file__), config),
                 'run',
