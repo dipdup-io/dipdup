@@ -1,0 +1,34 @@
+name: Homepage
+concurrency: ci-${{ github.ref }}
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs/**'
+
+jobs:
+  homepage:
+    name: Homepage
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Nodejs and yarn
+      uses: actions/setup-node@v1
+      with:
+        node-version: '11.x'
+
+    - name: Build homepage
+      run: make homepage
+
+    - name: Deploy to GH Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/dist
+        cname: dipdup.net
+        keep_files: true
