@@ -5,7 +5,7 @@ on:
     tags:
       - "*.*.*"
     branches:
-      - aux/docs
+      - docs/finish-migration
       - master
     paths:
       - 'docs/**'
