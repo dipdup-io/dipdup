@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Fixed
+
+* cli: Commands with `--help` argument are no longer require a working DipDup config.
+
 ## 5.1.5 - 2022-06-05
 
 ### Fixed

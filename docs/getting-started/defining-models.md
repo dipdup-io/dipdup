@@ -1,4 +1,5 @@
 # Defining models
+
 DipDup uses the Tortoise ORM library to cover database operations. During initialization, DipDup generates a `models.py` file on the top level of the package that will contain all database models. The name and location of this file cannot be changed.
 
 A typical `models.py` file looks like the following:

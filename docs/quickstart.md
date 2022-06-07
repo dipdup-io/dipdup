@@ -9,10 +9,11 @@ A Linux environment with Python 3.10+ installed is required to use DipDup.
 ## Create a new project
 
 ### From template
+
 Cookiecutter is a cool `jinja2` wrapper to initialize hello-world templates of various frameworks and toolkits interactively. Install `python-cookiecutter` package systemwide, then call:
 
 ```shell
-$ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
+cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 ```
 
 ### From scratch

@@ -154,6 +154,10 @@ async def _check_version() -> None:
 @click.pass_context
 @cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
+    # NOTE: Workaround for subcommands
+    if '--help' in sys.argv:
+        return
+
     # NOTE: Search in current workdir, fallback to builtin configs
     try:
         path = join(os.getcwd(), logging_config)
