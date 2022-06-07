@@ -9,6 +9,7 @@ on:
       - master
     paths:
       - 'docs/**'
+      - '*.md'
 
 jobs:
   homepage:
