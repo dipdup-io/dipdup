@@ -1,13 +1,9 @@
 # Table of contents
 
-* [Overview](README.md)
-* [Release notes](release-notes/README.md)
-  * [Changelog](CHANGELOG.md)
-  * [5.1.0](release-notes/5.1.0.md)
-  * [5.0.0](release-notes/5.0.0.md)
-  * [4.2.0](release-notes/4.2.0.md)
-  * [4.1.0](release-notes/4.1.0.md)
-  * [4.0.0](release-notes/4.0.0.md)
+[Overview](README.md)
+
+# User Guide
+
 * [Quickstart](quickstart.md)
 * [Getting started](getting-started/README.md)
   * [Installation](getting-started/installation.md)
@@ -64,6 +60,9 @@
 * [Services (plugins)](services/README.md)
   * [mempool](services/mempool.md)
   * [metadata](services/metadata.md)
+
+# Reference Guide
+
 * [Config file reference](config/README.md)
   * [Full reference](config/reference.md)
   * [advanced](config/advanced.md)
@@ -97,3 +96,13 @@
   * [schema init](cli/schema-init.md)
   * [schema wipe](cli/schema-wipe.md)
   * [status](cli/status.md)
+
+# What's New
+
+* [Changelog](CHANGELOG.md)
+* [Release notes](release-notes/README.md)
+  * [5.1.0](release-notes/5.1.0.md)
+  * [5.0.0](release-notes/5.0.0.md)
+  * [4.2.0](release-notes/4.2.0.md)
+  * [4.1.0](release-notes/4.1.0.md)
+  * [4.0.0](release-notes/4.0.0.md)
