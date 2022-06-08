@@ -4,7 +4,11 @@
 
 ### Fixed
 
-* cli: Commands with `--help` argument are no longer require a working DipDup config.
+* cli: Commands with `--help` argument no longer require a working DipDup config.
+
+### Other
+
+* docs: Migrate docs from GitBook to mdbook.
 
 ## 5.1.5 - 2022-06-05
 
