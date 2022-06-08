@@ -1,5 +1,11 @@
 # Changelog
 
+## [unreleased]
+
+### Performance
+
+* cli: Lazy import dependencies to speed up startup.
+
 ## 5.1.5 - 2022-06-05
 
 ### Fixed
