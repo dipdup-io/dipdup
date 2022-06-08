@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dipdup"
 description = "Python SDK for developing indexers of Tezos smart contracts inspired by The Graph"
-version = "5.1.4"
+version = "5.1.5"
 license = "MIT"
 authors = [
     "Lev Gorodetskiy <github@droserasprout.space>",
@@ -59,7 +59,7 @@ pytest = "^7.1.2"
 pytest-cov = "^3.0.0"
 pytest-xdist = "^2.5.0"
 Sphinx = "^4.5.0"
-sphinx-click = "^4.0.1"
+sphinx-click = "^4.1.0"
 sphinx-markdown-builder = "^0.5.5"
 testcontainers = "^3.4.2"
 types-pytz = "^2021.1.2"

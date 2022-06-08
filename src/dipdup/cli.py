@@ -146,7 +146,7 @@ async def _check_version() -> None:
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
 
-@click.group(help='Docs: https://docs.dipdup.net', context_settings={'max_content_width': 120})
+@click.group(help='Docs: https://dipdup.net/docs', context_settings={'max_content_width': 120})
 @click.version_option(__version__)
 @click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
 @click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file with KEY=value strings', default=[])

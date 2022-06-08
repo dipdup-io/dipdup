@@ -84,7 +84,7 @@ class ConfigurationError(DipDupError):
         return f"""
             {self.msg}
 
-            DipDup config reference: https://docs.dipdup.net/config
+            DipDup config reference: https://dipdup.net/docs/config
         """
 
 
@@ -102,7 +102,7 @@ class DatabaseConfigurationError(ConfigurationError):
             Table: `{self.model._meta.db_table}`
 
             Tortoise ORM examples: https://tortoise-orm.readthedocs.io/en/latest/examples.html
-            DipDup config reference: https://docs.dipdup.net/config/database
+            DipDup config reference: https://dipdup.net/docs/config/database
         """
 
 
@@ -133,7 +133,7 @@ class MigrationRequiredError(DipDupError):
               1. Run `dipdup migrate`.
               2. Review and commit changes.
 
-            See https://docs.dipdup.net/release-notes for more information. {reindex}
+            See https://dipdup.net/docs/release-notes for more information. {reindex}
         """
 
 
@@ -159,7 +159,7 @@ class ReindexingRequiredError(DipDupError):
               * Eliminate the cause of reindexing and run `dipdup schema approve`.
               * Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
-            See https://docs.dipdup.net/advanced/reindexing for more information.
+            See https://dipdup.net/docs/advanced/reindexing for more information.
         """.format(
             reason=self.reason.value,
             context=context,
@@ -329,7 +329,7 @@ class HasuraError(DipDupError):
 
             Check out Hasura logs for more information.
 
-            GraphQL integration docs: https://docs.dipdup.net/graphql/
+            GraphQL integration docs: https://dipdup.net/docs/graphql/
         """
 
 
@@ -349,5 +349,5 @@ class ConflictingHooksError(DipDupError):
               * Follow the docs to migrate to the `{self.new}` hook, then remove `{self.old}` hook from the project.
               * Remove `{self.new}` hook from the project to preserve current behavior.
 
-            Release notes: https://docs.dipdup.net/release-notes/
+            Release notes: https://dipdup.net/docs/release-notes/
         """

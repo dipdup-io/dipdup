@@ -1,5 +1,12 @@
 name: Test
-on: push
+on:
+  push:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - "Makefile"
 
 jobs:
   test:
