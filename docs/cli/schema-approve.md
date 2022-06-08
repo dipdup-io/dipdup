@@ -3,10 +3,8 @@
 Continue to use existing schema after reindexing was triggered.
 
 ```shell
-dipdup schema approve [--hashes]
+dipdup schema approve
 ```
-
-Add `--hashes` flag to recalculate all schema and config hashes.
 
 See [5.3. Reindexing](../advanced/reindexing.md) for details.
 
