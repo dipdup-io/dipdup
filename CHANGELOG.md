@@ -5,6 +5,7 @@
 ### Fixed
 
 * cli: Commands with `--help` option no longer require a working DipDup config.
+* index: Fixed crash with `RuntimeError` after continuous realtime connection loss.
 
 ### Performance
 
