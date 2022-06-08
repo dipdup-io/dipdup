@@ -4,11 +4,16 @@
 
 ### Fixed
 
+* cli: Commands with `--help` option no longer require a working DipDup config.
 * index: Fixed crash with `RuntimeError` after continuous realtime connection loss.
 
 ### Performance
 
 * cli: Lazy import dependencies to speed up startup.
+
+### Other
+
+* docs: Migrate docs from GitBook to mdbook.
 
 ## 5.1.5 - 2022-06-05
 
