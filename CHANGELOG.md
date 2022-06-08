@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Deprecated
+
+* cli: All `run` command options are deprecated. Use the `advanced` section of the config.
+
 ### Performance
 
 * cli: Lazy import dependencies to speed up startup.
