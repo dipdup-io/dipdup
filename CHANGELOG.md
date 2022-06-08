@@ -2,6 +2,18 @@
 
 ## [unreleased]
 
+### Added
+
+* context: Added `execute_sql_query` method to run queries from `<project>/sql` directory.
+
+### Fixed
+
+* context: Fixed `execute_sql_scripts` method when the path is a file.
+
+### Deprecated
+
+* context: `execute_sql` is deprecated, use `execute_sql_scripts` instead.
+
 ### Performance
 
 * cli: Lazy import dependencies to speed up startup.

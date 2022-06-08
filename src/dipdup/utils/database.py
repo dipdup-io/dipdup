@@ -19,6 +19,7 @@ from typing import Type
 from typing import Union
 
 import sqlparse  # type: ignore
+from genericpath import isdir
 from tortoise import Model
 from tortoise import ModuleType
 from tortoise import Tortoise
@@ -30,6 +31,7 @@ from tortoise.fields import DecimalField
 from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
 
+from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DatabaseConfigurationError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
@@ -140,28 +142,51 @@ async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
     await conn.execute_script(_truncate_schema_sql)
 
 
-async def execute_sql_scripts(conn: BaseDBAsyncClient, path: str) -> None:
-    for file in iter_files(path, '.sql'):
+async def execute_sql_scripts(
+    conn: BaseDBAsyncClient,
+    path: str,
+    *args: Any,
+    **kwargs: Any,
+) -> None:
+    for file in iter_files(path, ext='.sql'):
         _logger.info('Executing `%s`', file.name)
         sql = file.read()
+        # NOTE: Dangerous, but acceptable
+        sql = sql.format(*args, **kwargs)
         for statement in sqlparse.split(sql):
             # NOTE: Ignore empty statements
             with suppress(AttributeError):
                 await conn.execute_script(statement)
 
 
-async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
+async def execute_sql_query(
+    conn: BaseDBAsyncClient,
+    path: str,
+    *values: Any,
+) -> Any:
+    if isdir(path):
+        raise ConfigurationError(f'`{path}` is a directory, can\'t apply `*args`')
+
+    for file in iter_files(path, ext='.sql'):
+        _logger.info('Executing `%s`', file.name)
+        sql = file.read()
+        return await conn.execute_query(sql, list(values))
+
+    raise RuntimeError
+
+
+async def generate_schema(conn: BaseDBAsyncClient, name: str, head_status_timeout: int) -> None:
     if isinstance(conn, SqliteClient):
         await Tortoise.generate_schemas()
     elif isinstance(conn, AsyncpgDBClient):
         await create_schema(conn, name)
         await Tortoise.generate_schemas()
 
-        # NOTE: Apply built-in scripts before project ones
-        sql_path = join(dirname(__file__), '..', 'sql', 'on_reindex')
-        await execute_sql_scripts(conn, sql_path)
+        # NOTE: Create a view for monitoring head status
+        sql_path = join(dirname(__file__), '..', 'sql', 'dipdup_head_status.sql')
+        await execute_sql_scripts(conn, sql_path, head_status_timeout)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f'`{conn.__class__.__name__}` is not supported')
 
 
 async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:

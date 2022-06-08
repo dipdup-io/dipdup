@@ -105,7 +105,7 @@ async def on_rollback(
     from_level: int,
     to_level: int,
 ) -> None:
-    await ctx.execute_sql('on_rollback')
+    await ctx.execute_sql_scripts('on_rollback')
 
     database_config: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = ctx.config.database
 

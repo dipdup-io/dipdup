@@ -120,13 +120,14 @@ class FormattedLogger(Logger):
         self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
 
-# TODO: Cache me
 def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
     """Iterate over files in a directory. Or a single file. Sort alphabetically, filter by extension, skip empty files."""
+    if not exists(path) and ext:
+        path += ext
     if not exists(path):
-        return
+        raise FileNotFoundError(path)
     elif isfile(path):
-        paths = iter(path)
+        paths = iter((path,))
     elif isdir(path):
         paths = map(partial(join, path), sorted(listdir(path)))
     else:

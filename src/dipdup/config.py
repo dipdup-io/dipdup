@@ -1169,6 +1169,7 @@ class AdvancedConfig:
     merge_subscriptions: bool = False
     metadata_interface: bool = False
     skip_version_check: bool = False
+    head_status_timeout: int = 3 * 60
 
 
 @dataclass

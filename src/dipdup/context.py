@@ -6,7 +6,6 @@ from contextlib import AsyncExitStack
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
-from os.path import exists
 from os.path import join
 from pprint import pformat
 from typing import Any
@@ -58,6 +57,7 @@ from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils import slowdown
+from dipdup.utils.database import execute_sql_query
 from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import wipe_schema
@@ -151,12 +151,22 @@ class DipDupContext:
         """
         await self.callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
-    async def execute_sql(self, name: str) -> None:
+    async def execute_sql(self, name: str, *args: Any, **kwargs) -> None:
+        await self.execute_sql_scripts(name, *args, **kwargs)
+
+    async def execute_sql_scripts(self, name: str, *args: Any, **kwargs) -> None:
         """Execute SQL script with given name
 
-        :param name: SQL script name within `<project>/sql` directory
+        :param name: SQL script or directory name within `<project>/sql` directory
         """
-        await self.callbacks.execute_sql(self, name)
+        await self.callbacks.execute_sql(self, name, *args, **kwargs)
+
+    async def execute_sql_query(self, name: str, *args: Any) -> Any:
+        """Execute SQL query with given name
+
+        :param name: SQL query name within `<project>/sql` directory
+        """
+        return await self.callbacks.execute_sql_query(self, name, *args)
 
     async def restart(self) -> None:
         """Restart indexer preserving CLI arguments"""
@@ -451,20 +461,34 @@ class CallbackManager:
         else:
             pending_hooks.append(_wrapper())
 
-    async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
+    async def execute_sql(self, ctx: 'DipDupContext', name: str, *args: Any, **kwargs) -> None:
+        self._logger.warning(
+            '`execute_sql` is deprecated and will be removed in the next major version. Use `execute_sql_scripts` instead.'
+        )
+        await self.execute_sql_scripts(ctx, name, *args, **kwargs)
+
+    async def execute_sql_scripts(self, ctx: 'DipDupContext', name: str, *args: Any, **kwargs) -> None:
         """Execute SQL included with project"""
         if not isinstance(ctx.config.database, PostgresDatabaseConfig):
-            self._logger.warning('Skipping SQL hook `%s`: not supported on SQLite', name)
+            self._logger.warning('Skipping SQL script `%s`: not supported on SQLite', name)
             return
 
         subpackages = name.split('.')
         sql_path = join(ctx.config.package_path, 'sql', *subpackages)
-        if not exists(sql_path):
-            raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 
-        # NOTE: SQL hooks are executed on default connection
         connection = _get_connection(None)
-        await execute_sql_scripts(connection, sql_path)
+        await execute_sql_scripts(connection, sql_path, *args, **kwargs)
+
+    async def execute_sql_query(self, ctx: 'DipDupContext', name: str, *values: Any) -> Any:
+        """Execute SQL query"""
+        if not isinstance(ctx.config.database, PostgresDatabaseConfig):
+            raise ConfigurationError('Can\'t execute SQL query: not supported on SQLite')
+
+        subpackages = name.split('.')
+        sql_path = join(ctx.config.package_path, 'sql', *subpackages)
+
+        connection = _get_connection(None)
+        return await execute_sql_query(connection, sql_path, *values)
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:
