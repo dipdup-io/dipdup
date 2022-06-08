@@ -96,6 +96,8 @@ jobs:
       - name: Parse changelog
         id: changelog
         uses: mindsers/changelog-reader-action@v2
+        with:
+          version: ${{ github.ref }}
 
       - name: Publish GitHub release
         id: create_release
