@@ -3287,7 +3287,11 @@ async def on_restart(ctx: HandlerContext) -&gt; None:
 <h2 id="unreleased"><a class="header" href="#unreleased">[unreleased]</a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
-<li>cli: Commands with <code>--help</code> argument no longer require a working DipDup config.</li>
+<li>cli: Commands with <code>--help</code> option no longer require a working DipDup config.</li>
+</ul>
+<h3 id="performance"><a class="header" href="#performance">Performance</a></h3>
+<ul>
+<li>cli: Lazy import dependencies to speed up startup.</li>
 </ul>
 <h3 id="other"><a class="header" href="#other">Other</a></h3>
 <ul>
@@ -3307,7 +3311,7 @@ async def on_restart(ctx: HandlerContext) -&gt; None:
 <li>index: Fixed crash with <code>RuntimeError</code> after continuous realtime connection loss.</li>
 <li>tzkt: Fixed <code>origination</code> subscription missing when <code>merge_subscriptions</code> flag is set.</li>
 </ul>
-<h3 id="performance"><a class="header" href="#performance">Performance</a></h3>
+<h3 id="performance-1"><a class="header" href="#performance-1">Performance</a></h3>
 <ul>
 <li>ci: Decrease the size of generic and <code>-pytezos</code> Docker images by 11% and 16%, respectively.</li>
 </ul>
@@ -3316,7 +3320,7 @@ async def on_restart(ctx: HandlerContext) -&gt; None:
 <ul>
 <li>database: Fixed special characters in password not being URL encoded.</li>
 </ul>
-<h3 id="performance-1"><a class="header" href="#performance-1">Performance</a></h3>
+<h3 id="performance-2"><a class="header" href="#performance-2">Performance</a></h3>
 <ul>
 <li>context: Do not reinitialize config when adding a single index.</li>
 </ul>
@@ -3451,7 +3455,7 @@ async def on_restart(ctx: HandlerContext) -&gt; None:
 <ul>
 <li>bcd: Removed <code>bcd</code> datasource and config section.</li>
 </ul>
-<h3 id="performance-2"><a class="header" href="#performance-2">Performance</a></h3>
+<h3 id="performance-3"><a class="header" href="#performance-3">Performance</a></h3>
 <ul>
 <li>dipdup: Use fast <code>orjson</code> library instead of built-in <code>json</code> where possible.</li>
 </ul>
@@ -3553,7 +3557,7 @@ async def on_restart(ctx: HandlerContext) -&gt; None:
 <ul>
 <li>cli: Unknown exceptions are no longer wrapped with <code>DipDupError</code>.</li>
 </ul>
-<h3 id="performance-3"><a class="header" href="#performance-3">Performance</a></h3>
+<h3 id="performance-4"><a class="header" href="#performance-4">Performance</a></h3>
 <ul>
 <li>hasura: Removed some useless requests.</li>
 </ul>
@@ -3584,7 +3588,7 @@ async def on_restart(ctx: HandlerContext) -&gt; None:
 <li>hasura: Fixed missing relations for models with <code>ManyToManyField</code> fields.</li>
 <li>tzkt: Fixed parsing storage with nested structures.</li>
 </ul>
-<h3 id="performance-4"><a class="header" href="#performance-4">Performance</a></h3>
+<h3 id="performance-5"><a class="header" href="#performance-5">Performance</a></h3>
 <ul>
 <li>dipdup: Minor overall performance improvements.</li>
 </ul>
@@ -3620,7 +3624,7 @@ async def on_restart(ctx: HandlerContext) -&gt; None:
 <li>tzkt: Fixed processing operations with default entrypoint and empty parameter.</li>
 <li>tzkt: Fixed crash while recursively applying bigmap diffs to the storage.</li>
 </ul>
-<h3 id="performance-5"><a class="header" href="#performance-5">Performance</a></h3>
+<h3 id="performance-6"><a class="header" href="#performance-6">Performance</a></h3>
 <ul>
 <li>tzkt: Increased speed of applying bigmap diffs to operation storage.</li>
 </ul>
@@ -3656,7 +3660,7 @@ async def on_restart(ctx: HandlerContext) -&gt; None:
 <li>index: Fixed crash while processing storage of some contracts.</li>
 <li>index: Fixed matching of untyped operations filtered by <code>source</code> field (<a href="https://github.com/pravin-d">@pravin-d</a>).</li>
 </ul>
-<h3 id="performance-6"><a class="header" href="#performance-6">Performance</a></h3>
+<h3 id="performance-7"><a class="header" href="#performance-7">Performance</a></h3>
 <ul>
 <li>index: Checks performed on each iteration of the main DipDup loop are slightly faster now.</li>
 </ul>
@@ -3701,7 +3705,7 @@ async def on_restart(ctx: HandlerContext) -&gt; None:
 <li>cli: <code>run --oneshot</code> option is deprecated and will be removed in the next major release. The oneshot mode applies automatically when <code>last_level</code> field is set in the index config.</li>
 <li>cli: <code>clear-cache</code> command is deprecated and will be removed in the next major release. Use <code>cache clear</code> command instead.</li>
 </ul>
-<h3 id="performance-7"><a class="header" href="#performance-7">Performance</a></h3>
+<h3 id="performance-8"><a class="header" href="#performance-8">Performance</a></h3>
 <ul>
 <li>config: Configuration files are loaded 10x times faster.</li>
 <li>index: Number of operations processed by matcher reduced by 40%-95% depending on the number of addresses and entrypoints used.</li>
@@ -3988,7 +3992,7 @@ async for key_batch in batch_iter:
 <li>cli: Removed dummy <code>schema approve --hashes</code> flag.</li>
 <li>config: Removed dummy <code>advanced.oneshot</code> flag.</li>
 </ul>
-<h3 id="performance-8"><a class="header" href="#performance-8">Performance</a></h3>
+<h3 id="performance-9"><a class="header" href="#performance-9">Performance</a></h3>
 <ul>
 <li>dipdup: Use fast <code>orjson</code> library instead of built-in <code>json</code> where possible.</li>
 </ul>
@@ -4266,7 +4270,7 @@ hooks:
 <ul>
 <li>cli: Removed deprecated <code>run --oneshot</code> argument and <code>clear-cache</code> command.</li>
 </ul>
-<h3 id="performance-9"><a class="header" href="#performance-9">Performance</a></h3>
+<h3 id="performance-10"><a class="header" href="#performance-10">Performance</a></h3>
 <ul>
 <li>config: Configuration files are loaded 10x times faster.</li>
 <li>index: Checks performed on each iteration of the main DipDup loop are slightly faster now.</li>
