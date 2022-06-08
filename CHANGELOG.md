@@ -6,6 +6,10 @@
 
 * cli: Commands with `--help` argument no longer require a working DipDup config.
 
+### Performance
+
+* cli: Lazy import dependencies to speed up startup.
+
 ### Other
 
 * docs: Migrate docs from GitBook to mdbook.

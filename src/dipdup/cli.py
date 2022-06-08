@@ -19,12 +19,7 @@ from typing import cast
 
 import aiohttp
 import asyncclick as click
-import sentry_sdk
 from dotenv import load_dotenv
-from fcache.cache import FileCache  # type: ignore
-from sentry_sdk.integrations.aiohttp import AioHttpIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration
-from tabulate import tabulate
 from tortoise import Tortoise
 from tortoise.utils import get_schema_sql
 
@@ -110,6 +105,11 @@ def _init_sentry(config: DipDupConfig) -> None:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
         level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
+
+    # NOTE: Lazy import to speed up startup
+    import sentry_sdk
+    from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
 
     integrations = [
         AioHttpIntegration(),
@@ -266,6 +266,9 @@ async def status(ctx):
         async for index in Index.filter().order_by('name'):
             table.append((index.name, index.status.value, index.level))
 
+    # NOTE: Lazy import to speed up startup
+    from tabulate import tabulate
+
     echo(tabulate(table, tablefmt='plain'))
 
 
@@ -316,6 +319,9 @@ async def cache(ctx):
 @click.pass_context
 @cli_wrapper
 async def cache_clear(ctx) -> None:
+    # NOTE: Lazy import to speed up startup
+    from fcache.cache import FileCache  # type: ignore
+
     FileCache('dipdup', flag='cs').clear()
 
 
@@ -323,6 +329,9 @@ async def cache_clear(ctx) -> None:
 @click.pass_context
 @cli_wrapper
 async def cache_show(ctx) -> None:
+    # NOTE: Lazy import to speed up startup
+    from fcache.cache import FileCache  # type: ignore
+
     cache = FileCache('dipdup', flag='cs')
     size = subprocess.check_output(['du', '-sh', cache.cache_dir]).split()[0].decode('utf-8')
     echo(f'{cache.cache_dir}: {len(cache)} items, {size}')
