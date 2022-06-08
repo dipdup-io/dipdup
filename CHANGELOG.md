@@ -4,7 +4,7 @@
 
 ### Fixed
 
-* cli: Commands with `--help` argument no longer require a working DipDup config.
+* cli: Commands with `--help` option no longer require a working DipDup config.
 
 ### Performance
 
