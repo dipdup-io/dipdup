@@ -24,8 +24,6 @@ docs:
 	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > cli/reference.md
 	tail -n '+33' _build/html/config-reference.html | head -n '-63' > config/reference.md
 	tail -n '+33' _build/html/context-reference.html | head -n '-63' > advanced/context/reference.md
-	cp ../CHANGELOG.md CHANGELOG.md
-	cp ../README.md README.md
 	mdbook build  --dest-dir=dist/docs
 
 homepage:
