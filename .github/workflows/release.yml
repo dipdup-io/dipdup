@@ -93,10 +93,19 @@ jobs:
           poetry build
           poetry publish
 
+      - name: Parse changelog
+        id: changelog
+        uses: mindsers/changelog-reader-action@v2
+
       - name: Publish GitHub release
-        uses: "marvinpinto/action-automatic-releases@latest"
+        id: create_release
+        uses: actions/create-release@v1
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: false
-
-
+          tag_name: ${{ github.ref }}
+          release_name: ${{ steps.changelog.outputs.version }} - ${{ steps.changelog.outputs.date }}
+          body: |
+            ${{ steps.changelog.outputs.changes }}
+          draft: true
+          prerelease: ${{ steps.changelog.outputs.status == 'prereleased' }}
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
