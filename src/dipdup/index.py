@@ -311,22 +311,36 @@ class OperationIndex(Index):
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
+        self._logger.debug('Processing %s realtime messages from queue', len(self._queue))
+
         while self._queue:
             message = self._queue.popleft()
             messages_left = len(self._queue)
+
+            if not message:
+                raise RuntimeError('Got empty message from realtime queue')
+
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
+
             if isinstance(message, SingleLevelRollback):
-                self._logger.debug('Processing rollback realtime message, %s left in queue', messages_left)
+                # NOTE: To match <= condition, variable is not used anywhere else
+                message_level = message.from_level + 1
+            else:
+                message_level = message[0].operations[0].level
+
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
+            if isinstance(message, SingleLevelRollback):
                 await self._single_level_rollback(message.from_level)
-            elif message:
-                self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
+            else:
                 with ExitStack() as stack:
                     if Metrics.enabled:
                         stack.enter_context(Metrics.measure_level_realtime_duration())
                     await self._process_level_operations(message)
-            else:
-                raise RuntimeError('Got empty message from realtime queue')
+
         else:
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, 0)
@@ -655,6 +669,11 @@ class BigMapIndex(Index):
             self._logger.debug('Processing websocket queue')
         while self._queue:
             big_maps = self._queue.popleft()
+            message_level = big_maps[0].level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
@@ -875,6 +894,11 @@ class HeadIndex(Index):
     async def _process_queue(self) -> None:
         while self._queue:
             head = self._queue.popleft()
+            message_level = head.level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
             self._logger.debug('Processing head realtime message, %s left in queue', len(self._queue))
 
             batch_level = head.level
@@ -991,6 +1015,11 @@ class TokenTransferIndex(Index):
             self._logger.debug('Processing websocket queue')
         while self._queue:
             token_transfers = self._queue.popleft()
+            message_level = token_transfers[0].level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())

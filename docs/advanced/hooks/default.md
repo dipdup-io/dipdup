@@ -2,7 +2,7 @@
 
 Every DipDup project has multiple hooks called default; they fire on system-wide events and, like regular hooks, are not linked to any index. Names of those hooks are reserved; you can't use them in config.
 
-## `on_rollback`
+## `on_index_rollback`
 
 Fires when TzKT datasource has received a chain reorg message which can't be processed automatically.
 

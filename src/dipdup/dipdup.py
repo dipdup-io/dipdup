@@ -218,17 +218,10 @@ class IndexDispatcher:
         for datasource in self._ctx.datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
-            datasource.call_on_disconnected(self._on_disconnected)
             datasource.call_on_head(self._on_head)
             datasource.call_on_operations(self._on_operations)
             datasource.call_on_big_maps(self._on_big_maps)
             datasource.call_on_rollback(self._on_rollback)
-
-    async def _on_disconnected(self) -> None:
-        # NOTE: Invalidate realtime queues; sync level will be reset
-        self._logger.info('Datasource disconnected, dropping realtime queues')
-        for index in self._indexes.values():
-            index._queue.clear()
 
     async def _on_head(self, datasource: IndexDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.

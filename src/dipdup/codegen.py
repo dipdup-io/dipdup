@@ -8,13 +8,13 @@ from os.path import exists
 from os.path import join
 from os.path import splitext
 from shutil import rmtree
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import cast
 
 import orjson as json
-from jinja2 import Template
 
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
@@ -41,7 +41,10 @@ from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 from dipdup.utils import write
 
-_templates: Dict[str, Template] = {}
+if TYPE_CHECKING:
+    from jinja2 import Template
+
+_templates: Dict[str, 'Template'] = {}
 
 
 def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -72,8 +75,11 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
         return schema
 
 
-def load_template(name: str) -> Template:
+def load_template(name: str) -> 'Template':
     """Load template from templates/{name}.j2"""
+    # NOTE: Lazy loading to speed up startup
+    from jinja2 import Template
+
     if name not in _templates:
         with open(join(dirname(__file__), 'templates', name + '.j2'), 'r') as f:
             return Template(f.read())
