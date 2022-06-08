@@ -135,35 +135,35 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="feature-flags"><a class="header" href="#feature-flags">Feature flags</a></h1>
-<p>Feature flags allow users to modify some system-wide tunables that affect behaviour of the whole framework. These options are either experimental or unsuitable for generic configurations.</p>
+<p>Feature flags allow users to modify some system-wide tunables that affect the behavior of the whole framework. These options are either experimental or unsuitable for generic configurations.</p>
 <table><thead><tr><th><code>run</code> command option</th><th>config path</th><th>is stable</th></tr></thead><tbody>
 <tr><td><code>--early-realtime</code></td><td><code>advanced.early_realtime</code></td><td>✅</td></tr>
 <tr><td><code>--merge-subscriptions</code></td><td><code>advanced.merge_subscriptions</code></td><td>✅</td></tr>
 <tr><td><code>--postpone-jobs</code></td><td><code>advanced.postpone_jobs</code></td><td>✅</td></tr>
 <tr><td><code>--metadata-interface</code></td><td><code>advanced.metadata_interface</code></td><td>✅</td></tr>
+<tr><td></td><td><code>advanced.skip-version-check</code></td><td>✅</td></tr>
 </tbody></table>
-<p>Good practice is to use set feature flags in environment-specific config files.</p>
+<p>A good practice is to use set feature flags in environment-specific config files.</p>
 <h2 id="early-realtime"><a class="header" href="#early-realtime">Early realtime</a></h2>
-<p>By default, DipDup enters sync state twice: before and after establishing a realtime connection. This flag allows to start collecting realtime messages while sync is in progress, right after indexes load.</p>
+<p>By default, DipDup enters a sync state twice: before and after establishing a realtime connection. This flag allows starting collecting realtime messages while sync is in progress, right after indexes load.</p>
 <p>Let's consider two scenarios:</p>
 <ol>
 <li>
-<p>Indexing 10 contracts with 10 000 operations each. Initial indexing could take several hours. There is no need to accumulate incoming operations since resync time after establishing a realtime connection depends on contracts number, thus taking a negligible amount of time.</p>
+<p>Indexing 10 contracts with 10 000 operations each. Initial indexing could take several hours. There is no need to accumulate incoming operations since resync time after establishing a realtime connection depends on the contract number, thus taking a negligible amount of time.</p>
 </li>
 <li>
 <p>Indexing 10 000 contracts with 10 operations each. Both initial sync and resync will take a while. But the number of operations received during this time won't affect RAM consumption much.</p>
 </li>
 </ol>
-<p>If you have not strict RAM constraints, it's recommended to enable this flag. faster indexing times and to decrease load on tzkt api.</p>
+<p>If you do not have strict RAM constraints, it's recommended to enable this flag. You'll get faster indexing times and decreased load on TzKT API.</p>
 <h2 id="merge-subscriptions"><a class="header" href="#merge-subscriptions">Merge subscriptions</a></h2>
-<p>Subscribe to all operations/big map diffs during realtime indexing. IncreaseX at the cost of Y.</p>
-<p>size, with early</p>
+<p>Subscribe to all operations/big map diffs during realtime indexing instead of separate channels. This flag helps to avoid the 10.000 subscription limit of TzKT and speed up processing. The downside is an increased RAM consumption during sync, especially if <code>early_realtimm</code> flag is enabled too.</p>
 <h2 id="postpone-jobs"><a class="header" href="#postpone-jobs">Postpone jobs</a></h2>
-<p>Do not start the job scheduler until all indexes are synchronized. <code>on_synchronized</code></p>
-<p>save database iops</p>
+<p>Do not start the job scheduler until all indexes are synchronized. If your jobs perform some calculations that make sense only after indexing is fully finished, this toggle can save you some IOPS.</p>
 <h2 id="metadata-interface"><a class="header" href="#metadata-interface">Metadata interface</a></h2>
-<p>tables created</p>
-<p>w/o flag will be ignored</p>
+<p>Without this flag calling <code>ctx.update_contract_metadata</code> and <code>ctx.update_token_metadata</code> will make no effect. Corresponding internal tables are created on reindex in any way.</p>
+<h2 id="skip-version-check"><a class="header" href="#skip-version-check">Skip version check</a></h2>
+<p>Disables warning about running unstable or out-of-date DipDup version.</p>
 
                     </main>
 

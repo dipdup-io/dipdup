@@ -136,7 +136,7 @@
                     <main>
                         <h1 id="default-hooks"><a class="header" href="#default-hooks">Default hooks</a></h1>
 <p>Every DipDup project has multiple hooks called default; they fire on system-wide events and, like regular hooks, are not linked to any index. Names of those hooks are reserved; you can't use them in config.</p>
-<h2 id="on_rollback"><a class="header" href="#on_rollback"><code>on_rollback</code></a></h2>
+<h2 id="on_index_rollback"><a class="header" href="#on_index_rollback"><code>on_index_rollback</code></a></h2>
 <p>Fires when TzKT datasource has received a chain reorg message which can't be processed automatically.</p>
 <p>If your indexer is stateless, you can just drop DB data saved after <code>to_level</code> and continue indexing. Otherwize, implement more complex logic. By default, this hook triggers full reindexing.</p>
 <h2 id="on_restart"><a class="header" href="#on_restart"><code>on_restart</code></a></h2>
