@@ -22,7 +22,7 @@ where:
 
 * `entrypoint_1 ... entrypoint_n` are items from the according to handler pattern.
 * `ctx: HandlerContext` provides useful helpers and contains an internal state (see ).
-* `Transaction` contains transaction typed parameter and storage, plus other fields.
+* A `Transaction` model contains transaction typed parameter and storage, plus other fields.
 
 For the _origination_ case, the handler signature will look similar:
 
@@ -36,7 +36,7 @@ async def on_origination(
 )
 ```
 
-where `Origination` contains origination script, initial storage **(typed)**, amount, delegate, etc.
+An `Origination` model contains the origination script, initial storage (typed), amount, delegate, etc.
 
 A _Big\_map_ update handler will look like the following:
 

@@ -82,20 +82,8 @@
   * [sentry](config/sentry.md)
   * [spec_version](config/spec_version.md)
   * [templates](config/templates.md)
-* [Command-line reference](cli/README.md)
-  * [Full reference](cli/reference.md)
-  * [cache clear](cli/cache-clear.md)
-  * [cache show](cli/cache-show.md)
-  * [config export](cli/config-export.md)
-  * [hasura configure](cli/hasura-configure.md)
-  * [init](cli/init.md)
-  * [migrate](cli/migrate.md)
+* [Command-line reference](cli/reference.md)
   * [run](cli/run.md)
-  * [schema approve](cli/schema-approve.md)
-  * [schema export](cli/schema-export.md)
-  * [schema init](cli/schema-init.md)
-  * [schema wipe](cli/schema-wipe.md)
-  * [status](cli/status.md)
 
 # What's New
 

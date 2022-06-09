@@ -1,4 +1,4 @@
-
+            
   <section id="dipdup">
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this headline">¶</a></h1>
 <p>Docs: <a class="reference external" href="https://dipdup.net/docs">https://dipdup.net/docs</a></p>
@@ -38,14 +38,14 @@
 </div>
 <section id="dipdup-cache-clear">
 <h3>clear<a class="headerlink" href="#dipdup-cache-clear" title="Permalink to this headline">¶</a></h3>
-<p>Clear cache</p>
+<p>Clear request cache of DipDup datasources.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache clear <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
 <section id="dipdup-cache-show">
 <h3>show<a class="headerlink" href="#dipdup-cache-show" title="Permalink to this headline">¶</a></h3>
-<p>Show cache size information</p>
+<p>Show information about DipDup disk caches.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache show <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
@@ -73,7 +73,7 @@
 </section>
 <section id="dipdup-config-export">
 <h3>export<a class="headerlink" href="#dipdup-config-export" title="Permalink to this headline">¶</a></h3>
-<p>Dump DipDup configuration after resolving templates</p>
+<p>Print config after resolving all links and templates.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="nb">export</span> <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
@@ -81,7 +81,7 @@
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-config-export-unsafe">
 <span class="sig-name descname"><span class="pre">--unsafe</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-config-export-unsafe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resolve environment variables; output may contain secrets</p>
+<dd><p>Resolve environment variables. Otherwise, default values from config will be used. Avoid sharing output with 3rd-parties when this flag set - it may contain secrets.</p>
 </dd></dl>
 
 </section>
@@ -188,7 +188,8 @@
 </section>
 <section id="dipdup-schema-init">
 <h3>init<a class="headerlink" href="#dipdup-schema-init" title="Permalink to this headline">¶</a></h3>
-<p>Initialize database schema and trigger <cite>on_reindex</cite></p>
+<p>Prepare a database for running DipDip.</p>
+<p>This command creates tables based on your models, then calls <cite>sql/on_reindex</cite> to finish preparation - the same things DipDup does when run on a clean database.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema init <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
@@ -216,9 +217,11 @@
 </section>
 <section id="dipdup-status">
 <h2>status<a class="headerlink" href="#dipdup-status" title="Permalink to this headline">¶</a></h2>
-<p>Show current status of indexes in database</p>
+<p>Show the current status of indexes in the database.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup status <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
 </section>
+
+
