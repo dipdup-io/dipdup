@@ -78,7 +78,7 @@
   * [sentry](config/sentry.md)
   * [spec_version](config/spec_version.md)
   * [templates](config/templates.md)
-* [Command-line reference](cli/reference.md)
+* [Command-line reference](cli-reference.md)
 
 # What's New
 
