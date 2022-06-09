@@ -167,7 +167,7 @@ async def simulate_reorg(
 
     if level:
         await ctx.fire_hook(
-            "on_rollback",
+            "on_index_rollback",
             wait=True
             index=None,  # type: ignore
             from_level=level,
