@@ -79,3 +79,41 @@ See [12.4. datasources](../../config/datasources.md) for details.
 > This page or paragraph is yet to be written. Come back later.
 
 DipDup is fully compatible with [TimescaleDB](https://docs.timescale.com/). Try its "continuous aggregates" feature, especially if dealing with market data like DEX quotes.
+
+## Cache commonly used models
+
+If your indexer contains models having few fields and used primarily on relations, you can cache such models during synchronization.
+
+Example code:
+
+```python
+class Trader(Model):
+    address = fields.CharField(36, pk=True)
+
+
+class TraderCache:
+    def __init__(self, size: int = 1000) -> None:
+        self._size = size
+        self._traders: OrderedDict[str, Trader] = OrderedDict()
+
+    async def get(self, address: str) -> Trader:
+        if address not in self._traders:
+            # NOTE: Already created on origination
+            self._traders[address], _ = await Trader.get_or_create(address=address)
+              if len(self._traders) > self._size:
+                self._traders.popitem(last=False)
+
+        return self._traders[address]
+
+trader_cache = TraderCache()
+```
+
+Use `trader_cache.get` in handlers. After sync is complete, you can clear this cache to free some RAM:
+
+```python
+async def on_synchronized(
+    ctx: HookContext,
+) -> None:
+    ...
+    models.trader_cache.clear()
+```

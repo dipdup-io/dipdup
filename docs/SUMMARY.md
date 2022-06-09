@@ -49,7 +49,6 @@
   * [Processing offchain data](cookbook/offchain-data.md)
   * [Reusing typename for different contracts](cookbook/reusing-typenames.md)
   * [Synchronizing multiple handlers/hooks](cookbook/sync-callbacks.md)
-  * [Caching models](cookbook/caching-models.md)
   * [Multiprocessing](cookbook/multiprocessing.md)
 * [Examples](examples/README.md)
   * [Demo projects](examples/demo-projects.md)
