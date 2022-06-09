@@ -80,7 +80,7 @@
   * [templates](config/templates.md)
 * [Command-line reference](cli/README.md)
   * [Full reference](cli/reference.md)
-  * [run](cli/run.md)
+  * [init](cli/init.md)
 
 # What's New
 

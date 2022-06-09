@@ -235,7 +235,10 @@ async def run(
     merge_subscriptions: bool,
     metadata_interface: bool,
 ) -> None:
-    """Run indexer."""
+    """Run indexer.
+    
+    Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
+    """
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     config.advanced.postpone_jobs |= postpone_jobs
