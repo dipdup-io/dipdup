@@ -47,6 +47,8 @@ from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
+DEFAULT_CONFIG_NAME = 'dipdup.yml'
+
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
 
@@ -148,13 +150,25 @@ async def _check_version() -> None:
 
 @click.group(context_settings={'max_content_width': 120})
 @click.version_option(__version__)
-@click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
-@click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file with KEY=value strings', default=[])
-@click.option('--logging-config', '-l', type=str, help='Path to Python logging YAML config', default='logging.yml')
+@click.option(
+    '--config',
+    '-c',
+    type=str,
+    multiple=True,
+    help=f'A path to DipDup project config (default: {DEFAULT_CONFIG_NAME}).',
+    default=[DEFAULT_CONFIG_NAME],
+)
+@click.option('--env-file', '-e', type=str, multiple=True, help='A path to .env file containing `KEY=value` strings.', default=[])
+@click.option('--logging-config', '-l', type=str, help='A path to Python logging config in YAML format.', default='logging.yml')
 @click.pass_context
 @cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
-    """Docs: https://dipdup.net/docs"""
+    """Manage and run DipDup indexers.
+
+    Full docs: https://dipdup.net/docs
+
+    Report an issue: https://github.com/dipdup-net/dipdup-py/issues
+    """
     # NOTE: Workaround for subcommands
     if '--help' in sys.argv:
         return
@@ -241,7 +255,7 @@ async def run(
 @click.pass_context
 @cli_wrapper
 async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
-    """'Generate project tree and missing callbacks and types."""
+    """Generate project tree and missing callbacks and types."""
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
     await dipdup.init(overwrite_types, keep_schemas)
@@ -254,9 +268,7 @@ async def migrate(ctx):
     """
     Migrate project to the new spec version.
 
-    When a DipDup release introduces changes that require your attention, `spec_version` config field is bumped. If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`.
-
-    Review and commit changes after running this command.
+    If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`. Review and commit changes after running it.
     """
     config: DipDupConfig = ctx.obj.config
     migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
@@ -309,7 +321,7 @@ async def config_export(ctx, unsafe: bool) -> None:
 
 
 @config.command(name='env')
-@click.option('--file', '-f', type=str, default=None, help='Output to file instead of stdout')
+@click.option('--file', '-f', type=str, default=None, help='Output to file instead of stdout.')
 @click.pass_context
 @cli_wrapper
 async def config_env(ctx, file: Optional[str]) -> None:

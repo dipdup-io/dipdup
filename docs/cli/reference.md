@@ -1,7 +1,9 @@
 
   <section id="dipdup">
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this headline">¶</a></h1>
-<p>Docs: <a class="reference external" href="https://dipdup.net/docs">https://dipdup.net/docs</a></p>
+<p>Manage and run DipDup indexers.</p>
+<p>Full docs: <a class="reference external" href="https://dipdup.net/docs">https://dipdup.net/docs</a></p>
+<p>Report an issue: <a class="reference external" href="https://github.com/dipdup-net/dipdup-py/issues">https://github.com/dipdup-net/dipdup-py/issues</a></p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
@@ -15,19 +17,19 @@
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-c">
 <span id="cmdoption-dipdup-config"></span><span class="sig-name descname"><span class="pre">-c</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;config&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-c" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to dipdup YAML config</p>
+<dd><p>A path to DipDup project config (default: dipdup.yml).</p>
 </dd></dl>
 
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-e">
 <span id="cmdoption-dipdup-env-file"></span><span class="sig-name descname"><span class="pre">-e</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--env-file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;env_file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-e" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to .env file with KEY=value strings</p>
+<dd><p>A path to .env file containing <cite>KEY=value</cite> strings.</p>
 </dd></dl>
 
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-l">
 <span id="cmdoption-dipdup-logging-config"></span><span class="sig-name descname"><span class="pre">-l</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--logging-config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;logging_config&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-l" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to Python logging YAML config</p>
+<dd><p>A path to Python logging config in YAML format.</p>
 </dd></dl>
 
 <section id="dipdup-cache">
@@ -68,7 +70,7 @@
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-config-env-f">
 <span id="cmdoption-dipdup-config-env-file"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-config-env-f" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output to file instead of stdout</p>
+<dd><p>Output to file instead of stdout.</p>
 </dd></dl>
 
 </section>
@@ -111,7 +113,7 @@
 </section>
 <section id="dipdup-init">
 <h2>init<a class="headerlink" href="#dipdup-init" title="Permalink to this headline">¶</a></h2>
-<p>‘Generate project tree and missing callbacks and types.</p>
+<p>Generate project tree and missing callbacks and types.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup init <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
@@ -132,8 +134,7 @@
 <section id="dipdup-migrate">
 <h2>migrate<a class="headerlink" href="#dipdup-migrate" title="Permalink to this headline">¶</a></h2>
 <p>Migrate project to the new spec version.</p>
-<p>When a DipDup release introduces changes that require your attention, <cite>spec_version</cite> config field is bumped. If you’re getting <cite>MigrationRequiredError</cite> after updating DipDup, this command will fix imports and type annotations to match the current <cite>spec_version</cite>.</p>
-<p>Review and commit changes after running this command.</p>
+<p>If you’re getting <cite>MigrationRequiredError</cite> after updating DipDup, this command will fix imports and type annotations to match the current <cite>spec_version</cite>. Review and commit changes after running it.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup migrate <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
