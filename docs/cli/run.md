@@ -6,16 +6,6 @@ Configures API connectors, initializes database and runs the indexer. Execution 
 dipdup [-c dipdup.yml] run [--postpone-jobs] [--early-realtime] [--merge-subscriptions]
 ```
 
-## Schema migration
-
-DipDup does not support database schema migration: if there's any change in the models, it will reindex everything from scratch. The rationale behind this is that it's easier and faster to start over than handle migrations that can be of arbitrary complexity and do not guarantee data consistency.
-
-DipDup stores a hash of the SQL version of the DB schema and checks for changes each time you run this command.
-
-## Recovering from state
-
-DipDup applies all updates atomically block by block. In case of emergency shut down, it can safely recover later and continue from the level he ended. DipDup state is stored in the database per index and can be used by API consumers to determine the current indexer head.
-
 ## Hasura setup
 
 If [hasura](../config/hasura.md) section is present in configuration file, DipDup will do basic setup:
