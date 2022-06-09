@@ -236,7 +236,7 @@ async def run(
     metadata_interface: bool,
 ) -> None:
     """Run indexer.
-    
+
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
     """
     config: DipDupConfig = ctx.obj.config
@@ -258,7 +258,10 @@ async def run(
 @click.pass_context
 @cli_wrapper
 async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
-    """Generate project tree and missing callbacks and types."""
+    """Generate project tree, missing callbacks and types.
+
+    This command is idempotend, meaning it won't overwrite previously generated files unless asked explicitly.
+    """
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
     await dipdup.init(overwrite_types, keep_schemas)

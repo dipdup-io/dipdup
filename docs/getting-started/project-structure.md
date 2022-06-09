@@ -42,6 +42,8 @@ demo_tzbtc
 | `sql` | SQL scripts to run from callbacks (`*.sql`) |
 | `types` | Codegened Pydantic typeclasses for contract storage/parameter |
 
+DipDup will generate all the necessary directories and files inside the project's root on `init` command. These include contract type definitions and callback stubs to be implemented by the developer.
+
 ## Type classes
 
 <!-- TODO: Move somewhere -->
@@ -54,6 +56,34 @@ The following models are created at `init`:
 
 * `operation` indexes: storage type for all contracts met in handler patterns plus parameter type for all destination+entrypoint pairs.
 * `big_map` indexes: key and storage types for all big map paths in handler configs.
+
+## Nested packages
+
+Callback modules don't have to be in top-level `hooks`/`handlers` directories. Add one or multiple dots to the callback name to define nested packages:
+
+```yaml
+package: indexer
+hooks:
+  foo.bar:
+    callback: foo.bar
+```
+
+After running the `init` command, you'll get the following directory tree (shortened for readability):
+
+```text
+indexer
+├── hooks
+│   ├── foo
+│   │   ├── bar.py
+│   │   └── __init__.py
+│   └── __init__.py
+└── sql
+    └── foo
+        └── bar
+            └── .keep
+```
+
+The same rules apply to handler callbacks. Note that the `callback` field must be a valid Python package name - lowercase letters, underscores, and dots.
 
 > 🤓 **SEE ALSO**
 >
