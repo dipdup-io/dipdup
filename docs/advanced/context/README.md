@@ -8,7 +8,7 @@ An instance of the `HandlerContext` class is passed to every handler providing a
 
 ## `.reindex() -> None`
 
-Drops the entire database and starts the indexing process from scratch. `on_rollback` hook calls this helper by default.
+Drops the entire database and starts the indexing process from scratch. `on_index_rollback` hook calls this helper by default.
 
 ## `.add_contract(name, address, typename) -> Coroutine`
 

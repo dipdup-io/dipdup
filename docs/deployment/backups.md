@@ -94,18 +94,18 @@ def delete_old_backups():
     ...
 ```
 
-`<project>/hooks/on_rollback.py`
+`<project>/hooks/on_index_rollback.py`
 
 ```python
 ...
 
-async def on_rollback(
+async def on_index_rollback(
     ctx: HookContext,
-    datasource: Datasource,
+    index: Index,
     from_level: int,
     to_level: int,
 ) -> None:
-    await ctx.execute_sql('on_rollback')
+    await ctx.execute_sql('on_index_rollback')
 
     database_config: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = ctx.config.database
 
@@ -166,5 +166,11 @@ async def simulate_reorg(
     level = ctx.get_tzkt_datasource("tzkt_mainnet")._level.get(MessageType.head)
 
     if level:
-        await ctx.fire_hook("on_rollback", wait=True, datasource=ctx.get_tzkt_datasource("tzkt_mainnet"), from_level=level, to_level=level-2)
+        await ctx.fire_hook(
+            "on_rollback",
+            wait=True
+            index=None,  # type: ignore
+            from_level=level,
+            to_level=level - 2,
+        )
 ```
