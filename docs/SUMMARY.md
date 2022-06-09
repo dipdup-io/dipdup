@@ -82,7 +82,8 @@
   * [sentry](config/sentry.md)
   * [spec_version](config/spec_version.md)
   * [templates](config/templates.md)
-* [Command-line reference](cli/reference.md)
+* [Command-line reference](cli/README.md)
+  * [Full reference](cli/reference.md)
   * [run](cli/run.md)
 
 # What's New

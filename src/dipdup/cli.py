@@ -221,7 +221,7 @@ async def run(
     merge_subscriptions: bool,
     metadata_interface: bool,
 ) -> None:
-    """Run indexer"""
+    """Run indexer."""
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     config.advanced.postpone_jobs |= postpone_jobs
@@ -235,12 +235,13 @@ async def run(
     await dipdup.run()
 
 
-@cli.command(help='Generate project tree and missing callbacks and types')
-@click.option('--overwrite-types', is_flag=True, help='Regenerate existing types')
-@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
+@cli.command()
+@click.option('--overwrite-types', is_flag=True, help='Regenerate existing types.')
+@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types.')
 @click.pass_context
 @cli_wrapper
 async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
+    """'Generate project tree and missing callbacks and types."""
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
     await dipdup.init(overwrite_types, keep_schemas)
@@ -254,7 +255,7 @@ async def migrate(ctx):
     Migrate project to the new spec version.
 
     When a DipDup release introduces changes that require your attention, `spec_version` config field is bumped. If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`.
-    
+
     Review and commit changes after running this command.
     """
     config: DipDupConfig = ctx.obj.config
@@ -290,15 +291,16 @@ async def config(ctx):
     ...
 
 
-@config.command(name='export', help='Print config after resolving all links and templates.')
-@click.option(
-    '--unsafe',
-    is_flag=True,
-    help='Resolve environment variables. Otherwise, default values from config will be used. Avoid sharing output with 3rd-parties when this flag set - it may contain secrets.',
-)
+@config.command(name='export')
+@click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from config.')
 @click.pass_context
 @cli_wrapper
 async def config_export(ctx, unsafe: bool) -> None:
+    """
+    Print config after resolving all links and templates.
+
+    WARNING: Avoid sharing output with 3rd-parties when `--unsafe` flag set - it may contain secrets!
+    """
     config_yaml = DipDupConfig.load(
         paths=ctx.obj.config.paths,
         environment=unsafe,
@@ -312,7 +314,7 @@ async def config_export(ctx, unsafe: bool) -> None:
 @cli_wrapper
 async def config_env(ctx, file: Optional[str]) -> None:
     """Dump environment variables used in DipDup config.
-    
+
     If variable is not set, default value will be used.
     """
     config = DipDupConfig.load(
@@ -470,7 +472,7 @@ async def schema_init(ctx):
     """
     Prepare a database for running DipDip.
 
-    This command creates tables based on your models, then calls `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
+    This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
     """
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
