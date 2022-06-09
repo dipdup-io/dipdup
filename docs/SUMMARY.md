@@ -59,6 +59,7 @@
 
 # Reference Guide
 
+* [Command-line reference](cli-reference.md)
 * [Config file reference](config/README.md)
   * [Full reference](config/reference.md)
   * [advanced](config/advanced.md)
@@ -78,7 +79,6 @@
   * [sentry](config/sentry.md)
   * [spec_version](config/spec_version.md)
   * [templates](config/templates.md)
-* [Command-line reference](cli-reference.md)
 
 # What's New
 
