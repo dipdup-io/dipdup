@@ -114,7 +114,7 @@
 <section id="dipdup-init">
 <h2>init<a class="headerlink" href="#dipdup-init" title="Permalink to this headline">¶</a></h2>
 <p>Generate project tree, missing callbacks and types.</p>
-<p>This command is idempotend, meaning it won’t overwrite previously generated files unless asked explicitly.</p>
+<p>This command is idempotent, meaning it won’t overwrite previously generated files unless asked explicitly.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup init <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>

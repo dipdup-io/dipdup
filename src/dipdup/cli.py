@@ -260,7 +260,7 @@ async def run(
 async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
     """Generate project tree, missing callbacks and types.
 
-    This command is idempotend, meaning it won't overwrite previously generated files unless asked explicitly.
+    This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
     """
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
