@@ -18,10 +18,10 @@ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 
 ### From scratch
 
-You need the `poetry` package manager installed.
+We advise using the `poetry` package manager for new projects.
 
 ```shell
-poetry init -n
+poetry init
 poetry add dipdup
 poetry shell
 ```
