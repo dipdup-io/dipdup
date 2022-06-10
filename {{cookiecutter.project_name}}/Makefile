@@ -1,30 +1,37 @@
-## ==> DipDup makefile
 .ONESHELL:
-.PHONY: test build docs
-.DEFAULT_GOAL: all
-
+.PHONY: $(MAKECMDGOALS)
 ##
-## DEV=1           Install dev dependencies
+##    🚧 DipDup developer tools
+##
+## DEV=1                Whether to install dev dependencies
 DEV=1
-## TAG=latest      Docker tag for images built
+## TAG=latest           Tag for the `image` command
 TAG=latest
+
 ##
 
-all:            ## Run a whole CI pipeline (default)
-	make install lint test cover
+help:           ## Show this help (default)
+	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-install:        ## Install project
+all:            ## Run a whole CI pipeline: lint, run tests, build docs
+	make install lint test docs
+
+install:        ## Install project dependencies
 	poetry install \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
-	poetry run pip uninstall -y flakehell || true
 
 lint:           ## Lint with all tools
 	make isort black flake mypy
 
-isort:          ## Lint with isort
+test:           ## Run test suite
+	poetry run pytest --cov-report=term-missing --cov={{ cookiecutter.package }} --cov-report=xml -n auto --dist loadscope -s -v tests
+
+##
+
+isort:          ## Format with isort
 	poetry run isort src tests
 
-black:          ## Lint with black
+black:          ## Format with black
 	poetry run black src tests
 
 flake:          ## Lint with flake8
@@ -33,13 +40,10 @@ flake:          ## Lint with flake8
 mypy:           ## Lint with mypy
 	poetry run mypy src tests
 
-test:           ## Run test suite
-	poetry run pytest --cov-report=term-missing --cov={{ cookiecutter.package }} --cov-report=xml -n auto --dist loadscope -s -v tests
-
 cover:          ## Print coverage for the current branch
 	poetry run diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml
 
-build:          ## Build wheel Python package
+build:          ## Build Python wheel package
 	poetry build
 
 image:          ## Build Docker image
@@ -60,5 +64,7 @@ release-major:  ## Release major version
 	git push --tags
 	git push
 
-help:           ## Show this help
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
+clean:          ## Remove all files from .gitignore except for `.venv`
+	git clean -xdf --exclude=".venv"
+
+##
