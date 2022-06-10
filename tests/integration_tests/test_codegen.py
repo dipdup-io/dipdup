@@ -7,7 +7,6 @@ from unittest import IsolatedAsyncioTestCase
 
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
-from dipdup.utils import skip_ci
 
 configs = [
     'hic_et_nunc',
@@ -18,7 +17,6 @@ configs = [
 ]
 
 
-@skip_ci
 class CodegenTest(IsolatedAsyncioTestCase):
     async def asyncTearDown(self) -> None:
         for name in configs:
