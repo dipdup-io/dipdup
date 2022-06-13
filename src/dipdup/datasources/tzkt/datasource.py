@@ -899,6 +899,7 @@ class TzktDatasource(IndexDatasource):
         self._ws_client.on_error(self._on_error)
 
         self._ws_client.on('operations', partial(self._on_message, MessageType.operation))
+        self._ws_client.on('transfers', partial(self._on_message, MessageType.token_transfer))
         self._ws_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
         self._ws_client.on('head', partial(self._on_message, MessageType.head))
 
@@ -977,6 +978,8 @@ class TzktDatasource(IndexDatasource):
         for buffered_message in self._buffer.yield_from():
             if buffered_message.type == MessageType.operation:
                 await self._process_operations_data(cast(list, buffered_message.data))
+            elif buffered_message.type == MessageType.token_transfer:
+                await self._process_token_transfers_data(cast(list, buffered_message.data))
             elif buffered_message.type == MessageType.big_map:
                 await self._process_big_maps_data(cast(list, buffered_message.data))
             elif buffered_message.type == MessageType.head:
@@ -996,6 +999,17 @@ class TzktDatasource(IndexDatasource):
 
         for _level, operations in level_operations.items():
             await self.emit_operations(tuple(operations))
+
+    async def _process_token_transfers_data(self, data: List[Dict[str, Any]]) -> None:
+        """Parse and emit raw token transfers from WS"""
+        level_token_transfers: DefaultDict[int, Deque[TokenTransferData]] = defaultdict(deque)
+
+        for token_transfer_json in data:
+            token_transfer = self.convert_token_transfer(token_transfer_json)
+            level_token_transfers[token_transfer.level].append(token_transfer)
+
+        for _level, token_transfers in level_token_transfers.items():
+            await self.emit_token_transfers(tuple(token_transfers))
 
     async def _process_big_maps_data(self, data: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
