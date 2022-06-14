@@ -47,6 +47,8 @@ from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
+DEFAULT_CONFIG_NAME = 'dipdup.yml'
+
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
 
@@ -146,14 +148,27 @@ async def _check_version() -> None:
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
 
-@click.group(help='Docs: https://dipdup.net/docs', context_settings={'max_content_width': 120})
+@click.group(context_settings={'max_content_width': 120})
 @click.version_option(__version__)
-@click.option('--config', '-c', type=str, multiple=True, help='Path to dipdup YAML config', default=['dipdup.yml'])
-@click.option('--env-file', '-e', type=str, multiple=True, help='Path to .env file with KEY=value strings', default=[])
-@click.option('--logging-config', '-l', type=str, help='Path to Python logging YAML config', default='logging.yml')
+@click.option(
+    '--config',
+    '-c',
+    type=str,
+    multiple=True,
+    help=f'A path to DipDup project config (default: {DEFAULT_CONFIG_NAME}).',
+    default=[DEFAULT_CONFIG_NAME],
+)
+@click.option('--env-file', '-e', type=str, multiple=True, help='A path to .env file containing `KEY=value` strings.', default=[])
+@click.option('--logging-config', '-l', type=str, help='A path to Python logging config in YAML format.', default='logging.yml')
 @click.pass_context
 @cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
+    """Manage and run DipDup indexers.
+
+    Full docs: https://dipdup.net/docs
+
+    Report an issue: https://github.com/dipdup-net/dipdup-py/issues
+    """
     # NOTE: Workaround for subcommands
     if '--help' in sys.argv:
         return
@@ -206,11 +221,11 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     )
 
 
-@cli.command(help='Run indexing')
-@click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized')
-@click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized')
-@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing')
-@click.option('--metadata-interface', is_flag=True, help='Enable metadata interface')
+@cli.command()
+@click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized.')
+@click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized.')
+@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing.')
+@click.option('--metadata-interface', is_flag=True, help='Enable metadata interface.')
 @click.pass_context
 @cli_wrapper
 async def run(
@@ -220,6 +235,10 @@ async def run(
     merge_subscriptions: bool,
     metadata_interface: bool,
 ) -> None:
+    """Run indexer.
+
+    Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
+    """
     config: DipDupConfig = ctx.obj.config
     config.initialize()
     config.advanced.postpone_jobs |= postpone_jobs
@@ -233,30 +252,40 @@ async def run(
     await dipdup.run()
 
 
-@cli.command(help='Generate project tree and missing callbacks and types')
-@click.option('--overwrite-types', is_flag=True, help='Regenerate existing types')
-@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types')
+@cli.command()
+@click.option('--overwrite-types', is_flag=True, help='Regenerate existing types.')
+@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types.')
 @click.pass_context
 @cli_wrapper
 async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
+    """Generate project tree, missing callbacks and types.
+
+    This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
+    """
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
     await dipdup.init(overwrite_types, keep_schemas)
 
 
-@cli.command(help='Migrate project to the new spec version')
+@cli.command()
 @click.pass_context
 @cli_wrapper
 async def migrate(ctx):
+    """
+    Migrate project to the new spec version.
+
+    If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`. Review and commit changes after running it.
+    """
     config: DipDupConfig = ctx.obj.config
     migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
     await migrations.migrate()
 
 
-@cli.command(help='Show current status of indexes in database')
+@cli.command()
 @click.pass_context
 @cli_wrapper
 async def status(ctx):
+    """Show the current status of indexes in the database."""
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -272,18 +301,24 @@ async def status(ctx):
     echo(tabulate(table, tablefmt='plain'))
 
 
-@cli.group(help='Commands to manage DipDup configuration')
+@cli.group()
 @click.pass_context
 @cli_wrapper
 async def config(ctx):
+    """Commands to manage DipDup configuration."""
     ...
 
 
-@config.command(name='export', help='Dump DipDup configuration after resolving templates')
-@click.option('--unsafe', is_flag=True, help='Resolve environment variables; output may contain secrets')
+@config.command(name='export')
+@click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from config.')
 @click.pass_context
 @cli_wrapper
 async def config_export(ctx, unsafe: bool) -> None:
+    """
+    Print config after resolving all links and templates.
+
+    WARNING: Avoid sharing output with 3rd-parties when `--unsafe` flag set - it may contain secrets!
+    """
     config_yaml = DipDupConfig.load(
         paths=ctx.obj.config.paths,
         environment=unsafe,
@@ -291,11 +326,15 @@ async def config_export(ctx, unsafe: bool) -> None:
     echo(config_yaml)
 
 
-@config.command(name='env', help='Dump environment variables used in DipDup config')
-@click.option('--file', '-f', type=str, default=None, help='Output to file instead of stdout')
+@config.command(name='env')
+@click.option('--file', '-f', type=str, default=None, help='Output to file instead of stdout.')
 @click.pass_context
 @cli_wrapper
 async def config_env(ctx, file: Optional[str]) -> None:
+    """Dump environment variables used in DipDup config.
+
+    If variable is not set, default value will be used.
+    """
     config = DipDupConfig.load(
         paths=ctx.obj.config.paths,
         environment=True,
@@ -308,27 +347,30 @@ async def config_env(ctx, file: Optional[str]) -> None:
         echo(content)
 
 
-@cli.group(help='Manage internal cache')
+@cli.group()
 @click.pass_context
 @cli_wrapper
 async def cache(ctx):
+    """Manage internal cache."""
     ...
 
 
-@cache.command(name='clear', help='Clear cache')
+@cache.command(name='clear')
 @click.pass_context
 @cli_wrapper
 async def cache_clear(ctx) -> None:
+    """Clear request cache of DipDup datasources."""
     # NOTE: Lazy import to speed up startup
     from fcache.cache import FileCache  # type: ignore
 
     FileCache('dipdup', flag='cs').clear()
 
 
-@cache.command(name='show', help='Show cache size information')
+@cache.command(name='show')
 @click.pass_context
 @cli_wrapper
 async def cache_show(ctx) -> None:
+    """Show information about DipDup disk caches."""
     # NOTE: Lazy import to speed up startup
     from fcache.cache import FileCache  # type: ignore
 
@@ -337,18 +379,19 @@ async def cache_show(ctx) -> None:
     echo(f'{cache.cache_dir}: {len(cache)} items, {size}')
 
 
-@cli.group(help='Hasura integration related commands')
+@cli.group(help='Hasura integration related commands.')
 @click.pass_context
 @cli_wrapper
 async def hasura(ctx):
     ...
 
 
-@hasura.command(name='configure', help='Configure Hasura GraphQL Engine')
-@click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured')
+@hasura.command(name='configure')
+@click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
 @cli_wrapper
 async def hasura_configure(ctx, force: bool):
+    """Configure Hasura GraphQL Engine to use with DipDup."""
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -365,17 +408,19 @@ async def hasura_configure(ctx, force: bool):
             await hasura_gateway.configure(force)
 
 
-@cli.group(help='Manage database schema')
+@cli.group()
 @click.pass_context
 @cli_wrapper
 async def schema(ctx):
+    """Manage database schema."""
     ...
 
 
-@schema.command(name='approve', help='Continue to use existing schema after reindexing was triggered')
+@schema.command(name='approve')
 @click.pass_context
 @cli_wrapper
 async def schema_approve(ctx):
+    """Continue to use existing schema after reindexing was triggered."""
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -395,12 +440,17 @@ async def schema_approve(ctx):
     _logger.info('Schema approved')
 
 
-@schema.command(name='wipe', help='Drop all database tables, functions and views')
-@click.option('--immune', is_flag=True, help='Drop immune tables too')
-@click.option('--force', is_flag=True, help='Skip confirmation prompt')
+@schema.command(name='wipe')
+@click.option('--immune', is_flag=True, help='Drop immune tables too.')
+@click.option('--force', is_flag=True, help='Skip confirmation prompt.')
 @click.pass_context
 @cli_wrapper
 async def schema_wipe(ctx, immune: bool, force: bool):
+    """
+    Drop all database tables, functions and views.
+
+    WARNING: This action is irreversible! All indexed data will be lost!
+    """
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -433,10 +483,15 @@ async def schema_wipe(ctx, immune: bool, force: bool):
     _logger.info('Schema wiped')
 
 
-@schema.command(name='init', help='Initialize database schema and trigger `on_reindex`')
+@schema.command(name='init')
 @click.pass_context
 @cli_wrapper
 async def schema_init(ctx):
+    """
+    Prepare a database for running DipDip.
+
+    This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
+    """
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     dipdup = DipDup(config)
@@ -456,10 +511,14 @@ async def schema_init(ctx):
     _logger.info('Schema initialized')
 
 
-@schema.command(name='export', help='Print schema SQL including `on_reindex` hook')
+@schema.command(name='export')
 @click.pass_context
 @cli_wrapper
 async def schema_export(ctx):
+    """Print SQL schema including scripts from `sql/on_reindex`.
+
+    This command may help you debug inconsistency between project models and expected SQL schema.
+    """
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'

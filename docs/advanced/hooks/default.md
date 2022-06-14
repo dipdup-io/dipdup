@@ -10,7 +10,7 @@ If your indexer is stateless, you can just drop DB data saved after `to_level` a
 
 ## `on_restart`
 
-This hook executes right before starting indexing. It allows configuring DipDup in runtime based on data from external sources. Datasources are already initialized at the execution time and available at `ctx.datasources`. You can, for example, configure logging here or add contracts and indexes in runtime instead of from static config.
+This hook executes right before starting indexing. It allows configuring DipDup in runtime based on data from external sources. Datasources are already initialized at execution and available at `ctx.datasources`. You can, for example, configure logging here or add contracts and indexes in runtime instead of from static config.
 
 ## `on_reindex`
 

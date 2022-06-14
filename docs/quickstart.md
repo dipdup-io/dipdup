@@ -18,10 +18,10 @@ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 
 ### From scratch
 
-You need the `poetry` package manager installed.
+We advise using the `poetry` package manager for new projects.
 
 ```shell
-poetry init -n
+poetry init
 poetry add dipdup
 poetry shell
 ```
@@ -96,14 +96,14 @@ demo_tzbtc
 │   ├── __init__.py
 │   ├── on_reindex.py
 │   ├── on_restart.py
-│   ├── on_rollback.py
+│   ├── on_index_rollback.py
 │   └── on_synchronized.py
 ├── __init__.py
 ├── models.py
 ├── sql
 │   ├── on_reindex
 │   ├── on_restart
-│   ├── on_rollback
+│   ├── on_index_rollback
 │   └── on_synchronized
 └── types
     ├── __init__.py
