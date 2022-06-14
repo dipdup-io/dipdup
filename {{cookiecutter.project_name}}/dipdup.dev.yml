@@ -17,4 +17,4 @@ sentry:
   environment: ${SENTRY_ENVIRONMENT:-dev}
 
 prometheus:
-  url: 0.0.0.0
+  host: 0.0.0.0
