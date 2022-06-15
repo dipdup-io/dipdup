@@ -1,8 +1,9 @@
-from tortoise import Model
 from tortoise import fields
 
+from dipdup.models import VersionedModel
 
-class Holder(Model):
+
+class Holder(VersionedModel):
     address = fields.CharField(max_length=36, pk=True)
     balance = fields.DecimalField(decimal_places=8, max_digits=20, default=0)
     turnover = fields.DecimalField(decimal_places=8, max_digits=20, default=0)

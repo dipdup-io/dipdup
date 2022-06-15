@@ -462,7 +462,7 @@ class OperationIndex(Index):
             await self.state.update_status(level=batch_level)
             return
 
-        async with in_global_transaction():
+        async with in_global_transaction(level=batch_level):
             for operation_subgroup, handler_config, args in matched_handlers:
                 await self._call_matched_handler(handler_config, operation_subgroup, args)
             await self.state.update_status(level=batch_level)
@@ -735,6 +735,7 @@ class BigMapIndex(Index):
                         big_map_ids.add((int(contract_big_map['ptr']), address, path))
 
         # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
+        # NOTE: Can't use versioned models here, do not pass level to `in_global_transaction`
         async with in_global_transaction():
             for big_map_id, address, path in big_map_ids:
                 async for big_map_keys in self._datasource.iter_big_map(big_map_id, head_level):
@@ -778,7 +779,7 @@ class BigMapIndex(Index):
             await self.state.update_status(level=batch_level)
             return
 
-        async with in_global_transaction():
+        async with in_global_transaction(level=batch_level):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=batch_level)
@@ -907,7 +908,7 @@ class HeadIndex(Index):
             if batch_level <= index_level:
                 raise RuntimeError(f'Level of head must be higher than index state level: {batch_level} <= {index_level}')
 
-            async with in_global_transaction():
+            async with in_global_transaction(level=batch_level):
                 self._logger.debug('Processing head info of level %s', batch_level)
                 for handler_config in self._config.handlers:
                     await self._call_matched_handler(handler_config, head)
@@ -987,7 +988,7 @@ class TokenTransferIndex(Index):
             await self.state.update_status(level=level)
             return
 
-        async with in_global_transaction():
+        async with in_global_transaction(level=level):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=level)
