@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.1.7 - 2022-06-15
+
+### Fixed
+
+* index: Fixed `token_transfer` index not receiving realtime updates.
+
 ## 5.1.6 - 2022-06-08
 
 ### Fixed
