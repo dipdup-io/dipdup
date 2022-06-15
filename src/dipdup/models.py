@@ -1,37 +1,37 @@
-import asyncio
-from contextlib import asynccontextmanager
 from dataclasses import field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from functools import partial
 from typing import Any
-from typing import AsyncIterator
 from typing import Dict
 from typing import Generic
 from typing import Iterable
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import TypeVar
 
-import orjson
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import BaseDBAsyncClient
 from tortoise import ForeignKeyFieldInstance
-from tortoise import Model
+from tortoise import Model as TortoiseModel
 from tortoise import fields
 
 from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.enums import ReindexingReason
 from dipdup.enums import TokenStandard
+from dipdup.utils import json_dumps
 from dipdup.utils.database import versioned_model_manager
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
+
+
+# ===> Dataclasses
 
 
 @dataclass
@@ -210,7 +210,107 @@ class TokenTransferData:
     tzkt_migration_id: Optional[int] = None
 
 
-class Schema(Model):
+# ===> Model Versioning
+
+
+class ModelUpdateAction(Enum):
+    INSERT = 'INSERT'
+    UPDATE = 'UPDATE'
+    DELETE = 'DELETE'
+
+
+class ModelUpdate(TortoiseModel):
+    table_name = fields.CharField(256)
+    table_pk = fields.CharField(256)
+    level = fields.IntField()
+
+    action = fields.CharEnumField(ModelUpdateAction)
+    data = fields.JSONField(encoder=json_dumps, null=True)
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_model_update'
+
+
+class Model(TortoiseModel):
+    @property
+    def _update_data(self) -> Dict[str, Any]:
+        update_data = {}
+        for key, field_ in self._meta.fields_map.items():
+            if field_.pk:
+                continue
+            if isinstance(field_, ForeignKeyFieldInstance):
+                continue
+            value = getattr(self, key)
+            if isinstance(value, fields.ReverseRelation):
+                continue
+            update_data[key] = getattr(self, key)
+
+        return update_data
+
+    async def delete(self, using_db: Optional[BaseDBAsyncClient] = None) -> None:
+
+        await ModelUpdate.create(
+            table_name=self._meta.db_table,
+            table_pk=self.pk,
+            level=versioned_model_manager.level,
+            action=ModelUpdateAction.DELETE,
+            data=self._update_data,
+        )
+
+        await super().delete(using_db=using_db)
+
+    async def save(
+        self,
+        using_db: Optional[BaseDBAsyncClient] = None,
+        update_fields: Optional[Iterable[str]] = None,
+        force_create: bool = False,
+        force_update: bool = False,
+    ) -> None:
+        saved_in_db = self._saved_in_db
+
+        await super().save(
+            using_db=using_db,
+            update_fields=update_fields,
+            force_create=force_create,
+            force_update=force_update,
+        )
+
+        if not saved_in_db:
+            await ModelUpdate.create(
+                table_name=self._meta.db_table,
+                table_pk=self.pk,
+                level=versioned_model_manager.level,
+                action=ModelUpdateAction.INSERT,
+                data=None,
+            )
+        else:
+            await ModelUpdate.create(
+                table_name=self._meta.db_table,
+                table_pk=self.pk,
+                level=versioned_model_manager.level,
+                action=ModelUpdateAction.UPDATE,
+                data=self._update_data,
+            )
+
+    @classmethod
+    async def create(cls: Type['Model'], using_db: Optional[BaseDBAsyncClient] = None, **kwargs: Any) -> 'Model':
+        instance = cls(**kwargs)
+        instance._saved_in_db = False
+        db = using_db or cls._choose_db(True)
+        await instance.save(using_db=db, force_create=True)
+        return instance
+
+    class Meta:
+        abstract = True
+
+
+# ===> Built-in Models
+
+
+class Schema(TortoiseModel):
     name = fields.CharField(256, pk=True)
     hash = fields.CharField(256)
     reindex = fields.CharEnumField(ReindexingReason, max_length=40, null=True)
@@ -222,7 +322,7 @@ class Schema(Model):
         table = 'dipdup_schema'
 
 
-class Head(Model):
+class Head(TortoiseModel):
     name = fields.CharField(256, pk=True)
     level = fields.IntField()
     hash = fields.CharField(64)
@@ -235,7 +335,7 @@ class Head(Model):
         table = 'dipdup_head'
 
 
-class Index(Model):
+class Index(TortoiseModel):
     name = fields.CharField(256, pk=True)
     type = fields.CharEnumField(IndexType)
     status = fields.CharEnumField(IndexStatus, default=IndexStatus.NEW)
@@ -262,7 +362,7 @@ class Index(Model):
         table = 'dipdup_index'
 
 
-class Contract(Model):
+class Contract(TortoiseModel):
     name = fields.CharField(256, pk=True)
     address = fields.CharField(256)
     typename = fields.CharField(256, null=True)
@@ -301,93 +401,3 @@ class TokenMetadata(Model):
     class Meta:
         table = 'dipdup_token_metadata'
         unique_together = ('network', 'contract', 'token_id')
-
-
-class ModelUpdateAction(Enum):
-    INSERT = 'INSERT'
-    UPDATE = 'UPDATE'
-    DELETE = 'DELETE'
-
-
-def default(obj):
-    if isinstance(obj, Decimal):
-        return str(obj)
-    raise TypeError
-
-
-_dumps = lambda x: orjson.dumps(x, default=default).decode()
-
-
-class ModelUpdate(Model):
-    table_name = fields.CharField(256)
-    table_pk = fields.CharField(256)
-    level = fields.IntField()
-
-    action = fields.CharEnumField(ModelUpdateAction)
-    data = fields.JSONField(encoder=_dumps, null=True)
-
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
-
-    class Meta:
-        table = 'dipdup_model_update'
-
-
-class VersionedModel(Model):
-    @property
-    def _update_data(self) -> Dict[str, Any]:
-        update_data = {}
-        for key, field in self._meta.fields_map.items():
-            if field.pk:
-                continue
-            if isinstance(field, ForeignKeyFieldInstance):
-                continue
-            update_data[key] = getattr(self, key)
-
-        return update_data
-
-    async def delete(self, using_db: Optional[BaseDBAsyncClient] = None) -> None:
-
-        await ModelUpdate.create(
-            table_name=self._meta.db_table,
-            table_pk=self.pk,
-            level=versioned_model_manager.level,
-            action=ModelUpdateAction.DELETE,
-            data=self._update_data,
-        )
-
-        await super().delete(using_db=using_db)
-
-    async def save(
-        self,
-        using_db: Optional[BaseDBAsyncClient] = None,
-        update_fields: Optional[Iterable[str]] = None,
-        force_create: bool = False,
-        force_update: bool = False,
-    ) -> None:
-        if not self._saved_in_db:
-            await ModelUpdate.create(
-                table_name=self._meta.db_table,
-                table_pk=self.pk,
-                level=versioned_model_manager.level,
-                action=ModelUpdateAction.INSERT,
-                data=None,
-            )
-        else:
-            await ModelUpdate.create(
-                table_name=self._meta.db_table,
-                table_pk=self.pk,
-                level=versioned_model_manager.level,
-                action=ModelUpdateAction.UPDATE,
-                data=self._update_data,
-            )
-
-        await super().save(
-            using_db=using_db,
-            update_fields=update_fields,
-            force_create=force_create,
-            force_update=force_update,
-        )
-
-    class Meta:
-        abstract = True

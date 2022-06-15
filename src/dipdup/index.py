@@ -47,7 +47,6 @@ from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import InvalidDataError
-from dipdup.exceptions import ReindexingReason
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BigMapDiff

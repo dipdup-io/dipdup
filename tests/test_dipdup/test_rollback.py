@@ -16,7 +16,6 @@ from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.dipdup import IndexDispatcher
 from dipdup.enums import MessageType
-from dipdup.enums import ReindexingReason
 from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
 from dipdup.index import OperationIndex

@@ -37,9 +37,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
-from dipdup.exceptions import ConflictingHooksError
 from dipdup.exceptions import DipDupException
-from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ProjectImportError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex
@@ -59,7 +57,6 @@ from dipdup.models import Schema
 from dipdup.models import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
-from dipdup.utils import is_importable
 from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
