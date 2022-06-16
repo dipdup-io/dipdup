@@ -45,8 +45,9 @@ class TransactionManager:
                 if self._transaction_level:
                     raise ValueError('Transaction is already started')
 
-                if level and (not sync_level or sync_level - level <= self._history_depth):
-                    self._transaction_level = level
+                if level and self._history_depth:
+                    if not sync_level or sync_level - level <= self._history_depth:
+                        self._transaction_level = level
 
                 yield
         finally:
