@@ -1171,6 +1171,7 @@ class AdvancedConfig:
     metadata_interface: bool = False
     skip_version_check: bool = False
     history_depth: int = 2
+    history_cleanup_interval: int = 60
 
 
 @dataclass

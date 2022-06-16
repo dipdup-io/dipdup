@@ -78,13 +78,9 @@ class IndexDispatcher:
         self._entrypoint_filter: Set[Optional[str]] = set()
         self._address_filter: Set[str] = set()
 
-    async def run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
-        tasks = [self._run(spawn_datasources_event, start_scheduler_event, early_realtime)]
-        if self._ctx.config.prometheus:
-            tasks.append(self._update_metrics(self._ctx.config.prometheus.update_interval))
-        await gather(*tasks)
-
-    async def _run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
+    async def run(
+        self, spawn_datasources_event: Event, start_scheduler_event: Event, cleanup_updates_event: Event, early_realtime: bool = False
+    ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
         await self._load_index_states()
@@ -131,6 +127,8 @@ class IndexDispatcher:
 
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
+                if not cleanup_updates_event.is_set():
+                    cleanup_updates_event.set()
             # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
             else:
                 on_synchronized_fired = False
@@ -395,6 +393,7 @@ class DipDup:
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
+            updates_cleanup_event = await self._set_up_transactions(stack, tasks, cleanup=not self._config.oneshot)
             await self._set_up_datasources(stack)
             await self._set_up_hooks(tasks, run=not self._config.oneshot)
             await self._set_up_prometheus()
@@ -407,19 +406,24 @@ class DipDup:
                 await MetadataCursor.initialize()
 
             if self._config.oneshot:
+                start_scheduler_event = Event()
+                spawn_datasources_event = Event()
+
                 if self._config.jobs:
                     self._logger.warning('Running in oneshot mode; `jobs` are ignored')
-                start_scheduler_event, spawn_datasources_event = Event(), Event()
             else:
-                start_scheduler_event = await self._set_up_scheduler(stack, tasks)
+                start_scheduler_event = await self._set_up_scheduler(tasks)
+                spawn_datasources_event = await self._spawn_datasources(tasks)
+
                 if not advanced_config.postpone_jobs:
                     start_scheduler_event.set()
-                spawn_datasources_event = await self._spawn_datasources(tasks)
 
             spawn_index_tasks = (create_task(self._ctx.spawn_index(name)) for name in self._config.indexes)
             await gather(*spawn_index_tasks)
 
-            await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime)
+            await self._set_up_index_dispatcher(
+                tasks, spawn_datasources_event, start_scheduler_event, updates_cleanup_event, advanced_config.early_realtime
+            )
 
             await gather(*tasks)
 
@@ -482,12 +486,19 @@ class DipDup:
 
         await self._ctx.fire_hook('on_restart')
 
+    async def _set_up_transactions(self, stack: AsyncExitStack, tasks: Set[Task], cleanup: bool) -> Event:
+        event = Event()
+        interval = self._config.advanced.history_cleanup_interval
+        stack.enter_context(self._transactions.register())
+        if cleanup:
+            cleanup_task = create_task(self._transactions.cleanup_task(event, interval))
+            tasks.add(cleanup_task)
+        return event
+
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
         # NOTE: Must be called before entering Tortoise context
         prepare_models(self._config.package)
         validate_models(self._config.package)
-
-        stack.enter_context(self._transactions.register())
 
         url = self._config.database.connection_string
         timeout = self._config.database.connection_timeout if isinstance(self._config.database, PostgresDatabaseConfig) else None
@@ -562,6 +573,7 @@ class DipDup:
         tasks: Set[Task],
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
+        cleanup_updates_event: Event,
         early_realtime: bool,
     ) -> None:
         index_dispatcher = IndexDispatcher(self._ctx)
@@ -570,10 +582,13 @@ class DipDup:
                 index_dispatcher.run(
                     spawn_datasources_event,
                     start_scheduler_event,
+                    cleanup_updates_event,
                     early_realtime,
                 )
             )
         )
+        if prometheus_config := self._ctx.config.prometheus:
+            tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
 
     async def _spawn_datasources(self, tasks: Set[Task]) -> Event:
         event = Event()
@@ -589,7 +604,7 @@ class DipDup:
         tasks.add(create_task(_event_wrapper()))
         return event  # noqa: R504
 
-    async def _set_up_scheduler(self, stack: AsyncExitStack, tasks: Set[Task]) -> Event:
+    async def _set_up_scheduler(self, tasks: Set[Task]) -> Event:
         # NOTE: Prepare SchedulerManager
         event = Event()
         scheduler = SchedulerManager(self._config.advanced.scheduler)
