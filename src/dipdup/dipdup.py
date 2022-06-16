@@ -52,6 +52,7 @@ from dipdup.models import Head
 from dipdup.models import HeadBlockData
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
+from dipdup.models import Model
 from dipdup.models import OperationData
 from dipdup.models import Schema
 from dipdup.models import TokenTransferData
@@ -62,6 +63,7 @@ from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import get_schema_hash
+from dipdup.utils.database import iter_models
 from dipdup.utils.database import prepare_models
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import validate_models
@@ -486,6 +488,10 @@ class DipDup:
         # NOTE: Must be called before entering Tortoise context
         prepare_models(self._config.package)
         validate_models(self._config.package)
+
+        for _, model in iter_models(self._config.package):
+            if isinstance(model, Model):
+                self._transactions.register_model(model)
 
         url = self._config.database.connection_string
         timeout = self._config.database.connection_timeout if isinstance(self._config.database, PostgresDatabaseConfig) else None
