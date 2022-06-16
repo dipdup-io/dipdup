@@ -30,11 +30,6 @@ KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
-# NOTE: Overwritten by TransactionManager.register()
-def get_transaction_level() -> Optional[int]:
-    raise RuntimeError('TransactionManager is not registered')
-
-
 # ===> Dataclasses
 
 
@@ -217,6 +212,11 @@ class TokenTransferData:
 # ===> Model Versioning
 
 
+# NOTE: Overwritten by TransactionManager.register()
+def get_transaction_level() -> Optional[int]:
+    raise RuntimeError('TransactionManager is not registered')
+
+
 class ModelUpdateAction(Enum):
     INSERT = 'INSERT'
     UPDATE = 'UPDATE'
@@ -320,7 +320,7 @@ class Model(TortoiseModel):
         abstract = True
 
 
-# ===> Built-in Models
+# ===> Built-in Models (mostly not versioned)
 
 
 class Schema(TortoiseModel):
