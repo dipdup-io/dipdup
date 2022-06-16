@@ -23,7 +23,6 @@ from dipdup.enums import IndexType
 from dipdup.enums import ReindexingReason
 from dipdup.enums import TokenStandard
 from dipdup.utils import json_dumps
-from dipdup.utils.database import versioned_model_manager
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -250,17 +249,22 @@ class Model(TortoiseModel):
 
         return update_data
 
-    async def delete(self, using_db: Optional[BaseDBAsyncClient] = None) -> None:
+    async def delete(
+        self,
+        using_db: Optional[BaseDBAsyncClient] = None,
+        _level: Optional[int] = None,
+    ) -> None:
+        await super().delete(using_db=using_db)
+        if not _level:
+            return
 
         await ModelUpdate.create(
             table_name=self._meta.db_table,
             table_pk=self.pk,
-            level=versioned_model_manager.level,
+            level=_level,
             action=ModelUpdateAction.DELETE,
             data=self._update_data,
         )
-
-        await super().delete(using_db=using_db)
 
     async def save(
         self,
@@ -268,21 +272,23 @@ class Model(TortoiseModel):
         update_fields: Optional[Iterable[str]] = None,
         force_create: bool = False,
         force_update: bool = False,
+        _level: Optional[int] = None,
     ) -> None:
         saved_in_db = self._saved_in_db
-
         await super().save(
             using_db=using_db,
             update_fields=update_fields,
             force_create=force_create,
             force_update=force_update,
         )
+        if not _level:
+            return
 
         if not saved_in_db:
             await ModelUpdate.create(
                 table_name=self._meta.db_table,
                 table_pk=self.pk,
-                level=versioned_model_manager.level,
+                level=_level,
                 action=ModelUpdateAction.INSERT,
                 data=None,
             )
@@ -290,17 +296,22 @@ class Model(TortoiseModel):
             await ModelUpdate.create(
                 table_name=self._meta.db_table,
                 table_pk=self.pk,
-                level=versioned_model_manager.level,
+                level=_level,
                 action=ModelUpdateAction.UPDATE,
                 data=self._update_data,
             )
 
     @classmethod
-    async def create(cls: Type['Model'], using_db: Optional[BaseDBAsyncClient] = None, **kwargs: Any) -> 'Model':
+    async def create(
+        cls: Type['Model'],
+        using_db: Optional[BaseDBAsyncClient] = None,
+        _level: Optional[int] = None,
+        **kwargs: Any,
+    ) -> 'Model':
         instance = cls(**kwargs)
         instance._saved_in_db = False
         db = using_db or cls._choose_db(True)
-        await instance.save(using_db=db, force_create=True)
+        await instance.save(using_db=db, force_create=True, _level=_level)
         return instance
 
     class Meta:

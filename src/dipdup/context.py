@@ -56,10 +56,10 @@ from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
+from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
 from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
-from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import wipe_schema
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
@@ -108,10 +108,12 @@ class DipDupContext:
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
+        transactions: TransactionManager,
     ) -> None:
         self.datasources = datasources
         self.config = config
         self.callbacks = callbacks
+        self.transactions = transactions
         self.logger = FormattedLogger('dipdup.context')
 
     def __str__(self) -> str:
@@ -323,10 +325,11 @@ class HookContext(DipDupContext):
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
+        transactions: TransactionManager,
         logger: FormattedLogger,
         hook_config: HookConfig,
     ) -> None:
-        super().__init__(datasources, config, callbacks)
+        super().__init__(datasources, config, callbacks, transactions)
         self.logger = logger
         self.hook_config = hook_config
 
@@ -351,11 +354,12 @@ class HandlerContext(DipDupContext):
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
+        transactions: TransactionManager,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
         datasource: TzktDatasource,
     ) -> None:
-        super().__init__(datasources, config, callbacks)
+        super().__init__(datasources, config, callbacks, transactions)
         self.logger = logger
         self.handler_config = handler_config
         self.datasource = datasource
@@ -409,6 +413,7 @@ class CallbackManager:
             datasources=ctx.datasources,
             config=ctx.config,
             callbacks=ctx.callbacks,
+            transactions=ctx.transactions,
             logger=FormattedLogger(module, fmt),
             handler_config=handler_config,
             datasource=datasource,
@@ -432,6 +437,7 @@ class CallbackManager:
             datasources=ctx.datasources,
             config=ctx.config,
             callbacks=ctx.callbacks,
+            transactions=ctx.transactions,
             logger=FormattedLogger(module, fmt),
             hook_config=hook_config,
         )
@@ -442,7 +448,7 @@ class CallbackManager:
             async with AsyncExitStack() as stack:
                 stack.enter_context(self._callback_wrapper(module))
                 if hook_config.atomic:
-                    await stack.enter_async_context(in_global_transaction())
+                    await stack.enter_async_context(ctx.transactions.in_transaction())
 
                 await hook_config.callback_fn(ctx, *args, **kwargs)
 

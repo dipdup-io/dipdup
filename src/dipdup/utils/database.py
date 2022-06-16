@@ -3,7 +3,6 @@ import decimal
 import hashlib
 import importlib
 import logging
-from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from os.path import dirname
@@ -28,7 +27,6 @@ from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
-from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
 
 from dipdup.exceptions import DatabaseConfigurationError
@@ -45,7 +43,7 @@ def get_connection() -> BaseDBAsyncClient:
     return connections.get(DEFAULT_CONNECTION_NAME)
 
 
-def _set_connection(conn: BaseDBAsyncClient) -> None:
+def set_connection(conn: BaseDBAsyncClient) -> None:
     connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
@@ -75,43 +73,6 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
         yield
     finally:
         await Tortoise.close_connections()
-
-
-class _VersionedModelManager:
-    _lock = asyncio.Lock()
-    _level: Optional[int] = None
-
-    @property
-    def level(self) -> int:
-        if self._level is None:
-            raise RuntimeError('`VersionedModel` could only be modified within handler context')
-        return self._level
-
-    @asynccontextmanager
-    async def context(self, level: int) -> AsyncIterator[None]:
-        async with self._lock:
-            self._level = level
-            yield
-            self._level = None
-
-
-versioned_model_manager = _VersionedModelManager()
-
-
-@asynccontextmanager
-async def in_global_transaction(level: Optional[int] = None):
-    """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
-    try:
-        original_conn = get_connection()
-        async with AsyncExitStack() as stack:
-            conn = await stack.enter_async_context(in_transaction())
-            if level:
-                await stack.enter_async_context(versioned_model_manager.context(level))
-
-            _set_connection(conn)
-            yield
-    finally:
-        _set_connection(original_conn)
 
 
 def is_model_class(obj: Any) -> bool:

@@ -38,6 +38,7 @@ from dipdup.config import SkipHistory
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.context import DipDupContext
+from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
@@ -58,7 +59,6 @@ from dipdup.models import TokenTransferData
 from dipdup.models import Transaction
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
-from dipdup.utils.database import in_global_transaction
 
 _logger = logging.getLogger(__name__)
 
@@ -174,6 +174,10 @@ class Index:
     @property
     def realtime(self) -> bool:
         return self.state.status == IndexStatus.REALTIME and not self._queue
+
+    @property
+    def sync_level(self) -> Optional[int]:
+        return self.datasource.get_sync_level(HeadSubscription())
 
     async def initialize_state(self, state: Optional[models.Index] = None) -> None:
         if self._state:
@@ -461,7 +465,10 @@ class OperationIndex(Index):
             await self.state.update_status(level=batch_level)
             return
 
-        async with in_global_transaction(level=batch_level):
+        async with self._ctx.transactions.in_transaction(
+            level=batch_level,
+            sync_level=self.sync_level,
+        ):
             for operation_subgroup, handler_config, args in matched_handlers:
                 await self._call_matched_handler(handler_config, operation_subgroup, args)
             await self.state.update_status(level=batch_level)
@@ -734,8 +741,8 @@ class BigMapIndex(Index):
                         big_map_ids.add((int(contract_big_map['ptr']), address, path))
 
         # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
-        # NOTE: Can't use versioned models here, do not pass level to `in_global_transaction`
-        async with in_global_transaction():
+        # FIXME: Can we use versioned models here?
+        async with self._ctx.transactions.in_transaction():
             for big_map_id, address, path in big_map_ids:
                 async for big_map_keys in self._datasource.iter_big_map(big_map_id, head_level):
                     big_map_data = tuple(
@@ -778,7 +785,10 @@ class BigMapIndex(Index):
             await self.state.update_status(level=batch_level)
             return
 
-        async with in_global_transaction(level=batch_level):
+        async with self._ctx.transactions.in_transaction(
+            level=batch_level,
+            sync_level=self.sync_level,
+        ):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=batch_level)
@@ -907,7 +917,10 @@ class HeadIndex(Index):
             if batch_level <= index_level:
                 raise RuntimeError(f'Level of head must be higher than index state level: {batch_level} <= {index_level}')
 
-            async with in_global_transaction(level=batch_level):
+            async with self._ctx.transactions.in_transaction(
+                level=batch_level,
+                sync_level=self.sync_level,
+            ):
                 self._logger.debug('Processing head info of level %s', batch_level)
                 for handler_config in self._config.handlers:
                     await self._call_matched_handler(handler_config, head)
@@ -970,27 +983,31 @@ class TokenTransferIndex(Index):
     async def _process_level_token_transfers(self, token_transfers: Iterable[TokenTransferData]) -> None:
         if not token_transfers:
             return
-        level = self._extract_level(tuple(token_transfers))
+        batch_level = self._extract_level(tuple(token_transfers))
 
         if self.state.status == IndexStatus.SYNCING:
-            if level < self.state.level:
-                raise RuntimeError(f'Level of token transfer batch must be not lower than index state level: {level} < {self.state.level}')
+            if batch_level < self.state.level:
+                raise RuntimeError(
+                    f'Level of token transfer batch must be not lower than index state level: {batch_level} < {self.state.level}'
+                )
         else:
-            if level <= self.state.level:
-                raise RuntimeError(f'Level of token transfer batch must be higher than index state level: {level} <= {self.state.level}')
+            if batch_level <= self.state.level:
+                raise RuntimeError(
+                    f'Level of token transfer batch must be higher than index state level: {batch_level} <= {self.state.level}'
+                )
 
-        self._logger.debug('Processing token transfers of level %s', level)
+        self._logger.debug('Processing token transfers of level %s', batch_level)
         matched_handlers = await self._match_token_transfers(token_transfers)
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
-            await self.state.update_status(level=level)
+            await self.state.update_status(level=batch_level)
             return
 
-        async with in_global_transaction(level=level):
+        async with self._ctx.transactions.in_transaction(level=batch_level, sync_level=self.sync_level):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
-            await self.state.update_status(level=level)
+            await self.state.update_status(level=batch_level)
 
     async def _call_matched_handler(self, handler_config: TokenTransferHandlerConfig, token_transfer: TokenTransferData) -> None:
         if not handler_config.parent:

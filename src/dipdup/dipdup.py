@@ -57,6 +57,7 @@ from dipdup.models import Schema
 from dipdup.models import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
+from dipdup.transactions import TransactionManager
 from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
@@ -361,10 +362,12 @@ class DipDup:
         self._datasources: Dict[str, Datasource] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, Datasource] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
+        self._transactions: TransactionManager = TransactionManager(self._config.advanced.history_depth)
         self._ctx = DipDupContext(
             config=self._config,
             datasources=self._datasources,
             callbacks=self._callbacks,
+            transactions=self._transactions,
         )
         self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         self._schema: Optional[Schema] = None

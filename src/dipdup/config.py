@@ -1160,6 +1160,7 @@ class AdvancedConfig:
     :param merge_subscriptions: Subscribe to all operations instead of exact channels
     :param metadata_interface: Expose metadata interface for TzKT
     :param skip_version_check: Do not check for new DipDup versions on startup
+    :param history_depth: A number of levels to keep for rollback
     """
 
     reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -1169,6 +1170,7 @@ class AdvancedConfig:
     merge_subscriptions: bool = False
     metadata_interface: bool = False
     skip_version_check: bool = False
+    history_depth: int = 2
 
 
 @dataclass
