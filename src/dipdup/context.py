@@ -23,7 +23,6 @@ from typing import cast
 
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
-from tortoise.transactions import _get_connection
 
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
@@ -60,6 +59,7 @@ from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
 from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
+from dipdup.utils.database import get_connection
 from dipdup.utils.database import wipe_schema
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
@@ -192,7 +192,7 @@ class DipDupContext:
             raise ReindexingRequiredError(schema.reindex, context)
 
         elif action == ReindexingAction.wipe:
-            conn = _get_connection(None)
+            conn = get_connection()
             if isinstance(self.config.database, PostgresDatabaseConfig):
                 await wipe_schema(conn, self.config.database.schema_name, self.config.database.immune_tables)
             else:
@@ -460,7 +460,7 @@ class CallbackManager:
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""
         if not isinstance(ctx.config.database, PostgresDatabaseConfig):
-            self._logger.warning('Skipping SQL hook `%s`: not supported on SQLite', name)
+            self._logger.warning('Skipping SQL script `%s`: not supported on SQLite', name)
             return
 
         subpackages = name.split('.')
@@ -468,9 +468,9 @@ class CallbackManager:
         if not exists(sql_path):
             raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 
-        # NOTE: SQL hooks are executed on default connection
-        connection = _get_connection(None)
-        await execute_sql_scripts(connection, sql_path)
+        # NOTE: SQL scripts are not wrapped in transaction
+        conn = get_connection()
+        await execute_sql_scripts(conn, sql_path)
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:

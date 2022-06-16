@@ -30,6 +30,11 @@ KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
 
 
+# NOTE: Overwritten by TransactionManager.register()
+def get_transaction_level() -> Optional[int]:
+    raise RuntimeError('TransactionManager is not registered')
+
+
 # ===> Dataclasses
 
 
@@ -252,16 +257,15 @@ class Model(TortoiseModel):
     async def delete(
         self,
         using_db: Optional[BaseDBAsyncClient] = None,
-        _level: Optional[int] = None,
     ) -> None:
         await super().delete(using_db=using_db)
-        if not _level:
+        if not (level := get_transaction_level()):
             return
 
         await ModelUpdate.create(
             table_name=self._meta.db_table,
             table_pk=self.pk,
-            level=_level,
+            level=level,
             action=ModelUpdateAction.DELETE,
             data=self._update_data,
         )
@@ -272,7 +276,6 @@ class Model(TortoiseModel):
         update_fields: Optional[Iterable[str]] = None,
         force_create: bool = False,
         force_update: bool = False,
-        _level: Optional[int] = None,
     ) -> None:
         saved_in_db = self._saved_in_db
         await super().save(
@@ -281,14 +284,14 @@ class Model(TortoiseModel):
             force_create=force_create,
             force_update=force_update,
         )
-        if not _level:
+        if not (level := get_transaction_level()):
             return
 
         if not saved_in_db:
             await ModelUpdate.create(
                 table_name=self._meta.db_table,
                 table_pk=self.pk,
-                level=_level,
+                level=level,
                 action=ModelUpdateAction.INSERT,
                 data=None,
             )
@@ -296,7 +299,7 @@ class Model(TortoiseModel):
             await ModelUpdate.create(
                 table_name=self._meta.db_table,
                 table_pk=self.pk,
-                level=_level,
+                level=level,
                 action=ModelUpdateAction.UPDATE,
                 data=self._update_data,
             )
@@ -305,13 +308,12 @@ class Model(TortoiseModel):
     async def create(
         cls: Type['Model'],
         using_db: Optional[BaseDBAsyncClient] = None,
-        _level: Optional[int] = None,
         **kwargs: Any,
     ) -> 'Model':
         instance = cls(**kwargs)
         instance._saved_in_db = False
         db = using_db or cls._choose_db(True)
-        await instance.save(using_db=db, force_create=True, _level=_level)
+        await instance.save(using_db=db, force_create=True)
         return instance
 
     class Meta:

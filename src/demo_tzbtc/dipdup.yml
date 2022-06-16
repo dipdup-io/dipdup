@@ -33,3 +33,4 @@ indexes:
         pattern:
           - destination: tzbtc_mainnet
             entrypoint: mint
+    first_level: 2455447

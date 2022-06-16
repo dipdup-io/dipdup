@@ -1,13 +1,12 @@
 from contextlib import asynccontextmanager
-from functools import wraps
+from contextlib import contextmanager
 from typing import AsyncIterator
+from typing import Generator
 from typing import Optional
-from typing import Set
-from typing import Type
 
 from tortoise.transactions import in_transaction
 
-from dipdup.models import Model
+import dipdup.models
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import set_connection
 
@@ -16,22 +15,20 @@ class TransactionManager:
     def __init__(self, history_depth: int = 2) -> None:
         self._history_depth = history_depth
         self._transaction_level: Optional[int] = None
-        self._models: Set[Model] = set()
 
-    def register_model(self, model: Type[Model]) -> None:
-        if model in self._models:
-            raise ValueError(f'Model `{model}` is already registered')
+    @contextmanager
+    def register(self) -> Generator[None, None, None]:
+        fn = dipdup.models.get_transaction_level
+        try:
+            fn()
+        except RuntimeError:
+            pass
+        else:
+            raise RuntimeError('TransactionManager is already registered')
 
-        model.save = self._wrapper(model.save)  # type: ignore
-        model.delete = self._wrapper(model.delete)  # type: ignore
-
-    def _wrapper(self, fn):
-        @wraps(fn)
-        async def wrapper(*args, **kwargs):
-            kwargs['_level'] = self._transaction_level
-            return await fn(*args, **kwargs)
-
-        return wrapper
+        dipdup.models.get_transaction_level = lambda: self._transaction_level
+        yield
+        dipdup.models.get_transaction_level = fn
 
     @asynccontextmanager
     async def in_transaction(
