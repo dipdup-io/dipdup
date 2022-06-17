@@ -31,7 +31,7 @@ def _get_index_dispatcher() -> IndexDispatcher:
     )
     index_dispatcher._ctx.reindex = AsyncMock()  # type: ignore
     index_dispatcher._ctx.config = AsyncMock()  # type: ignore
-    index_dispatcher._ctx.transactions = TransactionManager(0)  # type: ignore
+    index_dispatcher._ctx._transactions = TransactionManager(0)  # type: ignore
 
     return index_dispatcher
 
@@ -69,7 +69,7 @@ def _get_operation_index(level: int) -> OperationIndex:
     index._call_matched_handler = AsyncMock()  # type: ignore
     index._ctx.reindex = AsyncMock()  # type: ignore
     index._ctx.config = MagicMock()
-    index._ctx.transactions = TransactionManager(0)
+    index._ctx._transactions = TransactionManager(0)
 
     return index
 

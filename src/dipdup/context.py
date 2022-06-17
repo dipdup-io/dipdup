@@ -112,8 +112,8 @@ class DipDupContext:
     ) -> None:
         self.datasources = datasources
         self.config = config
-        self.callbacks = callbacks
-        self.transactions = transactions
+        self._callbacks = callbacks
+        self._transactions = transactions
         self.logger = FormattedLogger('dipdup.context')
 
     def __str__(self) -> str:
@@ -133,7 +133,7 @@ class DipDupContext:
         :param fmt: Format string for `ctx.logger` messages
         :param wait: Wait for hook to finish or fire and forget
         """
-        await self.callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
+        await self._callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
 
     async def fire_handler(
         self,
@@ -151,14 +151,14 @@ class DipDupContext:
         :param datasource: An instance of datasource that triggered the handler
         :param fmt: Format string for `ctx.logger` messages
         """
-        await self.callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
+        await self._callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
     async def execute_sql(self, name: str) -> None:
         """Execute SQL script with given name
 
         :param name: SQL script name within `<project>/sql` directory
         """
-        await self.callbacks.execute_sql(self, name)
+        await self._callbacks.execute_sql(self, name)
 
     async def restart(self) -> None:
         """Restart indexer preserving CLI arguments"""
@@ -252,7 +252,7 @@ class DipDupContext:
 
         await datasource.add_index(index_config)
         for handler_config in index_config.handlers:
-            self.callbacks.register_handler(handler_config)
+            self._callbacks.register_handler(handler_config)
         await index.initialize_state(state)
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
@@ -366,11 +366,12 @@ class HandlerContext(DipDupContext):
         template_values = handler_config.parent.template_values if handler_config.parent else {}
         self.template_values = TemplateValuesDict(self, **template_values)
 
+    # TODO
     async def rollback(self, level: int) -> None:
         if not (index_config := self.handler_config.parent):
             raise Exception
 
-        async with self.transactions.in_transaction():
+        async with self._transactions.in_transaction():
             index_config
 
 
@@ -419,8 +420,8 @@ class CallbackManager:
         new_ctx = HandlerContext(
             datasources=ctx.datasources,
             config=ctx.config,
-            callbacks=ctx.callbacks,
-            transactions=ctx.transactions,
+            callbacks=ctx._callbacks,
+            transactions=ctx._transactions,
             logger=FormattedLogger(module, fmt),
             handler_config=handler_config,
             datasource=datasource,
@@ -443,8 +444,8 @@ class CallbackManager:
         new_ctx = HookContext(
             datasources=ctx.datasources,
             config=ctx.config,
-            callbacks=ctx.callbacks,
-            transactions=ctx.transactions,
+            callbacks=ctx._callbacks,
+            transactions=ctx._transactions,
             logger=FormattedLogger(module, fmt),
             hook_config=hook_config,
         )
@@ -455,7 +456,7 @@ class CallbackManager:
             async with AsyncExitStack() as stack:
                 stack.enter_context(self._callback_wrapper(module))
                 if hook_config.atomic:
-                    await stack.enter_async_context(ctx.transactions.in_transaction())
+                    await stack.enter_async_context(ctx._transactions.in_transaction())
 
                 await hook_config.callback_fn(ctx, *args, **kwargs)
 
