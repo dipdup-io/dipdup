@@ -360,7 +360,11 @@ class DipDup:
         self._datasources: Dict[str, Datasource] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, Datasource] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
-        self._transactions: TransactionManager = TransactionManager(self._config.advanced.history_depth)
+        self._transactions: TransactionManager = TransactionManager(
+            depth=self._config.advanced.history_depth,
+            cleanup_interval=self._config.advanced.history_cleanup_interval,
+            immune_tables=self._config.database.immune_tables,
+        )
         self._ctx = DipDupContext(
             config=self._config,
             datasources=self._datasources,
@@ -501,9 +505,9 @@ class DipDup:
         validate_models(self._config.package)
 
         url = self._config.database.connection_string
-        timeout = self._config.database.connection_timeout if isinstance(self._config.database, PostgresDatabaseConfig) else None
+        timeout = self._config.database.connection_timeout
         models = f'{self._config.package}.models'
-        await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
+        await stack.enter_async_context(tortoise_wrapper(url, models, timeout))
 
     async def _set_up_hooks(self, tasks: Set[Task], run: bool = False) -> None:
         for hook_config in default_hooks.values():

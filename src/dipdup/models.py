@@ -7,6 +7,7 @@ from typing import Dict
 from typing import Generic
 from typing import Iterable
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -216,6 +217,7 @@ class TokenTransferData:
 class DatabaseTransaction:
     level: int
     index: str
+    immune_tables: Set[str]
 
 
 # NOTE: Overwritten by TransactionManager.register()
@@ -266,7 +268,10 @@ class Model(TortoiseModel):
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> None:
         await super().delete(using_db=using_db)
+
         if not (transaction := get_transaction()):
+            return
+        if self._meta.db_table in transaction.immune_tables:
             return
 
         await ModelUpdate.create(
@@ -292,7 +297,10 @@ class Model(TortoiseModel):
             force_create=force_create,
             force_update=force_update,
         )
+
         if not (transaction := get_transaction()):
+            return
+        if self._meta.db_table in transaction.immune_tables:
             return
 
         if not saved_in_db:

@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import AsyncIterator
 from typing import Generator
 from typing import Optional
+from typing import Set
 
 from tortoise.transactions import in_transaction
 
@@ -13,9 +14,15 @@ from dipdup.utils.database import set_connection
 
 
 class TransactionManager:
-    def __init__(self, depth: int = 2, cleanup_interval: int = 60) -> None:
+    def __init__(
+        self,
+        depth: int = 2,
+        cleanup_interval: int = 60,
+        immune_tables: Optional[Set[str]] = None,
+    ) -> None:
         self._depth = depth
         self._cleanup_interval = cleanup_interval
+        self._immune_tables = immune_tables or set()
         self._transaction: Optional[dipdup.models.DatabaseTransaction] = None
 
     @contextmanager
@@ -50,7 +57,11 @@ class TransactionManager:
 
                 if level and index and self._depth:
                     if not sync_level or sync_level - level <= self._depth:
-                        self._transaction = dipdup.models.DatabaseTransaction(level, index)
+                        self._transaction = dipdup.models.DatabaseTransaction(
+                            level,
+                            index,
+                            self._immune_tables,
+                        )
 
                 yield
         finally:

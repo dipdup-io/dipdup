@@ -90,9 +90,18 @@ class SqliteDatabaseConfig:
     def schema_name(self) -> str:
         return 'public'
 
-    @cached_property
+    @property
     def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
+
+    @property
+    def immune_tables(self) -> Set[str]:
+        return set()
+
+    @property
+    def connection_timeout(self) -> int:
+        # NOTE: Fail immediately
+        return 1
 
 
 @dataclass
@@ -117,7 +126,7 @@ class PostgresDatabaseConfig:
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
     password: str = ''
-    immune_tables: Tuple[str, ...] = field(default_factory=tuple)
+    immune_tables: Set[str] = field(default_factory=set)
     connection_timeout: int = 60
 
     @cached_property
