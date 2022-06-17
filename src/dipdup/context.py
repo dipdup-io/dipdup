@@ -366,6 +366,13 @@ class HandlerContext(DipDupContext):
         template_values = handler_config.parent.template_values if handler_config.parent else {}
         self.template_values = TemplateValuesDict(self, **template_values)
 
+    async def rollback(self, level: int) -> None:
+        if not (index_config := self.handler_config.parent):
+            raise Exception
+
+        async with self.transactions.in_transaction():
+            index_config
+
 
 class CallbackManager:
     def __init__(self, package: str) -> None:

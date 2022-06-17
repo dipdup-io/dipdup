@@ -16,27 +16,28 @@ class TransactionManager:
     def __init__(self, depth: int = 2, cleanup_interval: int = 60) -> None:
         self._depth = depth
         self._cleanup_interval = cleanup_interval
-        self._transaction_level: Optional[int] = None
+        self._transaction: Optional[dipdup.models.DatabaseTransaction] = None
 
     @contextmanager
     def register(self) -> Generator[None, None, None]:
-        fn = dipdup.models.get_transaction_level
+        original_get_transaction = dipdup.models.get_transaction
         try:
-            fn()
+            original_get_transaction()
         except RuntimeError:
             pass
         else:
             raise RuntimeError('TransactionManager is already registered')
 
-        dipdup.models.get_transaction_level = lambda: self._transaction_level
+        dipdup.models.get_transaction = lambda: self._transaction
         yield
-        dipdup.models.get_transaction_level = fn
+        dipdup.models.get_transaction = original_get_transaction
 
     @asynccontextmanager
     async def in_transaction(
         self,
         level: Optional[int] = None,
         sync_level: Optional[int] = None,
+        index: Optional[str] = None,
     ) -> AsyncIterator[None]:
         """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
         try:
@@ -44,17 +45,17 @@ class TransactionManager:
             async with in_transaction() as conn:
                 set_connection(conn)
 
-                if self._transaction_level:
+                if self._transaction:
                     raise ValueError('Transaction is already started')
 
-                if level and self._depth:
+                if level and index and self._depth:
                     if not sync_level or sync_level - level <= self._depth:
-                        self._transaction_level = level
+                        self._transaction = dipdup.models.DatabaseTransaction(level, index)
 
                 yield
         finally:
+            self._transaction = None
             set_connection(original_conn)
-            self._transaction_level = None
 
     async def cleanup_task(self, event: asyncio.Event, interval: int) -> None:
         """Cleanup outdated model updates"""

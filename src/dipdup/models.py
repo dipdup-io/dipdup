@@ -212,8 +212,14 @@ class TokenTransferData:
 # ===> Model Versioning
 
 
+@dataclass
+class DatabaseTransaction:
+    level: int
+    index: str
+
+
 # NOTE: Overwritten by TransactionManager.register()
-def get_transaction_level() -> Optional[int]:
+def get_transaction() -> Optional[DatabaseTransaction]:
     raise RuntimeError('TransactionManager is not registered')
 
 
@@ -227,6 +233,7 @@ class ModelUpdate(TortoiseModel):
     table_name = fields.CharField(256)
     table_pk = fields.CharField(256)
     level = fields.IntField()
+    index = fields.CharField(256)
 
     action = fields.CharEnumField(ModelUpdateAction)
     data = fields.JSONField(encoder=json_dumps, null=True)
@@ -259,13 +266,14 @@ class Model(TortoiseModel):
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> None:
         await super().delete(using_db=using_db)
-        if not (level := get_transaction_level()):
+        if not (transaction := get_transaction()):
             return
 
         await ModelUpdate.create(
             table_name=self._meta.db_table,
             table_pk=self.pk,
-            level=level,
+            level=transaction.level,
+            index=transaction.index,
             action=ModelUpdateAction.DELETE,
             data=self._update_data,
         )
@@ -284,14 +292,15 @@ class Model(TortoiseModel):
             force_create=force_create,
             force_update=force_update,
         )
-        if not (level := get_transaction_level()):
+        if not (transaction := get_transaction()):
             return
 
         if not saved_in_db:
             await ModelUpdate.create(
                 table_name=self._meta.db_table,
                 table_pk=self.pk,
-                level=level,
+                level=transaction.level,
+                index=transaction.index,
                 action=ModelUpdateAction.INSERT,
                 data=None,
             )
@@ -299,7 +308,8 @@ class Model(TortoiseModel):
             await ModelUpdate.create(
                 table_name=self._meta.db_table,
                 table_pk=self.pk,
-                level=level,
+                level=transaction.level,
+                index=transaction.index,
                 action=ModelUpdateAction.UPDATE,
                 data=self._update_data,
             )
@@ -320,7 +330,7 @@ class Model(TortoiseModel):
         abstract = True
 
 
-# ===> Built-in Models (mostly not versioned)
+# ===> Built-in Models (not versioned)
 
 
 class Schema(TortoiseModel):
@@ -385,6 +395,9 @@ class Contract(TortoiseModel):
 
     class Meta:
         table = 'dipdup_contract'
+
+
+# ===> Built-in Models (versioned)
 
 
 class ContractMetadata(Model):
