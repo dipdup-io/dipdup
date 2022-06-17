@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import logging
 import os
 import sys
@@ -53,6 +54,7 @@ from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
 from dipdup.models import ContractMetadata
 from dipdup.models import Index
+from dipdup.models import ModelUpdate
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
@@ -333,6 +335,26 @@ class HookContext(DipDupContext):
         self.logger = logger
         self.hook_config = hook_config
 
+    async def rollback(self, index: str, from_level: int, to_level: int) -> None:
+        if from_level <= to_level:
+            raise RuntimeError(f'Attempt to rollback in future: {from_level} <= {to_level}')
+        if from_level - to_level > self.config.advanced.rollback_depth:
+            # TODO: More context
+            await self.reindex(ReindexingReason.rollback)
+
+        models = importlib.import_module(f'{self.config.package}.models')
+        async with self._transactions.in_transaction():
+            updates = ModelUpdate.filter(
+                level__le=from_level,
+                level__gt=to_level,
+                index=index,
+            ).order_by('-id')
+            async for update in updates:
+                model = getattr(models, update.model_name)
+                await update.revert(model)
+
+        # TODO: Update index level. Everywhere, including existing states.
+
 
 class TemplateValuesDict(dict):
     def __init__(self, ctx, **kwargs):
@@ -365,14 +387,6 @@ class HandlerContext(DipDupContext):
         self.datasource = datasource
         template_values = handler_config.parent.template_values if handler_config.parent else {}
         self.template_values = TemplateValuesDict(self, **template_values)
-
-    # TODO
-    async def rollback(self, level: int) -> None:
-        if not (index_config := self.handler_config.parent):
-            raise Exception
-
-        async with self._transactions.in_transaction():
-            index_config
 
 
 class CallbackManager:

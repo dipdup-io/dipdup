@@ -237,19 +237,31 @@ class ModelUpdateAction(Enum):
 
 
 class ModelUpdate(TortoiseModel):
-    table_name = fields.CharField(256)
-    table_pk = fields.CharField(256)
+    model_name = fields.CharField(256)
+    model_pk = fields.CharField(256)
     level = fields.IntField()
     index = fields.CharField(256)
 
     action = fields.CharEnumField(ModelUpdateAction)
-    data = fields.JSONField(encoder=json_dumps, null=True)
+    data: Dict[str, Any] = fields.JSONField(encoder=json_dumps, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
         table = 'dipdup_model_update'
+
+    async def revert(self, model: Type[TortoiseModel]) -> None:
+        """Revert model update"""
+
+        if self.action == ModelUpdateAction.INSERT:
+            await model.filter(pk=self.model_pk).delete()
+        elif self.action == ModelUpdateAction.UPDATE:
+            await model.filter(pk=self.model_pk).update(**self.data)
+        elif self.action == ModelUpdateAction.DELETE:
+            await model.create(pk=self.model_pk, **self.data)
+
+        await self.delete()
 
 
 class Model(TortoiseModel):
@@ -278,8 +290,8 @@ class Model(TortoiseModel):
             return
 
         await ModelUpdate.create(
-            table_name=self._meta.db_table,
-            table_pk=self.pk,
+            model_name=self.__class__.__name__,
+            model_pk=self.pk,
             level=transaction.level,
             index=transaction.index,
             action=ModelUpdateAction.DELETE,
@@ -308,8 +320,8 @@ class Model(TortoiseModel):
 
         if not saved_in_db:
             await ModelUpdate.create(
-                table_name=self._meta.db_table,
-                table_pk=self.pk,
+                model_name=self.__class__.__name__,
+                model_pk=self.pk,
                 level=transaction.level,
                 index=transaction.index,
                 action=ModelUpdateAction.INSERT,
@@ -317,8 +329,8 @@ class Model(TortoiseModel):
             )
         else:
             await ModelUpdate.create(
-                table_name=self._meta.db_table,
-                table_pk=self.pk,
+                model_name=self.__class__.__name__,
+                model_pk=self.pk,
                 level=transaction.level,
                 index=transaction.index,
                 action=ModelUpdateAction.UPDATE,
