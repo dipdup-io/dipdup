@@ -58,7 +58,6 @@ from dipdup.models import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
-from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import get_schema_hash
@@ -73,7 +72,6 @@ class IndexDispatcher:
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
-        self._tasks: Deque[asyncio.Task] = deque()
 
         self._entrypoint_filter: Set[Optional[str]] = set()
         self._address_filter: Set[str] = set()
@@ -105,11 +103,7 @@ class IndexDispatcher:
                     await datasource.subscribe()
 
             tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
-            while self._tasks:
-                tasks.append(self._tasks.popleft())
-
-            async with slowdown(1):
-                await gather(*tasks)
+            indexes_processed = await gather(*tasks)
 
             indexes_spawned = False
             while pending_indexes:
@@ -133,6 +127,11 @@ class IndexDispatcher:
             else:
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
+
+            if not any(indexes_processed):
+                await self._ctx._transactions.cleanup()
+
+            await asyncio.sleep(1)
 
     async def _update_metrics(self, update_interval: float) -> None:
         while True:
@@ -224,18 +223,16 @@ class IndexDispatcher:
             datasource.call_on_rollback(self._on_rollback)
 
     async def _on_head(self, datasource: IndexDatasource, head: HeadBlockData) -> None:
-        # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
-        self._tasks.append(
-            asyncio.create_task(
-                Head.update_or_create(
-                    name=datasource.name,
-                    defaults={
-                        'level': head.level,
-                        'hash': head.hash,
-                        'timestamp': head.timestamp,
-                    },
-                ),
-            )
+        # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
+        asyncio.ensure_future(
+            Head.update_or_create(
+                name=datasource.name,
+                defaults={
+                    'level': head.level,
+                    'hash': head.hash,
+                    'timestamp': head.timestamp,
+                },
+            ),
         )
         if Metrics.enabled:
             Metrics.set_datasource_head_updated(datasource.name)

@@ -1,11 +1,8 @@
-import asyncio
 import importlib
 import logging
 import pkgutil
-import time
 import types
 from collections import defaultdict
-from contextlib import asynccontextmanager
 from contextlib import suppress
 from decimal import Decimal
 from functools import partial
@@ -18,7 +15,6 @@ from os.path import exists
 from os.path import getsize
 from os.path import join
 from typing import Any
-from typing import AsyncGenerator
 from typing import Callable
 from typing import DefaultDict
 from typing import Dict
@@ -50,17 +46,6 @@ def import_submodules(package: str) -> Dict[str, types.ModuleType]:
         if is_pkg:
             results.update(import_submodules(full_name))
     return results
-
-
-@asynccontextmanager
-async def slowdown(seconds: int) -> AsyncGenerator[None, None]:
-    """Sleep if nested block was executed faster than X seconds"""
-    started_at = time.time()
-    yield
-    finished_at = time.time()
-    time_spent = finished_at - started_at
-    if time_spent < seconds:
-        await asyncio.sleep(seconds - time_spent)
 
 
 def snake_to_pascal(value: str) -> str:

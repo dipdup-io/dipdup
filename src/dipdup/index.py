@@ -203,7 +203,7 @@ class Index:
             },
         )
 
-    async def process(self) -> None:
+    async def process(self) -> bool:
         if not isinstance(self._config, HeadIndexConfig) and self._config.last_level:
             head_level = self._config.last_level
             with ExitStack() as stack:
@@ -234,6 +234,9 @@ class Index:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_total_realtime_duration())
                 await self._process_queue()
+        else:
+            return False
+        return True
 
     @abstractmethod
     async def _synchronize(self, head_level: int, cache: bool = False) -> None:

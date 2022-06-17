@@ -65,6 +65,11 @@ class TransactionManager:
             self._transaction = None
             set_connection(original_conn)
 
-    async def cleanup(self, last_level: int) -> None:
+    async def cleanup(self) -> None:
         """Cleanup outdated model updates"""
+        most_recent_index = await dipdup.models.Index.filter().order_by('-level').first()
+        if not most_recent_index:
+            return
+
+        last_level = most_recent_index.level - self._depth
         await dipdup.models.ModelUpdate.filter(level__lt=last_level).delete()

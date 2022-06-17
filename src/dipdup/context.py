@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import sys
@@ -57,7 +58,6 @@ from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
-from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import wipe_schema
@@ -385,9 +385,9 @@ class CallbackManager:
     async def run(self) -> None:
         self._logger.debug('Starting CallbackManager loop')
         while True:
-            async with slowdown(1):
-                while pending_hooks:
-                    await pending_hooks.popleft()
+            while pending_hooks:
+                await pending_hooks.popleft()
+            await asyncio.sleep(1)
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
