@@ -79,7 +79,10 @@ class IndexDispatcher:
         self._address_filter: Set[str] = set()
 
     async def run(
-        self, spawn_datasources_event: Event, start_scheduler_event: Event, cleanup_updates_event: Event, early_realtime: bool = False
+        self,
+        spawn_datasources_event: Event,
+        start_scheduler_event: Event,
+        early_realtime: bool = False,
     ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
@@ -127,10 +130,8 @@ class IndexDispatcher:
 
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
-                if not cleanup_updates_event.is_set():
-                    cleanup_updates_event.set()
-            # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
             else:
+                # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
 
     async def _update_metrics(self, update_interval: float) -> None:
@@ -361,8 +362,7 @@ class DipDup:
         self._datasources_by_config: Dict[DatasourceConfigT, Datasource] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
-            depth=self._config.advanced.history_depth,
-            cleanup_interval=self._config.advanced.history_cleanup_interval,
+            depth=self._config.advanced.rollback_depth,
             immune_tables=self._config.database.immune_tables,
         )
         self._ctx = DipDupContext(
@@ -397,7 +397,7 @@ class DipDup:
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
-            updates_cleanup_event = await self._set_up_transactions(stack, tasks, cleanup=not self._config.oneshot)
+            await self._set_up_transactions(stack)
             await self._set_up_datasources(stack)
             await self._set_up_hooks(tasks, run=not self._config.oneshot)
             await self._set_up_prometheus()
@@ -425,9 +425,7 @@ class DipDup:
             spawn_index_tasks = (create_task(self._ctx.spawn_index(name)) for name in self._config.indexes)
             await gather(*spawn_index_tasks)
 
-            await self._set_up_index_dispatcher(
-                tasks, spawn_datasources_event, start_scheduler_event, updates_cleanup_event, advanced_config.early_realtime
-            )
+            await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime)
 
             await gather(*tasks)
 
@@ -490,14 +488,8 @@ class DipDup:
 
         await self._ctx.fire_hook('on_restart')
 
-    async def _set_up_transactions(self, stack: AsyncExitStack, tasks: Set[Task], cleanup: bool) -> Event:
-        event = Event()
-        interval = self._config.advanced.history_cleanup_interval
+    async def _set_up_transactions(self, stack: AsyncExitStack) -> None:
         stack.enter_context(self._transactions.register())
-        if cleanup:
-            cleanup_task = create_task(self._transactions.cleanup_task(event, interval))
-            tasks.add(cleanup_task)
-        return event
 
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
         # NOTE: Must be called before entering Tortoise context
@@ -577,7 +569,6 @@ class DipDup:
         tasks: Set[Task],
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
-        cleanup_updates_event: Event,
         early_realtime: bool,
     ) -> None:
         index_dispatcher = IndexDispatcher(self._ctx)
@@ -586,7 +577,6 @@ class DipDup:
                 index_dispatcher.run(
                     spawn_datasources_event,
                     start_scheduler_event,
-                    cleanup_updates_event,
                     early_realtime,
                 )
             )

@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
 from typing import AsyncIterator
@@ -17,11 +16,9 @@ class TransactionManager:
     def __init__(
         self,
         depth: int = 2,
-        cleanup_interval: int = 60,
         immune_tables: Optional[Set[str]] = None,
     ) -> None:
         self._depth = depth
-        self._cleanup_interval = cleanup_interval
         self._immune_tables = immune_tables or set()
         self._transaction: Optional[dipdup.models.VersionedTransaction] = None
 
@@ -68,16 +65,6 @@ class TransactionManager:
             self._transaction = None
             set_connection(original_conn)
 
-    async def cleanup_task(self, event: asyncio.Event, interval: int) -> None:
+    async def cleanup(self, last_level: int) -> None:
         """Cleanup outdated model updates"""
-        await event.wait()
-
-        while True:
-            await asyncio.sleep(interval)
-            last_index = await dipdup.models.Index.filter().order_by('level').first()
-            if not last_index:
-                raise RuntimeError('No indexes found')
-
-            level = last_index.level - self._depth
-            await dipdup.models.ModelUpdate.filter(level__lt=level).delete()
-            await asyncio.sleep(interval)
+        await dipdup.models.ModelUpdate.filter(level__lt=last_level).delete()
