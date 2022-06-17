@@ -38,6 +38,7 @@ from dipdup.config import SkipHistory
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.context import DipDupContext
+from dipdup.context import rolled_back_indexes
 from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
@@ -204,6 +205,10 @@ class Index:
         )
 
     async def process(self) -> bool:
+        if self.name in rolled_back_indexes:
+            await self.state.refresh_from_db(('level',))
+            rolled_back_indexes.remove(self.name)
+
         if not isinstance(self._config, HeadIndexConfig) and self._config.last_level:
             head_level = self._config.last_level
             with ExitStack() as stack:

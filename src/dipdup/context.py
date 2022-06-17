@@ -17,6 +17,7 @@ from typing import Deque
 from typing import Dict
 from typing import Iterator
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -68,6 +69,7 @@ DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 # NOTE: Dependency cycle
 pending_indexes = deque()  # type: ignore
 pending_hooks: Deque[Awaitable[None]] = deque()
+rolled_back_indexes: Set[str] = set()
 
 
 class MetadataCursor:
@@ -353,7 +355,8 @@ class HookContext(DipDupContext):
                 model = getattr(models, update.model_name)
                 await update.revert(model)
 
-        # TODO: Update index level. Everywhere, including existing states.
+        await Index.filter(name=index).update(level=to_level)
+        rolled_back_indexes.add(index)
 
 
 class TemplateValuesDict(dict):
