@@ -23,7 +23,7 @@ class TransactionManager:
         self._depth = depth
         self._cleanup_interval = cleanup_interval
         self._immune_tables = immune_tables or set()
-        self._transaction: Optional[dipdup.models.DatabaseTransaction] = None
+        self._transaction: Optional[dipdup.models.VersionedTransaction] = None
 
     @contextmanager
     def register(self) -> Generator[None, None, None]:
@@ -57,7 +57,7 @@ class TransactionManager:
 
                 if level and index and self._depth:
                     if not sync_level or sync_level - level <= self._depth:
-                        self._transaction = dipdup.models.DatabaseTransaction(
+                        self._transaction = dipdup.models.VersionedTransaction(
                             level,
                             index,
                             self._immune_tables,

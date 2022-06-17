@@ -214,14 +214,14 @@ class TokenTransferData:
 
 
 @dataclass
-class DatabaseTransaction:
+class VersionedTransaction:
     level: int
     index: str
     immune_tables: Set[str]
 
 
 # NOTE: Overwritten by TransactionManager.register()
-def get_transaction() -> Optional[DatabaseTransaction]:
+def get_transaction() -> Optional[VersionedTransaction]:
     raise RuntimeError('TransactionManager is not registered')
 
 
