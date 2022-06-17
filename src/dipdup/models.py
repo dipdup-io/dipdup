@@ -1,8 +1,10 @@
+from collections import defaultdict
 from dataclasses import field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any
+from typing import DefaultDict
 from typing import Dict
 from typing import Generic
 from typing import Iterable
@@ -213,6 +215,9 @@ class TokenTransferData:
 # ===> Model Versioning
 
 
+versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
+
+
 @dataclass
 class VersionedTransaction:
     level: int
@@ -249,19 +254,17 @@ class ModelUpdate(TortoiseModel):
 
 class Model(TortoiseModel):
     @property
-    def _update_data(self) -> Dict[str, Any]:
-        update_data = {}
-        for key, field_ in self._meta.fields_map.items():
-            if field_.pk:
-                continue
-            if isinstance(field_, ForeignKeyFieldInstance):
-                continue
-            value = getattr(self, key)
-            if isinstance(value, fields.ReverseRelation):
-                continue
-            update_data[key] = getattr(self, key)
+    def _versioned_data(self) -> Dict[str, Any]:
+        if not (field_names := versioned_fields[self._meta.db_table]):
+            for key, field_ in self._meta.fields_map.items():
+                if field_.pk:
+                    continue
+                elif isinstance(field_, ForeignKeyFieldInstance):
+                    field_names.add(f'{key}_id')
+                else:
+                    field_names.add(key)
 
-        return update_data
+        return {name: getattr(self, name) for name in field_names}
 
     async def delete(
         self,
@@ -280,7 +283,7 @@ class Model(TortoiseModel):
             level=transaction.level,
             index=transaction.index,
             action=ModelUpdateAction.DELETE,
-            data=self._update_data,
+            data=self._versioned_data,
         )
 
     async def save(
@@ -319,7 +322,7 @@ class Model(TortoiseModel):
                 level=transaction.level,
                 index=transaction.index,
                 action=ModelUpdateAction.UPDATE,
-                data=self._update_data,
+                data=self._versioned_data,
             )
 
     @classmethod
