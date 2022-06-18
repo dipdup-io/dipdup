@@ -473,9 +473,9 @@ class CallbackManager:
             async with AsyncExitStack() as stack:
                 stack.enter_context(self._callback_wrapper(module))
                 if hook_config.atomic:
-                    await stack.enter_async_context(ctx._transactions.in_transaction())
+                    await stack.enter_async_context(new_ctx._transactions.in_transaction())
 
-                await hook_config.callback_fn(ctx, *args, **kwargs)
+                await hook_config.callback_fn(new_ctx, *args, **kwargs)
 
         if wait:
             await _wrapper()

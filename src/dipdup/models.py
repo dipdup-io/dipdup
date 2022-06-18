@@ -17,7 +17,6 @@ from typing import TypeVar
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from tortoise import BaseDBAsyncClient
-from tortoise import ForeignKeyFieldInstance
 from tortoise import Model as TortoiseModel
 from tortoise import fields
 
