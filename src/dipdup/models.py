@@ -269,9 +269,9 @@ class Model(TortoiseModel):
     def _versioned_data(self) -> Dict[str, Any]:
         if not (field_names := versioned_fields[self._meta.db_table]):
             for key, field_ in self._meta.fields_map.items():
-                if field_.pk:
+                if field_.pk or key in self._meta.backward_fk_fields:
                     continue
-                elif isinstance(field_, ForeignKeyFieldInstance):
+                elif key in self._meta.fk_fields:
                     field_names.add(f'{key}_id')
                 else:
                     field_names.add(key)
