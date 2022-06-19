@@ -277,58 +277,37 @@ class IndexDispatcher:
             Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Choose action for each index
-        ignored_indexes: Set[str] = set()
-        single_level_indexes: Set[str] = set()
-        unprocessed_indexes: Set[str] = set()
+        affected_indexes: Set[str] = set()
 
         for index_name, index in self._indexes.items():
             index_level = index.state.level
 
             if index.message_type != type_:
                 self._logger.debug('%s: different channel, skipping', index_name)
-                ignored_indexes.add(index_name)
 
             elif index.datasource != datasource:
                 self._logger.debug('%s: different datasource, skipping', index_name)
-                ignored_indexes.add(index_name)
 
             elif to_level >= index_level:
                 self._logger.debug('%s: level is too low, skipping', index_name)
-                ignored_indexes.add(index_name)
-
-            elif from_level - to_level == 1:
-                if isinstance(index, OperationIndex):
-                    self._logger.debug('%s: single-level, supported', index_name)
-                    single_level_indexes.add(index_name)
-                else:
-                    self._logger.debug('%s: single-level, not supported', index_name)
-                    unprocessed_indexes.add(index_name)
 
             else:
                 self._logger.debug('%s: unprocessed', index_name)
-                unprocessed_indexes.add(index_name)
+                affected_indexes.add(index_name)
 
         self._logger.info(
-            '%s indexes, %s ignored, %s single-level, %s unprocessed',
+            '%s/%s indexes affected',
             len(self._indexes),
-            len(ignored_indexes),
-            len(single_level_indexes),
-            len(unprocessed_indexes),
+            len(affected_indexes),
         )
 
-        for index_name in single_level_indexes:
-            self._logger.info('`%s`: performing a single-level rollback', index_name)
-            if not isinstance(index := self._indexes[index_name], OperationIndex):
-                raise RuntimeError(f'Attempt to single-level rollback non-operation index: {index_name}')  # pragma: no cover
-            index.push_rollback(from_level)
-
-        if not unprocessed_indexes:
+        if not affected_indexes:
             self._logger.info('`%s` rollback complete', channel)
             return
 
         if self._ctx.config.per_index_rollback:
             hook_name = 'on_index_rollback'
-            for index_name in unprocessed_indexes:
+            for index_name in affected_indexes:
                 self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
                 await self._ctx.fire_hook(
                     hook_name,

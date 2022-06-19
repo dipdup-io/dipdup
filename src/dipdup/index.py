@@ -2,7 +2,6 @@ import logging
 from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
-from collections import namedtuple
 from contextlib import ExitStack
 from datetime import datetime
 from typing import DefaultDict
@@ -77,10 +76,7 @@ class OperationSubgroup:
         return hash(f'{self.hash}:{self.counter}')
 
 
-# NOTE: Message queue of OperationIndex
-SingleLevelRollback = namedtuple('SingleLevelRollback', ('from_level'))
 Operations = Tuple[OperationData, ...]
-OperationQueueItemT = Union[Tuple[OperationSubgroup, ...], SingleLevelRollback]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
 MatchedOperationsT = Tuple[OperationSubgroup, OperationHandlerConfig, Deque[OperationHandlerArgumentT]]
 MatchedBigMapsT = Tuple[BigMapHandlerConfig, BigMapDiff]
@@ -289,36 +285,13 @@ class OperationIndex(Index):
 
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[OperationQueueItemT] = deque()
+        self._queue: Deque[Tuple[OperationSubgroup, ...]] = deque()
         self._contract_hashes: Dict[str, Tuple[int, int]] = {}
-        self._next_head_level: Optional[int] = None
-        self._head_hashes: Dict[str, bool] = {}
-        self._migration_originations: Optional[Dict[str, OperationData]] = None
 
     def push_operations(self, operation_subgroups: Tuple[OperationSubgroup, ...]) -> None:
         self._queue.append(operation_subgroups)
         if Metrics.enabled:
             Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
-
-    def push_rollback(self, from_level: int) -> None:
-        self._queue.append(SingleLevelRollback(from_level))
-
-    async def _single_level_rollback(self, from_level: int) -> None:
-        """Ensure the next arrived block has all operations of the previous one. But it could also contain additional operations we need to process.
-
-        Called by IndexDispatcher when index datasource receive a single level rollback.
-        """
-        if self._next_head_level:
-            raise RuntimeError('Index is already in a single-level rollback state')
-
-        index_level = cast(int, self.state.level)
-        if index_level < from_level:
-            self._logger.info('Index level is lower than new head level, ignoring: %s < %s', index_level, from_level)
-        elif index_level == from_level:
-            self._logger.info('Single level rollback, next block will be processed partially')
-            self._next_head_level = from_level
-        else:
-            raise RuntimeError(f'Index level is higher than new head level: {index_level} > {from_level}')
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
@@ -334,23 +307,16 @@ class OperationIndex(Index):
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
 
-            if isinstance(message, SingleLevelRollback):
-                # NOTE: To match <= condition, variable is not used anywhere else
-                message_level = message.from_level + 1
-            else:
-                message_level = message[0].operations[0].level
+            message_level = message[0].operations[0].level
 
             if message_level <= self.state.level:
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
 
-            if isinstance(message, SingleLevelRollback):
-                await self._single_level_rollback(message.from_level)
-            else:
-                with ExitStack() as stack:
-                    if Metrics.enabled:
-                        stack.enter_context(Metrics.measure_level_realtime_duration())
-                    await self._process_level_operations(message)
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_level_realtime_duration())
+                await self._process_level_operations(message)
 
         else:
             if Metrics.enabled:
@@ -415,55 +381,10 @@ class OperationIndex(Index):
         if batch_level < index_level:
             raise RuntimeError(f'Batch level is lower than index level: {batch_level} < {index_level}')
 
-        # NOTE: Single level rollback was triggered
-        if head_level := self._next_head_level:
-            if head_level != index_level:
-                raise RuntimeError(f'New head level is not equal to index level: {head_level} != {index_level}')
-
-            self._logger.info('Rolling back to the previous level, verifying processed operations')
-            rollback_hook_called = False
-            old_head_hashes = set(self._head_hashes)
-            old_head_matched_hashes = {k for k, v in self._head_hashes.items() if v}
-            new_head_hashes = {s.hash for s in operation_subgroups}
-            unprocessed_hashes = new_head_hashes - old_head_hashes
-            # NOTE: We can ignore subgroups that don't match any handlers
-            missing_hashes = old_head_matched_hashes - new_head_hashes
-
-            self._logger.info('Comparing hashes: %s new, %s missing', len(unprocessed_hashes), len(missing_hashes))
-            if missing_hashes:
-                rollback_hook_called = True
-                self._logger.info('Some operations were backtracked, calling rollback hook')
-                if self._ctx.config.per_index_rollback:
-                    hook_name = 'on_index_rollback'
-                    await self._ctx.fire_hook(
-                        hook_name,
-                        index=self,
-                        from_level=head_level,
-                        to_level=head_level - 1,
-                    )
-                else:
-                    hook_name = 'on_rollback'
-                    await self._ctx.fire_hook(
-                        hook_name,
-                        datasource=self.datasource,
-                        from_level=head_level + 1,
-                        to_level=head_level,
-                    )
-
-            self._next_head_level = None
-            self._head_hashes.clear()
-
-            if rollback_hook_called:
-                return
-
-            operation_subgroups = tuple(filter(lambda subgroup: subgroup.hash in unprocessed_hashes, operation_subgroups))
-
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: Deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
-            subgroup_matched_handlers = await self._match_operation_subgroup(operation_subgroup)
-            matched_handlers += subgroup_matched_handlers
-            self._head_hashes[operation_subgroup.hash] = bool(subgroup_matched_handlers)
+            matched_handlers += await self._match_operation_subgroup(operation_subgroup)
 
         if Metrics.enabled:
             Metrics.set_index_handlers_matched(len(matched_handlers))

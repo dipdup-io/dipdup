@@ -347,7 +347,7 @@ class HookContext(DipDupContext):
         models = importlib.import_module(f'{self.config.package}.models')
         async with self._transactions.in_transaction():
             updates = ModelUpdate.filter(
-                level__le=from_level,
+                level__lte=from_level,
                 level__gt=to_level,
                 index=index,
             ).order_by('-id')

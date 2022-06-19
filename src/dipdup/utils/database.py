@@ -78,7 +78,9 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
 
 def is_model_class(obj: Any) -> bool:
     """Is subclass of tortoise.Model, but not the base class"""
-    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model
+    import dipdup.models
+
+    return isinstance(obj, type) and issubclass(obj, Model) and obj not in (Model, dipdup.models.Model)
 
 
 def iter_models(package: str) -> Iterator[Tuple[str, Type[Model]]]:
