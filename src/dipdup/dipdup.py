@@ -62,7 +62,6 @@ from dipdup.utils.database import get_connection
 from dipdup.utils.database import get_schema_hash
 from dipdup.utils.database import prepare_models
 from dipdup.utils.database import tortoise_wrapper
-from dipdup.utils.database import validate_models
 
 
 class IndexDispatcher:
@@ -459,7 +458,6 @@ class DipDup:
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
         # NOTE: Must be called before entering Tortoise context
         prepare_models(self._config.package)
-        validate_models(self._config.package)
 
         url = self._config.database.connection_string
         timeout = self._config.database.connection_timeout

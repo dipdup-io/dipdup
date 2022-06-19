@@ -43,7 +43,7 @@ from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
-from dipdup.utils.database import set_decimal_context
+from dipdup.utils.database import prepare_models
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
@@ -246,7 +246,8 @@ async def run(
     config.advanced.merge_subscriptions |= merge_subscriptions
     config.advanced.metadata_interface |= metadata_interface
 
-    set_decimal_context(config.package)
+    with suppress(ImportError):
+        prepare_models(config.package)
 
     dipdup = DipDup(config)
     await dipdup.run()
