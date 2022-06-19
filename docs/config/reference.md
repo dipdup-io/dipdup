@@ -147,12 +147,6 @@
 <dd><p>Absolute path to the indexer package, existing or default</p>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="dipdup.config.DipDupConfig.per_index_rollback">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">per_index_rollback</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#dipdup.config.DipDupConfig.per_index_rollback" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if package has <cite>on_index_rollback</cite> hook</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
