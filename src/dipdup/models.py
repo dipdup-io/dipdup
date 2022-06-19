@@ -8,6 +8,7 @@ from typing import DefaultDict
 from typing import Dict
 from typing import Generic
 from typing import Iterable
+from typing import NoReturn
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -347,6 +348,28 @@ class Model(TortoiseModel):
         db = using_db or cls._choose_db(True)
         await instance.save(using_db=db, force_create=True)
         return instance
+
+    @classmethod
+    def bulk_create(
+        cls: Type['Model'],
+        objects: Iterable['Model'],
+        batch_size: Optional[int] = None,
+        ignore_conflicts: bool = False,
+        update_fields: Optional[Iterable[str]] = None,
+        on_conflict: Optional[Iterable[str]] = None,
+        using_db: Optional[BaseDBAsyncClient] = None,
+    ) -> NoReturn:
+        raise NotImplementedError('`bulk_create` method is not supported')
+
+    @classmethod
+    def bulk_update(
+        cls: Type['Model'],
+        objects: Iterable['Model'],
+        fields: Iterable[str],
+        batch_size: Optional[int] = None,
+        using_db: Optional[BaseDBAsyncClient] = None,
+    ) -> NoReturn:
+        raise NotImplementedError('`bulk_update` method is not supported')
 
     class Meta:
         abstract = True
