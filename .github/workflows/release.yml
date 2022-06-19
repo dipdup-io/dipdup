@@ -97,13 +97,13 @@ jobs:
         id: changelog
         uses: mindsers/changelog-reader-action@v2
         with:
-          version: ${{ github.ref }}
+          version: ${{ github.ref_name }}
 
       - name: Publish GitHub release
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
           release_name: ${{ steps.changelog.outputs.version }} - ${{ steps.changelog.outputs.date }}
           body: |
             ${{ steps.changelog.outputs.changes }}

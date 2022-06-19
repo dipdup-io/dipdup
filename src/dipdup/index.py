@@ -937,8 +937,14 @@ class TokenTransferIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[TokenTransferData, ...]] = deque()
 
+    def push_token_transfers(self, token_transfers: Tuple[TokenTransferData, ...]) -> None:
+        self._queue.append(token_transfers)
+
+        if Metrics.enabled:
+            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
-        """Fetch operations via Fetcher and pass to message callback"""
+        """Fetch token transfers via Fetcher and pass to message callback"""
         first_level = await self._enter_sync_state(last_level)
         if first_level is None:
             return

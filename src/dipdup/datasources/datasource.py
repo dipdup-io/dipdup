@@ -17,6 +17,7 @@ from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData
 from dipdup.models import HeadBlockData
 from dipdup.models import OperationData
+from dipdup.models import TokenTransferData
 from dipdup.utils import FormattedLogger
 
 _logger = logging.getLogger('dipdup.datasource')
@@ -25,6 +26,7 @@ _logger = logging.getLogger('dipdup.datasource')
 EmptyCallbackT = Callable[[], Awaitable[None]]
 HeadCallbackT = Callable[['IndexDatasource', HeadBlockData], Awaitable[None]]
 OperationsCallbackT = Callable[['IndexDatasource', Tuple[OperationData, ...]], Awaitable[None]]
+TokenTransfersCallbackT = Callable[['IndexDatasource', Tuple[TokenTransferData, ...]], Awaitable[None]]
 BigMapsCallbackT = Callable[['IndexDatasource', Tuple[BigMapData, ...]], Awaitable[None]]
 RollbackCallbackT = Callable[['IndexDatasource', MessageType, int, int], Awaitable[None]]
 
@@ -74,6 +76,7 @@ class IndexDatasource(Datasource):
         self._on_disconnected_callbacks: Set[EmptyCallbackT] = set()
         self._on_head_callbacks: Set[HeadCallbackT] = set()
         self._on_operations_callbacks: Set[OperationsCallbackT] = set()
+        self._on_token_transfers_callbacks: Set[TokenTransfersCallbackT] = set()
         self._on_big_maps_callbacks: Set[BigMapsCallbackT] = set()
         self._on_rollback_callbacks: Set[RollbackCallbackT] = set()
         self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
@@ -100,6 +103,9 @@ class IndexDatasource(Datasource):
     def call_on_operations(self, fn: OperationsCallbackT) -> None:
         self._on_operations_callbacks.add(fn)
 
+    def call_on_token_transfers(self, fn: TokenTransfersCallbackT) -> None:
+        self._on_token_transfers_callbacks.add(fn)
+
     def call_on_big_maps(self, fn: BigMapsCallbackT) -> None:
         self._on_big_maps_callbacks.add(fn)
 
@@ -119,6 +125,10 @@ class IndexDatasource(Datasource):
     async def emit_operations(self, operations: Tuple[OperationData, ...]) -> None:
         for fn in self._on_operations_callbacks:
             await fn(self, operations)
+
+    async def emit_token_transfers(self, token_transfers: Tuple[TokenTransferData, ...]) -> None:
+        for fn in self._on_token_transfers_callbacks:
+            await fn(self, token_transfers)
 
     async def emit_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         for fn in self._on_big_maps_callbacks:

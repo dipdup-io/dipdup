@@ -30,7 +30,7 @@ To begin with, create a new directory for your project and enter it. Now choose 
 Initialize a new PEP 518 project and add DipDip to dependencies.
 
 ```shell
-poetry init -n
+poetry init
 poetry add dipdup
 ```
 
