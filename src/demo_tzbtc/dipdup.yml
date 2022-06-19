@@ -17,7 +17,6 @@ datasources:
 
 advanced:
   early_realtime: True
-  rollback_depth: 100
 
 indexes:
   tzbtc_holders_mainnet:
@@ -34,4 +33,3 @@ indexes:
         pattern:
           - destination: tzbtc_mainnet
             entrypoint: mint
-    first_level: 2455447

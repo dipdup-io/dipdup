@@ -1,5 +1,24 @@
 # Changelog
 
+## [unreleased]
+
+### Added
+
+* config: Added `advanced.rollback_depth` field, a number of levels to keep in a database for rollback.
+* context: Added `rollback` method to perform database rollback.
+* database: Added an internal `ModelUpdate` model to store the latest database changes.
+
+### Changed
+
+* codegen: `on_index_rollback` hook calls `ctx.rollback` by default.
+* database: Project models must be subclassed from `dipdup.models.Model`
+* database: `bulk_create` and `bulk_update` model methods are not supported.
+
+### Removed
+
+* hooks: Removed deprecated `on_rollback` hook.
+* index: Do not try to avoid single-level rollbacks by comparing operation hashes.
+
 ## 5.1.7 - 2022-06-15
 
 ### Fixed

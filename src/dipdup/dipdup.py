@@ -265,7 +265,7 @@ class IndexDispatcher:
             index.push_big_maps(big_maps)
 
     async def _on_rollback(self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
-        """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
+        """Call `on_index_rollback` hook for each index that is affected by rollback"""
         if from_level <= to_level:
             raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
 

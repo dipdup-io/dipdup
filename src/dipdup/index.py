@@ -378,8 +378,8 @@ class OperationIndex(Index):
 
         batch_level = operation_subgroups[0].operations[0].level
         index_level = self.state.level
-        if batch_level < index_level:
-            raise RuntimeError(f'Batch level is lower than index level: {batch_level} < {index_level}')
+        if batch_level <= index_level:
+            raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: Deque[MatchedOperationsT] = deque()
@@ -695,12 +695,11 @@ class BigMapIndex(Index):
     async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         if not big_maps:
             return
+
         batch_level = self._extract_level(big_maps)
         index_level = self.state.level
-
-        # NOTE: le operator because single level rollbacks are not supported
         if batch_level <= index_level:
-            raise RuntimeError(f'Level of big map batch must be higher than index state level: {batch_level} <= {index_level}')
+            raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing big map diffs of level %s', batch_level)
         matched_handlers = await self._match_big_maps(big_maps)
@@ -835,9 +834,8 @@ class HeadIndex(Index):
 
             batch_level = head.level
             index_level = self.state.level
-
             if batch_level <= index_level:
-                raise RuntimeError(f'Level of head must be higher than index state level: {batch_level} <= {index_level}')
+                raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
             async with self._ctx._transactions.in_transaction(batch_level, self.sync_level, self.name):
                 self._logger.debug('Processing head info of level %s', batch_level)
