@@ -331,23 +331,3 @@ class HasuraError(DipDupError):
 
             GraphQL integration docs: https://dipdup.net/docs/graphql/
         """
-
-
-@dataclass(repr=False)
-class ConflictingHooksError(DipDupError):
-    """Project contains hooks that conflict with each other"""
-
-    old: str
-    new: str
-
-    def _help(self) -> str:
-        return f"""
-            `{self.old}` hook was superseded by the `{self.new}` one; they can't be used together.
-
-            Perform one of the following actions:
-
-              * Follow the docs to migrate to the `{self.new}` hook, then remove `{self.old}` hook from the project.
-              * Remove `{self.new}` hook from the project to preserve current behavior.
-
-            Release notes: https://dipdup.net/docs/release-notes/
-        """

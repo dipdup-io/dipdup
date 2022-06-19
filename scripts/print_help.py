@@ -20,7 +20,6 @@ example_exceptions = (
     exc.CallbackError('demo_tzbtc.handlers.on_mint', ValueError('foo')),
     exc.CallbackTypeError('handler', 'on_mint', 'foo', int, str),
     exc.HasuraError('Invalid query'),
-    exc.ConflictingHooksError('on_rollback', 'on_index_rollback')
 )
 
 for e in example_exceptions:

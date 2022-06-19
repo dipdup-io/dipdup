@@ -38,7 +38,6 @@ from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
-from dipdup.exceptions import ProjectImportError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
@@ -305,22 +304,12 @@ class IndexDispatcher:
             self._logger.info('`%s` rollback complete', channel)
             return
 
-        if self._ctx.config.per_index_rollback:
-            hook_name = 'on_index_rollback'
-            for index_name in affected_indexes:
-                self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
-                await self._ctx.fire_hook(
-                    hook_name,
-                    index=self._indexes[index_name],
-                    from_level=from_level,
-                    to_level=to_level,
-                )
-        else:
-            hook_name = 'on_rollback'
-            self._logger.warning('`%s`: can\'t process, firing `%s` hook', datasource.name, hook_name)
+        hook_name = 'on_index_rollback'
+        for index_name in affected_indexes:
+            self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
             await self._ctx.fire_hook(
                 hook_name,
-                datasource=datasource,
+                index=self._indexes[index_name],
                 from_level=from_level,
                 to_level=to_level,
             )
@@ -479,13 +468,7 @@ class DipDup:
 
     async def _set_up_hooks(self, tasks: Set[Task], run: bool = False) -> None:
         for hook_config in default_hooks.values():
-            try:
-                self._callbacks.register_hook(hook_config)
-            except ProjectImportError:
-                if hook_config.callback in ('on_rollback', 'on_index_rollback'):
-                    self._logger.info(f'Hook `{hook_config.callback}` is not available')
-                else:
-                    raise
+            self._callbacks.register_hook(hook_config)
 
         for hook_config in self._config.hooks.values():
             self._callbacks.register_hook(hook_config)
