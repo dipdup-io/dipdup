@@ -338,6 +338,7 @@ class HookContext(DipDupContext):
         self.hook_config = hook_config
 
     async def rollback(self, index: str, from_level: int, to_level: int) -> None:
+        self.logger.info('Rolling back `%s`: %s -> %s', index, from_level, to_level)
         if from_level <= to_level:
             raise RuntimeError(f'Attempt to rollback in future: {from_level} <= {to_level}')
         if from_level - to_level > self.config.advanced.rollback_depth:
@@ -346,12 +347,13 @@ class HookContext(DipDupContext):
 
         models = importlib.import_module(f'{self.config.package}.models')
         async with self._transactions.in_transaction():
-            updates = ModelUpdate.filter(
+            updates = await ModelUpdate.filter(
                 level__lte=from_level,
                 level__gt=to_level,
                 index=index,
             ).order_by('-id')
-            async for update in updates:
+            self.logger.info(f'Reverting {len(updates)} updates')
+            for update in updates:
                 model = getattr(models, update.model_name)
                 await update.revert(model)
 
