@@ -352,7 +352,9 @@ class HookContext(DipDupContext):
                 level__gt=to_level,
                 index=index,
             ).order_by('-id')
-            self.logger.info(f'Reverting {len(updates)} updates')
+
+            if updates:
+                self.logger.info(f'Reverting {len(updates)} updates')
             for update in updates:
                 model = getattr(models, update.model_name)
                 await update.revert(model)
