@@ -73,7 +73,7 @@ indexes:
 > 🤓 **SEE ALSO**
 >
 > * [4.5. Templates and variables](getting-started/templates-and-variables.md)
-> * [12. Config file reference](config/)
+> * [12. Config file reference](config/README.md)
 
 ## Initialize project tree
 
@@ -121,7 +121,7 @@ That's a lot of files and directories! But don't worry, we will need only `model
 > 🤓 **SEE ALSO**
 >
 > * [4.4. Project structure](getting-started/project-structure.md)
-> * [13.5. init](cli/init.md)
+> * [13.5. init](cli-reference.md)
 
 ## Define data models
 
@@ -258,4 +258,4 @@ DipDup will fetch all the historical data and then switch to realtime updates. Y
 
 > 🤓 **SEE ALSO**
 >
-> * [13. Command-line reference](cli/)
+> * [13. Command-line reference](cli-reference.md)
