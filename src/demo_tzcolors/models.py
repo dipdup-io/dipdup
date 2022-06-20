@@ -25,6 +25,8 @@ class Token(Model):
     timestamp = fields.DatetimeField()
     holder: ForeignKeyFieldInstance[Address] = fields.ForeignKeyField('models.Address', 'tokens')
 
+    token_id: int
+
     class Meta:
         table = 'tokens'
 
@@ -39,6 +41,8 @@ class Auction(Model):
     status = fields.IntEnumField(AuctionStatus)
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
+    token_id: int
 
     class Meta:
         table = 'auctions'

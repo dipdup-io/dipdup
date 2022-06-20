@@ -9,6 +9,8 @@ async def on_bid(
     ctx: HandlerContext,
     bid: Transaction[BidParameter, TzcolorsAuctionStorage],
 ) -> None:
+    assert bid.data.amount is not None
+
     auction = await models.Auction.filter(
         id=bid.parameter.__root__,
     ).get()
@@ -23,5 +25,5 @@ async def on_bid(
     ).save()
 
     auction.bidder = bidder
-    auction.bid_amount += bid.data.amount  # type: ignore
+    auction.bid_amount += bid.data.amount
     await auction.save()

@@ -21,6 +21,6 @@ async def on_fa2_withdraw_profit(
 
     if transaction_0:
         assert transaction_0.amount is not None
-        position.realized_pl += Decimal(transaction_0.amount) / (10**6)  # type: ignore
+        position.realized_pl += Decimal(transaction_0.amount) / (10**6)
 
         await position.save()

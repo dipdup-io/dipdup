@@ -15,7 +15,7 @@ async def on_withdraw(
 
     # FIXME: Don't do that, returns None when id=0. Bug in Tortoise?
     # token = await auction.token
-    token = await models.Token.filter(id=auction.token_id).get()  # type: ignore
+    token = await models.Token.filter(id=auction.token_id).get()
 
     token.holder = await auction.bidder
     await token.save()

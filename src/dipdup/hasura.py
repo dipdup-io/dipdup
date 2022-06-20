@@ -15,8 +15,9 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import cast
 
-import humps  # type: ignore
+import humps
 import orjson as json
 from aiohttp import ClientConnectorError
 from aiohttp import ClientOSError
@@ -160,7 +161,7 @@ class HasuraGateway(HTTPGateway):
         # NOTE: Fetch metadata once again (to do: find out why is it necessary) and save its hash for future comparisons
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
-        hasura_schema.hash = metadata_hash  # type: ignore
+        hasura_schema.hash = metadata_hash
         await hasura_schema.save()
 
         self._logger.info('Hasura instance has been configured')
@@ -275,7 +276,7 @@ class HasuraGateway(HTTPGateway):
 
     def _iterate_graphql_queries(self) -> Iterator[Tuple[str, str]]:
         package = importlib.import_module(self._package)
-        package_path = dirname(package.__file__)
+        package_path = dirname(cast(str, package.__file__))
         graphql_path = join(package_path, 'graphql')
         for file in iter_files(graphql_path, '.graphql'):
             yield file.name.split('/')[-1][:-8], file.read()

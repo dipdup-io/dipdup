@@ -155,7 +155,8 @@ def touch(path: str) -> None:
     mkdir_p(dirname(path))
     if not exists(path):
         _logger.info('Creating file `%s`', path)
-        open(path, 'a').close()
+        with open(path, 'a'):
+            pass
 
 
 def write(path: str, content: Union[str, bytes], overwrite: bool = False) -> bool:
@@ -185,12 +186,6 @@ def is_importable(module: str, obj: str) -> bool:
         import_from(module, obj)
         return True
     return False
-
-
-def skip_ci(fn) -> Callable[..., Any]:
-    if os.environ.get('CI'):
-        return skip('CI environment, skipping')(fn)
-    return fn
 
 
 def exclude_none(config_json: Any) -> Any:

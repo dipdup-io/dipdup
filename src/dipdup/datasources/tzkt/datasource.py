@@ -30,7 +30,7 @@ from typing import cast
 
 from pysignalr.client import SignalRClient
 from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
-from pysignalr.messages import CompletionMessage  # type: ignore
+from pysignalr.messages import CompletionMessage
 
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT
@@ -327,7 +327,7 @@ class MessageBuffer:
 
     def add(self, type_: MessageType, level: int, data: MessageData) -> None:
         """Add a message to the buffer."""
-        if not level in self._messages:
+        if level not in self._messages:
             self._messages[level] = []
         self._messages[level].append(BufferedMessage(type_, data))
 
@@ -352,15 +352,14 @@ class MessageBuffer:
         buffered_levels = sorted(self._messages.keys())
         yielded_levels = buffered_levels[: len(buffered_levels) - self._size]
         for level in yielded_levels:
-            for buffered_message in self._messages.pop(level):
-                yield buffered_message
+            yield from self._messages.pop(level)
 
 
 class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
         cache=True,
         retry_sleep=1,
-        retry_multiplier=2,
+        retry_multiplier=1.1,
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
@@ -895,11 +894,12 @@ class TzktDatasource(IndexDatasource):
             max_size=None,
         )
 
-        self._ws_client.on_open(self._on_connect)
-        self._ws_client.on_close(self._on_disconnect)
+        self._ws_client.on_open(self._on_connected)
+        self._ws_client.on_close(self._on_disconnected)
         self._ws_client.on_error(self._on_error)
 
         self._ws_client.on('operations', partial(self._on_message, MessageType.operation))
+        self._ws_client.on('transfers', partial(self._on_message, MessageType.token_transfer))
         self._ws_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
         self._ws_client.on('head', partial(self._on_message, MessageType.head))
 
@@ -916,6 +916,7 @@ class TzktDatasource(IndexDatasource):
                     await ws.run()
                 except WebsocketConnectionError as e:
                     self._logger.error('Websocket connection error: %s', e)
+                    await self.emit_disconnected()
                     await asyncio.sleep(retry_sleep)
                     retry_sleep *= self._http_config.retry_multiplier
 
@@ -926,13 +927,15 @@ class TzktDatasource(IndexDatasource):
 
         await gather(*tasks)
 
-    async def _on_connect(self) -> None:
+    async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
         # NOTE: Subscribing here will block WebSocket loop
+        await self.emit_connected()
 
-    async def _on_disconnect(self) -> None:
-        self._logger.info('Realtime connection lost')
+    async def _on_disconnected(self) -> None:
+        self._logger.info('Realtime connection lost, resetting subscriptions')
         self._subscriptions.reset()
+        await self.emit_disconnected()
 
     async def _on_error(self, message: CompletionMessage) -> NoReturn:
         """Raise exception from WS server's error message"""
@@ -975,6 +978,8 @@ class TzktDatasource(IndexDatasource):
         for buffered_message in self._buffer.yield_from():
             if buffered_message.type == MessageType.operation:
                 await self._process_operations_data(cast(list, buffered_message.data))
+            elif buffered_message.type == MessageType.token_transfer:
+                await self._process_token_transfers_data(cast(list, buffered_message.data))
             elif buffered_message.type == MessageType.big_map:
                 await self._process_big_maps_data(cast(list, buffered_message.data))
             elif buffered_message.type == MessageType.head:
@@ -994,6 +999,17 @@ class TzktDatasource(IndexDatasource):
 
         for _level, operations in level_operations.items():
             await self.emit_operations(tuple(operations))
+
+    async def _process_token_transfers_data(self, data: List[Dict[str, Any]]) -> None:
+        """Parse and emit raw token transfers from WS"""
+        level_token_transfers: DefaultDict[int, Deque[TokenTransferData]] = defaultdict(deque)
+
+        for token_transfer_json in data:
+            token_transfer = self.convert_token_transfer(token_transfer_json)
+            level_token_transfers[token_transfer.level].append(token_transfer)
+
+        for _level, token_transfers in level_token_transfers.items():
+            await self.emit_token_transfers(tuple(token_transfers))
 
     async def _process_big_maps_data(self, data: List[Dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""

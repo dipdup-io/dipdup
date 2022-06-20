@@ -20,6 +20,6 @@ async def on_fa12_withdraw_profit(
     position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
     if transaction_0:
         assert transaction_0.amount is not None
-        position.realized_pl += Decimal(transaction_0.amount) / (10**6)  # type: ignore
+        position.realized_pl += Decimal(transaction_0.amount) / (10**6)
 
         await position.save()

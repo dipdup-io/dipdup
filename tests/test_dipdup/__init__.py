@@ -12,6 +12,6 @@ async def create_test_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> Dip
     dipdup = DipDup(config)
     await dipdup._create_datasources()
     await dipdup._set_up_database(stack)
-    await dipdup._set_up_hooks()
+    await dipdup._set_up_hooks(set())
     await dipdup._initialize_schema()
     return dipdup

@@ -46,6 +46,7 @@ from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
 from dipdup.index import Index
 from dipdup.index import OperationIndex
+from dipdup.index import TokenTransferIndex
 from dipdup.index import extract_operation_subgroups
 from dipdup.models import BigMapData
 from dipdup.models import Contract
@@ -55,6 +56,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Schema
+from dipdup.models import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.utils import is_importable
@@ -68,9 +70,8 @@ from dipdup.utils.database import validate_models
 
 
 class IndexDispatcher:
-    def __init__(self, ctx: DipDupContext, index_rollback: bool = True) -> None:
+    def __init__(self, ctx: DipDupContext) -> None:
         self._ctx = ctx
-        self._index_rollback = index_rollback
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
@@ -172,17 +173,6 @@ class IndexDispatcher:
                 self._ctx.config.contracts[contract.name] = contract_config
         self._ctx.config.initialize(skip_imports=True)
 
-    async def _subscribe_to_datasource_events(self) -> None:
-        for datasource in self._ctx.datasources.values():
-            if not isinstance(datasource, IndexDatasource):
-                continue
-            # NOTE: No need to subscribe to head, handled by datasource itself
-            # FIXME: mypy tricks, ignore first argument
-            datasource.on_head(self._on_head)  # type: ignore
-            datasource.on_operations(self._on_operations)  # type: ignore
-            datasource.on_big_maps(self._on_big_maps)  # type: ignore
-            datasource.on_rollback(self._on_rollback)  # type: ignore
-
     async def _load_index_states(self) -> None:
         if self._indexes:
             raise RuntimeError('Index states are already loaded')
@@ -200,7 +190,7 @@ class IndexDispatcher:
 
                 new_hash = index_config.hash()
                 if not index_state.config_hash:
-                    index_state.config_hash = new_hash  # type: ignore
+                    index_state.config_hash = new_hash
                     await index_state.save()
                 elif new_hash != index_state.config_hash:
                     await self._ctx.reindex(
@@ -226,7 +216,17 @@ class IndexDispatcher:
         tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
         await gather(*tasks)
 
-    async def _on_head(self, datasource: TzktDatasource, head: HeadBlockData) -> None:
+    async def _subscribe_to_datasource_events(self) -> None:
+        for datasource in self._ctx.datasources.values():
+            if not isinstance(datasource, IndexDatasource):
+                continue
+            datasource.call_on_head(self._on_head)
+            datasource.call_on_operations(self._on_operations)
+            datasource.call_on_token_transfers(self._on_token_transfers)
+            datasource.call_on_big_maps(self._on_big_maps)
+            datasource.call_on_rollback(self._on_rollback)
+
+    async def _on_head(self, datasource: IndexDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
         self._tasks.append(
             asyncio.create_task(
@@ -246,7 +246,7 @@ class IndexDispatcher:
             if isinstance(index, HeadIndex) and index.datasource == datasource:
                 index.push_head(head)
 
-    async def _on_operations(self, datasource: TzktDatasource, operations: Tuple[OperationData, ...]) -> None:
+    async def _on_operations(self, datasource: IndexDatasource, operations: Tuple[OperationData, ...]) -> None:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
@@ -262,12 +262,17 @@ class IndexDispatcher:
         for index in operation_indexes:
             index.push_operations(operation_subgroups)
 
-    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: Tuple[BigMapData]) -> None:
+    async def _on_token_transfers(self, datasource: IndexDatasource, token_transfers: Tuple[TokenTransferData, ...]) -> None:
+        token_transfer_indexes = (i for i in self._indexes.values() if isinstance(i, TokenTransferIndex) and i.datasource == datasource)
+        for index in token_transfer_indexes:
+            index.push_token_transfers(token_transfers)
+
+    async def _on_big_maps(self, datasource: IndexDatasource, big_maps: Tuple[BigMapData, ...]) -> None:
         big_map_indexes = (i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource)
         for index in big_map_indexes:
             index.push_big_maps(big_maps)
 
-    async def _on_rollback(self, datasource: TzktDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
+    async def _on_rollback(self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
         """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
         if from_level <= to_level:
             raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
@@ -327,7 +332,7 @@ class IndexDispatcher:
             self._logger.info('`%s` rollback complete', channel)
             return
 
-        if self._index_rollback:
+        if self._ctx.config.per_index_rollback:
             hook_name = 'on_index_rollback'
             for index_name in unprocessed_indexes:
                 self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
@@ -391,7 +396,7 @@ class DipDup:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
             await self._set_up_datasources(stack)
-            await self._set_up_hooks(tasks)
+            await self._set_up_hooks(tasks, run=not self._config.oneshot)
             await self._set_up_prometheus()
 
             await self._initialize_schema()
@@ -402,6 +407,8 @@ class DipDup:
                 await MetadataCursor.initialize()
 
             if self._config.oneshot:
+                if self._config.jobs:
+                    self._logger.warning('Running in oneshot mode; `jobs` are ignored')
                 start_scheduler_event, spawn_datasources_event = Event(), Event()
             else:
                 start_scheduler_event = await self._set_up_scheduler(stack, tasks)
@@ -464,7 +471,7 @@ class DipDup:
                 await self._ctx.reindex(ReindexingReason.schema_modified)
 
         elif not self._schema.hash:
-            self._schema.hash = schema_hash  # type: ignore
+            self._schema.hash = schema_hash
             await self._schema.save()
 
         elif self._schema.hash != schema_hash:
@@ -485,7 +492,7 @@ class DipDup:
         models = f'{self._config.package}.models'
         await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
 
-    async def _set_up_hooks(self, tasks: Optional[Set[Task]] = None) -> None:
+    async def _set_up_hooks(self, tasks: Set[Task], run: bool = False) -> None:
         for hook_config in default_hooks.values():
             try:
                 self._callbacks.register_hook(hook_config)
@@ -498,8 +505,7 @@ class DipDup:
         for hook_config in self._config.hooks.values():
             self._callbacks.register_hook(hook_config)
 
-        # FIXME: Why does `is not None` check break oneshot mode?
-        if tasks:
+        if run:
             tasks.add(create_task(self._callbacks.run()))
 
     async def _set_up_prometheus(self) -> None:
@@ -556,17 +562,7 @@ class DipDup:
         start_scheduler_event: Event,
         early_realtime: bool,
     ) -> None:
-        # NOTE: Decide how to handle rollbacks depending on hooks presence
-        # TODO: Remove in 6.0
-        old_hook, new_hook = 'on_rollback', 'on_index_rollback'
-        has_old_hook = is_importable(f'{self._config.package}.hooks.{old_hook}', old_hook)
-        has_new_hook = is_importable(f'{self._config.package}.hooks.{new_hook}', new_hook)
-        if has_old_hook and has_new_hook:
-            raise ConflictingHooksError(old_hook, new_hook)
-        elif not has_old_hook and not has_new_hook:
-            raise InitializationRequiredError('none of `on_rollback` or `on_index_rollback` hooks found')
-
-        index_dispatcher = IndexDispatcher(self._ctx, index_rollback=has_new_hook)
+        index_dispatcher = IndexDispatcher(self._ctx)
         tasks.add(
             create_task(
                 index_dispatcher.run(

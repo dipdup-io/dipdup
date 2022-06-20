@@ -30,6 +30,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 from typing import cast
+from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
 from pydantic import validator
@@ -51,8 +52,12 @@ from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import ConflictingHooksError
+from dipdup.exceptions import IndexAlreadyExistsError
+from dipdup.exceptions import InitializationRequiredError
 from dipdup.utils import exclude_none
 from dipdup.utils import import_from
+from dipdup.utils import is_importable
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -119,7 +124,7 @@ class PostgresDatabaseConfig:
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
-        connection_string = f'{self.kind}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?maxsize=1'
+        connection_string = f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}?maxsize=1'
         if self.schema_name != DEFAULT_POSTGRES_SCHEMA:
             connection_string += f'&schema={self.schema_name}'
         return connection_string
@@ -1218,8 +1223,6 @@ class DipDupConfig:
         self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
         self._default_hooks: bool = False
-        self._links_resolved: Set[str] = set()
-        self._imports_resolved: Set[str] = set()
 
     @cached_property
     def schema_name(self) -> str:
@@ -1233,21 +1236,35 @@ class DipDupConfig:
         """Absolute path to the indexer package, existing or default"""
         try:
             package = importlib.import_module(self.package)
-            return dirname(package.__file__)
+            return dirname(cast(str, package.__file__))
         except ImportError:
             return os.path.join(os.getcwd(), self.package)
+
+    # TODO: Remove in 6.0
+    @cached_property
+    def per_index_rollback(self) -> bool:
+        """Check if package has `on_index_rollback` hook"""
+        new_hook = is_importable(f'{self.package}.hooks.on_index_rollback', 'on_index_rollback')
+        old_hook = is_importable(f'{self.package}.hooks.on_rollback', 'on_rollback')
+        if new_hook and old_hook:
+            raise ConflictingHooksError('on_rollback', 'on_index_rollback')
+        elif not new_hook and not old_hook:
+            raise InitializationRequiredError('none of `on_rollback` or `on_index_rollback` hooks found')
+        elif new_hook:
+            return True
+        elif old_hook:
+            return False
+        else:
+            raise RuntimeError
 
     @property
     def oneshot(self) -> bool:
         """Whether all indexes have `last_level` field set"""
         syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, HeadIndexConfig))
         oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
-        if not oneshot_indexes:
-            return False
-        elif len(oneshot_indexes) == len(syncable_indexes):
+        if len(oneshot_indexes) == len(syncable_indexes):
             return True
-        else:
-            raise ConfigurationError('Either all or none of indexes can have `last_level` field set')
+        return False
 
     @classmethod
     def load(
@@ -1323,6 +1340,29 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
+    def _import_index(self, index_config: IndexConfigT) -> None:
+        _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
+
+        if isinstance(index_config, IndexTemplateConfig):
+            raise ConfigInitializationException
+
+        elif isinstance(index_config, OperationIndexConfig):
+            self._import_operation_index_types(index_config)
+            self._import_index_callbacks(index_config)
+
+        elif isinstance(index_config, BigMapIndexConfig):
+            self._import_big_map_index_types(index_config)
+            self._import_index_callbacks(index_config)
+
+        elif isinstance(index_config, HeadIndexConfig):
+            self._import_index_callbacks(index_config)
+
+        elif isinstance(index_config, TokenTransferIndexConfig):
+            self._import_index_callbacks(index_config)
+
+        else:
+            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
     def initialize(self, skip_imports: bool = False) -> None:
         self._set_names()
         self._resolve_templates()
@@ -1333,32 +1373,22 @@ class DipDupConfig:
             return
 
         for index_config in self.indexes.values():
-            if index_config.name in self._imports_resolved:
-                continue
+            self._import_index(index_config)
 
-            _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
-
-            if isinstance(index_config, IndexTemplateConfig):
-                raise ConfigInitializationException
-
-            elif isinstance(index_config, OperationIndexConfig):
-                self._import_operation_index_types(index_config)
-                self._import_index_callbacks(index_config)
-
-            elif isinstance(index_config, BigMapIndexConfig):
-                self._import_big_map_index_types(index_config)
-                self._import_index_callbacks(index_config)
-
-            elif isinstance(index_config, HeadIndexConfig):
-                self._import_index_callbacks(index_config)
-
-            elif isinstance(index_config, TokenTransferIndexConfig):
-                self._import_index_callbacks(index_config)
-
-            else:
-                raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
-
-            self._imports_resolved.add(index_config.name)
+    def add_index(self, name: str, template: str, values: Dict[str, str]) -> None:
+        if name in self.indexes:
+            raise IndexAlreadyExistsError(self, name)
+        template_config = IndexTemplateConfig(
+            template=template,
+            values=values,
+        )
+        template_config.name = name
+        self._resolve_template(template_config)
+        index_config = cast(ResolvedIndexConfigT, self.indexes[name])
+        self._resolve_index_links(index_config)
+        self._resolve_index_subscriptions(index_config)
+        index_config.name = name
+        self._import_index(index_config)
 
     @classmethod
     def _load_raw_config(cls, path: str) -> str:
@@ -1413,8 +1443,7 @@ class DipDupConfig:
             value_regex = r'<[ ]*' + key + r'[ ]*>'
             raw_template = re.sub(value_regex, value, raw_template)
 
-        with suppress(AttributeError):
-            missing_value = re.search(r'<*>', raw_template).search(0)  # type: ignore
+        if missing_value := re.search(r'<*>', raw_template):
             raise ConfigurationError(f'`{template_config.name}` index config is missing required template value `{missing_value}`')
 
         json_template = json.loads(raw_template)
@@ -1433,13 +1462,10 @@ class DipDupConfig:
                 self._resolve_template(index_config)
 
     def _resolve_links(self) -> None:
-        for name, index_config in self.indexes.items():
-            if name in self._links_resolved:
-                continue
+        for index_config in self.indexes.values():
             self._resolve_index_links(index_config)
             # TODO: Not exactly link resolving, move somewhere else
             self._resolve_index_subscriptions(index_config)
-            self._links_resolved.add(index_config.name)
 
         for job_config in self.jobs.values():
             if isinstance(job_config.hook, str):
@@ -1455,29 +1481,25 @@ class DipDupConfig:
             return
 
         if isinstance(index_config, OperationIndexConfig):
-            if self.advanced.merge_subscriptions:
-                index_config.subscriptions.add(TransactionSubscription())
-                return
+            if OperationType.transaction in index_config.types:
+                if self.advanced.merge_subscriptions:
+                    index_config.subscriptions.add(TransactionSubscription())
+                else:
+                    for contract_config in index_config.contracts:
+                        if not isinstance(contract_config, ContractConfig):
+                            raise ConfigInitializationException
+                        index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
 
-            for contract_config in index_config.contracts:
-                if not isinstance(contract_config, ContractConfig):
-                    raise ConfigInitializationException
-                index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
-
-            for handler_config in index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    if isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        index_config.subscriptions.add(OriginationSubscription())
-                        break
+            if OperationType.origination in index_config.types:
+                index_config.subscriptions.add(OriginationSubscription())
 
         elif isinstance(index_config, BigMapIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(BigMapSubscription())
-                return
-
-            for big_map_handler_config in index_config.handlers:
-                address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
-                index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
+            else:
+                for big_map_handler_config in index_config.handlers:
+                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                    index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
 
         elif isinstance(index_config, HeadIndexConfig):
             index_config.subscriptions.add(HeadSubscription())

@@ -201,7 +201,6 @@ class Index:
         )
 
     async def process(self) -> None:
-        # NOTE: `--oneshot` flag implied
         if not isinstance(self._config, HeadIndexConfig) and self._config.last_level:
             head_level = self._config.last_level
             with ExitStack() as stack:
@@ -312,22 +311,36 @@ class OperationIndex(Index):
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
+        self._logger.debug('Processing %s realtime messages from queue', len(self._queue))
+
         while self._queue:
             message = self._queue.popleft()
             messages_left = len(self._queue)
+
+            if not message:
+                raise RuntimeError('Got empty message from realtime queue')
+
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
+
             if isinstance(message, SingleLevelRollback):
-                self._logger.debug('Processing rollback realtime message, %s left in queue', messages_left)
+                # NOTE: To match <= condition, variable is not used anywhere else
+                message_level = message.from_level + 1
+            else:
+                message_level = message[0].operations[0].level
+
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
+            if isinstance(message, SingleLevelRollback):
                 await self._single_level_rollback(message.from_level)
-            elif message:
-                self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
+            else:
                 with ExitStack() as stack:
                     if Metrics.enabled:
                         stack.enter_context(Metrics.measure_level_realtime_duration())
                     await self._process_level_operations(message)
-            else:
-                raise RuntimeError('Got empty message from realtime queue')
+
         else:
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, 0)
@@ -391,11 +404,13 @@ class OperationIndex(Index):
         if batch_level < index_level:
             raise RuntimeError(f'Batch level is lower than index level: {batch_level} < {index_level}')
 
+        # NOTE: Single level rollback was triggered
         if head_level := self._next_head_level:
             if head_level != index_level:
                 raise RuntimeError(f'New head level is not equal to index level: {head_level} != {index_level}')
 
             self._logger.info('Rolling back to the previous level, verifying processed operations')
+            rollback_hook_called = False
             old_head_hashes = set(self._head_hashes)
             old_head_matched_hashes = {k for k, v in self._head_hashes.items() if v}
             new_head_hashes = {s.hash for s in operation_subgroups}
@@ -405,18 +420,30 @@ class OperationIndex(Index):
 
             self._logger.info('Comparing hashes: %s new, %s missing', len(unprocessed_hashes), len(missing_hashes))
             if missing_hashes:
-                self._logger.info('Some operations were backtracked, requesting reindexing')
-                await self._ctx.reindex(
-                    ReindexingReason.rollback,
-                    datasource=self._datasource.name,
-                    from_level=head_level,
-                    # NOTE: Index level is not decreased on a single-level rollback
-                    to_level=head_level - 1,
-                    missing_hashes=', '.join(missing_hashes),
-                )
+                rollback_hook_called = True
+                self._logger.info('Some operations were backtracked, calling rollback hook')
+                if self._ctx.config.per_index_rollback:
+                    hook_name = 'on_index_rollback'
+                    await self._ctx.fire_hook(
+                        hook_name,
+                        index=self,
+                        from_level=head_level,
+                        to_level=head_level - 1,
+                    )
+                else:
+                    hook_name = 'on_rollback'
+                    await self._ctx.fire_hook(
+                        hook_name,
+                        datasource=self.datasource,
+                        from_level=head_level + 1,
+                        to_level=head_level,
+                    )
 
             self._next_head_level = None
             self._head_hashes.clear()
+
+            if rollback_hook_called:
+                return
 
             operation_subgroups = tuple(filter(lambda subgroup: subgroup.hash in unprocessed_hashes, operation_subgroups))
 
@@ -591,8 +618,10 @@ class OperationIndex(Index):
 
     async def _get_origination_addresses(self) -> Set[str]:
         """Get addresses to fetch origination from during initial synchronization"""
-        # FIXME: Missing `OperationType.origination` in config is ignored
-        addresses = set()
+        if OperationType.origination not in self._config.types:
+            return set()
+
+        addresses: Set[str] = set()
         for handler_config in self._config.handlers:
             for pattern_config in handler_config.pattern:
                 if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
@@ -640,6 +669,11 @@ class BigMapIndex(Index):
             self._logger.debug('Processing websocket queue')
         while self._queue:
             big_maps = self._queue.popleft()
+            message_level = big_maps[0].level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
@@ -860,6 +894,11 @@ class HeadIndex(Index):
     async def _process_queue(self) -> None:
         while self._queue:
             head = self._queue.popleft()
+            message_level = head.level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
             self._logger.debug('Processing head realtime message, %s left in queue', len(self._queue))
 
             batch_level = head.level
@@ -898,8 +937,14 @@ class TokenTransferIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[TokenTransferData, ...]] = deque()
 
+    def push_token_transfers(self, token_transfers: Tuple[TokenTransferData, ...]) -> None:
+        self._queue.append(token_transfers)
+
+        if Metrics.enabled:
+            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+
     async def _synchronize(self, last_level: int, cache: bool = False) -> None:
-        """Fetch operations via Fetcher and pass to message callback"""
+        """Fetch token transfers via Fetcher and pass to message callback"""
         first_level = await self._enter_sync_state(last_level)
         if first_level is None:
             return
@@ -976,6 +1021,11 @@ class TokenTransferIndex(Index):
             self._logger.debug('Processing websocket queue')
         while self._queue:
             token_transfers = self._queue.popleft()
+            message_level = token_transfers[0].level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from contextlib import suppress
 from functools import partial
 from typing import Any
 from typing import Dict
@@ -9,7 +10,7 @@ from typing import Set
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
 from apscheduler.events import EVENT_JOB_EXECUTED
-from apscheduler.events import JobEvent  # type: ignore
+from apscheduler.events import JobEvent
 from apscheduler.job import Job  # type: ignore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
 from apscheduler.triggers.cron import CronTrigger  # type: ignore
@@ -86,14 +87,12 @@ class SchedulerManager:
                 logger=logger,
                 hook_config=hook_config,
             )
-            try:
+            with suppress(asyncio.CancelledError):
                 await job_ctx.fire_hook(
                     hook_config.callback,
                     *args,
                     **kwargs,
                 )
-            except asyncio.CancelledError:
-                pass
 
         if job_config.crontab:
             trigger = CronTrigger.from_crontab(job_config.crontab)

@@ -19,15 +19,38 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-patch:
-	cp ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py.bak
-	echo "import asyncclick as click" > ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py
-	cat ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py.bak | grep -v 'import click' >> ../.venv/lib/python3.10/site-packages/sphinx_click/ext.py
-
-install:
+docs:
 	make html
-	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > ../../dipdup-docs/cli/reference.md
-	tail -n '+33' _build/html/config-reference.html | head -n '-63' > ../../dipdup-docs/config/reference.md
-	tail -n '+33' _build/html/context-reference.html | head -n '-63' > ../../dipdup-docs/advanced/context/reference.md
-	cp ../CHANGELOG.md ../../dipdup-docs/release-notes/changelog.md
-	cp ../README.md ../../dipdup-docs/README.md
+	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > cli-reference.md
+	tail -n '+33' _build/html/config-reference.html | head -n '-63' > config/reference.md
+	tail -n '+33' _build/html/context-reference.html | head -n '-63' > advanced/context/reference.md
+	mdbook build  --dest-dir=dist/docs
+
+homepage:
+	npm i
+	npm run build
+
+serve:
+	mdbook serve -o
+
+wc:
+	find . -name \*.md -type f -exec wc {} \;
+
+lint: markdown orphans links
+
+markdown:
+	markdownlint -f . --disable=MD013 --disable=MD033  || true
+
+clean:
+	git clean -Xdf
+
+orphans:
+	cat SUMMARY.md | grep ".md" > mentioned.tmp
+	sed -i -E 's@^.*\[(.*)\]\((.*)\).*$$@\2@p' mentioned.tmp
+	cat mentioned.tmp | uniq | sort -o mentioned.tmp
+	find . | grep ".md" | grep -v -e "node_modules/" -e " book/" -e "placeholders.md" -e "SUMMARY.md" | cut -c "3-" | sort -o existing.tmp
+	diff --color mentioned.tmp existing.tmp
+	rm mentioned.tmp existing.tmp
+
+links:
+	python -m linkcheckmd -r . 
