@@ -295,8 +295,8 @@ class IndexDispatcher:
 
         self._logger.info(
             '%s/%s indexes affected',
-            len(self._indexes),
             len(affected_indexes),
+            len(self._indexes),
         )
 
         if not affected_indexes:
