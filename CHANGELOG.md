@@ -12,7 +12,7 @@
 
 * codegen: `on_index_rollback` hook calls `ctx.rollback` by default.
 * database: Project models must be subclassed from `dipdup.models.Model`
-* database: `bulk_create` and `bulk_update` model methods are not supported.
+* database: `bulk_create` and `bulk_update` model methods are no longer supported.
 
 ### Removed
 
