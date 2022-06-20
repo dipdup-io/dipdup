@@ -1,3 +1,3 @@
 # Getting started
 
-This part of docs covers the same features [Quickstart](../quickstart.md) article does, but more focused on details.
+This part of the docs covers the same features the [Quickstart](../quickstart.md) article does but is more focused on details.
