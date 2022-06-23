@@ -121,18 +121,23 @@ class HasuraGateway(HTTPGateway):
             self._logger.info('Metadata is up to date, no action required')
             return
 
-        # NOTE: Find chosen source and overwrite its tables
+        # NOTE: Find chosen source and overwrite its tables, create if missing and allowed.
         source_name = self._hasura_config.source
-        for source in metadata['sources']:
-            if source['name'] == source_name:
-                source['tables'] = await self._generate_source_tables_metadata()
-                break
-        else:
-            raise HasuraError(f'Source `{source_name}` not found in metadata')
+
+        if (source := self._get_source(metadata, source_name)) is None:
+            if not self._hasura_config.create_source:
+                raise HasuraError(f'Source `{source_name}` not found in metadata. Set `create_source` flag to create it.')
+
+            await self._create_source()
+            metadata = await self._fetch_metadata()
+            if (source := self._get_source(metadata, source_name)) is None:
+                raise HasuraError(f'Source `{source_name}` not found in metadata after creation.')
+
+        source['tables'] = await self._generate_source_tables_metadata()
         await self._replace_metadata(metadata)
 
         # NOTE: Apply table customizations before generating queries
-        await self._apply_table_customization()
+        await self._apply_table_customization(source)
         metadata = await self._fetch_metadata()
 
         # NOTE: Generate and apply queries and REST endpoints
@@ -160,6 +165,13 @@ class HasuraGateway(HTTPGateway):
         await hasura_schema.save()
 
         self._logger.info('Hasura instance has been configured')
+
+    def _get_source(self, metadata: Dict[str, Any], name: str) -> Optional[Dict[str, Any]]:
+        for source in metadata['sources']:
+            if source['name'] == name:
+                return source
+        else:
+            return None
 
     async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
@@ -203,13 +215,34 @@ class HasuraGateway(HTTPGateway):
 
         self._logger.info('Connected to Hasura %s', version)
 
+    async def _create_source(self) -> Dict[str, Any]:
+        self._logger.info(f'Adding source `{self._hasura_config.source}`')
+        return await self._hasura_request(
+            endpoint='metadata',
+            json={
+                'type': 'pg_add_source',
+                'args': {
+                    'name': self._hasura_config.source,
+                    'configuration': {
+                        'connection_info': {
+                            'database_url': {
+                                'connection_parameters': self._database_config.hasura_connection_parameters,
+                            },
+                            'use_prepared_statements': True,
+                        }
+                    },
+                    'replace_configuration': True,
+                },
+            },
+        )
+
     async def _fetch_metadata(self) -> Dict[str, Any]:
         self._logger.info('Fetching existing metadata')
         return await self._hasura_request(
             endpoint='metadata',
             json={
-                "type": "export_metadata",
-                "args": {},
+                'type': 'export_metadata',
+                'args': {},
             },
         )
 
@@ -400,17 +433,22 @@ class HasuraGateway(HTTPGateway):
 
         return fields
 
-    async def _apply_table_customization(self) -> None:
+    async def _apply_table_customization(self, source: Dict[str, Any]) -> None:
         """Convert table and column names to camelCase.
 
         Based on https://github.com/m-rgba/hasura-snake-to-camel
         """
 
+        # NOTE: Build a set of table names for our source
+        table_names = {t['table']['name'] for t in source['tables']}
         tables = await self._get_fields()
 
         # TODO: Bulk request
         for table in tables:
-            custom_root_fields = self._format_custom_root_fields(table)
+            if table.root not in table_names:
+                continue
+
+            custom_root_fields = self._format_custom_root_fields(table.root)
             columns = await self._get_fields(table.root)
             custom_column_names = self._format_custom_column_names(columns)
             args: Dict[str, Any] = {
@@ -479,9 +517,7 @@ class HasuraGateway(HTTPGateway):
             "comment": None,
         }
 
-    def _format_custom_root_fields(self, table: Field) -> Dict[str, Any]:
-        table_name = table.root
-
+    def _format_custom_root_fields(self, table_name: str) -> Dict[str, Any]:
         def _fmt(fmt: str) -> str:
             if self._hasura_config.camel_case:
                 return humps.camelize(fmt.format(table_name))
