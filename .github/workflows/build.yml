@@ -36,17 +36,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Escape special characters in ref_name
-        run: |
-          ref_name=$(echo ${{ github.ref }} | sed 's/\//\\\//g')
-          echo "DOCKER_IMAGE_TAG=$ref_name" >> $GITHUB_ENV
-
       - name: Set up metadata
         id: meta
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
-          tags: ${{ env.DOCKER_IMAGE_TAG }}
+          tags: '${{ github.ref_name }}'
           flavor: |
             latest=false
 
@@ -58,6 +53,5 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags:
-            - "${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}"
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
