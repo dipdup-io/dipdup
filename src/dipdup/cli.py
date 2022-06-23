@@ -261,10 +261,21 @@ async def run(
     """
     config: DipDupConfig = ctx.obj.config
     config.initialize()
-    config.advanced.postpone_jobs |= postpone_jobs
-    config.advanced.early_realtime |= early_realtime
-    config.advanced.merge_subscriptions |= merge_subscriptions
-    config.advanced.metadata_interface |= metadata_interface
+
+    # TODO: Deprecated, remove in 6.0
+    warn_text = 'option is deprecated and will be removed in the next version. Use `advanced` section of the config instead.'
+    if postpone_jobs:
+        _logger.warning('`--postpone-jobs` %s', warn_text)
+        config.advanced.postpone_jobs |= postpone_jobs
+    if early_realtime:
+        _logger.warning('`--early-realtime` %s', warn_text)
+        config.advanced.early_realtime |= early_realtime
+    if merge_subscriptions:
+        _logger.warning('`--merge-subscriptions` %s', warn_text)
+        config.advanced.merge_subscriptions |= merge_subscriptions
+    if metadata_interface:
+        _logger.warning('`--metadata-interface` %s', warn_text)
+        config.advanced.metadata_interface |= metadata_interface
 
     set_decimal_context(config.package)
 
