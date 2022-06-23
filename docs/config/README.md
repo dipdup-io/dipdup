@@ -12,7 +12,8 @@ DipDup configuration file consists of several logical blocks:
 
 | | |
 |-|-|
-| Header               | `package`* |
+| Header               | `spec_version`* |
+|                      | `package`* |
 | Inventory            | `database`* |
 |                      | `contracts`* |
 |                      | `datasources`* |

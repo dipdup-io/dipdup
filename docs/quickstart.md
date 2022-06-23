@@ -36,6 +36,7 @@ poetry shell
 DipDup configuration is stored in YAML files of a specific format. Create a new file named `dipdup.yml` in your current working directory with the following content:
 
 ```yaml
+spec_version: 1.2
 package: demo_tzbtc
 
 database:

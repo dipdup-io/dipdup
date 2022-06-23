@@ -39,7 +39,6 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
-from dipdup import __spec_version__
 from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import HeadSubscription
@@ -1190,6 +1189,7 @@ class AdvancedConfig:
 class DipDupConfig:
     """Main indexer config
 
+    :param spec_version: Version of specification
     :param package: Name of indexer's Python package, existing or not
     :param datasources: Mapping of datasource aliases and datasource configs
     :param database: Database config
@@ -1205,9 +1205,9 @@ class DipDupConfig:
     :param custom: User-defined Custom config
     """
 
+    spec_version: str
     package: str
     datasources: Dict[str, DatasourceConfigT]
-    spec_version: Optional[str] = None
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     contracts: Dict[str, ContractConfig] = field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = field(default_factory=dict)
@@ -1222,8 +1222,6 @@ class DipDupConfig:
     logging: LoggingValues = LoggingValues.default
 
     def __post_init_post_parse__(self):
-        if self.spec_version:
-            _logger.warning('`spec_version` option is deprecated, remove it from config')
         self.paths: List[str] = []
         self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)

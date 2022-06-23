@@ -226,14 +226,12 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     except Exception as e:
         raise InitializationRequiredError('Failed to create a project package.') from e
 
-    # NOTE: Deprecated, remove in 6.0
-    if _config.spec_version:
-        # NOTE: Ensure that `spec_version` is valid and supported
-        if _config.spec_version not in spec_version_mapping:
-            raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
-        if _config.spec_version != __spec_version__:
-            reindex = spec_reindex_mapping[__spec_version__]
-            raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
+    # NOTE: Ensure that `spec_version` is valid and supported
+    if _config.spec_version not in spec_version_mapping:
+        raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
+    if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
+        reindex = spec_reindex_mapping[__spec_version__]
+        raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
     ctx.obj = CLIContext(
         config_paths=config,
@@ -307,8 +305,6 @@ async def migrate(ctx) -> None:
 
     If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`. Review and commit changes after running it.
     """
-    # NOTE: We will never get there from cli() if `spec_version` is set 😌
-    # NOTE: This command however may come handy in the future for database migrations.
     _logger.info('Project is already at the latest version, no further actions required')
 
 

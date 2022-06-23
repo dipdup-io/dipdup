@@ -77,6 +77,7 @@
   * [package](config/package.md)
   * [prometheus](config/prometheus.md)
   * [sentry](config/sentry.md)
+  * [spec_version](config/spec_version.md)
   * [templates](config/templates.md)
 
 # What's New
