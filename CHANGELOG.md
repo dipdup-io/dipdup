@@ -7,13 +7,14 @@
 * config: Added `logging` config field.
 * config: Added `hasura.create_source` flag to create PostgreSQL source if missing.
 
-### Deprecated
-
-* cli: `--logging-config` option is deprecated.
-
 ### Fixed
 
 * hasura: Do not apply table customizations to tables from other sources.
+
+### Deprecated
+
+* cli: `--logging-config` option is deprecated.
+* cli: All `run` command options are deprecated. Use the `advanced` section of the config.
 
 ## 5.1.7 - 2022-06-15
 
