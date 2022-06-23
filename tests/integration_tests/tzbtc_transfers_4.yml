@@ -19,3 +19,5 @@ indexes:
     # see: https://api.tzkt.io/v1/tokens/transfers?id=125069119
     first_level: 1883357
     last_level: 1883358
+
+logging: quiet

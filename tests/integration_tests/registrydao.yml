@@ -41,3 +41,5 @@ indexes:
     template: registry_dao
     values:
       contract: registry
+
+logging: quiet

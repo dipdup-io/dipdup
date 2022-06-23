@@ -18,3 +18,5 @@ indexes:
       - callback: on_token_transfer
     first_level: 2315000
     last_level: 2315100
+
+logging: quiet

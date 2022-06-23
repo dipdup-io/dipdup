@@ -34,3 +34,5 @@ indexes:
     values:
       datasource: tzkt
       name_registry: name_registry
+
+logging: quiet

@@ -46,6 +46,7 @@ from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import TokenTransferSubscription
 from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.enums import LoggingValues
 from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReason
@@ -128,6 +129,16 @@ class PostgresDatabaseConfig:
         if self.schema_name != DEFAULT_POSTGRES_SCHEMA:
             connection_string += f'&schema={self.schema_name}'
         return connection_string
+
+    @cached_property
+    def hasura_connection_parameters(self) -> Dict[str, Any]:
+        return {
+            'username': self.user,
+            'password': self.password,
+            'database': self.database,
+            'host': self.host,
+            'port': self.port,
+        }
 
     @validator('immune_tables')
     def _valid_immune_tables(cls, v) -> None:
@@ -992,6 +1003,7 @@ class HasuraConfig:
 
     :param url: URL of the Hasura instance.
     :param admin_secret: Admin secret of the Hasura instance.
+    :param create_source: Whether source should be added to Hasura if missing.
     :param source: Hasura source for DipDup to configure, others will be left untouched.
     :param select_limit: Row limit for unauthenticated queries.
     :param allow_aggregations: Whether to allow aggregations in unauthenticated queries.
@@ -1002,6 +1014,7 @@ class HasuraConfig:
 
     url: str
     admin_secret: Optional[str] = None
+    create_source: bool = False
     source: str = 'default'
     select_limit: int = 100
     allow_aggregations: bool = True
@@ -1205,6 +1218,7 @@ class DipDupConfig:
     prometheus: Optional[PrometheusConfig] = None
     advanced: AdvancedConfig = AdvancedConfig()
     custom: Dict[str, Any] = field(default_factory=dict)
+    logging: LoggingValues = LoggingValues.default
 
     def __post_init_post_parse__(self):
         self.paths: List[str] = []
@@ -1327,6 +1341,16 @@ class DipDupConfig:
         if not isinstance(datasource, TzktDatasourceConfig):
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
+
+    def set_up_logging(self) -> None:
+        if self.logging == LoggingValues.default:
+            pass
+        elif self.logging == LoggingValues.quiet:
+            logging.getLogger('dipdup').setLevel(logging.WARNING)
+        elif self.logging == LoggingValues.verbose:
+            logging.getLogger('dipdup').setLevel(logging.DEBUG)
+        else:
+            raise RuntimeError(f'Unknown `logging` field value: `{self.logging}`')
 
     def _import_index(self, index_config: IndexConfigT) -> None:
         _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)

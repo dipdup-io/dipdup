@@ -2,7 +2,7 @@
 
 This page will guide you through the steps to get your first selective indexer up and running in a few minutes without getting too deep into the details.
 
-Let's create an indexer for [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database then calculate some statistics of its' holders' activity.
+Let's create an indexer for the [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database and then calculate some statistics of its holders' activity.
 
 A Linux environment with Python 3.10+ installed is required to use DipDup.
 
@@ -18,10 +18,10 @@ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 
 ### From scratch
 
-You need `poetry` package manager installed.
+We advise using the `poetry` package manager for new projects.
 
 ```shell
-poetry init -n
+poetry init
 poetry add dipdup
 poetry shell
 ```
@@ -73,7 +73,7 @@ indexes:
 > 🤓 **SEE ALSO**
 >
 > * [4.5. Templates and variables](getting-started/templates-and-variables.md)
-> * [12. Config file reference](config/)
+> * [12. Config file reference](config/README.md)
 
 ## Initialize project tree
 
@@ -96,14 +96,14 @@ demo_tzbtc
 │   ├── __init__.py
 │   ├── on_reindex.py
 │   ├── on_restart.py
-│   ├── on_rollback.py
+│   ├── on_index_rollback.py
 │   └── on_synchronized.py
 ├── __init__.py
 ├── models.py
 ├── sql
 │   ├── on_reindex
 │   ├── on_restart
-│   ├── on_rollback
+│   ├── on_index_rollback
 │   └── on_synchronized
 └── types
     ├── __init__.py
@@ -116,12 +116,12 @@ demo_tzbtc
         └── storage.py
 ```
 
-That's a lot of files and directories! But don't worry, in this guide, we will need only `models.py` and `handlers` modules.
+That's a lot of files and directories! But don't worry, we will need only `models.py` and `handlers` modules in this guide.
 
 > 🤓 **SEE ALSO**
 >
 > * [4.4. Project structure](getting-started/project-structure.md)
-> * [13.5. init](cli/init.md)
+> * [13.5. init](cli-reference.md)
 
 ## Define data models
 
@@ -133,7 +133,7 @@ Our schema will consist of a single model `Holder` having several fields:
 * `tx_count` — number of transfers/mints
 * `last_seen` — time of the last transfer/mint
 
-Put the following content in `models.py` file:
+Put the following content in the `models.py` file:
 
 ```python
 from tortoise import Model, fields
@@ -157,7 +157,7 @@ class Holder(Model):
 
 Everything's ready to implement an actual indexer logic.
 
-Our task is to index all the balance updates, so we'll start with a helper method to handle them. Create a file named `on_balance_update.py` in `handlers` package with the following content:
+Our task is to index all the balance updates, so we'll start with a helper method to handle them. Create a file named `on_balance_update.py` in the `handlers` package with the following content:
 
 ```python
 from decimal import Decimal
@@ -177,7 +177,7 @@ async def on_balance_update(
     await holder.save()
 ```
 
-Three methods of tzBTC contract can alter token balances — `transfer`, `mint` and `burn`. The last one is omitted in this tutorial for simplicity. Edit corresponding handlers to call `on_balance_update` method with data from matched operations:
+Three methods of tzBTC contract can alter token balances — `transfer`, `mint`, and `burn`. The last one is omitted in this tutorial for simplicity. Edit corresponding handlers to call the `on_balance_update` method with data from matched operations:
 
 `on_transfer.py`
 
@@ -254,8 +254,8 @@ And that's all! We can run the indexer now.
 dipdup run
 ```
 
-DipDup will fetch all the historical data then switch to realtime updates. Your application data has been successfully indexed!
+DipDup will fetch all the historical data and then switch to realtime updates. Your application data has been successfully indexed!
 
 > 🤓 **SEE ALSO**
 >
-> * [13. Command-line reference](cli/)
+> * [13. Command-line reference](cli-reference.md)

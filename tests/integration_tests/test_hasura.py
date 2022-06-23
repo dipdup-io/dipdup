@@ -12,11 +12,9 @@ from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.hasura import HasuraGateway
-from dipdup.utils import skip_ci
 from dipdup.utils.database import tortoise_wrapper
 
 
-@skip_ci
 class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
 
@@ -57,7 +55,11 @@ class HasuraTest(IsolatedAsyncioTestCase):
             hasura_container._container.reload()
             hasura_ip = hasura_container._container.attrs['NetworkSettings']['IPAddress']
 
-            config.hasura = HasuraConfig(f'http://{hasura_ip}:8080')
+            config.hasura = HasuraConfig(
+                url=f'http://{hasura_ip}:8080',
+                source='new_source',
+                create_source=True,
+            )
             hasura_gateway = HasuraGateway('demo_hic_et_nunc', config.hasura, config.database)
             await stack.enter_async_context(hasura_gateway)
 
