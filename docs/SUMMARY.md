@@ -33,6 +33,7 @@
   * [REST endpoints](graphql/rest.md)
   * [GenQL](graphql/genql.md)
 * [Troubleshooting](troubleshooting/README.md)
+  * [Common issues](troubleshooting/common-issues.md)
   * [Reporting bugs](troubleshooting/reporting-bugs.md)
 * [Deployment and operations](deployment/README.md)
   * [Database engines](deployment/database-engines.md)
