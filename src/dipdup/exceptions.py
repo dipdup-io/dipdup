@@ -128,12 +128,7 @@ class MigrationRequiredError(DipDupError):
 
             {version_table.strip()}
 
-            Perform the following actions:
-
-              1. Run `dipdup migrate`.
-              2. Review and commit changes.
-
-            See https://dipdup.net/docs/release-notes for more information. {reindex}
+            See https://dipdup.net/docs/release-notes to learn steps required to perform migration. {reindex}
         """
 
 

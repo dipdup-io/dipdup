@@ -37,7 +37,6 @@ from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.migrations import DipDupMigrationManager
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
@@ -226,12 +225,14 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     except Exception as e:
         raise InitializationRequiredError('Failed to create a project package.') from e
 
-    # NOTE: Ensure that `spec_version` is valid and supported
-    if _config.spec_version not in spec_version_mapping:
-        raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
-    if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
-        reindex = spec_reindex_mapping[__spec_version__]
-        raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
+    # NOTE: Deprecated, remove in 6.0
+    if _config.spec_version:
+        # NOTE: Ensure that `spec_version` is valid and supported
+        if _config.spec_version not in spec_version_mapping:
+            raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
+        if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
+            reindex = spec_reindex_mapping[__spec_version__]
+            raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
     ctx.obj = CLIContext(
         config_paths=config,
@@ -285,6 +286,7 @@ async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
     await dipdup.init(overwrite_types, keep_schemas)
 
 
+# NOTE: Deprecated, remove in 6.0
 @cli.command()
 @click.pass_context
 @cli_wrapper
@@ -294,9 +296,9 @@ async def migrate(ctx):
 
     If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`. Review and commit changes after running it.
     """
-    config: DipDupConfig = ctx.obj.config
-    migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
-    await migrations.migrate()
+    # NOTE: We would already crashed in cli() otherwise
+    _logger.info('Project is already at latest version, no further actions required')
+    _logger.warning('`migrate` command is deprecated.')
 
 
 @cli.command()

@@ -33,7 +33,6 @@
   * [REST endpoints](graphql/rest.md)
   * [GenQL](graphql/genql.md)
 * [Troubleshooting](troubleshooting/README.md)
-  * [Common issues](troubleshooting/common-issues.md)
   * [Reporting bugs](troubleshooting/reporting-bugs.md)
 * [Deployment and operations](deployment/README.md)
   * [Database engines](deployment/database-engines.md)
@@ -77,7 +76,6 @@
   * [package](config/package.md)
   * [prometheus](config/prometheus.md)
   * [sentry](config/sentry.md)
-  * [spec_version](config/spec_version.md)
   * [templates](config/templates.md)
 
 # What's New
