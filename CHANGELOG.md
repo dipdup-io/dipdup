@@ -10,6 +10,8 @@
 ### Deprecated
 
 * cli: `--logging-config` option is deprecated.
+* cli: `cache show` and `cache clear` commands are deprecated.
+* config: `http.cache` option is deprecated.
 
 ### Fixed
 

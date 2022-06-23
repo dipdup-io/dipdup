@@ -114,7 +114,6 @@ tzkt = ctx.get_tzkt_datasource('tzkt_mainnet')
 protocol_json = await tzkt.request(
     method='get',
     url='v1/protocols/current',
-    cache=False,
     weigth=1,  # ratelimiter leaky-bucket drops
 )
 assert protocol_json['hash'] == 'PtHangz2aRngywmSRGGvrcTyMbbdpWdpFKuS4uMWxg2RaH9i1qx'

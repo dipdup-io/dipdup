@@ -31,7 +31,6 @@ datasources:
     kind: tzkt
     ...
     http:
-      cache: True
       retry_count: 10
       retry_sleep: 1
       retry_multiplier: 1.2

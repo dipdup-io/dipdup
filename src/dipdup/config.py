@@ -163,6 +163,7 @@ class HTTPConfig:
     :param batch_size: Number of items fetched in a single paginated request (for some APIs)
     """
 
+    # TODO: Deprecated, remove in 6.0
     cache: Optional[bool] = None
     retry_count: Optional[int] = None
     retry_sleep: Optional[float] = None

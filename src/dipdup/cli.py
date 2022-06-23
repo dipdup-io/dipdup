@@ -365,12 +365,13 @@ async def config_env(ctx, file: Optional[str]) -> None:
         echo(content)
 
 
+# TODO: Deprecated, remove in 6.0
 @cli.group()
 @click.pass_context
 @cli_wrapper
 async def cache(ctx):
     """Manage internal cache."""
-    ...
+    _logger.warning('`cache` command group is deprecated. Implement caching logic manually if needed.')
 
 
 @cache.command(name='clear')

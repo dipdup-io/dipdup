@@ -206,7 +206,7 @@ class Index:
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_total_sync_duration())
-                await self._synchronize(head_level, cache=True)
+                await self._synchronize(head_level)
             await self.state.update_status(IndexStatus.ONESHOT, head_level)
 
         sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
@@ -233,7 +233,7 @@ class Index:
                 await self._process_queue()
 
     @abstractmethod
-    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int) -> None:
         ...
 
     @abstractmethod
@@ -345,7 +345,7 @@ class OperationIndex(Index):
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, 0)
 
-    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         index_level = await self._enter_sync_state(head_level)
         if index_level is None:
@@ -371,7 +371,6 @@ class OperationIndex(Index):
             last_level=head_level,
             transaction_addresses=transaction_addresses,
             origination_addresses=origination_addresses,
-            cache=cache,
             migration_originations=migration_originations,
         )
 
@@ -679,7 +678,7 @@ class BigMapIndex(Index):
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_big_maps(big_maps)
 
-    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         index_level = await self._enter_sync_state(head_level)
         if index_level is None:
@@ -693,11 +692,11 @@ class BigMapIndex(Index):
         ):
             await self._synchronize_level(head_level)
         else:
-            await self._synchronize_full(index_level, head_level, cache)
+            await self._synchronize_full(index_level, head_level)
 
         await self._exit_sync_state(head_level)
 
-    async def _synchronize_full(self, index_level: int, head_level: int, cache: bool = False) -> None:
+    async def _synchronize_full(self, index_level: int, head_level: int) -> None:
         first_level = index_level + 1
         self._logger.info('Fetching big map diffs from level %s to %s', first_level, head_level)
 
@@ -710,7 +709,6 @@ class BigMapIndex(Index):
             last_level=head_level,
             big_map_addresses=big_map_addresses,
             big_map_paths=big_map_paths,
-            cache=cache,
         )
 
         async for level, big_maps in fetcher.fetch_big_maps_by_level():
@@ -887,7 +885,7 @@ class HeadIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[HeadBlockData] = deque()
 
-    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int) -> None:
         self._logger.info('Setting index level to %s and moving on', head_level)
         await self.state.update_status(status=IndexStatus.REALTIME, level=head_level)
 
@@ -943,7 +941,7 @@ class TokenTransferIndex(Index):
         if Metrics.enabled:
             Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
 
-    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, last_level: int) -> None:
         """Fetch token transfers via Fetcher and pass to message callback"""
         first_level = await self._enter_sync_state(last_level)
         if first_level is None:
@@ -955,7 +953,6 @@ class TokenTransferIndex(Index):
             datasource=self._datasource,
             first_level=first_level,
             last_level=last_level,
-            cache=cache,
         )
 
         async for level, token_transfers in fetcher.fetch_token_transfers_by_level():
