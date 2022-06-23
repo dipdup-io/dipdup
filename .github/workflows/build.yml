@@ -17,6 +17,7 @@ jobs:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       DOCKER_REGISTRY: ghcr.io
       DOCKER_IMAGE_NAME: ${{ github.repository }}
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -35,12 +36,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Escape special characters in ref_name
+        run: |
+          ref_name=$(echo ${{ github.ref }} | sed 's/\//\\\//g')
+          echo "DOCKER_IMAGE_TAG=$ref_name" >> $GITHUB_ENV
+
       - name: Set up metadata
         id: meta
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
-          tags: ${{ github.ref_name }}
+          tags: ${{ env.DOCKER_IMAGE_TAG }}
           flavor: |
             latest=false
 
@@ -52,5 +58,6 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: ${{ steps.meta.outputs.tags }}
+          tags:
+            - "${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}"
           labels: ${{ steps.meta.outputs.labels }}
