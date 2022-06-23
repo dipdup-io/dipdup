@@ -4,7 +4,12 @@
 
 ### Added
 
+* config: Added `logging` config field.
 * config: Added `hasura.create_source` flag to create PostgreSQL source if missing.
+
+### Deprecated
+
+* cli: `--logging-config` option is deprecated.
 
 ### Fixed
 

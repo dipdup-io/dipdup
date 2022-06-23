@@ -53,6 +53,17 @@ _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
 
 
+def set_up_logging() -> None:
+    root = logging.getLogger()
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(levelname)-8s %(name)-20s %(message)s')
+    handler.setFormatter(formatter)
+    root.addHandler(handler)
+
+    # NOTE: Nothing useful there
+    logging.getLogger('tortoise').setLevel(logging.WARNING)
+
+
 def echo(message: str) -> None:
     with suppress(BrokenPipeError):
         click.echo(message)
@@ -62,7 +73,6 @@ def echo(message: str) -> None:
 class CLIContext:
     config_paths: List[str]
     config: DipDupConfig
-    logging_config: LoggingConfig
 
 
 async def _shutdown() -> None:
@@ -159,7 +169,7 @@ async def _check_version() -> None:
     default=[DEFAULT_CONFIG_NAME],
 )
 @click.option('--env-file', '-e', type=str, multiple=True, help='A path to .env file containing `KEY=value` strings.', default=[])
-@click.option('--logging-config', '-l', type=str, help='A path to Python logging config in YAML format.', default='logging.yml')
+@click.option('--logging-config', '-l', type=str, help='A path to Python logging config in YAML format.', default=None)
 @click.pass_context
 @cli_wrapper
 async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
@@ -173,18 +183,19 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     if '--help' in sys.argv:
         return
 
-    # NOTE: Search in current workdir, fallback to builtin configs
-    try:
-        path = join(os.getcwd(), logging_config)
-        _logging_config = LoggingConfig.load(path)
-    except FileNotFoundError:
-        path = join(dirname(__file__), 'configs', logging_config)
-        _logging_config = LoggingConfig.load(path)
-    _logging_config.apply()
+    set_up_logging()
 
-    # NOTE: Nothing useful there
-    if 'tortoise' not in _logging_config.config['loggers']:
-        logging.getLogger('tortoise').setLevel(logging.WARNING)
+    # TODO: Deprecated, remove in 6.0
+    if logging_config:
+        _logger.warning('`--logging-config` option is deprecated. Use `logging` config field.')
+        # NOTE: Search in the current workdir, fallback to builtin configs
+        try:
+            path = os.path.join(os.getcwd(), logging_config)
+            _logging_config = LoggingConfig.load(path)
+        except FileNotFoundError:
+            path = os.path.join(os.path.dirname(__file__), 'configs', logging_config)
+            _logging_config = LoggingConfig.load(path)
+        _logging_config.apply()
 
     # NOTE: Apply env files before loading config
     for env_path in env_file:
@@ -195,13 +206,21 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         load_dotenv(env_path, override=True)
 
     _config = DipDupConfig.load(config)
+
+    # TODO: Deprecated, remove in 6.0
+    # NOTE: Skip if Python config is already applied
+    if not logging_config:
+        _config.set_up_logging()
+
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
     _init_sentry(_config)
 
+    # NOTE: Fire and forget, do not block instant commands
     if not _config.advanced.skip_version_check:
         asyncio.ensure_future(_check_version())
 
+    # NOTE: Avoid import errors if project package is incomplete
     try:
         await DipDupCodeGenerator(_config, {}).create_package()
     except Exception as e:
@@ -217,7 +236,6 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     ctx.obj = CLIContext(
         config_paths=config,
         config=_config,
-        logging_config=_logging_config,
     )
 
 
