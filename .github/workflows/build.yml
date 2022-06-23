@@ -41,7 +41,6 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
-          tags: '${{ github.ref_name }}'
           flavor: |
             latest=false
 
@@ -53,5 +52,5 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: '${{ github.ref_name }}'
           labels: ${{ steps.meta.outputs.labels }}
