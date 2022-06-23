@@ -11,7 +11,8 @@
 
 * cli: `--logging-config` option is deprecated.
 * cli: `cache show` and `cache clear` commands are deprecated.
-* config: `http.cache` option is deprecated.
+* cli: `spec_version` field is deprecated.
+* config: `http.cache` flag is deprecated.
 
 ### Fixed
 
