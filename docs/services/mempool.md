@@ -1,6 +1,6 @@
 # mempool
 
-This is an optional section used by the [mempool](https://github.com/dipdup-net/mempool) indexer plugin. It uses [`contracts`](contracts.md) and [`datasources`](datasources.md) aliases as well as the [`database`](database.md) connection.
+This is an optional section used by the [mempool](https://github.com/dipdup-net/mempool) indexer plugin. It uses [`contracts`](../config/contracts.md) and [`datasources`](../config/datasources.md) aliases as well as the [`database`](../config/database.md) connection.
 
 Mempool configuration has two sections: `settings` and `indexers` (required).
 
@@ -92,18 +92,18 @@ The complete list of values allowed:
 
 #### accounts
 
-Array of [contract](contracts.md) aliases used to filter operations by source or destination.  
+Array of [contract](../config/contracts.md) aliases used to filter operations by source or destination.  
 **NOTE**: applied to manager operations only.
 
 ### Datasources
 
-Mempool plugin is tightly coupled with [TzKT](datasources.md#tzkt) and [Tezos node](datasources.md#tezos-node) providers.
+Mempool plugin is tightly coupled with [TzKT](../config/datasources.md#tzkt) and [Tezos node](../config/datasources.md#tezos-node) providers.
 
 #### tzkt
 
-An alias pointing to a [datasource](datasources.md) of kind `tzkt` is expected.
+An alias pointing to a [datasource](../config/datasources.md) of kind `tzkt` is expected.
 
 #### rpc
 
-An array of aliases pointing to [datasources](datasources.md) of kind `tezos-node`  
+An array of aliases pointing to [datasources](../config/datasources.md) of kind `tezos-node`  
 Polling multiple nodes allows to detect more refused operations and makes indexing more robust in general.

@@ -23,6 +23,6 @@ contracts:
 
 A `typename` field is only required when using index templates, but it helps to improve the readability of auto-generated code and avoid repetition.
 
-Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See [4.5. Templates and variables](templates-and-variables) for details.
+Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See [4.5. Templates and variables](../getting-started/templates-and-variables.md) for details.
 
-If multiple contracts you index have the same interface but different code, see [8.2. Reusing typename for different contracts](cookbook/reusing-typenames.md).
+If multiple contracts you index have the same interface but different code, see [8.2. Reusing typename for different contracts](../cookbook/reusing-typenames.md).

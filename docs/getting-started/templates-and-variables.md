@@ -16,7 +16,7 @@ templates:
             entrypoint: call
 ```
 
-Templates have the same syntax as [indexes](indexes/README.md) of all kinds; the only difference is that they additionally support placeholders enabling parameterization:
+Templates have the same syntax as [indexes](../config/indexes/README.md) of all kinds; the only difference is that they additionally support placeholders enabling parameterization:
 
 ```yaml
 field: <placeholder>

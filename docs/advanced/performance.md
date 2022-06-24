@@ -69,7 +69,7 @@ By default, DipDup retries failed requests infinitely, exponentially increasing 
 > * [8.1. Database engines](../deployment/database-engines.md)
 > * [8.9. Backup and restore](../deployment/backups.md)
 
-See [12.4. datasources](../../config/datasources.md) for details.
+See [12.4. datasources](../config/datasources.md) for details.
 
 ## Use TimescaleDB for time-series
 

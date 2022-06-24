@@ -1020,22 +1020,6 @@ optional = true
 python-versions = ">=3.7"
 
 [[package]]
-name = "linkcheckmd"
-version = "1.4.0"
-description = "Check links for Markdown-based site"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-aiohttp = ">=3.3"
-
-[package.extras]
-lint = ["flake8", "flake8-bugbear", "flake8-builtins", "flake8-blind-except", "mypy"]
-requests = ["requests"]
-tests = ["pytest"]
-
-[[package]]
 name = "markupsafe"
 version = "2.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -2466,7 +2450,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "82f3a3ae5966a0bcd05c7c314da6c27443411a00c5d9ab24e60fbebc7b81860a"
+content-hash = "7c86384c07a2f28c3f687623ae186d3e2dfb08bc553c452d89b3f77efb2aac6b"
 
 [metadata.files]
 aiohttp = [
@@ -3090,9 +3074,6 @@ jupyter-core = [
 jupyterlab-pygments = [
     {file = "jupyterlab_pygments-0.2.2-py2.py3-none-any.whl", hash = "sha256:2405800db07c9f770863bcf8049a529c3dd4d3e28536638bd7c1c01d2748309f"},
     {file = "jupyterlab_pygments-0.2.2.tar.gz", hash = "sha256:7405d7fde60819d905a9fa8ce89e4cd830e318cdad22a0030f7a901da705585d"},
-]
-linkcheckmd = [
-    {file = "linkcheckmd-1.4.0.tar.gz", hash = "sha256:3a539c9a4e11697fc7fcc269d379accf93c8cccbf971f3cea0bae40912d9f609"},
 ]
 markupsafe = [
     {file = "MarkupSafe-2.1.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:86b1f75c4e7c2ac2ccdaec2b9022845dbb81880ca318bb7a0a01fbf7813e3812"},

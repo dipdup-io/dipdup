@@ -18,7 +18,7 @@ We [aim to improve](https://github.com/dipdup-net/dipdup-py/pull/358) cross-plat
 
 > 🤓 **SEE ALSO**
 >
-> * [5.6. Improving performance](advanced/performance/)
+> * [5.6. Improving performance](../advanced/performance.md)
 > * [What is the Windows Subsystem for Linux?](https://docs.microsoft.com/en-us/windows/wsl/about)
 
 ## Local installation

@@ -24,4 +24,4 @@ This hook fires when every active index reaches a realtime state. Here you can c
 >
 > * [5.3. Reindexing](../../advanced/reindexing.md)
 > * [5.5. Executing SQL scripts](../sql.md)
-> * [Handler context](../advanced/handler-context.md)
+> * [Handler context](../context/README.md)
