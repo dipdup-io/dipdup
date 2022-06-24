@@ -18,7 +18,7 @@ We [aim to improve](https://github.com/dipdup-net/dipdup-py/pull/358) cross-plat
 
 > 🤓 **SEE ALSO**
 >
-> * [5.6. Improving performance](../advanced/performance.md)
+> * {{ #summary advanced/performance.md }}
 > * [What is the Windows Subsystem for Linux?](https://docs.microsoft.com/en-us/windows/wsl/about)
 
 ## Local installation
@@ -48,6 +48,6 @@ pip install dipdup
 
 > 🤓 **SEE ALSO**
 >
-> * [8.2. Building Docker images](../deployment/docker.md)
-> * [8.3. Deploying with docker-compose](../deployment/docker-compose.md)
-> * [8.4. Deploying with Docker Swarm](../deployment/swarm.md)
+> * {{ #summary deployment/docker.md }}
+> * {{ #summary deployment/docker-compose.md }}
+> * {{ #summary deployment/swarm.md }}

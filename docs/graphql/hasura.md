@@ -77,5 +77,5 @@ Keep in mind that "camelcasing" is a separate stage performed after all tables a
 
 > 🤓 **SEE ALSO**
 >
-> * [6.1. Hasura integration](../config/hasura.md)
-> * [13.5. hasura configure](../cli-reference.md#hasura-configure)
+> * {{ #summary config/hasura.md }}
+> * {{ #summary cli-reference.md#hasura-configure }}

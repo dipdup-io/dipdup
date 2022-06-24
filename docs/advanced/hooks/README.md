@@ -46,4 +46,4 @@ By default, hooks execute SQL scripts from the corresponding subdirectory of `sq
 
 > 🤓 **SEE ALSO**
 >
-> * {{#summary config/hooks.md}}
+> * {{ #summary config/hooks.md}}

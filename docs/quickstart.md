@@ -28,7 +28,7 @@ poetry shell
 
 > 🤓 **SEE ALSO**
 >
-> * {{#summary getting-started/installation.md}}
+> * {{ #summary getting-started/installation.md}}
 > * [Poetry documentation](https://python-poetry.org/docs/)
 
 ## Write a configuration file
@@ -72,8 +72,8 @@ indexes:
 
 > 🤓 **SEE ALSO**
 >
-> * {{#summary getting-started/templates-and-variables.md}}
-> * {{#summary config/README.md}}
+> * {{ #summary getting-started/templates-and-variables.md}}
+> * {{ #summary config/README.md}}
 
 ## Initialize project tree
 
@@ -120,8 +120,8 @@ That's a lot of files and directories! But don't worry, we will need only `model
 
 > 🤓 **SEE ALSO**
 >
-> * [4.4. Project structure](getting-started/project-structure.md)
-> * [13.5. init](cli-reference.md)
+> * {{ #summary getting-started/project-structure.md}}
+> * {{ #summary cli-reference.md#init}}
 
 ## Define data models
 
@@ -149,7 +149,7 @@ class Holder(Model):
 
 > 🤓 **SEE ALSO**
 >
-> * [4.6. Defining models](getting-started/defining-models.md)
+> * {{ #summary getting-started/defining-models.md}}
 > * [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
 > * [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)
 
@@ -246,7 +246,7 @@ And that's all! We can run the indexer now.
 
 > 🤓 **SEE ALSO**
 >
-> * [4.7. Implementing handlers](getting-started/implementing-handlers.md)
+> * {{ #summary getting-started/implementing-handlers.md}}
 
 ## Run your indexer
 
@@ -258,4 +258,4 @@ DipDup will fetch all the historical data and then switch to realtime updates. Y
 
 > 🤓 **SEE ALSO**
 >
-> * [13. Command-line reference](cli-reference.md)
+> * {{ #summary cli-reference.md}}

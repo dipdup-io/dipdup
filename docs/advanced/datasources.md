@@ -123,4 +123,4 @@ Datasource HTTP connection parameters (ratelimit, backoff, etc.) are applied on 
 
 > 🤓 **SEE ALSO**
 >
-> * [12.4. datasources](../config/datasources.md)
+> * {{ #summary config/datasources.md}}

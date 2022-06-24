@@ -4,7 +4,7 @@ import logging
 import re
 import sys
 
-SUMMARY_REGEX = '{{#summary (.*)}}'
+SUMMARY_REGEX = r'{{ *#summary (.*) *}}'
 logging.basicConfig(level=logging.INFO)
 
 def _parse_summary() -> dict[str, str]:
@@ -32,14 +32,28 @@ def _parse_summary() -> dict[str, str]:
     return links
 
 def _preprocess_content(text: str, links: dict[str, str], depth: int) -> str:
-    # Replace {{#summary ...}} placeholders with links from SUMMARY.md
-    for match in re.findall(SUMMARY_REGEX, text):
-        placeholder = '{{#summary ' + match + '}}'
+    # Replace {{ #summary ...}} placeholders with links from SUMMARY.md
+    for path in re.findall(SUMMARY_REGEX, text):
+        path = path.strip()
 
-        header = links[match.lstrip('./')]
-        parts = ['..'] * depth + [match]
-        url = f'[{header}]({"/".join(parts)})'
-        text = text.replace(placeholder, url.replace('README.md', 'index.md'))
+        anchor = ''
+        if '#' in path:
+            path, anchor = path.split('#')
+
+        full_path = '/'.join(['..'] * depth + [path])
+        try:
+            title = links[path]
+        except KeyError:
+            print(f'==> Missing link for `{path}` in SUMMARY.md', file=sys.stderr)
+            quit(1)
+
+        if anchor:
+            title += f' → {anchor}'
+            anchor = f'#{anchor}'
+
+        url = f'[{title}]({full_path}{anchor})'.replace('README.md', 'index.md')
+        text = re.sub(SUMMARY_REGEX, url, text, count=1)
+
     return text
 
 def _preprocess_section(section: dict, links: dict[str, str], depth: int) -> dict:
