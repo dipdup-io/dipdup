@@ -28,7 +28,7 @@ poetry shell
 
 > 🤓 **SEE ALSO**
 >
-> * [4.1. Installation](getting-started/installation.md)
+> * {{#summary getting-started/installation.md}}
 > * [Poetry documentation](https://python-poetry.org/docs/)
 
 ## Write a configuration file
@@ -72,8 +72,8 @@ indexes:
 
 > 🤓 **SEE ALSO**
 >
-> * [4.5. Templates and variables](getting-started/templates-and-variables.md)
-> * [12. Config file reference](config/README.md)
+> * {{#summary getting-started/templates-and-variables.md}}
+> * {{#summary config/README.md}}
 
 ## Initialize project tree
 

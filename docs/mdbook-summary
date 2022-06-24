@@ -1,0 +1,61 @@
+#$python
+import json
+import logging
+import re
+import sys
+
+SUMMARY_REGEX = '{{#summary (.*)}}'
+logging.basicConfig(level=logging.INFO)
+
+def _parse_summary() -> dict[str, str]:
+    links = {}
+    with open('SUMMARY.md') as f:
+        major, minor, patch = 0, 0, 0
+        for line in f:        
+            if line.startswith('* ['):
+                major += 1
+                minor, patch = 0, 0
+                prefix = f'{major}.'
+            elif line.startswith('  * ['):
+                minor += 1
+                patch = 0
+                prefix = f'{major}.{minor}.'
+            elif line.startswith('    * ['):
+                patch += 1
+                prefix = f'{major}.{minor}.{patch}.'
+            else:
+                continue
+
+            text, url = re.findall(r'\[(.*?)\]\((.*?)\)', line)[0]
+            links[url] = f'{prefix} {text}'
+
+    return links
+
+def _preprocess_content(text: str, links: dict[str, str], depth: int) -> str:
+    # Replace {{#summary ...}} placeholders with links from SUMMARY.md
+    for match in re.findall(SUMMARY_REGEX, text):
+        placeholder = '{{#summary ' + match + '}}'
+
+        header = links[match.lstrip('./')]
+        parts = ['..'] * depth + [match]
+        url = f'[{header}]({"/".join(parts)})'
+        text = text.replace(placeholder, url.replace('README.md', 'index.md'))
+    return text
+
+def _preprocess_section(section: dict, links: dict[str, str], depth: int) -> dict:
+    if chapter := section.get('Chapter'):
+        chapter['content'] = _preprocess_content(chapter['content'], links, depth)
+        chapter['sub_items'] = [_preprocess_section(item, links, depth + 1) for item in chapter['sub_items']]
+    return section
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'supports': 
+            sys.exit(0)
+
+    links = _parse_summary()
+    context, book = json.load(sys.stdin)
+    for item in book.get('sections', ()):
+        _preprocess_section(item, links, 1)
+        
+    print(json.dumps(book), end='')

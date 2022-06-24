@@ -1,4 +1,4 @@
-
+            
   <span class="target" id="module-dipdup.config"></span><dl class="py class">
 <dt class="sig sig-object py" id="dipdup.config.AdvancedConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex:</span> <span class="pre">typing.Dict[dipdup.enums.ReindexingReason</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipdup.enums.ReindexingAction]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler:</span> <span class="pre">typing.Optional[typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typing.Any]]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.config.AdvancedConfig" title="Permalink to this definition">¶</a></dt>
@@ -305,7 +305,7 @@ http: HTTP client configuration</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>hook</strong> – Name of hook to run</p></li>
-<li><p><strong>crontab</strong> – Schedule with crontab syntax (<cite>** ** *</cite>)</p></li>
+<li><p><strong>crontab</strong> – Schedule with crontab syntax (<cite>* * * * *</cite>)</p></li>
 <li><p><strong>interval</strong> – Schedule with interval in seconds</p></li>
 <li><p><strong>daemon</strong> – Run hook as a daemon (never stops)</p></li>
 <li><p><strong>args</strong> – Arguments to pass to the hook</p></li>
@@ -556,3 +556,6 @@ http: HTTP client configuration</p>
 </dd>
 </dl>
 </dd></dl>
+
+
+
