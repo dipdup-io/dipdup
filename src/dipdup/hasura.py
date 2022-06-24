@@ -83,7 +83,6 @@ class Field:
 
 class HasuraGateway(HTTPGateway):
     _default_http_config = HTTPConfig(
-        cache=False,
         # NOTE: Does not apply to initial healthcheck
         retry_count=3,
         retry_sleep=1,
@@ -178,7 +177,6 @@ class HasuraGateway(HTTPGateway):
         try:
             result = await self.request(
                 method='post',
-                cache=False,
                 url=f'{self._hasura_config.url}/v1/{endpoint}',
                 json=json,
                 headers=self._hasura_config.headers,

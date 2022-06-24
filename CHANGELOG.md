@@ -14,7 +14,9 @@
 ### Deprecated
 
 * cli: `--logging-config` option is deprecated.
-* cli: All `run` command options are deprecated. Use the `advanced` section of the config.
+* cli: All `run` command flags are deprecated. Use the `advanced` section of the config.
+* cli: `cache show` and `cache clear` commands are deprecated.
+* config: `http.cache` flag is deprecated.
 
 ## 5.1.7 - 2022-06-15
 

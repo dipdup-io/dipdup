@@ -1,46 +1,154 @@
 # Common issues
 
-## `MigrationRequiredError`
+## DipDupError
 
-### Reason
+### Unknown DipDup error
 
-DipDup was updated to release which `spec_version` differs from the value in the config file. You need to perform an automatic migration before starting indexing again.
+An unexpected error has occurred!
 
-### Solution
+Please file a bug report at <https://github.com/dipdup-net/dipdup/issues>
 
-  1. Run [`dipdup migrate`](../cli/migrate.md) command.
-  2. Review and commit changes.
+## DatasourceError
 
-## `ReindexingRequiredError`
+### One of datasources returned an error
 
-### Reason
+`[datasource_name]` datasource returned an error: [error_message]
 
-There can be several possible reasons that require reindexing from scratch:
+Please file a bug report at <https://github.com/dipdup-net/dipdup/issues>
 
-* Your db models or your config (thus likely handler) changed, it means that all the previous data is probably not correct or will be inconsistent with the new one. Of course, you handle that manually or write a migration — luckily, there is a way to disable reindexing for such cases.
-* Also, DipDup internal models or some raw indexing mechanisms changed (e.g., a serious bug was fixed), and, unfortunetely, it is required to re-run the indexer. Sometimes those changes do not affect your particular case, and you can skip the reindexing part.
-* Finally, there are chain reorgs happening from time to time, and if you don't have your `on_index_rollback` handler implemented — be ready for those errors. Luckily there is a generic approach to mitigate that — just wait for another block before applying the previous one, i.e., introduce a lag into the indexing process.
+## ConfigurationError
 
-### Solution
+### DipDup YAML config is invalid
 
-You can set how to react in each of the cases described. Here's an example setup:
+[error_message]
 
-```yaml
-advanced:
-  reindex:
-    manual: exception
-    migration: exception
-    rollback: exception
-    config_modified: ignore
-    schema_modified: ignore
-```
+DipDup config reference: <https://dipdup.net/docs/config>
 
-To index with a lag, add this TzKT datasource preference:
+## DatabaseConfigurationError
 
-```yaml
-datasources:
-  tzkt_mainnet:
-    kind: tzkt
-    url: ${TZKT_URL:-https://api.tzkt.io}
-    buffer_size: 1  # <--- one level reorgs are most common, 2-level reorgs are super rare
-```
+### DipDup can't initialize database with given models and parameters
+
+[error_message]
+
+Model: `Model`
+Table: ``
+
+Tortoise ORM examples: <https://tortoise-orm.readthedocs.io/en/latest/examples.html>
+DipDup config reference: <https://dipdup.net/docs/config/database>
+
+## ReindexingRequiredError
+
+### Unable to continue indexing with existing database
+
+Reindexing required! Reason: manual.
+
+  [context_key]: [context_value]
+
+You may want to backup database before proceeding. After that perform one of the following actions:
+
+* Eliminate the cause of reindexing and run `dipdup schema approve`.
+* Drop database and start indexing from scratch with `dipdup schema wipe` command.
+
+See <https://dipdup.net/docs/advanced/reindexing> for more information.
+
+## InitializationRequiredError
+
+### Project initialization required
+
+Project initialization required! Reason: [error_message].
+
+Perform the following actions:
+
+* Run `dipdup init`.
+* Review and commit changes.
+
+## ProjectImportError
+
+### Can't import type or callback from the project package
+
+Failed to import `[name]` from module `[module_qualname]`.
+
+Reasons in order of possibility:
+
+  1. `init` command has not been called after modifying the config
+  2. Type or callback has been renamed or removed manually
+  3. `package` name is occupied by existing non-DipDup package
+  4. Package exists, but not discoverable - check `$PYTHONPATH`
+
+## ContractAlreadyExistsError
+
+### Attempt to add a contract with alias or address already in use
+
+Contract with name `[name]` or address `tz1deadbeafdeadbeafdeadbeafdeadbeafdeadbeaf` already exists.
+
+Active contracts:
+
+## IndexAlreadyExistsError
+
+### Attemp to add an index with an alias already in use
+
+Index with name `[index_name]` already exists.
+
+Active indexes:
+
+## InvalidDataError
+
+### Failed to validate datasource message against generated type class
+
+Failed to validate datasource message against generated type class.
+
+Expected type:
+`type`
+
+Invalid data:
+[path]
+
+Parsed object:
+{'[key]': '[value]'}
+
+## CallbackError
+
+### An error occured during callback execution
+
+`[callback_qualname]` callback execution failed:
+
+  Exception:
+
+Eliminate the reason of failure and restart DipDup.
+
+## CallbackTypeError
+
+### Agrument of invalid type was passed to a callback
+
+`[name]` [kind] callback was called with an argument of invalid type.
+
+  argument: `[arg]`
+  type: <class 'type'>
+  expected type: <class 'type'>
+
+Make sure to set correct typenames in config and run `dipdup init --overwrite-types` to regenerate typeclasses.
+
+## HasuraError
+
+### Failed to configure Hasura instance
+
+Failed to configure Hasura:
+
+  [error_message]
+
+Check out Hasura logs for more information.
+
+GraphQL integration docs: <https://dipdup.net/docs/graphql/>
+
+## ConflictingHooksError
+
+### Project contains hooks that conflict with each other
+
+`[old_hook]` hook was superseded by the `[new_hook]` one; they can't be used together.
+
+Perform one of the following actions:
+
+* Follow the docs to migrate to the `[new_hook]` hook, then remove `[old_hook]` hook from the project.
+* Remove `[new_hook]` hook from the project to preserve current behavior.
+
+Release notes: <https://dipdup.net/docs/release-notes/>
