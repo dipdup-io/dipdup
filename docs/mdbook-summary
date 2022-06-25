@@ -8,24 +8,22 @@ SUMMARY_REGEX = r'{{ *#summary (.*) *}}'
 logging.basicConfig(level=logging.INFO)
 
 def _parse_summary() -> dict[str, str]:
-    links = {}
+    links: dict[str, str] = {}
+    version: list[int] = []
     with open('SUMMARY.md') as f:
-        major, minor, patch = 0, 0, 0
-        for line in f:        
-            if line.startswith('* ['):
-                major += 1
-                minor, patch = 0, 0
-                prefix = f'{major}.'
-            elif line.startswith('  * ['):
-                minor += 1
-                patch = 0
-                prefix = f'{major}.{minor}.'
-            elif line.startswith('    * ['):
-                patch += 1
-                prefix = f'{major}.{minor}.{patch}.'
-            else:
+        for line in f:
+            if '* [' not in line:
                 continue
 
+            depth = int((len(line) - len(line.lstrip())) / 2) + 1
+            if depth > len(version):
+                version += [0] * (depth - len(version))
+
+            version[depth - 1] += 1
+            for i in range(depth, len(version)):
+                version[i] = 0
+
+            prefix = '.'.join(str(v) for v in version[:depth]) + '.'
             text, url = re.findall(r'\[(.*?)\]\((.*?)\)', line)[0]
             links[url] = f'{prefix} {text}'
 
