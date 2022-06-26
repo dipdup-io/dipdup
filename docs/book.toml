@@ -5,8 +5,5 @@ multilingual = false
 src = "."
 title = "DipDup framework"
 
-# [output.linkcheck]
-# follow-web-links = false
-
 [preprocessor.summary]
 command = "python mdbook-summary"

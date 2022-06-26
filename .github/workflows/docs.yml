@@ -41,8 +41,6 @@ jobs:
 
     - name: Set up mdBook
       uses: jontze/action-mdbook@v1
-      with:
-        use-linkcheck: true
 
     - name: Install project
       run: make install
