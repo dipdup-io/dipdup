@@ -12,7 +12,7 @@ Under the hood, DipDup generates Hasura metadata from your DB schema and applies
 
 Hasura metadata is all about data representation in GraphQL API. The structure of the database itself is managed solely by Tortoise ORM.
 
-Metadata configuration is idempotent: each time you do `dipdup run` it queries the existing schema and do the merge if required. DipDup configures Hasura once after reindex, saves the hash of resulting metadata in `dipdup_schema` table, and doesn't touch Hasura until needed.
+Metadata configuration is idempotent: each time you call `run` or `hasura configure` command, DipDup queries the existing schema and does the merge if required. DipDup configures Hasura after reindexing, saves the hash of resulting metadata in the `dipdup_schema` table, and doesn't touch Hasura until needed.
 
 ## Database limitations
 

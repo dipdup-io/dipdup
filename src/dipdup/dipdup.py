@@ -46,6 +46,7 @@ from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
 from dipdup.index import Index
 from dipdup.index import OperationIndex
+from dipdup.index import TokenTransferIndex
 from dipdup.index import extract_operation_subgroups
 from dipdup.models import BigMapData
 from dipdup.models import Contract
@@ -55,6 +56,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Schema
+from dipdup.models import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.utils import is_importable
@@ -218,17 +220,11 @@ class IndexDispatcher:
         for datasource in self._ctx.datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
-            datasource.call_on_disconnected(self._on_disconnected)
             datasource.call_on_head(self._on_head)
             datasource.call_on_operations(self._on_operations)
+            datasource.call_on_token_transfers(self._on_token_transfers)
             datasource.call_on_big_maps(self._on_big_maps)
             datasource.call_on_rollback(self._on_rollback)
-
-    async def _on_disconnected(self) -> None:
-        # NOTE: Invalidate realtime queues; sync level will be reset
-        self._logger.info('Datasource disconnected, dropping realtime queues')
-        for index in self._indexes.values():
-            index._queue.clear()
 
     async def _on_head(self, datasource: IndexDatasource, head: HeadBlockData) -> None:
         # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
@@ -265,6 +261,11 @@ class IndexDispatcher:
         operation_indexes = (i for i in self._indexes.values() if isinstance(i, OperationIndex) and i.datasource == datasource)
         for index in operation_indexes:
             index.push_operations(operation_subgroups)
+
+    async def _on_token_transfers(self, datasource: IndexDatasource, token_transfers: Tuple[TokenTransferData, ...]) -> None:
+        token_transfer_indexes = (i for i in self._indexes.values() if isinstance(i, TokenTransferIndex) and i.datasource == datasource)
+        for index in token_transfer_indexes:
+            index.push_token_transfers(token_transfers)
 
     async def _on_big_maps(self, datasource: IndexDatasource, big_maps: Tuple[BigMapData, ...]) -> None:
         big_map_indexes = (i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource)

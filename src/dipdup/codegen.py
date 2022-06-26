@@ -381,7 +381,7 @@ class DipDupCodeGenerator:
 
             code: List[str] = []
             if sql:
-                code.append(f"await ctx.execute_sql_scripts('{original_callback}')")
+                code.append(f"await ctx.execute_sql('{original_callback}')")
                 if callback == 'on_index_rollback':
                     imports.add('from dipdup.enums import ReindexingReason')
                     code.append('await ctx.reindex(')

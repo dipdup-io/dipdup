@@ -1,13 +1,9 @@
 # Table of contents
 
-* [Overview](README.md)
-* [Release notes](release-notes/README.md)
-  * [Changelog](CHANGELOG.md)
-  * [5.1.0](release-notes/5.1.0.md)
-  * [5.0.0](release-notes/5.0.0.md)
-  * [4.2.0](release-notes/4.2.0.md)
-  * [4.1.0](release-notes/4.1.0.md)
-  * [4.0.0](release-notes/4.0.0.md)
+[Overview](README.md)
+
+# User Guide
+
 * [Quickstart](quickstart.md)
 * [Getting started](getting-started/README.md)
   * [Installation](getting-started/installation.md)
@@ -25,10 +21,7 @@
   * [Reindexing](advanced/reindexing.md)
   * [Feature flags](advanced/feature-flags.md)
   * [Executing SQL scripts](advanced/sql.md)
-  * [Improving performance](advanced/performance/README.md)
-    * [Working with time series](advanced/performance/time-series.md)
-    * [Tuning datasources](advanced/performance/datasources.md)
-    * [Optimizing database queries](advanced/performance/database.md)
+  * [Improving performance](advanced/performance.md)
   * [Callback context (ctx)](advanced/context/README.md)
     * [Full reference](advanced/context/reference.md)
   * [Internal models](advanced/internal-models.md)
@@ -56,7 +49,6 @@
   * [Processing offchain data](cookbook/offchain-data.md)
   * [Reusing typename for different contracts](cookbook/reusing-typenames.md)
   * [Synchronizing multiple handlers/hooks](cookbook/sync-callbacks.md)
-  * [Caching models](cookbook/caching-models.md)
   * [Multiprocessing](cookbook/multiprocessing.md)
 * [Examples](examples/README.md)
   * [Demo projects](examples/demo-projects.md)
@@ -64,6 +56,10 @@
 * [Services (plugins)](services/README.md)
   * [mempool](services/mempool.md)
   * [metadata](services/metadata.md)
+
+# Reference Guide
+
+* [Command-line reference](cli-reference.md)
 * [Config file reference](config/README.md)
   * [Full reference](config/reference.md)
   * [advanced](config/advanced.md)
@@ -83,17 +79,13 @@
   * [sentry](config/sentry.md)
   * [spec_version](config/spec_version.md)
   * [templates](config/templates.md)
-* [Command-line reference](cli/README.md)
-  * [Full reference](cli/reference.md)
-  * [cache clear](cli/cache-clear.md)
-  * [cache show](cli/cache-show.md)
-  * [config export](cli/config-export.md)
-  * [hasura configure](cli/hasura-configure.md)
-  * [init](cli/init.md)
-  * [migrate](cli/migrate.md)
-  * [run](cli/run.md)
-  * [schema approve](cli/schema-approve.md)
-  * [schema export](cli/schema-export.md)
-  * [schema init](cli/schema-init.md)
-  * [schema wipe](cli/schema-wipe.md)
-  * [status](cli/status.md)
+
+# What's New
+
+* [Changelog](CHANGELOG.md)
+* [Release notes](release-notes/README.md)
+  * [5.1.0](release-notes/5.1.0.md)
+  * [5.0.0](release-notes/5.0.0.md)
+  * [4.2.0](release-notes/4.2.0.md)
+  * [4.1.0](release-notes/4.1.0.md)
+  * [4.0.0](release-notes/4.0.0.md)

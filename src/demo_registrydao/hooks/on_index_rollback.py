@@ -9,7 +9,7 @@ async def on_index_rollback(
     from_level: int,
     to_level: int,
 ) -> None:
-    await ctx.execute_sql_scripts('on_index_rollback')
+    await ctx.execute_sql('on_index_rollback')
     await ctx.reindex(
         ReindexingReason.rollback,
         index=index.name,

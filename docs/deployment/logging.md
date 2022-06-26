@@ -1,9 +1,5 @@
 # Logging
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
-
 Currently, you have two options to configure logging:
 
 1. Manually in `on_restart` hook
@@ -14,10 +10,14 @@ import logging
 async def on_restart(
     ctx: HookContext,
 ) -> None:
-    logging.getLogger('my_logger').setLevel('DEBUG')
+    logging.getLogger('dipdup').setLevel('DEBUG')
 ```
 
 2. With Python logging config
+
+> ⚠ **WARNING**
+>
+> This feature will be deprecated soon. Consider configuring logging inside of `on_restart` hook.
 
 ```shell
 dipdup -l logging.yml run

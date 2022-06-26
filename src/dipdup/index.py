@@ -206,7 +206,7 @@ class Index:
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_total_sync_duration())
-                await self._synchronize(head_level, cache=True)
+                await self._synchronize(head_level)
             await self.state.update_status(IndexStatus.ONESHOT, head_level)
 
         sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
@@ -233,7 +233,7 @@ class Index:
                 await self._process_queue()
 
     @abstractmethod
-    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int) -> None:
         ...
 
     @abstractmethod
@@ -311,27 +311,41 @@ class OperationIndex(Index):
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
+        self._logger.debug('Processing %s realtime messages from queue', len(self._queue))
+
         while self._queue:
             message = self._queue.popleft()
             messages_left = len(self._queue)
+
+            if not message:
+                raise RuntimeError('Got empty message from realtime queue')
+
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
+
             if isinstance(message, SingleLevelRollback):
-                self._logger.debug('Processing rollback realtime message, %s left in queue', messages_left)
+                # NOTE: To match <= condition, variable is not used anywhere else
+                message_level = message.from_level + 1
+            else:
+                message_level = message[0].operations[0].level
+
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
+            if isinstance(message, SingleLevelRollback):
                 await self._single_level_rollback(message.from_level)
-            elif message:
-                self._logger.debug('Processing operations realtime message, %s left in queue', messages_left)
+            else:
                 with ExitStack() as stack:
                     if Metrics.enabled:
                         stack.enter_context(Metrics.measure_level_realtime_duration())
                     await self._process_level_operations(message)
-            else:
-                raise RuntimeError('Got empty message from realtime queue')
+
         else:
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, 0)
 
-    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         index_level = await self._enter_sync_state(head_level)
         if index_level is None:
@@ -357,7 +371,6 @@ class OperationIndex(Index):
             last_level=head_level,
             transaction_addresses=transaction_addresses,
             origination_addresses=origination_addresses,
-            cache=cache,
             migration_originations=migration_originations,
         )
 
@@ -655,12 +668,17 @@ class BigMapIndex(Index):
             self._logger.debug('Processing websocket queue')
         while self._queue:
             big_maps = self._queue.popleft()
+            message_level = big_maps[0].level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_big_maps(big_maps)
 
-    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         index_level = await self._enter_sync_state(head_level)
         if index_level is None:
@@ -674,11 +692,11 @@ class BigMapIndex(Index):
         ):
             await self._synchronize_level(head_level)
         else:
-            await self._synchronize_full(index_level, head_level, cache)
+            await self._synchronize_full(index_level, head_level)
 
         await self._exit_sync_state(head_level)
 
-    async def _synchronize_full(self, index_level: int, head_level: int, cache: bool = False) -> None:
+    async def _synchronize_full(self, index_level: int, head_level: int) -> None:
         first_level = index_level + 1
         self._logger.info('Fetching big map diffs from level %s to %s', first_level, head_level)
 
@@ -691,7 +709,6 @@ class BigMapIndex(Index):
             last_level=head_level,
             big_map_addresses=big_map_addresses,
             big_map_paths=big_map_paths,
-            cache=cache,
         )
 
         async for level, big_maps in fetcher.fetch_big_maps_by_level():
@@ -868,13 +885,18 @@ class HeadIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[HeadBlockData] = deque()
 
-    async def _synchronize(self, head_level: int, cache: bool = False) -> None:
+    async def _synchronize(self, head_level: int) -> None:
         self._logger.info('Setting index level to %s and moving on', head_level)
         await self.state.update_status(status=IndexStatus.REALTIME, level=head_level)
 
     async def _process_queue(self) -> None:
         while self._queue:
             head = self._queue.popleft()
+            message_level = head.level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
             self._logger.debug('Processing head realtime message, %s left in queue', len(self._queue))
 
             batch_level = head.level
@@ -913,8 +935,14 @@ class TokenTransferIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[TokenTransferData, ...]] = deque()
 
-    async def _synchronize(self, last_level: int, cache: bool = False) -> None:
-        """Fetch operations via Fetcher and pass to message callback"""
+    def push_token_transfers(self, token_transfers: Tuple[TokenTransferData, ...]) -> None:
+        self._queue.append(token_transfers)
+
+        if Metrics.enabled:
+            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+
+    async def _synchronize(self, last_level: int) -> None:
+        """Fetch token transfers via Fetcher and pass to message callback"""
         first_level = await self._enter_sync_state(last_level)
         if first_level is None:
             return
@@ -925,7 +953,6 @@ class TokenTransferIndex(Index):
             datasource=self._datasource,
             first_level=first_level,
             last_level=last_level,
-            cache=cache,
         )
 
         async for level, token_transfers in fetcher.fetch_token_transfers_by_level():
@@ -991,6 +1018,11 @@ class TokenTransferIndex(Index):
             self._logger.debug('Processing websocket queue')
         while self._queue:
             token_transfers = self._queue.popleft()
+            message_level = token_transfers[0].level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())

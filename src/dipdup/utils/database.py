@@ -142,7 +142,7 @@ async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
     await conn.execute_script(_truncate_schema_sql)
 
 
-async def execute_sql_scripts(
+async def execute_sql(
     conn: BaseDBAsyncClient,
     path: str,
     *args: Any,
@@ -184,7 +184,7 @@ async def generate_schema(conn: BaseDBAsyncClient, name: str, head_status_timeou
 
         # NOTE: Create a view for monitoring head status
         sql_path = join(dirname(__file__), '..', 'sql', 'dipdup_head_status.sql')
-        await execute_sql_scripts(conn, sql_path, head_status_timeout)
+        await execute_sql(conn, sql_path, head_status_timeout)
     else:
         raise NotImplementedError(f'`{conn.__class__.__name__}` is not supported')
 

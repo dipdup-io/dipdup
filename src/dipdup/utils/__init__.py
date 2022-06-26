@@ -189,12 +189,6 @@ def is_importable(module: str, obj: str) -> bool:
     return False
 
 
-def skip_ci(fn) -> Callable[..., Any]:
-    if os.environ.get('CI'):
-        return skip('CI environment, skipping')(fn)
-    return fn
-
-
 def exclude_none(config_json: Any) -> Any:
     if isinstance(config_json, (list, tuple)):
         return [exclude_none(i) for i in config_json if i is not None]

@@ -5,18 +5,41 @@
 ### Added
 
 * context: Added `execute_sql_query` method to run queries from `<project>/sql` directory.
+* config: Added `logging` config field.
+* config: Added `hasura.create_source` flag to create PostgreSQL source if missing.
 
 ### Fixed
 
-* context: Fixed `execute_sql_scripts` method when the path is a file.
+* context: Fixed `execute_sql` method when the path is a file.
+* hasura: Do not apply table customizations to tables from other sources.
 
 ### Deprecated
 
-* context: `execute_sql` is deprecated, use `execute_sql_scripts` instead.
+* cli: `--logging-config` option is deprecated.
+* cli: All `run` command flags are deprecated. Use the `advanced` section of the config.
+* cli: `cache show` and `cache clear` commands are deprecated.
+* config: `http.cache` flag is deprecated
+
+## 5.1.7 - 2022-06-15
+
+### Fixed
+
+* index: Fixed `token_transfer` index not receiving realtime updates.
+
+## 5.1.6 - 2022-06-08
+
+### Fixed
+
+* cli: Commands with `--help` option no longer require a working DipDup config.
+* index: Fixed crash with `RuntimeError` after continuous realtime connection loss.
 
 ### Performance
 
 * cli: Lazy import dependencies to speed up startup.
+
+### Other
+
+* docs: Migrate docs from GitBook to mdbook.
 
 ## 5.1.5 - 2022-06-05
 

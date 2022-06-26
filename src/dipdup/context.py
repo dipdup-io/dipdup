@@ -57,8 +57,8 @@ from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils import slowdown
+from dipdup.utils.database import execute_sql
 from dipdup.utils.database import execute_sql_query
-from dipdup.utils.database import execute_sql_scripts
 from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import wipe_schema
 
@@ -152,9 +152,6 @@ class DipDupContext:
         await self.callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
     async def execute_sql(self, name: str, *args: Any, **kwargs) -> None:
-        await self.execute_sql_scripts(name, *args, **kwargs)
-
-    async def execute_sql_scripts(self, name: str, *args: Any, **kwargs) -> None:
         """Execute SQL script with given name
 
         :param name: SQL script or directory name within `<project>/sql` directory
@@ -462,12 +459,6 @@ class CallbackManager:
             pending_hooks.append(_wrapper())
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str, *args: Any, **kwargs) -> None:
-        self._logger.warning(
-            '`execute_sql` is deprecated and will be removed in the next major version. Use `execute_sql_scripts` instead.'
-        )
-        await self.execute_sql_scripts(ctx, name, *args, **kwargs)
-
-    async def execute_sql_scripts(self, ctx: 'DipDupContext', name: str, *args: Any, **kwargs) -> None:
         """Execute SQL included with project"""
         if not isinstance(ctx.config.database, PostgresDatabaseConfig):
             self._logger.warning('Skipping SQL script `%s`: not supported on SQLite', name)
@@ -477,7 +468,7 @@ class CallbackManager:
         sql_path = join(ctx.config.package_path, 'sql', *subpackages)
 
         connection = _get_connection(None)
-        await execute_sql_scripts(connection, sql_path, *args, **kwargs)
+        await execute_sql(connection, sql_path, *args, **kwargs)
 
     async def execute_sql_query(self, ctx: 'DipDupContext', name: str, *values: Any) -> Any:
         """Execute SQL query"""

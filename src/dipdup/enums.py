@@ -1,6 +1,14 @@
 from enum import Enum
 
 
+class LoggingValues(Enum):
+    """Enum for `logging` field values."""
+
+    default = 'default'
+    quiet = 'quiet'
+    verbose = 'verbose'
+
+
 class MessageType(Enum):
     operation = 'operation'
     big_map = 'big_map'
