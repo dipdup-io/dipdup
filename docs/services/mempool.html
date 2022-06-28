@@ -135,7 +135,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="mempool"><a class="header" href="#mempool">mempool</a></h1>
-<p>This is an optional section used by the <a href="https://github.com/dipdup-net/mempool">mempool</a> indexer plugin. It uses <a href="contracts.html"><code>contracts</code></a> and <a href="datasources.html"><code>datasources</code></a> aliases as well as the <a href="database.html"><code>database</code></a> connection.</p>
+<p>This is an optional section used by the <a href="https://github.com/dipdup-net/mempool">mempool</a> indexer plugin. It uses <a href="../config/contracts.html"><code>contracts</code></a> and <a href="../config/datasources.html"><code>datasources</code></a> aliases as well as the <a href="../config/database.html"><code>database</code></a> connection.</p>
 <p>Mempool configuration has two sections: <code>settings</code> and <code>indexers</code> (required).</p>
 <p>{% page-ref page=&quot;../advanced/mempool-plugin.md&quot; %}</p>
 <h2 id="settings"><a class="header" href="#settings">Settings</a></h2>
@@ -200,14 +200,14 @@ The complete list of values allowed:</p>
 </ul>
 <p><code>*</code>  — manager operations.</p>
 <h4 id="accounts"><a class="header" href="#accounts">accounts</a></h4>
-<p>Array of <a href="contracts.html">contract</a> aliases used to filter operations by source or destination.<br />
+<p>Array of <a href="../config/contracts.html">contract</a> aliases used to filter operations by source or destination.<br />
 <strong>NOTE</strong>: applied to manager operations only.</p>
 <h3 id="datasources"><a class="header" href="#datasources">Datasources</a></h3>
-<p>Mempool plugin is tightly coupled with <a href="datasources.html#tzkt">TzKT</a> and <a href="datasources.html#tezos-node">Tezos node</a> providers.</p>
+<p>Mempool plugin is tightly coupled with <a href="../config/datasources.html#tzkt">TzKT</a> and <a href="../config/datasources.html#tezos-node">Tezos node</a> providers.</p>
 <h4 id="tzkt"><a class="header" href="#tzkt">tzkt</a></h4>
-<p>An alias pointing to a <a href="datasources.html">datasource</a> of kind <code>tzkt</code> is expected.</p>
+<p>An alias pointing to a <a href="../config/datasources.html">datasource</a> of kind <code>tzkt</code> is expected.</p>
 <h4 id="rpc"><a class="header" href="#rpc">rpc</a></h4>
-<p>An array of aliases pointing to <a href="datasources.html">datasources</a> of kind <code>tezos-node</code><br />
+<p>An array of aliases pointing to <a href="../config/datasources.html">datasources</a> of kind <code>tezos-node</code><br />
 Polling multiple nodes allows to detect more refused operations and makes indexing more robust in general.</p>
 
                     </main>

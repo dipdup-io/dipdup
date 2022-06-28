@@ -135,50 +135,16 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="logging"><a class="header" href="#logging">Logging</a></h1>
-<p>Currently, you have two options to configure logging:</p>
-<ol>
-<li>Manually in <code>on_restart</code> hook</li>
-</ol>
+<p>To control the number of logs DipDup produces, set the <code>logging</code> field in config:</p>
+<pre><code class="language-yaml">logging: default|verbose|quiet
+</code></pre>
+<p>If you need more fined tuning, perform it in the <code>on_restart</code> hook:</p>
 <pre><code class="language-python">import logging
 
 async def on_restart(
     ctx: HookContext,
 ) -&gt; None:
-    logging.getLogger('dipdup').setLevel('DEBUG')
-</code></pre>
-<ol start="2">
-<li>With Python logging config</li>
-</ol>
-<blockquote>
-<p>⚠ <strong>WARNING</strong></p>
-<p>This feature will be deprecated soon. Consider configuring logging inside of <code>on_restart</code> hook.</p>
-</blockquote>
-<pre><code class="language-shell">dipdup -l logging.yml run
-</code></pre>
-<p>Example config:</p>
-<pre><code class="language-yaml">version: 1
-disable_existing_loggers: false
-formatters:
-  brief:
-    format: &quot;%(levelname)-8s %(name)-20s %(message)s&quot;
-handlers:
-  console:
-    level: INFO
-    formatter: brief
-    class: logging.StreamHandler
-    stream: ext://sys.stdout
-loggers:
-  dipdup:
-    level: INFO
-
-  aiosqlite:
-    level: INFO
-  db_client:
-    level: INFO
-root:
-  level: INFO
-  handlers:
-    - console
+    logging.getLogger('some_logger').setLevel('DEBUG')
 </code></pre>
 
                     </main>

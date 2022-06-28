@@ -135,39 +135,96 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="common-issues"><a class="header" href="#common-issues">Common issues</a></h1>
-<h2 id="migrationrequirederror"><a class="header" href="#migrationrequirederror"><code>MigrationRequiredError</code></a></h2>
-<h3 id="reason"><a class="header" href="#reason">Reason</a></h3>
-<p>DipDup was updated to release which <code>spec_version</code> differs from the value in the config file. You need to perform an automatic migration before starting indexing again.</p>
-<h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
-<ol>
-<li>Run <a href="../cli/migrate.html"><code>dipdup migrate</code></a> command.</li>
-<li>Review and commit changes.</li>
-</ol>
-<h2 id="reindexingrequirederror"><a class="header" href="#reindexingrequirederror"><code>ReindexingRequiredError</code></a></h2>
-<h3 id="reason-1"><a class="header" href="#reason-1">Reason</a></h3>
-<p>There can be several possible reasons that require reindexing from scratch:</p>
+<h2 id="dipduperror"><a class="header" href="#dipduperror">DipDupError</a></h2>
+<h3 id="unknown-dipdup-error"><a class="header" href="#unknown-dipdup-error">Unknown DipDup error</a></h3>
+<p>An unexpected error has occurred!</p>
+<p>Please file a bug report at https://github.com/dipdup-net/dipdup/issues</p>
+<h2 id="datasourceerror"><a class="header" href="#datasourceerror">DatasourceError</a></h2>
+<h3 id="one-of-datasources-returned-an-error"><a class="header" href="#one-of-datasources-returned-an-error">One of datasources returned an error</a></h3>
+<p><code>[datasource_name]</code> datasource returned an error: [error_message]</p>
+<p>Please file a bug report at https://github.com/dipdup-net/dipdup/issues</p>
+<h2 id="configurationerror"><a class="header" href="#configurationerror">ConfigurationError</a></h2>
+<h3 id="dipdup-yaml-config-is-invalid"><a class="header" href="#dipdup-yaml-config-is-invalid">DipDup YAML config is invalid</a></h3>
+<p>[error_message]</p>
+<p>DipDup config reference: https://dipdup.net/docs/config</p>
+<h2 id="databaseconfigurationerror"><a class="header" href="#databaseconfigurationerror">DatabaseConfigurationError</a></h2>
+<h3 id="dipdup-cant-initialize-database-with-given-models-and-parameters"><a class="header" href="#dipdup-cant-initialize-database-with-given-models-and-parameters">DipDup can't initialize database with given models and parameters</a></h3>
+<p>[error_message]</p>
+<p>Model: <code>Model</code>
+Table: ``</p>
+<p>Tortoise ORM examples: https://tortoise-orm.readthedocs.io/en/latest/examples.html
+DipDup config reference: https://dipdup.net/docs/config/database</p>
+<h2 id="reindexingrequirederror"><a class="header" href="#reindexingrequirederror">ReindexingRequiredError</a></h2>
+<h3 id="unable-to-continue-indexing-with-existing-database"><a class="header" href="#unable-to-continue-indexing-with-existing-database">Unable to continue indexing with existing database</a></h3>
+<p>Reindexing required! Reason: manual.</p>
+<p>You may want to backup database before proceeding. After that perform one of the following actions:</p>
 <ul>
-<li>Your db models or your config (thus likely handler) changed, it means that all the previous data is probably not correct or will be inconsistent with the new one. Of course, you handle that manually or write a migration — luckily, there is a way to disable reindexing for such cases.</li>
-<li>Also, DipDup internal models or some raw indexing mechanisms changed (e.g., a serious bug was fixed), and, unfortunetely, it is required to re-run the indexer. Sometimes those changes do not affect your particular case, and you can skip the reindexing part.</li>
-<li>Finally, there are chain reorgs happening from time to time, and if you don't have your <code>on_index_rollback</code> handler implemented — be ready for those errors. Luckily there is a generic approach to mitigate that — just wait for another block before applying the previous one, i.e., introduce a lag into the indexing process.</li>
+<li>Eliminate the cause of reindexing and run <code>dipdup schema approve</code>.</li>
+<li>Drop database and start indexing from scratch with <code>dipdup schema wipe</code> command.</li>
 </ul>
-<h3 id="solution-1"><a class="header" href="#solution-1">Solution</a></h3>
-<p>You can set how to react in each of the cases described. Here's an example setup:</p>
-<pre><code class="language-yaml">advanced:
-  reindex:
-    manual: exception
-    migration: exception
-    rollback: exception
-    config_modified: ignore
-    schema_modified: ignore
-</code></pre>
-<p>To index with a lag, add this TzKT datasource preference:</p>
-<pre><code class="language-yaml">datasources:
-  tzkt_mainnet:
-    kind: tzkt
-    url: ${TZKT_URL:-https://api.tzkt.io}
-    buffer_size: 1  # &lt;--- one level reorgs are most common, 2-level reorgs are super rare
-</code></pre>
+<p>See https://dipdup.net/docs/advanced/reindexing for more information.</p>
+<h2 id="initializationrequirederror"><a class="header" href="#initializationrequirederror">InitializationRequiredError</a></h2>
+<h3 id="project-initialization-required"><a class="header" href="#project-initialization-required">Project initialization required</a></h3>
+<p>Project initialization required! Reason: [error_message].</p>
+<p>Perform the following actions:</p>
+<ul>
+<li>Run <code>dipdup init</code>.</li>
+<li>Review and commit changes.</li>
+</ul>
+<h2 id="projectimporterror"><a class="header" href="#projectimporterror">ProjectImportError</a></h2>
+<h3 id="cant-import-type-or-callback-from-the-project-package"><a class="header" href="#cant-import-type-or-callback-from-the-project-package">Can't import type or callback from the project package</a></h3>
+<p>Failed to import <code>[name]</code> from module <code>[module_qualname]</code>.</p>
+<p>Reasons in order of possibility:</p>
+<ol>
+<li><code>init</code> command has not been called after modifying the config</li>
+<li>Type or callback has been renamed or removed manually</li>
+<li><code>package</code> name is occupied by existing non-DipDup package</li>
+<li>Package exists, but not discoverable - check <code>$PYTHONPATH</code></li>
+</ol>
+<h2 id="contractalreadyexistserror"><a class="header" href="#contractalreadyexistserror">ContractAlreadyExistsError</a></h2>
+<h3 id="attempt-to-add-a-contract-with-alias-or-address-already-in-use"><a class="header" href="#attempt-to-add-a-contract-with-alias-or-address-already-in-use">Attempt to add a contract with alias or address already in use</a></h3>
+<p>Contract with name <code>[name]</code> or address <code>tz1deadbeafdeadbeafdeadbeafdeadbeafdeadbeaf</code> already exists.</p>
+<p>Active contracts:</p>
+<h2 id="indexalreadyexistserror"><a class="header" href="#indexalreadyexistserror">IndexAlreadyExistsError</a></h2>
+<h3 id="attemp-to-add-an-index-with-an-alias-already-in-use"><a class="header" href="#attemp-to-add-an-index-with-an-alias-already-in-use">Attemp to add an index with an alias already in use</a></h3>
+<p>Index with name <code>[index_name]</code> already exists.</p>
+<p>Active indexes:</p>
+<h2 id="invaliddataerror"><a class="header" href="#invaliddataerror">InvalidDataError</a></h2>
+<h3 id="failed-to-validate-datasource-message-against-generated-type-class"><a class="header" href="#failed-to-validate-datasource-message-against-generated-type-class">Failed to validate datasource message against generated type class</a></h3>
+<p>Failed to validate datasource message against generated type class.</p>
+<p>Expected type:
+<code>type</code></p>
+<p>Invalid data:
+[path]</p>
+<p>Parsed object:
+{'[key]': '[value]'}</p>
+<h2 id="callbackerror"><a class="header" href="#callbackerror">CallbackError</a></h2>
+<h3 id="an-error-occured-during-callback-execution"><a class="header" href="#an-error-occured-during-callback-execution">An error occured during callback execution</a></h3>
+<p><code>[callback_qualname]</code> callback execution failed:</p>
+<p>Exception: </p>
+<p>Eliminate the reason of failure and restart DipDup.</p>
+<h2 id="callbacktypeerror"><a class="header" href="#callbacktypeerror">CallbackTypeError</a></h2>
+<h3 id="agrument-of-invalid-type-was-passed-to-a-callback"><a class="header" href="#agrument-of-invalid-type-was-passed-to-a-callback">Agrument of invalid type was passed to a callback</a></h3>
+<p><code>[name]</code> [kind] callback was called with an argument of invalid type.</p>
+<p>argument: <code>[arg]</code>
+type: &lt;class 'type'&gt;
+expected type: &lt;class 'type'&gt;</p>
+<p>Make sure to set correct typenames in config and run <code>dipdup init --overwrite-types</code> to regenerate typeclasses.</p>
+<h2 id="hasuraerror"><a class="header" href="#hasuraerror">HasuraError</a></h2>
+<h3 id="failed-to-configure-hasura-instance"><a class="header" href="#failed-to-configure-hasura-instance">Failed to configure Hasura instance</a></h3>
+<p>Failed to configure Hasura:</p>
+<p>[error_message]</p>
+<p>Check out Hasura logs for more information.</p>
+<p>GraphQL integration docs: https://dipdup.net/docs/graphql/</p>
+<h2 id="conflictinghookserror"><a class="header" href="#conflictinghookserror">ConflictingHooksError</a></h2>
+<h3 id="project-contains-hooks-that-conflict-with-each-other"><a class="header" href="#project-contains-hooks-that-conflict-with-each-other">Project contains hooks that conflict with each other</a></h3>
+<p><code>[old_hook]</code> hook was superseded by the <code>[new_hook]</code> one; they can't be used together.</p>
+<p>Perform one of the following actions:</p>
+<ul>
+<li>Follow the docs to migrate to the <code>[new_hook]</code> hook, then remove <code>[old_hook]</code> hook from the project.</li>
+<li>Remove <code>[new_hook]</code> hook from the project to preserve current behavior.</li>
+</ul>
+<p>Release notes: https://dipdup.net/docs/release-notes/</p>
 
                     </main>
 

@@ -20,10 +20,11 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 docs:
-	make html
+	poetry run make html
 	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > cli-reference.md
 	tail -n '+33' _build/html/config-reference.html | head -n '-63' > config/reference.md
 	tail -n '+33' _build/html/context-reference.html | head -n '-63' > advanced/context/reference.md
+	poetry run python ../scripts/print_help.py > troubleshooting/common-issues.md
 	mdbook build  --dest-dir=dist/docs
 
 homepage:
@@ -36,7 +37,7 @@ serve:
 wc:
 	find . -name \*.md -type f -exec wc {} \;
 
-lint:
+markdownlint:
 	markdownlint -f . --disable=MD013 --disable=MD033  || true
 
 clean:
@@ -46,6 +47,6 @@ orphans:
 	cat SUMMARY.md | grep ".md" > mentioned.tmp
 	sed -i -E 's@^.*\[(.*)\]\((.*)\).*$$@\2@p' mentioned.tmp
 	cat mentioned.tmp | uniq | sort -o mentioned.tmp
-	find . | grep ".md" | grep -v -e "node_modules/" -e " book/" -e "placeholders.md" -e "SUMMARY.md" -e "README.md" | cut -c "3-" | sort -o existing.tmp
+	find . | grep ".md" | grep -v -e "node_modules/" -e " book/" -e "placeholders.md" -e "SUMMARY.md" -e "mdbook-summary" | cut -c "3-" | sort -o existing.tmp
 	diff --color mentioned.tmp existing.tmp
 	rm mentioned.tmp existing.tmp

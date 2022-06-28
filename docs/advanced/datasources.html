@@ -213,7 +213,6 @@ assert file['name'] == 'json-buffer'
 protocol_json = await tzkt.request(
     method='get',
     url='v1/protocols/current',
-    cache=False,
     weigth=1,  # ratelimiter leaky-bucket drops
 )
 assert protocol_json['hash'] == 'PtHangz2aRngywmSRGGvrcTyMbbdpWdpFKuS4uMWxg2RaH9i1qx'
@@ -222,7 +221,7 @@ assert protocol_json['hash'] == 'PtHangz2aRngywmSRGGvrcTyMbbdpWdpFKuS4uMWxg2RaH9
 <blockquote>
 <p>🤓 <strong>SEE ALSO</strong></p>
 <ul>
-<li><a href="../config/datasources.html">12.4. datasources</a></li>
+<li><a href="https://dipdup.net/docs/config/datasources.html">11.5. datasources</a></li>
 </ul>
 </blockquote>
 

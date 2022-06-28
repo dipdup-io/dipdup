@@ -135,11 +135,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="metadata"><a class="header" href="#metadata">metadata</a></h1>
-<p>This is an optional section used by the <a href="https://github.com/dipdup-net/metadata">metadata</a> indexer plugin. It uses <a href="contracts.html"><code>contracts</code></a> and <a href="datasources.html"><code>datasources</code></a> aliases as well as the <a href="database.html"><code>database</code></a> connection.</p>
+<p>This is an optional section used by the <a href="https://github.com/dipdup-net/metadata">metadata</a> indexer plugin. It uses <a href="../config/contracts.html"><code>contracts</code></a> and <a href="../config/datasources.html"><code>datasources</code></a> aliases as well as the <a href="../config/database.html"><code>database</code></a> connection.</p>
 <p>Metadata configuration has two required sections: <code>settings</code> and <code>indexers</code></p>
-<p>{% content-ref url=&quot;../advanced/metadata-plugin.md&quot; %}
-<a href="../advanced/metadata-plugin.html">metadata-plugin.md</a>
-{% endcontent-ref %}</p>
 <h2 id="settings"><a class="header" href="#settings">Settings</a></h2>
 <pre><code class="language-yaml">metadata:
   settings:
@@ -181,11 +178,11 @@
 <p>Each indexer object has two keys: <code>filters</code> and <code>datasources</code> (required).</p>
 <h3 id="filters"><a class="header" href="#filters">Filters</a></h3>
 <h4 id="accounts"><a class="header" href="#accounts">accounts</a></h4>
-<p>Array of <a href="contracts.html">contract</a> aliases used to filter Big_map updates by the owner contract address.</p>
+<p>Array of <a href="../config/contracts.html">contract</a> aliases used to filter Big_map updates by the owner contract address.</p>
 <h3 id="datasources"><a class="header" href="#datasources">Datasources</a></h3>
-<p>Metadata plugin is tightly coupled with <a href="datasources.html#tzkt">TzKT</a> provider.</p>
+<p>Metadata plugin is tightly coupled with <a href="../config/datasources.html#tzkt">TzKT</a> provider.</p>
 <h4 id="tzkt"><a class="header" href="#tzkt">tzkt</a></h4>
-<p>An alias pointing to a <a href="datasources.html">datasource</a> of kind <code>tzkt</code> is expected.</p>
+<p>An alias pointing to a <a href="../config/datasources.html">datasource</a> of kind <code>tzkt</code> is expected.</p>
 
                     </main>
 

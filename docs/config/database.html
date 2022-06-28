@@ -176,14 +176,14 @@
 <!-- TODO: Move to the upper level -->
 <p>You can also use compose-style environment variable substitutions with default values for secrets and other fields. See <a href="../getting-started/templates-and-variables.html#">Templates and variables</a> for details.</p>
 <h3 id="immune-tables"><a class="header" href="#immune-tables">Immune tables</a></h3>
-<p>In some cases, DipDup can't continue indexing with an existing database. See <a href="../advanced/reindexing.html">5.3. Reindexing</a> for details. One of the solutions to resolve reindexing state is to drop the database and start indexing from scratch. To achieve this, either invoke <a href="../cli/schema-wipe.html"><code>schema wipe</code> command</a> or set an action to <code>wipe</code> in <a href="../config/advanced.html"><code>advanced.reindex</code> config section</a>.</p>
+<p>In some cases, DipDup can't continue indexing with an existing database. See <a href="../advanced/reindexing.html">5.3. Reindexing</a> for details. One of the solutions to resolve reindexing state is to drop the database and start indexing from scratch. To achieve this, either invoke the <a href="../cli-reference.md#dipdup-schema-wipe.html"><code>schema wipe</code> command</a> or set an action to <code>wipe</code> in the <a href="../config/advanced.html"><code>advanced.reindex</code> config section</a>.</p>
 <p>You might want to keep several tables during schema wipe if data in them is not dependent on index states yet heavy. A typical example is indexing IPFS data — rollbacks do not affect off-chain storage, so you can safely continue after receiving a reorg message.</p>
 <pre><code class="language-yaml">database:
   immune_tables:
     - token_metadata
     - contract_metadata
 </code></pre>
-<p><code>immune_tables</code> is an optional array of table names that will be ignored during schema wipe. Note that to change the schema of an immune table, you need to perform a migration by yourself. DipDup will neither drop the table nor automatically handle the update.</p>
+<p><code>immune_tables</code> is an optional array of table names that will be ignored during schema wipe. Once an immune table is created, DipDup will never touch it again; to change the schema of an immune table, you need to perform a migration manually. Check <code>schema export</code> output before doing this to ensure the resulting schema is the same TortoiseORM would generate.</p>
 
                     </main>
 
