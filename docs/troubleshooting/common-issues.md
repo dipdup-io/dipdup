@@ -1,11 +1,12 @@
 # Common issues
+
 ## DipDupError
 
 ### Unknown DipDup error
 
 An unexpected error has occurred!
 
-Please file a bug report at https://github.com/dipdup-net/dipdup/issues
+Please file a bug report at <https://github.com/dipdup-net/dipdup/issues>
 
 ## DatasourceError
 
@@ -13,7 +14,7 @@ Please file a bug report at https://github.com/dipdup-net/dipdup/issues
 
 `[datasource_name]` datasource returned an error: [error_message]
 
-Please file a bug report at https://github.com/dipdup-net/dipdup/issues
+Please file a bug report at <https://github.com/dipdup-net/dipdup/issues>
 
 ## ConfigurationError
 
@@ -21,7 +22,7 @@ Please file a bug report at https://github.com/dipdup-net/dipdup/issues
 
 [error_message]
 
-DipDup config reference: https://dipdup.net/docs/config
+DipDup config reference: <https://dipdup.net/docs/config>
 
 ## DatabaseConfigurationError
 
@@ -32,8 +33,8 @@ DipDup config reference: https://dipdup.net/docs/config
 Model: `Model`
 Table: ``
 
-Tortoise ORM examples: https://tortoise-orm.readthedocs.io/en/latest/examples.html
-DipDup config reference: https://dipdup.net/docs/config/database
+Tortoise ORM examples: <https://tortoise-orm.readthedocs.io/en/latest/examples.html>
+DipDup config reference: <https://dipdup.net/docs/config/database>
 
 ## ReindexingRequiredError
 
@@ -45,10 +46,10 @@ Reindexing required! Reason: manual.
 
 You may want to backup database before proceeding. After that perform one of the following actions:
 
-  * Eliminate the cause of reindexing and run `dipdup schema approve`.
-  * Drop database and start indexing from scratch with `dipdup schema wipe` command.
+* Eliminate the cause of reindexing and run `dipdup schema approve`.
+* Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
-See https://dipdup.net/docs/advanced/reindexing for more information.
+See <https://dipdup.net/docs/advanced/reindexing> for more information.
 
 ## InitializationRequiredError
 
@@ -58,8 +59,8 @@ Project initialization required! Reason: [error_message].
 
 Perform the following actions:
 
-  * Run `dipdup init`.
-  * Review and commit changes.
+* Run `dipdup init`.
+* Review and commit changes.
 
 ## ProjectImportError
 
@@ -111,7 +112,7 @@ Parsed object:
 
 `[callback_qualname]` callback execution failed:
 
-  Exception: 
+  Exception:
 
 Eliminate the reason of failure and restart DipDup.
 
@@ -137,7 +138,7 @@ Failed to configure Hasura:
 
 Check out Hasura logs for more information.
 
-GraphQL integration docs: https://dipdup.net/docs/graphql/
+GraphQL integration docs: <https://dipdup.net/docs/graphql/>
 
 ## ConflictingHooksError
 
@@ -147,8 +148,7 @@ GraphQL integration docs: https://dipdup.net/docs/graphql/
 
 Perform one of the following actions:
 
-  * Follow the docs to migrate to the `[new_hook]` hook, then remove `[old_hook]` hook from the project.
-  * Remove `[new_hook]` hook from the project to preserve current behavior.
+* Follow the docs to migrate to the `[new_hook]` hook, then remove `[old_hook]` hook from the project.
+* Remove `[new_hook]` hook from the project to preserve current behavior.
 
-Release notes: https://dipdup.net/docs/release-notes/
-
+Release notes: <https://dipdup.net/docs/release-notes/>
