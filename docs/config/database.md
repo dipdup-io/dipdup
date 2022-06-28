@@ -55,7 +55,7 @@ You can also use compose-style environment variable substitutions with default v
 
 ### Immune tables
 
-In some cases, DipDup can't continue indexing with an existing database. See [5.3. Reindexing](../advanced/reindexing.md) for details. One of the solutions to resolve reindexing state is to drop the database and start indexing from scratch. To achieve this, either invoke the [`schema wipe` command](../cli/schema-wipe.md) or set an action to `wipe` in the [`advanced.reindex` config section](../config/advanced.md).
+In some cases, DipDup can't continue indexing with an existing database. See [5.3. Reindexing](../advanced/reindexing.md) for details. One of the solutions to resolve reindexing state is to drop the database and start indexing from scratch. To achieve this, either invoke the [`schema wipe` command](../cli-reference.md#dipdup-schema-wipe.md) or set an action to `wipe` in the [`advanced.reindex` config section](../config/advanced.md).
 
 You might want to keep several tables during schema wipe if data in them is not dependent on index states yet heavy. A typical example is indexing IPFS data — rollbacks do not affect off-chain storage, so you can safely continue after receiving a reorg message.
 

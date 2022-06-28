@@ -3,12 +3,12 @@
 DipDup allows spawning new indexes from a template in runtime. There are two ways to do that:
 
 * From another index (e.g., handling factory originations)
-* In [`on_configure` hook](../cli/dipdup-run.md#custom-initialization)
+* In `on_configure` hook (see {{ #summary advanced/hooks/default.md}})
 
 > ⚠ **WARNING**
 >
-> DipDup is currently not able to automatically generate types and handlers for template indexes unless there is at least one [static instance](indexes/template.md).
+> DipDup is currently not able to automatically generate types and handlers for template indexes unless there is at least one [static instance](../config/indexes/template.md).
 
-DipDup exposes several context methods that extend the current configuration with new contracts and template instances. See [5.8. Handler context](../advanced/handler-context.md) for details.
+DipDup exposes several context methods that extend the current configuration with new contracts and template instances. See {{ #summary advanced/context/README.md}} for details.
 
-See [12.13. templates](../config/templates.md) for details.
+See {{ #summary config/templates.md}} for details.

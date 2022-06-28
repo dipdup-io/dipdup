@@ -15,5 +15,5 @@ hasura:
 
 > 🤓 **SEE ALSO**
 >
-> * [6.1. Hasura integration](../graphql/hasura.md)
-> * [13.5. hasura configure](../cli/hasura-configure.md)
+> * {{ #summary graphql/hasura.md}}
+> * {{ #summary cli-reference.md#dipdup-hasura-configure}}

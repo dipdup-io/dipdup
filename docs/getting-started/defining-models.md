@@ -29,5 +29,5 @@ There are some limitations introduced to make Hasura GraphQL integration easier.
 >
 > * [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
 > * [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)
-> * [8.1. Database engines](../deployment/database-engines.md)
-> * [8.9. Backup and restore](../deployment/backups.md)
+> * {{ #summary deployment/database-engines.md }}
+> * {{ #summary deployment/backups.md }}

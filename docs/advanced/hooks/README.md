@@ -1,6 +1,6 @@
 # Hooks
 
-Hooks are user-defined callbacks called either from the [`ctx.fire_hook`](../advanced/handler-context.md#helpers) method or by scheduler ([`jobs`](jobs.md) config section, we'll return to this topic later).
+Hooks are user-defined callbacks called either from the [`ctx.fire_hook`](../context/reference.md) method or by scheduler ([`jobs`](jobs.md) config section, we'll return to this topic later).
 
 Let's assume we want to calculate some statistics on-demand to avoid blocking an indexer with heavy computations. Add the following lines to DipDup config:
 
@@ -46,4 +46,4 @@ By default, hooks execute SQL scripts from the corresponding subdirectory of `sq
 
 > 🤓 **SEE ALSO**
 >
-> * [12.6. hooks](../../config/hooks.md)
+> * {{ #summary config/hooks.md}}

@@ -14,4 +14,4 @@ hooks:
 
 > 🤓 **SEE ALSO**
 >
-> * [12.6. hooks](../advanced/hooks/README.md)
+> * {{ #summary advanced/hooks/README.md}}

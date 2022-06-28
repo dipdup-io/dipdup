@@ -16,7 +16,7 @@ templates:
             entrypoint: call
 ```
 
-Templates have the same syntax as [indexes](indexes/README.md) of all kinds; the only difference is that they additionally support placeholders enabling parameterization:
+Templates have the same syntax as [indexes](../config/indexes/README.md) of all kinds; the only difference is that they additionally support placeholders enabling parameterization:
 
 ```yaml
 field: <placeholder>
@@ -28,5 +28,5 @@ Any index implementing a template must have a value for each existing placeholde
 
 > 🤓 **SEE ALSO**
 >
-> * [5.9. Spawning indexes at runtime](../advanced/index-factories.md)
-> * [12.13. templates](../config/templates.md)
+> * {{ #summary advanced/index-factories.md }}
+> * {{ #summary config/templates.md }}

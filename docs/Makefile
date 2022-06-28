@@ -37,9 +37,7 @@ serve:
 wc:
 	find . -name \*.md -type f -exec wc {} \;
 
-lint: markdown orphans links
-
-markdown:
+markdownlint:
 	markdownlint -f . --disable=MD013 --disable=MD033  || true
 
 clean:
@@ -49,9 +47,6 @@ orphans:
 	cat SUMMARY.md | grep ".md" > mentioned.tmp
 	sed -i -E 's@^.*\[(.*)\]\((.*)\).*$$@\2@p' mentioned.tmp
 	cat mentioned.tmp | uniq | sort -o mentioned.tmp
-	find . | grep ".md" | grep -v -e "node_modules/" -e " book/" -e "placeholders.md" -e "SUMMARY.md" | cut -c "3-" | sort -o existing.tmp
+	find . | grep ".md" | grep -v -e "node_modules/" -e " book/" -e "placeholders.md" -e "SUMMARY.md" -e "mdbook-summary" | cut -c "3-" | sort -o existing.tmp
 	diff --color mentioned.tmp existing.tmp
 	rm mentioned.tmp existing.tmp
-
-links:
-	python -m linkcheckmd -r . 
