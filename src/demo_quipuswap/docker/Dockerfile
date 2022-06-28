@@ -1,2 +1,2 @@
-FROM dipdup/dipdup:5.1.7
+FROM dipdup/dipdup:5.2.0
 COPY demo_quipuswap /home/dipdup/demo_quipuswap
