@@ -31,7 +31,6 @@ datasources:
     kind: tzkt
     ...
     http:
-      cache: True
       retry_count: 10
       retry_sleep: 1
       retry_multiplier: 1.2
@@ -67,10 +66,10 @@ By default, DipDup retries failed requests infinitely, exponentially increasing 
 >
 > * [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
 > * [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)
-> * [8.1. Database engines](../deployment/database-engines.md)
-> * [8.9. Backup and restore](../deployment/backups.md)
+> * {{ #summary deployment/database-engines.md}}
+> * {{ #summary deployment/backups.md}}
 
-See [12.4. datasources](../../config/datasources.md) for details.
+See [12.4. datasources](../config/datasources.md) for details.
 
 ## Use TimescaleDB for time-series
 

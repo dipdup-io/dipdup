@@ -31,7 +31,7 @@ test:           ## Run test suite
 
 docs:           ## Build docs
 	cd docs
-	make -s clean docs lint || true
+	make -s clean docs markdownlint orphans || true
 
 homepage:       ## Build homepage
 	cd docs

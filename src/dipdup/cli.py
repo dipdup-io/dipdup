@@ -15,6 +15,7 @@ from os.path import exists
 from os.path import join
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import cast
 
 import aiohttp
@@ -37,7 +38,6 @@ from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
 from dipdup.hasura import HasuraGateway
-from dipdup.migrations import DipDupMigrationManager
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
@@ -229,7 +229,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
     # NOTE: Ensure that `spec_version` is valid and supported
     if _config.spec_version not in spec_version_mapping:
         raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
-    if _config.spec_version != __spec_version__ and ctx.invoked_subcommand != 'migrate':
+    if _config.spec_version != __spec_version__:
         reindex = spec_reindex_mapping[__spec_version__]
         raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
@@ -300,30 +300,29 @@ async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
 @cli.command()
 @click.pass_context
 @cli_wrapper
-async def migrate(ctx):
+async def migrate(ctx) -> None:
     """
     Migrate project to the new spec version.
 
     If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`. Review and commit changes after running it.
     """
-    config: DipDupConfig = ctx.obj.config
-    migrations = DipDupMigrationManager(config, ctx.obj.config_paths)
-    await migrations.migrate()
+    _logger.info('Project is already at the latest version, no further actions required')
 
 
 @cli.command()
 @click.pass_context
 @cli_wrapper
-async def status(ctx):
+async def status(ctx) -> None:
     """Show the current status of indexes in the database."""
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    table = [('name', 'status', 'level')]
+    table: List[Tuple[str, str, str | int]] = [('name', 'status', 'level')]
     async with tortoise_wrapper(url, models):
         async for index in Index.filter().order_by('name'):
-            table.append((index.name, index.status.value, index.level))
+            row = (index.name, index.status.value, index.level)
+            table.append(row)
 
     # NOTE: Lazy import to speed up startup
     from tabulate import tabulate
@@ -334,7 +333,7 @@ async def status(ctx):
 @cli.group()
 @click.pass_context
 @cli_wrapper
-async def config(ctx):
+async def config(ctx) -> None:
     """Commands to manage DipDup configuration."""
     ...
 
@@ -377,12 +376,13 @@ async def config_env(ctx, file: Optional[str]) -> None:
         echo(content)
 
 
+# TODO: Deprecated, remove in 6.0
 @cli.group()
 @click.pass_context
 @cli_wrapper
-async def cache(ctx):
+async def cache(ctx) -> None:
     """Manage internal cache."""
-    ...
+    _logger.warning('`cache` command group is deprecated. Implement caching logic manually if needed.')
 
 
 @cache.command(name='clear')
@@ -412,7 +412,7 @@ async def cache_show(ctx) -> None:
 @cli.group(help='Hasura integration related commands.')
 @click.pass_context
 @cli_wrapper
-async def hasura(ctx):
+async def hasura(ctx) -> None:
     ...
 
 
@@ -420,7 +420,7 @@ async def hasura(ctx):
 @click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
 @cli_wrapper
-async def hasura_configure(ctx, force: bool):
+async def hasura_configure(ctx, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -441,7 +441,7 @@ async def hasura_configure(ctx, force: bool):
 @cli.group()
 @click.pass_context
 @cli_wrapper
-async def schema(ctx):
+async def schema(ctx) -> None:
     """Manage database schema."""
     ...
 
@@ -449,7 +449,7 @@ async def schema(ctx):
 @schema.command(name='approve')
 @click.pass_context
 @cli_wrapper
-async def schema_approve(ctx):
+async def schema_approve(ctx) -> None:
     """Continue to use existing schema after reindexing was triggered."""
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -475,7 +475,7 @@ async def schema_approve(ctx):
 @click.option('--force', is_flag=True, help='Skip confirmation prompt.')
 @click.pass_context
 @cli_wrapper
-async def schema_wipe(ctx, immune: bool, force: bool):
+async def schema_wipe(ctx, immune: bool, force: bool) -> None:
     """
     Drop all database tables, functions and views.
 
@@ -516,7 +516,7 @@ async def schema_wipe(ctx, immune: bool, force: bool):
 @schema.command(name='init')
 @click.pass_context
 @cli_wrapper
-async def schema_init(ctx):
+async def schema_init(ctx) -> None:
     """
     Prepare a database for running DipDip.
 
@@ -544,7 +544,7 @@ async def schema_init(ctx):
 @schema.command(name='export')
 @click.pass_context
 @cli_wrapper
-async def schema_export(ctx):
+async def schema_export(ctx) -> None:
     """Print SQL schema including scripts from `sql/on_reindex`.
 
     This command may help you debug inconsistency between project models and expected SQL schema.

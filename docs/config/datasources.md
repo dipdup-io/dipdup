@@ -53,4 +53,4 @@ datasources:
 
 > 🤓 **SEE ALSO**
 >
-> * [5.1. datasources](../advanced/datasources.md)
+> * {{ #summary advanced/datasources.md}}

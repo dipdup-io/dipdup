@@ -12,7 +12,7 @@
 <dt class="sig sig-object std" id="cmdoption-dipdup-version">
 <span class="sig-name descname"><span class="pre">--version</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-version" title="Permalink to this definition">¶</a></dt>
 <dd><p>Show the version and exit.</p>
-</dd></dl>
+</dd></dl> 
 
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-c">
