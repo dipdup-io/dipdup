@@ -40,7 +40,9 @@ jobs:
           ${{ runner.os }}-venv-
 
     - name: Set up mdBook
-      uses: jontze/action-mdbook@v1
+      uses: peaceiris/actions-mdbook@v1
+      with:
+        mdbook-version: '0.4.18'
 
     - name: Install project
       run: make install
