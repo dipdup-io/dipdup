@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.2.0 - 2022-06-28
+## [unreleased]
 
 ### Added
 
@@ -19,7 +19,7 @@
 * hooks: Removed deprecated `on_rollback` hook.
 * index: Do not try to avoid single-level rollbacks by comparing operation hashes.
 
-## [unreleased]
+## 5.2.0 - 2022-06-28
 
 ### Added
 
