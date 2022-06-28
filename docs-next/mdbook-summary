@@ -1,10 +1,13 @@
 # $python
+"""Replaces {{ #summary ...}} placeholders with links from SUMMARY.md"""
 import json
+import os
 import re
 import sys
 from typing import NoReturn
 
 SUMMARY_REGEX = r'{{ *#summary (.*) *}}'
+MDBOOK_ROOT = os.environ.get('MDBOOK_ROOT')
 
 
 def _fail(message: str) -> NoReturn:
@@ -46,7 +49,14 @@ def _preprocess_content(text: str, links: dict[str, str], depth: int) -> str:
         if '#' in path:
             path, anchor = path.split('#')
 
-        full_path = '/'.join(['..'] * depth + [path])
+        if MDBOOK_ROOT:
+            root_path = path
+            if 'http' in MDBOOK_ROOT and root_path.endswith('.md'):
+                root_path = root_path[:-3] + '.html'
+            full_path = os.path.join(MDBOOK_ROOT, root_path)
+        else:
+            full_path = '/'.join(['..'] * depth + [path])
+
         try:
             title = links[path]
         except KeyError:
