@@ -176,7 +176,7 @@
 <!-- TODO: Move to the upper level -->
 <p>You can also use compose-style environment variable substitutions with default values for secrets and other fields. See <a href="../getting-started/templates-and-variables.html#">Templates and variables</a> for details.</p>
 <h3 id="immune-tables"><a class="header" href="#immune-tables">Immune tables</a></h3>
-<p>In some cases, DipDup can't continue indexing with an existing database. See <a href="../advanced/reindexing.html">5.3. Reindexing</a> for details. One of the solutions to resolve reindexing state is to drop the database and start indexing from scratch. To achieve this, either invoke the <a href="../cli/schema-wipe.html"><code>schema wipe</code> command</a> or set an action to <code>wipe</code> in the <a href="../config/advanced.html"><code>advanced.reindex</code> config section</a>.</p>
+<p>In some cases, DipDup can't continue indexing with an existing database. See <a href="../advanced/reindexing.html">5.3. Reindexing</a> for details. One of the solutions to resolve reindexing state is to drop the database and start indexing from scratch. To achieve this, either invoke the <a href="../cli-reference.md#dipdup-schema-wipe.html"><code>schema wipe</code> command</a> or set an action to <code>wipe</code> in the <a href="../config/advanced.html"><code>advanced.reindex</code> config section</a>.</p>
 <p>You might want to keep several tables during schema wipe if data in them is not dependent on index states yet heavy. A typical example is indexing IPFS data — rollbacks do not affect off-chain storage, so you can safely continue after receiving a reorg message.</p>
 <pre><code class="language-yaml">database:
   immune_tables:

@@ -135,7 +135,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="hooks"><a class="header" href="#hooks">Hooks</a></h1>
-<p>Hooks are user-defined callbacks called either from the <a href="../advanced/handler-context.html#helpers"><code>ctx.fire_hook</code></a> method or by scheduler (<a href="jobs.html"><code>jobs</code></a> config section, we'll return to this topic later).</p>
+<p>Hooks are user-defined callbacks called either from the <a href="../context/reference.html"><code>ctx.fire_hook</code></a> method or by scheduler (<a href="jobs.html"><code>jobs</code></a> config section, we'll return to this topic later).</p>
 <p>Let's assume we want to calculate some statistics on-demand to avoid blocking an indexer with heavy computations. Add the following lines to DipDup config:</p>
 <pre><code class="language-yaml">hooks:
   calculate_stats:
@@ -171,7 +171,7 @@ async def calculate_stats(
 <blockquote>
 <p>🤓 <strong>SEE ALSO</strong></p>
 <ul>
-<li><a href="../../config/hooks.html">12.6. hooks</a></li>
+<li><a href="../../config/hooks.html">11.7. hooks</a></li>
 </ul>
 </blockquote>
 
