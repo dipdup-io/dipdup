@@ -70,11 +70,9 @@ class HasuraTest(IsolatedAsyncioTestCase):
             await stack.enter_async_context(hasura_gateway)
 
             try:
-                await hasura_gateway.configure()
+                await hasura_gateway.configure(force=True)
 
                 config.hasura.camel_case = True
-                hasura_gateway = HasuraGateway('demo_hic_et_nunc', config.hasura, config.database)
-                await stack.enter_async_context(hasura_gateway)
 
                 await hasura_gateway.configure(force=True)
             except HasuraError:
