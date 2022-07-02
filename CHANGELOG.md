@@ -5,7 +5,8 @@
 ### Fixed
 
 * cli: Fixed setting default logging level.
-* hasura: Fixed metadata generation for relations with custom field name.
+* hasura: Fixed metadata generation for relations with a custom field name.
+* hasura: Fixed configuring existing instances after changing `camel_case` field in config.
 
 ## 5.2.0 - 2022-06-28
 

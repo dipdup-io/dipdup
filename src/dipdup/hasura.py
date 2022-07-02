@@ -15,6 +15,7 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 from typing import cast
 
 import humps
@@ -36,9 +37,14 @@ from dipdup.http import HTTPGateway
 from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import iter_models
 
+RelationalFieldT = Union[
+    fields.relational.ForeignKeyFieldInstance,
+    fields.relational.ManyToManyFieldInstance,
+]
 _get_fields_query = '''
 query introspectionQuery($name: String!) {
   __type(name: $name) {
@@ -133,16 +139,23 @@ class HasuraGateway(HTTPGateway):
                 raise HasuraError(f'Source `{source_name}` not found in metadata after creation.')
 
         source['tables'] = await self._generate_source_tables_metadata()
+
+        # NOTE: Don't forget to invalidate old queries, customization will fail otherwise.
+        source['query_collections'] = []
+        source['rest_endpoints'] = []
+
         await self._replace_metadata(metadata)
 
         # NOTE: Apply table customizations before generating queries
         await self._apply_table_customization(source)
         metadata = await self._fetch_metadata()
+        if (source := self._get_source(metadata, source_name)) is None:
+            raise HasuraError(f'Source `{source_name}` not found in metadata after table customization.')
 
         # NOTE: Generate and apply queries and REST endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
         self._logger.info('Adding %s generated and user-defined queries', len(query_collections_metadata))
-        metadata['query_collections'] = [
+        source['query_collections'] = [
             {
                 "name": "allowed-queries",
                 "definition": {"queries": query_collections_metadata},
@@ -153,11 +166,12 @@ class HasuraGateway(HTTPGateway):
             self._logger.info('Adding %s REST endpoints', len(query_collections_metadata))
             query_names = [q['name'] for q in query_collections_metadata]
             rest_endpoints_metadata = await self._generate_rest_endpoints_metadata(query_names)
-            metadata['rest_endpoints'] = rest_endpoints_metadata
+            source['rest_endpoints'] = rest_endpoints_metadata
 
         await self._replace_metadata(metadata)
 
-        # NOTE: Fetch metadata once again (to do: find out why is it necessary) and save its hash for future comparisons
+        # TODO: Find out why it is necessary
+        # NOTE: Fetch metadata once again and save its hash for future comparisons
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
         hasura_schema.hash = metadata_hash
@@ -329,13 +343,13 @@ class HasuraGateway(HTTPGateway):
                     metadata_tables[junction_table_name]['object_relationships'].append(
                         self._format_object_relationship(
                             name=related_table_name,
-                            column=related_table_name + '_id',
+                            column=self._get_relation_source_field(field),
                         )
                     )
                     metadata_tables[junction_table_name]['object_relationships'].append(
                         self._format_object_relationship(
                             name=table_name,
-                            column=table_name + '_id',
+                            column=self._get_relation_source_field(field),
                         )
                     )
                     if field.related_name:
@@ -343,7 +357,7 @@ class HasuraGateway(HTTPGateway):
                             self._format_array_relationship(
                                 related_name=f'{related_table_name}_{field.related_name}',
                                 table=junction_table_name,
-                                column=related_table_name + '_id',
+                                column=self._get_relation_source_field(field),
                             )
                         )
 
@@ -365,7 +379,14 @@ class HasuraGateway(HTTPGateway):
                 raise RuntimeError(f'Table `{table_name}` has no primary key. How is that possible?')
 
             fields = await self._get_fields(table_name)
-            queries.append(self._format_rest_query(table_name, table_name, filter, fields))
+            queries.append(
+                self._format_rest_query(
+                    name=table_name,
+                    table=table_name,
+                    filter=filter,
+                    fields=fields,
+                )
+            )
 
         for query_name, query in self._iterate_graphql_queries():
             queries.append({'name': query_name, 'query': query})
@@ -594,14 +615,12 @@ class HasuraGateway(HTTPGateway):
             },
         }
 
-    @staticmethod
-    def _get_relation_source_field(field):
-        try:
-            result = field.source_field
-        except AttributeError:
-            return field.model_field_name + '_id'
+    def _get_relation_source_field(self, field: RelationalFieldT) -> str:
+        if source_field := field.source_field:
+            name = field.model._meta.fields_db_projection[source_field]
+        else:
+            name = field.model_field_name + '_id'
 
-        try:
-            return field.model._meta.fields_db_projection[result]  # noqa
-        except (AttributeError, KeyError):
-            return result
+        if self._hasura_config.camel_case:
+            return humps.camelize(name)
+        return name
