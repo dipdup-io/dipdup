@@ -1324,14 +1324,12 @@ class DipDupConfig:
         return datasource
 
     def set_up_logging(self) -> None:
-        if self.logging == LoggingValues.default:
-            pass
-        elif self.logging == LoggingValues.quiet:
-            logging.getLogger('dipdup').setLevel(logging.WARNING)
-        elif self.logging == LoggingValues.verbose:
-            logging.getLogger('dipdup').setLevel(logging.DEBUG)
-        else:
-            raise RuntimeError(f'Unknown `logging` field value: `{self.logging}`')
+        level = {
+            LoggingValues.default: logging.INFO,
+            LoggingValues.quiet: logging.WARNING,
+            LoggingValues.verbose: logging.DEBUG,
+        }[self.logging]
+        logging.getLogger('dipdup').setLevel(level)
 
     def _import_index(self, index_config: IndexConfigT) -> None:
         _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
