@@ -1,9 +1,0 @@
-query tokens($id: bigint) {
-  hicEtNuncToken(where: {id: {_eq: $id}}) {
-    creatorId
-    id
-    level
-    supply
-    timestamp
-  }
-}

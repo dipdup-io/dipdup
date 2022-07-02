@@ -20,6 +20,12 @@
 * hooks: Removed deprecated `on_rollback` hook.
 * index: Do not try to avoid single-level rollbacks by comparing operation hashes.
 
+[uneleased]
+
+### Fixed
+
+* hasura: Fixed metadata generation.
+
 ## [5.2.1] - 2022-07-02
 
 ### Fixed
