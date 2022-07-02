@@ -1,5 +1,9 @@
 # Changelog
 
+### Fixed
+
+* hasura: Fixed metadata generation for relations with custom field name.
+
 ## 5.2.0 - 2022-06-28
 
 ### Added

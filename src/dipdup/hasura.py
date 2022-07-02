@@ -309,7 +309,7 @@ class HasuraGateway(HTTPGateway):
                     metadata_tables[table_name]['object_relationships'].append(
                         self._format_object_relationship(
                             name=field_name,
-                            column=field_name + '_id',
+                            column=self._get_relation_source_field(field),
                         )
                     )
                     if field.related_name:
@@ -317,7 +317,7 @@ class HasuraGateway(HTTPGateway):
                             self._format_array_relationship(
                                 related_name=field.related_name,
                                 table=table_name,
-                                column=field_name + '_id',
+                                column=self._get_relation_source_field(field),
                             )
                         )
 
@@ -593,3 +593,15 @@ class HasuraGateway(HTTPGateway):
                 "limit": self._hasura_config.select_limit,
             },
         }
+
+    @staticmethod
+    def _get_relation_source_field(field):
+        try:
+            result = field.source_field
+        except AttributeError:
+            return field.model_field_name + '_id'
+
+        try:
+            return field.model._meta.fields_db_projection[result]  # noqa
+        except (AttributeError, KeyError):
+            return result
