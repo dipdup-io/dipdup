@@ -4,6 +4,7 @@
 
 ### Added
 
+* cli: Added `config export --full` flag to resolve templates before printing config.
 * config: Added `advanced.rollback_depth` field, a number of levels to keep in a database for rollback.
 * context: Added `rollback` method to perform database rollback.
 * database: Added an internal `ModelUpdate` model to store the latest database changes.

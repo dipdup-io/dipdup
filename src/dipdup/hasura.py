@@ -37,7 +37,6 @@ from dipdup.http import HTTPGateway
 from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
-from dipdup.utils import snake_to_pascal
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import iter_models
 
