@@ -1,7 +1,10 @@
 # Changelog
 
+## [unreleased]
+
 ### Fixed
 
+* cli: Fixed setting default logging level.
 * hasura: Fixed metadata generation for relations with custom field name.
 
 ## 5.2.0 - 2022-06-28
