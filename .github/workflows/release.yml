@@ -102,6 +102,8 @@ jobs:
       - name: Publish GitHub release
         id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
           release_name: ${{ steps.changelog.outputs.version }} - ${{ steps.changelog.outputs.date }}
@@ -109,5 +111,3 @@ jobs:
             ${{ steps.changelog.outputs.changes }}
           draft: true
           prerelease: ${{ steps.changelog.outputs.status == 'prereleased' }}
-          allowUpdates: true
-          token: ${{ secrets.GITHUB_TOKEN }}
