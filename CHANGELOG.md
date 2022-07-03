@@ -20,6 +20,12 @@
 * hooks: Removed deprecated `on_rollback` hook.
 * index: Do not try to avoid single-level rollbacks by comparing operation hashes.
 
+## [Unreleased]
+
+### Fixed
+
+* cli: Fixed `hasura configure` command crash when models have empty `Meta.table`.
+
 ## [5.2.2] - 2022-07-03
 
 ### Fixed
