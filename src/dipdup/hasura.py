@@ -109,7 +109,6 @@ class HasuraGateway(HTTPGateway):
 
     async def configure(self, force: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
-
         # TODO: Validate during config parsing
         if self._database_config.schema_name != DEFAULT_POSTGRES_SCHEMA:
             raise ConfigurationError('Hasura integration requires `schema_name` to be `public`')
@@ -141,8 +140,8 @@ class HasuraGateway(HTTPGateway):
         source['tables'] = await self._generate_source_tables_metadata()
 
         # NOTE: Don't forget to invalidate old queries, customization will fail otherwise.
-        source['query_collections'] = []
-        source['rest_endpoints'] = []
+        metadata['query_collections'] = []
+        metadata['rest_endpoints'] = []
 
         await self._replace_metadata(metadata)
 
@@ -155,7 +154,7 @@ class HasuraGateway(HTTPGateway):
         # NOTE: Generate and apply queries and REST endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
         self._logger.info('Adding %s generated and user-defined queries', len(query_collections_metadata))
-        source['query_collections'] = [
+        metadata['query_collections'] = [
             {
                 "name": "allowed-queries",
                 "definition": {"queries": query_collections_metadata},
@@ -166,7 +165,7 @@ class HasuraGateway(HTTPGateway):
             self._logger.info('Adding %s REST endpoints', len(query_collections_metadata))
             query_names = [q['name'] for q in query_collections_metadata]
             rest_endpoints_metadata = await self._generate_rest_endpoints_metadata(query_names)
-            source['rest_endpoints'] = rest_endpoints_metadata
+            metadata['rest_endpoints'] = rest_endpoints_metadata
 
         await self._replace_metadata(metadata)
 
@@ -267,7 +266,6 @@ class HasuraGateway(HTTPGateway):
             'type': 'replace_metadata',
             'args': {
                 'metadata': metadata,
-                'allow_inconsistent_metadata': True,
             },
         }
         await self._hasura_request(endpoint, json)
@@ -617,10 +615,5 @@ class HasuraGateway(HTTPGateway):
 
     def _get_relation_source_field(self, field: RelationalFieldT) -> str:
         if source_field := field.source_field:
-            name = field.model._meta.fields_db_projection[source_field]
-        else:
-            name = field.model_field_name + '_id'
-
-        if self._hasura_config.camel_case:
-            return humps.camelize(name)
-        return name
+            return field.model._meta.fields_db_projection[source_field]
+        return field.model_field_name + '_id'
