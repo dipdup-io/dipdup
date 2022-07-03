@@ -20,7 +20,7 @@
 * hooks: Removed deprecated `on_rollback` hook.
 * index: Do not try to avoid single-level rollbacks by comparing operation hashes.
 
-[uneleased]
+## [5.2.2] - 2022-07-03
 
 ### Fixed
 
