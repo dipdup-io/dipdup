@@ -51,16 +51,25 @@ def set_connection(conn: BaseDBAsyncClient) -> None:
 @asynccontextmanager
 async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int = 60) -> AsyncIterator:
     """Initialize Tortoise with internal and project models, close connections when done"""
-    modules: Dict[str, Iterable[Union[str, ModuleType]]] = {'int_models': ['dipdup.models']}
+    model_modules: Dict[str, Iterable[Union[str, ModuleType]]] = {
+        'int_models': ['dipdup.models'],
+    }
     if models:
-        modules['models'] = [models]
+        if not models.endswith('.models'):
+            models += '.models'
+        model_modules['models'] = [models]
+
+    # NOTE: Must be called before entering Tortoise context
+    prepare_models(models)
+
     try:
         for attempt in range(timeout):
             try:
                 await Tortoise.init(
                     db_url=url,
-                    modules=modules,
+                    modules=model_modules,
                 )
+
                 # FIXME: Wait for the connection to be ready, required since 0.19.0
                 conn = get_connection()
                 await conn.execute_query('SELECT 1')
@@ -83,17 +92,24 @@ def is_model_class(obj: Any) -> bool:
     return isinstance(obj, type) and issubclass(obj, TortoiseModel) and obj not in (TortoiseModel, Model)
 
 
-def iter_models(package: str) -> Iterator[Tuple[str, Type[TortoiseModel]]]:
+def iter_models(package: Optional[str]) -> Iterator[Tuple[str, Type[TortoiseModel]]]:
     """Iterate over built-in and project's models"""
-    dipdup_models = importlib.import_module('dipdup.models')
-    package_models = importlib.import_module(f'{package}.models')
+    if package and not package.endswith('.models'):
+        package += '.models'
 
-    for models in (dipdup_models, package_models):
-        for attr in dir(models):
-            model = getattr(models, attr)
-            if is_model_class(model):
-                app = 'int_models' if models.__name__ == 'dipdup.models' else 'models'
-                yield app, model
+    modules = [importlib.import_module('dipdup.models')]
+    if package:
+        modules.append(importlib.import_module(package))
+
+    for models_module in modules:
+        for attr in dir(models_module):
+            if attr.startswith('_'):
+                continue
+
+            attr_value = getattr(models_module, attr)
+            if is_model_class(attr_value):
+                app = 'int_models' if models_module.__name__ == 'dipdup.models' else 'models'
+                yield app, attr_value
 
 
 def get_schema_hash(conn: BaseDBAsyncClient) -> str:
@@ -178,9 +194,8 @@ async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
 
-def prepare_models(package: str) -> None:
+def prepare_models(package: Optional[str]) -> None:
     """Prepare TortoiseORM models to use with DipDup.
-
     Generate missing table names, validate models, increase decimal precision.
     """
     from dipdup.models import Model

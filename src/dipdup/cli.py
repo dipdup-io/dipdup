@@ -43,7 +43,6 @@ from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
-from dipdup.utils.database import prepare_models
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
@@ -275,9 +274,6 @@ async def run(
         _logger.warning('`--metadata-interface` %s', warn_text)
         config.advanced.metadata_interface |= metadata_interface
 
-    with suppress(ImportError):
-        prepare_models(config.package)
-
     dipdup = DipDup(config)
     await dipdup.run()
 
@@ -435,10 +431,15 @@ async def hasura_configure(ctx, force: bool) -> None:
     )
 
     async with AsyncExitStack() as stack:
-        # TODO: Verify and prepare models in tortoise_wrapper?
-        await DipDup(config)._set_up_database(stack)
-
+        await stack.enter_async_context(
+            tortoise_wrapper(
+                url=config.database.connection_string,
+                models=config.package,
+                timeout=config.database.connection_timeout,
+            )
+        )
         await stack.enter_async_context(hasura_gateway)
+
         await hasura_gateway.configure(force)
 
 
