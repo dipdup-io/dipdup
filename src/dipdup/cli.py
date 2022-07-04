@@ -275,8 +275,6 @@ async def run(
         _logger.warning('`--metadata-interface` %s', warn_text)
         config.advanced.metadata_interface |= metadata_interface
 
-    set_decimal_context(config.package)
-
     dipdup = DipDup(config)
     await dipdup.run()
 
@@ -431,10 +429,15 @@ async def hasura_configure(ctx, force: bool) -> None:
     )
 
     async with AsyncExitStack() as stack:
-        # TODO: Verify and prepare models in tortoise_wrapper?
-        await DipDup(config)._set_up_database(stack)
-
+        await stack.enter_async_context(
+            tortoise_wrapper(
+                url=config.database.connection_string,
+                models=config.package,
+                timeout=config.database.connection_timeout,
+            )
+        )
         await stack.enter_async_context(hasura_gateway)
+
         await hasura_gateway.configure(force)
 
 

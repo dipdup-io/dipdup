@@ -51,16 +51,25 @@ def _set_connection(conn: BaseDBAsyncClient) -> None:
 @asynccontextmanager
 async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int = 60) -> AsyncIterator:
     """Initialize Tortoise with internal and project models, close connections when done"""
-    modules: Dict[str, Iterable[Union[str, ModuleType]]] = {'int_models': ['dipdup.models']}
+    model_modules: Dict[str, Iterable[Union[str, ModuleType]]] = {
+        'int_models': ['dipdup.models'],
+    }
     if models:
-        modules['models'] = [models]
+        if not models.endswith('.models'):
+            models += '.models'
+        model_modules['models'] = [models]
+
+    # NOTE: Must be called before entering Tortoise context
+    prepare_models(models)
+
     try:
         for attempt in range(timeout):
             try:
                 await Tortoise.init(
                     db_url=url,
-                    modules=modules,
+                    modules=model_modules,
                 )
+
                 # FIXME: Wait for the connection to be ready, required since 0.19.0
                 conn = get_connection()
                 await conn.execute_query('SELECT 1')
@@ -93,17 +102,24 @@ def is_model_class(obj: Any) -> bool:
     return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
 
 
-def iter_models(package: str) -> Iterator[Tuple[str, Type[Model]]]:
+def iter_models(package: Optional[str]) -> Iterator[Tuple[str, Type[Model]]]:
     """Iterate over built-in and project's models"""
-    dipdup_models = importlib.import_module('dipdup.models')
-    package_models = importlib.import_module(f'{package}.models')
+    if package and not package.endswith('.models'):
+        package += '.models'
 
-    for models in (dipdup_models, package_models):
-        for attr in dir(models):
-            model = getattr(models, attr)
-            if is_model_class(model):
-                app = 'int_models' if models.__name__ == 'dipdup.models' else 'models'
-                yield app, model
+    modules = [importlib.import_module('dipdup.models')]
+    if package:
+        modules.append(importlib.import_module(package))
+
+    for models_module in modules:
+        for attr in dir(models_module):
+            if attr.startswith('_'):
+                continue
+
+            attr_value = getattr(models_module, attr)
+            if is_model_class(attr_value):
+                app = 'int_models' if attr_value.__name__ == 'dipdup.models' else 'models'
+                yield app, attr_value
 
 
 def set_decimal_context(package: str) -> None:
@@ -205,26 +221,46 @@ async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
 
-def prepare_models(package: str) -> None:
-    for _, model in iter_models(package):
+def prepare_models(package: Optional[str]) -> None:
+    """Prepare TortoiseORM models to use with DipDup.
+    Generate missing table names, validate models, increase decimal precision.
+    """
+    from dipdup.models import Model
+
+    decimal_context = decimal.getcontext()
+    prec = decimal_context.prec
+
+    for app, model in iter_models(package):
+
+        # NOTE: Enforce our class for user models
+        if app == 'models' and not issubclass(model, Model):
+            raise DatabaseConfigurationError('Project models must be subclassed from `dipdup.models.Model`', model)
+
         # NOTE: Generate missing table names before Tortoise does
-        model._meta.db_table = model._meta.db_table or pascal_to_snake(model.__name__)
+        if not model._meta.db_table:
+            model._meta.db_table = pascal_to_snake(model.__name__)
 
-
-def validate_models(package: str) -> None:
-    """Check project's models for common mistakes"""
-    for _, model in iter_models(package):
+        # NOTE: Enforce tables in snake_case
         table_name = model._meta.db_table
-
         if table_name != pascal_to_snake(table_name):
             raise DatabaseConfigurationError('Table name must be in snake_case', model)
 
         for field in model._meta.fields_map.values():
+            # NOTE: Enforce fields in snake_case
             field_name = field.model_field_name
 
             if field_name != pascal_to_snake(field_name):
                 raise DatabaseConfigurationError('Model fields must be in snake_case', model)
 
-            # NOTE: Leads to GraphQL issues
-            if field_name == table_name:
-                raise DatabaseConfigurationError('Model fields must differ from table name', model)
+            # NOTE: Increase decimal precision if needed
+            if isinstance(field, DecimalField):
+                prec = max(prec, field.max_digits)
+
+    # NOTE: Set new decimal precision
+    if decimal_context.prec < prec:
+        _logger.warning('Decimal context precision has been updated: %s -> %s', decimal_context.prec, prec)
+        decimal_context.prec = prec
+
+        # NOTE: DefaultContext is used for new threads
+        decimal.DefaultContext.prec = prec
+        decimal.setcontext(decimal_context)
