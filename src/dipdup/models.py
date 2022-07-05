@@ -258,24 +258,27 @@ class ModelUpdate(TortoiseModel):
         """Revert model update"""
 
         # NOTE: Deserialize non-JSON types
-        data = copy(self.data)
-        for key, field_ in model._meta.fields_map.items():
-            if isinstance(field_, fields.DecimalField):
-                data[key] = Decimal(data[key])
-            elif isinstance(field_, fields.DatetimeField):
-                data[key] = datetime.fromisoformat(data[key])
-            elif isinstance(field, fields.DateField):
-                data[key] = date.fromisoformat(data[key])
-            elif isinstance(field, fields.TimeField):
-                data[key] = time.fromisoformat(data[key])
-            # TODO: There are more non-JSON-deserializable fields
+        if self.data:
+            data = copy(self.data)
+            for key, field_ in model._meta.fields_map.items():
+                if field_.pk and self.action == ModelUpdateAction.DELETE:
+                    data[key] = self.model_pk
+                elif isinstance(field_, fields.DecimalField):
+                    data[key] = Decimal(data[key])
+                elif isinstance(field_, fields.DatetimeField):
+                    data[key] = datetime.fromisoformat(data[key])
+                elif isinstance(field_, fields.DateField):
+                    data[key] = date.fromisoformat(data[key])
+                elif isinstance(field_, fields.TimeField):
+                    data[key] = time.fromisoformat(data[key])
+                # TODO: There may be more non-JSON-deserializable fields
 
         if self.action == ModelUpdateAction.INSERT:
             await model.filter(pk=self.model_pk).delete()
         elif self.action == ModelUpdateAction.UPDATE:
             await model.filter(pk=self.model_pk).update(**data)
         elif self.action == ModelUpdateAction.DELETE:
-            await model.create(pk=self.model_pk, **data)
+            await model.create(**data)
 
         await self.delete()
 
@@ -323,6 +326,10 @@ class Model(TortoiseModel):
         force_update: bool = False,
     ) -> None:
         saved_in_db = self._saved_in_db
+        # FIXME: Fetch current data from DB since we don't know which fields were updated
+        if get_transaction() and saved_in_db:
+            current_data = await self.__class__.get(pk=self.pk)
+
         await super().save(
             using_db=using_db,
             update_fields=update_fields,
@@ -351,7 +358,7 @@ class Model(TortoiseModel):
                 level=transaction.level,
                 index=transaction.index,
                 action=ModelUpdateAction.UPDATE,
-                data=self._versioned_data,
+                data=current_data._versioned_data,
             )
 
     @classmethod

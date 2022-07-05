@@ -72,7 +72,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
                 'creator_id': 'tz1deadbeaf',
                 'level': 1000,
                 'price': 1,
-                'status': 1,
+                'status': 0,
                 'timestamp': '1970-01-01T00:00:00+00:00',
             }
 
@@ -104,7 +104,29 @@ class RollbackTest(IsolatedAsyncioTestCase):
                 to_level=1001,
             )
 
-            # FIXME: Wrong PK
             swap = await models.Swap.filter(id=1).get()
             assert swap.status == models.SwapStatus.FINISHED
             
+            # NOTE: Rollback UPDATE
+            await HookContext.rollback(
+                self=dipdup._ctx,  # type: ignore
+                index='test',
+                from_level=1001,
+                to_level=1000,
+            )
+
+            swap = await models.Swap.filter(id=1).get()
+            assert swap.status == models.SwapStatus.ACTIVE
+
+            # NOTE: Rollback INSERT
+            await HookContext.rollback(
+                self=dipdup._ctx,  # type: ignore
+                index='test',
+                from_level=1000,
+                to_level=999,
+            )
+
+            holders = await models.Holder.filter().count()
+            assert holders == 0
+            swaps = await models.Swap.filter().count()
+            assert swaps == 0
