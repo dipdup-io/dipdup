@@ -6,12 +6,14 @@ import demo_hic_et_nunc.models as models
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.dipdup import DipDup
+from dipdup.enums import IndexType
+from dipdup.models import Index
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
 
 
 class RollbackTest(IsolatedAsyncioTestCase):
-    async def test_model_update_creation(self) -> None:
+    async def test_model_updates(self) -> None:
         config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
         config.initialize()
         dipdup = DipDup(config)
@@ -130,3 +132,40 @@ class RollbackTest(IsolatedAsyncioTestCase):
             assert holders == 0
             swaps = await models.Swap.filter().count()
             assert swaps == 0
+            model_updates = await ModelUpdate.filter().count()
+            assert model_updates == 0
+
+    async def test_cleanup_and_filtering(self) -> None:
+        config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
+        config.initialize()
+        dipdup = DipDup(config)
+        in_transaction = dipdup._transactions.in_transaction
+
+        async with AsyncExitStack() as stack:
+            await dipdup._set_up_database(stack)
+            await dipdup._set_up_transactions(stack)
+            await dipdup._set_up_hooks(set())
+            await dipdup._initialize_schema()
+
+            # NOTE: Filter less than `rollback_depth` (which is 2 by default)
+            sync_level = 1000
+            for level in range(995, 1005):
+                async with in_transaction(level=level, sync_level=sync_level, index='test'):
+                    holder = models.Holder(address=str(level))
+                    await holder.save()
+
+            model_update_levels = await ModelUpdate.filter().values_list('level', flat=True)
+            assert model_update_levels == [998, 999, 1000, 1001, 1002, 1003, 1004]
+
+            # NOTE: Cleanup
+            index = Index(
+                name='test',
+                type=IndexType.operation,
+                config_hash='',
+                level=1005,
+            )
+            await index.save()
+            await dipdup._transactions.cleanup()
+
+            model_update_levels = await ModelUpdate.filter().values_list('level', flat=True)
+            assert model_update_levels == [1003, 1004]
