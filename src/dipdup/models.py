@@ -1,6 +1,9 @@
 from collections import defaultdict
+from copy import copy
 from dataclasses import field
+from datetime import date
 from datetime import datetime
+from datetime import time
 from decimal import Decimal
 from enum import Enum
 from typing import Any
@@ -254,12 +257,25 @@ class ModelUpdate(TortoiseModel):
     async def revert(self, model: Type[TortoiseModel]) -> None:
         """Revert model update"""
 
+        # NOTE: Deserialize non-JSON types
+        data = copy(self.data)
+        for key, field_ in model._meta.fields_map.items():
+            if isinstance(field_, fields.DecimalField):
+                data[key] = Decimal(data[key])
+            elif isinstance(field_, fields.DatetimeField):
+                data[key] = datetime.fromisoformat(data[key])
+            elif isinstance(field, fields.DateField):
+                data[key] = date.fromisoformat(data[key])
+            elif isinstance(field, fields.TimeField):
+                data[key] = time.fromisoformat(data[key])
+            # TODO: There are more non-JSON-deserializable fields
+
         if self.action == ModelUpdateAction.INSERT:
             await model.filter(pk=self.model_pk).delete()
         elif self.action == ModelUpdateAction.UPDATE:
-            await model.filter(pk=self.model_pk).update(**self.data)
+            await model.filter(pk=self.model_pk).update(**data)
         elif self.action == ModelUpdateAction.DELETE:
-            await model.create(pk=self.model_pk, **self.data)
+            await model.create(pk=self.model_pk, **data)
 
         await self.delete()
 
@@ -271,7 +287,8 @@ class Model(TortoiseModel):
             for key, field_ in self._meta.fields_map.items():
                 if field_.pk or key in self._meta.backward_fk_fields:
                     continue
-                elif key in self._meta.fk_fields:
+
+                if key in self._meta.fk_fields:
                     field_names.add(f'{key}_id')
                 else:
                     field_names.add(key)
