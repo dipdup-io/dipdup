@@ -133,11 +133,14 @@ def _init_sentry(config: DipDupConfig) -> None:
     sentry_sdk.init(
         dsn=config.sentry.dsn,
         environment=config.sentry.environment,
+        server_name=config.sentry.server_name,
+        release=config.sentry.release or __version__,
         integrations=integrations,
-        release=__version__,
         attach_stacktrace=attach_stacktrace,
         before_send=_sentry_before_send,
     )
+    sentry_sdk.set_tag('dipdup_version', __version__)
+    sentry_sdk.set_tag('dipdup_package', config.package)
 
 
 async def _check_version() -> None:

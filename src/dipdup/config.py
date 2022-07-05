@@ -1085,12 +1085,16 @@ class SentryConfig:
     """Config for Sentry integration.
 
     :param dsn: DSN of the Sentry instance
-    :param environment: Environment to report to Sentry (informational only)
+    :param environment: Environment (defaults to `production`)
+    :param server_name: Server name (defaults to hostname)
+    :param release: Release version (defaults to DipDup version)
     :param debug: Catch warning messages and more context
     """
 
     dsn: str
     environment: Optional[str] = None
+    server_name: Optional[str] = None
+    release: Optional[str] = None
     debug: bool = False
 
 
