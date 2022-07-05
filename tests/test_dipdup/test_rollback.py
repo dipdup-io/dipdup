@@ -4,7 +4,7 @@ from unittest import IsolatedAsyncioTestCase
 
 import demo_hic_et_nunc.models as models
 from dipdup.config import DipDupConfig
-from dipdup.context import HandlerContext, HookContext
+from dipdup.context import HookContext
 from dipdup.dipdup import DipDup
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
@@ -35,7 +35,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
                     amount_left=1,
                     level=1000,
                     status=models.SwapStatus.ACTIVE,
-                    timestamp=datetime(1970, 1, 1)
+                    timestamp=datetime(1970, 1, 1),
                 )
                 await swap.save()
 
@@ -106,7 +106,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
 
             swap = await models.Swap.filter(id=1).get()
             assert swap.status == models.SwapStatus.FINISHED
-            
+
             # NOTE: Rollback UPDATE
             await HookContext.rollback(
                 self=dipdup._ctx,  # type: ignore
