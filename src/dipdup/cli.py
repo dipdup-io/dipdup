@@ -278,8 +278,6 @@ async def run(
         _logger.warning('`--metadata-interface` %s', warn_text)
         config.advanced.metadata_interface |= metadata_interface
 
-    set_decimal_context(config.package)
-
     dipdup = DipDup(config)
     await dipdup.run()
 
@@ -425,8 +423,6 @@ async def hasura(ctx) -> None:
 async def hasura_configure(ctx, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
     config: DipDupConfig = ctx.obj.config
-    url = config.database.connection_string
-    models = f'{config.package}.models'
     if not config.hasura:
         raise ConfigurationError('`hasura` config section is empty')
     hasura_gateway = HasuraGateway(
@@ -435,9 +431,17 @@ async def hasura_configure(ctx, force: bool) -> None:
         database_config=cast(PostgresDatabaseConfig, config.database),
     )
 
-    async with tortoise_wrapper(url, models):
-        async with hasura_gateway:
-            await hasura_gateway.configure(force)
+    async with AsyncExitStack() as stack:
+        await stack.enter_async_context(
+            tortoise_wrapper(
+                url=config.database.connection_string,
+                models=config.package,
+                timeout=config.database.connection_timeout,
+            )
+        )
+        await stack.enter_async_context(hasura_gateway)
+
+        await hasura_gateway.configure(force)
 
 
 @cli.group()

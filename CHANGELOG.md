@@ -6,6 +6,10 @@
 
 * sentry: Allow customizing `server_name` and `release` tags with corresponding fields in Sentry config.
 
+### Fixed
+
+* cli: Fixed `hasura configure` command crash when models have empty `Meta.table`.
+
 ## [5.2.2] - 2022-07-03
 
 ### Fixed

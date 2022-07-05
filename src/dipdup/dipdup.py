@@ -59,14 +59,11 @@ from dipdup.models import Schema
 from dipdup.models import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
-from dipdup.utils import is_importable
 from dipdup.utils import slowdown
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import get_schema_hash
-from dipdup.utils.database import prepare_models
 from dipdup.utils.database import tortoise_wrapper
-from dipdup.utils.database import validate_models
 
 
 class IndexDispatcher:
@@ -483,14 +480,13 @@ class DipDup:
         await self._ctx.fire_hook('on_restart')
 
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
-        # NOTE: Must be called before entering Tortoise context
-        prepare_models(self._config.package)
-        validate_models(self._config.package)
-
-        url = self._config.database.connection_string
-        timeout = self._config.database.connection_timeout if isinstance(self._config.database, PostgresDatabaseConfig) else None
-        models = f'{self._config.package}.models'
-        await stack.enter_async_context(tortoise_wrapper(url, models, timeout or 60))
+        await stack.enter_async_context(
+            tortoise_wrapper(
+                url=self._config.database.connection_string,
+                models=self._config.package,
+                timeout=self._config.database.connection_timeout,
+            )
+        )
 
     async def _set_up_hooks(self, tasks: Set[Task], run: bool = False) -> None:
         for hook_config in default_hooks.values():

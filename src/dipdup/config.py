@@ -91,9 +91,18 @@ class SqliteDatabaseConfig:
     def schema_name(self) -> str:
         return 'public'
 
-    @cached_property
+    @property
     def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
+
+    @property
+    def immune_tables(self) -> Set[str]:
+        return set()
+
+    @property
+    def connection_timeout(self) -> int:
+        # NOTE: Fail immediately
+        return 1
 
 
 @dataclass
