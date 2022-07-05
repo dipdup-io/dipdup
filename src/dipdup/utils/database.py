@@ -104,21 +104,24 @@ def is_model_class(obj: Any) -> bool:
 
 def iter_models(package: Optional[str]) -> Iterator[Tuple[str, Type[Model]]]:
     """Iterate over built-in and project's models"""
-    if package and not package.endswith('.models'):
-        package += '.models'
+    modules = [
+        ('int_models', importlib.import_module('dipdup.models')),
+    ]
 
-    modules = [importlib.import_module('dipdup.models')]
     if package:
-        modules.append(importlib.import_module(package))
+        if not package.endswith('.models'):
+            package += '.models'
+        modules.append(
+            ('models', importlib.import_module(package)),
+        )
 
-    for models_module in modules:
-        for attr in dir(models_module):
+    for app, module in modules:
+        for attr in dir(module):
             if attr.startswith('_'):
                 continue
 
-            attr_value = getattr(models_module, attr)
+            attr_value = getattr(module, attr)
             if is_model_class(attr_value):
-                app = 'int_models' if attr_value.__name__ == 'dipdup.models' else 'models'
                 yield app, attr_value
 
 
