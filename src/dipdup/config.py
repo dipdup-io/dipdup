@@ -1208,7 +1208,7 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    datasources: Dict[str, DatasourceConfigT]
+    datasources: Dict[str, DatasourceConfigT] = field(default_factory=dict)
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     contracts: Dict[str, ContractConfig] = field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = field(default_factory=dict)
