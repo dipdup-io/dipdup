@@ -2,7 +2,8 @@ from contextlib import AsyncExitStack
 from datetime import datetime
 from unittest import IsolatedAsyncioTestCase
 
-import demo_hic_et_nunc.models as models
+import demo_hic_et_nunc.models as hen_models
+import demo_tezos_domains.models as domains_models
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.dipdup import DipDup
@@ -27,16 +28,16 @@ class RollbackTest(IsolatedAsyncioTestCase):
 
             # NOTE: INSERT
             async with in_transaction(level=1000, index='test'):
-                holder = models.Holder(address='tz1deadbeaf')
+                holder = hen_models.Holder(address='tz1deadbeaf')
                 await holder.save()
 
-                swap = models.Swap(
+                swap = hen_models.Swap(
                     creator=holder,
                     price=1,
                     amount=1,
                     amount_left=1,
                     level=1000,
-                    status=models.SwapStatus.ACTIVE,
+                    status=hen_models.SwapStatus.ACTIVE,
                     timestamp=datetime(1970, 1, 1),
                 )
                 await swap.save()
@@ -59,7 +60,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
 
             # NOTE: UPDATE
             async with in_transaction(level=1001, index='test'):
-                swap.status = models.SwapStatus.FINISHED
+                swap.status = hen_models.SwapStatus.FINISHED
                 await swap.save()
 
             model_update = await ModelUpdate.filter(id=3).get()
@@ -106,8 +107,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
                 to_level=1001,
             )
 
-            swap = await models.Swap.filter(id=1).get()
-            assert swap.status == models.SwapStatus.FINISHED
+            swap = await hen_models.Swap.filter(id=1).get()
+            assert swap.status == hen_models.SwapStatus.FINISHED
 
             # NOTE: Rollback UPDATE
             await HookContext.rollback(
@@ -117,8 +118,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
                 to_level=1000,
             )
 
-            swap = await models.Swap.filter(id=1).get()
-            assert swap.status == models.SwapStatus.ACTIVE
+            swap = await hen_models.Swap.filter(id=1).get()
+            assert swap.status == hen_models.SwapStatus.ACTIVE
 
             # NOTE: Rollback INSERT
             await HookContext.rollback(
@@ -128,9 +129,9 @@ class RollbackTest(IsolatedAsyncioTestCase):
                 to_level=999,
             )
 
-            holders = await models.Holder.filter().count()
+            holders = await hen_models.Holder.filter().count()
             assert holders == 0
-            swaps = await models.Swap.filter().count()
+            swaps = await hen_models.Swap.filter().count()
             assert swaps == 0
             model_updates = await ModelUpdate.filter().count()
             assert model_updates == 0
@@ -151,7 +152,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
             sync_level = 1000
             for level in range(995, 1005):
                 async with in_transaction(level=level, sync_level=sync_level, index='test'):
-                    holder = models.Holder(address=str(level))
+                    holder = hen_models.Holder(address=str(level))
                     await holder.save()
 
             model_update_levels = await ModelUpdate.filter().values_list('level', flat=True)
@@ -169,3 +170,47 @@ class RollbackTest(IsolatedAsyncioTestCase):
 
             model_update_levels = await ModelUpdate.filter().values_list('level', flat=True)
             assert model_update_levels == [1003, 1004]
+
+    async def test_optionals(self) -> None:
+        config = DipDupConfig(spec_version='1.2', package='demo_tezos_domains')
+        config.initialize()
+        dipdup = DipDup(config)
+        in_transaction = dipdup._transactions.in_transaction
+
+        async with AsyncExitStack() as stack:
+            await dipdup._set_up_database(stack)
+            await dipdup._set_up_transactions(stack)
+            await dipdup._set_up_hooks(set())
+            await dipdup._initialize_schema()
+
+            # NOTE: INSERT and DELETE model with optionals
+            async with in_transaction(level=1000, index='test'):
+                tld = await domains_models.TLD.create(
+                    id='test',
+                    owner='test',
+                )
+                domain = await domains_models.Domain.create(
+                    id='test',
+                    tld=tld,
+                    expiry=None,
+                    owner='test',
+                    token_id=None,
+                )
+
+            async with in_transaction(level=1001, index='test'):
+                await domain.delete()
+
+            # NOTE: Rollback DELETE
+            await HookContext.rollback(
+                self=dipdup._ctx,  # type: ignore
+                index='test',
+                from_level=1001,
+                to_level=1000,
+            )
+
+            domain = await domains_models.Domain.filter(id='test').get()
+            assert domain.id == 'test'
+            assert domain.tld_id == tld.id
+            assert domain.expiry is None
+            assert domain.owner == 'test'
+            assert domain.token_id is None

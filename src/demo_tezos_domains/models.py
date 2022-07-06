@@ -1,3 +1,5 @@
+from typing import Optional
+
 from tortoise import ForeignKeyFieldInstance
 from tortoise import fields
 
@@ -15,6 +17,8 @@ class Domain(Model):
     expiry = fields.DatetimeField(null=True)
     owner = fields.CharField(max_length=36)
     token_id = fields.BigIntField(null=True)
+
+    tld_id: Optional[str]
 
 
 class Record(Model):

@@ -261,16 +261,22 @@ class ModelUpdate(TortoiseModel):
         if self.data:
             data = copy(self.data)
             for key, field_ in model._meta.fields_map.items():
+                value = data.get(key)
                 if field_.pk and self.action == ModelUpdateAction.DELETE:
                     data[key] = self.model_pk
+                elif value is None:
+                    if not field_.null:
+                        continue
+                    data[key] = value
                 elif isinstance(field_, fields.DecimalField):
-                    data[key] = Decimal(data[key])
+                    data[key] = Decimal(value)
                 elif isinstance(field_, fields.DatetimeField):
-                    data[key] = datetime.fromisoformat(data[key])
+                    data[key] = datetime.fromisoformat(value)
                 elif isinstance(field_, fields.DateField):
-                    data[key] = date.fromisoformat(data[key])
+                    data[key] = date.fromisoformat(value)
                 elif isinstance(field_, fields.TimeField):
-                    data[key] = time.fromisoformat(data[key])
+                    data[key] = time.fromisoformat(value)
+
                 # TODO: There may be more non-JSON-deserializable fields
 
         if self.action == ModelUpdateAction.INSERT:
@@ -363,10 +369,10 @@ class Model(TortoiseModel):
 
     @classmethod
     async def create(
-        cls: Type['Model'],
+        cls: Type['ModelT'],
         using_db: Optional[BaseDBAsyncClient] = None,
         **kwargs: Any,
-    ) -> 'Model':
+    ) -> 'ModelT':
         instance = cls(**kwargs)
         instance._saved_in_db = False
         db = using_db or cls._choose_db(True)
@@ -397,6 +403,9 @@ class Model(TortoiseModel):
 
     class Meta:
         abstract = True
+
+
+ModelT = TypeVar('ModelT', bound=Model)
 
 
 # ===> Built-in Models (not versioned)
