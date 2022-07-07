@@ -123,7 +123,7 @@ class PostgresDatabaseConfig:
     database: str = DEFAULT_POSTGRES_DATABASE
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
-    password: str = ''
+    password: str = field(default='', repr=False)
     immune_tables: Set[str] = field(default_factory=set)
     connection_timeout: int = 60
 
@@ -1020,7 +1020,7 @@ class HasuraConfig:
     """
 
     url: str
-    admin_secret: Optional[str] = None
+    admin_secret: Optional[str] = field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
     select_limit: int = 100
