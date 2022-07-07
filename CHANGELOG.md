@@ -9,6 +9,7 @@
 ### Fixed
 
 * cli: Fixed `hasura configure` command crash when models have empty `Meta.table`.
+* config: Removed secrets from config `__repr__`.
 
 ## [5.2.2] - 2022-07-03
 

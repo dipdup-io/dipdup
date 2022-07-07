@@ -7,6 +7,8 @@ from unittest import IsolatedAsyncioTestCase
 
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
+from dipdup.config import HasuraConfig
+from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import TransactionSubscription
@@ -15,10 +17,10 @@ from dipdup.exceptions import ConfigurationError
 
 
 class ConfigTest(IsolatedAsyncioTestCase):
-    async def asyncSetUp(self):
+    async def asyncSetUp(self) -> None:
         self.path = join(dirname(__file__), 'dipdup.yml')
 
-    async def test_load_initialize(self):
+    async def test_load_initialize(self) -> None:
         config = DipDupConfig.load([self.path])
 
         config.initialize()
@@ -59,7 +61,7 @@ class ConfigTest(IsolatedAsyncioTestCase):
             config.indexes['hen_mainnet'].subscriptions,  # type: ignore
         )
 
-    async def test_validators(self):
+    async def test_validators(self) -> None:
         with self.assertRaises(ConfigurationError):
             ContractConfig(address='KT1lalala')
         with self.assertRaises(ConfigurationError):
@@ -67,7 +69,7 @@ class ConfigTest(IsolatedAsyncioTestCase):
         with self.assertRaises(ConfigurationError):
             TzktDatasourceConfig(kind='tzkt', url='not_an_url')
 
-    async def test_dump(self):
+    async def test_dump(self) -> None:
         config = DipDupConfig.load([self.path])
         config.initialize()
 
@@ -77,3 +79,18 @@ class ConfigTest(IsolatedAsyncioTestCase):
 
         config = DipDupConfig.load([tmp], environment=False)
         config.initialize()
+
+    async def test_secrets(self) -> None:
+        db_config = PostgresDatabaseConfig(
+            kind='postgres',
+            host='localhost',
+            password='SeCrEt=)',
+        )
+        hasura_config = HasuraConfig(
+            url='https://localhost',
+            admin_secret='SeCrEt=)',
+        )
+        self.assertIn('localhost', str(db_config))
+        self.assertNotIn('SeCrEt=)', str(db_config))
+        self.assertIn('localhost', str(db_config))
+        self.assertNotIn('SeCrEt=)', str(hasura_config))
