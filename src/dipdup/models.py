@@ -8,6 +8,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any
 from typing import DefaultDict
+from typing import Deque
 from typing import Dict
 from typing import Generic
 from typing import Iterable
@@ -233,6 +234,11 @@ def get_transaction() -> Optional[VersionedTransaction]:
     raise RuntimeError('TransactionManager is not registered')
 
 
+# NOTE: Overwritten by TransactionManager.register()
+def get_pending_updates() -> Deque['ModelUpdate']:
+    raise RuntimeError('TransactionManager is not registered')
+
+
 class ModelUpdateAction(Enum):
     INSERT = 'INSERT'
     UPDATE = 'UPDATE'
@@ -315,7 +321,7 @@ class Model(TortoiseModel):
         if self._meta.db_table in transaction.immune_tables:
             return
 
-        await ModelUpdate.create(
+        update = ModelUpdate(
             model_name=self.__class__.__name__,
             model_pk=self.pk,
             level=transaction.level,
@@ -323,6 +329,7 @@ class Model(TortoiseModel):
             action=ModelUpdateAction.DELETE,
             data=self._versioned_data,
         )
+        get_pending_updates().append(update)
 
     async def save(
         self,
@@ -349,7 +356,7 @@ class Model(TortoiseModel):
             return
 
         if not saved_in_db:
-            await ModelUpdate.create(
+            update = ModelUpdate(
                 model_name=self.__class__.__name__,
                 model_pk=self.pk,
                 level=transaction.level,
@@ -358,7 +365,7 @@ class Model(TortoiseModel):
                 data=None,
             )
         else:
-            await ModelUpdate.create(
+            update = ModelUpdate(
                 model_name=self.__class__.__name__,
                 model_pk=self.pk,
                 level=transaction.level,
@@ -366,6 +373,7 @@ class Model(TortoiseModel):
                 action=ModelUpdateAction.UPDATE,
                 data=current_data._versioned_data,
             )
+        get_pending_updates().append(update)
 
     @classmethod
     async def create(

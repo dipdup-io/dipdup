@@ -1,6 +1,8 @@
+from collections import deque
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
 from typing import AsyncIterator
+from typing import Deque
 from typing import Generator
 from typing import Optional
 from typing import Set
@@ -21,20 +23,25 @@ class TransactionManager:
         self._depth = depth
         self._immune_tables = immune_tables or set()
         self._transaction: Optional[dipdup.models.VersionedTransaction] = None
+        self._pending_updates: Deque[dipdup.models.ModelUpdate] = deque()
 
     @contextmanager
     def register(self) -> Generator[None, None, None]:
         original_get_transaction = dipdup.models.get_transaction
+        original_get_pending_updates = dipdup.models.get_pending_updates
         try:
             original_get_transaction()
+            original_get_pending_updates()
         except RuntimeError:
             pass
         else:
             raise RuntimeError('TransactionManager is already registered')
 
         dipdup.models.get_transaction = lambda: self._transaction
+        dipdup.models.get_pending_updates = lambda: self._pending_updates
         yield
         dipdup.models.get_transaction = original_get_transaction
+        dipdup.models.get_pending_updates = original_get_pending_updates
 
     @asynccontextmanager
     async def in_transaction(
@@ -61,9 +68,17 @@ class TransactionManager:
                         )
 
                 yield
+
+                if self._transaction:
+                    await self._commit()
         finally:
             self._transaction = None
             set_connection(original_conn)
+
+    async def _commit(self) -> None:
+        """Save pending updates to DB in the same order as they were added"""
+        while self._pending_updates:
+            await self._pending_updates.popleft().save()
 
     async def cleanup(self) -> None:
         """Cleanup outdated model updates"""
