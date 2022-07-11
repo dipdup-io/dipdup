@@ -26,6 +26,7 @@ from aiohttp import ClientResponseError
 from aiohttp import ServerDisconnectedError
 from pydantic.dataclasses import dataclass
 from tortoise import fields
+import semver
 
 from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
@@ -225,6 +226,7 @@ class HasuraGateway(HTTPGateway):
             raise HasuraError('v1 is not supported, upgrade to the latest stable version.')
 
         self._logger.info('Connected to Hasura %s', version)
+        self._hasura_version = version
 
     async def _create_source(self) -> Dict[str, Any]:
         self._logger.info(f'Adding source `{self._hasura_config.source}`')
@@ -603,7 +605,7 @@ class HasuraGateway(HTTPGateway):
         }
 
     def _format_select_permissions(self) -> Dict[str, Any]:
-        return {
+        permissions = {
             "role": "user",
             "permission": {
                 "columns": "*",
@@ -612,6 +614,12 @@ class HasuraGateway(HTTPGateway):
                 "limit": self._hasura_config.select_limit,
             },
         }
+
+        # If connected hasura supports, add query_root_fields
+        if self._hasura_config.allow_aggregations and semver.compare("v2.8.0", self._hasura_version) >= 0:
+            permissions["permission"]["query_root_fields"] = ["select_aggregate"]
+
+        return permissions
 
     def _get_relation_source_field(self, field: RelationalFieldT) -> str:
         if source_field := field.source_field:
