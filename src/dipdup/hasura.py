@@ -226,7 +226,7 @@ class HasuraGateway(HTTPGateway):
             raise HasuraError('v1 is not supported, upgrade to the latest stable version.')
 
         self._logger.info('Connected to Hasura %s', version)
-        self._hasura_version = version
+        self._hasura_version = version[1:]
 
     async def _create_source(self) -> Dict[str, Any]:
         self._logger.info(f'Adding source `{self._hasura_config.source}`')
@@ -616,8 +616,8 @@ class HasuraGateway(HTTPGateway):
         }
 
         # If connected hasura supports, add query_root_fields
-        if self._hasura_config.allow_aggregations and semver.compare("v2.8.0", self._hasura_version) >= 0:
-            permissions["permission"]["query_root_fields"] = ["select_aggregate"]
+        if self._hasura_config.allow_aggregations and semver.VersionInfo.parse(self._hasura_version).compare("2.8.0") >= 0:
+            permissions["permission"]["query_root_fields"] = ["select", "select_aggregate"]
 
         return permissions
 
