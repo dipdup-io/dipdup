@@ -43,6 +43,7 @@ sqlparse = "^0.4.2"
 tabulate = "^0.8.9"
 tortoise-orm = "0.19.1"
 typing-inspect = "^0.7.1"
+semver = "^2.13.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
