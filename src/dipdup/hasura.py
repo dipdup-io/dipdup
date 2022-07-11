@@ -605,7 +605,7 @@ class HasuraGateway(HTTPGateway):
         }
 
     def _format_select_permissions(self) -> Dict[str, Any]:
-        permissions = {
+        permissions: Dict[str, Any] = {
             "role": "user",
             "permission": {
                 "columns": "*",
