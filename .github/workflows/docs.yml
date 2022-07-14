@@ -47,7 +47,7 @@ jobs:
       run: make install
 
     - name: Build docs (docs)
-      if: startsWith(github.ref, 'refs/tags')
+      if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, '-rc')
       run: MDBOOK_ROOT=https://dipdup.net/docs make docs
 
     - name: Deploy to GH Pages (docs)
@@ -59,7 +59,7 @@ jobs:
         destination_dir: docs
 
     - name: Build docs (docs-next)
-      if: startsWith(github.ref, 'refs/heads')
+      if: startsWith(github.ref, 'refs/heads') || contains(github.ref, '-rc')
       run: MDBOOK_ROOT=https://dipdup.net/docs-next make docs
 
     - name: Deploy to GH Pages (docs-next)
