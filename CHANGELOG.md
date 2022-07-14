@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- cli: Fixed logs being printed to stderr instead of stdout.
+
 ## [5.2.3] - 2022-07-07
 
 ### Added
