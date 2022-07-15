@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning].
 
 ### Fixed
 
+- cli: Fixed logs being printed to stderr instead of stdout.
 - config: Fixed oneshot detection without `oneshot_indexes`.
 
 ## [5.2.3] - 2022-07-07
