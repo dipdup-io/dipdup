@@ -21,9 +21,9 @@ help:
 
 docs:
 	poetry run make html
-	tail -n '+33' _build/html/cli-reference.html | head -n '-63' > cli-reference.md
-	tail -n '+33' _build/html/config-reference.html | head -n '-63' > config/reference.md
-	tail -n '+33' _build/html/context-reference.html | head -n '-63' > advanced/context/reference.md
+	tail -n '+34' _build/html/cli-reference.html | head -n '-63' > cli-reference.md
+	tail -n '+34' _build/html/config-reference.html | head -n '-63' > config/reference.md
+	tail -n '+34' _build/html/context-reference.html | head -n '-63' > advanced/context/reference.md
 	poetry run python ../scripts/print_help.py > troubleshooting/common-issues.md
 	mdbook build  --dest-dir=dist/docs
 
