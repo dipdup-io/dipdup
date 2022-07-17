@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning].
 - hooks: Removed deprecated `on_rollback` hook.
 - index: Do not try to avoid single-level rollbacks by comparing operation hashes.
 
+## [5.2.4] - 2022-07-17
+
+### Fixed
+
+- cli: Fixed logs being printed to stderr instead of stdout.
+- config: Fixed job scheduler not starting when config contains no indexes.
+
 ## [5.2.3] - 2022-07-07
 
 ### Added
@@ -652,7 +659,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/dipdup-net/dipdup-py/compare/5.2.3...HEAD
+[unreleased]: https://github.com/dipdup-net/dipdup-py/compare/5.2.4...HEAD
+[5.2.4]: https://github.com/dipdup-net/dipdup-py/compare/5.2.3...5.2.4
 [5.2.3]: https://github.com/dipdup-net/dipdup-py/compare/5.2.2...5.2.3
 [5.2.2]: https://github.com/dipdup-net/dipdup-py/compare/5.2.1...5.2.2
 [5.2.1]: https://github.com/dipdup-net/dipdup-py/compare/5.2.0...5.2.1

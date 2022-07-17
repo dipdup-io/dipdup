@@ -1,4 +1,3 @@
-
   <section id="dipdup">
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this headline">¶</a></h1>
 <p>Manage and run DipDup indexers.</p>

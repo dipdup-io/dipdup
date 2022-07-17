@@ -54,7 +54,7 @@ _is_shutting_down = False
 
 def set_up_logging() -> None:
     root = logging.getLogger()
-    handler = logging.StreamHandler()
+    handler = logging.StreamHandler(stream=sys.stdout)
     formatter = logging.Formatter('%(levelname)-8s %(name)-20s %(message)s')
     handler.setFormatter(formatter)
     root.addHandler(handler)
