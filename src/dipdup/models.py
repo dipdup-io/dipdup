@@ -18,6 +18,7 @@ from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
+from typing import cast
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
@@ -25,8 +26,9 @@ from tortoise import BaseDBAsyncClient
 from tortoise import Model as TortoiseModel
 from tortoise import fields
 from tortoise.expressions import Q
-from tortoise.queryset import BulkCreateQuery
-from tortoise.queryset import BulkUpdateQuery
+from tortoise.models import MODEL
+from tortoise.queryset import BulkCreateQuery as TortoiseBulkCreateQuery
+from tortoise.queryset import BulkUpdateQuery as TortoiseBulkUpdateQuery
 from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
 from tortoise.queryset import QuerySet as TortoiseQuerySet
 from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
@@ -399,6 +401,30 @@ class DeleteQuery(TortoiseDeleteQuery):
         return await super()._execute()
 
 
+class BulkUpdateQuery(TortoiseBulkUpdateQuery):
+    async def _execute(self) -> int:
+        for model in self.objects:
+            if update := ModelUpdate.from_model(
+                cast(Model, model),
+                ModelUpdateAction.UPDATE,
+            ):
+                get_pending_updates().append(update)
+
+        return await super()._execute()
+
+
+class BulkCreateQuery(TortoiseBulkCreateQuery):
+    async def _execute(self) -> List[MODEL]:
+        for model in self.objects:
+            if update := ModelUpdate.from_model(
+                cast(Model, model),
+                ModelUpdateAction.INSERT,
+            ):
+                get_pending_updates().append(update)
+
+        return await super()._execute()
+
+
 class QuerySet(TortoiseQuerySet):
     def update(self, **kwargs: Any) -> UpdateQuery:
         return UpdateQuery(
@@ -514,18 +540,22 @@ class Model(TortoiseModel):
         on_conflict: Optional[Iterable[str]] = None,
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> BulkCreateQuery:
-        # FIXME: Queryset is not awaited yet
-        for model in objects:
-            if update := ModelUpdate.from_model(model, ModelUpdateAction.INSERT):
-                get_pending_updates().append(update)
+        if ignore_conflicts and update_fields:
+            raise ValueError(
+                "ignore_conflicts and update_fields are mutually exclusive.",
+            )
+        if not ignore_conflicts:
+            if (update_fields and not on_conflict) or (on_conflict and not update_fields):
+                raise ValueError("update_fields and on_conflict need set in same time.")
 
-        return super().bulk_create(
-            objects,
+        return BulkCreateQuery(
+            db=using_db or cls._choose_db(True),
+            model=cls,
+            objects=objects,
             batch_size=batch_size,
             ignore_conflicts=ignore_conflicts,
             update_fields=update_fields,
             on_conflict=on_conflict,
-            using_db=using_db,
         )
 
     @classmethod
@@ -536,16 +566,21 @@ class Model(TortoiseModel):
         batch_size: Optional[int] = None,
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> BulkUpdateQuery:
-        # FIXME: Queryset is not awaited yet
-        for model in objects:
-            if update := ModelUpdate.from_model(model, ModelUpdateAction.UPDATE):
-                get_pending_updates().append(update)
+        if any(obj.pk is None for obj in objects):
+            raise ValueError("All bulk_update() objects must have a primary key set.")
 
-        return super().bulk_update(
-            objects,
-            fields,
+        self = QuerySet(cls)
+        return BulkUpdateQuery(  # type:ignore
+            db=self._db,
+            model=self.model,
+            q_objects=self._q_objects,
+            annotations=self._annotations,
+            custom_filters=self._custom_filters,
+            limit=self._limit,
+            orderings=self._orderings,
+            objects=objects,
+            fields=fields,
             batch_size=batch_size,
-            using_db=using_db,
         )
 
     class Meta:
