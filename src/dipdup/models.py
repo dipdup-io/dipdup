@@ -476,7 +476,11 @@ class Model(TortoiseModel):
         """Get versioned data of the model at the current time"""
         if not (field_names := versioned_fields[self._meta.db_table]):
             for key, field_ in self._meta.fields_map.items():
-                if field_.pk or key in self._meta.backward_fk_fields:
+                if field_.pk:
+                    continue
+                if key in self._meta.backward_fk_fields:
+                    continue
+                if key not in self._meta.fields_db_projection:
                     continue
 
                 if key in self._meta.fk_fields:
