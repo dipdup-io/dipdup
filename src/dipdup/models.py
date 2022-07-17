@@ -12,7 +12,6 @@ from typing import Deque
 from typing import Dict
 from typing import Generic
 from typing import Iterable
-from typing import NoReturn
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -24,16 +23,14 @@ from pydantic.dataclasses import dataclass
 from tortoise import BaseDBAsyncClient
 from tortoise import Model as TortoiseModel
 from tortoise import fields
+from tortoise.queryset import BulkCreateQuery
+from tortoise.queryset import BulkUpdateQuery
 
 from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.enums import ReindexingReason
 from dipdup.enums import TokenStandard
 from dipdup.utils import json_dumps
-
-# from tortoise.queryset import BulkCreateQuery
-# from tortoise.queryset import BulkUpdateQuery
-
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -415,8 +412,19 @@ class Model(TortoiseModel):
         update_fields: Optional[Iterable[str]] = None,
         on_conflict: Optional[Iterable[str]] = None,
         using_db: Optional[BaseDBAsyncClient] = None,
-    ) -> NoReturn:
-        raise NotImplementedError
+    ) -> BulkCreateQuery:
+        for model in objects:
+            if update := ModelUpdate.from_model(model, ModelUpdateAction.INSERT):
+                get_pending_updates().append(update)
+
+        return super().bulk_create(
+            objects,
+            batch_size=batch_size,
+            ignore_conflicts=ignore_conflicts,
+            update_fields=update_fields,
+            on_conflict=on_conflict,
+            using_db=using_db,
+        )
 
     @classmethod
     def bulk_update(
@@ -425,8 +433,17 @@ class Model(TortoiseModel):
         fields: Iterable[str],
         batch_size: Optional[int] = None,
         using_db: Optional[BaseDBAsyncClient] = None,
-    ) -> NoReturn:
-        raise NotImplementedError
+    ) -> BulkUpdateQuery:
+        for model in objects:
+            if update := ModelUpdate.from_model(model, ModelUpdateAction.UPDATE):
+                get_pending_updates().append(update)
+
+        return super().bulk_update(
+            objects,
+            fields,
+            batch_size=batch_size,
+            using_db=using_db,
+        )
 
     class Meta:
         abstract = True

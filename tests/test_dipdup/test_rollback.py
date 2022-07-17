@@ -3,8 +3,6 @@ from datetime import datetime
 from typing import List
 from unittest import IsolatedAsyncioTestCase
 
-import pytest
-
 import demo_hic_et_nunc.models as hen_models
 import demo_tezos_domains.models as domains_models
 from dipdup.config import DipDupConfig
@@ -218,9 +216,8 @@ class RollbackTest(IsolatedAsyncioTestCase):
             assert domain.owner == 'test'
             assert domain.token_id is None
 
-    @pytest.mark.skip('NotImplementedError')
     async def test_bulk_create_update(self) -> None:
-        config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
+        config = DipDupConfig(spec_version='1.2', package='demo_tezos_domains')
         config.initialize()
         dipdup = DipDup(config)
         in_transaction = dipdup._transactions.in_transaction
@@ -231,15 +228,80 @@ class RollbackTest(IsolatedAsyncioTestCase):
             await dipdup._set_up_hooks(set())
             await dipdup._initialize_schema()
 
-            holders: List[hen_models.Holder] = []
-            for i in range(10):
-                holder = hen_models.Holder(address=str(i))
-                holders.append(holder)
+            tlds: List[domains_models.TLD] = []
+            for i in range(3):
+                tld = domains_models.TLD(
+                    id=str(i),
+                    owner='test',
+                )
+                tlds.append(tld)
 
             async with in_transaction(level=1000, index='test'):
-                await hen_models.Holder.bulk_create(holders)  # type: ignore
+                await domains_models.TLD.bulk_create(tlds)
 
-            holders = await hen_models.Holder.filter().count()
-            assert holders == 10
+            # FIXME: Stupid tortoise
+            for tld in tlds:
+                tld._saved_in_db = True
+
+            domains: List[domains_models.Domain] = []
+            for tld in tlds:
+                domain = domains_models.Domain(
+                    id=tld.id,
+                    tld=tld,
+                    expiry=None,
+                    owner='test',
+                    token_id=None,
+                )
+                domains.append(domain)
+
+            # FIXME: Yes, the same level, why not
+            async with in_transaction(level=1000, index='test'):
+                await domains_models.Domain.bulk_create(domains)
+
+            for tld, domain in zip(tlds, domains):
+                tld.owner = tld.id
+                domain.token_id = int(domain.id)
+
+            async with in_transaction(level=1001, index='test'):
+                await domains_models.TLD.bulk_update(tlds, ('owner',))
+                await domains_models.Domain.bulk_update(domains, ('token_id',))
+
+            owners = await domains_models.TLD.filter().values_list('owner', flat=True)
+            assert owners == ['0', '1', '2']
+            token_ids = await domains_models.Domain.filter().values_list('token_id', flat=True)
+            assert token_ids == [0, 1, 2]
+
             model_updates = await ModelUpdate.filter().count()
-            assert model_updates == 10
+            assert model_updates == 12
+
+            # NOTE: Rollback bulk_update
+            await HookContext.rollback(
+                self=dipdup._ctx,  # type: ignore
+                index='test',
+                from_level=1001,
+                to_level=1000,
+            )
+
+            owners = await domains_models.TLD.filter().values_list('owner', flat=True)
+            assert owners == ['test'] * 3
+            token_ids = await domains_models.Domain.filter().values_list('token_id', flat=True)
+            assert token_ids == [None] * 3
+
+            model_updates = await ModelUpdate.filter().count()
+            assert model_updates == 6
+
+            # NOTE: Rollback bulk_insert
+            await HookContext.rollback(
+                self=dipdup._ctx,  # type: ignore
+                index='test',
+                from_level=1000,
+                to_level=999,
+            )
+
+            owners = await domains_models.TLD.filter().values_list('owner', flat=True)
+            assert owners == []
+            token_ids = await domains_models.Domain.filter().values_list('token_id', flat=True)
+            assert token_ids == []
+
+            model_updates = await ModelUpdate.filter().count()
+            assert model_updates == 0
