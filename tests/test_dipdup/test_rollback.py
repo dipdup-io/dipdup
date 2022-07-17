@@ -1,6 +1,9 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
+from typing import List
 from unittest import IsolatedAsyncioTestCase
+
+import pytest
 
 import demo_hic_et_nunc.models as hen_models
 import demo_tezos_domains.models as domains_models
@@ -214,3 +217,29 @@ class RollbackTest(IsolatedAsyncioTestCase):
             assert domain.expiry is None
             assert domain.owner == 'test'
             assert domain.token_id is None
+
+    @pytest.mark.skip('NotImplementedError')
+    async def test_bulk_create_update(self) -> None:
+        config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
+        config.initialize()
+        dipdup = DipDup(config)
+        in_transaction = dipdup._transactions.in_transaction
+
+        async with AsyncExitStack() as stack:
+            await dipdup._set_up_database(stack)
+            await dipdup._set_up_transactions(stack)
+            await dipdup._set_up_hooks(set())
+            await dipdup._initialize_schema()
+
+            holders: List[hen_models.Holder] = []
+            for i in range(10):
+                holder = hen_models.Holder(address=str(i))
+                holders.append(holder)
+
+            async with in_transaction(level=1000, index='test'):
+                await hen_models.Holder.bulk_create(holders)  # type: ignore
+
+            holders = await hen_models.Holder.filter().count()
+            assert holders == 10
+            model_updates = await ModelUpdate.filter().count()
+            assert model_updates == 10

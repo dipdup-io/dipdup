@@ -31,6 +31,10 @@ from dipdup.enums import ReindexingReason
 from dipdup.enums import TokenStandard
 from dipdup.utils import json_dumps
 
+# from tortoise.queryset import BulkCreateQuery
+# from tortoise.queryset import BulkUpdateQuery
+
+
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
@@ -260,6 +264,31 @@ class ModelUpdate(TortoiseModel):
     class Meta:
         table = 'dipdup_model_update'
 
+    @classmethod
+    def from_model(cls, model: 'Model', action: ModelUpdateAction) -> Optional['ModelUpdate']:
+        if not (transaction := get_transaction()):
+            return None
+        if model._meta.db_table in transaction.immune_tables:
+            return None
+
+        if action == ModelUpdateAction.INSERT:
+            data = None
+        elif action == ModelUpdateAction.UPDATE:
+            data = model.original_data
+        elif action == ModelUpdateAction.DELETE:
+            data = model.versioned_data
+        else:
+            raise ValueError(f'Unknown action: {action}')
+
+        return ModelUpdate(
+            model_name=model.__class__.__name__,
+            model_pk=model.pk,
+            level=transaction.level,
+            index=transaction.index,
+            action=action,
+            data=data,
+        )
+
     async def revert(self, model: Type[TortoiseModel]) -> None:
         """Revert model update"""
 
@@ -296,8 +325,17 @@ class ModelUpdate(TortoiseModel):
 
 
 class Model(TortoiseModel):
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._original_data = self.versioned_data
+
     @property
-    def _versioned_data(self) -> Dict[str, Any]:
+    def original_data(self) -> Dict[str, Any]:
+        return self._original_data
+
+    # TODO: Split to a separate clean cached function
+    @property
+    def versioned_data(self) -> Dict[str, Any]:
         if not (field_names := versioned_fields[self._meta.db_table]):
             for key, field_ in self._meta.fields_map.items():
                 if field_.pk or key in self._meta.backward_fk_fields:
@@ -316,20 +354,8 @@ class Model(TortoiseModel):
     ) -> None:
         await super().delete(using_db=using_db)
 
-        if not (transaction := get_transaction()):
-            return
-        if self._meta.db_table in transaction.immune_tables:
-            return
-
-        update = ModelUpdate(
-            model_name=self.__class__.__name__,
-            model_pk=self.pk,
-            level=transaction.level,
-            index=transaction.index,
-            action=ModelUpdateAction.DELETE,
-            data=self._versioned_data,
-        )
-        get_pending_updates().append(update)
+        if update := ModelUpdate.from_model(self, ModelUpdateAction.DELETE):
+            get_pending_updates().append(update)
 
     async def save(
         self,
@@ -338,11 +364,7 @@ class Model(TortoiseModel):
         force_create: bool = False,
         force_update: bool = False,
     ) -> None:
-        saved_in_db = self._saved_in_db
-        # FIXME: Fetch current data from DB since we don't know which fields were updated
-        if get_transaction() and saved_in_db:
-            current_data = await self.__class__.get(pk=self.pk)
-
+        action = ModelUpdateAction.UPDATE if self._saved_in_db else ModelUpdateAction.INSERT
         await super().save(
             using_db=using_db,
             update_fields=update_fields,
@@ -350,30 +372,8 @@ class Model(TortoiseModel):
             force_update=force_update,
         )
 
-        if not (transaction := get_transaction()):
-            return
-        if self._meta.db_table in transaction.immune_tables:
-            return
-
-        if not saved_in_db:
-            update = ModelUpdate(
-                model_name=self.__class__.__name__,
-                model_pk=self.pk,
-                level=transaction.level,
-                index=transaction.index,
-                action=ModelUpdateAction.INSERT,
-                data=None,
-            )
-        else:
-            update = ModelUpdate(
-                model_name=self.__class__.__name__,
-                model_pk=self.pk,
-                level=transaction.level,
-                index=transaction.index,
-                action=ModelUpdateAction.UPDATE,
-                data=current_data._versioned_data,
-            )
-        get_pending_updates().append(update)
+        if update := ModelUpdate.from_model(self, action):
+            get_pending_updates().append(update)
 
     @classmethod
     async def create(
@@ -397,7 +397,7 @@ class Model(TortoiseModel):
         on_conflict: Optional[Iterable[str]] = None,
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> NoReturn:
-        raise NotImplementedError('`bulk_create` method is not supported')
+        raise NotImplementedError
 
     @classmethod
     def bulk_update(
@@ -407,7 +407,7 @@ class Model(TortoiseModel):
         batch_size: Optional[int] = None,
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> NoReturn:
-        raise NotImplementedError('`bulk_update` method is not supported')
+        raise NotImplementedError
 
     class Meta:
         abstract = True
