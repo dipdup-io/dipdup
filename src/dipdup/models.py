@@ -46,6 +46,8 @@ ValueType = TypeVar('ValueType', bound=BaseModel)
 
 @dataclass
 class OperationData:
+    """Basic structure for operations from TzKT response"""
+
     type: str
     id: int
     level: int
@@ -78,7 +80,7 @@ class OperationData:
 
 @dataclass
 class Transaction(Generic[ParameterType, StorageType]):
-    """Wrapper for every transaction in handler arguments"""
+    """Wrapper for matched transaction with typed data passed to the handler"""
 
     data: OperationData
     parameter: ParameterType
@@ -87,7 +89,7 @@ class Transaction(Generic[ParameterType, StorageType]):
 
 @dataclass
 class Origination(Generic[StorageType]):
-    """Wrapper for every origination in handler arguments"""
+    """Wrapper for matched origination with typed data passed to the handler"""
 
     data: OperationData
     storage: StorageType
@@ -130,7 +132,7 @@ class BigMapData:
 
 @dataclass
 class BigMapDiff(Generic[KeyType, ValueType]):
-    """Wrapper for every big map diff in handler arguments"""
+    """Wrapper for matched big map diff with typed data passed to the handler"""
 
     action: BigMapAction
     data: BigMapData
@@ -140,7 +142,7 @@ class BigMapDiff(Generic[KeyType, ValueType]):
 
 @dataclass
 class BlockData:
-    """Basic structure for blocks from TzKT HTTP response"""
+    """Basic structure for blocks received from TzKT REST API"""
 
     level: int
     hash: str
@@ -158,7 +160,7 @@ class BlockData:
 
 @dataclass
 class HeadBlockData:
-    """Basic structure for head block from TzKT SignalR response"""
+    """Basic structure for head block received from TzKT SignalR API"""
 
     chain: str
     chain_id: str
@@ -186,7 +188,7 @@ class HeadBlockData:
 
 @dataclass
 class QuoteData:
-    """Basic structure for quotes from TzKT HTTP response"""
+    """Basic structure for quotes received from TzKT REST API"""
 
     level: int
     timestamp: datetime
@@ -201,6 +203,8 @@ class QuoteData:
 
 @dataclass
 class TokenTransferData:
+    """Basic structure for token transver received from TzKT SignalR API"""
+
     id: int
     level: int
     timestamp: datetime
@@ -228,6 +232,8 @@ versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
 
 @dataclass
 class VersionedTransaction:
+    """Metadata of currently opened versioned transaction."""
+
     level: int
     index: str
     immune_tables: Set[str]
@@ -235,21 +241,27 @@ class VersionedTransaction:
 
 # NOTE: Overwritten by TransactionManager.register()
 def get_transaction() -> Optional[VersionedTransaction]:
+    """Get metadata of currently opened versioned transaction if any"""
     raise RuntimeError('TransactionManager is not registered')
 
 
 # NOTE: Overwritten by TransactionManager.register()
 def get_pending_updates() -> Deque['ModelUpdate']:
+    """Get pending model updates queue"""
     raise RuntimeError('TransactionManager is not registered')
 
 
 class ModelUpdateAction(Enum):
+    """Mapping for actions in model update"""
+
     INSERT = 'INSERT'
     UPDATE = 'UPDATE'
     DELETE = 'DELETE'
 
 
 class ModelUpdate(TortoiseModel):
+    """Model update created within versioned transactions"""
+
     model_name = fields.CharField(256)
     model_pk = fields.CharField(256)
     level = fields.IntField()
@@ -266,6 +278,7 @@ class ModelUpdate(TortoiseModel):
 
     @classmethod
     def from_model(cls, model: 'Model', action: ModelUpdateAction) -> Optional['ModelUpdate']:
+        """Create model update from model instance if necessary"""
         if not (transaction := get_transaction()):
             return None
         if model._meta.db_table in transaction.immune_tables:
@@ -274,7 +287,8 @@ class ModelUpdate(TortoiseModel):
         if action == ModelUpdateAction.INSERT:
             data = None
         elif action == ModelUpdateAction.UPDATE:
-            data = model.original_data
+            # TODO: Save only changed fields?
+            data = model.original_versioned_data
         elif action == ModelUpdateAction.DELETE:
             data = model.versioned_data
         else:
@@ -290,7 +304,7 @@ class ModelUpdate(TortoiseModel):
         )
 
     async def revert(self, model: Type[TortoiseModel]) -> None:
-        """Revert model update"""
+        """Revert a single model update"""
 
         # NOTE: Deserialize non-JSON types
         if self.data:
@@ -325,17 +339,21 @@ class ModelUpdate(TortoiseModel):
 
 
 class Model(TortoiseModel):
+    """Base class for DipDup project models"""
+
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self._original_data = self.versioned_data
+        self._original_versioned_data = self.versioned_data
 
     @property
-    def original_data(self) -> Dict[str, Any]:
-        return self._original_data
+    def original_versioned_data(self) -> Dict[str, Any]:
+        """Get versioned data of the model at the time of creation"""
+        return self._original_versioned_data
 
     # TODO: Split to a separate clean cached function
     @property
     def versioned_data(self) -> Dict[str, Any]:
+        """Get versioned data of the model at the current time"""
         if not (field_names := versioned_fields[self._meta.db_table]):
             for key, field_ in self._meta.fields_map.items():
                 if field_.pk or key in self._meta.backward_fk_fields:
@@ -348,6 +366,7 @@ class Model(TortoiseModel):
 
         return {name: getattr(self, name) for name in field_names}
 
+    # NOTE: Do not touch docstrings below this line to preserve Tortoise ones
     async def delete(
         self,
         using_db: Optional[BaseDBAsyncClient] = None,

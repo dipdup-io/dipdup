@@ -15,6 +15,8 @@ from dipdup.utils.database import set_connection
 
 
 class TransactionManager:
+    """Manages versioned transactions"""
+
     def __init__(
         self,
         depth: int = 2,
@@ -27,6 +29,7 @@ class TransactionManager:
 
     @contextmanager
     def register(self) -> Generator[None, None, None]:
+        """Register this manager to use in current process"""
         original_get_transaction = dipdup.models.get_transaction
         original_get_pending_updates = dipdup.models.get_pending_updates
         try:
