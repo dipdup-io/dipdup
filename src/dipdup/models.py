@@ -12,6 +12,7 @@ from typing import Deque
 from typing import Dict
 from typing import Generic
 from typing import Iterable
+from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -23,8 +24,12 @@ from pydantic.dataclasses import dataclass
 from tortoise import BaseDBAsyncClient
 from tortoise import Model as TortoiseModel
 from tortoise import fields
+from tortoise.expressions import Q
 from tortoise.queryset import BulkCreateQuery
 from tortoise.queryset import BulkUpdateQuery
+from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
+from tortoise.queryset import QuerySet as TortoiseQuerySet
+from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
 from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
@@ -325,14 +330,100 @@ class ModelUpdate(TortoiseModel):
 
                 # TODO: There may be more non-JSON-deserializable fields
 
+        # NOTE: Do not version rollbacks
         if self.action == ModelUpdateAction.INSERT:
-            await model.filter(pk=self.model_pk).delete()
+            await TortoiseQuerySet(model).filter(pk=self.model_pk).delete()
         elif self.action == ModelUpdateAction.UPDATE:
-            await model.filter(pk=self.model_pk).update(**data)
+            await TortoiseQuerySet(model).filter(pk=self.model_pk).update(**data)
         elif self.action == ModelUpdateAction.DELETE:
             await model.create(**data)
 
         await self.delete()
+
+
+class UpdateQuery(TortoiseUpdateQuery):
+    def __init__(
+        self,
+        model: Type[TortoiseModel],
+        update_kwargs: Dict[str, Any],
+        db: BaseDBAsyncClient,
+        q_objects: List[Q],
+        annotations: Dict[str, Any],
+        custom_filters: Dict[str, Dict[str, Any]],
+        limit: Optional[int],
+        orderings: List[Tuple[str, str]],
+        filter_queryset: TortoiseQuerySet,
+    ) -> None:
+        super().__init__(
+            model,
+            update_kwargs,
+            db,
+            q_objects,
+            annotations,
+            custom_filters,
+            limit,
+            orderings,
+        )
+        self.filter_queryset = filter_queryset
+
+    async def _execute(self) -> int:
+        models = await self.filter_queryset
+        for model in models:
+            if update := ModelUpdate.from_model(model, ModelUpdateAction.UPDATE):
+                get_pending_updates().append(update)
+
+        return await super()._execute()
+
+
+class DeleteQuery(TortoiseDeleteQuery):
+    def __init__(
+        self,
+        model: Type[TortoiseModel],
+        db: BaseDBAsyncClient,
+        q_objects: List[Q],
+        annotations: Dict[str, Any],
+        custom_filters: Dict[str, Dict[str, Any]],
+        limit: Optional[int],
+        orderings: List[Tuple[str, str]],
+        filter_queryset: TortoiseQuerySet,
+    ) -> None:
+        super().__init__(model, db, q_objects, annotations, custom_filters, limit, orderings)
+        self.filter_queryset = filter_queryset
+
+    async def _execute(self) -> int:
+        models = await self.filter_queryset
+        for model in models:
+            if update := ModelUpdate.from_model(model, ModelUpdateAction.DELETE):
+                get_pending_updates().append(update)
+
+        return await super()._execute()
+
+
+class QuerySet(TortoiseQuerySet):
+    def update(self, **kwargs: Any) -> UpdateQuery:
+        return UpdateQuery(
+            db=self._db,
+            model=self.model,
+            update_kwargs=kwargs,
+            q_objects=self._q_objects,
+            annotations=self._annotations,
+            custom_filters=self._custom_filters,
+            limit=self._limit,
+            orderings=self._orderings,
+            filter_queryset=self,
+        )
+
+    def delete(self) -> DeleteQuery:
+        return DeleteQuery(
+            db=self._db,
+            model=self.model,
+            q_objects=self._q_objects,
+            annotations=self._annotations,
+            custom_filters=self._custom_filters,
+            limit=self._limit,
+            orderings=self._orderings,
+            filter_queryset=self,
+        )
 
 
 class Model(TortoiseModel):
@@ -341,6 +432,12 @@ class Model(TortoiseModel):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._original_versioned_data = self.versioned_data
+
+    @classmethod
+    def _init_from_db(cls, **kwargs: Any) -> 'Model':
+        model = super()._init_from_db(**kwargs)
+        model._original_versioned_data = model.versioned_data
+        return model
 
     @property
     def original_versioned_data(self) -> Dict[str, Any]:
@@ -392,6 +489,10 @@ class Model(TortoiseModel):
             get_pending_updates().append(update)
 
     @classmethod
+    def filter(cls, *args: Any, **kwargs: Any) -> TortoiseQuerySet:
+        return QuerySet(cls).filter(*args, **kwargs)
+
+    @classmethod
     async def create(
         cls: Type['ModelT'],
         using_db: Optional[BaseDBAsyncClient] = None,
@@ -413,6 +514,7 @@ class Model(TortoiseModel):
         on_conflict: Optional[Iterable[str]] = None,
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> BulkCreateQuery:
+        # FIXME: Queryset is not awaited yet
         for model in objects:
             if update := ModelUpdate.from_model(model, ModelUpdateAction.INSERT):
                 get_pending_updates().append(update)
@@ -434,6 +536,7 @@ class Model(TortoiseModel):
         batch_size: Optional[int] = None,
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> BulkUpdateQuery:
+        # FIXME: Queryset is not awaited yet
         for model in objects:
             if update := ModelUpdate.from_model(model, ModelUpdateAction.UPDATE):
                 get_pending_updates().append(update)

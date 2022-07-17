@@ -305,3 +305,57 @@ class RollbackTest(IsolatedAsyncioTestCase):
 
             model_updates = await ModelUpdate.filter().count()
             assert model_updates == 0
+
+    async def test_update_prefetch(self) -> None:
+        config = DipDupConfig(spec_version='1.2', package='demo_tezos_domains')
+        config.initialize()
+        dipdup = DipDup(config)
+        in_transaction = dipdup._transactions.in_transaction
+
+        async with AsyncExitStack() as stack:
+            await dipdup._set_up_database(stack)
+            await dipdup._set_up_transactions(stack)
+            await dipdup._set_up_hooks(set())
+            await dipdup._initialize_schema()
+
+            # NOTE: INSERT
+            tlds: List[domains_models.TLD] = []
+            for i in range(3):
+                tld = domains_models.TLD(
+                    id=str(i),
+                    owner='test',
+                )
+                tlds.append(tld)
+
+            async with in_transaction(level=1000, index='test'):
+                await domains_models.TLD.bulk_create(tlds)
+
+            owners = await domains_models.TLD.filter().values_list('owner', flat=True)
+            assert owners == ['test'] * 3
+
+            model_updates = await ModelUpdate.filter().count()
+            assert model_updates == 3
+
+            # NOTE: UPDATE with prefetch
+            async with in_transaction(level=1001, index='test'):
+                await domains_models.TLD.filter().update(owner='foo')
+
+            owners = await domains_models.TLD.filter().values_list('owner', flat=True)
+            assert owners == ['foo'] * 3
+
+            model_updates = await ModelUpdate.filter().count()
+            assert model_updates == 6
+
+            # NOTE: Rollback UPDATE with prefetch
+            await HookContext.rollback(
+                self=dipdup._ctx,  # type: ignore
+                index='test',
+                from_level=1001,
+                to_level=1000,
+            )
+
+            owners = await domains_models.TLD.filter().values_list('owner', flat=True)
+            assert owners == ['test'] * 3
+
+            model_updates = await ModelUpdate.filter().count()
+            assert model_updates == 3
