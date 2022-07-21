@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import time
 from decimal import Decimal
 from enum import Enum
+from functools import cache
 from typing import Any
 from typing import DefaultDict
 from typing import Deque
@@ -26,6 +27,7 @@ from tortoise import BaseDBAsyncClient
 from tortoise import Model as TortoiseModel
 from tortoise import fields
 from tortoise.expressions import Q
+from tortoise.fields import relational
 from tortoise.models import MODEL
 from tortoise.queryset import BulkCreateQuery as TortoiseBulkCreateQuery
 from tortoise.queryset import BulkUpdateQuery as TortoiseBulkUpdateQuery
@@ -452,6 +454,23 @@ class QuerySet(TortoiseQuerySet):
         )
 
 
+@cache
+def get_versioned_fields(model: Type['Model']) -> Set[str]:
+    field_names: Set[str] = set()
+
+    for key, field_ in model._meta.fields_map.items():
+        if field_.pk:
+            continue
+        elif isinstance(field_, relational.BackwardFKRelation):
+            continue
+        elif isinstance(field_, relational.ForeignKeyFieldInstance):
+            field_names.add(f'{key}_id')
+        else:
+            field_names.add(key)
+
+    return field_names
+
+
 class Model(TortoiseModel):
     """Base class for DipDup project models"""
 
@@ -470,25 +489,10 @@ class Model(TortoiseModel):
         """Get versioned data of the model at the time of creation"""
         return self._original_versioned_data
 
-    # TODO: Split to a separate clean cached function
     @property
     def versioned_data(self) -> Dict[str, Any]:
         """Get versioned data of the model at the current time"""
-        if not (field_names := versioned_fields[self._meta.db_table]):
-            for key, field_ in self._meta.fields_map.items():
-                if field_.pk:
-                    continue
-                if key in self._meta.backward_fk_fields:
-                    continue
-                if key not in self._meta.fields_db_projection:
-                    continue
-
-                if key in self._meta.fk_fields:
-                    field_names.add(f'{key}_id')
-                else:
-                    field_names.add(key)
-
-        return {name: getattr(self, name) for name in field_names}
+        return {name: getattr(self, name) for name in get_versioned_fields(self.__class__)}
 
     # NOTE: Do not touch docstrings below this line to preserve Tortoise ones
     async def delete(
