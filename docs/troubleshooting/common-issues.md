@@ -42,7 +42,6 @@ DipDup config reference: <https://dipdup.net/docs/config/database>
 
 Reindexing required! Reason: manual.
 
-  [context_key]: [context_value]
 
 You may want to backup database before proceeding. After that perform one of the following actions:
 

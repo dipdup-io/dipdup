@@ -457,11 +457,12 @@ class QuerySet(TortoiseQuerySet):
 @cache
 def get_versioned_fields(model: Type['Model']) -> Set[str]:
     field_names: Set[str] = set()
+    field_keys = model._meta.db_fields.union(model._meta.fk_fields)
 
     for key, field_ in model._meta.fields_map.items():
-        if field_.pk:
+        if key not in field_keys:
             continue
-        elif isinstance(field_, relational.BackwardFKRelation):
+        if field_.pk:
             continue
         elif isinstance(field_, relational.ForeignKeyFieldInstance):
             field_names.add(f'{key}_id')
