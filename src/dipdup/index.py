@@ -213,13 +213,15 @@ class Index:
                 await self._synchronize(head_level)
             await self.state.update_status(IndexStatus.ONESHOT, head_level)
 
-        sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
-        sync_level = sync_levels.pop()
-        if sync_level is None:
-            raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
-        if sync_levels:
-            raise RuntimeError(f'Multiple sync levels: {sync_level}, {sync_levels}')
         index_level = self.state.level
+        sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
+        if not sync_levels:
+            raise RuntimeError('Index has no subscriptions')
+        if None in sync_levels:
+            raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
+        # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
+        # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
+        sync_level = max(cast(Set[int], sync_levels))
 
         if index_level < sync_level:
             self._logger.info('Index is behind datasource level, syncing: %s -> %s', index_level, sync_level)

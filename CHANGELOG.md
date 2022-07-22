@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning].
 - hooks: Removed deprecated `on_rollback` hook.
 - index: Do not try to avoid single-level rollbacks by comparing operation hashes.
 
+## [Unreleased]
+
+### Fixed
+
+- index: Fixed crash when adding an index with new subscriptions in runtime.
+
 ## [5.2.4] - 2022-07-17
 
 ### Fixed
