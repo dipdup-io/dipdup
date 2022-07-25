@@ -38,7 +38,6 @@ from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
-from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
@@ -173,8 +172,15 @@ class Index:
         return self.state.status == IndexStatus.REALTIME and not self._queue
 
     @property
-    def sync_level(self) -> Optional[int]:
-        return self.datasource.get_sync_level(HeadSubscription())
+    def sync_level(self) -> int:
+        sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
+        if not sync_levels:
+            raise RuntimeError('Index has no subscriptions')
+        if None in sync_levels:
+            raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
+        # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
+        # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
+        return max(cast(Set[int], sync_levels))
 
     async def initialize_state(self, state: Optional[models.Index] = None) -> None:
         if self._state:
@@ -214,14 +220,7 @@ class Index:
             await self.state.update_status(IndexStatus.ONESHOT, head_level)
 
         index_level = self.state.level
-        sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
-        if not sync_levels:
-            raise RuntimeError('Index has no subscriptions')
-        if None in sync_levels:
-            raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
-        # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
-        # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
-        sync_level = max(cast(Set[int], sync_levels))
+        sync_level = self.sync_level
 
         if index_level < sync_level:
             self._logger.info('Index is behind datasource level, syncing: %s -> %s', index_level, sync_level)
