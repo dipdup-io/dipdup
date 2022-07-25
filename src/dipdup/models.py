@@ -316,14 +316,16 @@ class ModelUpdate(TortoiseModel):
         if self.data:
             data = copy(self.data)
             for key, field_ in model._meta.fields_map.items():
-                value = data.get(key)
+                # NOTE: Restore deleted models with old PK
                 if field_.pk and self.action == ModelUpdateAction.DELETE:
                     data[key] = self.model_pk
-                elif value is None:
-                    if not field_.null:
-                        continue
-                    data[key] = value
-                elif isinstance(field_, fields.DecimalField):
+                    continue
+
+                value = data.get(key)
+                if value is None:
+                    continue
+
+                if isinstance(field_, fields.DecimalField):
                     data[key] = Decimal(value)
                 elif isinstance(field_, fields.DatetimeField):
                     data[key] = datetime.fromisoformat(value)
