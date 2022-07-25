@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from copy import copy
 from dataclasses import field
@@ -46,6 +47,8 @@ StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
 
+
+_logger = logging.getLogger(__name__)
 
 # ===> Dataclasses
 
@@ -294,12 +297,14 @@ class ModelUpdate(TortoiseModel):
             data = None
         elif action == ModelUpdateAction.UPDATE:
             data = model.versioned_data_diff
+            if not data:
+                return None
         elif action == ModelUpdateAction.DELETE:
             data = model.versioned_data
         else:
             raise ValueError(f'Unknown action: {action}')
 
-        return ModelUpdate(
+        self = ModelUpdate(
             model_name=model.__class__.__name__,
             model_pk=model.pk,
             level=transaction.level,
@@ -307,6 +312,14 @@ class ModelUpdate(TortoiseModel):
             action=action,
             data=data,
         )
+        _logger.debug(
+            'Saving %s(%s) %s: %s',
+            self.model_name,
+            self.model_pk,
+            self.action.value,
+            data,
+        )
+        return self
 
     async def revert(self, model: Type[TortoiseModel]) -> None:
         """Revert a single model update"""
@@ -334,7 +347,14 @@ class ModelUpdate(TortoiseModel):
 
                 # TODO: There may be more non-JSON-deserializable fields
 
-        # NOTE: Do not version rollbacks
+        _logger.debug(
+            'Reverting %s(%s) %s: %s',
+            self.model_name,
+            self.model_pk,
+            self.action.value,
+            data,
+        )
+        # NOTE: Do not version rollbacks, use unpatched querysets
         if self.action == ModelUpdateAction.INSERT:
             await TortoiseQuerySet(model).filter(pk=self.model_pk).delete()
         elif self.action == ModelUpdateAction.UPDATE:
@@ -371,7 +391,10 @@ class UpdateQuery(TortoiseUpdateQuery):
         self.filter_queryset = filter_queryset
 
     async def _execute(self) -> int:
+        _logger.debug('Prefetching query models: %s', self.filter_queryset)
         models = await self.filter_queryset
+        _logger.debug('Got %s', len(models))
+
         for model in models:
             model._set_kwargs(self.update_kwargs)
             if update := ModelUpdate.from_model(model, ModelUpdateAction.UPDATE):
@@ -396,7 +419,10 @@ class DeleteQuery(TortoiseDeleteQuery):
         self.filter_queryset = filter_queryset
 
     async def _execute(self) -> int:
+        _logger.debug('Prefetching query models: %s', self.filter_queryset)
         models = await self.filter_queryset
+        _logger.debug('Got %s', len(models))
+
         for model in models:
             if update := ModelUpdate.from_model(model, ModelUpdateAction.DELETE):
                 get_pending_updates().append(update)
