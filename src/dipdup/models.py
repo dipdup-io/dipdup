@@ -293,8 +293,7 @@ class ModelUpdate(TortoiseModel):
         if action == ModelUpdateAction.INSERT:
             data = None
         elif action == ModelUpdateAction.UPDATE:
-            # TODO: Save only changed fields?
-            data = model.original_versioned_data
+            data = model.versioned_data_diff
         elif action == ModelUpdateAction.DELETE:
             data = model.versioned_data
         else:
@@ -311,10 +310,9 @@ class ModelUpdate(TortoiseModel):
 
     async def revert(self, model: Type[TortoiseModel]) -> None:
         """Revert a single model update"""
-
+        data = copy(self.data)
         # NOTE: Deserialize non-JSON types
-        if self.data:
-            data = copy(self.data)
+        if data:
             for key, field_ in model._meta.fields_map.items():
                 # NOTE: Restore deleted models with old PK
                 if field_.pk and self.action == ModelUpdateAction.DELETE:
@@ -375,6 +373,7 @@ class UpdateQuery(TortoiseUpdateQuery):
     async def _execute(self) -> int:
         models = await self.filter_queryset
         for model in models:
+            model._set_kwargs(self.update_kwargs)
             if update := ModelUpdate.from_model(model, ModelUpdateAction.UPDATE):
                 get_pending_updates().append(update)
 
@@ -496,6 +495,15 @@ class Model(TortoiseModel):
     def versioned_data(self) -> Dict[str, Any]:
         """Get versioned data of the model at the current time"""
         return {name: getattr(self, name) for name in get_versioned_fields(self.__class__)}
+
+    @property
+    def versioned_data_diff(self) -> Dict[str, Any]:
+        """Get versioned data of the model changed since creation"""
+        data = {}
+        for key, value in self.original_versioned_data.items():
+            if value != self.versioned_data[key]:
+                data[key] = value
+        return data
 
     # NOTE: Do not touch docstrings below this line to preserve Tortoise ones
     async def delete(

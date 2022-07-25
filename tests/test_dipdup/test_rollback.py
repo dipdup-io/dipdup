@@ -71,13 +71,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
             assert model_update.model_name == 'Swap'
             assert model_update.model_pk == '1'
             assert model_update.data == {
-                'amount': 1,
-                'amount_left': 1,
-                'creator_id': 'tz1deadbeaf',
-                'level': 1000,
-                'price': 1,
                 'status': 0,
-                'timestamp': '1970-01-01T00:00:00+00:00',
             }
 
             # NOTE: DELETE
