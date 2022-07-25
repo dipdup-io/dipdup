@@ -53,10 +53,7 @@ class SubscriptionManager:
         return {k for k, v in self._subscriptions.items() if k is not None and v is None}
 
     def add(self, subscription: Subscription) -> None:
-        if subscription in self._subscriptions:
-            if not self._merge_subscriptions:
-                _logger.warning(f'Subscription already exists: {subscription}')
-        else:
+        if subscription not in self._subscriptions:
             self._subscriptions[subscription] = None
 
     def remove(self, subscription: Subscription) -> None:
