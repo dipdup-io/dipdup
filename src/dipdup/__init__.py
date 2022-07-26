@@ -3,7 +3,7 @@ import os
 import sys
 import warnings
 
-__version__ = '5.2.5'
+__version__ = '6.0.0-rc1'
 __spec_version__ = '1.2'
 spec_version_mapping = {
     '0.1': '<=0.4.3',
