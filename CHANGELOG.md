@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [5.2.5] - 2022-07-26
 
 ### Added
 
@@ -671,7 +671,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/dipdup-net/dipdup-py/compare/5.2.4...HEAD
+[unreleased]: https://github.com/dipdup-net/dipdup-py/compare/5.2.5...HEAD
+[5.2.5]: https://github.com/dipdup-net/dipdup-py/compare/5.2.4...5.2.5
 [5.2.4]: https://github.com/dipdup-net/dipdup-py/compare/5.2.3...5.2.4
 [5.2.3]: https://github.com/dipdup-net/dipdup-py/compare/5.2.2...5.2.3
 [5.2.2]: https://github.com/dipdup-net/dipdup-py/compare/5.2.1...5.2.2
