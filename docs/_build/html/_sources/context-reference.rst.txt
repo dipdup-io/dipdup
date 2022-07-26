@@ -1,2 +1,0 @@
-.. automodule:: dipdup.context
-   :members:
