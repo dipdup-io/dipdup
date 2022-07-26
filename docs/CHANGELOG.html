@@ -1,0 +1,769 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Changelog - DipDup framework</title>
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Overview</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="quickstart.html"><strong aria-hidden="true">1.</strong> Quickstart</a></li><li class="chapter-item expanded "><a href="getting-started/index.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="getting-started/installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="getting-started/core-concepts.html"><strong aria-hidden="true">2.2.</strong> Core concepts</a></li><li class="chapter-item expanded "><a href="getting-started/preparing-inventory.html"><strong aria-hidden="true">2.3.</strong> Preparing inventory</a></li><li class="chapter-item expanded "><a href="getting-started/project-structure.html"><strong aria-hidden="true">2.4.</strong> Project structure</a></li><li class="chapter-item expanded "><a href="getting-started/templates-and-variables.html"><strong aria-hidden="true">2.5.</strong> Templates and variables</a></li><li class="chapter-item expanded "><a href="getting-started/defining-models.html"><strong aria-hidden="true">2.6.</strong> Defining models</a></li><li class="chapter-item expanded "><a href="getting-started/implementing-handlers.html"><strong aria-hidden="true">2.7.</strong> Implementing handlers</a></li></ol></li><li class="chapter-item expanded "><a href="advanced/index.html"><strong aria-hidden="true">3.</strong> Advanced usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="advanced/datasources.html"><strong aria-hidden="true">3.1.</strong> Datasources</a></li><li class="chapter-item expanded "><a href="advanced/hooks/index.html"><strong aria-hidden="true">3.2.</strong> Hooks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="advanced/hooks/default.html"><strong aria-hidden="true">3.2.1.</strong> Default hooks</a></li><li class="chapter-item expanded "><a href="advanced/hooks/jobs.html"><strong aria-hidden="true">3.2.2.</strong> Job scheduler</a></li></ol></li><li class="chapter-item expanded "><a href="advanced/reindexing.html"><strong aria-hidden="true">3.3.</strong> Reindexing</a></li><li class="chapter-item expanded "><a href="advanced/feature-flags.html"><strong aria-hidden="true">3.4.</strong> Feature flags</a></li><li class="chapter-item expanded "><a href="advanced/sql.html"><strong aria-hidden="true">3.5.</strong> Executing SQL scripts</a></li><li class="chapter-item expanded "><a href="advanced/performance.html"><strong aria-hidden="true">3.6.</strong> Improving performance</a></li><li class="chapter-item expanded "><a href="advanced/context/index.html"><strong aria-hidden="true">3.7.</strong> Callback context (ctx)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="advanced/context/reference.html"><strong aria-hidden="true">3.7.1.</strong> Full reference</a></li></ol></li><li class="chapter-item expanded "><a href="advanced/internal-models.html"><strong aria-hidden="true">3.8.</strong> Internal models</a></li><li class="chapter-item expanded "><a href="advanced/index-factories.html"><strong aria-hidden="true">3.9.</strong> Spawning indexes at runtime</a></li><li class="chapter-item expanded "><a href="advanced/scheduler.html"><strong aria-hidden="true">3.10.</strong> Scheduler configuration</a></li><li class="chapter-item expanded "><a href="advanced/metadata-interface.html"><strong aria-hidden="true">3.11.</strong> Metadata interface</a></li></ol></li><li class="chapter-item expanded "><a href="graphql/index.html"><strong aria-hidden="true">4.</strong> GraphQL API</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="graphql/hasura.html"><strong aria-hidden="true">4.1.</strong> Hasura integration</a></li><li class="chapter-item expanded "><a href="graphql/rest.html"><strong aria-hidden="true">4.2.</strong> REST endpoints</a></li><li class="chapter-item expanded "><a href="graphql/genql.html"><strong aria-hidden="true">4.3.</strong> GenQL</a></li></ol></li><li class="chapter-item expanded "><a href="troubleshooting/index.html"><strong aria-hidden="true">5.</strong> Troubleshooting</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="troubleshooting/common-issues.html"><strong aria-hidden="true">5.1.</strong> Common issues</a></li><li class="chapter-item expanded "><a href="troubleshooting/reporting-bugs.html"><strong aria-hidden="true">5.2.</strong> Reporting bugs</a></li></ol></li><li class="chapter-item expanded "><a href="deployment/index.html"><strong aria-hidden="true">6.</strong> Deployment and operations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="deployment/database-engines.html"><strong aria-hidden="true">6.1.</strong> Database engines</a></li><li class="chapter-item expanded "><a href="deployment/docker.html"><strong aria-hidden="true">6.2.</strong> Building Docker images</a></li><li class="chapter-item expanded "><a href="deployment/docker-compose.html"><strong aria-hidden="true">6.3.</strong> Deploying with docker-compose</a></li><li class="chapter-item expanded "><a href="deployment/swarm.html"><strong aria-hidden="true">6.4.</strong> Deploying with Docker Swarm</a></li><li class="chapter-item expanded "><a href="deployment/sentry.html"><strong aria-hidden="true">6.5.</strong> Sentry integration</a></li><li class="chapter-item expanded "><a href="deployment/prometheus.html"><strong aria-hidden="true">6.6.</strong> Prometheus integration</a></li><li class="chapter-item expanded "><a href="deployment/logging.html"><strong aria-hidden="true">6.7.</strong> Logging</a></li><li class="chapter-item expanded "><a href="deployment/monitoring.html"><strong aria-hidden="true">6.8.</strong> Monitoring</a></li><li class="chapter-item expanded "><a href="deployment/backups.html"><strong aria-hidden="true">6.9.</strong> Backup and restore</a></li></ol></li><li class="chapter-item expanded "><a href="cookbook/index.html"><strong aria-hidden="true">7.</strong> Cookbook</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="cookbook/offchain-data.html"><strong aria-hidden="true">7.1.</strong> Processing offchain data</a></li><li class="chapter-item expanded "><a href="cookbook/reusing-typenames.html"><strong aria-hidden="true">7.2.</strong> Reusing typename for different contracts</a></li><li class="chapter-item expanded "><a href="cookbook/sync-callbacks.html"><strong aria-hidden="true">7.3.</strong> Synchronizing multiple handlers/hooks</a></li><li class="chapter-item expanded "><a href="cookbook/multiprocessing.html"><strong aria-hidden="true">7.4.</strong> Multiprocessing</a></li></ol></li><li class="chapter-item expanded "><a href="examples/index.html"><strong aria-hidden="true">8.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="examples/demo-projects.html"><strong aria-hidden="true">8.1.</strong> Demo projects</a></li><li class="chapter-item expanded "><a href="examples/built-with-dipdup.html"><strong aria-hidden="true">8.2.</strong> Built with DipDup</a></li></ol></li><li class="chapter-item expanded "><a href="services/index.html"><strong aria-hidden="true">9.</strong> Services (plugins)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="services/mempool.html"><strong aria-hidden="true">9.1.</strong> mempool</a></li><li class="chapter-item expanded "><a href="services/metadata.html"><strong aria-hidden="true">9.2.</strong> metadata</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="cli-reference.html"><strong aria-hidden="true">10.</strong> Command-line reference</a></li><li class="chapter-item expanded "><a href="config/index.html"><strong aria-hidden="true">11.</strong> Config file reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config/reference.html"><strong aria-hidden="true">11.1.</strong> Full reference</a></li><li class="chapter-item expanded "><a href="config/advanced.html"><strong aria-hidden="true">11.2.</strong> advanced</a></li><li class="chapter-item expanded "><a href="config/contracts.html"><strong aria-hidden="true">11.3.</strong> contracts</a></li><li class="chapter-item expanded "><a href="config/database.html"><strong aria-hidden="true">11.4.</strong> database</a></li><li class="chapter-item expanded "><a href="config/datasources.html"><strong aria-hidden="true">11.5.</strong> datasources</a></li><li class="chapter-item expanded "><a href="config/hasura.html"><strong aria-hidden="true">11.6.</strong> hasura</a></li><li class="chapter-item expanded "><a href="config/hooks.html"><strong aria-hidden="true">11.7.</strong> hooks</a></li><li class="chapter-item expanded "><a href="config/indexes/index.html"><strong aria-hidden="true">11.8.</strong> indexes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config/indexes/big_map.html"><strong aria-hidden="true">11.8.1.</strong> big_map</a></li><li class="chapter-item expanded "><a href="config/indexes/head.html"><strong aria-hidden="true">11.8.2.</strong> head</a></li><li class="chapter-item expanded "><a href="config/indexes/operation.html"><strong aria-hidden="true">11.8.3.</strong> operation</a></li><li class="chapter-item expanded "><a href="config/indexes/template.html"><strong aria-hidden="true">11.8.4.</strong> template</a></li></ol></li><li class="chapter-item expanded "><a href="config/jobs.html"><strong aria-hidden="true">11.9.</strong> jobs</a></li><li class="chapter-item expanded "><a href="config/package.html"><strong aria-hidden="true">11.10.</strong> package</a></li><li class="chapter-item expanded "><a href="config/prometheus.html"><strong aria-hidden="true">11.11.</strong> prometheus</a></li><li class="chapter-item expanded "><a href="config/sentry.html"><strong aria-hidden="true">11.12.</strong> sentry</a></li><li class="chapter-item expanded "><a href="config/spec_version.html"><strong aria-hidden="true">11.13.</strong> spec_version</a></li><li class="chapter-item expanded "><a href="config/templates.html"><strong aria-hidden="true">11.14.</strong> templates</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">What's New</li><li class="chapter-item expanded "><a href="CHANGELOG.html" class="active"><strong aria-hidden="true">12.</strong> Changelog</a></li><li class="chapter-item expanded "><a href="release-notes/index.html"><strong aria-hidden="true">13.</strong> Release notes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="release-notes/5.1.0.html"><strong aria-hidden="true">13.1.</strong> 5.1.0</a></li><li class="chapter-item expanded "><a href="release-notes/5.0.0.html"><strong aria-hidden="true">13.2.</strong> 5.0.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.2.0.html"><strong aria-hidden="true">13.3.</strong> 4.2.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.1.0.html"><strong aria-hidden="true">13.4.</strong> 4.1.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.0.0.html"><strong aria-hidden="true">13.5.</strong> 4.0.0</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">DipDup framework</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h2 id="525---2022-07-26"><a class="header" href="#525---2022-07-26"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.4...5.2.5">5.2.5</a> - 2022-07-26</a></h2>
+<h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
+<ul>
+<li>index: Fixed crash when adding an index with new subscriptions in runtime.</li>
+</ul>
+<h2 id="524---2022-07-17"><a class="header" href="#524---2022-07-17"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.3...5.2.4">5.2.4</a> - 2022-07-17</a></h2>
+<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
+<ul>
+<li>cli: Fixed logs being printed to stderr instead of stdout.</li>
+<li>config: Fixed job scheduler not starting when config contains no indexes.</li>
+</ul>
+<h2 id="523---2022-07-07"><a class="header" href="#523---2022-07-07"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.2...5.2.3">5.2.3</a> - 2022-07-07</a></h2>
+<h3 id="added"><a class="header" href="#added">Added</a></h3>
+<ul>
+<li>sentry: Allow customizing <code>server_name</code> and <code>release</code> tags with corresponding fields in Sentry config.</li>
+</ul>
+<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
+<ul>
+<li>cli: Fixed <code>hasura configure</code> command crash when models have empty <code>Meta.table</code>.</li>
+<li>config: Removed secrets from config <code>__repr__</code>.</li>
+</ul>
+<h2 id="522---2022-07-03"><a class="header" href="#522---2022-07-03"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.1...5.2.2">5.2.2</a> - 2022-07-03</a></h2>
+<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
+<ul>
+<li>hasura: Fixed metadata generation.</li>
+</ul>
+<h2 id="521---2022-07-02"><a class="header" href="#521---2022-07-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.0...5.2.1">5.2.1</a> - 2022-07-02</a></h2>
+<h3 id="fixed-4"><a class="header" href="#fixed-4">Fixed</a></h3>
+<ul>
+<li>cli: Fixed setting default logging level.</li>
+<li>hasura: Fixed metadata generation for relations with a custom field name.</li>
+<li>hasura: Fixed configuring existing instances after changing <code>camel_case</code> field in config.</li>
+</ul>
+<h2 id="520---2022-06-28"><a class="header" href="#520---2022-06-28"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.7...5.2.0">5.2.0</a> - 2022-06-28</a></h2>
+<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
+<ul>
+<li>config: Added <code>logging</code> config field.</li>
+<li>config: Added <code>hasura.create_source</code> flag to create PostgreSQL source if missing.</li>
+</ul>
+<h3 id="fixed-5"><a class="header" href="#fixed-5">Fixed</a></h3>
+<ul>
+<li>hasura: Do not apply table customizations to tables from other sources.</li>
+</ul>
+<h3 id="deprecated"><a class="header" href="#deprecated">Deprecated</a></h3>
+<ul>
+<li>cli: <code>--logging-config</code> option is deprecated.</li>
+<li>cli: All <code>run</code> command flags are deprecated. Use the <code>advanced</code> section of the config.</li>
+<li>cli: <code>cache show</code> and <code>cache clear</code> commands are deprecated.</li>
+<li>config: <code>http.cache</code> flag is deprecated.</li>
+</ul>
+<h2 id="517---2022-06-15"><a class="header" href="#517---2022-06-15"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.6...5.1.7">5.1.7</a> - 2022-06-15</a></h2>
+<h3 id="fixed-6"><a class="header" href="#fixed-6">Fixed</a></h3>
+<ul>
+<li>index: Fixed <code>token_transfer</code> index not receiving realtime updates.</li>
+</ul>
+<h2 id="516---2022-06-08"><a class="header" href="#516---2022-06-08"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.5...5.1.6">5.1.6</a> - 2022-06-08</a></h2>
+<h3 id="fixed-7"><a class="header" href="#fixed-7">Fixed</a></h3>
+<ul>
+<li>cli: Commands with <code>--help</code> option no longer require a working DipDup config.</li>
+<li>index: Fixed crash with <code>RuntimeError</code> after continuous realtime connection loss.</li>
+</ul>
+<h3 id="performance"><a class="header" href="#performance">Performance</a></h3>
+<ul>
+<li>cli: Lazy import dependencies to speed up startup.</li>
+</ul>
+<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<ul>
+<li>docs: Migrate docs from GitBook to mdbook.</li>
+</ul>
+<h2 id="515---2022-06-05"><a class="header" href="#515---2022-06-05"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.4...5.1.5">5.1.5</a> - 2022-06-05</a></h2>
+<h3 id="fixed-8"><a class="header" href="#fixed-8">Fixed</a></h3>
+<ul>
+<li>config: Fixed crash when rollback hook is about to be called.</li>
+</ul>
+<h2 id="514---2022-06-02"><a class="header" href="#514---2022-06-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.3...5.1.4">5.1.4</a> - 2022-06-02</a></h2>
+<h3 id="fixed-9"><a class="header" href="#fixed-9">Fixed</a></h3>
+<ul>
+<li>config: Fixed <code>OperationIndexConfig.types</code> field being partially ignored.</li>
+<li>index: Allow mixing oneshot and regular indexes in a single config.</li>
+<li>index: Call rollback hook instead of triggering reindex when single-level rollback has failed.</li>
+<li>index: Fixed crash with <code>RuntimeError</code> after continuous realtime connection loss.</li>
+<li>tzkt: Fixed <code>origination</code> subscription missing when <code>merge_subscriptions</code> flag is set.</li>
+</ul>
+<h3 id="performance-1"><a class="header" href="#performance-1">Performance</a></h3>
+<ul>
+<li>ci: Decrease the size of generic and <code>-pytezos</code> Docker images by 11% and 16%, respectively.</li>
+</ul>
+<h2 id="513---2022-05-26"><a class="header" href="#513---2022-05-26"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.2...5.1.3">5.1.3</a> - 2022-05-26</a></h2>
+<h3 id="fixed-10"><a class="header" href="#fixed-10">Fixed</a></h3>
+<ul>
+<li>database: Fixed special characters in password not being URL encoded.</li>
+</ul>
+<h3 id="performance-2"><a class="header" href="#performance-2">Performance</a></h3>
+<ul>
+<li>context: Do not reinitialize config when adding a single index.</li>
+</ul>
+<h2 id="512---2022-05-24"><a class="header" href="#512---2022-05-24"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.1...5.1.2">5.1.2</a> - 2022-05-24</a></h2>
+<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
+<ul>
+<li>tzkt: Added <code>originated_contract_tzips</code> field to <code>OperationData</code>.</li>
+</ul>
+<h3 id="fixed-11"><a class="header" href="#fixed-11">Fixed</a></h3>
+<ul>
+<li>jobs: Fixed jobs with <code>daemon</code> schedule never start.</li>
+<li>jobs: Fixed failed jobs not throwing exceptions into the main loop.</li>
+</ul>
+<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
+<ul>
+<li>database: Tortoise ORM updated to <code>0.19.1</code>.</li>
+</ul>
+<h2 id="511---2022-05-13"><a class="header" href="#511---2022-05-13"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.0...5.1.1">5.1.1</a> - 2022-05-13</a></h2>
+<h3 id="fixed-12"><a class="header" href="#fixed-12">Fixed</a></h3>
+<ul>
+<li>index: Ignore indexes with different message types on rollback.</li>
+<li>metadata: Add <code>ithacanet</code> to available networks.</li>
+</ul>
+<h2 id="510---2022-05-12"><a class="header" href="#510---2022-05-12"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.4...5.1.0">5.1.0</a> - 2022-05-12</a></h2>
+<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
+<ul>
+<li>ci: Push <code>X</code> and <code>X.Y</code> tags to the Docker Hub on release.</li>
+<li>cli: Added <code>config env</code> command to export env-file with default values.</li>
+<li>cli: Show warning when running an outdated version of DipDup.</li>
+<li>hooks: Added a new hook <code>on_index_rollback</code> to perform per-index rollbacks.</li>
+</ul>
+<h3 id="fixed-13"><a class="header" href="#fixed-13">Fixed</a></h3>
+<ul>
+<li>index: Fixed fetching <code>migration</code> operations.</li>
+<li>tzkt: Fixed possible data corruption when using the <code>buffer_size</code> option.</li>
+<li>tzkt: Fixed reconnection due to <code>websockets</code> message size limit.</li>
+</ul>
+<h3 id="deprecated-1"><a class="header" href="#deprecated-1">Deprecated</a></h3>
+<ul>
+<li>hooks: The <code>on_rollback</code> default hook is superseded by <code>on_index_rollback</code> and will be removed later.</li>
+</ul>
+<h2 id="504---2022-05-05"><a class="header" href="#504---2022-05-05"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.3...5.0.4">5.0.4</a> - 2022-05-05</a></h2>
+<h3 id="fixed-14"><a class="header" href="#fixed-14">Fixed</a></h3>
+<ul>
+<li>exceptions: Fixed incorrect formatting and broken links in help messages.</li>
+<li>index: Fixed crash when the only index in config is <code>head</code>.</li>
+<li>index: Fixed fetching originations during the initial sync.</li>
+</ul>
+<h2 id="503---2022-05-04"><a class="header" href="#503---2022-05-04"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.2...5.0.3">5.0.3</a> - 2022-05-04</a></h2>
+<h3 id="fixed-15"><a class="header" href="#fixed-15">Fixed</a></h3>
+<ul>
+<li>index: Fixed crash when no block with the same level arrived after a single-level rollback.</li>
+<li>index: Fixed setting initial index level when <code>IndexConfig.first_level</code> is set.</li>
+<li>tzkt: Fixed delayed emitting of buffered realtime messages.</li>
+<li>tzkt: Fixed inconsistent behavior of <code>first_level</code>/<code>last_level</code> arguments in different getter methods.</li>
+</ul>
+<h2 id="502---2022-04-21"><a class="header" href="#502---2022-04-21"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.1...5.0.2">5.0.2</a> - 2022-04-21</a></h2>
+<h3 id="fixed-16"><a class="header" href="#fixed-16">Fixed</a></h3>
+<ul>
+<li>context: Fixed reporting incorrect reindexing reason.</li>
+<li>exceptions: Fixed crash with <code>FrozenInstanceError</code> when an exception is raised from a callback.</li>
+<li>jobs: Fixed graceful shutdown of daemon jobs.</li>
+</ul>
+<h3 id="improved"><a class="header" href="#improved">Improved</a></h3>
+<ul>
+<li>codegen: Refined <code>on_rollback</code> hook template.</li>
+<li>exceptions: Updated help messages for known exceptions.</li>
+<li>tzkt: Do not request reindexing if missing subgroups have matched no handlers.</li>
+</ul>
+<h2 id="501---2022-04-12"><a class="header" href="#501---2022-04-12"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0...5.0.1">5.0.1</a> - 2022-04-12</a></h2>
+<h3 id="fixed-17"><a class="header" href="#fixed-17">Fixed</a></h3>
+<ul>
+<li>cli: Fixed <code>schema init</code> command crash with SQLite databases.</li>
+<li>index: Fixed spawning datasources in oneshot mode.</li>
+<li>tzkt: Fixed processing realtime messages.</li>
+</ul>
+<h2 id="500---2022-04-08"><a class="header" href="#500---2022-04-08"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc4...5.0.0">5.0.0</a> - 2022-04-08</a></h2>
+<p>This release contains no changes except for the version number.</p>
+<h2 id="500-rc4---2022-04-04"><a class="header" href="#500-rc4---2022-04-04"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc3...5.0.0-rc4">5.0.0-rc4</a> - 2022-04-04</a></h2>
+<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
+<ul>
+<li>tzkt: Added ability to process realtime messages with lag.</li>
+</ul>
+<h2 id="427---2022-04-02"><a class="header" href="#427---2022-04-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.6...4.2.7">4.2.7</a> - 2022-04-02</a></h2>
+<h3 id="fixed-18"><a class="header" href="#fixed-18">Fixed</a></h3>
+<ul>
+<li>config: Fixed <code>jobs</code> config section validation.</li>
+<li>hasura: Fixed metadata generation for v2.3.0 and above.</li>
+<li>tzkt: Fixed <code>get_originated_contracts</code> and <code>get_similar_contracts</code> methods response.</li>
+</ul>
+<h2 id="500-rc3---2022-03-28"><a class="header" href="#500-rc3---2022-03-28"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc2...5.0.0-rc3">5.0.0-rc3</a> - 2022-03-28</a></h2>
+<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
+<ul>
+<li>config: Added <code>custom</code> section to store arbitrary user data.</li>
+</ul>
+<h3 id="fixed-19"><a class="header" href="#fixed-19">Fixed</a></h3>
+<ul>
+<li>config: Fixed default SQLite path (<code>:memory:</code>).</li>
+<li>tzkt: Fixed pagination in several getter methods.</li>
+<li>tzkt: Fixed data loss when <code>skip_history</code> option is enabled.</li>
+</ul>
+<h3 id="removed"><a class="header" href="#removed">Removed</a></h3>
+<ul>
+<li>config: Removed dummy <code>advanced.oneshot</code> flag.</li>
+<li>cli: Removed <code>docker init</code> command.</li>
+<li>cli: Removed dummy <code>schema approve --hashes</code> flag.</li>
+</ul>
+<h2 id="500-rc2---2022-03-13"><a class="header" href="#500-rc2---2022-03-13"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc1...5.0.0-rc2">5.0.0-rc2</a> - 2022-03-13</a></h2>
+<h3 id="fixed-20"><a class="header" href="#fixed-20">Fixed</a></h3>
+<ul>
+<li>tzkt: Fixed crash in methods that do not support cursor pagination.</li>
+<li>prometheus: Fixed invalid metric labels. </li>
+</ul>
+<h2 id="500-rc1---2022-03-02"><a class="header" href="#500-rc1---2022-03-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.6...5.0.0-rc1">5.0.0-rc1</a> - 2022-03-02</a></h2>
+<h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
+<ul>
+<li>metadata: Added <code>metadata_interface</code> feature flag to expose metadata in TzKT format.</li>
+<li>prometheus: Added ability to expose Prometheus metrics.</li>
+<li>tzkt: Added missing fields to the <code>HeadBlockData</code> model.</li>
+<li>tzkt: Added <code>iter_...</code> methods to iterate over item batches.</li>
+</ul>
+<h3 id="fixed-21"><a class="header" href="#fixed-21">Fixed</a></h3>
+<ul>
+<li>tzkt: Fixed possible OOM while calling methods that support pagination.</li>
+<li>tzkt: Fixed possible data loss in <code>get_originations</code> and <code>get_quotes</code> methods.</li>
+</ul>
+<h3 id="changed"><a class="header" href="#changed">Changed</a></h3>
+<ul>
+<li>tzkt: Added <code>offset</code> and <code>limit</code> arguments to all methods that support pagination.</li>
+</ul>
+<h3 id="removed-1"><a class="header" href="#removed-1">Removed</a></h3>
+<ul>
+<li>bcd: Removed <code>bcd</code> datasource and config section.</li>
+</ul>
+<h3 id="performance-3"><a class="header" href="#performance-3">Performance</a></h3>
+<ul>
+<li>dipdup: Use fast <code>orjson</code> library instead of built-in <code>json</code> where possible.</li>
+</ul>
+<h2 id="426---2022-02-25"><a class="header" href="#426---2022-02-25"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.5...4.2.6">4.2.6</a> - 2022-02-25</a></h2>
+<h3 id="fixed-22"><a class="header" href="#fixed-22">Fixed</a></h3>
+<ul>
+<li>database: Fixed generating table names from uppercase model names.</li>
+<li>http: Fixed bug that leads to caching invalid responses on the disk.</li>
+<li>tzkt: Fixed processing realtime messages with data from multiple levels.</li>
+</ul>
+<h2 id="425---2022-02-21"><a class="header" href="#425---2022-02-21"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.4...4.2.5">4.2.5</a> - 2022-02-21</a></h2>
+<h3 id="fixed-23"><a class="header" href="#fixed-23">Fixed</a></h3>
+<ul>
+<li>database: Do not add the <code>schema</code> argument to the PostgreSQL connection string when not needed.</li>
+<li>hasura: Wait for Hasura to be configured before starting indexing.</li>
+</ul>
+<h2 id="424---2022-02-14"><a class="header" href="#424---2022-02-14"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.3...4.2.4">4.2.4</a> - 2022-02-14</a></h2>
+<h3 id="added-7"><a class="header" href="#added-7">Added</a></h3>
+<ul>
+<li>config: Added <code>http</code> datasource to making arbitrary http requests.</li>
+</ul>
+<h3 id="fixed-24"><a class="header" href="#fixed-24">Fixed</a></h3>
+<ul>
+<li>context: Fixed crash when calling <code>fire_hook</code> method.</li>
+<li>context: Fixed <code>HookConfig.atomic</code> flag, which was ignored in <code>fire_hook</code> method.</li>
+<li>database: Create missing tables even if <code>Schema</code> model is present.</li>
+<li>database: Fixed excess increasing of <code>decimal</code> context precision.</li>
+<li>index: Fixed loading handler callbacks from nested packages (<a href="https://github.com/veqtor">@veqtor</a>).</li>
+</ul>
+<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
+<ul>
+<li>ci: Added GitHub Action to build and publish Docker images for each PR opened.</li>
+</ul>
+<h2 id="423---2022-02-08"><a class="header" href="#423---2022-02-08"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.2...4.2.3">4.2.3</a> - 2022-02-08</a></h2>
+<h3 id="fixed-25"><a class="header" href="#fixed-25">Fixed</a></h3>
+<ul>
+<li>ci: Removed <code>black 21.12b0</code> dependency since bug in <code>datamodel-codegen-generator</code> is fixed.</li>
+<li>cli: Fixed <code>config export</code> command crash when <code>advanced.reindex</code> dictionary is present.</li>
+<li>cli: Removed optionals from <code>config export</code> output so the result can be loaded again.</li>
+<li>config: Verify <code>advanced.scheduler</code> config for the correctness and unsupported features.</li>
+<li>context: Fixed ignored <code>wait</code> argument of <code>fire_hook</code> method.</li>
+<li>hasura: Fixed processing relation fields with missing <code>related_name</code>.</li>
+<li>jobs: Fixed default <code>apscheduler</code> config.</li>
+<li>tzkt: Fixed crash occurring when reorg message is the first one received by the datasource.</li>
+</ul>
+<h2 id="422---2022-02-01"><a class="header" href="#422---2022-02-01"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.1...4.2.2">4.2.2</a> - 2022-02-01</a></h2>
+<h3 id="fixed-26"><a class="header" href="#fixed-26">Fixed</a></h3>
+<ul>
+<li>config: Fixed <code>ipfs</code> datasource config.</li>
+</ul>
+<h2 id="421---2022-01-31"><a class="header" href="#421---2022-01-31"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.0...4.2.1">4.2.1</a> - 2022-01-31</a></h2>
+<h3 id="fixed-27"><a class="header" href="#fixed-27">Fixed</a></h3>
+<ul>
+<li>ci: Added <code>black 21.12b0</code> dependency to avoid possible conflict with <code>datamodel-codegen-generator</code>.</li>
+</ul>
+<h2 id="420---2022-01-31"><a class="header" href="#420---2022-01-31"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.1.2...4.2.0">4.2.0</a> - 2022-01-31</a></h2>
+<h3 id="added-8"><a class="header" href="#added-8">Added</a></h3>
+<ul>
+<li>context: Added <code>wait</code> argument to <code>fire_hook</code> method to escape current transaction context.</li>
+<li>context: Added <code>ctx.get_&lt;kind&gt;_datasource</code> helpers to avoid type casting.</li>
+<li>hooks: Added ability to configure <code>apscheduler</code> with <code>AdvancedConfig.scheduler</code> field.</li>
+<li>http: Added <code>request</code> method to send arbitrary requests (affects all datasources).</li>
+<li>ipfs: Added <code>ipfs</code> datasource to download JSON and binary data from IPFS.</li>
+</ul>
+<h3 id="fixed-28"><a class="header" href="#fixed-28">Fixed</a></h3>
+<ul>
+<li>http: Removed dangerous method <code>close_session</code>.</li>
+<li>context: Fixed help message of <code>IndexAlreadyExistsError</code> exception.</li>
+</ul>
+<h3 id="deprecated-2"><a class="header" href="#deprecated-2">Deprecated</a></h3>
+<ul>
+<li>bcd: Added deprecation notice.</li>
+</ul>
+<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
+<ul>
+<li>dipdup: Removed unused internal methods.</li>
+</ul>
+<h2 id="412---2022-01-27"><a class="header" href="#412---2022-01-27"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.1.1...4.1.2">4.1.2</a> - 2022-01-27</a></h2>
+<h3 id="added-9"><a class="header" href="#added-9">Added</a></h3>
+<ul>
+<li>cli: Added <code>schema wipe --force</code> argument to skip confirmation prompt.</li>
+</ul>
+<h3 id="fixed-29"><a class="header" href="#fixed-29">Fixed</a></h3>
+<ul>
+<li>cli: Show warning about deprecated <code>--hashes</code> argument</li>
+<li>cli: Ignore <code>SIGINT</code> signal when shutdown is in progress.</li>
+<li>sentry: Ignore exceptions when shutdown is in progress.</li>
+</ul>
+<h2 id="411---2022-01-25"><a class="header" href="#411---2022-01-25"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.1.0...4.1.1">4.1.1</a> - 2022-01-25</a></h2>
+<h3 id="fixed-30"><a class="header" href="#fixed-30">Fixed</a></h3>
+<ul>
+<li>cli: Fixed stacktraces missing on exception.</li>
+<li>cli: Fixed wrapping <code>OSError</code> with <code>ConfigurationError</code> during config loading.</li>
+<li>hasura: Fixed printing help messages on <code>HasuraError</code>.</li>
+<li>hasura: Preserve a list of sources in Hasura Cloud environments.</li>
+<li>hasura: Fixed <code>HasuraConfig.source</code> config option.</li>
+</ul>
+<h3 id="changed-1"><a class="header" href="#changed-1">Changed</a></h3>
+<ul>
+<li>cli: Unknown exceptions are no longer wrapped with <code>DipDupError</code>.</li>
+</ul>
+<h3 id="performance-4"><a class="header" href="#performance-4">Performance</a></h3>
+<ul>
+<li>hasura: Removed some useless requests.</li>
+</ul>
+<h2 id="410---2022-01-24"><a class="header" href="#410---2022-01-24"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.5...4.1.0">4.1.0</a> - 2022-01-24</a></h2>
+<h3 id="added-10"><a class="header" href="#added-10">Added</a></h3>
+<ul>
+<li>cli: Added <code>schema init</code> command to initialize database schema.</li>
+<li>cli: Added <code>--force</code> flag to <code>hasura configure</code> command.</li>
+<li>codegen: Added support for subpackages inside callback directories.</li>
+<li>hasura: Added <code>dipdup_head_status</code> view and REST endpoint.</li>
+<li>index: Added an ability to skip historical data while synchronizing <code>big_map</code> indexes.</li>
+<li>metadata: Added <code>metadata</code> datasource.</li>
+<li>tzkt: Added <code>get_big_map</code> and <code>get_contract_big_maps</code> datasource methods.</li>
+</ul>
+<h2 id="405---2022-01-20"><a class="header" href="#405---2022-01-20"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.4...4.0.5">4.0.5</a> - 2022-01-20</a></h2>
+<h3 id="fixed-31"><a class="header" href="#fixed-31">Fixed</a></h3>
+<ul>
+<li>index: Fixed deserializing manually modified typeclasses.</li>
+</ul>
+<h2 id="404---2022-01-17"><a class="header" href="#404---2022-01-17"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.3...4.0.4">4.0.4</a> - 2022-01-17</a></h2>
+<h3 id="added-11"><a class="header" href="#added-11">Added</a></h3>
+<ul>
+<li>cli: Added <code>--keep-schemas</code> flag to <code>init</code> command to preserve JSONSchemas along with generated types.</li>
+</ul>
+<h3 id="fixed-32"><a class="header" href="#fixed-32">Fixed</a></h3>
+<ul>
+<li>demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.</li>
+<li>hasura: Fixed missing relations for models with <code>ManyToManyField</code> fields.</li>
+<li>tzkt: Fixed parsing storage with nested structures.</li>
+</ul>
+<h3 id="performance-5"><a class="header" href="#performance-5">Performance</a></h3>
+<ul>
+<li>dipdup: Minor overall performance improvements.</li>
+</ul>
+<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
+<ul>
+<li>ci: Cache virtual environment in GitHub Actions.</li>
+<li>ci: Detect CI environment and skip tests that fail in GitHub Actions.</li>
+<li>ci: Execute tests in parallel with <code>pytest-xdist</code> when possible.</li>
+<li>ci: More strict linting rules of <code>flake8</code>.</li>
+</ul>
+<h2 id="403---2022-01-09"><a class="header" href="#403---2022-01-09"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.2...4.0.3">4.0.3</a> - 2022-01-09</a></h2>
+<h3 id="fixed-33"><a class="header" href="#fixed-33">Fixed</a></h3>
+<ul>
+<li>tzkt: Fixed parsing parameter with an optional value.</li>
+</ul>
+<h2 id="402---2022-01-06"><a class="header" href="#402---2022-01-06"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.1...4.0.2">4.0.2</a> - 2022-01-06</a></h2>
+<h3 id="added-12"><a class="header" href="#added-12">Added</a></h3>
+<ul>
+<li>tzkt: Added optional <code>delegate_address</code> and <code>delegate_alias</code> fields to <code>OperationData</code>.</li>
+</ul>
+<h3 id="fixed-34"><a class="header" href="#fixed-34">Fixed</a></h3>
+<ul>
+<li>tzkt: Fixed crash due to unprocessed pysignalr exception.</li>
+<li>tzkt: Fixed parsing <code>OperationData.amount</code> field.</li>
+<li>tzkt: Fixed parsing storage with top-level boolean fields.</li>
+</ul>
+<h2 id="401---2021-12-30"><a class="header" href="#401---2021-12-30"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.0...4.0.1">4.0.1</a> - 2021-12-30</a></h2>
+<h3 id="fixed-35"><a class="header" href="#fixed-35">Fixed</a></h3>
+<ul>
+<li>codegen: Fixed generating storage typeclasses with <code>Union</code> fields.</li>
+<li>codegen: Fixed preprocessing contract JSONSchema.</li>
+<li>index: Fixed processing reindexing reason saved in the database.</li>
+<li>tzkt: Fixed processing operations with default entrypoint and empty parameter.</li>
+<li>tzkt: Fixed crash while recursively applying bigmap diffs to the storage.</li>
+</ul>
+<h3 id="performance-6"><a class="header" href="#performance-6">Performance</a></h3>
+<ul>
+<li>tzkt: Increased speed of applying bigmap diffs to operation storage.</li>
+</ul>
+<h2 id="400---2021-12-24"><a class="header" href="#400---2021-12-24"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.0-rc3...4.0.0">4.0.0</a> - 2021-12-24</a></h2>
+<p>This release contains no changes except for the version number.</p>
+<h2 id="400-rc3---2021-12-20"><a class="header" href="#400-rc3---2021-12-20"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.0-rc2...4.0.0-rc3">4.0.0-rc3</a> - 2021-12-20</a></h2>
+<h3 id="fixed-36"><a class="header" href="#fixed-36">Fixed</a></h3>
+<ul>
+<li>cli: Fixed missing <code>schema approve --hashes</code> argument.</li>
+<li>codegen: Fixed contract address used instead of an alias when typename is not set.</li>
+<li>tzkt: Fixed processing operations with entrypoint <code>default</code>.</li>
+<li>tzkt: Fixed regression in processing migration originations.</li>
+<li>tzkt: Fixed filtering of big map diffs by the path.</li>
+</ul>
+<h3 id="removed-2"><a class="header" href="#removed-2">Removed</a></h3>
+<ul>
+<li>cli: Removed deprecated <code>run --oneshot</code> argument and <code>clear-cache</code> command.</li>
+</ul>
+<h2 id="400-rc2---2021-12-11"><a class="header" href="#400-rc2---2021-12-11"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.0-rc1...4.0.0-rc2">4.0.0-rc2</a> - 2021-12-11</a></h2>
+<h3 id="-migration"><a class="header" href="#-migration">⚠ Migration</a></h3>
+<ul>
+<li>Run <code>dipdup init</code> command to generate <code>on_synchronized</code> hook stubs.</li>
+</ul>
+<h3 id="added-13"><a class="header" href="#added-13">Added</a></h3>
+<ul>
+<li>hooks: Added <code>on_synchronized</code> hook, which fires each time all indexes reach realtime state.</li>
+</ul>
+<h3 id="fixed-37"><a class="header" href="#fixed-37">Fixed</a></h3>
+<ul>
+<li>cli: Fixed config not being verified when invoking some commands.</li>
+<li>codegen: Fixed generating callback arguments for untyped operations.</li>
+<li>index: Fixed incorrect log messages, remove duplicate ones.</li>
+<li>index: Fixed crash while processing storage of some contracts.</li>
+<li>index: Fixed matching of untyped operations filtered by <code>source</code> field (<a href="https://github.com/pravin-d">@pravin-d</a>).</li>
+</ul>
+<h3 id="performance-7"><a class="header" href="#performance-7">Performance</a></h3>
+<ul>
+<li>index: Checks performed on each iteration of the main DipDup loop are slightly faster now.</li>
+</ul>
+<h2 id="400-rc1---2021-12-02"><a class="header" href="#400-rc1---2021-12-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.1.3...4.0.0-rc1">4.0.0-rc1</a> - 2021-12-02</a></h2>
+<h3 id="-migration-1"><a class="header" href="#-migration-1">⚠ Migration</a></h3>
+<ul>
+<li>Run <code>dipdup schema approve</code> command on every database you want to use with 4.0.0-rc1. Running <code>dipdup migrate</code> is not necessary since <code>spec_version</code> hasn't changed in this release.</li>
+</ul>
+<h3 id="added-14"><a class="header" href="#added-14">Added</a></h3>
+<ul>
+<li>cli: Added <code>run --early-realtime</code> flag to establish a realtime connection before all indexes are synchronized.</li>
+<li>cli: Added <code>run --merge-subscriptions</code> flag to subscribe to all operations/big map diffs during realtime indexing.</li>
+<li>cli: Added <code>status</code> command to print the current status of indexes from the database.</li>
+<li>cli: Added <code>config export [--unsafe]</code> command to print config after resolving all links and variables.</li>
+<li>cli: Added <code>cache show</code> command to get information about file caches used by DipDup.</li>
+<li>config: Added <code>first_level</code> and <code>last_level</code> optional fields to <code>TemplateIndexConfig</code>. These limits are applied after ones from the template itself.</li>
+<li>config: Added <code>daemon</code> boolean field to <code>JobConfig</code> to run a single callback indefinitely. Conflicts with <code>crontab</code> and <code>interval</code> fields.</li>
+<li>config: Added <code>advanced</code> top-level section.</li>
+</ul>
+<h3 id="fixed-38"><a class="header" href="#fixed-38">Fixed</a></h3>
+<ul>
+<li>cli: Fixed crashes and output inconsistency when piping DipDup commands.</li>
+<li>cli: Fixed <code>schema wipe --immune</code> flag being ignored.</li>
+<li>codegen: Fixed missing imports in handlers generated during init.</li>
+<li>coinbase: Fixed possible data inconsistency caused by caching enabled for method <code>get_candles</code>.</li>
+<li>http: Fixed increasing sleep time between failed request attempts.</li>
+<li>index: Fixed invocation of head index callback.</li>
+<li>index: Fixed <code>CallbackError</code> raised instead of <code>ReindexingRequiredError</code> in some cases.</li>
+<li>tzkt: Fixed resubscribing when realtime connectivity is lost for a long time.</li>
+<li>tzkt: Fixed sending useless subscription requests when adding indexes in runtime.</li>
+<li>tzkt: Fixed <code>get_originated_contracts</code> and <code>get_similar_contracts</code> methods whose output was limited to <code>HTTPConfig.batch_size</code> field.</li>
+<li>tzkt: Fixed lots of SignalR bugs by replacing <code>aiosignalrcore</code> library with <code>pysignalr</code>.</li>
+</ul>
+<h2 id="changed-2"><a class="header" href="#changed-2">Changed</a></h2>
+<ul>
+<li>cli: <code>dipdup schema wipe</code> command now requires confirmation when invoked in the interactive shell.</li>
+<li>cli: <code>dipdup schema approve</code> command now also causes a recalculation of schema and index config hashes.</li>
+<li>index: DipDup will recalculate respective hashes if reindexing is triggered with <code>config_modified: ignore</code> or <code>schema_modified: ignore</code> in advanced config.</li>
+</ul>
+<h3 id="deprecated-3"><a class="header" href="#deprecated-3">Deprecated</a></h3>
+<ul>
+<li>cli: <code>run --oneshot</code> option is deprecated and will be removed in the next major release. The oneshot mode applies automatically when <code>last_level</code> field is set in the index config.</li>
+<li>cli: <code>clear-cache</code> command is deprecated and will be removed in the next major release. Use <code>cache clear</code> command instead.</li>
+</ul>
+<h3 id="performance-8"><a class="header" href="#performance-8">Performance</a></h3>
+<ul>
+<li>config: Configuration files are loaded 10x times faster.</li>
+<li>index: Number of operations processed by matcher reduced by 40%-95% depending on the number of addresses and entrypoints used.</li>
+<li>tzkt: Rate limit was increased. Try to set <code>connection_timeout</code> to a higher value if requests fail with <code>ConnectionTimeout</code> exception.</li>
+<li>tzkt: Improved performance of response deserialization. </li>
+</ul>
+<h2 id="313---2021-11-15"><a class="header" href="#313---2021-11-15"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.1.2...3.1.3">3.1.3</a> - 2021-11-15</a></h2>
+<h3 id="fixed-39"><a class="header" href="#fixed-39">Fixed</a></h3>
+<ul>
+<li>codegen: Fixed missing imports in operation handlers. </li>
+<li>codegen: Fixed invalid imports and arguments in big_map handlers.</li>
+</ul>
+<h2 id="312---2021-11-02"><a class="header" href="#312---2021-11-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.1.1...3.1.2">3.1.2</a> - 2021-11-02</a></h2>
+<h3 id="fixed-40"><a class="header" href="#fixed-40">Fixed</a></h3>
+<ul>
+<li>Fixed crash occurred during synchronization of big map indexes.</li>
+</ul>
+<h2 id="311---2021-10-18"><a class="header" href="#311---2021-10-18"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.1.0...3.1.1">3.1.1</a> - 2021-10-18</a></h2>
+<h3 id="fixed-41"><a class="header" href="#fixed-41">Fixed</a></h3>
+<ul>
+<li>Fixed loss of realtime subscriptions occurred after TzKT API outage.</li>
+<li>Fixed updating schema hash in <code>schema approve</code> command.</li>
+<li>Fixed possible crash occurred while Hasura is not ready.</li>
+</ul>
+<h2 id="310---2021-10-12"><a class="header" href="#310---2021-10-12"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.4...3.1.0">3.1.0</a> - 2021-10-12</a></h2>
+<h3 id="added-15"><a class="header" href="#added-15">Added</a></h3>
+<ul>
+<li>New index class <code>HeadIndex</code> (configuration: <a href="https://github.com/dipdup-net/dipdup-py/blob/master/src/dipdup/config.py#L778"><code>dipdup.config.HeadIndexConfig</code></a>). Use this index type to handle head (limited block header content) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.</li>
+<li>Added three new commands: <code>schema approve</code>, <code>schema wipe</code>, and <code>schema export</code>. Run <code>dipdup schema --help</code> command for details.</li>
+</ul>
+<h3 id="changed-3"><a class="header" href="#changed-3">Changed</a></h3>
+<ul>
+<li>Triggering reindexing won't lead to dropping the database automatically anymore. <code>ReindexingRequiredError</code> is raised instead. <code>--forbid-reindexing</code> option has become default.</li>
+<li><code>--reindex</code> option is removed. Use <code>dipdup schema wipe</code> instead.</li>
+<li>Values of <code>dipdup_schema.reindex</code> field updated to simplify querying database. See <a href="https://github.com/dipdup-net/dipdup-py/blob/master/src/dipdup/enums.py"><code>dipdup.enums.ReindexingReason</code></a> class for possible values.</li>
+</ul>
+<h3 id="fixed-42"><a class="header" href="#fixed-42">Fixed</a></h3>
+<ul>
+<li>Fixed <code>ReindexRequiredError</code> not being raised when running DipDup after reindexing was triggered.</li>
+<li>Fixed index config hash calculation. Hashes of existing indexes in a database will be updated during the first run.</li>
+<li>Fixed issue in <code>BigMapIndex</code> causing the partial loss of big map diffs.</li>
+<li>Fixed printing help for CLI commands.</li>
+<li>Fixed merging storage which contains specific nested structures.</li>
+</ul>
+<h3 id="improved-1"><a class="header" href="#improved-1">Improved</a></h3>
+<ul>
+<li>Raise <code>DatabaseConfigurationError</code> exception when project models are not compatible with GraphQL.</li>
+<li>Another bunch of performance optimizations. Reduced DB pressure, speeded up parallel processing lots of indexes.</li>
+<li>Added initial set of performance benchmarks (run: <code>./scripts/run_benchmarks.sh</code>)</li>
+</ul>
+<h2 id="304---2021-10-04"><a class="header" href="#304---2021-10-04"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.3...3.0.4">3.0.4</a> - 2021-10-04</a></h2>
+<h3 id="improved-2"><a class="header" href="#improved-2">Improved</a></h3>
+<ul>
+<li>A significant increase in indexing speed.</li>
+</ul>
+<h3 id="fixed-43"><a class="header" href="#fixed-43">Fixed</a></h3>
+<ul>
+<li>Fixed unexpected reindexing caused by the bug in processing zero- and single-level rollbacks.</li>
+<li>Removed unnecessary file IO calls that could cause <code>PermissionError</code> exception in Docker environments.</li>
+<li>Fixed possible violation of block-level atomicity during realtime indexing.</li>
+</ul>
+<h3 id="changes"><a class="header" href="#changes">Changes</a></h3>
+<ul>
+<li>Public methods of <code>TzktDatasource</code> now return immutable sequences.</li>
+</ul>
+<h2 id="303---2021-10-01"><a class="header" href="#303---2021-10-01"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.2...3.0.3">3.0.3</a> - 2021-10-01</a></h2>
+<h3 id="fixed-44"><a class="header" href="#fixed-44">Fixed</a></h3>
+<ul>
+<li>Fixed processing of single-level rollbacks emitted before rolled back head.</li>
+</ul>
+<h2 id="302---2021-09-30"><a class="header" href="#302---2021-09-30"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.1...3.0.2">3.0.2</a> - 2021-09-30</a></h2>
+<h3 id="added-16"><a class="header" href="#added-16">Added</a></h3>
+<ul>
+<li>Human-readable <code>CHANGELOG.md</code> 🕺</li>
+<li>Two new options added to <code>dipdup run</code> command:
+<ul>
+<li><code>--forbid-reindexing</code> – raise <code>ReindexingRequiredError</code> instead of truncating database when reindexing is triggered for any reason. To continue indexing with existing database run <code>UPDATE dipdup_schema SET reindex = NULL;</code></li>
+<li><code>--postpone-jobs</code> – job scheduler won't start until all indexes are synchronized. </li>
+</ul>
+</li>
+</ul>
+<h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
+<ul>
+<li>Migration to this version requires reindexing.</li>
+<li><code>dipdup_index.head_id</code> foreign key removed. <code>dipdup_head</code> table still contains the latest blocks from Websocket received by each datasource.</li>
+</ul>
+<h3 id="fixed-45"><a class="header" href="#fixed-45">Fixed</a></h3>
+<ul>
+<li>Removed unnecessary calls to TzKT API.</li>
+<li>Fixed removal of PostgreSQL extensions (<code>timescaledb</code>, <code>pgcrypto</code>) by function <code>truncate_database</code> triggered on reindex.</li>
+<li>Fixed creation of missing project package on <code>init</code>.</li>
+<li>Fixed invalid handler callbacks generated on <code>init</code>.</li>
+<li>Fixed detection of existing types in the project.</li>
+<li>Fixed race condition caused by event emitter concurrency.</li>
+<li>Capture unknown exceptions with Sentry before wrapping to <code>DipDupError</code>.</li>
+<li>Fixed job scheduler start delay.</li>
+<li>Fixed processing of reorg messages.</li>
+</ul>
+<h2 id="301---2021-09-24"><a class="header" href="#301---2021-09-24"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.0...3.0.1">3.0.1</a> - 2021-09-24</a></h2>
+<h3 id="added-17"><a class="header" href="#added-17">Added</a></h3>
+<ul>
+<li>Added <code>get_quote</code> and <code>get_quotes</code> methods to <code>TzKTDatasource</code>.</li>
+</ul>
+<h3 id="fixed-46"><a class="header" href="#fixed-46">Fixed</a></h3>
+<ul>
+<li>Defer spawning index datasources until initial sync is complete. It helps to mitigate some WebSocket-related crashes, but initial sync is a bit slower now.</li>
+<li>Fixed possible race conditions in <code>TzKTDatasource</code>.</li>
+<li>Start <code>jobs</code> scheduler after all indexes sync with a current head to speed up indexing.</li>
+</ul>
+<!-- Links -->
+<!-- Versions -->
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="config/templates.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="release-notes/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="config/templates.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="release-notes/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+    </body>
+</html>
