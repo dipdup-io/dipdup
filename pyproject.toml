@@ -88,8 +88,11 @@ show_source = true
 extended_default_ignore = []
 
 [tool.flakeheaven.plugins]
-"flake8-*" = ["+*", "-C417", "-SIM106", "-SIM114", "-SIM102"]
+"*" = ["+*"]
+flake8-comprehensions = ["-C417"]
 flake8-docstrings = ["-*"]
+flake8-simplify = ["-SIM106", "-SIM114", "-SIM102"]
+pycodestyle = ["-*"]
 
 [build-system]
 requires = ["poetry_core>=1.0.0", "cryptography==3.3.2", "wheel"]

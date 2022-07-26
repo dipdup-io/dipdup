@@ -2,12 +2,9 @@ name: Build
 on:
   push:
     branches:
-      - 'master'
+      - "**"
     tags:
       - '*.*.*'
-  pull_request:
-    branches:
-      - 'master'
 
 jobs:
   build:
@@ -17,6 +14,7 @@ jobs:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       DOCKER_REGISTRY: ghcr.io
       DOCKER_IMAGE_NAME: ${{ github.repository }}
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -40,11 +38,14 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
           flavor: |
             latest=false
 
       - name: Publish image on GHCR
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           file: Dockerfile

@@ -19,7 +19,6 @@ example_exceptions = (
     exc.CallbackError('[callback_qualname]', Exception()),
     exc.CallbackTypeError('[kind]', '[name]', '[arg]', type, type),
     exc.HasuraError('[error_message]'),
-    exc.ConflictingHooksError('[old_hook]', '[new_hook]'),
 )
 
 print('# Common issues')

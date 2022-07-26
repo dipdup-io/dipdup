@@ -53,12 +53,9 @@ from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import ConflictingHooksError
 from dipdup.exceptions import IndexAlreadyExistsError
-from dipdup.exceptions import InitializationRequiredError
 from dipdup.utils import exclude_none
 from dipdup.utils import import_from
-from dipdup.utils import is_importable
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -127,7 +124,7 @@ class PostgresDatabaseConfig:
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
     password: str = field(default='', repr=False)
-    immune_tables: Tuple[str, ...] = field(default_factory=tuple)
+    immune_tables: Set[str] = field(default_factory=set)
     connection_timeout: int = 60
 
     @cached_property
@@ -1162,17 +1159,6 @@ default_hooks = {
     'on_synchronized': HookConfig(
         callback='on_synchronized',
     ),
-    # TODO: Deprecated; remove in 6.0
-    # NOTE: Fires on rollback when `on_index_rollback` hook is not presented
-    # NOTE: Default: reindex.
-    'on_rollback': HookConfig(
-        callback='on_rollback',
-        args={
-            'index': 'dipdup.datasources.datasource.IndexDatasource',
-            'from_level': 'int',
-            'to_level': 'int',
-        },
-    ),
 }
 
 
@@ -1187,6 +1173,7 @@ class AdvancedConfig:
     :param merge_subscriptions: Subscribe to all operations instead of exact channels
     :param metadata_interface: Expose metadata interface for TzKT
     :param skip_version_check: Do not check for new DipDup versions on startup
+    :param rollback_depth: A number of levels to keep for rollback
     """
 
     reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -1196,6 +1183,7 @@ class AdvancedConfig:
     merge_subscriptions: bool = False
     metadata_interface: bool = False
     skip_version_check: bool = False
+    rollback_depth: int = 2
 
 
 @dataclass
@@ -1220,7 +1208,7 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    datasources: Dict[str, DatasourceConfigT]
+    datasources: Dict[str, DatasourceConfigT] = field(default_factory=dict)
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     contracts: Dict[str, ContractConfig] = field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = field(default_factory=dict)
@@ -1255,23 +1243,6 @@ class DipDupConfig:
             return dirname(cast(str, package.__file__))
         except ImportError:
             return os.path.join(os.getcwd(), self.package)
-
-    # TODO: Remove in 6.0
-    @cached_property
-    def per_index_rollback(self) -> bool:
-        """Check if package has `on_index_rollback` hook"""
-        new_hook = is_importable(f'{self.package}.hooks.on_index_rollback', 'on_index_rollback')
-        old_hook = is_importable(f'{self.package}.hooks.on_rollback', 'on_rollback')
-        if new_hook and old_hook:
-            raise ConflictingHooksError('on_rollback', 'on_index_rollback')
-        elif not new_hook and not old_hook:
-            raise InitializationRequiredError('none of `on_rollback` or `on_index_rollback` hooks found')
-        elif new_hook:
-            return True
-        elif old_hook:
-            return False
-        else:
-            raise RuntimeError
 
     @property
     def oneshot(self) -> bool:

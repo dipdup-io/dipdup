@@ -1,13 +1,10 @@
-import asyncio
 import importlib
 import logging
-import os
 import pkgutil
-import time
 import types
 from collections import defaultdict
-from contextlib import asynccontextmanager
 from contextlib import suppress
+from decimal import Decimal
 from functools import partial
 from functools import reduce
 from logging import Logger
@@ -18,7 +15,6 @@ from os.path import exists
 from os.path import getsize
 from os.path import join
 from typing import Any
-from typing import AsyncGenerator
 from typing import Callable
 from typing import DefaultDict
 from typing import Dict
@@ -30,9 +26,9 @@ from typing import TextIO
 from typing import TypeVar
 from typing import Union
 from typing import cast
-from unittest import skip
 
 import humps
+import orjson
 from genericpath import isdir
 from genericpath import isfile
 
@@ -50,17 +46,6 @@ def import_submodules(package: str) -> Dict[str, types.ModuleType]:
         if is_pkg:
             results.update(import_submodules(full_name))
     return results
-
-
-@asynccontextmanager
-async def slowdown(seconds: int) -> AsyncGenerator[None, None]:
-    """Sleep if nested block was executed faster than X seconds"""
-    started_at = time.time()
-    yield
-    finished_at = time.time()
-    time_spent = finished_at - started_at
-    if time_spent < seconds:
-        await asyncio.sleep(seconds - time_spent)
 
 
 def snake_to_pascal(value: str) -> str:
@@ -194,3 +179,13 @@ def exclude_none(config_json: Any) -> Any:
     if isinstance(config_json, dict):
         return {k: exclude_none(v) for k, v in config_json.items() if v is not None}
     return config_json
+
+
+def _dumps_default(obj):
+    if isinstance(obj, Decimal):
+        return str(obj)
+    raise TypeError
+
+
+def json_dumps(obj):
+    return orjson.dumps(obj, default=_dumps_default).decode()

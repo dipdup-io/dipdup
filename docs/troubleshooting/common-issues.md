@@ -42,7 +42,6 @@ DipDup config reference: <https://dipdup.net/docs/config/database>
 
 Reindexing required! Reason: manual.
 
-  [context_key]: [context_value]
 
 You may want to backup database before proceeding. After that perform one of the following actions:
 
@@ -139,16 +138,3 @@ Failed to configure Hasura:
 Check out Hasura logs for more information.
 
 GraphQL integration docs: <https://dipdup.net/docs/graphql/>
-
-## ConflictingHooksError
-
-### Project contains hooks that conflict with each other
-
-`[old_hook]` hook was superseded by the `[new_hook]` one; they can't be used together.
-
-Perform one of the following actions:
-
-* Follow the docs to migrate to the `[new_hook]` hook, then remove `[old_hook]` hook from the project.
-* Remove `[new_hook]` hook from the project to preserve current behavior.
-
-Release notes: <https://dipdup.net/docs/release-notes/>

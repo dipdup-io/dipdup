@@ -1,8 +1,9 @@
 from enum import IntEnum
 
 from tortoise import ForeignKeyFieldInstance
-from tortoise import Model
 from tortoise import fields
+
+from dipdup.models import Model
 
 
 class AuctionStatus(IntEnum):

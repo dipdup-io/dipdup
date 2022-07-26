@@ -46,11 +46,3 @@ DipDup stores a hash of the SQL version of the DB schema and checks for changes 
 ## Handling chain reorgs
 
 Reorg messages signaling chain reorganizations. That means some blocks, including all operations, are rolled back in favor of another with higher fitness. Chain reorgs happen regularly (especially in testnets), so it's not something you can ignore. You must handle such messages correctly - otherwise, you will likely accumulate duplicate or invalid data. You can implement your rollback logic by editing the `on_index_rollback` hook.
-
-### Single level
-
-Single level rollbacks are processed in the following way:
-
-* If the new block has the same subset of operations as the replaced one — do nothing;
-* If the new block has all the operations from the replaced one AND several new operations — process those new operations;
-* If the new block misses some operations from the replaced one: trigger full reindexing.

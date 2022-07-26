@@ -1,3 +1,5 @@
+import asyncio
+import importlib
 import logging
 import os
 import sys
@@ -15,6 +17,7 @@ from typing import Deque
 from typing import Dict
 from typing import Iterator
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -23,7 +26,6 @@ from typing import cast
 
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
-from tortoise.transactions import _get_connection
 
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
@@ -53,19 +55,21 @@ from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
 from dipdup.models import ContractMetadata
 from dipdup.models import Index
+from dipdup.models import ModelUpdate
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
+from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
-from dipdup.utils import slowdown
 from dipdup.utils.database import execute_sql_scripts
-from dipdup.utils.database import in_global_transaction
+from dipdup.utils.database import get_connection
 from dipdup.utils.database import wipe_schema
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 # NOTE: Dependency cycle
 pending_indexes = deque()  # type: ignore
 pending_hooks: Deque[Awaitable[None]] = deque()
+rolled_back_indexes: Set[str] = set()
 
 
 class MetadataCursor:
@@ -108,10 +112,12 @@ class DipDupContext:
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
+        transactions: TransactionManager,
     ) -> None:
         self.datasources = datasources
         self.config = config
-        self.callbacks = callbacks
+        self._callbacks = callbacks
+        self._transactions = transactions
         self.logger = FormattedLogger('dipdup.context')
 
     def __str__(self) -> str:
@@ -131,7 +137,7 @@ class DipDupContext:
         :param fmt: Format string for `ctx.logger` messages
         :param wait: Wait for hook to finish or fire and forget
         """
-        await self.callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
+        await self._callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
 
     async def fire_handler(
         self,
@@ -149,14 +155,14 @@ class DipDupContext:
         :param datasource: An instance of datasource that triggered the handler
         :param fmt: Format string for `ctx.logger` messages
         """
-        await self.callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
+        await self._callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
     async def execute_sql(self, name: str) -> None:
         """Execute SQL script with given name
 
         :param name: SQL script name within `<project>/sql` directory
         """
-        await self.callbacks.execute_sql(self, name)
+        await self._callbacks.execute_sql(self, name)
 
     async def restart(self) -> None:
         """Restart indexer preserving CLI arguments"""
@@ -190,7 +196,7 @@ class DipDupContext:
             raise ReindexingRequiredError(schema.reindex, context)
 
         elif action == ReindexingAction.wipe:
-            conn = _get_connection(None)
+            conn = get_connection()
             if isinstance(self.config.database, PostgresDatabaseConfig):
                 await wipe_schema(conn, self.config.database.schema_name, self.config.database.immune_tables)
             else:
@@ -250,7 +256,7 @@ class DipDupContext:
 
         await datasource.add_index(index_config)
         for handler_config in index_config.handlers:
-            self.callbacks.register_handler(handler_config)
+            self._callbacks.register_handler(handler_config)
         await index.initialize_state(state)
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
@@ -323,12 +329,38 @@ class HookContext(DipDupContext):
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
+        transactions: TransactionManager,
         logger: FormattedLogger,
         hook_config: HookConfig,
     ) -> None:
-        super().__init__(datasources, config, callbacks)
+        super().__init__(datasources, config, callbacks, transactions)
         self.logger = logger
         self.hook_config = hook_config
+
+    async def rollback(self, index: str, from_level: int, to_level: int) -> None:
+        self.logger.info('Rolling back `%s`: %s -> %s', index, from_level, to_level)
+        if from_level <= to_level:
+            raise RuntimeError(f'Attempt to rollback in future: {from_level} <= {to_level}')
+        if from_level - to_level > self.config.advanced.rollback_depth:
+            # TODO: More context
+            await self.reindex(ReindexingReason.rollback)
+
+        models = importlib.import_module(f'{self.config.package}.models')
+        async with self._transactions.in_transaction():
+            updates = await ModelUpdate.filter(
+                level__lte=from_level,
+                level__gt=to_level,
+                index=index,
+            ).order_by('-id')
+
+            if updates:
+                self.logger.info(f'Reverting {len(updates)} updates')
+            for update in updates:
+                model = getattr(models, update.model_name)
+                await update.revert(model)
+
+        await Index.filter(name=index).update(level=to_level)
+        rolled_back_indexes.add(index)
 
 
 class TemplateValuesDict(dict):
@@ -351,11 +383,12 @@ class HandlerContext(DipDupContext):
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
+        transactions: TransactionManager,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
         datasource: TzktDatasource,
     ) -> None:
-        super().__init__(datasources, config, callbacks)
+        super().__init__(datasources, config, callbacks, transactions)
         self.logger = logger
         self.handler_config = handler_config
         self.datasource = datasource
@@ -373,9 +406,9 @@ class CallbackManager:
     async def run(self) -> None:
         self._logger.debug('Starting CallbackManager loop')
         while True:
-            async with slowdown(1):
-                while pending_hooks:
-                    await pending_hooks.popleft()
+            while pending_hooks:
+                await pending_hooks.popleft()
+            await asyncio.sleep(1)
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
@@ -408,7 +441,8 @@ class CallbackManager:
         new_ctx = HandlerContext(
             datasources=ctx.datasources,
             config=ctx.config,
-            callbacks=ctx.callbacks,
+            callbacks=ctx._callbacks,
+            transactions=ctx._transactions,
             logger=FormattedLogger(module, fmt),
             handler_config=handler_config,
             datasource=datasource,
@@ -431,7 +465,8 @@ class CallbackManager:
         new_ctx = HookContext(
             datasources=ctx.datasources,
             config=ctx.config,
-            callbacks=ctx.callbacks,
+            callbacks=ctx._callbacks,
+            transactions=ctx._transactions,
             logger=FormattedLogger(module, fmt),
             hook_config=hook_config,
         )
@@ -442,9 +477,10 @@ class CallbackManager:
             async with AsyncExitStack() as stack:
                 stack.enter_context(self._callback_wrapper(module))
                 if hook_config.atomic:
-                    await stack.enter_async_context(in_global_transaction())
+                    # NOTE: Do not use versioned transactions here
+                    await stack.enter_async_context(new_ctx._transactions.in_transaction())
 
-                await hook_config.callback_fn(ctx, *args, **kwargs)
+                await hook_config.callback_fn(new_ctx, *args, **kwargs)
 
         if wait:
             await _wrapper()
@@ -454,7 +490,7 @@ class CallbackManager:
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""
         if not isinstance(ctx.config.database, PostgresDatabaseConfig):
-            self._logger.warning('Skipping SQL hook `%s`: not supported on SQLite', name)
+            self._logger.warning('Skipping SQL script `%s`: not supported on SQLite', name)
             return
 
         subpackages = name.split('.')
@@ -462,9 +498,9 @@ class CallbackManager:
         if not exists(sql_path):
             raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 
-        # NOTE: SQL hooks are executed on default connection
-        connection = _get_connection(None)
-        await execute_sql_scripts(connection, sql_path)
+        # NOTE: SQL scripts are not wrapped in transaction
+        conn = get_connection()
+        await execute_sql_scripts(conn, sql_path)
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:

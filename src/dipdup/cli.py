@@ -43,7 +43,6 @@ from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
-from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
@@ -340,19 +339,22 @@ async def config(ctx) -> None:
 
 @config.command(name='export')
 @click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from config.')
+@click.option('--full', is_flag=True, help='Resolve index templates.')
 @click.pass_context
 @cli_wrapper
-async def config_export(ctx, unsafe: bool) -> None:
+async def config_export(ctx, unsafe: bool, full: bool) -> None:
     """
-    Print config after resolving all links and templates.
+    Print config after resolving all links and, optionally, templates.
 
     WARNING: Avoid sharing output with 3rd-parties when `--unsafe` flag set - it may contain secrets!
     """
-    config_yaml = DipDupConfig.load(
+    config = DipDupConfig.load(
         paths=ctx.obj.config.paths,
         environment=unsafe,
-    ).dump()
-    echo(config_yaml)
+    )
+    if full:
+        config.initialize(skip_imports=True)
+    echo(config.dump())
 
 
 @config.command(name='env')
@@ -511,7 +513,7 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
                 conn=conn,
                 name=config.database.schema_name,
                 # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-                immune_tables=config.database.immune_tables if not immune else (),
+                immune_tables=config.database.immune_tables if not immune else set(),
             )
         else:
             await Tortoise._drop_databases()

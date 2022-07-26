@@ -14,12 +14,13 @@ from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import Union
 
 import sqlparse  # type: ignore
-from tortoise import Model
+from tortoise import Model as TortoiseModel
 from tortoise import ModuleType
 from tortoise import Tortoise
 from tortoise import connections
@@ -27,7 +28,6 @@ from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
-from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
 
 from dipdup.exceptions import DatabaseConfigurationError
@@ -44,7 +44,7 @@ def get_connection() -> BaseDBAsyncClient:
     return connections.get(DEFAULT_CONNECTION_NAME)
 
 
-def _set_connection(conn: BaseDBAsyncClient) -> None:
+def set_connection(conn: BaseDBAsyncClient) -> None:
     connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
@@ -85,24 +85,14 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
         await Tortoise.close_connections()
 
 
-@asynccontextmanager
-async def in_global_transaction():
-    """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
-    try:
-        original_conn = get_connection()
-        async with in_transaction() as conn:
-            _set_connection(conn)
-            yield
-    finally:
-        _set_connection(original_conn)
-
-
 def is_model_class(obj: Any) -> bool:
     """Is subclass of tortoise.Model, but not the base class"""
-    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
+    from dipdup.models import Model
+
+    return isinstance(obj, type) and issubclass(obj, TortoiseModel) and obj not in (TortoiseModel, Model)
 
 
-def iter_models(package: Optional[str]) -> Iterator[Tuple[str, Type[Model]]]:
+def iter_models(package: Optional[str]) -> Iterator[Tuple[str, Type[TortoiseModel]]]:
     """Iterate over built-in and project's models"""
     modules = [
         ('int_models', importlib.import_module('dipdup.models')),
@@ -123,23 +113,6 @@ def iter_models(package: Optional[str]) -> Iterator[Tuple[str, Type[Model]]]:
             attr_value = getattr(module, attr)
             if is_model_class(attr_value):
                 yield app, attr_value
-
-
-def set_decimal_context(package: str) -> None:
-    """Adjust system decimal context to match database precision"""
-    context = decimal.getcontext()
-    prec = context.prec
-    for _, model in iter_models(package):
-        for field in model._meta.fields_map.values():
-            if isinstance(field, DecimalField):
-                prec = max(prec, field.max_digits)
-
-    if context.prec < prec:
-        _logger.warning('Decimal context precision has been updated: %s -> %s', context.prec, prec)
-        context.prec = prec
-        # NOTE: DefaultContext used for new threads
-        decimal.DefaultContext.prec = prec
-        decimal.setcontext(context)
 
 
 def get_schema_hash(conn: BaseDBAsyncClient) -> str:
@@ -191,7 +164,7 @@ async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
     await conn.execute_script(f"SELECT truncate_schema('{name}')")
 
 
-async def wipe_schema(conn: BaseDBAsyncClient, name: str, immune_tables: Tuple[str, ...]) -> None:
+async def wipe_schema(conn: BaseDBAsyncClient, name: str, immune_tables: Set[str]) -> None:
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
 
@@ -251,9 +224,12 @@ def prepare_models(package: Optional[str]) -> None:
         for field in model._meta.fields_map.values():
             # NOTE: Enforce fields in snake_case
             field_name = field.model_field_name
-
             if field_name != pascal_to_snake(field_name):
                 raise DatabaseConfigurationError('Model fields must be in snake_case', model)
+
+            # NOTE: Enforce unique field names to avoid GraphQL issues
+            if field_name == table_name:
+                raise DatabaseConfigurationError('Model fields must differ from table name', model)
 
             # NOTE: Increase decimal precision if needed
             if isinstance(field, DecimalField):

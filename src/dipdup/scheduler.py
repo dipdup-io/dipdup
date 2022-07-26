@@ -83,7 +83,8 @@ class SchedulerManager:
             job_ctx = HookContext(
                 config=ctx.config,
                 datasources=ctx.datasources,
-                callbacks=ctx.callbacks,
+                callbacks=ctx._callbacks,
+                transactions=ctx._transactions,
                 logger=logger,
                 hook_config=hook_config,
             )

@@ -76,7 +76,7 @@
 </section>
 <section id="dipdup-config-export">
 <h3>export<a class="headerlink" href="#dipdup-config-export" title="Permalink to this heading">¶</a></h3>
-<p>Print config after resolving all links and templates.</p>
+<p>Print config after resolving all links and, optionally, templates.</p>
 <p>WARNING: Avoid sharing output with 3rd-parties when <cite>–unsafe</cite> flag set - it may contain secrets!</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="nb">export</span> <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
@@ -86,6 +86,12 @@
 <dt class="sig sig-object std" id="cmdoption-dipdup-config-export-unsafe">
 <span class="sig-name descname"><span class="pre">--unsafe</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-config-export-unsafe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resolve environment variables or use default values from config.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-config-export-full">
+<span class="sig-name descname"><span class="pre">--full</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-config-export-full" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve index templates.</p>
 </dd></dl>
 
 </section>

@@ -37,10 +37,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
-from dipdup.exceptions import ConflictingHooksError
 from dipdup.exceptions import DipDupException
-from dipdup.exceptions import InitializationRequiredError
-from dipdup.exceptions import ProjectImportError
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex
 from dipdup.index import HeadIndex
@@ -59,7 +56,7 @@ from dipdup.models import Schema
 from dipdup.models import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
-from dipdup.utils import slowdown
+from dipdup.transactions import TransactionManager
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import get_schema_hash
@@ -72,18 +69,16 @@ class IndexDispatcher:
 
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index] = {}
-        self._tasks: Deque[asyncio.Task] = deque()
 
         self._entrypoint_filter: Set[Optional[str]] = set()
         self._address_filter: Set[str] = set()
 
-    async def run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
-        tasks = [self._run(spawn_datasources_event, start_scheduler_event, early_realtime)]
-        if self._ctx.config.prometheus:
-            tasks.append(self._update_metrics(self._ctx.config.prometheus.update_interval))
-        await gather(*tasks)
-
-    async def _run(self, spawn_datasources_event: Event, start_scheduler_event: Event, early_realtime: bool = False) -> None:
+    async def run(
+        self,
+        spawn_datasources_event: Event,
+        start_scheduler_event: Event,
+        early_realtime: bool = False,
+    ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
         await self._load_index_states()
@@ -105,11 +100,7 @@ class IndexDispatcher:
                     await datasource.subscribe()
 
             tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
-            while self._tasks:
-                tasks.append(self._tasks.popleft())
-
-            async with slowdown(1):
-                await gather(*tasks)
+            indexes_processed = await gather(*tasks)
 
             indexes_spawned = False
             while pending_indexes:
@@ -130,9 +121,14 @@ class IndexDispatcher:
 
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
-            # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
             else:
+                # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
+
+            if not any(indexes_processed):
+                await self._ctx._transactions.cleanup()
+
+            await asyncio.sleep(1)
 
     async def _update_metrics(self, update_interval: float) -> None:
         while True:
@@ -224,18 +220,16 @@ class IndexDispatcher:
             datasource.call_on_rollback(self._on_rollback)
 
     async def _on_head(self, datasource: IndexDatasource, head: HeadBlockData) -> None:
-        # NOTE: Do not await query results - blocked database connection may cause Websocket timeout.
-        self._tasks.append(
-            asyncio.create_task(
-                Head.update_or_create(
-                    name=datasource.name,
-                    defaults={
-                        'level': head.level,
-                        'hash': head.hash,
-                        'timestamp': head.timestamp,
-                    },
-                ),
-            )
+        # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
+        asyncio.ensure_future(
+            Head.update_or_create(
+                name=datasource.name,
+                defaults={
+                    'level': head.level,
+                    'hash': head.hash,
+                    'timestamp': head.timestamp,
+                },
+            ),
         )
         if Metrics.enabled:
             Metrics.set_datasource_head_updated(datasource.name)
@@ -270,7 +264,7 @@ class IndexDispatcher:
             index.push_big_maps(big_maps)
 
     async def _on_rollback(self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
-        """Perform a single level rollback when possible, otherwise call `on_rollback` hook"""
+        """Call `on_index_rollback` hook for each index that is affected by rollback"""
         if from_level <= to_level:
             raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
 
@@ -280,71 +274,40 @@ class IndexDispatcher:
             Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Choose action for each index
-        ignored_indexes: Set[str] = set()
-        single_level_indexes: Set[str] = set()
-        unprocessed_indexes: Set[str] = set()
+        affected_indexes: Set[str] = set()
 
         for index_name, index in self._indexes.items():
             index_level = index.state.level
 
             if index.message_type != type_:
                 self._logger.debug('%s: different channel, skipping', index_name)
-                ignored_indexes.add(index_name)
 
             elif index.datasource != datasource:
                 self._logger.debug('%s: different datasource, skipping', index_name)
-                ignored_indexes.add(index_name)
 
             elif to_level >= index_level:
                 self._logger.debug('%s: level is too low, skipping', index_name)
-                ignored_indexes.add(index_name)
-
-            elif from_level - to_level == 1:
-                if isinstance(index, OperationIndex):
-                    self._logger.debug('%s: single-level, supported', index_name)
-                    single_level_indexes.add(index_name)
-                else:
-                    self._logger.debug('%s: single-level, not supported', index_name)
-                    unprocessed_indexes.add(index_name)
 
             else:
                 self._logger.debug('%s: unprocessed', index_name)
-                unprocessed_indexes.add(index_name)
+                affected_indexes.add(index_name)
 
         self._logger.info(
-            '%s indexes, %s ignored, %s single-level, %s unprocessed',
+            '%s/%s indexes affected',
+            len(affected_indexes),
             len(self._indexes),
-            len(ignored_indexes),
-            len(single_level_indexes),
-            len(unprocessed_indexes),
         )
 
-        for index_name in single_level_indexes:
-            self._logger.info('`%s`: performing a single-level rollback', index_name)
-            if not isinstance(index := self._indexes[index_name], OperationIndex):
-                raise RuntimeError(f'Attempt to single-level rollback non-operation index: {index_name}')  # pragma: no cover
-            index.push_rollback(from_level)
-
-        if not unprocessed_indexes:
+        if not affected_indexes:
             self._logger.info('`%s` rollback complete', channel)
             return
 
-        if self._ctx.config.per_index_rollback:
-            hook_name = 'on_index_rollback'
-            for index_name in unprocessed_indexes:
-                self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
-                await self._ctx.fire_hook(
-                    hook_name,
-                    index=self._indexes[index_name],
-                    from_level=from_level,
-                    to_level=to_level,
-                )
-        else:
-            hook_name = 'on_rollback'
-            self._logger.warning('`%s`: can\'t process, firing `%s` hook', datasource.name, hook_name)
+        hook_name = 'on_index_rollback'
+        for index_name in affected_indexes:
+            self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
             await self._ctx.fire_hook(
                 hook_name,
-                datasource=datasource,
+                index=self._indexes[index_name],
                 from_level=from_level,
                 to_level=to_level,
             )
@@ -361,10 +324,15 @@ class DipDup:
         self._datasources: Dict[str, Datasource] = {}
         self._datasources_by_config: Dict[DatasourceConfigT, Datasource] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
+        self._transactions: TransactionManager = TransactionManager(
+            depth=self._config.advanced.rollback_depth,
+            immune_tables=self._config.database.immune_tables,
+        )
         self._ctx = DipDupContext(
             config=self._config,
             datasources=self._datasources,
             callbacks=self._callbacks,
+            transactions=self._transactions,
         )
         self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
         self._schema: Optional[Schema] = None
@@ -392,6 +360,7 @@ class DipDup:
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
+            await self._set_up_transactions(stack)
             await self._set_up_datasources(stack)
             await self._set_up_hooks(tasks, run=not self._config.oneshot)
             await self._set_up_prometheus()
@@ -404,14 +373,17 @@ class DipDup:
                 await MetadataCursor.initialize()
 
             if self._config.oneshot:
+                start_scheduler_event = Event()
+                spawn_datasources_event = Event()
+
                 if self._config.jobs:
                     self._logger.warning('Running in oneshot mode; `jobs` are ignored')
-                start_scheduler_event, spawn_datasources_event = Event(), Event()
             else:
-                start_scheduler_event = await self._set_up_scheduler(stack, tasks)
+                start_scheduler_event = await self._set_up_scheduler(tasks)
+                spawn_datasources_event = await self._spawn_datasources(tasks)
+
                 if not advanced_config.postpone_jobs:
                     start_scheduler_event.set()
-                spawn_datasources_event = await self._spawn_datasources(tasks)
 
             spawn_index_tasks = (create_task(self._ctx.spawn_index(name)) for name in self._config.indexes)
             await gather(*spawn_index_tasks)
@@ -479,6 +451,9 @@ class DipDup:
 
         await self._ctx.fire_hook('on_restart')
 
+    async def _set_up_transactions(self, stack: AsyncExitStack) -> None:
+        stack.enter_context(self._transactions.register())
+
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
         await stack.enter_async_context(
             tortoise_wrapper(
@@ -490,13 +465,7 @@ class DipDup:
 
     async def _set_up_hooks(self, tasks: Set[Task], run: bool = False) -> None:
         for hook_config in default_hooks.values():
-            try:
-                self._callbacks.register_hook(hook_config)
-            except ProjectImportError:
-                if hook_config.callback in ('on_rollback', 'on_index_rollback'):
-                    self._logger.info(f'Hook `{hook_config.callback}` is not available')
-                else:
-                    raise
+            self._callbacks.register_hook(hook_config)
 
         for hook_config in self._config.hooks.values():
             self._callbacks.register_hook(hook_config)
@@ -568,6 +537,8 @@ class DipDup:
                 )
             )
         )
+        if prometheus_config := self._ctx.config.prometheus:
+            tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
 
     async def _spawn_datasources(self, tasks: Set[Task]) -> Event:
         event = Event()
@@ -583,7 +554,7 @@ class DipDup:
         tasks.add(create_task(_event_wrapper()))
         return event  # noqa: R504
 
-    async def _set_up_scheduler(self, stack: AsyncExitStack, tasks: Set[Task]) -> Event:
+    async def _set_up_scheduler(self, tasks: Set[Task]) -> Event:
         # NOTE: Prepare SchedulerManager
         event = Event()
         scheduler = SchedulerManager(self._config.advanced.scheduler)
