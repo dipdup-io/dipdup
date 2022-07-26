@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
-## [5.2.5] - 2022-07-26
+## [Unreleased]
 
 ### Added
 
@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning].
 - hooks: Removed deprecated `on_rollback` hook.
 - index: Do not try to avoid single-level rollbacks by comparing operation hashes.
 
-## [Unreleased]
+## [5.2.5] - 2022-07-26
 
 ### Fixed
 
