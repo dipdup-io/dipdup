@@ -1174,6 +1174,7 @@ class AdvancedConfig:
     :param metadata_interface: Expose metadata interface for TzKT
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
+    :param crash_reporting: Enable crash reporting
     """
 
     reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -1184,6 +1185,7 @@ class AdvancedConfig:
     metadata_interface: bool = False
     skip_version_check: bool = False
     rollback_depth: int = 2
+    crash_reporting: bool = False
 
 
 @dataclass

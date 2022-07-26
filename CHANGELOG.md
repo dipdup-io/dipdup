@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- config: Added `advanced.crash_reporting` flag to enable reporting crashes to Baking Bad.
+- dipdup: Save tombstones in `~/.cache/dipdup` on crash.
+
 ## [6.0.0-rc1] - 2022-07-26
 
 ### Added

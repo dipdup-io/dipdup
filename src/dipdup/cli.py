@@ -8,11 +8,15 @@ import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
+from datetime import datetime
 from functools import partial
 from functools import wraps
 from os.path import dirname
 from os.path import exists
 from os.path import join
+from pathlib import Path
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -20,6 +24,7 @@ from typing import cast
 
 import aiohttp
 import asyncclick as click
+import orjson as json
 from dotenv import load_dotenv
 from tortoise import Tortoise
 from tortoise.utils import get_schema_sql
@@ -32,6 +37,7 @@ from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config import LoggingConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import SentryConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DipDupError
@@ -41,12 +47,15 @@ from dipdup.hasura import HasuraGateway
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
+from dipdup.utils import write
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
+# TODO: Replace with real value
+BAKING_BAD_SENTRY_DSN = ''
 
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
@@ -96,14 +105,34 @@ def cli_wrapper(fn):
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
+            # NOTE: Lazy import to speed up startup
+            import sentry_sdk.serializer
+            import sentry_sdk.utils
+
+            # NOTE: Generate a tombstone
+            exc_info = sentry_sdk.utils.exc_info_from_error(e)
+            event, _ = sentry_sdk.utils.event_from_exception(exc_info)
+            event = sentry_sdk.serializer.serialize(event)
+            write(
+                path=join(
+                    Path.home(),
+                    '.cache',
+                    'dipdup',
+                    f'tombstone_{int(datetime.now().timestamp())}.json',
+                ),
+                content=json.dumps(event, option=json.OPT_INDENT_2),
+            )
+
+            # NOTE: Print helpful error message after traceback
             help_message = e.format() if isinstance(e, DipDupError) else DipDupError().format()
             atexit.register(partial(click.echo, help_message, err=True))
+
             raise
 
     return wrapper
 
 
-def _sentry_before_send(event, _):
+def _sentry_before_send(event: Dict[str, Any], hint: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if _is_shutting_down:
         return None
     return event
@@ -111,7 +140,10 @@ def _sentry_before_send(event, _):
 
 def _init_sentry(config: DipDupConfig) -> None:
     if not config.sentry:
-        return
+        if not config.advanced.crash_reporting:
+            return
+        config.sentry = SentryConfig(dsn=BAKING_BAD_SENTRY_DSN)
+
     if config.sentry.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
