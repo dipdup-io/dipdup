@@ -171,8 +171,8 @@ class Index:
     def realtime(self) -> bool:
         return self.state.status == IndexStatus.REALTIME and not self._queue
 
-    @property
-    def sync_level(self) -> int:
+    def get_sync_level(self) -> int:
+        """Get level index needs to be synchronized to depending on its subscription status"""
         sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
         if not sync_levels:
             raise RuntimeError('Index has no subscriptions')
@@ -220,7 +220,7 @@ class Index:
             await self.state.update_status(IndexStatus.ONESHOT, head_level)
 
         index_level = self.state.level
-        sync_level = self.sync_level
+        sync_level = self.get_sync_level()
 
         if index_level < sync_level:
             self._logger.info('Index is behind datasource level, syncing: %s -> %s', index_level, sync_level)
@@ -317,21 +317,21 @@ class OperationIndex(Index):
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_operations(message)
+                await self._process_level_operations(message, message_level)
 
         else:
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, 0)
 
-    async def _synchronize(self, head_level: int) -> None:
+    async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        index_level = await self._enter_sync_state(head_level)
+        index_level = await self._enter_sync_state(sync_level)
         if index_level is None:
             return
 
         first_level = index_level + 1
 
-        self._logger.info('Fetching operations from level %s to %s', first_level, head_level)
+        self._logger.info('Fetching operations from level %s to %s', first_level, sync_level)
         transaction_addresses = await self._get_transaction_addresses()
         origination_addresses = await self._get_origination_addresses()
 
@@ -346,7 +346,7 @@ class OperationIndex(Index):
         fetcher = OperationFetcher(
             datasource=self._datasource,
             first_level=first_level,
-            last_level=head_level,
+            last_level=sync_level,
             transaction_addresses=transaction_addresses,
             origination_addresses=origination_addresses,
             migration_originations=migration_originations,
@@ -354,7 +354,7 @@ class OperationIndex(Index):
 
         async for level, operations in fetcher.fetch_operations_by_level():
             if Metrics.enabled:
-                Metrics.set_levels_to_sync(self._config.name, head_level - level)
+                Metrics.set_levels_to_sync(self._config.name, sync_level - level)
 
             operation_subgroups = tuple(
                 extract_operation_subgroups(
@@ -368,13 +368,17 @@ class OperationIndex(Index):
                 with ExitStack() as stack:
                     if Metrics.enabled:
                         stack.enter_context(Metrics.measure_level_sync_duration())
-                    await self._process_level_operations(operation_subgroups)
+                    await self._process_level_operations(operation_subgroups, sync_level)
 
-        await self._exit_sync_state(head_level)
+        await self._exit_sync_state(sync_level)
 
-    async def _process_level_operations(self, operation_subgroups: Tuple[OperationSubgroup, ...]) -> None:
+    async def _process_level_operations(
+        self,
+        operation_subgroups: Tuple[OperationSubgroup, ...],
+        sync_level: int,
+    ) -> None:
         if not operation_subgroups:
-            raise RuntimeError('No operations to process')
+            return
 
         batch_level = operation_subgroups[0].operations[0].level
         index_level = self.state.level
@@ -394,7 +398,7 @@ class OperationIndex(Index):
             await self.state.update_status(level=batch_level)
             return
 
-        async with self._ctx._transactions.in_transaction(batch_level, self.sync_level, self.name):
+        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
             for operation_subgroup, handler_config, args in matched_handlers:
                 await self._call_matched_handler(handler_config, operation_subgroup, args)
             await self.state.update_status(level=batch_level)
@@ -609,11 +613,11 @@ class BigMapIndex(Index):
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_big_maps(big_maps)
+                await self._process_level_big_maps(big_maps, message_level)
 
-    async def _synchronize(self, head_level: int) -> None:
+    async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
-        index_level = await self._enter_sync_state(head_level)
+        index_level = await self._enter_sync_state(sync_level)
         if index_level is None:
             return
 
@@ -623,15 +627,15 @@ class BigMapIndex(Index):
                 self._config.skip_history == SkipHistory.once and not self.state.level,
             )
         ):
-            await self._synchronize_level(head_level)
+            await self._synchronize_level(sync_level)
         else:
-            await self._synchronize_full(index_level, head_level)
+            await self._synchronize_full(index_level, sync_level)
 
-        await self._exit_sync_state(head_level)
+        await self._exit_sync_state(sync_level)
 
-    async def _synchronize_full(self, index_level: int, head_level: int) -> None:
+    async def _synchronize_full(self, index_level: int, sync_level: int) -> None:
         first_level = index_level + 1
-        self._logger.info('Fetching big map diffs from level %s to %s', first_level, head_level)
+        self._logger.info('Fetching big map diffs from level %s to %s', first_level, sync_level)
 
         big_map_addresses = self._get_big_map_addresses()
         big_map_paths = self._get_big_map_paths()
@@ -639,7 +643,7 @@ class BigMapIndex(Index):
         fetcher = BigMapFetcher(
             datasource=self._datasource,
             first_level=first_level,
-            last_level=head_level,
+            last_level=sync_level,
             big_map_addresses=big_map_addresses,
             big_map_paths=big_map_paths,
         )
@@ -647,9 +651,9 @@ class BigMapIndex(Index):
         async for level, big_maps in fetcher.fetch_big_maps_by_level():
             with ExitStack() as stack:
                 if Metrics.enabled:
-                    Metrics.set_levels_to_sync(self._config.name, head_level - level)
+                    Metrics.set_levels_to_sync(self._config.name, sync_level - level)
                     stack.enter_context(Metrics.measure_level_sync_duration())
-                await self._process_level_big_maps(big_maps)
+                await self._process_level_big_maps(big_maps, sync_level)
 
     async def _synchronize_level(self, head_level: int) -> None:
         # NOTE: Checking late because feature flags could be modified after loading config
@@ -691,7 +695,11 @@ class BigMapIndex(Index):
 
             await self.state.update_status(level=head_level)
 
-    async def _process_level_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
+    async def _process_level_big_maps(
+        self,
+        big_maps: Tuple[BigMapData, ...],
+        sync_level: int,
+    ) -> None:
         if not big_maps:
             return
 
@@ -703,12 +711,15 @@ class BigMapIndex(Index):
         self._logger.debug('Processing big map diffs of level %s', batch_level)
         matched_handlers = await self._match_big_maps(big_maps)
 
+        if Metrics.enabled:
+            Metrics.set_index_handlers_matched(len(matched_handlers))
+
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
             await self.state.update_status(level=batch_level)
             return
 
-        async with self._ctx._transactions.in_transaction(batch_level, self.sync_level, self.name):
+        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=batch_level)
@@ -836,7 +847,7 @@ class HeadIndex(Index):
             if batch_level <= index_level:
                 raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
-            async with self._ctx._transactions.in_transaction(batch_level, self.sync_level, self.name):
+            async with self._ctx._transactions.in_transaction(batch_level, message_level, self.name):
                 self._logger.debug('Processing head info of level %s', batch_level)
                 for handler_config in self._config.handlers:
                     await self._call_matched_handler(handler_config, head)
@@ -872,34 +883,39 @@ class TokenTransferIndex(Index):
         if Metrics.enabled:
             Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
 
-    async def _synchronize(self, last_level: int) -> None:
+    async def _synchronize(self, sync_level: int) -> None:
         """Fetch token transfers via Fetcher and pass to message callback"""
-        first_level = await self._enter_sync_state(last_level)
+        first_level = await self._enter_sync_state(sync_level)
         if first_level is None:
             return
 
-        self._logger.info('Fetching token transfers from level %s to %s', first_level, last_level)
+        self._logger.info('Fetching token transfers from level %s to %s', first_level, sync_level)
 
         fetcher = TokenTransferFetcher(
             datasource=self._datasource,
             first_level=first_level,
-            last_level=last_level,
+            last_level=sync_level,
         )
 
         async for level, token_transfers in fetcher.fetch_token_transfers_by_level():
             with ExitStack() as stack:
                 if Metrics.enabled:
-                    Metrics.set_levels_to_sync(self._config.name, last_level - level)
+                    Metrics.set_levels_to_sync(self._config.name, sync_level - level)
                     stack.enter_context(Metrics.measure_level_sync_duration())
-                await self._process_level_token_transfers(token_transfers)
+                await self._process_level_token_transfers(token_transfers, sync_level)
 
-        await self._exit_sync_state(last_level)
+        await self._exit_sync_state(sync_level)
 
-    async def _process_level_token_transfers(self, token_transfers: Iterable[TokenTransferData]) -> None:
+    async def _process_level_token_transfers(
+        self,
+        token_transfers: Tuple[TokenTransferData, ...],
+        sync_level: int,
+    ) -> None:
         if not token_transfers:
             return
-        batch_level = self._extract_level(tuple(token_transfers))
 
+        # FIXME: Why is this needed?
+        batch_level = self._extract_level(token_transfers)
         if self.state.status == IndexStatus.SYNCING:
             if batch_level < self.state.level:
                 raise RuntimeError(
@@ -914,12 +930,15 @@ class TokenTransferIndex(Index):
         self._logger.debug('Processing token transfers of level %s', batch_level)
         matched_handlers = await self._match_token_transfers(token_transfers)
 
+        if Metrics.enabled:
+            Metrics.set_index_handlers_matched(len(matched_handlers))
+
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
             await self.state.update_status(level=batch_level)
             return
 
-        async with self._ctx._transactions.in_transaction(batch_level, self.sync_level, self.name):
+        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=batch_level)
@@ -961,7 +980,7 @@ class TokenTransferIndex(Index):
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_token_transfers(token_transfers)
+                await self._process_level_token_transfers(token_transfers, message_level)
 
     def _get_token_addresses(self) -> Set[str]:
         """Get addresses to fetch big map diffs from during initial synchronization"""
