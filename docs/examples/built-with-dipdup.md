@@ -32,6 +32,6 @@ Juster is an on-chain smart contract platform allowing users to take part in an 
 
 ## tz1and
 
-A Virtual World and NFT Marketplace.
-
 [Homepage](https://www.tz1and.com/) | [API](https://indexer.tz1and.com/v1/graphql) | [GitHub](https://github.com/tz1and/tezland-indexer)
+
+A Virtual World and NFT Marketplace.
