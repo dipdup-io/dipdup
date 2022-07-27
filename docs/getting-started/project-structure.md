@@ -89,6 +89,6 @@ The same rules apply to handler callbacks. Note that the `callback` field must b
 >
 > * {{ #summary getting-started/defining-models.md }}
 > * {{ #summary getting-started/implementing-handlers.md }}
-> * {{ #summary advanced/hooks/README.md }}
+> * {{ #summary advanced/hooks.md }}
 > * {{ #summary advanced/sql.md }}
 > * {{ #summary graphql/hasura.md }}

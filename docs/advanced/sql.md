@@ -1,4 +1,4 @@
-# Executing SQL scripts
+# SQL scripts
 
 Put your `*.sql` scripts to `<package>/sql`. You can run these scripts from any callback with `ctx.execute_sql('name')`. If `name` is a directory, each script it contains will be executed.
 

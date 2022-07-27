@@ -15,17 +15,16 @@
   * [Implementing handlers](getting-started/implementing-handlers.md)
 * [Advanced usage](advanced/README.md)
   * [Datasources](advanced/datasources.md)
-  * [Hooks](advanced/hooks/README.md)
-    * [Default hooks](advanced/hooks/default.md)
-    * [Job scheduler](advanced/hooks/jobs.md)
+  * [Hooks](advanced/hooks.md)
+  * [Default hooks](advanced/default-hooks.md)
+  * [Job scheduler](advanced/jobs.md)
   * [Reindexing](advanced/reindexing.md)
   * [Feature flags](advanced/feature-flags.md)
-  * [Executing SQL scripts](advanced/sql.md)
+  * [SQL scripts](advanced/sql.md)
   * [Improving performance](advanced/performance.md)
   * [Callback context (ctx)](advanced/context/README.md)
   * [Internal models](advanced/internal-models.md)
-  * [Spawning indexes at runtime](advanced/index-factories.md)
-  * [Scheduler configuration](advanced/scheduler.md)
+  * [Index factories](advanced/index-factories.md)
   * [Metadata interface](advanced/metadata-interface.md)
 * [GraphQL API](graphql/README.md)
   * [Hasura integration](graphql/hasura.md)
@@ -48,13 +47,16 @@
   * [Processing offchain data](cookbook/offchain-data.md)
   * [Reusing typename for different contracts](cookbook/reusing-typenames.md)
   * [Synchronizing multiple handlers/hooks](cookbook/sync-callbacks.md)
-  * [Multiprocessing](cookbook/multiprocessing.md)
-* [Examples](examples/README.md)
-  * [Demo projects](examples/demo-projects.md)
-  * [Built with DipDup](examples/built-with-dipdup.md)
-* [Services (plugins)](services/README.md)
-  * [mempool](services/mempool.md)
-  * [metadata](services/metadata.md)
+
+# Examples
+
+* [Demo projects](examples/demo-projects.md)
+* [Built with DipDup](examples/built-with-dipdup.md)
+
+# Services
+
+* [mempool](services/mempool.md)
+* [metadata](services/metadata.md)
 
 # Reference Guide
 

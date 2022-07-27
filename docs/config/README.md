@@ -10,19 +10,21 @@ dipdup -c configs/config.yml run
 
 DipDup configuration file consists of several logical blocks:
 
-| | |
-|-|-|
-| Header               | `spec_version`* |
-|                      | `package`* |
-| Inventory            | `database`* |
-|                      | `contracts`* |
-|                      | `datasources`* |
-| Index definitions    | `indexes` |
-|                      | `templates` |
-| Integrations         | `sentry`
-|                      | `hasura` |
-| Hooks                | `hooks` |
-|                      | `jobs` |
+| | | |
+|-|-|-|
+| Header               | `spec_version`* | {{ #summary config/spec_version.md}} |
+|                      | `package`*      | {{ #summary config/package.md}} |
+| Inventory            | `database`      | {{ #summary config/database.md}} |
+|                      | `contracts`     | {{ #summary config/contracts.md}} |
+|                      | `datasources`   | {{ #summary config/datasources.md}} |
+| Index definitions    | `indexes`       | {{ #summary config/indexes/README.md}} |
+|                      | `templates`     | {{ #summary config/templates.md}} |
+| Hook definitions     | `hooks`         | {{ #summary config/hooks.md}} |
+|                      | `jobs`          | {{ #summary config/jobs.md}} |
+| Integrations         | `sentry`        | {{ #summary config/sentry.md}} |
+|                      | `hasura`        | {{ #summary config/hasura.md}} |
+|                      | `prometheus`    | {{ #summary config/prometheus.md}} |
+| Tunables             | `advanced`      | {{ #summary config/advanced.md}} |
 
 `*`  — required sections
 
