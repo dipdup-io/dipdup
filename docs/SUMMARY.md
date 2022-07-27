@@ -23,7 +23,6 @@
   * [Executing SQL scripts](advanced/sql.md)
   * [Improving performance](advanced/performance.md)
   * [Callback context (ctx)](advanced/context/README.md)
-    * [Full reference](advanced/context/reference.md)
   * [Internal models](advanced/internal-models.md)
   * [Spawning indexes at runtime](advanced/index-factories.md)
   * [Scheduler configuration](advanced/scheduler.md)

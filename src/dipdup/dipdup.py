@@ -385,7 +385,7 @@ class DipDup:
                 if not advanced_config.postpone_jobs:
                     start_scheduler_event.set()
 
-            spawn_index_tasks = (create_task(self._ctx.spawn_index(name)) for name in self._config.indexes)
+            spawn_index_tasks = (create_task(self._ctx._spawn_index(name)) for name in self._config.indexes)
             await gather(*spawn_index_tasks)
 
             await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime)

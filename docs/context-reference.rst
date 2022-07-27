@@ -1,2 +1,2 @@
 .. automodule:: dipdup.context
-   :members:
+   :members: DipDupContext, HandlerContext, HookContext
