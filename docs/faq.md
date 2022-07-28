@@ -19,3 +19,16 @@ class ContractStorage(BaseModel):
 ```
 
 Don't forget `Extra.ignore` Pydantic hint, otherwise indexing will fail. Files starting with `# dipdup: ignore` won't be overwritten on init.
+
+
+# Processing offchain data
+
+> 🚧 **UNDER CONSTRUCTION**
+>
+> This page or paragraph is yet to be written. Come back later.
+
+# Synchronizing multiple handlers/hooks
+
+> 🚧 **UNDER CONSTRUCTION**
+>
+> This page or paragraph is yet to be written. Come back later.

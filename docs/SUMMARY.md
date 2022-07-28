@@ -30,9 +30,6 @@
   * [Hasura integration](graphql/hasura.md)
   * [REST endpoints](graphql/rest.md)
   * [GenQL](graphql/genql.md)
-* [Troubleshooting](troubleshooting/README.md)
-  * [Common issues](troubleshooting/common-issues.md)
-  * [Reporting bugs](troubleshooting/reporting-bugs.md)
 * [Deployment and operations](deployment/README.md)
   * [Database engines](deployment/database-engines.md)
   * [Building Docker images](deployment/docker.md)
@@ -43,10 +40,9 @@
   * [Logging](deployment/logging.md)
   * [Monitoring](deployment/monitoring.md)
   * [Backup and restore](deployment/backups.md)
-* [Cookbook](cookbook/README.md)
-  * [Processing offchain data](cookbook/offchain-data.md)
-  * [Reusing typename for different contracts](cookbook/reusing-typenames.md)
-  * [Synchronizing multiple handlers/hooks](cookbook/sync-callbacks.md)
+* [F.A.Q.](faq.md)
+* [Troubleshooting](troubleshooting.md)
+* [Contributing](CONTRIBUTING.md)
 
 # Examples
 
