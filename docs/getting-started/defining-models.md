@@ -25,7 +25,7 @@ There are some limitations introduced to make Hasura GraphQL integration easier.
 * Model fields must be in `snake_case`
 * Model fields must differ from table name
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
 > * [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)

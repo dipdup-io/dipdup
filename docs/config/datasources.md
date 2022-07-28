@@ -51,6 +51,6 @@ datasources:
     url: https://ipfs.io/ipfs
 ```
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary advanced/datasources.md}}

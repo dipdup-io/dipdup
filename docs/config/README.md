@@ -27,7 +27,7 @@ DipDup configuration file consists of several logical blocks:
 | Tunables             | `advanced`      | {{ #summary config/advanced.md}} |
 |                      | `logging`       | {{ #summary config/logging.md}} |
 
-`*`  — required fields
+`*` — required fields
 
 ## Environment variables
 

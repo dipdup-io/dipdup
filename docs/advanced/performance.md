@@ -62,7 +62,7 @@ By default, DipDup retries failed requests infinitely, exponentially increasing 
 
 `batch_size` parameter is TzKT-specific. By default, DipDup limit requests to 10000 items, the maximum value allowed on public instances provided by Baking Bad. Decreasing this value will reduce the time required for TzKT to process a single request and thus reduce the load. By reducing the `connection_limit` parameter, you can achieve the same effect (limited to synchronizing multiple indexes concurrently).
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
 > * [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)

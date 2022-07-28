@@ -20,7 +20,7 @@ This hook fires after the database are re-initialized after reindexing (wipe). H
 
 This hook fires when every active index reaches a realtime state. Here you can clear caches internal caches or do other cleanups.
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary advanced/reindexing.md}}
 > * {{ #summary advanced/sql.md}}

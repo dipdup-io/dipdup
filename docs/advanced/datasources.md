@@ -121,6 +121,6 @@ assert protocol_json['hash'] == 'PtHangz2aRngywmSRGGvrcTyMbbdpWdpFKuS4uMWxg2RaH9
 
 Datasource HTTP connection parameters (ratelimit, backoff, etc.) are applied on every request.
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary config/datasources.md}}

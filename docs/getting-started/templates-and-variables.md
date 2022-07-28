@@ -26,7 +26,7 @@ Any string value wrapped in angle brackets is treated as a placeholder, so make 
 
 Any index implementing a template must have a value for each existing placeholder; the exception raised otherwise. Those values are within the handler context at `ctx.template_values`.
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary advanced/index-factories.md }}
 > * {{ #summary config/templates.md }}

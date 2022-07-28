@@ -26,7 +26,7 @@ poetry add dipdup
 poetry shell
 ```
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary getting-started/installation.md}}
 > * [Poetry documentation](https://python-poetry.org/docs/)
@@ -70,7 +70,7 @@ indexes:
             entrypoint: mint
 ```
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary getting-started/templates-and-variables.md}}
 > * {{ #summary config/README.md}}
@@ -118,7 +118,7 @@ demo_tzbtc
 
 That's a lot of files and directories! But don't worry, we will need only `models.py` and `handlers` modules in this guide.
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary getting-started/project-structure.md}}
 > * {{ #summary cli-reference.md#init}}
@@ -147,7 +147,7 @@ class Holder(Model):
     last_seen = fields.DatetimeField(null=True)
 ```
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary getting-started/defining-models.md}}
 > * [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
@@ -244,7 +244,7 @@ async def on_mint(
 
 And that's all! We can run the indexer now.
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary getting-started/implementing-handlers.md}}
 
@@ -256,6 +256,6 @@ dipdup run
 
 DipDup will fetch all the historical data and then switch to realtime updates. Your application data has been successfully indexed!
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary cli-reference.md}}
