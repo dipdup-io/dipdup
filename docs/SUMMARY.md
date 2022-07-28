@@ -53,7 +53,7 @@
 * [Demo projects](examples/demo-projects.md)
 * [Built with DipDup](examples/built-with-dipdup.md)
 
-# Services
+# Standalone services
 
 * [mempool](services/mempool.md)
 * [metadata](services/metadata.md)
@@ -75,6 +75,7 @@
     * [operation](config/indexes/operation.md)
     * [template](config/indexes/template.md)
   * [jobs](config/jobs.md)
+  * [logging](config/logging.md)
   * [package](config/package.md)
   * [prometheus](config/prometheus.md)
   * [sentry](config/sentry.md)

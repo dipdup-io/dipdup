@@ -25,8 +25,9 @@ DipDup configuration file consists of several logical blocks:
 |                      | `hasura`        | {{ #summary config/hasura.md}} |
 |                      | `prometheus`    | {{ #summary config/prometheus.md}} |
 | Tunables             | `advanced`      | {{ #summary config/advanced.md}} |
+|                      | `logging`       | {{ #summary config/logging.md}} |
 
-`*`  — required sections
+`*`  — required fields
 
 ## Environment variables
 
@@ -40,10 +41,10 @@ You can use environment variables throughout the configuration file, except for 
 
 ## Merging config files
 
-DipDup allows you to customize the configuration for a specific environment or a workflow. It works similar to docker-compose, but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide `-c` command-line option multiple times:
+DipDup allows you to customize the configuration for a specific environment or a workflow. It works similar to docker-compose, but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the `-c` command-line option multiple times:
 
 ```shell
 dipdup -c dipdup.yml -c dipdup.prod.yml run
 ```
 
-Run [`config export`](../cli-reference.md#dipdup-config-export) command if unsure about final config used by DipDup.
+Run [`config export`](../cli-reference.md#dipdup-config-export) command if unsure about the final config used by DipDup.
