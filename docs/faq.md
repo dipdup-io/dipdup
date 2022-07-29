@@ -1,8 +1,8 @@
-# Reusing typename for different contracts
+# F.A.Q
 
-In some cases, you may want to make some manual changes in typeclasses and ensure they won't be lost on init. Let's say you want to reuse typename for multiple contracts providing the same interface (like FA1.2 and FA2 tokens) but having different storage structure. You can comment out differing fields which are not important for your index.
+## How to index different contracts that share the same interface?
 
-`types/contract_typename/storage.py`
+Multiple contracts can provide the same interface (like FA1.2 and FA2 standard tokens) but have a different storage structure. If you try to use the same typename for them, indexing will fail. However, you can modify typeclasses manually. Modify `types/<typename>/storage.py` file and comment out unique fields that are not important for your index:
 
 ```python
 # dipdup: ignore
@@ -13,22 +13,25 @@ class ContractStorage(BaseModel):
     class Config:
         extra = Extra.ignore
 
-    some_common_big_map: Dict[str, str]
-    # unique_big_map_a: Dict[str, str]
-    # unique_big_map_b: Dict[str, str]
+    common_ledger: Dict[str, str]
+    # unique_field_foo: str
+    # unique_field_bar: str
 ```
 
-Don't forget `Extra.ignore` Pydantic hint, otherwise indexing will fail. Files starting with `# dipdup: ignore` won't be overwritten on init.
+Note the `# dipdup: ignore` comment on the first line. It tells DipDup not to overwrite this file on `init --overwrite-types` command.
 
+Don't forget `Extra.ignore` Pydantic hint, otherwise, storage deserialization will fail.
 
-# Processing offchain data
-
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
-
-# Synchronizing multiple handlers/hooks
+## What is the correct way to process off-chain data?
 
 > 🚧 **UNDER CONSTRUCTION**
 >
 > This page or paragraph is yet to be written. Come back later.
+
+## One of my indexes depends on another one's indexed data. How to process them in a specific order?
+
+Indexes of all kinds are fully independent. They are processed in parallel, have their message queues and don't share any state. It is one of the essential DipDup concepts, so there's no "official" way to manage the order of indexing.
+
+Avoid waiting for sync primitives like `asyncio.Event` or `asyncio.Lock` in handlers. Indexing will be stuck forever waiting for the database transaction to complete.
+
+Instead, save raw data in handlers and process it later with hooks when all conditions are met. For example, process data batch only when all indexes in the `dipdup_index` table have reached a specific level.
