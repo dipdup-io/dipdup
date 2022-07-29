@@ -25,7 +25,7 @@ from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import default_hooks
+from dipdup.config import event_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
@@ -464,8 +464,8 @@ class DipDup:
         )
 
     async def _set_up_hooks(self, tasks: Set[Task], run: bool = False) -> None:
-        for hook_config in default_hooks.values():
-            self._callbacks.register_hook(hook_config)
+        for event_hook_config in event_hooks.values():
+            self._callbacks.register_hook(event_hook_config)
 
         for hook_config in self._config.hooks.values():
             self._callbacks.register_hook(hook_config)

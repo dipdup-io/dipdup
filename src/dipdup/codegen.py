@@ -29,7 +29,7 @@ from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
-from dipdup.config import default_hooks
+from dipdup.config import event_hooks
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
@@ -292,7 +292,7 @@ class DipDupCodeGenerator:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     async def generate_hooks(self) -> None:
-        for hook_configs in self._config.hooks.values(), default_hooks.values():
+        for hook_configs in self._config.hooks.values(), event_hooks.values():
             for hook_config in hook_configs:
                 await self._generate_callback(hook_config, sql=True)
 

@@ -30,6 +30,7 @@ from tortoise.exceptions import OperationalError
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
+from dipdup.config import EventHookConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import HookConfig
@@ -550,6 +551,11 @@ class CallbackManager:
     ) -> None:
         module = f'{self._package}.hooks.{name}'
         hook_config = self._get_hook(name)
+
+        if isinstance(hook_config, EventHookConfig):
+            if isinstance(ctx, (HandlerContext, HookContext)):
+                raise RuntimeError('Event hooks cannot be fired manually')
+
         new_ctx = HookContext._wrap(
             ctx,
             logger=FormattedLogger(module, fmt),
