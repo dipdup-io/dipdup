@@ -33,8 +33,8 @@ DipDup applies all updates atomically block by block. In case of an emergency sh
 
 Here are a few essential things to know before running your indexer:
 
-* Ensure that the database you're connecting to is used by DipDup exclusively. Changes in index configuration or models require DipDup to **drop the whole database** and start indexing from scratch.
-* Do not rename existing indexes in the config file without cleaning up the database first. DipDup won't handle that automatically and will treat the renamed index as new.
+* Ensure that the database (or schema in the case of PostgreSQL) you're connecting to is used by DipDup exclusively. Changes in index configuration or models require DipDup to **drop the whole database (schema)** and start indexing from scratch. You can, however, mark specific tables as immune to preserve them from being dropped.
+* Changing index config triggers reindexing. Also, do not change aliases of existing indexes in the config file without cleaning up the database first. DipDup won't handle that automatically and will treat the renamed index as new.
 * Multiple indexes pointing to different contracts should not reuse the same models (unless you know what you are doing) because synchronization is done sequentially by index.
 
 ## Schema migration
@@ -45,4 +45,6 @@ DipDup stores a hash of the SQL version of the DB schema and checks for changes 
 
 ## Handling chain reorgs
 
-Reorg messages signaling chain reorganizations. That means some blocks, including all operations, are rolled back in favor of another with higher fitness. Chain reorgs happen regularly (especially in testnets), so it's not something you can ignore. You must handle such messages correctly - otherwise, you will likely accumulate duplicate or invalid data. You can implement your rollback logic by editing the `on_index_rollback` hook.
+Reorg messages signaling chain reorganizations. That means some blocks, including all operations, are rolled back in favor of another with higher fitness. Chain reorgs happen regularly (especially in testnets), so it's not something you can ignore. These messages must be handled correctly -- otherwise, you will likely accumulate duplicate or invalid data.
+
+Singe version 6.0 DipDup processes chain reorgs seamlessly restoring a previous database state. You can implement your rollback logic by editing the `on_index_rollback` event hook.
