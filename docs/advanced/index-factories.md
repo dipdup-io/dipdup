@@ -3,7 +3,7 @@
 DipDup allows spawning new indexes from a template in runtime. There are two ways to do that:
 
 * From another index (e.g., handling factory originations)
-* In `on_configure` hook (see {{ #summary advanced/default-hooks.md}})
+* In `on_configure` hook (see {{ #summary advanced/event-hooks.md}})
 
 > ⚠ **WARNING**
 >

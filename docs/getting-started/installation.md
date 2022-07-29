@@ -49,5 +49,3 @@ pip install dipdup
 > 💡 **SEE ALSO**
 >
 > * {{ #summary deployment/docker.md }}
-> * {{ #summary deployment/docker-compose.md }}
-> * {{ #summary deployment/swarm.md }}

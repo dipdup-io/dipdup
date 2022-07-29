@@ -17,4 +17,3 @@ While sometimes it's convenient to use one database engine for development and a
 >
 > * {{ #summary advanced/sql.md}}
 > * {{ #summary config/database.md#immune-tables}}
-
