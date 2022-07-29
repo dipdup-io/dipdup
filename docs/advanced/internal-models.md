@@ -1,5 +1,6 @@
 # Internal models
 
+<!-- FIXME: missing tables -->
 | model | table | description |
 | :--- | :--- | :--- |
 | `dipdup.models.Schema` | `dipdup_schema` | Hash of database schema to detect changes that require reindexing. |

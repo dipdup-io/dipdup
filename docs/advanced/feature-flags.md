@@ -2,6 +2,7 @@
 
 Feature flags allow users to modify some system-wide tunables that affect the behavior of the whole framework. These options are either experimental or unsuitable for generic configurations.
 
+<!-- FIXME: remove CLI options -->
 | `run` command option | config path | is stable |
 | - | - | - |
 | `--early-realtime` | `advanced.early_realtime` | ✅ |

@@ -1,6 +1,6 @@
 # Table of contents
 
-[Overview](README.md)
+[Introduction](README.md)
 
 # User Guide
 
@@ -16,7 +16,7 @@
 * [Advanced usage](advanced/README.md)
   * [Datasources](advanced/datasources.md)
   * [Hooks](advanced/hooks.md)
-  * [Default hooks](advanced/default-hooks.md)
+  * [Event hooks](advanced/event-hooks.md)
   * [Job scheduler](advanced/jobs.md)
   * [Reindexing](advanced/reindexing.md)
   * [Feature flags](advanced/feature-flags.md)
@@ -32,24 +32,22 @@
   * [GenQL](graphql/genql.md)
 * [Deployment and operations](deployment/README.md)
   * [Database engines](deployment/database-engines.md)
-  * [Building Docker images](deployment/docker.md)
-  * [Deploying with docker-compose](deployment/docker-compose.md)
-  * [Deploying with Docker Swarm](deployment/swarm.md)
+  * [Running in Docker](deployment/docker.md)
   * [Sentry integration](deployment/sentry.md)
   * [Prometheus integration](deployment/prometheus.md)
   * [Logging](deployment/logging.md)
-  * [Monitoring](deployment/monitoring.md)
+  * [Monitoring]()
   * [Backup and restore](deployment/backups.md)
 * [F.A.Q.](faq.md)
 * [Troubleshooting](troubleshooting.md)
-* [Contributing](CONTRIBUTING.md)
+* [Contribution guide](CONTRIBUTING.md)
 
 # Examples
 
 * [Demo projects](examples/demo-projects.md)
 * [Built with DipDup](examples/built-with-dipdup.md)
 
-# Standalone services
+# Standalone Services
 
 * [mempool](services/mempool.md)
 * [metadata](services/metadata.md)
