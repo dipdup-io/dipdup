@@ -1,4 +1,4 @@
-# F.A.Q
+# F.A.Q.
 
 ## How to index different contracts that share the same interface?
 
