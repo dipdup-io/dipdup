@@ -29,16 +29,6 @@ DipDup configuration file consists of several logical blocks:
 
 `*` — required fields
 
-## Environment variables
-
-DipDup supports compose-style variable expansion with optional default value:
-
-```yaml
-field: ${ENV_VAR:-default_value}
-```
-
-You can use environment variables throughout the configuration file, except for property names (YAML object keys).
-
 ## Merging config files
 
 DipDup allows you to customize the configuration for a specific environment or a workflow. It works similar to docker-compose, but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the `-c` command-line option multiple times:
