@@ -36,38 +36,7 @@ poetry shell
 DipDup configuration is stored in YAML files of a specific format. Create a new file named `dipdup.yml` in your current working directory with the following content:
 
 ```yaml
-spec_version: 1.2
-package: demo_tzbtc
-
-database:
-  kind: sqlite
-  path: demo_tzbtc.sqlite3
-  
-contracts:
-  tzbtc_mainnet:
-    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
-    typename: tzbtc
-
-datasources:
-  tzkt_mainnet:
-    kind: tzkt
-    url: https://api.tzkt.io
-    
-indexes:
-  tzbtc_holders_mainnet:
-    kind: operation
-    datasource: tzkt_mainnet
-    contracts: 
-      - tzbtc_mainnet
-    handlers:
-      - callback: on_transfer
-        pattern:
-          - destination: tzbtc_mainnet
-            entrypoint: transfer
-      - callback: on_mint
-        pattern:
-          - destination: tzbtc_mainnet
-            entrypoint: mint
+{{ #include ../../src/demo_tzbtc/dipdup.yml }}
 ```
 
 > 💡 **SEE ALSO**
