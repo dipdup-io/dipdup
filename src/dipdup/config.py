@@ -1391,9 +1391,13 @@ class DipDupConfig:
         _logger.debug('Loading config from %s', path)
         try:
             with open(path) as file:
-                return file.read()
+                return ''.join(filter(cls._filter_commented_lines, file.readlines()))
         except OSError as e:
             raise ConfigurationError(str(e)) from e
+
+    @classmethod
+    def _filter_commented_lines(cls, line: str) -> bool:
+        return '#' not in line or line.lstrip()[0] != '#'
 
     @classmethod
     def _substitute_env_variables(cls, raw_config: str) -> Tuple[str, Dict[str, str]]:
