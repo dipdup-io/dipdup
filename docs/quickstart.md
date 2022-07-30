@@ -36,7 +36,7 @@ poetry shell
 DipDup configuration is stored in YAML files of a specific format. Create a new file named `dipdup.yml` in your current working directory with the following content:
 
 ```yaml
-{{ #include ../../src/demo_tzbtc/dipdup.yml }}
+{{ #include ../src/demo_tzbtc/dipdup.yml }}
 ```
 
 > 💡 **SEE ALSO**
@@ -129,21 +129,7 @@ Everything's ready to implement an actual indexer logic.
 Our task is to index all the balance updates, so we'll start with a helper method to handle them. Create a file named `on_balance_update.py` in the `handlers` package with the following content:
 
 ```python
-from decimal import Decimal
-import demo_tzbtc.models as models
-
-
-async def on_balance_update(
-    address: str,
-    balance_update: Decimal, 
-    timestamp: str
-) -> None:
-    holder, _ = await models.Holder.get_or_create(address=address)
-    holder.balance += balance_update
-    holder.tx_count += 1
-    holder.last_seen = timestamp
-    assert holder.balance >= 0, address
-    await holder.save()
+{{ #include ../src/demo_tzbtc/handlers/on_balance_update.py }}
 ```
 
 Three methods of tzBTC contract can alter token balances — `transfer`, `mint`, and `burn`. The last one is omitted in this tutorial for simplicity. Edit corresponding handlers to call the `on_balance_update` method with data from matched operations:
@@ -151,64 +137,13 @@ Three methods of tzBTC contract can alter token balances — `transfer`, `mint`,
 `on_transfer.py`
 
 ```python
-from typing import Optional
-from decimal import Decimal
-
-from dipdup.models import Transaction
-from dipdup.context import HandlerContext
-
-import demo_tzbtc.models as models
-
-from demo_tzbtc.types.tzbtc.parameter.transfer import TransferParameter
-from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
-from demo_tzbtc.handlers.on_balance_update import on_balance_update
-
-
-async def on_transfer(
-    ctx: HandlerContext,
-    transfer: Transaction[TransferParameter, TzbtcStorage],
-) -> None:
-    if transfer.parameter.from_ == transfer.parameter.to:
-        # NOTE: Internal tzBTC transaction
-        return
-
-    amount = Decimal(transfer.parameter.value) / (10 ** 8)
-    await on_balance_update(
-        address=transfer.parameter.from_,
-        balance_update=-amount,
-        timestamp=transfer.data.timestamp,
-    )
-    await on_balance_update(address=transfer.parameter.to,
-                            balance_update=amount,
-                            timestamp=transfer.data.timestamp)
+{{ #include ../src/demo_tzbtc/handlers/on_transfer.py }}
 ```
 
 `on_mint.py`
 
 ```python
-from typing import Optional
-from decimal import Decimal
-
-from dipdup.models import Transaction
-from dipdup.context import HandlerContext
-
-import demo_tzbtc.models as models
-
-from demo_tzbtc.types.tzbtc.parameter.mint import MintParameter
-from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
-from demo_tzbtc.handlers.on_balance_update import on_balance_update
-
-
-async def on_mint(
-    ctx: HandlerContext,
-    mint: Transaction[MintParameter, TzbtcStorage],
-) -> None:
-    amount = Decimal(mint.parameter.value) / (10 ** 8)
-    await on_balance_update(
-        address=mint.parameter.to,
-        balance_update=amount,
-        timestamp=mint.data.timestamp
-    )
+{{ #include ../src/demo_tzbtc/handlers/on_mint.py }}
 ```
 
 And that's all! We can run the indexer now.

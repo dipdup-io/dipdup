@@ -12,4 +12,8 @@ async def on_mint(
     mint: Transaction[MintParameter, TzbtcStorage],
 ) -> None:
     amount = Decimal(mint.parameter.value) / (10**8)
-    await on_balance_update(address=mint.parameter.to, balance_update=amount, timestamp=mint.data.timestamp)
+    await on_balance_update(
+        address=mint.parameter.to,
+        balance_update=amount,
+        timestamp=mint.data.timestamp,
+    )
