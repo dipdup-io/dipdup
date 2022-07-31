@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- config: Do not perform env variable substitution in commented out lines.
+
 ## [6.0.0-rc1] - 2022-07-26
 
 ### Added
