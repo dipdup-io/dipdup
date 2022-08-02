@@ -111,3 +111,17 @@ custom:
             assert exc.args[0] == 'Environment variable `DEFINITELY_NOT_DEFINED` is not set'
         else:
             raise AssertionError('ConfigurationError not raised')
+
+    @pytest.mark.parametrize(
+        'value',
+        (
+            '${DEFINITELY_NOT_DEFINED}',
+            '${DEFINITELY_NOT_DEFINED:-}',
+        ),
+    )
+    def test_skip_commented_variables(self, value, dummy_config_path, tmp_path_factory) -> None:
+        append_raw = f"""
+  #  some commented line corresponding to ENV_VARIABLE_REGEX with {value}
+"""
+        config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
+        DipDupConfig.load([config_path], True)

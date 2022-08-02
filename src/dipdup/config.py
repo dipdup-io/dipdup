@@ -158,7 +158,6 @@ class PostgresDatabaseConfig:
 class HTTPConfig:
     """Advanced configuration of HTTP client
 
-    :param cache: Whether to cache responses
     :param retry_count: Number of retries after request failed before giving up
     :param retry_sleep: Sleep time between retries
     :param retry_multiplier: Multiplier for sleep time between retries
@@ -169,8 +168,6 @@ class HTTPConfig:
     :param batch_size: Number of items fetched in a single paginated request (for some APIs)
     """
 
-    # TODO: Deprecated, remove in 6.0
-    cache: Optional[bool] = None
     retry_count: Optional[int] = None
     retry_sleep: Optional[float] = None
     retry_multiplier: Optional[float] = None
@@ -1395,9 +1392,13 @@ class DipDupConfig:
         _logger.debug('Loading config from %s', path)
         try:
             with open(path) as file:
-                return file.read()
+                return ''.join(filter(cls._filter_commented_lines, file.readlines()))
         except OSError as e:
             raise ConfigurationError(str(e)) from e
+
+    @classmethod
+    def _filter_commented_lines(cls, line: str) -> bool:
+        return '#' not in line or line.lstrip()[0] != '#'
 
     @classmethod
     def _substitute_env_variables(cls, raw_config: str) -> Tuple[str, Dict[str, str]]:
@@ -1609,23 +1610,3 @@ class DipDupConfig:
     def _import_big_map_index_types(self, index_config: BigMapIndexConfig) -> None:
         for big_map_handler_config in index_config.handlers:
             big_map_handler_config.initialize_big_map_type(self.package)
-
-
-@dataclass
-class LoggingConfig:
-    config: Dict[str, Any]
-
-    @classmethod
-    def load(
-        cls,
-        path: str,
-    ) -> 'LoggingConfig':
-
-        current_workdir = os.path.join(os.getcwd())
-        path = os.path.join(current_workdir, path)
-
-        with open(path) as file:
-            return cls(config=YAML().load(file.read()))
-
-    def apply(self):
-        logging.config.dictConfig(self.config)

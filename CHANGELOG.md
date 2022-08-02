@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- config: Do not perform env variable substitution in commented out lines.
+
+### Removed
+
+- cli: `--logging-config` option is removed.
+- cli: All `run` command flags are removed. Use the `advanced` section of the config.
+- cli: `cache show` and `cache clear` commands are removed.
+- config: `http.cache` flag is removed.
+
 ## [6.0.0-rc1] - 2022-07-26
 
 ### Added

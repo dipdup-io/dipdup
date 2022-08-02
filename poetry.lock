@@ -77,14 +77,6 @@ test = ["coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "pytest (>=7.0)", "pytes
 trio = ["trio (>=0.16)"]
 
 [[package]]
-name = "appdirs"
-version = "1.4.4"
-description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "appnope"
 version = "0.1.3"
 description = "Disable App Nap on macOS >= 10.9"
@@ -681,17 +673,6 @@ python-versions = "*"
 devel = ["colorama", "jsonschema", "json-spec", "pylint", "pytest", "pytest-benchmark", "pytest-cache", "validictory"]
 
 [[package]]
-name = "fcache"
-version = "0.4.7"
-description = "a dictionary-like, file-based cache module for Python"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-appdirs = "*"
-
-[[package]]
 name = "flake8"
 version = "4.0.1"
 description = "the modular source code checker: pep8 pyflakes and co"
@@ -960,7 +941,7 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "jsonschema"
-version = "4.8.0"
+version = "4.9.0"
 description = "An implementation of JSON Schema validation for Python"
 category = "main"
 optional = false
@@ -1254,7 +1235,7 @@ dev = ["pre-commit"]
 
 [[package]]
 name = "orjson"
-version = "3.7.9"
+version = "3.7.11"
 description = "Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy"
 category = "main"
 optional = false
@@ -2428,11 +2409,11 @@ python-versions = "*"
 
 [[package]]
 name = "yarl"
-version = "1.7.2"
+version = "1.8.1"
 description = "Yet another URL library"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 idna = ">=2.0"
@@ -2444,7 +2425,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "60f641a631104fc4e5d27d114f89cedc70ae20a4d35f7f6f633f4722258a4ed6"
+content-hash = "1c065b06f440c3490914a8e895981c73b4c2c0f23300a1e78f2fa43fa8b5b5e0"
 
 [metadata.files]
 aiohttp = []
@@ -2453,7 +2434,6 @@ aiosignal = []
 aiosqlite = []
 alabaster = []
 anyio = []
-appdirs = []
 appnope = []
 apscheduler = []
 argcomplete = []
@@ -2503,7 +2483,6 @@ execnet = []
 executing = []
 fastecdsa = []
 fastjsonschema = []
-fcache = []
 flake8 = []
 flake8-bugbear = []
 flake8-comprehensions = []
