@@ -188,10 +188,7 @@ class _HTTPGateway:
         weight: int = 1,
         **kwargs,
     ) -> Any:
-        """Perform an HTTP request.
-
-        Check for parameters in cache, if not found, perform retried request and cache result.
-        """
+        """Performs an HTTP request."""
         return await self._retry_request(method, url, weight, **kwargs)
 
     def set_user_agent(self, *args: str) -> None:

@@ -46,7 +46,6 @@ hasura:
 
 | field | description |
 | - | - |
-| `cache` | Whether to cache responses |
 | `retry_count` | Number of retries after request failed before giving up |
 | `retry_sleep` | Sleep time between retries |
 | `retry_multiplier` | Multiplier for sleep time between retries |

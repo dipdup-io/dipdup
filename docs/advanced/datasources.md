@@ -28,7 +28,6 @@ TzKT datasource is based on generic HTTP datasource and thus inherits its settin
 datasources:
   tzkt_mainnet:
     http:
-      cache: false
       retry_count:  # retry infinetely
       retry_sleep:
       retry_multiplier:

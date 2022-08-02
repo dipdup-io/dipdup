@@ -13,4 +13,3 @@ A minimal working example looks like this:
 ```yaml
 {{ #include ../../src/demo_tzbtc/dipdup.yml }}
 ```
-
