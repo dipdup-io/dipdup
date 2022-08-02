@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+### Fixed
+
+- config: Do not perform env variable substitution in commented out lines.
+
 ### Removed
 
 - cli: `--logging-config` option is removed.
