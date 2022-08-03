@@ -1,6 +1,6 @@
 # Troubleshooting
 
-This page contains tips for troubleshooting DipDup projects.
+This page contains tips for troubleshooting DipDup issues.
 
 ## Update DipDup to the latest version
 
@@ -10,6 +10,7 @@ If you're using Poetry, set caret version constraint in `pyproject.toml` to use 
 
 ```toml
 [tool.poetry.dependencies]
+python = ">=3.10,<3.11"
 dipdup = "^6.0.0"
 ```
 
@@ -44,18 +45,39 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config env
 
 ## Use linters to find errors in your Python code
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+Exceptions that occurred during callback execution are reraised as `CallbackError`s. If you experience this issue, most likely your code is incorrect. Luckily, the Python ecosystem has lots of tools called linters to help you find mistakes. In DipDup we mostly use a combo of `flake8` and `mypy`. You can start using both with zero configuration:
+
+```shell
+poetry add --dev flake8 mypy
+poetry run flake8
+poetry run mypy
+```
+
+You can find a more complex example in DipDup's [pyproject.toml](https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/pyproject.toml) or use the cookiecutter template to create a new project with all recommended bells and whistles (see {{ #summary quickstart.md#from-template }}).
+
 
 ## Explore contract calls in Better Call Dev
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+[Better Call Dev](https://better-call.dev) is a blockchain explorer for Tezos smart contracts. It provides a more human-friendly interface than TzKT to explore exact contract calls and parameter/storage structures. 
+
+![BCD](assets/troubleshooting-bcd.png)
+
+Try it out when writing index definitions.
+
+## Packaging issues
+
+Poetry package manager we recommend using with DipDup is not the most stable software in the world. If you experience issues with it like `SolverProblemError`, try the following:
+
+* Remove `.venv` and `poetry.lock` from the project root
+* Remove `~/.cache/pypoetry` and `~/.cache/pip/` directories
+* Run `poetry install` and hope for the best.
 
 ## Got stuck? Ask for help
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+We are always ready to answer your questions!
+
+If you think you've found a bug, please report it directly to the [GitHub Issues](https://github.com/dipdup-net/dipdup-py). For all other discussions, join our socials:
+
+* [Discord](https://discord.com/invite/RcPGSdcVSx) (preferred)
+* [Telegram](https://t.me/baking_bad_chat)
+* [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L)
