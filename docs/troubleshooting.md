@@ -55,10 +55,9 @@ poetry run mypy
 
 You can find a more complex example in DipDup's [pyproject.toml](https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/pyproject.toml) or use the cookiecutter template to create a new project with all recommended bells and whistles (see {{ #summary quickstart.md#from-template }}).
 
-
 ## Explore contract calls in Better Call Dev
 
-[Better Call Dev](https://better-call.dev) is a blockchain explorer for Tezos smart contracts. It provides a more human-friendly interface than TzKT to explore exact contract calls and parameter/storage structures. 
+[Better Call Dev](https://better-call.dev) is a blockchain explorer for Tezos smart contracts. It provides a more human-friendly interface than TzKT to explore exact contract calls and parameter/storage structures.
 
 ![BCD](assets/troubleshooting-bcd.png)
 
