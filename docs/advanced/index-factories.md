@@ -1,14 +1,31 @@
 # Index factories
 
-DipDup allows spawning new indexes from a template in runtime. There are two ways to do that:
+DipDup allows creating new indexes in runtime. To begin with, you need to define index templates in the top-level `templates` section of the config. Then call `ctx.add_contract` and `ctx.add_index` methods from any user callback.
 
-* From another index (e.g., handling factory originations)
-* In `on_configure` hook (see {{ #summary advanced/event-hooks.md}})
+DipDup is currently not able to automatically generate types and handlers for template indexes unless there is at least one static instance ({{ #summary config/indexes/template.md}}). Add it temporarily setting template values manually to call `dipdup init` command. 
 
-> ⚠ **WARNING**
->
-> DipDup is currently not able to automatically generate types and handlers for template indexes unless there is at least one [static instance](../config/indexes/template.md).
+The most common way to spawn indexes is to create an index that tracks the originations of contracts with similar code or originated by a specific contract. A minimal example looks like this:
 
-DipDup exposes several context methods that extend the current configuration with new contracts and template instances. See {{ #summary advanced/context/README.md}} for details.
+```yaml
+contracts:
+  registry:
+    address: KT19CF3KKrvdW77ttFomCuin2k4uAVkryYqh
 
-See {{ #summary config/templates.md}} for details.
+indexes:
+  factory:
+    kind: operation
+    datasource: tzkt
+    types:
+      - origination
+    handlers:
+        - callback: on_factory_origination
+          pattern:
+            - type: origination
+              similar_to: registry
+```
+
+Another solution is to implement custom logic in `on_restart` hook (see {{ #summary advanced/event-hooks.md#on_restart}})
+
+> 💡 **SEE ALSO**
+> * {{ #summary advanced/context/README.md}}
+> * {{ #summary config/templates.md}}
