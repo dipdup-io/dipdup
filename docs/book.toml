@@ -8,5 +8,8 @@ title = "DipDup Documentation"
 [build]
 create-missing = false
 
+[output.html]
+default-theme = "coal"
+
 [preprocessor.summary]
 command = "python mdbook-summary"
