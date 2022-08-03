@@ -4,7 +4,7 @@ This page will guide you through the steps to get your first selective indexer u
 
 Let's create an indexer for the [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database and then calculate some statistics of its holders' activity.
 
-A Linux environment with Python 3.10 installed is required to use DipDup.
+A modern Linux distribution with Python 3.10 installed is required to run DipDup.
 
 ## Create a new project
 
@@ -18,11 +18,16 @@ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 
 ### From scratch
 
-We advise using the `poetry` package manager for new projects.
+We advise using the [Poetry](https://python-poetry.org) package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools -- use them instead.
+
 
 ```shell
-poetry init
+# Create a new project
+mkdir my-indexer; cd my-indexer
+poetry init --python ">=3.10,<3.11"
+# Add dipdup as a dependency
 poetry add dipdup
+# Enter the virtualenv
 poetry shell
 ```
 
