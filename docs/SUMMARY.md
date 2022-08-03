@@ -36,7 +36,6 @@
   * [Sentry integration](deployment/sentry.md)
   * [Prometheus integration](deployment/prometheus.md)
   * [Logging](deployment/logging.md)
-  * [Monitoring]()
   * [Backup and restore](deployment/backups.md)
 * [F.A.Q.](faq.md)
 * [Troubleshooting](troubleshooting.md)

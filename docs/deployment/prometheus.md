@@ -1,8 +1,12 @@
 # Prometheus integration
 
+DipDup provides basic integration with the Prometheus monitoring system by exposing some metrics.
+
+When running DipDup in Docker make sure that the Prometheus instance is in the same network.
+
 ## Available metrics
 
-The following metrics will be exposed:
+The following metrics are exposed under `dipdup` namespace:
 
 | metric name | description |
 |-|-|
@@ -18,3 +22,5 @@ The following metrics will be exposed:
 | `dipdup_datasource_rollbacks_total` | Number of rollbacks |
 | `dipdup_http_errors_total` | Number of http errors |
 | `dipdup_callback_duration_seconds` | Duration of callback execution |
+
+You can also query {{ #summary advanced/internal-models.md}} for monitoring purposes.
