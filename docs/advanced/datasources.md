@@ -1,15 +1,19 @@
 # Datasources
 
-Datasources are DipDup connectors to various APIs. TzKT data is used for indexing, other sources are complimentary.
+Datasources are DipDup connectors to various APIs. The table below shows how different datasources can be used.
 
-|  | `tzkt` | `tezos-node` | `coinbase` | `metadata` | `ipfs` | `http` |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Callback context (via `ctx.datasources`) | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| DipDup index | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `mempool` service | ✅\* | ✅\* | ❌ | ❌ | ❌ | ❌ |
-| `metadata` service | ✅\* | ❌ | ❌ | ❌ | ❌ | ❌ |
+**Index** datasource is the one used by DipDup internally to process specific index (set with `datasource: ...` in config). Currently, it can be only `tzkt`. Datasources available in **context** can be accessed in handlers and hooks via `ctx.get_<kind>_datasource()` methods and used to perform arbitrary requests. Finally, **standalone services** implement a subset of DipDup datasources and config directives. You can't use services-specific datasources like `tezos-node` in the main framework, they are here for informational purposes only.
 
-\* - required
+|              | index | context | `mempool` service | `metadata` service |
+| :----------- | :---: | :-----: | :---------------: | :----------------: |
+| `tzkt`       |   ✴   |    ✅    |         ✴         |         ✴          |
+| `tezos-node` |   ❌   |    ❌    |         ✴         |         ❌          |
+| `coinbase`   |   ❌   |    ✅    |         ❌         |         ❌          |
+| `metadata`   |   ❌   |    ✅    |         ❌         |         ❌          |
+| `ipfs`       |   ❌   |    ✅    |         ❌         |         ❌          |
+| `http`       |   ❌   |    ✅    |         ❌         |         ❌          |
+
+✴ *required* ✅ *supported* ❌ *not supported*
 
 ## TzKT
 
@@ -22,33 +26,31 @@ datasources:
     url: https://api.tzkt.io
 ```
 
-TzKT datasource is based on generic HTTP datasource and thus inherits its settings (optional):
+The number of items in each request can be configured with `batch_size` directive. Affects request number and memory usage.
 
 ```yaml
 datasources:
   tzkt_mainnet:
     http:
-      retry_count:  # retry infinetely
-      retry_sleep:
-      retry_multiplier:
-      ratelimit_rate:
-      ratelimit_period:
-      connection_limit: 100
-      connection_timeout: 60
+      ...
       batch_size: 10000
 ```
 
-Also you can wait for several block confirmations before processing the operations, e.g. to mitigate chain reorgs:
+The rest HTTP tunables are the same as for other datasources.
+
+<!-- FIXME: Not needed since we have DB rollbacks? -->
+Also, you can wait for several block confirmations before processing the operations, e.g. to mitigate chain reorgs:
 
 ```yaml
 datasources:
   tzkt_mainnet:
-    buffer_size: 1  # indexing with single block lag
+    ...
+    buffer_size: 1  # indexing with a single block lag
 ```
 
 ## Tezos node
 
-Tezos RPC is a standard interface provided by the Tezos node. It's not suitable for indexing purposes but used for accessing mempool data and other things that are not available through TzKT.
+Tezos RPC is a standard interface provided by the Tezos node. This datasource is used solely by `mempool` and `metadata` standalone services; you can't use it in regular DipDup indexes.
 
 ```yaml
 datasources:
@@ -78,12 +80,14 @@ datasources:
   metadata:
     kind: metadata
     url: https://metadata.dipdup.net
-    network: mainnet|handzhounet
+    network: mainnet | ithacanet
 ```
+
+<!-- FIXME: No usage example -->
 
 ## IPFS
 
-While working with contract/token metadata, a typical scenario is to fetch it from IPFS. DipDup now has a separate datasource to perform such requests.
+While working with contract/token metadata, a typical scenario is to fetch it from IPFS. DipDup has a separate datasource to perform such requests via public nodes.
 
 ```yaml
 datasources:
@@ -104,21 +108,41 @@ file = await ipfs.get('QmSgSC7geYH3Ae4SpUHy4KutxqNH9ESKBGXoCN4JQdbtEz/package.js
 assert file['name'] == 'json-buffer'
 ```
 
-## Sending arbitrary requests
+## HTTP (generic)
 
-DipDup datasources do not cover all available methods of underlying APIs. Let's say you want to fetch protocol of the chain you're currently indexing from TzKT:
+If you need to perform arbitrary requests to APIs not supported by DipDup, use generic HTTP datasource instead of plain `aiohttp` requests. That way you can use the same features DipDup uses for internal requests: retry with backoff, rate limiting, Prometheus integration etc.
+
+```yaml
+datasources:
+  my_api:
+    kind: http
+    url: https://my_api.local/v1
+```
+
+```python
+api = ctx.get_http_datasource('my_api')
+response = await api.request(
+    method='get',
+    url='hello',  # relative to URL in config
+    weigth=1,  # ratelimiter leaky-bucket drops
+    params={
+      'foo': 'bar',
+    },
+)
+```
+
+All DipDup datasources are inherited from `http`, so you can send arbitrary requests with any datasource. Let's say you want to fetch the protocol of the chain you're currently indexing (`tzkt` datasource doesn't have a separate method for it):
 
 ```python
 tzkt = ctx.get_tzkt_datasource('tzkt_mainnet')
 protocol_json = await tzkt.request(
     method='get',
     url='v1/protocols/current',
-    weigth=1,  # ratelimiter leaky-bucket drops
 )
 assert protocol_json['hash'] == 'PtHangz2aRngywmSRGGvrcTyMbbdpWdpFKuS4uMWxg2RaH9i1qx'
 ```
 
-Datasource HTTP connection parameters (ratelimit, backoff, etc.) are applied on every request.
+Datasource HTTP connection parameters (ratelimit, retry with backoff, etc.) are applied on every request.
 
 > 💡 **SEE ALSO**
 >
