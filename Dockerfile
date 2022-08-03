@@ -10,7 +10,7 @@ RUN <<eot
     pip install --no-cache-dir poetry
     useradd -ms /bin/bash dipdup
     mkdir /home/dipdup/source
-    rm -r /var/lib/apt/lists/* /var/log/* /tmp/*
+    rm -r /var/lib/apt/lists/* /var/log/*
 eot
 
 COPY --chown=dipdup Makefile pyproject.toml poetry.lock README.md /home/dipdup/source/
@@ -27,7 +27,6 @@ RUN <<eot
     echo 'dipdup ALL = NOPASSWD: /usr/bin/inject_pyproject.sh' >> /etc/sudoers
     chmod +x /usr/bin/inject_pyproject.sh
     chmod +x /usr/bin/inject_pyproject
-    apt uninstall -y make git
     rm -r /root/.cache
 eot
 
