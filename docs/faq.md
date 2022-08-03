@@ -24,9 +24,16 @@ Don't forget `Extra.ignore` Pydantic hint, otherwise, storage deserialization wi
 
 ## What is the correct way to process off-chain data?
 
-> 🚧 **UNDER CONSTRUCTION**
+DipDup provides convenient helpers to process off-chain data like market quotes or IPFS metadata. Follow the tips below to use them most efficiently.
+
+* Do not perform off-chain requests in handers until necessary. Use hooks instead, enriching indexed data on-demand.
+* Use generic `http` datasources for external APIs instead of plain `aiohttp` requests. This way you can use the same features DipDup uses for internal requests: retry with backoff, rate limiting, Prometheus integration etc.
+* Database tables that store off-chain data can be marked as immune, preventing them from being removed on reindexing.
+
+> 💡 **SEE ALSO**
 >
-> This page or paragraph is yet to be written. Come back later.
+> * {{ #summary advanced/datasources.md#http-generic }}
+> * {{ #summary config/database.md#immune-tables }}
 
 ## One of my indexes depends on another one's indexed data. How to process them in a specific order?
 
