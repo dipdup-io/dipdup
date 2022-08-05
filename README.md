@@ -1,9 +1,3 @@
-___
-
-<center> ✨ We invite you to take part in the <a href="https://forms.gle/nMkQnmukRPmwQedLA">DipDup Community Survey April 2022</a>! ✨ </center>
-
-___
-
 [![Python](https://img.shields.io/badge/made%20with-python-blue.svg?)](https://www.python.org)
 [![GitHub stars](https://img.shields.io/github/stars/dipdup-net/dipdup-py)](https://github.com/dipdup-net/dipdup-py)
 [![Latest stable release](https://img.shields.io/github/v/release/dipdup-net/dipdup-py?label=stable)](https://github.com/dipdup-net/dipdup-py/releases)
