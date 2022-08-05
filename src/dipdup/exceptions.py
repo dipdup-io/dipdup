@@ -1,11 +1,13 @@
 import textwrap
 from dataclasses import dataclass
 from dataclasses import field
+from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Type
 
+import orjson as json
 from tabulate import tabulate
 from tortoise.models import Model
 
@@ -23,6 +25,32 @@ def unindent(text: str) -> str:
 def indent(text: str, indent: int = 2) -> str:
     """Add indentation to text"""
     return textwrap.indent(text, ' ' * indent)
+
+
+def save_tombstone(error: Exception) -> str:
+    """Saves a tombstone file with Sentry error data, returns the path to the tempfile"""
+    # NOTE: Lazy import to speed up startup
+    import sentry_sdk.serializer
+    import sentry_sdk.utils
+
+    exc_info = sentry_sdk.utils.exc_info_from_error(error)
+    event, _ = sentry_sdk.utils.event_from_exception(exc_info)
+    event = sentry_sdk.serializer.serialize(event)
+
+    tombstone_file = NamedTemporaryFile(
+        mode='wb',
+        suffix='.json',
+        prefix='dipdup-tombstone_',
+        delete=False,
+    )
+    with tombstone_file as f:
+        f.write(
+            json.dumps(
+                event,
+                option=json.OPT_INDENT_2,
+            ),
+        )
+    return tombstone_file.name
 
 
 class DipDupException(Exception):

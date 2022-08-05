@@ -7,13 +7,11 @@ import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
-from datetime import datetime
 from functools import partial
 from functools import wraps
 from os.path import dirname
 from os.path import exists
 from os.path import join
-from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -23,7 +21,6 @@ from typing import cast
 
 import aiohttp
 import asyncclick as click
-import orjson as json
 from dotenv import load_dotenv
 from tortoise import Tortoise
 from tortoise.utils import get_schema_sql
@@ -41,19 +38,19 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
+from dipdup.exceptions import _tab
+from dipdup.exceptions import save_tombstone
 from dipdup.hasura import HasuraGateway
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
-from dipdup.utils import write
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
-# TODO: Replace with real value
-BAKING_BAD_SENTRY_DSN = ''
+BAKING_BAD_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
 
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
@@ -93,38 +90,29 @@ async def _shutdown() -> None:
     await asyncio.gather(*tasks, return_exceptions=True)
 
 
+def _print_help(error: Exception, tombstone_path: str) -> None:
+    """Prints helpful error message after traceback"""
+    help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
+    help_message += _tab + f'Tombstone saved to `{tombstone_path}`'
+    atexit.register(partial(click.echo, help_message, err=True))
+
+
 def cli_wrapper(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs) -> None:
         loop = asyncio.get_running_loop()
-        loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(_shutdown()))
+        loop.add_signal_handler(
+            signal.SIGINT,
+            lambda: asyncio.ensure_future(_shutdown()),
+        )
         try:
             await fn(*args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            # NOTE: Lazy import to speed up startup
-            import sentry_sdk.serializer
-            import sentry_sdk.utils
-
-            # NOTE: Generate a tombstone
-            exc_info = sentry_sdk.utils.exc_info_from_error(e)
-            event, _ = sentry_sdk.utils.event_from_exception(exc_info)
-            event = sentry_sdk.serializer.serialize(event)
-            write(
-                path=join(
-                    Path.home(),
-                    '.cache',
-                    'dipdup',
-                    f'tombstone_{int(datetime.now().timestamp())}.json',
-                ),
-                content=json.dumps(event, option=json.OPT_INDENT_2),
-            )
-
-            # NOTE: Print helpful error message after traceback
-            help_message = e.format() if isinstance(e, DipDupError) else DipDupError().format()
-            atexit.register(partial(click.echo, help_message, err=True))
-
+            _logger.exception('Unhandled exception caught')
+            tombstone_path = save_tombstone(e)
+            _print_help(e, tombstone_path)
             raise
 
     return wrapper
