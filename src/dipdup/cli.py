@@ -3,7 +3,6 @@ import atexit
 import logging
 import os
 import signal
-import subprocess
 import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
@@ -35,7 +34,6 @@ from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig
-from dipdup.config import LoggingConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SentryConfig
 from dipdup.dipdup import DipDup
@@ -202,11 +200,17 @@ async def _check_version() -> None:
     help=f'A path to DipDup project config (default: {DEFAULT_CONFIG_NAME}).',
     default=[DEFAULT_CONFIG_NAME],
 )
-@click.option('--env-file', '-e', type=str, multiple=True, help='A path to .env file containing `KEY=value` strings.', default=[])
-@click.option('--logging-config', '-l', type=str, help='A path to Python logging config in YAML format.', default=None)
+@click.option(
+    '--env-file',
+    '-e',
+    type=str,
+    multiple=True,
+    help='A path to .env file containing `KEY=value` strings.',
+    default=[],
+)
 @click.pass_context
 @cli_wrapper
-async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
+async def cli(ctx, config: List[str], env_file: List[str]):
     """Manage and run DipDup indexers.
 
     Full docs: https://dipdup.net/docs
@@ -219,18 +223,6 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
     set_up_logging()
 
-    # TODO: Deprecated, remove in 6.0
-    if logging_config:
-        _logger.warning('`--logging-config` option is deprecated. Use `logging` config field.')
-        # NOTE: Search in the current workdir, fallback to builtin configs
-        try:
-            path = os.path.join(os.getcwd(), logging_config)
-            _logging_config = LoggingConfig.load(path)
-        except FileNotFoundError:
-            path = os.path.join(os.path.dirname(__file__), 'configs', logging_config)
-            _logging_config = LoggingConfig.load(path)
-        _logging_config.apply()
-
     # NOTE: Apply env files before loading config
     for env_path in env_file:
         env_path = join(os.getcwd(), env_path)
@@ -240,11 +232,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         load_dotenv(env_path, override=True)
 
     _config = DipDupConfig.load(config)
-
-    # TODO: Deprecated, remove in 6.0
-    # NOTE: Skip if Python config is already applied
-    if not logging_config:
-        _config.set_up_logging()
+    _config.set_up_logging()
 
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
@@ -274,40 +262,15 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
 
 @cli.command()
-@click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized.')
-@click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized.')
-@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing.')
-@click.option('--metadata-interface', is_flag=True, help='Enable metadata interface.')
 @click.pass_context
 @cli_wrapper
-async def run(
-    ctx,
-    postpone_jobs: bool,
-    early_realtime: bool,
-    merge_subscriptions: bool,
-    metadata_interface: bool,
-) -> None:
+async def run(ctx) -> None:
     """Run indexer.
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
     """
     config: DipDupConfig = ctx.obj.config
     config.initialize()
-
-    # TODO: Deprecated, remove in 6.0
-    warn_text = 'option is deprecated and will be removed in the next version. Use `advanced` section of the config instead.'
-    if postpone_jobs:
-        _logger.warning('`--postpone-jobs` %s', warn_text)
-        config.advanced.postpone_jobs |= postpone_jobs
-    if early_realtime:
-        _logger.warning('`--early-realtime` %s', warn_text)
-        config.advanced.early_realtime |= early_realtime
-    if merge_subscriptions:
-        _logger.warning('`--merge-subscriptions` %s', warn_text)
-        config.advanced.merge_subscriptions |= merge_subscriptions
-    if metadata_interface:
-        _logger.warning('`--metadata-interface` %s', warn_text)
-        config.advanced.metadata_interface |= metadata_interface
 
     dipdup = DipDup(config)
     await dipdup.run()
@@ -408,39 +371,6 @@ async def config_env(ctx, file: Optional[str]) -> None:
             f.write(content)
     else:
         echo(content)
-
-
-# TODO: Deprecated, remove in 6.0
-@cli.group()
-@click.pass_context
-@cli_wrapper
-async def cache(ctx) -> None:
-    """Manage internal cache."""
-    _logger.warning('`cache` command group is deprecated. Implement caching logic manually if needed.')
-
-
-@cache.command(name='clear')
-@click.pass_context
-@cli_wrapper
-async def cache_clear(ctx) -> None:
-    """Clear request cache of DipDup datasources."""
-    # NOTE: Lazy import to speed up startup
-    from fcache.cache import FileCache  # type: ignore
-
-    FileCache('dipdup', flag='cs').clear()
-
-
-@cache.command(name='show')
-@click.pass_context
-@cli_wrapper
-async def cache_show(ctx) -> None:
-    """Show information about DipDup disk caches."""
-    # NOTE: Lazy import to speed up startup
-    from fcache.cache import FileCache  # type: ignore
-
-    cache = FileCache('dipdup', flag='cs')
-    size = subprocess.check_output(['du', '-sh', cache.cache_dir]).split()[0].decode('utf-8')
-    echo(f'{cache.cache_dir}: {len(cache)} items, {size}')
 
 
 @cli.group(help='Hasura integration related commands.')
