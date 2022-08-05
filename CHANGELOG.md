@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+### Added
+
+- config: Added `advanced.crash_reporting` flag to enable reporting crashes to Baking Bad.
+- dipdup: Save Sentry tombstone in `/tmp/dipdup-tombstone_XXXXXXX.json` on a crash.
+
 ### Fixed
 
 - config: Do not perform env variable substitution in commented out lines.
