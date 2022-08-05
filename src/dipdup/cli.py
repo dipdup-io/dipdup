@@ -12,6 +12,8 @@ from functools import wraps
 from os.path import dirname
 from os.path import exists
 from os.path import join
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -30,11 +32,14 @@ from dipdup import spec_version_mapping
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import SentryConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
+from dipdup.exceptions import _tab
+from dipdup.exceptions import save_tombstone
 from dipdup.hasura import HasuraGateway
 from dipdup.models import Index
 from dipdup.models import Schema
@@ -45,6 +50,7 @@ from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
+BAKING_BAD_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
 
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
@@ -84,24 +90,35 @@ async def _shutdown() -> None:
     await asyncio.gather(*tasks, return_exceptions=True)
 
 
+def _print_help(error: Exception, tombstone_path: str) -> None:
+    """Prints helpful error message after traceback"""
+    help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
+    help_message += _tab + f'Tombstone saved to `{tombstone_path}`'
+    atexit.register(partial(click.echo, help_message, err=True))
+
+
 def cli_wrapper(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs) -> None:
         loop = asyncio.get_running_loop()
-        loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(_shutdown()))
+        loop.add_signal_handler(
+            signal.SIGINT,
+            lambda: asyncio.ensure_future(_shutdown()),
+        )
         try:
             await fn(*args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            help_message = e.format() if isinstance(e, DipDupError) else DipDupError().format()
-            atexit.register(partial(click.echo, help_message, err=True))
+            _logger.exception('Unhandled exception caught')
+            tombstone_path = save_tombstone(e)
+            _print_help(e, tombstone_path)
             raise
 
     return wrapper
 
 
-def _sentry_before_send(event, _):
+def _sentry_before_send(event: Dict[str, Any], hint: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if _is_shutting_down:
         return None
     return event
@@ -109,7 +126,10 @@ def _sentry_before_send(event, _):
 
 def _init_sentry(config: DipDupConfig) -> None:
     if not config.sentry:
-        return
+        if not config.advanced.crash_reporting:
+            return
+        config.sentry = SentryConfig(dsn=BAKING_BAD_SENTRY_DSN)
+
     if config.sentry.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:

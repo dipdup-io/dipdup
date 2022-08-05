@@ -10,7 +10,7 @@ RUN <<eot
     pip install --no-cache-dir poetry
     useradd -ms /bin/bash dipdup
     mkdir /home/dipdup/source
-    rm -r /var/lib/apt/lists/* /var/log/* /tmp/*
+    rm -r /var/lib/apt/lists/* /var/log/*
 eot
 
 COPY --chown=dipdup Makefile pyproject.toml poetry.lock README.md /home/dipdup/source/
