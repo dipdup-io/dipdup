@@ -53,8 +53,9 @@ flake8-bugbear = "^22.1.11"
 flake8-simplify = "^0.19.2"
 flakeheaven = "^2.0.0"
 isort = "^5.9.3"
-mypy = "^0.961"
+mypy = "^0.971"
 pytest = "^7.1.2"
+pytest-asyncio = "^0.19.0"
 pytest-cov = "^3.0.0"
 pytest-xdist = "^2.5.0"
 Sphinx = "^5.0.2"
@@ -63,7 +64,6 @@ sphinx-markdown-builder = "^0.5.5"
 testcontainers = "^3.4.2"
 types-pytz = "^2022.1.1"
 types-tabulate = "^0.8.2"
-pytest-asyncio = "^0.18.3"
 
 [tool.poetry.extras]
 pytezos = ["pytezos"]

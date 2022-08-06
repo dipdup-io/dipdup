@@ -31,7 +31,7 @@ async def _create_index(hash_: str) -> None:
 
 
 async def spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
-    await dispatcher._ctx.spawn_index(name)
+    await dispatcher._ctx._spawn_index(name)
     dispatcher._indexes[name] = pending_indexes.pop()
 
 

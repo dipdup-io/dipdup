@@ -44,6 +44,6 @@ async def calculate_stats(
 
 By default, hooks execute SQL scripts from the corresponding subdirectory of `sql/`. Remove or comment out the `execute_sql` call to prevent this. This way, both Python and SQL code may be executed in a single hook if needed.
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary config/hooks.md}}

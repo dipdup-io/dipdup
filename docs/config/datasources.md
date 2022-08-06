@@ -12,7 +12,6 @@ datasources:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
-      cache: false
       retry_count:  # retry infinetely
       retry_sleep:
       retry_multiplier:
@@ -51,6 +50,6 @@ datasources:
     url: https://ipfs.io/ipfs
 ```
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary advanced/datasources.md}}

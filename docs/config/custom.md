@@ -1,4 +1,4 @@
-# Reporting bugs
+# custom
 
 > 🚧 **UNDER CONSTRUCTION**
 >

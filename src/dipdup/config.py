@@ -1130,15 +1130,20 @@ class HookConfig(CallbackMixin, kind='hook'):
                 yield package, obj
 
 
-default_hooks = {
+@dataclass
+class EventHookConfig(HookConfig, kind='hook'):
+    pass
+
+
+event_hooks = {
     # NOTE: Fires on every run after datasources and schema are initialized.
     # NOTE: Default: nothing.
-    'on_restart': HookConfig(
+    'on_restart': EventHookConfig(
         callback='on_restart',
     ),
     # NOTE: Fires on rollback which affects specific index and can't be processed unattended.
-    # NOTE: Default: reindex.
-    'on_index_rollback': HookConfig(
+    # NOTE: Default: database rollback.
+    'on_index_rollback': EventHookConfig(
         callback='on_index_rollback',
         args={
             'index': 'dipdup.index.Index',
@@ -1148,12 +1153,12 @@ default_hooks = {
     ),
     # NOTE: Fires when DipDup runs with empty schema, right after schema is initialized.
     # NOTE: Default: nothing.
-    'on_reindex': HookConfig(
+    'on_reindex': EventHookConfig(
         callback='on_reindex',
     ),
     # NOTE: Fires when all indexes reach REALTIME state.
     # NOTE: Default: nothing.
-    'on_synchronized': HookConfig(
+    'on_synchronized': EventHookConfig(
         callback='on_synchronized',
     ),
 }
@@ -1225,7 +1230,6 @@ class DipDupConfig:
         self.paths: List[str] = []
         self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
-        self._default_hooks: bool = False
 
     @cached_property
     def schema_name(self) -> str:
@@ -1429,8 +1433,8 @@ class DipDupConfig:
         for name, hook_config in self.hooks.items():
             if name != hook_config.callback:
                 raise ConfigurationError(f'`{name}` hook name must be equal to `callback` value.')
-            if name in default_hooks:
-                raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
+            if name in event_hooks:
+                raise ConfigurationError(f'`{name}` hook name is reserved by event hook')
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)

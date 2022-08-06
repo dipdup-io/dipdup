@@ -12,6 +12,6 @@ hooks:
      depth: int
 ```
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
-> * {{ #summary advanced/hooks/README.md}}
+> * {{ #summary advanced/hooks.md}}

@@ -16,7 +16,7 @@ DipDup currently doesn't work in Windows environments due to incompatibilities i
 
 We [aim to improve](https://github.com/dipdup-net/dipdup-py/pull/358) cross-platform compatibility in future releases.
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary advanced/performance.md }}
 > * [What is the Windows Subsystem for Linux?](https://docs.microsoft.com/en-us/windows/wsl/about)
@@ -46,8 +46,6 @@ pip install dipdup
 
 ## Other options
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * {{ #summary deployment/docker.md }}
-> * {{ #summary deployment/docker-compose.md }}
-> * {{ #summary deployment/swarm.md }}

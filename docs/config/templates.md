@@ -11,7 +11,7 @@ indexes:
 
 templates:
   bar:
-    kind" index
+    kind: index
     datasource: tzkt_<network>  # resolves into `tzkt_mainnet`
     ...
 ```

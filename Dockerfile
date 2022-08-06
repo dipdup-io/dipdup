@@ -27,7 +27,6 @@ RUN <<eot
     echo 'dipdup ALL = NOPASSWD: /usr/bin/inject_pyproject.sh' >> /etc/sudoers
     chmod +x /usr/bin/inject_pyproject.sh
     chmod +x /usr/bin/inject_pyproject
-    apt uninstall -y make git
     rm -r /root/.cache
 eot
 

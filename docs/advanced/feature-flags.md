@@ -2,15 +2,16 @@
 
 Feature flags allow users to modify some system-wide tunables that affect the behavior of the whole framework. These options are either experimental or unsuitable for generic configurations.
 
-| `run` command option | config path | is stable |
-| - | - | - |
-| `--early-realtime` | `advanced.early_realtime` | ✅ |
-| `--merge-subscriptions` | `advanced.merge_subscriptions` | ✅ |
-| `--postpone-jobs` | `advanced.postpone_jobs` | ✅ |
-| `--metadata-interface` | `advanced.metadata_interface` | ✅ |
-| | `advanced.skip-version-check` | ✅ |
-
 A good practice is to use set feature flags in environment-specific config files.
+
+```yaml
+advanced:
+  early_realtime: False
+  merge_subscriptions: False
+  postpone_jobs: False
+  metadata_interface: False
+  skip_version_check: False
+```
 
 ## Early realtime
 

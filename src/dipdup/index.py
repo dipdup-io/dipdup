@@ -538,7 +538,7 @@ class OperationIndex(Index):
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx.fire_handler(
+        await self._ctx._fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,
@@ -784,7 +784,7 @@ class BigMapIndex(Index):
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx.fire_handler(
+        await self._ctx._fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,
@@ -857,7 +857,7 @@ class HeadIndex(Index):
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx.fire_handler(
+        await self._ctx._fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,
@@ -947,7 +947,7 @@ class TokenTransferIndex(Index):
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx.fire_handler(
+        await self._ctx._fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,

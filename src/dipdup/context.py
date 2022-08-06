@@ -30,6 +30,7 @@ from tortoise.exceptions import OperationalError
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
+from dipdup.config import EventHookConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import HookConfig
@@ -77,10 +78,11 @@ class MetadataCursor:
     _token = 0
 
     def __new__(cls):
-        raise NotImplementedError
+        raise NotImplementedError('MetadataCursor is a singleton class')
 
     @classmethod
     async def initialize(cls) -> None:
+        """Initialize metadata cursor from the database."""
         if last_contract := await ContractMetadata.filter().order_by('-update_id').first():
             cls._contract = last_contract.update_id
         if last_token := await TokenMetadata.filter().order_by('-update_id').first():
@@ -88,22 +90,22 @@ class MetadataCursor:
 
     @classmethod
     def contract(cls) -> int:
+        """Increment the current contract update ID and return it."""
         cls._contract += 1
         return cls._contract
 
     @classmethod
     def token(cls) -> int:
+        """Increment the current token update ID and return it."""
         cls._token += 1
         return cls._token
 
 
-# TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
 class DipDupContext:
-    """Class to store application context
+    """Common execution context for handler and hook callbacks.
 
     :param datasources: Mapping of available datasources
     :param config: DipDup configuration
-    :param callbacks: Low-level callback interface (intented for internal use)
     :param logger: Context-aware logger instance
     """
 
@@ -139,7 +141,7 @@ class DipDupContext:
         """
         await self._callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
 
-    async def fire_handler(
+    async def _fire_handler(
         self,
         name: str,
         index: str,
@@ -155,24 +157,30 @@ class DipDupContext:
         :param datasource: An instance of datasource that triggered the handler
         :param fmt: Format string for `ctx.logger` messages
         """
-        await self._callbacks.fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
+        await self._callbacks._fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
     async def execute_sql(self, name: str) -> None:
-        """Execute SQL script with given name
+        """Executes SQL script(s) with given name.
 
-        :param name: SQL script name within `<project>/sql` directory
+        If the `name` path is a directory, all `.sql` scripts within it will be executed in alphabetical order.
+
+        :param name: File or directory within project's `sql` directory
         """
         await self._callbacks.execute_sql(self, name)
 
     async def restart(self) -> None:
-        """Restart indexer preserving CLI arguments"""
+        """Restart process and continue indexing."""
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> None:
-        """Drop the whole database and restart with the same CLI arguments"""
+        """Drops the entire database and starts the indexing process from scratch.
+
+        :param reason: Reason for reindexing in free-form string
+        :param context: Additional information to include in exception message
+        """
         if reason is None:
             reason = ReindexingReason.manual
-        # NOTE: Do not check for `str`!
+        # NOTE: Do not check for `str`! Enum is inherited from it.
         elif not isinstance(reason, ReindexingReason):
             context['message'] = reason
             reason = ReindexingReason.manual
@@ -207,6 +215,12 @@ class DipDupContext:
             raise NotImplementedError
 
     async def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
+        """Adds contract to the inventory.
+
+        :param name: Contract name
+        :param address: Contract address
+        :param typename: Alias for the contract script
+        """
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(self, name, address)
@@ -227,10 +241,16 @@ class DipDupContext:
 
     # TODO: Option to override first_level/last_level?
     async def add_index(self, name: str, template: str, values: Dict[str, Any], state: Optional[Index] = None) -> None:
-        self.config.add_index(name, template, values)
-        await self.spawn_index(name, state)
+        """Adds a new contract to the inventory.
 
-    async def spawn_index(self, name: str, state: Optional[Index] = None) -> None:
+        :param name: Index name
+        :param template: Index template to use
+        :param values: Mapping of values to fill template with
+        """
+        self.config.add_index(name, template, values)
+        await self._spawn_index(name, state)
+
+    async def _spawn_index(self, name: str, state: Optional[Index] = None) -> None:
         # NOTE: Avoiding circular import
         from dipdup.index import BigMapIndex
         from dipdup.index import HeadIndex
@@ -268,6 +288,14 @@ class DipDupContext:
         address: str,
         metadata: Dict[str, Any],
     ) -> None:
+        """
+        Inserts or updates corresponding rows in the internal `dipdup_contract_metadata` table
+        to provide a generic metadata interface (see docs).
+
+        :param network: Network name (e.g. `mainnet`)
+        :param address: Contract address
+        :param metadata: Contract metadata to insert/update
+        """
         if not self.config.advanced.metadata_interface:
             return
         update_id = MetadataCursor.contract()
@@ -284,6 +312,16 @@ class DipDupContext:
         token_id: str,
         metadata: Dict[str, Any],
     ) -> None:
+        """
+        Inserts or updates corresponding rows in the internal `dipdup_token_metadata` table
+        to provide a generic metadata interface (see docs).
+
+        :param network: Network name (e.g. `mainnet`)
+        :param address: Contract address
+        :param token_id: Token ID
+        :param metadata: Token metadata to insert/update
+        """
+
         if not self.config.advanced.metadata_interface:
             return
         if not all(str.isdigit(c) for c in token_id):
@@ -306,23 +344,31 @@ class DipDupContext:
         return datasource
 
     def get_tzkt_datasource(self, name: str) -> TzktDatasource:
+        """Get `tzkt` datasource by name"""
         return self._get_datasource(name, TzktDatasource)
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
+        """Get `coinbase` datasource by name"""
         return self._get_datasource(name, CoinbaseDatasource)
 
     def get_metadata_datasource(self, name: str) -> MetadataDatasource:
+        """Get `metadata` datasource by name"""
         return self._get_datasource(name, MetadataDatasource)
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
+        """Get `ipfs` datasource by name"""
         return self._get_datasource(name, IpfsDatasource)
 
     def get_http_datasource(self, name: str) -> HttpDatasource:
+        """Get `http` datasource by name"""
         return self._get_datasource(name, HttpDatasource)
 
 
 class HookContext(DipDupContext):
-    """Hook callback context."""
+    """Execution context of hook callbacks.
+
+    :param hook_config: Configuration of current hook
+    """
 
     def __init__(
         self,
@@ -337,7 +383,29 @@ class HookContext(DipDupContext):
         self.logger = logger
         self.hook_config = hook_config
 
+    @classmethod
+    def _wrap(
+        cls,
+        ctx: DipDupContext,
+        logger: FormattedLogger,
+        hook_config: HookConfig,
+    ) -> 'HookContext':
+        return cls(
+            datasources=ctx.datasources,
+            config=ctx.config,
+            callbacks=ctx._callbacks,
+            transactions=ctx._transactions,
+            logger=logger,
+            hook_config=hook_config,
+        )
+
     async def rollback(self, index: str, from_level: int, to_level: int) -> None:
+        """Rollback index to a given level reverting all changes made since that level.
+
+        :param index: Index name
+        :param from_level: Level to rollback from
+        :param to_level: Level to rollback to
+        """
         self.logger.info('Rolling back `%s`: %s -> %s', index, from_level, to_level)
         if from_level <= to_level:
             raise RuntimeError(f'Attempt to rollback in future: {from_level} <= {to_level}')
@@ -364,6 +432,8 @@ class HookContext(DipDupContext):
 
 
 class TemplateValuesDict(dict):
+    """Dictionary with template values."""
+
     def __init__(self, ctx, **kwargs):
         self.ctx = ctx
         super().__init__(**kwargs)
@@ -376,7 +446,11 @@ class TemplateValuesDict(dict):
 
 
 class HandlerContext(DipDupContext):
-    """Common handler context."""
+    """Execution context of handler callbacks.
+
+    :param handler_config: Configuration of current handler
+    :param datasource: Index datasource instance
+    """
 
     def __init__(
         self,
@@ -394,6 +468,24 @@ class HandlerContext(DipDupContext):
         self.datasource = datasource
         template_values = handler_config.parent.template_values if handler_config.parent else {}
         self.template_values = TemplateValuesDict(self, **template_values)
+
+    @classmethod
+    def _wrap(
+        cls,
+        ctx: DipDupContext,
+        logger: FormattedLogger,
+        handler_config: HandlerConfig,
+        datasource: TzktDatasource,
+    ) -> 'HandlerContext':
+        return cls(
+            datasources=ctx.datasources,
+            config=ctx.config,
+            callbacks=ctx._callbacks,
+            transactions=ctx._transactions,
+            logger=logger,
+            handler_config=handler_config,
+            datasource=datasource,
+        )
 
 
 class CallbackManager:
@@ -426,7 +518,7 @@ class CallbackManager:
             self._hooks[key] = hook_config
             hook_config.initialize_callback_fn(self._package)
 
-    async def fire_handler(
+    async def _fire_handler(
         self,
         ctx: 'DipDupContext',
         name: str,
@@ -438,11 +530,8 @@ class CallbackManager:
     ) -> None:
         module = f'{self._package}.handlers.{name}'
         handler_config = self._get_handler(name, index)
-        new_ctx = HandlerContext(
-            datasources=ctx.datasources,
-            config=ctx.config,
-            callbacks=ctx._callbacks,
-            transactions=ctx._transactions,
+        new_ctx = HandlerContext._wrap(
+            ctx,
             logger=FormattedLogger(module, fmt),
             handler_config=handler_config,
             datasource=datasource,
@@ -462,11 +551,13 @@ class CallbackManager:
     ) -> None:
         module = f'{self._package}.hooks.{name}'
         hook_config = self._get_hook(name)
-        new_ctx = HookContext(
-            datasources=ctx.datasources,
-            config=ctx.config,
-            callbacks=ctx._callbacks,
-            transactions=ctx._transactions,
+
+        if isinstance(hook_config, EventHookConfig):
+            if isinstance(ctx, (HandlerContext, HookContext)):
+                raise RuntimeError('Event hooks cannot be fired manually')
+
+        new_ctx = HookContext._wrap(
+            ctx,
             logger=FormattedLogger(module, fmt),
             hook_config=hook_config,
         )
