@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [6.0.0rc2] - 2022-08-06
 
 ### Added
 
@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning].
 
 ### Fixed
 
-- config: Do not perform env variable substitution in commented out lines.
+- config: Do not perform env variable substitution in commented-out lines.
 
 ### Removed
 
@@ -689,7 +689,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0-rc1...HEAD
+[unreleased]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0rc2...HEAD
+[6.0.0rc2]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0-rc1...6.0.0rc2
 [6.0.0-rc1]: https://github.com/dipdup-net/dipdup-py/compare/5.2.5...6.0.0-rc1
 [5.2.5]: https://github.com/dipdup-net/dipdup-py/compare/5.2.4...5.2.5
 [5.2.4]: https://github.com/dipdup-net/dipdup-py/compare/5.2.3...5.2.4
