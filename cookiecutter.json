@@ -8,7 +8,7 @@
     "author": "John Smith <johnsmith@example.com>",
 
     "🚧": "Software versions (press enter)",
-    "dipdup_version": "5.2",
+    "dipdup_version": "6.0",
     "postgresql_version": [
       "postgres:15",
       "postgres:14",
@@ -17,6 +17,7 @@
       "timescale/timescaledb:latest-pg13"
     ],
     "hasura_version": [
+      "hasura/graphql-engine:v2.9.0",
       "hasura/graphql-engine:v2.8.4"
     ],
 
