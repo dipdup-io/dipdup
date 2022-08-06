@@ -1,16 +1,15 @@
 <!DOCTYPE HTML>
-<html lang="en" class="sidebar-visible no-js light">
+<html lang="en" class="sidebar-visible no-js coal">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Callback context (ctx) - DipDup framework</title>
+        <title>Callback context (ctx) - DipDup Documentation</title>
         <!-- Custom HTML head -->
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
-        <link rel="icon" href="../../favicon.svg">
         <link rel="shortcut icon" href="../../favicon.png">
         <link rel="stylesheet" href="../../css/variables.css">
         <link rel="stylesheet" href="../../css/general.css">
@@ -30,7 +29,7 @@
         <!-- Provide site root to javascript -->
         <script type="text/javascript">
             var path_to_root = "../../";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "coal";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
@@ -56,7 +55,7 @@
             if (theme === null || theme === undefined) { theme = default_theme; }
             var html = document.querySelector('html');
             html.classList.remove('no-js')
-            html.classList.remove('light')
+            html.classList.remove('coal')
             html.classList.add(theme);
             html.classList.add('js');
         </script>
@@ -75,7 +74,8 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../../index.html">Overview</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="../../quickstart.html"><strong aria-hidden="true">1.</strong> Quickstart</a></li><li class="chapter-item expanded "><a href="../../getting-started/index.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../getting-started/installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="../../getting-started/core-concepts.html"><strong aria-hidden="true">2.2.</strong> Core concepts</a></li><li class="chapter-item expanded "><a href="../../getting-started/preparing-inventory.html"><strong aria-hidden="true">2.3.</strong> Preparing inventory</a></li><li class="chapter-item expanded "><a href="../../getting-started/project-structure.html"><strong aria-hidden="true">2.4.</strong> Project structure</a></li><li class="chapter-item expanded "><a href="../../getting-started/templates-and-variables.html"><strong aria-hidden="true">2.5.</strong> Templates and variables</a></li><li class="chapter-item expanded "><a href="../../getting-started/defining-models.html"><strong aria-hidden="true">2.6.</strong> Defining models</a></li><li class="chapter-item expanded "><a href="../../getting-started/implementing-handlers.html"><strong aria-hidden="true">2.7.</strong> Implementing handlers</a></li></ol></li><li class="chapter-item expanded "><a href="../../advanced/index.html"><strong aria-hidden="true">3.</strong> Advanced usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../advanced/datasources.html"><strong aria-hidden="true">3.1.</strong> Datasources</a></li><li class="chapter-item expanded "><a href="../../advanced/hooks/index.html"><strong aria-hidden="true">3.2.</strong> Hooks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../advanced/hooks/default.html"><strong aria-hidden="true">3.2.1.</strong> Default hooks</a></li><li class="chapter-item expanded "><a href="../../advanced/hooks/jobs.html"><strong aria-hidden="true">3.2.2.</strong> Job scheduler</a></li></ol></li><li class="chapter-item expanded "><a href="../../advanced/reindexing.html"><strong aria-hidden="true">3.3.</strong> Reindexing</a></li><li class="chapter-item expanded "><a href="../../advanced/feature-flags.html"><strong aria-hidden="true">3.4.</strong> Feature flags</a></li><li class="chapter-item expanded "><a href="../../advanced/sql.html"><strong aria-hidden="true">3.5.</strong> Executing SQL scripts</a></li><li class="chapter-item expanded "><a href="../../advanced/performance.html"><strong aria-hidden="true">3.6.</strong> Improving performance</a></li><li class="chapter-item expanded "><a href="../../advanced/context/index.html" class="active"><strong aria-hidden="true">3.7.</strong> Callback context (ctx)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../advanced/context/reference.html"><strong aria-hidden="true">3.7.1.</strong> Full reference</a></li></ol></li><li class="chapter-item expanded "><a href="../../advanced/internal-models.html"><strong aria-hidden="true">3.8.</strong> Internal models</a></li><li class="chapter-item expanded "><a href="../../advanced/index-factories.html"><strong aria-hidden="true">3.9.</strong> Spawning indexes at runtime</a></li><li class="chapter-item expanded "><a href="../../advanced/scheduler.html"><strong aria-hidden="true">3.10.</strong> Scheduler configuration</a></li><li class="chapter-item expanded "><a href="../../advanced/metadata-interface.html"><strong aria-hidden="true">3.11.</strong> Metadata interface</a></li></ol></li><li class="chapter-item expanded "><a href="../../graphql/index.html"><strong aria-hidden="true">4.</strong> GraphQL API</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../graphql/hasura.html"><strong aria-hidden="true">4.1.</strong> Hasura integration</a></li><li class="chapter-item expanded "><a href="../../graphql/rest.html"><strong aria-hidden="true">4.2.</strong> REST endpoints</a></li><li class="chapter-item expanded "><a href="../../graphql/genql.html"><strong aria-hidden="true">4.3.</strong> GenQL</a></li></ol></li><li class="chapter-item expanded "><a href="../../troubleshooting/index.html"><strong aria-hidden="true">5.</strong> Troubleshooting</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../troubleshooting/common-issues.html"><strong aria-hidden="true">5.1.</strong> Common issues</a></li><li class="chapter-item expanded "><a href="../../troubleshooting/reporting-bugs.html"><strong aria-hidden="true">5.2.</strong> Reporting bugs</a></li></ol></li><li class="chapter-item expanded "><a href="../../deployment/index.html"><strong aria-hidden="true">6.</strong> Deployment and operations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../deployment/database-engines.html"><strong aria-hidden="true">6.1.</strong> Database engines</a></li><li class="chapter-item expanded "><a href="../../deployment/docker.html"><strong aria-hidden="true">6.2.</strong> Building Docker images</a></li><li class="chapter-item expanded "><a href="../../deployment/docker-compose.html"><strong aria-hidden="true">6.3.</strong> Deploying with docker-compose</a></li><li class="chapter-item expanded "><a href="../../deployment/swarm.html"><strong aria-hidden="true">6.4.</strong> Deploying with Docker Swarm</a></li><li class="chapter-item expanded "><a href="../../deployment/sentry.html"><strong aria-hidden="true">6.5.</strong> Sentry integration</a></li><li class="chapter-item expanded "><a href="../../deployment/prometheus.html"><strong aria-hidden="true">6.6.</strong> Prometheus integration</a></li><li class="chapter-item expanded "><a href="../../deployment/logging.html"><strong aria-hidden="true">6.7.</strong> Logging</a></li><li class="chapter-item expanded "><a href="../../deployment/monitoring.html"><strong aria-hidden="true">6.8.</strong> Monitoring</a></li><li class="chapter-item expanded "><a href="../../deployment/backups.html"><strong aria-hidden="true">6.9.</strong> Backup and restore</a></li></ol></li><li class="chapter-item expanded "><a href="../../cookbook/index.html"><strong aria-hidden="true">7.</strong> Cookbook</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../cookbook/offchain-data.html"><strong aria-hidden="true">7.1.</strong> Processing offchain data</a></li><li class="chapter-item expanded "><a href="../../cookbook/reusing-typenames.html"><strong aria-hidden="true">7.2.</strong> Reusing typename for different contracts</a></li><li class="chapter-item expanded "><a href="../../cookbook/sync-callbacks.html"><strong aria-hidden="true">7.3.</strong> Synchronizing multiple handlers/hooks</a></li><li class="chapter-item expanded "><a href="../../cookbook/multiprocessing.html"><strong aria-hidden="true">7.4.</strong> Multiprocessing</a></li></ol></li><li class="chapter-item expanded "><a href="../../examples/index.html"><strong aria-hidden="true">8.</strong> Examples</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../examples/demo-projects.html"><strong aria-hidden="true">8.1.</strong> Demo projects</a></li><li class="chapter-item expanded "><a href="../../examples/built-with-dipdup.html"><strong aria-hidden="true">8.2.</strong> Built with DipDup</a></li></ol></li><li class="chapter-item expanded "><a href="../../services/index.html"><strong aria-hidden="true">9.</strong> Services (plugins)</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../services/mempool.html"><strong aria-hidden="true">9.1.</strong> mempool</a></li><li class="chapter-item expanded "><a href="../../services/metadata.html"><strong aria-hidden="true">9.2.</strong> metadata</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="../../cli-reference.html"><strong aria-hidden="true">10.</strong> Command-line reference</a></li><li class="chapter-item expanded "><a href="../../config/index.html"><strong aria-hidden="true">11.</strong> Config file reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../config/reference.html"><strong aria-hidden="true">11.1.</strong> Full reference</a></li><li class="chapter-item expanded "><a href="../../config/advanced.html"><strong aria-hidden="true">11.2.</strong> advanced</a></li><li class="chapter-item expanded "><a href="../../config/contracts.html"><strong aria-hidden="true">11.3.</strong> contracts</a></li><li class="chapter-item expanded "><a href="../../config/database.html"><strong aria-hidden="true">11.4.</strong> database</a></li><li class="chapter-item expanded "><a href="../../config/datasources.html"><strong aria-hidden="true">11.5.</strong> datasources</a></li><li class="chapter-item expanded "><a href="../../config/hasura.html"><strong aria-hidden="true">11.6.</strong> hasura</a></li><li class="chapter-item expanded "><a href="../../config/hooks.html"><strong aria-hidden="true">11.7.</strong> hooks</a></li><li class="chapter-item expanded "><a href="../../config/indexes/index.html"><strong aria-hidden="true">11.8.</strong> indexes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../config/indexes/big_map.html"><strong aria-hidden="true">11.8.1.</strong> big_map</a></li><li class="chapter-item expanded "><a href="../../config/indexes/head.html"><strong aria-hidden="true">11.8.2.</strong> head</a></li><li class="chapter-item expanded "><a href="../../config/indexes/operation.html"><strong aria-hidden="true">11.8.3.</strong> operation</a></li><li class="chapter-item expanded "><a href="../../config/indexes/template.html"><strong aria-hidden="true">11.8.4.</strong> template</a></li></ol></li><li class="chapter-item expanded "><a href="../../config/jobs.html"><strong aria-hidden="true">11.9.</strong> jobs</a></li><li class="chapter-item expanded "><a href="../../config/package.html"><strong aria-hidden="true">11.10.</strong> package</a></li><li class="chapter-item expanded "><a href="../../config/prometheus.html"><strong aria-hidden="true">11.11.</strong> prometheus</a></li><li class="chapter-item expanded "><a href="../../config/sentry.html"><strong aria-hidden="true">11.12.</strong> sentry</a></li><li class="chapter-item expanded "><a href="../../config/spec_version.html"><strong aria-hidden="true">11.13.</strong> spec_version</a></li><li class="chapter-item expanded "><a href="../../config/templates.html"><strong aria-hidden="true">11.14.</strong> templates</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">What's New</li><li class="chapter-item expanded "><a href="../../CHANGELOG.html"><strong aria-hidden="true">12.</strong> Changelog</a></li><li class="chapter-item expanded "><a href="../../release-notes/index.html"><strong aria-hidden="true">13.</strong> Release notes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../release-notes/6.0.0.html"><strong aria-hidden="true">13.1.</strong> 6.0.0 (unreleased)</a></li><li class="chapter-item expanded "><a href="../../release-notes/5.1.0.html"><strong aria-hidden="true">13.2.</strong> 5.1.0</a></li><li class="chapter-item expanded "><a href="../../release-notes/5.0.0.html"><strong aria-hidden="true">13.3.</strong> 5.0.0</a></li><li class="chapter-item expanded "><a href="../../release-notes/4.2.0.html"><strong aria-hidden="true">13.4.</strong> 4.2.0</a></li><li class="chapter-item expanded "><a href="../../release-notes/4.1.0.html"><strong aria-hidden="true">13.5.</strong> 4.1.0</a></li><li class="chapter-item expanded "><a href="../../release-notes/4.0.0.html"><strong aria-hidden="true">13.6.</strong> 4.0.0</a></li></ol></li></ol>
+                <a href="https://dipdup.net/docs">stable</a> | <a href="https://dipdup.net/docs-next">latest</a>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../../index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="../../quickstart.html"><strong aria-hidden="true">1.</strong> Quickstart</a></li><li class="chapter-item expanded "><a href="../../getting-started/index.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../getting-started/installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="../../getting-started/core-concepts.html"><strong aria-hidden="true">2.2.</strong> Core concepts</a></li><li class="chapter-item expanded "><a href="../../getting-started/creating-config.html"><strong aria-hidden="true">2.3.</strong> Creating config</a></li><li class="chapter-item expanded "><a href="../../getting-started/project-structure.html"><strong aria-hidden="true">2.4.</strong> Project structure</a></li><li class="chapter-item expanded "><a href="../../getting-started/defining-models.html"><strong aria-hidden="true">2.5.</strong> Defining models</a></li><li class="chapter-item expanded "><a href="../../getting-started/implementing-handlers.html"><strong aria-hidden="true">2.6.</strong> Implementing handlers</a></li><li class="chapter-item expanded "><a href="../../getting-started/templates-and-variables.html"><strong aria-hidden="true">2.7.</strong> Templates and variables</a></li></ol></li><li class="chapter-item expanded "><a href="../../advanced/index.html"><strong aria-hidden="true">3.</strong> Advanced usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../advanced/datasources.html"><strong aria-hidden="true">3.1.</strong> Datasources</a></li><li class="chapter-item expanded "><a href="../../advanced/hooks.html"><strong aria-hidden="true">3.2.</strong> Hooks</a></li><li class="chapter-item expanded "><a href="../../advanced/event-hooks.html"><strong aria-hidden="true">3.3.</strong> Event hooks</a></li><li class="chapter-item expanded "><a href="../../advanced/jobs.html"><strong aria-hidden="true">3.4.</strong> Job scheduler</a></li><li class="chapter-item expanded "><a href="../../advanced/reindexing.html"><strong aria-hidden="true">3.5.</strong> Reindexing</a></li><li class="chapter-item expanded "><a href="../../advanced/feature-flags.html"><strong aria-hidden="true">3.6.</strong> Feature flags</a></li><li class="chapter-item expanded "><a href="../../advanced/sql.html"><strong aria-hidden="true">3.7.</strong> SQL scripts</a></li><li class="chapter-item expanded "><a href="../../advanced/performance.html"><strong aria-hidden="true">3.8.</strong> Improving performance</a></li><li class="chapter-item expanded "><a href="../../advanced/context/index.html" class="active"><strong aria-hidden="true">3.9.</strong> Callback context (ctx)</a></li><li class="chapter-item expanded "><a href="../../advanced/internal-models.html"><strong aria-hidden="true">3.10.</strong> Internal models</a></li><li class="chapter-item expanded "><a href="../../advanced/index-factories.html"><strong aria-hidden="true">3.11.</strong> Index factories</a></li><li class="chapter-item expanded "><a href="../../advanced/metadata-interface.html"><strong aria-hidden="true">3.12.</strong> Metadata interface</a></li></ol></li><li class="chapter-item expanded "><a href="../../graphql/index.html"><strong aria-hidden="true">4.</strong> GraphQL API</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../graphql/hasura.html"><strong aria-hidden="true">4.1.</strong> Hasura integration</a></li><li class="chapter-item expanded "><a href="../../graphql/rest.html"><strong aria-hidden="true">4.2.</strong> REST endpoints</a></li><li class="chapter-item expanded "><a href="../../graphql/genql.html"><strong aria-hidden="true">4.3.</strong> GenQL</a></li></ol></li><li class="chapter-item expanded "><a href="../../deployment/index.html"><strong aria-hidden="true">5.</strong> Deployment and operations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../deployment/database-engines.html"><strong aria-hidden="true">5.1.</strong> Database engines</a></li><li class="chapter-item expanded "><a href="../../deployment/docker.html"><strong aria-hidden="true">5.2.</strong> Running in Docker</a></li><li class="chapter-item expanded "><a href="../../deployment/sentry.html"><strong aria-hidden="true">5.3.</strong> Sentry integration</a></li><li class="chapter-item expanded "><a href="../../deployment/prometheus.html"><strong aria-hidden="true">5.4.</strong> Prometheus integration</a></li><li class="chapter-item expanded "><a href="../../deployment/logging.html"><strong aria-hidden="true">5.5.</strong> Logging</a></li><li class="chapter-item expanded "><a href="../../deployment/backups.html"><strong aria-hidden="true">5.6.</strong> Backup and restore</a></li></ol></li><li class="chapter-item expanded "><a href="../../faq.html"><strong aria-hidden="true">6.</strong> F.A.Q.</a></li><li class="chapter-item expanded "><a href="../../troubleshooting.html"><strong aria-hidden="true">7.</strong> Troubleshooting</a></li><li class="chapter-item expanded "><a href="../../CONTRIBUTING.html"><strong aria-hidden="true">8.</strong> Contribution guide</a></li><li class="chapter-item expanded affix "><li class="part-title">Examples</li><li class="chapter-item expanded "><a href="../../examples/demo-projects.html"><strong aria-hidden="true">9.</strong> Demo projects</a></li><li class="chapter-item expanded "><a href="../../examples/built-with-dipdup.html"><strong aria-hidden="true">10.</strong> Built with DipDup</a></li><li class="chapter-item expanded affix "><li class="part-title">Standalone Services</li><li class="chapter-item expanded "><a href="../../services/mempool.html"><strong aria-hidden="true">11.</strong> mempool</a></li><li class="chapter-item expanded "><a href="../../services/metadata.html"><strong aria-hidden="true">12.</strong> metadata</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="../../cli-reference.html"><strong aria-hidden="true">13.</strong> Command-line reference</a></li><li class="chapter-item expanded "><a href="../../config/index.html"><strong aria-hidden="true">14.</strong> Config file reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../config/reference.html"><strong aria-hidden="true">14.1.</strong> Full reference</a></li><li class="chapter-item expanded "><a href="../../config/advanced.html"><strong aria-hidden="true">14.2.</strong> advanced</a></li><li class="chapter-item expanded "><a href="../../config/contracts.html"><strong aria-hidden="true">14.3.</strong> contracts</a></li><li class="chapter-item expanded "><a href="../../config/custom.html"><strong aria-hidden="true">14.4.</strong> custom</a></li><li class="chapter-item expanded "><a href="../../config/database.html"><strong aria-hidden="true">14.5.</strong> database</a></li><li class="chapter-item expanded "><a href="../../config/datasources.html"><strong aria-hidden="true">14.6.</strong> datasources</a></li><li class="chapter-item expanded "><a href="../../config/hasura.html"><strong aria-hidden="true">14.7.</strong> hasura</a></li><li class="chapter-item expanded "><a href="../../config/hooks.html"><strong aria-hidden="true">14.8.</strong> hooks</a></li><li class="chapter-item expanded "><a href="../../config/indexes/index.html"><strong aria-hidden="true">14.9.</strong> indexes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../config/indexes/big_map.html"><strong aria-hidden="true">14.9.1.</strong> big_map</a></li><li class="chapter-item expanded "><a href="../../config/indexes/head.html"><strong aria-hidden="true">14.9.2.</strong> head</a></li><li class="chapter-item expanded "><a href="../../config/indexes/operation.html"><strong aria-hidden="true">14.9.3.</strong> operation</a></li><li class="chapter-item expanded "><a href="../../config/indexes/template.html"><strong aria-hidden="true">14.9.4.</strong> template</a></li><li class="chapter-item expanded "><a href="../../config/indexes/token_transfer.html"><strong aria-hidden="true">14.9.5.</strong> token_transfer</a></li></ol></li><li class="chapter-item expanded "><a href="../../config/jobs.html"><strong aria-hidden="true">14.10.</strong> jobs</a></li><li class="chapter-item expanded "><a href="../../config/logging.html"><strong aria-hidden="true">14.11.</strong> logging</a></li><li class="chapter-item expanded "><a href="../../config/package.html"><strong aria-hidden="true">14.12.</strong> package</a></li><li class="chapter-item expanded "><a href="../../config/prometheus.html"><strong aria-hidden="true">14.13.</strong> prometheus</a></li><li class="chapter-item expanded "><a href="../../config/sentry.html"><strong aria-hidden="true">14.14.</strong> sentry</a></li><li class="chapter-item expanded "><a href="../../config/spec_version.html"><strong aria-hidden="true">14.15.</strong> spec_version</a></li><li class="chapter-item expanded "><a href="../../config/templates.html"><strong aria-hidden="true">14.16.</strong> templates</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">What's New</li><li class="chapter-item expanded "><a href="../../CHANGELOG.html"><strong aria-hidden="true">15.</strong> Changelog</a></li><li class="chapter-item expanded "><a href="../../release-notes/index.html"><strong aria-hidden="true">16.</strong> Release notes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../release-notes/6.0.0.html"><strong aria-hidden="true">16.1.</strong> 6.0.0 (unreleased)</a></li><li class="chapter-item expanded "><a href="../../release-notes/5.1.0.html"><strong aria-hidden="true">16.2.</strong> 5.1.0</a></li><li class="chapter-item expanded "><a href="../../release-notes/5.0.0.html"><strong aria-hidden="true">16.3.</strong> 5.0.0</a></li><li class="chapter-item expanded "><a href="../../release-notes/4.2.0.html"><strong aria-hidden="true">16.4.</strong> 4.2.0</a></li><li class="chapter-item expanded "><a href="../../release-notes/4.1.0.html"><strong aria-hidden="true">16.5.</strong> 4.1.0</a></li><li class="chapter-item expanded "><a href="../../release-notes/4.0.0.html"><strong aria-hidden="true">16.6.</strong> 4.0.0</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -93,9 +93,9 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal (default)</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
                         </ul>
@@ -104,7 +104,7 @@
                         </button>
                     </div>
 
-                    <h1 class="menu-title">DipDup framework</h1>
+                    <h1 class="menu-title">DipDup Documentation</h1>
 
                     <div class="right-buttons">
                         <a href="../../print.html" title="Print this book" aria-label="Print this book">
@@ -115,7 +115,7 @@
 
                 <div id="search-wrapper" class="hidden">
                     <form id="searchbar-outer" class="searchbar-outer">
-                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
                     </form>
                     <div id="searchresults-outer" class="searchresults-outer hidden">
                         <div id="searchresults-header" class="searchresults-header"></div>
@@ -135,29 +135,186 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="callback-context-ctx"><a class="header" href="#callback-context-ctx">Callback context (<code>ctx</code>)</a></h1>
-<blockquote>
-<p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
-<p>This page or paragraph is yet to be written. Come back later.</p>
-</blockquote>
 <p>An instance of the <code>HandlerContext</code> class is passed to every handler providing a set of helper methods and read-only properties.</p>
-<h2 id="reindex---none"><a class="header" href="#reindex---none"><code>.reindex() -&gt; None</code></a></h2>
-<p>Drops the entire database and starts the indexing process from scratch. <code>on_index_rollback</code> hook calls this helper by default.</p>
-<h2 id="add_contractname-address-typename---coroutine"><a class="header" href="#add_contractname-address-typename---coroutine"><code>.add_contract(name, address, typename) -&gt; Coroutine</code></a></h2>
-<p>Add a new contract to the inventory.</p>
-<h2 id="add_indexname-template-values---coroutine"><a class="header" href="#add_indexname-template-values---coroutine"><code>.add_index(name, template, values) -&gt; Coroutine</code></a></h2>
-<p>Add a new index to the current configuration.</p>
-<h2 id="fire_hookname-waittrue-kwargs---none"><a class="header" href="#fire_hookname-waittrue-kwargs---none"><code>.fire_hook(name, wait=True, **kwargs) -&gt; None</code></a></h2>
-<p>Trigger hook execution. Unset <code>wait</code> to execute hook outside of the current database transaction.</p>
-<h2 id="execute_sqlname---none"><a class="header" href="#execute_sqlname---none"><code>.execute_sql(name) -&gt; None</code></a></h2>
-<p>The <code>execute_sql</code> argument could be either name of SQL script in <code>sql</code> directory or an absolute/relative path. If the path is a directory, all <code>.sql</code> scripts within it will be executed in alphabetical order.</p>
-<h2 id="update_contract_metadatanetwork-address-token_id-metadata---none"><a class="header" href="#update_contract_metadatanetwork-address-token_id-metadata---none"><code>.update_contract_metadata(network, address, token_id, metadata) -&gt; None</code></a></h2>
-<p>Inserts or updates the corresponding row in the service <code>dipdup_contract_metadata</code> table used for exposing the <a href="../metadata-interface.html">5.11 Metadata interface</a></p>
-<h2 id="update_token_metadatanetwork-address-token_id-metadata---none"><a class="header" href="#update_token_metadatanetwork-address-token_id-metadata---none"><code>.update_token_metadata(network, address, token_id, metadata) -&gt; None</code></a></h2>
-<p>Inserts or updates the corresponding row in the service <code>dipdup_token_metadata</code> table used for exposing the <a href="../metadata-interface.html">5.11 Metadata interface</a></p>
-<h2 id="logger"><a class="header" href="#logger"><code>.logger</code></a></h2>
-<p>Use this instance for logging.</p>
-<h2 id="template_values"><a class="header" href="#template_values"><code>.template_values</code></a></h2>
-<p>You can access values used for initializing a template index.</p>
+<h2 id="reference"><a class="header" href="#reference">Reference</a></h2>
+<p><span class="target" id="module-dipdup.context"></span><dl class="py class"></p>
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">DipDupContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Datasource</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><span class="pre">DipDupConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CallbackManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TransactionManager</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.DipDupContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Common execution context for handler and hook callbacks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasources</strong> – Mapping of available datasources</p></li>
+<li><p><strong>config</strong> – DipDup configuration</p></li>
+<li><p><strong>logger</strong> – Context-aware logger instance</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.add_contract">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_contract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.add_contract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds contract to the inventory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – Contract name</p></li>
+<li><p><strong>address</strong> – Contract address</p></li>
+<li><p><strong>typename</strong> – Alias for the contract script</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.add_index">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Index</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.add_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a new contract to the inventory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – Index name</p></li>
+<li><p><strong>template</strong> – Index template to use</p></li>
+<li><p><strong>values</strong> – Mapping of values to fill template with</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.execute_sql">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.execute_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes SQL script(s) with given name.</p>
+<p>If the <cite>name</cite> path is a directory, all <cite>.sql</cite> scripts within it will be executed in alphabetical order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – File or directory within project’s <cite>sql</cite> directory</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.fire_hook">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fire_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.fire_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fire hook with given name and arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – Hook name</p></li>
+<li><p><strong>fmt</strong> – Format string for <cite>ctx.logger</cite> messages</p></li>
+<li><p><strong>wait</strong> – Wait for hook to finish or fire and forget</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.get_coinbase_datasource">
+<span class="sig-name descname"><span class="pre">get_coinbase_datasource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CoinbaseDatasource</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.get_coinbase_datasource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get <cite>coinbase</cite> datasource by name</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.get_http_datasource">
+<span class="sig-name descname"><span class="pre">get_http_datasource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">HttpDatasource</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.get_http_datasource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get <cite>http</cite> datasource by name</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.get_ipfs_datasource">
+<span class="sig-name descname"><span class="pre">get_ipfs_datasource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">IpfsDatasource</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.get_ipfs_datasource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get <cite>ipfs</cite> datasource by name</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.get_metadata_datasource">
+<span class="sig-name descname"><span class="pre">get_metadata_datasource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">MetadataDatasource</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.get_metadata_datasource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get <cite>metadata</cite> datasource by name</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.get_tzkt_datasource">
+<span class="sig-name descname"><span class="pre">get_tzkt_datasource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TzktDatasource</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.get_tzkt_datasource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get <cite>tzkt</cite> datasource by name</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.reindex">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reindex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ReindexingReason</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.reindex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drops the entire database and starts the indexing process from scratch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reason</strong> – Reason for reindexing in free-form string</p></li>
+<li><p><strong>context</strong> – Additional information to include in exception message</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.restart">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">restart</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.restart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart process and continue indexing.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.update_contract_metadata">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_contract_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.update_contract_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inserts or updates corresponding rows in the internal <cite>dipdup_contract_metadata</cite> table
+to provide a generic metadata interface (see docs).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> – Network name (e.g. <cite>mainnet</cite>)</p></li>
+<li><p><strong>address</strong> – Contract address</p></li>
+<li><p><strong>metadata</strong> – Contract metadata to insert/update</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.update_token_metadata">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_token_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.update_token_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inserts or updates corresponding rows in the internal <cite>dipdup_token_metadata</cite> table
+to provide a generic metadata interface (see docs).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> – Network name (e.g. <cite>mainnet</cite>)</p></li>
+<li><p><strong>address</strong> – Contract address</p></li>
+<li><p><strong>token_id</strong> – Token ID</p></li>
+<li><p><strong>metadata</strong> – Token metadata to insert/update</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="dipdup.context.HandlerContext">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">HandlerContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Datasource</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><span class="pre">DipDupConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CallbackManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TransactionManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FormattedLogger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handler_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config-reference.html#dipdup.config.HandlerConfig" title="dipdup.config.HandlerConfig"><span class="pre">HandlerConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TzktDatasource</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.HandlerContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execution context of handler callbacks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handler_config</strong> – Configuration of current handler</p></li>
+<li><p><strong>datasource</strong> – Index datasource instance</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="dipdup.context.HookContext">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">HookContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Datasource</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><span class="pre">DipDupConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CallbackManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TransactionManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FormattedLogger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hook_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config-reference.html#dipdup.config.HookConfig" title="dipdup.config.HookConfig"><span class="pre">HookConfig</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.HookContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execution context of hook callbacks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>hook_config</strong> – Configuration of current hook</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.HookContext.rollback">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.context.HookContext.rollback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rollback index to a given level reverting all changes made since that level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> – Index name</p></li>
+<li><p><strong>from_level</strong> – Level to rollback from</p></li>
+<li><p><strong>to_level</strong> – Level to rollback to</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 
                     </main>
 
@@ -166,7 +323,7 @@
                             <a rel="prev" href="../../advanced/performance.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
-                            <a rel="next" href="../../advanced/context/reference.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../../advanced/internal-models.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         <div style="clear: both"></div>
@@ -178,7 +335,7 @@
                     <a rel="prev" href="../../advanced/performance.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
-                    <a rel="next" href="../../advanced/context/reference.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../../advanced/internal-models.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
