@@ -42,6 +42,7 @@
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#J"><strong>J</strong></a>
@@ -53,6 +54,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  
 </div>
 <h2 id="Symbols">Symbols</h2>
@@ -63,13 +65,6 @@
 
       <ul>
         <li><a href="cli-reference.html#cmdoption-dipdup-c">dipdup command line option</a>
-</li>
-      </ul></li>
-      <li>
-    --early-realtime
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-run-early-realtime">dipdup-run command line option</a>
 </li>
       </ul></li>
       <li>
@@ -96,12 +91,21 @@
 </li>
       </ul></li>
       <li>
+    --full
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-config-export-full">dipdup-config-export command line option</a>
+</li>
+      </ul></li>
+      <li>
     --immune
 
       <ul>
         <li><a href="cli-reference.html#cmdoption-dipdup-schema-wipe-immune">dipdup-schema-wipe command line option</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     --keep-schemas
 
@@ -110,40 +114,10 @@
 </li>
       </ul></li>
       <li>
-    --logging-config
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-l">dipdup command line option</a>
-</li>
-      </ul></li>
-      <li>
-    --merge-subscriptions
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-run-merge-subscriptions">dipdup-run command line option</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    --metadata-interface
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-run-metadata-interface">dipdup-run command line option</a>
-</li>
-      </ul></li>
-      <li>
     --overwrite-types
 
       <ul>
         <li><a href="cli-reference.html#cmdoption-dipdup-init-overwrite-types">dipdup-init command line option</a>
-</li>
-      </ul></li>
-      <li>
-    --postpone-jobs
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-run-postpone-jobs">dipdup-run command line option</a>
 </li>
       </ul></li>
       <li>
@@ -181,23 +155,20 @@
         <li><a href="cli-reference.html#cmdoption-dipdup-config-env-f">dipdup-config-env command line option</a>
 </li>
       </ul></li>
-      <li>
-    -l
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-l">dipdup command line option</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.config.OperationIndexConfig.address_filter">address_filter (dipdup.config.OperationIndexConfig property)</a>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.add_contract">add_contract() (dipdup.context.DipDupContext method)</a>
+</li>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.add_index">add_index() (dipdup.context.DipDupContext method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="config-reference.html#dipdup.config.OperationIndexConfig.address_filter">address_filter (dipdup.config.OperationIndexConfig property)</a>
+</li>
       <li><a href="config-reference.html#dipdup.config.AdvancedConfig">AdvancedConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
@@ -242,15 +213,11 @@
 </li>
         <li><a href="cli-reference.html#cmdoption-dipdup-e">--env-file</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-l">--logging-config</a>
-</li>
         <li><a href="cli-reference.html#cmdoption-dipdup-version">--version</a>
 </li>
         <li><a href="cli-reference.html#cmdoption-dipdup-c">-c</a>
 </li>
         <li><a href="cli-reference.html#cmdoption-dipdup-e">-e</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-l">-l</a>
 </li>
       </ul></li>
       <li>
@@ -266,6 +233,8 @@
     dipdup-config-export command line option
 
       <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-config-export-full">--full</a>
+</li>
         <li><a href="cli-reference.html#cmdoption-dipdup-config-export-unsafe">--unsafe</a>
 </li>
       </ul></li>
@@ -276,6 +245,8 @@
         <li><a href="cli-reference.html#cmdoption-dipdup-hasura-configure-force">--force</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     dipdup-init command line option
 
@@ -283,21 +254,6 @@
         <li><a href="cli-reference.html#cmdoption-dipdup-init-keep-schemas">--keep-schemas</a>
 </li>
         <li><a href="cli-reference.html#cmdoption-dipdup-init-overwrite-types">--overwrite-types</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    dipdup-run command line option
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-run-early-realtime">--early-realtime</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-run-merge-subscriptions">--merge-subscriptions</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-run-metadata-interface">--metadata-interface</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-run-postpone-jobs">--postpone-jobs</a>
 </li>
       </ul></li>
       <li>
@@ -337,6 +293,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="config-reference.html#dipdup.config.EventHookConfig">EventHookConfig (class in dipdup.config)</a>
+</li>
       <li><a href="context-reference.html#dipdup.context.DipDupContext.execute_sql">execute_sql() (dipdup.context.DipDupContext method)</a>
 </li>
   </ul></td>
@@ -345,11 +303,25 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="context-reference.html#dipdup.context.DipDupContext.fire_handler">fire_handler() (dipdup.context.DipDupContext method)</a>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.fire_hook">fire_hook() (dipdup.context.DipDupContext method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.get_coinbase_datasource">get_coinbase_datasource() (dipdup.context.DipDupContext method)</a>
+</li>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.get_http_datasource">get_http_datasource() (dipdup.context.DipDupContext method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="context-reference.html#dipdup.context.DipDupContext.fire_hook">fire_hook() (dipdup.context.DipDupContext method)</a>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.get_ipfs_datasource">get_ipfs_datasource() (dipdup.context.DipDupContext method)</a>
+</li>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.get_metadata_datasource">get_metadata_datasource() (dipdup.context.DipDupContext method)</a>
+</li>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.get_tzkt_datasource">get_tzkt_datasource() (dipdup.context.DipDupContext method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -414,10 +386,6 @@
       <li><a href="config-reference.html#dipdup.config.CodegenMixin.locate_arguments">locate_arguments() (dipdup.config.CodegenMixin method)</a>
 </li>
   </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.config.LoggingConfig">LoggingConfig (class in dipdup.config)</a>
-</li>
-  </ul></td>
 </tr></table>
 
 <h2 id="M">M</h2>
@@ -480,8 +448,6 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config-reference.html#dipdup.config.PatternConfig">PatternConfig (class in dipdup.config)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.DipDupConfig.per_index_rollback">per_index_rollback (dipdup.config.DipDupConfig property)</a>
-</li>
       <li><a href="config-reference.html#dipdup.config.PostgresDatabaseConfig">PostgresDatabaseConfig (class in dipdup.config)</a>
 </li>
       <li><a href="config-reference.html#dipdup.config.PrometheusConfig">PrometheusConfig (class in dipdup.config)</a>
@@ -497,6 +463,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="context-reference.html#dipdup.context.DipDupContext.restart">restart() (dipdup.context.DipDupContext method)</a>
+</li>
+      <li><a href="context-reference.html#dipdup.context.HookContext.rollback">rollback() (dipdup.context.HookContext method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -520,8 +488,6 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="context-reference.html#dipdup.context.TemplateValuesDict">TemplateValuesDict (class in dipdup.context)</a>
-</li>
       <li><a href="config-reference.html#dipdup.config.TemplateValuesMixin">TemplateValuesMixin (class in dipdup.config)</a>
 </li>
       <li><a href="config-reference.html#dipdup.config.TokenTransferHandlerConfig">TokenTransferHandlerConfig (class in dipdup.config)</a>
@@ -533,6 +499,18 @@
       <li><a href="config-reference.html#dipdup.config.TransactionIdxMixin">TransactionIdxMixin (class in dipdup.config)</a>
 </li>
       <li><a href="config-reference.html#dipdup.config.TzktDatasourceConfig">TzktDatasourceConfig (class in dipdup.config)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.update_contract_metadata">update_contract_metadata() (dipdup.context.DipDupContext method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.update_token_metadata">update_token_metadata() (dipdup.context.DipDupContext method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -589,7 +567,7 @@
       &copy;2022, Baking Bad.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
