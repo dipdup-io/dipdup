@@ -22,7 +22,7 @@
   * [Feature flags](advanced/feature-flags.md)
   * [SQL scripts](advanced/sql.md)
   * [Improving performance](advanced/performance.md)
-  * [Callback context (ctx)](advanced/context/README.md)
+  * [Callback context (ctx)](advanced/context.md)
   * [Internal models](advanced/internal-models.md)
   * [Index factories](advanced/index-factories.md)
   * [Metadata interface](advanced/metadata-interface.md)

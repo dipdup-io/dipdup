@@ -25,4 +25,4 @@ If your indexer is stateless, you can just drop DB data saved after `to_level` a
 >
 > * {{ #summary advanced/reindexing.md}}
 > * {{ #summary advanced/sql.md}}
-> * {{ #summary advanced/context/README.md}}
+> * {{ #summary advanced/context.md}}

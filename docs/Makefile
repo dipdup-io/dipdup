@@ -23,7 +23,7 @@ docs:
 	poetry run make html
 	tail -n '+34' _build/html/cli-reference.html | head -n '-63' > cli-reference.md
 	tail -n '+34' _build/html/config-reference.html | head -n '-63' > config/reference.md
-	tail -n '+34' _build/html/context-reference.html | head -n '-63' > advanced/context/reference.md
+	tail -n '+34' _build/html/context-reference.html | head -n '-63' > include/context-reference.md
 	mdbook build  --dest-dir=dist/docs
 
 homepage:
@@ -46,6 +46,6 @@ orphans:
 	cat SUMMARY.md | grep ".md" > mentioned.tmp
 	sed -i -E 's@^.*\[(.*)\]\((.*)\).*$$@\2@p' mentioned.tmp
 	cat mentioned.tmp | uniq | sort -o mentioned.tmp
-	find . | grep ".md" | grep -v -e "node_modules/" -e " book/" -e "placeholders.md" -e "SUMMARY.md" -e "mdbook-summary" | cut -c "3-" | sort -o existing.tmp
+	find . | grep ".md" | grep -v -e "node_modules/" -e " book/" -e "placeholders.md" -e "SUMMARY.md" -e "mdbook-summary" -e "include" | cut -c "3-" | sort -o existing.tmp
 	diff --color mentioned.tmp existing.tmp
 	rm mentioned.tmp existing.tmp

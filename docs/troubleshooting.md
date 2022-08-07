@@ -39,9 +39,18 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config env
 
 ## Enable debug logging and crash reporting
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+More logs can give you a clue about the reason for an issue. Enable them in config:
+
+```yaml
+logging: verbose
+```
+
+When an exception occurs DipDup saves crash dumps to `/tmp/dipdup-tombstone_XXXXXXX.json`. You can send those dumps to Baking Bad automatically:
+
+```yaml
+advanced:
+  crash_reporting: True
+```
 
 ## Use linters to find errors in your Python code
 

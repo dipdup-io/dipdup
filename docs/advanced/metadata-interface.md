@@ -90,7 +90,7 @@ query MyQuery {
 }
 ```
 
-DipDup handles table management for you and exposes a [context-level helper](../advanced/context/README.md).
+DipDup handles table management for you and exposes a [context-level helper](../advanced/context.md).
 
 Tezos Domains example:
 
