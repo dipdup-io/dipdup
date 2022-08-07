@@ -33,7 +33,7 @@ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 
 ### Poetry
 
-We advise using the [Poetry](https://python-poetry.org) package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools ‒ use them instead.
+We advise using the [Poetry](https://python-poetry.org) package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.
 
 ```shell
 # Create a new project

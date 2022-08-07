@@ -38,8 +38,7 @@ datasources:
 
 The rest HTTP tunables are the same as for other datasources.
 
-<!-- FIXME: Not needed since we have DB rollbacks? -->
-Also, you can wait for several block confirmations before processing the operations, e.g. to mitigate chain reorgs:
+Also, you can wait for several block confirmations before processing the operations:
 
 ```yaml
 datasources:
@@ -47,6 +46,8 @@ datasources:
     ...
     buffer_size: 1  # indexing with a single block lag
 ```
+
+Since 6.0 chain reorgs are processed automatically, but you may find this feature useful for other cases.
 
 ## Tezos node
 
@@ -83,7 +84,12 @@ datasources:
     network: mainnet | ithacanet
 ```
 
-<!-- FIXME: No usage example -->
+Then, in your hook or handler code:
+
+```python
+datasource = ctx.get_metadata_datasource('metadata')
+token_metadata = await datasource.get_token_metadata('KT1...', '0')
+```
 
 ## IPFS
 

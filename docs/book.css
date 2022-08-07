@@ -4,5 +4,5 @@ h2, h3 {
 
 pre > code {
     padding: 1.5rem;  /* was 1rem */
-    font-size: 0.825em; /* was 0.875em; */
+    font-size: 0.825em;  /* was 0.875em; */
 }
