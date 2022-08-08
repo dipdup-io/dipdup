@@ -1,2 +1,2 @@
-FROM dipdup/dipdup:6.0.0rc2
+FROM dipdup/dipdup:6.0.0
 COPY demo_tzbtc /home/dipdup/demo_tzbtc
