@@ -507,7 +507,7 @@ This release contains no changes except for the version number.
 
 ## [4.0.0-rc2] - 2021-12-11
 
-### ⚠ Migration
+### Migration
 
 - Run `dipdup init` command to generate `on_synchronized` hook stubs.
 
@@ -529,7 +529,7 @@ This release contains no changes except for the version number.
 
 ## [4.0.0-rc1] - 2021-12-02
 
-### ⚠ Migration
+### Migration
 
 - Run `dipdup schema approve` command on every database you want to use with 4.0.0-rc1. Running `dipdup migrate` is not necessary since `spec_version` hasn't changed in this release.
 
