@@ -10,6 +10,7 @@ create-missing = false
 
 [output.html]
 default-theme = "coal"
+additional-css = ["book.css"]
 
 [preprocessor.summary]
 command = "python mdbook-summary"
