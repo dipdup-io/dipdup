@@ -1,0 +1,8 @@
+h2, h3 {
+    margin-top: 1.5em;  /* was 2.5em */
+}
+
+pre > code {
+    padding: 1.5rem;  /* was 1rem */
+    font-size: 0.825em;  /* was 0.875em; */
+}

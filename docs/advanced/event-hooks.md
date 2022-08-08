@@ -16,13 +16,12 @@ This hook fires when every active index reaches a realtime state. Here you can c
 
 ## `on_index_rollback`
 
-Fires when TzKT datasource has received a chain reorg message which can't be processed automatically.
+Fires when TzKT datasource has received a chain reorg message which can't be processed by dropping buffered messages (`buffer_size` option).
 
-<!-- FIXME -->
-If your indexer is stateless, you can just drop DB data saved after `to_level` and continue indexing. Otherwise, implement more complex logic. By default, this hook triggers full reindexing.
+Since version 6.0 this hook performs a database-level rollback by default. If it doesn't work for you for some reason remove `ctx.rollback` call and implement your own rollback logic.
 
 > 💡 **SEE ALSO**
 >
 > * {{ #summary advanced/reindexing.md}}
 > * {{ #summary advanced/sql.md}}
-> * {{ #summary advanced/context/README.md}}
+> * {{ #summary advanced/context.md}}

@@ -1,32 +1,41 @@
 # Creating config
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+Developing a DipDup indexer begins with creating a YAML config file. You can find a minimal example to start indexing on the Quickstart page.
 
-Developing a DipDup indexer begins with creating a YAML config file. You can find a minimal example to start indexing on the Quckstart page. This page will cover all available options and when they are useful. When you decide what config sections you need in your project, follow {{ #summary config/README.md }} for detailed instructions.
+## General structure
 
-<!-- Header	spec_version*	14.14. spec_version
-	package*	14.11. package
-Inventory	database	14.4. database
-	contracts	14.3. contracts
-	datasources	14.5. datasources
-Index definitions	indexes	14.8. indexes
-	templates	14.15. templates
-Hook definitions	hooks	14.7. hooks
-	jobs	14.9. jobs
-Integrations	sentry	14.13. sentry
-	hasura	14.6. hasura
-	prometheus	14.12. prometheus
-Tunables	advanced	14.2. advanced
-	logging	14.10. logging
+DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for `dipdup.yml` file in the current working directory, but you can provide any path with a `-c` CLI option.
 
-* Contracts you want to process with your indexer. `operation` indexes will fetch sender/target/origination operations of this contract, `big_maps` ones its big maps. See [12.2. contracts](../config/contracts.md) for details.
-* Datasources used both by DipDup internally and user on demand.
-* Indexes. -->
+DipDup config file consists of several logical blocks:
+
+{{ #include ../include/config-toc.md }}
+
+**Header** contains two required fields, `package` and `spec_version`. They are used to identify the project and the version of the DipDup specification. All other fields in the config are optional.
+
+**Inventory** specifies contracts that need to be indexed, datasources to fetch data from and the database to store data in.
+
+**Index definitions** define the index templates that will be used to index the contract data.
+
+**Hook definitions** define callback functions that will be called manually or on schedule.
+
+**Integrations** are used to integrate with third-party services.
+
+**Tunables** affect the behavior of the whole framework.
+
+## Merging config files
+
+DipDup allows you to customize the configuration for a specific environment or a workflow. It works similar to docker-compose, but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the `-c` command-line option multiple times:
+
+```shell
+dipdup -c dipdup.yml -c dipdup.prod.yml run
+```
+
+Run [`config export`](../cli-reference.md#dipdup-config-export) command if unsure about the final config used by DipDup.
+
+## Full example
 
 Let's put it all together. Config below is an artificial example but contains almost all available options.
 
 ```yaml
-{{ #include _dipdup-full.yml }}
+{{ #include ../include/dipdup-full.yml }}
 ```

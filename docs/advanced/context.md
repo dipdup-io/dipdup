@@ -4,4 +4,4 @@ An instance of the `HandlerContext` class is passed to every handler providing a
 
 ## Reference
 
-{{ #include reference.md}}
+{{ #include ../include/context-reference.md}}

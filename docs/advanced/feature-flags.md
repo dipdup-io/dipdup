@@ -11,6 +11,7 @@ advanced:
   postpone_jobs: False
   metadata_interface: False
   skip_version_check: False
+  crash_reporting: False
 ```
 
 ## Early realtime
@@ -35,8 +36,12 @@ Do not start the job scheduler until all indexes are synchronized. If your jobs 
 
 ## Metadata interface
 
-Without this flag calling `ctx.update_contract_metadata` and `ctx.update_token_metadata` will make no effect. Corresponding internal tables are created on reindex in any way.
+Without this flag calling `ctx.update_contract_metadata` and `ctx.update_token_metadata` will make no effect. Corresponding internal tables are created on reindexing in any way.
 
 ## Skip version check
 
 Disables warning about running unstable or out-of-date DipDup version.
+
+## Crash reporting
+
+Enables sending crash reports to the Baking Bad team. This is **disabled by default**. You can inspect crash dumps saved as `/tmp/dipdup-tombstone_XXXXXXX.json` before enabling this option.

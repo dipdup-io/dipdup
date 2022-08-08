@@ -1,5 +1,16 @@
 # custom
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+An arbitrary YAML object you can use to store internal indexer configuration.
+
+```yaml
+package: my_indexer
+...
+custom:
+  foo: bar
+```
+
+Access or modify it from any callback:
+
+```python
+ctx.config.custom['foo'] = 'buzz'
+```

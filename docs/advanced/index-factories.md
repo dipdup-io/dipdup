@@ -28,5 +28,5 @@ Another solution is to implement custom logic in `on_restart` hook (see {{ #summ
 
 > 💡 **SEE ALSO**
 >
-> * {{ #summary advanced/context/README.md}}
+> * {{ #summary advanced/context.md}}
 > * {{ #summary config/templates.md}}

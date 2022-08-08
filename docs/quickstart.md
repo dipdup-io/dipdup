@@ -8,9 +8,9 @@ A modern Linux distribution with Python 3.10 installed is required to run DipDup
 
 ## Create a new project
 
-### From template
+### Interactively (recommended)
 
-Cookiecutter is a cool `jinja2` wrapper to initialize hello-world templates of various frameworks and toolkits interactively. Install `python-cookiecutter` package systemwide, then call:
+You can initialize a hello-world project interactively by choosing configuration options in the terminal. Install [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/README.html) package systemwide, then run:
 
 ```shell
 cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
@@ -18,7 +18,7 @@ cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
 
 ### From scratch
 
-We advise using the [Poetry](https://python-poetry.org) package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools -- use them instead.
+We advise using the [Poetry](https://python-poetry.org) package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.
 
 ```shell
 # Create a new project
@@ -109,15 +109,7 @@ Our schema will consist of a single model `Holder` having several fields:
 Put the following content in the `models.py` file:
 
 ```python
-from tortoise import Model, fields
-
-
-class Holder(Model):
-    address = fields.CharField(max_length=36, pk=True)
-    balance = fields.DecimalField(decimal_places=8, max_digits=20, default=0)
-    volume = fields.DecimalField(decimal_places=8, max_digits=20, default=0)
-    tx_count = fields.BigIntField(default=0)
-    last_seen = fields.DatetimeField(null=True)
+{{ #include ../src/demo_tzbtc/models.py }}
 ```
 
 > 💡 **SEE ALSO**

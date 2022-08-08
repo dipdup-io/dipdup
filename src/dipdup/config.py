@@ -1429,12 +1429,19 @@ class DipDupConfig:
             if self.advanced.metadata_interface:
                 raise ConfigurationError('`metadata_interface` flag requires `hasura` section to be present')
 
-        # NOTE: Reserved hooks
+        # NOTE: Hook names and callbacks
         for name, hook_config in self.hooks.items():
             if name != hook_config.callback:
                 raise ConfigurationError(f'`{name}` hook name must be equal to `callback` value.')
             if name in event_hooks:
                 raise ConfigurationError(f'`{name}` hook name is reserved by event hook')
+
+        # NOTE: Conflicting rollback techniques
+        for name, datasource_config in self.datasources.items():
+            if not isinstance(datasource_config, TzktDatasourceConfig):
+                continue
+            if datasource_config.buffer_size and self.advanced.rollback_depth:
+                raise ConfigurationError(f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`')
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)

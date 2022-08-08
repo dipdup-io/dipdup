@@ -2,7 +2,7 @@
 
 Put your `*.sql` scripts to `<package>/sql`. You can run these scripts from any callback with `ctx.execute_sql('name')`. If `name` is a directory, each script it contains will be executed.
 
-Both types of scripts are executed without being wrapped with SQL transactions. It's generally a good idea to avoid touching table data in scripts.
+Scripts are executed without being wrapped with SQL transactions. It's generally a good idea to avoid touching table data in scripts.
 
 SQL scripts are ignored if SQLite is used as a database backend.
 
