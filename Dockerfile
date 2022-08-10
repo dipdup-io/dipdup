@@ -6,7 +6,7 @@ ARG EXTRAS
 SHELL ["/bin/bash", "-x", "-v", "-c"]
 RUN <<eot
     apt update
-    apt install -y --no-install-recommends make git sudo python3-ruamel.yaml.clib `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y --no-install-recommends make git sudo python3-ruamel.yaml.clib_0 `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
     pip install --no-cache-dir poetry
     useradd -ms /bin/bash dipdup
     mkdir /home/dipdup/source
