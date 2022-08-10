@@ -27,7 +27,7 @@ RUN <<eot
     echo 'dipdup ALL = NOPASSWD: /usr/bin/inject_pyproject.sh' >> /etc/sudoers
     chmod +x /usr/bin/inject_pyproject.sh
     chmod +x /usr/bin/inject_pyproject
-    rm -r /root/.cache
+    rm -r /root/.cache || true
 eot
 
 COPY --chown=dipdup . /home/dipdup/source
