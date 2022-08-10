@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- context: Do not wrap known exceptions with `CallbackError`
+
 ## [6.0.0] - 2022-08-08
 
 This release contains no changes except for the version number.
@@ -693,7 +699,7 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0...HEAD
+[Unreleased]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0...HEAD
 [6.0.0]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0rc2...6.0.0
 [6.0.0rc2]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0-rc1...6.0.0rc2
 [6.0.0-rc1]: https://github.com/dipdup-net/dipdup-py/compare/5.2.5...6.0.0-rc1
