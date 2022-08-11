@@ -46,9 +46,8 @@ ENV PATH="/opt/dipdup/.venv/bin:$PATH"
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
 RUN <<eot
-    poetry config virtualenvs.in-project true
-
     useradd -ms /bin/bash dipdup
+    pip install --no-cache-dir poetry
 
     apt update
     apt install -y --no-install-recommends git sudo `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
