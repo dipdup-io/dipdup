@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1.3-labs
 FROM python:3.10-slim-buster AS compile-image
 
-ARG EXTRAS
+ARG EXTRAS=""
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
 RUN <<eot
     apt update
-    apt install -y --no-install-recommends gcc gcc-arm-none-eabi make git sudo `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y gcc gcc-arm-none-eabi make git sudo `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
     rm -r /var/lib/apt/lists/*
 
     mkdir -p /opt/dipdup
@@ -39,12 +39,6 @@ RUN <<eot
 eot
 
 FROM python:3.10-slim-buster AS build-image
-
-ARG EXTRAS
-ENV POETRY_VIRTUALENVS_IN_PROJECT=true
-ENV PATH="/opt/dipdup/.venv/bin:$PATH"
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
-
 RUN <<eot
     useradd -ms /bin/bash dipdup
     pip install --no-cache-dir poetry
