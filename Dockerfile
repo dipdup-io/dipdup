@@ -7,7 +7,7 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
 RUN <<eot
     apt update
-    apt install -y --no-install-recommends gcc gcc-multilib make git sudo `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y --no-install-recommends gcc gcc-aarch64-linux-gnu make git sudo `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
     rm -r /var/lib/apt/lists/*
 
     mkdir -p /opt/dipdup
