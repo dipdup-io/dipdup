@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1.3-labs
 FROM python:3.10-slim-buster AS compile-image
-
 ARG EXTRAS=""
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
@@ -39,6 +38,10 @@ RUN <<eot
 eot
 
 FROM python:3.10-slim-buster AS build-image
+ARG EXTRAS=""
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+
 RUN <<eot
     useradd -ms /bin/bash dipdup
     pip install --no-cache-dir poetry
@@ -52,7 +55,6 @@ COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
 COPY --chown=dipdup . /opt/dipdup
 
 USER dipdup
-
 WORKDIR /home/dipdup/
 ENTRYPOINT ["dipdup"]
 CMD ["run"]
