@@ -59,6 +59,8 @@ build:          ## Build Python wheel package
 
 image:          ## Build Docker image
 	docker buildx build . -t dipdup:${TAG}
+
+image-pytezos:
 	docker buildx build . -t dipdup:${TAG}-pytezos --build-arg EXTRAS=pytezos
 
 release-patch:  ## Release patch version
