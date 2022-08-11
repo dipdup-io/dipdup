@@ -55,6 +55,7 @@ COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
 COPY --chown=dipdup . /opt/dipdup
 
 USER dipdup
+ENV PATH="/opt/dipdup/.venv/bin:$PATH"
 WORKDIR /home/dipdup/
 ENTRYPOINT ["dipdup"]
 CMD ["run"]
