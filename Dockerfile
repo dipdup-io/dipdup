@@ -2,12 +2,11 @@
 FROM python:3.10-slim-buster AS compile-image
 
 ARG EXTRAS
-SHELL ["/bin/bash", "-c"]
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
-RUN <<eot
+RUN <<eot bash
     apt update
-    apt install -y --no-install-recommends gcc gcc-aarch64-linux-gnu make git sudo `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y --no-install-recommends gcc gcc-arm-none-eabi make git sudo `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
     rm -r /var/lib/apt/lists/*
 
     mkdir -p /opt/dipdup
@@ -23,7 +22,7 @@ ENV PATH="/opt/dipdup/.venv/bin:$PATH"
 COPY --chown=dipdup Makefile pyproject.toml poetry.lock README.md /opt/dipdup/
 COPY --chown=dipdup inject_pyproject.sh /usr/bin/inject_pyproject.sh
 
-RUN <<eot
+RUN <<eot bash
     # We want to copy our code at the last layer but not to break poetry's "packages" section
     mkdir -p /opt/dipdup/src/dipdup
     touch /opt/dipdup/src/dipdup/__init__.py
@@ -41,11 +40,10 @@ eot
 FROM python:3.10-slim-buster AS build-image
 
 ARG EXTRAS
-SHELL ["/bin/bash", "-c"]
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 ENV PATH="/opt/dipdup/.venv/bin:$PATH"
 
-RUN <<eot
+RUN <<eot bash
     poetry config virtualenvs.in-project true
 
     useradd -ms /bin/bash dipdup
