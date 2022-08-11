@@ -2,7 +2,7 @@
 FROM python:3.10-slim-buster AS compile-image
 
 ARG EXTRAS
-SHELL ["/bin/bash", "-x", "-v", "-c"]
+SHELL ["/bin/bash", "-c"]
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
 RUN <<eot
@@ -41,7 +41,7 @@ eot
 FROM python:3.10-slim-buster AS build-image
 
 ARG EXTRAS
-SHELL ["/bin/bash", "-x", "-v", "-c"]
+SHELL ["/bin/bash", "-c"]
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 ENV PATH="/opt/dipdup/.venv/bin:$PATH"
 
