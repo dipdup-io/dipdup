@@ -11,7 +11,7 @@ RUN <<eot
 
     mkdir -p /opt/dipdup
     python -m venv /opt/dipdup/.venv
-    pip install --no-cache-dir poetry
+    pip install --no-cache-dir poetry wheel
 
     rm -r /var/log/*
 eot
