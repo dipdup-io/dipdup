@@ -9,9 +9,10 @@ RUN <<eot
     apt install -y gcc make git `if [[ $PYTEZOS = "1" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
     rm -r /var/lib/apt/lists/*
 
+    pip install --no-cache-dir poetry wheel
+
     mkdir -p /opt/dipdup
     python -m venv /opt/dipdup/.venv
-    pip install --no-cache-dir poetry wheel
 
     rm -r /var/log/*
 eot
