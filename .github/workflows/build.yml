@@ -81,6 +81,6 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-pytezos.outputs.tags }}
+          labels: ${{ steps.meta-pytezos.outputs.labels }}
           build-args: PYTEZOS=1
