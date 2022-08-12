@@ -13,7 +13,7 @@ RUN <<eot
 
     mkdir -p /opt/dipdup
     python -m venv /opt/dipdup/.venv
-    /opt/dipdup/.venv/bin/pip installl --no-cache-dir -U pip setuptools wheel
+    /opt/dipdup/.venv/bin/pip install --no-cache-dir -U pip setuptools wheel
 
     rm -r /var/log/*
 eot
