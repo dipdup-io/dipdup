@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1.3-labs
 FROM python:3.10-slim-buster AS compile-image
-ARG EXTRAS=""
+ARG PYTEZOS=0
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
 RUN <<eot
     apt update
-    apt install -y gcc make git `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y gcc make git `if [[ $PYTEZOS = "1" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
     rm -r /var/lib/apt/lists/*
 
     mkdir -p /opt/dipdup
@@ -29,13 +29,13 @@ RUN <<eot
     mkdir -p /opt/dipdup/src/dipdup
     touch /opt/dipdup/src/dipdup/__init__.py
 
-    make install DEV=0 EXTRAS="${EXTRAS}"
+    make install DEV=0 PYTEZOS="${PYTEZOS}"
 
     rm -r /root/.cache
 eot
 
 FROM python:3.10-slim-buster AS build-image
-ARG EXTRAS=""
+ARG PYTEZOS=0
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
@@ -44,7 +44,7 @@ RUN <<eot
     pip install --no-cache-dir poetry
 
     apt update
-    apt install -y --no-install-recommends git `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y --no-install-recommends git `if [[ $PYTEZOS = "1" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
     rm -r /var/lib/apt/lists/*
 eot
 

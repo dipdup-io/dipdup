@@ -36,18 +36,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up metadata
+      - name: Set up metadata (base)
         id: meta
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+          flavor: |
+            latest=false
           tags: |
             type=ref,event=branch
             type=ref,event=tag
+
+      - name: Set up metadata (pytezos)
+        id: meta-pytezos
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: |
             latest=false
+            suffix=-pytezos
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
 
-      - name: Publish image on GHCR
+      - name: Publish image on GHCR (base)
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -58,3 +70,17 @@ jobs:
           cache-to: type=gha,mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: PYTEZOS=0
+
+      - name: Publish image on GHCR (pytezos)
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: PYTEZOS=1

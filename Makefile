@@ -3,10 +3,10 @@
 ##
 ##    🚧 DipDup developer tools
 ##
-## DEV=1                Whether to install dev dependencies
+## DEV=1                Install dev dependencies
 DEV=1
-## EXTRAS=""            Extras to install (`pytezos` or none)
-EXTRAS=""
+## PYTEZOS=0            Install PyTezos
+PYTEZOS=0
 ## TAG=latest           Tag for the `image` command
 TAG=latest
 
@@ -20,7 +20,7 @@ all:            ## Run a whole CI pipeline: lint, run tests, build docs
 
 install:        ## Install project dependencies
 	poetry install \
-	`if [ -n "${EXTRAS}" ]; then for i in ${EXTRAS}; do echo "-E $$i "; done; fi` \
+	`if [ "${PYTEZOS}" = "1" ]; then echo "-E pytezos "; fi` \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
 
 lint:           ## Lint with all tools
@@ -61,7 +61,7 @@ image:          ## Build Docker image
 	docker buildx build . -t dipdup:${TAG}
 
 image-pytezos:
-	docker buildx build . -t dipdup:${TAG}-pytezos --build-arg EXTRAS=pytezos
+	docker buildx build . -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
 
 release-patch:  ## Release patch version
 	bumpversion patch
