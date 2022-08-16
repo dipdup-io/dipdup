@@ -10,6 +10,9 @@
 # Add code
 !src
 
+# Add config files
+!*.yml
+
 # Ignore caches
 **/.mypy_cache
 **/.pytest_cache
