@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- sentry: Fixed "invalid value `environment`" error.
+
 ## [6.0.0] - 2022-08-08
 
 This release contains no changes except for the version number.
