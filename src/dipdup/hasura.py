@@ -340,13 +340,13 @@ class HasuraGateway(HTTPGateway):
                     metadata_tables[junction_table_name]['object_relationships'].append(
                         self._format_object_relationship(
                             name=related_table_name,
-                            column=self._get_relation_source_field(field),
+                            column=field.forward_key,
                         )
                     )
                     metadata_tables[junction_table_name]['object_relationships'].append(
                         self._format_object_relationship(
                             name=table_name,
-                            column=self._get_relation_source_field(field),
+                            column=field.backward_key,
                         )
                     )
                     if field.related_name:
@@ -354,7 +354,7 @@ class HasuraGateway(HTTPGateway):
                             self._format_array_relationship(
                                 related_name=f'{related_table_name}_{field.related_name}',
                                 table=junction_table_name,
-                                column=self._get_relation_source_field(field),
+                                column=field.forward_key,
                             )
                         )
 
