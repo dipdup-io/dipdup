@@ -10,15 +10,14 @@
     "🚧": "Software versions (press enter)",
     "dipdup_version": "6.0",
     "postgresql_version": [
-      "postgres:15",
       "postgres:14",
       "postgres:13",
       "timescale/timescaledb:latest-pg14",
       "timescale/timescaledb:latest-pg13"
     ],
     "hasura_version": [
-      "hasura/graphql-engine:v2.9.0",
-      "hasura/graphql-engine:v2.8.4"
+      "hasura/graphql-engine:v2.10.1",
+      "hasura/graphql-engine:v2.9.0"
     ],
 
     "🧹": "Code quality (press enter)",
