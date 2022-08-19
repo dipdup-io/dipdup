@@ -68,12 +68,12 @@ class TestDemos:
         self.run_dipdup('tzcolors.yml')
 
         async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzcolors.models'):
-            addresses = await demo_tzcolors.models.Address.filter().count()
+            users = await demo_tzcolors.models.User.filter().count()
             tokens = await demo_tzcolors.models.Token.filter().count()
             auctions = await demo_tzcolors.models.Auction.filter().count()
             bids = await demo_tzcolors.models.Bid.filter().count()
 
-            assert addresses == 9
+            assert users == 9
             assert tokens == 14
             assert auctions == 14
             assert bids == 44

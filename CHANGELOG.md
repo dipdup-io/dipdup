@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning].
 ### Fixed
 
 - codegen: Fixed invalid `models.py` template.
-- context: Do not wrap known exceptions with `CallbackError`
+- context: Do not wrap known exceptions with `CallbackError`.
+- database: Raise `DatabaseConfigurationError` when backward relation name equals table name.
 - database: Wrap schema wiping in a transaction to avoid orphaned tables in the immune schema.
 - hasura: Fixed processing M2M relations.
 - sentry: Fixed "invalid value `environment`" error.

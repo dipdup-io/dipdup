@@ -15,7 +15,7 @@ async def on_bid(
         id=bid.parameter.__root__,
     ).get()
 
-    bidder, _ = await models.Address.get_or_create(address=bid.data.sender_address)
+    bidder, _ = await models.User.get_or_create(address=bid.data.sender_address)
     await models.Bid(
         auction=auction,
         bidder=bidder,
