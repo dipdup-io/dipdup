@@ -461,7 +461,7 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
         if isinstance(config.database, PostgresDatabaseConfig):
             await wipe_schema(
                 conn=conn,
-                name=config.database.schema_name,
+                schema_name=config.database.schema_name,
                 # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
                 immune_tables=config.database.immune_tables if not immune else set(),
             )
