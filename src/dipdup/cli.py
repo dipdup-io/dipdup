@@ -158,18 +158,22 @@ def _init_sentry(config: DipDupConfig) -> None:
             event_level=event_level,
         ),
     ]
-    sentry_sdk.init(
-        dsn=config.sentry.dsn,
-        environment=config.sentry.environment,
-        server_name=config.sentry.server_name,
-        release=config.sentry.release or __version__,
-        integrations=integrations,
-        attach_stacktrace=attach_stacktrace,
-        before_send=partial(
+    init_kwargs: Dict[str, Any] = {
+        'dsn': config.sentry.dsn,
+        'integrations': integrations,
+        'attach_stacktrace': attach_stacktrace,
+        'before_send': partial(
             _sentry_before_send,
             crash_reporting=config.advanced.crash_reporting,
         ),
-    )
+        'release': config.sentry.release or __version__,
+    }
+    if config.sentry.environment:
+        init_kwargs['environment'] = config.sentry.environment
+    if config.sentry.server_name:
+        init_kwargs['server_name'] = config.sentry.server_name
+
+    sentry_sdk.init(**init_kwargs)
     sentry_sdk.set_tag('dipdup_version', __version__)
     sentry_sdk.set_tag('dipdup_package', config.package)
 
