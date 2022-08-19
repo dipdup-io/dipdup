@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning].
 - context: Do not wrap known exceptions with `CallbackError`
 - hasura: Fixed processing M2M relations.
 - sentry: Fixed "invalid value `environment`" error.
+- sentry: Ignore events from project callbacks when `crash_reporting` is enabled.
 
 ## [6.0.0] - 2022-08-08
 

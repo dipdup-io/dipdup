@@ -118,9 +118,20 @@ def cli_wrapper(fn):
     return wrapper
 
 
-def _sentry_before_send(event: Dict[str, Any], hint: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _sentry_before_send(
+    event: Dict[str, Any],
+    hint: Dict[str, Any],
+    crash_reporting: bool,
+) -> Optional[Dict[str, Any]]:
+    # NOTE: Terminated connections, cancelled tasks, etc.
     if _is_shutting_down:
         return None
+
+    # NOTE: User-generated events (e.g. from `ctx.logger`)
+    if logger_name := event['logger']:
+        if crash_reporting and not logger_name.startswith('dipdup'):
+            return None
+
     return event
 
 
@@ -151,7 +162,10 @@ def _init_sentry(config: DipDupConfig) -> None:
         'dsn': config.sentry.dsn,
         'integrations': integrations,
         'attach_stacktrace': attach_stacktrace,
-        'before_send': _sentry_before_send,
+        'before_send': partial(
+            _sentry_before_send,
+            crash_reporting=config.advanced.crash_reporting,
+        ),
         'release': config.sentry.release or __version__,
     }
     if config.sentry.environment:
