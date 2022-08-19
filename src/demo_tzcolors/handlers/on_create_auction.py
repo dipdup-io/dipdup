@@ -10,7 +10,7 @@ async def on_create_auction(
     create_auction: Transaction[CreateAuctionParameter, TzcolorsAuctionStorage],
 ) -> None:
 
-    holder, _ = await models.Address.get_or_create(address=create_auction.data.sender_address)
+    holder, _ = await models.User.get_or_create(address=create_auction.data.sender_address)
 
     token, _ = await models.Token.get_or_create(
         id=create_auction.parameter.token_id,

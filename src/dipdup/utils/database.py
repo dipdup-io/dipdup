@@ -20,7 +20,8 @@ from typing import Type
 from typing import Union
 
 import sqlparse  # type: ignore
-from tortoise import ForeignKeyFieldInstance, Model as TortoiseModel
+from tortoise import ForeignKeyFieldInstance
+from tortoise import Model as TortoiseModel
 from tortoise import ModuleType
 from tortoise import Tortoise
 from tortoise import connections

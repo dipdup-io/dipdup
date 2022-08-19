@@ -11,11 +11,8 @@ class AuctionStatus(IntEnum):
     FINISHED = 1
 
 
-class Address(Model):
+class User(Model):
     address = fields.CharField(36, pk=True)
-
-    class Meta:
-        table = 'addresses'
 
 
 class Token(Model):
@@ -24,20 +21,17 @@ class Token(Model):
     amount = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
-    holder: ForeignKeyFieldInstance[Address] = fields.ForeignKeyField('models.Address', 'tokens')
+    holder: ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'tokens')
 
     token_id: int
-
-    class Meta:
-        table = 'tokens'
 
 
 class Auction(Model):
     id = fields.BigIntField(pk=True)
     token: ForeignKeyFieldInstance[Token] = fields.ForeignKeyField('models.Token', 'auctions')
     bid_amount = fields.BigIntField()
-    bidder: ForeignKeyFieldInstance[Address] = fields.ForeignKeyField('models.Address', 'winning_auctions')
-    seller: ForeignKeyFieldInstance[Address] = fields.ForeignKeyField('models.Address', 'created_auctions')
+    bidder: ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'winning_auctions')
+    seller: ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'created_auctions')
     end_timestamp = fields.DatetimeField()
     status = fields.IntEnumField(AuctionStatus)
     level = fields.BigIntField()
@@ -45,14 +39,11 @@ class Auction(Model):
 
     token_id: int
 
-    class Meta:
-        table = 'auctions'
-
 
 class Bid(Model):
     id = fields.BigIntField(pk=True)
     auction: ForeignKeyFieldInstance[Auction] = fields.ForeignKeyField('models.Auction', 'bids')
     bid_amount = fields.BigIntField()
-    bidder: ForeignKeyFieldInstance[Address] = fields.ForeignKeyField('models.Address', 'bids')
+    bidder: ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'bids')
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
