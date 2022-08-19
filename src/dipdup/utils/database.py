@@ -20,7 +20,7 @@ from typing import Type
 from typing import Union
 
 import sqlparse  # type: ignore
-from tortoise import Model as TortoiseModel
+from tortoise import ForeignKeyFieldInstance, Model as TortoiseModel
 from tortoise import ModuleType
 from tortoise import Tortoise
 from tortoise import connections
@@ -237,7 +237,11 @@ def prepare_models(package: Optional[str]) -> None:
 
             # NOTE: Enforce unique field names to avoid GraphQL issues
             if field_name == table_name:
-                raise DatabaseConfigurationError('Model fields must differ from table name', model)
+                raise DatabaseConfigurationError('Model field names must differ from table name', model)
+
+            # NOTE: The same for backward relations
+            if isinstance(field, ForeignKeyFieldInstance) and field.related_name == table_name:
+                raise DatabaseConfigurationError('Model field names must differ from table name', model)
 
             # NOTE: Increase decimal precision if needed
             if isinstance(field, DecimalField):
