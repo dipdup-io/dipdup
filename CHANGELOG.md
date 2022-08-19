@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning].
 
 ### Fixed
 
+- codegen: Fixed invalid `models.py` template.
 - hasura: Fixed processing M2M relations.
 - sentry: Fixed "invalid value `environment`" error.
 
