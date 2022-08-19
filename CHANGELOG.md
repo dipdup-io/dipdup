@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning].
 
 - codegen: Fixed invalid `models.py` template.
 - context: Do not wrap known exceptions with `CallbackError`
+- database: Wrap schema wiping in a transaction to avoid orphaned tables in the immune schema.
 - hasura: Fixed processing M2M relations.
 - sentry: Fixed "invalid value `environment`" error.
 - sentry: Ignore events from project callbacks when `crash_reporting` is enabled.
