@@ -250,7 +250,6 @@ class ContractAlreadyExistsError(DipDupError):
                 tablefmt='plain',
             )
         )
-        what = f'name `{self.name}`' if self.name else f'address'
         return f"""
             Contract `{self.name}` (`{self.address}`) already exists.
 
