@@ -234,7 +234,7 @@ def prepare_models(package: Optional[str]) -> None:
             db_tables.add(model._meta.db_table)
         else:
             raise DatabaseConfigurationError(
-                'Duplicate table name detected. Make sure that all models have unique table names.',
+                'Table name is duplicated or reserved. Make sure that all models have unique table names.',
                 model,
             )
 
