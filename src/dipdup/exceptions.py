@@ -240,8 +240,8 @@ class ContractAlreadyExistsError(DipDupError):
     """Attempt to add a contract with alias or address already in use"""
 
     ctx: Any
-    name: Optional[str] = None
-    address: Optional[str] = None
+    name: str
+    address: str
 
     def _help(self) -> str:
         contracts_table = indent(
@@ -250,9 +250,9 @@ class ContractAlreadyExistsError(DipDupError):
                 tablefmt='plain',
             )
         )
-        what = f'name `{self.name}`' if self.name else f'address `{self.address}`'
+        what = f'name `{self.name}`' if self.name else f'address'
         return f"""
-            Contract with {what} already exists.
+            Contract `{self.name}` (`{self.address}`) already exists.
 
             Active contracts:
 
