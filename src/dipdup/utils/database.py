@@ -210,39 +210,67 @@ def prepare_models(package: Optional[str]) -> None:
     Generate missing table names, validate models, increase decimal precision if needed.
     """
     # NOTE: Circular imports
-    from dipdup.models import Model
+    import dipdup.models
 
+    db_tables: Set[str] = set()
     decimal_context = decimal.getcontext()
     prec = decimal_context.prec
 
     for app, model in iter_models(package):
-
         # NOTE: Enforce our class for user models
-        if app == 'models' and not issubclass(model, Model):
-            raise DatabaseConfigurationError('Project models must be subclassed from `dipdup.models.Model`', model)
+        if app == 'models' and not issubclass(model, dipdup.models.Model):
+            raise DatabaseConfigurationError(
+                'Project models must be subclassed from `dipdup.models.Model`.'
+                '\n\n'
+                'Replace `from tortoise import Model` import with `from dipdup.models import Model`.',
+                model,
+            )
 
         # NOTE: Generate missing table names before Tortoise does
         if not model._meta.db_table:
             model._meta.db_table = pascal_to_snake(model.__name__)
 
+        if model._meta.db_table not in db_tables:
+            db_tables.add(model._meta.db_table)
+        else:
+            raise DatabaseConfigurationError(
+                'Duplicate table name detected. Make sure that all models have unique table names.',
+                model,
+            )
+
         # NOTE: Enforce tables in snake_case
         table_name = model._meta.db_table
         if table_name != pascal_to_snake(table_name):
-            raise DatabaseConfigurationError('Table name must be in snake_case', model)
+            raise DatabaseConfigurationError(
+                'Table name must be in snake_case.',
+                model,
+            )
 
         for field in model._meta.fields_map.values():
             # NOTE: Enforce fields in snake_case
             field_name = field.model_field_name
             if field_name != pascal_to_snake(field_name):
-                raise DatabaseConfigurationError('Model fields must be in snake_case', model)
+                raise DatabaseConfigurationError(
+                    'Model fields must be in snake_case.',
+                    model,
+                    field_name,
+                )
 
             # NOTE: Enforce unique field names to avoid GraphQL issues
             if field_name == table_name:
-                raise DatabaseConfigurationError('Model field names must differ from table name', model)
+                raise DatabaseConfigurationError(
+                    'Model field names must differ from table name.',
+                    model,
+                    field_name,
+                )
 
             # NOTE: The same for backward relations
             if isinstance(field, ForeignKeyFieldInstance) and field.related_name == table_name:
-                raise DatabaseConfigurationError('Model field names must differ from table name', model)
+                raise DatabaseConfigurationError(
+                    'Model field names must differ from table name.',
+                    model,
+                    f'related_name={field.related_name}',
+                )
 
             # NOTE: Increase decimal precision if needed
             if isinstance(field, DecimalField):

@@ -228,7 +228,11 @@ class DipDupContext:
         """
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
         if name in self.config.contracts:
+            raise ContractAlreadyExistsError(self, name)
+        if address in self.config._contract_addresses:
             raise ContractAlreadyExistsError(self, name, address)
+        else:
+            self.config._contract_addresses.add(address)
 
         contract_config = ContractConfig(
             address=address,
