@@ -162,7 +162,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
 
 [[package]]
 name = "asttokens"
-version = "2.0.7"
+version = "2.0.8"
 description = "Annotate AST trees with source code positions"
 category = "main"
 optional = true
@@ -379,7 +379,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "charset-normalizer"
-version = "2.1.0"
+version = "2.1.1"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 category = "main"
 optional = false
@@ -409,7 +409,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "coverage"
-version = "6.4.3"
+version = "6.4.4"
 description = "Code coverage measurement for Python"
 category = "dev"
 optional = false
@@ -462,7 +462,7 @@ http = ["httpx"]
 
 [[package]]
 name = "debugpy"
-version = "1.6.2"
+version = "1.6.3"
 description = "An implementation of the Debug Adapter Protocol for Python"
 category = "main"
 optional = true
@@ -647,7 +647,7 @@ testing = ["pre-commit"]
 
 [[package]]
 name = "executing"
-version = "0.9.1"
+version = "0.10.0"
 description = "Get the currently executing AST node of a frame, and other information"
 category = "main"
 optional = true
@@ -941,7 +941,7 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "jsonschema"
-version = "4.9.1"
+version = "4.14.0"
 description = "An implementation of JSON Schema validation for Python"
 category = "main"
 optional = false
@@ -952,8 +952,8 @@ attrs = ">=17.4.0"
 pyrsistent = ">=0.14.0,<0.17.0 || >0.17.0,<0.17.1 || >0.17.1,<0.17.2 || >0.17.2"
 
 [package.extras]
-format = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3987", "uri-template", "webcolors (>=1.11)"]
-format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3986-validator (>0.1.0)", "uri-template", "webcolors (>=1.11)"]
+format-nongpl = ["webcolors (>=1.11)", "uri-template", "rfc3986-validator (>0.1.0)", "rfc3339-validator", "jsonpointer (>1.13)", "isoduration", "idna", "fqdn"]
+format = ["webcolors (>=1.11)", "uri-template", "rfc3987", "rfc3339-validator", "jsonpointer (>1.13)", "isoduration", "idna", "fqdn"]
 
 [[package]]
 name = "jupyter-client"
@@ -1023,7 +1023,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "matplotlib-inline"
-version = "0.1.3"
+version = "0.1.6"
 description = "Inline Matplotlib backend for Jupyter"
 category = "main"
 optional = true
@@ -1042,8 +1042,8 @@ python-versions = "*"
 
 [[package]]
 name = "mistune"
-version = "0.8.4"
-description = "The fastest markdown parser in pure Python"
+version = "2.0.4"
+description = "A sane Markdown parser with useful plugins and renderers"
 category = "main"
 optional = true
 python-versions = "*"
@@ -1118,7 +1118,7 @@ test = ["black", "check-manifest", "flake8", "ipykernel", "ipython (<8.0.0)", "i
 
 [[package]]
 name = "nbconvert"
-version = "6.5.3"
+version = "7.0.0"
 description = "Converting Jupyter Notebooks"
 category = "main"
 optional = true
@@ -1128,13 +1128,12 @@ python-versions = ">=3.7"
 beautifulsoup4 = "*"
 bleach = "*"
 defusedxml = "*"
-entrypoints = ">=0.2.2"
 jinja2 = ">=3.0"
 jupyter-core = ">=4.7"
 jupyterlab-pygments = "*"
 lxml = "*"
-MarkupSafe = ">=2.0"
-mistune = ">=0.8.1,<2"
+markupsafe = ">=2.0"
+mistune = ">=2.0.3,<3"
 nbclient = ">=0.5.0"
 nbformat = ">=5.1"
 packaging = "*"
@@ -1144,10 +1143,12 @@ tinycss2 = "*"
 traitlets = ">=5.0"
 
 [package.extras]
-all = ["pytest", "pytest-cov", "pytest-dependency", "ipykernel", "ipywidgets (>=7)", "pre-commit", "pyppeteer (>=1,<1.1)", "tornado (>=6.1)", "sphinx (>=1.5.1)", "sphinx-rtd-theme", "nbsphinx (>=0.2.12)", "ipython"]
-docs = ["sphinx (>=1.5.1)", "sphinx-rtd-theme", "nbsphinx (>=0.2.12)", "ipython"]
+all = ["ipykernel", "ipython", "ipywidgets (>=7)", "nbsphinx (>=0.2.12)", "pre-commit", "pyppeteer (>=1,<1.1)", "pyqtwebengine (>=5.15)", "pytest", "pytest-cov", "pytest-dependency", "sphinx-rtd-theme", "sphinx (==5.0.2)", "tornado (>=6.1)"]
+docs = ["ipython", "nbsphinx (>=0.2.12)", "sphinx-rtd-theme", "sphinx (==5.0.2)"]
+qtpdf = ["pyqtwebengine (>=5.15)"]
+qtpng = ["pyqtwebengine (>=5.15)"]
 serve = ["tornado (>=6.1)"]
-test = ["pytest", "pytest-cov", "pytest-dependency", "ipykernel", "ipywidgets (>=7)", "pre-commit", "pyppeteer (>=1,<1.1)"]
+test = ["ipykernel", "ipywidgets (>=7)", "pre-commit", "pyppeteer (>=1,<1.1)", "pytest", "pytest-cov", "pytest-dependency"]
 webpdf = ["pyppeteer (>=1,<1.1)"]
 
 [[package]]
@@ -1250,7 +1251,7 @@ dev = ["pre-commit"]
 
 [[package]]
 name = "orjson"
-version = "3.7.11"
+version = "3.7.12"
 description = "Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy"
 category = "main"
 optional = false
@@ -1521,11 +1522,14 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "pygments"
-version = "2.12.0"
+version = "2.13.0"
 description = "Pygments is a syntax highlighting package written in Python."
 category = "main"
 optional = false
 python-versions = ">=3.6"
+
+[package.extras]
+plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyhumps"
@@ -1745,7 +1749,7 @@ cli = ["click (>=5.0)"]
 
 [[package]]
 name = "pytz"
-version = "2022.1"
+version = "2022.2.1"
 description = "World timezone definitions, modern and historical"
 category = "main"
 optional = false
@@ -1796,7 +1800,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "pyzmq"
-version = "23.2.0"
+version = "23.2.1"
 description = "Python bindings for 0MQ"
 category = "main"
 optional = true
@@ -1881,7 +1885,7 @@ win32 = ["pywin32"]
 
 [[package]]
 name = "sentry-sdk"
-version = "1.9.4"
+version = "1.9.5"
 description = "Python client for Sentry (https://sentry.io)"
 category = "main"
 optional = false
@@ -1890,29 +1894,29 @@ python-versions = "*"
 [package.dependencies]
 certifi = "*"
 urllib3 = [
-    {version = ">=1.26.11", markers = "python_version >= \"3.6\""},
     {version = ">=1.26.9", markers = "python_version >= \"3.5\""},
+    {version = ">=1.26.11", markers = "python_version >= \"3.6\""},
 ]
 
 [package.extras]
-tornado = ["tornado (>=5)"]
-starlette = ["starlette (>=0.19.1)"]
-sqlalchemy = ["sqlalchemy (>=1.2)"]
-sanic = ["sanic (>=0.8)"]
-rq = ["rq (>=0.6)"]
-quart = ["blinker (>=1.1)", "quart (>=0.16.1)"]
-pyspark = ["pyspark (>=2.4.4)"]
-pure_eval = ["asttokens", "executing", "pure-eval"]
-httpx = ["httpx (>=0.16.0)"]
-flask = ["blinker (>=1.1)", "flask (>=0.11)"]
-fastapi = ["fastapi (>=0.79.0)"]
-falcon = ["falcon (>=1.4)"]
-django = ["django (>=1.8)"]
-chalice = ["chalice (>=1.16.0)"]
-celery = ["celery (>=3)"]
-bottle = ["bottle (>=0.12.13)"]
-beam = ["apache-beam (>=2.12)"]
 aiohttp = ["aiohttp (>=3.5)"]
+beam = ["apache-beam (>=2.12)"]
+bottle = ["bottle (>=0.12.13)"]
+celery = ["celery (>=3)"]
+chalice = ["chalice (>=1.16.0)"]
+django = ["django (>=1.8)"]
+falcon = ["falcon (>=1.4)"]
+fastapi = ["fastapi (>=0.79.0)"]
+flask = ["flask (>=0.11)", "blinker (>=1.1)"]
+httpx = ["httpx (>=0.16.0)"]
+pure_eval = ["pure-eval", "executing", "asttokens"]
+pyspark = ["pyspark (>=2.4.4)"]
+quart = ["quart (>=0.16.1)", "blinker (>=1.1)"]
+rq = ["rq (>=0.6)"]
+sanic = ["sanic (>=0.8)"]
+sqlalchemy = ["sqlalchemy (>=1.2)"]
+starlette = ["starlette (>=0.19.1)"]
+tornado = ["tornado (>=5)"]
 
 [[package]]
 name = "simplejson"
@@ -2094,7 +2098,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "stack-data"
-version = "0.3.0"
+version = "0.4.0"
 description = "Extract data from python stack frames and tracebacks for informative displays"
 category = "main"
 optional = true
@@ -2145,7 +2149,7 @@ test = ["pre-commit", "pytest-timeout", "pytest (>=6.0)"]
 
 [[package]]
 name = "testcontainers"
-version = "3.6.0"
+version = "3.6.1"
 description = "Library provides lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container"
 category = "main"
 optional = false
@@ -2280,7 +2284,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "types-pytz"
-version = "2022.1.2"
+version = "2022.2.1.0"
 description = "Typing stubs for pytz"
 category = "dev"
 optional = false
@@ -2316,7 +2320,7 @@ typing-extensions = ">=3.7.4"
 
 [[package]]
 name = "tzdata"
-version = "2022.1"
+version = "2022.2"
 description = "Provider of IANA time zone data"
 category = "main"
 optional = false
@@ -2359,7 +2363,7 @@ python-versions = "*"
 
 [[package]]
 name = "urllib3"
-version = "1.26.11"
+version = "1.26.12"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
@@ -2367,7 +2371,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, 
 
 [package.extras]
 brotli = ["brotlicffi (>=0.8.0)", "brotli (>=1.0.9)", "brotlipy (>=0.6.0)"]
-secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
+secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "urllib3-secure-extra", "ipaddress"]
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]

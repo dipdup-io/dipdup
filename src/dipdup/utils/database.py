@@ -20,6 +20,7 @@ from typing import Type
 from typing import Union
 
 import sqlparse  # type: ignore
+from tortoise import ForeignKeyFieldInstance
 from tortoise import Model as TortoiseModel
 from tortoise import ModuleType
 from tortoise import Tortoise
@@ -164,22 +165,29 @@ async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
     await conn.execute_script(f"SELECT truncate_schema('{name}')")
 
 
-async def wipe_schema(conn: BaseDBAsyncClient, name: str, immune_tables: Set[str]) -> None:
+async def wipe_schema(
+    conn: BaseDBAsyncClient,
+    schema_name: str,
+    immune_tables: Set[str],
+) -> None:
+    """Truncate schema preserving immune tables. Executes in a transaction"""
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
 
-    immune_schema_name = f'{name}_immune'
-    if immune_tables:
-        await create_schema(conn, immune_schema_name)
-        for table in immune_tables:
-            await move_table(conn, table, name, immune_schema_name)
+    immune_schema_name = f'{schema_name}_immune'
 
-    await truncate_schema(conn, name)
+    async with conn._in_transaction() as conn:
+        if immune_tables:
+            await create_schema(conn, immune_schema_name)
+            for table in immune_tables:
+                await move_table(conn, table, schema_name, immune_schema_name)
 
-    if immune_tables:
-        for table in immune_tables:
-            await move_table(conn, table, immune_schema_name, name)
-        await drop_schema(conn, immune_schema_name)
+        await truncate_schema(conn, schema_name)
+
+        if immune_tables:
+            for table in immune_tables:
+                await move_table(conn, table, immune_schema_name, schema_name)
+            await drop_schema(conn, immune_schema_name)
 
 
 async def drop_schema(conn: BaseDBAsyncClient, name: str) -> None:
@@ -199,8 +207,9 @@ async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema
 
 def prepare_models(package: Optional[str]) -> None:
     """Prepare TortoiseORM models to use with DipDup.
-    Generate missing table names, validate models, increase decimal precision.
+    Generate missing table names, validate models, increase decimal precision if needed.
     """
+    # NOTE: Circular imports
     from dipdup.models import Model
 
     decimal_context = decimal.getcontext()
@@ -229,7 +238,11 @@ def prepare_models(package: Optional[str]) -> None:
 
             # NOTE: Enforce unique field names to avoid GraphQL issues
             if field_name == table_name:
-                raise DatabaseConfigurationError('Model fields must differ from table name', model)
+                raise DatabaseConfigurationError('Model field names must differ from table name', model)
+
+            # NOTE: The same for backward relations
+            if isinstance(field, ForeignKeyFieldInstance) and field.related_name == table_name:
+                raise DatabaseConfigurationError('Model field names must differ from table name', model)
 
             # NOTE: Increase decimal precision if needed
             if isinstance(field, DecimalField):

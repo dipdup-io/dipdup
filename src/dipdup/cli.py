@@ -118,9 +118,20 @@ def cli_wrapper(fn):
     return wrapper
 
 
-def _sentry_before_send(event: Dict[str, Any], hint: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _sentry_before_send(
+    event: Dict[str, Any],
+    hint: Dict[str, Any],
+    crash_reporting: bool,
+) -> Optional[Dict[str, Any]]:
+    # NOTE: Terminated connections, cancelled tasks, etc.
     if _is_shutting_down:
         return None
+
+    # NOTE: User-generated events (e.g. from `ctx.logger`)
+    if logger_name := event['logger']:
+        if crash_reporting and not logger_name.startswith('dipdup'):
+            return None
+
     return event
 
 
@@ -147,15 +158,22 @@ def _init_sentry(config: DipDupConfig) -> None:
             event_level=event_level,
         ),
     ]
-    sentry_sdk.init(
-        dsn=config.sentry.dsn,
-        environment=config.sentry.environment,
-        server_name=config.sentry.server_name,
-        release=config.sentry.release or __version__,
-        integrations=integrations,
-        attach_stacktrace=attach_stacktrace,
-        before_send=_sentry_before_send,
-    )
+    init_kwargs: Dict[str, Any] = {
+        'dsn': config.sentry.dsn,
+        'integrations': integrations,
+        'attach_stacktrace': attach_stacktrace,
+        'before_send': partial(
+            _sentry_before_send,
+            crash_reporting=config.advanced.crash_reporting,
+        ),
+        'release': config.sentry.release or __version__,
+    }
+    if config.sentry.environment:
+        init_kwargs['environment'] = config.sentry.environment
+    if config.sentry.server_name:
+        init_kwargs['server_name'] = config.sentry.server_name
+
+    sentry_sdk.init(**init_kwargs)
     sentry_sdk.set_tag('dipdup_version', __version__)
     sentry_sdk.set_tag('dipdup_package', config.package)
 
@@ -461,7 +479,7 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
         if isinstance(config.database, PostgresDatabaseConfig):
             await wipe_schema(
                 conn=conn,
-                name=config.database.schema_name,
+                schema_name=config.database.schema_name,
                 # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
                 immune_tables=config.database.immune_tables if not immune else set(),
             )
