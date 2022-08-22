@@ -2307,18 +2307,6 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
-name = "typing-inspect"
-version = "0.7.1"
-description = "Runtime inspection utilities for typing module."
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-mypy-extensions = ">=0.3.0"
-typing-extensions = ">=3.7.4"
-
-[[package]]
 name = "tzdata"
 version = "2022.2"
 description = "Provider of IANA time zone data"
@@ -2445,7 +2433,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "1c065b06f440c3490914a8e895981c73b4c2c0f23300a1e78f2fa43fa8b5b5e0"
+content-hash = "316925995250faf8c6f198e5f90121a3cbe69a0e9588da3dec32cb0cf49f1c9f"
 
 [metadata.files]
 aiohttp = []
@@ -2634,7 +2622,6 @@ typed-ast = []
 types-pytz = []
 types-tabulate = []
 typing-extensions = []
-typing-inspect = []
 tzdata = []
 tzlocal = []
 unify = []
