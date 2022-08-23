@@ -59,6 +59,10 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
 
+      - name: Set up layer caching
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+
       - name: Publish image on GHCR (base)
         uses: docker/build-push-action@v3
         with:
