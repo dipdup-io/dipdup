@@ -57,7 +57,12 @@ cover:          ## Print coverage for the current branch
 build:          ## Build Python wheel package
 	poetry build
 
-image:          ## Build Docker image
+image:
+	make image-base
+	make image-pytezos
+	make image-slim
+
+image-base:          ## Build Docker image
 	docker buildx build . -t dipdup:${TAG}
 
 image-pytezos:
@@ -86,12 +91,14 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 
 ##
 
-requirements:
+requirements:   ## Update dependencies, export requirements.txt
 	make install
 	poetry update
 	cp pyproject.toml pyproject.toml.bak
 	cp poetry.lock poetry.lock.bak
 	poetry export -o requirements.txt
+	poetry export -o requirements.pytezos.txt -E pytezos
+	poetry export -o requirements.dev.txt --dev
 	poetry remove datamodel-code-generator
 	poetry export -o requirements.slim.txt
 	mv pyproject.toml.bak pyproject.toml
