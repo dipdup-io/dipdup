@@ -7,7 +7,7 @@
 !poetry.lock
 !README.md
 !inject_pyproject.sh
-!requirements**.txt
+!requirements**
 
 # Add code
 !src/dipdup/
