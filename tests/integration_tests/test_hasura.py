@@ -1,8 +1,10 @@
 from contextlib import AsyncExitStack
+import os
 from os.path import dirname
 from os.path import join
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
+import pytest
 
 from testcontainers.core.generic import DbContainer  # type: ignore
 from testcontainers.postgres import PostgresContainer  # type: ignore
@@ -15,6 +17,8 @@ from dipdup.exceptions import HasuraError
 from dipdup.hasura import HasuraGateway
 from dipdup.utils.database import tortoise_wrapper
 
+if os.environ.get("CI") == "true":
+    pytest.skip("skipping integration tests on CI", allow_module_level=True)
 
 class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
