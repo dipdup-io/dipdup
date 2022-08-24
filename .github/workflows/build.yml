@@ -71,10 +71,6 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
 
-      - name: Set up layer caching
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        continue-on-error: true
-
       - name: Publish image on GHCR (base)
         uses: docker/build-push-action@v3
         with:
@@ -83,8 +79,8 @@ jobs:
           platforms: linux/amd64
           # platforms: linux/amd64,linux/arm64
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=default
+          cache-to: type=gha,scope=default,mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: PYTEZOS=0
@@ -97,8 +93,8 @@ jobs:
           # platforms: linux/amd64,linux/arm64
           platforms: linux/amd64
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=pytezos
+          cache-to: type=gha,scope=pytezos,mode=max
           tags: ${{ steps.meta-pytezos.outputs.tags }}
           labels: ${{ steps.meta-pytezos.outputs.labels }}
           build-args: PYTEZOS=1
@@ -110,7 +106,7 @@ jobs:
           file: Dockerfile.slim
           platforms: linux/amd64,linux/arm64
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=slim
+          cache-to: type=gha,scope=slim,mode=max
           tags: ${{ steps.meta-slim.outputs.tags }}
           labels: ${{ steps.meta-slim.outputs.labels }}
