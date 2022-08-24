@@ -85,3 +85,15 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 
 ##
+
+requirements:
+	make install
+	poetry update
+	cp pyproject.toml pyproject.toml.bak
+	cp poetry.lock poetry.lock.bak
+	poetry export -o requirements.txt
+	poetry remove datamodel-code-generator
+	poetry export -o requirements.slim.txt
+	mv pyproject.toml.bak pyproject.toml
+	mv poetry.lock.bak poetry.lock
+	make install
