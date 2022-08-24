@@ -1,6 +1,6 @@
 FROM python:3.10-alpine AS compile-image
 RUN apk add --update --no-cache build-base gcc musl-dev python3-dev libffi-dev openssl-dev cargo && \
-    python -m venv /opt/dipdup && \
+    python -m venv --without-pip --system-site-packages /opt/dipdup && \
     mkdir -p /opt/dipdup/src/dipdup/ && \
     touch /opt/dipdup/src/dipdup/__init__.py
 WORKDIR /opt/dipdup
@@ -9,8 +9,8 @@ ENV PYTHON_PATH="/opt/dipdup/src:$PATH"
 
 COPY pyproject.toml requirements.slim.txt README.md /opt/dipdup/
 
-RUN pip install --no-cache-dir --disable-pip-version-check -r /opt/dipdup/requirements.slim.txt && \
-    pip install --no-cache-dir --disable-pip-version-check -e .
+RUN /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check -r /opt/dipdup/requirements.slim.txt && \
+    /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check --upgrade -e .
 
 FROM python:3.10-alpine AS build-image
 
@@ -19,7 +19,7 @@ COPY . /opt/dipdup
 
 USER guest
 ENV PATH="/opt/dipdup/bin:$PATH"
-ENV PYTHON_PATH="/opt/dipdup/src:$PATH"
+ENV PYTHONPATH="/opt/dipdup/src:/opt/dipdup/lib/python3.10/site-packages:$PYTHONPATH"
 WORKDIR /home/dipdup/
 ENTRYPOINT ["dipdup"]
 CMD ["run"]
