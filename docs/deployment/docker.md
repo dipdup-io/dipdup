@@ -1,16 +1,84 @@
 # Running in Docker
 
-## Building images
+## Base images
+
+DipDup provides multiple prebuilt images for different environments hosted on Docker Hub. Choose the one according to your needs from the table below.
+
+| | default | pytezos | slim |
+| - | :-: | :-: | :-: |
+| base image | `python:3.10-slim-buster` | `python:3.10-slim-buster` | `python:3.10-alpine` |
+| platforms | `amd64`, `arm64` | `amd64`, `arm64` | `amd64`, `arm64` |
+| latest tag | `dipdup/dipdup:6` | `dipdup/dipdup:6-pytezos` | `dipdup/dipdup:6-slim` |
+| image size | 355M | 646M | 147M |
+| `dipdup init` command | ✅ | ✅ | ❌ |
+| `git`, and `poetry` included | ✅ | ✅ | ❌ |
+| PyTezos included | ❌ | ✅ | ❌
+
+Default DipDup image is suitable for development and testing. It includes some developments tools to make package management easier. If unsure, use this image.
+
+### `-slim` image
+
+> 🚧 **UNDER CONSTRUCTION**
+>
+> This page or paragraph is yet to be written. Come back later.
+
+### `-pytezos` image
+
+The only difference with the default image is pre-installed PyTezos library, the same as `pip install dipdup -E pytezos`. DipDup doesn't provide any further PyPoetry integration. Having some patience you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!
+
+### GitHub Container Registry
+
+
+
+## Writing Dockerfile
+
+Start with creating `.dockerignore` for your project if it's missing.
+
+```text
+# Ignore all
+*
+
+# Add build files
+!Makefile
+!pyproject.toml
+!poetry.lock
+!README.md
+
+# Add code
+!generic_dex
+
+# Add configs
+!*.yml
+
+# Ignore caches
+**/.mypy_cache
+**/__pycache__
+```
+
+A typical Dockerfile for default and pytezos images looks like this:
 
 ```Dockerfile
-FROM dipdup/dipdup:6.0
+FROM dipdup/dipdup:6
+# FROM dipdup/dipdup:6-pytezos
 
 # Uncomment if you have additional dependencies in pyproject.toml
 # COPY pyproject.toml poetry.lock ./
 # RUN inject_pyproject
 
-COPY indexer indexer
-COPY dipdup.yml dipdup.prod.yml ./
+COPY . .
+```
+
+Slim image doesn't provide poetry integration, so if your project has additional dependencies, you need to install them manually.
+
+```Dockerfile
+FROM dipdup/dipdup:6
+# FROM dipdup/dipdup:6-pytezos
+
+# Installing additional dependencies
+# COPY requirements.txt ./
+# /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check -r requirements.txt
+
+COPY . .
 ```
 
 ## Deploying with `docker-compose`
