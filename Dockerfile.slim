@@ -1,39 +1,23 @@
-# syntax=docker/dockerfile:1.3-labs
-FROM python:3.10-slim-buster AS compile-image
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
-
-RUN <<eot
-    apt update
-    apt install -y gcc
-    rm -r /var/lib/apt/lists/*
-
-    mkdir -p /opt/dipdup
-eot
-
+FROM python:3.10-alpine AS compile-image
+RUN apk add --update --no-cache build-base gcc musl-dev python3-dev libffi-dev openssl-dev cargo && \
+    python -m venv /opt/dipdup && \
+    mkdir -p /opt/dipdup/src/dipdup/ && \
+    touch /opt/dipdup/src/dipdup/__init__.py
 WORKDIR /opt/dipdup
 ENV PATH="/opt/dipdup/bin:$PATH"
+ENV PYTHON_PATH="/opt/dipdup/src:$PATH"
 
-COPY --chown=dipdup requirements.slim.txt README.md /opt/dipdup/
+COPY pyproject.toml requirements.slim.txt README.md /opt/dipdup/
 
-RUN <<eot
-    mkdir -p /opt/dipdup/
-    python -m venv /opt/dipdup
-    pip install --target /opt/dipdup -r requirements.slim.txt
+RUN pip install --no-cache-dir --disable-pip-version-check -r /opt/dipdup/requirements.slim.txt && \
+    pip install --no-cache-dir --disable-pip-version-check -e .
 
-    rm -r /root/.cache
-eot
+FROM python:3.10-alpine AS build-image
 
-FROM python:3.10-slim-buster AS build-image
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+COPY --from=compile-image /opt/dipdup /opt/dipdup
+COPY . /opt/dipdup
 
-RUN <<eot
-    useradd -ms /bin/bash dipdup
-eot
-
-COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
-COPY --chown=dipdup . /opt/dipdup
-
-USER dipdup
+USER guest
 ENV PATH="/opt/dipdup/bin:$PATH"
 ENV PYTHON_PATH="/opt/dipdup/src:$PATH"
 WORKDIR /home/dipdup/

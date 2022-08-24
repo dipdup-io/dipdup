@@ -63,6 +63,9 @@ image:          ## Build Docker image
 image-pytezos:
 	docker buildx build . -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
 
+image-slim:
+	docker buildx build . -t dipdup:${TAG}-slim -f Dockerfile.slim
+
 release-patch:  ## Release patch version
 	bumpversion patch
 	git push --tags
