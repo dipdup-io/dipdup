@@ -36,8 +36,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up metadata (base)
-        id: meta
+      - name: Set up metadata (default)
+        id: meta-default
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
@@ -71,27 +71,25 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
 
-      - name: Publish image on GHCR (base)
+      - name: Publish nightly image (default)
         uses: docker/build-push-action@v3
         with:
           context: .
           file: Dockerfile
-          platforms: linux/amd64
-          # platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64
           push: true
           cache-from: type=gha,scope=default
           cache-to: type=gha,scope=default,mode=max
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-default.outputs.tags }}
+          labels: ${{ steps.meta-default.outputs.labels }}
           build-args: PYTEZOS=0
 
-      - name: Publish image on GHCR (pytezos)
+      - name: Publish nightly image (pytezos)
         uses: docker/build-push-action@v3
         with:
           context: .
           file: Dockerfile
-          # platforms: linux/amd64,linux/arm64
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           cache-from: type=gha,scope=pytezos
           cache-to: type=gha,scope=pytezos,mode=max
@@ -99,7 +97,7 @@ jobs:
           labels: ${{ steps.meta-pytezos.outputs.labels }}
           build-args: PYTEZOS=1
 
-      - name: Publish image on GHCR (slim)
+      - name: Publish nightly image (slim)
         uses: docker/build-push-action@v3
         with:
           context: .

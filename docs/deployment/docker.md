@@ -9,7 +9,7 @@ DipDup provides multiple prebuilt images for different environments hosted on Do
 | base image | `python:3.10-slim-buster` | `python:3.10-slim-buster` | `python:3.10-alpine` |
 | platforms | `amd64`, `arm64` | `amd64`, `arm64` | `amd64`, `arm64` |
 | latest tag | `dipdup/dipdup:6` | `dipdup/dipdup:6-pytezos` | `dipdup/dipdup:6-slim` |
-| image size | 355M | 646M | 147M |
+| image size | 355M | 646M | 136M |
 | `dipdup init` command | ✅ | ✅ | ❌ |
 | `git`, and `poetry` included | ✅ | ✅ | ❌ |
 | PyTezos included | ❌ | ✅ | ❌
@@ -26,9 +26,7 @@ Default DipDup image is suitable for development and testing. It includes some d
 
 The only difference with the default image is pre-installed PyTezos library, the same as `pip install dipdup -E pytezos`. DipDup doesn't provide any further PyPoetry integration. Having some patience you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!
 
-### GitHub Container Registry
-
-
+### Nightly builds (ghcr.io)
 
 ## Writing Dockerfile
 
