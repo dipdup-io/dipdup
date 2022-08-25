@@ -4,17 +4,15 @@ This page covers the installation of DipDup in different environments.
 
 ## Host requirements
 
-A Linux environment with **Python 3.10** installed is required to use DipDup.
+A *Linux*/*MacOS* environment with *Python 3.10* installed is required to use DipDup. Other UNIX-like systems should work but are not supported officially.
 
 Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database. RAM requirements increase with the number of indexes.
 
-### Non-Linux environments
-
-Other UNIX-like systems (macOS, FreeBSD, etc.) should work but are not supported officially.
+### Non-UNIX environments
 
 DipDup currently doesn't work in Windows environments due to incompatibilities in libraries it depends on. Please use WSL or Docker.
 
-We aim to improve cross-platform compatibility in future releases ([issue](https://github.com/dipdup-net/dipdup-py/pull/358)).
+We aim to improve cross-platform compatibility in future releases ([issue](https://github.com/dipdup-net/dipdup-py/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+)).
 
 > 💡 **SEE ALSO**
 >

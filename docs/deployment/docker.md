@@ -8,23 +8,21 @@ DipDup provides multiple prebuilt images for different environments hosted on Do
 | - | :-: | :-: | :-: |
 | base image | `python:3.10-slim-buster` | `python:3.10-slim-buster` | `python:3.10-alpine` |
 | platforms | `amd64`, `arm64` | `amd64`, `arm64` | `amd64`, `arm64` |
-| latest tag | `dipdup/dipdup:6` | `dipdup/dipdup:6-pytezos` | `dipdup/dipdup:6-slim` |
-| image size | 355M | 646M | 136M |
+| latest tag | `6` | `6-pytezos` | `6-slim` |
+| image size | 352M | 481M | 136M |
 | `dipdup init` command | ✅ | ✅ | ❌ |
 | `git`, and `poetry` included | ✅ | ✅ | ❌ |
 | PyTezos included | ❌ | ✅ | ❌
 
-Default DipDup image is suitable for development and testing. It includes some developments tools to make package management easier. If unsure, use this image.
+Default DipDup image is suitable for development and testing. It includes some development tools to make package management easier. If unsure, use this image.
 
 ### `-slim` image
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+The slim image is based on Alpine Linux and has a much smaller size than the default one. As a tradeoff, it doesn't include codegen functionality (unlikely to be useful in production). The default Docker user is also forbidden to modify DipDup installation directory.
 
 ### `-pytezos` image
 
-The only difference with the default image is pre-installed PyTezos library, the same as `pip install dipdup -E pytezos`. DipDup doesn't provide any further PyPoetry integration. Having some patience you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!
+The only difference with the default image is the pre-installed PyTezos library, the same as `pip install dipdup -E pytezos`. DipDup doesn't provide any further PyPoetry integration. Having some patience you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!
 
 ### Nightly builds (ghcr.io)
 
@@ -40,10 +38,11 @@ Start with creating `.dockerignore` for your project if it's missing.
 !Makefile
 !pyproject.toml
 !poetry.lock
+!requirements**
 !README.md
 
 # Add code
-!generic_dex
+!src
 
 # Add configs
 !*.yml
@@ -53,28 +52,20 @@ Start with creating `.dockerignore` for your project if it's missing.
 **/__pycache__
 ```
 
-A typical Dockerfile for default and pytezos images looks like this:
+A typical Dockerfile looks like this:
 
 ```Dockerfile
 FROM dipdup/dipdup:6
 # FROM dipdup/dipdup:6-pytezos
+# FROM dipdup/dipdup:6-slim
 
-# Uncomment if you have additional dependencies in pyproject.toml
-# COPY pyproject.toml poetry.lock ./
-# RUN inject_pyproject
+# Optional: install additional dependencies using poetry
+# COPY pyproject.toml poetry.lock .
+# RUN install_dependencies
 
-COPY . .
-```
-
-Slim image doesn't provide poetry integration, so if your project has additional dependencies, you need to install them manually.
-
-```Dockerfile
-FROM dipdup/dipdup:6
-# FROM dipdup/dipdup:6-pytezos
-
-# Installing additional dependencies
-# COPY requirements.txt ./
-# /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check -r requirements.txt
+# Optional: install additional dependencies using pip
+# COPY requirements.txt .
+# RUN install_dependencies requirements.txt
 
 COPY . .
 ```
@@ -99,9 +90,9 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
     volumes:
-      - ./dipdup.yml:/home/dipdup/dipdup.yml
-      - ./dipdup.prod.yml:/home/dipdup/dipdup.prod.yml
-      - ./indexer:/home/dipdup/indexer
+      - dipdup.yml:/home/dipdup/dipdup.yml
+      - dipdup.prod.yml:/home/dipdup/dipdup.prod.yml
+      - indexer:/home/dipdup/indexer
     ports:
       - 127.0.0.1:9000:9000
 

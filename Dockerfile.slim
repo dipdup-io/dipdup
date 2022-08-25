@@ -13,6 +13,7 @@ RUN /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip
 
 FROM python:3.10-alpine AS build-image
 
+COPY --chmod=0555 install_dependencies.sh /opt/dipdup/bin/install_dependencies
 COPY --from=compile-image /opt/dipdup /opt/dipdup
 COPY . /opt/dipdup
 

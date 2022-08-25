@@ -58,18 +58,18 @@ build:          ## Build Python wheel package
 	poetry build
 
 image:
-	make image-base
+	make image-default
 	make image-pytezos
 	make image-slim
 
-image-base:          ## Build Docker image
-	docker buildx build . -t dipdup:${TAG}
+image-default:          ## Build Docker image
+	docker buildx build . --progress plain -t dipdup:${TAG}
 
 image-pytezos:
-	docker buildx build . -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
+	docker buildx build . --progress plain -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
 
 image-slim:
-	docker buildx build . -t dipdup:${TAG}-slim -f Dockerfile.slim
+	docker buildx build . --progress plain -t dipdup:${TAG}-slim -f Dockerfile.slim
 
 release-patch:  ## Release patch version
 	bumpversion patch
