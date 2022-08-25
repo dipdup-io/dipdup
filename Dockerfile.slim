@@ -9,8 +9,8 @@ ENV PYTHON_PATH="/opt/dipdup/src:$PATH"
 
 COPY pyproject.toml requirements.slim.txt README.md /opt/dipdup/
 
-RUN /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check -r /opt/dipdup/requirements.slim.txt && \
-    /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check --upgrade -e .
+RUN /usr/local/bin/pip install --prefix /opt/dipdup --disable-pip-version-check -r /opt/dipdup/requirements.slim.txt && \
+    /usr/local/bin/pip install --prefix /opt/dipdup --disable-pip-version-check --upgrade -e .
 
 FROM python:3.10-alpine AS build-image
 
