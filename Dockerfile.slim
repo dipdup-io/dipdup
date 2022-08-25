@@ -16,7 +16,8 @@ FROM python:3.10-alpine AS build-image
 COPY --from=compile-image /opt/dipdup /opt/dipdup
 COPY . /opt/dipdup
 
-USER guest
+RUN adduser -D dipdup
+USER dipdup
 ENV PATH="/opt/dipdup/bin:$PATH"
 ENV PYTHONPATH="/opt/dipdup/src:/opt/dipdup/lib/python3.10/site-packages:$PYTHONPATH"
 WORKDIR /home/dipdup/
