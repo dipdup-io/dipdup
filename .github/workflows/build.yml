@@ -7,6 +7,8 @@ on:
       - '*.*.*'
     paths:
       - "src/**"
+      - "Dockerfile"
+      - "Dockerfile.slim"
       - "pyproject.toml"
       - "poetry.lock"
       - "Makefile"
