@@ -8,18 +8,7 @@ on:
 jobs:
   test:
     name: Test cookiecutter
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: amd64
-          - os: macos-latest
-            arch: amd64
-          - os: ubuntu-latest
-            arch: arm64
-          - os: macos-latest
-            arch: arm64
+    runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -41,7 +30,7 @@ jobs:
         id: cache-venv
         with:
           path: /home/runner/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-venv-${{ hashFiles('**/poetry.lock') }}
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/cookiecutter/cookiecutter.json') }}
           restore-keys: |
             ${{ runner.os }}-venv-
 
