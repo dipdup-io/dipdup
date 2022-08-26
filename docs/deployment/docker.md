@@ -64,21 +64,7 @@ Environment variables are expanded in the DipDup config file; Postgres password 
 Create a separate `dipdup.<environment>.yml` file for this stack:
 
 ```yaml
-database:
-  kind: postgres
-  host: db
-  port: 5432
-  user: dipdup
-  password: ${POSTGRES_PASSWORD:-changeme}
-  database: dipdup
-  schema_name: demo
-
-hasura:
-  url: http://hasura:8080
-  admin_secret: ${ADMIN_SECRET:-changeme}
-  allow_aggregations: False
-  camel_case: true
-  select_limit: 100
+{{ #include ../../cookiecutter/root/dipdup.prod.yml }}
 ```
 
 Note the hostnames (resolved in the docker network) and environment variables (expanded by DipDup).
