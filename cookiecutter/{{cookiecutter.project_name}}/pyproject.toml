@@ -27,14 +27,15 @@ flakeheaven = "^2.0.0"
 isort = "^5.9.3"
 mypy = "^0.971"
 pytest = "^7.1.2"
-pytest-asyncio = "^0.18.3"
+pytest-asyncio = "^0.19.0"
 pytest-cov = "^3.0.0"
 pytest-xdist = "^2.5.0"
-types-pytz = "^2021.1.2"
+types-pytz = "^2022.1.1"
 types-tabulate = "^0.8.2"
 
 [tool.isort]
 line_length = {{ cookiecutter.line_length }}
+force_single_line = true
 
 [tool.black]
 line-length = {{ cookiecutter.line_length }}
