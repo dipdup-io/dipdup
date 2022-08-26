@@ -45,12 +45,12 @@ RUN <<eot
     rm -r /var/log/* /var/lib/apt/lists/* /var/cache/* /var/lib/dpkg/status*
 eot
 
-COPY --chown=dipdup --chmod=0555 install_dependencies.sh /opt/dipdup/.venv/bin/install_dependencies
-COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
-COPY --chown=dipdup . /opt/dipdup
-
 USER dipdup
 ENV PATH="/opt/dipdup/.venv/bin:$PATH"
 WORKDIR /home/dipdup/
 ENTRYPOINT ["dipdup"]
 CMD ["run"]
+
+COPY --chown=dipdup --chmod=0755 install_dependencies.sh /opt/dipdup/.venv/bin/install_dependencies
+COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
+COPY --chown=dipdup . /opt/dipdup
