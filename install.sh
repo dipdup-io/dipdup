@@ -4,7 +4,7 @@ set -o pipefail
 
 DIPDUP_CWD=`pwd`
 DIPDUP_CACHE="${DIPDUP_CACHE:=/tmp/dipdup_install}"
-DIPDUP_VERSION="${DIPDUP_VERSION:=aux/arm64}"
+DIPDUP_REF="${DIPDUP_REF:=master}"
 
 echo "==> Welcome to the DipDup Installer"
 mkdir -p $DIPDUP_CACHE
@@ -27,7 +27,7 @@ pip install -qU cookiecutter
 cd $DIPDUP_CWD
 
 echo "==> Creating DipDup project"
-cookiecutter -f https://github.com/dipdup-net/dipdup-py -c $DIPDUP_VERSION --directory cookiecutter
+cookiecutter -f https://github.com/dipdup-net/dipdup-py -c $DIPDUP_REF --directory cookiecutter
 deactivate
 
 for dir in `ls -d */ | grep -v cookiecutter`; do
