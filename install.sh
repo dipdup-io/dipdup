@@ -3,8 +3,8 @@ set -e
 set -o pipefail
 
 DIPDUP_CWD=`pwd`
-DIPDUP_CACHE=/tmp/dipdup_install
-DIPDUP_VERSION=aux/arm64
+DIPDUP_CACHE="${DIPDUP_CACHE:=/tmp/dipdup_install}"
+DIPDUP_VERSION="${DIPDUP_VERSION:=aux/arm64}"
 
 echo "==> Welcome to the DipDup Installer"
 mkdir -p $DIPDUP_CACHE
