@@ -5,6 +5,12 @@ on:
       - "**"
     tags:
       - '*.*.*'
+    paths:
+      - "src/**"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - "Makefile"
+      - ".github/workflows/build.yml"
 
 jobs:
   build:
