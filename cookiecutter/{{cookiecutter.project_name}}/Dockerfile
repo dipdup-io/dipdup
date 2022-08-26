@@ -1,8 +1,13 @@
 FROM dipdup/dipdup:{{ cookiecutter.dipdup_version }}
+# FROM dipdup/dipdup:{{ cookiecutter.dipdup_version }}-pytezos
+# FROM dipdup/dipdup:{{ cookiecutter.dipdup_version }}-slim
 
-COPY src/{{cookiecutter.package}} {{cookiecutter.package}}
-COPY dipdup*.yml ./
+# Optional: install additional dependencies using poetry
+# COPY pyproject.toml poetry.lock .
+# RUN install_dependencies
 
-# Uncomment the following lines if you have dependencies other than dipdup in pyproject.toml
-# COPY pyproject.toml poetry.lock ./
-# RUN inject_pyproject
+# Optional: install additional dependencies using pip
+# COPY requirements.txt .
+# RUN install_dependencies requirements.txt
+
+COPY . .

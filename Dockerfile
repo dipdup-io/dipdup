@@ -46,7 +46,8 @@ RUN <<eot
 eot
 
 USER dipdup
-ENV PATH="/opt/dipdup/.venv/bin:$PATH"
+ENV PATH="/opt/dipdup/bin:$PATH"
+ENV PYTHONPATH="/home/dipdup:/home/dipdup/src:/opt/dipdup/src:/opt/dipdup/lib/python3.10/site-packages:$PYTHONPATH"
 WORKDIR /home/dipdup/
 ENTRYPOINT ["dipdup"]
 CMD ["run"]
