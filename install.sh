@@ -1,12 +1,12 @@
-#$/bin/bash
+#$/bin/sh
 set -e 
 set -o pipefail
 
 echo "==> Welcome to the DipDup Installer"
 CURR_PWD=`pwd`
-DUPDUP_RUN_CACHE_DIR=~/.cache/dipdup_run
-mkdir -p $DUPDUP_RUN_CACHE_DIR
-cd $DUPDUP_RUN_CACHE_DIR
+DIPDUP_INSTALL_CACHE_DIR=~/.cache/dipdup_run
+mkdir -p $DIPDUP_INSTALL_CACHE_DIR
+cd $DIPDUP_INSTALL_CACHE_DIR
 
 echo "==> Checking for dependencies"
 for dep in python git make poetry; do
@@ -25,7 +25,7 @@ pip install -qU cookiecutter
 cd $CURR_PWD
 
 echo "==> Creating DipDup project"
-bash -c 'cookiecutter -f https://github.com/dipdup-net/cookiecutter-dipdup'
+cookiecutter -f https://github.com/dipdup-net/dipdup-py -c aux/arm64 --directory cookiecutter
 deactivate
 
 for dir in `ls -d */ | grep -v cookiecutter`; do
@@ -41,6 +41,6 @@ for dir in `ls -d */ | grep -v cookiecutter`; do
 done
 
 echo "==> Cleaning up"
-rm -r $DUPDUP_RUN_CACHE_DIR
+rm -r $DIPDUP_INSTALL_CACHE_DIR
 
 echo "==> Done! DipDup is ready to use."
