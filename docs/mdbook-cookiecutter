@@ -5,7 +5,7 @@ from os.path import dirname, join
 import re
 import sys
 
-COOKIECUTTER_REGEX = r'{{ *cookiecutter\.(.*) *}}'
+COOKIECUTTER_REGEX = r'{{ *cookiecutter\.(\w*) *}}'
 
 def _preprocess_content(text: str, defaults: dict[str, str]) -> str:
     for path in re.findall(COOKIECUTTER_REGEX, text):

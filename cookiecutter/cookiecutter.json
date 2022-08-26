@@ -8,7 +8,7 @@
     "author": "John Smith <johnsmith@example.com>",
 
     "🚧": "Software versions (press enter)",
-    "dipdup_version": "6.0",
+    "dipdup_version": "6",
     "postgresql_version": [
       "postgres:14",
       "postgres:13",

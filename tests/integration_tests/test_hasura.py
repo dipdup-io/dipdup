@@ -55,7 +55,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
             await dipdup._set_up_hooks(set())
             await dipdup._initialize_schema()
 
-            hasura_container = DbContainer('hasura/graphql-engine:v2.8.3').with_env(
+            hasura_container = DbContainer('hasura/graphql-engine:v2.10.1').with_env(
                 'HASURA_GRAPHQL_DATABASE_URL',
                 f'postgres://test:test@{postgres_ip}:5432',
             )
