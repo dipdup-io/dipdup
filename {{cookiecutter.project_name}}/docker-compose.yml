@@ -10,9 +10,6 @@ services:
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - ADMIN_SECRET=${HASURA_SECRET:-changeme}
-    volumes:
-      - ./dipdup.yml:/home/dipdup/dipdup.yml
-      - ./dipdup.prod.yml:/home/dipdup/dipdup.prod.yml
 
   db:
     image: {{ cookiecutter.postgresql_version }}
