@@ -4,6 +4,7 @@ on:
     paths:
       - "src/**"
       - "tests/**"
+      - "cookiecutter/**"
       - "pyproject.toml"
       - "poetry.lock"
       - "Makefile"
@@ -55,3 +56,6 @@ jobs:
         run: make lint
       - name: Run tests
         run: make test
+
+      - name: Create a new dipdup project and ensure it's valid
+        run: poetry run pip install -y cookiecutter && poetry run cookiecutter --no-input cookiecutter && cd my-dipdup-indexer && make all
