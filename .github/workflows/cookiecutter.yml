@@ -1,17 +1,13 @@
-name: Test
+name: Test cookiecutter
 on:
   push:
     paths:
-      - "src/**"
-      - "tests/**"
-      - "pyproject.toml"
-      - "poetry.lock"
-      - "Makefile"
-      - ".github/workflows/test.yml"
+      - "cookiecutter/**"
+      - ".github/workflows/cookiecutter.yml"
 
 jobs:
   test:
-    name: Test
+    name: Test cookiecutter
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -49,9 +45,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-venv-
 
-      - name: Install project
-        run: make install
-      - name: Run lint
-        run: make lint
-      - name: Run tests
-        run: make test
+      - name: Create new project and ensure it's valid
+        run: poetry run pip install cookiecutter && poetry run cookiecutter --no-input cookiecutter && cd my-dipdup-indexer && make all
