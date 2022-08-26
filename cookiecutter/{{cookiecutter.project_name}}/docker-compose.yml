@@ -1,15 +1,17 @@
 version: "3.8"
 
 services:
-  indexer:
+  dipdup:
     build: .
     depends_on:
       - db
     command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
-    restart: "always"
+    restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-      - ADMIN_SECRET=${HASURA_SECRET:-changeme}
+      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+    ports:
+      - 127.0.0.1:9000:9000
 
   db:
     image: {{ cookiecutter.postgresql_version }}
@@ -17,6 +19,7 @@ services:
       - 127.0.0.1:5432:5432
     volumes:
       - db:/var/lib/postgresql/data
+    restart: always
     environment:
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
@@ -26,9 +29,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      mode: replicated
-      replicas: 1
 
   hasura:
     image: {{ cookiecutter.hasura_version }}

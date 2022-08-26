@@ -5,12 +5,13 @@
 !Makefile
 !pyproject.toml
 !poetry.lock
+!requirements**
 !README.md
 
 # Add code
 !src
 
-# Add config files
+# Add configs
 !*.yml
 
 # Ignore caches
