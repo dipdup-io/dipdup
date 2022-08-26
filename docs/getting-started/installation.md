@@ -23,10 +23,10 @@ We aim to improve cross-platform compatibility in future releases ([issue](https
 
 ### Interactively (recommended)
 
-You can initialize a hello-world project interactively by choosing configuration options in the terminal. Install [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/README.html) package systemwide, then run:
+You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/README.html) and create a new project in the current directory.
 
 ```shell
-cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
+curl https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/install.sh | sh
 ```
 
 ### Poetry
