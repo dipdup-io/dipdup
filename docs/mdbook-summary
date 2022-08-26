@@ -1,4 +1,3 @@
-#!python
 """Replaces {{ #summary ...}} placeholders with links from SUMMARY.md"""
 import json
 import os

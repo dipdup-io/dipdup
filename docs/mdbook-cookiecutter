@@ -1,4 +1,3 @@
-#!python
 """Replaces {{ cookiecutter... }} placeholders with default values from cookiecutter.json"""
 import json
 from os.path import dirname, join
@@ -34,8 +33,14 @@ if __name__ == '__main__':
     with open(join(dirname(__file__), '..', 'cookiecutter', 'cookiecutter.json')) as file:
         defaults = json.load(file)
 
-    context, book = json.load(sys.stdin)
-    for section in book.get('sections', ()):
-        _preprocess_chapter(section, defaults)
+    text = sys.stdin.read()
 
-    print(json.dumps(book), end='')
+    try:
+        context, book = json.loads(text)
+        for section in book.get('sections', ()):
+            _preprocess_chapter(section, defaults)
+
+        print(json.dumps(book), end='')
+
+    except json.decoder.JSONDecodeError:
+        print(_preprocess_content(text, defaults))
