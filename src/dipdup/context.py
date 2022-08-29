@@ -227,8 +227,12 @@ class DipDupContext:
         :param typename: Alias for the contract script
         """
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
-        if name in self.config.contracts:
+        if contract := self.config.contracts.get(name):
+            raise ContractAlreadyExistsError(self, name, contract.address)
+        if address in self.config._contract_addresses:
             raise ContractAlreadyExistsError(self, name, address)
+        else:
+            self.config._contract_addresses.add(address)
 
         contract_config = ContractConfig(
             address=address,
