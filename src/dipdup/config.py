@@ -1230,6 +1230,7 @@ class DipDupConfig:
         self.paths: List[str] = []
         self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
+        self._contract_addresses = {contract.address for contract in self.contracts.values()}
 
     @cached_property
     def schema_name(self) -> str:
