@@ -18,11 +18,11 @@ idna==3.3; python_version >= "3.7" and python_full_version >= "3.6.2" and python
 iso8601==1.0.2; python_full_version >= "3.6.2" and python_version < "4.0" and python_version >= "3.7"
 msgpack==1.0.4; python_version >= "3.8" and python_version < "4.0"
 multidict==6.0.2; python_version >= "3.8" and python_version < "4.0"
-orjson==3.7.12; python_version >= "3.7"
+orjson==3.8.0; python_version >= "3.7"
 packaging==21.3; python_version >= "3.6"
 prometheus-client==0.14.1; python_version >= "3.6"
 pydantic==1.9.2; python_full_version >= "3.6.1"
-pyhumps==3.7.2
+pyhumps==3.7.3
 pyparsing==3.0.9; python_full_version >= "3.6.8" and python_version >= "3.6"
 pypika-tortoise==0.1.6; python_version >= "3.7" and python_version < "4.0"
 pysignalr==0.1.2; python_version >= "3.8" and python_version < "4.0"
