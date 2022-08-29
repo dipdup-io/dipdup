@@ -1,0 +1,63 @@
+[tool.poetry]
+name = "{{ cookiecutter.project_name }}"
+version = "{{ cookiecutter.version }}"
+description = "{{ cookiecutter.description }}"
+license = "{{ cookiecutter.license }}"
+authors = [
+    "{{ cookiecutter.author }}"
+]
+readme = "README.md"
+packages = [
+    { include = "{{ cookiecutter.package }}", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+dipdup = "^{{ cookiecutter.dipdup_version }}"
+
+[tool.poetry.dev-dependencies]
+black = "^22.1.0"
+bump2version = "^1.0.1"
+diff-cover = "^6.5.0"
+flake8-return = "^1.1.3"
+flake8-comprehensions = "^3.8.0"
+flake8-bugbear = "^22.1.11"
+flake8-simplify = "^0.19.2"
+flakeheaven = "^2.0.0"
+isort = "^5.9.3"
+mypy = "^0.971"
+pytest = "^7.1.2"
+pytest-asyncio = "^0.19.0"
+pytest-cov = "^3.0.0"
+pytest-xdist = "^2.5.0"
+types-pytz = "^2022.1.1"
+types-tabulate = "^0.8.2"
+
+[tool.isort]
+line_length = {{ cookiecutter.line_length }}
+force_single_line = true
+
+[tool.black]
+line-length = {{ cookiecutter.line_length }}
+target-version = ['py310']
+skip-string-normalization = true
+
+[tool.flakeheaven]
+format = "colored"
+max_line_length = 140
+show_source = true
+extended_default_ignore = []
+
+[tool.flakeheaven.plugins]
+"*" = ["+*"]
+flake8-comprehensions = ["-C417"]
+flake8-docstrings = ["-*"]
+flake8-simplify = ["-SIM106", "-SIM114", "-SIM102"]
+pycodestyle = ["-*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

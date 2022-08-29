@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import platform
-from abc import ABC
 from contextlib import suppress
 from http import HTTPStatus
 from json import JSONDecodeError
@@ -27,7 +26,7 @@ safe_exceptions = (
 )
 
 
-class HTTPGateway(ABC):
+class HTTPGateway:
     """Base class for datasources which connect to remote HTTP endpoints"""
 
     _default_http_config: HTTPConfig

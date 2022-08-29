@@ -7,11 +7,23 @@ on:
       - "pyproject.toml"
       - "poetry.lock"
       - "Makefile"
+      - ".github/workflows/test.yml"
 
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+          - os: macos-latest
+            arch: amd64
+          - os: ubuntu-latest
+            arch: arm64
+          - os: macos-latest
+            arch: arm64
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2

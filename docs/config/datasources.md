@@ -38,7 +38,7 @@ datasources:
   metadata:
     kind: metadata
     url: https://metadata.dipdup.net
-    network: mainnet|handzhounet
+    network: mainnet|hangzhounet
 ```
 
 ## ipfs

@@ -1,40 +1,58 @@
 # syntax=docker/dockerfile:1.3-labs
-FROM python:3.10-slim-buster
+FROM python:3.10-slim-buster AS compile-image
+ARG PYTEZOS=0
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
-ARG EXTRAS
-
-SHELL ["/bin/bash", "-x", "-v", "-c"]
 RUN <<eot
     apt update
-    apt install -y --no-install-recommends make git sudo `if [[ $EXTRAS =~ "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y gcc make git `if [[ $PYTEZOS = "1" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+
     pip install --no-cache-dir poetry
-    useradd -ms /bin/bash dipdup
-    mkdir /home/dipdup/source
-    rm -r /var/lib/apt/lists/* /var/log/*
+
+    mkdir -p /opt/dipdup
+ 
+    rm -r /var/log/* /var/lib/apt/lists/* /var/cache/* /var/lib/dpkg/status*
 eot
 
-COPY --chown=dipdup Makefile pyproject.toml poetry.lock README.md /home/dipdup/source/
-COPY --chown=dipdup inject_pyproject.sh /usr/bin/inject_pyproject.sh
-WORKDIR /home/dipdup/source
+WORKDIR /opt/dipdup
+ENV PATH="/opt/dipdup/.venv/bin:$PATH"
+
+COPY --chown=dipdup Makefile pyproject.toml poetry.lock README.md /opt/dipdup/
 
 RUN <<eot
     # We want to copy our code at the last layer but not to break poetry's "packages" section
-    mkdir -p /home/dipdup/source/src/dipdup
-    touch /home/dipdup/source/src/dipdup/__init__.py
-    poetry config virtualenvs.create false
-    make install DEV=0 EXTRAS="${EXTRAS}"
-    echo 'sudo /usr/bin/inject_pyproject.sh' >> /usr/bin/inject_pyproject
-    echo 'dipdup ALL = NOPASSWD: /usr/bin/inject_pyproject.sh' >> /etc/sudoers
-    chmod +x /usr/bin/inject_pyproject.sh
-    chmod +x /usr/bin/inject_pyproject
-    rm -r /root/.cache
+    mkdir -p /opt/dipdup/src/dipdup
+    touch /opt/dipdup/src/dipdup/__init__.py
+
+    make install DEV=0 PYTEZOS="${PYTEZOS}"
+
+    rm -r /root/.cache/
 eot
 
-COPY --chown=dipdup . /home/dipdup/source
+FROM python:3.10-slim-buster AS build-image
+ARG PYTEZOS=0
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+SHELL ["/bin/bash", "-c"]
+
+RUN <<eot
+    useradd -ms /bin/bash dipdup
+    pip install --no-cache-dir poetry
+
+    apt update
+    apt install -y --no-install-recommends git `if [[ $PYTEZOS = "1" ]]; then echo libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+
+    rm -r /var/log/* /var/lib/apt/lists/* /var/cache/* /var/lib/dpkg/status*
+eot
 
 USER dipdup
-RUN poetry config virtualenvs.create false
-
+ENV PATH="/opt/dipdup/.venv/bin:$PATH"
+ENV PYTHONPATH="/home/dipdup:/home/dipdup/src:/opt/dipdup/src:/opt/dipdup/lib/python3.10/site-packages:$PYTHONPATH"
 WORKDIR /home/dipdup/
 ENTRYPOINT ["dipdup"]
 CMD ["run"]
+
+COPY --chown=dipdup --chmod=0755 install_dependencies.sh /opt/dipdup/.venv/bin/install_dependencies
+COPY --chown=dipdup --chmod=0755 install_dependencies.sh /opt/dipdup/.venv/bin/inject_pyproject
+COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
+COPY --chown=dipdup . /opt/dipdup

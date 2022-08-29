@@ -379,7 +379,7 @@ class CodegenMixin(ABC):
         return kwargs
 
 
-class PatternConfig(CodegenMixin, ABC):
+class PatternConfig(CodegenMixin):
     @classmethod
     def format_storage_import(cls, package: str, module_name: str) -> Tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'

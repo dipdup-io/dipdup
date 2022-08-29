@@ -4,16 +4,16 @@ This page will guide you through the steps to get your first selective indexer u
 
 Let's create an indexer for the [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database and then calculate some statistics of its holders' activity.
 
-A modern Linux distribution with Python 3.10 installed is required to run DipDup.
+A modern Linux/MacOS distribution with Python 3.10 installed is required to run DipDup.
 
 ## Create a new project
 
 ### Interactively (recommended)
 
-You can initialize a hello-world project interactively by choosing configuration options in the terminal. Install [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/README.html) package systemwide, then run:
+You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/README.html) and create a new project in the current directory.
 
 ```shell
-cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
+sh <(curl https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/install.sh)
 ```
 
 ### From scratch

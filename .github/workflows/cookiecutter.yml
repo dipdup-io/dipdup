@@ -1,0 +1,38 @@
+name: Test cookiecutter
+on:
+  push:
+    paths:
+      - "cookiecutter/**"
+      - ".github/workflows/cookiecutter.yml"
+
+jobs:
+  test:
+    name: Test cookiecutter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10.x"
+
+      - name: Set up Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: "1.1.13"
+
+      - name: Set up cache
+        uses: actions/cache@v2
+        id: cache-venv
+        with:
+          path: /home/runner/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/cookiecutter/cookiecutter.json') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+
+      - name: Create new project and ensure it's valid
+        run: poetry run pip install cookiecutter && poetry run cookiecutter --no-input cookiecutter && cd my-dipdup-indexer && make all

@@ -1,5 +1,4 @@
 import logging
-from abc import ABC
 from typing import Dict
 from typing import Literal
 from typing import Optional
@@ -10,7 +9,7 @@ from pydantic.dataclasses import dataclass
 _logger = logging.getLogger('dipdup.datasource')
 
 
-class Subscription(ABC):
+class Subscription:
     type: str
 
 

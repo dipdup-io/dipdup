@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- ci: Introduced official MacOS support.
+- ci: Build `arm64` images for M1/M2 silicon.
+- ci: Build `-slim` images based on Alpine Linux.
+
 ## [6.0.1] - 2022-08-19
 
 ### Fixed

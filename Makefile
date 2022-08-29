@@ -3,10 +3,10 @@
 ##
 ##    🚧 DipDup developer tools
 ##
-## DEV=1                Whether to install dev dependencies
+## DEV=1                Install dev dependencies
 DEV=1
-## EXTRAS=""            Extras to install (`pytezos` or none)
-EXTRAS=""
+## PYTEZOS=0            Install PyTezos
+PYTEZOS=0
 ## TAG=latest           Tag for the `image` command
 TAG=latest
 
@@ -20,7 +20,7 @@ all:            ## Run a whole CI pipeline: lint, run tests, build docs
 
 install:        ## Install project dependencies
 	poetry install \
-	`if [ -n "${EXTRAS}" ]; then for i in ${EXTRAS}; do echo "-E $$i "; done; fi` \
+	`if [ "${PYTEZOS}" = "1" ]; then echo "-E pytezos "; fi` \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
 
 lint:           ## Lint with all tools
@@ -57,9 +57,19 @@ cover:          ## Print coverage for the current branch
 build:          ## Build Python wheel package
 	poetry build
 
-image:          ## Build Docker image
-	docker buildx build . -t dipdup:${TAG}
-	docker buildx build . -t dipdup:${TAG}-pytezos --build-arg EXTRAS=pytezos
+image:
+	make image-default
+	make image-pytezos
+	make image-slim
+
+image-default:          ## Build Docker image
+	docker buildx build . --progress plain -t dipdup:${TAG}
+
+image-pytezos:
+	docker buildx build . --progress plain -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
+
+image-slim:
+	docker buildx build . --progress plain -t dipdup:${TAG}-slim -f Dockerfile.slim
 
 release-patch:  ## Release patch version
 	bumpversion patch
@@ -80,3 +90,17 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 
 ##
+
+requirements:   ## Update dependencies, export requirements.txt
+	make install
+	poetry update
+	cp pyproject.toml pyproject.toml.bak
+	cp poetry.lock poetry.lock.bak
+	poetry export -o requirements.txt
+	poetry export -o requirements.pytezos.txt -E pytezos
+	poetry export -o requirements.dev.txt --dev
+	poetry remove datamodel-code-generator
+	poetry export -o requirements.slim.txt
+	mv pyproject.toml.bak pyproject.toml
+	mv poetry.lock.bak poetry.lock
+	make install

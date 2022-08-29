@@ -6,7 +6,8 @@
 !pyproject.toml
 !poetry.lock
 !README.md
-!inject_pyproject.sh
+!install_dependencies.sh
+!requirements**
 
 # Add code
 !src/dipdup/

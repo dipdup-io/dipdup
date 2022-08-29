@@ -14,3 +14,7 @@ additional-css = ["book.css"]
 
 [preprocessor.summary]
 command = "python mdbook-summary"
+
+[preprocessor.cookiecutter]
+command = "python mdbook-cookiecutter"
+after = [ "links" ]

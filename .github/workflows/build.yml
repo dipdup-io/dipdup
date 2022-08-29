@@ -5,6 +5,14 @@ on:
       - "**"
     tags:
       - '*.*.*'
+    paths:
+      - "src/**"
+      - "Dockerfile"
+      - "Dockerfile.slim"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - "Makefile"
+      - ".github/workflows/build.yml"
 
 jobs:
   build:
@@ -21,6 +29,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         with:
@@ -33,24 +44,75 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up metadata
-        id: meta
+      - name: Set up metadata (default)
+        id: meta-default
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+          flavor: |
+            latest=false
           tags: |
             type=ref,event=branch
             type=ref,event=tag
+
+      - name: Set up metadata (pytezos)
+        id: meta-pytezos
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: |
             latest=false
+            suffix=-pytezos
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
 
-      - name: Publish image on GHCR
+      - name: Set up metadata (slim)
+        id: meta-slim
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+          flavor: |
+            latest=false
+            suffix=-slim
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - name: Publish nightly image (default)
         uses: docker/build-push-action@v3
         with:
           context: .
           file: Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=default
+          cache-to: type=gha,scope=default,mode=max
+          tags: ${{ steps.meta-default.outputs.tags }}
+          labels: ${{ steps.meta-default.outputs.labels }}
+          build-args: PYTEZOS=0
+
+      - name: Publish nightly image (pytezos)
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          cache-from: type=gha,scope=pytezos
+          cache-to: type=gha,scope=pytezos,mode=max
+          tags: ${{ steps.meta-pytezos.outputs.tags }}
+          labels: ${{ steps.meta-pytezos.outputs.labels }}
+          build-args: PYTEZOS=1
+
+      - name: Publish nightly image (slim)
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile.slim
+          platforms: linux/amd64,linux/arm64
+          push: true
+          cache-from: type=gha,scope=slim
+          cache-to: type=gha,scope=slim,mode=max
+          tags: ${{ steps.meta-slim.outputs.tags }}
+          labels: ${{ steps.meta-slim.outputs.labels }}
