@@ -138,12 +138,11 @@
                         <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
 <p>This page covers the installation of DipDup in different environments.</p>
 <h2 id="host-requirements"><a class="header" href="#host-requirements">Host requirements</a></h2>
-<p>A Linux environment with <strong>Python 3.10</strong> installed is required to use DipDup.</p>
+<p>A <em>Linux</em>/<em>MacOS</em> environment with <em>Python 3.10</em> installed is required to use DipDup. Other UNIX-like systems should work but are not supported officially.</p>
 <p>Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database. RAM requirements increase with the number of indexes.</p>
-<h3 id="non-linux-environments"><a class="header" href="#non-linux-environments">Non-Linux environments</a></h3>
-<p>Other UNIX-like systems (macOS, FreeBSD, etc.) should work but are not supported officially.</p>
+<h3 id="non-unix-environments"><a class="header" href="#non-unix-environments">Non-UNIX environments</a></h3>
 <p>DipDup currently doesn't work in Windows environments due to incompatibilities in libraries it depends on. Please use WSL or Docker.</p>
-<p>We aim to improve cross-platform compatibility in future releases (<a href="https://github.com/dipdup-net/dipdup-py/pull/358">issue</a>).</p>
+<p>We aim to improve cross-platform compatibility in future releases (<a href="https://github.com/dipdup-net/dipdup-py/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+">issue</a>).</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
@@ -153,8 +152,8 @@
 </blockquote>
 <h2 id="local-installation"><a class="header" href="#local-installation">Local installation</a></h2>
 <h3 id="interactively-recommended"><a class="header" href="#interactively-recommended">Interactively (recommended)</a></h3>
-<p>You can initialize a hello-world project interactively by choosing configuration options in the terminal. Install <a href="https://cookiecutter.readthedocs.io/en/stable/README.html"><code>cookiecutter</code></a> package systemwide, then run:</p>
-<pre><code class="language-shell">cookiecutter https://github.com/dipdup-net/cookiecutter-dipdup
+<p>You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install <a href="https://cookiecutter.readthedocs.io/en/stable/README.html"><code>cookiecutter</code></a> and create a new project in the current directory.</p>
+<pre><code class="language-shell">sh &lt;(curl https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/install.sh)
 </code></pre>
 <h3 id="poetry"><a class="header" href="#poetry">Poetry</a></h3>
 <p>We advise using the <a href="https://python-poetry.org">Poetry</a> package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.</p>
