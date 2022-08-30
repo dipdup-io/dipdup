@@ -136,59 +136,103 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="running-in-docker"><a class="header" href="#running-in-docker">Running in Docker</a></h1>
-<h2 id="building-images"><a class="header" href="#building-images">Building images</a></h2>
-<pre><code class="language-Dockerfile">FROM dipdup/dipdup:6.0
-
-# Uncomment if you have additional dependencies in pyproject.toml
-# COPY pyproject.toml poetry.lock ./
-# RUN inject_pyproject
-
-COPY indexer indexer
-COPY dipdup.yml dipdup.prod.yml ./
+<h2 id="base-images"><a class="header" href="#base-images">Base images</a></h2>
+<p>DipDup provides multiple prebuilt images for different environments hosted on <a href="https://hub.docker.com/r/dipdup/dipdup">Docker Hub</a>. Choose the one according to your needs from the table below.</p>
+<table><thead><tr><th></th><th style="text-align: center">default</th><th style="text-align: center">pytezos</th><th style="text-align: center">slim</th></tr></thead><tbody>
+<tr><td>base image</td><td style="text-align: center"><code>python:3.10-slim</code></td><td style="text-align: center"><code>python:3.10-slim</code></td><td style="text-align: center"><code>python:3.10-alpine</code></td></tr>
+<tr><td>platforms</td><td style="text-align: center"><code>amd64</code>, <code>arm64</code></td><td style="text-align: center"><code>amd64</code>, <code>arm64</code></td><td style="text-align: center"><code>amd64</code>, <code>arm64</code></td></tr>
+<tr><td>latest tag</td><td style="text-align: center"><code>6</code></td><td style="text-align: center"><code>6-pytezos</code></td><td style="text-align: center"><code>6-slim</code></td></tr>
+<tr><td>image size</td><td style="text-align: center">352M</td><td style="text-align: center">481M</td><td style="text-align: center">136M</td></tr>
+<tr><td><code>dipdup init</code> command</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td></tr>
+<tr><td><code>git</code> and <code>poetry</code> included</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td></tr>
+<tr><td>PyTezos included</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td></tr>
+</tbody></table>
+<p>Default DipDup image is suitable for development and testing. It includes some development tools to make package management easier. If unsure, use this image.</p>
+<h3 id="-slim-image"><a class="header" href="#-slim-image"><code>-slim</code> image</a></h3>
+<p>This image is based on Alpine Linux and has a much smaller size than the default one. As a tradeoff, it doesn't include codegen functionality (unlikely to be useful in production).</p>
+<h3 id="-pytezos-image"><a class="header" href="#-pytezos-image"><code>-pytezos</code> image</a></h3>
+<p>The only difference with the default image is the pre-installed PyTezos library, the same as <code>pip install dipdup -E pytezos</code>. DipDup doesn't provide any further PyPoetry integration. Having some patience you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!</p>
+<h3 id="nightly-builds-ghcrio"><a class="header" href="#nightly-builds-ghcrio">Nightly builds (ghcr.io)</a></h3>
+<p>In addition to <a href="https://hub.docker.com/r/dipdup/dipdup">Docker Hub</a> we also publish images on <a href="https://github.com/dipdup-net/dipdup-py/pkgs/container/dipdup-py">GitHub Packages</a>. Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!</p>
+<pre><code class="language-Dockerfile"># Slim image for `aux/arm64` branch
+FROM ghcr.io/dipdup-net/dipdup-py:aux-arm64-slim
 </code></pre>
+<h2 id="writing-dockerfile"><a class="header" href="#writing-dockerfile">Writing Dockerfile</a></h2>
+<p>Start with creating <code>.dockerignore</code> for your project if it's missing.</p>
+<pre><code class="language-text"># Ignore all
+*
+
+# Add build files
+!Makefile
+!pyproject.toml
+!poetry.lock
+!requirements**
+!README.md
+
+# Add code
+!src
+
+# Add configs
+!*.yml
+
+# Ignore caches
+**/.mypy_cache
+**/.pytest_cache
+**/__pycache__
+</code></pre>
+<p>A typical Dockerfile looks like this:</p>
+<pre><code class="language-Dockerfile">FROM dipdup/dipdup:6
+# FROM dipdup/dipdup:6-pytezos
+# FROM dipdup/dipdup:6-slim
+
+# Optional: install additional dependencies using poetry
+# COPY pyproject.toml poetry.lock .
+# RUN install_dependencies
+
+# Optional: install additional dependencies using pip
+# COPY requirements.txt .
+# RUN install_dependencies requirements.txt
+
+COPY . .
+</code></pre>
+<p>Note that Poetry integration is not available in the slim image.</p>
 <h2 id="deploying-with-docker-compose"><a class="header" href="#deploying-with-docker-compose">Deploying with <code>docker-compose</code></a></h2>
 <p>Make sure you have <a href="https://docs.docker.com/get-docker/">docker</a> run and <a href="https://docs.docker.com/compose/install/">docker-compose</a> installed.</p>
 <p>Example <code>docker-compose.yml</code> file:</p>
 <pre><code class="language-yaml">version: &quot;3.8&quot;
 
 services:
-  indexer:
+  dipdup:
     build: .
     depends_on:
       - db
     command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
-    restart: &quot;no&quot;
+    restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
-    volumes:
-      - ./dipdup.yml:/home/dipdup/dipdup.yml
-      - ./dipdup.prod.yml:/home/dipdup/dipdup.prod.yml
-      - ./indexer:/home/dipdup/indexer
     ports:
       - 127.0.0.1:9000:9000
 
   db:
-    image: timescale/timescaledb:latest-pg13
+    image: postgres:14
     ports:
       - 127.0.0.1:5432:5432
     volumes:
       - db:/var/lib/postgresql/data
+    restart: always
     environment:
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
     healthcheck:
-      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U postgres&quot;]
+      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U dipdup&quot;]
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      mode: replicated
-      replicas: 1
 
   hasura:
-    image: hasura/graphql-engine:v2.8.3
+    image: hasura/graphql-engine:v2.11.0
     ports:
       - 127.0.0.1:8080:8080
     depends_on:
@@ -199,7 +243,7 @@ services:
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=true
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
-      - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
 
@@ -212,17 +256,22 @@ volumes:
   kind: postgres
   host: db
   port: 5432
-  user: dipdup
+  user: ${POSTGRES_USER:-dipdup}
   password: ${POSTGRES_PASSWORD:-changeme}
-  database: dipdup
-  schema_name: demo
+  database: ${POSTGRES_DB:-dipdup}
 
 hasura:
   url: http://hasura:8080
-  admin_secret: ${ADMIN_SECRET:-changeme}
-  allow_aggregations: False
+  admin_secret: ${HASURA_SECRET:-changeme}
+  allow_aggregations: false
   camel_case: true
-  select_limit: 100
+
+sentry:
+  dsn: ${SENTRY_DSN:-&quot;&quot;}
+  environment: ${SENTRY_ENVIRONMENT:-prod}
+
+prometheus:
+  host: 0.0.0.0
 </code></pre>
 <p>Note the hostnames (resolved in the docker network) and environment variables (expanded by DipDup).</p>
 <p>Build and run the containers:</p>
@@ -234,6 +283,104 @@ hasura:
 <p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
 <p>This page or paragraph is yet to be written. Come back later.</p>
 </blockquote>
+<p>Example stack:</p>
+<pre><code class="language-yaml">version: &quot;3.8&quot;
+
+services:
+  dipdup:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-net/dipdup-py:${TAG:-master}
+    depends_on:
+      - db
+      - hasura
+    command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
+    environment:
+      - &quot;POSTGRES_USER=dipdup&quot;
+      - &quot;POSTGRES_PASSWORD=changeme&quot;
+      - &quot;POSTGRES_DB=dipdup&quot;
+      - &quot;HASURA_SECRET=changeme&quot;
+    networks:
+      - dipdup-private
+      - prometheus-private
+    deploy:
+      mode: replicated
+      replicas: ${INDEXER_ENABLED:-1}
+      labels:
+        - prometheus-job=${SERVICE}
+        - prometheus-port=8000
+      placement: &amp;placement
+        constraints:
+          - node.labels.${SERVICE} == true
+    logging: &amp;logging
+      driver: &quot;json-file&quot;
+      options:
+        max-size: &quot;10m&quot;
+        max-file: &quot;10&quot;
+        tag: &quot;\{\{.Name\}\}.\{\{.ImageID\}\}&quot;
+
+  db:
+    image: postgres:14
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment: 
+      - POSTGRES_USER=dipdup
+      - POSTGRES_DB=dipdup
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    healthcheck:
+      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U postgres&quot;]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dipdup-private
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement: *placement
+    logging: *logging
+
+  hasura:
+    image: hasura/graphql-engine:v2.11.0
+    depends_on:
+      - db
+    environment:
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=true
+      - HASURA_GRAPHQL_DEV_MODE=false
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log
+      - HASURA_GRAPHQL_LOG_LEVEL=warn
+      - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
+      - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
+      - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
+    networks:
+      - dipdup-private
+      - traefik-public
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.${SERVICE}.loadbalancer.server.port=8080
+        - &quot;traefik.http.routers.${SERVICE}.rule=Host(`${HOST}`) &amp;&amp; (PathPrefix(`/v1/graphql`) || PathPrefix(`/api/rest`))&quot;
+        - traefik.http.routers.${SERVICE}.entrypoints=http,${INGRESS:-ingress}
+        - &quot;traefik.http.routers.${SERVICE}-console.rule=Host(`${SERVICE}.${SWARM_ROOT_DOMAIN}`)&quot;
+        - traefik.http.routers.${SERVICE}-console.entrypoints=https
+        - traefik.http.middlewares.${SERVICE}-console.headers.customrequestheaders.X-Hasura-Admin-Secret=${HASURA_SECRET}
+        - traefik.http.routers.${SERVICE}-console.middlewares=authelia@docker,${SERVICE}-console
+      placement: *placement
+    logging: *logging
+
+
+volumes:
+  db:
+
+networks:
+  dipdup-private:
+  traefik-public:
+    external: true
+  prometheus-private:
+    external: true
+</code></pre>
 
                     </main>
 
