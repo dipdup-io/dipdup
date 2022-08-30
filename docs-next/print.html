@@ -178,7 +178,7 @@ Development is supported by <a href="https://tezos.foundation/">Tezos Foundation
 <h2 id="create-a-new-project"><a class="header" href="#create-a-new-project">Create a new project</a></h2>
 <h3 id="interactively-recommended"><a class="header" href="#interactively-recommended">Interactively (recommended)</a></h3>
 <p>You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install <a href="https://cookiecutter.readthedocs.io/en/stable/README.html"><code>cookiecutter</code></a> and create a new project in the current directory.</p>
-<pre><code class="language-shell">sh &lt;(curl https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/install.sh)
+<pre><code class="language-shell">curl https://dipdup.net/install.py | python
 </code></pre>
 <h3 id="from-scratch"><a class="header" href="#from-scratch">From scratch</a></h3>
 <p>We advise using the <a href="https://python-poetry.org">Poetry</a> package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.</p>
@@ -424,7 +424,7 @@ async def on_mint(
 <h2 id="local-installation"><a class="header" href="#local-installation">Local installation</a></h2>
 <h3 id="interactively-recommended-1"><a class="header" href="#interactively-recommended-1">Interactively (recommended)</a></h3>
 <p>You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install <a href="https://cookiecutter.readthedocs.io/en/stable/README.html"><code>cookiecutter</code></a> and create a new project in the current directory.</p>
-<pre><code class="language-shell">sh &lt;(curl https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/install.sh)
+<pre><code class="language-shell">curl https://dipdup.net/install.py | python
 </code></pre>
 <h3 id="poetry"><a class="header" href="#poetry">Poetry</a></h3>
 <p>We advise using the <a href="https://python-poetry.org">Poetry</a> package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.</p>
@@ -1909,7 +1909,7 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.10.1
+    image: hasura/graphql-engine:v2.11.0
     ports:
       - 127.0.0.1:8080:8080
     depends_on:
@@ -2016,7 +2016,7 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.10.1
+    image: hasura/graphql-engine:v2.11.0
     depends_on:
       - db
     environment:
@@ -3686,9 +3686,9 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-net/dipdup-py/compare/6.0.1...HEAD">Unreleased</a></a></h2>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
 <ul>
-<li>ci: Introduced official MacOS support.</li>
 <li>ci: Build <code>arm64</code> images for M1/M2 silicon.</li>
 <li>ci: Build <code>-slim</code> images based on Alpine Linux.</li>
+<li>ci: Introduced official MacOS support.</li>
 </ul>
 <h2 id="601---2022-08-19"><a class="header" href="#601---2022-08-19"><a href="https://github.com/dipdup-net/dipdup-py/compare/6.0.0...6.0.1">6.0.1</a> - 2022-08-19</a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
