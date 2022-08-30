@@ -57,19 +57,21 @@ cover:          ## Print coverage for the current branch
 build:          ## Build Python wheel package
 	poetry build
 
-image:
+image:          ## Build all Docker images
 	make image-default
 	make image-pytezos
 	make image-slim
 
-image-default:          ## Build Docker image
+image-default:  ## Build default Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}
 
-image-pytezos:
+image-pytezos:  ## Build pytezos Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
 
-image-slim:
+image-slim:     ## Build slim Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}-slim -f Dockerfile.slim
+
+##
 
 release-patch:  ## Release patch version
 	bumpversion patch
@@ -86,12 +88,12 @@ release-major:  ## Release major version
 	git push --tags
 	git push
 
+##
+
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 
-##
-
-update:          ## Update dependencies, export requirements.txt (wait an eternity)
+update:         ## Update dependencies, export requirements.txt (wait an eternity)
 	make install
 	poetry update
 
@@ -111,3 +113,5 @@ update:          ## Update dependencies, export requirements.txt (wait an eterni
 	make install
 
 	scripts/update-demos.sh
+
+##
