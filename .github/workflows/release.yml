@@ -87,8 +87,8 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-default.outputs.tags }}
+          labels: ${{ steps.meta-default.outputs.labels }}
           build-args: PYTEZOS=0
 
       - name: Publish stable image (pytezos)
