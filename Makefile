@@ -40,16 +40,16 @@ homepage:       ## Build homepage
 ##
 
 isort:          ## Format with isort
-	poetry run isort src tests
+	poetry run isort src tests scripts
 
 black:          ## Format with black
-	poetry run black src tests
+	poetry run black src tests scripts
 
 flake:          ## Lint with flake8
-	poetry run flakeheaven lint src tests
+	poetry run flakeheaven lint src tests scripts
 
 mypy:           ## Lint with mypy
-	poetry run mypy src tests
+	poetry run mypy src tests scripts
 
 cover:          ## Print coverage for the current branch
 	poetry run diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml
@@ -91,16 +91,23 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 
 ##
 
-requirements:   ## Update dependencies, export requirements.txt
+update:          ## Update dependencies, export requirements.txt (wait an eternity)
 	make install
 	poetry update
+
 	cp pyproject.toml pyproject.toml.bak
 	cp poetry.lock poetry.lock.bak
+
 	poetry export -o requirements.txt
 	poetry export -o requirements.pytezos.txt -E pytezos
 	poetry export -o requirements.dev.txt --dev
+
 	poetry remove datamodel-code-generator
 	poetry export -o requirements.slim.txt
+
 	mv pyproject.toml.bak pyproject.toml
 	mv poetry.lock.bak poetry.lock
+
 	make install
+
+	scripts/update-demos.sh

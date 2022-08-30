@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning].
 
 ### Added
 
-- ci: Introduced official MacOS support.
 - ci: Build `arm64` images for M1/M2 silicon.
 - ci: Build `-slim` images based on Alpine Linux.
+- ci: Introduced official MacOS support.
 
 ## [6.0.1] - 2022-08-19
 
