@@ -18,12 +18,12 @@ from typing import Tuple
 from typing import Union
 from typing import cast
 
-import humps
 import orjson as json
 from aiohttp import ClientConnectorError
 from aiohttp import ClientOSError
 from aiohttp import ClientResponseError
 from aiohttp import ServerDisconnectedError
+from humps import main as humps
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 

@@ -23,6 +23,27 @@ jobs:
       DOCKER_REGISTRY: ghcr.io
       DOCKER_IMAGE_NAME: ${{ github.repository }}
 
+    strategy:
+      matrix:
+        image:
+          - name: default
+            suffix: ''
+            platforms: linux/amd64,linux/arm64
+            dockerfile: Dockerfile
+            build_args: 'PYTEZOS=0'
+
+          - name: pytezos
+            suffix: -pytezos
+            platforms: linux/amd64,linux/arm64
+            dockerfile: Dockerfile
+            build_args: 'PYTEZOS=1'
+
+          - name: slim
+            suffix: -slim
+            dockerfile: Dockerfile.slim
+            platforms: linux/amd64,linux/arm64
+            build_args: ''
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -44,75 +65,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up metadata (default)
-        id: meta-default
+      - name: Set up metadata
+        id: meta
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: |
             latest=false
+            suffix={{ matrix.image.suffix }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
 
-      - name: Set up metadata (pytezos)
-        id: meta-pytezos
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
-          flavor: |
-            latest=false
-            suffix=-pytezos
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-
-      - name: Set up metadata (slim)
-        id: meta-slim
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
-          flavor: |
-            latest=false
-            suffix=-slim
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-
-      - name: Publish nightly image (default)
+      - name: Publish nightly image
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: Dockerfile
-          platforms: linux/amd64,linux/arm64
+          file: ${{ matrix.image.dockerfile }}
+          platforms: ${{ matrix.image.platforms }}
           push: true
-          cache-from: type=gha,scope=default
-          cache-to: type=gha,scope=default,mode=max
-          tags: ${{ steps.meta-default.outputs.tags }}
-          labels: ${{ steps.meta-default.outputs.labels }}
-          build-args: PYTEZOS=0
-
-      - name: Publish nightly image (pytezos)
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          cache-from: type=gha,scope=pytezos
-          cache-to: type=gha,scope=pytezos,mode=max
-          tags: ${{ steps.meta-pytezos.outputs.tags }}
-          labels: ${{ steps.meta-pytezos.outputs.labels }}
-          build-args: PYTEZOS=1
-
-      - name: Publish nightly image (slim)
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: Dockerfile.slim
-          platforms: linux/amd64,linux/arm64
-          push: true
-          cache-from: type=gha,scope=slim
-          cache-to: type=gha,scope=slim,mode=max
-          tags: ${{ steps.meta-slim.outputs.tags }}
-          labels: ${{ steps.meta-slim.outputs.labels }}
+          cache-from: type=gha,scope={{ matrix.image.name }}
+          cache-to: type=gha,scope={{ matrix.image.name }},mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ matrix.image.build_args }}

@@ -8,6 +8,8 @@ on:
       - master
     paths:
       - 'docs/**'
+      - 'scripts/**'
+      - ".github/workflows/docs.yml"
 
 jobs:
   docs:
@@ -69,3 +71,11 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/dist/docs
         destination_dir: docs-next
+
+    - name: Deploy scripts to GH Pages
+      if: startsWith(github.ref, 'refs/heads') || contains(github.ref, '-rc')
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./scripts
+        keep_files: true

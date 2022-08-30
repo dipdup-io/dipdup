@@ -1,4 +1,4 @@
-#$/bin/sh
+#!/bin/sh
 if [ $# -eq 0 ]; then
     echo "Installing requirements from 'pyproject.toml'"
     sed -i  -e 's/dipdup = .*/dipdup = {path = "\/opt\/dipdup", develop = true}/' pyproject.toml

@@ -52,7 +52,7 @@ WORKDIR /home/dipdup/
 ENTRYPOINT ["dipdup"]
 CMD ["run"]
 
-COPY --chown=dipdup --chmod=0755 install_dependencies.sh /opt/dipdup/.venv/bin/install_dependencies
-COPY --chown=dipdup --chmod=0755 install_dependencies.sh /opt/dipdup/.venv/bin/inject_pyproject
+COPY --chown=dipdup --chmod=0755 scripts/install_dependencies.sh /opt/dipdup/.venv/bin/install_dependencies
+COPY --chown=dipdup --chmod=0755 scripts/install_dependencies.sh /opt/dipdup/.venv/bin/inject_pyproject
 COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
 COPY --chown=dipdup . /opt/dipdup

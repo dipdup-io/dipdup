@@ -27,10 +27,10 @@ from typing import TypeVar
 from typing import Union
 from typing import cast
 
-import humps
 import orjson
 from genericpath import isdir
 from genericpath import isfile
+from humps import main as humps
 
 from dipdup.exceptions import ProjectImportError
 

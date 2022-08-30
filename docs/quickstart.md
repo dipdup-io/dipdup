@@ -13,7 +13,7 @@ A modern Linux/MacOS distribution with Python 3.10 installed is required to run 
 You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/README.html) and create a new project in the current directory.
 
 ```shell
-sh <(curl https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/install.sh)
+python -c "$(curl -sSL https://dipdup.net/install.py)"
 ```
 
 ### From scratch
