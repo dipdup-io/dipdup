@@ -6,8 +6,6 @@ on:
       - "*.*.*"
     branches:
       - master
-      # FIXME
-      - aux/6.1-final-touches
     paths:
       - 'docs/**'
       - 'scripts/**'
