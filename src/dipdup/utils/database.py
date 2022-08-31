@@ -6,6 +6,7 @@ import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from os.path import dirname
+from os.path import isdir
 from os.path import join
 from pathlib import Path
 from typing import Any
@@ -20,7 +21,6 @@ from typing import Type
 from typing import Union
 
 import sqlparse  # type: ignore
-from genericpath import isdir
 from tortoise import ForeignKeyFieldInstance
 from tortoise import Model as TortoiseModel
 from tortoise import ModuleType

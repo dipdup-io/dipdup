@@ -343,6 +343,7 @@ DatasourceConfigT = Union[
 ]
 
 
+@dataclass
 class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 

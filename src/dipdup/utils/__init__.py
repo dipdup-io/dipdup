@@ -13,6 +13,8 @@ from os import makedirs
 from os.path import dirname
 from os.path import exists
 from os.path import getsize
+from os.path import isdir
+from os.path import isfile
 from os.path import join
 from typing import Any
 from typing import Callable
@@ -28,8 +30,6 @@ from typing import Union
 from typing import cast
 
 import orjson
-from genericpath import isdir
-from genericpath import isfile
 from humps import main as humps
 
 from dipdup.exceptions import ProjectImportError
