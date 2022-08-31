@@ -1,6 +1,9 @@
+from typing import Optional
+
 from tortoise import ForeignKeyFieldInstance
-from tortoise import Model
 from tortoise import fields
+
+from dipdup.models import Model
 
 
 class TLD(Model):
@@ -14,6 +17,8 @@ class Domain(Model):
     expiry = fields.DatetimeField(null=True)
     owner = fields.CharField(max_length=36)
     token_id = fields.BigIntField(null=True)
+
+    tld_id: Optional[str]
 
 
 class Record(Model):

@@ -4,35 +4,48 @@ This page covers the installation of DipDup in different environments.
 
 ## Host requirements
 
-A Linux environment with **Python 3.10** installed is required to use DipDup.
+A *Linux*/*MacOS* environment with *Python 3.10* installed is required to use DipDup. Other UNIX-like systems should work but are not supported officially.
 
-Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database.
+Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database. RAM requirements increase with the number of indexes.
 
-### Non-Linux environments
-
-Other UNIX-like systems (macOS, FreeBSD, etc.) should work but are not supported officially.
+### Non-UNIX environments
 
 DipDup currently doesn't work in Windows environments due to incompatibilities in libraries it depends on. Please use WSL or Docker.
 
-We [aim to improve](https://github.com/dipdup-net/dipdup-py/pull/358) cross-platform compatibility in future releases.
+We aim to improve cross-platform compatibility in future releases ([issue](https://github.com/dipdup-net/dipdup-py/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+)).
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
-> * [5.6. Improving performance](advanced/performance/)
+> * {{ #summary advanced/performance.md }}
 > * [What is the Windows Subsystem for Linux?](https://docs.microsoft.com/en-us/windows/wsl/about)
 
 ## Local installation
 
-To begin with, create a new directory for your project and enter it. Now choose one way of managing virtual environments:
+### Interactively (recommended)
 
-### Poetry (recommended)
-
-Initialize a new PEP 518 project and add DipDip to dependencies.
+You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/README.html) and create a new project in the current directory.
 
 ```shell
-poetry init
-poetry add dipdup
+python -c "$(curl -sSL https://dipdup.net/install.py)"
 ```
+
+### Poetry
+
+We advise using the [Poetry](https://python-poetry.org) package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.
+
+```shell
+# Create a new project
+mkdir my-indexer; cd my-indexer
+poetry init --python ">=3.10,<3.11"
+# Add dipdup as a dependency
+poetry add dipdup
+# Enter the virtualenv
+poetry shell
+```
+
+> 💡 **SEE ALSO**
+>
+> * [Poetry documentation](https://python-poetry.org/docs/)
 
 ### pip
 
@@ -44,10 +57,6 @@ source .venv/bin/activate
 pip install dipdup
 ```
 
-## Other options
+## Docker
 
-> 🤓 **SEE ALSO**
->
-> * [8.2. Building Docker images](../deployment/docker.md)
-> * [8.3. Deploying with docker-compose](../deployment/docker-compose.md)
-> * [8.4. Deploying with Docker Swarm](../deployment/swarm.md)
+See {{ #summary deployment/docker.md }} page.

@@ -1,12 +1,8 @@
 # metadata
 
-This is an optional section used by the [metadata](https://github.com/dipdup-net/metadata) indexer plugin. It uses [`contracts`](contracts.md) and [`datasources`](datasources.md) aliases as well as the [`database`](database.md) connection.
+This is an optional section used by the [metadata](https://github.com/dipdup-net/metadata) indexer plugin. It uses [`contracts`](../config/contracts.md) and [`datasources`](../config/datasources.md) aliases as well as the [`database`](../config/database.md) connection.
 
 Metadata configuration has two required sections: `settings` and `indexers`
-
-{% content-ref url="../advanced/metadata-plugin.md" %}
-[metadata-plugin.md](../advanced/metadata-plugin.md)
-{% endcontent-ref %}
 
 ## Settings
 
@@ -71,12 +67,12 @@ Each indexer object has two keys: `filters` and `datasources` (required).
 
 #### accounts
 
-Array of [contract](contracts.md) aliases used to filter Big\_map updates by the owner contract address.
+Array of [contract](../config/contracts.md) aliases used to filter Big\_map updates by the owner contract address.
 
 ### Datasources
 
-Metadata plugin is tightly coupled with [TzKT](datasources.md#tzkt) provider.
+Metadata plugin is tightly coupled with [TzKT](../config/datasources.md#tzkt) provider.
 
 #### tzkt
 
-An alias pointing to a [datasource](datasources.md) of kind `tzkt` is expected.
+An alias pointing to a [datasource](../config/datasources.md) of kind `tzkt` is expected.

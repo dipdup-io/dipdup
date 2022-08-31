@@ -15,14 +15,15 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 from typing import cast
 
-import humps
 import orjson as json
 from aiohttp import ClientConnectorError
 from aiohttp import ClientOSError
 from aiohttp import ClientResponseError
 from aiohttp import ServerDisconnectedError
+from humps import main as humps
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 
@@ -39,6 +40,10 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import iter_models
 
+RelationalFieldT = Union[
+    fields.relational.ForeignKeyFieldInstance,
+    fields.relational.ManyToManyFieldInstance,
+]
 _get_fields_query = '''
 query introspectionQuery($name: String!) {
   __type(name: $name) {
@@ -103,7 +108,6 @@ class HasuraGateway(HTTPGateway):
 
     async def configure(self, force: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
-
         # TODO: Validate during config parsing
         if self._database_config.schema_name != DEFAULT_POSTGRES_SCHEMA:
             raise ConfigurationError('Hasura integration requires `schema_name` to be `public`')
@@ -133,11 +137,18 @@ class HasuraGateway(HTTPGateway):
                 raise HasuraError(f'Source `{source_name}` not found in metadata after creation.')
 
         source['tables'] = await self._generate_source_tables_metadata()
+
+        # NOTE: Don't forget to invalidate old queries, customization will fail otherwise.
+        metadata['query_collections'] = []
+        metadata['rest_endpoints'] = []
+
         await self._replace_metadata(metadata)
 
         # NOTE: Apply table customizations before generating queries
         await self._apply_table_customization(source)
         metadata = await self._fetch_metadata()
+        if (source := self._get_source(metadata, source_name)) is None:
+            raise HasuraError(f'Source `{source_name}` not found in metadata after table customization.')
 
         # NOTE: Generate and apply queries and REST endpoints
         query_collections_metadata = await self._generate_query_collections_metadata()
@@ -157,7 +168,8 @@ class HasuraGateway(HTTPGateway):
 
         await self._replace_metadata(metadata)
 
-        # NOTE: Fetch metadata once again (to do: find out why is it necessary) and save its hash for future comparisons
+        # TODO: Find out why it is necessary
+        # NOTE: Fetch metadata once again and save its hash for future comparisons
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
         hasura_schema.hash = metadata_hash
@@ -253,7 +265,6 @@ class HasuraGateway(HTTPGateway):
             'type': 'replace_metadata',
             'args': {
                 'metadata': metadata,
-                'allow_inconsistent_metadata': True,
             },
         }
         await self._hasura_request(endpoint, json)
@@ -309,7 +320,7 @@ class HasuraGateway(HTTPGateway):
                     metadata_tables[table_name]['object_relationships'].append(
                         self._format_object_relationship(
                             name=field_name,
-                            column=field_name + '_id',
+                            column=self._get_relation_source_field(field),
                         )
                     )
                     if field.related_name:
@@ -317,7 +328,7 @@ class HasuraGateway(HTTPGateway):
                             self._format_array_relationship(
                                 related_name=field.related_name,
                                 table=table_name,
-                                column=field_name + '_id',
+                                column=self._get_relation_source_field(field),
                             )
                         )
 
@@ -329,13 +340,13 @@ class HasuraGateway(HTTPGateway):
                     metadata_tables[junction_table_name]['object_relationships'].append(
                         self._format_object_relationship(
                             name=related_table_name,
-                            column=related_table_name + '_id',
+                            column=field.forward_key,
                         )
                     )
                     metadata_tables[junction_table_name]['object_relationships'].append(
                         self._format_object_relationship(
                             name=table_name,
-                            column=table_name + '_id',
+                            column=field.backward_key,
                         )
                     )
                     if field.related_name:
@@ -343,7 +354,7 @@ class HasuraGateway(HTTPGateway):
                             self._format_array_relationship(
                                 related_name=f'{related_table_name}_{field.related_name}',
                                 table=junction_table_name,
-                                column=related_table_name + '_id',
+                                column=field.forward_key,
                             )
                         )
 
@@ -365,7 +376,14 @@ class HasuraGateway(HTTPGateway):
                 raise RuntimeError(f'Table `{table_name}` has no primary key. How is that possible?')
 
             fields = await self._get_fields(table_name)
-            queries.append(self._format_rest_query(table_name, table_name, filter, fields))
+            queries.append(
+                self._format_rest_query(
+                    name=table_name,
+                    table=table_name,
+                    filter=filter,
+                    fields=fields,
+                )
+            )
 
         for query_name, query in self._iterate_graphql_queries():
             queries.append({'name': query_name, 'query': query})
@@ -593,3 +611,8 @@ class HasuraGateway(HTTPGateway):
                 "limit": self._hasura_config.select_limit,
             },
         }
+
+    def _get_relation_source_field(self, field: RelationalFieldT) -> str:
+        if source_field := field.source_field:
+            return field.model._meta.fields_db_projection[source_field]
+        return field.model_field_name + '_id'

@@ -12,7 +12,6 @@ datasources:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
-      cache: false
       retry_count:  # retry infinetely
       retry_sleep:
       retry_multiplier:
@@ -39,7 +38,7 @@ datasources:
   metadata:
     kind: metadata
     url: https://metadata.dipdup.net
-    network: mainnet|handzhounet
+    network: mainnet|hangzhounet
 ```
 
 ## ipfs
@@ -51,6 +50,6 @@ datasources:
     url: https://ipfs.io/ipfs
 ```
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
-> * [5.1. datasources](../advanced/datasources.md)
+> * {{ #summary advanced/datasources.md}}

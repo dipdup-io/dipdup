@@ -1,9 +1,11 @@
+import os
 from contextlib import AsyncExitStack
 from os.path import dirname
 from os.path import join
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
 
+import pytest
 from testcontainers.core.generic import DbContainer  # type: ignore
 from testcontainers.postgres import PostgresContainer  # type: ignore
 
@@ -11,8 +13,12 @@ from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
+from dipdup.exceptions import HasuraError
 from dipdup.hasura import HasuraGateway
 from dipdup.utils.database import tortoise_wrapper
+
+if os.environ.get("CI") == "true":
+    pytest.skip("skipping integration tests on CI", allow_module_level=True)
 
 
 class HasuraTest(IsolatedAsyncioTestCase):
@@ -40,12 +46,17 @@ class HasuraTest(IsolatedAsyncioTestCase):
                 password='test',
             )
             dipdup = DipDup(config)
-            await stack.enter_async_context(tortoise_wrapper(config.database.connection_string, 'demo_hic_et_nunc.models'))
+            await stack.enter_async_context(
+                tortoise_wrapper(
+                    config.database.connection_string,
+                    'demo_hic_et_nunc.models',
+                )
+            )
             await dipdup._set_up_database(stack)
             await dipdup._set_up_hooks(set())
             await dipdup._initialize_schema()
 
-            hasura_container = DbContainer('hasura/graphql-engine:v2.6.2').with_env(
+            hasura_container = DbContainer('hasura/graphql-engine:v2.10.1').with_env(
                 'HASURA_GRAPHQL_DATABASE_URL',
                 f'postgres://test:test@{postgres_ip}:5432',
             )
@@ -63,7 +74,12 @@ class HasuraTest(IsolatedAsyncioTestCase):
             hasura_gateway = HasuraGateway('demo_hic_et_nunc', config.hasura, config.database)
             await stack.enter_async_context(hasura_gateway)
 
-            await hasura_gateway.configure()
+            try:
+                await hasura_gateway.configure(force=True)
 
-            config.hasura.camel_case = True
-            await hasura_gateway.configure()
+                config.hasura.camel_case = True
+
+                await hasura_gateway.configure(force=True)
+            except HasuraError:
+                dipdup._ctx.logger.info(hasura_container.get_logs())
+                raise

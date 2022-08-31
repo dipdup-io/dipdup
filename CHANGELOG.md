@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+<<<<<<< HEAD
 ## [Unreleased]
 
 ### Added
@@ -28,6 +29,21 @@ and this project adheres to [Semantic Versioning].
 
 ### Fixed
 
+=======
+## [6.1.0] - 2022-08-30
+
+### Added
+
+- ci: Build `arm64` images for M1/M2 silicon.
+- ci: Build `-slim` images based on Alpine Linux.
+- ci: Introduced official MacOS support.
+- ci: Introduced interactive installer (dipdup.net/install.py).
+
+## [6.0.1] - 2022-08-19
+
+### Fixed
+
+>>>>>>> master
 - codegen: Fixed invalid `models.py` template.
 - context: Do not wrap known exceptions with `CallbackError`.
 - database: Raise `DatabaseConfigurationError` when backward relation name equals table name.
@@ -724,8 +740,12 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
+<<<<<<< HEAD
 [Unreleased]: https://github.com/dipdup-net/dipdup-py/compare/6.1.0...HEAD
 [6.1.0]: https://github.com/dipdup-net/dipdup-py/compare/6.0.1...6.1.0
+=======
+[Unreleased]: https://github.com/dipdup-net/dipdup-py/compare/6.0.1...HEAD
+>>>>>>> master
 [6.0.1]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0...6.0.1
 [6.0.0]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0rc2...6.0.0
 [6.0.0rc2]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0-rc1...6.0.0rc2

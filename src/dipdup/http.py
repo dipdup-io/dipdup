@@ -1,9 +1,6 @@
 import asyncio
-import hashlib
 import logging
-import pickle
 import platform
-from abc import ABC
 from contextlib import suppress
 from http import HTTPStatus
 from json import JSONDecodeError
@@ -16,7 +13,6 @@ from typing import cast
 import aiohttp
 import orjson
 from aiolimiter import AsyncLimiter
-from fcache.cache import FileCache  # type: ignore
 
 from dipdup import __version__
 from dipdup.config import HTTPConfig
@@ -30,7 +26,7 @@ safe_exceptions = (
 )
 
 
-class HTTPGateway(ABC):
+class HTTPGateway:
     """Base class for datasources which connect to remote HTTP endpoints"""
 
     _default_http_config: HTTPConfig
@@ -51,12 +47,11 @@ class HTTPGateway(ABC):
         self,
         method: str,
         url: str,
-        cache: bool = False,
         weight: int = 1,
         **kwargs,
     ) -> Any:
         """Send arbitrary HTTP request"""
-        return await self._http.request(method, url, cache, weight, **kwargs)
+        return await self._http.request(method, url, weight, **kwargs)
 
     def set_user_agent(self, *args: str) -> None:
         """Add list of arguments to User-Agent header"""
@@ -74,7 +69,6 @@ class _HTTPGateway:
         self._config = config
         self._user_agent_args: Tuple[str, ...] = ()
         self._user_agent: Optional[str] = None
-        self._cache = FileCache('dipdup', flag='cs')
         self._ratelimiter = (
             AsyncLimiter(max_rate=config.ratelimit_rate, time_period=config.ratelimit_period)
             if config.ratelimit_rate and config.ratelimit_period
@@ -190,26 +184,11 @@ class _HTTPGateway:
         self,
         method: str,
         url: str,
-        cache: bool = False,
         weight: int = 1,
         **kwargs,
     ) -> Any:
-        """Perform an HTTP request.
-
-        Check for parameters in cache, if not found, perform retried request and cache result.
-        """
-        if self._config.cache and cache:
-            # NOTE: Don't forget to include base gateway URL in the cache key
-            key_data = (method, self._url, url, kwargs)
-            key = hashlib.sha256(pickle.dumps(key_data)).hexdigest()
-            try:
-                return self._cache[key]
-            except KeyError:
-                response = await self._retry_request(method, url, weight, **kwargs)
-                self._cache[key] = response
-                return response  # noqa: R504
-        else:
-            return await self._retry_request(method, url, weight, **kwargs)
+        """Performs an HTTP request."""
+        return await self._retry_request(method, url, weight, **kwargs)
 
     def set_user_agent(self, *args: str) -> None:
         """Add list of arguments to User-Agent header"""

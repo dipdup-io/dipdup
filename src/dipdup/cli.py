@@ -3,7 +3,6 @@ import atexit
 import logging
 import os
 import signal
-import subprocess
 import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
@@ -13,6 +12,8 @@ from functools import wraps
 from os.path import dirname
 from os.path import exists
 from os.path import join
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -30,24 +31,26 @@ from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
 from dipdup.codegen import DipDupCodeGenerator
 from dipdup.config import DipDupConfig
-from dipdup.config import LoggingConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import SentryConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
+from dipdup.exceptions import _tab
+from dipdup.exceptions import save_tombstone
 from dipdup.hasura import HasuraGateway
 from dipdup.models import Index
 from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
-from dipdup.utils.database import set_decimal_context
 from dipdup.utils.database import tortoise_wrapper
 from dipdup.utils.database import wipe_schema
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
+BAKING_BAD_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
 
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
@@ -55,7 +58,7 @@ _is_shutting_down = False
 
 def set_up_logging() -> None:
     root = logging.getLogger()
-    handler = logging.StreamHandler()
+    handler = logging.StreamHandler(stream=sys.stdout)
     formatter = logging.Formatter('%(levelname)-8s %(name)-20s %(message)s')
     handler.setFormatter(formatter)
     root.addHandler(handler)
@@ -87,32 +90,57 @@ async def _shutdown() -> None:
     await asyncio.gather(*tasks, return_exceptions=True)
 
 
+def _print_help(error: Exception, tombstone_path: str) -> None:
+    """Prints helpful error message after traceback"""
+    help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
+    help_message += _tab + f'Tombstone saved to `{tombstone_path}`'
+    atexit.register(partial(click.echo, help_message, err=True))
+
+
 def cli_wrapper(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs) -> None:
         loop = asyncio.get_running_loop()
-        loop.add_signal_handler(signal.SIGINT, lambda: asyncio.ensure_future(_shutdown()))
+        loop.add_signal_handler(
+            signal.SIGINT,
+            lambda: asyncio.ensure_future(_shutdown()),
+        )
         try:
             await fn(*args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            help_message = e.format() if isinstance(e, DipDupError) else DipDupError().format()
-            atexit.register(partial(click.echo, help_message, err=True))
+            _logger.exception('Unhandled exception caught')
+            tombstone_path = save_tombstone(e)
+            _print_help(e, tombstone_path)
             raise
 
     return wrapper
 
 
-def _sentry_before_send(event, _):
+def _sentry_before_send(
+    event: Dict[str, Any],
+    hint: Dict[str, Any],
+    crash_reporting: bool,
+) -> Optional[Dict[str, Any]]:
+    # NOTE: Terminated connections, cancelled tasks, etc.
     if _is_shutting_down:
         return None
+
+    # NOTE: User-generated events (e.g. from `ctx.logger`)
+    if logger_name := event['logger']:
+        if crash_reporting and not logger_name.startswith('dipdup'):
+            return None
+
     return event
 
 
 def _init_sentry(config: DipDupConfig) -> None:
     if not config.sentry:
-        return
+        if not config.advanced.crash_reporting:
+            return
+        config.sentry = SentryConfig(dsn=BAKING_BAD_SENTRY_DSN)
+
     if config.sentry.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
@@ -130,14 +158,24 @@ def _init_sentry(config: DipDupConfig) -> None:
             event_level=event_level,
         ),
     ]
-    sentry_sdk.init(
-        dsn=config.sentry.dsn,
-        environment=config.sentry.environment,
-        integrations=integrations,
-        release=__version__,
-        attach_stacktrace=attach_stacktrace,
-        before_send=_sentry_before_send,
-    )
+    init_kwargs: Dict[str, Any] = {
+        'dsn': config.sentry.dsn,
+        'integrations': integrations,
+        'attach_stacktrace': attach_stacktrace,
+        'before_send': partial(
+            _sentry_before_send,
+            crash_reporting=config.advanced.crash_reporting,
+        ),
+        'release': config.sentry.release or __version__,
+    }
+    if config.sentry.environment:
+        init_kwargs['environment'] = config.sentry.environment
+    if config.sentry.server_name:
+        init_kwargs['server_name'] = config.sentry.server_name
+
+    sentry_sdk.init(**init_kwargs)
+    sentry_sdk.set_tag('dipdup_version', __version__)
+    sentry_sdk.set_tag('dipdup_package', config.package)
 
 
 async def _check_version() -> None:
@@ -168,11 +206,17 @@ async def _check_version() -> None:
     help=f'A path to DipDup project config (default: {DEFAULT_CONFIG_NAME}).',
     default=[DEFAULT_CONFIG_NAME],
 )
-@click.option('--env-file', '-e', type=str, multiple=True, help='A path to .env file containing `KEY=value` strings.', default=[])
-@click.option('--logging-config', '-l', type=str, help='A path to Python logging config in YAML format.', default=None)
+@click.option(
+    '--env-file',
+    '-e',
+    type=str,
+    multiple=True,
+    help='A path to .env file containing `KEY=value` strings.',
+    default=[],
+)
 @click.pass_context
 @cli_wrapper
-async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
+async def cli(ctx, config: List[str], env_file: List[str]):
     """Manage and run DipDup indexers.
 
     Full docs: https://dipdup.net/docs
@@ -185,18 +229,6 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
     set_up_logging()
 
-    # TODO: Deprecated, remove in 6.0
-    if logging_config:
-        _logger.warning('`--logging-config` option is deprecated. Use `logging` config field.')
-        # NOTE: Search in the current workdir, fallback to builtin configs
-        try:
-            path = os.path.join(os.getcwd(), logging_config)
-            _logging_config = LoggingConfig.load(path)
-        except FileNotFoundError:
-            path = os.path.join(os.path.dirname(__file__), 'configs', logging_config)
-            _logging_config = LoggingConfig.load(path)
-        _logging_config.apply()
-
     # NOTE: Apply env files before loading config
     for env_path in env_file:
         env_path = join(os.getcwd(), env_path)
@@ -206,11 +238,7 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
         load_dotenv(env_path, override=True)
 
     _config = DipDupConfig.load(config)
-
-    # TODO: Deprecated, remove in 6.0
-    # NOTE: Skip if Python config is already applied
-    if not logging_config:
-        _config.set_up_logging()
+    _config.set_up_logging()
 
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
@@ -240,42 +268,15 @@ async def cli(ctx, config: List[str], env_file: List[str], logging_config: str):
 
 
 @cli.command()
-@click.option('--postpone-jobs', is_flag=True, help='Do not start job scheduler until all indexes are synchronized.')
-@click.option('--early-realtime', is_flag=True, help='Establish a realtime connection before all indexes are synchronized.')
-@click.option('--merge-subscriptions', is_flag=True, help='Subscribe to all operations/big map diffs during realtime indexing.')
-@click.option('--metadata-interface', is_flag=True, help='Enable metadata interface.')
 @click.pass_context
 @cli_wrapper
-async def run(
-    ctx,
-    postpone_jobs: bool,
-    early_realtime: bool,
-    merge_subscriptions: bool,
-    metadata_interface: bool,
-) -> None:
+async def run(ctx) -> None:
     """Run indexer.
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
     """
     config: DipDupConfig = ctx.obj.config
     config.initialize()
-
-    # TODO: Deprecated, remove in 6.0
-    warn_text = 'option is deprecated and will be removed in the next version. Use `advanced` section of the config instead.'
-    if postpone_jobs:
-        _logger.warning('`--postpone-jobs` %s', warn_text)
-        config.advanced.postpone_jobs |= postpone_jobs
-    if early_realtime:
-        _logger.warning('`--early-realtime` %s', warn_text)
-        config.advanced.early_realtime |= early_realtime
-    if merge_subscriptions:
-        _logger.warning('`--merge-subscriptions` %s', warn_text)
-        config.advanced.merge_subscriptions |= merge_subscriptions
-    if metadata_interface:
-        _logger.warning('`--metadata-interface` %s', warn_text)
-        config.advanced.metadata_interface |= metadata_interface
-
-    set_decimal_context(config.package)
 
     dipdup = DipDup(config)
     await dipdup.run()
@@ -339,19 +340,22 @@ async def config(ctx) -> None:
 
 @config.command(name='export')
 @click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from config.')
+@click.option('--full', is_flag=True, help='Resolve index templates.')
 @click.pass_context
 @cli_wrapper
-async def config_export(ctx, unsafe: bool) -> None:
+async def config_export(ctx, unsafe: bool, full: bool) -> None:
     """
-    Print config after resolving all links and templates.
+    Print config after resolving all links and, optionally, templates.
 
     WARNING: Avoid sharing output with 3rd-parties when `--unsafe` flag set - it may contain secrets!
     """
-    config_yaml = DipDupConfig.load(
+    config = DipDupConfig.load(
         paths=ctx.obj.config.paths,
         environment=unsafe,
-    ).dump()
-    echo(config_yaml)
+    )
+    if full:
+        config.initialize(skip_imports=True)
+    echo(config.dump())
 
 
 @config.command(name='env')
@@ -375,39 +379,6 @@ async def config_env(ctx, file: Optional[str]) -> None:
         echo(content)
 
 
-# TODO: Deprecated, remove in 6.0
-@cli.group()
-@click.pass_context
-@cli_wrapper
-async def cache(ctx) -> None:
-    """Manage internal cache."""
-    _logger.warning('`cache` command group is deprecated. Implement caching logic manually if needed.')
-
-
-@cache.command(name='clear')
-@click.pass_context
-@cli_wrapper
-async def cache_clear(ctx) -> None:
-    """Clear request cache of DipDup datasources."""
-    # NOTE: Lazy import to speed up startup
-    from fcache.cache import FileCache  # type: ignore
-
-    FileCache('dipdup', flag='cs').clear()
-
-
-@cache.command(name='show')
-@click.pass_context
-@cli_wrapper
-async def cache_show(ctx) -> None:
-    """Show information about DipDup disk caches."""
-    # NOTE: Lazy import to speed up startup
-    from fcache.cache import FileCache  # type: ignore
-
-    cache = FileCache('dipdup', flag='cs')
-    size = subprocess.check_output(['du', '-sh', cache.cache_dir]).split()[0].decode('utf-8')
-    echo(f'{cache.cache_dir}: {len(cache)} items, {size}')
-
-
 @cli.group(help='Hasura integration related commands.')
 @click.pass_context
 @cli_wrapper
@@ -422,8 +393,6 @@ async def hasura(ctx) -> None:
 async def hasura_configure(ctx, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
     config: DipDupConfig = ctx.obj.config
-    url = config.database.connection_string
-    models = f'{config.package}.models'
     if not config.hasura:
         raise ConfigurationError('`hasura` config section is empty')
     hasura_gateway = HasuraGateway(
@@ -432,9 +401,17 @@ async def hasura_configure(ctx, force: bool) -> None:
         database_config=cast(PostgresDatabaseConfig, config.database),
     )
 
-    async with tortoise_wrapper(url, models):
-        async with hasura_gateway:
-            await hasura_gateway.configure(force)
+    async with AsyncExitStack() as stack:
+        await stack.enter_async_context(
+            tortoise_wrapper(
+                url=config.database.connection_string,
+                models=config.package,
+                timeout=config.database.connection_timeout,
+            )
+        )
+        await stack.enter_async_context(hasura_gateway)
+
+        await hasura_gateway.configure(force)
 
 
 @cli.group()
@@ -502,9 +479,9 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
         if isinstance(config.database, PostgresDatabaseConfig):
             await wipe_schema(
                 conn=conn,
-                name=config.database.schema_name,
+                schema_name=config.database.schema_name,
                 # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-                immune_tables=config.database.immune_tables if not immune else (),
+                immune_tables=config.database.immune_tables if not immune else set(),
             )
         else:
             await Tortoise._drop_databases()

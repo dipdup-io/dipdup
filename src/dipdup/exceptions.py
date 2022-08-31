@@ -1,11 +1,13 @@
 import textwrap
 from dataclasses import dataclass
 from dataclasses import field
+from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Type
 
+import orjson as json
 from tabulate import tabulate
 from tortoise.models import Model
 
@@ -23,6 +25,32 @@ def unindent(text: str) -> str:
 def indent(text: str, indent: int = 2) -> str:
     """Add indentation to text"""
     return textwrap.indent(text, ' ' * indent)
+
+
+def save_tombstone(error: Exception) -> str:
+    """Saves a tombstone file with Sentry error data, returns the path to the tempfile"""
+    # NOTE: Lazy import to speed up startup
+    import sentry_sdk.serializer
+    import sentry_sdk.utils
+
+    exc_info = sentry_sdk.utils.exc_info_from_error(error)
+    event, _ = sentry_sdk.utils.event_from_exception(exc_info)
+    event = sentry_sdk.serializer.serialize(event)
+
+    tombstone_file = NamedTemporaryFile(
+        mode='wb',
+        suffix='.json',
+        prefix='dipdup-tombstone_',
+        delete=False,
+    )
+    with tombstone_file as f:
+        f.write(
+            json.dumps(
+                event,
+                option=json.OPT_INDENT_2,
+            ),
+        )
+    return tombstone_file.name
 
 
 class DipDupException(Exception):
@@ -90,19 +118,22 @@ class ConfigurationError(DipDupError):
 
 @dataclass(repr=False)
 class DatabaseConfigurationError(ConfigurationError):
-    """DipDup can't initialize database with given models and parameters"""
+    """Can't initialize database, `models.py` module is invalid"""
 
     model: Type[Model]
+    field: Optional[str] = None
 
     def _help(self) -> str:
         return f"""
             {self.msg}
 
-            Model: `{self.model._meta._model.__name__}`
-            Table: `{self.model._meta.db_table}`
+              model: `{self.model._meta._model.__name__}`
+              table: `{self.model._meta.db_table}`
+              field: `{self.field or ''}`
 
-            Tortoise ORM examples: https://tortoise-orm.readthedocs.io/en/latest/examples.html
-            DipDup config reference: https://dipdup.net/docs/config/database
+            See https://dipdup.net/docs/getting-started/defining-models
+            See https://dipdup.net/docs/config/database
+            See https://dipdup.net/docs/advanced/internal-models
         """
 
 
@@ -191,9 +222,9 @@ class ProjectImportError(DipDupError):
     obj: Optional[str] = None
 
     def _help(self) -> str:
-        what = f'`{self.obj}` from' if self.obj else ''
+        what = f'`{self.obj}` from ' if self.obj else ''
         return f"""
-            Failed to import {what} module `{self.module}`.
+            Failed to import {what}module `{self.module}`.
 
             Reasons in order of possibility:
 
@@ -220,7 +251,7 @@ class ContractAlreadyExistsError(DipDupError):
             )
         )
         return f"""
-            Contract with name `{self.name}` or address `{self.address}` already exists.
+            Contract `{self.name}` (`{self.address}`) already exists.
 
             Active contracts:
 
@@ -312,6 +343,9 @@ class CallbackTypeError(DipDupError):
               expected type: {self.expected_type}
 
             Make sure to set correct typenames in config and run `dipdup init --overwrite-types` to regenerate typeclasses.
+
+            See https://dipdup.net/docs/getting-started/project-structure
+            See https://dipdup.net/docs/cli-reference#init
         """
 
 
@@ -327,27 +361,9 @@ class HasuraError(DipDupError):
 
               {self.msg}
 
-            Check out Hasura logs for more information.
+            If it's `400 Bad Request`, check out Hasura logs for more information.
 
-            GraphQL integration docs: https://dipdup.net/docs/graphql/
-        """
-
-
-@dataclass(repr=False)
-class ConflictingHooksError(DipDupError):
-    """Project contains hooks that conflict with each other"""
-
-    old: str
-    new: str
-
-    def _help(self) -> str:
-        return f"""
-            `{self.old}` hook was superseded by the `{self.new}` one; they can't be used together.
-
-            Perform one of the following actions:
-
-              * Follow the docs to migrate to the `{self.new}` hook, then remove `{self.old}` hook from the project.
-              * Remove `{self.new}` hook from the project to preserve current behavior.
-
-            Release notes: https://dipdup.net/docs/release-notes/
+            See https://dipdup.net/docs/graphql/
+            See https://dipdup.net/docs/config/hasura.html
+            See https://dipdup.net/docs/cli-reference.html#dipdup-hasura-configure
         """

@@ -85,10 +85,10 @@ indexer
 
 The same rules apply to handler callbacks. Note that the `callback` field must be a valid Python package name - lowercase letters, underscores, and dots.
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
-> * [4.6. Defining models](defining-models.md)
-> * [4.7. Implementing handlers](implementing-handlers.md)
-> * [5.2. Hooks](../advanced/hooks/README.md)
-> * [5.5. Executing SQL scripts](../advanced/sql.md)
-> * [5.6.1. Hasura integration](../graphql/hasura.md)
+> * {{ #summary getting-started/defining-models.md }}
+> * {{ #summary getting-started/implementing-handlers.md }}
+> * {{ #summary advanced/hooks.md }}
+> * {{ #summary advanced/sql.md }}
+> * {{ #summary graphql/hasura.md }}

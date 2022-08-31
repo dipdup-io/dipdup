@@ -29,7 +29,7 @@ from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
-from dipdup.config import default_hooks
+from dipdup.config import event_hooks
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
@@ -292,11 +292,8 @@ class DipDupCodeGenerator:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     async def generate_hooks(self) -> None:
-        for hook_configs in self._config.hooks.values(), default_hooks.values():
+        for hook_configs in self._config.hooks.values(), event_hooks.values():
             for hook_config in hook_configs:
-                # TODO: Skipping deprecated hook, remove in 6.0
-                if hook_config.callback == 'on_rollback':
-                    continue
                 await self._generate_callback(hook_config, sql=True)
 
     async def cleanup(self) -> None:
@@ -383,11 +380,8 @@ class DipDupCodeGenerator:
             if sql:
                 code.append(f"await ctx.execute_sql('{original_callback}')")
                 if callback == 'on_index_rollback':
-                    imports.add('from dipdup.enums import ReindexingReason')
-                    code.append('await ctx.reindex(')
-                    code.append('    ReindexingReason.rollback,')
+                    code.append('await ctx.rollback(')
                     code.append('    index=index.name,')
-                    code.append('    datasource=index.datasource.name,')
                     code.append('    from_level=from_level,')
                     code.append('    to_level=to_level,')
                     code.append(')')

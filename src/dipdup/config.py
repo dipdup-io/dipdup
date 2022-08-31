@@ -53,12 +53,9 @@ from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import ConflictingHooksError
 from dipdup.exceptions import IndexAlreadyExistsError
-from dipdup.exceptions import InitializationRequiredError
 from dipdup.utils import exclude_none
 from dipdup.utils import import_from
-from dipdup.utils import is_importable
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -91,9 +88,18 @@ class SqliteDatabaseConfig:
     def schema_name(self) -> str:
         return 'public'
 
-    @cached_property
+    @property
     def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
+
+    @property
+    def immune_tables(self) -> Set[str]:
+        return set()
+
+    @property
+    def connection_timeout(self) -> int:
+        # NOTE: Fail immediately
+        return 1
 
 
 @dataclass
@@ -117,8 +123,8 @@ class PostgresDatabaseConfig:
     database: str = DEFAULT_POSTGRES_DATABASE
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
-    password: str = ''
-    immune_tables: Tuple[str, ...] = field(default_factory=tuple)
+    password: str = field(default='', repr=False)
+    immune_tables: Set[str] = field(default_factory=set)
     connection_timeout: int = 60
 
     @cached_property
@@ -152,7 +158,6 @@ class PostgresDatabaseConfig:
 class HTTPConfig:
     """Advanced configuration of HTTP client
 
-    :param cache: Whether to cache responses
     :param retry_count: Number of retries after request failed before giving up
     :param retry_sleep: Sleep time between retries
     :param retry_multiplier: Multiplier for sleep time between retries
@@ -163,8 +168,6 @@ class HTTPConfig:
     :param batch_size: Number of items fetched in a single paginated request (for some APIs)
     """
 
-    # TODO: Deprecated, remove in 6.0
-    cache: Optional[bool] = None
     retry_count: Optional[int] = None
     retry_sleep: Optional[float] = None
     retry_multiplier: Optional[float] = None
@@ -340,7 +343,6 @@ DatasourceConfigT = Union[
 ]
 
 
-@dataclass
 class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 
@@ -376,7 +378,7 @@ class CodegenMixin(ABC):
         return kwargs
 
 
-class PatternConfig(CodegenMixin, ABC):
+class PatternConfig(CodegenMixin):
     @classmethod
     def format_storage_import(cls, package: str, module_name: str) -> Tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
@@ -1014,7 +1016,7 @@ class HasuraConfig:
     """
 
     url: str
-    admin_secret: Optional[str] = None
+    admin_secret: Optional[str] = field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
     select_limit: int = 100
@@ -1076,12 +1078,16 @@ class SentryConfig:
     """Config for Sentry integration.
 
     :param dsn: DSN of the Sentry instance
-    :param environment: Environment to report to Sentry (informational only)
+    :param environment: Environment (defaults to `production`)
+    :param server_name: Server name (defaults to hostname)
+    :param release: Release version (defaults to DipDup version)
     :param debug: Catch warning messages and more context
     """
 
     dsn: str
     environment: Optional[str] = None
+    server_name: Optional[str] = None
+    release: Optional[str] = None
     debug: bool = False
 
 
@@ -1123,15 +1129,20 @@ class HookConfig(CallbackMixin, kind='hook'):
                 yield package, obj
 
 
-default_hooks = {
+@dataclass
+class EventHookConfig(HookConfig, kind='hook'):
+    pass
+
+
+event_hooks = {
     # NOTE: Fires on every run after datasources and schema are initialized.
     # NOTE: Default: nothing.
-    'on_restart': HookConfig(
+    'on_restart': EventHookConfig(
         callback='on_restart',
     ),
     # NOTE: Fires on rollback which affects specific index and can't be processed unattended.
-    # NOTE: Default: reindex.
-    'on_index_rollback': HookConfig(
+    # NOTE: Default: database rollback.
+    'on_index_rollback': EventHookConfig(
         callback='on_index_rollback',
         args={
             'index': 'dipdup.index.Index',
@@ -1141,24 +1152,13 @@ default_hooks = {
     ),
     # NOTE: Fires when DipDup runs with empty schema, right after schema is initialized.
     # NOTE: Default: nothing.
-    'on_reindex': HookConfig(
+    'on_reindex': EventHookConfig(
         callback='on_reindex',
     ),
     # NOTE: Fires when all indexes reach REALTIME state.
     # NOTE: Default: nothing.
-    'on_synchronized': HookConfig(
+    'on_synchronized': EventHookConfig(
         callback='on_synchronized',
-    ),
-    # TODO: Deprecated; remove in 6.0
-    # NOTE: Fires on rollback when `on_index_rollback` hook is not presented
-    # NOTE: Default: reindex.
-    'on_rollback': HookConfig(
-        callback='on_rollback',
-        args={
-            'index': 'dipdup.datasources.datasource.IndexDatasource',
-            'from_level': 'int',
-            'to_level': 'int',
-        },
     ),
 }
 
@@ -1174,6 +1174,8 @@ class AdvancedConfig:
     :param merge_subscriptions: Subscribe to all operations instead of exact channels
     :param metadata_interface: Expose metadata interface for TzKT
     :param skip_version_check: Do not check for new DipDup versions on startup
+    :param rollback_depth: A number of levels to keep for rollback
+    :param crash_reporting: Enable crash reporting
     """
 
     reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -1184,6 +1186,8 @@ class AdvancedConfig:
     metadata_interface: bool = False
     skip_version_check: bool = False
     head_status_timeout: int = 3 * 60
+    rollback_depth: int = 2
+    crash_reporting: bool = False
 
 
 @dataclass
@@ -1208,7 +1212,7 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    datasources: Dict[str, DatasourceConfigT]
+    datasources: Dict[str, DatasourceConfigT] = field(default_factory=dict)
     database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     contracts: Dict[str, ContractConfig] = field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = field(default_factory=dict)
@@ -1226,7 +1230,7 @@ class DipDupConfig:
         self.paths: List[str] = []
         self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
-        self._default_hooks: bool = False
+        self._contract_addresses = {contract.address for contract in self.contracts.values()}
 
     @cached_property
     def schema_name(self) -> str:
@@ -1244,29 +1248,12 @@ class DipDupConfig:
         except ImportError:
             return os.path.join(os.getcwd(), self.package)
 
-    # TODO: Remove in 6.0
-    @cached_property
-    def per_index_rollback(self) -> bool:
-        """Check if package has `on_index_rollback` hook"""
-        new_hook = is_importable(f'{self.package}.hooks.on_index_rollback', 'on_index_rollback')
-        old_hook = is_importable(f'{self.package}.hooks.on_rollback', 'on_rollback')
-        if new_hook and old_hook:
-            raise ConflictingHooksError('on_rollback', 'on_index_rollback')
-        elif not new_hook and not old_hook:
-            raise InitializationRequiredError('none of `on_rollback` or `on_index_rollback` hooks found')
-        elif new_hook:
-            return True
-        elif old_hook:
-            return False
-        else:
-            raise RuntimeError
-
     @property
     def oneshot(self) -> bool:
         """Whether all indexes have `last_level` field set"""
         syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, HeadIndexConfig))
         oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
-        if len(oneshot_indexes) == len(syncable_indexes):
+        if len(oneshot_indexes) == len(syncable_indexes) > 0:
             return True
         return False
 
@@ -1345,14 +1332,12 @@ class DipDupConfig:
         return datasource
 
     def set_up_logging(self) -> None:
-        if self.logging == LoggingValues.default:
-            pass
-        elif self.logging == LoggingValues.quiet:
-            logging.getLogger('dipdup').setLevel(logging.WARNING)
-        elif self.logging == LoggingValues.verbose:
-            logging.getLogger('dipdup').setLevel(logging.DEBUG)
-        else:
-            raise RuntimeError(f'Unknown `logging` field value: `{self.logging}`')
+        level = {
+            LoggingValues.default: logging.INFO,
+            LoggingValues.quiet: logging.WARNING,
+            LoggingValues.verbose: logging.DEBUG,
+        }[self.logging]
+        logging.getLogger('dipdup').setLevel(level)
 
     def _import_index(self, index_config: IndexConfigT) -> None:
         _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
@@ -1410,9 +1395,13 @@ class DipDupConfig:
         _logger.debug('Loading config from %s', path)
         try:
             with open(path) as file:
-                return file.read()
+                return ''.join(filter(cls._filter_commented_lines, file.readlines()))
         except OSError as e:
             raise ConfigurationError(str(e)) from e
+
+    @classmethod
+    def _filter_commented_lines(cls, line: str) -> bool:
+        return '#' not in line or line.lstrip()[0] != '#'
 
     @classmethod
     def _substitute_env_variables(cls, raw_config: str) -> Tuple[str, Dict[str, str]]:
@@ -1441,12 +1430,19 @@ class DipDupConfig:
             if self.advanced.metadata_interface:
                 raise ConfigurationError('`metadata_interface` flag requires `hasura` section to be present')
 
-        # NOTE: Reserved hooks
+        # NOTE: Hook names and callbacks
         for name, hook_config in self.hooks.items():
             if name != hook_config.callback:
                 raise ConfigurationError(f'`{name}` hook name must be equal to `callback` value.')
-            if name in default_hooks:
-                raise ConfigurationError(f'`{name}` hook name is reserved. See docs to learn more about built-in hooks.')
+            if name in event_hooks:
+                raise ConfigurationError(f'`{name}` hook name is reserved by event hook')
+
+        # NOTE: Conflicting rollback techniques
+        for name, datasource_config in self.datasources.items():
+            if not isinstance(datasource_config, TzktDatasourceConfig):
+                continue
+            if datasource_config.buffer_size and self.advanced.rollback_depth:
+                raise ConfigurationError(f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`')
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
@@ -1624,23 +1620,3 @@ class DipDupConfig:
     def _import_big_map_index_types(self, index_config: BigMapIndexConfig) -> None:
         for big_map_handler_config in index_config.handlers:
             big_map_handler_config.initialize_big_map_type(self.package)
-
-
-@dataclass
-class LoggingConfig:
-    config: Dict[str, Any]
-
-    @classmethod
-    def load(
-        cls,
-        path: str,
-    ) -> 'LoggingConfig':
-
-        current_workdir = os.path.join(os.getcwd())
-        path = os.path.join(current_workdir, path)
-
-        with open(path) as file:
-            return cls(config=YAML().load(file.read()))
-
-    def apply(self):
-        logging.config.dictConfig(self.config)

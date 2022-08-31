@@ -16,6 +16,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         with:
@@ -27,8 +30,8 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set up metadata
-        id: meta
+      - name: Set up metadata (default)
+        id: meta-default
         uses: docker/metadata-action@v3
         with:
           images: dipdup/dipdup
@@ -39,7 +42,7 @@ jobs:
             type=pep440,pattern={{major}}
             type=pep440,pattern={{major}}.{{minor}}
 
-      - name: Set up metadata (-pytezos)
+      - name: Set up metadata (pytezos)
         id: meta-pytezos
         uses: docker/metadata-action@v3
         with:
@@ -50,6 +53,18 @@ jobs:
             type=pep440,pattern={{version}}-pytezos
             type=pep440,pattern={{major}}-pytezos
             type=pep440,pattern={{major}}.{{minor}}-pytezos
+
+      - name: Set up metadata (slim)
+        id: meta-slim
+        uses: docker/metadata-action@v3
+        with:
+          images: dipdup/dipdup
+          flavor: |
+            latest=false
+          tags: |
+            type=pep440,pattern={{version}}-slim
+            type=pep440,pattern={{major}}-slim
+            type=pep440,pattern={{major}}.{{minor}}-slim
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -68,24 +83,37 @@ jobs:
       - name: Run tests
         run: make test
 
-      - name: Publish image on Docker Hub
+      - name: Publish stable image (default)
         uses: docker/build-push-action@v2
         with:
           context: .
           file: Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-default.outputs.tags }}
+          labels: ${{ steps.meta-default.outputs.labels }}
+          build-args: PYTEZOS=0
 
-      - name: Publish image on Docker Hub (-pytezos)
+      - name: Publish stable image (pytezos)
         uses: docker/build-push-action@v2
         with:
           context: .
           file: Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta-pytezos.outputs.tags }}
           labels: ${{ steps.meta-pytezos.outputs.labels }}
-          build-args: EXTRAS=pytezos
+          build-args: PYTEZOS=1
+
+      - name: Publish stable image (slim)
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile.slim
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-slim.outputs.tags }}
+          labels: ${{ steps.meta-slim.outputs.labels }}
 
       - name: Publish package on PyPi
         run: |
@@ -102,6 +130,8 @@ jobs:
       - name: Publish GitHub release
         id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
           release_name: ${{ steps.changelog.outputs.version }} - ${{ steps.changelog.outputs.date }}
@@ -109,5 +139,3 @@ jobs:
             ${{ steps.changelog.outputs.changes }}
           draft: true
           prerelease: ${{ steps.changelog.outputs.status == 'prereleased' }}
-          allowUpdates: true
-          token: ${{ secrets.GITHUB_TOKEN }}

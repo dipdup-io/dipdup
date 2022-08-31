@@ -26,7 +26,7 @@ This config section allows users to tune some system-wide options, either experi
 
 CLI flags have priority over self-titled `AdvancedConfig` fields.
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
-> * [5.3. Reindexing](../advanced/reindexing.md)
-> * [5.4. Feature flags](../advanced/feature-flags.md)
+> * {{ #summary advanced/reindexing.md}}
+> * {{ #summary advanced/feature-flags.md}}

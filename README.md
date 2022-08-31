@@ -1,9 +1,3 @@
-___
-
-<center> ✨ We invite you to take part in the <a href="https://forms.gle/nMkQnmukRPmwQedLA">DipDup Community Survey April 2022</a>! ✨ </center>
-
-___
-
 [![Python](https://img.shields.io/badge/made%20with-python-blue.svg?)](https://www.python.org)
 [![GitHub stars](https://img.shields.io/github/stars/dipdup-net/dipdup-py)](https://github.com/dipdup-net/dipdup-py)
 [![Latest stable release](https://img.shields.io/github/v/release/dipdup-net/dipdup-py?label=stable)](https://github.com/dipdup-net/dipdup-py/releases)
@@ -24,7 +18,7 @@ ___
              /_/                  /_/      
 ```
 
-DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/) smart-contracts. It helps developers focus on the business logic instead of writing data storing and serving boilerplate. DipDup-based indexers are selective, which means only required data is requested. This approach allows to achieve faster indexing times and decreased load on APIs DipDup uses.
+DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/) smart contracts. It helps developers focus on the business logic instead of writing data storing and serving boilerplate. DipDup-based indexers are selective, which means only required data is requested. This approach allows to achieve faster indexing times and decreased load on APIs DipDup uses.
 
 * **Ready to build your first indexer?** Head to [Quickstart](https://dipdup.net/docs/quickstart).
 
@@ -35,4 +29,5 @@ DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/
 * **Have a question?** Contact us on [Discord](https://discord.com/invite/RcPGSdcVSx), [Telegram](https://t.me/baking_bad_chat), or [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L)!
 
 This project is maintained by the [Baking Bad](https://baking-bad.org/) team.
+<br>
 Development is supported by [Tezos Foundation](https://tezos.foundation/).

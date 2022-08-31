@@ -3,7 +3,6 @@ import logging
 import sys
 from asyncio import Event
 from asyncio import create_task
-from asyncio import gather
 from collections import defaultdict
 from collections import deque
 from datetime import datetime

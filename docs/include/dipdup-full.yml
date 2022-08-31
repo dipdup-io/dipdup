@@ -1,0 +1,146 @@
+spec_version: 1.2
+package: my_indexer
+
+database:
+  kind: postgres
+  host: db
+  port: 5432
+  user: dipdup
+  password: changeme
+  database: dipdup
+  schema_name: public
+  immune_tables:
+    - token_metadata
+    - contract_metadata
+
+contracts:
+  some_dex:
+    address: KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6
+    typename: quipu_fa12
+
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: https://api.tzkt.io
+  my_api:
+    kind: http
+    url: https://my_api.local/v1
+  ipfs:
+    kind: ipfs
+    url: https://ipfs.io/ipfs
+  coinbase:
+    kind: coinbase
+  metadata:
+    kind: metadata
+    url: https://metadata.dipdup.net
+    network: mainnet
+
+indexes:
+  operation_index_from_template:
+    template: operation_template
+    values:
+      datasource: tzkt
+      contract: some_dex
+
+  big_map_index_from_template:
+    template: big_map_template
+    values:
+      datasource: tzkt
+      contract: some_dex
+    first_level: 1
+    last_level: 46963
+    skip_history: never
+
+  factory:
+    kind: operation
+    datasource: tzkt
+    types:
+      - origination
+    contracts:
+      - some_dex
+    handlers:
+      - callback: on_factory_origination
+        pattern:
+          - type: origination
+            similar_to: some_dex
+
+templates:
+  operation_template:
+    kind: operation
+    datasource: <datasource>
+    types:
+      - origination
+      - transaction
+    contracts:
+      - <contract>
+    handlers:
+      - callback: on_origination
+        pattern:
+          - type: origination
+            originated_contract: <contract>
+      - callback: on_some_call
+        pattern:
+          - type: transaction
+            destination: <contract>
+            entrypoint: some_call
+
+  big_map_template:
+    kind: big_map
+    datasource: <datasource>
+    handlers:
+      - callback: on_update_records
+        contract: <name_registry>
+        path: store.records
+      - callback: on_update_expiry_map
+        contract: <name_registry>
+        path: store.expiry_map
+
+
+hooks:
+  calculate_stats:
+    callback: calculate_stats
+    atomic: False
+    args:
+     major: bool
+
+jobs:
+  midnight_stats:
+    hook: calculate_stats
+    crontab: "0 0 * * *"
+    args:
+      major: True
+
+sentry:
+  dsn: https://localhost
+  environment: dev
+  debug: False
+
+prometheus:
+  host: 0.0.0.0
+
+hasura:
+  url: http://hasura:8080
+  admin_secret: changeme
+  allow_aggregations: False
+  camel_case: true
+  select_limit: 100
+
+advanced:
+  early_realtime: True
+  merge_subscriptions: False
+  postpone_jobs: False
+  metadata_interface: False
+  skip_version_check: False
+  scheduler:
+    apscheduler.job_defaults.coalesce: True
+    apscheduler.job_defaults.max_instances: 3
+  reindex:
+    manual: wipe
+    migration: exception
+    rollback: ignore
+    config_modified: exception
+    schema_modified: exception
+  rollback_depth: 2
+  crash_reporting: False
+
+logging: verbose

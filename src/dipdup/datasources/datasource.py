@@ -35,8 +35,6 @@ class Datasource(HTTPGateway):
     def __init__(self, url: str, http_config: HTTPConfig) -> None:
         super().__init__(url, http_config)
         self._logger = _logger
-        if http_config.cache:
-            self._logger.warning('`http.cache` option is deprecated. Implement caching logic manually if needed.')
 
     @abstractmethod
     async def run(self) -> None:
@@ -58,8 +56,8 @@ class HttpDatasource(Datasource):
         super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = _logger
 
-    async def get(self, url: str, cache: bool = False, weight: int = 1, **kwargs):
-        return await self.request(METH_GET, url, cache, weight, **kwargs)
+    async def get(self, url: str, weight: int = 1, **kwargs):
+        return await self.request(METH_GET, url, weight, **kwargs)
 
     async def run(self) -> None:
         pass

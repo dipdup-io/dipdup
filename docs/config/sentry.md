@@ -13,6 +13,6 @@ sentry:
 | `environment` | Environment to report to Sentry (informational only) |
 | `debug` | Catch warning messages and more context |
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
-> * [8.5. Sentry integration](../deployment/sentry.md)
+> * {{ #summary deployment/sentry.md}}

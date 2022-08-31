@@ -1,0 +1,92 @@
+"""Replaces {{ #summary ...}} placeholders with links from SUMMARY.md"""
+import json
+import os
+import re
+import sys
+from typing import NoReturn
+
+SUMMARY_REGEX = r'{{ *#summary (.*) *}}'
+MDBOOK_ROOT = os.environ.get('MDBOOK_ROOT')
+
+
+def _fail(message: str) -> NoReturn:
+    """Prints error message and exits with error code 1."""
+    print(f'==> {message}', file=sys.stderr)
+    quit(1)
+
+
+def _parse_summary() -> dict[str, str]:
+    """Parses SUMMARY.md and returns a dictionary of links and their titles."""
+    links: dict[str, str] = {}
+    version: list[int] = []
+    with open('SUMMARY.md') as f:
+        for line in f:
+            if '* [' not in line:
+                continue
+
+            depth = int((len(line) - len(line.lstrip())) / 2) + 1
+            if depth > len(version):
+                version += [0] * (depth - len(version))
+
+            version[depth - 1] += 1
+            for i in range(depth, len(version)):
+                version[i] = 0
+
+            prefix = '.'.join(str(v) for v in version[:depth]) + '.'
+            text, url = re.findall(r'\[(.*?)\]\((.*?)\)', line)[0]
+            links[url] = f'{prefix} {text}'
+
+    return links
+
+
+def _preprocess_content(text: str, links: dict[str, str], depth: int) -> str:
+    """Replaces {{ #summary ...}} placeholders with links from SUMMARY.md"""
+    for path in re.findall(SUMMARY_REGEX, text):
+        path = path.strip()
+
+        anchor = ''
+        if '#' in path:
+            path, anchor = path.split('#')
+
+        if MDBOOK_ROOT:
+            root_path = path
+            if 'http' in MDBOOK_ROOT and root_path.endswith('.md'):
+                root_path = root_path[:-3] + '.html'
+            full_path = os.path.join(MDBOOK_ROOT, root_path)
+        else:
+            full_path = '/'.join(['..'] * depth + [path])
+
+        try:
+            title = links[path]
+        except KeyError:
+            _fail(f'Missing link for `{path}` in SUMMARY.md')
+
+        if anchor:
+            title += f' → {anchor}'
+            anchor = f'#{anchor}'
+
+        url = f'[{title}]({full_path}{anchor})'.replace('README.md', 'index.md').replace('README.html', 'index.html')
+        text = re.sub(SUMMARY_REGEX, url, text, count=1)
+
+    return text
+
+
+def _preprocess_chapter(section: dict, links: dict[str, str], depth: int) -> dict:
+    """Preprocesses a chapter section recursively."""
+    if chapter := section.get('Chapter'):
+        chapter['content'] = _preprocess_content(chapter['content'], links, depth)
+        chapter['sub_items'] = [_preprocess_chapter(item, links, depth + 1) for item in chapter['sub_items']]
+    return section
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'supports':
+            sys.exit(0)
+
+    links = _parse_summary()
+    context, book = json.load(sys.stdin)
+    for section in book.get('sections', ()):
+        _preprocess_chapter(section, links, depth=1)
+
+    print(json.dumps(book), end='')

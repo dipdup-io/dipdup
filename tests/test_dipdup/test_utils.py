@@ -5,9 +5,9 @@ from tortoise import Tortoise
 
 from dipdup.enums import IndexType
 from dipdup.models import Index
+from dipdup.transactions import TransactionManager
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils.database import in_global_transaction
 from dipdup.utils.database import tortoise_wrapper
 
 
@@ -17,6 +17,7 @@ class SomeException(Exception):
 
 class UtilsTest(IsolatedAsyncioTestCase):
     async def test_in_global_transaction(self) -> None:
+        transactions = TransactionManager()
         async with tortoise_wrapper('sqlite://:memory:'):
             await Tortoise.generate_schemas()
 
@@ -26,7 +27,7 @@ class UtilsTest(IsolatedAsyncioTestCase):
             self.assertEqual(1, count)
 
             # 2. Success query within transaction
-            async with in_global_transaction():
+            async with transactions.in_transaction():
                 await Index(name='2', type=IndexType.operation, config_hash='').save()
             count = await Index.filter().count()
             self.assertEqual(2, count)
@@ -40,7 +41,7 @@ class UtilsTest(IsolatedAsyncioTestCase):
 
             # 4. Rolled back query within transaction
             with suppress(SomeException):
-                async with in_global_transaction():
+                async with transactions.in_transaction():
                     await Index(name='4', type=IndexType.operation, config_hash='').save()
                     raise SomeException
             count = await Index.filter().count()

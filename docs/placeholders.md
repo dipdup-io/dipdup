@@ -20,7 +20,7 @@
 
 ## See also
 
-> 🤓 **SEE ALSO**
+> 💡 **SEE ALSO**
 >
 > * [13. Command-line reference](cli-reference.md)
 > * [External link](https://google.com)

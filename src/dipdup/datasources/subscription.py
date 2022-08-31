@@ -1,5 +1,4 @@
 import logging
-from abc import ABC
 from typing import Dict
 from typing import Literal
 from typing import Optional
@@ -10,7 +9,7 @@ from pydantic.dataclasses import dataclass
 _logger = logging.getLogger('dipdup.datasource')
 
 
-class Subscription(ABC):
+class Subscription:
     type: str
 
 
@@ -53,10 +52,7 @@ class SubscriptionManager:
         return {k for k, v in self._subscriptions.items() if k is not None and v is None}
 
     def add(self, subscription: Subscription) -> None:
-        if subscription in self._subscriptions:
-            if not self._merge_subscriptions:
-                _logger.warning(f'Subscription already exists: {subscription}')
-        else:
+        if subscription not in self._subscriptions:
             self._subscriptions[subscription] = None
 
     def remove(self, subscription: Subscription) -> None:

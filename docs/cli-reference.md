@@ -1,6 +1,6 @@
 
   <section id="dipdup">
-<h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this headline">¶</a></h1>
+<h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this heading">¶</a></h1>
 <p>Manage and run DipDup indexers.</p>
 <p>Full docs: <a class="reference external" href="https://dipdup.net/docs">https://dipdup.net/docs</a></p>
 <p>Report an issue: <a class="reference external" href="https://github.com/dipdup-net/dipdup-py/issues">https://github.com/dipdup-net/dipdup-py/issues</a></p>
@@ -26,41 +26,14 @@
 <dd><p>A path to .env file containing <cite>KEY=value</cite> strings.</p>
 </dd></dl>
 
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-l">
-<span id="cmdoption-dipdup-logging-config"></span><span class="sig-name descname"><span class="pre">-l</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--logging-config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;logging_config&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-l" title="Permalink to this definition">¶</a></dt>
-<dd><p>A path to Python logging config in YAML format.</p>
-</dd></dl>
-
-<section id="dipdup-cache">
-<h2>cache<a class="headerlink" href="#dipdup-cache" title="Permalink to this headline">¶</a></h2>
-<p>Manage internal cache.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
-</pre></div>
-</div>
-<section id="dipdup-cache-clear">
-<h3>clear<a class="headerlink" href="#dipdup-cache-clear" title="Permalink to this headline">¶</a></h3>
-<p>Clear request cache of DipDup datasources.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache clear <span class="o">[</span>OPTIONS<span class="o">]</span>
-</pre></div>
-</div>
-</section>
-<section id="dipdup-cache-show">
-<h3>show<a class="headerlink" href="#dipdup-cache-show" title="Permalink to this headline">¶</a></h3>
-<p>Show information about DipDup disk caches.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup cache show <span class="o">[</span>OPTIONS<span class="o">]</span>
-</pre></div>
-</div>
-</section>
-</section>
 <section id="dipdup-config">
-<h2>config<a class="headerlink" href="#dipdup-config" title="Permalink to this headline">¶</a></h2>
+<h2>config<a class="headerlink" href="#dipdup-config" title="Permalink to this heading">¶</a></h2>
 <p>Commands to manage DipDup configuration.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
 <section id="dipdup-config-env">
-<h3>env<a class="headerlink" href="#dipdup-config-env" title="Permalink to this headline">¶</a></h3>
+<h3>env<a class="headerlink" href="#dipdup-config-env" title="Permalink to this heading">¶</a></h3>
 <p>Dump environment variables used in DipDup config.</p>
 <p>If variable is not set, default value will be used.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config env <span class="o">[</span>OPTIONS<span class="o">]</span>
@@ -75,8 +48,8 @@
 
 </section>
 <section id="dipdup-config-export">
-<h3>export<a class="headerlink" href="#dipdup-config-export" title="Permalink to this headline">¶</a></h3>
-<p>Print config after resolving all links and templates.</p>
+<h3>export<a class="headerlink" href="#dipdup-config-export" title="Permalink to this heading">¶</a></h3>
+<p>Print config after resolving all links and, optionally, templates.</p>
 <p>WARNING: Avoid sharing output with 3rd-parties when <cite>–unsafe</cite> flag set - it may contain secrets!</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="nb">export</span> <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
@@ -88,16 +61,22 @@
 <dd><p>Resolve environment variables or use default values from config.</p>
 </dd></dl>
 
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-config-export-full">
+<span class="sig-name descname"><span class="pre">--full</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-config-export-full" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve index templates.</p>
+</dd></dl>
+
 </section>
 </section>
 <section id="dipdup-hasura">
-<h2>hasura<a class="headerlink" href="#dipdup-hasura" title="Permalink to this headline">¶</a></h2>
+<h2>hasura<a class="headerlink" href="#dipdup-hasura" title="Permalink to this heading">¶</a></h2>
 <p>Hasura integration related commands.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup hasura <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
 <section id="dipdup-hasura-configure">
-<h3>configure<a class="headerlink" href="#dipdup-hasura-configure" title="Permalink to this headline">¶</a></h3>
+<h3>configure<a class="headerlink" href="#dipdup-hasura-configure" title="Permalink to this heading">¶</a></h3>
 <p>Configure Hasura GraphQL Engine to use with DipDup.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup hasura configure <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
@@ -112,7 +91,7 @@
 </section>
 </section>
 <section id="dipdup-init">
-<h2>init<a class="headerlink" href="#dipdup-init" title="Permalink to this headline">¶</a></h2>
+<h2>init<a class="headerlink" href="#dipdup-init" title="Permalink to this heading">¶</a></h2>
 <p>Generate project tree, missing callbacks and types.</p>
 <p>This command is idempotent, meaning it won’t overwrite previously generated files unless asked explicitly.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup init <span class="o">[</span>OPTIONS<span class="o">]</span>
@@ -133,7 +112,7 @@
 
 </section>
 <section id="dipdup-migrate">
-<h2>migrate<a class="headerlink" href="#dipdup-migrate" title="Permalink to this headline">¶</a></h2>
+<h2>migrate<a class="headerlink" href="#dipdup-migrate" title="Permalink to this heading">¶</a></h2>
 <p>Migrate project to the new spec version.</p>
 <p>If you’re getting <cite>MigrationRequiredError</cite> after updating DipDup, this command will fix imports and type annotations to match the current <cite>spec_version</cite>. Review and commit changes after running it.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup migrate <span class="o">[</span>OPTIONS<span class="o">]</span>
@@ -141,53 +120,28 @@
 </div>
 </section>
 <section id="dipdup-run">
-<h2>run<a class="headerlink" href="#dipdup-run" title="Permalink to this headline">¶</a></h2>
+<h2>run<a class="headerlink" href="#dipdup-run" title="Permalink to this heading">¶</a></h2>
 <p>Run indexer.</p>
 <p>Execution can be gracefully interrupted with <cite>Ctrl+C</cite> or <cite>SIGTERM</cite> signal.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup run <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
-<p class="rubric">Options</p>
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-run-postpone-jobs">
-<span class="sig-name descname"><span class="pre">--postpone-jobs</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-run-postpone-jobs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Do not start job scheduler until all indexes are synchronized.</p>
-</dd></dl>
-
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-run-early-realtime">
-<span class="sig-name descname"><span class="pre">--early-realtime</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-run-early-realtime" title="Permalink to this definition">¶</a></dt>
-<dd><p>Establish a realtime connection before all indexes are synchronized.</p>
-</dd></dl>
-
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-run-merge-subscriptions">
-<span class="sig-name descname"><span class="pre">--merge-subscriptions</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-run-merge-subscriptions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subscribe to all operations/big map diffs during realtime indexing.</p>
-</dd></dl>
-
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-run-metadata-interface">
-<span class="sig-name descname"><span class="pre">--metadata-interface</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-run-metadata-interface" title="Permalink to this definition">¶</a></dt>
-<dd><p>Enable metadata interface.</p>
-</dd></dl>
-
 </section>
 <section id="dipdup-schema">
-<h2>schema<a class="headerlink" href="#dipdup-schema" title="Permalink to this headline">¶</a></h2>
+<h2>schema<a class="headerlink" href="#dipdup-schema" title="Permalink to this heading">¶</a></h2>
 <p>Manage database schema.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
 <section id="dipdup-schema-approve">
-<h3>approve<a class="headerlink" href="#dipdup-schema-approve" title="Permalink to this headline">¶</a></h3>
+<h3>approve<a class="headerlink" href="#dipdup-schema-approve" title="Permalink to this heading">¶</a></h3>
 <p>Continue to use existing schema after reindexing was triggered.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema approve <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
 <section id="dipdup-schema-export">
-<h3>export<a class="headerlink" href="#dipdup-schema-export" title="Permalink to this headline">¶</a></h3>
+<h3>export<a class="headerlink" href="#dipdup-schema-export" title="Permalink to this heading">¶</a></h3>
 <p>Print SQL schema including scripts from <cite>sql/on_reindex</cite>.</p>
 <p>This command may help you debug inconsistency between project models and expected SQL schema.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema <span class="nb">export</span> <span class="o">[</span>OPTIONS<span class="o">]</span>
@@ -195,7 +149,7 @@
 </div>
 </section>
 <section id="dipdup-schema-init">
-<h3>init<a class="headerlink" href="#dipdup-schema-init" title="Permalink to this headline">¶</a></h3>
+<h3>init<a class="headerlink" href="#dipdup-schema-init" title="Permalink to this heading">¶</a></h3>
 <p>Prepare a database for running DipDip.</p>
 <p>This command creates tables based on your models, then executes <cite>sql/on_reindex</cite> to finish preparation - the same things DipDup does when run on a clean database.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema init <span class="o">[</span>OPTIONS<span class="o">]</span>
@@ -203,7 +157,7 @@
 </div>
 </section>
 <section id="dipdup-schema-wipe">
-<h3>wipe<a class="headerlink" href="#dipdup-schema-wipe" title="Permalink to this headline">¶</a></h3>
+<h3>wipe<a class="headerlink" href="#dipdup-schema-wipe" title="Permalink to this heading">¶</a></h3>
 <p>Drop all database tables, functions and views.</p>
 <p>WARNING: This action is irreversible! All indexed data will be lost!</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema wipe <span class="o">[</span>OPTIONS<span class="o">]</span>
@@ -225,7 +179,7 @@
 </section>
 </section>
 <section id="dipdup-status">
-<h2>status<a class="headerlink" href="#dipdup-status" title="Permalink to this headline">¶</a></h2>
+<h2>status<a class="headerlink" href="#dipdup-status" title="Permalink to this heading">¶</a></h2>
 <p>Show the current status of indexes in the database.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup status <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
