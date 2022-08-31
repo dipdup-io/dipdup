@@ -424,7 +424,11 @@ class DipDup:
                 await self._ctx.reindex(ReindexingReason.schema_modified)
 
         # NOTE: Call even if Schema is present; there may be new tables
-        await generate_schema(conn, schema_name, self._config.advanced.head_status_timeout)
+        await generate_schema(
+            conn,
+            schema_name,
+            self._config.advanced.head_status_timeout,
+        )
         schema_hash = get_schema_hash(conn)
 
         if self._schema is None:

@@ -168,7 +168,11 @@ async def execute_sql_query(
     raise RuntimeError
 
 
-async def generate_schema(conn: BaseDBAsyncClient, name: str, head_status_timeout: int) -> None:
+async def generate_schema(
+    conn: BaseDBAsyncClient,
+    name: str,
+    head_status_timeout: int,
+) -> None:
     if isinstance(conn, SqliteClient):
         await Tortoise.generate_schemas()
     elif isinstance(conn, AsyncpgDBClient):
