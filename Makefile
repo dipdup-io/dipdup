@@ -21,7 +21,7 @@ all:            ## Run a whole CI pipeline: lint, run tests, build docs
 install:        ## Install project dependencies
 	poetry install \
 	`if [ "${PYTEZOS}" = "1" ]; then echo "-E pytezos "; fi` \
-	`if [ "${DEV}" = "1" ]; then echo "--with dev"; fi`
+	`if [ "${DEV}" = "0" ]; then echo "--without dev"; fi`
 
 lint:           ## Lint with all tools
 	make isort black flake mypy

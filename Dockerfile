@@ -37,7 +37,7 @@ SHELL ["/bin/bash", "-c"]
 
 RUN <<eot
     useradd -ms /bin/bash dipdup
-    pip install -U --no-cache-dir poetry==1.2.0 pip setuptools
+    pip install --no-cache-dir poetry==1.2.0 setuptools
 
     apt update
     apt install -y --no-install-recommends git `if [[ $PYTEZOS = "1" ]]; then echo libsodium-dev libsecp256k1-dev libgmp-dev; fi`
