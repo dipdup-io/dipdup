@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning].
 
 ### Added
 
-* context: Added `execute_sql_query` method to run queries from `<project>/sql` directory.
+* context: Added `execute_sql_query` method to run queries from `sql` project directory.
+* context: `execute_sql` method now accepts arbitrary arguments to format SQL script (unsafe, use with caution)
 
 ### Fixed
 
