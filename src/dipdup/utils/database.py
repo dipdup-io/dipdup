@@ -6,7 +6,7 @@ import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from os.path import dirname
-from os.path import isdir
+from os.path import isfile
 from os.path import join
 from pathlib import Path
 from typing import Any
@@ -32,8 +32,8 @@ from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
 from tortoise.utils import get_schema_sql
 
-from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DatabaseConfigurationError
+from dipdup.exceptions import DatabaseEngineError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
@@ -141,10 +141,22 @@ async def execute_sql(
     *args: Any,
     **kwargs: Any,
 ) -> None:
+    # NOTE: Fail later, directory can be empty
+    supported = True if isinstance(conn, AsyncpgDBClient) else False
+
     for file in iter_files(path, ext='.sql'):
-        _logger.info('Executing `%s`', file.name)
+        _logger.info('Executing script `%s`', file.name)
+
+        if not supported:
+            raise DatabaseEngineError(
+                msg=f'Can\'t execute SQL query `{path}`: not supported',
+                kind='sqlite',
+                required='postgres',
+            )
+
         sql = file.read()
-        # NOTE: Dangerous, but acceptable
+        # NOTE: Generally it's a very bad idea to format SQL scripts with arbitrary arguments.
+        # NOTE: We trust package developers here.
         sql = sql.format(*args, **kwargs)
         for statement in sqlparse.split(sql):
             # NOTE: Ignore empty statements
@@ -157,15 +169,26 @@ async def execute_sql_query(
     path: str,
     *values: Any,
 ) -> Any:
-    if isdir(path):
-        raise ConfigurationError(f'`{path}` is a directory, can\'t apply `*args`')
+    if not isinstance(conn, AsyncpgDBClient):
+        raise DatabaseEngineError(
+            msg=f'Can\'t execute SQL query `{path}`: not supported',
+            kind='sqlite',
+            required='postgres',
+        )
+
+    if not isfile(path):
+        raise DatabaseEngineError(
+            msg=f'Can\'t execute SQL query `{path}`: path must be a file',
+            kind='postgres',
+            required='postgres',
+        )
 
     for file in iter_files(path, ext='.sql'):
-        _logger.info('Executing `%s`', file.name)
+        _logger.info('Executing query `%s`', file.name)
         sql = file.read()
         return await conn.execute_query(sql, list(values))
-
-    raise RuntimeError
+    else:
+        raise RuntimeError(f'Can\'t find SQL query `{path}`')
 
 
 async def generate_schema(

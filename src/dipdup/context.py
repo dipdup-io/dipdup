@@ -50,6 +50,7 @@ from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import ContractAlreadyExistsError
+from dipdup.exceptions import DatabaseEngineError
 from dipdup.exceptions import DipDupError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
@@ -594,11 +595,7 @@ class CallbackManager:
             pending_hooks.append(_wrapper())
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str, *args: Any, **kwargs) -> None:
-        """Execute SQL included with project"""
-        if not isinstance(ctx.config.database, PostgresDatabaseConfig):
-            self._logger.warning('Skipping SQL script `%s`: not supported on SQLite', name)
-            return
-
+        """Execute SQL script included with the project"""
         subpackages = name.split('.')
         sql_path = join(ctx.config.package_path, 'sql', *subpackages)
 
@@ -606,9 +603,13 @@ class CallbackManager:
         await execute_sql(conn, sql_path, *args, **kwargs)
 
     async def execute_sql_query(self, ctx: 'DipDupContext', name: str, *values: Any) -> Any:
-        """Execute SQL query"""
+        """Execute SQL query included with the project"""
         if not isinstance(ctx.config.database, PostgresDatabaseConfig):
-            raise ConfigurationError('Can\'t execute SQL query: not supported on SQLite')
+            raise DatabaseEngineError(
+                msg=f'Can\'t execute SQL query `{name}`',
+                kind=ctx.config.database.kind,
+                required='postgres',
+            )
 
         subpackages = name.split('.')
         sql_path = join(ctx.config.package_path, 'sql', *subpackages)
