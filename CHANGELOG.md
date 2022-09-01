@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- ci: Lock Pydantic to 1.9.2 to avoid breaking changes in 1.10.0
+
 ## [6.1.0] - 2022-08-30
 
 ### Added
