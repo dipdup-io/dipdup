@@ -140,7 +140,7 @@
 <p>When running DipDup in Docker make sure that the Prometheus instance is in the same network.</p>
 <h2 id="available-metrics"><a class="header" href="#available-metrics">Available metrics</a></h2>
 <p>The following metrics are exposed under <code>dipdup</code> namespace:</p>
-<table><thead><tr><th>metric name</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>metric name</th><th>description</th></tr></thead><tbody>
 <tr><td><code>dipdup_indexes_total</code></td><td>Number of indexes in operation by status</td></tr>
 <tr><td><code>dipdup_index_level_sync_duration_seconds</code></td><td>Duration of indexing a single level</td></tr>
 <tr><td><code>dipdup_index_level_realtime_duration_seconds</code></td><td>Duration of last index syncronization</td></tr>
@@ -154,6 +154,7 @@
 <tr><td><code>dipdup_http_errors_total</code></td><td>Number of http errors</td></tr>
 <tr><td><code>dipdup_callback_duration_seconds</code></td><td>Duration of callback execution</td></tr>
 </tbody></table>
+</div>
 <p>You can also query <a href="https://dipdup.net/docs/advanced/internal-models.html">3.10. Internal models</a> for monitoring purposes.</p>
 
                     </main>

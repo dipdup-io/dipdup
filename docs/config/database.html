@@ -148,10 +148,11 @@
   kind: sqlite
   path: db.sqlite3
 </code></pre>
-<table><thead><tr><th>field</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>field</th><th>description</th></tr></thead><tbody>
 <tr><td><code>kind</code></td><td>always 'sqlite'</td></tr>
 <tr><td><code>path</code></td><td>Path to .sqlite3 file, leave default for in-memory database</td></tr>
 </tbody></table>
+</div>
 <h2 id="postgresql"><a class="header" href="#postgresql">PostgreSQL</a></h2>
 <p>Requires <code>host</code>, <code>port</code>, <code>user</code>, <code>password</code>, and <code>database</code> fields. You can set <code>schema_name</code> to values other than <code>public</code>, but Hasura integration won't be available.</p>
 <pre><code class="language-yaml">database:
@@ -163,7 +164,7 @@
   database: dipdup
   schema_name: public
 </code></pre>
-<table><thead><tr><th>field</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>field</th><th>description</th></tr></thead><tbody>
 <tr><td><code>kind</code></td><td>always 'postgres'</td></tr>
 <tr><td><code>host</code></td><td>Host</td></tr>
 <tr><td><code>port</code></td><td>Port</td></tr>
@@ -174,7 +175,7 @@
 <tr><td><code>immune_tables</code></td><td>List of tables to preserve during reindexing</td></tr>
 <tr><td><code>connection_timeout</code></td><td>Connection timeout in seconds</td></tr>
 </tbody></table>
-<!-- TODO: Move to the upper level -->
+</div><!-- TODO: Move to the upper level -->
 <p>You can also use compose-style environment variable substitutions with default values for secrets and other fields. See <a href="../getting-started/templates-and-variables.html#">Templates and variables</a> for details.</p>
 <h3 id="immune-tables"><a class="header" href="#immune-tables">Immune tables</a></h3>
 <p>In some cases, DipDup can't continue indexing with an existing database. See <a href="../advanced/reindexing.html">5.3. Reindexing</a> for details. One of the solutions to resolve reindexing state is to drop the database and start indexing from scratch. To achieve this, either invoke the <a href="../cli-reference.md#dipdup-schema-wipe.html"><code>schema wipe</code> command</a> or set an action to <code>wipe</code> in the <a href="../config/advanced.html"><code>advanced.reindex</code> config section</a>.</p>

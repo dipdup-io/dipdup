@@ -137,19 +137,21 @@
                     <main>
                         <h1 id="reindexing"><a class="header" href="#reindexing">Reindexing</a></h1>
 <p>In some cases, DipDup can't proceed with indexing without a full wipe. Several reasons trigger reindexing; some are avoidable, some are not:</p>
-<table><thead><tr><th>reason</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>reason</th><th>description</th></tr></thead><tbody>
 <tr><td><code>manual</code></td><td>Reindexing triggered manually from callback with <code>ctx.reindex</code>.</td></tr>
 <tr><td><code>migration</code></td><td>Applied migration requires reindexing. Check release notes before switching between major DipDup versions to be prepared.</td></tr>
 <tr><td><code>rollback</code></td><td>Reorg message received from TzKT can not be processed.</td></tr>
 <tr><td><code>config_modified</code></td><td>One of the index configs has been modified.</td></tr>
 <tr><td><code>schema_modified</code></td><td>Database schema has been modified. Try to avoid manual schema modifications in favor of <a href="../advanced/sql.html">SQL scripts</a>.</td></tr>
 </tbody></table>
+</div>
 <p>It is possible to configure desirable action on reindexing triggered by the specific reason.</p>
-<table><thead><tr><th>action</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>action</th><th>description</th></tr></thead><tbody>
 <tr><td><code>exception</code> (default)</td><td>Raise <code>ReindexingRequiredError</code> and quit with error code. The safest option since you can trigger reindexing accidentally, e.g., by a typo in config. Don't forget to set up the correct restart policy when using it with containers.</td></tr>
 <tr><td><code>wipe</code></td><td>Drop the whole database and start indexing from scratch. Be careful with this option!</td></tr>
 <tr><td><code>ignore</code></td><td>Ignore the event and continue indexing as usual. It can lead to unexpected side-effects up to data corruption; make sure you know what you are doing.</td></tr>
 </tbody></table>
+</div>
 <p>To configure actions for each reason, add the following section to the DipDup config:</p>
 <pre><code class="language-yaml">advanced:
   ...

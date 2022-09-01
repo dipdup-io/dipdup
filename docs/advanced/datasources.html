@@ -138,7 +138,7 @@
                         <h1 id="datasources"><a class="header" href="#datasources">Datasources</a></h1>
 <p>Datasources are DipDup connectors to various APIs. The table below shows how different datasources can be used.</p>
 <p><strong>Index</strong> datasource is the one used by DipDup internally to process specific index (set with <code>datasource: ...</code> in config). Currently, it can be only <code>tzkt</code>. Datasources available in <strong>context</strong> can be accessed in handlers and hooks via <code>ctx.get_&lt;kind&gt;_datasource()</code> methods and used to perform arbitrary requests. Finally, <strong>standalone services</strong> implement a subset of DipDup datasources and config directives. You can't use services-specific datasources like <code>tezos-node</code> in the main framework, they are here for informational purposes only.</p>
-<table><thead><tr><th style="text-align: left"></th><th style="text-align: center">index</th><th style="text-align: center">context</th><th style="text-align: center"><code>mempool</code> service</th><th style="text-align: center"><code>metadata</code> service</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left"></th><th style="text-align: center">index</th><th style="text-align: center">context</th><th style="text-align: center"><code>mempool</code> service</th><th style="text-align: center"><code>metadata</code> service</th></tr></thead><tbody>
 <tr><td style="text-align: left"><code>tzkt</code></td><td style="text-align: center">✴</td><td style="text-align: center">✅</td><td style="text-align: center">✴</td><td style="text-align: center">✴</td></tr>
 <tr><td style="text-align: left"><code>tezos-node</code></td><td style="text-align: center">❌</td><td style="text-align: center">❌</td><td style="text-align: center">✴</td><td style="text-align: center">❌</td></tr>
 <tr><td style="text-align: left"><code>coinbase</code></td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td><td style="text-align: center">❌</td></tr>
@@ -146,6 +146,7 @@
 <tr><td style="text-align: left"><code>ipfs</code></td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td><td style="text-align: center">❌</td></tr>
 <tr><td style="text-align: left"><code>http</code></td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td><td style="text-align: center">❌</td></tr>
 </tbody></table>
+</div>
 <p>✴ <em>required</em> ✅ <em>supported</em> ❌ <em>not supported</em></p>
 <h2 id="tzkt"><a class="header" href="#tzkt">TzKT</a></h2>
 <p><a href="https://api.tzkt.io/">TzKT</a> provides REST endpoints to query historical data and SignalR (Websocket) subscriptions to get realtime updates. Flexible filters allow you to request only data needed for your application and drastically speed up the indexing process.</p>
