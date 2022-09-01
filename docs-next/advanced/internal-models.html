@@ -137,7 +137,7 @@
                     <main>
                         <h1 id="internal-models"><a class="header" href="#internal-models">Internal models</a></h1>
 <p>This page describes the internal models used by DipDup. You shouldn't modify data in these models directly.</p>
-<table><thead><tr><th style="text-align: left">model</th><th style="text-align: left">table</th><th style="text-align: left">description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: left">model</th><th style="text-align: left">table</th><th style="text-align: left">description</th></tr></thead><tbody>
 <tr><td style="text-align: left"><code>Model</code></td><td style="text-align: left">N/A</td><td style="text-align: left">Base class for all models in DipDup project. Provides advanced transaction management.</td></tr>
 <tr><td style="text-align: left"><code>Schema</code></td><td style="text-align: left"><code>dipdup_schema</code></td><td style="text-align: left">Hash of database schema to detect changes that require reindexing.</td></tr>
 <tr><td style="text-align: left"><code>Head</code></td><td style="text-align: left"><code>dipdup_head</code></td><td style="text-align: left">The latest block received by a datasource from a WebSocket connection.</td></tr>
@@ -147,6 +147,7 @@
 <tr><td style="text-align: left"><code>ContractMetadata</code></td><td style="text-align: left"><code>dipdup_contract_metadata</code></td><td style="text-align: left">See <a href="https://dipdup.net/docs-next/advanced/metadata-interface.html">3.12. Metadata interface</a></td></tr>
 <tr><td style="text-align: left"><code>TokenMetadata</code></td><td style="text-align: left"><code>dipdup_token_metadata</code></td><td style="text-align: left">See <a href="https://dipdup.net/docs-next/advanced/metadata-interface.html">3.12. Metadata interface</a></td></tr>
 </tbody></table>
+</div>
 <p>With the help of these tables, you can set up monitoring of DipDup deployment to know when something goes wrong:</p>
 <pre><code class="language-sql">-- This query will return time since the latest block was received by a datasource.
 SELECT NOW() - timestamp FROM dipdup_head;

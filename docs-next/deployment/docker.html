@@ -138,7 +138,7 @@
                         <h1 id="running-in-docker"><a class="header" href="#running-in-docker">Running in Docker</a></h1>
 <h2 id="base-images"><a class="header" href="#base-images">Base images</a></h2>
 <p>DipDup provides multiple prebuilt images for different environments hosted on <a href="https://hub.docker.com/r/dipdup/dipdup">Docker Hub</a>. Choose the one according to your needs from the table below.</p>
-<table><thead><tr><th></th><th style="text-align: center">default</th><th style="text-align: center">pytezos</th><th style="text-align: center">slim</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th></th><th style="text-align: center">default</th><th style="text-align: center">pytezos</th><th style="text-align: center">slim</th></tr></thead><tbody>
 <tr><td>base image</td><td style="text-align: center"><code>python:3.10-slim</code></td><td style="text-align: center"><code>python:3.10-slim</code></td><td style="text-align: center"><code>python:3.10-alpine</code></td></tr>
 <tr><td>platforms</td><td style="text-align: center"><code>amd64</code>, <code>arm64</code></td><td style="text-align: center"><code>amd64</code>, <code>arm64</code></td><td style="text-align: center"><code>amd64</code>, <code>arm64</code></td></tr>
 <tr><td>latest tag</td><td style="text-align: center"><code>6</code></td><td style="text-align: center"><code>6-pytezos</code></td><td style="text-align: center"><code>6-slim</code></td></tr>
@@ -147,6 +147,7 @@
 <tr><td><code>git</code> and <code>poetry</code> included</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td></tr>
 <tr><td>PyTezos included</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td></tr>
 </tbody></table>
+</div>
 <p>Default DipDup image is suitable for development and testing. It includes some development tools to make package management easier. If unsure, use this image.</p>
 <h3 id="-slim-image"><a class="header" href="#-slim-image"><code>-slim</code> image</a></h3>
 <p>This image is based on Alpine Linux and has a much smaller size than the default one. As a tradeoff, it doesn't include codegen functionality (unlikely to be useful in production).</p>

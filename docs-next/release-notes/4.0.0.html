@@ -157,19 +157,21 @@
 <p>Also, two new flags were added to improve DipDup performance in several scenarios: <code>merge_subscriptions</code> and <code>early_relatime</code>.  See <a href="#new-cli-commands-and-flags">this paragraph</a> for details.</p>
 <h3 id="configurable-action-on-reindex"><a class="header" href="#configurable-action-on-reindex">Configurable action on reindex</a></h3>
 <p>There are several reasons that trigger reindexing:</p>
-<table><thead><tr><th>reason</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>reason</th><th>description</th></tr></thead><tbody>
 <tr><td><code>manual</code></td><td>Reindexing triggered manually from callback with <code>ctx.reindex</code>.</td></tr>
 <tr><td><code>migration</code></td><td>Applied migration requires reindexing. Check release notes before switching between major DipDup versions to be prepared.</td></tr>
 <tr><td><code>rollback</code></td><td>Reorg message received from TzKT, and can not be processed.</td></tr>
 <tr><td><code>config_modified</code></td><td>One of the index configs has been modified.</td></tr>
 <tr><td><code>schema_modified</code></td><td>Database schema has been modified. Try to avoid manual schema modifications in favor of <a href="../advanced/sql.html">SQL hooks</a>.</td></tr>
 </tbody></table>
+</div>
 <p>Now it is possible to configure desirable action on reindexing triggered by the specific reason.</p>
-<table><thead><tr><th>action</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>action</th><th>description</th></tr></thead><tbody>
 <tr><td><code>exception</code> (default)</td><td>Raise <code>ReindexingRequiredError</code> and quit with error code. The safest option since you can trigger reindexing accidentally, e.g., by a typo in config. Don't forget to set up the correct restart policy when using it with containers.</td></tr>
 <tr><td><code>wipe</code></td><td>Drop the whole database and start indexing from scratch. Be careful with this option!</td></tr>
 <tr><td><code>ignore</code></td><td>Ignore the event and continue indexing as usual. It can lead to unexpected side-effects up to data corruption; make sure you know what you are doing.</td></tr>
 </tbody></table>
+</div>
 <p>To configure actions for each reason, add the following section to DipDup config:</p>
 <pre><code class="language-yaml">advanced:
   ...
@@ -181,19 +183,21 @@
     schema_modified: exception
 </code></pre>
 <h3 id="new-cli-commands-and-flags"><a class="header" href="#new-cli-commands-and-flags">New CLI commands and flags</a></h3>
-<table><thead><tr><th>command or flag</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>command or flag</th><th>description</th></tr></thead><tbody>
 <tr><td><code>cache show</code></td><td>Get information about file caches used by DipDup.</td></tr>
 <tr><td><code>config export</code></td><td>Print config after resolving all links and variables. Add <code>--unsafe</code> option to substitute environment variables; default values from config will be used otherwise.</td></tr>
 <tr><td><code>run --early-realtime</code></td><td>Establish a realtime connection before all indexes are synchronized.</td></tr>
 <tr><td><code>run --merge-subscriptions</code></td><td>Subscribe to all operations/big map diffs during realtime indexing. This flag helps to avoid reaching TzKT subscriptions limit (currently 10000 channels). Keep in mind that this option could significantly improve RAM consumption depending on the time required to perform a sync.</td></tr>
 <tr><td><code>status</code></td><td>Print the current status of indexes from the database.</td></tr>
 </tbody></table>
+</div>
 <h3 id="advanced-top-level-config-section"><a class="header" href="#advanced-top-level-config-section"><code>advanced</code> top-level config section</a></h3>
 <p>This config section allows users to tune system-wide options, either experimental or unsuitable for generic configurations.</p>
-<table><thead><tr><th>field</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>field</th><th>description</th></tr></thead><tbody>
 <tr><td><code>early_realtime</code><br><code>merge_subscriptions</code><br><code>postpone_jobs</code></td><td>Another way to set <code>run</code> command flags. Useful for maintaining per-deployment configurations.</td></tr>
 <tr><td><code>reindex</code></td><td>Configure action on reindexing triggered. See <a href="#configurable-action-on-reindex">this paragraph</a> for details.</td></tr>
 </tbody></table>
+</div>
 <p>CLI flags have priority over self-titled <code>AdvancedConfig</code> fields.</p>
 <h3 id="aiosignalrcore-replaced-with-pysignalr"><a class="header" href="#aiosignalrcore-replaced-with-pysignalr"><code>aiosignalrcore</code> replaced with <code>pysignalr</code></a></h3>
 <p>It may not be the most noticeable improvement for end-user, but it still deserves a separate paragraph in this article.</p>

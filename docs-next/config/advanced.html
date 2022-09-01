@@ -148,7 +148,7 @@
     schema_modified: exception
 </code></pre>
 <p>This config section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.</p>
-<table><thead><tr><th>field</th><th>description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>field</th><th>description</th></tr></thead><tbody>
 <tr><td><code>reindex</code></td><td>Mapping of reindexing reasons and actions DipDup performs</td></tr>
 <tr><td><code>scheduler</code></td><td><code>apscheduler</code> scheduler config</td></tr>
 <tr><td><code>postpone_jobs</code></td><td>Do not start job scheduler until all indexes are in realtime state</td></tr>
@@ -156,6 +156,7 @@
 <tr><td><code>merge_subscriptions</code></td><td>Subscribe to all operations instead of exact channels</td></tr>
 <tr><td><code>metadata_interface</code></td><td>Expose metadata interface for TzKT</td></tr>
 </tbody></table>
+</div>
 <p>CLI flags have priority over self-titled <code>AdvancedConfig</code> fields.</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>

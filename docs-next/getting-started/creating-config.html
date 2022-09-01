@@ -140,7 +140,7 @@
 <h2 id="general-structure"><a class="header" href="#general-structure">General structure</a></h2>
 <p>DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for <code>dipdup.yml</code> file in the current working directory, but you can provide any path with a <code>-c</code> CLI option.</p>
 <p>DipDup config file consists of several logical blocks:</p>
-<table><thead><tr><th></th><th></th><th></th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th></th><th></th><th></th></tr></thead><tbody>
 <tr><td>Header</td><td><code>spec_version</code>*</td><td><a href="https://dipdup.net/docs-next/config/spec_version.html">14.15. spec_version</a></td></tr>
 <tr><td></td><td><code>package</code>*</td><td><a href="https://dipdup.net/docs-next/config/package.html">14.12. package</a></td></tr>
 <tr><td>Inventory</td><td><code>database</code></td><td><a href="https://dipdup.net/docs-next/config/database.html">14.5. database</a></td></tr>
@@ -157,6 +157,7 @@
 <tr><td>Tunables</td><td><code>advanced</code></td><td><a href="https://dipdup.net/docs-next/config/advanced.html">14.2. advanced</a></td></tr>
 <tr><td></td><td><code>logging</code></td><td><a href="https://dipdup.net/docs-next/config/logging.html">14.11. logging</a></td></tr>
 </tbody></table>
+</div>
 <p><strong>Header</strong> contains two required fields, <code>package</code> and <code>spec_version</code>. They are used to identify the project and the version of the DipDup specification. All other fields in the config are optional.</p>
 <p><strong>Inventory</strong> specifies contracts that need to be indexed, datasources to fetch data from and the database to store data in.</p>
 <p><strong>Index definitions</strong> define the index templates that will be used to index the contract data.</p>
