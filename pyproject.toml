@@ -31,7 +31,7 @@ asyncpg = "^0.26.0"
 datamodel-code-generator = "^0.13.0"
 orjson = "^3.6.6"
 prometheus-client = "^0.14.1"
-pydantic = "^1.8.2"
+pydantic = "1.9.2"
 pyhumps = "^3.0.2"
 pysignalr = "^0.1.2"
 pytezos = {version = "^3.5.2", optional = true}

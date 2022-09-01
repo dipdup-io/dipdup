@@ -57,7 +57,7 @@ advanced:
 Exceptions that occurred during callback execution are reraised as `CallbackError`s. If you experience this issue, most likely your code is incorrect. Luckily, the Python ecosystem has lots of tools called linters to help you find mistakes. In DipDup we mostly use a combo of `flake8` and `mypy`. You can start using both with zero configuration:
 
 ```shell
-poetry add --dev flake8 mypy
+poetry add --with dev flake8 mypy
 poetry run flake8
 poetry run mypy
 ```

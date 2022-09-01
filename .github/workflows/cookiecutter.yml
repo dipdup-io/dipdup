@@ -23,7 +23,7 @@ jobs:
       - name: Set up Poetry
         uses: snok/install-poetry@v1
         with:
-          version: "1.1.13"
+          version: "1.2.0"
 
       - name: Set up cache
         uses: actions/cache@v2

@@ -21,7 +21,7 @@ all:            ## Run a whole CI pipeline: lint, run tests, build docs
 install:        ## Install project dependencies
 	poetry install \
 	`if [ "${PYTEZOS}" = "1" ]; then echo "-E pytezos "; fi` \
-	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
+	`if [ "${DEV}" = "1" ]; then echo "--with dev"; fi`
 
 lint:           ## Lint with all tools
 	make isort black flake mypy
@@ -100,18 +100,18 @@ update:         ## Update dependencies, export requirements.txt (wait an eternit
 	cp pyproject.toml pyproject.toml.bak
 	cp poetry.lock poetry.lock.bak
 
-	poetry export -o requirements.txt
-	poetry export -o requirements.pytezos.txt -E pytezos
-	poetry export -o requirements.dev.txt --dev
-
+	# NOTE: 1.2.0 spells
+	poetry export --without-hashes -o requirements.txt
+	poetry export --without-hashes -o requirements.pytezos.txt -E pytezos
+	poetry export --without-hashes -o requirements.dev.txt --with dev
 	poetry remove datamodel-code-generator
-	poetry export -o requirements.slim.txt
+	poetry export --without-hashes -o requirements.slim.txt
 
 	mv pyproject.toml.bak pyproject.toml
 	mv poetry.lock.bak poetry.lock
 
 	make install
 
-	scripts/update-demos.sh
+	scripts/update_demos.sh
 
 ##
