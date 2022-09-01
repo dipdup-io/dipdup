@@ -170,7 +170,7 @@ class DipDupContext:
         await self._callbacks.execute_sql(self, name, *args, **kwargs)
 
     async def execute_sql_query(self, name: str, *args: Any) -> Any:
-        """Execute SQL query with given name
+        """Executes SQL query with given name
 
         :param name: SQL query name within `<project>/sql` directory
         """
@@ -594,7 +594,13 @@ class CallbackManager:
         else:
             pending_hooks.append(_wrapper())
 
-    async def execute_sql(self, ctx: 'DipDupContext', name: str, *args: Any, **kwargs) -> None:
+    async def execute_sql(
+        self,
+        ctx: 'DipDupContext',
+        name: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         """Execute SQL script included with the project"""
         subpackages = name.split('.')
         sql_path = join(ctx.config.package_path, 'sql', *subpackages)
@@ -602,7 +608,12 @@ class CallbackManager:
         conn = get_connection()
         await execute_sql(conn, sql_path, *args, **kwargs)
 
-    async def execute_sql_query(self, ctx: 'DipDupContext', name: str, *values: Any) -> Any:
+    async def execute_sql_query(
+        self,
+        ctx: 'DipDupContext',
+        name: str,
+        *values: Any,
+    ) -> Any:
         """Execute SQL query included with the project"""
         if not isinstance(ctx.config.database, PostgresDatabaseConfig):
             raise DatabaseEngineError(

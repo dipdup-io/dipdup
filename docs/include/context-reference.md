@@ -57,7 +57,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext.execute_sql_query">
 <em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_sql_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="#dipdup.context.DipDupContext.execute_sql_query" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute SQL query with given name</p>
+<dd><p>Executes SQL query with given name</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>name</strong> – SQL query name within <cite>&lt;project&gt;/sql</cite> directory</p>
