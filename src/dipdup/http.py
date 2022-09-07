@@ -43,6 +43,11 @@ class HTTPGateway:
         """Close underlying aiohttp session"""
         await self._http.__aexit__(exc_type, exc, tb)
 
+    @property
+    def url(self) -> str:
+        """HTTP endpoint URL"""
+        return self._http._url
+
     async def request(
         self,
         method: str,

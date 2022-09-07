@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- config: Added `alias` field to operation pattern items.
+
+### Fixed
+
+- tzkt: Request protocol version on datasource initialization.
+- config: Require aliases for multiple operations with the same entrypoint.
+
 ## [6.1.1] - 2022-09-01
 
 ### Fixed

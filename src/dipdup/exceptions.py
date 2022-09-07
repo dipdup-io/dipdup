@@ -117,7 +117,7 @@ class ConfigurationError(DipDupError):
 
 
 @dataclass(repr=False)
-class DatabaseConfigurationError(ConfigurationError):
+class InvalidModelsError(ConfigurationError):
     """Can't initialize database, `models.py` module is invalid"""
 
     model: Type[Model]
