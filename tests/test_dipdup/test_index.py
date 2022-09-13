@@ -2,15 +2,96 @@ import datetime
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock
 
-from dipdup.config import ContractConfig
+from dipdup.config import ContractConfig, OriginationHandlerConfig, OriginationIndexConfig
 from dipdup.config import OperationHandlerConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import TzktDatasourceConfig
-from dipdup.enums import OperationType
-from dipdup.index import OperationIndex
+from dipdup.enums import OperationType, IndexStatus
+from dipdup.index import OperationIndex, OriginationIndex
 from dipdup.index import extract_operation_subgroups
-from dipdup.models import OperationData
+from dipdup.models import OperationData, Index
+
+origination_operations = (
+    OperationData(
+        type='origination',
+        id=148420757,
+        level=2000007,
+        timestamp=datetime.datetime(2022, 1, 3, 14, 4, 50, tzinfo=datetime.timezone.utc),
+        hash='opaLJ8aFE5v1VKcu6vFEg9NTaedz6ME9CCHdpZ8eqM7fYHAHspd',
+        counter=43525270,
+        sender_address='tz1hptiTysJwHDjJ5STgt4maFjLmU6wvSVva',
+        target_address=None,
+        initiator_address=None,
+        amount=None,
+        status='applied',
+        has_internals=True,
+        storage=None,
+        block=None,
+        sender_alias=None,
+        nonce=None,
+        target_alias=None,
+        initiator_alias=None,
+        entrypoint=None,
+        parameter_json=None,
+        originated_contract_address="KT1SfJpAGDasNQRQPpdCM1CWnJNQ6Khs7c1R",
+        originated_contract_alias=None,
+        originated_contract_type_hash=-1552513651,
+        originated_contract_code_hash=1941250399,
+    ),
+    OperationData(
+        type='origination',
+        id=148423087,
+        level=2000007,
+        timestamp=datetime.datetime(2022, 1, 3, 14, 10, 20, tzinfo=datetime.timezone.utc),
+        hash='opAK6CLRGybiJ158e9U1GcoaJD6hfyjPEiA8z5rJnpzQ8MGkvpH',
+        counter=38405677,
+        sender_address='KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM',
+        target_address=None,
+        initiator_address='tz1LnavCNnCHhqnixzTK9xwwELdcnTtsDFro',
+        amount=None,
+        status='applied',
+        has_internals=True,
+        storage=None,
+        block=None,
+        sender_alias=None,
+        nonce=None,
+        target_alias=None,
+        initiator_alias=None,
+        entrypoint=None,
+        parameter_json=None,
+        originated_contract_address="KT1D5KXV95aKKWVnoKCbyW87SxkRMcCF6MJH",
+        originated_contract_alias=None,
+        originated_contract_type_hash=1167792881,
+        originated_contract_code_hash=178659938,
+    ),
+    OperationData(
+        type='origination',
+        id=148423315,
+        level=2000007,
+        timestamp=datetime.datetime(2022, 1, 3, 14, 10, 50, tzinfo=datetime.timezone.utc),
+        hash='ooCvM4zYT2FJVmuECMdA3NKALfuSBxiiWheTFqPKJuJPhwtkcYC',
+        counter=41557094,
+        sender_address='tz1UzkQES1LoweQifrLSyfjHLSeW47Cgjtkw',
+        target_address=None,
+        initiator_address=None,
+        amount=None,
+        status='applied',
+        has_internals=True,
+        storage=None,
+        block=None,
+        sender_alias=None,
+        nonce=None,
+        target_alias=None,
+        initiator_alias=None,
+        entrypoint=None,
+        parameter_json=None,
+        originated_contract_address="KT1GwcbcRrrAAKXNQW6w4a9D5n3qtTfet2ti",
+        originated_contract_alias=None,
+        originated_contract_type_hash=-1552513651,
+        originated_contract_code_hash=1941250399,
+    )
+)
 
 add_liquidity_operations = (
     OperationData(
@@ -288,6 +369,18 @@ index_config = OperationIndexConfig(
 )
 index_config.name = 'asdf'
 
+origination_index_config = OriginationIndexConfig(
+    datasource=TzktDatasourceConfig(kind='tzkt', url='https://api.tzkt.io', http=None),
+    kind='origination',
+    handlers=(
+        OriginationHandlerConfig(
+            callback='on_origination'
+        ),
+    ),
+    first_level=2000000
+)
+origination_index_config.name = 'originations'
+
 
 class MatcherTest(IsolatedAsyncioTestCase):
     async def test_match_smak_add_liquidity(self) -> None:
@@ -308,4 +401,11 @@ class MatcherTest(IsolatedAsyncioTestCase):
 
         matched_handlers = await index._match_operation_subgroup(operation_subgroups[0])
         assert len(matched_handlers) == 1
+        index._prepare_handler_args.assert_called()
+
+    async def test_match_originations(self) -> None:
+        index = OriginationIndex(None, origination_index_config, None)  # type: ignore
+        index._prepare_handler_args = AsyncMock()  # type: ignore
+        matched_handlers = await index._match_originations(origination_operations)
+        assert len(matched_handlers) == 3
         index._prepare_handler_args.assert_called()
