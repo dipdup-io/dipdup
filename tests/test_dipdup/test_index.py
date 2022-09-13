@@ -2,15 +2,20 @@ import datetime
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock
 
-from dipdup.config import ContractConfig, OriginationHandlerConfig, OriginationIndexConfig
+from dipdup.config import ContractConfig
 from dipdup.config import OperationHandlerConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
+from dipdup.config import OriginationHandlerConfig
+from dipdup.config import OriginationIndexConfig
 from dipdup.config import TzktDatasourceConfig
-from dipdup.enums import OperationType, IndexStatus
-from dipdup.index import OperationIndex, OriginationIndex
+from dipdup.enums import IndexStatus
+from dipdup.enums import OperationType
+from dipdup.index import OperationIndex
+from dipdup.index import OriginationIndex
 from dipdup.index import extract_operation_subgroups
-from dipdup.models import OperationData, Index
+from dipdup.models import Index
+from dipdup.models import OperationData
 
 origination_operations = (
     OperationData(
@@ -90,7 +95,7 @@ origination_operations = (
         originated_contract_alias=None,
         originated_contract_type_hash=-1552513651,
         originated_contract_code_hash=1941250399,
-    )
+    ),
 )
 
 add_liquidity_operations = (
@@ -372,12 +377,8 @@ index_config.name = 'asdf'
 origination_index_config = OriginationIndexConfig(
     datasource=TzktDatasourceConfig(kind='tzkt', url='https://api.tzkt.io', http=None),
     kind='origination',
-    handlers=(
-        OriginationHandlerConfig(
-            callback='on_origination'
-        ),
-    ),
-    first_level=2000000
+    handlers=(OriginationHandlerConfig(callback='on_origination'),),
+    first_level=2000000,
 )
 origination_index_config.name = 'originations'
 
@@ -405,7 +406,12 @@ class MatcherTest(IsolatedAsyncioTestCase):
 
     async def test_match_originations(self) -> None:
         index = OriginationIndex(None, origination_index_config, None)  # type: ignore
-        index._prepare_handler_args = AsyncMock()  # type: ignore
+        index._process_originations = AsyncMock()  # type: ignore
+        await index.initialize_state(Index(name="originations", level=1, status=IndexStatus.SYNCING))
+
         matched_handlers = await index._match_originations(origination_operations)
         assert len(matched_handlers) == 3
-        index._prepare_handler_args.assert_called()
+
+        index.push_originations(origination_operations)
+        await index._process_queue()
+        index._process_originations.assert_called()
