@@ -206,12 +206,7 @@ class OperationFetcher:
 class OriginationFetcher:
     """Fetches originations from TZKT REST API endpoints, merges them and yields by level. Offet of every endpoint is tracked separately."""
 
-    def __init__(
-        self,
-        datasource: 'TzktDatasource',
-        first_level: int,
-        last_level: int
-    ) -> None:
+    def __init__(self, datasource: 'TzktDatasource', first_level: int, last_level: int) -> None:
         self._datasource = datasource
         self._first_level = first_level
         self._last_level = last_level
@@ -234,17 +229,11 @@ class OriginationFetcher:
     async def _fetch_originations(self) -> None:
         """Fetch a single batch of originations, bump channel offset"""
         key = OperationFetcherRequest.originations
-        if not self._origination_addresses:
-            self._fetched[key] = True
-            self._heads[key] = self._last_level
-        if self._fetched[key]:
-            return
 
-        self._logger.debug('Fetching originations of %s', self._origination_addresses)
+        self._logger.debug('Fetching originations')
 
         # FIXME: No pagination because of URL length limit workaround
-        originations = await self._datasource.get_originations(
-            addresses=self._origination_addresses,
+        originations = await self._datasource.get_untyped_originations(
             first_level=self._first_level,
             last_level=self._last_level,
         )
@@ -693,6 +682,27 @@ class TzktDatasource(IndexDatasource):
                     "status": "applied",
                 },
             )
+
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
+
+    # FIXME: No pagination because of URL length limit workaround
+    async def get_untyped_originations(
+        self,
+        first_level: int,
+        last_level: int,
+    ) -> Tuple[OperationData, ...]:
+        raw_originations = []
+        raw_originations += await self.request(
+            'get',
+            url='v1/operations/originations',
+            params={
+                "level.ge": first_level,
+                "level.le": last_level,
+                "select": ','.join(ORIGINATION_OPERATION_FIELDS),
+                "status": "applied",
+            },
+        )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
         return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
