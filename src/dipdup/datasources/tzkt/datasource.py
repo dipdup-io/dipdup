@@ -203,6 +203,90 @@ class OperationFetcher:
             raise RuntimeError('Operations left in queue')
 
 
+class OriginationFetcher:
+    """Fetches originations from TZKT REST API endpoints, merges them and yields by level. Offet of every endpoint is tracked separately."""
+
+    def __init__(
+        self,
+        datasource: 'TzktDatasource',
+        first_level: int,
+        last_level: int
+    ) -> None:
+        self._datasource = datasource
+        self._first_level = first_level
+        self._last_level = last_level
+
+        self._logger = logging.getLogger('dipdup.tzkt')
+        self._head: int = 0
+        self._heads: Dict[OperationFetcherRequest, int] = {}
+        self._offsets: Dict[OperationFetcherRequest, int] = {}
+        self._fetched: Dict[OperationFetcherRequest, bool] = {}
+
+        self._operations: DefaultDict[int, Deque[OperationData]] = defaultdict(deque)
+
+    def _get_operations_head(self, operations: Tuple[OperationData, ...]) -> int:
+        """Get latest block level (head) of sorted operations batch"""
+        for i in range(len(operations) - 1)[::-1]:
+            if operations[i].level != operations[i + 1].level:
+                return operations[i].level
+        return operations[0].level
+
+    async def _fetch_originations(self) -> None:
+        """Fetch a single batch of originations, bump channel offset"""
+        key = OperationFetcherRequest.originations
+        if not self._origination_addresses:
+            self._fetched[key] = True
+            self._heads[key] = self._last_level
+        if self._fetched[key]:
+            return
+
+        self._logger.debug('Fetching originations of %s', self._origination_addresses)
+
+        # FIXME: No pagination because of URL length limit workaround
+        originations = await self._datasource.get_originations(
+            addresses=self._origination_addresses,
+            first_level=self._first_level,
+            last_level=self._last_level,
+        )
+
+        for op in originations:
+            level = op.level
+            self._operations[level].append(op)
+
+        self._logger.debug('Got %s', len(originations))
+        self._fetched[key] = True
+        self._heads[key] = self._last_level
+
+    async def fetch_originations_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[OperationData, ...]], None]:
+        """Iterate over operations fetched from TZKT.
+
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
+        """
+        self._heads[OperationFetcherRequest.originations] = 0
+        self._offsets[OperationFetcherRequest.originations] = 0
+        self._fetched[OperationFetcherRequest.originations] = False
+
+        while True:
+            min_head = sorted(self._heads.items(), key=lambda x: x[1])[0][0]
+            if min_head == OperationFetcherRequest.originations:
+                await self._fetch_originations()
+            else:
+                raise RuntimeError
+
+            head = min(self._heads.values())
+            while self._head <= head:
+                if self._head in self._operations:
+                    operations = self._operations.pop(self._head)
+                    yield self._head, dedup_operations(tuple(operations))
+                self._head += 1
+
+            if all(self._fetched.values()):
+                break
+
+        if self._operations:
+            raise RuntimeError('Operations left in queue')
+
+
 class BigMapFetcher:
     """Fetches bigmap diffs from REST API, merges them and yields by level."""
 

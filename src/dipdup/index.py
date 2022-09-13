@@ -32,13 +32,15 @@ from dipdup.config import OperationHandlerPatternConfigT
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import OperationType
+from dipdup.config import OriginationHandlerConfig
+from dipdup.config import OriginationIndexConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import SkipHistory
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
-from dipdup.datasources.tzkt.datasource import BigMapFetcher
+from dipdup.datasources.tzkt.datasource import BigMapFetcher, OriginationFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -1004,3 +1006,113 @@ class TokenTransferIndex(Index):
             if handler_config.token_id is not None:
                 ids.add(handler_config.token_id)
         return ids
+
+
+class OriginationIndex(Index):
+    message_type = MessageType.origination
+    _config: OriginationIndexConfig
+
+    def __init__(self, ctx: DipDupContext, config: OriginationIndexConfig, datasource: TzktDatasource) -> None:
+        super().__init__(ctx, config, datasource)
+        self._queue: Deque[Tuple[OperationData, ...]] = deque()
+
+    def push_originations(self, originations: Tuple[OperationData, ...]) -> None:
+        self._queue.append(originations)
+
+        if Metrics.enabled:
+            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+
+    async def _synchronize(self, sync_level: int) -> None:
+        """Fetch originations via Fetcher and pass to message callback"""
+        first_level = await self._enter_sync_state(sync_level)
+        if first_level is None:
+            return
+
+        self._logger.info('Fetching originations from level %s to %s', first_level, sync_level)
+
+        fetcher = OriginationFetcher(
+            datasource=self._datasource,
+            first_level=first_level,
+            last_level=sync_level,
+        )
+
+        async for level, originations in fetcher.fetch_originations_by_level():
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    Metrics.set_levels_to_sync(self._config.name, sync_level - level)
+                    stack.enter_context(Metrics.measure_level_sync_duration())
+                await self._process_originations(originations, sync_level)
+
+        await self._exit_sync_state(sync_level)
+
+    async def _process_originations(
+        self,
+        originations: Tuple[OperationData, ...],
+        sync_level: int,
+    ) -> None:
+        if not originations:
+            return
+
+        # FIXME: Why is this needed?
+        batch_level = self._extract_level(originations)
+        if self.state.status == IndexStatus.SYNCING:
+            if batch_level < self.state.level:
+                raise RuntimeError(
+                    f'Level of origination batch must be not lower than index state level: {batch_level} < {self.state.level}'
+                )
+        else:
+            if batch_level <= self.state.level:
+                raise RuntimeError(f'Level of origination batch must be higher than index state level: {batch_level} <= {self.state.level}')
+
+        self._logger.debug('Processing originations of level %s', batch_level)
+        matched_handlers = await self._match_originations(originations)
+
+        if Metrics.enabled:
+            Metrics.set_index_handlers_matched(len(matched_handlers))
+
+        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
+        if not matched_handlers:
+            await self.state.update_status(level=batch_level)
+            return
+
+        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
+            for handler_config, big_map_diff in matched_handlers:
+                await self._call_matched_handler(handler_config, big_map_diff)
+            await self.state.update_status(level=batch_level)
+
+    async def _call_matched_handler(self, handler_config: OriginationHandlerConfig, origination: OperationData) -> None:
+        if not handler_config.parent:
+            raise ConfigInitializationException
+
+        await self._ctx._fire_handler(
+            handler_config.callback,
+            handler_config.parent.name,
+            self.datasource,
+            # FIXME: missing `operation_id` field in API to identify operation
+            None,
+            origination,
+        )
+
+    async def _match_originations(self, originations: Iterable[OperationData]) -> List[Tuple[OriginationHandlerConfig, OperationData]]:
+        matched_handlers: List[Tuple[OriginationHandlerConfig, OperationData]] = []
+        for origination in originations:
+            for handler_config in self._config.handlers:
+                matched_handlers.append((handler_config, origination))
+
+        return matched_handlers
+
+    async def _process_queue(self) -> None:
+        """Process WebSocket queue"""
+        if self._queue:
+            self._logger.debug('Processing websocket queue')
+        while self._queue:
+            originations = self._queue.popleft()
+            message_level = originations[0].level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_level_realtime_duration())
+                await self._process_originations(originations, message_level)

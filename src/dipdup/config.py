@@ -990,14 +990,39 @@ class TokenTransferIndexConfig(IndexConfig):
     last_level: int = 0
 
 
+@dataclass
+class OriginationHandlerConfig(HandlerConfig, kind='handler'):
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'OperationData'
+        yield package, 'models as models'
+
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'origination', 'OperationData'
+
+
+@dataclass
+class OriginationIndexConfig(IndexConfig):
+    """Origination index config"""
+
+    kind: Literal['origination']
+    datasource: Union[str, TzktDatasourceConfig]
+    handlers: Tuple[OriginationHandlerConfig, ...] = field(default_factory=tuple)
+
+    first_level: int = 0
+    last_level: int = 0
+
+
 IndexConfigT = Union[
     OperationIndexConfig,
     BigMapIndexConfig,
     HeadIndexConfig,
     TokenTransferIndexConfig,
+    OriginationIndexConfig,
     IndexTemplateConfig,
 ]
-ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, TokenTransferIndexConfig]
+ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, TokenTransferIndexConfig, OriginationIndexConfig]
 HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
