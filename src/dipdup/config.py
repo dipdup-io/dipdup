@@ -1384,6 +1384,9 @@ class DipDupConfig:
         elif isinstance(index_config, TokenTransferIndexConfig):
             self._import_index_callbacks(index_config)
 
+        elif isinstance(index_config, OriginationIndexConfig):
+            self._import_index_callbacks(index_config)
+
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1542,6 +1545,9 @@ class DipDupConfig:
         elif isinstance(index_config, TokenTransferIndexConfig):
             index_config.subscriptions.add(TokenTransferSubscription())
 
+        elif isinstance(index_config, OriginationIndexConfig):
+            index_config.subscriptions.add(OriginationSubscription())
+
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1602,6 +1608,13 @@ class DipDupConfig:
 
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
+
+        elif isinstance(index_config, OriginationIndexConfig):
+            if isinstance(index_config.datasource, str):
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+
+            for origination_handler_config in index_config.handlers:
+                origination_handler_config.parent = index_config
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
