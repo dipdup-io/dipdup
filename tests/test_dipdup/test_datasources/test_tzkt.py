@@ -206,6 +206,12 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertEqual(23812803, originations[0].id)
             self.assertEqual(('fa12',), originations[0].originated_contract_tzips)
 
+    async def test_get_untyped_originations(self) -> None:
+        async with with_tzkt(1, 'https://tzkt-mainnet.dipdup.net') as tzkt:
+            originations = await tzkt.get_untyped_originations(889027, 889027)
+            self.assertEqual(23812803, originations[0].id)
+            self.assertEqual(('fa12',), originations[0].originated_contract_tzips)
+
     async def test_on_operation_message_data(self) -> None:
         with open(join(dirname(__file__), '..', 'ftzfun.json')) as f:
             operations_json = json.load(f)
