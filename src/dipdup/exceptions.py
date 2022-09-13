@@ -103,6 +103,23 @@ class DatasourceError(DipDupError):
 
 
 @dataclass(repr=False)
+class InvalidRequestError(DipDupError):
+    """API returned an unexpected response"""
+
+    msg: str
+    url: str
+
+    def _help(self) -> str:
+        return f"""
+            Unexpected response: {self.msg}
+
+            URL: `{self.url}`
+
+            Make sure that config is correct and you're calling the correct API.
+        """
+
+
+@dataclass(repr=False)
 class ConfigurationError(DipDupError):
     """DipDup YAML config is invalid"""
 
