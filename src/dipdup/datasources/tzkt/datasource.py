@@ -1097,7 +1097,7 @@ class TzktDatasource(IndexDatasource):
             hash=block_json['hash'],
             timestamp=cls._parse_timestamp(block_json['timestamp']),
             proto=block_json['proto'],
-            priority=block_json['priority'],
+            priority=block_json.get('priority'),
             validations=block_json['validations'],
             deposit=block_json['deposit'],
             reward=block_json['reward'],
