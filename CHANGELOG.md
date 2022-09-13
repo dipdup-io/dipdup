@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning].
 
 - config: Require aliases for multiple operations with the same entrypoint.
 - http: Raise `InvalidRequestError` on 204 No Content responses.
-- tzkt: Request protocol version on datasource initialization.
+- tzkt: Remove deprecated block field `priority`.
+- tzkt: Check API version on datasource initialization.
 
 ## [6.1.1] - 2022-09-01
 

@@ -157,12 +157,12 @@ class BlockData:
     hash: str
     timestamp: datetime
     proto: int
-    priority: int
     validations: int
     deposit: int
     reward: int
     fees: int
     nonce_revealed: bool
+    priority: Optional[int] = None
     baker_address: Optional[str] = None
     baker_alias: Optional[str] = None
 
