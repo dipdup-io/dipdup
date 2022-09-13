@@ -759,8 +759,16 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
+
+        arg_names: set[str] = set()
         for pattern in self.pattern:
-            yield from pattern.iter_arguments()
+            arg, arg_type = next(pattern.iter_arguments())
+            if arg in arg_names:
+                raise ConfigurationError(
+                    f'Pattern item is not unique. Set `alias` field to avoid duplicates.\n\n              handler: `{self.callback}`\n              entrypoint: `{arg}`',
+                )
+            arg_names.add(arg)
+            yield arg, arg_type
 
 
 @dataclass
