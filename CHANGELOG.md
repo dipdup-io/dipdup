@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- tzkt: Remove deprecated block field `priority`.
+
 ## [6.1.1] - 2022-09-01
 
 ### Fixed
