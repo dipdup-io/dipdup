@@ -208,6 +208,7 @@ class QuoteData:
     jpy: Decimal
     krw: Decimal
     eth: Decimal
+    gbp: Decimal
 
 
 @dataclass

@@ -10,13 +10,14 @@ and this project adheres to [Semantic Versioning].
 ### Added
 
 - config: Added `alias` field to operation pattern items.
+- tzkt: Added quote field `gbp`.
 
 ### Fixed
 
 - config: Require aliases for multiple operations with the same entrypoint.
 - http: Raise `InvalidRequestError` on 204 No Content responses.
+- tzkt: Verify API version on datasource initialization.
 - tzkt: Remove deprecated block field `priority`.
-- tzkt: Check API version on datasource initialization.
 
 ## [6.1.1] - 2022-09-01
 

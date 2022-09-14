@@ -1169,6 +1169,7 @@ class TzktDatasource(IndexDatasource):
             jpy=Decimal(quote_json['jpy']),
             krw=Decimal(quote_json['krw']),
             eth=Decimal(quote_json['eth']),
+            gbp=Decimal(quote_json['gbp']),
         )
 
     @classmethod
