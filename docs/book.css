@@ -6,3 +6,9 @@ pre > code {
     padding: 1.5rem;  /* was 1rem */
     font-size: 0.825em;  /* was 0.875em; */
 }
+
+.flex-img {
+    float: right;
+    width: 35%;
+    padding: 1.5em;
+}

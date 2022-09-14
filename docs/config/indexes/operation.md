@@ -1,3 +1,8 @@
+<div class="flex-img">
+  <img src="../../assets/operation-bcd.png" alt="Operation group in BCD explorer">
+  <img src="../../assets/operation-config.png" alt="`operation` index config">
+</div>
+
 # operation
 
 Operation index allows you to query only those operations related to your DApp and do pattern matching on its content (internal calls chain). It is the closest thing to fully-fledged event logs.
