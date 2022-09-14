@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning].
 
 ### Fixed
 
+- tzkt: Quote field `gbp` added.
+
+### Fixed
+
 - tzkt: Remove deprecated block field `priority`.
 
 ## [6.1.1] - 2022-09-01
