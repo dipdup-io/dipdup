@@ -792,4 +792,4 @@ This release contains no changes except for the version number.
 [3.0.3]: https://github.com/dipdup-net/dipdup-py/compare/3.0.2...3.0.3
 [3.0.2]: https://github.com/dipdup-net/dipdup-py/compare/3.0.1...3.0.2
 [3.0.1]: https://github.com/dipdup-net/dipdup-py/compare/3.0.0...3.0.1
-[3.0.0]: https://github.com/Author/Repository/releases/tag/3.0.0
+[3.0.0]: https://github.com/dipdup-net/dipdup-py/releases/tag/3.0.0
