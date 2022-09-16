@@ -127,6 +127,10 @@ def _sentry_before_send(
     if _is_shutting_down:
         return None
 
+    # NOTE: Tests and CI
+    if 'pytest' in sys.modules or 'CI' in os.environ:
+        return None
+
     # NOTE: User-generated events (e.g. from `ctx.logger`)
     if logger_name := event['logger']:
         if crash_reporting and not logger_name.startswith('dipdup'):
