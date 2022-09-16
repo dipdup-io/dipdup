@@ -2,17 +2,17 @@ name: Build
 on:
   push:
     branches:
-      - "**"
+      - '**'
     tags:
       - '*.*.*'
     paths:
-      - "src/**"
-      - "Dockerfile"
-      - "Dockerfile.slim"
-      - "pyproject.toml"
-      - "poetry.lock"
-      - "Makefile"
-      - ".github/workflows/build.yml"
+      - 'src/**'
+      - 'Dockerfile'
+      - 'Dockerfile.slim'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - 'Makefile'
+      - '.github/workflows/build.yml'
 
 jobs:
   build:

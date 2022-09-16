@@ -16,6 +16,7 @@ from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
 from dipdup.config import HTTPConfig
+from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
 
 safe_exceptions = (
@@ -42,6 +43,11 @@ class HTTPGateway:
     async def __aexit__(self, exc_type, exc, tb) -> None:
         """Close underlying aiohttp session"""
         await self._http.__aexit__(exc_type, exc, tb)
+
+    @property
+    def url(self) -> str:
+        """HTTP endpoint URL"""
+        return self._http._url
 
     async def request(
         self,
@@ -175,10 +181,11 @@ class _HTTPGateway:
             raise_for_status=True,
             **kwargs,
         ) as response:
-            try:
+            if response.status == HTTPStatus.NO_CONTENT:
+                raise InvalidRequestError('204 No Content', request_string)
+            with suppress(JSONDecodeError, aiohttp.ContentTypeError):
                 return await response.json()
-            except (JSONDecodeError, aiohttp.ContentTypeError):
-                return await response.read()
+            return await response.read()
 
     async def request(
         self,

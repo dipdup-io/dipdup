@@ -64,6 +64,15 @@ DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
+KNOWN_TZKT_URLS = (
+    'https://api.tzkt.io',
+    'https://api.mainnet.tzkt.io',
+    'https://api.ghostnet.tzkt.io',
+    'https://api.jakartanet.tzkt.io',
+    'https://staging.api.tzkt.io',
+    'https://staging.api.mainnet.tzkt.io',
+)
+DEFAULT_TZKT_URL = KNOWN_TZKT_URLS[0]
 DEFAULT_POSTGRES_SCHEMA = 'public'
 DEFAULT_POSTGRES_USER = DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
@@ -241,7 +250,7 @@ class TzktDatasourceConfig(NameMixin):
     """
 
     kind: Literal['tzkt']
-    url: str
+    url: str = DEFAULT_TZKT_URL
     http: Optional[HTTPConfig] = None
     buffer_size: int = 0
 
@@ -380,42 +389,78 @@ class CodegenMixin(ABC):
 
 
 class PatternConfig(CodegenMixin):
+    """Base class for pattern config items.
+
+    Contains methods for import and method signature generation during handler callbacks codegen.
+    """
+
     @classmethod
-    def format_storage_import(cls, package: str, module_name: str) -> Tuple[str, str]:
+    def format_storage_import(
+        cls,
+        package: str,
+        module_name: str,
+    ) -> Tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         return f'{package}.types.{module_name}.storage', storage_cls
 
     @classmethod
-    def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> Tuple[str, str]:
+    def format_parameter_import(
+        cls,
+        package: str,
+        module_name: str,
+        entrypoint: str,
+        alias: Optional[str],
+    ) -> Tuple[str, str]:
         entrypoint = entrypoint.lstrip('_')
+        parameter_module = pascal_to_snake(entrypoint)
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
-        return f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}', parameter_cls
+        if alias:
+            parameter_cls += f' as {snake_to_pascal(alias)}Parameter'
+
+        return f'{package}.types.{module_name}.parameter.{parameter_module}', parameter_cls
 
     @classmethod
     def format_untyped_operation_import(cls) -> Tuple[str, str]:
         return 'dipdup.models', 'OperationData'
 
     @classmethod
-    def format_origination_argument(cls, module_name: str, optional: bool) -> Tuple[str, str]:
+    def format_origination_argument(
+        cls,
+        module_name: str,
+        optional: bool,
+    ) -> Tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
             return f'{module_name}_origination', f'Optional[Origination[{storage_cls}]] = None'
         return f'{module_name}_origination', f'Origination[{storage_cls}]'
 
     @classmethod
-    def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> Tuple[str, str]:
+    def format_operation_argument(
+        cls,
+        module_name: str,
+        entrypoint: str,
+        optional: bool,
+        alias: Optional[str],
+    ) -> Tuple[str, str]:
+        arg_name = pascal_to_snake(alias or entrypoint)
         entrypoint = entrypoint.lstrip('_')
-        parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
+        parameter_cls = f'{snake_to_pascal(arg_name)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return pascal_to_snake(entrypoint), f'Optional[Transaction[{parameter_cls}, {storage_cls}]] = None'
-        return pascal_to_snake(entrypoint), f'Transaction[{parameter_cls}, {storage_cls}]'
+            return arg_name, f'Optional[Transaction[{parameter_cls}, {storage_cls}]] = None'
+        return arg_name, f'Transaction[{parameter_cls}, {storage_cls}]'
 
     @classmethod
-    def format_untyped_operation_argument(cls, transaction_idx: int, optional: bool) -> Tuple[str, str]:
+    def format_untyped_operation_argument(
+        cls,
+        transaction_idx: int,
+        optional: bool,
+        alias: Optional[str],
+    ) -> Tuple[str, str]:
+        arg_name = pascal_to_snake(alias or f'transaction_{transaction_idx}')
         if optional:
-            return f'transaction_{transaction_idx}', 'Optional[OperationData] = None'
-        return f'transaction_{transaction_idx}', 'OperationData'
+            return arg_name, 'Optional[OperationData] = None'
+        return arg_name, 'OperationData'
 
 
 @dataclass
@@ -512,6 +557,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
     :param destination: Match operations by destination contract alias
     :param entrypoint: Match operations by contract entrypoint
     :param optional: Whether can operation be missing in operation group
+    :param alias: Alias for transaction (helps to avoid duplicates)
     """
 
     type: Literal['transaction'] = 'transaction'
@@ -519,6 +565,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
     destination: Optional[Union[str, ContractConfig]] = None
     entrypoint: Optional[str] = None
     optional: bool = False
+    alias: Optional[str] = None
 
     def __post_init_post_parse__(self):
         StorageTypeMixin.__post_init_post_parse__(self)
@@ -531,7 +578,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         if self.entrypoint:
             module_name = self.destination_contract_config.module_name
             yield 'dipdup.models', 'Transaction'
-            yield self.format_parameter_import(package, module_name, self.entrypoint)
+            yield self.format_parameter_import(package, module_name, self.entrypoint, self.alias)
             yield self.format_storage_import(package, module_name)
         else:
             yield self.format_untyped_operation_import()
@@ -539,9 +586,9 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         if self.entrypoint:
             module_name = self.destination_contract_config.module_name
-            yield self.format_operation_argument(module_name, self.entrypoint, self.optional)
+            yield self.format_operation_argument(module_name, self.entrypoint, self.optional, self.alias)
         else:
-            yield self.format_untyped_operation_argument(self.transaction_idx, self.optional)
+            yield self.format_untyped_operation_argument(self.transaction_idx, self.optional, self.alias)
 
     @cached_property
     def source_contract_config(self) -> ContractConfig:
@@ -566,6 +613,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     :param originated_contract: Match origination of exact contract
     :param optional: Whether can operation be missing in operation group
     :param strict: Match operations by storage only or by the whole code
+    :param alias: Alias for transaction (helps to avoid duplicates)
     """
 
     type: Literal['origination'] = 'origination'
@@ -574,6 +622,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     originated_contract: Optional[Union[str, ContractConfig]] = None
     optional: bool = False
     strict: bool = False
+    alias: Optional[str] = None
 
     def __post_init_post_parse__(self):
         super().__post_init_post_parse__()
@@ -687,7 +736,10 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig'], kind='handler'):
         ParentMixin.__post_init_post_parse__(self)
 
 
-OperationHandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
+OperationHandlerPatternConfigT = Union[
+    OperationHandlerOriginationPatternConfig,
+    OperationHandlerTransactionPatternConfig,
+]
 
 
 @dataclass
@@ -707,8 +759,16 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
+
+        arg_names: set[str] = set()
         for pattern in self.pattern:
-            yield from pattern.iter_arguments()
+            arg, arg_type = next(pattern.iter_arguments())
+            if arg in arg_names:
+                raise ConfigurationError(
+                    f'Pattern item is not unique. Set `alias` field to avoid duplicates.\n\n              handler: `{self.callback}`\n              entrypoint: `{arg}`',
+                )
+            arg_names.add(arg)
+            yield arg, arg_type
 
 
 @dataclass
@@ -773,20 +833,20 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
 
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
-        config_json = json.dumps(self, default=pydantic_encoder)
-
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
+        config_json = json.dumps(self, default=pydantic_encoder)
         config_dict = json.loads(config_json)
 
-        # NOTE: We need to preserve datasource URL but remove its HTTP tunables to avoid false-positives.
-        config_dict['datasource'].pop('http', None)
-        # NOTE: TzKT tunable
-        config_dict['datasource'].pop('buffer_size', None)
-        # NOTE: Same for BigMapIndex tunables
-        config_dict.pop('skip_history', None)
+        self.strip(config_dict)
 
         config_json = json.dumps(config_dict)
         return hashlib.sha256(config_json.encode()).hexdigest()
+
+    @classmethod
+    def strip(cls, config_dict: Dict[str, Any]) -> None:
+        """Strip config from tunables that are not needed for hash calculation."""
+        config_dict['datasource'].pop('http', None)
+        config_dict['datasource'].pop('buffer_size', None)
 
 
 @dataclass
@@ -808,6 +868,13 @@ class OperationIndexConfig(IndexConfig):
 
     first_level: int = 0
     last_level: int = 0
+
+    @classmethod
+    def strip(cls, config_dict: Dict[str, Any]) -> None:
+        super().strip(config_dict)
+        for handler in config_dict['handlers']:
+            for item in handler['pattern']:
+                item.pop('alias', None)
 
     @cached_property
     def entrypoint_filter(self) -> Set[Optional[str]]:
@@ -942,6 +1009,11 @@ class BigMapIndexConfig(IndexConfig):
     def contracts(self) -> Set[ContractConfig]:
         return {handler_config.contract_config for handler_config in self.handlers}
 
+    @classmethod
+    def strip(cls, config_dict: Dict[str, Any]) -> None:
+        super().strip(config_dict)
+        config_dict.pop('skip_history', None)
+
 
 @dataclass
 class HeadHandlerConfig(HandlerConfig, kind='handler'):
@@ -997,8 +1069,16 @@ IndexConfigT = Union[
     TokenTransferIndexConfig,
     IndexTemplateConfig,
 ]
-ResolvedIndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, TokenTransferIndexConfig]
-HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
+ResolvedIndexConfigT = Union[
+    OperationIndexConfig,
+    BigMapIndexConfig,
+    HeadIndexConfig,
+    TokenTransferIndexConfig,
+]
+HandlerPatternConfigT = Union[
+    OperationHandlerOriginationPatternConfig,
+    OperationHandlerTransactionPatternConfig,
+]
 
 
 @dataclass

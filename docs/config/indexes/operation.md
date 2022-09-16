@@ -1,10 +1,15 @@
+<div class="float-img">
+  <img src="../../assets/operation-bcd.png" alt="Operation group in BCD explorer">
+  <img src="../../assets/operation-config.png" alt="`operation` index config">
+</div>
+
 # operation
 
-Operation index allows you to query only those operations related to your DApp and do pattern matching on its content (internal calls chain). It is the closest thing to fully-fledged event logs.
+Operation index allows you to query only operations related to your dapp and match them with handlers by content. A single contract call consists of implicit operation and, optionally, internal operations. For each of them, you can specify a handler that will be called when operation group. As a result, you get something like an event log for your dapp.
 
 ## Filters
 
-DipDup supports filtering operations by `kind`, `source`, `destination` (if applicable), and `originated_contract` (if applicable).
+DipDup supports filtering operations by `source`, `destination` (if applicable), and `originated_contract` (if applicable).
 
 DipDup fetches only _applied_ operations.
 
@@ -24,7 +29,7 @@ In this example, DipDup will fetch all the operations where any of source and de
 
 ### types
 
-By default, DipDup works only with transactions, but you can explicitly list operation types you want to subscribe to (currently `transaction` and `origination` types are supported):
+By default, DipDup works only with transactions, but you can explicitly list operation types you want to subscribe to (currently `transaction`, `origination` and `migration` types are supported):
 
 ```yaml
 indexes:
@@ -32,20 +37,20 @@ indexes:
     kind: operation
     datasource: tzkt
     contracts:
-      - contract1
+      - some_contract
     types:
       - transaction
       - origination
 ```
 
-Note that in the case of originations, DipDup will query operations where either source or originated contract address is equal to _contract1._
+Note that in the case of originations, DipDup will query operations where either source or originated contract address is equal to _some\_contract_.
 
 ## Handlers
 
 Each operation handler contains two required fields:
 
-* `callback` —  name of the _async_ function with a particular signature; DipDup will try to load it from the module with the same name `<package_name>.handlers.<callback>`
-* `pattern` — a non-empty list of items that have to be matched
+* `callback` —  name of the _async_ function with a particular signature; DipDup will create it on init and in the module with the same name `<package_name>.handlers.<callback>`.
+* `pattern` — a non-empty list of items that need to be matched.
 
 ```yaml
 indexes:
@@ -53,12 +58,12 @@ indexes:
     kind: operation
     datasource: tzkt
     contracts:
-      - contract1
+      - some_contract
     handlers:
       - callback: on_call
         pattern:
-          - destination: contract1
-            entrypoint: call        
+          - destination: some_contract
+            entrypoint: transfer
 ```
 
 You can think of operation pattern as a regular expression on a sequence of operations (both external and internal) with global flag enabled (can be multiple matches) and where various operation parameters (type, source, destination, entrypoint, originated contract) are used for matching.
@@ -67,7 +72,7 @@ You can think of operation pattern as a regular expression on a sequence of oper
 
 Here are the supported filters for matching operations (all optional):
 
-* `type` — (either _transaction_ or _origination_) usually inferred from the existence of other fields
+* `type` — _transaction_ or _origination_; usually inferred from the existence of other fields
 * `destination` — invoked contract alias (from the [inventory](../contracts.md))
 * `entrypoint` — invoked entrypoint name
 * `source` — operation sender alias (from the [inventory](../contracts.md))
@@ -80,17 +85,16 @@ It's unnecessary to match the entire operation content; you can skip external/in
 
 ```yaml
 pattern:
-  - destination: contract_1
-    entrypoint: call_1
-  - destination: contract_2
-    entrypoint: internal_call_2
-  - source: contract_1
+  # Implicit transaction
+  - destination: some_contract
+    entrypoint: mint
+
+  # Internal transactions below
+  - destination: another_contract
+    entrypoint: transfer
+
+  - source: some_contract
     type: transaction
-  - source: contract_2
-    type: origination
-    similar_to: contract_3
-    strict: true
-    optional: true
 ```
 
 You will get slightly different callback argument types depending on whether you specify _destination+entrypoint_ for transactions and _originated\_contract_ for originations. Namely, in the first case, DipDup will generate the dataclass for a particular entrypoint/storage, and in the second case not (meaning you will have to handle untyped parameters/storage updates).

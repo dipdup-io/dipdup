@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+### Added
+
+- config: Added `alias` field to operation pattern items.
+- tzkt: Added quote field `gbp`.
+
 ### Fixed
 
-- tzkt: Quote field `gbp` added.
-
-### Fixed
-
+- config: Require aliases for multiple operations with the same entrypoint.
+- http: Raise `InvalidRequestError` on 204 No Content responses.
+- tzkt: Verify API version on datasource initialization.
 - tzkt: Remove deprecated block field `priority`.
 
 ## [6.1.1] - 2022-09-01
@@ -788,4 +792,4 @@ This release contains no changes except for the version number.
 [3.0.3]: https://github.com/dipdup-net/dipdup-py/compare/3.0.2...3.0.3
 [3.0.2]: https://github.com/dipdup-net/dipdup-py/compare/3.0.1...3.0.2
 [3.0.1]: https://github.com/dipdup-net/dipdup-py/compare/3.0.0...3.0.1
-[3.0.0]: https://github.com/Author/Repository/releases/tag/3.0.0
+[3.0.0]: https://github.com/dipdup-net/dipdup-py/releases/tag/3.0.0

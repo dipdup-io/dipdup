@@ -31,7 +31,7 @@ from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
 from tortoise.utils import get_schema_sql
 
-from dipdup.exceptions import DatabaseConfigurationError
+from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
@@ -219,7 +219,7 @@ def prepare_models(package: Optional[str]) -> None:
     for app, model in iter_models(package):
         # NOTE: Enforce our class for user models
         if app == 'models' and not issubclass(model, dipdup.models.Model):
-            raise DatabaseConfigurationError(
+            raise InvalidModelsError(
                 'Project models must be subclassed from `dipdup.models.Model`.'
                 '\n\n'
                 'Replace `from tortoise import Model` import with `from dipdup.models import Model`.',
@@ -233,7 +233,7 @@ def prepare_models(package: Optional[str]) -> None:
         if model._meta.db_table not in db_tables:
             db_tables.add(model._meta.db_table)
         else:
-            raise DatabaseConfigurationError(
+            raise InvalidModelsError(
                 'Table name is duplicated or reserved. Make sure that all models have unique table names.',
                 model,
             )
@@ -241,7 +241,7 @@ def prepare_models(package: Optional[str]) -> None:
         # NOTE: Enforce tables in snake_case
         table_name = model._meta.db_table
         if table_name != pascal_to_snake(table_name):
-            raise DatabaseConfigurationError(
+            raise InvalidModelsError(
                 'Table name must be in snake_case.',
                 model,
             )
@@ -250,7 +250,7 @@ def prepare_models(package: Optional[str]) -> None:
             # NOTE: Enforce fields in snake_case
             field_name = field.model_field_name
             if field_name != pascal_to_snake(field_name):
-                raise DatabaseConfigurationError(
+                raise InvalidModelsError(
                     'Model fields must be in snake_case.',
                     model,
                     field_name,
@@ -258,7 +258,7 @@ def prepare_models(package: Optional[str]) -> None:
 
             # NOTE: Enforce unique field names to avoid GraphQL issues
             if field_name == table_name:
-                raise DatabaseConfigurationError(
+                raise InvalidModelsError(
                     'Model field names must differ from table name.',
                     model,
                     field_name,
@@ -266,7 +266,7 @@ def prepare_models(package: Optional[str]) -> None:
 
             # NOTE: The same for backward relations
             if isinstance(field, ForeignKeyFieldInstance) and field.related_name == table_name:
-                raise DatabaseConfigurationError(
+                raise InvalidModelsError(
                     'Model field names must differ from table name.',
                     model,
                     f'related_name={field.related_name}',

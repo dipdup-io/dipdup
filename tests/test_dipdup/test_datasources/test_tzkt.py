@@ -12,6 +12,7 @@ from dipdup.config import HTTPConfig
 from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
+from dipdup.exceptions import InvalidRequestError
 from dipdup.models import OperationData
 
 
@@ -224,3 +225,8 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             level = tzkt.get_channel_level(MessageType.operation)
             self.assertEqual(2, level)
             self.assertIsInstance(emit_mock.await_args_list[0][0][1][0], OperationData)
+
+    async def test_no_content(self) -> None:
+        async with with_tzkt(1, 'https://api.jakartanet.tzkt.io') as tzkt:
+            with self.assertRaises(InvalidRequestError):
+                await tzkt.get_jsonschemas('KT1EHdK9asB6BtPLvt1ipKRuxsrKoQhDoKgs')
