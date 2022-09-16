@@ -147,8 +147,11 @@ def _init_sentry(config: DipDupConfig) -> None:
         level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
 
     # NOTE: Lazy import to speed up startup
+    import hashlib
+
     import sentry_sdk
     from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+    from sentry_sdk.integrations.atexit import AtexitIntegration
     from sentry_sdk.integrations.logging import LoggingIntegration
 
     integrations = [
@@ -157,6 +160,7 @@ def _init_sentry(config: DipDupConfig) -> None:
             level=level,
             event_level=event_level,
         ),
+        AtexitIntegration(lambda _, __: None),
     ]
     init_kwargs: Dict[str, Any] = {
         'dsn': config.sentry.dsn,
@@ -174,8 +178,17 @@ def _init_sentry(config: DipDupConfig) -> None:
         init_kwargs['server_name'] = config.sentry.server_name
 
     sentry_sdk.init(**init_kwargs)
+
     sentry_sdk.set_tag('dipdup_version', __version__)
     sentry_sdk.set_tag('dipdup_package', config.package)
+
+    # NOTE: Obfuscated package/connection pair
+    user_id = hashlib.sha256(
+        (config.package + config.database.connection_string).encode(),
+    ).hexdigest()[:8]
+
+    sentry_sdk.set_user({'id': user_id})
+    sentry_sdk.Hub.current.start_session()
 
 
 async def _check_version() -> None:
