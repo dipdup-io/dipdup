@@ -6,8 +6,6 @@ on:
       - '*.*.*'
     branches:
       - master
-      # FIXME
-      - fix/tzkt-url
     paths:
       - 'docs/**'
       - 'scripts/**'
