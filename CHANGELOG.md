@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning].
 
 - sentry: Enable crash-free session reporting.
 
+### Fixed
+
+- sentry: Unwrap `CallbackError` traceback to fix event grouping.
+
 ## [6.1.2] - 2022-09-16
 
 ### Added

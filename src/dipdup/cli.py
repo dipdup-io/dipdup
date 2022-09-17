@@ -136,6 +136,16 @@ def _sentry_before_send(
         if crash_reporting and not logger_name.startswith('dipdup'):
             return None
 
+    # NOTE: Dark magic ahead. Merge CallbackError and its cause when possible.
+    with suppress(KeyError, IndexError):
+        exceptions = event['exception']['values']
+        if exceptions[-1]['type'] == 'CallbackError':
+            wrapper_frames = exceptions[-1]['stacktrace']['frames']
+            crash_frames = exceptions[-2]['stacktrace']['frames']
+            exceptions[-2]['stacktrace']['frames'] = wrapper_frames + crash_frames
+            event['message'] = exceptions[-2]['value']
+            del exceptions[-1]
+
     return event
 
 
