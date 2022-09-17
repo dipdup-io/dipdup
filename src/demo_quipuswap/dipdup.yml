@@ -26,6 +26,7 @@ datasources:
 
 advanced:
   early_realtime: True
+  crash_reporting: True
 
 templates:
   quipuswap_fa12:
