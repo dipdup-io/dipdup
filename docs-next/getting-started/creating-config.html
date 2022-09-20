@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                         </script>
 
                     </div>
@@ -147,21 +147,21 @@
 <p>DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for <code>dipdup.yml</code> file in the current working directory, but you can provide any path with a <code>-c</code> CLI option.</p>
 <p>DipDup config file consists of several logical blocks:</p>
 <div class="table-wrapper"><table><thead><tr><th></th><th></th><th></th></tr></thead><tbody>
-<tr><td>Header</td><td><code>spec_version</code>*</td><td><a href="https://dipdup.net/docs-next/config/spec_version.html">14.15. spec_version</a></td></tr>
-<tr><td></td><td><code>package</code>*</td><td><a href="https://dipdup.net/docs-next/config/package.html">14.12. package</a></td></tr>
-<tr><td>Inventory</td><td><code>database</code></td><td><a href="https://dipdup.net/docs-next/config/database.html">14.5. database</a></td></tr>
-<tr><td></td><td><code>contracts</code></td><td><a href="https://dipdup.net/docs-next/config/contracts.html">14.3. contracts</a></td></tr>
-<tr><td></td><td><code>datasources</code></td><td><a href="https://dipdup.net/docs-next/config/datasources.html">14.6. datasources</a></td></tr>
-<tr><td></td><td><code>custom</code></td><td><a href="https://dipdup.net/docs-next/config/custom.html">14.4. custom</a></td></tr>
-<tr><td>Index definitions</td><td><code>indexes</code></td><td><a href="https://dipdup.net/docs-next/config/indexes/index.html">14.9. indexes</a></td></tr>
-<tr><td></td><td><code>templates</code></td><td><a href="https://dipdup.net/docs-next/config/templates.html">14.16. templates</a></td></tr>
-<tr><td>Hook definitions</td><td><code>hooks</code></td><td><a href="https://dipdup.net/docs-next/config/hooks.html">14.8. hooks</a></td></tr>
-<tr><td></td><td><code>jobs</code></td><td><a href="https://dipdup.net/docs-next/config/jobs.html">14.10. jobs</a></td></tr>
-<tr><td>Integrations</td><td><code>hasura</code></td><td><a href="https://dipdup.net/docs-next/config/hasura.html">14.7. hasura</a></td></tr>
-<tr><td></td><td><code>sentry</code></td><td><a href="https://dipdup.net/docs-next/config/sentry.html">14.14. sentry</a></td></tr>
-<tr><td></td><td><code>prometheus</code></td><td><a href="https://dipdup.net/docs-next/config/prometheus.html">14.13. prometheus</a></td></tr>
-<tr><td>Tunables</td><td><code>advanced</code></td><td><a href="https://dipdup.net/docs-next/config/advanced.html">14.2. advanced</a></td></tr>
-<tr><td></td><td><code>logging</code></td><td><a href="https://dipdup.net/docs-next/config/logging.html">14.11. logging</a></td></tr>
+<tr><td>Header</td><td><code>spec_version</code>*</td><td><a href="https://docs-next.dipdup.io/config/spec_version.html">14.15. spec_version</a></td></tr>
+<tr><td></td><td><code>package</code>*</td><td><a href="https://docs-next.dipdup.io/config/package.html">14.12. package</a></td></tr>
+<tr><td>Inventory</td><td><code>database</code></td><td><a href="https://docs-next.dipdup.io/config/database.html">14.5. database</a></td></tr>
+<tr><td></td><td><code>contracts</code></td><td><a href="https://docs-next.dipdup.io/config/contracts.html">14.3. contracts</a></td></tr>
+<tr><td></td><td><code>datasources</code></td><td><a href="https://docs-next.dipdup.io/config/datasources.html">14.6. datasources</a></td></tr>
+<tr><td></td><td><code>custom</code></td><td><a href="https://docs-next.dipdup.io/config/custom.html">14.4. custom</a></td></tr>
+<tr><td>Index definitions</td><td><code>indexes</code></td><td><a href="https://docs-next.dipdup.io/config/indexes/index.html">14.9. indexes</a></td></tr>
+<tr><td></td><td><code>templates</code></td><td><a href="https://docs-next.dipdup.io/config/templates.html">14.16. templates</a></td></tr>
+<tr><td>Hook definitions</td><td><code>hooks</code></td><td><a href="https://docs-next.dipdup.io/config/hooks.html">14.8. hooks</a></td></tr>
+<tr><td></td><td><code>jobs</code></td><td><a href="https://docs-next.dipdup.io/config/jobs.html">14.10. jobs</a></td></tr>
+<tr><td>Integrations</td><td><code>hasura</code></td><td><a href="https://docs-next.dipdup.io/config/hasura.html">14.7. hasura</a></td></tr>
+<tr><td></td><td><code>sentry</code></td><td><a href="https://docs-next.dipdup.io/config/sentry.html">14.14. sentry</a></td></tr>
+<tr><td></td><td><code>prometheus</code></td><td><a href="https://docs-next.dipdup.io/config/prometheus.html">14.13. prometheus</a></td></tr>
+<tr><td>Tunables</td><td><code>advanced</code></td><td><a href="https://docs-next.dipdup.io/config/advanced.html">14.2. advanced</a></td></tr>
+<tr><td></td><td><code>logging</code></td><td><a href="https://docs-next.dipdup.io/config/logging.html">14.11. logging</a></td></tr>
 </tbody></table>
 </div>
 <p><strong>Header</strong> contains two required fields, <code>package</code> and <code>spec_version</code>. They are used to identify the project and the version of the DipDup specification. All other fields in the config are optional.</p>

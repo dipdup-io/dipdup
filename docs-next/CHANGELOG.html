@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                         </script>
 
                     </div>
@@ -193,7 +193,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
 <ul>
 <li>config: Added <code>advanced.crash_reporting</code> flag to enable reporting crashes to Baking Bad.</li>
-<li>dipdup: Save Sentry tombstone in <code>/tmp/dipdup-tombstone_XXXXXXX.json</code> on a crash.</li>
+<li>dipdup: Save Sentry crashdump in <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> on a crash.</li>
 </ul>
 <h3 id="fixed-4"><a class="header" href="#fixed-4">Fixed</a></h3>
 <ul>

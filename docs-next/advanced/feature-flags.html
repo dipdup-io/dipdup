@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                         </script>
 
                     </div>
@@ -173,7 +173,7 @@
 <h2 id="skip-version-check"><a class="header" href="#skip-version-check">Skip version check</a></h2>
 <p>Disables warning about running unstable or out-of-date DipDup version.</p>
 <h2 id="crash-reporting"><a class="header" href="#crash-reporting">Crash reporting</a></h2>
-<p>Enables sending crash reports to the Baking Bad team. This is <strong>disabled by default</strong>. You can inspect crash dumps saved as <code>/tmp/dipdup-tombstone_XXXXXXX.json</code> before enabling this option.</p>
+<p>Enables sending crash reports to the Baking Bad team. This is <strong>disabled by default</strong>. You can inspect crash dumps saved as <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> before enabling this option.</p>
 
                     </main>
 

@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                         </script>
 
                     </div>
@@ -147,7 +147,7 @@
 </code></pre>
 <p>DipDup will search for a module named <code>my_module_name</code> in <a href="https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH"><code>PYTHONPATH</code></a></p>
 <p>This field helps to decouple DipDup configuration file from the indexer implementation and gives more flexibility in managing the source code.</p>
-<p>See <a href="https://dipdup.net/docs-next/getting-started/project-structure.html">2.4. Project structure</a> for details.</p>
+<p>See <a href="https://docs-next.dipdup.io/getting-started/project-structure.html">2.4. Project structure</a> for details.</p>
 
                     </main>
 
