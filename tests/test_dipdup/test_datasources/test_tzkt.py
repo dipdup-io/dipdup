@@ -20,7 +20,7 @@ from dipdup.models import OperationData
 async def with_tzkt(batch_size: int, url: str | None = None) -> AsyncIterator[TzktDatasource]:
     config = HTTPConfig(
         batch_size=batch_size,
-        replay_path='/tmp/dipdup-replays',
+        replay_path='/tmp/dipdup/replays',
     )
     datasource = TzktDatasource(url or 'https://api.tzkt.io', config)
     async with datasource:

@@ -11,7 +11,7 @@ datasources:
     kind: tzkt
     url: https://api.hangzhou2net.tzkt.io
     http:
-      replay_path: /tmp/dipdup-replays
+      replay_path: /tmp/dipdup/replays
 
 indexes:
   rewq:
