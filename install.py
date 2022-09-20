@@ -11,9 +11,9 @@ from tempfile import TemporaryDirectory
 from typing import NoReturn
 
 TEMPLATE = env.get('TEMPLATE', 'master')
-TEMPLATE_REPOSITORY = 'https://github.com/dipdup-net/dipdup-py'
+TEMPLATE_REPOSITORY = 'https://github.com/dipdup-net/dipdup'
 TEMPLATE_PATH = 'cookiecutter'
-CACHED_TEMPLATE_PATH = join(env["HOME"], '.cookiecutters', 'dipdup-py')
+CACHED_TEMPLATE_PATH = join(env["HOME"], '.cookiecutters', 'dipdup')
 CWD = os.getcwd()
 
 run = partial(subprocess.run, check=True, shell=True)
