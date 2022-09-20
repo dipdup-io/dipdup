@@ -160,9 +160,9 @@
 <h3 id="-pytezos-image"><a class="header" href="#-pytezos-image"><code>-pytezos</code> image</a></h3>
 <p>The only difference with the default image is the pre-installed PyTezos library, the same as <code>pip install dipdup -E pytezos</code>. DipDup doesn't provide any further PyPoetry integration. Having some patience you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!</p>
 <h3 id="nightly-builds-ghcrio"><a class="header" href="#nightly-builds-ghcrio">Nightly builds (ghcr.io)</a></h3>
-<p>In addition to <a href="https://hub.docker.com/r/dipdup/dipdup">Docker Hub</a> we also publish images on <a href="https://github.com/dipdup-net/dipdup-py/pkgs/container/dipdup-py">GitHub Packages</a>. Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!</p>
+<p>In addition to <a href="https://hub.docker.com/r/dipdup/dipdup">Docker Hub</a> we also publish images on <a href="https://github.com/dipdup-net/dipdup/pkgs/container/dipdup">GitHub Packages</a>. Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!</p>
 <pre><code class="language-Dockerfile"># Slim image for `aux/arm64` branch
-FROM ghcr.io/dipdup-net/dipdup-py:aux-arm64-slim
+FROM ghcr.io/dipdup-net/dipdup:aux-arm64-slim
 </code></pre>
 <h2 id="writing-dockerfile"><a class="header" href="#writing-dockerfile">Writing Dockerfile</a></h2>
 <p>Start with creating <code>.dockerignore</code> for your project if it's missing.</p>
@@ -295,7 +295,7 @@ prometheus:
 
 services:
   dipdup:
-    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-net/dipdup-py:${TAG:-master}
+    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-net/dipdup:${TAG:-master}
     depends_on:
       - db
       - hasura

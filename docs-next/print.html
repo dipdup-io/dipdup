@@ -143,15 +143,15 @@
                 <div id="content" class="content">
                     <main>
                         <p><a href="https://www.python.org"><img src="https://img.shields.io/badge/made%20with-python-blue.svg?" alt="Python" /></a>
-<a href="https://github.com/dipdup-net/dipdup-py"><img src="https://img.shields.io/github/stars/dipdup-net/dipdup-py" alt="GitHub stars" /></a>
-<a href="https://github.com/dipdup-net/dipdup-py/releases"><img src="https://img.shields.io/github/v/release/dipdup-net/dipdup-py?label=stable" alt="Latest stable release" /></a>
-<a href="https://github.com/dipdup-net/dipdup-py/releases"><img src="https://img.shields.io/github/v/release/dipdup-net/dipdup-py?include_prereleases&amp;label=latest" alt="Latest pre-release)" /></a>
+<a href="https://github.com/dipdup-net/dipdup"><img src="https://img.shields.io/github/stars/dipdup-net/dipdup" alt="GitHub stars" /></a>
+<a href="https://github.com/dipdup-net/dipdup/releases"><img src="https://img.shields.io/github/v/release/dipdup-net/dipdup?label=stable" alt="Latest stable release" /></a>
+<a href="https://github.com/dipdup-net/dipdup/releases"><img src="https://img.shields.io/github/v/release/dipdup-net/dipdup?include_prereleases&amp;label=latest" alt="Latest pre-release)" /></a>
 <a href="https://pypi.org/project/dipdup/"><img src="https://img.shields.io/pypi/dm/dipdup" alt="PyPI monthly downloads" /></a>
 <br>
-<a href="https://github.com/dipdup-net/dipdup-py/actions"><img src="https://img.shields.io/github/workflow/status/dipdup-net/dipdup-py/Test" alt="GitHub tests" /></a>
-<a href="https://github.com/dipdup-net/dipdup-py/issues"><img src="https://img.shields.io/github/issues/dipdup-net/dipdup-py" alt="GitHub issues" /></a>
-<a href="https://github.com/dipdup-net/dipdup-py/pulls"><img src="https://img.shields.io/github/issues-pr/dipdup-net/dipdup-py" alt="GitHub pull requests" /></a>
-<a href="https://github.com/dipdup-net/dipdup-py/blob/master/LICENSE"><img src="https://img.shields.io/github/license/dipdup-net/dipdup-py" alt="License: MIT" /></a></p>
+<a href="https://github.com/dipdup-net/dipdup/actions"><img src="https://img.shields.io/github/workflow/status/dipdup-net/dipdup/Test" alt="GitHub tests" /></a>
+<a href="https://github.com/dipdup-net/dipdup/issues"><img src="https://img.shields.io/github/issues/dipdup-net/dipdup" alt="GitHub issues" /></a>
+<a href="https://github.com/dipdup-net/dipdup/pulls"><img src="https://img.shields.io/github/issues-pr/dipdup-net/dipdup" alt="GitHub pull requests" /></a>
+<a href="https://github.com/dipdup-net/dipdup/blob/master/LICENSE"><img src="https://img.shields.io/github/license/dipdup-net/dipdup" alt="License: MIT" /></a></p>
 <pre><code class="language-text">        ____   _         ____              
        / __ \ (_)____   / __ \ __  __ ____ 
       / / / // // __ \ / / / // / / // __ \
@@ -165,10 +165,10 @@
 <p><strong>Ready to build your first indexer?</strong> Head to <a href="https://dipdup.net/docs/quickstart">Quickstart</a>.</p>
 </li>
 <li>
-<p><strong>Looking for examples?</strong> Check out <a href="https://github.com/dipdup-net/dipdup-py/tree/master/src">Demo Projects</a>.</p>
+<p><strong>Looking for examples?</strong> Check out <a href="https://github.com/dipdup-net/dipdup/tree/master/src">Demo Projects</a>.</p>
 </li>
 <li>
-<p><strong>Want to contribute?</strong> See <a href="https://github.com/dipdup-net/dipdup-py/tree/master/CONTRIBUTING.md">Contribution Guide</a>.</p>
+<p><strong>Want to contribute?</strong> See <a href="https://github.com/dipdup-net/dipdup/tree/master/CONTRIBUTING.md">Contribution Guide</a>.</p>
 </li>
 <li>
 <p><strong>Have a question?</strong> Contact us on <a href="https://discord.com/invite/RcPGSdcVSx">Discord</a>, <a href="https://t.me/baking_bad_chat">Telegram</a>, or <a href="https://tezos-dev.slack.com/archives/CV5NX7F2L">Slack</a>!</p>
@@ -419,7 +419,7 @@ async def on_mint(
 <p>Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database. RAM requirements increase with the number of indexes.</p>
 <h3 id="non-unix-environments"><a class="header" href="#non-unix-environments">Non-UNIX environments</a></h3>
 <p>DipDup currently doesn't work in Windows environments due to incompatibilities in libraries it depends on. Please use WSL or Docker.</p>
-<p>We aim to improve cross-platform compatibility in future releases (<a href="https://github.com/dipdup-net/dipdup-py/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+">issue</a>).</p>
+<p>We aim to improve cross-platform compatibility in future releases (<a href="https://github.com/dipdup-net/dipdup/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+">issue</a>).</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
@@ -1845,9 +1845,9 @@ client.chain.query
 <h3 id="-pytezos-image"><a class="header" href="#-pytezos-image"><code>-pytezos</code> image</a></h3>
 <p>The only difference with the default image is the pre-installed PyTezos library, the same as <code>pip install dipdup -E pytezos</code>. DipDup doesn't provide any further PyPoetry integration. Having some patience you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!</p>
 <h3 id="nightly-builds-ghcrio"><a class="header" href="#nightly-builds-ghcrio">Nightly builds (ghcr.io)</a></h3>
-<p>In addition to <a href="https://hub.docker.com/r/dipdup/dipdup">Docker Hub</a> we also publish images on <a href="https://github.com/dipdup-net/dipdup-py/pkgs/container/dipdup-py">GitHub Packages</a>. Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!</p>
+<p>In addition to <a href="https://hub.docker.com/r/dipdup/dipdup">Docker Hub</a> we also publish images on <a href="https://github.com/dipdup-net/dipdup/pkgs/container/dipdup">GitHub Packages</a>. Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!</p>
 <pre><code class="language-Dockerfile"># Slim image for `aux/arm64` branch
-FROM ghcr.io/dipdup-net/dipdup-py:aux-arm64-slim
+FROM ghcr.io/dipdup-net/dipdup:aux-arm64-slim
 </code></pre>
 <h2 id="writing-dockerfile"><a class="header" href="#writing-dockerfile">Writing Dockerfile</a></h2>
 <p>Start with creating <code>.dockerignore</code> for your project if it's missing.</p>
@@ -1980,7 +1980,7 @@ prometheus:
 
 services:
   dipdup:
-    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-net/dipdup-py:${TAG:-master}
+    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-net/dipdup:${TAG:-master}
     depends_on:
       - db
       - hasura
@@ -2380,7 +2380,7 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config env
 poetry run flake8
 poetry run mypy
 </code></pre>
-<p>You can find a more complex example in DipDup's <a href="https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/pyproject.toml">pyproject.toml</a> or use the cookiecutter template to create a new project with all recommended bells and whistles (see <a href="https://dipdup.net/docs-next/quickstart.html#from-template">1. Quickstart → from-template</a>).</p>
+<p>You can find a more complex example in DipDup's <a href="https://raw.githubusercontent.com/dipdup-net/dipdup/master/pyproject.toml">pyproject.toml</a> or use the cookiecutter template to create a new project with all recommended bells and whistles (see <a href="https://dipdup.net/docs-next/quickstart.html#from-template">1. Quickstart → from-template</a>).</p>
 <h2 id="explore-contract-calls-in-better-call-dev"><a class="header" href="#explore-contract-calls-in-better-call-dev">Explore contract calls in Better Call Dev</a></h2>
 <p><a href="https://better-call.dev">Better Call Dev</a> is a blockchain explorer for Tezos smart contracts. It provides a more human-friendly interface than TzKT to explore exact contract calls and parameter/storage structures.</p>
 <p><img src="assets/troubleshooting-bcd.png" alt="BCD" /></p>
@@ -2394,7 +2394,7 @@ poetry run mypy
 </ul>
 <h2 id="got-stuck-ask-for-help"><a class="header" href="#got-stuck-ask-for-help">Got stuck? Ask for help</a></h2>
 <p>We are always ready to answer your questions!</p>
-<p>If you think you've found a bug, please report it directly to the <a href="https://github.com/dipdup-net/dipdup-py">GitHub Issues</a>. For all other discussions, join our socials:</p>
+<p>If you think you've found a bug, please report it directly to the <a href="https://github.com/dipdup-net/dipdup">GitHub Issues</a>. For all other discussions, join our socials:</p>
 <ul>
 <li><a href="https://discord.com/invite/RcPGSdcVSx">Discord</a> (preferred)</li>
 <li><a href="https://t.me/baking_bad_chat">Telegram</a></li>
@@ -2432,25 +2432,25 @@ poetry run mypy
 <p>DipDup repository contains several minimal examples of how to use various features for real-case scenarios. Please, do not use these examples in production unmodified. We have not put a production-grade amount of effort into developing them, so they may contain flaws in indexing logic.</p>
 <p>Some projects that started as a demo now evolved into full-fledged applications running in production. Check out <a href="https://dipdup.net/docs-next/examples/built-with-dipdup.html">10. Built with DipDup</a> page.</p>
 <h2 id="tzbtc-token"><a class="header" href="#tzbtc-token">TzBTC token</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_tzbtc">demo_tzbtc</a></p>
+<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tzbtc">demo_tzbtc</a></p>
 <p>The most basic indexer used in Quickstart. A single <code>operation</code> index to track balances of TzBTC token holders, nothing else.</p>
 <h2 id="hic-et-nunc"><a class="header" href="#hic-et-nunc">hic et nunc</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_hic_et_nunc">demo_hic_et_nunc</a></p>
+<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_hic_et_nunc">demo_hic_et_nunc</a></p>
 <p>Indexes trades and swaps of &quot;hic et nunc&quot;, one of the most popular NFT marketplaces on Tezos.</p>
 <h2 id="quipuswap"><a class="header" href="#quipuswap">Quipuswap</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_quipuswap">demo_quipuswap</a></p>
+<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_quipuswap">demo_quipuswap</a></p>
 <p>Covers all available operations of Quipuswap DEX contracts: trades, transfers, moving liquidity. A more complex example with index templates.</p>
 <h2 id="homebase-registrydao"><a class="header" href="#homebase-registrydao">Homebase RegistryDAO</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_registrydao">demo_registrydao</a></p>
+<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_registrydao">demo_registrydao</a></p>
 <p>Homebase enables users to create DAO contracts. In this example indexes are spawned in runtime (<a href="https://dipdup.net/docs-next/advanced/index-factories.html">3.11. Index factories</a>) for all contracts having the same script.</p>
 <h2 id="tezos-domains-operation"><a class="header" href="#tezos-domains-operation">Tezos Domains (<code>operation</code>)</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_tezos_domains">demo_tezos_domains</a></p>
+<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tezos_domains">demo_tezos_domains</a></p>
 <p>Tezos Domains is a distributed naming system. You probably have seen those fancy <code>user.tez</code> names while browsing explorers. This is a pretty basic example of how to index them.</p>
 <h2 id="tezos-domains-big_map"><a class="header" href="#tezos-domains-big_map">Tezos Domains (<code>big_map</code>)</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_tezos_domains_big_map">demo_tezos_domains_big_map</a></p>
+<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tezos_domains_big_map">demo_tezos_domains_big_map</a></p>
 <p>The same as above, but uses <code>big_map</code> index instead of <code>operation</code> one. The storage structure of this contract is pretty straightforward; we only need to track a single big map. To speed up indexing more, this example contains <code>skip_history: once</code> directive to index only the current state of the contract before switching to realtime processing.</p>
 <h2 id="tzcolors"><a class="header" href="#tzcolors">TzColors</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup-py/tree/master/src/demo_tzcolors">demo_tzcolors</a></p>
+<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tzcolors">demo_tzcolors</a></p>
 <p>A very basic indexer of TzColors NFT token and marketplace. Unlike <code>hic et nunc</code> this marketplace provides auction functionality. Other than that, it is pretty much the same.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="built-with-dipdup"><a class="header" href="#built-with-dipdup">Built with DipDup</a></h1>
 <p>This page is a brief overview of projects which use DipDup as an indexing solution.</p>
@@ -2601,7 +2601,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <h1 id="dipdup"><a class="header" href="#dipdup">dipdup<a class="headerlink" href="cli-reference.html#dipdup" title="Permalink to this heading">¶</a></a></h1>
 <p>Manage and run DipDup indexers.</p>
 <p>Full docs: <a class="reference external" href="https://dipdup.net/docs">https://dipdup.net/docs</a></p>
-<p>Report an issue: <a class="reference external" href="https://github.com/dipdup-net/dipdup-py/issues">https://github.com/dipdup-net/dipdup-py/issues</a></p>
+<p>Report an issue: <a class="reference external" href="https://github.com/dipdup-net/dipdup/issues">https://github.com/dipdup-net/dipdup/issues</a></p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
@@ -3758,12 +3758,12 @@ templates:
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-net/dipdup-py/compare/6.1.2...HEAD">Unreleased</a></a></h2>
+<h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-net/dipdup/compare/6.1.2...HEAD">Unreleased</a></a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
 <li>metadata: Updated protocol aliases.</li>
 </ul>
-<h2 id="612---2022-09-16"><a class="header" href="#612---2022-09-16"><a href="https://github.com/dipdup-net/dipdup-py/compare/6.1.0...6.1.1">6.1.2</a> - 2022-09-16</a></h2>
+<h2 id="612---2022-09-16"><a class="header" href="#612---2022-09-16"><a href="https://github.com/dipdup-net/dipdup/compare/6.1.0...6.1.1">6.1.2</a> - 2022-09-16</a></h2>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
 <ul>
 <li>config: Added <code>alias</code> field to operation pattern items.</li>
@@ -3776,12 +3776,12 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>tzkt: Verify API version on datasource initialization.</li>
 <li>tzkt: Remove deprecated block field <code>priority</code>.</li>
 </ul>
-<h2 id="611---2022-09-01"><a class="header" href="#611---2022-09-01"><a href="https://github.com/dipdup-net/dipdup-py/compare/6.1.0...6.1.1">6.1.1</a> - 2022-09-01</a></h2>
+<h2 id="611---2022-09-01"><a class="header" href="#611---2022-09-01"><a href="https://github.com/dipdup-net/dipdup/compare/6.1.0...6.1.1">6.1.1</a> - 2022-09-01</a></h2>
 <h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
 <ul>
 <li>ci: Lock Pydantic to 1.9.2 to avoid breaking changes in dataclasses.</li>
 </ul>
-<h2 id="610---2022-08-30"><a class="header" href="#610---2022-08-30"><a href="https://github.com/dipdup-net/dipdup-py/compare/6.0.1...6.1.0">6.1.0</a> - 2022-08-30</a></h2>
+<h2 id="610---2022-08-30"><a class="header" href="#610---2022-08-30"><a href="https://github.com/dipdup-net/dipdup/compare/6.0.1...6.1.0">6.1.0</a> - 2022-08-30</a></h2>
 <h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
 <ul>
 <li>ci: Build <code>arm64</code> images for M1/M2 silicon.</li>
@@ -3789,7 +3789,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>ci: Introduced official MacOS support.</li>
 <li>ci: Introduced interactive installer (dipdup.net/install.py).</li>
 </ul>
-<h2 id="601---2022-08-19"><a class="header" href="#601---2022-08-19"><a href="https://github.com/dipdup-net/dipdup-py/compare/6.0.0...6.0.1">6.0.1</a> - 2022-08-19</a></h2>
+<h2 id="601---2022-08-19"><a class="header" href="#601---2022-08-19"><a href="https://github.com/dipdup-net/dipdup/compare/6.0.0...6.0.1">6.0.1</a> - 2022-08-19</a></h2>
 <h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
 <ul>
 <li>codegen: Fixed invalid <code>models.py</code> template.</li>
@@ -3800,9 +3800,9 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>sentry: Fixed &quot;invalid value <code>environment</code>&quot; error.</li>
 <li>sentry: Ignore events from project callbacks when <code>crash_reporting</code> is enabled.</li>
 </ul>
-<h2 id="600---2022-08-08"><a class="header" href="#600---2022-08-08"><a href="https://github.com/dipdup-net/dipdup-py/compare/6.0.0rc2...6.0.0">6.0.0</a> - 2022-08-08</a></h2>
+<h2 id="600---2022-08-08"><a class="header" href="#600---2022-08-08"><a href="https://github.com/dipdup-net/dipdup/compare/6.0.0rc2...6.0.0">6.0.0</a> - 2022-08-08</a></h2>
 <p>This release contains no changes except for the version number.</p>
-<h2 id="600rc2---2022-08-06"><a class="header" href="#600rc2---2022-08-06"><a href="https://github.com/dipdup-net/dipdup-py/compare/6.0.0-rc1...6.0.0rc2">6.0.0rc2</a> - 2022-08-06</a></h2>
+<h2 id="600rc2---2022-08-06"><a class="header" href="#600rc2---2022-08-06"><a href="https://github.com/dipdup-net/dipdup/compare/6.0.0-rc1...6.0.0rc2">6.0.0rc2</a> - 2022-08-06</a></h2>
 <h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
 <ul>
 <li>config: Added <code>advanced.crash_reporting</code> flag to enable reporting crashes to Baking Bad.</li>
@@ -3819,7 +3819,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>cli: <code>cache show</code> and <code>cache clear</code> commands are removed.</li>
 <li>config: <code>http.cache</code> flag is removed.</li>
 </ul>
-<h2 id="600-rc1---2022-07-26"><a class="header" href="#600-rc1---2022-07-26"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.5...6.0.0-rc1">6.0.0-rc1</a> - 2022-07-26</a></h2>
+<h2 id="600-rc1---2022-07-26"><a class="header" href="#600-rc1---2022-07-26"><a href="https://github.com/dipdup-net/dipdup/compare/5.2.5...6.0.0-rc1">6.0.0-rc1</a> - 2022-07-26</a></h2>
 <h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
 <ul>
 <li>cli: Added <code>config export --full</code> flag to resolve templates before printing config.</li>
@@ -3842,18 +3842,18 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>hooks: Removed deprecated <code>on_rollback</code> hook.</li>
 <li>index: Do not try to avoid single-level rollbacks by comparing operation hashes.</li>
 </ul>
-<h2 id="525---2022-07-26"><a class="header" href="#525---2022-07-26"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.4...5.2.5">5.2.5</a> - 2022-07-26</a></h2>
+<h2 id="525---2022-07-26"><a class="header" href="#525---2022-07-26"><a href="https://github.com/dipdup-net/dipdup/compare/5.2.4...5.2.5">5.2.5</a> - 2022-07-26</a></h2>
 <h3 id="fixed-6"><a class="header" href="#fixed-6">Fixed</a></h3>
 <ul>
 <li>index: Fixed crash when adding an index with new subscriptions in runtime.</li>
 </ul>
-<h2 id="524---2022-07-17"><a class="header" href="#524---2022-07-17"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.3...5.2.4">5.2.4</a> - 2022-07-17</a></h2>
+<h2 id="524---2022-07-17"><a class="header" href="#524---2022-07-17"><a href="https://github.com/dipdup-net/dipdup/compare/5.2.3...5.2.4">5.2.4</a> - 2022-07-17</a></h2>
 <h3 id="fixed-7"><a class="header" href="#fixed-7">Fixed</a></h3>
 <ul>
 <li>cli: Fixed logs being printed to stderr instead of stdout.</li>
 <li>config: Fixed job scheduler not starting when config contains no indexes.</li>
 </ul>
-<h2 id="523---2022-07-07"><a class="header" href="#523---2022-07-07"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.2...5.2.3">5.2.3</a> - 2022-07-07</a></h2>
+<h2 id="523---2022-07-07"><a class="header" href="#523---2022-07-07"><a href="https://github.com/dipdup-net/dipdup/compare/5.2.2...5.2.3">5.2.3</a> - 2022-07-07</a></h2>
 <h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
 <ul>
 <li>sentry: Allow customizing <code>server_name</code> and <code>release</code> tags with corresponding fields in Sentry config.</li>
@@ -3863,19 +3863,19 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>cli: Fixed <code>hasura configure</code> command crash when models have empty <code>Meta.table</code>.</li>
 <li>config: Removed secrets from config <code>__repr__</code>.</li>
 </ul>
-<h2 id="522---2022-07-03"><a class="header" href="#522---2022-07-03"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.1...5.2.2">5.2.2</a> - 2022-07-03</a></h2>
+<h2 id="522---2022-07-03"><a class="header" href="#522---2022-07-03"><a href="https://github.com/dipdup-net/dipdup/compare/5.2.1...5.2.2">5.2.2</a> - 2022-07-03</a></h2>
 <h3 id="fixed-9"><a class="header" href="#fixed-9">Fixed</a></h3>
 <ul>
 <li>hasura: Fixed metadata generation.</li>
 </ul>
-<h2 id="521---2022-07-02"><a class="header" href="#521---2022-07-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.2.0...5.2.1">5.2.1</a> - 2022-07-02</a></h2>
+<h2 id="521---2022-07-02"><a class="header" href="#521---2022-07-02"><a href="https://github.com/dipdup-net/dipdup/compare/5.2.0...5.2.1">5.2.1</a> - 2022-07-02</a></h2>
 <h3 id="fixed-10"><a class="header" href="#fixed-10">Fixed</a></h3>
 <ul>
 <li>cli: Fixed setting default logging level.</li>
 <li>hasura: Fixed metadata generation for relations with a custom field name.</li>
 <li>hasura: Fixed configuring existing instances after changing <code>camel_case</code> field in config.</li>
 </ul>
-<h2 id="520---2022-06-28"><a class="header" href="#520---2022-06-28"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.7...5.2.0">5.2.0</a> - 2022-06-28</a></h2>
+<h2 id="520---2022-06-28"><a class="header" href="#520---2022-06-28"><a href="https://github.com/dipdup-net/dipdup/compare/5.1.7...5.2.0">5.2.0</a> - 2022-06-28</a></h2>
 <h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
 <ul>
 <li>config: Added <code>logging</code> config field.</li>
@@ -3892,12 +3892,12 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>cli: <code>cache show</code> and <code>cache clear</code> commands are deprecated.</li>
 <li>config: <code>http.cache</code> flag is deprecated.</li>
 </ul>
-<h2 id="517---2022-06-15"><a class="header" href="#517---2022-06-15"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.6...5.1.7">5.1.7</a> - 2022-06-15</a></h2>
+<h2 id="517---2022-06-15"><a class="header" href="#517---2022-06-15"><a href="https://github.com/dipdup-net/dipdup/compare/5.1.6...5.1.7">5.1.7</a> - 2022-06-15</a></h2>
 <h3 id="fixed-12"><a class="header" href="#fixed-12">Fixed</a></h3>
 <ul>
 <li>index: Fixed <code>token_transfer</code> index not receiving realtime updates.</li>
 </ul>
-<h2 id="516---2022-06-08"><a class="header" href="#516---2022-06-08"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.5...5.1.6">5.1.6</a> - 2022-06-08</a></h2>
+<h2 id="516---2022-06-08"><a class="header" href="#516---2022-06-08"><a href="https://github.com/dipdup-net/dipdup/compare/5.1.5...5.1.6">5.1.6</a> - 2022-06-08</a></h2>
 <h3 id="fixed-13"><a class="header" href="#fixed-13">Fixed</a></h3>
 <ul>
 <li>cli: Commands with <code>--help</code> option no longer require a working DipDup config.</li>
@@ -3911,12 +3911,12 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>docs: Migrate docs from GitBook to mdbook.</li>
 </ul>
-<h2 id="515---2022-06-05"><a class="header" href="#515---2022-06-05"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.4...5.1.5">5.1.5</a> - 2022-06-05</a></h2>
+<h2 id="515---2022-06-05"><a class="header" href="#515---2022-06-05"><a href="https://github.com/dipdup-net/dipdup/compare/5.1.4...5.1.5">5.1.5</a> - 2022-06-05</a></h2>
 <h3 id="fixed-14"><a class="header" href="#fixed-14">Fixed</a></h3>
 <ul>
 <li>config: Fixed crash when rollback hook is about to be called.</li>
 </ul>
-<h2 id="514---2022-06-02"><a class="header" href="#514---2022-06-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.3...5.1.4">5.1.4</a> - 2022-06-02</a></h2>
+<h2 id="514---2022-06-02"><a class="header" href="#514---2022-06-02"><a href="https://github.com/dipdup-net/dipdup/compare/5.1.3...5.1.4">5.1.4</a> - 2022-06-02</a></h2>
 <h3 id="fixed-15"><a class="header" href="#fixed-15">Fixed</a></h3>
 <ul>
 <li>config: Fixed <code>OperationIndexConfig.types</code> field being partially ignored.</li>
@@ -3929,7 +3929,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>ci: Decrease the size of generic and <code>-pytezos</code> Docker images by 11% and 16%, respectively.</li>
 </ul>
-<h2 id="513---2022-05-26"><a class="header" href="#513---2022-05-26"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.2...5.1.3">5.1.3</a> - 2022-05-26</a></h2>
+<h2 id="513---2022-05-26"><a class="header" href="#513---2022-05-26"><a href="https://github.com/dipdup-net/dipdup/compare/5.1.2...5.1.3">5.1.3</a> - 2022-05-26</a></h2>
 <h3 id="fixed-16"><a class="header" href="#fixed-16">Fixed</a></h3>
 <ul>
 <li>database: Fixed special characters in password not being URL encoded.</li>
@@ -3938,7 +3938,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>context: Do not reinitialize config when adding a single index.</li>
 </ul>
-<h2 id="512---2022-05-24"><a class="header" href="#512---2022-05-24"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.1...5.1.2">5.1.2</a> - 2022-05-24</a></h2>
+<h2 id="512---2022-05-24"><a class="header" href="#512---2022-05-24"><a href="https://github.com/dipdup-net/dipdup/compare/5.1.1...5.1.2">5.1.2</a> - 2022-05-24</a></h2>
 <h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
 <ul>
 <li>tzkt: Added <code>originated_contract_tzips</code> field to <code>OperationData</code>.</li>
@@ -3952,13 +3952,13 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>database: Tortoise ORM updated to <code>0.19.1</code>.</li>
 </ul>
-<h2 id="511---2022-05-13"><a class="header" href="#511---2022-05-13"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.1.0...5.1.1">5.1.1</a> - 2022-05-13</a></h2>
+<h2 id="511---2022-05-13"><a class="header" href="#511---2022-05-13"><a href="https://github.com/dipdup-net/dipdup/compare/5.1.0...5.1.1">5.1.1</a> - 2022-05-13</a></h2>
 <h3 id="fixed-18"><a class="header" href="#fixed-18">Fixed</a></h3>
 <ul>
 <li>index: Ignore indexes with different message types on rollback.</li>
 <li>metadata: Add <code>ithacanet</code> to available networks.</li>
 </ul>
-<h2 id="510---2022-05-12"><a class="header" href="#510---2022-05-12"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.4...5.1.0">5.1.0</a> - 2022-05-12</a></h2>
+<h2 id="510---2022-05-12"><a class="header" href="#510---2022-05-12"><a href="https://github.com/dipdup-net/dipdup/compare/5.0.4...5.1.0">5.1.0</a> - 2022-05-12</a></h2>
 <h3 id="added-7"><a class="header" href="#added-7">Added</a></h3>
 <ul>
 <li>ci: Push <code>X</code> and <code>X.Y</code> tags to the Docker Hub on release.</li>
@@ -3976,14 +3976,14 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>hooks: The <code>on_rollback</code> default hook is superseded by <code>on_index_rollback</code> and will be removed later.</li>
 </ul>
-<h2 id="504---2022-05-05"><a class="header" href="#504---2022-05-05"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.3...5.0.4">5.0.4</a> - 2022-05-05</a></h2>
+<h2 id="504---2022-05-05"><a class="header" href="#504---2022-05-05"><a href="https://github.com/dipdup-net/dipdup/compare/5.0.3...5.0.4">5.0.4</a> - 2022-05-05</a></h2>
 <h3 id="fixed-20"><a class="header" href="#fixed-20">Fixed</a></h3>
 <ul>
 <li>exceptions: Fixed incorrect formatting and broken links in help messages.</li>
 <li>index: Fixed crash when the only index in config is <code>head</code>.</li>
 <li>index: Fixed fetching originations during the initial sync.</li>
 </ul>
-<h2 id="503---2022-05-04"><a class="header" href="#503---2022-05-04"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.2...5.0.3">5.0.3</a> - 2022-05-04</a></h2>
+<h2 id="503---2022-05-04"><a class="header" href="#503---2022-05-04"><a href="https://github.com/dipdup-net/dipdup/compare/5.0.2...5.0.3">5.0.3</a> - 2022-05-04</a></h2>
 <h3 id="fixed-21"><a class="header" href="#fixed-21">Fixed</a></h3>
 <ul>
 <li>index: Fixed crash when no block with the same level arrived after a single-level rollback.</li>
@@ -3991,7 +3991,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>tzkt: Fixed delayed emitting of buffered realtime messages.</li>
 <li>tzkt: Fixed inconsistent behavior of <code>first_level</code>/<code>last_level</code> arguments in different getter methods.</li>
 </ul>
-<h2 id="502---2022-04-21"><a class="header" href="#502---2022-04-21"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.1...5.0.2">5.0.2</a> - 2022-04-21</a></h2>
+<h2 id="502---2022-04-21"><a class="header" href="#502---2022-04-21"><a href="https://github.com/dipdup-net/dipdup/compare/5.0.1...5.0.2">5.0.2</a> - 2022-04-21</a></h2>
 <h3 id="fixed-22"><a class="header" href="#fixed-22">Fixed</a></h3>
 <ul>
 <li>context: Fixed reporting incorrect reindexing reason.</li>
@@ -4004,28 +4004,28 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>exceptions: Updated help messages for known exceptions.</li>
 <li>tzkt: Do not request reindexing if missing subgroups have matched no handlers.</li>
 </ul>
-<h2 id="501---2022-04-12"><a class="header" href="#501---2022-04-12"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0...5.0.1">5.0.1</a> - 2022-04-12</a></h2>
+<h2 id="501---2022-04-12"><a class="header" href="#501---2022-04-12"><a href="https://github.com/dipdup-net/dipdup/compare/5.0.0...5.0.1">5.0.1</a> - 2022-04-12</a></h2>
 <h3 id="fixed-23"><a class="header" href="#fixed-23">Fixed</a></h3>
 <ul>
 <li>cli: Fixed <code>schema init</code> command crash with SQLite databases.</li>
 <li>index: Fixed spawning datasources in oneshot mode.</li>
 <li>tzkt: Fixed processing realtime messages.</li>
 </ul>
-<h2 id="500---2022-04-08"><a class="header" href="#500---2022-04-08"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc4...5.0.0">5.0.0</a> - 2022-04-08</a></h2>
+<h2 id="500---2022-04-08"><a class="header" href="#500---2022-04-08"><a href="https://github.com/dipdup-net/dipdup/compare/5.0.0-rc4...5.0.0">5.0.0</a> - 2022-04-08</a></h2>
 <p>This release contains no changes except for the version number.</p>
-<h2 id="500-rc4---2022-04-04"><a class="header" href="#500-rc4---2022-04-04"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc3...5.0.0-rc4">5.0.0-rc4</a> - 2022-04-04</a></h2>
+<h2 id="500-rc4---2022-04-04"><a class="header" href="#500-rc4---2022-04-04"><a href="https://github.com/dipdup-net/dipdup/compare/5.0.0-rc3...5.0.0-rc4">5.0.0-rc4</a> - 2022-04-04</a></h2>
 <h3 id="added-8"><a class="header" href="#added-8">Added</a></h3>
 <ul>
 <li>tzkt: Added ability to process realtime messages with lag.</li>
 </ul>
-<h2 id="427---2022-04-02"><a class="header" href="#427---2022-04-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.6...4.2.7">4.2.7</a> - 2022-04-02</a></h2>
+<h2 id="427---2022-04-02"><a class="header" href="#427---2022-04-02"><a href="https://github.com/dipdup-net/dipdup/compare/4.2.6...4.2.7">4.2.7</a> - 2022-04-02</a></h2>
 <h3 id="fixed-24"><a class="header" href="#fixed-24">Fixed</a></h3>
 <ul>
 <li>config: Fixed <code>jobs</code> config section validation.</li>
 <li>hasura: Fixed metadata generation for v2.3.0 and above.</li>
 <li>tzkt: Fixed <code>get_originated_contracts</code> and <code>get_similar_contracts</code> methods response.</li>
 </ul>
-<h2 id="500-rc3---2022-03-28"><a class="header" href="#500-rc3---2022-03-28"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc2...5.0.0-rc3">5.0.0-rc3</a> - 2022-03-28</a></h2>
+<h2 id="500-rc3---2022-03-28"><a class="header" href="#500-rc3---2022-03-28"><a href="https://github.com/dipdup-net/dipdup/compare/5.0.0-rc2...5.0.0-rc3">5.0.0-rc3</a> - 2022-03-28</a></h2>
 <h3 id="added-9"><a class="header" href="#added-9">Added</a></h3>
 <ul>
 <li>config: Added <code>custom</code> section to store arbitrary user data.</li>
@@ -4042,13 +4042,13 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>cli: Removed <code>docker init</code> command.</li>
 <li>cli: Removed dummy <code>schema approve --hashes</code> flag.</li>
 </ul>
-<h2 id="500-rc2---2022-03-13"><a class="header" href="#500-rc2---2022-03-13"><a href="https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc1...5.0.0-rc2">5.0.0-rc2</a> - 2022-03-13</a></h2>
+<h2 id="500-rc2---2022-03-13"><a class="header" href="#500-rc2---2022-03-13"><a href="https://github.com/dipdup-net/dipdup/compare/5.0.0-rc1...5.0.0-rc2">5.0.0-rc2</a> - 2022-03-13</a></h2>
 <h3 id="fixed-26"><a class="header" href="#fixed-26">Fixed</a></h3>
 <ul>
 <li>tzkt: Fixed crash in methods that do not support cursor pagination.</li>
 <li>prometheus: Fixed invalid metric labels. </li>
 </ul>
-<h2 id="500-rc1---2022-03-02"><a class="header" href="#500-rc1---2022-03-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.6...5.0.0-rc1">5.0.0-rc1</a> - 2022-03-02</a></h2>
+<h2 id="500-rc1---2022-03-02"><a class="header" href="#500-rc1---2022-03-02"><a href="https://github.com/dipdup-net/dipdup/compare/4.2.6...5.0.0-rc1">5.0.0-rc1</a> - 2022-03-02</a></h2>
 <h3 id="added-10"><a class="header" href="#added-10">Added</a></h3>
 <ul>
 <li>metadata: Added <code>metadata_interface</code> feature flag to expose metadata in TzKT format.</li>
@@ -4073,20 +4073,20 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>dipdup: Use fast <code>orjson</code> library instead of built-in <code>json</code> where possible.</li>
 </ul>
-<h2 id="426---2022-02-25"><a class="header" href="#426---2022-02-25"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.5...4.2.6">4.2.6</a> - 2022-02-25</a></h2>
+<h2 id="426---2022-02-25"><a class="header" href="#426---2022-02-25"><a href="https://github.com/dipdup-net/dipdup/compare/4.2.5...4.2.6">4.2.6</a> - 2022-02-25</a></h2>
 <h3 id="fixed-28"><a class="header" href="#fixed-28">Fixed</a></h3>
 <ul>
 <li>database: Fixed generating table names from uppercase model names.</li>
 <li>http: Fixed bug that leads to caching invalid responses on the disk.</li>
 <li>tzkt: Fixed processing realtime messages with data from multiple levels.</li>
 </ul>
-<h2 id="425---2022-02-21"><a class="header" href="#425---2022-02-21"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.4...4.2.5">4.2.5</a> - 2022-02-21</a></h2>
+<h2 id="425---2022-02-21"><a class="header" href="#425---2022-02-21"><a href="https://github.com/dipdup-net/dipdup/compare/4.2.4...4.2.5">4.2.5</a> - 2022-02-21</a></h2>
 <h3 id="fixed-29"><a class="header" href="#fixed-29">Fixed</a></h3>
 <ul>
 <li>database: Do not add the <code>schema</code> argument to the PostgreSQL connection string when not needed.</li>
 <li>hasura: Wait for Hasura to be configured before starting indexing.</li>
 </ul>
-<h2 id="424---2022-02-14"><a class="header" href="#424---2022-02-14"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.3...4.2.4">4.2.4</a> - 2022-02-14</a></h2>
+<h2 id="424---2022-02-14"><a class="header" href="#424---2022-02-14"><a href="https://github.com/dipdup-net/dipdup/compare/4.2.3...4.2.4">4.2.4</a> - 2022-02-14</a></h2>
 <h3 id="added-11"><a class="header" href="#added-11">Added</a></h3>
 <ul>
 <li>config: Added <code>http</code> datasource to making arbitrary http requests.</li>
@@ -4103,7 +4103,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>ci: Added GitHub Action to build and publish Docker images for each PR opened.</li>
 </ul>
-<h2 id="423---2022-02-08"><a class="header" href="#423---2022-02-08"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.2...4.2.3">4.2.3</a> - 2022-02-08</a></h2>
+<h2 id="423---2022-02-08"><a class="header" href="#423---2022-02-08"><a href="https://github.com/dipdup-net/dipdup/compare/4.2.2...4.2.3">4.2.3</a> - 2022-02-08</a></h2>
 <h3 id="fixed-31"><a class="header" href="#fixed-31">Fixed</a></h3>
 <ul>
 <li>ci: Removed <code>black 21.12b0</code> dependency since bug in <code>datamodel-codegen-generator</code> is fixed.</li>
@@ -4115,17 +4115,17 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>jobs: Fixed default <code>apscheduler</code> config.</li>
 <li>tzkt: Fixed crash occurring when reorg message is the first one received by the datasource.</li>
 </ul>
-<h2 id="422---2022-02-01"><a class="header" href="#422---2022-02-01"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.1...4.2.2">4.2.2</a> - 2022-02-01</a></h2>
+<h2 id="422---2022-02-01"><a class="header" href="#422---2022-02-01"><a href="https://github.com/dipdup-net/dipdup/compare/4.2.1...4.2.2">4.2.2</a> - 2022-02-01</a></h2>
 <h3 id="fixed-32"><a class="header" href="#fixed-32">Fixed</a></h3>
 <ul>
 <li>config: Fixed <code>ipfs</code> datasource config.</li>
 </ul>
-<h2 id="421---2022-01-31"><a class="header" href="#421---2022-01-31"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.2.0...4.2.1">4.2.1</a> - 2022-01-31</a></h2>
+<h2 id="421---2022-01-31"><a class="header" href="#421---2022-01-31"><a href="https://github.com/dipdup-net/dipdup/compare/4.2.0...4.2.1">4.2.1</a> - 2022-01-31</a></h2>
 <h3 id="fixed-33"><a class="header" href="#fixed-33">Fixed</a></h3>
 <ul>
 <li>ci: Added <code>black 21.12b0</code> dependency to avoid possible conflict with <code>datamodel-codegen-generator</code>.</li>
 </ul>
-<h2 id="420---2022-01-31"><a class="header" href="#420---2022-01-31"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.1.2...4.2.0">4.2.0</a> - 2022-01-31</a></h2>
+<h2 id="420---2022-01-31"><a class="header" href="#420---2022-01-31"><a href="https://github.com/dipdup-net/dipdup/compare/4.1.2...4.2.0">4.2.0</a> - 2022-01-31</a></h2>
 <h3 id="added-12"><a class="header" href="#added-12">Added</a></h3>
 <ul>
 <li>context: Added <code>wait</code> argument to <code>fire_hook</code> method to escape current transaction context.</li>
@@ -4147,7 +4147,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>dipdup: Removed unused internal methods.</li>
 </ul>
-<h2 id="412---2022-01-27"><a class="header" href="#412---2022-01-27"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.1.1...4.1.2">4.1.2</a> - 2022-01-27</a></h2>
+<h2 id="412---2022-01-27"><a class="header" href="#412---2022-01-27"><a href="https://github.com/dipdup-net/dipdup/compare/4.1.1...4.1.2">4.1.2</a> - 2022-01-27</a></h2>
 <h3 id="added-13"><a class="header" href="#added-13">Added</a></h3>
 <ul>
 <li>cli: Added <code>schema wipe --force</code> argument to skip confirmation prompt.</li>
@@ -4158,7 +4158,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>cli: Ignore <code>SIGINT</code> signal when shutdown is in progress.</li>
 <li>sentry: Ignore exceptions when shutdown is in progress.</li>
 </ul>
-<h2 id="411---2022-01-25"><a class="header" href="#411---2022-01-25"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.1.0...4.1.1">4.1.1</a> - 2022-01-25</a></h2>
+<h2 id="411---2022-01-25"><a class="header" href="#411---2022-01-25"><a href="https://github.com/dipdup-net/dipdup/compare/4.1.0...4.1.1">4.1.1</a> - 2022-01-25</a></h2>
 <h3 id="fixed-36"><a class="header" href="#fixed-36">Fixed</a></h3>
 <ul>
 <li>cli: Fixed stacktraces missing on exception.</li>
@@ -4175,7 +4175,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>hasura: Removed some useless requests.</li>
 </ul>
-<h2 id="410---2022-01-24"><a class="header" href="#410---2022-01-24"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.5...4.1.0">4.1.0</a> - 2022-01-24</a></h2>
+<h2 id="410---2022-01-24"><a class="header" href="#410---2022-01-24"><a href="https://github.com/dipdup-net/dipdup/compare/4.0.5...4.1.0">4.1.0</a> - 2022-01-24</a></h2>
 <h3 id="added-14"><a class="header" href="#added-14">Added</a></h3>
 <ul>
 <li>cli: Added <code>schema init</code> command to initialize database schema.</li>
@@ -4186,12 +4186,12 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>metadata: Added <code>metadata</code> datasource.</li>
 <li>tzkt: Added <code>get_big_map</code> and <code>get_contract_big_maps</code> datasource methods.</li>
 </ul>
-<h2 id="405---2022-01-20"><a class="header" href="#405---2022-01-20"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.4...4.0.5">4.0.5</a> - 2022-01-20</a></h2>
+<h2 id="405---2022-01-20"><a class="header" href="#405---2022-01-20"><a href="https://github.com/dipdup-net/dipdup/compare/4.0.4...4.0.5">4.0.5</a> - 2022-01-20</a></h2>
 <h3 id="fixed-37"><a class="header" href="#fixed-37">Fixed</a></h3>
 <ul>
 <li>index: Fixed deserializing manually modified typeclasses.</li>
 </ul>
-<h2 id="404---2022-01-17"><a class="header" href="#404---2022-01-17"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.3...4.0.4">4.0.4</a> - 2022-01-17</a></h2>
+<h2 id="404---2022-01-17"><a class="header" href="#404---2022-01-17"><a href="https://github.com/dipdup-net/dipdup/compare/4.0.3...4.0.4">4.0.4</a> - 2022-01-17</a></h2>
 <h3 id="added-15"><a class="header" href="#added-15">Added</a></h3>
 <ul>
 <li>cli: Added <code>--keep-schemas</code> flag to <code>init</code> command to preserve JSONSchemas along with generated types.</li>
@@ -4213,12 +4213,12 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>ci: Execute tests in parallel with <code>pytest-xdist</code> when possible.</li>
 <li>ci: More strict linting rules of <code>flake8</code>.</li>
 </ul>
-<h2 id="403---2022-01-09"><a class="header" href="#403---2022-01-09"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.2...4.0.3">4.0.3</a> - 2022-01-09</a></h2>
+<h2 id="403---2022-01-09"><a class="header" href="#403---2022-01-09"><a href="https://github.com/dipdup-net/dipdup/compare/4.0.2...4.0.3">4.0.3</a> - 2022-01-09</a></h2>
 <h3 id="fixed-39"><a class="header" href="#fixed-39">Fixed</a></h3>
 <ul>
 <li>tzkt: Fixed parsing parameter with an optional value.</li>
 </ul>
-<h2 id="402---2022-01-06"><a class="header" href="#402---2022-01-06"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.1...4.0.2">4.0.2</a> - 2022-01-06</a></h2>
+<h2 id="402---2022-01-06"><a class="header" href="#402---2022-01-06"><a href="https://github.com/dipdup-net/dipdup/compare/4.0.1...4.0.2">4.0.2</a> - 2022-01-06</a></h2>
 <h3 id="added-16"><a class="header" href="#added-16">Added</a></h3>
 <ul>
 <li>tzkt: Added optional <code>delegate_address</code> and <code>delegate_alias</code> fields to <code>OperationData</code>.</li>
@@ -4229,7 +4229,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>tzkt: Fixed parsing <code>OperationData.amount</code> field.</li>
 <li>tzkt: Fixed parsing storage with top-level boolean fields.</li>
 </ul>
-<h2 id="401---2021-12-30"><a class="header" href="#401---2021-12-30"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.0...4.0.1">4.0.1</a> - 2021-12-30</a></h2>
+<h2 id="401---2021-12-30"><a class="header" href="#401---2021-12-30"><a href="https://github.com/dipdup-net/dipdup/compare/4.0.0...4.0.1">4.0.1</a> - 2021-12-30</a></h2>
 <h3 id="fixed-41"><a class="header" href="#fixed-41">Fixed</a></h3>
 <ul>
 <li>codegen: Fixed generating storage typeclasses with <code>Union</code> fields.</li>
@@ -4242,9 +4242,9 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>tzkt: Increased speed of applying bigmap diffs to operation storage.</li>
 </ul>
-<h2 id="400---2021-12-24"><a class="header" href="#400---2021-12-24"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.0-rc3...4.0.0">4.0.0</a> - 2021-12-24</a></h2>
+<h2 id="400---2021-12-24"><a class="header" href="#400---2021-12-24"><a href="https://github.com/dipdup-net/dipdup/compare/4.0.0-rc3...4.0.0">4.0.0</a> - 2021-12-24</a></h2>
 <p>This release contains no changes except for the version number.</p>
-<h2 id="400-rc3---2021-12-20"><a class="header" href="#400-rc3---2021-12-20"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.0-rc2...4.0.0-rc3">4.0.0-rc3</a> - 2021-12-20</a></h2>
+<h2 id="400-rc3---2021-12-20"><a class="header" href="#400-rc3---2021-12-20"><a href="https://github.com/dipdup-net/dipdup/compare/4.0.0-rc2...4.0.0-rc3">4.0.0-rc3</a> - 2021-12-20</a></h2>
 <h3 id="fixed-42"><a class="header" href="#fixed-42">Fixed</a></h3>
 <ul>
 <li>cli: Fixed missing <code>schema approve --hashes</code> argument.</li>
@@ -4257,7 +4257,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>cli: Removed deprecated <code>run --oneshot</code> argument and <code>clear-cache</code> command.</li>
 </ul>
-<h2 id="400-rc2---2021-12-11"><a class="header" href="#400-rc2---2021-12-11"><a href="https://github.com/dipdup-net/dipdup-py/compare/4.0.0-rc1...4.0.0-rc2">4.0.0-rc2</a> - 2021-12-11</a></h2>
+<h2 id="400-rc2---2021-12-11"><a class="header" href="#400-rc2---2021-12-11"><a href="https://github.com/dipdup-net/dipdup/compare/4.0.0-rc1...4.0.0-rc2">4.0.0-rc2</a> - 2021-12-11</a></h2>
 <h3 id="migration"><a class="header" href="#migration">Migration</a></h3>
 <ul>
 <li>Run <code>dipdup init</code> command to generate <code>on_synchronized</code> hook stubs.</li>
@@ -4278,7 +4278,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>index: Checks performed on each iteration of the main DipDup loop are slightly faster now.</li>
 </ul>
-<h2 id="400-rc1---2021-12-02"><a class="header" href="#400-rc1---2021-12-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.1.3...4.0.0-rc1">4.0.0-rc1</a> - 2021-12-02</a></h2>
+<h2 id="400-rc1---2021-12-02"><a class="header" href="#400-rc1---2021-12-02"><a href="https://github.com/dipdup-net/dipdup/compare/3.1.3...4.0.0-rc1">4.0.0-rc1</a> - 2021-12-02</a></h2>
 <h3 id="migration-1"><a class="header" href="#migration-1">Migration</a></h3>
 <ul>
 <li>Run <code>dipdup schema approve</code> command on every database you want to use with 4.0.0-rc1. Running <code>dipdup migrate</code> is not necessary since <code>spec_version</code> hasn't changed in this release.</li>
@@ -4326,35 +4326,35 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>tzkt: Rate limit was increased. Try to set <code>connection_timeout</code> to a higher value if requests fail with <code>ConnectionTimeout</code> exception.</li>
 <li>tzkt: Improved performance of response deserialization. </li>
 </ul>
-<h2 id="313---2021-11-15"><a class="header" href="#313---2021-11-15"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.1.2...3.1.3">3.1.3</a> - 2021-11-15</a></h2>
+<h2 id="313---2021-11-15"><a class="header" href="#313---2021-11-15"><a href="https://github.com/dipdup-net/dipdup/compare/3.1.2...3.1.3">3.1.3</a> - 2021-11-15</a></h2>
 <h3 id="fixed-45"><a class="header" href="#fixed-45">Fixed</a></h3>
 <ul>
 <li>codegen: Fixed missing imports in operation handlers. </li>
 <li>codegen: Fixed invalid imports and arguments in big_map handlers.</li>
 </ul>
-<h2 id="312---2021-11-02"><a class="header" href="#312---2021-11-02"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.1.1...3.1.2">3.1.2</a> - 2021-11-02</a></h2>
+<h2 id="312---2021-11-02"><a class="header" href="#312---2021-11-02"><a href="https://github.com/dipdup-net/dipdup/compare/3.1.1...3.1.2">3.1.2</a> - 2021-11-02</a></h2>
 <h3 id="fixed-46"><a class="header" href="#fixed-46">Fixed</a></h3>
 <ul>
 <li>Fixed crash occurred during synchronization of big map indexes.</li>
 </ul>
-<h2 id="311---2021-10-18"><a class="header" href="#311---2021-10-18"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.1.0...3.1.1">3.1.1</a> - 2021-10-18</a></h2>
+<h2 id="311---2021-10-18"><a class="header" href="#311---2021-10-18"><a href="https://github.com/dipdup-net/dipdup/compare/3.1.0...3.1.1">3.1.1</a> - 2021-10-18</a></h2>
 <h3 id="fixed-47"><a class="header" href="#fixed-47">Fixed</a></h3>
 <ul>
 <li>Fixed loss of realtime subscriptions occurred after TzKT API outage.</li>
 <li>Fixed updating schema hash in <code>schema approve</code> command.</li>
 <li>Fixed possible crash occurred while Hasura is not ready.</li>
 </ul>
-<h2 id="310---2021-10-12"><a class="header" href="#310---2021-10-12"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.4...3.1.0">3.1.0</a> - 2021-10-12</a></h2>
+<h2 id="310---2021-10-12"><a class="header" href="#310---2021-10-12"><a href="https://github.com/dipdup-net/dipdup/compare/3.0.4...3.1.0">3.1.0</a> - 2021-10-12</a></h2>
 <h3 id="added-19"><a class="header" href="#added-19">Added</a></h3>
 <ul>
-<li>New index class <code>HeadIndex</code> (configuration: <a href="https://github.com/dipdup-net/dipdup-py/blob/master/src/dipdup/config.py#L778"><code>dipdup.config.HeadIndexConfig</code></a>). Use this index type to handle head (limited block header content) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.</li>
+<li>New index class <code>HeadIndex</code> (configuration: <a href="https://github.com/dipdup-net/dipdup/blob/master/src/dipdup/config.py#L778"><code>dipdup.config.HeadIndexConfig</code></a>). Use this index type to handle head (limited block header content) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.</li>
 <li>Added three new commands: <code>schema approve</code>, <code>schema wipe</code>, and <code>schema export</code>. Run <code>dipdup schema --help</code> command for details.</li>
 </ul>
 <h3 id="changed-4"><a class="header" href="#changed-4">Changed</a></h3>
 <ul>
 <li>Triggering reindexing won't lead to dropping the database automatically anymore. <code>ReindexingRequiredError</code> is raised instead. <code>--forbid-reindexing</code> option has become default.</li>
 <li><code>--reindex</code> option is removed. Use <code>dipdup schema wipe</code> instead.</li>
-<li>Values of <code>dipdup_schema.reindex</code> field updated to simplify querying database. See <a href="https://github.com/dipdup-net/dipdup-py/blob/master/src/dipdup/enums.py"><code>dipdup.enums.ReindexingReason</code></a> class for possible values.</li>
+<li>Values of <code>dipdup_schema.reindex</code> field updated to simplify querying database. See <a href="https://github.com/dipdup-net/dipdup/blob/master/src/dipdup/enums.py"><code>dipdup.enums.ReindexingReason</code></a> class for possible values.</li>
 </ul>
 <h3 id="fixed-48"><a class="header" href="#fixed-48">Fixed</a></h3>
 <ul>
@@ -4370,7 +4370,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>Another bunch of performance optimizations. Reduced DB pressure, speeded up parallel processing lots of indexes.</li>
 <li>Added initial set of performance benchmarks (run: <code>./scripts/run_benchmarks.sh</code>)</li>
 </ul>
-<h2 id="304---2021-10-04"><a class="header" href="#304---2021-10-04"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.3...3.0.4">3.0.4</a> - 2021-10-04</a></h2>
+<h2 id="304---2021-10-04"><a class="header" href="#304---2021-10-04"><a href="https://github.com/dipdup-net/dipdup/compare/3.0.3...3.0.4">3.0.4</a> - 2021-10-04</a></h2>
 <h3 id="improved-2"><a class="header" href="#improved-2">Improved</a></h3>
 <ul>
 <li>A significant increase in indexing speed.</li>
@@ -4385,12 +4385,12 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>Public methods of <code>TzktDatasource</code> now return immutable sequences.</li>
 </ul>
-<h2 id="303---2021-10-01"><a class="header" href="#303---2021-10-01"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.2...3.0.3">3.0.3</a> - 2021-10-01</a></h2>
+<h2 id="303---2021-10-01"><a class="header" href="#303---2021-10-01"><a href="https://github.com/dipdup-net/dipdup/compare/3.0.2...3.0.3">3.0.3</a> - 2021-10-01</a></h2>
 <h3 id="fixed-50"><a class="header" href="#fixed-50">Fixed</a></h3>
 <ul>
 <li>Fixed processing of single-level rollbacks emitted before rolled back head.</li>
 </ul>
-<h2 id="302---2021-09-30"><a class="header" href="#302---2021-09-30"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.1...3.0.2">3.0.2</a> - 2021-09-30</a></h2>
+<h2 id="302---2021-09-30"><a class="header" href="#302---2021-09-30"><a href="https://github.com/dipdup-net/dipdup/compare/3.0.1...3.0.2">3.0.2</a> - 2021-09-30</a></h2>
 <h3 id="added-20"><a class="header" href="#added-20">Added</a></h3>
 <ul>
 <li>Human-readable <code>CHANGELOG.md</code> 🕺</li>
@@ -4418,7 +4418,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>Fixed job scheduler start delay.</li>
 <li>Fixed processing of reorg messages.</li>
 </ul>
-<h2 id="301---2021-09-24"><a class="header" href="#301---2021-09-24"><a href="https://github.com/dipdup-net/dipdup-py/compare/3.0.0...3.0.1">3.0.1</a> - 2021-09-24</a></h2>
+<h2 id="301---2021-09-24"><a class="header" href="#301---2021-09-24"><a href="https://github.com/dipdup-net/dipdup/compare/3.0.0...3.0.1">3.0.1</a> - 2021-09-24</a></h2>
 <h3 id="added-21"><a class="header" href="#added-21">Added</a></h3>
 <ul>
 <li>Added <code>get_quote</code> and <code>get_quotes</code> methods to <code>TzKTDatasource</code>.</li>
