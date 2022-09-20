@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- metadata: Updated protocol aliases.
+
 ## [6.1.2] - 2022-09-16
 
 ### Added

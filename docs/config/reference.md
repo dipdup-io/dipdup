@@ -334,7 +334,7 @@ http: HTTP client configuration</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> – always ‘metadata’</p></li>
-<li><p><strong>network</strong> – Network name, e.g. mainnet, hangzhounet, etc.</p></li>
+<li><p><strong>network</strong> – Network name, e.g. mainnet, ghostnet, etc.</p></li>
 <li><p><strong>url</strong> – GraphQL API URL, e.g. <a class="reference external" href="https://metadata.dipdup.net">https://metadata.dipdup.net</a></p></li>
 <li><p><strong>http</strong> – HTTP client configuration</p></li>
 </ul>
