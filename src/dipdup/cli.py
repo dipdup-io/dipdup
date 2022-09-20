@@ -246,7 +246,7 @@ async def _check_version() -> None:
 async def cli(ctx, config: List[str], env_file: List[str]):
     """Manage and run DipDup indexers.
 
-    Full docs: https://dipdup.net/docs
+    Full docs: https://docs.dipdup.io
 
     Report an issue: https://github.com/dipdup-net/dipdup/issues
     """
