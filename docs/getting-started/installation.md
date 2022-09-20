@@ -12,7 +12,7 @@ Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space fo
 
 DipDup currently doesn't work in Windows environments due to incompatibilities in libraries it depends on. Please use WSL or Docker.
 
-We aim to improve cross-platform compatibility in future releases ([issue](https://github.com/dipdup-net/dipdup-py/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+)).
+We aim to improve cross-platform compatibility in future releases ([issue](https://github.com/dipdup-net/dipdup/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+)).
 
 > 💡 **SEE ALSO**
 >
