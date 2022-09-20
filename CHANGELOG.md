@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning].
 - sentry: Unwrap `CallbackError` traceback to fix event grouping.
 - sentry: Hide "attempting to send..." message on shutdown.
 
+### Other
+
+- ci: Do not build default and `-pytezos` nightly images.
+
 ## [6.1.2] - 2022-09-16
 
 ### Added
