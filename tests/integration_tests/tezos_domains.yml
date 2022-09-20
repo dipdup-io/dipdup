@@ -14,6 +14,8 @@ datasources:
   tzkt:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: /tmp/dipdup/replays
 
 templates:
   tezos_domains:
