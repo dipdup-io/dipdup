@@ -1,6 +1,8 @@
+import tempfile
 import textwrap
 from dataclasses import dataclass
 from dataclasses import field
+from os.path import join
 from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import Dict
@@ -27,30 +29,35 @@ def indent(text: str, indent: int = 2) -> str:
     return textwrap.indent(text, ' ' * indent)
 
 
-def save_tombstone(error: Exception) -> str:
-    """Saves a tombstone file with Sentry error data, returns the path to the tempfile"""
+def save_crashdump(error: Exception) -> str:
+    """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
     # NOTE: Lazy import to speed up startup
     import sentry_sdk.serializer
     import sentry_sdk.utils
+
+    from dipdup.utils import mkdir_p
 
     exc_info = sentry_sdk.utils.exc_info_from_error(error)
     event, _ = sentry_sdk.utils.event_from_exception(exc_info)
     event = sentry_sdk.serializer.serialize(event)
 
-    tombstone_file = NamedTemporaryFile(
-        mode='wb',
+    tmp_dir = join(tempfile.gettempdir(), 'dipdup', 'crashdumps')
+    mkdir_p(tmp_dir)
+
+    crashdump_file = NamedTemporaryFile(
+        mode='ab',
         suffix='.json',
-        prefix='dipdup-tombstone_',
+        dir=tmp_dir,
         delete=False,
     )
-    with tombstone_file as f:
+    with crashdump_file as f:
         f.write(
             json.dumps(
                 event,
                 option=json.OPT_INDENT_2,
             ),
         )
-    return tombstone_file.name
+    return crashdump_file.name
 
 
 class DipDupException(Exception):

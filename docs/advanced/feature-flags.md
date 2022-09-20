@@ -44,4 +44,4 @@ Disables warning about running unstable or out-of-date DipDup version.
 
 ## Crash reporting
 
-Enables sending crash reports to the Baking Bad team. This is **disabled by default**. You can inspect crash dumps saved as `/tmp/dipdup-tombstone_XXXXXXX.json` before enabling this option.
+Enables sending crash reports to the Baking Bad team. This is **disabled by default**. You can inspect crash dumps saved as `/tmp/dipdup/crashdumps/XXXXXXX.json` before enabling this option.
