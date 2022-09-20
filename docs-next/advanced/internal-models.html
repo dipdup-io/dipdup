@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
                         </script>
 
                     </div>
@@ -150,8 +150,8 @@
 <tr><td style="text-align: left"><code>Index</code></td><td style="text-align: left"><code>dipdup_index</code></td><td style="text-align: left">Indexing status, level of the latest processed block, template, and template values if applicable.</td></tr>
 <tr><td style="text-align: left"><code>Contract</code></td><td style="text-align: left"><code>dipdup_contract</code></td><td style="text-align: left">Nothing useful for us humans. It helps DipDup to keep track of dynamically spawned contracts.</td></tr>
 <tr><td style="text-align: left"><code>ModelUpdate</code></td><td style="text-align: left"><code>dipdup_model_update</code></td><td style="text-align: left">Service table to store model diffs for database rollback.</td></tr>
-<tr><td style="text-align: left"><code>ContractMetadata</code></td><td style="text-align: left"><code>dipdup_contract_metadata</code></td><td style="text-align: left">See <a href="https://docs-next.dipdup.io/advanced/metadata-interface.html">3.12. Metadata interface</a></td></tr>
-<tr><td style="text-align: left"><code>TokenMetadata</code></td><td style="text-align: left"><code>dipdup_token_metadata</code></td><td style="text-align: left">See <a href="https://docs-next.dipdup.io/advanced/metadata-interface.html">3.12. Metadata interface</a></td></tr>
+<tr><td style="text-align: left"><code>ContractMetadata</code></td><td style="text-align: left"><code>dipdup_contract_metadata</code></td><td style="text-align: left">See <a href="https://dipdup.net/docs-next/advanced/metadata-interface.html">3.12. Metadata interface</a></td></tr>
+<tr><td style="text-align: left"><code>TokenMetadata</code></td><td style="text-align: left"><code>dipdup_token_metadata</code></td><td style="text-align: left">See <a href="https://dipdup.net/docs-next/advanced/metadata-interface.html">3.12. Metadata interface</a></td></tr>
 </tbody></table>
 </div>
 <p>With the help of these tables, you can set up monitoring of DipDup deployment to know when something goes wrong:</p>

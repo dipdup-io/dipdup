@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
                         </script>
 
                     </div>
@@ -162,9 +162,9 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config env
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
-<li><a href="https://docs-next.dipdup.io/cli-reference.html#dipdup-config-export">13. Command-line reference → dipdup-config-export</a></li>
-<li><a href="https://docs-next.dipdup.io/cli-reference.html#dipdup-config-env">13. Command-line reference → dipdup-config-env</a></li>
-<li><a href="https://docs-next.dipdup.io/config/index.html">14. Config file reference</a></li>
+<li><a href="https://dipdup.net/docs-next/cli-reference.html#dipdup-config-export">13. Command-line reference → dipdup-config-export</a></li>
+<li><a href="https://dipdup.net/docs-next/cli-reference.html#dipdup-config-env">13. Command-line reference → dipdup-config-env</a></li>
+<li><a href="https://dipdup.net/docs-next/config/index.html">14. Config file reference</a></li>
 </ul>
 </blockquote>
 <h2 id="enable-debug-logging-and-crash-reporting"><a class="header" href="#enable-debug-logging-and-crash-reporting">Enable debug logging and crash reporting</a></h2>
@@ -181,7 +181,7 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config env
 poetry run flake8
 poetry run mypy
 </code></pre>
-<p>You can find a more complex example in DipDup's <a href="https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/pyproject.toml">pyproject.toml</a> or use the cookiecutter template to create a new project with all recommended bells and whistles (see <a href="https://docs-next.dipdup.io/quickstart.html#from-template">1. Quickstart → from-template</a>).</p>
+<p>You can find a more complex example in DipDup's <a href="https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/pyproject.toml">pyproject.toml</a> or use the cookiecutter template to create a new project with all recommended bells and whistles (see <a href="https://dipdup.net/docs-next/quickstart.html#from-template">1. Quickstart → from-template</a>).</p>
 <h2 id="explore-contract-calls-in-better-call-dev"><a class="header" href="#explore-contract-calls-in-better-call-dev">Explore contract calls in Better Call Dev</a></h2>
 <p><a href="https://better-call.dev">Better Call Dev</a> is a blockchain explorer for Tezos smart contracts. It provides a more human-friendly interface than TzKT to explore exact contract calls and parameter/storage structures.</p>
 <p><img src="assets/troubleshooting-bcd.png" alt="BCD" /></p>

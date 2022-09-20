@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
                         </script>
 
                     </div>
@@ -447,7 +447,7 @@ http: HTTP client configuration</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> – always ‘metadata’</p></li>
-<li><p><strong>network</strong> – Network name, e.g. mainnet, hangzhounet, etc.</p></li>
+<li><p><strong>network</strong> – Network name, e.g. mainnet, ghostnet, etc.</p></li>
 <li><p><strong>url</strong> – GraphQL API URL, e.g. <a class="reference external" href="https://metadata.dipdup.net">https://metadata.dipdup.net</a></p></li>
 <li><p><strong>http</strong> – HTTP client configuration</p></li>
 </ul>

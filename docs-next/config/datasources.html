@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
                         </script>
 
                     </div>
@@ -170,7 +170,7 @@
   metadata:
     kind: metadata
     url: https://metadata.dipdup.net
-    network: mainnet|hangzhounet
+    network: mainnet|ghostnet|jakartanet|kathmandunet
 </code></pre>
 <h2 id="ipfs"><a class="header" href="#ipfs">ipfs</a></h2>
 <pre><code class="language-yaml">datasources:
@@ -181,7 +181,7 @@
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
-<li><a href="https://docs-next.dipdup.io/advanced/datasources.html">3.1. Datasources</a></li>
+<li><a href="https://dipdup.net/docs-next/advanced/datasources.html">3.1. Datasources</a></li>
 </ul>
 </blockquote>
 
