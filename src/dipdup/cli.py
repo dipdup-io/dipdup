@@ -127,10 +127,24 @@ def _sentry_before_send(
     if _is_shutting_down:
         return None
 
+    # NOTE: Tests and CI
+    if 'pytest' in sys.modules or 'CI' in os.environ:
+        return None
+
     # NOTE: User-generated events (e.g. from `ctx.logger`)
     if logger_name := event['logger']:
         if crash_reporting and not logger_name.startswith('dipdup'):
             return None
+
+    # NOTE: Dark magic ahead. Merge CallbackError and its cause when possible.
+    with suppress(KeyError, IndexError):
+        exceptions = event['exception']['values']
+        if exceptions[-1]['type'] == 'CallbackError':
+            wrapper_frames = exceptions[-1]['stacktrace']['frames']
+            crash_frames = exceptions[-2]['stacktrace']['frames']
+            exceptions[-2]['stacktrace']['frames'] = wrapper_frames + crash_frames
+            event['message'] = exceptions[-2]['value']
+            del exceptions[-1]
 
     return event
 
@@ -147,8 +161,11 @@ def _init_sentry(config: DipDupConfig) -> None:
         level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
 
     # NOTE: Lazy import to speed up startup
+    import hashlib
+
     import sentry_sdk
     from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+    from sentry_sdk.integrations.atexit import AtexitIntegration
     from sentry_sdk.integrations.logging import LoggingIntegration
 
     integrations = [
@@ -157,6 +174,7 @@ def _init_sentry(config: DipDupConfig) -> None:
             level=level,
             event_level=event_level,
         ),
+        AtexitIntegration(lambda _, __: None),
     ]
     init_kwargs: Dict[str, Any] = {
         'dsn': config.sentry.dsn,
@@ -174,8 +192,17 @@ def _init_sentry(config: DipDupConfig) -> None:
         init_kwargs['server_name'] = config.sentry.server_name
 
     sentry_sdk.init(**init_kwargs)
+
     sentry_sdk.set_tag('dipdup_version', __version__)
     sentry_sdk.set_tag('dipdup_package', config.package)
+
+    # NOTE: Obfuscated package/connection pair
+    user_id = hashlib.sha256(
+        (config.package + config.database.connection_string).encode(),
+    ).hexdigest()[:8]
+
+    sentry_sdk.set_user({'id': user_id})
+    sentry_sdk.Hub.current.start_session()
 
 
 async def _check_version() -> None:

@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+### Added
+
+- sentry: Enable crash-free session reporting.
+
 ### Fixed
 
 - metadata: Updated protocol aliases.
+- sentry: Unwrap `CallbackError` traceback to fix event grouping.
+- sentry: Hide "attempting to send..." message on shutdown.
 
 ## [6.1.2] - 2022-09-16
 
