@@ -52,7 +52,7 @@ jobs:
 
     - name: Build docs (docs)
       if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, '-rc')
-      run: MDBOOK_ROOT=https://docs.dipdup.net make docs
+      run: MDBOOK_ROOT=https://docs.dipdup.io make docs
 
     - name: Deploy to GH Pages (docs)
       if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, '-rc')
@@ -64,7 +64,7 @@ jobs:
 
     - name: Build docs (docs-next)
       if: startsWith(github.ref, 'refs/heads') || contains(github.ref, '-rc')
-      run: MDBOOK_ROOT=https://docs-next.dipdup.net make docs
+      run: MDBOOK_ROOT=https://docs-next.dipdup.io make docs
 
     - name: Deploy to GH Pages (docs-next)
       if: startsWith(github.ref, 'refs/heads') || contains(github.ref, '-rc')
