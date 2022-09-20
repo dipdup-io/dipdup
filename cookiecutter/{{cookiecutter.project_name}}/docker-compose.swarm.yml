@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   dipdup:
-    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-net/dipdup-py:${TAG:-master}
+    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-net/dipdup:${TAG:-master}
     depends_on:
       - db
       - hasura
