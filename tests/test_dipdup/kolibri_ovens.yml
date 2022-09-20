@@ -10,6 +10,8 @@ datasources:
   tzkt:
     kind: tzkt
     url: https://api.tzkt.io
+    http:
+      replay_path: /tmp/dipdup/replays
 
 indexes:
   kolibri_ovens:

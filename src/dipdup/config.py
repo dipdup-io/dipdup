@@ -175,6 +175,7 @@ class HTTPConfig:
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
     :param batch_size: Number of items fetched in a single paginated request (for some APIs)
+    :param replay_path: Development-only option to replay HTTP requests from a file
     """
 
     retry_count: Optional[int] = None
@@ -185,6 +186,7 @@ class HTTPConfig:
     connection_limit: Optional[int] = None  # default 100
     connection_timeout: Optional[int] = None  # default 60
     batch_size: Optional[int] = None
+    replay_path: Optional[str] = None
 
     def merge(self, other: Optional['HTTPConfig']) -> 'HTTPConfig':
         """Set missing values from other config"""
