@@ -5,6 +5,8 @@ import platform
 from contextlib import suppress
 from http import HTTPStatus
 from json import JSONDecodeError
+from os.path import isfile
+from os.path import join
 from typing import Any
 from typing import Mapping
 from typing import Optional
@@ -14,7 +16,6 @@ from typing import cast
 import aiohttp
 import orjson
 from aiolimiter import AsyncLimiter
-from genericpath import isfile
 
 from dipdup import __version__
 from dipdup.config import HTTPConfig
@@ -213,8 +214,8 @@ class _HTTPGateway:
             f'{self._url} {method} {url} {kwargs}'.encode(),
         ).hexdigest()
         if not self._config.replay_path:
-            raise Exception
-        replay_path = self._config.replay_path.rstrip('/') + '/' + request_hash
+            raise RuntimeError('Replay path is not set')
+        replay_path = join(self._config.replay_path.rstrip('/'), request_hash)
 
         if isfile(replay_path):
             with open(replay_path, 'rb') as file:
