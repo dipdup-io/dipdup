@@ -295,7 +295,7 @@ class MetadataDatasourceConfig(NameMixin):
     """DipDup Metadata datasource config
 
     :param kind: always 'metadata'
-    :param network: Network name, e.g. mainnet, hangzhounet, etc.
+    :param network: Network name, e.g. mainnet, ghostnet, etc.
     :param url: GraphQL API URL, e.g. https://metadata.dipdup.net
     :param http: HTTP client configuration
     """

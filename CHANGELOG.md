@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning].
 
 ### Fixed
 
+- metadata: Updated protocol aliases.
 - sentry: Unwrap `CallbackError` traceback to fix event grouping.
 - sentry: Hide "attempting to send..." message on shutdown.
 
