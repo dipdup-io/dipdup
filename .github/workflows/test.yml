@@ -40,7 +40,7 @@ jobs:
         with:
           version: '1.2.0'
 
-      - name: Set up cache
+      - name: Set up cache (venv)
         uses: actions/cache@v2
         id: cache-venv
         with:
@@ -48,6 +48,15 @@ jobs:
           key: ${{ runner.os }}-venv-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
             ${{ runner.os }}-venv-
+
+      - name: Set up cache (replays)
+        uses: actions/cache@v2
+        id: cache-replays
+        with:
+          path: /tmp/dipdup/replays
+          key: ${{ runner.os }}-replays-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-replays-
 
       - name: Install project
         run: make install
