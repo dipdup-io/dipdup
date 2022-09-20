@@ -192,19 +192,19 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
     async def test_get_migration_originations(self) -> None:
         async with with_tzkt(2) as tzkt:
             originations = await tzkt.get_migration_originations()
-            self.assertEqual(67955553, originations[0].id)
-            self.assertEqual(67955554, originations[1].id)
+            self.assertEqual(66864948445184, originations[0].id)
+            self.assertEqual(66864949493760, originations[1].id)
 
     async def test_iter_migration_originations(self) -> None:
         async with with_tzkt(1) as tzkt:
             originations = await take_two(tzkt.iter_migration_originations())
-            self.assertEqual(67955553, originations[0].id)
-            self.assertEqual(67955554, originations[1].id)
+            self.assertEqual(66864948445184, originations[0].id)
+            self.assertEqual(66864949493760, originations[1].id)
 
     async def test_get_originations(self) -> None:
-        async with with_tzkt(1, 'https://tzkt-mainnet.dipdup.net') as tzkt:
+        async with with_tzkt(1) as tzkt:
             originations = await tzkt.get_originations({'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'}, 889027, 889027)
-            self.assertEqual(23812803, originations[0].id)
+            self.assertEqual(24969533718528, originations[0].id)
             self.assertEqual(('fa12',), originations[0].originated_contract_tzips)
 
     async def test_on_operation_message_data(self) -> None:
