@@ -39,7 +39,7 @@ from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
 from dipdup.exceptions import _tab
-from dipdup.exceptions import save_tombstone
+from dipdup.exceptions import save_crashdump
 from dipdup.hasura import HasuraGateway
 from dipdup.models import Index
 from dipdup.models import Schema
@@ -90,10 +90,10 @@ async def _shutdown() -> None:
     await asyncio.gather(*tasks, return_exceptions=True)
 
 
-def _print_help(error: Exception, tombstone_path: str) -> None:
+def _print_help(error: Exception, crashdump_path: str) -> None:
     """Prints helpful error message after traceback"""
     help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
-    help_message += _tab + f'Tombstone saved to `{tombstone_path}`'
+    help_message += _tab + f'Crashdump saved to `{crashdump_path}`'
     atexit.register(partial(click.echo, help_message, err=True))
 
 
@@ -111,8 +111,8 @@ def cli_wrapper(fn):
             pass
         except Exception as e:
             _logger.exception('Unhandled exception caught')
-            tombstone_path = save_tombstone(e)
-            _print_help(e, tombstone_path)
+            crashdump_path = save_crashdump(e)
+            _print_help(e, crashdump_path)
             raise
 
     return wrapper
@@ -270,6 +270,8 @@ async def cli(ctx, config: List[str], env_file: List[str]):
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
     _init_sentry(_config)
+
+    raise Exception
 
     # NOTE: Fire and forget, do not block instant commands
     if not _config.advanced.skip_version_check:
