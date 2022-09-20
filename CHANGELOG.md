@@ -61,7 +61,7 @@ This release contains no changes except for the version number.
 ### Added
 
 - config: Added `advanced.crash_reporting` flag to enable reporting crashes to Baking Bad.
-- dipdup: Save Sentry tombstone in `/tmp/dipdup-tombstone_XXXXXXX.json` on a crash.
+- dipdup: Save Sentry crashdump in `/tmp/dipdup/crashdumps/XXXXXXX.json` on a crash.
 
 ### Fixed
 

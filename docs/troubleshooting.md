@@ -45,7 +45,7 @@ More logs can give you a clue about the reason for an issue. Enable them in conf
 logging: verbose
 ```
 
-When an exception occurs DipDup saves crash dumps to `/tmp/dipdup-tombstone_XXXXXXX.json`. You can send those dumps to Baking Bad automatically:
+When an exception occurs DipDup saves crash dumps to `/tmp/dipdup/crashdumps/XXXXXXX.json`. You can send those dumps to Baking Bad automatically:
 
 ```yaml
 advanced:
