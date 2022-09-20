@@ -271,8 +271,6 @@ async def cli(ctx, config: List[str], env_file: List[str]):
     _config.initialize(skip_imports=True)
     _init_sentry(_config)
 
-    raise Exception
-
     # NOTE: Fire and forget, do not block instant commands
     if not _config.advanced.skip_version_check:
         asyncio.ensure_future(_check_version())
