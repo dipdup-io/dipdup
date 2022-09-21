@@ -3,18 +3,12 @@ import os
 import subprocess
 import sys
 from functools import partial
-from os import environ as env
-from os.path import join
 from shutil import rmtree
 from shutil import which
-from tempfile import TemporaryDirectory
 from typing import NoReturn
 
-TEMPLATE = env.get('TEMPLATE', 'master')
-TEMPLATE_REPOSITORY = 'https://github.com/dipdup-net/dipdup'
-TEMPLATE_PATH = 'cookiecutter'
-CACHED_TEMPLATE_PATH = join(env["HOME"], '.cookiecutters', 'dipdup')
-CWD = os.getcwd()
+DEFAULT_REPO = 'https://github.com/dipdup-net/dipdup'
+DEFAULT_REF = 'master'
 
 run = partial(subprocess.run, check=True, shell=True)
 
@@ -27,11 +21,7 @@ class bcolors:
 
 
 def echo(msg: str, color: str = bcolors.OKBLUE) -> None:
-    print(color + f'==> {msg}' + bcolors.ENDC)
-
-
-def err(msg: str, color: str = bcolors.FAIL) -> None:
-    print(color + msg + bcolors.ENDC)
+    print(color + f'=> {msg}' + bcolors.ENDC)
 
 
 def fail(msg: str) -> NoReturn:
@@ -39,26 +29,48 @@ def fail(msg: str) -> NoReturn:
     sys.exit(1)
 
 
-echo(f'Installing DipDup from template `{TEMPLATE}`')
+def done(msg: str) -> NoReturn:
+    echo(msg, color=bcolors.OKGREEN)
+    sys.exit(0)
 
-echo('Checking for dependencies')
-for binary in ('git', 'make', 'poetry'):
-    if not which(binary):
-        fail(f'`{binary}` not found, install it and try again')
 
-with TemporaryDirectory(prefix='dipdup-install-') as tmpdir:
-    echo(f'Preparing `{tmpdir}` environment')
+def main(
+    quiet: bool = False,
+    repo: str = DEFAULT_REPO,
+    ref: str = DEFAULT_REF,
+) -> None:
+    if sys.version_info < (3, 10):
+        fail('DipDup requires Python 3.10')
 
-    run(f'python -m venv {tmpdir}', cwd=tmpdir)
-    run('bin/python -m pip install -Uq pip cookiecutter', cwd=tmpdir)
+    echo('Welcome to DipDup installer')
 
-    rmtree(CACHED_TEMPLATE_PATH, ignore_errors=True)
-    if TEMPLATE == 'CI':
-        run(f'{tmpdir}/bin/cookiecutter --no-input {TEMPLATE_PATH}')
+    if not which('pipx'):
+        echo('Installing pipx')
+        run('pip install --user -q pipx')
+        run('python -m pipx ensurepath')
+
+    if not which('cookiecutter'):
+        echo('Installing cookiecutter')
+        run('pipx install cookiecutter')
+
+    if not which('poetry'):
+        echo('Installing poetry')
+        run('pipx install poetry')
+
+    cookiecutter_cmd = 'cookiecutter'
+    if repo.startswith(('git@', 'https://')):
+        echo('Using remote template')
+        cookiecutter_cmd += f' -f {repo} -c {ref} --directory cookiecutter'
     else:
-        run(f'{tmpdir}/bin/cookiecutter -f {TEMPLATE_REPOSITORY} -c {TEMPLATE} --directory {TEMPLATE_PATH}')
+        echo('Using local template')
+        cookiecutter_cmd += f' {repo}'
+    if quiet:
+        cookiecutter_cmd += ' --no-input'
 
-    for _dir in os.listdir(CWD):
+    rmtree(os.path.expanduser('~/.cookiecutters/dipdup'), ignore_errors=True)
+    run(cookiecutter_cmd)
+
+    for _dir in os.listdir(os.getcwd()):
         if not os.path.isfile(f'{_dir}/dipdup.yml'):
             continue
         if os.path.isfile(f'{_dir}/poetry.lock'):
@@ -70,9 +82,22 @@ with TemporaryDirectory(prefix='dipdup-install-') as tmpdir:
         echo('Running initial setup (can take a while)')
         run('make install', cwd=_dir)
 
-        echo(' Verifying project')
+        echo('Verifying project')
         run('make lint', cwd=_dir)
 
-        break
+        done('Done! DipDup is ready to use.')
 
-echo('Done! DipDup is ready to use.', color=bcolors.OKGREEN)
+    fail('No new projects found')
+
+
+if __name__ == '__main__':
+    args = sys.argv[1:]
+    quiet = False
+    if '-q' in args:
+        args.remove('-q')
+        quiet = True
+
+    if len(args) not in (0, 1, 2):
+        fail('Usage: install.py [-q] [repo] [ref]')
+
+    main(quiet, *args)
