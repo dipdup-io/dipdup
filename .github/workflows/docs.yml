@@ -19,14 +19,14 @@ jobs:
     - name: Check out the repo
       uses: actions/checkout@v3
 
-    - name: Install poetry
-      run: pipx install poetry
-
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
         cache: 'poetry'
+
+    - name: Install poetry
+      run: pipx install poetry
 
     - name: Set up mdBook
       uses: peaceiris/actions-mdbook@v1
