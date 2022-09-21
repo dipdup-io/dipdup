@@ -27,4 +27,4 @@ jobs:
         run: pipx reinstall poetry --python python3.10
 
       - name: Create new project and ensure it's valid
-        run: TEMPLATE=CI python scripts/install.py
+        run: python scripts/install.py -q cookiecutter
