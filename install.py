@@ -53,7 +53,10 @@ with TemporaryDirectory(prefix='dipdup-install-') as tmpdir:
     run('bin/python -m pip install -Uq pip cookiecutter', cwd=tmpdir)
 
     rmtree(CACHED_TEMPLATE_PATH, ignore_errors=True)
-    run(f'{tmpdir}/bin/cookiecutter -f {TEMPLATE_REPOSITORY} -c {TEMPLATE} --directory {TEMPLATE_PATH}')
+    if TEMPLATE == 'CI':
+        run(f'{tmpdir}/bin/cookiecutter --no-input {TEMPLATE_PATH}')
+    else:
+        run(f'{tmpdir}/bin/cookiecutter -f {TEMPLATE_REPOSITORY} -c {TEMPLATE} --directory {TEMPLATE_PATH}')
 
     for _dir in os.listdir(CWD):
         if not os.path.isfile(f'{_dir}/dipdup.yml'):
