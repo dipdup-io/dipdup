@@ -33,10 +33,6 @@ docs:           ## Build docs
 	cd docs
 	make -s clean docs markdownlint orphans || true
 
-homepage:       ## Build homepage
-	cd docs
-	make homepage
-
 ##
 
 isort:          ## Format with isort

@@ -11,7 +11,6 @@ on:
       - 'Dockerfile.slim'
       - 'pyproject.toml'
       - 'poetry.lock'
-      - 'Makefile'
       - '.github/workflows/build.yml'
 
 jobs:
@@ -26,20 +25,20 @@ jobs:
     strategy:
       matrix:
         image:
-          - name: default
-            suffix: ''
-            platforms: linux/amd64,linux/arm64
-            dockerfile: Dockerfile
-            build_args: 'PYTEZOS=0'
+          # - name: default
+          #   suffix: ''
+          #   platforms: linux/amd64,linux/arm64
+          #   dockerfile: Dockerfile
+          #   build_args: 'PYTEZOS=0'
 
-          - name: pytezos
-            suffix: -pytezos
-            platforms: linux/amd64,linux/arm64
-            dockerfile: Dockerfile
-            build_args: 'PYTEZOS=1'
+          # - name: pytezos
+          #   suffix: -pytezos
+          #   platforms: linux/amd64,linux/arm64
+          #   dockerfile: Dockerfile
+          #   build_args: 'PYTEZOS=1'
 
           - name: slim
-            suffix: -slim
+            suffix: ''
             dockerfile: Dockerfile.slim
             platforms: linux/amd64,linux/arm64
             build_args: ''

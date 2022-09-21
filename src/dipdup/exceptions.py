@@ -136,7 +136,7 @@ class ConfigurationError(DipDupError):
         return f"""
             {self.msg}
 
-            DipDup config reference: https://dipdup.net/docs/config
+            DipDup config reference: https://docs.dipdup.io/config
         """
 
 
@@ -155,9 +155,9 @@ class InvalidModelsError(ConfigurationError):
               table: `{self.model._meta.db_table}`
               field: `{self.field or ''}`
 
-            See https://dipdup.net/docs/getting-started/defining-models
-            See https://dipdup.net/docs/config/database
-            See https://dipdup.net/docs/advanced/internal-models
+            See https://docs.dipdup.io/getting-started/defining-models
+            See https://docs.dipdup.io/config/database
+            See https://docs.dipdup.io/advanced/internal-models
         """
 
 
@@ -188,7 +188,7 @@ class MigrationRequiredError(DipDupError):
               1. Run `dipdup migrate`.
               2. Review and commit changes.
 
-            See https://dipdup.net/docs/release-notes for more information. {reindex}
+            See https://docs.dipdup.io/release-notes for more information. {reindex}
         """
 
 
@@ -214,7 +214,7 @@ class ReindexingRequiredError(DipDupError):
               * Eliminate the cause of reindexing and run `dipdup schema approve`.
               * Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
-            See https://dipdup.net/docs/advanced/reindexing for more information.
+            See https://docs.dipdup.io/advanced/reindexing for more information.
         """.format(
             reason=self.reason.value,
             context=context,
@@ -368,8 +368,8 @@ class CallbackTypeError(DipDupError):
 
             Make sure to set correct typenames in config and run `dipdup init --overwrite-types` to regenerate typeclasses.
 
-            See https://dipdup.net/docs/getting-started/project-structure
-            See https://dipdup.net/docs/cli-reference#init
+            See https://docs.dipdup.io/getting-started/project-structure
+            See https://docs.dipdup.io/cli-reference#init
         """
 
 
@@ -387,7 +387,7 @@ class HasuraError(DipDupError):
 
             If it's `400 Bad Request`, check out Hasura logs for more information.
 
-            See https://dipdup.net/docs/graphql/
-            See https://dipdup.net/docs/config/hasura.html
-            See https://dipdup.net/docs/cli-reference.html#dipdup-hasura-configure
+            See https://docs.dipdup.io/graphql/
+            See https://docs.dipdup.io/config/hasura.html
+            See https://docs.dipdup.io/cli-reference.html#dipdup-hasura-configure
         """
