@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                         </script>
 
                     </div>
@@ -148,11 +148,11 @@
 <p>Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database. RAM requirements increase with the number of indexes.</p>
 <h3 id="non-unix-environments"><a class="header" href="#non-unix-environments">Non-UNIX environments</a></h3>
 <p>DipDup currently doesn't work in Windows environments due to incompatibilities in libraries it depends on. Please use WSL or Docker.</p>
-<p>We aim to improve cross-platform compatibility in future releases (<a href="https://github.com/dipdup-net/dipdup-py/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+">issue</a>).</p>
+<p>We aim to improve cross-platform compatibility in future releases (<a href="https://github.com/dipdup-net/dipdup/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+">issue</a>).</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
-<li><a href="https://dipdup.net/docs/advanced/performance.html">3.8. Improving performance</a></li>
+<li><a href="https://docs.dipdup.io/advanced/performance.html">3.8. Improving performance</a></li>
 <li><a href="https://docs.microsoft.com/en-us/windows/wsl/about">What is the Windows Subsystem for Linux?</a></li>
 </ul>
 </blockquote>
@@ -184,7 +184,7 @@ source .venv/bin/activate
 pip install dipdup
 </code></pre>
 <h2 id="docker"><a class="header" href="#docker">Docker</a></h2>
-<p>See <a href="https://dipdup.net/docs/deployment/docker.html">5.2. Running in Docker</a> page.</p>
+<p>See <a href="https://docs.dipdup.io/deployment/docker.html">5.2. Running in Docker</a> page.</p>
 
                     </main>
 

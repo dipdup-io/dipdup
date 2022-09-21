@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                         </script>
 
                     </div>
@@ -211,8 +211,8 @@ async for key_batch in batch_iter:
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
-<li><a href="https://dipdup.net/docs/config/prometheus.html">14.13. prometheus</a></li>
-<li><a href="https://dipdup.net/docs/deployment/prometheus.html">5.4. Prometheus integration</a></li>
+<li><a href="https://docs.dipdup.io/config/prometheus.html">14.13. prometheus</a></li>
+<li><a href="https://docs.dipdup.io/deployment/prometheus.html">5.4. Prometheus integration</a></li>
 </ul>
 </blockquote>
 <h2 id="changes-since-427"><a class="header" href="#changes-since-427">Changes since 4.2.7</a></h2>

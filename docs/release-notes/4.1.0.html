@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                         </script>
 
                     </div>
@@ -164,7 +164,7 @@
   metadata:
     kind: metadata
     url: https://metadata.dipdup.net
-    network: mainnet|hangzhounet
+    network: mainnet|ghostnet|jakartanet|kathmandunet
 </code></pre>
 <p>Now you can use it anywhere in your callbacks:</p>
 <pre><code class="language-python">datasource = ctx.datasources['metadata']

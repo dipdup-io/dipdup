@@ -92,8 +92,8 @@
                         <a class="icon-button" id="stable" href="#">stable</a>
                         <a class="icon-button" id="latest" href="#">latest</a>
                         <script type="text/javascript">
-                            document.getElementById('stable').setAttribute('href', window.location.href.replace('/docs-next/', '/docs/'));
-                            document.getElementById('latest').setAttribute('href', window.location.href.replace('/docs/', '/docs-next/'));
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                         </script>
 
                     </div>
@@ -209,7 +209,7 @@ ________________________________________________________________________________
 Eliminate the reason of failure and restart DipDup.
 ________________________________________________________________________________
 
-Tombstone saved to `/tmp/dipdup-tombstone_veb7kz07.json`
+Crashdump saved to `/tmp/dipdup/crashdumps/veb7kz07.json`
 </code></pre>
 <p>This JSON file is the same data Sentry collects on crashes if integration is enabled. It includes a stack trace, local variables of each frame, and other information useful when investigating a crash. Attach this file when sending bug reports to GitHub Issues.</p>
 <p>When preparing a crash dump Sentry can detect sensitive information like database passwords in the crash dump and remove it from the report. So it's generally safe to share the crash dump with the developers. Now you can also send these crash reports automatically to the Baking Bad team.</p>
@@ -225,7 +225,7 @@ Tombstone saved to `/tmp/dipdup-tombstone_veb7kz07.json`
 <li>config: Added <code>advanced.rollback_depth</code> field, a number of levels to keep in a database for rollback.</li>
 <li>context: Added <code>rollback</code> method to perform database rollback.</li>
 <li>database: Added an internal <code>ModelUpdate</code> model to store the latest database changes.</li>
-<li>dipdup: Save Sentry tombstone in <code>/tmp/dipdup-tombstone_XXXXXXX.json</code> on a crash.</li>
+<li>dipdup: Save Sentry crashdump in <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> on a crash.</li>
 </ul>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
