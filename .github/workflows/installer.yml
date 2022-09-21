@@ -24,4 +24,4 @@ jobs:
           cache: 'poetry'
 
       - name: Create new project and ensure it's valid
-        run: TEMPLATE=CI python scripts/install.py
+        run: TEMPLATE=CI python3.10 scripts/install.py
