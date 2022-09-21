@@ -1,13 +1,14 @@
-name: Test cookiecutter
+name: Installer
 on:
   push:
     paths:
       - 'cookiecutter/**'
-      - '.github/workflows/cookiecutter.yml'
+      - 'scripts/**'
+      - '.github/workflows/installer.yml'
 
 jobs:
   test:
-    name: Test cookiecutter
+    name: Installer
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -23,4 +24,4 @@ jobs:
           cache: 'poetry'
 
       - name: Create new project and ensure it's valid
-        run: poetry run pip install cookiecutter && poetry run cookiecutter --no-input cookiecutter && cd my-dipdup-indexer && make all
+        run: TEMPLATE=CI scripts/install.py
