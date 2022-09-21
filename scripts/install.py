@@ -54,7 +54,7 @@ with TemporaryDirectory(prefix='dipdup-install-') as tmpdir:
 
     rmtree(CACHED_TEMPLATE_PATH, ignore_errors=True)
     if TEMPLATE == 'CI':
-        run(f'{tmpdir}/bin/cookiecutter --no-input --directory {TEMPLATE_PATH}')
+        run(f'{tmpdir}/bin/cookiecutter --no-input {TEMPLATE_PATH}')
     else:
         run(f'{tmpdir}/bin/cookiecutter -f {TEMPLATE_REPOSITORY} -c {TEMPLATE} --directory {TEMPLATE_PATH}')
 
