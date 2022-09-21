@@ -44,18 +44,18 @@ jobs:
         id: cache-venv
         with:
           path: /home/runner/.cache/pypoetry/virtualenvs
-          key: ${{ matrix.os }}-venv
+          key: ${{ matrix.os }}-${{ matrix.arch }}-venv
           restore-keys: |
-            ${{ matrix.os }}-venv
+            ${{ matrix.os }}-${{ matrix.arch }}-venv
 
       - name: Set up cache (replays)
         uses: actions/cache@v2
         id: cache-replays
         with:
           path: /tmp/dipdup/replays
-          key: ${{ matrix.os }}-replays
+          key: ${{ matrix.os }}-${{ matrix.arch }}-replays
           restore-keys: |
-            ${{ matrix.os }}-replays
+            ${{ matrix.os }}-${{ matrix.arch }}-replays
 
       - name: Install project
         run: make install
