@@ -25,28 +25,16 @@ jobs:
             arch: arm64
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v3
+
+      - name: Install poetry
+        run: pipx install poetry
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10.x'
-
-      - name: Set up Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: '1.2.1'
-
-      - name: Set up cache (venv)
-        uses: actions/cache@v2
-        id: cache-venv
-        with:
-          path: /home/runner/.cache/pypoetry/virtualenvs
-          key: ${{ matrix.os }}-${{ matrix.arch }}-venv
-          restore-keys: |
-            ${{ matrix.os }}-${{ matrix.arch }}-venv
+          python-version: '3.10'
+          cache: 'poetry'
 
       - name: Set up cache (replays)
         uses: actions/cache@v2
