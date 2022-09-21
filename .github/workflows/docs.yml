@@ -6,8 +6,6 @@ on:
       - '*.*.*'
     branches:
       - master
-      # FIXME: temporary
-      - aux/docs-root
     paths:
       - 'docs/**'
       - 'scripts/**'
