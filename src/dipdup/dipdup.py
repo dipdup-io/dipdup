@@ -15,7 +15,6 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 
-from prometheus_client import start_http_server  # type: ignore
 from tortoise.exceptions import OperationalError
 
 from dipdup.codegen import CodeGenerator
@@ -475,6 +474,8 @@ class DipDup:
 
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus:
+            from prometheus_client import start_http_server  # type: ignore
+
             Metrics.enabled = True
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 

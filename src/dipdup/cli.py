@@ -1,5 +1,4 @@
 import asyncio
-import atexit
 import logging
 import os
 import signal
@@ -19,35 +18,21 @@ from typing import Optional
 from typing import Tuple
 from typing import cast
 
-import aiohttp
 import asyncclick as click
-from dotenv import load_dotenv
-from tortoise import Tortoise
-from tortoise.utils import get_schema_sql
 
 from dipdup import __spec_version__
 from dipdup import __version__
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
-from dipdup.codegen import CodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SentryConfig
-from dipdup.dipdup import DipDup
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
 from dipdup.exceptions import _tab
 from dipdup.exceptions import save_crashdump
-from dipdup.hasura import HasuraGateway
-from dipdup.models import Index
-from dipdup.models import Schema
-from dipdup.utils import iter_files
-from dipdup.utils.database import generate_schema
-from dipdup.utils.database import get_connection
-from dipdup.utils.database import tortoise_wrapper
-from dipdup.utils.database import wipe_schema
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
 BAKING_BAD_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
@@ -92,6 +77,8 @@ async def _shutdown() -> None:
 
 def _print_help(error: Exception, crashdump_path: str) -> None:
     """Prints helpful error message after traceback"""
+    import atexit
+
     help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
     help_message += _tab + f'Crashdump saved to `{crashdump_path}`'
     atexit.register(partial(click.echo, help_message, err=True))
@@ -211,6 +198,8 @@ async def _check_version() -> None:
         _logger.info('Set `skip_version_check` flag in config to hide this message.')
         return
 
+    import aiohttp
+
     async with AsyncExitStack() as stack:
         stack.enter_context(suppress(Exception))
         session = await stack.enter_async_context(aiohttp.ClientSession())
@@ -254,6 +243,8 @@ async def cli(ctx, config: List[str], env_file: List[str]):
     if '--help' in sys.argv:
         return
 
+    from dotenv import load_dotenv
+
     set_up_logging()
 
     # NOTE: Apply env files before loading config
@@ -267,6 +258,8 @@ async def cli(ctx, config: List[str], env_file: List[str]):
     # NOTE: `new` needs no other preparations
     if ctx.invoked_subcommand == 'new':
         return
+
+    from dipdup.codegen import CodeGenerator
 
     _config = DipDupConfig.load(config)
     _config.set_up_logging()
@@ -306,6 +299,8 @@ async def run(ctx) -> None:
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
     """
+    from dipdup.dipdup import DipDup
+
     config: DipDupConfig = ctx.obj.config
     config.initialize()
 
@@ -323,6 +318,8 @@ async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
     """
+    from dipdup.dipdup import DipDup
+
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
     await dipdup.init(overwrite_types, keep_schemas)
@@ -345,6 +342,9 @@ async def migrate(ctx) -> None:
 @cli_wrapper
 async def status(ctx) -> None:
     """Show the current status of indexes in the database."""
+    from dipdup.models import Index
+    from dipdup.utils.database import tortoise_wrapper
+
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -423,6 +423,9 @@ async def hasura(ctx) -> None:
 @cli_wrapper
 async def hasura_configure(ctx, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
+    from dipdup.hasura import HasuraGateway
+    from dipdup.utils.database import tortoise_wrapper
+
     config: DipDupConfig = ctx.obj.config
     if not config.hasura:
         raise ConfigurationError('`hasura` config section is empty')
@@ -458,6 +461,10 @@ async def schema(ctx) -> None:
 @cli_wrapper
 async def schema_approve(ctx) -> None:
     """Continue to use existing schema after reindexing was triggered."""
+    from dipdup.models import Index
+    from dipdup.models import Schema
+    from dipdup.utils.database import tortoise_wrapper
+
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -488,6 +495,12 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
 
     WARNING: This action is irreversible! All indexed data will be lost!
     """
+    from tortoise import Tortoise
+
+    from dipdup.utils.database import get_connection
+    from dipdup.utils.database import tortoise_wrapper
+    from dipdup.utils.database import wipe_schema
+
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
@@ -529,6 +542,10 @@ async def schema_init(ctx) -> None:
 
     This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
     """
+    from dipdup.dipdup import DipDup
+    from dipdup.utils.database import generate_schema
+    from dipdup.utils.database import get_connection
+
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     dipdup = DipDup(config)
@@ -556,6 +573,12 @@ async def schema_export(ctx) -> None:
 
     This command may help you debug inconsistency between project models and expected SQL schema.
     """
+    from tortoise.utils import get_schema_sql
+
+    from dipdup.utils import iter_files
+    from dipdup.utils.database import get_connection
+    from dipdup.utils.database import tortoise_wrapper
+
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
