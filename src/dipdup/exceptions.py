@@ -285,7 +285,7 @@ class ContractAlreadyExistsError(DipDupError):
 
 @dataclass(repr=False)
 class IndexAlreadyExistsError(DipDupError):
-    """Attemp to add an index with an alias already in use"""
+    """Attempt to add an index with an alias already in use"""
 
     ctx: Any
     name: str

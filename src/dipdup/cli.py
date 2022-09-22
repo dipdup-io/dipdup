@@ -8,6 +8,7 @@ from contextlib import AsyncExitStack
 from contextlib import suppress
 from functools import partial
 from functools import wraps
+from shutil import which
 from typing import Any
 from typing import Dict
 from typing import List
@@ -255,8 +256,9 @@ async def cli(ctx, config: List[str], env_file: List[str]):
         _logger.info('Applying env_file `%s`', env_path)
         load_dotenv(env_path, override=True)
 
-    # NOTE: `new` needs no other preparations
-    if ctx.invoked_subcommand == 'new':
+    # NOTE: `new` and `update` need no other preparations
+    if ctx.invoked_subcommand in ('new', 'update'):
+        logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
     from dataclasses import dataclass
@@ -634,3 +636,39 @@ async def new(ctx, quiet: bool) -> None:
 
     generator = ProjectGenerator()
     generator.generate(quiet)
+
+
+@cli.command()
+@click.pass_context
+@cli_wrapper
+async def update(ctx) -> None:
+    from pathlib import Path
+
+    from dipdup.utils import run as _run
+
+    _found = False
+
+    if which('pipx'):
+        pipx_packages_raw = _run('pipx list --short', capture_output=True).stdout
+        pipx_packages = {p.split()[0].decode() for p in pipx_packages_raw.splitlines()}
+
+        if 'dipdup' in pipx_packages:
+            _found = True
+            _logger.info('Updating DipDup with pipx')
+            _run('pipx upgrade dipdup')
+
+        if 'datamodel-code-generator' in pipx_packages:
+            _logger.info('Updating datamodel-code-generator with pipx')
+            _run('pipx upgrade datamodel-code-generator')
+
+        if 'poetry' in pipx_packages:
+            _logger.info('Updating poetry with pipx')
+            _run('pipx upgrade poetry')
+
+    if Path('pyproject.toml').exists() and Path('poetry.lock').exists():
+        _found = True
+        _logger.info('Updating DipDup with poetry')
+        _run('poetry update dipdup')
+
+    if not _found:
+        _logger.warning('Unknown installation method, please update DipDup manually')

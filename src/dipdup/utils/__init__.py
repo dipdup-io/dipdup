@@ -1,6 +1,7 @@
 import importlib
 import logging
 import pkgutil
+import subprocess
 import types
 from collections import defaultdict
 from contextlib import suppress
@@ -189,3 +190,12 @@ def _dumps_default(obj):
 
 def json_dumps(obj):
     return orjson.dumps(obj, default=_dumps_default).decode()
+
+
+def run(*args, **kwargs):
+    return subprocess.run(
+        *args,
+        **kwargs,
+        check=True,
+        shell=True,
+    )

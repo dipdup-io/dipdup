@@ -198,4 +198,10 @@
 </pre></div>
 </div>
 </section>
+<section id="dipdup-update">
+<h2>update<a class="headerlink" href="#dipdup-update" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup update <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
 </section>
