@@ -17,7 +17,6 @@ all:            ## Run a whole CI pipeline: lint, run tests, build docs
 	make install lint test docs
 
 install:        ## Install project dependencies
-	poetry lock
 	poetry install \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
 
