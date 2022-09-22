@@ -71,12 +71,6 @@ def main(quiet: bool) -> None:
         echo('Updating DipDup')
         run('pipx upgrade dipdup')
 
-    # NOTE: May be available system-wide
-    if not which('cookiecutter'):
-        if ask('Install cookiecutter? Required for `dipdup new` command', True, quiet):
-            echo('Installing cookiecutter')
-            run('pipx install cookiecutter')
-
     if not which('poetry'):
         if ask('Install poetry? Optional for `dipdup new` command', True, quiet):
             echo('Installing poetry')

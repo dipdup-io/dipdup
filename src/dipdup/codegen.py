@@ -89,8 +89,7 @@ def load_template(name: str) -> 'Template':
             dirname(__file__),
             'templates',
             *os.sep.split(name)[1:],
-            name,
-            '.j2',
+            f'{name}.j2',
         )
         with open(path) as f:
             return Template(f.read())
@@ -568,10 +567,13 @@ class ProjectGenerator:
                 continue
 
             self._logger.info('Generating `%s`', output_path)
-            template = load_template(join('project', relative_path))
+            template = load_template(path.replace('.j2', ''))
             content = template.render(cookiecutter=Answers(**answers))
             write(output_path, content)
 
-    def generate(self) -> None:
-        answers = self.input()
+    def generate(self, quiet: bool) -> None:
+        if quiet:
+            answers = {i['name']: i['default'] for i in _questions}  # type: ignore
+        else:
+            answers = self.input()
         self.render(answers)

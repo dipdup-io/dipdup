@@ -575,10 +575,10 @@ async def schema_export(ctx) -> None:
 
 @cli.command()
 @click.pass_context
-@click.option('--quiet', is_flag=True, help='Use default values for all prompts.')
+@click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @cli_wrapper
 async def new(ctx, quiet: bool) -> None:
     from dipdup.codegen import ProjectGenerator
 
     generator = ProjectGenerator()
-    generator.generate()
+    generator.generate(quiet)

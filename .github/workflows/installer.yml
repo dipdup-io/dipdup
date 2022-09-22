@@ -2,8 +2,8 @@ name: Installer
 on:
   push:
     paths:
-      - 'cookiecutter/**'
-      - 'scripts/**'
+      - 'src/dipdup/templates/**'
+      - 'scripts/install.py'
       - '.github/workflows/installer.yml'
 
 jobs:

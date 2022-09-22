@@ -1,4 +1,4 @@
-
+            
   <section id="dipdup">
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this heading">¶</a></h1>
 <p>Manage and run DipDup indexers.</p>
@@ -119,6 +119,19 @@
 </pre></div>
 </div>
 </section>
+<section id="dipdup-new">
+<h2>new<a class="headerlink" href="#dipdup-new" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup new <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-new-q">
+<span id="cmdoption-dipdup-new-quiet"></span><span class="sig-name descname"><span class="pre">-q</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--quiet</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-new-q" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use default values for all prompts.</p>
+</dd></dl>
+
+</section>
 <section id="dipdup-run">
 <h2>run<a class="headerlink" href="#dipdup-run" title="Permalink to this heading">¶</a></h2>
 <p>Run indexer.</p>
@@ -186,3 +199,5 @@
 </div>
 </section>
 </section>
+
+
