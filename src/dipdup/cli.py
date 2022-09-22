@@ -203,7 +203,7 @@ async def _check_version() -> None:
         latest_version = response_json['tag_name']
 
         if __version__ != latest_version:
-            _logger.warning('You are running an outdated version of DipDup. Please update to the latest version.')
+            _logger.warning('You are running an outdated version of DipDup. Please run `dipdup update`.')
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
 

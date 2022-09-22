@@ -14,7 +14,9 @@ python = ">=3.10,<3.11"
 dipdup = "^6.0.0"
 ```
 
-Run `poetry update dipdup` periodically to update to the latest version.
+pipx installations always use latest version.
+
+Run `dipdup update` periodically to update to the latest version.
 
 While building Docker images you can use `X` and `X.Y` tags to lock to specific major/minor releases:
 
