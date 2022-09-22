@@ -6,8 +6,14 @@ from typing import NoReturn
 DEFAULT_REPO = 'https://github.com/dipdup-net/dipdup'
 DEFAULT_REF = 'master'
 
+
 def run(*args, **kwargs):
-    return subprocess.run(*args, **kwargs, check=True, shell=True,)
+    return subprocess.run(
+        *args,
+        **kwargs,
+        check=True,
+        shell=True,
+    )
 
 
 class colors:
@@ -31,6 +37,7 @@ def done(msg: str) -> NoReturn:
     echo(msg, color=colors.GREEN)
     sys.exit(0)
 
+
 def ask(msg: str, default: bool, quiet: bool) -> bool:
     msg += ' [Y/n]' if default else ' [y/N]'
     echo(msg, colors.YELLOW)
@@ -41,6 +48,7 @@ def ask(msg: str, default: bool, quiet: bool) -> bool:
         return input().lower() not in ('n', 'no')
     else:
         return input().lower() in ('y', 'yes')
+
 
 def main(quiet: bool) -> None:
     if sys.version_info < (3, 10):

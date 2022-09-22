@@ -29,7 +29,7 @@ from dipdup import __spec_version__
 from dipdup import __version__
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
-from dipdup.codegen import DipDupCodeGenerator
+from dipdup.codegen import CodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SentryConfig
@@ -264,6 +264,10 @@ async def cli(ctx, config: List[str], env_file: List[str]):
         _logger.info('Applying env_file `%s`', env_path)
         load_dotenv(env_path, override=True)
 
+    # NOTE: `new` needs no other preparations
+    if ctx.invoked_subcommand == 'new':
+        return
+
     _config = DipDupConfig.load(config)
     _config.set_up_logging()
 
@@ -277,7 +281,7 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 
     # NOTE: Avoid import errors if project package is incomplete
     try:
-        await DipDupCodeGenerator(_config, {}).create_package()
+        await CodeGenerator(_config, {}).create_package()
     except Exception as e:
         raise InitializationRequiredError('Failed to create a project package.') from e
 
@@ -574,4 +578,7 @@ async def schema_export(ctx) -> None:
 @click.option('--quiet', is_flag=True, help='Use default values for all prompts.')
 @cli_wrapper
 async def new(ctx, quiet: bool) -> None:
-    ...
+    from dipdup.codegen import ProjectGenerator
+
+    generator = ProjectGenerator()
+    generator.generate()

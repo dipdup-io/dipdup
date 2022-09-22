@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import subprocess
+from glob import glob
 from os.path import basename
 from os.path import dirname
 from os.path import exists
@@ -15,6 +16,9 @@ from typing import List
 from typing import cast
 
 import orjson as json
+from asyncclick import Choice
+from asyncclick import prompt
+from genericpath import isdir
 
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
@@ -81,12 +85,19 @@ def load_template(name: str) -> 'Template':
     from jinja2 import Template
 
     if name not in _templates:
-        with open(join(dirname(__file__), 'templates', name + '.j2'), 'r') as f:
+        path = join(
+            dirname(__file__),
+            'templates',
+            *os.sep.split(name)[1:],
+            name,
+            '.j2',
+        )
+        with open(path) as f:
             return Template(f.read())
     return _templates[name]
 
 
-class DipDupCodeGenerator:
+class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
     def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, Datasource]) -> None:
@@ -400,3 +411,167 @@ class DipDupCodeGenerator:
             # NOTE: Preserve the same structure as in `handlers`
             sql_path = join(self._config.package_path, 'sql', *subpackages, callback, '.keep')
             touch(sql_path)
+
+
+# {
+#     "\n👀": "General information (press enter)",
+#     "project_name": "my-dipdup-indexer",
+#     "package": "{{cookiecutter.project_name.replace('-', '_')}}",
+#     "version": "0.0.1",
+#     "description": "My shiny new indexer based on DipDup",
+#     "license": "MIT",
+#     "author": "John Smith <johnsmith@example.com>",
+
+#     "🚧": "Software versions (press enter)",
+#     "dipdup_version": "6",
+#     "postgresql_version": [
+#       "postgres:14",
+#       "postgres:13",
+#       "timescale/timescaledb:latest-pg14",
+#       "timescale/timescaledb:latest-pg13"
+#     ],
+#     "hasura_version": [
+#       "hasura/graphql-engine:v2.11.2",
+#       "hasura/graphql-engine:v2.10.1"
+#     ],
+
+#     "🧹": "Code quality (press enter)",
+#     "line_length": "140",
+
+#     "🥳": "Everything's ready! See README.md inside the project for the next steps (press enter)"
+# }
+
+# FIXME: Pure Copilot
+_questions = [
+    {
+        'type': 'input',
+        'name': 'project_name',
+        'message': 'Project name',
+        'default': 'my-dipdup-indexer',
+    },
+    {
+        'type': 'input',
+        'name': 'package',
+        'message': 'Package name',
+        'default': 'my_dipdup_indexer',
+    },
+    {
+        'type': 'input',
+        'name': 'version',
+        'message': 'Version',
+        'default': '0.0.1',
+    },
+    {
+        'type': 'input',
+        'name': 'description',
+        'message': 'Project description',
+        'default': 'My shiny new indexer based on DipDup',
+    },
+    {
+        'type': 'input',
+        'name': 'license',
+        'message': 'License',
+        'default': 'MIT',
+    },
+    {
+        'type': 'input',
+        'name': 'author',
+        'message': 'Author',
+        'default': 'John Smith <johnsmith@localhost.lan>',
+    },
+    {
+        'type': 'list',
+        'name': 'dipdup_version',
+        'message': 'DipDup version',
+        'choices': ['6'],
+        'default': '6',
+    },
+    {
+        'type': 'list',
+        'name': 'postgresql_version',
+        'message': 'PostgreSQL version',
+        'choices': [
+            'postgres:14',
+            'postgres:13',
+            'timescale/timescaledb:latest-pg14',
+            'timescale/timescaledb:latest-pg13',
+        ],
+        'default': 'postgres:14',
+    },
+    {
+        'type': 'list',
+        'name': 'hasura_version',
+        'message': 'Hasura version',
+        'choices': [
+            'hasura/graphql-engine:v2.11.2',
+            'hasura/graphql-engine:v2.10.1',
+        ],
+        'default': 'hasura/graphql-engine:v2.11.2',
+    },
+    {
+        'type': 'input',
+        'name': 'line_length',
+        'message': 'Line length',
+        'default': '140',
+    },
+]
+
+
+class Answers:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+
+class ProjectGenerator:
+    def __init__(self) -> None:
+        self._logger = logging.getLogger('dipdup.project')
+        self._templates_path = join(dirname(__file__), 'templates', 'project')
+
+    def input(self) -> Dict[str, str]:
+        answers: Dict[str, str] = {}
+        for question in _questions:
+            question = cast(Dict[str, Any], question)
+            answer = ''
+            while not answer:
+                if question['type'] == 'input':
+                    answer = prompt(
+                        text=question['message'],
+                        default=question['default'],
+                    )
+                elif question['type'] == 'list':
+                    answer = prompt(
+                        text=question['message'],
+                        type=Choice(question['choices']),
+                        default=question['default'],
+                    )
+                else:
+                    raise ValueError(f'Unknown question type: {question["type"]}')
+
+            answers[question['name']] = answer
+
+        return answers
+
+    def render(self, answers: Dict[str, str]) -> None:
+        from jinja2 import Template
+
+        for path in glob(join(self._templates_path, '**'), recursive=True):
+            if isdir(path):
+                continue
+
+            relative_path = path.replace(self._templates_path, '').lstrip('/')
+            output_path = join(answers['project_name'], relative_path).replace('.j2', '')
+            output_path = Template(output_path).render(cookiecutter=Answers(**answers))
+            mkdir_p(dirname(output_path))
+            if exists(output_path):
+                self._logger.warning('File `%s` already exists, skipping', output_path)
+                continue
+
+            self._logger.info('Generating `%s`', output_path)
+            template = load_template(join('project', relative_path))
+            content = template.render(cookiecutter=Answers(**answers))
+            write(output_path, content)
+
+    def generate(self) -> None:
+        answers = self.input()
+        self.render(answers)

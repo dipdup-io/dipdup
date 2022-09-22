@@ -18,7 +18,7 @@ from typing import Tuple
 from prometheus_client import start_http_server  # type: ignore
 from tortoise.exceptions import OperationalError
 
-from dipdup.codegen import DipDupCodeGenerator
+from dipdup.codegen import CodeGenerator
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
@@ -334,7 +334,7 @@ class DipDup:
             callbacks=self._callbacks,
             transactions=self._transactions,
         )
-        self._codegen = DipDupCodeGenerator(self._config, self._datasources_by_config)
+        self._codegen = CodeGenerator(self._config, self._datasources_by_config)
         self._schema: Optional[Schema] = None
 
     @property
