@@ -19,6 +19,9 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Update pipx
+        run: pip install --user -U pipx
+
       - name: Install DipDup
         run: python scripts/install.py -q
 
