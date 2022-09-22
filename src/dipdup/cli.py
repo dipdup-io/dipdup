@@ -1,3 +1,4 @@
+# NOTE: All imports except the basic ones are very lazy in this module. Let's keep it that way.
 import asyncio
 import logging
 import os
@@ -5,12 +6,8 @@ import signal
 import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
-from dataclasses import dataclass
 from functools import partial
 from functools import wraps
-from os.path import dirname
-from os.path import exists
-from os.path import join
 from typing import Any
 from typing import Dict
 from typing import List
@@ -24,15 +21,6 @@ from dipdup import __spec_version__
 from dipdup import __version__
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
-from dipdup.config import DipDupConfig
-from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import SentryConfig
-from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import DipDupError
-from dipdup.exceptions import InitializationRequiredError
-from dipdup.exceptions import MigrationRequiredError
-from dipdup.exceptions import _tab
-from dipdup.exceptions import save_crashdump
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
 BAKING_BAD_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
@@ -57,12 +45,6 @@ def echo(message: str) -> None:
         click.echo(message)
 
 
-@dataclass
-class CLIContext:
-    config_paths: List[str]
-    config: DipDupConfig
-
-
 async def _shutdown() -> None:
     global _is_shutting_down
     if _is_shutting_down:
@@ -78,6 +60,9 @@ async def _shutdown() -> None:
 def _print_help(error: Exception, crashdump_path: str) -> None:
     """Prints helpful error message after traceback"""
     import atexit
+
+    from dipdup.exceptions import DipDupError
+    from dipdup.exceptions import _tab
 
     help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
     help_message += _tab + f'Crashdump saved to `{crashdump_path}`'
@@ -97,6 +82,8 @@ def cli_wrapper(fn):
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
+            from dipdup.exceptions import save_crashdump
+
             _logger.exception('Unhandled exception caught')
             crashdump_path = save_crashdump(e)
             _print_help(e, crashdump_path)
@@ -136,10 +123,17 @@ def _sentry_before_send(
     return event
 
 
-def _init_sentry(config: DipDupConfig) -> None:
+def _init_sentry(config) -> None:
+    from dipdup.config import DipDupConfig
+
+    assert isinstance(config, DipDupConfig)
     if not config.sentry:
         if not config.advanced.crash_reporting:
             return
+
+    from dipdup.config import SentryConfig
+
+    if not config.sentry:
         config.sentry = SentryConfig(dsn=BAKING_BAD_SENTRY_DSN)
 
     if config.sentry.debug:
@@ -244,7 +238,12 @@ async def cli(ctx, config: List[str], env_file: List[str]):
     if '--help' in args or args in ([], ['config'], ['hasura'], ['schema']):
         return
 
+    from os.path import exists
+    from os.path import join
+
     from dotenv import load_dotenv
+
+    from dipdup.exceptions import ConfigurationError
 
     set_up_logging()
 
@@ -260,7 +259,13 @@ async def cli(ctx, config: List[str], env_file: List[str]):
     if ctx.invoked_subcommand == 'new':
         return
 
+    from dataclasses import dataclass
+
     from dipdup.codegen import CodeGenerator
+    from dipdup.config import DipDupConfig
+    from dipdup.exceptions import ConfigurationError
+    from dipdup.exceptions import InitializationRequiredError
+    from dipdup.exceptions import MigrationRequiredError
 
     _config = DipDupConfig.load(config)
     _config.set_up_logging()
@@ -286,6 +291,11 @@ async def cli(ctx, config: List[str], env_file: List[str]):
         reindex = spec_reindex_mapping[__spec_version__]
         raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
+    @dataclass
+    class CLIContext:
+        config_paths: List[str]
+        config: DipDupConfig
+
     ctx.obj = CLIContext(
         config_paths=config,
         config=_config,
@@ -300,6 +310,7 @@ async def run(ctx) -> None:
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
     """
+    from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
@@ -319,6 +330,7 @@ async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
     """
+    from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
@@ -343,6 +355,7 @@ async def migrate(ctx) -> None:
 @cli_wrapper
 async def status(ctx) -> None:
     """Show the current status of indexes in the database."""
+    from dipdup.config import DipDupConfig
     from dipdup.models import Index
     from dipdup.utils.database import tortoise_wrapper
 
@@ -381,6 +394,8 @@ async def config_export(ctx, unsafe: bool, full: bool) -> None:
 
     WARNING: Avoid sharing output with 3rd-parties when `--unsafe` flag set - it may contain secrets!
     """
+    from dipdup.config import DipDupConfig
+
     config = DipDupConfig.load(
         paths=ctx.obj.config.paths,
         environment=unsafe,
@@ -399,6 +414,8 @@ async def config_env(ctx, file: Optional[str]) -> None:
 
     If variable is not set, default value will be used.
     """
+    from dipdup.config import DipDupConfig
+
     config = DipDupConfig.load(
         paths=ctx.obj.config.paths,
         environment=True,
@@ -424,6 +441,9 @@ async def hasura(ctx) -> None:
 @cli_wrapper
 async def hasura_configure(ctx, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
+    from dipdup.config import DipDupConfig
+    from dipdup.config import PostgresDatabaseConfig
+    from dipdup.exceptions import ConfigurationError
     from dipdup.hasura import HasuraGateway
     from dipdup.utils.database import tortoise_wrapper
 
@@ -462,6 +482,7 @@ async def schema(ctx) -> None:
 @cli_wrapper
 async def schema_approve(ctx) -> None:
     """Continue to use existing schema after reindexing was triggered."""
+    from dipdup.config import DipDupConfig
     from dipdup.models import Index
     from dipdup.models import Schema
     from dipdup.utils.database import tortoise_wrapper
@@ -498,6 +519,8 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
     """
     from tortoise import Tortoise
 
+    from dipdup.config import DipDupConfig
+    from dipdup.config import PostgresDatabaseConfig
     from dipdup.utils.database import get_connection
     from dipdup.utils.database import tortoise_wrapper
     from dipdup.utils.database import wipe_schema
@@ -543,6 +566,7 @@ async def schema_init(ctx) -> None:
 
     This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
     """
+    from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
     from dipdup.utils.database import generate_schema
     from dipdup.utils.database import get_connection
@@ -574,8 +598,12 @@ async def schema_export(ctx) -> None:
 
     This command may help you debug inconsistency between project models and expected SQL schema.
     """
+    from os.path import dirname
+    from os.path import join
+
     from tortoise.utils import get_schema_sql
 
+    from dipdup.config import DipDupConfig
     from dipdup.utils import iter_files
     from dipdup.utils.database import get_connection
     from dipdup.utils.database import tortoise_wrapper

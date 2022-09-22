@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning].
 
 ### Performance
 
-- cli: Up to 2.5x decrease in startup time.
+- cli: Up to 5x decrease in startup time.
 
 ## [6.1.3] - 2022-09-21
 
