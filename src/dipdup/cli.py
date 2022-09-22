@@ -567,3 +567,40 @@ async def schema_export(ctx) -> None:
                 output += file.read() + '\n'
 
         echo(output)
+
+
+@cli.command()
+@click.pass_context
+@cli_wrapper
+async def new(ctx) -> None:
+    cookiecutter_cmd = 'cookiecutter'
+    if repo.startswith(('git@', 'https://')):
+        echo('Using remote template')
+        cookiecutter_cmd += f' -f {repo} -c {ref} --directory cookiecutter'
+    else:
+        echo('Using local template')
+        cookiecutter_cmd += f' {repo}'
+    if quiet:
+        cookiecutter_cmd += ' --no-input'
+
+    rmtree(os.path.expanduser('~/.cookiecutters/dipdup'), ignore_errors=True)
+    run(cookiecutter_cmd)
+
+    for _dir in os.listdir(os.getcwd()):
+        if not os.path.isfile(f'{_dir}/dipdup.yml'):
+            continue
+        if os.path.isfile(f'{_dir}/poetry.lock'):
+            continue
+
+        echo(f'Found new project `{_dir}`')
+        run('git init', cwd=_dir)
+
+        echo('Running initial setup (can take a while)')
+        run('make install', cwd=_dir)
+
+        echo('Verifying project')
+        run('make lint', cwd=_dir)
+
+        done('Done! DipDup is ready to use.')
+
+    fail('No new projects found')
