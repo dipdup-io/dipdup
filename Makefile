@@ -108,6 +108,6 @@ update:         ## Update dependencies, export requirements.txt (wait an eternit
 
 	make install
 
+	scripts/update_cookiecutter.py
 	scripts/update_demos.sh
-
 ##

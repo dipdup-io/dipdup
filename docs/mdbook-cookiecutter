@@ -30,7 +30,7 @@ if __name__ == '__main__':
         if sys.argv[1] == 'supports':
             sys.exit(0)
 
-    with open(join(dirname(__file__), '..', 'cookiecutter', 'cookiecutter.json')) as file:
+    with open(join(dirname(__file__), 'cookiecutter.json')) as file:
         defaults = json.load(file)
 
     text = sys.stdin.read()

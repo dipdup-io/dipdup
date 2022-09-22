@@ -411,37 +411,8 @@ class CodeGenerator:
             sql_path = join(self._config.package_path, 'sql', *subpackages, callback, '.keep')
             touch(sql_path)
 
-
-# {
-#     "\n👀": "General information (press enter)",
-#     "project_name": "dipdup-indexer",
-#     "package": "{{cookiecutter.project_name.replace('-', '_')}}",
-#     "version": "0.0.1",
-#     "description": "My shiny new indexer based on DipDup",
-#     "license": "MIT",
-#     "author": "John Smith <johnsmith@example.com>",
-
-#     "🚧": "Software versions (press enter)",
-#     "dipdup_version": "6",
-#     "postgresql_version": [
-#       "postgres:14",
-#       "postgres:13",
-#       "timescale/timescaledb:latest-pg14",
-#       "timescale/timescaledb:latest-pg13"
-#     ],
-#     "hasura_version": [
-#       "hasura/graphql-engine:v2.11.2",
-#       "hasura/graphql-engine:v2.10.1"
-#     ],
-
-#     "🧹": "Code quality (press enter)",
-#     "line_length": "140",
-
-#     "🥳": "Everything's ready! See README.md inside the project for the next steps (press enter)"
-# }
-
 # FIXME: Pure Copilot
-_questions = [
+questions = [
     {
         'type': 'input',
         'name': 'project_name',
@@ -529,7 +500,7 @@ class ProjectGenerator:
 
     def input(self) -> Dict[str, str]:
         answers: Dict[str, str] = {}
-        for question in _questions:
+        for question in questions:
             question = cast(Dict[str, Any], question)
             answer = ''
             while not answer:
@@ -573,7 +544,7 @@ class ProjectGenerator:
 
     def generate(self, quiet: bool) -> None:
         if quiet:
-            answers = {i['name']: i['default'] for i in _questions}  # type: ignore
+            answers = {i['name']: i['default'] for i in questions}  # type: ignore
         else:
             answers = self.input()
         self.render(answers)

@@ -1,4 +1,4 @@
-aiohttp==3.8.1 ; python_version >= "3.10" and python_version < "3.11"
+aiohttp==3.8.3 ; python_version >= "3.10" and python_version < "3.11"
 aiolimiter==1.0.0 ; python_version >= "3.10" and python_version < "3.11"
 aiosignal==1.2.0 ; python_version >= "3.10" and python_version < "3.11"
 aiosqlite==0.17.0 ; python_version >= "3.10" and python_version < "3.11"

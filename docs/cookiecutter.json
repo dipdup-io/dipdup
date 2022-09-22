@@ -1,0 +1,12 @@
+{
+    "project_name": "dipdup-indexer",
+    "package": "dipdup_indexer",
+    "version": "0.0.1",
+    "description": "My shiny new indexer based on DipDup",
+    "license": "MIT",
+    "author": "John Smith <johnsmith@localhost.lan>",
+    "dipdup_version": "6",
+    "postgresql_version": "postgres:14",
+    "hasura_version": "hasura/graphql-engine:v2.11.2",
+    "line_length": "140"
+}
