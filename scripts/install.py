@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 from shutil import which
@@ -66,7 +67,10 @@ def main(quiet: bool) -> None:
 
     if 'dipdup' not in pipx_packages:
         echo('Installing DipDup')
-        run('pipx install dipdup')
+        if os.environ.get('CI'):
+            run('pipx install .')
+        else:
+            run('pipx install dipdup')
     else:
         echo('Updating DipDup')
         run('pipx upgrade dipdup')
