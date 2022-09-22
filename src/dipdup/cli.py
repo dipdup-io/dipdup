@@ -239,8 +239,9 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 
     Report an issue: https://github.com/dipdup-net/dipdup/issues
     """
-    # NOTE: Workaround for subcommands
-    if '--help' in sys.argv:
+    # NOTE: Workaround for help pages
+    args = sys.argv[1:]
+    if '--help' in args or args in ([], ['config'], ['hasura'], ['schema']):
         return
 
     from dotenv import load_dotenv

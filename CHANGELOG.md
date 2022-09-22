@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- cli: Commands that only print help pages no longer require a valid config.
+
+### Performance
+
+- cli: Up to 2.5x decrease in startup time.
+
 ## [6.1.3] - 2022-09-21
 
 ### Added
