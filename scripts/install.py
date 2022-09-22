@@ -4,9 +4,6 @@ import sys
 from shutil import which
 from typing import NoReturn
 
-DEFAULT_REPO = 'https://github.com/dipdup-net/dipdup'
-DEFAULT_REF = 'master'
-
 
 def run(*args, **kwargs):
     return subprocess.run(
@@ -51,7 +48,7 @@ def ask(msg: str, default: bool, quiet: bool) -> bool:
         return input().lower() in ('y', 'yes')
 
 
-def main(quiet: bool) -> None:
+def main(quiet: bool, local: bool) -> None:
     if sys.version_info < (3, 10):
         fail('DipDup requires Python 3.10')
 
@@ -66,10 +63,11 @@ def main(quiet: bool) -> None:
     pipx_packages = {p.split()[0].decode() for p in pipx_packages_raw.splitlines()}
 
     if 'dipdup' not in pipx_packages:
-        echo('Installing DipDup')
-        if os.environ.get('CI'):
+        if local:
+            echo(f'Installing DipDup from `{os.getcwd()}`')
             run('pipx install .')
         else:
+            echo(f'Installing DipDup from PyPI')
             run('pipx install dipdup')
     else:
         echo('Updating DipDup')
@@ -85,7 +83,9 @@ def main(quiet: bool) -> None:
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    if len(args) not in (0, 1):
-        fail('Usage: install.py [-q | --quiet]')
+    if len(args) not in (0, 1, 2):
+        fail('usage: install.py [-q | --quiet] | [-l | --local]')
 
-    main('--quiet' in args or '-q' in args)
+    quiet = '--quiet' in args or '-q' in args
+    local = '--local' in args or '-l' in args
+    main(quiet, local)

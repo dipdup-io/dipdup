@@ -20,10 +20,10 @@ jobs:
           python-version: '3.10'
 
       - name: Install DipDup
-        run: python scripts/install.py -q
+        run: python scripts/install.py --quiet --local
 
       - name: Create new project
         run: dipdup new -q
 
       - name: Validate project
-        run: cd my-dipdup-indexer; make install lint
+        run: cd dipdup-indexer; make install lint

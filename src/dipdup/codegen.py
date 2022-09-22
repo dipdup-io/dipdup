@@ -414,7 +414,7 @@ class CodeGenerator:
 
 # {
 #     "\n👀": "General information (press enter)",
-#     "project_name": "my-dipdup-indexer",
+#     "project_name": "dipdup-indexer",
 #     "package": "{{cookiecutter.project_name.replace('-', '_')}}",
 #     "version": "0.0.1",
 #     "description": "My shiny new indexer based on DipDup",
@@ -446,13 +446,13 @@ _questions = [
         'type': 'input',
         'name': 'project_name',
         'message': 'Project name',
-        'default': 'my-dipdup-indexer',
+        'default': 'dipdup-indexer',
     },
     {
         'type': 'input',
         'name': 'package',
         'message': 'Package name',
-        'default': 'my_dipdup_indexer',
+        'default': 'dipdup_indexer',
     },
     {
         'type': 'input',
