@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from pathlib import Path
-from os.path import join
-from dipdup.codegen import questions
 import json
+from os.path import join
+from pathlib import Path
+
+from dipdup.codegen import questions
 
 path = join(Path(__file__).parent.parent, 'docs', 'cookiecutter.json')
 

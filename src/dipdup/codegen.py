@@ -411,6 +411,7 @@ class CodeGenerator:
             sql_path = join(self._config.package_path, 'sql', *subpackages, callback, '.keep')
             touch(sql_path)
 
+
 # FIXME: Pure Copilot
 questions = [
     {

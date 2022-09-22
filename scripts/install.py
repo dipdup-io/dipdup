@@ -68,7 +68,7 @@ def main(quiet: bool, local: bool) -> None:
             echo(f'Installing DipDup from `{os.getcwd()}`')
             run('pipx install .')
         else:
-            echo(f'Installing DipDup from PyPI')
+            echo('Installing DipDup from PyPI')
             run('pipx install dipdup')
     else:
         echo('Updating DipDup')
