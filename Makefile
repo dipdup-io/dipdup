@@ -19,6 +19,7 @@ all:            ## Run a whole CI pipeline: lint, run tests, build docs
 	make install lint test docs
 
 install:        ## Install project dependencies
+	poetry lock
 	poetry install \
 	`if [ "${PYTEZOS}" = "1" ]; then echo "-E pytezos "; fi` \
 	`if [ "${DEV}" = "0" ]; then echo "--without dev"; fi`
