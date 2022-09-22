@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: Installer
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -19,9 +19,6 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Update pipx
-        run: pip install --user -U pipx
-
       - name: Install DipDup
         run: python scripts/install.py -q
 
@@ -29,4 +26,4 @@ jobs:
         run: dipdup new -q
 
       - name: Validate project
-        run: cd my-new-indexer; make install lint
+        run: cd my-dipdup-indexer; make install lint
