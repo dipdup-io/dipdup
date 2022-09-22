@@ -73,12 +73,17 @@ def main(quiet: bool, local: bool) -> None:
         echo('Updating DipDup')
         run('pipx upgrade dipdup')
 
+    if 'datamodel-code-generator' not in pipx_packages:
+        run('pipx install datamodel-code-generator')
+    else:
+        run('pipx upgrade datamodel-code-generator')
+
     if not which('poetry'):
         if ask('Install poetry? Optional for `dipdup new` command', True, quiet):
             echo('Installing poetry')
             run('pipx install poetry')
 
-    done('Done! DipDup is ready to use. Run `dipdup new` to create a new project')
+    done('Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available commands.')
 
 
 if __name__ == '__main__':
