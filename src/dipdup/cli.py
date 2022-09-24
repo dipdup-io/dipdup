@@ -636,7 +636,7 @@ async def new(ctx, quiet: bool) -> None:
     from dipdup.project import DefaultProject
 
     project = DefaultProject()
-    project.prompt(quiet=quiet)
+    project.run(quiet=quiet)
     project.render()
 
 

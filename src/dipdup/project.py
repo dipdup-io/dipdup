@@ -2,14 +2,12 @@ import logging
 from glob import glob
 from os.path import dirname
 from os.path import exists
+from os.path import isdir
 from os.path import join
 from typing import Any
 
+import asyncclick as cl
 import orjson as json
-from asyncclick import Choice
-from asyncclick import echo
-from asyncclick import prompt
-from genericpath import isdir
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -22,41 +20,66 @@ _logger = logging.getLogger('dipdup.project')
 
 
 class Question(BaseModel):
+    type: type = str
     name: str
     description: str
     default: Any
 
     def prompt(self) -> Any:
-        echo(self.description)
-        return prompt(self.name, default=self.default)
+        try:
+            return cl.prompt(
+                self.name,
+                default=self.default,
+                type=self.type,
+            )
+        except cl.Abort:
+            _logger.info('Aborted')
+            exit(0)
 
     class Config:
         frozen = True
 
 
-class BooleanQuestion(Question):
-    default: bool
+class NotifyQuestion(Question):
+    type = type(None)
 
-    def prompt(self) -> bool:
-        print(self.description)
-        return prompt(self.name, default=self.default, type=bool)
-
-
-class ChoiceQuestion(Question):
-    default: str
-    choices: tuple[str, ...]
-
-    def prompt(self) -> str:
-        print(self.description)
-        return prompt(self.name, default=self.default, type=Choice(self.choices))
+    def prompt(self) -> Any:
+        cl.secho(self.description, fg='yellow')
+        return self.default
 
 
 class InputQuestion(Question):
+    type = str
     default: str
 
-    def prompt(self) -> str:
-        print(self.description)
-        return prompt(self.name, default=self.default)
+    def prompt(self) -> bool:
+        cl.secho(f'=> {self.description}', fg='blue')
+        return super().prompt()
+
+
+class BooleanQuestion(Question):
+    type = bool
+    default: bool
+
+    def prompt(self) -> bool:
+        cl.secho(f'=> {self.description}', fg='blue')
+        return super().prompt()
+
+
+class ChoiceQuestion(Question):
+    type = int
+    default: int
+    choices: tuple[str, ...]
+
+    @property
+    def default_choice(self) -> str:
+        return self.choices[self.default]
+
+    def prompt(self) -> int:
+        cl.secho(f'=> {self.description}', fg='blue')
+        for i, choice in enumerate(self.choices):
+            cl.echo(f'  {i}) {choice}')
+        return super().prompt()
 
 
 class JinjaAnswers(dict):
@@ -79,17 +102,28 @@ class Project(BaseModel):
     def reset(self) -> None:
         self.answers = JinjaAnswers()
 
-    def prompt(self, quiet: bool) -> None:
+    def run(self, quiet: bool) -> None:
         if not self.questions:
-            raise ConfigurationError('No questions to prompt')
+            raise ConfigurationError('No questions defined')
         if self.answers:
             raise ConfigurationError('Answers already exist')
+
         for question in self.questions:
-            self.answers[question.name] = question.default if quiet else question.prompt()
+            if quiet:
+                value = question.default_choice if isinstance(question, ChoiceQuestion) else question.default
+                cl.echo(f'{question.name}: using default value `{value}`')
+            else:
+                value = question.prompt()
+            self.answers[question.name] = value
 
     def write_cookiecutter_json(self, path: str) -> None:
         with open(path, 'wb') as f:
-            f.write(json.dumps(self.answers, option=json.OPT_INDENT_2))
+            f.write(
+                json.dumps(
+                    self.answers,
+                    option=json.OPT_INDENT_2,
+                )
+            )
 
     def render(self) -> None:
         from jinja2 import Template
@@ -117,6 +151,10 @@ class DefaultProject(Project):
     path = join(dirname(__file__), 'templates', 'project')
     description = 'Default DipDup project, ex. cookiecutter template'
     questions: tuple[Question, ...] = (
+        NotifyQuestion(
+            name='welcome',
+            description='Welcome to DipDup! This script will help you to create a new project.',
+        ),
         InputQuestion(
             name='project_name',
             description='Project name',
@@ -150,7 +188,7 @@ class DefaultProject(Project):
         ChoiceQuestion(
             name='dipdup_version',
             description='DipDup version',
-            default='6',
+            default=0,
             choices=(
                 '6',
                 '6.1',
@@ -159,7 +197,7 @@ class DefaultProject(Project):
         ChoiceQuestion(
             name='postgresql_version',
             description='PostgreSQL version',
-            default='postgres:14',
+            default=0,
             choices=(
                 'postgres:14',
                 'postgres:13',
@@ -170,7 +208,7 @@ class DefaultProject(Project):
         ChoiceQuestion(
             name='hasura_version',
             description='Hasura version',
-            default='hasura/graphql-engine:v2.11.2',
+            default=0,
             choices=(
                 'hasura/graphql-engine:v2.11.2',
                 'hasura/graphql-engine:v2.10.1',
