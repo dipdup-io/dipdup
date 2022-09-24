@@ -126,13 +126,16 @@ def _sentry_before_send(
 
 def _init_sentry(config) -> None:
     from dipdup.config import DipDupConfig
+    from dipdup.config import SentryConfig
 
     assert isinstance(config, DipDupConfig)
     if not config.sentry:
-        if not config.advanced.crash_reporting:
-            return
+        config.sentry = SentryConfig()
 
-    from dipdup.config import SentryConfig
+    if not config.sentry.dsn:
+        if config.advanced.crash_reporting:
+            return
+        config.sentry.dsn = BAKING_BAD_SENTRY_DSN
 
     if not config.sentry:
         config.sentry = SentryConfig(dsn=BAKING_BAD_SENTRY_DSN)

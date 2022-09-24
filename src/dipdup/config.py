@@ -1167,7 +1167,7 @@ class SentryConfig:
     :param debug: Catch warning messages and more context
     """
 
-    dsn: str
+    dsn: str = ''
     environment: Optional[str] = None
     server_name: Optional[str] = None
     release: Optional[str] = None

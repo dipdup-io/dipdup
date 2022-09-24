@@ -28,11 +28,19 @@ class Question(BaseModel):
 
     def prompt(self) -> Any:
         try:
+            if self.type == bool:
+                text = f"{self.name} [{'Y/n' if self.default else 'y/N'}]"
+                show_default = False
+            else:
+                text = self.name
+                show_default = True
             return cl.prompt(
-                self.name,
+                text=text,
                 default=self.default,
                 type=self.type,
+                show_default=show_default,
             )
+
         except cl.Abort:
             _logger.info('Aborted')
             exit(0)
@@ -82,6 +90,7 @@ class ChoiceQuestion(Question):
             cl.echo(f'  {i}) {choice}')
         value: int = super().prompt()
         return self.choices[value]
+
 
 class JinjaAnswers(dict):
     def __getattr__(self, item):
@@ -208,7 +217,7 @@ class DefaultProject(Project):
         ),
         ChoiceQuestion(
             name='postgresql_version',
-            description=('PostgreSQL version:' 'Try TimescaleDB when working with time series.'),
+            description=('PostgreSQL version:\n' 'Try TimescaleDB when working with time series.'),
             default=0,
             choices=(
                 'postgres:14',
@@ -219,7 +228,9 @@ class DefaultProject(Project):
         ),
         ChoiceQuestion(
             name='hasura_version',
-            description=('Hasura version:\n' 'Test new versions before production; breaking changes are possible between minor versions.'),
+            description=(
+                'Hasura version:\n' 'Test new releases before using in production; breaking changes are possible between minor versions.'
+            ),
             default=0,
             choices=(
                 'hasura/graphql-engine:v2.11.2',
@@ -231,9 +242,15 @@ class DefaultProject(Project):
             default=None,
             description='Miscellaneous tunables; leave default values if unsure',
         ),
+        BooleanQuestion(
+            name='crash_reporting',
+            description='Enable crash reporting?\n' 'It helps us a lot to improve DipDup 🙏',
+            # FIXME: I really-really want it to be opt-out :/
+            default=True,
+        ),
         InputQuestion(
             name='line_length',
-            description=('Maximum line length:' 'Used by linters.'),
+            description=('Maximum line length:\n' 'Used by linters.'),
             default='140',
         ),
     )

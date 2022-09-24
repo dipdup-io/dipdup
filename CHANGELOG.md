@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning].
 ### Fixed
 
 - cli: Commands that only print help pages no longer require a valid config.
+- config: Allow leaving `dsn` field empty.
 
 ### Removed
 
