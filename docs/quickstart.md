@@ -10,23 +10,36 @@ A modern Linux/MacOS distribution with Python 3.10 installed is required to run 
 
 ### Interactively (recommended)
 
-You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/README.html) and create a new project in the current directory.
+You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install DipDup for the current user:
 
 ```shell
 python -c "$(curl -sSL https://dipdup.net/install.py)"
 ```
 
-### From scratch
-
-We advise using the [Poetry](https://python-poetry.org) package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.
+Now, let's create a new project:
 
 ```shell
-# Create a new project
-mkdir my-indexer; cd my-indexer
+dipdup new
+```
+
+Follow the instructions; project will be created in the current directory. You can skip reading the rest of this page and slap `dipdup run` instead.
+
+### From scratch
+
+Currently, we mostly use [Poetry](https://python-poetry.org) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.
+
+```shell
+# Create a new project directory
+mkdir dipdup-indexer; cd dipdup-indexer
+
+# Plain pip
+python -m venv .venv
+. .venv/bin/activate
+pip install dipdup
+
+# or Poetry
 poetry init --python ">=3.10,<3.11"
-# Add dipdup as a dependency
 poetry add dipdup
-# Enter the virtualenv
 poetry shell
 ```
 

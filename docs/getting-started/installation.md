@@ -35,7 +35,7 @@ We advise using the [Poetry](https://python-poetry.org) package manager for new 
 
 ```shell
 # Create a new project
-mkdir my-indexer; cd my-indexer
+mkdir dipdup-indexer; cd dipdup-indexer
 poetry init --python ">=3.10,<3.11"
 # Add dipdup as a dependency
 poetry add dipdup
