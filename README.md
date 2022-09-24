@@ -22,12 +22,12 @@ DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/
 
 * **Ready to build your first indexer?** Head to [Quickstart](https://docs.dipdup.io/quickstart).
 
-* **Looking for examples?** Check out [Demo Projects](https://github.com/dipdup-net/dipdup/tree/master/src).
+* **Looking for examples?** Check out [Demos Projects](https://docs.dipdup.io/examples/demo-projects) and [Built with DipDup](https://docs.dipdup.io/examples/built-with-dipdup) pages.
 
-* **Want to contribute?** See [Contribution Guide](https://github.com/dipdup-net/dipdup/tree/master/CONTRIBUTING.md).
+* **Want to participate?** Vote for issues on [GitHub](https://github.com/dipdup-net/dipdup/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) or [become a sponsor](https://github.com/sponsors/dipdup-net).
 
 * **Have a question?** Contact us on [Discord](https://discord.com/invite/RcPGSdcVSx), [Telegram](https://t.me/baking_bad_chat), or [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L)!
 
-This project is maintained by the [Baking Bad](https://baking-bad.org/) team.
+This project is maintained by the [Baking Bad](https://bakingbad.dev/) team.
 <br>
 Development is supported by [Tezos Foundation](https://tezos.foundation/).

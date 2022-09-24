@@ -76,12 +76,12 @@ class ChoiceQuestion(Question):
     def default_choice(self) -> str:
         return self.choices[self.default]
 
-    def prompt(self) -> int:
+    def prompt(self) -> str:
         cl.secho(f'=> {self.description}', fg='blue')
         for i, choice in enumerate(self.choices):
             cl.echo(f'  {i}) {choice}')
-        return super().prompt()
-
+        value: int = super().prompt()
+        return self.choices[value]
 
 class JinjaAnswers(dict):
     def __getattr__(self, item):
@@ -111,10 +111,11 @@ class Project(BaseModel):
 
         for question in self.questions:
             if quiet:
-                value = question.default_choice if isinstance(question, ChoiceQuestion) else question.default
+                value = question.choices[question.default] if isinstance(question, ChoiceQuestion) else question.default
                 cl.echo(f'{question.name}: using default value `{value}`')
             else:
                 value = question.prompt()
+
             self.answers[question.name] = value
 
     def write_cookiecutter_json(self, path: str) -> None:
