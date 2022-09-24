@@ -4,6 +4,7 @@ from os.path import dirname
 from os.path import exists
 from os.path import isdir
 from os.path import join
+from types import NoneType
 from typing import Any
 
 import asyncclick as cl
@@ -41,10 +42,10 @@ class Question(BaseModel):
 
 
 class NotifyQuestion(Question):
-    type = type(None)
+    type = NoneType
 
     def prompt(self) -> Any:
-        cl.secho(self.description, fg='yellow')
+        cl.secho('\n' + self.description + '\n', fg='yellow')
         return self.default
 
 
@@ -120,7 +121,7 @@ class Project(BaseModel):
         with open(path, 'wb') as f:
             f.write(
                 json.dumps(
-                    self.answers,
+                    {k: v for k, v in self.answers.items() if not k.startswith('_')},
                     option=json.OPT_INDENT_2,
                 )
             )
@@ -152,42 +153,52 @@ class DefaultProject(Project):
     description = 'Default DipDup project, ex. cookiecutter template'
     questions: tuple[Question, ...] = (
         NotifyQuestion(
-            name='welcome',
-            description='Welcome to DipDup! This script will help you to create a new project.',
+            name='_welcome',
+            default=None,
+            description=(
+                'Welcome to DipDup! This script will help you to create a new project.\n'
+                'You can abort at any time by pressing Ctrl+C.\n'
+                'Let\'s start with some basic questions.'
+            ),
         ),
         InputQuestion(
             name='project_name',
-            description='Project name',
+            description='Project name:',
             default='dipdup-indexer',
         ),
         InputQuestion(
             name='package',
-            description='Package name',
+            description='Python package name:',
             default='dipdup_indexer',
         ),
         InputQuestion(
             name='version',
-            description='Project version',
+            description='Project version:',
             default='0.0.1',
         ),
         InputQuestion(
             name='description',
-            description='Project description',
+            description='Project description:',
             default='My shiny new indexer based on DipDup',
         ),
         InputQuestion(
             name='license',
-            description='License',
+            description=('Project license:\n' 'DipDup itself is MIT-licensed.'),
             default='MIT',
         ),
         InputQuestion(
             name='author',
-            description='Author',
+            description=('Project author:\n' 'You can add more later.'),
             default='John Smith <john_smith@localhost.lan>',
+        ),
+        NotifyQuestion(
+            name='_versions',
+            default=None,
+            description='Now choose versions of software you want to use.',
         ),
         ChoiceQuestion(
             name='dipdup_version',
-            description='DipDup version',
+            description='DipDup version:',
             default=0,
             choices=(
                 '6',
@@ -196,7 +207,7 @@ class DefaultProject(Project):
         ),
         ChoiceQuestion(
             name='postgresql_version',
-            description='PostgreSQL version',
+            description=('PostgreSQL version:' 'Try TimescaleDB when working with time series.'),
             default=0,
             choices=(
                 'postgres:14',
@@ -207,16 +218,21 @@ class DefaultProject(Project):
         ),
         ChoiceQuestion(
             name='hasura_version',
-            description='Hasura version',
+            description=('Hasura version:\n' 'Test new versions before production; breaking changes are possible between minor versions.'),
             default=0,
             choices=(
                 'hasura/graphql-engine:v2.11.2',
                 'hasura/graphql-engine:v2.10.1',
             ),
         ),
+        NotifyQuestion(
+            name='_other',
+            default=None,
+            description='Miscellaneous tunables; leave default values if unsure',
+        ),
         InputQuestion(
             name='line_length',
-            description='Line length',
+            description=('Maximum line length:' 'Used by linters.'),
             default='140',
         ),
     )
