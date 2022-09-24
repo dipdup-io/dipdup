@@ -16,6 +16,8 @@ from os import makedirs
 from os.path import dirname
 from os.path import exists
 from os.path import getsize
+from os.path import isdir
+from os.path import isfile
 from os.path import join
 from typing import TYPE_CHECKING
 from typing import Any
@@ -32,8 +34,6 @@ from typing import Union
 from typing import cast
 
 import orjson
-from os.path import isdir
-from os.path import isfile
 from humps import main as humps
 
 from dipdup.exceptions import ProjectImportError

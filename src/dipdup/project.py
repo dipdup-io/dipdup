@@ -40,10 +40,9 @@ class Question(BaseModel):
                 type=self.type,
                 show_default=show_default,
             )
-
         except cl.Abort:
-            _logger.info('Aborted')
-            exit(0)
+            cl.echo('\nAborted')
+            quit(0)
 
     class Config:
         frozen = True

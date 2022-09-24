@@ -73,11 +73,15 @@ def _print_help(error: Exception, crashdump_path: str) -> None:
 def cli_wrapper(fn):
     @wraps(fn)
     async def wrapper(*args, **kwargs) -> None:
-        loop = asyncio.get_running_loop()
-        loop.add_signal_handler(
-            signal.SIGINT,
-            lambda: asyncio.ensure_future(_shutdown()),
-        )
+        # NOTE: Avoid catching Click prompts
+        ctx = args[0]
+        if ctx.invoked_subcommand not in (None, 'new', 'schema', 'wipe'):
+            loop = asyncio.get_running_loop()
+            loop.add_signal_handler(
+                signal.SIGINT,
+                lambda: asyncio.ensure_future(_shutdown()),
+            )
+
         try:
             await fn(*args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
@@ -540,10 +544,9 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
             click.confirm(f'You\'re about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?', abort=True)
         except AssertionError:
             click.echo('Not in a TTY, skipping confirmation')
-        # FIXME: Can't catch asyncio.CancelledError here
         except click.Abort:
-            click.echo('Aborted')
-            return
+            click.echo('\nAborted')
+            quit(0)
 
     _logger.info('Wiping schema `%s`', url)
 
