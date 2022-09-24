@@ -10,7 +10,7 @@
   "bugs": {
     "url": "https://github.com/dipdup-net/dipdup-docs/issues"
   },
-  "homepage": "https://dipdup.net",
+  "homepage": "https://dipdup.io",
   "scripts": {
     "serve": "NODE_ENV=development webpack --watch",
     "build": "NODE_ENV=production webpack"

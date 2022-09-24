@@ -9,7 +9,7 @@ authors = [
 ]
 readme = "README.md"
 repository = "https://github.com/dipdup-net/dipdup"
-homepage = "https://dipdup.net/"
+homepage = "https://dipdup.io/"
 keywords = ['tezos', 'blockchain', 'sdk', 'michelson', 'indexers', 'tzkt', 'cryptocurrencies', 'smart-contracts']
 classifiers = [
     "Programming Language :: Python :: 3",

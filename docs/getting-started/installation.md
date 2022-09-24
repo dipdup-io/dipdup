@@ -26,7 +26,7 @@ We aim to improve cross-platform compatibility in future releases ([issue](https
 The following command will install DipDup for the current user:
 
 ```shell
-python -c "$(curl -sSL https://dipdup.net/install.py)"
+python -c "$(curl -sSL https://dipdup.io/install.py)"
 ```
 
 This script uses pipx under the hood to install `dipdup` and `datamodel-codegen` as a CLI tools. Then you can use any package manager of your choice to manage versions of DipDup and other the dependencies of your project.
