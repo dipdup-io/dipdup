@@ -11,11 +11,15 @@ and this project adheres to [Semantic Versioning].
 
 - install: New install script based on pipx.
 - cli: `dipdup new` command to create a new project (ex. cookiecutter).
-- cli: `dipdup update` command to update local pipx and poetry ins tallations.
+- cli: `dipdup update` command to update local pipx and poetry installations.
 
 ### Fixed
 
 - cli: Commands that only print help pages no longer require a valid config.
+
+### Removed
+
+- install: Cookiecutter template is no longer supported.
 
 ### Performance
 

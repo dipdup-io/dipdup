@@ -178,10 +178,10 @@ def _init_sentry(config) -> None:
     sentry_sdk.set_tag('dipdup_version', __version__)
     sentry_sdk.set_tag('dipdup_package', config.package)
 
-    # NOTE: Obfuscated package/connection pair
+    # NOTE: Obfuscated package/connection pair (also truncated by Sentry)
     user_id = hashlib.sha256(
         (config.package + config.database.connection_string).encode(),
-    ).hexdigest()[:8]
+    ).hexdigest()
 
     sentry_sdk.set_user({'id': user_id})
     sentry_sdk.Hub.current.start_session()
@@ -230,9 +230,9 @@ async def _check_version() -> None:
 async def cli(ctx, config: List[str], env_file: List[str]):
     """Manage and run DipDup indexers.
 
-    Full docs: https://docs.dipdup.io
+    Documentation: https://docs.dipdup.io
 
-    Report an issue: https://github.com/dipdup-net/dipdup/issues
+    Issues: https://github.com/dipdup-net/dipdup/issues
     """
     # NOTE: Workaround for help pages
     args = sys.argv[1:]
@@ -328,7 +328,7 @@ async def run(ctx) -> None:
 @click.pass_context
 @cli_wrapper
 async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
-    """Generate project tree, missing callbacks and types.
+    """Generate project tree, callbacks and types.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
     """
@@ -430,7 +430,7 @@ async def config_env(ctx, file: Optional[str]) -> None:
         echo(content)
 
 
-@cli.group(help='Hasura integration related commands.')
+@cli.group(help='Commands related to Hasura integration.')
 @click.pass_context
 @cli_wrapper
 async def hasura(ctx) -> None:
@@ -475,7 +475,7 @@ async def hasura_configure(ctx, force: bool) -> None:
 @click.pass_context
 @cli_wrapper
 async def schema(ctx) -> None:
-    """Manage database schema."""
+    """Commands to manage database schema."""
     ...
 
 
@@ -632,16 +632,19 @@ async def schema_export(ctx) -> None:
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @cli_wrapper
 async def new(ctx, quiet: bool) -> None:
-    from dipdup.codegen import ProjectGenerator
+    """Create a new project interactively."""
+    from dipdup.project import DefaultProject
 
-    generator = ProjectGenerator()
-    generator.generate(quiet)
+    project = DefaultProject()
+    project.prompt(quiet=quiet)
+    project.render()
 
 
 @cli.command()
 @click.pass_context
 @cli_wrapper
 async def update(ctx) -> None:
+    """Update DipDup to the latest version."""
     from pathlib import Path
 
     from dipdup.utils import run as _run

@@ -2,8 +2,8 @@
   <section id="dipdup">
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this heading">¶</a></h1>
 <p>Manage and run DipDup indexers.</p>
-<p>Full docs: <a class="reference external" href="https://docs.dipdup.io">https://docs.dipdup.io</a></p>
-<p>Report an issue: <a class="reference external" href="https://github.com/dipdup-net/dipdup/issues">https://github.com/dipdup-net/dipdup/issues</a></p>
+<p>Documentation: <a class="reference external" href="https://docs.dipdup.io">https://docs.dipdup.io</a></p>
+<p>Issues: <a class="reference external" href="https://github.com/dipdup-net/dipdup/issues">https://github.com/dipdup-net/dipdup/issues</a></p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
@@ -71,7 +71,7 @@
 </section>
 <section id="dipdup-hasura">
 <h2>hasura<a class="headerlink" href="#dipdup-hasura" title="Permalink to this heading">¶</a></h2>
-<p>Hasura integration related commands.</p>
+<p>Commands related to Hasura integration.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup hasura <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
@@ -92,7 +92,7 @@
 </section>
 <section id="dipdup-init">
 <h2>init<a class="headerlink" href="#dipdup-init" title="Permalink to this heading">¶</a></h2>
-<p>Generate project tree, missing callbacks and types.</p>
+<p>Generate project tree, callbacks and types.</p>
 <p>This command is idempotent, meaning it won’t overwrite previously generated files unless asked explicitly.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup init <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
@@ -121,6 +121,7 @@
 </section>
 <section id="dipdup-new">
 <h2>new<a class="headerlink" href="#dipdup-new" title="Permalink to this heading">¶</a></h2>
+<p>Create a new project interactively.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup new <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
@@ -142,7 +143,7 @@
 </section>
 <section id="dipdup-schema">
 <h2>schema<a class="headerlink" href="#dipdup-schema" title="Permalink to this heading">¶</a></h2>
-<p>Manage database schema.</p>
+<p>Commands to manage database schema.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
@@ -200,6 +201,7 @@
 </section>
 <section id="dipdup-update">
 <h2>update<a class="headerlink" href="#dipdup-update" title="Permalink to this heading">¶</a></h2>
+<p>Update DipDup to the latest version.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup update <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
