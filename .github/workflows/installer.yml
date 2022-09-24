@@ -2,7 +2,7 @@ name: Installer
 on:
   push:
     paths:
-      - 'src/dipdup/templates/**'
+      - 'src/**'
       - 'scripts/install.py'
       - '.github/workflows/installer.yml'
 
