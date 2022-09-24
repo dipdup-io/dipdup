@@ -5,6 +5,6 @@ do
     dipdup -c src/$name/dipdup.yml init --overwrite-types
     for file in "Dockerfile" "docker-compose.yml" ".dockerignore" "dipdup.dev.yml" "dipdup.prod.yml"
     do
-        cat src/dipdup/templates/project/$file.j2 | python docs/mdbook-cookiecutter > src/$name/$file
+        cat src/dipdup/projects/base/$file.j2 | python docs/mdbook-cookiecutter > src/$name/$file
     done
 done

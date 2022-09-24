@@ -1,5 +1,6 @@
 import logging
 import os
+from os.path import dirname
 import re
 import subprocess
 from os.path import basename
@@ -96,7 +97,9 @@ class CodeGenerator:
 
         models_path = join(package_path, 'models.py')
         if not exists(models_path):
-            template = load_template('models.py')
+            template = load_template(
+                join(dirname(__file__), 'templates', 'models.py.j2',
+            ))
             models_code = template.render()
             write(models_path, models_code)
 
@@ -354,7 +357,9 @@ class CodeGenerator:
         callback_path = join(subpackage_path, f'{callback}.py')
         if not exists(callback_path):
             self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
-            callback_template = load_template('callback.py')
+            callback_template = load_template(
+                join(dirname(__file__), 'templates', 'callback.py.j2',
+            ))
 
             arguments = callback_config.format_arguments()
             imports = set(callback_config.format_imports(self._config.package))

@@ -32,8 +32,8 @@ from typing import Union
 from typing import cast
 
 import orjson
-from genericpath import isdir
-from genericpath import isfile
+from os.path import isdir
+from os.path import isfile
 from humps import main as humps
 
 from dipdup.exceptions import ProjectImportError
@@ -209,7 +209,7 @@ def run(*args, **kwargs):
 
 @cache
 def load_template(name: str) -> 'Template':
-    """Load template from templates/{name}.j2"""
+    """Load template from relative project path"""
     from jinja2 import Template
 
     path = join(
@@ -217,7 +217,7 @@ def load_template(name: str) -> 'Template':
         '..',
         'templates',
         *os.sep.split(name)[1:],
-        f'{name}.j2',
+        name,
     )
     if not exists(path):
         raise RuntimeError(f'Template `{name}` not found at `{path}`')

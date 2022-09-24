@@ -132,6 +132,18 @@
 <dd><p>Use default values for all prompts.</p>
 </dd></dl>
 
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-new-f">
+<span id="cmdoption-dipdup-new-force"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--force</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-new-f" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overwrite existing files.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-new-r">
+<span id="cmdoption-dipdup-new-replay"></span><span class="sig-name descname"><span class="pre">-r</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--replay</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;replay&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-new-r" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replay a previously saved state.</p>
+</dd></dl>
+
 </section>
 <section id="dipdup-run">
 <h2>run<a class="headerlink" href="#dipdup-run" title="Permalink to this heading">¶</a></h2>

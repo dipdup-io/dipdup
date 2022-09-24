@@ -633,14 +633,21 @@ async def schema_export(ctx) -> None:
 @cli.command()
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
+@click.option('--force', '-f', is_flag=True, help='Overwrite existing files.')
+@click.option('--replay', '-r', type=click.Path(exists=True), default=None, help='Replay a previously saved state.')
 @cli_wrapper
-async def new(ctx, quiet: bool) -> None:
+async def new(
+    ctx,
+    quiet: bool,
+    force: bool,
+    replay: str | None,
+) -> None:
     """Create a new project interactively."""
     from dipdup.project import DefaultProject
 
     project = DefaultProject()
-    project.run(quiet=quiet)
-    project.render()
+    project.run(quiet, replay)
+    project.render(force)
 
 
 @cli.command()

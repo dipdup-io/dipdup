@@ -112,11 +112,16 @@ class Project(BaseModel):
     def reset(self) -> None:
         self.answers = JinjaAnswers()
 
-    def run(self, quiet: bool) -> None:
+    def run(self, quiet: bool, replay: str | None) -> None:
         if not self.questions:
             raise ConfigurationError('No questions defined')
         if self.answers:
             raise ConfigurationError('Answers already exist')
+
+        if replay:
+            with open(replay, 'rb') as f:
+                self.answers = JinjaAnswers(json.loads(f.read()))
+            return
 
         for question in self.questions:
             if quiet:
@@ -136,30 +141,45 @@ class Project(BaseModel):
                 )
             )
 
-    def render(self) -> None:
+    def _render(self, path: str, output_path: str, force: bool) -> None:
+        if exists(output_path) and not force:
+            _logger.warning('File `%s` already exists, skipping', output_path)
+
+        _logger.info('Generating `%s`', output_path)
+        template = load_template(path)
+        content = template.render(cookiecutter=self.answers)
+        write(output_path, content, overwrite=force)
+
+    def render(self, force: bool = False) -> None:
         from jinja2 import Template
 
-        for path in glob(join(self.path, '**'), recursive=True):
+        base_path = join(dirname(__file__), 'projects')
+        project_path = join(base_path, self.path)
+        project_paths = glob(
+            '**',
+            root_dir=project_path,
+            recursive=True,
+        )
+        config_path = join(base_path, self.answers['template'] + '.yml.j2')
+
+        for path in project_paths:
+            output_path = join(self.answers['project_name'], path.replace('.j2', ''))
+            output_path = Template(output_path).render(cookiecutter=self.answers)
+            mkdir_p(dirname(output_path))
+            path = join(project_path, path)
+
             if isdir(path):
                 continue
 
-            relative_path = path.replace(self.path, '').lstrip('/')
-            output_path = join(self.answers['project_name'], relative_path).replace('.j2', '')
-            output_path = Template(output_path).render(cookiecutter=self.answers)
-            mkdir_p(dirname(output_path))
-            if exists(output_path):
-                _logger.warning('File `%s` already exists, skipping', output_path)
-                continue
+            self._render(join(project_path, path), output_path, force)
 
-            _logger.info('Generating `%s`', output_path)
-            template = load_template(path.replace('.j2', ''))
-            content = template.render(cookiecutter=self.answers)
-            write(output_path, content)
+        output_path = join(self.answers['project_name'], 'dipdup.yml')
+        self._render(config_path, output_path, force)
 
 
 class DefaultProject(Project):
     name = 'dipdup'
-    path = join(dirname(__file__), 'templates', 'project')
+    path = 'base'
     description = 'Default DipDup project, ex. cookiecutter template'
     questions: tuple[Question, ...] = (
         NotifyQuestion(
@@ -170,6 +190,12 @@ class DefaultProject(Project):
                 'You can abort at any time by pressing Ctrl+C.\n'
                 'Let\'s start with some basic questions.'
             ),
+        ),
+        ChoiceQuestion(
+            name='template',
+            description='Config template:',
+            default=0,
+            choices=('demo_tzbtc',),
         ),
         InputQuestion(
             name='project_name',

@@ -6,5 +6,5 @@ from dipdup.project import DefaultProject
 
 path = join(Path(__file__).parent.parent, 'docs', 'cookiecutter.json')
 project = DefaultProject()
-project.run(quiet=True)
+project.run(quiet=True, replay=None)
 project.write_cookiecutter_json(path)

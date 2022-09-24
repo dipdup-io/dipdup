@@ -32,6 +32,8 @@ if __name__ == '__main__':
 
     with open(join(dirname(__file__), 'cookiecutter.json')) as file:
         defaults = json.load(file)
+    for k, v in defaults.items():
+        defaults[k] = str(v)
 
     text = sys.stdin.read()
 
