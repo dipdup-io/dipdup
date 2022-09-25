@@ -93,14 +93,13 @@ release-major:  ## Release major version
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 
-update:         ## Update dependencies, export requirements.txt (wait an eternity)
+update:         ## Update dependencies, export requirements.txt
 	make install
 	poetry update
 
 	cp pyproject.toml pyproject.toml.bak
 	cp poetry.lock poetry.lock.bak
 
-	# NOTE: 1.2.0 spells
 	poetry export --without-hashes -o requirements.txt
 	poetry export --without-hashes -o requirements.pytezos.txt -E pytezos
 	poetry export --without-hashes -o requirements.dev.txt --with dev
