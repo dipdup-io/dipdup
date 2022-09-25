@@ -191,45 +191,45 @@ class DefaultProject(Project):
             name='_welcome',
             default=None,
             description=(
-                'Welcome to DipDup! This script will help you to create a new project.\n'
+                'Welcome to DipDup! This command will help you to create a new project.\n'
                 'You can abort at any time by pressing Ctrl+C.\n'
-                'Let\'s start with some basic questions.'
+                'Let\'s start with some basic questions.  Press Enter to use default value.'
             ),
         ),
         ChoiceQuestion(
             name='template',
-            description='Config template:',
+            description='Choose config template',
             default=0,
             choices=('demo_tzbtc',),
         ),
         InputQuestion(
             name='project_name',
-            description='Project name:',
+            description='Enter project name',
             default='dipdup-indexer',
         ),
         InputQuestion(
             name='package',
-            description='Python package name:',
+            description='Enter Python package name',
             default='dipdup_indexer',
         ),
         InputQuestion(
             name='version',
-            description='Project version:',
+            description='Enter project version',
             default='0.0.1',
         ),
         InputQuestion(
             name='description',
-            description='Project description:',
+            description='Enter project description',
             default='My shiny new indexer based on DipDup',
         ),
         InputQuestion(
             name='license',
-            description=('Project license:\n' 'DipDup itself is MIT-licensed.'),
+            description=('Enter project license\n' 'DipDup itself is MIT-licensed.'),
             default='MIT',
         ),
         InputQuestion(
             name='author',
-            description=('Project author:\n' 'You can add more later.'),
+            description=('Enter project author\n' 'You can add more later in pyproject.toml.'),
             default='John Smith <john_smith@localhost.lan>',
         ),
         NotifyQuestion(
@@ -239,7 +239,7 @@ class DefaultProject(Project):
         ),
         ChoiceQuestion(
             name='dipdup_version',
-            description='DipDup version:',
+            description='Choose DipDup version',
             default=0,
             choices=(
                 '6',
@@ -248,7 +248,7 @@ class DefaultProject(Project):
         ),
         ChoiceQuestion(
             name='postgresql_version',
-            description=('PostgreSQL version:\n' 'Try TimescaleDB when working with time series.'),
+            description=('Choose PostgreSQL version\n' 'Try TimescaleDB when working with time series.'),
             default=0,
             choices=(
                 'postgres:14',
@@ -261,9 +261,7 @@ class DefaultProject(Project):
         ),
         ChoiceQuestion(
             name='hasura_version',
-            description=(
-                'Hasura version:\n' 'Test new releases before using in production; breaking changes are possible between minor versions.'
-            ),
+            description=('Choose Hasura version\n' 'Test new releases before using in production; new versions may break compatibility.'),
             default=0,
             choices=(
                 'hasura/graphql-engine:v2.11.2',
@@ -284,7 +282,7 @@ class DefaultProject(Project):
         ),
         InputQuestion(
             name='line_length',
-            description=('Maximum line length:\n' 'Used by linters.'),
+            description=('Enter maximum line length\n' 'Used by linters.'),
             default='140',
         ),
     )
