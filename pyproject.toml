@@ -58,8 +58,6 @@ pytest = "*"
 pytest-asyncio = "*"
 pytest-cov = "*"
 pytest-xdist = "*"
-# FIXME: No module named '_distutils_hack.override'
-setuptools = "65.4.0"
 Sphinx = "*"
 sphinx-click = "*"
 sphinx-markdown-builder = "*"
@@ -101,5 +99,5 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 
 [build-system]
-requires = ["poetry_core>=1.2.0"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
