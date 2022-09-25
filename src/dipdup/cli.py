@@ -655,14 +655,16 @@ async def new(
 
 @cli.command()
 @click.pass_context
+@click.option('--force', '-f', is_flag=True, help='Force update.')
 @cli_wrapper
-async def update(ctx) -> None:
+async def update(ctx, force: bool) -> None:
     """Update DipDup to the latest version."""
     from pathlib import Path
 
     from dipdup.utils import run as _run
 
     _found = False
+    force_str = '--force' if force else ''
 
     if which('pipx'):
         pipx_packages_raw = _run('pipx list --short', capture_output=True).stdout
@@ -671,20 +673,22 @@ async def update(ctx) -> None:
         if 'dipdup' in pipx_packages:
             _found = True
             _logger.info('Updating DipDup with pipx')
-            _run('pipx upgrade dipdup')
+            _run(f'pipx upgrade dipdup {force_str}')
 
         if 'datamodel-code-generator' in pipx_packages:
             _logger.info('Updating datamodel-code-generator with pipx')
-            _run('pipx upgrade datamodel-code-generator')
+            _run(f'pipx upgrade datamodel-code-generator {force_str}')
 
         if 'poetry' in pipx_packages:
             _logger.info('Updating poetry with pipx')
-            _run('pipx upgrade poetry')
+            _run(f'pipx upgrade poetry {force_str}')
 
     if Path('pyproject.toml').exists() and Path('poetry.lock').exists():
         _found = True
         _logger.info('Updating DipDup with poetry')
-        _run('poetry update dipdup')
+        _run('poetry update dipdup -q')
 
     if not _found:
         _logger.warning('Unknown installation method, please update DipDup manually')
+    else:
+        _logger.info('DipDup and all dependencies are up to date')
