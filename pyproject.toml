@@ -41,6 +41,8 @@ pytezos = {version = "^3.6.1", optional = true}
 python-dotenv = "^0.19.0"
 "ruamel.yaml" = "^0.17.2"
 sentry-sdk = "^1.4.3"
+# FIXME: No module named '_distutils_hack.override'
+setuptools = "65.4.0"
 sqlparse = "^0.4.2"
 tabulate = "^0.8.9"
 

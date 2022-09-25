@@ -1963,7 +1963,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "Sphinx"
-version = "5.2.0"
+version = "5.2.0.post0"
 description = "Python documentation generator"
 category = "dev"
 optional = false
@@ -2437,7 +2437,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "ead7841e0823762470287cc0ef49f126b8f38d3c13610ec25cbc75b9f51e04c0"
+content-hash = "89c3aa13d1d2c6ea8b93d8c46363ddf31d997f96a65a730cd52e525f95f8ee3a"
 
 [metadata.files]
 aiohttp = [
@@ -4126,8 +4126,8 @@ soupsieve = [
     {file = "soupsieve-2.3.2.post1.tar.gz", hash = "sha256:fc53893b3da2c33de295667a0e19f078c14bf86544af307354de5fcf12a3f30d"},
 ]
 Sphinx = [
-    {file = "Sphinx-5.2.0.tar.gz", hash = "sha256:1790c2098937dcfa7871c9d102c24eccd4a8b883b67c5c1e26892fb52d102542"},
-    {file = "sphinx-5.2.0-py3-none-any.whl", hash = "sha256:422812bdf2dacab55c47ee4dd4746bb82e739fe4c97ce16dd68bcc208e348e73"},
+    {file = "Sphinx-5.2.0.post0.tar.gz", hash = "sha256:68e7833263a961521f45302fa87285f9395ecf385f1eefd85cd61ddff0b15bc1"},
+    {file = "sphinx-5.2.0.post0-py3-none-any.whl", hash = "sha256:db93dc52cc90d12ef38c9f506eab9171813041204d8270e30ffad2be511e7ced"},
 ]
 sphinx-click = [
     {file = "sphinx-click-4.3.0.tar.gz", hash = "sha256:bd4db5d3c1bec345f07af07b8e28a76cfc5006d997984e38ae246bbf8b9a3b38"},
