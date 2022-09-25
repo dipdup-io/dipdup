@@ -29,11 +29,11 @@ The following command will install DipDup for the current user:
 python -c "$(curl -sSL https://dipdup.io/install.py)"
 ```
 
-This script uses pipx under the hood to install `dipdup` and `datamodel-codegen` as a CLI tools. Then you can use any package manager of your choice to manage versions of DipDup and other the dependencies of your project.
+This script uses pipx under the hood to install `dipdup` and `datamodel-codegen` as CLI tools. Then you can use any package manager of your choice to manage versions of DipDup and other project dependencies.
 
 ### Manually
 
-Currently, we mostly use [Poetry](https://python-poetry.org) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.
+Currently, we mainly use [Poetry](https://python-poetry.org)](<https://python-poetry.org>) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.
 
 ```shell
 # Create a new project directory

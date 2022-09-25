@@ -26,7 +26,7 @@ Follow the instructions; project will be created in the current directory. You c
 
 ### From scratch
 
-Currently, we mostly use [Poetry](https://python-poetry.org) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.
+Currently, we mainly use [Poetry](https://python-poetry.org) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.
 
 ```shell
 # Create a new project directory
