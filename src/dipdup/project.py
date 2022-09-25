@@ -181,6 +181,12 @@ class Project(BaseModel):
         output_path = join(self.answers['project_name'], 'dipdup.yml')
         self._render(config_path, output_path, force)
 
+    def get_defaults(self) -> dict[str, Any]:
+        return {
+            question.name: question.choices[question.default] if isinstance(question, ChoiceQuestion) else question.default
+            for question in self.questions
+        }
+
 
 class DefaultProject(Project):
     name = 'dipdup'
@@ -247,7 +253,7 @@ class DefaultProject(Project):
             ),
         ),
         ChoiceQuestion(
-            name='postgresql_version',
+            name='postgresql_image',
             description=('Choose PostgreSQL version\n' 'Try TimescaleDB when working with time series.'),
             default=0,
             choices=(
@@ -260,7 +266,7 @@ class DefaultProject(Project):
             ),
         ),
         ChoiceQuestion(
-            name='hasura_version',
+            name='hasura_image',
             description=('Choose Hasura version\n' 'Test new releases before using in production; new versions may break compatibility.'),
             default=0,
             choices=(

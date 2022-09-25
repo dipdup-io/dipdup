@@ -7,8 +7,8 @@
   "license": "MIT",
   "author": "John Smith <john_smith@localhost.lan>",
   "dipdup_version": "6",
-  "postgresql_version": "postgres:14",
-  "hasura_version": "hasura/graphql-engine:v2.11.2",
+  "postgresql_image": "postgres:14",
+  "hasura_image": "hasura/graphql-engine:v2.11.2",
   "crash_reporting": true,
   "line_length": "140"
 }

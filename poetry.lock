@@ -474,7 +474,7 @@ name = "deprecation"
 version = "2.1.0"
 description = "A library to handle automated deprecations"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [package.dependencies]
@@ -2138,7 +2138,7 @@ name = "testcontainers"
 version = "3.7.0"
 description = "Library provides lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -2391,7 +2391,7 @@ name = "wrapt"
 version = "1.14.1"
 description = "Module for decorators, wrappers and monkey patching."
 category = "main"
-optional = false
+optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 
 [[package]]
@@ -2420,7 +2420,7 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "9125ddd1490af4f3d1d98bda11a0914328c08a93cef82a21e34cfa9ebf8c77fd"
+content-hash = "a91d7b923c9c62fc414fb61eded116fbc7771f480a02ddc70902975b3e43b40e"
 
 [metadata.files]
 aiohttp = [

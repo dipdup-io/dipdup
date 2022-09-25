@@ -14,7 +14,7 @@ services:
       - 127.0.0.1:9000:9000
 
   db:
-    image: {{ cookiecutter.postgresql_version }}
+    image: {{ cookiecutter.postgresql_image }}
     ports:
       - 127.0.0.1:5432:5432
     volumes:
@@ -31,7 +31,7 @@ services:
       retries: 5
 
   hasura:
-    image: {{ cookiecutter.hasura_version }}
+    image: {{ cookiecutter.hasura_image }}
     ports:
       - 127.0.0.1:8080:8080
     depends_on:

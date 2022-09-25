@@ -32,7 +32,7 @@ services:
         tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
 
   db:
-    image: {{ cookiecutter.postgresql_version }}
+    image: {{ cookiecutter.postgresql_image }}
     volumes:
       - db:/var/lib/postgresql/data
     environment: 
@@ -53,7 +53,7 @@ services:
     logging: *logging
 
   hasura:
-    image: {{ cookiecutter.hasura_version }}
+    image: {{ cookiecutter.hasura_image }}
     depends_on:
       - db
     environment:
