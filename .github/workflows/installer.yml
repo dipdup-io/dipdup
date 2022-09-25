@@ -33,3 +33,4 @@ jobs:
 
       - name: make lint
         run: cd dipdup-indexer; make lint
+ 
