@@ -55,6 +55,14 @@ flake8-docstrings = ["-*"]
 flake8-simplify = ["-SIM106", "-SIM114", "-SIM102"]
 pycodestyle = ["-*"]
 
+[tool.mypy]
+python_version = "3.10"
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "ruamel"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 asyncio_mode = 'auto'
 

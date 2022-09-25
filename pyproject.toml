@@ -96,9 +96,17 @@ flake8-docstrings = ["-*"]
 flake8-simplify = ["-SIM106", "-SIM114", "-SIM102"]
 pycodestyle = ["-*"]
 
-[build-system]
-requires = ["poetry_core>=1.0.0", "cryptography==3.3.2", "wheel"]
-build-backend = "poetry.core.masonry.api"
+[tool.mypy]
+python_version = "3.10"
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "ruamel"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = 'auto'
+
+[build-system]
+requires = ["poetry_core>=1.0.0", "cryptography==3.3.2", "wheel"]
+build-backend = "poetry.core.masonry.api"

@@ -26,19 +26,17 @@ class Question(BaseModel):
     description: str
     default: Any
 
+    @property
+    def text(self) -> str:
+        return f'{self.name} [{self.default}]'
+
     def prompt(self) -> Any:
         try:
-            if self.type == bool:
-                text = f"{self.name} [{'Y/n' if self.default else 'y/N'}]"
-                show_default = False
-            else:
-                text = self.name
-                show_default = True
             return cl.prompt(
-                text=text,
+                text=self.text,
                 default=self.default,
                 type=self.type,
-                show_default=show_default,
+                show_default=False,
             )
         except cl.Abort:
             cl.echo('\nAborted')
@@ -69,6 +67,10 @@ class BooleanQuestion(Question):
     type = bool
     default: bool
 
+    @property
+    def text(self) -> str:
+        return f'{self.name} [{self.default and "Y/n" or "y/N"}]'
+
     def prompt(self) -> bool:
         cl.secho(f'=> {self.description}', fg='blue')
         return super().prompt()
@@ -82,6 +84,10 @@ class ChoiceQuestion(Question):
     @property
     def default_choice(self) -> str:
         return self.choices[self.default]
+
+    @property
+    def text(self) -> str:
+        return f'{self.name} [{self.default_choice}]'
 
     def prompt(self) -> str:
         cl.secho(f'=> {self.description}', fg='blue')
@@ -249,6 +255,8 @@ class DefaultProject(Project):
                 'postgres:13',
                 'timescale/timescaledb:latest-pg14',
                 'timescale/timescaledb:latest-pg13',
+                'timescale/timescaledb-ha:pg14-latest',
+                'timescale/timescaledb-ha:pg13-latest',
             ),
         ),
         ChoiceQuestion(
@@ -259,7 +267,8 @@ class DefaultProject(Project):
             default=0,
             choices=(
                 'hasura/graphql-engine:v2.11.2',
-                'hasura/graphql-engine:v2.10.1',
+                'hasura/graphql-engine:v2.12.0',
+                'hasura/graphql-engine:v2.13.0-beta.1',
             ),
         ),
         NotifyQuestion(
