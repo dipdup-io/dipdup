@@ -16,13 +16,13 @@
 
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-c">
-<span id="cmdoption-dipdup-config"></span><span class="sig-name descname"><span class="pre">-c</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;config&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-c" title="Permalink to this definition">¶</a></dt>
+<span id="cmdoption-dipdup-config"></span><span class="sig-name descname"><span class="pre">-c</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;PATH&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-c" title="Permalink to this definition">¶</a></dt>
 <dd><p>A path to DipDup project config (default: dipdup.yml).</p>
 </dd></dl>
 
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-e">
-<span id="cmdoption-dipdup-env-file"></span><span class="sig-name descname"><span class="pre">-e</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--env-file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;env_file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-e" title="Permalink to this definition">¶</a></dt>
+<span id="cmdoption-dipdup-env-file"></span><span class="sig-name descname"><span class="pre">-e</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--env-file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;PATH&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-e" title="Permalink to this definition">¶</a></dt>
 <dd><p>A path to .env file containing <cite>KEY=value</cite> strings.</p>
 </dd></dl>
 

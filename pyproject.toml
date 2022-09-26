@@ -71,6 +71,7 @@ pytezos = ["pytezos"]
 
 [tool.poetry.scripts]
 dipdup = "dipdup.cli:cli"
+dipdup-install = "dipdup.install:cli"
 
 [tool.isort]
 line_length = 140

@@ -162,7 +162,7 @@ def _check_system() -> None:
         echo('WARNING: Running in virtualenv, this script affects only current user', colors.YELLOW)
 
 
-if __name__ == '__main__':
+def cli() -> None:
     echo('Welcome to DipDup installer')
 
     _check_system()
@@ -184,3 +184,7 @@ if __name__ == '__main__':
             ref=args.ref.strip() if args.ref else None,
             path=args.path.strip() if args.path else None,
         )
+
+
+if __name__ == '__main__':
+    cli()

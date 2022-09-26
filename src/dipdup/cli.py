@@ -220,6 +220,7 @@ async def _check_version() -> None:
     multiple=True,
     help=f'A path to DipDup project config (default: {DEFAULT_CONFIG_NAME}).',
     default=[DEFAULT_CONFIG_NAME],
+    metavar='PATH',
 )
 @click.option(
     '--env-file',
@@ -228,6 +229,7 @@ async def _check_version() -> None:
     multiple=True,
     help='A path to .env file containing `KEY=value` strings.',
     default=[],
+    metavar='PATH',
 )
 @click.pass_context
 @cli_wrapper
