@@ -10,6 +10,7 @@ import subprocess
 import sys
 from shutil import which
 from typing import NoReturn
+from typing import Set
 
 GITHUB = 'https://github.com/dipdup-net/dipdup.git'
 
@@ -88,7 +89,7 @@ def ensure_poetry(quiet: bool) -> None:
         run('pipx install poetry')
 
 
-def get_pipx_packages() -> set[str]:
+def get_pipx_packages() -> Set[str]:
     """Get installed pipx packages"""
     ensure_pipx()
     pipx_packages_raw = run('pipx list --short', capture_output=True).stdout
