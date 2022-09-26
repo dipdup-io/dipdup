@@ -32,7 +32,7 @@ from pysignalr.client import SignalRClient
 from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage
 
-from dipdup.config import KNOWN_TZKT_URLS
+from dipdup import baking_bad
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
@@ -384,7 +384,9 @@ class TzktDatasource(IndexDatasource):
                 return
 
             protocol = await self.request('get', 'v1/protocols/current')
-            category = 'hosted' if self.url in KNOWN_TZKT_URLS else 'self-hosted'
+            category = 'self-hosted'
+            if (instance := baking_bad.TZKT_API_URLS.get(self.url)) is not None:
+                category = f'hosted ({instance})'
             self._logger.info(
                 '%s, protocol v%s (%s)',
                 category,

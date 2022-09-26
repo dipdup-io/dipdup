@@ -20,11 +20,11 @@ import asyncclick as click
 
 from dipdup import __spec_version__
 from dipdup import __version__
+from dipdup import baking_bad
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
-BAKING_BAD_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
 
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
@@ -139,10 +139,7 @@ def _init_sentry(config) -> None:
     if not config.sentry.dsn:
         if config.advanced.crash_reporting:
             return
-        config.sentry.dsn = BAKING_BAD_SENTRY_DSN
-
-    if not config.sentry:
-        config.sentry = SentryConfig(dsn=BAKING_BAD_SENTRY_DSN)
+        config.sentry.dsn = baking_bad.SENTRY_DSN
 
     if config.sentry.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
