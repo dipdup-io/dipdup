@@ -16,7 +16,9 @@ and this project adheres to [Semantic Versioning].
 ### Fixed
 
 - cli: Commands that only print help pages no longer require a valid config.
-- config: Allow leaving `dsn` field empty.
+- codegen: Fail lately when datamodel-codegen is not available.
+- config: Allow `dsn` field to be empty.
+- hooks: Raise a `FeatureAvailabilityHook` instead of a warning when trying to execute hooks on SQLite.
 
 ### Removed
 

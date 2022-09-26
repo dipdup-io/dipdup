@@ -388,6 +388,24 @@ class HasuraError(DipDupError):
             If it's `400 Bad Request`, check out Hasura logs for more information.
 
             See https://docs.dipdup.io/graphql/
-            See https://docs.dipdup.io/config/hasura.html
-            See https://docs.dipdup.io/cli-reference.html#dipdup-hasura-configure
+            See https://docs.dipdup.io/config/hasura
+            See https://docs.dipdup.io/cli-reference#dipdup-hasura-configure
+        """
+
+
+@dataclass(repr=False)
+class FeatureAvailabilityError(DipDupError):
+    """Requested feature is not supported in the current environment"""
+
+    feature: str
+    reason: str
+
+    def _help(self) -> str:
+        return f"""
+            Feature `{self.feature}` is not available in the current environment.
+
+            {self.reason}
+
+            See https://docs.dipdup.io/installation
+            See https://docs.dipdup.io/advanced/docker
         """
