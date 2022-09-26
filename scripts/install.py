@@ -49,19 +49,21 @@ def ask(msg: str, default: bool, quiet: bool) -> bool:
         return input().lower() in ('y', 'yes')
 
 
-def main(quiet: bool, local: bool) -> None:
-    if sys.version_info < (3, 10):
-        fail('DipDup requires Python 3.10')
-
-    echo('Welcome to DipDup installer')
-
+def ensure_pipx() -> None:
     if not which('pipx'):
         echo('Installing pipx')
         run('pip install --user -q pipx')
         run('python -m pipx ensurepath')
 
+
+def get_pipx_packages() -> set[str]:
+    ensure_pipx()
     pipx_packages_raw = run('pipx list --short', capture_output=True).stdout
-    pipx_packages = {p.split()[0].decode() for p in pipx_packages_raw.splitlines()}
+    return {p.split()[0].decode() for p in pipx_packages_raw.splitlines()}
+
+
+def install(quiet: bool, local: bool) -> None:
+    pipx_packages = get_pipx_packages()
 
     if 'dipdup' not in pipx_packages:
         if local:
@@ -87,11 +89,33 @@ def main(quiet: bool, local: bool) -> None:
     done('Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available commands.')
 
 
+def uninstall() -> None:
+    pipx_packages = get_pipx_packages()
+
+    if 'dipdup' in pipx_packages:
+        echo('Uninstalling DipDup')
+        run('pipx uninstall dipdup')
+
+    if 'datamodel-code-generator' in pipx_packages:
+        echo('Uninstalling datamodel-code-generator')
+        run('pipx uninstall datamodel-code-generator')
+
+    done('Done! DipDup is uninstalled.')
+
+
 if __name__ == '__main__':
+    if sys.version_info < (3, 10):
+        fail('DipDup requires Python 3.10')
+
     args = sys.argv[1:]
     if len(args) not in (0, 1, 2):
-        fail('usage: install.py [-q | --quiet] | [-l | --local]')
+        fail('usage: install.py [-q | --quiet] | [-l | --local] | [-u | --uninstall')
 
-    quiet = '--quiet' in args or '-q' in args
-    local = '--local' in args or '-l' in args
-    main(quiet, local)
+    echo('Welcome to DipDup installer')
+
+    if '-u' in args or '--uninstall' in args:
+        uninstall()
+    else:
+        quiet = '--quiet' in args or '-q' in args
+        local = '--local' in args or '-l' in args
+        install(quiet, local)
