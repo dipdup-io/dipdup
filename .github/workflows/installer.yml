@@ -20,10 +20,10 @@ jobs:
           python-version: '3.10'
 
       - name: Install DipDup
-        run: python scripts/install.py --quiet --local
+        run: python src/dipdup/install.py --quiet --path .
 
       - name: dipdup new
-        run: dipdup new -q
+        run: dipdup new --quiet
 
       - name: dipdup init
         run: cd dipdup-indexer; dipdup init

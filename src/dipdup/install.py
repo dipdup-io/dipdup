@@ -4,14 +4,15 @@ WARNING: No imports allowed here except stdlib! Otherwise, `curl | python` magic
 
 Some functions are importable for internal use in `dipdup.cli`.
 """
+import argparse
 import os
 import subprocess
 import sys
 from shutil import which
 from typing import NoReturn
-import argparse
 
 GITHUB = 'https://github.com/dipdup-net/dipdup.git'
+
 
 def run(*args, **kwargs):
     """Run shell command"""
@@ -25,21 +26,13 @@ def run(*args, **kwargs):
 
 class colors:
     """ANSI color codes"""
+
     BLUE = '\033[34m'
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
     RED = '\033[91m'
     ENDC = '\033[0m'
 
-import sys
-
-def get_base_prefix_compat():
-    """Get base/real prefix, or sys.prefix if there is none."""
-    return any((
-        getattr(sys, "base_prefix", None),
-        getattr(sys, "real_prefix", None),
-        sys.prefix,
-    ))
 
 def echo(msg: str, color: str = colors.BLUE) -> None:
     print(color + f'=> {msg}' + colors.ENDC)
@@ -66,12 +59,14 @@ def ask(msg: str, default: bool, quiet: bool) -> bool:
     else:
         return input().lower() in ('y', 'yes')
 
+
 def ensure_git() -> None:
     """Ensure git is installed"""
     if which('git'):
         return
 
     fail('git is required to install DipDup from ref')
+
 
 def ensure_pipx() -> None:
     """Ensure pipx is installed for current user"""
@@ -82,6 +77,7 @@ def ensure_pipx() -> None:
     run('pip install --user -q pipx')
     run('python -m pipx ensurepath')
 
+
 def ensure_poetry(quiet: bool) -> None:
     """Ensure poetry is installed for current user"""
     if which('poetry'):
@@ -90,6 +86,7 @@ def ensure_poetry(quiet: bool) -> None:
     if ask('Install poetry? Optional for `dipdup new` command', True, quiet):
         echo('Installing poetry')
         run('pipx install poetry')
+
 
 def get_pipx_packages() -> set[str]:
     """Get installed pipx packages"""
@@ -134,6 +131,7 @@ def install(
 
     done('Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available commands.')
 
+
 def uninstall(quiet: bool) -> NoReturn:
     """Uninstall DipDup and its dependencies with pipx"""
     pipx_packages = get_pipx_packages()
@@ -149,17 +147,19 @@ def uninstall(quiet: bool) -> NoReturn:
 
     done('Done! DipDup is uninstalled.')
 
+
 def _check_system() -> None:
     if not sys.version.startswith('3.10'):
         fail('DipDup requires Python 3.10')
 
     # NOTE: Show warning if user is root
     if os.geteuid() == 0:
-        echo('WARNING: Running as root, this is not generally recommended', colors.YELLOW)        
+        echo('WARNING: Running as root, this is not generally recommended', colors.YELLOW)
 
     # NOTE: Show warning if user is in virtualenv
     if sys.base_prefix != sys.prefix:
         echo('WARNING: Running in virtualenv, this script affects only current user', colors.YELLOW)
+
 
 if __name__ == '__main__':
     echo('Welcome to DipDup installer')

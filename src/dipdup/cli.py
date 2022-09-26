@@ -8,7 +8,7 @@ from contextlib import AsyncExitStack
 from contextlib import suppress
 from functools import partial
 from functools import wraps
-from shutil import which
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -75,7 +75,7 @@ def cli_wrapper(fn):
     async def wrapper(*args, **kwargs) -> None:
         # NOTE: Avoid catching Click prompts
         ctx = args[0]
-        if ctx.invoked_subcommand not in (None, 'new', 'schema', 'wipe'):
+        if ctx.invoked_subcommand not in (None, 'new', 'schema', 'wipe', 'install', 'update', 'uninstall'):
             loop = asyncio.get_running_loop()
             loop.add_signal_handler(
                 signal.SIGINT,
@@ -260,8 +260,8 @@ async def cli(ctx, config: List[str], env_file: List[str]):
         _logger.info('Applying env_file `%s`', env_path)
         load_dotenv(env_path, override=True)
 
-    # NOTE: `new` and `update` need no other preparations
-    if ctx.invoked_subcommand in ('new', 'update'):
+    # NOTE: These commands need no other preparations
+    if ctx.invoked_subcommand in ('new', 'update', 'install', 'update', 'uninstall'):
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
@@ -652,40 +652,53 @@ async def new(
 
 @cli.command()
 @click.pass_context
-@click.option('--force', '-f', is_flag=True, help='Force update.')
+@click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
+@click.option('--force', '-f', is_flag=True, help='Force reinstall.')
+@click.option('--ref', '-r', default=None, help='Install DipDup from a specific git ref.')
+@click.option('--path', '-p', default=None, help='Install DipDup from a local path.')
 @cli_wrapper
-async def update(ctx, force: bool) -> None:
-    """Update DipDup to the latest version."""
-    from pathlib import Path
+async def install(
+    ctx,
+    quiet: bool,
+    force: bool,
+    ref: str | None,
+    path: str | None,
+) -> None:
+    """Install DipDup for the current user."""
+    import dipdup.install
 
-    from dipdup.utils import run as _run
+    dipdup.install.install(quiet, force, ref, path)
 
-    _found = False
-    force_str = '--force' if force else ''
 
-    if which('pipx'):
-        pipx_packages_raw = _run('pipx list --short', capture_output=True).stdout
-        pipx_packages = {p.split()[0].decode() for p in pipx_packages_raw.splitlines()}
+@cli.command()
+@click.pass_context
+@click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
+@cli_wrapper
+async def uninstall(
+    ctx,
+    quiet: bool,
+) -> None:
+    """Uninstall DipDup for the current user."""
+    import dipdup.install
 
-        if 'dipdup' in pipx_packages:
-            _found = True
-            _logger.info('Updating DipDup with pipx')
-            _run(f'pipx upgrade dipdup {force_str}')
+    dipdup.install.uninstall(quiet)
 
-        if 'datamodel-code-generator' in pipx_packages:
-            _logger.info('Updating datamodel-code-generator with pipx')
-            _run(f'pipx upgrade datamodel-code-generator {force_str}')
 
-        if 'poetry' in pipx_packages:
-            _logger.info('Updating poetry with pipx')
-            _run(f'pipx upgrade poetry {force_str}')
+@cli.command()
+@click.pass_context
+@click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
+@click.option('--force', '-f', is_flag=True, help='Force reinstall.')
+@cli_wrapper
+async def update(
+    ctx,
+    quiet: bool,
+    force: bool,
+) -> None:
+    """Update DipDup for the current user."""
+    import dipdup.install
 
-    if Path('pyproject.toml').exists() and Path('poetry.lock').exists():
-        _found = True
-        _logger.info('Updating DipDup with poetry')
-        _run('poetry update dipdup -q')
+    dipdup.install.install(quiet, force, None, None)
 
-    if not _found:
-        _logger.warning('Unknown installation method, please update DipDup manually')
-    else:
-        _logger.info('DipDup and all dependencies are up to date')
+    if Path('poetry.lock').exists():
+        dipdup.install.ensure_poetry(quiet)
+        dipdup.install.run('poetry update dipdup -q')

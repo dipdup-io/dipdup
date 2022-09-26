@@ -111,6 +111,38 @@
 </dd></dl>
 
 </section>
+<section id="dipdup-install">
+<h2>install<a class="headerlink" href="#dipdup-install" title="Permalink to this heading">¶</a></h2>
+<p>Install DipDup for the current user.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup install <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-install-q">
+<span id="cmdoption-dipdup-install-quiet"></span><span class="sig-name descname"><span class="pre">-q</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--quiet</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-install-q" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use default values for all prompts.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-install-f">
+<span id="cmdoption-dipdup-install-force"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--force</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-install-f" title="Permalink to this definition">¶</a></dt>
+<dd><p>Force reinstall.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-install-r">
+<span id="cmdoption-dipdup-install-ref"></span><span class="sig-name descname"><span class="pre">-r</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--ref</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;ref&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-install-r" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install DipDup from a specific git ref.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-install-p">
+<span id="cmdoption-dipdup-install-path"></span><span class="sig-name descname"><span class="pre">-p</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--path</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;path&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-install-p" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install DipDup from a local path.</p>
+</dd></dl>
+
+</section>
 <section id="dipdup-migrate">
 <h2>migrate<a class="headerlink" href="#dipdup-migrate" title="Permalink to this heading">¶</a></h2>
 <p>Migrate project to the new spec version.</p>
@@ -211,17 +243,37 @@
 </pre></div>
 </div>
 </section>
+<section id="dipdup-uninstall">
+<h2>uninstall<a class="headerlink" href="#dipdup-uninstall" title="Permalink to this heading">¶</a></h2>
+<p>Uninstall DipDup for the current user.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup uninstall <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-uninstall-q">
+<span id="cmdoption-dipdup-uninstall-quiet"></span><span class="sig-name descname"><span class="pre">-q</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--quiet</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-uninstall-q" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use default values for all prompts.</p>
+</dd></dl>
+
+</section>
 <section id="dipdup-update">
 <h2>update<a class="headerlink" href="#dipdup-update" title="Permalink to this heading">¶</a></h2>
-<p>Update DipDup to the latest version.</p>
+<p>Update DipDup for the current user.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup update <span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
 <dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-update-q">
+<span id="cmdoption-dipdup-update-quiet"></span><span class="sig-name descname"><span class="pre">-q</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--quiet</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-update-q" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use default values for all prompts.</p>
+</dd></dl>
+
+<dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-update-f">
 <span id="cmdoption-dipdup-update-force"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--force</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-update-f" title="Permalink to this definition">¶</a></dt>
-<dd><p>Force update.</p>
+<dd><p>Force reinstall.</p>
 </dd></dl>
 
 </section>
