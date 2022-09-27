@@ -702,5 +702,4 @@ async def update(
     dipdup.install.install(quiet, force, None, None)
 
     if Path('poetry.lock').exists():
-        dipdup.install.ensure_poetry(quiet)
-        dipdup.install.run('poetry update dipdup -q')
+        dipdup.install.run('poetry update dipdup')

@@ -8,6 +8,7 @@ import argparse
 import os
 import subprocess
 import sys
+from pathlib import Path
 from shutil import which
 from typing import NoReturn
 from typing import Set
@@ -79,16 +80,6 @@ def ensure_pipx() -> None:
     run('python -m pipx ensurepath')
 
 
-def ensure_poetry(quiet: bool) -> None:
-    """Ensure poetry is installed for current user"""
-    if which('poetry'):
-        return
-
-    if ask('Install poetry? Optional for `dipdup new` command', True, quiet):
-        echo('Installing poetry')
-        run('pipx install poetry')
-
-
 def get_pipx_packages() -> Set[str]:
     """Get installed pipx packages"""
     ensure_pipx()
@@ -108,8 +99,14 @@ def install(
 
     force_str = '--force' if force else ''
     pipx_packages = get_pipx_packages()
+    pipx_dipdup = 'dipdup' in pipx_packages
+    pipx_datamodel_codegen = 'datamodel-code-generator' in pipx_packages
+    pipx_poetry = 'poetry' in pipx_packages
 
-    if 'dipdup' not in pipx_packages:
+    if pipx_dipdup:
+        echo('Updating DipDup')
+        run(f'pipx upgrade dipdup {force_str}')
+    else:
         if path:
             echo(f'Installing DipDup from `{path}`')
             run(f'pipx install {path} {force_str}')
@@ -119,16 +116,21 @@ def install(
         else:
             echo('Installing DipDup from PyPI')
             run(f'pipx install dipdup {force_str}')
-    else:
-        echo('Updating DipDup')
-        run(f'pipx upgrade dipdup {force_str}')
 
-    if 'datamodel-code-generator' not in pipx_packages:
-        run(f'pipx install datamodel-code-generator {force_str}')
-    else:
+    if pipx_datamodel_codegen:
         run(f'pipx upgrade datamodel-code-generator {force_str}')
+    else:
+        run(f'pipx install datamodel-code-generator {force_str}')
 
-    ensure_poetry(quiet)
+    if (legacy_poetry := Path(Path.home(), '.poetry')).exists():
+        os.rmdir(legacy_poetry)
+        run(f'pipx install poetry {force_str}')
+    elif pipx_poetry:
+        echo('Updating Poetry')
+        run(f'pipx upgrade poetry {force_str}')
+    elif ask('Install poetry? Optional for `dipdup new` command', True, quiet):
+        echo('Installing poetry')
+        run(f'pipx install poetry {force_str}')
 
     done('Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available commands.')
 
