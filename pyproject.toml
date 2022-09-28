@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "dipdup"
 description = "Python SDK for developing indexers of Tezos smart contracts inspired by The Graph"
-version = "6.1.1"
+version = "6.1.3"
 license = "MIT"
 authors = [
     "Lev Gorodetskiy <github@droserasprout.space>",
     "Michael Zaikin <mz@baking-bad.org>"
 ]
 readme = "README.md"
-repository = "https://github.com/dipdup-net/dipdup-py"
+repository = "https://github.com/dipdup-net/dipdup"
 homepage = "https://dipdup.net/"
 keywords = ['tezos', 'blockchain', 'sdk', 'michelson', 'indexers', 'tzkt', 'cryptocurrencies', 'smart-contracts']
 classifiers = [

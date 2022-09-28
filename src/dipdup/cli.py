@@ -39,7 +39,7 @@ from dipdup.exceptions import DipDupError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import MigrationRequiredError
 from dipdup.exceptions import _tab
-from dipdup.exceptions import save_tombstone
+from dipdup.exceptions import save_crashdump
 from dipdup.hasura import HasuraGateway
 from dipdup.models import Index
 from dipdup.models import Schema
@@ -90,10 +90,10 @@ async def _shutdown() -> None:
     await asyncio.gather(*tasks, return_exceptions=True)
 
 
-def _print_help(error: Exception, tombstone_path: str) -> None:
+def _print_help(error: Exception, crashdump_path: str) -> None:
     """Prints helpful error message after traceback"""
     help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
-    help_message += _tab + f'Tombstone saved to `{tombstone_path}`'
+    help_message += _tab + f'Crashdump saved to `{crashdump_path}`'
     atexit.register(partial(click.echo, help_message, err=True))
 
 
@@ -111,8 +111,8 @@ def cli_wrapper(fn):
             pass
         except Exception as e:
             _logger.exception('Unhandled exception caught')
-            tombstone_path = save_tombstone(e)
-            _print_help(e, tombstone_path)
+            crashdump_path = save_crashdump(e)
+            _print_help(e, crashdump_path)
             raise
 
     return wrapper
@@ -127,10 +127,24 @@ def _sentry_before_send(
     if _is_shutting_down:
         return None
 
+    # NOTE: Tests and CI
+    if 'pytest' in sys.modules or 'CI' in os.environ:
+        return None
+
     # NOTE: User-generated events (e.g. from `ctx.logger`)
     if logger_name := event['logger']:
         if crash_reporting and not logger_name.startswith('dipdup'):
             return None
+
+    # NOTE: Dark magic ahead. Merge CallbackError and its cause when possible.
+    with suppress(KeyError, IndexError):
+        exceptions = event['exception']['values']
+        if exceptions[-1]['type'] == 'CallbackError':
+            wrapper_frames = exceptions[-1]['stacktrace']['frames']
+            crash_frames = exceptions[-2]['stacktrace']['frames']
+            exceptions[-2]['stacktrace']['frames'] = wrapper_frames + crash_frames
+            event['message'] = exceptions[-2]['value']
+            del exceptions[-1]
 
     return event
 
@@ -147,8 +161,11 @@ def _init_sentry(config: DipDupConfig) -> None:
         level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
 
     # NOTE: Lazy import to speed up startup
+    import hashlib
+
     import sentry_sdk
     from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+    from sentry_sdk.integrations.atexit import AtexitIntegration
     from sentry_sdk.integrations.logging import LoggingIntegration
 
     integrations = [
@@ -157,6 +174,7 @@ def _init_sentry(config: DipDupConfig) -> None:
             level=level,
             event_level=event_level,
         ),
+        AtexitIntegration(lambda _, __: None),
     ]
     init_kwargs: Dict[str, Any] = {
         'dsn': config.sentry.dsn,
@@ -174,8 +192,17 @@ def _init_sentry(config: DipDupConfig) -> None:
         init_kwargs['server_name'] = config.sentry.server_name
 
     sentry_sdk.init(**init_kwargs)
+
     sentry_sdk.set_tag('dipdup_version', __version__)
     sentry_sdk.set_tag('dipdup_package', config.package)
+
+    # NOTE: Obfuscated package/connection pair
+    user_id = hashlib.sha256(
+        (config.package + config.database.connection_string).encode(),
+    ).hexdigest()[:8]
+
+    sentry_sdk.set_user({'id': user_id})
+    sentry_sdk.Hub.current.start_session()
 
 
 async def _check_version() -> None:
@@ -187,7 +214,7 @@ async def _check_version() -> None:
     async with AsyncExitStack() as stack:
         stack.enter_context(suppress(Exception))
         session = await stack.enter_async_context(aiohttp.ClientSession())
-        response = await session.get('https://api.github.com/repos/dipdup-net/dipdup-py/releases/latest')
+        response = await session.get('https://api.github.com/repos/dipdup-net/dipdup/releases/latest')
         response_json = await response.json()
         latest_version = response_json['tag_name']
 
@@ -219,9 +246,9 @@ async def _check_version() -> None:
 async def cli(ctx, config: List[str], env_file: List[str]):
     """Manage and run DipDup indexers.
 
-    Full docs: https://dipdup.net/docs
+    Full docs: https://docs.dipdup.io
 
-    Report an issue: https://github.com/dipdup-net/dipdup-py/issues
+    Report an issue: https://github.com/dipdup-net/dipdup/issues
     """
     # NOTE: Workaround for subcommands
     if '--help' in sys.argv:

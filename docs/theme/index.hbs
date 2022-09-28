@@ -103,8 +103,6 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                {{!-- NOTE: Docs version switcher --}}
-                <a href="https://dipdup.net/docs">stable</a> | <a href="https://dipdup.net/docs-next">latest</a>
                 {{#toc}}{{/toc}}
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
@@ -121,6 +119,19 @@
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
                         </button>
+                        {{!-- NOTE: Docs version switcher --}}
+                        <a class="icon-button" id="stable" href="#">stable</a>
+                        <a class="icon-button" id="latest" href="#">latest</a>
+                        <script type="text/javascript">
+                            document.getElementById('stable').setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            document.getElementById('latest').setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
+                        </script>
+
+                    </div>
+
+                    <h1 class="menu-title">{{ book_title }}</h1>
+
+                    <div class="right-buttons">
                         <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
                             <i class="fa fa-paint-brush"></i>
                         </button>
@@ -136,11 +147,6 @@
                             <i class="fa fa-search"></i>
                         </button>
                         {{/if}}
-                    </div>
-
-                    <h1 class="menu-title">{{ book_title }}</h1>
-
-                    <div class="right-buttons">
                         {{#if print_enable}}
                         <a href="{{ path_to_root }}print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>

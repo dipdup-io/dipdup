@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [6.1.3] - 2022-09-21
+
+### Added
+
+- sentry: Enable crash-free session reporting.
+
+### Fixed
+
+- metadata: Updated protocol aliases.
+- sentry: Unwrap `CallbackError` traceback to fix event grouping.
+- sentry: Hide "attempting to send..." message on shutdown.
+
+### Other
+
+- ci: Do not build default and `-pytezos` nightly images.
+
+## [6.1.2] - 2022-09-16
+
+### Added
+
+- config: Added `alias` field to operation pattern items.
+- tzkt: Added quote field `gbp`.
+
+### Fixed
+
+- config: Require aliases for multiple operations with the same entrypoint.
+- http: Raise `InvalidRequestError` on 204 No Content responses.
+- tzkt: Verify API version on datasource initialization.
+- tzkt: Remove deprecated block field `priority`.
+
 ## [6.1.1] - 2022-09-01
 
 ### Fixed
@@ -41,7 +71,7 @@ This release contains no changes except for the version number.
 ### Added
 
 - config: Added `advanced.crash_reporting` flag to enable reporting crashes to Baking Bad.
-- dipdup: Save Sentry tombstone in `/tmp/dipdup-tombstone_XXXXXXX.json` on a crash.
+- dipdup: Save Sentry crashdump in `/tmp/dipdup/crashdumps/XXXXXXX.json` on a crash.
 
 ### Fixed
 
@@ -632,14 +662,14 @@ This release contains no changes except for the version number.
 
 ### Added
 
-- New index class `HeadIndex` (configuration: [`dipdup.config.HeadIndexConfig`](https://github.com/dipdup-net/dipdup-py/blob/master/src/dipdup/config.py#L778)). Use this index type to handle head (limited block header content) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.
+- New index class `HeadIndex` (configuration: [`dipdup.config.HeadIndexConfig`](https://github.com/dipdup-net/dipdup/blob/master/src/dipdup/config.py#L778)). Use this index type to handle head (limited block header content) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.
 - Added three new commands: `schema approve`, `schema wipe`, and `schema export`. Run `dipdup schema --help` command for details.
 
 ### Changed
 
 - Triggering reindexing won't lead to dropping the database automatically anymore. `ReindexingRequiredError` is raised instead. `--forbid-reindexing` option has become default.
 - `--reindex` option is removed. Use `dipdup schema wipe` instead.
-- Values of `dipdup_schema.reindex` field updated to simplify querying database. See [`dipdup.enums.ReindexingReason`](https://github.com/dipdup-net/dipdup-py/blob/master/src/dipdup/enums.py) class for possible values.
+- Values of `dipdup_schema.reindex` field updated to simplify querying database. See [`dipdup.enums.ReindexingReason`](https://github.com/dipdup-net/dipdup/blob/master/src/dipdup/enums.py) class for possible values.
 
 ### Fixed
 
@@ -720,62 +750,64 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-net/dipdup-py/compare/6.1.1...HEAD
-[6.1.1]: https://github.com/dipdup-net/dipdup-py/compare/6.1.0...6.1.1
-[6.1.0]: https://github.com/dipdup-net/dipdup-py/compare/6.0.1...6.1.0
-[6.0.1]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0...6.0.1
-[6.0.0]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0rc2...6.0.0
-[6.0.0rc2]: https://github.com/dipdup-net/dipdup-py/compare/6.0.0-rc1...6.0.0rc2
-[6.0.0-rc1]: https://github.com/dipdup-net/dipdup-py/compare/5.2.5...6.0.0-rc1
-[5.2.5]: https://github.com/dipdup-net/dipdup-py/compare/5.2.4...5.2.5
-[5.2.4]: https://github.com/dipdup-net/dipdup-py/compare/5.2.3...5.2.4
-[5.2.3]: https://github.com/dipdup-net/dipdup-py/compare/5.2.2...5.2.3
-[5.2.2]: https://github.com/dipdup-net/dipdup-py/compare/5.2.1...5.2.2
-[5.2.1]: https://github.com/dipdup-net/dipdup-py/compare/5.2.0...5.2.1
-[5.2.0]: https://github.com/dipdup-net/dipdup-py/compare/5.1.7...5.2.0
-[5.1.7]: https://github.com/dipdup-net/dipdup-py/compare/5.1.6...5.1.7
-[5.1.6]: https://github.com/dipdup-net/dipdup-py/compare/5.1.5...5.1.6
-[5.1.5]: https://github.com/dipdup-net/dipdup-py/compare/5.1.4...5.1.5
-[5.1.4]: https://github.com/dipdup-net/dipdup-py/compare/5.1.3...5.1.4
-[5.1.3]: https://github.com/dipdup-net/dipdup-py/compare/5.1.2...5.1.3
-[5.1.2]: https://github.com/dipdup-net/dipdup-py/compare/5.1.1...5.1.2
-[5.1.1]: https://github.com/dipdup-net/dipdup-py/compare/5.1.0...5.1.1
-[5.1.0]: https://github.com/dipdup-net/dipdup-py/compare/5.0.4...5.1.0
-[5.0.4]: https://github.com/dipdup-net/dipdup-py/compare/5.0.3...5.0.4
-[5.0.3]: https://github.com/dipdup-net/dipdup-py/compare/5.0.2...5.0.3
-[5.0.2]: https://github.com/dipdup-net/dipdup-py/compare/5.0.1...5.0.2
-[5.0.1]: https://github.com/dipdup-net/dipdup-py/compare/5.0.0...5.0.1
-[5.0.0]: https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc4...5.0.0
-[5.0.0-rc4]: https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc3...5.0.0-rc4
-[4.2.7]: https://github.com/dipdup-net/dipdup-py/compare/4.2.6...4.2.7
-[5.0.0-rc3]: https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc2...5.0.0-rc3
-[5.0.0-rc2]: https://github.com/dipdup-net/dipdup-py/compare/5.0.0-rc1...5.0.0-rc2
-[5.0.0-rc1]: https://github.com/dipdup-net/dipdup-py/compare/4.2.6...5.0.0-rc1
-[4.2.6]: https://github.com/dipdup-net/dipdup-py/compare/4.2.5...4.2.6
-[4.2.5]: https://github.com/dipdup-net/dipdup-py/compare/4.2.4...4.2.5
-[4.2.4]: https://github.com/dipdup-net/dipdup-py/compare/4.2.3...4.2.4
-[4.2.3]: https://github.com/dipdup-net/dipdup-py/compare/4.2.2...4.2.3
-[4.2.2]: https://github.com/dipdup-net/dipdup-py/compare/4.2.1...4.2.2
-[4.2.1]: https://github.com/dipdup-net/dipdup-py/compare/4.2.0...4.2.1
-[4.2.0]: https://github.com/dipdup-net/dipdup-py/compare/4.1.2...4.2.0
-[4.1.2]: https://github.com/dipdup-net/dipdup-py/compare/4.1.1...4.1.2
-[4.1.1]: https://github.com/dipdup-net/dipdup-py/compare/4.1.0...4.1.1
-[4.1.0]: https://github.com/dipdup-net/dipdup-py/compare/4.0.5...4.1.0
-[4.0.5]: https://github.com/dipdup-net/dipdup-py/compare/4.0.4...4.0.5
-[4.0.4]: https://github.com/dipdup-net/dipdup-py/compare/4.0.3...4.0.4
-[4.0.3]: https://github.com/dipdup-net/dipdup-py/compare/4.0.2...4.0.3
-[4.0.2]: https://github.com/dipdup-net/dipdup-py/compare/4.0.1...4.0.2
-[4.0.1]: https://github.com/dipdup-net/dipdup-py/compare/4.0.0...4.0.1
-[4.0.0]: https://github.com/dipdup-net/dipdup-py/compare/4.0.0-rc3...4.0.0
-[4.0.0-rc3]: https://github.com/dipdup-net/dipdup-py/compare/4.0.0-rc2...4.0.0-rc3
-[4.0.0-rc2]: https://github.com/dipdup-net/dipdup-py/compare/4.0.0-rc1...4.0.0-rc2
-[4.0.0-rc1]: https://github.com/dipdup-net/dipdup-py/compare/3.1.3...4.0.0-rc1
-[3.1.3]: https://github.com/dipdup-net/dipdup-py/compare/3.1.2...3.1.3
-[3.1.2]: https://github.com/dipdup-net/dipdup-py/compare/3.1.1...3.1.2
-[3.1.1]: https://github.com/dipdup-net/dipdup-py/compare/3.1.0...3.1.1
-[3.1.0]: https://github.com/dipdup-net/dipdup-py/compare/3.0.4...3.1.0
-[3.0.4]: https://github.com/dipdup-net/dipdup-py/compare/3.0.3...3.0.4
-[3.0.3]: https://github.com/dipdup-net/dipdup-py/compare/3.0.2...3.0.3
-[3.0.2]: https://github.com/dipdup-net/dipdup-py/compare/3.0.1...3.0.2
-[3.0.1]: https://github.com/dipdup-net/dipdup-py/compare/3.0.0...3.0.1
-[3.0.0]: https://github.com/Author/Repository/releases/tag/3.0.0
+[Unreleased]: https://github.com/dipdup-net/dipdup/compare/6.1.3...HEAD
+[6.1.3]: https://github.com/dipdup-net/dipdup/compare/6.1.2...6.1.3
+[6.1.2]: https://github.com/dipdup-net/dipdup/compare/6.1.1...6.1.2
+[6.1.1]: https://github.com/dipdup-net/dipdup/compare/6.1.0...6.1.1
+[6.1.0]: https://github.com/dipdup-net/dipdup/compare/6.0.1...6.1.0
+[6.0.1]: https://github.com/dipdup-net/dipdup/compare/6.0.0...6.0.1
+[6.0.0]: https://github.com/dipdup-net/dipdup/compare/6.0.0rc2...6.0.0
+[6.0.0rc2]: https://github.com/dipdup-net/dipdup/compare/6.0.0-rc1...6.0.0rc2
+[6.0.0-rc1]: https://github.com/dipdup-net/dipdup/compare/5.2.5...6.0.0-rc1
+[5.2.5]: https://github.com/dipdup-net/dipdup/compare/5.2.4...5.2.5
+[5.2.4]: https://github.com/dipdup-net/dipdup/compare/5.2.3...5.2.4
+[5.2.3]: https://github.com/dipdup-net/dipdup/compare/5.2.2...5.2.3
+[5.2.2]: https://github.com/dipdup-net/dipdup/compare/5.2.1...5.2.2
+[5.2.1]: https://github.com/dipdup-net/dipdup/compare/5.2.0...5.2.1
+[5.2.0]: https://github.com/dipdup-net/dipdup/compare/5.1.7...5.2.0
+[5.1.7]: https://github.com/dipdup-net/dipdup/compare/5.1.6...5.1.7
+[5.1.6]: https://github.com/dipdup-net/dipdup/compare/5.1.5...5.1.6
+[5.1.5]: https://github.com/dipdup-net/dipdup/compare/5.1.4...5.1.5
+[5.1.4]: https://github.com/dipdup-net/dipdup/compare/5.1.3...5.1.4
+[5.1.3]: https://github.com/dipdup-net/dipdup/compare/5.1.2...5.1.3
+[5.1.2]: https://github.com/dipdup-net/dipdup/compare/5.1.1...5.1.2
+[5.1.1]: https://github.com/dipdup-net/dipdup/compare/5.1.0...5.1.1
+[5.1.0]: https://github.com/dipdup-net/dipdup/compare/5.0.4...5.1.0
+[5.0.4]: https://github.com/dipdup-net/dipdup/compare/5.0.3...5.0.4
+[5.0.3]: https://github.com/dipdup-net/dipdup/compare/5.0.2...5.0.3
+[5.0.2]: https://github.com/dipdup-net/dipdup/compare/5.0.1...5.0.2
+[5.0.1]: https://github.com/dipdup-net/dipdup/compare/5.0.0...5.0.1
+[5.0.0]: https://github.com/dipdup-net/dipdup/compare/5.0.0-rc4...5.0.0
+[5.0.0-rc4]: https://github.com/dipdup-net/dipdup/compare/5.0.0-rc3...5.0.0-rc4
+[4.2.7]: https://github.com/dipdup-net/dipdup/compare/4.2.6...4.2.7
+[5.0.0-rc3]: https://github.com/dipdup-net/dipdup/compare/5.0.0-rc2...5.0.0-rc3
+[5.0.0-rc2]: https://github.com/dipdup-net/dipdup/compare/5.0.0-rc1...5.0.0-rc2
+[5.0.0-rc1]: https://github.com/dipdup-net/dipdup/compare/4.2.6...5.0.0-rc1
+[4.2.6]: https://github.com/dipdup-net/dipdup/compare/4.2.5...4.2.6
+[4.2.5]: https://github.com/dipdup-net/dipdup/compare/4.2.4...4.2.5
+[4.2.4]: https://github.com/dipdup-net/dipdup/compare/4.2.3...4.2.4
+[4.2.3]: https://github.com/dipdup-net/dipdup/compare/4.2.2...4.2.3
+[4.2.2]: https://github.com/dipdup-net/dipdup/compare/4.2.1...4.2.2
+[4.2.1]: https://github.com/dipdup-net/dipdup/compare/4.2.0...4.2.1
+[4.2.0]: https://github.com/dipdup-net/dipdup/compare/4.1.2...4.2.0
+[4.1.2]: https://github.com/dipdup-net/dipdup/compare/4.1.1...4.1.2
+[4.1.1]: https://github.com/dipdup-net/dipdup/compare/4.1.0...4.1.1
+[4.1.0]: https://github.com/dipdup-net/dipdup/compare/4.0.5...4.1.0
+[4.0.5]: https://github.com/dipdup-net/dipdup/compare/4.0.4...4.0.5
+[4.0.4]: https://github.com/dipdup-net/dipdup/compare/4.0.3...4.0.4
+[4.0.3]: https://github.com/dipdup-net/dipdup/compare/4.0.2...4.0.3
+[4.0.2]: https://github.com/dipdup-net/dipdup/compare/4.0.1...4.0.2
+[4.0.1]: https://github.com/dipdup-net/dipdup/compare/4.0.0...4.0.1
+[4.0.0]: https://github.com/dipdup-net/dipdup/compare/4.0.0-rc3...4.0.0
+[4.0.0-rc3]: https://github.com/dipdup-net/dipdup/compare/4.0.0-rc2...4.0.0-rc3
+[4.0.0-rc2]: https://github.com/dipdup-net/dipdup/compare/4.0.0-rc1...4.0.0-rc2
+[4.0.0-rc1]: https://github.com/dipdup-net/dipdup/compare/3.1.3...4.0.0-rc1
+[3.1.3]: https://github.com/dipdup-net/dipdup/compare/3.1.2...3.1.3
+[3.1.2]: https://github.com/dipdup-net/dipdup/compare/3.1.1...3.1.2
+[3.1.1]: https://github.com/dipdup-net/dipdup/compare/3.1.0...3.1.1
+[3.1.0]: https://github.com/dipdup-net/dipdup/compare/3.0.4...3.1.0
+[3.0.4]: https://github.com/dipdup-net/dipdup/compare/3.0.3...3.0.4
+[3.0.3]: https://github.com/dipdup-net/dipdup/compare/3.0.2...3.0.3
+[3.0.2]: https://github.com/dipdup-net/dipdup/compare/3.0.1...3.0.2
+[3.0.1]: https://github.com/dipdup-net/dipdup/compare/3.0.0...3.0.1
+[3.0.0]: https://github.com/dipdup-net/dipdup/releases/tag/3.0.0

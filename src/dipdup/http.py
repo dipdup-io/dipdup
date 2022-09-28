@@ -1,9 +1,12 @@
 import asyncio
+import hashlib
 import logging
 import platform
 from contextlib import suppress
 from http import HTTPStatus
 from json import JSONDecodeError
+from os.path import isfile
+from os.path import join
 from typing import Any
 from typing import Mapping
 from typing import Optional
@@ -16,7 +19,9 @@ from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
 from dipdup.config import HTTPConfig
+from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
+from dipdup.utils import touch
 
 safe_exceptions = (
     aiohttp.ClientConnectionError,
@@ -42,6 +47,11 @@ class HTTPGateway:
     async def __aexit__(self, exc_type, exc, tb) -> None:
         """Close underlying aiohttp session"""
         await self._http.__aexit__(exc_type, exc, tb)
+
+    @property
+    def url(self) -> str:
+        """HTTP endpoint URL"""
+        return self._http._url
 
     async def request(
         self,
@@ -109,7 +119,13 @@ class _HTTPGateway:
         return self.__session
 
     # TODO: Move to separate method to cover SignalR negotiations too
-    async def _retry_request(self, method: str, url: str, weight: int = 1, **kwargs):
+    async def _retry_request(
+        self,
+        method: str,
+        url: str,
+        weight: int = 1,
+        **kwargs,
+    ):
         """Retry a request in case of failure sleeping according to config"""
         attempt = 1
         retry_sleep = self._config.retry_sleep or 0
@@ -152,7 +168,13 @@ class _HTTPGateway:
                 multiplier = 1 if ratelimit_sleep else self._config.retry_multiplier or 1
                 retry_sleep *= multiplier
 
-    async def _request(self, method: str, url: str, weight: int = 1, **kwargs):
+    async def _request(
+        self,
+        method: str,
+        url: str,
+        weight: int = 1,
+        **kwargs,
+    ):
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
         if not url.startswith(self._url):
             url = self._url + '/' + url.lstrip('/')
@@ -175,10 +197,36 @@ class _HTTPGateway:
             raise_for_status=True,
             **kwargs,
         ) as response:
-            try:
+            if response.status == HTTPStatus.NO_CONTENT:
+                raise InvalidRequestError('204 No Content', request_string)
+            with suppress(JSONDecodeError, aiohttp.ContentTypeError):
                 return await response.json()
-            except (JSONDecodeError, aiohttp.ContentTypeError):
-                return await response.read()
+            return await response.read()
+
+    async def _replay_request(
+        self,
+        method: str,
+        url: str,
+        weight: int = 1,
+        **kwargs,
+    ):
+        request_hash = hashlib.sha256(
+            f'{self._url} {method} {url} {kwargs}'.encode(),
+        ).hexdigest()
+        if not self._config.replay_path:
+            raise RuntimeError('Replay path is not set')
+        replay_path = join(self._config.replay_path.rstrip('/'), request_hash)
+
+        if isfile(replay_path):
+            with open(replay_path, 'rb') as file:
+                return orjson.loads(file.read())
+        else:
+            response = await self._retry_request(method, url, weight, **kwargs)
+            if response:
+                touch(replay_path)
+                with open(replay_path, 'wb') as file:
+                    file.write(orjson.dumps(response))
+            return response
 
     async def request(
         self,
@@ -188,7 +236,10 @@ class _HTTPGateway:
         **kwargs,
     ) -> Any:
         """Performs an HTTP request."""
-        return await self._retry_request(method, url, weight, **kwargs)
+        if self._config.replay_path:
+            return await self._replay_request(method, url, weight, **kwargs)
+        else:
+            return await self._retry_request(method, url, weight, **kwargs)
 
     def set_user_agent(self, *args: str) -> None:
         """Add list of arguments to User-Agent header"""

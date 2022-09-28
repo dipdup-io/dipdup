@@ -17,6 +17,7 @@ datasources:
 
 advanced:
   early_realtime: True
+  crash_reporting: True
 
 templates:
 

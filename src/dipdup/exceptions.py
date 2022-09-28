@@ -1,6 +1,8 @@
+import tempfile
 import textwrap
 from dataclasses import dataclass
 from dataclasses import field
+from os.path import join
 from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import Dict
@@ -27,30 +29,35 @@ def indent(text: str, indent: int = 2) -> str:
     return textwrap.indent(text, ' ' * indent)
 
 
-def save_tombstone(error: Exception) -> str:
-    """Saves a tombstone file with Sentry error data, returns the path to the tempfile"""
+def save_crashdump(error: Exception) -> str:
+    """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
     # NOTE: Lazy import to speed up startup
     import sentry_sdk.serializer
     import sentry_sdk.utils
+
+    from dipdup.utils import mkdir_p
 
     exc_info = sentry_sdk.utils.exc_info_from_error(error)
     event, _ = sentry_sdk.utils.event_from_exception(exc_info)
     event = sentry_sdk.serializer.serialize(event)
 
-    tombstone_file = NamedTemporaryFile(
-        mode='wb',
+    tmp_dir = join(tempfile.gettempdir(), 'dipdup', 'crashdumps')
+    mkdir_p(tmp_dir)
+
+    crashdump_file = NamedTemporaryFile(
+        mode='ab',
         suffix='.json',
-        prefix='dipdup-tombstone_',
+        dir=tmp_dir,
         delete=False,
     )
-    with tombstone_file as f:
+    with crashdump_file as f:
         f.write(
             json.dumps(
                 event,
                 option=json.OPT_INDENT_2,
             ),
         )
-    return tombstone_file.name
+    return crashdump_file.name
 
 
 class DipDupException(Exception):
@@ -103,6 +110,23 @@ class DatasourceError(DipDupError):
 
 
 @dataclass(repr=False)
+class InvalidRequestError(DipDupError):
+    """API returned an unexpected response"""
+
+    msg: str
+    url: str
+
+    def _help(self) -> str:
+        return f"""
+            Unexpected response: {self.msg}
+
+            URL: `{self.url}`
+
+            Make sure that config is correct and you're calling the correct API.
+        """
+
+
+@dataclass(repr=False)
 class ConfigurationError(DipDupError):
     """DipDup YAML config is invalid"""
 
@@ -112,12 +136,12 @@ class ConfigurationError(DipDupError):
         return f"""
             {self.msg}
 
-            DipDup config reference: https://dipdup.net/docs/config
+            DipDup config reference: https://docs.dipdup.io/config
         """
 
 
 @dataclass(repr=False)
-class DatabaseConfigurationError(ConfigurationError):
+class InvalidModelsError(ConfigurationError):
     """Can't initialize database, `models.py` module is invalid"""
 
     model: Type[Model]
@@ -131,9 +155,9 @@ class DatabaseConfigurationError(ConfigurationError):
               table: `{self.model._meta.db_table}`
               field: `{self.field or ''}`
 
-            See https://dipdup.net/docs/getting-started/defining-models
-            See https://dipdup.net/docs/config/database
-            See https://dipdup.net/docs/advanced/internal-models
+            See https://docs.dipdup.io/getting-started/defining-models
+            See https://docs.dipdup.io/config/database
+            See https://docs.dipdup.io/advanced/internal-models
         """
 
 
@@ -164,7 +188,7 @@ class MigrationRequiredError(DipDupError):
               1. Run `dipdup migrate`.
               2. Review and commit changes.
 
-            See https://dipdup.net/docs/release-notes for more information. {reindex}
+            See https://docs.dipdup.io/release-notes for more information. {reindex}
         """
 
 
@@ -190,7 +214,7 @@ class ReindexingRequiredError(DipDupError):
               * Eliminate the cause of reindexing and run `dipdup schema approve`.
               * Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
-            See https://dipdup.net/docs/advanced/reindexing for more information.
+            See https://docs.dipdup.io/advanced/reindexing for more information.
         """.format(
             reason=self.reason.value,
             context=context,
@@ -344,8 +368,8 @@ class CallbackTypeError(DipDupError):
 
             Make sure to set correct typenames in config and run `dipdup init --overwrite-types` to regenerate typeclasses.
 
-            See https://dipdup.net/docs/getting-started/project-structure
-            See https://dipdup.net/docs/cli-reference#init
+            See https://docs.dipdup.io/getting-started/project-structure
+            See https://docs.dipdup.io/cli-reference#init
         """
 
 
@@ -363,7 +387,7 @@ class HasuraError(DipDupError):
 
             If it's `400 Bad Request`, check out Hasura logs for more information.
 
-            See https://dipdup.net/docs/graphql/
-            See https://dipdup.net/docs/config/hasura.html
-            See https://dipdup.net/docs/cli-reference.html#dipdup-hasura-configure
+            See https://docs.dipdup.io/graphql/
+            See https://docs.dipdup.io/config/hasura.html
+            See https://docs.dipdup.io/cli-reference.html#dipdup-hasura-configure
         """

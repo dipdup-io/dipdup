@@ -26,11 +26,11 @@ The only difference with the default image is the pre-installed PyTezos library,
 
 ### Nightly builds (ghcr.io)
 
-In addition to [Docker Hub](https://hub.docker.com/r/dipdup/dipdup) we also publish images on [GitHub Packages](https://github.com/dipdup-net/dipdup-py/pkgs/container/dipdup-py). Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!
+In addition to [Docker Hub](https://hub.docker.com/r/dipdup/dipdup) we also publish images on [GitHub Packages](https://github.com/dipdup-net/dipdup/pkgs/container/dipdup). Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!
 
 ```Dockerfile
 # Slim image for `aux/arm64` branch
-FROM ghcr.io/dipdup-net/dipdup-py:aux-arm64-slim
+FROM ghcr.io/dipdup-net/dipdup:aux-arm64-slim
 ```
 
 ## Writing Dockerfile

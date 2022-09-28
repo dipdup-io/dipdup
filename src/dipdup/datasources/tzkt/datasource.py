@@ -9,6 +9,7 @@ from datetime import datetime
 from datetime import timezone
 from decimal import Decimal
 from functools import partial
+from os import environ as env
 from typing import Any
 from typing import AsyncGenerator
 from typing import AsyncIterator
@@ -31,6 +32,7 @@ from pysignalr.client import SignalRClient
 from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage
 
+from dipdup.config import KNOWN_TZKT_URLS
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
@@ -446,6 +448,25 @@ class TzktDatasource(IndexDatasource):
         self._ws_client: Optional[SignalRClient] = None
         self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
 
+    async def __aenter__(self) -> None:
+        try:
+            await super().__aenter__()
+
+            # FIXME: Doesn't help much, tests still run against real TzKT instance
+            if env.get('CI') == 'true':
+                return
+
+            protocol = await self.request('get', 'v1/protocols/current')
+            category = 'hosted' if self.url in KNOWN_TZKT_URLS else 'self-hosted'
+            self._logger.info(
+                '%s, protocol v%s (%s)',
+                category,
+                protocol["code"],
+                protocol['hash'][:8] + '…' + protocol['hash'][-6:],
+            )
+        except Exception as e:
+            raise DatasourceError(f'Failed to connect to TzKT: {e}', self.name) from e
+
     @property
     def request_limit(self) -> int:
         return cast(int, self._http_config.batch_size)
@@ -455,7 +476,7 @@ class TzktDatasource(IndexDatasource):
         self._buffer._logger = FormattedLogger(self._buffer._logger.name, name + ': {}')
 
     def get_channel_level(self, message_type: MessageType) -> int:
-        """Get current level of the channel, or sync level is no messages were received yet."""
+        """Get current level of the channel, or sync level if no messages were received yet."""
         channel_level = self._level[message_type]
         if channel_level is None:
             # NOTE: If no data messages were received since run, use sync level instead
@@ -1191,7 +1212,7 @@ class TzktDatasource(IndexDatasource):
             hash=block_json['hash'],
             timestamp=cls._parse_timestamp(block_json['timestamp']),
             proto=block_json['proto'],
-            priority=block_json['priority'],
+            priority=block_json.get('priority'),
             validations=block_json['validations'],
             deposit=block_json['deposit'],
             reward=block_json['reward'],
@@ -1242,6 +1263,7 @@ class TzktDatasource(IndexDatasource):
             jpy=Decimal(quote_json['jpy']),
             krw=Decimal(quote_json['krw']),
             eth=Decimal(quote_json['eth']),
+            gbp=Decimal(quote_json['gbp']),
         )
 
     @classmethod

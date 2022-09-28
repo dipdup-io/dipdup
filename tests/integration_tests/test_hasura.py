@@ -1,5 +1,5 @@
-import os
 from contextlib import AsyncExitStack
+from os import environ as env
 from os.path import dirname
 from os.path import join
 from unittest import IsolatedAsyncioTestCase
@@ -17,8 +17,8 @@ from dipdup.exceptions import HasuraError
 from dipdup.hasura import HasuraGateway
 from dipdup.utils.database import tortoise_wrapper
 
-if os.environ.get("CI") == "true":
-    pytest.skip("skipping integration tests on CI", allow_module_level=True)
+if env.get('CI') == 'true':
+    pytest.skip('skipping integration tests on CI', allow_module_level=True)
 
 
 class HasuraTest(IsolatedAsyncioTestCase):
