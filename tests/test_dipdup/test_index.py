@@ -6,13 +6,13 @@ from dipdup.config import ContractConfig
 from dipdup.config import OperationHandlerConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
-from dipdup.config import OriginationHandlerConfig
-from dipdup.config import OriginationIndexConfig
+from dipdup.config import OperationUnfilteredHandlerConfig
+from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.enums import IndexStatus
 from dipdup.enums import OperationType
 from dipdup.index import OperationIndex
-from dipdup.index import OriginationIndex
+from dipdup.index import OperationUnfilteredIndex
 from dipdup.index import extract_operation_subgroups
 from dipdup.models import Index
 from dipdup.models import OperationData
@@ -374,10 +374,10 @@ index_config = OperationIndexConfig(
 )
 index_config.name = 'asdf'
 
-origination_index_config = OriginationIndexConfig(
+origination_index_config = OperationUnfilteredIndexConfig(
     datasource=TzktDatasourceConfig(kind='tzkt', url='https://api.tzkt.io', http=None),
     kind='origination',
-    handlers=(OriginationHandlerConfig(callback='on_origination'),),
+    handlers=(OperationUnfilteredHandlerConfig(callback='on_origination'),),
     first_level=2000000,
 )
 origination_index_config.name = 'originations'
@@ -405,7 +405,7 @@ class MatcherTest(IsolatedAsyncioTestCase):
         index._prepare_handler_args.assert_called()
 
     async def test_match_originations(self) -> None:
-        index = OriginationIndex(None, origination_index_config, None)  # type: ignore
+        index = OperationUnfilteredIndex(None, origination_index_config, None)  # type: ignore
         index._process_originations = AsyncMock()  # type: ignore
         await index.initialize_state(Index(name="originations", level=1, status=IndexStatus.SYNCING))
 

@@ -1065,7 +1065,7 @@ class TokenTransferIndexConfig(IndexConfig):
 
 
 @dataclass
-class OriginationHandlerConfig(HandlerConfig, kind='handler'):
+class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'OperationData'
@@ -1077,13 +1077,13 @@ class OriginationHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class OriginationIndexConfig(IndexConfig):
-    """Origination index config"""
+class OperationUnfilteredIndexConfig(IndexConfig):
+    """Operation unfiltered index config"""
 
-    kind: Literal['origination']
+    kind: Literal['operation_unfiltered']
     datasource: Union[str, TzktDatasourceConfig]
-    handlers: Tuple[OriginationHandlerConfig, ...] = field(default_factory=tuple)
-
+    handlers: Tuple[OperationUnfilteredHandlerConfig, ...] = field(default_factory=tuple)
+    type: Literal['origination']
     first_level: int = 0
     last_level: int = 0
 
@@ -1093,7 +1093,7 @@ IndexConfigT = Union[
     BigMapIndexConfig,
     HeadIndexConfig,
     TokenTransferIndexConfig,
-    OriginationIndexConfig,
+    OperationUnfilteredIndexConfig,
     IndexTemplateConfig,
 ]
 ResolvedIndexConfigT = Union[
@@ -1466,7 +1466,7 @@ class DipDupConfig:
         elif isinstance(index_config, TokenTransferIndexConfig):
             self._import_index_callbacks(index_config)
 
-        elif isinstance(index_config, OriginationIndexConfig):
+        elif isinstance(index_config, OperationUnfilteredIndexConfig):
             self._import_index_callbacks(index_config)
 
         else:
@@ -1627,7 +1627,7 @@ class DipDupConfig:
         elif isinstance(index_config, TokenTransferIndexConfig):
             index_config.subscriptions.add(TokenTransferSubscription())
 
-        elif isinstance(index_config, OriginationIndexConfig):
+        elif isinstance(index_config, OperationUnfilteredIndexConfig):
             index_config.subscriptions.add(OriginationSubscription())
 
         else:
@@ -1691,7 +1691,7 @@ class DipDupConfig:
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
 
-        elif isinstance(index_config, OriginationIndexConfig):
+        elif isinstance(index_config, OperationUnfilteredIndexConfig):
             if isinstance(index_config.datasource, str):
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 

@@ -32,8 +32,8 @@ from dipdup.config import OperationHandlerPatternConfigT
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import OperationType
-from dipdup.config import OriginationHandlerConfig
-from dipdup.config import OriginationIndexConfig
+from dipdup.config import OperationUnfilteredHandlerConfig
+from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import SkipHistory
 from dipdup.config import TokenTransferHandlerConfig
@@ -1009,11 +1009,11 @@ class TokenTransferIndex(Index):
         return ids
 
 
-class OriginationIndex(Index):
-    message_type = MessageType.origination
-    _config: OriginationIndexConfig
+class OperationUnfilteredIndex(OperationIndex):
+    message_type = MessageType.operation
+    _config: OperationUnfilteredIndexConfig
 
-    def __init__(self, ctx: DipDupContext, config: OriginationIndexConfig, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: OperationUnfilteredIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
         self._queue: Deque[Tuple[OperationData, ...]] = deque()
 
@@ -1081,7 +1081,7 @@ class OriginationIndex(Index):
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=batch_level)
 
-    async def _call_matched_handler(self, handler_config: OriginationHandlerConfig, origination: OperationData) -> None:
+    async def _call_matched_handler(self, handler_config: OperationUnfilteredHandlerConfig, origination: OperationData) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -1094,8 +1094,8 @@ class OriginationIndex(Index):
             origination,
         )
 
-    async def _match_originations(self, originations: Iterable[OperationData]) -> List[Tuple[OriginationHandlerConfig, OperationData]]:
-        matched_handlers: List[Tuple[OriginationHandlerConfig, OperationData]] = []
+    async def _match_originations(self, originations: Iterable[OperationData]) -> List[Tuple[OperationUnfilteredHandlerConfig, OperationData]]:
+        matched_handlers: List[Tuple[OperationUnfilteredHandlerConfig, OperationData]] = []
         for origination in originations:
             for handler_config in self._config.handlers:
                 matched_handlers.append((handler_config, origination))
