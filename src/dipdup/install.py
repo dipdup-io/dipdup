@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from shutil import rmtree
 from shutil import which
 from typing import NoReturn
 from typing import Set
@@ -123,7 +124,7 @@ def install(
         run(f'pipx install datamodel-code-generator {force_str}')
 
     if (legacy_poetry := Path(Path.home(), '.poetry')).exists():
-        os.rmdir(legacy_poetry)
+        rmtree(legacy_poetry, ignore_errors=True)
         run(f'pipx install poetry {force_str}')
     elif pipx_poetry:
         echo('Updating Poetry')
