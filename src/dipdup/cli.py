@@ -63,10 +63,10 @@ def _print_help(error: Exception, crashdump_path: str) -> None:
     import atexit
 
     from dipdup.exceptions import DipDupError
-    from dipdup.exceptions import _tab
+    from dipdup.exceptions import tab
 
     help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
-    help_message += _tab + f'Crashdump saved to `{crashdump_path}`'
+    help_message += tab + f'Crashdump saved to `{crashdump_path}`'
     atexit.register(partial(click.echo, help_message, err=True))
 
 

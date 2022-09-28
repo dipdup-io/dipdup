@@ -16,7 +16,7 @@ from tortoise.models import Model
 from dipdup import spec_version_mapping
 from dipdup.enums import ReindexingReason
 
-_tab = ('_' * 80) + '\n\n'
+tab = ('_' * 80) + '\n\n'
 
 
 def unindent(text: str) -> str:
@@ -91,7 +91,7 @@ class DipDupError(Exception):
         return unindent(self._help())
 
     def format(self) -> str:
-        return _tab + self.help() + '\n'
+        return tab + self.help() + '\n'
 
 
 @dataclass(repr=False)
@@ -177,7 +177,7 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
-        reindex = '\n\n' + _tab + ReindexingRequiredError(ReindexingReason.migration).help() if self.reindex else ''
+        reindex = '\n\n' + tab + ReindexingRequiredError(ReindexingReason.migration).help() if self.reindex else ''
         return f"""
             Project migration required!
 
