@@ -261,7 +261,7 @@ class CodeGenerator:
                 if not datamodel_codegen:
                     raise FeatureAvailabilityError(
                         feature='codegen',
-                        reason='datamodel-codegen is not installed. Are you in the `-slim` Docker image?',
+                        reason='datamodel-codegen is not installed. Are you in the `-slim` Docker image? If not - run `dipdup-install`.',
                     )
 
                 name = snake_to_pascal(name)
