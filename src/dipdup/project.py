@@ -283,12 +283,11 @@ class DefaultProject(Project):
         BooleanQuestion(
             name='crash_reporting',
             description='Enable crash reporting?\n' 'It helps us a lot to improve DipDup 🙏',
-            # FIXME: I really-really want it to be opt-out :/
-            default=True,
+            default=False,
         ),
         InputQuestion(
             name='line_length',
             description=('Enter maximum line length\n' 'Used by linters.'),
-            default='140',
+            default='120',
         ),
     )
