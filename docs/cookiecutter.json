@@ -9,6 +9,6 @@
   "dipdup_version": "6",
   "postgresql_image": "postgres:14",
   "hasura_image": "hasura/graphql-engine:v2.11.2",
-  "crash_reporting": true,
-  "line_length": "140"
+  "crash_reporting": false,
+  "line_length": "120"
 }
