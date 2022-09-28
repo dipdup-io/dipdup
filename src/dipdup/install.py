@@ -77,8 +77,12 @@ def ensure_pipx() -> None:
         return
 
     echo('Installing pipx')
-    run('pip install --user -q pipx')
+    if sys.base_prefix != sys.prefix:
+        run('python -m pip install pipx')
+    else:
+        run('python -m pip install --user pipx')
     run('python -m pipx ensurepath')
+    echo('WARNING: If installation fails after this step, please restart your shell and try again', colors.YELLOW)
 
 
 def get_pipx_packages() -> Set[str]:
