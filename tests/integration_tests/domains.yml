@@ -1,26 +1,24 @@
 spec_version: 1.2
-package: demo_tezos_domains
+package: demo_domains
 
 database:
   kind: sqlite
-  path: tezos_domains.sqlite3
+  path: db.sqlite3
 
 contracts:
-  mainnet_name_registry:
+  name_registry:
     address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
     typename: name_registry
 
 datasources:
-  tzkt_mainnet:
+  tzkt:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
-
-advanced:
-  early_realtime: True
-  crash_reporting: True
+    http:
+      replay_path: /tmp/dipdup/replays
 
 templates:
-  tezos_domains:
+  domains:
     kind: operation
     datasource: <datasource>
     contracts:
@@ -36,10 +34,13 @@ templates:
           - type: transaction
             destination: <name_registry>
             entrypoint: execute
+    last_level: 1450852
 
 indexes:
-  tezos_domains_mainnet:
-    template: tezos_domains
+  domains:
+    template: domains
     values:
-      datasource: tzkt_mainnet
-      name_registry: mainnet_name_registry
+      datasource: tzkt
+      name_registry: name_registry
+
+logging: quiet

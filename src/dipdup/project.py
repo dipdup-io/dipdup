@@ -171,7 +171,7 @@ class Project(BaseModel):
             root_dir=project_path,
             recursive=True,
         )
-        config_path = join(base_path, self.answers['template'] + '.yml.j2')
+        config_path = join(base_path, self.answers['template'], 'dipdup.yml.j2')
 
         for path in project_paths:
             output_path = join(self.answers['project_name'], path.replace('.j2', ''))
@@ -212,8 +212,25 @@ class DefaultProject(Project):
             name='template',
             description=('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n'),
             default=0,
-            choices=('demo_tzbtc',),
-            comments=('TzBTC token transfers',),
+            choices=(
+                'demo_domains',
+                'demo_domains_big_map',
+                'demo_hic_et_nunc',
+                'demo_quipuswap',
+                'demo_registrydao',
+                'demo_tzbtc',
+                'demo_tzbtc_transfers',
+                'demo_tzcolors',
+            ),
+            comments=(
+                'Tezos Domains name service',
+                'Tezos Domains name service (bag maps only)',
+                'hic at nunc NFT marketplace',
+                'Quipuswap DEX balances and liquidity',
+                'Homebase DAO registry (index factory)',
+                'TzBTC FA1.2 token transfers',
+                'TzBTC FA1.2 token transfers (transfers only)',
+            ),
         ),
         InputQuestion(
             name='project_name',
@@ -288,7 +305,7 @@ class DefaultProject(Project):
                 'hasura/graphql-engine:v2.13.0-beta.1',
             ),
             comments=(
-                'Supported',
+                'Recommended',
                 '',
                 '',
             ),

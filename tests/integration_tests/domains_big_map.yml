@@ -1,5 +1,5 @@
 spec_version: 1.2
-package: demo_tezos_domains_big_map
+package: demo_domains_big_map
 
 database:
   kind: sqlite
@@ -18,7 +18,7 @@ datasources:
       replay_path: /tmp/dipdup/replays
 
 templates:
-  tezos_domains_big_map:
+  domains_big_map:
     kind: big_map
     datasource: <datasource>
     handlers:
@@ -31,8 +31,8 @@ templates:
     last_level: 1450852
 
 indexes:
-  tezos_domains_big_map:
-    template: tezos_domains_big_map
+  domains_big_map:
+    template: domains_big_map
     values:
       datasource: tzkt
       name_registry: name_registry
