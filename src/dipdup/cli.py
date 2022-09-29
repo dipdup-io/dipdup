@@ -8,7 +8,6 @@ from contextlib import AsyncExitStack
 from contextlib import suppress
 from functools import partial
 from functools import wraps
-from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -700,6 +699,3 @@ async def update(
     import dipdup.install
 
     dipdup.install.install(quiet, force, None, None)
-
-    if Path('poetry.lock').exists():
-        dipdup.install.run('poetry update dipdup')
