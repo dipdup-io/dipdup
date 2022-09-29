@@ -206,9 +206,6 @@ def install(
         env._commands['poetry'] = which('poetry')
         pipx_poetry = True
 
-    if pipx_poetry and Path('poetry.lock').exists():
-        env.run_cmd('pipx', 'run', 'poetry', 'update', 'dipdup')
-
     done('Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available commands.')
 
 

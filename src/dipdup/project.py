@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from dipdup.exceptions import ConfigurationError
+from dipdup.install import tab
 from dipdup.utils import load_template
 from dipdup.utils import mkdir_p
 from dipdup.utils import write
@@ -32,12 +33,14 @@ class Question(BaseModel):
 
     def prompt(self) -> Any:
         try:
-            return cl.prompt(
+            value = cl.prompt(
                 text=self.text,
                 default=self.default,
                 type=self.type,
                 show_default=False,
             )
+            print('\n')
+            return value  # noqa: R504
         except cl.Abort:
             cl.echo('\nAborted')
             quit(0)
@@ -80,6 +83,7 @@ class ChoiceQuestion(Question):
     type = int
     default: int
     choices: tuple[str, ...]
+    comments: tuple[str, ...]
 
     @property
     def default_choice(self) -> str:
@@ -91,8 +95,10 @@ class ChoiceQuestion(Question):
 
     def prompt(self) -> str:
         cl.secho(f'=> {self.description}', fg='blue')
-        for i, choice in enumerate(self.choices):
-            cl.echo(f'  {i}) {choice}')
+        for i, choice_pair in enumerate(zip(self.choices, self.comments)):
+            choice, comment = choice_pair
+            cl.echo(f'  {i}) {tab(choice, 40)}{comment}')
+        print()
         value: int = super().prompt()
         return self.choices[value]
 
@@ -204,9 +210,10 @@ class DefaultProject(Project):
         ),
         ChoiceQuestion(
             name='template',
-            description='Choose config template',
+            description=('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n'),
             default=0,
             choices=('demo_tzbtc',),
+            comments=('TzBTC token transfers',),
         ),
         InputQuestion(
             name='project_name',
@@ -251,6 +258,10 @@ class DefaultProject(Project):
                 '6',
                 '6.1',
             ),
+            comments=(
+                'Latest stable release',
+                'Latest release of 6.1 branch',
+            ),
         ),
         ChoiceQuestion(
             name='postgresql_image',
@@ -258,11 +269,13 @@ class DefaultProject(Project):
             default=0,
             choices=(
                 'postgres:14',
-                'postgres:13',
                 'timescale/timescaledb:latest-pg14',
-                'timescale/timescaledb:latest-pg13',
                 'timescale/timescaledb-ha:pg14-latest',
-                'timescale/timescaledb-ha:pg13-latest',
+            ),
+            comments=(
+                'Official PostgreSQL',
+                'TimescaleDB',
+                'TimescaleDB HA (more extensions)',
             ),
         ),
         ChoiceQuestion(
@@ -273,6 +286,11 @@ class DefaultProject(Project):
                 'hasura/graphql-engine:v2.11.2',
                 'hasura/graphql-engine:v2.12.0',
                 'hasura/graphql-engine:v2.13.0-beta.1',
+            ),
+            comments=(
+                'Supported',
+                '',
+                '',
             ),
         ),
         NotifyQuestion(
