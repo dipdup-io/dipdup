@@ -37,6 +37,7 @@
   * [Prometheus integration](deployment/prometheus.md)
   * [Logging](deployment/logging.md)
   * [Backup and restore](deployment/backups.md)
+  * [Monitoring](deployment/monitoring.md)
 * [F.A.Q.](faq.md)
 * [Troubleshooting](troubleshooting.md)
 * [Contribution guide](CONTRIBUTING.md)
