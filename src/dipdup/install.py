@@ -153,7 +153,7 @@ class DipDupEnvironment:
         self.run_cmd('python3', '-m', 'pip', 'install', '--user', '-q', 'pipx')
         self.run_cmd('python3', '-m', 'pipx', 'ensurepath')
         os.environ['PATH'] = os.environ['PATH'] + ':' + str(Path.home() / '.local' / 'bin')
-        self.refresh()
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
 
 def install(
@@ -177,32 +177,32 @@ def install(
 
     if pipx_dipdup:
         echo('Updating DipDup')
-        env.run_cmd('python3', '-m', 'pipx', 'upgrade', 'dipdup', force_str)
+        env.run_cmd('pipx', 'upgrade', 'dipdup', force_str)
     else:
         if path:
             echo(f'Installing DipDup from `{path}`')
-            env.run_cmd('python3', '-m', 'pipx', 'install', path, force_str)
+            env.run_cmd('pipx', 'install', path, force_str)
         elif ref:
             echo(f'Installing DipDup from `{ref}`')
-            env.run_cmd('python3', '-m', 'pipx', 'install', f'git+{GITHUB}@{ref}', force_str)
+            env.run_cmd('pipx', 'install', f'git+{GITHUB}@{ref}', force_str)
         else:
             echo('Installing DipDup from PyPI')
-            env.run_cmd('python3', '-m', 'pipx', 'install', 'dipdup', force_str)
+            env.run_cmd('pipx', 'install', 'dipdup', force_str)
 
     if pipx_datamodel_codegen:
-        env.run_cmd('python3', '-m', 'pipx', 'upgrade', 'datamodel-code-generator', force_str)
+        env.run_cmd('pipx', 'upgrade', 'datamodel-code-generator', force_str)
     else:
-        env.run_cmd('python3', '-m', 'pipx', 'install', 'datamodel-code-generator', force_str)
+        env.run_cmd('pipx', 'install', 'datamodel-code-generator', force_str)
 
     if (legacy_poetry := Path(Path.home(), '.poetry')).exists():
         rmtree(legacy_poetry, ignore_errors=True)
-        env.run_cmd('python3', '-m', 'pipx', 'install', 'poetry', force_str)
+        env.run_cmd('pipx', 'install', 'poetry', force_str)
     elif pipx_poetry:
         echo('Updating Poetry')
-        env.run_cmd('python3', '-m', 'pipx', 'upgrade', 'poetry', force_str)
+        env.run_cmd('pipx', 'upgrade', 'poetry', force_str)
     elif ask('Install poetry? Optional for `dipdup new` command', True, quiet):
         echo('Installing poetry')
-        env.run_cmd('python3', '-m', 'pipx', 'install', 'poetry', force_str)
+        env.run_cmd('pipx', 'install', 'poetry', force_str)
         pipx_poetry = True
 
     if Path('poetry.lock').exists():
@@ -220,12 +220,12 @@ def uninstall(quiet: bool) -> NoReturn:
 
     if 'dipdup' in pipx_packages:
         echo('Uninstalling DipDup')
-        env.run_cmd('python3', '-m', 'pipx', 'uninstall', 'dipdup')
+        env.run_cmd('pipx', 'uninstall', 'dipdup')
 
     if 'datamodel-code-generator' in pipx_packages:
         if ask('Uninstall datamodel-code-generator?', True, quiet):
             echo('Uninstalling datamodel-code-generator')
-            env.run_cmd('python3', '-m', 'pipx', 'uninstall', 'datamodel-code-generator')
+            env.run_cmd('pipx', 'uninstall', 'datamodel-code-generator')
 
     done('Done! DipDup is uninstalled.')
 
