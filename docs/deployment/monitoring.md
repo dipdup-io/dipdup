@@ -1,6 +1,6 @@
 # Monitoring
 
-In order to perform up-to-date and freshness checks DipDup provides a standard REST endpoint you can use together with Betteruptime or similar services that can search for a keyword in the response.
+In order to perform up-to-date and freshness checks, DipDup provides a standard REST endpoint you can use together with Betteruptime or similar services that can search for a keyword in the response.
 
 This check basically says that DipDup is not stuck and keeps receiving new data (last known block timestamp is not older than **three minutes** from now).  
 Note that this is not enough to ensure everything works as expected, but it can at least cover the cases when there is an issue with the datasource or your indexer stops working due to an exception.  
@@ -24,7 +24,8 @@ For example:
 ### Response
 
 If the (latest block) head subscription state was updated less than **three minutes** ago, everything is **OK**:
-```
+
+```json
 {
   "dipdup_head_status": [
     {
@@ -34,8 +35,9 @@ If the (latest block) head subscription state was updated less than **three minu
 }
 ```
 
-Otherwise the state is considered **OUTDATED**:
-```
+Otherwise, the state is considered **OUTDATED**:
+
+```json
 {
   "dipdup_head_status": [
     {
