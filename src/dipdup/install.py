@@ -99,7 +99,7 @@ class DipDupEnvironment:
     def refresh_pipx(self) -> None:
         """Get installed pipx packages"""
         self.ensure_pipx()
-        pipx_packages_raw = self.run_cmd('python3', '-m', 'pipx', 'list', '--short', capture_output=True).stdout
+        pipx_packages_raw = self.run_cmd('pipx', 'list', '--short', capture_output=True).stdout
         self._pipx_packages = {p.split()[0].decode() for p in pipx_packages_raw.splitlines()}
         self._quiet or print(tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
