@@ -114,5 +114,10 @@ update:         ## Update dependencies, export requirements.txt
 	scripts/update_cookiecutter.py
 	scripts/update_demos.sh
 
+demos:
+	cd demos
+	dipdup new --quiet --force --replay demo-tzbtc.json
+	cd demo-tzbtc; dipdup init --overwrite-types; make lint
+
 ##
 ##

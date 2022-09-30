@@ -131,9 +131,11 @@ class Project(BaseModel):
         if replay:
             with open(replay, 'rb') as f:
                 self.answers = JinjaAnswers(json.loads(f.read()))
-            return
 
         for question in self.questions:
+            if question.name in self.answers:
+                continue
+
             if quiet:
                 value = question.choices[question.default] if isinstance(question, ChoiceQuestion) else question.default
                 cl.echo(f'{question.name}: using default value `{value}`')
