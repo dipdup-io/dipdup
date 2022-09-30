@@ -23,7 +23,6 @@ for demo in list(demos_path.iterdir()):
     project_name = project.answers['project_name']
     package = project.answers['package']
     subprocess.run(['mv', project_name, 'demos'], check=True)
-    subprocess.run(['ln', '-s', f'../demos/{project_name}/src/{package}', package], cwd='src', check=True)
 
 for demo in list(demos_path.iterdir()):
     if not demo.is_dir():
