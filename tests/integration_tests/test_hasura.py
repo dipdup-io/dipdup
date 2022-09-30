@@ -13,7 +13,7 @@ from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import HasuraError
 from dipdup.hasura import HasuraGateway
-from dipdup.project import DefaultProject
+from dipdup.project import BaseProject
 from dipdup.utils.database import tortoise_wrapper
 
 if env.get('CI') == 'true':
@@ -24,7 +24,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
 
     async def test_configure_hasura(self) -> None:
-        project_defaults = DefaultProject().get_defaults()
+        project_defaults = BaseProject().get_defaults()
 
         config_path = join(dirname(__file__), 'hic_et_nunc.yml')
         config = DipDupConfig.load([config_path])

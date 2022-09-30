@@ -109,7 +109,6 @@ class JinjaAnswers(dict):
 
 
 class Project(BaseModel):
-    name: str
     path: str
     description: str
     questions: tuple[Question, ...]
@@ -171,7 +170,6 @@ class Project(BaseModel):
             root_dir=project_path,
             recursive=True,
         )
-        config_path = join(base_path, self.answers['template'], 'dipdup.yml.j2')
 
         for path in project_paths:
             output_path = join(self.answers['project_name'], path.replace('.j2', ''))
@@ -184,9 +182,6 @@ class Project(BaseModel):
 
             self._render(join(project_path, path), output_path, force)
 
-        output_path = join(self.answers['project_name'], 'dipdup.yml')
-        self._render(config_path, output_path, force)
-
     def get_defaults(self) -> dict[str, Any]:
         return {
             question.name: question.choices[question.default] if isinstance(question, ChoiceQuestion) else question.default
@@ -194,8 +189,7 @@ class Project(BaseModel):
         }
 
 
-class DefaultProject(Project):
-    name = 'dipdup'
+class BaseProject(Project):
     path = 'base'
     description = 'Default DipDup project, ex. cookiecutter template'
     questions: tuple[Question, ...] = (
@@ -221,15 +215,18 @@ class DefaultProject(Project):
                 'demo_tzbtc',
                 'demo_tzbtc_transfers',
                 'demo_tzcolors',
+                'blank',
             ),
             comments=(
                 'Tezos Domains name service',
-                'Tezos Domains name service (bag maps only)',
+                'Tezos Domains name service (big maps only)',
                 'hic at nunc NFT marketplace',
                 'Quipuswap DEX balances and liquidity',
                 'Homebase DAO registry (index factory)',
                 'TzBTC FA1.2 token transfers',
                 'TzBTC FA1.2 token transfers (transfers only)',
+                'TzColors NFT marketplace',
+                'Empty config for a fresh start',
             ),
         ),
         InputQuestion(
@@ -326,3 +323,12 @@ class DefaultProject(Project):
             default='120',
         ),
     )
+
+    def render(self, force: bool = False) -> None:
+        super().render(force)
+        Project(
+            path=self.answers['template'],
+            description='Auto-generated demo subproject',
+            questions=(),
+            answers=self.answers,
+        ).render(force)

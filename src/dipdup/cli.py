@@ -644,9 +644,9 @@ async def new(
     replay: str | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import DefaultProject
+    from dipdup.project import BaseProject
 
-    project = DefaultProject()
+    project = BaseProject()
     project.run(quiet, replay)
     project.render(force)
 
