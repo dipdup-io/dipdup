@@ -1,7 +1,0 @@
-from tortoise import fields
-from dipdup.models import Model
-
-
-class ExampleModel(Model):
-    id = fields.IntField(pk=True)
-    ...
