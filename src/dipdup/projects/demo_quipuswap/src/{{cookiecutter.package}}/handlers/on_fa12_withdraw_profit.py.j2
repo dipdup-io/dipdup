@@ -1,0 +1,25 @@
+from decimal import Decimal
+from typing import Optional
+
+import {{cookiecutter.package}}.models as models
+from {{cookiecutter.package}}.types.quipu_fa12.parameter.withdraw_profit import WithdrawProfitParameter
+from {{cookiecutter.package}}.types.quipu_fa12.storage import QuipuFa12Storage
+from dipdup.context import HandlerContext
+from dipdup.models import OperationData
+from dipdup.models import Transaction
+
+
+async def on_fa12_withdraw_profit(
+    ctx: HandlerContext,
+    withdraw_profit: Transaction[WithdrawProfitParameter, QuipuFa12Storage],
+    transaction_0: Optional[OperationData] = None,
+) -> None:
+    symbol = ctx.template_values['symbol']
+    trader = withdraw_profit.data.sender_address
+
+    position, _ = await models.Position.get_or_create(trader=trader, symbol=symbol)
+    if transaction_0:
+        assert transaction_0.amount is not None
+        position.realized_pl += Decimal(transaction_0.amount) / (10**6)
+
+        await position.save()
