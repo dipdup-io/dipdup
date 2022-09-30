@@ -20,12 +20,16 @@ for demo in list(demos_path.iterdir()):
     project = BaseProject()
     project.run(quiet=True, replay=str(demo))
     project.render(force=True)
-    subprocess.run(['mv', project.answers['project_name'], 'demos'])
+
+    project_name = project.answers['project_name']
+    package = project.answers['package']
+    subprocess.run(['mv', project_name, 'demos'], check=True)
+    subprocess.run(['ln', '-s', f'../demos/{project_name}/src/{package}', package], cwd='src', check=True)
 
 for demo in list(demos_path.iterdir()):
     if not demo.is_dir():
         continue
 
     print(f'Initializing {demo.name}')
-    subprocess.run(['dipdup', 'init', '--overwrite-types'], cwd=demo)
-    subprocess.run(['make', 'lint'], cwd=demo)
+    subprocess.run(['dipdup', 'init', '--overwrite-types'], cwd=demo, check=True)
+    subprocess.run(['make', 'lint'], cwd=demo, check=True)
