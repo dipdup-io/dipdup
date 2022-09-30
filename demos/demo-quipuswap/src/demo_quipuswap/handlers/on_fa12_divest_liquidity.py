@@ -1,14 +1,13 @@
 from decimal import Decimal
 
-from dipdup.context import HandlerContext
-from dipdup.models import OperationData
-from dipdup.models import Transaction
-
 import demo_quipuswap.models as models
 from demo_quipuswap.types.fa12_token.parameter.transfer import TransferParameter
 from demo_quipuswap.types.fa12_token.storage import Fa12TokenStorage
 from demo_quipuswap.types.quipu_fa12.parameter.divest_liquidity import DivestLiquidityParameter
 from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
+from dipdup.context import HandlerContext
+from dipdup.models import OperationData
+from dipdup.models import Transaction
 
 
 async def on_fa12_divest_liquidity(

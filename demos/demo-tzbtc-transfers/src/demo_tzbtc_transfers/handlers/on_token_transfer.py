@@ -1,10 +1,9 @@
 from decimal import Decimal
 from decimal import InvalidOperation
 
+from demo_tzbtc_transfers.handlers.on_balance_update import on_balance_update
 from dipdup.context import HandlerContext
 from dipdup.models import TokenTransferData
-
-from demo_tzbtc_transfers.handlers.on_balance_update import on_balance_update
 
 
 async def on_token_transfer(

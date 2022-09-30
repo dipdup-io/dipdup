@@ -1,8 +1,7 @@
-from dipdup.context import HandlerContext
-from dipdup.models import Origination
-
 import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa12.storage import QuipuFa12Storage
+from dipdup.context import HandlerContext
+from dipdup.models import Origination
 
 
 async def on_fa12_origination(

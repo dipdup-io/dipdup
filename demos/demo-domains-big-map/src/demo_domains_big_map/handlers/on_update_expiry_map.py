@@ -1,9 +1,8 @@
-from dipdup.context import HandlerContext
-from dipdup.models import BigMapDiff
-
 import demo_domains_big_map.models as models
 from demo_domains_big_map.types.name_registry.big_map.store_expiry_map_key import StoreExpiryMapKey
 from demo_domains_big_map.types.name_registry.big_map.store_expiry_map_value import StoreExpiryMapValue
+from dipdup.context import HandlerContext
+from dipdup.models import BigMapDiff
 
 
 async def on_update_expiry_map(

@@ -1,5 +1,6 @@
-from dipdup.models import Model
 from tortoise import fields
+
+from dipdup.models import Model
 
 
 class Holder(Model):

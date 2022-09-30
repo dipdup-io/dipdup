@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from shutil import rmtree
 import subprocess
 from pathlib import Path
+from shutil import rmtree
 
 from dipdup.project import BaseProject
-
 
 demos_path = Path(__file__).parent.parent / 'demos'
 
@@ -31,5 +30,8 @@ for demo in list(demos_path.iterdir()):
         continue
 
     print(f'Initializing {demo.name}')
-    subprocess.run(['dipdup', 'init', '--overwrite-types'], cwd=demo, check=True)
-    subprocess.run(['make', 'lint'], cwd=demo, check=True)
+    subprocess.run(
+        ['dipdup', '-c', '../dipdup.yml', 'init', '--overwrite-types'],
+        cwd=demo / 'src',
+        check=True,
+    )

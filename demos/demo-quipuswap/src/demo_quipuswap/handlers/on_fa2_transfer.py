@@ -1,9 +1,8 @@
-from dipdup.context import HandlerContext
-from dipdup.models import Transaction
-
 import demo_quipuswap.models as models
 from demo_quipuswap.types.quipu_fa2.parameter.transfer import TransferParameter
 from demo_quipuswap.types.quipu_fa2.storage import QuipuFa2Storage
+from dipdup.context import HandlerContext
+from dipdup.models import Transaction
 
 
 async def on_fa2_transfer(
