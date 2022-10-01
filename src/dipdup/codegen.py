@@ -1,3 +1,13 @@
+"""Everything about Python code generation (`dipdup init`)
+
+* TzKT JSONSchema processing
+* Callback codegen with Jinja2 templates
+* Types codegen with datamodel-codegen
+
+For `dipdup new` templates processing see `dipdup.project` module.
+
+Please, keep imports lazy to speed up startup.
+"""
 import logging
 import os
 import re
@@ -77,7 +87,6 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
 
 def load_template(name: str) -> 'Template':
     """Load template from templates/{name}.j2"""
-    # NOTE: Lazy loading to speed up startup
     from jinja2 import Template
 
     if name not in _templates:
@@ -334,29 +343,6 @@ class DipDupCodeGenerator:
             address_schemas_json = await datasource.get_jsonschemas(address)
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
-
-    async def migrate_handlers_to_v11(self) -> None:
-        replace_table = {
-            'BigMapAction.ADD': 'BigMapAction.ADD_KEY',
-            'BigMapAction.UPDATE': 'BigMapAction.UPDATE_KEY',
-            'BigMapAction.REMOVE': 'BigMapAction.REMOVE_KEY',
-        }
-        handlers_path = join(self._config.package_path, 'handlers')
-
-        for root, _, files in os.walk(handlers_path):
-            for filename in files:
-                if filename == '__init__.py' or not filename.endswith('.py'):
-                    continue
-                path = join(root, filename)
-                newfile = []
-                with open(path) as file:
-                    for line in file.read().split('\n'):
-                        # Replace by table
-                        for from_, to in replace_table.items():
-                            line = line.replace(from_, to)
-                        newfile.append(line)
-                with open(path, 'w') as file:
-                    file.write('\n'.join(newfile))
 
     async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
         subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
