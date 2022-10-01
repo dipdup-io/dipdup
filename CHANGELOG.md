@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## Unreleased
+
+### Fixed
+
+- codegen: Fixed Jinja2 template caching.
+
+### Improved
+
+- codegen: Better cross-platform compatibility.
+
 ## [6.1.3] - 2022-09-21
 
 ### Added

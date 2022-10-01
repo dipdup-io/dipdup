@@ -9,16 +9,10 @@ For `dipdup new` templates processing see `dipdup.project` module.
 Please, keep imports lazy to speed up startup.
 """
 import logging
-import os
 import re
 import subprocess
-from os.path import basename
-from os.path import dirname
-from os.path import exists
-from os.path import join
-from os.path import splitext
+from pathlib import Path
 from shutil import rmtree
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
@@ -46,18 +40,15 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import import_submodules
-from dipdup.utils import mkdir_p
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils import touch
-from dipdup.utils import write
+from dipdup.utils.codegen import load_template
+from dipdup.utils.codegen import touch
+from dipdup.utils.codegen import write
 
-KEEP_FILE = '.keep'
-
-if TYPE_CHECKING:
-    from jinja2 import Template
-
-_templates: Dict[str, 'Template'] = {}
+KEEP_MARKER = '.keep'
+PYTHON_MARKER = '__init__.py'
+MODELS_MODULE = 'models.py'
 
 
 def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -92,16 +83,6 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
         return schema
 
 
-def load_template(name: str) -> 'Template':
-    """Load template from templates/{name}.j2"""
-    from jinja2 import Template
-
-    if name not in _templates:
-        with open(join(dirname(__file__), 'templates', name + '.j2'), 'r') as f:
-            return Template(f.read())
-    return _templates[name]
-
-
 class DipDupCodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
@@ -110,10 +91,15 @@ class DipDupCodeGenerator:
         self._config = config
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
-        self._schemas_path = join(config.package_path, 'schemas')
-        self._types_path = join(self._config.package_path, 'types')
-        self._sql_path = join(self._config.package_path, 'sql')
-        self._graphql_path = join(self._config.package_path, 'graphql')
+
+        self._path = Path(config.package_path)
+        self._models_path = self._path / MODELS_MODULE
+        self._schemas_path = self._path / 'schemas'
+        self._types_path = self._path / 'types'
+        self._handlers_path = self._path / 'handlers'
+        self._hooks_path = self._path / 'hooks'
+        self._sql_path = self._path / 'sql'
+        self._graphql_path = self._path / 'graphql'
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         self._logger.info('Initializing project')
@@ -128,24 +114,18 @@ class DipDupCodeGenerator:
 
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
-        package_path = self._config.package_path
-        touch(join(package_path, '__init__.py'))
+        touch(self._path / PYTHON_MARKER)
 
-        models_path = join(package_path, 'models.py')
-        if not exists(models_path):
-            template = load_template('models.py')
+        if not self._models_path.is_file():
+            template = load_template(MODELS_MODULE)
             models_code = template.render()
-            write(models_path, models_code)
+            write(self._models_path, models_code)
 
-        for subpackage in ('handlers', 'hooks'):
-            subpackage_path = join(package_path, subpackage)
-            touch(join(subpackage_path, '__init__.py'))
-
-        sql_path = join(package_path, 'sql')
-        touch(join(sql_path, KEEP_FILE))
-
-        graphql_path = join(package_path, 'graphql')
-        touch(join(graphql_path, KEEP_FILE))
+        touch(self._models_path)
+        touch(self._handlers_path / PYTHON_MARKER)
+        touch(self._hooks_path / PYTHON_MARKER)
+        touch(self._sql_path / KEEP_MARKER)
+        touch(self._graphql_path / KEEP_MARKER)
 
     async def _fetch_operation_pattern_schema(
         self,
@@ -165,10 +145,9 @@ class DipDupCodeGenerator:
         self._logger.debug(contract_config)
         contract_schemas = await self._get_schema(datasource_config, contract_config, originated)
 
-        contract_schemas_path = join(self._schemas_path, contract_config.module_name)
-        mkdir_p(contract_schemas_path)
+        contract_schemas_path = self._schemas_path / contract_config.module_name
 
-        storage_schema_path = join(contract_schemas_path, 'storage.json')
+        storage_schema_path = contract_schemas_path / 'storage.json'
         storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
 
         write(storage_schema_path, json.dumps(storage_schema, option=json.OPT_INDENT_2))
@@ -176,9 +155,8 @@ class DipDupCodeGenerator:
         if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
             return
 
-        parameter_schemas_path = join(contract_schemas_path, 'parameter')
+        parameter_schemas_path = contract_schemas_path / 'parameter'
         entrypoint = cast(str, operation_pattern_config.entrypoint)
-        mkdir_p(parameter_schemas_path)
 
         try:
             entrypoint_schema = next(ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint)
@@ -186,7 +164,7 @@ class DipDupCodeGenerator:
             raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e
 
         entrypoint = entrypoint.replace('.', '_').lstrip('_')
-        entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
+        entrypoint_schema_path = parameter_schemas_path / f'{entrypoint}.json'
         written = write(entrypoint_schema_path, json.dumps(entrypoint_schema, option=json.OPT_INDENT_2))
         if not written and contract_config.typename is not None:
             with open(entrypoint_schema_path, 'r') as file:
@@ -208,10 +186,8 @@ class DipDupCodeGenerator:
 
             contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
 
-            contract_schemas_path = join(self._schemas_path, contract_config.module_name)
-            mkdir_p(contract_schemas_path)
-            big_map_schemas_path = join(contract_schemas_path, 'big_map')
-            mkdir_p(big_map_schemas_path)
+            contract_schemas_path = self._schemas_path / contract_config.module_name
+            big_map_schemas_path = contract_schemas_path / 'big_map'
 
             try:
                 big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_handler_config.path)
@@ -219,17 +195,16 @@ class DipDupCodeGenerator:
                 raise ConfigurationError(f'Contract `{contract_config.address}` has no big map path `{big_map_handler_config.path}`') from e
             big_map_path = big_map_handler_config.path.replace('.', '_')
             big_map_key_schema = big_map_schema['keySchema']
-            big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_path}_key.json')
+            big_map_key_schema_path = big_map_schemas_path / f'{big_map_path}_key.json'
             write(big_map_key_schema_path, json.dumps(big_map_key_schema, option=json.OPT_INDENT_2))
 
             big_map_value_schema = big_map_schema['valueSchema']
-            big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_path}_value.json')
+            big_map_value_schema_path = big_map_schemas_path / f'{big_map_path}_value.json'
             write(big_map_value_schema_path, json.dumps(big_map_value_schema, option=json.OPT_INDENT_2))
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Creating `schemas` directory')
-        mkdir_p(self._schemas_path)
 
         for index_config in self._config.indexes.values():
 
@@ -258,38 +233,31 @@ class DipDupCodeGenerator:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameter, big map keys/values."""
 
         self._logger.info('Creating `types` package')
-        touch(join(self._types_path, '__init__.py'))
+        touch(self._types_path / PYTHON_MARKER)
 
-        # TODO: Cleaner code with pathlib
-        for root, dirs, files in os.walk(self._schemas_path):
-            types_root = root.replace(self._schemas_path, self._types_path)
+        for path in self._schemas_path.glob('**'):
+            if path.is_dir():
+                dir_path = self._types_path / path.relative_to(self._schemas_path)
+                touch(dir_path / PYTHON_MARKER)
 
-            for dir in dirs:
-                dir_path = join(types_root, dir)
-                touch(join(dir_path, '__init__.py'))
-
-            for file in files:
-                name, ext = splitext(basename(file))
-                if ext != '.json':
-                    continue
-
-                input_path = join(root, file)
-                output_path = join(types_root, f'{pascal_to_snake(name)}.py')
-
-                if exists(output_path) and not overwrite_types:
+            # for file in files:
+            elif path.suffix == '.json':
+                name = path.stem
+                output_path = self._types_path / path.relative_to(self._schemas_path) / f'{pascal_to_snake(name)}.py'
+                if not overwrite_types and output_path.exists():
                     continue
 
                 # NOTE: Skip if the first line starts with "# dipdup: ignore"
-                if exists(output_path):
+                if output_path.exists():
                     with open(output_path) as type_file:
                         first_line = type_file.readline()
                         if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
                             self._logger.info('Skipping `%s`', output_path)
                             continue
 
-                if name == 'storage':
-                    name = '_'.join([root.split('/')[-1], name])
-                if root.split('/')[-1] == 'parameter':
+                if path.parent.name == 'storage':
+                    name = f'{path.parent.parent.name}_{name}'
+                if path.parent.name == 'parameter':
                     name += '_parameter'
 
                 name = snake_to_pascal(name)
@@ -297,9 +265,9 @@ class DipDupCodeGenerator:
                 args = [
                     'datamodel-codegen',
                     '--input',
-                    input_path,
+                    str(path),
                     '--output',
-                    output_path,
+                    str(output_path),
                     '--class-name',
                     name.lstrip('_'),
                     '--disable-timestamp',
@@ -358,18 +326,18 @@ class DipDupCodeGenerator:
         return self._schemas[datasource_config][address]
 
     async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
-        subpackage_path = join(self._config.package_path, f'{callback_config.kind}s')
-
         original_callback = callback_config.callback
         subpackages = callback_config.callback.split('.')
         subpackages, callback = subpackages[:-1], subpackages[-1]
-        subpackage_path = join(subpackage_path, *subpackages)
 
-        init_path = join(subpackage_path, '__init__.py')
-        touch(init_path)
+        callback_path = Path.joinpath(
+            self._path,
+            f'{callback_config.kind}s',
+            *subpackages,
+            f'{callback}.py',
+        )
 
-        callback_path = join(subpackage_path, f'{callback}.py')
-        if not exists(callback_path):
+        if not callback_path.exists():
             self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
             callback_template = load_template('callback.py')
 
@@ -398,5 +366,10 @@ class DipDupCodeGenerator:
 
         if sql:
             # NOTE: Preserve the same structure as in `handlers`
-            sql_path = join(self._config.package_path, 'sql', *subpackages, callback, KEEP_FILE)
+            sql_path = Path.joinpath(
+                self._sql_path,
+                *subpackages,
+                callback,
+                KEEP_MARKER,
+            )
             touch(sql_path)

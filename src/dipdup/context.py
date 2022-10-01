@@ -8,8 +8,7 @@ from contextlib import AsyncExitStack
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
-from os.path import exists
-from os.path import join
+from pathlib import Path
 from pprint import pformat
 from typing import Any
 from typing import Awaitable
@@ -594,8 +593,8 @@ class CallbackManager:
             return
 
         subpackages = name.split('.')
-        sql_path = join(ctx.config.package_path, 'sql', *subpackages)
-        if not exists(sql_path):
+        sql_path = Path.joinpath(ctx.config.package_path, 'sql', *subpackages)
+        if not sql_path.exists():
             raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 
         # NOTE: SQL scripts are not wrapped in transaction

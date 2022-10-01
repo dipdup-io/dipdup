@@ -2,8 +2,7 @@ import subprocess
 from contextlib import suppress
 from decimal import Decimal
 from os import mkdir
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from shutil import rmtree
 
 import pytest
@@ -31,7 +30,7 @@ class TestDemos:
             [
                 'dipdup',
                 '-c',
-                join(dirname(__file__), config),
+                str(Path(__file__).parent / config),
                 'run',
             ],
             cwd='/tmp/dipdup',

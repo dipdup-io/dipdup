@@ -5,8 +5,7 @@ import platform
 from contextlib import suppress
 from http import HTTPStatus
 from json import JSONDecodeError
-from os.path import isfile
-from os.path import join
+from pathlib import Path
 from typing import Any
 from typing import Mapping
 from typing import Optional
@@ -21,7 +20,6 @@ from dipdup import __version__
 from dipdup.config import HTTPConfig
 from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
-from dipdup.utils import touch
 
 safe_exceptions = (
     aiohttp.ClientConnectionError,
@@ -210,23 +208,27 @@ class _HTTPGateway:
         weight: int = 1,
         **kwargs,
     ):
+        if not self._config.replay_path:
+            raise RuntimeError('Replay path is not set')
+
+        replay_path = Path(self._config.replay_path)
+        replay_path.mkdir(parents=True, exist_ok=True)
+
         request_hash = hashlib.sha256(
             f'{self._url} {method} {url} {kwargs}'.encode(),
         ).hexdigest()
-        if not self._config.replay_path:
-            raise RuntimeError('Replay path is not set')
-        replay_path = join(self._config.replay_path.rstrip('/'), request_hash)
+        replay_path = Path(self._config.replay_path) / request_hash
 
-        if isfile(replay_path):
-            with open(replay_path, 'rb') as file:
-                return orjson.loads(file.read())
-        else:
-            response = await self._retry_request(method, url, weight, **kwargs)
-            if response:
-                touch(replay_path)
-                with open(replay_path, 'wb') as file:
-                    file.write(orjson.dumps(response))
-            return response
+        if replay_path.exists():
+            if not replay_path.stat().st_size:
+                return None
+            return orjson.loads(replay_path.read_bytes())
+
+        response = await self._retry_request(method, url, weight, **kwargs)
+        with suppress(OSError):
+            replay_path.touch(exist_ok=True)
+            replay_path.write_bytes(orjson.dumps(response))
+        return response
 
     async def request(
         self,

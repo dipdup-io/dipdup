@@ -9,11 +9,7 @@ from functools import partial
 from functools import reduce
 from logging import Logger
 from os import listdir
-from os import makedirs
-from os.path import dirname
-from os.path import exists
-from os.path import getsize
-from os.path import join
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import DefaultDict
@@ -24,17 +20,12 @@ from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
-from typing import Union
 from typing import cast
 
 import orjson
-from genericpath import isdir
-from genericpath import isfile
 from humps import main as humps
 
 from dipdup.exceptions import ProjectImportError
-
-_logger = logging.getLogger('dipdup.utils')
 
 
 def import_submodules(package: str) -> Dict[str, types.ModuleType]:
@@ -105,56 +96,26 @@ class FormattedLogger(Logger):
         self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
 
-# TODO: Cache me
-def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
+def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
     """Iterate over files in a directory. Or a single file. Sort alphabetically, filter by extension, skip empty files."""
-    if not exists(path):
+    if not path.exists():
         return
-    elif isfile(path):
-        paths = iter(path)
-    elif isdir(path):
-        paths = map(partial(join, path), sorted(listdir(path)))
+    elif path.is_file():
+        paths = [path]
+    elif path.is_dir():
+        paths = sorted(map(partial(path.joinpath), listdir(path)))
     else:
         raise RuntimeError(f'Path `{path}` exists but is neither a file nor a directory')
 
     for path in paths:
-        if ext and not path.endswith(ext):
+        if ext and path.suffix != ext:
             continue
-        if not exists(path):
+        if not path.exists():
             continue
-        if not getsize(path):
+        if not path.stat().st_size:
             continue
         with open(path) as file:
             yield file
-
-
-def mkdir_p(path: str) -> None:
-    """Create directory tree, ignore if already exists"""
-    if not exists(path):
-        _logger.info('Creating directory `%s`', path)
-        makedirs(path)
-
-
-def touch(path: str) -> None:
-    """Create empty file, ignore if already exists"""
-    mkdir_p(dirname(path))
-    if not exists(path):
-        _logger.info('Creating file `%s`', path)
-        with open(path, 'a'):
-            pass
-
-
-def write(path: str, content: Union[str, bytes], overwrite: bool = False) -> bool:
-    """Write content to file, create directory tree if necessary"""
-    mkdir_p(dirname(path))
-    if exists(path) and not overwrite:
-        return False
-    _logger.info('Writing into file `%s`', path)
-    with open(path, 'wb') as file:
-        if isinstance(content, str):
-            content = content.encode()
-        file.write(content)
-    return True
 
 
 def import_from(module: str, obj: str) -> Any:
@@ -181,11 +142,10 @@ def exclude_none(config_json: Any) -> Any:
     return config_json
 
 
-def _dumps_default(obj):
-    if isinstance(obj, Decimal):
-        return str(obj)
-    raise TypeError
+def json_dumps_decimals(obj):
+    def _default(obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        raise TypeError
 
-
-def json_dumps(obj):
-    return orjson.dumps(obj, default=_dumps_default).decode()
+    return orjson.dumps(obj, default=_default).decode()

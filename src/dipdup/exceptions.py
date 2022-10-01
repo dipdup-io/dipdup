@@ -2,7 +2,7 @@ import tempfile
 import textwrap
 from dataclasses import dataclass
 from dataclasses import field
-from os.path import join
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import Dict
@@ -35,14 +35,12 @@ def save_crashdump(error: Exception) -> str:
     import sentry_sdk.serializer
     import sentry_sdk.utils
 
-    from dipdup.utils import mkdir_p
-
     exc_info = sentry_sdk.utils.exc_info_from_error(error)
     event, _ = sentry_sdk.utils.event_from_exception(exc_info)
     event = sentry_sdk.serializer.serialize(event)
 
-    tmp_dir = join(tempfile.gettempdir(), 'dipdup', 'crashdumps')
-    mkdir_p(tmp_dir)
+    tmp_dir = Path(tempfile.gettempdir()) / 'dipdup' / 'crashdumps'
+    tmp_dir.mkdir(parents=True, exist_ok=True)
 
     crashdump_file = NamedTemporaryFile(
         mode='ab',

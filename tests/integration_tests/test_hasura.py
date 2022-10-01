@@ -1,7 +1,6 @@
 from contextlib import AsyncExitStack
 from os import environ as env
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
 
@@ -25,7 +24,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
 
     async def test_configure_hasura(self) -> None:
-        config_path = join(dirname(__file__), 'hic_et_nunc.yml')
+        config_path = Path(__file__).parent / 'hic_et_nunc.yml'
         config = DipDupConfig.load([config_path])
         config.initialize(skip_imports=True)
 

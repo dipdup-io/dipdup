@@ -18,6 +18,7 @@ https://<your-indexer-host>/api/rest/dipdupHeadStatus?name=<datasource-uri>
 ```
 
 For example:
+
 * [https://domains.dipdup.net/api/rest/dipdup_head_status?name=https://api.tzkt.io](https://domains.dipdup.net/api/rest/dipdup_head_status?name=https://api.tzkt.io)
 * [https://juster.dipdup.net/api/rest/dipdupHeadStatus?name=https://api.tzkt.io](https://domains.dipdup.net/api/rest/dipdup_head_status?name=https://api.tzkt.io)
 

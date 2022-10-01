@@ -1,6 +1,5 @@
 import tempfile
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from typing import Callable
 from typing import Type
 from unittest import IsolatedAsyncioTestCase
@@ -18,7 +17,7 @@ from dipdup.exceptions import ConfigurationError
 
 class ConfigTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.path = join(dirname(__file__), 'dipdup.yml')
+        self.path = Path(__file__).parent / 'dipdup.yml'
 
     async def test_load_initialize(self) -> None:
         config = DipDupConfig.load([self.path])

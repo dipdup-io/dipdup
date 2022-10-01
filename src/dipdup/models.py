@@ -40,7 +40,7 @@ from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.enums import ReindexingReason
 from dipdup.enums import TokenStandard
-from dipdup.utils import json_dumps
+from dipdup.utils import json_dumps_decimals
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -278,7 +278,7 @@ class ModelUpdate(TortoiseModel):
     index = fields.CharField(256)
 
     action = fields.CharEnumField(ModelUpdateAction)
-    data: Dict[str, Any] = fields.JSONField(encoder=json_dumps, null=True)
+    data: Dict[str, Any] = fields.JSONField(encoder=json_dumps_decimals, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

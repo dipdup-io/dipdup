@@ -1,7 +1,5 @@
-import os
 from contextlib import suppress
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
 
@@ -21,12 +19,12 @@ class CodegenTest(IsolatedAsyncioTestCase):
     async def asyncTearDown(self) -> None:
         for name in configs:
             with suppress(FileNotFoundError):
-                package_path = join(os.getcwd(), f'demo_{name}_tmp')
+                package_path = f'demo_{name}_tmp'
                 rmtree(package_path)
 
     async def test_codegen(self) -> None:
         for name in configs:
-            config_path = join(dirname(__file__), name + '.yml')
+            config_path = Path(__file__).parent / f'{name}.yml'
             config = DipDupConfig.load([config_path])
             config.package += '_tmp'
             config.initialize(skip_imports=True)

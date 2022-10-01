@@ -9,9 +9,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from functools import partial
 from functools import wraps
-from os.path import dirname
-from os.path import exists
-from os.path import join
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -256,15 +254,17 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 
     set_up_logging()
 
+    env_file_paths = [Path(file) for file in env_file]
+    config_paths = [Path(file) for file in config]
+
     # NOTE: Apply env files before loading config
-    for env_path in env_file:
-        env_path = join(os.getcwd(), env_path)
-        if not exists(env_path):
+    for env_path in env_file_paths:
+        if not env_path.is_file():
             raise ConfigurationError(f'env file `{env_path}` does not exist')
         _logger.info('Applying env_file `%s`', env_path)
         load_dotenv(env_path, override=True)
 
-    _config = DipDupConfig.load(config)
+    _config = DipDupConfig.load(config_paths)
     _config.set_up_logging()
 
     # NOTE: Imports will be loaded later if needed
@@ -559,8 +559,8 @@ async def schema_export(ctx) -> None:
     async with tortoise_wrapper(url, models):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
-        dipdup_sql_path = join(dirname(__file__), 'sql', 'on_reindex')
-        project_sql_path = join(config.package_path, 'sql', 'on_reindex')
+        dipdup_sql_path = Path(__file__).parent / 'sql' / 'on_reindex'
+        project_sql_path = Path(config.package_path) / 'sql' / 'on_reindex'
 
         for sql_path in (dipdup_sql_path, project_sql_path):
             for file in iter_files(sql_path):

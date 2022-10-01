@@ -14,7 +14,7 @@ from dataclasses import field
 from functools import cached_property
 from io import StringIO
 from os import environ as env
-from os.path import dirname
+from pathlib import Path
 from pydoc import locate
 from typing import Any
 from typing import Callable
@@ -1357,7 +1357,7 @@ class DipDupConfig:
     logging: LoggingValues = LoggingValues.default
 
     def __post_init_post_parse__(self) -> None:
-        self.paths: List[str] = []
+        self.paths: List[Path] = []
         self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
         self._contract_addresses = {contract.address for contract in self.contracts.values()}
@@ -1370,13 +1370,13 @@ class DipDupConfig:
         return DEFAULT_POSTGRES_SCHEMA
 
     @cached_property
-    def package_path(self) -> str:
+    def package_path(self) -> Path:
         """Absolute path to the indexer package, existing or default"""
         try:
             package = importlib.import_module(self.package)
-            return dirname(cast(str, package.__file__))
+            return Path(cast(str, package.__file__)).parent
         except ImportError:
-            return os.path.join(os.getcwd(), self.package)
+            return Path(os.getcwd(), self.package)
 
     @property
     def oneshot(self) -> bool:
@@ -1390,7 +1390,7 @@ class DipDupConfig:
     @classmethod
     def load(
         cls,
-        paths: List[str],
+        paths: List[Path],
         environment: bool = True,
     ) -> 'DipDupConfig':
         yaml = YAML(typ='base')
@@ -1517,8 +1517,7 @@ class DipDupConfig:
         self._import_index(index_config)
 
     @classmethod
-    def _load_raw_config(cls, path: str) -> str:
-        path = os.path.join(os.getcwd(), path)
+    def _load_raw_config(cls, path: Path) -> str:
         _logger.debug('Loading config from %s', path)
         try:
             with open(path) as file:

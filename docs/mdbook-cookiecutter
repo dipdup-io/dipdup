@@ -1,6 +1,6 @@
 """Replaces {{ cookiecutter... }} placeholders with default values from cookiecutter.json"""
 import json
-from os.path import dirname, join
+from pathlib import Path
 import re
 import sys
 
@@ -30,9 +30,8 @@ if __name__ == '__main__':
         if sys.argv[1] == 'supports':
             sys.exit(0)
 
-    with open(join(dirname(__file__), '..', 'cookiecutter', 'cookiecutter.json')) as file:
-        defaults = json.load(file)
-
+    defaults_path = Path(__file__).parent.parent / 'cookiecutter' / 'cookiecutter.json'
+    defaults = json.loads(defaults_path.read_text())
     text = sys.stdin.read()
 
     try:
