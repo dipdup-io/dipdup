@@ -207,27 +207,54 @@ class DipDupCodeGenerator:
         self._logger.info('Creating `schemas` directory')
 
         for index_config in self._config.indexes.values():
-
             if isinstance(index_config, OperationIndexConfig):
                 await self._fetch_operation_index_schema(index_config)
-
             elif isinstance(index_config, BigMapIndexConfig):
                 await self._fetch_big_map_index_schema(index_config)
-
             elif isinstance(index_config, EventIndexConfig):
-                ...
-
+                raise NotImplementedError
             elif isinstance(index_config, HeadIndexConfig):
                 pass
-
             elif isinstance(index_config, TokenTransferIndexConfig):
                 pass
-
             elif isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException
-
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+    async def _generate_type(self, path: Path, force: bool) -> None:
+        name = path.stem
+        output_path = self._types_path / path.relative_to(self._schemas_path) / f'{pascal_to_snake(name)}.py'
+        if output_path.exists() and not force:
+            return
+
+        # NOTE: Skip if the first line starts with "# dipdup: ignore"
+        if output_path.exists():
+            with open(output_path) as type_file:
+                first_line = type_file.readline()
+                if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
+                    self._logger.info('Skipping `%s`', output_path)
+                    return
+
+        if path.parent.name == 'storage':
+            name = f'{path.parent.parent.name}_{name}'
+        if path.parent.name == 'parameter':
+            name += '_parameter'
+
+        name = snake_to_pascal(name)
+        self._logger.info('Generating type `%s`', name)
+        args = [
+            'datamodel-codegen',
+            '--input',
+            str(path),
+            '--output',
+            str(output_path),
+            '--class-name',
+            name.lstrip('_'),
+            '--disable-timestamp',
+        ]
+        self._logger.debug(' '.join(args))
+        subprocess.run(args, check=True)
 
     async def generate_types(self, overwrite_types: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameter, big map keys/values."""
@@ -240,40 +267,8 @@ class DipDupCodeGenerator:
                 dir_path = self._types_path / path.relative_to(self._schemas_path)
                 touch(dir_path / PYTHON_MARKER)
 
-            # for file in files:
             elif path.suffix == '.json':
-                name = path.stem
-                output_path = self._types_path / path.relative_to(self._schemas_path) / f'{pascal_to_snake(name)}.py'
-                if not overwrite_types and output_path.exists():
-                    continue
-
-                # NOTE: Skip if the first line starts with "# dipdup: ignore"
-                if output_path.exists():
-                    with open(output_path) as type_file:
-                        first_line = type_file.readline()
-                        if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
-                            self._logger.info('Skipping `%s`', output_path)
-                            continue
-
-                if path.parent.name == 'storage':
-                    name = f'{path.parent.parent.name}_{name}'
-                if path.parent.name == 'parameter':
-                    name += '_parameter'
-
-                name = snake_to_pascal(name)
-                self._logger.info('Generating type `%s`', name)
-                args = [
-                    'datamodel-codegen',
-                    '--input',
-                    str(path),
-                    '--output',
-                    str(output_path),
-                    '--class-name',
-                    name.lstrip('_'),
-                    '--disable-timestamp',
-                ]
-                self._logger.debug(' '.join(args))
-                subprocess.run(args, check=True)
+                await self._generate_type(path, overwrite_types)
 
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
