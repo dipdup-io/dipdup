@@ -1,3 +1,17 @@
+"""Config files parsing and processing
+
+As you can see from the code below, lots of things are going on here.
+
+* YAML (de)serialization
+* Templating indexes and env variables
+* Config validation
+* Methods to generate paths for codegen
+* And even importing contract types
+
+Dataclasses are used in this module instead of BaseModel for historical reasons (something with ruamel.yaml).
+Thus "...Mixin" classes to workaround the lack of proper inheritance.
+"""
+
 import hashlib
 import importlib
 import json
@@ -59,7 +73,8 @@ from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
-ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*))?\}'  # ${VARIABLE:-default} | ${VARIABLE}
+# NOTE: ${VARIABLE:-default} | ${VARIABLE}
+ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*))?\}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
