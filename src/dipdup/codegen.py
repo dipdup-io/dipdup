@@ -51,6 +51,8 @@ from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 from dipdup.utils import write
 
+KEEP_FILE = '.keep'
+
 if TYPE_CHECKING:
     from jinja2 import Template
 
@@ -58,12 +60,16 @@ _templates: Dict[str, 'Template'] = {}
 
 
 def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
-    """Preprocess bigmaps in JSONSchema. Those are unions as could be pointers.
-    We resolve bigmaps from diffs so no need to include int in type signature."""
+    """Preprocess `big_map` sections in JSONSchema.
+
+    TzKT returns them as unions since before merging big map diffs there are just `int` pointers.
+    We apply big map diffs to storage so there's no need to include `int` in type signature.
+    """
     if not isinstance(schema, dict):
         return schema
     if 'oneOf' in schema:
         schema['oneOf'] = [preprocess_storage_jsonschema(sub_schema) for sub_schema in schema['oneOf']]
+
     if 'properties' in schema:
         return {
             **schema,
@@ -131,10 +137,10 @@ class DipDupCodeGenerator:
             touch(join(subpackage_path, '__init__.py'))
 
         sql_path = join(package_path, 'sql')
-        touch(join(sql_path, '.keep'))
+        touch(join(sql_path, KEEP_FILE))
 
         graphql_path = join(package_path, 'graphql')
-        touch(join(graphql_path, '.keep'))
+        touch(join(graphql_path, KEEP_FILE))
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
@@ -158,7 +164,7 @@ class DipDupCodeGenerator:
                             contract_config = operation_pattern_config.contract_config
                             originated = bool(operation_pattern_config.source)
                         else:
-                            # NOTE: Operations without entrypoint are untyped
+                            # NOTE: Operations without destination+entrypoint are untyped
                             continue
 
                         self._logger.debug(contract_config)
@@ -247,6 +253,7 @@ class DipDupCodeGenerator:
         self._logger.info('Creating `types` package')
         touch(join(types_path, '__init__.py'))
 
+        # TODO: Cleaner code with pathlib
         for root, dirs, files in os.walk(schemas_path):
             types_root = root.replace(schemas_path, types_path)
 
@@ -385,5 +392,5 @@ class DipDupCodeGenerator:
 
         if sql:
             # NOTE: Preserve the same structure as in `handlers`
-            sql_path = join(self._config.package_path, 'sql', *subpackages, callback, '.keep')
+            sql_path = join(self._config.package_path, 'sql', *subpackages, callback, KEEP_FILE)
             touch(sql_path)
