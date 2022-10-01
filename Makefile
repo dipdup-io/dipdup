@@ -114,6 +114,7 @@ update:         ## Update dependencies, export requirements.txt
 scripts:
 	python scripts/update_cookiecutter.py
 	python scripts/update_demos.py
+	make lint
 
 ##
 ##

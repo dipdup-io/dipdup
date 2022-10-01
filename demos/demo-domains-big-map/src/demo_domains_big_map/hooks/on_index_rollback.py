@@ -1,6 +1,6 @@
-
-from dipdup.index import Index
 from dipdup.context import HookContext
+from dipdup.index import Index
+
 
 async def on_index_rollback(
     ctx: HookContext,

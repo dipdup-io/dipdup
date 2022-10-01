@@ -53,7 +53,7 @@ poetry shell
 DipDup configuration is stored in YAML files of a specific format. Create a new file named `dipdup.yml` in your current working directory with the following content:
 
 ```yaml
-{{ #include ../src/demo_tzbtc/dipdup.yml }}
+{{ #include ../demos/demo-tzbtc/dipdup.yml }}
 ```
 
 > 💡 **SEE ALSO**
@@ -122,7 +122,7 @@ Our schema will consist of a single model `Holder` having several fields:
 Put the following content in the `models.py` file:
 
 ```python
-{{ #include ../src/demo_tzbtc/models.py }}
+{{ #include ../demos/demo-tzbtc/src/demo_tzbtc/models.py }}
 ```
 
 > 💡 **SEE ALSO**
@@ -138,7 +138,7 @@ Everything's ready to implement an actual indexer logic.
 Our task is to index all the balance updates, so we'll start with a helper method to handle them. Create a file named `on_balance_update.py` in the `handlers` package with the following content:
 
 ```python
-{{ #include ../src/demo_tzbtc/handlers/on_balance_update.py }}
+{{ #include ../demos/demo-tzbtc/src/demo_tzbtc/handlers/on_balance_update.py }}
 ```
 
 Three methods of tzBTC contract can alter token balances — `transfer`, `mint`, and `burn`. The last one is omitted in this tutorial for simplicity. Edit corresponding handlers to call the `on_balance_update` method with data from matched operations:
@@ -146,13 +146,13 @@ Three methods of tzBTC contract can alter token balances — `transfer`, `mint`,
 `on_transfer.py`
 
 ```python
-{{ #include ../src/demo_tzbtc/handlers/on_transfer.py }}
+{{ #include ../demos/demo-tzbtc/src/demo_tzbtc/handlers/on_transfer.py }}
 ```
 
 `on_mint.py`
 
 ```python
-{{ #include ../src/demo_tzbtc/handlers/on_mint.py }}
+{{ #include ../demos/demo-tzbtc/src/demo_tzbtc/handlers/on_mint.py }}
 ```
 
 And that's all! We can run the indexer now.

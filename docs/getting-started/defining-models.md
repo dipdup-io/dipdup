@@ -5,7 +5,7 @@ DipDup uses the Tortoise ORM library to cover database operations. During initia
 A typical `models.py` file looks like the following (example from `demo_domains` package):
 
 ```python
-{{ #include ../../src/demo_domains/models.py }}
+{{ #include ../../demos/demo-domains/src/demo_domains/models.py }}
 ```
 
 See the links below to learn how to use this library.

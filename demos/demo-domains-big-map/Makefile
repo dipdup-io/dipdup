@@ -24,7 +24,7 @@ lint:           ## Lint with all tools
 	make isort black flake mypy
 
 test:           ## Run test suite
-	poetry run pytest --cov-report=term-missing --cov=demo_domains_big_map --cov-report=xml -n auto --dist loadscope -s -v tests
+	poetry run pytest tests
 
 ##
 
