@@ -49,5 +49,6 @@ jobs:
         run: make install
       - name: Run lint
         run: make lint
+        if: contains(matrix.os, 'ubuntu') && contains(matrix.arch, 'amd64')
       - name: Run tests
         run: make test
