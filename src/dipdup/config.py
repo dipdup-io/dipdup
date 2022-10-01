@@ -78,6 +78,16 @@ DEFAULT_POSTGRES_USER = DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
+ADDRESS_PREFIXES = (
+    'KT1',
+    # NOTE: Wallet addresses are allowed during config validation for debugging purposes.
+    # NOTE: It's a undocumented hack to filter by `source` field. Wallet indexing is not supported.
+    # NOTE: See https://github.com/dipdup-net/dipdup/issues/291
+    'tz1',
+    'tz2',
+    'tz3',
+)
+
 _logger = logging.getLogger('dipdup.config')
 
 
@@ -234,8 +244,7 @@ class ContractConfig(NameMixin):
         if '$' in v:
             return v
 
-        # NOTE: Wallet addresses are allowed for debugging purposes (source field). Do we need a separate section?
-        if not (v.startswith('KT1') or v.startswith(('tz1', 'tz2', 'tz3'))) or len(v) != 36:
+        if not v.startswith(ADDRESS_PREFIXES) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
 
@@ -536,7 +545,7 @@ class TransactionIdxMixin:
     :param transaction_idx:
     """
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         self._transaction_idx: Optional[int] = None
 
     @property
@@ -569,7 +578,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
     optional: bool = False
     alias: Optional[str] = None
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         StorageTypeMixin.__post_init_post_parse__(self)
         ParameterTypeMixin.__post_init_post_parse__(self)
         TransactionIdxMixin.__post_init_post_parse__(self)
@@ -626,9 +635,9 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     strict: bool = False
     alias: Optional[str] = None
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
-        self._matched_originations = []
+        self._matched_originations: List[str] = []
 
     def origination_processed(self, address: str) -> bool:
         if address in self._matched_originations:
@@ -704,10 +713,10 @@ class CallbackMixin(CodegenMixin):
 
     callback: str
 
-    def __init_subclass__(cls, kind: str):
+    def __init_subclass__(cls, kind: str) -> None:
         cls._kind = kind  # type: ignore
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         self._callback_fn = None
         if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
             raise ConfigurationError('`callback` field must be a valid Python module name')
@@ -919,7 +928,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     contract: Union[str, ContractConfig]
     path: str
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
         self._key_type_cls: Optional[Type[Any]] = None
         self._value_type_cls: Optional[Type[Any]] = None
@@ -1069,6 +1078,31 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
     contract: Union[str, ContractConfig]
     tag: str
 
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        self._event_type_cls: Optional[Type[Any]] = None
+
+    @cached_property
+    def contract_config(self) -> ContractConfig:
+        if not isinstance(self.contract, ContractConfig):
+            raise ConfigInitializationException
+        return self.contract
+
+    @cached_property
+    def event_type_cls(self) -> Type:
+        if self._event_type_cls is None:
+            raise ConfigInitializationException
+        return self._event_type_cls
+
+    def initialize_event_type(self, package: str) -> None:
+        """Resolve imports and initialize key and value type classes"""
+        _logger.debug('Registering event types for tag `%s`', self.tag)
+        tag = pascal_to_snake(self.tag.replace('.', '_'))
+
+        module_name = f'{package}.types.{self.contract_config.module_name}.event.{tag}'
+        cls_name = snake_to_pascal(tag)
+        self.key_type_cls = import_from(module_name, cls_name)
+
 
 @dataclass
 class EventIndexConfig(IndexConfig):
@@ -1154,7 +1188,7 @@ class JobConfig(NameMixin):
     daemon: bool = False
     args: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         schedules_enabled = sum(int(bool(x)) for x in (self.crontab, self.interval, self.daemon))
         if schedules_enabled > 1:
             raise ConfigurationError('Only one of `crontab`, `interval` of `daemon` can be specified')
@@ -1322,7 +1356,7 @@ class DipDupConfig:
     custom: Dict[str, Any] = field(default_factory=dict)
     logging: LoggingValues = LoggingValues.default
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         self.paths: List[str] = []
         self.environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
@@ -1440,23 +1474,20 @@ class DipDupConfig:
 
         if isinstance(index_config, IndexTemplateConfig):
             raise ConfigInitializationException
-
         elif isinstance(index_config, OperationIndexConfig):
-            self._import_operation_index_types(index_config)
-            self._import_index_callbacks(index_config)
-
+            pass
         elif isinstance(index_config, BigMapIndexConfig):
-            self._import_big_map_index_types(index_config)
-            self._import_index_callbacks(index_config)
-
+            pass
         elif isinstance(index_config, HeadIndexConfig):
-            self._import_index_callbacks(index_config)
-
+            pass
         elif isinstance(index_config, TokenTransferIndexConfig):
-            self._import_index_callbacks(index_config)
+            pass
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+        self._import_index_types(index_config)
+        self._import_index_callbacks(index_config)
 
     def initialize(self, skip_imports: bool = False) -> None:
         self._set_names()
@@ -1695,24 +1726,29 @@ class DipDupConfig:
             for name, config in named_configs.items():
                 config.name = name
 
-    def _import_operation_index_types(self, index_config: OperationIndexConfig) -> None:
-        for handler_config in index_config.handlers:
-            for pattern_config in handler_config.pattern:
-                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    if pattern_config.entrypoint:
-                        module_name = pattern_config.destination_contract_config.module_name
-                        pattern_config.initialize_parameter_cls(self.package, module_name, pattern_config.entrypoint)
-                        pattern_config.initialize_storage_cls(self.package, module_name)
-                elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                    module_name = pattern_config.module_name
-                    pattern_config.initialize_storage_cls(self.package, module_name)
-                else:
-                    raise NotImplementedError
-
     def _import_index_callbacks(self, index_config: ResolvedIndexConfigT) -> None:
         for handler_config in index_config.handlers:
             handler_config.initialize_callback_fn(self.package)
 
-    def _import_big_map_index_types(self, index_config: BigMapIndexConfig) -> None:
-        for big_map_handler_config in index_config.handlers:
-            big_map_handler_config.initialize_big_map_type(self.package)
+    def _import_index_types(self, index_config: ResolvedIndexConfigT) -> None:
+        if isinstance(index_config, OperationIndexConfig):
+            for handler_config in index_config.handlers:
+                for pattern_config in handler_config.pattern:
+                    if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                        if pattern_config.entrypoint:
+                            module_name = pattern_config.destination_contract_config.module_name
+                            pattern_config.initialize_parameter_cls(self.package, module_name, pattern_config.entrypoint)
+                            pattern_config.initialize_storage_cls(self.package, module_name)
+                    elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                        module_name = pattern_config.module_name
+                        pattern_config.initialize_storage_cls(self.package, module_name)
+                    else:
+                        raise NotImplementedError
+
+        elif isinstance(index_config, BigMapIndexConfig):
+            for big_map_handler_config in index_config.handlers:
+                big_map_handler_config.initialize_big_map_type(self.package)
+
+        elif isinstance(index_config, EventIndexConfig):
+            for event_handler_config in index_config.handlers:
+                event_handler_config.initialize_event_type(self.package)

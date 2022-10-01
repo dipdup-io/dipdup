@@ -21,6 +21,7 @@ from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
+from dipdup.config import EventIndexConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationHandlerOriginationPatternConfig
@@ -212,6 +213,10 @@ class DipDupCodeGenerator:
                     big_map_value_schema = big_map_schema['valueSchema']
                     big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_path}_value.json')
                     write(big_map_value_schema_path, json.dumps(big_map_value_schema, option=json.OPT_INDENT_2))
+
+            elif isinstance(index_config, EventIndexConfig):
+                for event_handler_config in index_config.handlers:
+                    contract_config = event_handler_config.contract_config
 
             elif isinstance(index_config, HeadIndexConfig):
                 pass
