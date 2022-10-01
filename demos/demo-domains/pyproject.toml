@@ -15,22 +15,13 @@ packages = [
 python = ">=3.10,<3.11"
 dipdup = "^6"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "*"
-bump2version = "*"
-diff-cover = "*"
-flake8-return = "*"
-flake8-comprehensions = "*"
-flake8-bugbear = "*"
 flakeheaven = "*"
 isort = "*"
 mypy = "*"
 pytest = "*"
 pytest-asyncio = "*"
-pytest-cov = "*"
-pytest-xdist = "*"
-types-pytz = "*"
-types-tabulate = "*"
 
 [tool.isort]
 line_length = 120
