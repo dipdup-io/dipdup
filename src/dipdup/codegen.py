@@ -109,6 +109,10 @@ class DipDupCodeGenerator:
         self._config = config
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
+        self._schemas_path = join(config.package_path, 'schemas')
+        self._types_path = join(self._config.package_path, 'types')
+        self._sql_path = join(self._config.package_path, 'sql')
+        self._graphql_path = join(self._config.package_path, 'graphql')
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         self._logger.info('Initializing project')
@@ -142,66 +146,60 @@ class DipDupCodeGenerator:
         graphql_path = join(package_path, 'graphql')
         touch(join(graphql_path, KEEP_FILE))
 
+    async def _fetch_operation_index_schema(self, index_config: OperationIndexConfig) -> None:
+        for operation_handler_config in index_config.handlers:
+            for operation_pattern_config in operation_handler_config.pattern:
+                if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig) and operation_pattern_config.entrypoint:
+                    contract_config = operation_pattern_config.destination_contract_config
+                    originated = False
+                elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
+                    contract_config = operation_pattern_config.contract_config
+                    originated = bool(operation_pattern_config.source)
+                else:
+                    # NOTE: Operations without destination+entrypoint are untyped
+                    continue
+
+                self._logger.debug(contract_config)
+                contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, originated)
+
+                contract_schemas_path = join(self._schemas_path, contract_config.module_name)
+                mkdir_p(contract_schemas_path)
+
+                storage_schema_path = join(contract_schemas_path, 'storage.json')
+                storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
+
+                write(storage_schema_path, json.dumps(storage_schema, option=json.OPT_INDENT_2))
+
+                if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
+                    continue
+
+                parameter_schemas_path = join(contract_schemas_path, 'parameter')
+                entrypoint = cast(str, operation_pattern_config.entrypoint)
+                mkdir_p(parameter_schemas_path)
+
+                try:
+                    entrypoint_schema = next(ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint)
+                except StopIteration as e:
+                    raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e
+
+                entrypoint = entrypoint.replace('.', '_').lstrip('_')
+                entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
+                written = write(entrypoint_schema_path, json.dumps(entrypoint_schema, option=json.OPT_INDENT_2))
+                if not written and contract_config.typename is not None:
+                    with open(entrypoint_schema_path, 'r') as file:
+                        existing_schema = json.loads(file.read())
+                    if entrypoint_schema != existing_schema:
+                        self._logger.warning('Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename)
+
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Creating `schemas` directory')
-        schemas_path = join(self._config.package_path, 'schemas')
-        mkdir_p(schemas_path)
+        mkdir_p(self._schemas_path)
 
         for index_config in self._config.indexes.values():
 
             if isinstance(index_config, OperationIndexConfig):
-                for operation_handler_config in index_config.handlers:
-                    for operation_pattern_config in operation_handler_config.pattern:
-
-                        if (
-                            isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig)
-                            and operation_pattern_config.entrypoint
-                        ):
-                            contract_config = operation_pattern_config.destination_contract_config
-                            originated = False
-                        elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
-                            contract_config = operation_pattern_config.contract_config
-                            originated = bool(operation_pattern_config.source)
-                        else:
-                            # NOTE: Operations without destination+entrypoint are untyped
-                            continue
-
-                        self._logger.debug(contract_config)
-                        contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, originated)
-
-                        contract_schemas_path = join(schemas_path, contract_config.module_name)
-                        mkdir_p(contract_schemas_path)
-
-                        storage_schema_path = join(contract_schemas_path, 'storage.json')
-                        storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
-
-                        write(storage_schema_path, json.dumps(storage_schema, option=json.OPT_INDENT_2))
-
-                        if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
-                            continue
-
-                        parameter_schemas_path = join(contract_schemas_path, 'parameter')
-                        entrypoint = cast(str, operation_pattern_config.entrypoint)
-                        mkdir_p(parameter_schemas_path)
-
-                        try:
-                            entrypoint_schema = next(
-                                ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint
-                            )
-                        except StopIteration as e:
-                            raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e
-
-                        entrypoint = entrypoint.replace('.', '_').lstrip('_')
-                        entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
-                        written = write(entrypoint_schema_path, json.dumps(entrypoint_schema, option=json.OPT_INDENT_2))
-                        if not written and contract_config.typename is not None:
-                            with open(entrypoint_schema_path, 'r') as file:
-                                existing_schema = json.loads(file.read())
-                            if entrypoint_schema != existing_schema:
-                                self._logger.warning(
-                                    'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename
-                                )
+                await self._fetch_operation_index_schema(index_config)
 
             elif isinstance(index_config, BigMapIndexConfig):
                 for big_map_handler_config in index_config.handlers:
@@ -209,7 +207,7 @@ class DipDupCodeGenerator:
 
                     contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
 
-                    contract_schemas_path = join(schemas_path, contract_config.module_name)
+                    contract_schemas_path = join(self._schemas_path, contract_config.module_name)
                     mkdir_p(contract_schemas_path)
                     big_map_schemas_path = join(contract_schemas_path, 'big_map')
                     mkdir_p(big_map_schemas_path)
@@ -247,15 +245,13 @@ class DipDupCodeGenerator:
 
     async def generate_types(self, overwrite_types: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameter, big map keys/values."""
-        schemas_path = join(self._config.package_path, 'schemas')
-        types_path = join(self._config.package_path, 'types')
 
         self._logger.info('Creating `types` package')
-        touch(join(types_path, '__init__.py'))
+        touch(join(self._types_path, '__init__.py'))
 
         # TODO: Cleaner code with pathlib
-        for root, dirs, files in os.walk(schemas_path):
-            types_root = root.replace(schemas_path, types_path)
+        for root, dirs, files in os.walk(self._schemas_path):
+            types_root = root.replace(self._schemas_path, self._types_path)
 
             for dir in dirs:
                 dir_path = join(types_root, dir)
@@ -316,8 +312,7 @@ class DipDupCodeGenerator:
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""
         self._logger.info('Cleaning up')
-        schemas_path = join(self._config.package_path, 'schemas')
-        rmtree(schemas_path)
+        rmtree(self._schemas_path)
 
     async def verify_package(self) -> None:
         import_submodules(self._config.package)
