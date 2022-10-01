@@ -21,7 +21,6 @@ from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigT
 from dipdup.config import DipDupConfig
-from dipdup.config import HandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationHandlerOriginationPatternConfig
@@ -282,14 +281,11 @@ class DipDupCodeGenerator:
 
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
-        handler_config: HandlerConfig
         for index_config in self._config.indexes.values():
-            if isinstance(index_config, (OperationIndexConfig, BigMapIndexConfig, HeadIndexConfig, TokenTransferIndexConfig)):
-                for handler_config in index_config.handlers:
-                    await self._generate_callback(handler_config)
-
-            else:
-                raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+            if isinstance(index_config, IndexTemplateConfig):
+                continue
+            for handler_config in index_config.handlers:
+                await self._generate_callback(handler_config)
 
     async def generate_hooks(self) -> None:
         for hook_configs in self._config.hooks.values(), event_hooks.values():

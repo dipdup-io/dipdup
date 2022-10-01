@@ -1064,18 +1064,32 @@ class TokenTransferIndexConfig(IndexConfig):
     last_level: int = 0
 
 
-IndexConfigT = Union[
-    OperationIndexConfig,
-    BigMapIndexConfig,
-    HeadIndexConfig,
-    TokenTransferIndexConfig,
-    IndexTemplateConfig,
-]
+@dataclass
+class EventHandlerConfig(HandlerConfig, kind='handler'):
+    contract: Union[str, ContractConfig]
+    tag: str
+
+
+@dataclass
+class EventIndexConfig(IndexConfig):
+    kind: Literal['event']
+    datasource: Union[str, TzktDatasourceConfig]
+    handlers: Tuple[EventHandlerConfig, ...] = field(default_factory=tuple)
+
+    first_level: int = 0
+    last_level: int = 0
+
+
 ResolvedIndexConfigT = Union[
     OperationIndexConfig,
     BigMapIndexConfig,
     HeadIndexConfig,
     TokenTransferIndexConfig,
+    EventIndexConfig,
+]
+IndexConfigT = Union[
+    ResolvedIndexConfigT,
+    IndexTemplateConfig,
 ]
 HandlerPatternConfigT = Union[
     OperationHandlerOriginationPatternConfig,
