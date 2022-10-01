@@ -1,13 +1,11 @@
 import asyncio
 import hashlib
 import logging
-from pathlib import Path
 import platform
 from contextlib import suppress
 from http import HTTPStatus
 from json import JSONDecodeError
-from os.path import isfile
-from os.path import join
+from pathlib import Path
 from typing import Any
 from typing import Mapping
 from typing import Optional
@@ -22,7 +20,6 @@ from dipdup import __version__
 from dipdup.config import HTTPConfig
 from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
-from dipdup.utils import touch
 
 safe_exceptions = (
     aiohttp.ClientConnectionError,
