@@ -35,6 +35,7 @@ from dipdup.config import EventIndexConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationHandlerOriginationPatternConfig
+from dipdup.config import OperationHandlerPatternConfigT
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import TokenTransferIndexConfig
@@ -146,50 +147,84 @@ class DipDupCodeGenerator:
         graphql_path = join(package_path, 'graphql')
         touch(join(graphql_path, KEEP_FILE))
 
+    async def _fetch_operation_pattern_schema(
+        self,
+        operation_pattern_config: OperationHandlerPatternConfigT,
+        datasource_config: TzktDatasourceConfig,
+    ) -> None:
+        if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig) and operation_pattern_config.entrypoint:
+            contract_config = operation_pattern_config.destination_contract_config
+            originated = False
+        elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
+            contract_config = operation_pattern_config.contract_config
+            originated = bool(operation_pattern_config.source)
+        else:
+            # NOTE: Operations without destination+entrypoint are untyped
+            return
+
+        self._logger.debug(contract_config)
+        contract_schemas = await self._get_schema(datasource_config, contract_config, originated)
+
+        contract_schemas_path = join(self._schemas_path, contract_config.module_name)
+        mkdir_p(contract_schemas_path)
+
+        storage_schema_path = join(contract_schemas_path, 'storage.json')
+        storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
+
+        write(storage_schema_path, json.dumps(storage_schema, option=json.OPT_INDENT_2))
+
+        if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
+            return
+
+        parameter_schemas_path = join(contract_schemas_path, 'parameter')
+        entrypoint = cast(str, operation_pattern_config.entrypoint)
+        mkdir_p(parameter_schemas_path)
+
+        try:
+            entrypoint_schema = next(ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint)
+        except StopIteration as e:
+            raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e
+
+        entrypoint = entrypoint.replace('.', '_').lstrip('_')
+        entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
+        written = write(entrypoint_schema_path, json.dumps(entrypoint_schema, option=json.OPT_INDENT_2))
+        if not written and contract_config.typename is not None:
+            with open(entrypoint_schema_path, 'r') as file:
+                existing_schema = json.loads(file.read())
+            if entrypoint_schema != existing_schema:
+                self._logger.warning('Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename)
+
     async def _fetch_operation_index_schema(self, index_config: OperationIndexConfig) -> None:
         for operation_handler_config in index_config.handlers:
             for operation_pattern_config in operation_handler_config.pattern:
-                if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig) and operation_pattern_config.entrypoint:
-                    contract_config = operation_pattern_config.destination_contract_config
-                    originated = False
-                elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
-                    contract_config = operation_pattern_config.contract_config
-                    originated = bool(operation_pattern_config.source)
-                else:
-                    # NOTE: Operations without destination+entrypoint are untyped
-                    continue
+                await self._fetch_operation_pattern_schema(
+                    operation_pattern_config,
+                    index_config.datasource_config,
+                )
 
-                self._logger.debug(contract_config)
-                contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, originated)
+    async def _fetch_big_map_index_schema(self, index_config: BigMapIndexConfig) -> None:
+        for big_map_handler_config in index_config.handlers:
+            contract_config = big_map_handler_config.contract_config
 
-                contract_schemas_path = join(self._schemas_path, contract_config.module_name)
-                mkdir_p(contract_schemas_path)
+            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
 
-                storage_schema_path = join(contract_schemas_path, 'storage.json')
-                storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
+            contract_schemas_path = join(self._schemas_path, contract_config.module_name)
+            mkdir_p(contract_schemas_path)
+            big_map_schemas_path = join(contract_schemas_path, 'big_map')
+            mkdir_p(big_map_schemas_path)
 
-                write(storage_schema_path, json.dumps(storage_schema, option=json.OPT_INDENT_2))
+            try:
+                big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_handler_config.path)
+            except StopIteration as e:
+                raise ConfigurationError(f'Contract `{contract_config.address}` has no big map path `{big_map_handler_config.path}`') from e
+            big_map_path = big_map_handler_config.path.replace('.', '_')
+            big_map_key_schema = big_map_schema['keySchema']
+            big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_path}_key.json')
+            write(big_map_key_schema_path, json.dumps(big_map_key_schema, option=json.OPT_INDENT_2))
 
-                if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
-                    continue
-
-                parameter_schemas_path = join(contract_schemas_path, 'parameter')
-                entrypoint = cast(str, operation_pattern_config.entrypoint)
-                mkdir_p(parameter_schemas_path)
-
-                try:
-                    entrypoint_schema = next(ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint)
-                except StopIteration as e:
-                    raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e
-
-                entrypoint = entrypoint.replace('.', '_').lstrip('_')
-                entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
-                written = write(entrypoint_schema_path, json.dumps(entrypoint_schema, option=json.OPT_INDENT_2))
-                if not written and contract_config.typename is not None:
-                    with open(entrypoint_schema_path, 'r') as file:
-                        existing_schema = json.loads(file.read())
-                    if entrypoint_schema != existing_schema:
-                        self._logger.warning('Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename)
+            big_map_value_schema = big_map_schema['valueSchema']
+            big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_path}_value.json')
+            write(big_map_value_schema_path, json.dumps(big_map_value_schema, option=json.OPT_INDENT_2))
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
@@ -202,34 +237,10 @@ class DipDupCodeGenerator:
                 await self._fetch_operation_index_schema(index_config)
 
             elif isinstance(index_config, BigMapIndexConfig):
-                for big_map_handler_config in index_config.handlers:
-                    contract_config = big_map_handler_config.contract_config
-
-                    contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
-
-                    contract_schemas_path = join(self._schemas_path, contract_config.module_name)
-                    mkdir_p(contract_schemas_path)
-                    big_map_schemas_path = join(contract_schemas_path, 'big_map')
-                    mkdir_p(big_map_schemas_path)
-
-                    try:
-                        big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_handler_config.path)
-                    except StopIteration as e:
-                        raise ConfigurationError(
-                            f'Contract `{contract_config.address}` has no big map path `{big_map_handler_config.path}`'
-                        ) from e
-                    big_map_path = big_map_handler_config.path.replace('.', '_')
-                    big_map_key_schema = big_map_schema['keySchema']
-                    big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_path}_key.json')
-                    write(big_map_key_schema_path, json.dumps(big_map_key_schema, option=json.OPT_INDENT_2))
-
-                    big_map_value_schema = big_map_schema['valueSchema']
-                    big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_path}_value.json')
-                    write(big_map_value_schema_path, json.dumps(big_map_value_schema, option=json.OPT_INDENT_2))
+                await self._fetch_big_map_index_schema(index_config)
 
             elif isinstance(index_config, EventIndexConfig):
-                for event_handler_config in index_config.handlers:
-                    contract_config = event_handler_config.contract_config
+                ...
 
             elif isinstance(index_config, HeadIndexConfig):
                 pass
