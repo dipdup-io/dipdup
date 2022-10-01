@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@v2
         id: cache-replays
         with:
-          path: /tmp/dipdup/replays
+          path: ~/.cache/dipdup/replays
           key: ${{ matrix.os }}-${{ matrix.arch }}-replays
           restore-keys: |
             ${{ matrix.os }}-${{ matrix.arch }}-replays

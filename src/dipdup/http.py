@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import logging
+from pathlib import Path
 import platform
 from contextlib import suppress
 from http import HTTPStatus
@@ -215,17 +216,16 @@ class _HTTPGateway:
         ).hexdigest()
         if not self._config.replay_path:
             raise RuntimeError('Replay path is not set')
-        replay_path = join(self._config.replay_path.rstrip('/'), request_hash)
+        replay_path = Path(self._config.replay_path).expanduser() / request_hash
 
-        if isfile(replay_path):
+        if replay_path.is_file():
             with open(replay_path, 'rb') as file:
                 return orjson.loads(file.read())
         else:
             response = await self._retry_request(method, url, weight, **kwargs)
             if response:
-                touch(replay_path)
-                with open(replay_path, 'wb') as file:
-                    file.write(orjson.dumps(response))
+                replay_path.parent.mkdir(parents=True, exist_ok=True)
+                replay_path.write_bytes(orjson.dumps(response))
             return response
 
     async def request(
