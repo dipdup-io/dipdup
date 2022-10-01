@@ -10,5 +10,6 @@
   "postgresql_image": "postgres:14",
   "hasura_image": "hasura/graphql-engine:v2.11.2",
   "crash_reporting": false,
+  "linters": "default",
   "line_length": "120"
 }

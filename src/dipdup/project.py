@@ -304,7 +304,7 @@ class BaseProject(Project):
                 'hasura/graphql-engine:v2.13.0-beta.1',
             ),
             comments=(
-                'Recommended',
+                'tested with DipDup',
                 '',
                 '',
             ),
@@ -319,6 +319,21 @@ class BaseProject(Project):
             description='Enable crash reporting?\n' 'It helps us a lot to improve DipDup 🙏',
             default=False,
         ),
+        ChoiceQuestion(
+            name='linters',
+            description=('Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.'),
+            default=0,
+            choices=(
+                'default',
+                'advanced',
+                'none',
+            ),
+            comments=(
+                'Classic set: black, isort, flake8, mypy, pytest',
+                'Same, plus bump2version, coverage and more flake8 plugins',
+                'None',
+            ),
+        ),
         InputQuestion(
             name='line_length',
             description=('Enter maximum line length\n' 'Used by linters.'),
@@ -328,9 +343,19 @@ class BaseProject(Project):
 
     def render(self, force: bool = False) -> None:
         super().render(force)
+
+        # NOTE: Config and handlers
         Project(
             path=self.answers['template'],
-            description='Auto-generated demo subproject',
+            description='',
+            questions=(),
+            answers=self.answers,
+        ).render(force)
+
+        # NOTE: Linters and stuff
+        Project(
+            path='linters_' + self.answers['linters'],
+            description='',
             questions=(),
             answers=self.answers,
         ).render(force)

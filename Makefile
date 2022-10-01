@@ -15,7 +15,7 @@ TAG=latest
 help:           ## Show this help (default)
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-all:            ## Run a whole CI pipeline: lint, run tests, build docs
+all:            ## Run a whole CI pipeline: formatters, linters and tests
 	make install lint test docs
 
 install:        ## Install project dependencies

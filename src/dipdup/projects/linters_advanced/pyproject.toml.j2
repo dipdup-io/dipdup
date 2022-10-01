@@ -15,7 +15,7 @@ packages = [
 python = ">=3.10,<3.11"
 dipdup = "^{{ cookiecutter.dipdup_version }}"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "*"
 bump2version = "*"
 diff-cover = "*"
@@ -29,8 +29,6 @@ pytest = "*"
 pytest-asyncio = "*"
 pytest-cov = "*"
 pytest-xdist = "*"
-types-pytz = "*"
-types-tabulate = "*"
 
 [tool.isort]
 line_length = {{ cookiecutter.line_length }}
