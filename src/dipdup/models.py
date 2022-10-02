@@ -46,6 +46,7 @@ ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
+EventType = TypeVar('EventType', bound=BaseModel)
 
 
 _logger = logging.getLogger(__name__)
@@ -232,6 +233,27 @@ class TokenTransferData:
     tzkt_transaction_id: Optional[int] = None
     tzkt_origination_id: Optional[int] = None
     tzkt_migration_id: Optional[int] = None
+
+
+@dataclass
+class EventData:
+    """Basic structure for events received from TzKT REST API"""
+
+    id: int
+    level: int
+    timestamp: datetime
+    tag: str
+    payload: Dict[str, Any]
+    contract_address: str
+    contract_alias: Optional[str] = None
+    contract_code_hash: Optional[int] = None
+    transaction_id: Optional[int] = None
+
+
+@dataclass
+class Event(Generic[EventType]):
+    data: EventData
+    payload: EventType
 
 
 # ===> Model Versioning

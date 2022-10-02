@@ -24,6 +24,8 @@ import dipdup.models as models
 from dipdup.config import BigMapHandlerConfig
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
+from dipdup.config import EventHandlerConfig
+from dipdup.config import EventIndexConfig
 from dipdup.config import HeadHandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import OperationHandlerConfig
@@ -39,6 +41,7 @@ from dipdup.config import TokenTransferIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
+from dipdup.datasources.tzkt.datasource import EventFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -50,6 +53,8 @@ from dipdup.exceptions import InvalidDataError
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BigMapDiff
+from dipdup.models import Event
+from dipdup.models import EventData
 from dipdup.models import HeadBlockData
 from dipdup.models import IndexStatus
 from dipdup.models import OperationData
@@ -79,6 +84,7 @@ Operations = Tuple[OperationData, ...]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
 MatchedOperationsT = Tuple[OperationSubgroup, OperationHandlerConfig, Deque[OperationHandlerArgumentT]]
 MatchedBigMapsT = Tuple[BigMapHandlerConfig, BigMapDiff]
+MatchedEventsT = Tuple[EventHandlerConfig, Event]
 
 
 def extract_operation_subgroups(
@@ -272,7 +278,7 @@ class Index:
 
     def _extract_level(
         self,
-        message: Union[Tuple[OperationData, ...], Tuple[BigMapData, ...], Tuple[TokenTransferData, ...]],
+        message: tuple[OperationData | BigMapData | TokenTransferData | EventData, ...],
     ) -> int:
         batch_levels = {item.level for item in message}
         if len(batch_levels) != 1:
@@ -983,7 +989,7 @@ class TokenTransferIndex(Index):
                 await self._process_level_token_transfers(token_transfers, message_level)
 
     def _get_token_addresses(self) -> Set[str]:
-        """Get addresses to fetch big map diffs from during initial synchronization"""
+        """Get addresses to fetch transfers from during initial synchronization"""
         addresses: set[str] = set()
         for handler_config in self._config.handlers:
             if isinstance(handler_config, TokenTransferHandlerConfig):
@@ -994,7 +1000,7 @@ class TokenTransferIndex(Index):
         return addresses
 
     def _get_token_ids(self) -> Set[int]:
-        """Get addresses to fetch big map diffs from during initial synchronization"""
+        """Get token ids to fetch transfers from during initial synchronization"""
         ids: set[int] = set()
         for handler_config in self._config.handlers:
             if isinstance(handler_config, TokenTransferHandlerConfig):
@@ -1004,3 +1010,160 @@ class TokenTransferIndex(Index):
             if handler_config.token_id is not None:
                 ids.add(handler_config.token_id)
         return ids
+
+
+class EventIndex(Index):
+    message_type = MessageType.event
+    _config: EventIndexConfig
+
+    def __init__(self, ctx: DipDupContext, config: EventIndexConfig, datasource: TzktDatasource) -> None:
+        super().__init__(ctx, config, datasource)
+        self._queue: Deque[Tuple[EventData, ...]] = deque()
+
+    def push_events(self, events: Tuple[EventData, ...]) -> None:
+        self._queue.append(events)
+
+        if Metrics.enabled:
+            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+
+    async def _process_queue(self) -> None:
+        """Process WebSocket queue"""
+        if self._queue:
+            self._logger.debug('Processing websocket queue')
+        while self._queue:
+            events = self._queue.popleft()
+            message_level = events[0].level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    stack.enter_context(Metrics.measure_level_realtime_duration())
+                await self._process_level_events(events, message_level)
+
+    async def _synchronize(self, sync_level: int) -> None:
+        """Fetch operations via Fetcher and pass to message callback"""
+        index_level = await self._enter_sync_state(sync_level)
+        if index_level is None:
+            return
+
+        first_level = index_level + 1
+        self._logger.info('Fetching contract events from level %s to %s', first_level, sync_level)
+
+        event_addresses = self._get_event_addresses()
+        event_tags = self._get_event_tags()
+
+        fetcher = EventFetcher(
+            datasource=self._datasource,
+            first_level=first_level,
+            last_level=sync_level,
+            event_addresses=event_addresses,
+            event_tags=event_tags,
+        )
+
+        async for level, events in fetcher.fetch_events_by_level():
+            with ExitStack() as stack:
+                if Metrics.enabled:
+                    Metrics.set_levels_to_sync(self._config.name, sync_level - level)
+                    stack.enter_context(Metrics.measure_level_sync_duration())
+                await self._process_level_events(events, sync_level)
+
+        await self._exit_sync_state(sync_level)
+
+    async def _process_level_events(
+        self,
+        events: Tuple[EventData, ...],
+        sync_level: int,
+    ) -> None:
+        if not events:
+            return
+
+        batch_level = self._extract_level(events)
+        index_level = self.state.level
+        if batch_level <= index_level:
+            raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
+
+        self._logger.debug('Processing contract events of level %s', batch_level)
+        matched_handlers = await self._match_events(events)
+
+        if Metrics.enabled:
+            Metrics.set_index_handlers_matched(len(matched_handlers))
+
+        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
+        if not matched_handlers:
+            await self.state.update_status(level=batch_level)
+            return
+
+        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
+            for handler_config, event_diff in matched_handlers:
+                await self._call_matched_handler(handler_config, event_diff)
+            await self.state.update_status(level=batch_level)
+
+    async def _match_event(self, handler_config: EventHandlerConfig, event: EventData) -> bool:
+        """Match single contract event with pattern"""
+        if handler_config.tag != event.tag:
+            return False
+        if handler_config.contract_config.address != event.contract_address:
+            return False
+        return True
+
+    async def _prepare_handler_args(
+        self,
+        handler_config: EventHandlerConfig,
+        matched_event: EventData,
+    ) -> Event:
+        """Prepare handler arguments, parse key and value. Schedule callback in executor."""
+        self._logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
+        if not handler_config.parent:
+            raise ConfigInitializationException
+
+        event_type = handler_config.event_type_cls
+        try:
+            payload = event_type.parse_obj(matched_event.payload)
+        except ValidationError as e:
+            raise InvalidDataError(event_type, matched_event.payload, matched_event) from e
+
+        return Event(
+            data=matched_event,
+            payload=payload,
+        )
+
+    async def _match_events(self, events: Iterable[EventData]) -> Deque[MatchedEventsT]:
+        """Try to match contract events in cache with all patterns from indexes."""
+        matched_handlers: Deque[MatchedEventsT] = deque()
+
+        for handler_config in self._config.handlers:
+            for event in events:
+                event_matched = await self._match_event(handler_config, event)
+                if event_matched:
+                    arg = await self._prepare_handler_args(handler_config, event)
+                    matched_handlers.append((handler_config, arg))
+
+        return matched_handlers
+
+    async def _call_matched_handler(self, handler_config: EventHandlerConfig, event: Event) -> None:
+        if not handler_config.parent:
+            raise ConfigInitializationException
+
+        await self._ctx._fire_handler(
+            handler_config.callback,
+            handler_config.parent.name,
+            self.datasource,
+            str(event.data.transaction_id),
+            event,
+        )
+
+    def _get_event_addresses(self) -> Set[str]:
+        """Get addresses to fetch events during initial synchronization"""
+        addresses = set()
+        for handler_config in self._config.handlers:
+            addresses.add(cast(ContractConfig, handler_config.contract).address)
+        return addresses
+
+    def _get_event_tags(self) -> Set[str]:
+        """Get tags to fetch events during initial synchronization"""
+        paths = set()
+        for handler_config in self._config.handlers:
+            paths.add(handler_config.tag)
+        return paths
