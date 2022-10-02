@@ -28,9 +28,10 @@
     </head>
     <body>
         <!-- Provide site root to javascript -->
+        <!-- NOTE: Fixed coal -->
         <script type="text/javascript">
             var path_to_root = "";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "coal";
+            var default_theme = "coal";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
@@ -144,20 +145,29 @@
                         <h1 id="quickstart"><a class="header" href="#quickstart">Quickstart</a></h1>
 <p>This page will guide you through the steps to get your first selective indexer up and running in a few minutes without getting too deep into the details.</p>
 <p>Let's create an indexer for the <a href="https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/">tzBTC FA1.2 token contract</a>. Our goal is to save all token transfers to the database and then calculate some statistics of its holders' activity.</p>
-<p>A modern Linux/MacOS distribution with Python 3.10 installed is required to run DipDup.</p>
+<p>A modern Linux/macOS distribution with Python 3.10 installed is required to run DipDup.</p>
 <h2 id="create-a-new-project"><a class="header" href="#create-a-new-project">Create a new project</a></h2>
 <h3 id="interactively-recommended"><a class="header" href="#interactively-recommended">Interactively (recommended)</a></h3>
-<p>You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install <a href="https://cookiecutter.readthedocs.io/en/stable/README.html"><code>cookiecutter</code></a> and create a new project in the current directory.</p>
-<pre><code class="language-shell">python -c &quot;$(curl -sSL https://dipdup.net/install.py)&quot;
+<p>You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install DipDup for the current user:</p>
+<pre><code class="language-shell">python -c &quot;$(curl -sSL https://dipdup.io/install.py)&quot;
 </code></pre>
+<p>Now, let's create a new project:</p>
+<pre><code class="language-shell">dipdup new
+</code></pre>
+<p>Follow the instructions; the project will be created in the current directory. You can skip reading the rest of this page and slap <code>dipdup run</code> instead.</p>
 <h3 id="from-scratch"><a class="header" href="#from-scratch">From scratch</a></h3>
-<p>We advise using the <a href="https://python-poetry.org">Poetry</a> package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.</p>
-<pre><code class="language-shell"># Create a new project
-mkdir my-indexer; cd my-indexer
+<p>Currently, we mainly use <a href="https://python-poetry.org">Poetry</a> for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.</p>
+<pre><code class="language-shell"># Create a new project directory
+mkdir dipdup-indexer; cd dipdup-indexer
+
+# Plain pip
+python -m venv .venv
+. .venv/bin/activate
+pip install dipdup
+
+# or Poetry
 poetry init --python &quot;&gt;=3.10,&lt;3.11&quot;
-# Add dipdup as a dependency
 poetry add dipdup
-# Enter the virtualenv
 poetry shell
 </code></pre>
 <blockquote>
@@ -174,7 +184,7 @@ package: demo_tzbtc
 
 database:
   kind: sqlite
-  path: demo_tzbtc.sqlite3
+  path: demo-tzbtc.sqlite3
 
 contracts:
   tzbtc_mainnet:
@@ -182,28 +192,31 @@ contracts:
     typename: tzbtc
 
 datasources:
-  tzkt:
+  tzkt_mainnet:
     kind: tzkt
     url: https://api.tzkt.io
 
-advanced:
-  early_realtime: True
-  crash_reporting: True
-
 indexes:
   tzbtc_holders_mainnet:
+    template: tzbtc_holders
+    values:
+      contract: tzbtc_mainnet
+      datasource: tzkt_mainnet
+
+templates:
+  tzbtc_holders:
     kind: operation
-    datasource: tzkt
+    datasource: &lt;datasource&gt;
     contracts:
-      - tzbtc_mainnet
+      - &lt;contract&gt;
     handlers:
       - callback: on_transfer
         pattern:
-          - destination: tzbtc_mainnet
+          - destination: &lt;contract&gt;
             entrypoint: transfer
       - callback: on_mint
         pattern:
-          - destination: tzbtc_mainnet
+          - destination: &lt;contract&gt;
             entrypoint: mint
 </code></pre>
 <blockquote>

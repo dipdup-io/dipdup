@@ -28,9 +28,10 @@
     </head>
     <body>
         <!-- Provide site root to javascript -->
+        <!-- NOTE: Fixed coal -->
         <script type="text/javascript">
             var path_to_root = "../";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "coal";
+            var default_theme = "coal";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
@@ -279,6 +280,10 @@ sentry:
 
 prometheus:
   host: 0.0.0.0
+
+advanced:
+  early_realtime: True
+  crash_reporting: False
 </code></pre>
 <p>Note the hostnames (resolved in the docker network) and environment variables (expanded by DipDup).</p>
 <p>Build and run the containers:</p>

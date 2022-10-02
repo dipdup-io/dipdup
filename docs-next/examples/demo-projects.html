@@ -28,9 +28,10 @@
     </head>
     <body>
         <!-- Provide site root to javascript -->
+        <!-- NOTE: Fixed coal -->
         <script type="text/javascript">
             var path_to_root = "../";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "coal";
+            var default_theme = "coal";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
@@ -157,10 +158,10 @@
 <p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_registrydao">demo_registrydao</a></p>
 <p>Homebase enables users to create DAO contracts. In this example indexes are spawned in runtime (<a href="https://docs-next.dipdup.io/advanced/index-factories.html">3.11. Index factories</a>) for all contracts having the same script.</p>
 <h2 id="tezos-domains-operation"><a class="header" href="#tezos-domains-operation">Tezos Domains (<code>operation</code>)</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tezos_domains">demo_tezos_domains</a></p>
+<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_domains">demo_domains</a></p>
 <p>Tezos Domains is a distributed naming system. You probably have seen those fancy <code>user.tez</code> names while browsing explorers. This is a pretty basic example of how to index them.</p>
 <h2 id="tezos-domains-big_map"><a class="header" href="#tezos-domains-big_map">Tezos Domains (<code>big_map</code>)</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tezos_domains_big_map">demo_tezos_domains_big_map</a></p>
+<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_domains_big_map">demo_domains_big_map</a></p>
 <p>The same as above, but uses <code>big_map</code> index instead of <code>operation</code> one. The storage structure of this contract is pretty straightforward; we only need to track a single big map. To speed up indexing more, this example contains <code>skip_history: once</code> directive to index only the current state of the contract before switching to realtime processing.</p>
 <h2 id="tzcolors"><a class="header" href="#tzcolors">TzColors</a></h2>
 <p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tzcolors">demo_tzcolors</a></p>

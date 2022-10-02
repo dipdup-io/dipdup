@@ -28,9 +28,10 @@
     </head>
     <body>
         <!-- Provide site root to javascript -->
+        <!-- NOTE: Fixed coal -->
         <script type="text/javascript">
             var path_to_root = "../";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "coal";
+            var default_theme = "coal";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
@@ -145,9 +146,9 @@
 <p>This page covers the installation of DipDup in different environments.</p>
 <h2 id="host-requirements"><a class="header" href="#host-requirements">Host requirements</a></h2>
 <p>A <em>Linux</em>/<em>MacOS</em> environment with <em>Python 3.10</em> installed is required to use DipDup. Other UNIX-like systems should work but are not supported officially.</p>
-<p>Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database. RAM requirements increase with the number of indexes.</p>
+<p>Minimum hardware requirements are <em>256 MB RAM</em>, <em>1 CPU core</em>, and some disk space for the database. RAM requirements increase with the number of indexes.</p>
 <h3 id="non-unix-environments"><a class="header" href="#non-unix-environments">Non-UNIX environments</a></h3>
-<p>DipDup currently doesn't work in Windows environments due to incompatibilities in libraries it depends on. Please use WSL or Docker.</p>
+<p>Windows is not officially supported, but there's a possibility everything will work fine. In case of issues throw us a message and use WSL or Docker.</p>
 <p>We aim to improve cross-platform compatibility in future releases (<a href="https://github.com/dipdup-net/dipdup/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+">issue</a>).</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
@@ -158,30 +159,24 @@
 </blockquote>
 <h2 id="local-installation"><a class="header" href="#local-installation">Local installation</a></h2>
 <h3 id="interactively-recommended"><a class="header" href="#interactively-recommended">Interactively (recommended)</a></h3>
-<p>You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install <a href="https://cookiecutter.readthedocs.io/en/stable/README.html"><code>cookiecutter</code></a> and create a new project in the current directory.</p>
-<pre><code class="language-shell">python -c &quot;$(curl -sSL https://dipdup.net/install.py)&quot;
+<p>The following command will install DipDup for the current user:</p>
+<pre><code class="language-shell">python -c &quot;$(curl -sSL https://dipdup.io/install.py)&quot;
 </code></pre>
-<h3 id="poetry"><a class="header" href="#poetry">Poetry</a></h3>
-<p>We advise using the <a href="https://python-poetry.org">Poetry</a> package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.</p>
-<pre><code class="language-shell"># Create a new project
-mkdir my-indexer; cd my-indexer
-poetry init --python &quot;&gt;=3.10,&lt;3.11&quot;
-# Add dipdup as a dependency
-poetry add dipdup
-# Enter the virtualenv
-poetry shell
-</code></pre>
-<blockquote>
-<p>💡 <strong>SEE ALSO</strong></p>
-<ul>
-<li><a href="https://python-poetry.org/docs/">Poetry documentation</a></li>
-</ul>
-</blockquote>
-<h3 id="pip"><a class="header" href="#pip">pip</a></h3>
-<p>Create a new virtual environment and install DipDup in it.</p>
-<pre><code class="language-shell">python -m venv .venv
-source .venv/bin/activate
+<p>This script uses pipx under the hood to install <code>dipdup</code> and <code>datamodel-codegen</code> as CLI tools. Then you can use any package manager of your choice to manage versions of DipDup and other project dependencies.</p>
+<h3 id="manually"><a class="header" href="#manually">Manually</a></h3>
+<p>Currently, we mainly use <a href="https://python-poetry.org">Poetry</a>](<a href="https://python-poetry.org">https://python-poetry.org</a>) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.</p>
+<pre><code class="language-shell"># Create a new project directory
+mkdir dipdup-indexer; cd dipdup-indexer
+
+# Plain pip
+python -m venv .venv
+. .venv/bin/activate
 pip install dipdup
+
+# or Poetry
+poetry init --python &quot;&gt;=3.10,&lt;3.11&quot;
+poetry add dipdup
+poetry shell
 </code></pre>
 <h2 id="docker"><a class="header" href="#docker">Docker</a></h2>
 <p>See <a href="https://docs-next.dipdup.io/deployment/docker.html">5.2. Running in Docker</a> page.</p>

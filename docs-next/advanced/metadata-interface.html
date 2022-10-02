@@ -28,9 +28,10 @@
     </head>
     <body>
         <!-- Provide site root to javascript -->
+        <!-- NOTE: Fixed coal -->
         <script type="text/javascript">
             var path_to_root = "../";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "coal";
+            var default_theme = "coal";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
@@ -228,9 +229,9 @@ We can go further and put the entire token info structure to IPFS:</p>
 </code></pre>
 <p>TzKT can be configured to subscribe to one or multiple DipDup metadata sources, currently we use in production:</p>
 <ul>
-<li>Generic TZIP-16/TZIP-12 metadata indexer <a href="https://github.com/dipdup-net/metadata">Github</a> | <a href="https://dipdup.net/sandbox.html?service=metadata">Playground</a></li>
-<li>Tezos Domains metadata indexer <a href="https://github.com/dipdup-net/tezos-domains">Github</a> | <a href="https://dipdup.net/sandbox.html?service=domains">Playground</a></li>
-<li>Ubisoft Quartz metadata indexer <a href="https://github.com/dipdup-net/quartz-metadata">Github</a> | <a href="https://dipdup.net/sandbox.html?service=quartz">Playground</a></li>
+<li>Generic TZIP-16/TZIP-12 metadata indexer <a href="https://github.com/dipdup-net/metadata">Github</a> | <a href="https://play.dipdup.io/">Playground</a></li>
+<li>Tezos Domains metadata indexer <a href="https://github.com/dipdup-net/tezos-domains">Github</a> | <a href="https://play.dipdup.io/">Playground</a></li>
+<li>Ubisoft Quartz metadata indexer <a href="https://github.com/dipdup-net/quartz-metadata">Github</a> | <a href="https://play.dipdup.io/">Playground</a></li>
 </ul>
 <p><img src="../assets/metadata_interface.svg" alt="TzKT token metadata flow" /></p>
 
