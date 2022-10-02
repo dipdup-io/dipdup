@@ -37,6 +37,7 @@ from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.subscription import BigMapSubscription
+from dipdup.datasources.subscription import EventSubscription
 from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
@@ -936,6 +937,15 @@ class TzktDatasource(IndexDatasource):
             method = 'SubscribeToTokenTransfers'
             request = [{}]
 
+        elif isinstance(subscription, EventSubscription):
+            method = 'SubscribeToEvents'
+            if subscription.address and subscription.tag:
+                request = [{'address': subscription.address, 'tag': subscription.tag}]
+            elif not subscription.address and not subscription.tag:
+                request = [{}]
+            else:
+                raise RuntimeError
+
         else:
             raise NotImplementedError
 
@@ -992,6 +1002,7 @@ class TzktDatasource(IndexDatasource):
         self._ws_client.on('transfers', partial(self._on_message, MessageType.token_transfer))
         self._ws_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
         self._ws_client.on('head', partial(self._on_message, MessageType.head))
+        self._ws_client.on('events', partial(self._on_message, MessageType.event))
 
         return self._ws_client
 
@@ -1069,6 +1080,8 @@ class TzktDatasource(IndexDatasource):
                 await self._process_big_maps_data(cast(list, buffered_message.data))
             elif buffered_message.type == MessageType.head:
                 await self._process_head_data(cast(dict, buffered_message.data))
+            elif buffered_message.type == MessageType.event:
+                await self._process_events_data(cast(list, buffered_message.data))
             else:
                 raise NotImplementedError(f'Unknown message type: {buffered_message.type}')
 
@@ -1112,6 +1125,18 @@ class TzktDatasource(IndexDatasource):
         """Parse and emit raw head block from WS"""
         block = self.convert_head_block(data)
         await self.emit_head(block)
+
+    async def _process_events_data(self, data: List[Dict[str, Any]]) -> None:
+        """Parse and emit raw big map diffs from WS"""
+        level_events: DefaultDict[int, Deque[EventData]] = defaultdict(deque)
+
+        events: Deque[EventData] = deque()
+        for event_json in data:
+            event = self.convert_event(event_json)
+            level_events[event.level].append(event)
+
+        for _level, events in level_events.items():
+            await self.emit_events(tuple(events))
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:

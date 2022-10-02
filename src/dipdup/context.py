@@ -30,6 +30,7 @@ from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import EventHookConfig
+from dipdup.config import EventIndexConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import HookConfig
@@ -261,12 +262,13 @@ class DipDupContext:
     async def _spawn_index(self, name: str, state: Optional[Index] = None) -> None:
         # NOTE: Avoiding circular import
         from dipdup.index import BigMapIndex
+        from dipdup.index import EventIndex
         from dipdup.index import HeadIndex
         from dipdup.index import OperationIndex
         from dipdup.index import TokenTransferIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
-        index: Union[OperationIndex, BigMapIndex, HeadIndex, TokenTransferIndex]
+        index: OperationIndex | BigMapIndex | HeadIndex | TokenTransferIndex | EventIndex
 
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
         datasource = self.get_tzkt_datasource(datasource_name)
@@ -279,6 +281,8 @@ class DipDupContext:
             index = HeadIndex(self, index_config, datasource)
         elif isinstance(index_config, TokenTransferIndexConfig):
             index = TokenTransferIndex(self, index_config, datasource)
+        elif isinstance(index_config, EventIndexConfig):
+            index = EventIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 

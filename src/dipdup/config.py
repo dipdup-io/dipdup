@@ -1513,7 +1513,7 @@ class DipDupConfig:
         elif isinstance(index_config, TokenTransferIndexConfig):
             pass
         elif isinstance(index_config, EventIndexConfig):
-            raise NotImplementedError
+            pass
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 

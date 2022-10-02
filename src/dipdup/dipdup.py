@@ -40,6 +40,7 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex
+from dipdup.index import EventIndex
 from dipdup.index import HeadIndex
 from dipdup.index import Index
 from dipdup.index import OperationIndex
@@ -47,6 +48,7 @@ from dipdup.index import TokenTransferIndex
 from dipdup.index import extract_operation_subgroups
 from dipdup.models import BigMapData
 from dipdup.models import Contract
+from dipdup.models import EventData
 from dipdup.models import Head
 from dipdup.models import HeadBlockData
 from dipdup.models import Index as IndexState
@@ -217,6 +219,7 @@ class IndexDispatcher:
             datasource.call_on_operations(self._on_operations)
             datasource.call_on_token_transfers(self._on_token_transfers)
             datasource.call_on_big_maps(self._on_big_maps)
+            datasource.call_on_events(self._on_events)
             datasource.call_on_rollback(self._on_rollback)
 
     async def _on_head(self, datasource: IndexDatasource, head: HeadBlockData) -> None:
@@ -262,6 +265,11 @@ class IndexDispatcher:
         big_map_indexes = (i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource)
         for index in big_map_indexes:
             index.push_big_maps(big_maps)
+
+    async def _on_events(self, datasource: IndexDatasource, events: Tuple[EventData, ...]) -> None:
+        event_indexes = (i for i in self._indexes.values() if isinstance(i, EventIndex) and i.datasource == datasource)
+        for index in event_indexes:
+            index.push_events(events)
 
     async def _on_rollback(self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
         """Call `on_index_rollback` hook for each index that is affected by rollback"""

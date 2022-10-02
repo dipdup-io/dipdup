@@ -1,4 +1,4 @@
-            
+
   <span class="target" id="module-dipdup.config"></span><p>Config files parsing and processing</p>
 <p>As you can see from the code below, lots of things are going on here.</p>
 <ul class="simple">
@@ -345,7 +345,7 @@ http: HTTP client configuration</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>hook</strong> – Name of hook to run</p></li>
-<li><p><strong>crontab</strong> – Schedule with crontab syntax (<cite>* * * * *</cite>)</p></li>
+<li><p><strong>crontab</strong> – Schedule with crontab syntax (<cite>** ** *</cite>)</p></li>
 <li><p><strong>interval</strong> – Schedule with interval in seconds</p></li>
 <li><p><strong>daemon</strong> – Run hook as a daemon (never stops)</p></li>
 <li><p><strong>args</strong> – Arguments to pass to the hook</p></li>
@@ -603,6 +603,3 @@ http: HTTP client configuration</p>
 </dd>
 </dl>
 </dd></dl>
-
-
-
