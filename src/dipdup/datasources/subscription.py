@@ -42,6 +42,13 @@ class TokenTransferSubscription(Subscription):
     type: Literal['token_transfer'] = 'token_transfer'
 
 
+@dataclass(frozen=True)
+class EventSubscription(Subscription):
+    type: str = 'event'
+    address: Optional[str] = None
+    tag: Optional[str] = None
+
+
 class SubscriptionManager:
     def __init__(self, merge_subscriptions: bool = False) -> None:
         self._merge_subscriptions: bool = merge_subscriptions

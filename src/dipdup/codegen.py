@@ -216,6 +216,7 @@ class DipDupCodeGenerator:
             except StopIteration as e:
                 raise ConfigurationError(f'Contract `{contract_config.address}` has no event with tag `{handler_config.tag}`') from e
             event_tag = handler_config.tag.replace('.', '_')
+            event_schema = event_schema['eventSchema']
             event_schema_path = event_schemas_path / f'{event_tag}.json'
             write(event_schema_path, json.dumps(event_schema, option=json.OPT_INDENT_2))
 
@@ -241,7 +242,7 @@ class DipDupCodeGenerator:
 
     async def _generate_type(self, path: Path, force: bool) -> None:
         name = path.stem
-        output_path = self._types_path / path.relative_to(self._schemas_path) / f'{pascal_to_snake(name)}.py'
+        output_path = self._types_path / path.relative_to(self._schemas_path).parent / f'{pascal_to_snake(name)}.py'
         if output_path.exists() and not force:
             return
 
@@ -260,6 +261,7 @@ class DipDupCodeGenerator:
 
         name = snake_to_pascal(name)
         self._logger.info('Generating type `%s`', name)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         args = [
             'datamodel-codegen',
             '--input',
@@ -279,13 +281,8 @@ class DipDupCodeGenerator:
         self._logger.info('Creating `types` package')
         touch(self._types_path / PYTHON_MARKER)
 
-        for path in self._schemas_path.glob('**'):
-            if path.is_dir():
-                dir_path = self._types_path / path.relative_to(self._schemas_path)
-                touch(dir_path / PYTHON_MARKER)
-
-            elif path.suffix == '.json':
-                await self._generate_type(path, overwrite_types)
+        for path in self._schemas_path.glob('**/*.json'):
+            await self._generate_type(path, overwrite_types)
 
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""

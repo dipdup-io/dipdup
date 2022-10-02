@@ -55,6 +55,7 @@ from typing_extensions import Literal
 
 from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import BigMapSubscription
+from dipdup.datasources.subscription import EventSubscription
 from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
@@ -1116,7 +1117,21 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
         module_name = f'{package}.types.{self.contract_config.module_name}.event.{tag}'
         cls_name = snake_to_pascal(tag)
-        self.key_type_cls = import_from(module_name, cls_name)
+        self._event_type_cls = import_from(module_name, cls_name)
+
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'Event'
+        yield package, 'models as models'
+
+        event_cls = snake_to_pascal(self.tag)
+        event_module = pascal_to_snake(self.tag)
+        module_name = self.contract_config.module_name
+        yield f'{package}.types.{module_name}.event.{event_module}', event_cls
+
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'event', f'Event[{snake_to_pascal(self.tag)}]'
 
 
 @dataclass
@@ -1659,6 +1674,14 @@ class DipDupConfig:
         elif isinstance(index_config, TokenTransferIndexConfig):
             index_config.subscriptions.add(TokenTransferSubscription())
 
+        elif isinstance(index_config, EventIndexConfig):
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(EventSubscription())
+            else:
+                for event_handler_config in index_config.handlers:
+                    address, tag = event_handler_config.contract_config.address, event_handler_config.tag
+                    index_config.subscriptions.add(EventSubscription(address=address, tag=tag))
+
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1719,6 +1742,16 @@ class DipDupConfig:
 
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
+
+        elif isinstance(index_config, EventIndexConfig):
+            if isinstance(index_config.datasource, str):
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+
+            for event_handler_config in index_config.handlers:
+                event_handler_config.parent = index_config
+
+                if isinstance(event_handler_config.contract, str):
+                    event_handler_config.contract = self.get_contract(event_handler_config.contract)
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

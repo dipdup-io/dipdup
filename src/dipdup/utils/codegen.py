@@ -13,7 +13,7 @@ _templates: dict[str, 'Template'] = {}
 def touch(path: Path) -> None:
     """Create empty file, ignore if already exists"""
     if not path.parent.exists():
-        _logger.info('Creating directory `%s`', path)
+        _logger.info('Creating directory `%s`', path.parent)
         path.parent.mkdir(parents=True, exist_ok=True)
 
     if not path.is_file():
@@ -24,7 +24,7 @@ def touch(path: Path) -> None:
 def write(path: Path, content: Union[str, bytes], overwrite: bool = False) -> bool:
     """Write content to file, create directory tree if necessary"""
     if not path.parent.exists():
-        _logger.info('Creating directory `%s`', path)
+        _logger.info('Creating directory `%s`', path.parent)
         path.parent.mkdir(parents=True, exist_ok=True)
 
     if path.exists() and not overwrite:
