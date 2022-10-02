@@ -1,5 +1,16 @@
 
-  <span class="target" id="module-dipdup.config"></span><dl class="py class">
+  <span class="target" id="module-dipdup.config"></span><p>Config files parsing and processing</p>
+<p>As you can see from the code below, lots of things are going on here.</p>
+<ul class="simple">
+<li><p>YAML (de)serialization</p></li>
+<li><p>Templating indexes and env variables</p></li>
+<li><p>Config validation</p></li>
+<li><p>Methods to generate paths for codegen</p></li>
+<li><p>And even importing contract types</p></li>
+</ul>
+<p>Dataclasses are used in this module instead of BaseModel for historical reasons (something with ruamel.yaml).
+Thus “…Mixin” classes to workaround the lack of proper inheritance.</p>
+<dl class="py class">
 <dt class="sig sig-object py" id="dipdup.config.AdvancedConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex:</span> <span class="pre">~typing.Dict[~dipdup.enums.ReindexingReason</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~dipdup.enums.ReindexingAction]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler:</span> <span class="pre">~typing.Optional[~typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Any]]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.config.AdvancedConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Feature flags and other advanced config.</p>

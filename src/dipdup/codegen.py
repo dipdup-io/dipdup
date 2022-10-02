@@ -173,16 +173,16 @@ class DipDupCodeGenerator:
                 self._logger.warning('Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename)
 
     async def _fetch_operation_index_schema(self, index_config: OperationIndexConfig) -> None:
-        for operation_handler_config in index_config.handlers:
-            for operation_pattern_config in operation_handler_config.pattern:
+        for handler_config in index_config.handlers:
+            for operation_pattern_config in handler_config.pattern:
                 await self._fetch_operation_pattern_schema(
                     operation_pattern_config,
                     index_config.datasource_config,
                 )
 
     async def _fetch_big_map_index_schema(self, index_config: BigMapIndexConfig) -> None:
-        for big_map_handler_config in index_config.handlers:
-            contract_config = big_map_handler_config.contract_config
+        for handler_config in index_config.handlers:
+            contract_config = handler_config.contract_config
 
             contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
 
@@ -190,10 +190,10 @@ class DipDupCodeGenerator:
             big_map_schemas_path = contract_schemas_path / 'big_map'
 
             try:
-                big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_handler_config.path)
+                big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == handler_config.path)
             except StopIteration as e:
-                raise ConfigurationError(f'Contract `{contract_config.address}` has no big map path `{big_map_handler_config.path}`') from e
-            big_map_path = big_map_handler_config.path.replace('.', '_')
+                raise ConfigurationError(f'Contract `{contract_config.address}` has no big map path `{handler_config.path}`') from e
+            big_map_path = handler_config.path.replace('.', '_')
             big_map_key_schema = big_map_schema['keySchema']
             big_map_key_schema_path = big_map_schemas_path / f'{big_map_path}_key.json'
             write(big_map_key_schema_path, json.dumps(big_map_key_schema, option=json.OPT_INDENT_2))
@@ -201,6 +201,23 @@ class DipDupCodeGenerator:
             big_map_value_schema = big_map_schema['valueSchema']
             big_map_value_schema_path = big_map_schemas_path / f'{big_map_path}_value.json'
             write(big_map_value_schema_path, json.dumps(big_map_value_schema, option=json.OPT_INDENT_2))
+
+    async def _fetch_event_index_schema(self, index_config: EventIndexConfig) -> None:
+        for handler_config in index_config.handlers:
+            contract_config = handler_config.contract_config
+
+            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
+
+            contract_schemas_path = self._schemas_path / contract_config.module_name
+            event_schemas_path = contract_schemas_path / 'event'
+
+            try:
+                event_schema = next(ep for ep in contract_schemas['events'] if ep['tag'] == handler_config.tag)
+            except StopIteration as e:
+                raise ConfigurationError(f'Contract `{contract_config.address}` has no event with tag `{handler_config.tag}`') from e
+            event_tag = handler_config.tag.replace('.', '_')
+            event_schema_path = event_schemas_path / f'{event_tag}.json'
+            write(event_schema_path, json.dumps(event_schema, option=json.OPT_INDENT_2))
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
@@ -212,7 +229,7 @@ class DipDupCodeGenerator:
             elif isinstance(index_config, BigMapIndexConfig):
                 await self._fetch_big_map_index_schema(index_config)
             elif isinstance(index_config, EventIndexConfig):
-                raise NotImplementedError
+                await self._fetch_event_index_schema(index_config)
             elif isinstance(index_config, HeadIndexConfig):
                 pass
             elif isinstance(index_config, TokenTransferIndexConfig):
@@ -257,7 +274,7 @@ class DipDupCodeGenerator:
         subprocess.run(args, check=True)
 
     async def generate_types(self, overwrite_types: bool = False) -> None:
-        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameter, big map keys/values."""
+        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
 
         self._logger.info('Creating `types` package')
         touch(self._types_path / PYTHON_MARKER)
