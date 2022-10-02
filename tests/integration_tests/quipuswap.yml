@@ -24,7 +24,7 @@ datasources:
     kind: tzkt
     url: https://api.tzkt.io
     http:
-      replay_path: /tmp/dipdup/replays
+      replay_path: ~/.cache/dipdup/replays
 
 templates:
   quipuswap_fa12:

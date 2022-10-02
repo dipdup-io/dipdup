@@ -13,6 +13,7 @@ import re
 import subprocess
 from pathlib import Path
 from shutil import rmtree
+from shutil import which
 from typing import Any
 from typing import Dict
 from typing import List
@@ -39,6 +40,7 @@ from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FeatureAvailabilityError
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -49,6 +51,7 @@ from dipdup.utils.codegen import write
 KEEP_MARKER = '.keep'
 PYTHON_MARKER = '__init__.py'
 MODELS_MODULE = 'models.py'
+CALLBACK_TEMPLATE = 'callback.py.j2'
 
 
 def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -83,7 +86,7 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
         return schema
 
 
-class DipDupCodeGenerator:
+class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
     def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, Datasource]) -> None:
@@ -117,7 +120,7 @@ class DipDupCodeGenerator:
         touch(self._path / PYTHON_MARKER)
 
         if not self._models_path.is_file():
-            template = load_template(MODELS_MODULE)
+            template = load_template('templates', f'{MODELS_MODULE}.j2')
             models_code = template.render()
             write(self._models_path, models_code)
 
@@ -254,6 +257,13 @@ class DipDupCodeGenerator:
                     self._logger.info('Skipping `%s`', output_path)
                     return
 
+        datamodel_codegen = which('datamodel-codegen')
+        if not datamodel_codegen:
+            raise FeatureAvailabilityError(
+                feature='codegen',
+                reason='datamodel-codegen is not installed. Are you in the `-slim` Docker image? If not - run `dipdup-install`.',
+            )
+
         if path.parent.name == 'storage':
             name = f'{path.parent.parent.name}_{name}'
         if path.parent.name == 'parameter':
@@ -263,7 +273,7 @@ class DipDupCodeGenerator:
         self._logger.info('Generating type `%s`', name)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         args = [
-            'datamodel-codegen',
+            datamodel_codegen,
             '--input',
             str(path),
             '--output',
@@ -339,7 +349,7 @@ class DipDupCodeGenerator:
         subpackages = callback_config.callback.split('.')
         subpackages, callback = subpackages[:-1], subpackages[-1]
 
-        callback_path = Path.joinpath(
+        callback_path = Path(
             self._path,
             f'{callback_config.kind}s',
             *subpackages,
@@ -348,7 +358,7 @@ class DipDupCodeGenerator:
 
         if not callback_path.exists():
             self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
-            callback_template = load_template('callback.py')
+            callback_template = load_template('templates', CALLBACK_TEMPLATE)
 
             arguments = callback_config.format_arguments()
             imports = set(callback_config.format_imports(self._config.package))
@@ -375,7 +385,7 @@ class DipDupCodeGenerator:
 
         if sql:
             # NOTE: Preserve the same structure as in `handlers`
-            sql_path = Path.joinpath(
+            sql_path = Path(
                 self._sql_path,
                 *subpackages,
                 callback,

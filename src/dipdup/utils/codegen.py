@@ -1,4 +1,5 @@
 import logging
+from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Union
@@ -7,7 +8,7 @@ if TYPE_CHECKING:
     from jinja2 import Template
 
 _logger = logging.getLogger('dipdup.utils')
-_templates: dict[str, 'Template'] = {}
+_templates: dict[Path, 'Template'] = {}
 
 
 def touch(path: Path) -> None:
@@ -37,12 +38,10 @@ def write(path: Path, content: Union[str, bytes], overwrite: bool = False) -> bo
     return True
 
 
-def load_template(name: str) -> 'Template':
-    """Load template from templates/{name}.j2"""
+@cache
+def load_template(*path: str) -> 'Template':
+    """Load template from path relative to dipdup package"""
     from jinja2 import Template
 
-    if name not in _templates:
-        with open(Path(__file__).parent.parent / 'templates' / f'{name}.j2') as f:
-            _templates[name] = Template(f.read())
-
-    return _templates[name]
+    full_path = Path(__file__).parent.parent.joinpath(*path)
+    return Template(full_path.read_text())

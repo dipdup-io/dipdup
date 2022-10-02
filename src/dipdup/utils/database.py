@@ -29,6 +29,7 @@ from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
 from tortoise.utils import get_schema_sql
 
+from dipdup.exceptions import FeatureAvailabilityError
 from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
@@ -135,7 +136,15 @@ async def execute_sql_scripts(conn: BaseDBAsyncClient, path: str | Path) -> None
     if isinstance(path, str):
         path = Path(path)
 
+    supported = isinstance(conn, AsyncpgDBClient)
+
     for file in iter_files(path, '.sql'):
+        if not supported:
+            raise FeatureAvailabilityError(
+                feature='sql_scripts',
+                reason='SQL scripts are not supported for SQLite database.',
+            )
+
         _logger.info('Executing `%s`', file.name)
         sql = file.read()
         for statement in sqlparse.split(sql):

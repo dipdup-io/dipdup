@@ -5,10 +5,8 @@ import types
 from collections import defaultdict
 from contextlib import suppress
 from decimal import Decimal
-from functools import partial
 from functools import reduce
 from logging import Logger
-from os import listdir
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -103,7 +101,7 @@ def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
     elif path.is_file():
         paths = [path]
     elif path.is_dir():
-        paths = sorted(map(partial(path.joinpath), listdir(path)))
+        paths = list(path.glob('*'))
     else:
         raise RuntimeError(f'Path `{path}` exists but is neither a file nor a directory')
 

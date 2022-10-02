@@ -5,15 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
-## Unreleased
+## [Unreleased]
+
+### Added
+
+- install: New install script based on pipx.
+- cli: `dipdup new` command to create a new project (ex. cookiecutter).
+- cli: `dipdup update` command to update local pipx and poetry installations.
 
 ### Fixed
 
+- cli: Commands that only print help pages no longer require a valid config.
+- codegen: Fail lately when datamodel-codegen is not available.
 - codegen: Fixed Jinja2 template caching.
+- config: Allow `dsn` field to be empty.
+- hooks: Raise a `FeatureAvailabilityHook` instead of a warning when trying to execute hooks on SQLite.
 
 ### Improved
 
 - codegen: Better cross-platform compatibility.
+
+### Performance
+
+- cli: Up to 5x decrease in startup time.
+- ci: A significant decrease in GitHub Actions CI time.
 
 ## [6.1.3] - 2022-09-21
 
@@ -58,7 +73,7 @@ and this project adheres to [Semantic Versioning].
 - ci: Build `arm64` images for M1/M2 silicon.
 - ci: Build `-slim` images based on Alpine Linux.
 - ci: Introduced official MacOS support.
-- ci: Introduced interactive installer (dipdup.net/install.py).
+- ci: Introduced interactive installer (dipdup.io/install.py).
 
 ## [6.0.1] - 2022-08-19
 

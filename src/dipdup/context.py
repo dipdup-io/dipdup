@@ -592,12 +592,8 @@ class CallbackManager:
 
     async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
         """Execute SQL included with project"""
-        if not isinstance(ctx.config.database, PostgresDatabaseConfig):
-            self._logger.warning('Skipping SQL script `%s`: not supported on SQLite', name)
-            return
-
         subpackages = name.split('.')
-        sql_path = Path.joinpath(ctx.config.package_path, 'sql', *subpackages)
+        sql_path = Path(ctx.config.package_path, 'sql', *subpackages)
         if not sql_path.exists():
             raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 

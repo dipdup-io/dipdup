@@ -53,6 +53,7 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
+from dipdup import baking_bad
 from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import BigMapSubscription
 from dipdup.datasources.subscription import EventSubscription
@@ -78,19 +79,12 @@ from dipdup.utils import snake_to_pascal
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*))?\}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
-DEFAULT_METADATA_URL = 'https://metadata.dipdup.net'
+DEFAULT_METADATA_URL = baking_bad.METADATA_API_URL
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
-KNOWN_TZKT_URLS = (
-    'https://api.tzkt.io',
-    'https://api.mainnet.tzkt.io',
-    'https://api.ghostnet.tzkt.io',
-    'https://api.jakartanet.tzkt.io',
-    'https://staging.api.tzkt.io',
-    'https://staging.api.mainnet.tzkt.io',
-)
-DEFAULT_TZKT_URL = KNOWN_TZKT_URLS[0]
+DEFAULT_TZKT_URL = next(iter(baking_bad.TZKT_API_URLS.keys()))
 DEFAULT_POSTGRES_SCHEMA = 'public'
-DEFAULT_POSTGRES_USER = DEFAULT_POSTGRES_DATABASE = 'postgres'
+DEFAULT_POSTGRES_DATABASE = 'postgres'
+DEFAULT_POSTGRES_USER = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
@@ -1245,7 +1239,7 @@ class SentryConfig:
     :param debug: Catch warning messages and more context
     """
 
-    dsn: str
+    dsn: str = ''
     environment: Optional[str] = None
     server_name: Optional[str] = None
     release: Optional[str] = None

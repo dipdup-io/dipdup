@@ -1,0 +1,46 @@
+spec_version: 1.2
+package: demo_domains
+
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+contracts:
+  name_registry:
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
+    typename: name_registry
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ~/.cache/dipdup/replays
+
+templates:
+  domains:
+    kind: operation
+    datasource: <datasource>
+    contracts:
+      - <name_registry>
+    handlers:
+      - callback: on_admin_update
+        pattern:
+          - type: transaction
+            destination: <name_registry>
+            entrypoint: admin_update
+      - callback: on_execute
+        pattern:
+          - type: transaction
+            destination: <name_registry>
+            entrypoint: execute
+    last_level: 1450852
+
+indexes:
+  domains:
+    template: domains
+    values:
+      datasource: tzkt
+      name_registry: name_registry
+
+logging: quiet

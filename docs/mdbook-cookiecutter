@@ -30,7 +30,7 @@ if __name__ == '__main__':
         if sys.argv[1] == 'supports':
             sys.exit(0)
 
-    defaults_path = Path(__file__).parent.parent / 'cookiecutter' / 'cookiecutter.json'
+    defaults_path = Path(__file__).parent / 'cookiecutter.json'
     defaults = json.loads(defaults_path.read_text())
     text = sys.stdin.read()
 

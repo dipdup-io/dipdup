@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "{{ cookiecutter.project_name }}"
+version = "{{ cookiecutter.version }}"
+description = "{{ cookiecutter.description }}"
+license = "{{ cookiecutter.license }}"
+authors = [
+    "{{ cookiecutter.author }}"
+]
+readme = "README.md"
+packages = [
+    { include = "{{ cookiecutter.package }}", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+dipdup = "^{{ cookiecutter.dipdup_version }}"
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
+flakeheaven = "*"
+isort = "*"
+mypy = "*"
+pytest = "*"
+pytest-asyncio = "*"
+
+[tool.isort]
+line_length = {{ cookiecutter.line_length }}
+force_single_line = true
+
+[tool.black]
+line-length = {{ cookiecutter.line_length }}
+target-version = ['py310']
+skip-string-normalization = true
+
+[tool.flakeheaven]
+max_line_length = {{ cookiecutter.line_length }}
+
+[tool.flakeheaven.plugins]
+"*" = ["+*"]
+pycodestyle = ["-*"]
+
+[tool.mypy]
+python_version = "3.10"
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "ruamel"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

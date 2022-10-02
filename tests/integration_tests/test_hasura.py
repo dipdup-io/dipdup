@@ -2,11 +2,9 @@ from contextlib import AsyncExitStack
 from os import environ as env
 from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import MagicMock
 
 import pytest
-from testcontainers.core.generic import DbContainer  # type: ignore
-from testcontainers.postgres import PostgresContainer  # type: ignore
+from docker.client import DockerClient  # type: ignore
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
@@ -14,6 +12,7 @@ from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import HasuraError
 from dipdup.hasura import HasuraGateway
+from dipdup.project import BaseProject
 from dipdup.utils.database import tortoise_wrapper
 
 if env.get('CI') == 'true':
@@ -24,17 +23,26 @@ class HasuraTest(IsolatedAsyncioTestCase):
     maxDiff = None
 
     async def test_configure_hasura(self) -> None:
+        project_defaults = BaseProject().get_defaults()
         config_path = Path(__file__).parent / 'hic_et_nunc.yml'
+
         config = DipDupConfig.load([config_path])
         config.initialize(skip_imports=True)
 
         async with AsyncExitStack() as stack:
-            postgres_container = PostgresContainer()
-            # NOTE: Skip healthcheck
-            postgres_container._connect = MagicMock()
-            stack.enter_context(postgres_container)
-            postgres_container._container.reload()
-            postgres_ip = postgres_container._container.attrs['NetworkSettings']['IPAddress']
+            docker = DockerClient.from_env()
+            postgres_container = docker.containers.run(
+                image=project_defaults['postgresql_image'],
+                environment={
+                    'POSTGRES_USER': 'test',
+                    'POSTGRES_PASSWORD': 'test',
+                    'POSTGRES_DB': 'test',
+                },
+                detach=True,
+                remove=True,
+            )
+            postgres_container.reload()
+            postgres_ip = postgres_container.attrs['NetworkSettings']['IPAddress']
 
             config.database = PostgresDatabaseConfig(
                 kind='postgres',
@@ -55,15 +63,16 @@ class HasuraTest(IsolatedAsyncioTestCase):
             await dipdup._set_up_hooks(set())
             await dipdup._initialize_schema()
 
-            hasura_container = DbContainer('hasura/graphql-engine:v2.10.1').with_env(
-                'HASURA_GRAPHQL_DATABASE_URL',
-                f'postgres://test:test@{postgres_ip}:5432',
+            hasura_container = docker.containers.run(
+                image=project_defaults['hasura_image'],
+                environment={
+                    'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@{postgres_ip}:5432',
+                },
+                detach=True,
+                remove=True,
             )
-            hasura_container._connect = MagicMock()
-            hasura_container._configure = MagicMock()
-            stack.enter_context(hasura_container)
-            hasura_container._container.reload()
-            hasura_ip = hasura_container._container.attrs['NetworkSettings']['IPAddress']
+            hasura_container.reload()
+            hasura_ip = hasura_container.attrs['NetworkSettings']['IPAddress']
 
             config.hasura = HasuraConfig(
                 url=f'http://{hasura_ip}:8080',
