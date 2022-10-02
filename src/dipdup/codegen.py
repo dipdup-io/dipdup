@@ -244,6 +244,7 @@ class CodeGenerator:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     async def _generate_type(self, path: Path, force: bool) -> None:
+        print(path)
         name = path.stem
         output_path = self._types_path / path.relative_to(self._schemas_path).parent / f'{pascal_to_snake(name)}.py'
         if output_path.exists() and not force:
@@ -264,14 +265,15 @@ class CodeGenerator:
                 reason='datamodel-codegen is not installed. Are you in the `-slim` Docker image? If not - run `dipdup-install`.',
             )
 
-        if path.parent.name == 'storage':
-            name = f'{path.parent.parent.name}_{name}'
-        if path.parent.name == 'parameter':
+        if path.name == 'storage.json':
+            name = f'{path.parent.name}_storage'
+        elif path.parent.name == 'parameter':
             name += '_parameter'
 
         name = snake_to_pascal(name)
         self._logger.info('Generating type `%s`', name)
         output_path.parent.mkdir(parents=True, exist_ok=True)
+        (output_path.parent / PYTHON_MARKER).touch(exist_ok=True)
         args = [
             datamodel_codegen,
             '--input',
@@ -310,7 +312,7 @@ class CodeGenerator:
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""
         self._logger.info('Cleaning up')
-        rmtree(self._schemas_path)
+        rmtree(self._schemas_path, ignore_errors=True)
 
     async def verify_package(self) -> None:
         import_submodules(self._config.package)

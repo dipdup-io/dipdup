@@ -160,15 +160,16 @@ class Project(BaseModel):
         from jinja2 import Template
 
         project_path = Path(__file__).parent / 'projects' / self.path
-        project_paths = project_path.glob('**/*')
+        project_paths = project_path.glob('**/*.j2')
 
         for path in project_paths:
-            if path.is_dir():
-                continue
-
             template_path = path.relative_to(Path(__file__).parent)
-            output_path = Path(self.answers['project_name'], path.relative_to(project_path)).as_posix().replace('.j2', '')
-            output_path = Path(Template(output_path).render(cookiecutter=self.answers))
+            output_path = Path(
+                self.answers['project_name'],
+                *path.relative_to(project_path).parts,
+                # NOTE: Remove ".j2" from extension
+            ).with_suffix(path.suffix[:-3])
+            output_path = Path(Template(str(output_path)).render(cookiecutter=self.answers))
             self._render(template_path, output_path, force)
 
     def get_defaults(self) -> dict[str, Any]:

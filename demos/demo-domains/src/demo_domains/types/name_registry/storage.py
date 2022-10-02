@@ -47,7 +47,7 @@ class Store(BaseModel):
     tzip12_tokens: Dict[str, str]
 
 
-class Storage(BaseModel):
+class NameRegistryStorage(BaseModel):
     class Config:
         extra = Extra.forbid
 

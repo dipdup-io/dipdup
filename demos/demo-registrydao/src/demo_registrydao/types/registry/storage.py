@@ -93,7 +93,7 @@ class QuorumThresholdAtCycle(BaseModel):
     staked: str
 
 
-class Storage(BaseModel):
+class RegistryStorage(BaseModel):
     class Config:
         extra = Extra.forbid
 
