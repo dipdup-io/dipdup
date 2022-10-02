@@ -8,7 +8,7 @@ from os.path import exists
 from os.path import join
 from os.path import splitext
 from shutil import rmtree
-from typing import TYPE_CHECKING
+from shutil import which
 from typing import Any
 from typing import Dict
 from typing import List
@@ -34,17 +34,14 @@ from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FeatureAvailabilityError
 from dipdup.utils import import_submodules
+from dipdup.utils import load_template
 from dipdup.utils import mkdir_p
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 from dipdup.utils import write
-
-if TYPE_CHECKING:
-    from jinja2 import Template
-
-_templates: Dict[str, 'Template'] = {}
 
 
 def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -75,18 +72,7 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
         return schema
 
 
-def load_template(name: str) -> 'Template':
-    """Load template from templates/{name}.j2"""
-    # NOTE: Lazy loading to speed up startup
-    from jinja2 import Template
-
-    if name not in _templates:
-        with open(join(dirname(__file__), 'templates', name + '.j2'), 'r') as f:
-            return Template(f.read())
-    return _templates[name]
-
-
-class DipDupCodeGenerator:
+class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
     def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, Datasource]) -> None:
@@ -113,7 +99,13 @@ class DipDupCodeGenerator:
 
         models_path = join(package_path, 'models.py')
         if not exists(models_path):
-            template = load_template('models.py')
+            template = load_template(
+                join(
+                    dirname(__file__),
+                    'templates',
+                    'models.py.j2',
+                )
+            )
             models_code = template.render()
             write(models_path, models_code)
 
@@ -228,6 +220,7 @@ class DipDupCodeGenerator:
 
     async def generate_types(self, overwrite_types: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameter, big map keys/values."""
+        datamodel_codegen = which('datamodel-codegen')
         schemas_path = join(self._config.package_path, 'schemas')
         types_path = join(self._config.package_path, 'types')
 
@@ -265,10 +258,16 @@ class DipDupCodeGenerator:
                 if root.split('/')[-1] == 'parameter':
                     name += '_parameter'
 
+                if not datamodel_codegen:
+                    raise FeatureAvailabilityError(
+                        feature='codegen',
+                        reason='datamodel-codegen is not installed. Are you in the `-slim` Docker image? If not - run `dipdup-install`.',
+                    )
+
                 name = snake_to_pascal(name)
                 self._logger.info('Generating type `%s`', name)
                 args = [
-                    'datamodel-codegen',
+                    datamodel_codegen,
                     '--input',
                     input_path,
                     '--output',
@@ -371,7 +370,13 @@ class DipDupCodeGenerator:
         callback_path = join(subpackage_path, f'{callback}.py')
         if not exists(callback_path):
             self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
-            callback_template = load_template('callback.py')
+            callback_template = load_template(
+                join(
+                    dirname(__file__),
+                    'templates',
+                    'callback.py.j2',
+                )
+            )
 
             arguments = callback_config.format_arguments()
             imports = set(callback_config.format_imports(self._config.package))

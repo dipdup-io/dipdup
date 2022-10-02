@@ -30,13 +30,13 @@ Homebase enables users to create DAO contracts. In this example indexes are spaw
 
 ## Tezos Domains (`operation`)
 
-source: [demo_tezos_domains](https://github.com/dipdup-net/dipdup/tree/master/src/demo_tezos_domains)
+source: [demo_domains](https://github.com/dipdup-net/dipdup/tree/master/src/demo_domains)
 
 Tezos Domains is a distributed naming system. You probably have seen those fancy `user.tez` names while browsing explorers. This is a pretty basic example of how to index them.
 
 ## Tezos Domains (`big_map`)
 
-source: [demo_tezos_domains_big_map](https://github.com/dipdup-net/dipdup/tree/master/src/demo_tezos_domains_big_map)
+source: [demo_domains_big_map](https://github.com/dipdup-net/dipdup/tree/master/src/demo_domains_big_map)
 
 The same as above, but uses `big_map` index instead of `operation` one. The storage structure of this contract is pretty straightforward; we only need to track a single big map. To speed up indexing more, this example contains `skip_history: once` directive to index only the current state of the contract before switching to realtime processing.
 

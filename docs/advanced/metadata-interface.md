@@ -111,8 +111,8 @@ await ctx.update_token_metadata(
 
 TzKT can be configured to subscribe to one or multiple DipDup metadata sources, currently we use in production:
 
-* Generic TZIP-16/TZIP-12 metadata indexer [Github](https://github.com/dipdup-net/metadata) | [Playground](https://dipdup.net/sandbox.html?service=metadata)
-* Tezos Domains metadata indexer [Github](https://github.com/dipdup-net/tezos-domains) | [Playground](https://dipdup.net/sandbox.html?service=domains)
-* Ubisoft Quartz metadata indexer [Github](https://github.com/dipdup-net/quartz-metadata) | [Playground](https://dipdup.net/sandbox.html?service=quartz)
+* Generic TZIP-16/TZIP-12 metadata indexer [Github](https://github.com/dipdup-net/metadata) | [Playground](https://play.dipdup.io/)
+* Tezos Domains metadata indexer [Github](https://github.com/dipdup-net/tezos-domains) | [Playground](https://play.dipdup.io/)
+* Ubisoft Quartz metadata indexer [Github](https://github.com/dipdup-net/quartz-metadata) | [Playground](https://play.dipdup.io/)
 
 ![TzKT token metadata flow](../assets/metadata_interface.svg)

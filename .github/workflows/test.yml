@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@v2
         id: cache-replays
         with:
-          path: /tmp/dipdup/replays
+          path: ~/.cache/dipdup/replays
           key: ${{ matrix.os }}-${{ matrix.arch }}-replays
           restore-keys: |
             ${{ matrix.os }}-${{ matrix.arch }}-replays
@@ -49,5 +49,6 @@ jobs:
         run: make install
       - name: Run lint
         run: make lint
+        if: contains(matrix.os, 'ubuntu') && contains(matrix.arch, 'amd64')
       - name: Run tests
         run: make test

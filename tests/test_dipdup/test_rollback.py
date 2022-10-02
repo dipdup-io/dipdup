@@ -3,8 +3,8 @@ from datetime import datetime
 from typing import List
 from unittest import IsolatedAsyncioTestCase
 
+import demo_domains.models as domains_models
 import demo_hic_et_nunc.models as hen_models
-import demo_tezos_domains.models as domains_models
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.dipdup import DipDup
@@ -167,7 +167,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
             assert model_update_levels == [1003, 1004]
 
     async def test_optionals(self) -> None:
-        config = DipDupConfig(spec_version='1.2', package='demo_tezos_domains')
+        config = DipDupConfig(spec_version='1.2', package='demo_domains')
         config.initialize()
         dipdup = DipDup(config)
         in_transaction = dipdup._transactions.in_transaction
@@ -211,7 +211,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
             assert domain.token_id is None
 
     async def test_bulk_create_update(self) -> None:
-        config = DipDupConfig(spec_version='1.2', package='demo_tezos_domains')
+        config = DipDupConfig(spec_version='1.2', package='demo_domains')
         config.initialize()
         dipdup = DipDup(config)
         in_transaction = dipdup._transactions.in_transaction
@@ -301,7 +301,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
             assert model_updates == 0
 
     async def test_update_prefetch(self) -> None:
-        config = DipDupConfig(spec_version='1.2', package='demo_tezos_domains')
+        config = DipDupConfig(spec_version='1.2', package='demo_domains')
         config.initialize()
         dipdup = DipDup(config)
         in_transaction = dipdup._transactions.in_transaction

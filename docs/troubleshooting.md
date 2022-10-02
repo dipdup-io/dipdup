@@ -11,15 +11,17 @@ If you're using Poetry, set caret version constraint in `pyproject.toml` to use 
 ```toml
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-dipdup = "^6.0.0"
+dipdup = "^{{ cookiecutter.dipdup_version }}"
 ```
 
-Run `poetry update dipdup` periodically to update to the latest version.
+pipx installations always use latest version.
+
+Run `dipdup update` periodically to update to the latest version.
 
 While building Docker images you can use `X` and `X.Y` tags to lock to specific major/minor releases:
 
 ```Dockerfile
-FROM dipdup/dipdup:6.0
+FROM dipdup/dipdup:{{ cookiecutter.dipdup_version }}
 ```
 
 ## Ensure that config is correct
