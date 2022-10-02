@@ -1,0 +1,41 @@
+spec_version: 1.2
+package: {{ cookiecutter.package }}
+
+database:
+  kind: sqlite
+  path: {{ cookiecutter.project_name }}.sqlite3
+
+contracts:
+  mainnet_name_registry:
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
+    typename: name_registry
+
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+templates:
+  domains:
+    kind: operation
+    datasource: <datasource>
+    contracts:
+      - <name_registry>
+    handlers:
+      - callback: on_admin_update
+        pattern:
+          - type: transaction
+            destination: <name_registry>
+            entrypoint: admin_update
+      - callback: on_execute
+        pattern:
+          - type: transaction
+            destination: <name_registry>
+            entrypoint: execute
+
+indexes:
+  domains_mainnet:
+    template: domains
+    values:
+      datasource: tzkt_mainnet
+      name_registry: mainnet_name_registry

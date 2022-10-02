@@ -1,0 +1,18 @@
+spec_version: 1.2
+package: demo_tzbtc_transfers
+
+database:
+  kind: sqlite
+  path: demo-tzbtc-transfers.sqlite3
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.tzkt.io
+
+indexes:
+  tzbtc_holders_mainnet:
+    kind: token_transfer
+    datasource: tzkt
+    handlers:
+      - callback: on_token_transfer

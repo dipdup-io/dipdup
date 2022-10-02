@@ -16,7 +16,7 @@ from tortoise.models import Model
 from dipdup import spec_version_mapping
 from dipdup.enums import ReindexingReason
 
-_tab = ('_' * 80) + '\n\n'
+tab = ('_' * 80) + '\n\n'
 
 
 def unindent(text: str) -> str:
@@ -91,7 +91,7 @@ class DipDupError(Exception):
         return unindent(self._help())
 
     def format(self) -> str:
-        return _tab + self.help() + '\n'
+        return tab + self.help() + '\n'
 
 
 @dataclass(repr=False)
@@ -177,7 +177,7 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
-        reindex = '\n\n' + _tab + ReindexingRequiredError(ReindexingReason.migration).help() if self.reindex else ''
+        reindex = '\n\n' + tab + ReindexingRequiredError(ReindexingReason.migration).help() if self.reindex else ''
         return f"""
             Project migration required!
 
@@ -285,7 +285,7 @@ class ContractAlreadyExistsError(DipDupError):
 
 @dataclass(repr=False)
 class IndexAlreadyExistsError(DipDupError):
-    """Attemp to add an index with an alias already in use"""
+    """Attempt to add an index with an alias already in use"""
 
     ctx: Any
     name: str
@@ -388,6 +388,24 @@ class HasuraError(DipDupError):
             If it's `400 Bad Request`, check out Hasura logs for more information.
 
             See https://docs.dipdup.io/graphql/
-            See https://docs.dipdup.io/config/hasura.html
-            See https://docs.dipdup.io/cli-reference.html#dipdup-hasura-configure
+            See https://docs.dipdup.io/config/hasura
+            See https://docs.dipdup.io/cli-reference#dipdup-hasura-configure
+        """
+
+
+@dataclass(repr=False)
+class FeatureAvailabilityError(DipDupError):
+    """Requested feature is not supported in the current environment"""
+
+    feature: str
+    reason: str
+
+    def _help(self) -> str:
+        return f"""
+            Feature `{self.feature}` is not available in the current environment.
+
+            {self.reason}
+
+            See https://docs.dipdup.io/installation
+            See https://docs.dipdup.io/advanced/docker
         """

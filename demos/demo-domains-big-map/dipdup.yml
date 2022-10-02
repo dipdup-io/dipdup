@@ -1,0 +1,36 @@
+spec_version: 1.2
+package: demo_domains_big_map
+
+database:
+  kind: sqlite
+  path: demo-domains-big-map.sqlite3
+
+contracts:
+  mainnet_name_registry:
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
+    typename: name_registry
+
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+templates:
+  domains_big_map:
+    kind: big_map
+    datasource: <datasource>
+    skip_history: once
+    handlers:
+      - callback: on_update_records
+        contract: <name_registry>
+        path: store.records
+      - callback: on_update_expiry_map
+        contract: <name_registry>
+        path: store.expiry_map
+
+indexes:
+  domains_big_map_mainnet:
+    template: domains_big_map
+    values:
+      datasource: tzkt_mainnet
+      name_registry: mainnet_name_registry

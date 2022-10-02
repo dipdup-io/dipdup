@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  dipdup:
+    build: .
+    depends_on:
+      - db
+    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+    ports:
+      - 127.0.0.1:9000:9000
+
+  db:
+    image: {{ cookiecutter.postgresql_image }}
+    ports:
+      - 127.0.0.1:5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+    restart: always
+    environment:
+      - POSTGRES_USER=dipdup
+      - POSTGRES_DB=dipdup
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dipdup"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hasura:
+    image: {{ cookiecutter.hasura_image }}
+    ports:
+      - 127.0.0.1:8080:8080
+    depends_on:
+      - db
+    restart: always
+    environment:
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=true
+      - HASURA_GRAPHQL_DEV_MODE=true
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET:-changeme}
+      - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
+      - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
+
+volumes:
+  db:

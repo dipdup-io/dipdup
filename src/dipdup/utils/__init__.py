@@ -1,10 +1,13 @@
 import importlib
 import logging
+import os
 import pkgutil
+import subprocess
 import types
 from collections import defaultdict
 from contextlib import suppress
 from decimal import Decimal
+from functools import cache
 from functools import partial
 from functools import reduce
 from logging import Logger
@@ -13,7 +16,10 @@ from os import makedirs
 from os.path import dirname
 from os.path import exists
 from os.path import getsize
+from os.path import isdir
+from os.path import isfile
 from os.path import join
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import DefaultDict
@@ -28,11 +34,12 @@ from typing import Union
 from typing import cast
 
 import orjson
-from genericpath import isdir
-from genericpath import isfile
 from humps import main as humps
 
 from dipdup.exceptions import ProjectImportError
+
+if TYPE_CHECKING:
+    from jinja2 import Template
 
 _logger = logging.getLogger('dipdup.utils')
 
@@ -132,7 +139,7 @@ def mkdir_p(path: str) -> None:
     """Create directory tree, ignore if already exists"""
     if not exists(path):
         _logger.info('Creating directory `%s`', path)
-        makedirs(path)
+        makedirs(path, exist_ok=True)
 
 
 def touch(path: str) -> None:
@@ -189,3 +196,31 @@ def _dumps_default(obj):
 
 def json_dumps(obj):
     return orjson.dumps(obj, default=_dumps_default).decode()
+
+
+def run(*args, **kwargs):
+    return subprocess.run(
+        *args,
+        **kwargs,
+        check=True,
+        shell=True,
+    )
+
+
+@cache
+def load_template(name: str) -> 'Template':
+    """Load template from relative project path"""
+    from jinja2 import Template
+
+    path = join(
+        dirname(__file__),
+        '..',
+        'templates',
+        *os.sep.split(name)[1:],
+        name,
+    )
+    if not exists(path):
+        raise RuntimeError(f'Template `{name}` not found at `{path}`')
+
+    with open(path) as f:
+        return Template(f.read())

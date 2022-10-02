@@ -15,7 +15,7 @@ TAG=latest
 help:           ## Show this help (default)
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-all:            ## Run a whole CI pipeline: lint, run tests, build docs
+all:            ## Run a whole CI pipeline: formatters, linters and tests
 	make install lint test docs
 
 install:        ## Install project dependencies
@@ -30,6 +30,7 @@ test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto --dist loadscope -s -v tests
 
 docs:           ## Build docs
+	scripts/update_cookiecutter.py
 	cd docs
 	make -s clean docs markdownlint orphans || true
 
@@ -70,16 +71,19 @@ image-slim:     ## Build slim Docker image
 ##
 
 release-patch:  ## Release patch version
+	make update all build image
 	bumpversion patch
 	git push --tags
 	git push
 
 release-minor:  ## Release minor version
+	make update all build image
 	bumpversion minor
 	git push --tags
 	git push
 
 release-major:  ## Release major version
+	make update all build image
 	bumpversion major
 	git push --tags
 	git push
@@ -89,14 +93,13 @@ release-major:  ## Release major version
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 
-update:         ## Update dependencies, export requirements.txt (wait an eternity)
+update:         ## Update dependencies, export requirements.txt
 	make install
 	poetry update
 
 	cp pyproject.toml pyproject.toml.bak
 	cp poetry.lock poetry.lock.bak
 
-	# NOTE: 1.2.0 spells
 	poetry export --without-hashes -o requirements.txt
 	poetry export --without-hashes -o requirements.pytezos.txt -E pytezos
 	poetry export --without-hashes -o requirements.dev.txt --with dev
@@ -108,6 +111,10 @@ update:         ## Update dependencies, export requirements.txt (wait an eternit
 
 	make install
 
-	scripts/update_demos.sh
+scripts:
+	python scripts/update_cookiecutter.py
+	python scripts/update_demos.py
+	make lint
 
+##
 ##

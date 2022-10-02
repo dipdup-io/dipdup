@@ -9,10 +9,10 @@ from shutil import rmtree
 import pytest
 from tortoise.transactions import in_transaction
 
+import demo_domains.models
+import demo_domains_big_map.models
 import demo_hic_et_nunc.models
 import demo_quipuswap.models
-import demo_tezos_domains.models
-import demo_tezos_domains_big_map.models
 import demo_tzbtc.models
 import demo_tzbtc_transfers.models
 import demo_tzcolors.models
@@ -78,22 +78,22 @@ class TestDemos:
             assert auctions == 14
             assert bids == 44
 
-    async def test_tezos_domains(self) -> None:
-        self.run_dipdup('tezos_domains.yml')
+    async def test_domains(self) -> None:
+        self.run_dipdup('domains.yml')
 
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tezos_domains.models'):
-            tlds = await demo_tezos_domains.models.TLD.filter().count()
-            domains = await demo_tezos_domains.models.Domain.filter().count()
+        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_domains.models'):
+            tlds = await demo_domains.models.TLD.filter().count()
+            domains = await demo_domains.models.Domain.filter().count()
 
             assert tlds == 1
             assert domains == 145
 
-    async def test_tezos_domains_big_map(self) -> None:
-        self.run_dipdup('tezos_domains_big_map.yml')
+    async def test_domains_big_map(self) -> None:
+        self.run_dipdup('domains_big_map.yml')
 
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tezos_domains_big_map.models'):
-            tlds = await demo_tezos_domains_big_map.models.TLD.filter().count()
-            domains = await demo_tezos_domains_big_map.models.Domain.filter().count()
+        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_domains_big_map.models'):
+            tlds = await demo_domains_big_map.models.TLD.filter().count()
+            domains = await demo_domains_big_map.models.Domain.filter().count()
 
             assert tlds == 1
             assert domains == 145

@@ -1,0 +1,96 @@
+version: "3.8"
+
+services:
+  dipdup:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-net/dipdup:${TAG:-master}
+    depends_on:
+      - db
+      - hasura
+    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
+    environment:
+      - "POSTGRES_USER=dipdup"
+      - "POSTGRES_PASSWORD=changeme"
+      - "POSTGRES_DB=dipdup"
+      - "HASURA_SECRET=changeme"
+    networks:
+      - dipdup-private
+      - prometheus-private
+    deploy:
+      mode: replicated
+      replicas: ${INDEXER_ENABLED:-1}
+      labels:
+        - prometheus-job=${SERVICE}
+        - prometheus-port=8000
+      placement: &placement
+        constraints:
+          - node.labels.${SERVICE} == true
+    logging: &logging
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+        tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
+
+  db:
+    image: {{ cookiecutter.postgresql_image }}
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment: 
+      - POSTGRES_USER=dipdup
+      - POSTGRES_DB=dipdup
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dipdup-private
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement: *placement
+    logging: *logging
+
+  hasura:
+    image: {{ cookiecutter.hasura_image }}
+    depends_on:
+      - db
+    environment:
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=true
+      - HASURA_GRAPHQL_DEV_MODE=false
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log
+      - HASURA_GRAPHQL_LOG_LEVEL=warn
+      - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
+      - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
+      - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
+    networks:
+      - dipdup-private
+      - traefik-public
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.${SERVICE}.loadbalancer.server.port=8080
+        - "traefik.http.routers.${SERVICE}.rule=Host(`${HOST}`) && (PathPrefix(`/v1/graphql`) || PathPrefix(`/api/rest`))"
+        - traefik.http.routers.${SERVICE}.entrypoints=http,${INGRESS:-ingress}
+        - "traefik.http.routers.${SERVICE}-console.rule=Host(`${SERVICE}.${SWARM_ROOT_DOMAIN}`)"
+        - traefik.http.routers.${SERVICE}-console.entrypoints=https
+        - traefik.http.middlewares.${SERVICE}-console.headers.customrequestheaders.X-Hasura-Admin-Secret=${HASURA_SECRET}
+        - traefik.http.routers.${SERVICE}-console.middlewares=authelia@docker,${SERVICE}-console
+      placement: *placement
+    logging: *logging
+
+
+volumes:
+  db:
+
+networks:
+  dipdup-private:
+  traefik-public:
+    external: true
+  prometheus-private:
+    external: true

@@ -38,13 +38,13 @@ FROM ghcr.io/dipdup-net/dipdup:aux-arm64-slim
 Start with creating `.dockerignore` for your project if it's missing.
 
 ```text
-{{ #include ../../cookiecutter/root/.dockerignore }}
+{{ #include ../../src/dipdup/projects/base/.dockerignore.j2 }}
 ```
 
 A typical Dockerfile looks like this:
 
 ```Dockerfile
-{{ #include ../../cookiecutter/root/Dockerfile }}
+{{ #include ../../src/dipdup/projects/base/Dockerfile.j2 }}
 ```
 
 Note that Poetry integration is not available in the slim image.
@@ -56,7 +56,7 @@ Make sure you have [docker](https://docs.docker.com/get-docker/) run and [docker
 Example `docker-compose.yml` file:
 
 ```yaml
-{{ #include ../../cookiecutter/root/docker-compose.yml }}
+{{ #include ../../src/dipdup/projects/base/docker-compose.yml.j2 }}
 ```
 
 Environment variables are expanded in the DipDup config file; Postgres password and Hasura secret are forwarded in this example.
@@ -64,7 +64,7 @@ Environment variables are expanded in the DipDup config file; Postgres password 
 Create a separate `dipdup.<environment>.yml` file for this stack:
 
 ```yaml
-{{ #include ../../cookiecutter/root/dipdup.prod.yml }}
+{{ #include ../../src/dipdup/projects/base/dipdup.prod.yml.j2 }}
 ```
 
 Note the hostnames (resolved in the docker network) and environment variables (expanded by DipDup).
@@ -86,5 +86,5 @@ We recommend [lazydocker](https://github.com/jesseduffield/lazydocker) for monit
 Example stack:
 
 ```yaml
-{{ #include ../../cookiecutter/root/docker-compose.swarm.yml }}
+{{ #include ../../src/dipdup/projects/base/docker-compose.swarm.yml.j2 }}
 ```

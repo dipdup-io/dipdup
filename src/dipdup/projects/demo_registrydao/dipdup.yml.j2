@@ -1,0 +1,48 @@
+spec_version: 1.2
+package: {{ cookiecutter.package }}
+
+database:
+  kind: sqlite
+  path: {{ cookiecutter.project_name }}.sqlite3
+
+contracts:
+  registry:
+    address: KT19CF3KKrvdW77ttFomCuin2k4uAVkryYqh
+    typename: registry
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+templates:
+  registry_dao:
+    kind: operation
+    datasource: tzkt
+    types:
+      - transaction
+      - origination
+    contracts:
+      - <contract>
+    handlers:
+      - callback: on_origination
+        pattern:
+          - type: origination
+            originated_contract: <contract>
+      - callback: on_propose
+        pattern:
+          - type: transaction
+            destination: <contract>
+            entrypoint: propose
+
+indexes:
+  factory:
+    kind: operation
+    datasource: tzkt
+    types:
+      - origination
+    handlers:
+        - callback: on_factory_origination
+          pattern:
+            - type: origination
+              similar_to: registry

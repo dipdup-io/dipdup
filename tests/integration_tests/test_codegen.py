@@ -12,7 +12,7 @@ configs = [
     'hic_et_nunc',
     'quipuswap',
     'tzcolors',
-    'tezos_domains_big_map',
+    'domains_big_map',
     'registrydao',
 ]
 
