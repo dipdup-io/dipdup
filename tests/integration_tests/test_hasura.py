@@ -89,5 +89,5 @@ class HasuraTest(IsolatedAsyncioTestCase):
 
                 await hasura_gateway.configure(force=True)
             except HasuraError:
-                dipdup._ctx.logger.info(hasura_container.get_logs())
+                dipdup._ctx.logger.info(hasura_container.logs())
                 raise

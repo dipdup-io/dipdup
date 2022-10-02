@@ -244,7 +244,6 @@ class CodeGenerator:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     async def _generate_type(self, path: Path, force: bool) -> None:
-        print(path)
         name = path.stem
         output_path = self._types_path / path.relative_to(self._schemas_path).parent / f'{pascal_to_snake(name)}.py'
         if output_path.exists() and not force:
@@ -293,8 +292,13 @@ class CodeGenerator:
         self._logger.info('Creating `types` package')
         touch(self._types_path / PYTHON_MARKER)
 
-        for path in self._schemas_path.glob('**/*.json'):
-            await self._generate_type(path, overwrite_types)
+        for path in self._schemas_path.glob('**/*'):
+            if path.is_dir():
+                touch(path / PYTHON_MARKER)
+            elif path.name.endswith('.json'):
+                await self._generate_type(path, overwrite_types)
+            else:
+                self._logger.warning('Skipping `%s`', path)
 
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
