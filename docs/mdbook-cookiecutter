@@ -12,7 +12,7 @@ def _preprocess_content(text: str, defaults: dict[str, str]) -> str:
         value = defaults[path]
         if isinstance(value, list):
             value = value[0]
-        text = re.sub(COOKIECUTTER_REGEX, value, text, count=1)
+        text = re.sub(COOKIECUTTER_REGEX, str(value), text, count=1)
 
     return text
 

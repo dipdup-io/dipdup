@@ -118,17 +118,16 @@ class CodeGenerator:
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
         touch(self._path / PYTHON_MARKER)
+        touch(self._types_path / PYTHON_MARKER)
+        touch(self._handlers_path / PYTHON_MARKER)
+        touch(self._hooks_path / PYTHON_MARKER)
+        touch(self._sql_path / KEEP_MARKER)
+        touch(self._graphql_path / KEEP_MARKER)
 
         if not self._models_path.is_file():
             template = load_template('templates', f'{MODELS_MODULE}.j2')
             models_code = template.render()
             write(self._models_path, models_code)
-
-        touch(self._models_path)
-        touch(self._handlers_path / PYTHON_MARKER)
-        touch(self._hooks_path / PYTHON_MARKER)
-        touch(self._sql_path / KEEP_MARKER)
-        touch(self._graphql_path / KEEP_MARKER)
 
     async def _fetch_operation_pattern_schema(
         self,
