@@ -195,10 +195,11 @@ class BaseProject(Project):
         ChoiceQuestion(
             name='template',
             description=('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n'),
-            default=0,
+            default=6,
             choices=(
                 'demo_domains',
                 'demo_domains_big_map',
+                'demo_events',
                 'demo_hic_et_nunc',
                 'demo_quipuswap',
                 'demo_registrydao',
@@ -210,6 +211,7 @@ class BaseProject(Project):
             comments=(
                 'Tezos Domains name service',
                 'Tezos Domains name service (big maps only)',
+                'Example index for contract events (new in Kathmandu)',
                 'hic at nunc NFT marketplace',
                 'Quipuswap DEX balances and liquidity',
                 'Homebase DAO registry (index factory)',

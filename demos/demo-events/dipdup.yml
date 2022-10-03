@@ -1,0 +1,28 @@
+spec_version: 1.2
+package: demo_events
+
+database:
+  kind: sqlite
+  path: demo-events.sqlite3
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.kathmandunet.tzkt.io/
+
+contracts:
+  event_emitter:
+    address: KT1F3Ai1GV6HXA7mzV8BZiPS9NEtDrRn9odn
+
+indexes:
+  events:
+    kind: event
+    datasource: tzkt
+    handlers:
+      - callback: on_xrate
+        contract: event_emitter
+        tag: xrate
+      - callback: on_unknown
+        contract: event_emitter
+
+logging: verbose
