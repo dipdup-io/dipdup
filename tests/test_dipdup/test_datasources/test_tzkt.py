@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock
 import orjson as json
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.exceptions import InvalidRequestError
 from dipdup.models import OperationData

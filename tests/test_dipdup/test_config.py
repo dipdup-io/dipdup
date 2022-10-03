@@ -9,8 +9,8 @@ from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import TzktDatasourceConfig
-from dipdup.datasources.subscription import OriginationSubscription
-from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.datasources.tzkt.models import OriginationSubscription
+from dipdup.datasources.tzkt.models import TransactionSubscription
 from dipdup.enums import OperationType
 from dipdup.exceptions import ConfigurationError
 
