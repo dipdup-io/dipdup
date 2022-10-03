@@ -1129,13 +1129,65 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
+class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
+    contract: Union[str, ContractConfig]
+
+    @cached_property
+    def contract_config(self) -> ContractConfig:
+        if not isinstance(self.contract, ContractConfig):
+            raise ConfigInitializationException
+        return self.contract
+
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'EventData'
+        yield package, 'models as models'
+
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'event', 'EventData'
+
+
+EventHandlerConfigT = Union[
+    EventHandlerConfig,
+    UnknownEventHandlerConfig,
+]
+
+
+@dataclass
 class EventIndexConfig(IndexConfig):
     kind: Literal['event']
     datasource: Union[str, TzktDatasourceConfig]
-    handlers: Tuple[EventHandlerConfig, ...] = field(default_factory=tuple)
+    handlers: Tuple[EventHandlerConfigT, ...] = field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0
+
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        self._by_contract: dict[ContractConfig, list[EventHandlerConfigT]] = defaultdict(list)
+        for handler_config in self.handlers:
+            self._by_contract[handler_config.contract_config].append(handler_config)
+
+    @cached_property
+    def known_tags(self) -> dict[str, set[str]]:
+        tags: dict[str, set[str]] = defaultdict(set)
+        for handler_config in self.handlers:
+            if not isinstance(handler_config, EventHandlerConfig):
+                continue
+            tags[handler_config.contract_config.address].add(handler_config.tag)
+        return tags
+
+    @cached_property
+    def fallback_handlers(self) -> dict[str, UnknownEventHandlerConfig]:
+        handlers: dict[str, UnknownEventHandlerConfig] = {}
+        for handler_config in self.handlers:
+            if not isinstance(handler_config, UnknownEventHandlerConfig):
+                continue
+            if address := handler_config.contract_config.address:
+                raise ConfigurationError(f'Only one fallback handler is allowed for contract `{address}`')
+            handlers[address] = handler_config
+        return handlers
 
 
 ResolvedIndexConfigT = Union[
@@ -1673,8 +1725,8 @@ class DipDupConfig:
                 index_config.subscriptions.add(EventSubscription())
             else:
                 for event_handler_config in index_config.handlers:
-                    address, tag = event_handler_config.contract_config.address, event_handler_config.tag
-                    index_config.subscriptions.add(EventSubscription(address=address, tag=tag))
+                    address = event_handler_config.contract_config.address
+                    index_config.subscriptions.add(EventSubscription(address))
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1793,4 +1845,5 @@ class DipDupConfig:
 
         elif isinstance(index_config, EventIndexConfig):
             for event_handler_config in index_config.handlers:
-                event_handler_config.initialize_event_type(self.package)
+                if isinstance(event_handler_config, EventHandlerConfig):
+                    event_handler_config.initialize_event_type(self.package)

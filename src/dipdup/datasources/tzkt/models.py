@@ -16,13 +16,12 @@ from typing import cast
 
 from pydantic import BaseModel
 from pydantic import Extra
-from pydantic.error_wrappers import ValidationError
 from typing_extensions import get_args
 from typing_extensions import get_origin
 
-from dipdup.exceptions import InvalidDataError
 from dipdup.models import OperationData
 from dipdup.models import StorageType
+from dipdup.utils.codegen import parse_object
 
 IntrospectionError = (KeyError, IndexError, AttributeError)
 
@@ -191,12 +190,4 @@ def deserialize_storage(operation_data: OperationData, storage_type: Type[Storag
         storage_type=storage_type,
         bigmap_diffs=bigmap_diffs,
     )
-
-    try:
-        return storage_type.parse_obj(operation_data.storage)
-    except ValidationError as e:
-        raise InvalidDataError(
-            type_cls=storage_type,
-            data=operation_data.storage,
-            parsed_object=operation_data,
-        ) from e
+    return parse_object(storage_type, operation_data.storage)

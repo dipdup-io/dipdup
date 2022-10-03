@@ -941,12 +941,10 @@ class TzktDatasource(IndexDatasource):
 
         elif isinstance(subscription, EventSubscription):
             method = 'SubscribeToEvents'
-            if subscription.address and subscription.tag:
-                request = [{'address': subscription.address, 'tag': subscription.tag}]
-            elif not subscription.address and not subscription.tag:
-                request = [{}]
+            if subscription.address:
+                request = [{'address': subscription.address}]
             else:
-                raise RuntimeError
+                request = [{}]
 
         else:
             raise NotImplementedError

@@ -250,10 +250,24 @@ class EventData:
     transaction_id: Optional[int] = None
 
 
+class UnknownEventReason(Enum):
+    """Reason for event to be unknown"""
+
+    tag = 'tag'
+    payload = 'payload'
+
+
 @dataclass
 class Event(Generic[EventType]):
     data: EventData
     payload: EventType
+
+
+@dataclass
+class UnknownEvent:
+    data: EventData
+    payload: dict[str, Any]
+    reason: UnknownEventReason
 
 
 # ===> Model Versioning

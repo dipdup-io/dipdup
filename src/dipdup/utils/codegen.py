@@ -2,13 +2,20 @@ import logging
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Type
+from typing import TypeVar
 from typing import Union
+
+from pydantic import BaseModel
+from pydantic import ValidationError
+
+from dipdup.exceptions import InvalidDataError
 
 if TYPE_CHECKING:
     from jinja2 import Template
 
-_logger = logging.getLogger('dipdup.utils')
-_templates: dict[Path, 'Template'] = {}
+_logger = logging.getLogger('dipdup.codegen')
 
 
 def touch(path: Path) -> None:
@@ -45,3 +52,14 @@ def load_template(*path: str) -> 'Template':
 
     full_path = Path(__file__).parent.parent.joinpath(*path)
     return Template(full_path.read_text())
+
+
+ObjectT = TypeVar('ObjectT', bound=BaseModel)
+
+
+def parse_object(type_: Type[ObjectT], data: Any) -> ObjectT:
+    try:
+        return type_.parse_obj(data)
+    except ValidationError as e:
+        msg = f'Failed to parse: {e.errors()}'
+        raise InvalidDataError(msg, type_, data) from e

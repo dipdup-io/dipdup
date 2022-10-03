@@ -35,6 +35,7 @@ from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
+from dipdup.config import UnknownEventHandlerConfig
 from dipdup.config import event_hooks
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -206,10 +207,15 @@ class CodeGenerator:
 
     async def _fetch_event_index_schema(self, index_config: EventIndexConfig) -> None:
         for handler_config in index_config.handlers:
+            if isinstance(handler_config, UnknownEventHandlerConfig):
+                continue
+
             contract_config = handler_config.contract_config
-
-            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
-
+            contract_schemas = await self._get_schema(
+                index_config.datasource_config,
+                contract_config,
+                False,
+            )
             contract_schemas_path = self._schemas_path / contract_config.module_name
             event_schemas_path = contract_schemas_path / 'event'
 
@@ -217,6 +223,7 @@ class CodeGenerator:
                 event_schema = next(ep for ep in contract_schemas['events'] if ep['tag'] == handler_config.tag)
             except StopIteration as e:
                 raise ConfigurationError(f'Contract `{contract_config.address}` has no event with tag `{handler_config.tag}`') from e
+
             event_tag = handler_config.tag.replace('.', '_')
             event_schema = event_schema['eventSchema']
             event_schema_path = event_schemas_path / f'{event_tag}.json'

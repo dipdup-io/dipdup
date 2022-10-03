@@ -3,6 +3,8 @@ from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
 from contextlib import ExitStack
+from contextlib import suppress
+from copy import copy
 from datetime import datetime
 from typing import DefaultDict
 from typing import Deque
@@ -18,13 +20,13 @@ from typing import Union
 from typing import cast
 
 from pydantic.dataclasses import dataclass
-from pydantic.error_wrappers import ValidationError
 
 import dipdup.models as models
 from dipdup.config import BigMapHandlerConfig
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import EventHandlerConfig
+from dipdup.config import EventHandlerConfigT
 from dipdup.config import EventIndexConfig
 from dipdup.config import HeadHandlerConfig
 from dipdup.config import HeadIndexConfig
@@ -38,6 +40,7 @@ from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import SkipHistory
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
+from dipdup.config import UnknownEventHandlerConfig
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
@@ -61,8 +64,11 @@ from dipdup.models import OperationData
 from dipdup.models import Origination
 from dipdup.models import TokenTransferData
 from dipdup.models import Transaction
+from dipdup.models import UnknownEvent
+from dipdup.models import UnknownEventReason
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
+from dipdup.utils.codegen import parse_object
 
 _logger = logging.getLogger(__name__)
 
@@ -84,7 +90,10 @@ Operations = Tuple[OperationData, ...]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
 MatchedOperationsT = Tuple[OperationSubgroup, OperationHandlerConfig, Deque[OperationHandlerArgumentT]]
 MatchedBigMapsT = Tuple[BigMapHandlerConfig, BigMapDiff]
-MatchedEventsT = Tuple[EventHandlerConfig, Event]
+MatchedEventsT = Union[
+    Tuple[EventHandlerConfig, Event],
+    Tuple[UnknownEventHandlerConfig, UnknownEvent],
+]
 
 
 def extract_operation_subgroups(
@@ -507,11 +516,8 @@ class OperationIndex(Index):
                     args.append(operation_data)
                     continue
 
-                parameter_type = pattern_config.parameter_type_cls
-                try:
-                    parameter = parameter_type.parse_obj(operation_data.parameter_json) if parameter_type else None
-                except ValidationError as e:
-                    raise InvalidDataError(parameter_type, operation_data.parameter_json, operation_data) from e
+                type_ = pattern_config.parameter_type_cls
+                parameter = parse_object(type_, operation_data.parameter_json) if type_ else None
 
                 storage_type = pattern_config.storage_type_cls
                 storage = deserialize_storage(operation_data, storage_type)
@@ -745,24 +751,16 @@ class BigMapIndex(Index):
     ) -> BigMapDiff:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
-        if not handler_config.parent:
-            raise ConfigInitializationException
 
         if matched_big_map.action.has_key:
-            key_type = handler_config.key_type_cls
-            try:
-                key = key_type.parse_obj(matched_big_map.key)
-            except ValidationError as e:
-                raise InvalidDataError(key_type, matched_big_map.key, matched_big_map) from e
+            type_ = handler_config.key_type_cls
+            key = parse_object(type_, matched_big_map.key) if type_ else None
         else:
             key = None
 
         if matched_big_map.action.has_value:
-            value_type = handler_config.value_type_cls
-            try:
-                value = value_type.parse_obj(matched_big_map.value)
-            except ValidationError as e:
-                raise InvalidDataError(value_type, matched_big_map.key, matched_big_map) from e
+            type_ = handler_config.value_type_cls
+            value = parse_object(type_, matched_big_map.value) if type_ else None
         else:
             value = None
 
@@ -1096,13 +1094,13 @@ class EventIndex(Index):
             return
 
         async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
-            for handler_config, event_diff in matched_handlers:
-                await self._call_matched_handler(handler_config, event_diff)
+            for handler_config, event in matched_handlers:
+                await self._call_matched_handler(handler_config, event)
             await self.state.update_status(level=batch_level)
 
-    async def _match_event(self, handler_config: EventHandlerConfig, event: EventData) -> bool:
+    async def _match_event(self, handler_config: EventHandlerConfigT, event: EventData) -> bool:
         """Match single contract event with pattern"""
-        if handler_config.tag != event.tag:
+        if isinstance(handler_config, EventHandlerConfig) and handler_config.tag != event.tag:
             return False
         if handler_config.contract_config.address != event.contract_address:
             return False
@@ -1110,39 +1108,50 @@ class EventIndex(Index):
 
     async def _prepare_handler_args(
         self,
-        handler_config: EventHandlerConfig,
+        handler_config: EventHandlerConfigT,
         matched_event: EventData,
-    ) -> Event:
+    ) -> Event | UnknownEvent | None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
-        if not handler_config.parent:
-            raise ConfigInitializationException
 
-        event_type = handler_config.event_type_cls
-        try:
-            payload = event_type.parse_obj(matched_event.payload)
-        except ValidationError as e:
-            raise InvalidDataError(event_type, matched_event.payload, matched_event) from e
+        if isinstance(handler_config, UnknownEventHandlerConfig):
+            return UnknownEvent(
+                data=matched_event,
+                payload=matched_event.payload,
+                reason=UnknownEventReason.tag,
+            )
 
-        return Event(
-            data=matched_event,
-            payload=payload,
-        )
+        with suppress(InvalidDataError):
+            type_ = handler_config.event_type_cls
+            payload = parse_object(type_, matched_event.payload)
+            return Event(
+                data=matched_event,
+                payload=payload,
+            )
+
+        return None
 
     async def _match_events(self, events: Iterable[EventData]) -> Deque[MatchedEventsT]:
-        """Try to match contract events in cache with all patterns from indexes."""
+        """Try to match contract events with all index handlers."""
         matched_handlers: Deque[MatchedEventsT] = deque()
+        events = deque(events)
 
         for handler_config in self._config.handlers:
-            for event in events:
-                event_matched = await self._match_event(handler_config, event)
-                if event_matched:
-                    arg = await self._prepare_handler_args(handler_config, event)
-                    matched_handlers.append((handler_config, arg))
+            # NOTE: Matched events are dropped after processing
+            for event in copy(events):
+                if not await self._match_event(handler_config, event):
+                    continue
+
+                arg = await self._prepare_handler_args(handler_config, event)
+                matched_handlers.append((handler_config, arg))  # type: ignore
+                events.remove(event)
 
         return matched_handlers
 
-    async def _call_matched_handler(self, handler_config: EventHandlerConfig, event: Event) -> None:
+    async def _call_matched_handler(self, handler_config: EventHandlerConfigT, event: Event | UnknownEvent):
+        if isinstance(handler_config, EventHandlerConfig) != isinstance(event, Event):
+            raise RuntimeError(f'Invalid handler config and event types: {handler_config}, {event}')
+
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -1165,5 +1174,6 @@ class EventIndex(Index):
         """Get tags to fetch events during initial synchronization"""
         paths = set()
         for handler_config in self._config.handlers:
-            paths.add(handler_config.tag)
+            if isinstance(handler_config, EventHandlerConfig):
+                paths.add(handler_config.tag)
         return paths

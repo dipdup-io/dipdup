@@ -46,7 +46,6 @@ class TokenTransferSubscription(Subscription):
 class EventSubscription(Subscription):
     type: str = 'event'
     address: Optional[str] = None
-    tag: Optional[str] = None
 
 
 class SubscriptionManager:

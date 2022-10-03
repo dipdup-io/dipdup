@@ -308,23 +308,19 @@ class IndexAlreadyExistsError(DipDupError):
 class InvalidDataError(DipDupError):
     """Failed to validate datasource message against generated type class"""
 
-    type_cls: Type[Any]
+    msg: str
+    type_: Type[Any]
     data: Any
-    parsed_object: Any
 
     def _help(self) -> str:
 
         return f"""
             Failed to validate datasource message against generated type class.
 
-            Expected type:
-            `{self.type_cls.__name__}`
+              {self.msg}
 
-            Invalid data:
-            {self.data}
-
-            Parsed object:
-            {self.parsed_object}
+            Type class: `{self.type_.__name__}`
+            Data: `{self.data}`
         """
 
 
