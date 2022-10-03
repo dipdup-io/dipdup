@@ -286,6 +286,8 @@ class CodeGenerator:
             class_name = f'{schema_path.parent.name}_storage'
         elif schema_path.parent.name == 'parameter':
             class_name = f'{module_name}_parameter'
+        elif schema_path.parent.name == 'event':
+            class_name = f'{module_name}_payload'
         else:
             class_name = module_name
 

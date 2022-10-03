@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from pydantic import Extra
 
 
-class Xrate(BaseModel):
+class XratePayload(BaseModel):
     class Config:
         extra = Extra.forbid
 

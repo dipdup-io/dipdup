@@ -1,4 +1,5 @@
 from tortoise import fields
+
 from dipdup.models import Model
 
 

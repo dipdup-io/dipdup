@@ -1119,14 +1119,15 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
         yield 'dipdup.models', 'Event'
         yield package, 'models as models'
 
-        event_cls = snake_to_pascal(self.tag)
+        event_cls = snake_to_pascal(self.tag + '_payload')
         event_module = pascal_to_snake(self.tag)
         module_name = self.contract_config.module_name
         yield f'{package}.types.{module_name}.event.{event_module}', event_cls
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        event_cls = snake_to_pascal(self.tag + '_payload')
         yield 'ctx', 'HandlerContext'
-        yield 'event', f'Event[{snake_to_pascal(self.tag)}]'
+        yield 'event', f'Event[{event_cls}]'
 
 
 @dataclass
