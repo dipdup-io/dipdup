@@ -37,10 +37,6 @@ input#searchbar, input#searchbar:focus {
     width: 5px;
 }
 
-*::-webkit-scrollbar-track {
-    background: var(--sidebar-bg);
-}
-
 *::-webkit-scrollbar-thumb {
     background-color: var(--sidebar-fg);
     border-radius: 20px;
