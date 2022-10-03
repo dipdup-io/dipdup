@@ -211,7 +211,7 @@ class _HTTPGateway:
         if not self._config.replay_path:
             raise RuntimeError('Replay path is not set')
 
-        replay_path = Path(self._config.replay_path)
+        replay_path = Path(self._config.replay_path).expanduser()
         replay_path.mkdir(parents=True, exist_ok=True)
 
         request_hash = hashlib.sha256(
