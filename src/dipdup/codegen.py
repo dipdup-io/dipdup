@@ -225,7 +225,7 @@ class CodeGenerator:
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
-        self._logger.info('Creating `schemas` directory')
+        self._logger.info('Fetching contract schemas')
 
         for index_config in self._config.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
@@ -243,10 +243,22 @@ class CodeGenerator:
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-    async def _generate_type(self, path: Path, force: bool) -> None:
-        name = path.stem
-        output_path = self._types_path / path.relative_to(self._schemas_path).parent / f'{pascal_to_snake(name)}.py'
+    async def _generate_type(self, schema_path: Path, force: bool) -> None:
+        rel_path = schema_path.relative_to(self._schemas_path)
+        type_pkg_path = self._types_path / rel_path
+
+        if schema_path.is_dir():
+            touch(type_pkg_path / PYTHON_MARKER)
+            return
+
+        if not schema_path.name.endswith('.json'):
+            self._logger.warning('Skipping `%s`: not a JSON', schema_path)
+            return
+
+        module_name = schema_path.stem
+        output_path = type_pkg_path.parent / f'{pascal_to_snake(module_name)}.py'
         if output_path.exists() and not force:
+            self._logger.info('Skipping `%s`: type already exists', schema_path)
             return
 
         # NOTE: Skip if the first line starts with "# dipdup: ignore"
@@ -254,7 +266,7 @@ class CodeGenerator:
             with open(output_path) as type_file:
                 first_line = type_file.readline()
                 if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
-                    self._logger.info('Skipping `%s`', output_path)
+                    self._logger.info('Skipping `%s`: "# dipdup: ignore" marker found', output_path)
                     return
 
         datamodel_codegen = which('datamodel-codegen')
@@ -264,23 +276,26 @@ class CodeGenerator:
                 reason='datamodel-codegen is not installed. Are you in the `-slim` Docker image? If not - run `dipdup-install`.',
             )
 
-        if path.name == 'storage.json':
-            name = f'{path.parent.name}_storage'
-        elif path.parent.name == 'parameter':
-            name += '_parameter'
+        if schema_path.name == 'storage.json':
+            class_name = f'{schema_path.parent.name}_storage'
+        elif schema_path.parent.name == 'parameter':
+            class_name = f'{module_name}_parameter'
+        else:
+            class_name = module_name
 
-        name = snake_to_pascal(name)
-        self._logger.info('Generating type `%s`', name)
+        class_name = snake_to_pascal(class_name).lstrip('_')
+
+        self._logger.info('Generating type `%s`', class_name)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         (output_path.parent / PYTHON_MARKER).touch(exist_ok=True)
         args = [
             datamodel_codegen,
             '--input',
-            str(path),
+            str(schema_path),
             '--output',
             str(output_path),
             '--class-name',
-            name.lstrip('_'),
+            class_name,
             '--disable-timestamp',
         ]
         self._logger.debug(' '.join(args))
@@ -293,12 +308,7 @@ class CodeGenerator:
         touch(self._types_path / PYTHON_MARKER)
 
         for path in self._schemas_path.glob('**/*'):
-            if path.is_dir():
-                touch(path / PYTHON_MARKER)
-            elif path.name.endswith('.json'):
-                await self._generate_type(path, overwrite_types)
-            else:
-                self._logger.warning('Skipping `%s`', path)
+            await self._generate_type(path, overwrite_types)
 
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
