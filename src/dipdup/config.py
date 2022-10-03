@@ -1,15 +1,16 @@
 """Config files parsing and processing
 
-As you can see from the code below, lots of things are going on here.
+As you can see from the amount of code below, lots of things are going on here:
 
 * YAML (de)serialization
-* Templating indexes and env variables
-* Config validation
+* Templating indexes and env variables (`<...>` and `${...}` syntax)
+* Config initialization and validation
 * Methods to generate paths for codegen
-* And even importing contract types
+* And even importing contract types on demand
 
-Dataclasses are used in this module instead of BaseModel for historical reasons (something with ruamel.yaml).
-Thus "...Mixin" classes to workaround the lack of proper inheritance.
+Dataclasses are used in this module instead of BaseModel for historical reasons (can't remember why;
+something about ruamel.yaml compatibility), thus "...Mixin" classes to workaround the lack of proper
+inheritance.
 """
 
 import hashlib
