@@ -65,7 +65,6 @@ from dipdup.models import Origination
 from dipdup.models import TokenTransferData
 from dipdup.models import Transaction
 from dipdup.models import UnknownEvent
-from dipdup.models import UnknownEventReason
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 from dipdup.utils.codegen import parse_object
@@ -1118,7 +1117,6 @@ class EventIndex(Index):
             return UnknownEvent(
                 data=matched_event,
                 payload=matched_event.payload,
-                reason=UnknownEventReason.tag,
             )
 
         with suppress(InvalidDataError):
@@ -1143,7 +1141,15 @@ class EventIndex(Index):
                     continue
 
                 arg = await self._prepare_handler_args(handler_config, event)
-                matched_handlers.append((handler_config, arg))  # type: ignore
+                if isinstance(arg, Event) and isinstance(handler_config, EventHandlerConfig):
+                    matched_handlers.append((handler_config, arg))
+                elif isinstance(arg, UnknownEvent) and isinstance(handler_config, UnknownEventHandlerConfig):
+                    matched_handlers.append((handler_config, arg))
+                elif arg is None:
+                    continue
+                else:
+                    raise RuntimeError
+
                 events.remove(event)
 
         return matched_handlers

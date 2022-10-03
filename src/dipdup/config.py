@@ -1140,12 +1140,12 @@ class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'EventData'
+        yield 'dipdup.models', 'UnknownEvent'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[Tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield 'event', 'EventData'
+        yield 'event', 'UnknownEvent'
 
 
 EventHandlerConfigT = Union[
@@ -1162,32 +1162,6 @@ class EventIndexConfig(IndexConfig):
 
     first_level: int = 0
     last_level: int = 0
-
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
-        self._by_contract: dict[ContractConfig, list[EventHandlerConfigT]] = defaultdict(list)
-        for handler_config in self.handlers:
-            self._by_contract[handler_config.contract_config].append(handler_config)
-
-    @cached_property
-    def known_tags(self) -> dict[str, set[str]]:
-        tags: dict[str, set[str]] = defaultdict(set)
-        for handler_config in self.handlers:
-            if not isinstance(handler_config, EventHandlerConfig):
-                continue
-            tags[handler_config.contract_config.address].add(handler_config.tag)
-        return tags
-
-    @cached_property
-    def fallback_handlers(self) -> dict[str, UnknownEventHandlerConfig]:
-        handlers: dict[str, UnknownEventHandlerConfig] = {}
-        for handler_config in self.handlers:
-            if not isinstance(handler_config, UnknownEventHandlerConfig):
-                continue
-            if address := handler_config.contract_config.address:
-                raise ConfigurationError(f'Only one fallback handler is allowed for contract `{address}`')
-            handlers[address] = handler_config
-        return handlers
 
 
 ResolvedIndexConfigT = Union[
