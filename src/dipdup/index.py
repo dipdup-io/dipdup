@@ -1152,6 +1152,11 @@ class EventIndex(Index):
 
                 events.remove(event)
 
+        # NOTE: We don't care about `merge_subscriptions` here implying that all events will be processed
+        # NOTE: Maybe "unfiltered" indexes will cover that case?
+        for address in {event.contract_address for event in events}:
+            self._logger.warning('Some events were not matched; fallback handler is missing for `{}`', address)
+
         return matched_handlers
 
     async def _call_matched_handler(self, handler_config: EventHandlerConfigT, event: Event | UnknownEvent):
