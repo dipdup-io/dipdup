@@ -36,18 +36,13 @@ from dipdup import baking_bad
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.subscription import BigMapSubscription
-from dipdup.datasources.subscription import EventSubscription
-from dipdup.datasources.subscription import HeadSubscription
-from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
-from dipdup.datasources.subscription import TokenTransferSubscription
-from dipdup.datasources.subscription import TransactionSubscription
 from dipdup.datasources.tzkt.enums import ORIGINATION_MIGRATION_FIELDS
 from dipdup.datasources.tzkt.enums import ORIGINATION_OPERATION_FIELDS
 from dipdup.datasources.tzkt.enums import TRANSACTION_OPERATION_FIELDS
 from dipdup.datasources.tzkt.enums import OperationFetcherRequest
 from dipdup.datasources.tzkt.enums import TzktMessageType
+from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.enums import TokenStandard
 from dipdup.exceptions import DatasourceError
@@ -911,43 +906,8 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe(self, subscription: Subscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
-        request: List[Dict[str, Any]]
-
-        if isinstance(subscription, TransactionSubscription):
-            method = 'SubscribeToOperations'
-            request = [{'types': 'transaction'}]
-            if subscription.address:
-                request[0]['address'] = subscription.address
-
-        elif isinstance(subscription, OriginationSubscription):
-            method = 'SubscribeToOperations'
-            request = [{'types': 'origination'}]
-
-        elif isinstance(subscription, HeadSubscription):
-            method, request = 'SubscribeToHead', []
-
-        elif isinstance(subscription, BigMapSubscription):
-            method = 'SubscribeToBigMaps'
-            if subscription.address and subscription.path:
-                request = [{'address': subscription.address, 'paths': [subscription.path]}]
-            elif not subscription.address and not subscription.path:
-                request = [{}]
-            else:
-                raise RuntimeError
-
-        elif isinstance(subscription, TokenTransferSubscription):
-            method = 'SubscribeToTokenTransfers'
-            request = [{}]
-
-        elif isinstance(subscription, EventSubscription):
-            method = 'SubscribeToEvents'
-            if subscription.address:
-                request = [{'address': subscription.address}]
-            else:
-                request = [{}]
-
-        else:
-            raise NotImplementedError
+        method = subscription.method
+        request: List[Dict[str, Any]] = subscription.get_request()
 
         event = Event()
 

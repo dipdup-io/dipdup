@@ -9,9 +9,9 @@ from typing import Tuple
 from aiohttp.hdrs import METH_GET
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import SubscriptionManager
+from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData

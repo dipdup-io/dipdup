@@ -1,51 +1,20 @@
 import logging
+from abc import abstractmethod
+from typing import Any
 from typing import Dict
-from typing import Literal
 from typing import Optional
 from typing import Set
-
-from pydantic.dataclasses import dataclass
 
 _logger = logging.getLogger('dipdup.datasource')
 
 
 class Subscription:
     type: str
+    method: str
 
-
-@dataclass(frozen=True)
-class HeadSubscription(Subscription):
-    type: str = 'head'
-
-
-@dataclass(frozen=True)
-class OriginationSubscription(Subscription):
-    type: str = 'origination'
-
-
-@dataclass(frozen=True)
-class TransactionSubscription(Subscription):
-    type: str = 'transaction'
-    address: Optional[str] = None
-
-
-# TODO: Add `ptr` and `tags` filters
-@dataclass(frozen=True)
-class BigMapSubscription(Subscription):
-    type: str = 'big_map'
-    address: Optional[str] = None
-    path: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class TokenTransferSubscription(Subscription):
-    type: Literal['token_transfer'] = 'token_transfer'
-
-
-@dataclass(frozen=True)
-class EventSubscription(Subscription):
-    type: str = 'event'
-    address: Optional[str] = None
+    @abstractmethod
+    def get_request(self) -> Any:
+        ...
 
 
 class SubscriptionManager:

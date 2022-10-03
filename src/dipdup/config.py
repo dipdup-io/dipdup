@@ -55,13 +55,13 @@ from typing_extensions import Literal
 
 from dipdup import baking_bad
 from dipdup.datasources.metadata.enums import MetadataNetwork
-from dipdup.datasources.subscription import BigMapSubscription
-from dipdup.datasources.subscription import EventSubscription
-from dipdup.datasources.subscription import HeadSubscription
-from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
-from dipdup.datasources.subscription import TokenTransferSubscription
-from dipdup.datasources.subscription import TransactionSubscription
+from dipdup.datasources.tzkt.models import BigMapSubscription
+from dipdup.datasources.tzkt.models import EventSubscription
+from dipdup.datasources.tzkt.models import HeadSubscription
+from dipdup.datasources.tzkt.models import OriginationSubscription
+from dipdup.datasources.tzkt.models import TokenTransferSubscription
+from dipdup.datasources.tzkt.models import TransactionSubscription
 from dipdup.enums import LoggingValues
 from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
@@ -1700,7 +1700,7 @@ class DipDupConfig:
             else:
                 for event_handler_config in index_config.handlers:
                     address = event_handler_config.contract_config.address
-                    index_config.subscriptions.add(EventSubscription(address))
+                    index_config.subscriptions.add(EventSubscription(address=address))
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
