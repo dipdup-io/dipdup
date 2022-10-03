@@ -16,9 +16,7 @@ import hashlib
 import importlib
 import json
 import logging.config
-import os
 import re
-import sys
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
@@ -1424,16 +1422,15 @@ class DipDupConfig:
     @cached_property
     def package_path(self) -> Path:
         """Absolute path to the indexer package, existing or default"""
-        # NOTE: Detect src/... layout
-        if (src_path := Path(os.getcwd(), 'src')).is_dir():
-            sys.path.append(str(src_path))
-            return Path(src_path, self.package)
-
         with suppress(ImportError):
             package = importlib.import_module(self.package)
             return Path(cast(str, package.__file__)).parent
 
-        return Path(os.getcwd(), self.package)
+        # NOTE: Detect src/<package> layout
+        if Path('src').is_dir():
+            return Path('src', self.package)
+
+        return Path(self.package)
 
     @property
     def oneshot(self) -> bool:

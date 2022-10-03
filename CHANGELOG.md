@@ -23,7 +23,8 @@ and this project adheres to [Semantic Versioning].
 
 ### Improved
 
-- codegen: Better cross-platform compatibility.
+- codegen: Improved cross-platform compatibility.
+- codegen: Detect `src/` layout and use it as a package path.
 
 ### Performance
 
