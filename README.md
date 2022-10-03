@@ -7,6 +7,7 @@
 [![PyPI monthly downloads](https://img.shields.io/pypi/dm/dipdup?color=2c2c2c)](https://pypi.org/project/dipdup/)
 [![GitHub issues](https://img.shields.io/github/issues/dipdup-net/dipdup?color=2c2c2c)](https://github.com/dipdup-net/dipdup/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/dipdup-net/dipdup?color=2c2c2c)](https://github.com/dipdup-net/dipdup/pulls)
+[![GitHub Discussions](https://img.shields.io/github/discussions/dipdup-net/dipdup?color=2c2c2c)](https://github.com/dipdup-net/dipdup/discussions)
 
 ```text
         ____   _         ____              
