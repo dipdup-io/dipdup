@@ -1,9 +1,9 @@
+[![GitHub stars](https://img.shields.io/github/stars/dipdup-net/dipdup?color=2c2c2c)](https://github.com/dipdup-net/dipdup)
+[![Latest stable release](https://img.shields.io/github/v/release/dipdup-net/dipdup?label=stable%20release&color=2c2c2c)](https://github.com/dipdup-net/dipdup/releases)
+[![Latest pre-release)](https://img.shields.io/github/v/release/dipdup-net/dipdup?include_prereleases&label=latest%20release&color=2c2c2c)](https://github.com/dipdup-net/dipdup/releases)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dipdup?color=2c2c2c)](https://www.python.org)
-[![Latest stable release](https://img.shields.io/github/v/release/dipdup-net/dipdup?label=stable&color=2c2c2c)](https://github.com/dipdup-net/dipdup/releases)
-[![Latest pre-release)](https://img.shields.io/github/v/release/dipdup-net/dipdup?include_prereleases&label=latest&color=2c2c2c)](https://github.com/dipdup-net/dipdup/releases)
 [![License: MIT](https://img.shields.io/github/license/dipdup-net/dipdup?color=2c2c2c)](https://github.com/dipdup-net/dipdup/blob/master/LICENSE)
 <br>
-[![GitHub stars](https://img.shields.io/github/stars/dipdup-net/dipdup?color=2c2c2c)](https://github.com/dipdup-net/dipdup)
 [![PyPI monthly downloads](https://img.shields.io/pypi/dm/dipdup?color=2c2c2c)](https://pypi.org/project/dipdup/)
 [![GitHub issues](https://img.shields.io/github/issues/dipdup-net/dipdup?color=2c2c2c)](https://github.com/dipdup-net/dipdup/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/dipdup-net/dipdup?color=2c2c2c)](https://github.com/dipdup-net/dipdup/pulls)
