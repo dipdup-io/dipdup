@@ -243,7 +243,7 @@ class EventData:
     level: int
     timestamp: datetime
     tag: str
-    payload: Dict[str, Any]
+    payload: Any
     contract_address: str
     contract_alias: Optional[str] = None
     contract_code_hash: Optional[int] = None
@@ -259,7 +259,7 @@ class Event(Generic[EventType]):
 @dataclass
 class UnknownEvent:
     data: EventData
-    payload: dict[str, Any]
+    payload: Any
 
 
 # ===> Model Versioning

@@ -1284,7 +1284,7 @@ class TzktDatasource(IndexDatasource):
 
     @classmethod
     def convert_event(cls, event_json: Dict[str, Any]) -> EventData:
-        """Convert raw big map diff message from WS/REST into dataclass"""
+        """Convert raw event message from WS/REST into dataclass"""
         return EventData(
             id=event_json['id'],
             level=event_json['level'],
