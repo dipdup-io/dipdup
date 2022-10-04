@@ -128,7 +128,7 @@
                         <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-button">
                             <i class="fa fa-paint-brush"></i>
                         </button>
-                        <div if="theme-popup" class="hidden"></div>
+                        <div id="theme-list" class="hidden"></div>
 
                         <script type="text/javascript">
                             var theme_toggle = document.getElementById('theme-toggle');
@@ -152,12 +152,12 @@
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
                                 this.console.log('asdf');
-                                stable_a.style.text-decoration-style = "dashed";                                
+                                stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
                                 this.console.log('asdf');
-                                latest_a.style.text-decoration-style = 'dashed';
+                                latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
                         </script>
