@@ -1,11 +1,10 @@
 import subprocess
-from contextlib import AsyncExitStack, asynccontextmanager, suppress
-from decimal import Decimal
-from os import mkdir
-from pathlib import Path
-from shutil import rmtree
 import tempfile
-from typing import AsyncIterator, Generator
+from contextlib import AsyncExitStack
+from contextlib import asynccontextmanager
+from decimal import Decimal
+from pathlib import Path
+from typing import AsyncIterator
 
 import pytest
 from tortoise.transactions import in_transaction
@@ -21,7 +20,7 @@ from dipdup.utils.database import tortoise_wrapper
 
 
 @asynccontextmanager
-async def run_dipdup_demo(config: str, package: str) -> AsyncIterator[None]:
+async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncIterator[Path]:
     config_path = Path(__file__).parent / config
     stack = AsyncExitStack()
     async with stack:
@@ -30,7 +29,10 @@ async def run_dipdup_demo(config: str, package: str) -> AsyncIterator[None]:
         Path(tmp_dir, 'dipdup.yml').write_text(config_path.read_text())
 
         subprocess.run(
-            ('dipdup', 'run',),
+            (
+                'dipdup',
+                cmd,
+            ),
             cwd=tmp_dir,
             check=True,
         )
@@ -38,7 +40,8 @@ async def run_dipdup_demo(config: str, package: str) -> AsyncIterator[None]:
         await stack.enter_async_context(
             tortoise_wrapper(f'sqlite://{tmp_dir}/db.sqlite3', f'{package}.models'),
         )
-        yield
+        yield Path(tmp_dir)
+
 
 class TestDemos:
     async def test_hic_et_nunc(self) -> None:

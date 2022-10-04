@@ -3,6 +3,6 @@ from tortoise import fields
 from dipdup.models import Model
 
 
-class ExampleModel(Model):
-    id = fields.IntField(pk=True)
-    ...
+class User(Model):
+    address = fields.CharField(36, pk=True)
+    balance = fields.IntField()
