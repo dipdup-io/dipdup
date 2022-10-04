@@ -1,9 +1,11 @@
 import subprocess
-from contextlib import suppress
+from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from decimal import Decimal
 from os import mkdir
 from pathlib import Path
 from shutil import rmtree
+import tempfile
+from typing import AsyncIterator, Generator
 
 import pytest
 from tortoise.transactions import in_transaction
@@ -18,29 +20,29 @@ import demo_tzcolors.models
 from dipdup.utils.database import tortoise_wrapper
 
 
-class TestDemos:
-    @pytest.fixture(autouse=True)
-    def prepare_dir(self) -> None:
-        with suppress(FileNotFoundError):
-            rmtree('/tmp/dipdup')
-        mkdir('/tmp/dipdup')
+@asynccontextmanager
+async def run_dipdup_demo(config: str, package: str) -> AsyncIterator[None]:
+    config_path = Path(__file__).parent / config
+    stack = AsyncExitStack()
+    async with stack:
+        # NOTE: Prepare a temporary directory for each test
+        tmp_dir = stack.enter_context(tempfile.TemporaryDirectory())
+        Path(tmp_dir, 'dipdup.yml').write_text(config_path.read_text())
 
-    def run_dipdup(self, config: str) -> None:
         subprocess.run(
-            [
-                'dipdup',
-                '-c',
-                str(Path(__file__).parent / config),
-                'run',
-            ],
-            cwd='/tmp/dipdup',
+            ('dipdup', 'run',),
+            cwd=tmp_dir,
             check=True,
         )
+        # NOTE: Yield from opened Tortoise connection to inspect database
+        await stack.enter_async_context(
+            tortoise_wrapper(f'sqlite://{tmp_dir}/db.sqlite3', f'{package}.models'),
+        )
+        yield
 
+class TestDemos:
     async def test_hic_et_nunc(self) -> None:
-        self.run_dipdup('hic_et_nunc.yml')
-
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_hic_et_nunc.models'):
+        async with run_dipdup_demo('hic_et_nunc.yml', 'demo_hic_et_nunc'):
             holders = await demo_hic_et_nunc.models.Holder.filter().count()
             tokens = await demo_hic_et_nunc.models.Token.filter().count()
             swaps = await demo_hic_et_nunc.models.Swap.filter().count()
@@ -52,9 +54,7 @@ class TestDemos:
             assert trades == 24
 
     async def test_quipuswap(self) -> None:
-        self.run_dipdup('quipuswap.yml')
-
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_quipuswap.models'):
+        async with run_dipdup_demo('quipuswap.yml', 'demo_quipuswap'):
             trades = await demo_quipuswap.models.Trade.filter().count()
             positions = await demo_quipuswap.models.Position.filter().count()
             async with in_transaction() as conn:
@@ -64,9 +64,7 @@ class TestDemos:
             assert positions == 214
 
     async def test_tzcolors(self) -> None:
-        self.run_dipdup('tzcolors.yml')
-
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzcolors.models'):
+        async with run_dipdup_demo('tzcolors.yml', 'demo_tzcolors'):
             users = await demo_tzcolors.models.User.filter().count()
             tokens = await demo_tzcolors.models.Token.filter().count()
             auctions = await demo_tzcolors.models.Auction.filter().count()
@@ -78,9 +76,7 @@ class TestDemos:
             assert bids == 44
 
     async def test_domains(self) -> None:
-        self.run_dipdup('domains.yml')
-
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_domains.models'):
+        async with run_dipdup_demo('domains.yml', 'demo_domains'):
             tlds = await demo_domains.models.TLD.filter().count()
             domains = await demo_domains.models.Domain.filter().count()
 
@@ -88,9 +84,7 @@ class TestDemos:
             assert domains == 145
 
     async def test_domains_big_map(self) -> None:
-        self.run_dipdup('domains_big_map.yml')
-
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_domains_big_map.models'):
+        async with run_dipdup_demo('domains_big_map.yml', 'demo_domains_big_map'):
             tlds = await demo_domains_big_map.models.TLD.filter().count()
             domains = await demo_domains_big_map.models.Domain.filter().count()
 
@@ -98,9 +92,7 @@ class TestDemos:
             assert domains == 145
 
     async def test_tzbtc(self) -> None:
-        self.run_dipdup('tzbtc.yml')
-
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzbtc.models'):
+        async with run_dipdup_demo('tzbtc.yml', 'demo_tzbtc'):
             holders = await demo_tzbtc.models.Holder.filter().count()
             holder = await demo_tzbtc.models.Holder.first()
             assert holder
@@ -119,9 +111,7 @@ class TestDemos:
         ],
     )
     async def test_tzbtc_transfers(self, config_file, expected_holders, expected_balance) -> None:
-        self.run_dipdup(config_file)
-
-        async with tortoise_wrapper('sqlite:///tmp/dipdup/db.sqlite3', 'demo_tzbtc_transfers.models'):
+        async with run_dipdup_demo(config_file, 'demo_tzbtc_transfers'):
             holders = await demo_tzbtc_transfers.models.Holder.filter().count()
             holder = await demo_tzbtc_transfers.models.Holder.first()
             assert holder
