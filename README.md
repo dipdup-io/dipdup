@@ -24,7 +24,7 @@ DipDup is a Python framework for building indexers of [Tezos](https://tezos.com/
 
 * **Looking for examples?** Check out [Demo Projects](https://docs.dipdup.io/examples/demo-projects) and [Built with DipDup](https://docs.dipdup.io/examples/built-with-dipdup) pages.
 
-* **Want to participate?** Vote for issues on [GitHub](https://github.com/dipdup-net/dipdup/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) or [become a sponsor](https://github.com/sponsors/dipdup-net).
+* **Want to participate?** Vote for [open issues](https://github.com/dipdup-net/dipdup/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc), join [discussions](https://github.com/dipdup-net/dipdup/discussions) or [become a sponsor](https://github.com/sponsors/dipdup-net).
 
 * **Have a question?** Contact us on [Discord](https://discord.com/invite/RcPGSdcVSx), [Telegram](https://t.me/baking_bad_chat), or [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L)!
 
