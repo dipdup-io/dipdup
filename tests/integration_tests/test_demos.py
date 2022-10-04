@@ -122,3 +122,22 @@ class TestDemos:
 
             assert holders == expected_holders
             assert f'{random_balance:f}' == expected_balance
+
+
+@pytest.mark.parametrize(
+    'demo',
+    (
+        'domains_big_map',
+        'domains',
+        'hic_et_nunc',
+        'quipuswap',
+        # FIXME:
+        # 'registrydao',
+        'tzbtc_transfers',
+        'tzbtc',
+        'tzcolors',
+    ),
+)
+async def test_codegen(demo: str) -> None:
+    async with run_dipdup_demo(f'{demo}.yml', f'demo_{demo}', 'init'):
+        ...
