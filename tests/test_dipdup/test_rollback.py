@@ -1,7 +1,9 @@
-import asyncio
 from contextlib import AsyncExitStack
 from datetime import datetime
+from os import environ as env
 from typing import List
+
+import pytest
 
 import demo_domains.models as domains_models
 import demo_hic_et_nunc.models as hen_models
@@ -13,19 +15,10 @@ from dipdup.models import Index
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
 
-# FIXME: Sadly, tricks `in_transaction` tricks conflict with pytest-xdist
-_test_lock = asyncio.Lock()
+if env.get('CI') == 'true':
+    pytest.skip('FIXME: pytest-xdist conflicts with TransactionManager injection', allow_module_level=True)
 
 
-def _lock_test(fn):
-    async def wrapper(*args, **kwargs):
-        async with _test_lock:
-            return await fn(*args, **kwargs)
-
-    return wrapper
-
-
-@_lock_test
 async def test_model_updates() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
     config.initialize()
@@ -143,7 +136,6 @@ async def test_model_updates() -> None:
         assert model_updates == 0
 
 
-@_lock_test
 async def test_cleanup_and_filtering() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
     config.initialize()
@@ -225,7 +217,6 @@ async def test_optionals() -> None:
         assert domain.token_id is None
 
 
-@_lock_test
 async def test_bulk_create_update() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_domains')
     config.initialize()
@@ -317,7 +308,6 @@ async def test_bulk_create_update() -> None:
         assert model_updates == 0
 
 
-@_lock_test
 async def test_update_prefetch() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_domains')
     config.initialize()
