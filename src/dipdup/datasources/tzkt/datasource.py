@@ -1291,7 +1291,7 @@ class TzktDatasource(IndexDatasource):
             timestamp=cls._parse_timestamp(event_json['timestamp']),
             contract_address=event_json['contract']['address'],
             tag=event_json['tag'],
-            payload=event_json['payload'],
+            payload=event_json.get('payload'),
         )
 
     async def _send(

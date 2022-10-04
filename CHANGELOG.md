@@ -24,12 +24,12 @@ and this project adheres to [Semantic Versioning].
 ### Improved
 
 - codegen: Improved cross-platform compatibility.
-- codegen: Detect `src/` layout and use it as a package path.
+- cli: Detect `src/` layout and use it as a package path.
 
 ### Performance
 
-- cli: Up to 5x decrease in startup time.
-- ci: A significant decrease in GitHub Actions CI time.
+- cli: Up to 5x faster startup for some commands.
+- ci: A significantly faster test and build workflows.
 
 ## [6.1.3] - 2022-09-21
 
