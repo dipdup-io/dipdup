@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import AsyncExitStack
 from datetime import datetime
 from typing import List
@@ -13,6 +14,7 @@ from dipdup.models import Index
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
 
+_test_lock = asyncio.Lock()
 
 class RollbackTest(IsolatedAsyncioTestCase):
     async def test_model_updates(self) -> None:
@@ -21,7 +23,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         dipdup = DipDup(config)
         in_transaction = dipdup._transactions.in_transaction
 
-        async with AsyncExitStack() as stack:
+        async with AsyncExitStack() as stack, _test_lock:
             await dipdup._set_up_database(stack)
             await dipdup._set_up_transactions(stack)
             await dipdup._set_up_hooks(set())
@@ -137,7 +139,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         dipdup = DipDup(config)
         in_transaction = dipdup._transactions.in_transaction
 
-        async with AsyncExitStack() as stack:
+        async with AsyncExitStack() as stack, _test_lock:
             await dipdup._set_up_database(stack)
             await dipdup._set_up_transactions(stack)
             await dipdup._set_up_hooks(set())
@@ -172,7 +174,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         dipdup = DipDup(config)
         in_transaction = dipdup._transactions.in_transaction
 
-        async with AsyncExitStack() as stack:
+        async with AsyncExitStack() as stack, _test_lock:
             await dipdup._set_up_database(stack)
             await dipdup._set_up_transactions(stack)
             await dipdup._set_up_hooks(set())
@@ -216,7 +218,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         dipdup = DipDup(config)
         in_transaction = dipdup._transactions.in_transaction
 
-        async with AsyncExitStack() as stack:
+        async with AsyncExitStack() as stack, _test_lock:
             await dipdup._set_up_database(stack)
             await dipdup._set_up_transactions(stack)
             await dipdup._set_up_hooks(set())
@@ -306,7 +308,7 @@ class RollbackTest(IsolatedAsyncioTestCase):
         dipdup = DipDup(config)
         in_transaction = dipdup._transactions.in_transaction
 
-        async with AsyncExitStack() as stack:
+        async with AsyncExitStack() as stack, _test_lock:
             await dipdup._set_up_database(stack)
             await dipdup._set_up_transactions(stack)
             await dipdup._set_up_hooks(set())
