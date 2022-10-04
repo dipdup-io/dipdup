@@ -1110,7 +1110,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
         tag = pascal_to_snake(self.tag.replace('.', '_'))
 
         module_name = f'{package}.types.{self.contract_config.module_name}.event.{tag}'
-        cls_name = snake_to_pascal(tag)
+        cls_name = snake_to_pascal(f'{tag}_payload')
         self._event_type_cls = import_from(module_name, cls_name)
 
     def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
