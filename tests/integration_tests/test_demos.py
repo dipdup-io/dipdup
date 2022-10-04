@@ -131,8 +131,7 @@ class TestDemos:
         'domains',
         'hic_et_nunc',
         'quipuswap',
-        # FIXME:
-        # 'registrydao',
+        'registrydao',
         'tzbtc_transfers',
         'tzbtc',
         'tzcolors',

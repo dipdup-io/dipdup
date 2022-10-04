@@ -27,6 +27,3 @@ class Vote(Model):
     id = fields.IntField(pk=True)
     proposal: ForeignKeyFieldInstance[Proposal] = fields.ForeignKeyField('models.Proposal', 'votes')
     amount = fields.IntField()
-
-    class Meta:
-        table = 'votes'
