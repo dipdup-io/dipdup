@@ -1,7 +1,0 @@
-src/
-package.json
-package-lock.json
-webpack.config.js
-babel.config.js
-.github/
-yarn.lock

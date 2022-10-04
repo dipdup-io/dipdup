@@ -16,7 +16,7 @@
 * [Indexes](indexes/README.md)
   * [Big map keys](indexes/big_map.md)
   * [Contract events](indexes/event.md)
-  * [Head block](indexes/head.md)
+  * [Head blocks](indexes/head.md)
   * [Operations](indexes/operation.md)
   * [Token transfers](indexes/token_transfer.md)
 * [Advanced usage](advanced/README.md)
