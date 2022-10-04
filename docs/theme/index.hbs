@@ -120,17 +120,45 @@
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
                         </button>
+                        {{#if search_enabled}}
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        {{/if}}
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-button">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <div if="theme-popup" class="hidden"></div>
+
+                        <script type="text/javascript">
+                            var theme_toggle = document.getElementById('theme-toggle');
+
+                            function toggleTheme() {
+                                var html = document.querySelector('html');
+                                var theme = html.classList.contains('coal') ? 'light' : 'coal';
+                                html.classList.remove('light');
+                                html.classList.remove('coal');
+                                html.classList.add(theme);
+                                try { localStorage.setItem('mdbook-theme', theme); } catch(e) { }
+                            }
+
+                            theme_toggle.addEventListener('click', toggleTheme);
+                        </script>
                         {{!-- NOTE: Docs version switcher --}}
                         <a class="icon-button" id="stable">stable</a>
                         <a class="icon-button" id="latest">latest</a>
                         <script type="text/javascript">
-                            stable_a = document.getElementById('stable');
-                            latest_a = document.getElementById('latest');
-                            if (window.location.href.includes('docs.')) {
-                                stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
-                            }
-                            if (window.location.href.includes('docs-next.')) {
+                            stable_a = document.getElementById("stable");
+                            latest_a = document.getElementById("latest");
+                            if (window.location.href.includes("docs.")) {
+                                this.console.log('asdf');
+                                stable_a.style.text-decoration-style = "dashed";                                
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
+                            }
+                            else if (window.location.href.includes('docs-next.')) {
+                                this.console.log('asdf');
+                                latest_a.style.text-decoration-style = 'dashed';
+                                stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
                         </script>
 
@@ -139,21 +167,6 @@
                     <h1 class="menu-title">{{ book_title }}</h1>
 
                     <div class="right-buttons">
-                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
-                            <i class="fa fa-paint-brush"></i>
-                        </button>
-                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="light">{{ theme_option "Light" }}</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="rust">{{ theme_option "Rust" }}</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="coal">{{ theme_option "Coal" }}</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="navy">{{ theme_option "Navy" }}</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="ayu">{{ theme_option "Ayu" }}</button></li>
-                        </ul>
-                        {{#if search_enabled}}
-                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
-                            <i class="fa fa-search"></i>
-                        </button>
-                        {{/if}}
                         {{#if print_enable}}
                         <a href="{{ path_to_root }}print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
