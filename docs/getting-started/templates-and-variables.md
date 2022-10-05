@@ -1,5 +1,34 @@
 # Templates and variables
 
+## Environment variables
+
+DipDup supports compose-style variable expansion with optional default value:
+
+```yaml
+database:
+  kind: postgres
+  host: ${POSTGRES_HOST:-localhost}
+  password: ${POSTGRES_PASSWORD}
+```
+
+You can use environment variables anywhere throughout the configuration file. Consider the following example (absolutely useless, but illustrative):
+
+```yaml
+custom:
+  ${FOO}: ${BAR:-bar}
+  ${FIZZ:-fizz}: ${BUZZ}
+```      
+
+Running `FOO=foo BUZZ=buzz dipdup config export --unsafe` will produce the following output:
+
+```yaml
+custom:
+  fizz: buzz
+  foo: bar
+```
+
+Use this feature to store sensitive data outside of the configuration file and make your app fully declarative.
+
 ## Index templates
 
 Templates allow you to reuse index configuration, e.g., for different networks (mainnet/testnet) or multiple contracts sharing the same codebase.
@@ -41,9 +70,9 @@ indexes:
       contract: some_dex
 ```
 
-Any string value wrapped in angle brackets is treated as a placeholder, so make sure there are no collisions with the actual values. You can use a single placeholder multiple times.
+Any string value wrapped in angle brackets is treated as a placeholder, so make sure there are no collisions with the actual values. You can use a single placeholder multiple times. In contradiction to environment variables, dictionary keys cannot be placeholders.
 
-Any index implementing a template must have a value for each existing placeholder; the exception raised otherwise. These values are available in the handler context at `ctx.template_values`.
+Index created from a template must have a value for each placeholder in it; the exception raised otherwise. These values are available in the handler context as `ctx.template_values` dictionary.
 
 You can also spawn indexes from templates in runtime. To achieve the same effect as above, you can use the following code:
 
@@ -57,35 +86,6 @@ ctx.add_index(
     },
 )
 ```
-
-## Environment variables
-
-DipDup supports compose-style variable expansion with optional default value:
-
-```yaml
-database:
-  kind: postgres
-  host: ${POSTGRES_HOST:-localhost}
-  password: ${POSTGRES_PASSWORD}
-```
-
-You can use environment variables anywhere throughout the configuration file.
-
-```yaml
-custom:
-  ${FOO}: ${BAR:-bar}
-  ${FIZZ:-fizz}: ${BUZZ}
-```      
-
-Running `FOO=foo BUZZ=buzz dipdup config export --unsafe` will produce the following output:
-
-```yaml
-custom:
-  fizz: buzz
-  foo: bar
-```
-
-Use this feature to store sensitive data outside of the configuration file and make your app fully declarative.
 
 > 💡 **SEE ALSO**
 >
