@@ -45,17 +45,47 @@ Any string value wrapped in angle brackets is treated as a placeholder, so make 
 
 Any index implementing a template must have a value for each existing placeholder; the exception raised otherwise. These values are available in the handler context at `ctx.template_values`.
 
+You can also spawn indexes from templates in runtime. To achieve the same effect as above, you can use the following code:
+
+```python
+ctx.add_index(
+    name='my_template_instance',
+    template='my_template',
+    values={
+        'datasource': 'tzkt_mainnet',
+        'contract': 'some_dex',
+    },
+)
+```
+
 ## Environment variables
 
 DipDup supports compose-style variable expansion with optional default value:
 
 ```yaml
 database:
-  ...
-  password: ${POSTGRES_PASSWORD:-changeme}
+  kind: postgres
+  host: ${POSTGRES_HOST:-localhost}
+  password: ${POSTGRES_PASSWORD}
 ```
 
-You can use environment variables throughout the configuration file, except for property names (YAML object keys).
+You can use environment variables anywhere throughout the configuration file.
+
+```yaml
+custom:
+  ${FOO}: ${BAR:-bar}
+  ${FIZZ:-fizz}: ${BUZZ}
+```      
+
+Running `FOO=foo BUZZ=buzz dipdup config export --unsafe` will produce the following output:
+
+```yaml
+custom:
+  fizz: buzz
+  foo: bar
+```
+
+Use this feature to store sensitive data outside of the configuration file and make your app fully declarative.
 
 > 💡 **SEE ALSO**
 >

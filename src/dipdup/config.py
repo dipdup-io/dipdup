@@ -76,7 +76,7 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
-ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*))?\}'
+ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = baking_bad.METADATA_API_URL

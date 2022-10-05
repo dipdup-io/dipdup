@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning].
 - codegen: Fail lately when datamodel-codegen is not available.
 - codegen: Fixed Jinja2 template caching.
 - config: Allow `dsn` field to be empty.
+- config: Fixed greedy environment variable expansion regex.
 - hooks: Raise a `FeatureAvailabilityHook` instead of a warning when trying to execute hooks on SQLite.
 
 ### Improved
