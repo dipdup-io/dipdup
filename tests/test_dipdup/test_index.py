@@ -510,7 +510,7 @@ index_config.name = 'asdf'
 
 operation_unfiltered_index_config = OperationUnfilteredIndexConfig(
     datasource=TzktDatasourceConfig(kind='tzkt', url='https://api.tzkt.io', http=None),
-    kind='operation',
+    kind='operation_unfiltered',
     handlers=(OperationUnfilteredHandlerConfig(callback='on_operation'),),
     first_level=2000000,
     types=(OperationType.origination, OperationType.transaction),
