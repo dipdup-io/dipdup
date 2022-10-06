@@ -774,6 +774,18 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
+class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'OperationData'
+        yield package, 'models as models'
+
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'origination', 'OperationData'
+
+
+@dataclass
 class TemplateValuesMixin:
     """`template_values` field"""
 
@@ -906,6 +918,24 @@ class OperationIndexConfig(IndexConfig):
                         raise ConfigInitializationException
 
         return addresses
+
+
+@dataclass
+class OperationUnfilteredIndexConfig(IndexConfig):
+    """Operation index config
+
+    :param kind: always `operation`
+    :param handlers: List of indexer handlers
+    :param first_level: Level to start indexing from
+    :param last_level: Level to stop indexing at (DipDup will terminate at this level)
+    """
+
+    kind: Literal["operation"]
+    handlers: Tuple[OperationUnfilteredHandlerConfig, ...]
+    types: Tuple[OperationType, ...] = (OperationType.transaction,)
+
+    first_level: int = 0
+    last_level: int = 0
 
 
 @dataclass
@@ -1064,30 +1094,6 @@ class TokenTransferIndexConfig(IndexConfig):
     last_level: int = 0
 
 
-@dataclass
-class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'OperationData'
-        yield package, 'models as models'
-
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
-        yield 'ctx', 'HandlerContext'
-        yield 'origination', 'OperationData'
-
-
-@dataclass
-class OperationUnfilteredIndexConfig(IndexConfig):
-    """Operation unfiltered index config"""
-
-    kind: Literal['operation_unfiltered']
-    datasource: Union[str, TzktDatasourceConfig]
-    handlers: Tuple[OperationUnfilteredHandlerConfig, ...] = field(default_factory=tuple)
-    type: Literal['origination']
-    first_level: int = 0
-    last_level: int = 0
-
-
 IndexConfigT = Union[
     OperationIndexConfig,
     BigMapIndexConfig,
@@ -1101,6 +1107,7 @@ ResolvedIndexConfigT = Union[
     BigMapIndexConfig,
     HeadIndexConfig,
     TokenTransferIndexConfig,
+    OperationUnfilteredIndexConfig,
 ]
 HandlerPatternConfigT = Union[
     OperationHandlerOriginationPatternConfig,
@@ -1628,7 +1635,7 @@ class DipDupConfig:
             index_config.subscriptions.add(TokenTransferSubscription())
 
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
-            index_config.subscriptions.add(OriginationSubscription())
+            index_config.subscriptions.add(TransactionSubscription())
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1695,8 +1702,8 @@ class DipDupConfig:
             if isinstance(index_config.datasource, str):
                 index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
-            for origination_handler_config in index_config.handlers:
-                origination_handler_config.parent = index_config
+            for operation_unfiltered_handler_config in index_config.handlers:
+                operation_unfiltered_handler_config.parent = index_config
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

@@ -17,11 +17,145 @@ from dipdup.index import extract_operation_subgroups
 from dipdup.models import Index
 from dipdup.models import OperationData
 
-origination_operations = (
+unfiltered_operations = (
+    OperationData(
+        type='transaction',
+        id=76905131,
+        level=1676582,
+        timestamp=datetime.datetime(2021, 9, 8, 16, 2, 14, tzinfo=datetime.timezone.utc),
+        hash='opWVrmpgeuQ2tz65DcV5USnCFW7j7x97XQ2BzEAcmefPEjUfkMw',
+        counter=15811432,
+        sender_address='KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU',
+        target_address='KT1GRSvLoikDsXujKgZPsGLX8k8VvR2Tq95b',
+        initiator_address='tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4',
+        amount=None,
+        status='applied',
+        has_internals=False,
+        storage={
+            'paused': False,
+            'balances': 3943,
+            'metadata': 3944,
+            'lastUpdate': '1676287',
+            'totalSupply': '14712639179877222051752285',
+            'administrator': 'KT1GpTEq4p2XZ8w9p5xM7Wayyw5VR7tb3UaW',
+            'token_metadata': 3945,
+            'tokensPerBlock': '50000000000000000000',
+        },
+        block=None,
+        sender_alias='PLENTY / SMAK Swap',
+        nonce=0,
+        target_alias='PLENTY',
+        initiator_alias=None,
+        entrypoint='transfer',
+        parameter_json={
+            'to': 'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU',
+            'from': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4',
+            'value': '470000000000000000000',
+        },
+        originated_contract_address=None,
+        originated_contract_alias=None,
+        originated_contract_type_hash=None,
+        originated_contract_code_hash=None,
+        diffs=(
+            {
+                'bigmap': 3943,
+                'path': 'balances',
+                'action': 'update_key',
+                'content': {
+                    'hash': 'exprtkqafR3YBedPSHP6Lts8WVHn4jj853RfRZiTpzYNP8KKLaU12H',
+                    'key': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4',
+                    'value': {
+                        'balance': '1141847967508578897233841',
+                        'approvals': {
+                            'KT19Dskaofi6ZTkrw3Tq4pK7fUqHqCz4pTZ3': '0',
+                            'KT1AbuUaPQmYLsB8n8FdSzBrxvrsm8ctwW1V': '0',
+                            'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU': '0',
+                            'KT1HUnqM6xFJa51PM2xHfLs7s6ARvXungtyq': '0',
+                            'KT1HZkD2T4uczgYkZ6fb9gm1fymeJoRuezLz': '9060000000000000000000',
+                            'KT1NtsnKQ1c3rYB12ZToP77XaJs8WDBvF221': '0',
+                            'KT1PuPNtDFLR6U7e7vDuxunDoKasVT6kMSkz': '0',
+                            'KT1UNBvCJXiwJY6tmHM7CJUVwNPew53XkSfh': '0',
+                            'KT1VeNQa4mucRj36qAJ9rTzm4DTJKfemVaZT': '0',
+                            'KT1X1LgNkQShpF9nRLYw3Dgdy4qp38MX617z': '0',
+                            'KT1XVrXmWY9AdVri6KpxKo4CWxizKajmgzMt': '0',
+                            'KT1XXAavg3tTj12W1ADvd3EEnm1pu6XTmiEF': '550000000000000000',
+                            'KT1XutoFJ9dXvWxT7ttG86N2tSTUEpatFVTm': '0',
+                        },
+                    },
+                },
+            },
+            {
+                'bigmap': 3943,
+                'path': 'balances',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprugvwjodjwqmGVVryY5uqz9fcg6BndukYj6bproCFShQ6nkuG8e',
+                    'key': 'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU',
+                    'value': {'balance': '470000000000000000000', 'approvals': {}},
+                },
+            },
+        ),
+    ),
+    OperationData(
+        type='transaction',
+        id=76905132,
+        level=1676582,
+        timestamp=datetime.datetime(2021, 9, 8, 16, 2, 14, tzinfo=datetime.timezone.utc),
+        hash='opWVrmpgeuQ2tz65DcV5USnCFW7j7x97XQ2BzEAcmefPEjUfkMw',
+        counter=15811432,
+        sender_address='KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU',
+        target_address='KT1TwzD6zV3WeJ39ukuqxcfK2fJCnhvrdN1X',
+        initiator_address='tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4',
+        amount=None,
+        status='applied',
+        has_internals=False,
+        storage={
+            'freezer': 'KT1TwzD6zV3WeJ39ukuqxcfK2fJCnhvrdN1X',
+            'balances': 1798,
+            'metadata': 1800,
+            'totalSupply': '896083333000',
+            'administrator': 'KT1TwzD6zV3WeJ39ukuqxcfK2fJCnhvrdN1X',
+            'token_metadata': 1801,
+            'frozen_accounts': 1799,
+        },
+        block=None,
+        sender_alias='PLENTY / SMAK Swap',
+        nonce=1,
+        target_alias='Smartlink',
+        initiator_alias=None,
+        entrypoint='transfer',
+        parameter_json={'to': 'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU', 'from': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4', 'value': '16000000'},
+        originated_contract_address=None,
+        originated_contract_alias=None,
+        originated_contract_type_hash=None,
+        originated_contract_code_hash=None,
+        diffs=(
+            {
+                'bigmap': 1798,
+                'path': 'balances',
+                'action': 'update_key',
+                'content': {
+                    'hash': 'exprtkqafR3YBedPSHP6Lts8WVHn4jj853RfRZiTpzYNP8KKLaU12H',
+                    'key': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4',
+                    'value': {'balance': '208684', 'approvals': {'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU': '0'}},
+                },
+            },
+            {
+                'bigmap': 1798,
+                'path': 'balances',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprugvwjodjwqmGVVryY5uqz9fcg6BndukYj6bproCFShQ6nkuG8e',
+                    'key': 'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU',
+                    'value': {'balance': '16000000', 'approvals': {}},
+                },
+            },
+        ),
+    ),
     OperationData(
         type='origination',
         id=148420757,
-        level=2000007,
+        level=1676582,
         timestamp=datetime.datetime(2022, 1, 3, 14, 4, 50, tzinfo=datetime.timezone.utc),
         hash='opaLJ8aFE5v1VKcu6vFEg9NTaedz6ME9CCHdpZ8eqM7fYHAHspd',
         counter=43525270,
@@ -47,7 +181,7 @@ origination_operations = (
     OperationData(
         type='origination',
         id=148423087,
-        level=2000007,
+        level=1676582,
         timestamp=datetime.datetime(2022, 1, 3, 14, 10, 20, tzinfo=datetime.timezone.utc),
         hash='opAK6CLRGybiJ158e9U1GcoaJD6hfyjPEiA8z5rJnpzQ8MGkvpH',
         counter=38405677,
@@ -73,7 +207,7 @@ origination_operations = (
     OperationData(
         type='origination',
         id=148423315,
-        level=2000007,
+        level=1676582,
         timestamp=datetime.datetime(2022, 1, 3, 14, 10, 50, tzinfo=datetime.timezone.utc),
         hash='ooCvM4zYT2FJVmuECMdA3NKALfuSBxiiWheTFqPKJuJPhwtkcYC',
         counter=41557094,
@@ -374,13 +508,14 @@ index_config = OperationIndexConfig(
 )
 index_config.name = 'asdf'
 
-origination_index_config = OperationUnfilteredIndexConfig(
+operation_unfiltered_index_config = OperationUnfilteredIndexConfig(
     datasource=TzktDatasourceConfig(kind='tzkt', url='https://api.tzkt.io', http=None),
-    kind='origination',
-    handlers=(OperationUnfilteredHandlerConfig(callback='on_origination'),),
+    kind='operation',
+    handlers=(OperationUnfilteredHandlerConfig(callback='on_operation'),),
     first_level=2000000,
+    types=(OperationType.origination, OperationType.transaction),
 )
-origination_index_config.name = 'originations'
+operation_unfiltered_index_config.name = 'operations'
 
 
 class MatcherTest(IsolatedAsyncioTestCase):
@@ -404,14 +539,30 @@ class MatcherTest(IsolatedAsyncioTestCase):
         assert len(matched_handlers) == 1
         index._prepare_handler_args.assert_called()
 
-    async def test_match_originations(self) -> None:
-        index = OperationUnfilteredIndex(None, origination_index_config, None)  # type: ignore
-        index._process_originations = AsyncMock()  # type: ignore
-        await index.initialize_state(Index(name="originations", level=1, status=IndexStatus.SYNCING))
+    async def test_match_unfiltered_operations(self) -> None:
+        index = OperationUnfilteredIndex(None, operation_unfiltered_index_config, None)  # type: ignore
+        index._prepare_handler_args = AsyncMock()  # type: ignore
+        await index.initialize_state(Index(name="operations", level=1, status=IndexStatus.SYNCING))
 
-        matched_handlers = await index._match_originations(origination_operations)
-        assert len(matched_handlers) == 3
+        operation_subgroups = tuple(
+            extract_operation_subgroups(
+                unfiltered_operations,
+                entrypoints=set(),
+                addresses=set(),
+            )
+        )
+        assert len(operation_subgroups) == 4
+        matched_handlers_0 = await index._match_operation_subgroup(
+            operation_subgroups[0])
+        matched_handlers_1 = await index._match_operation_subgroup(
+            operation_subgroups[1])
+        matched_handlers_2 = await index._match_operation_subgroup(
+            operation_subgroups[2])
+        matched_handlers_3 = await index._match_operation_subgroup(
+            operation_subgroups[3])
+        assert len(matched_handlers_0) == 1
+        assert len(matched_handlers_1) == 1
+        assert len(matched_handlers_2) == 1
+        assert len(matched_handlers_3) == 1
 
-        index.push_originations(origination_operations)
-        await index._process_queue()
-        index._process_originations.assert_called()
+        index._prepare_handler_args.assert_called()
