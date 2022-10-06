@@ -14,7 +14,6 @@ class MessageType(Enum):
     big_map = 'big_map'
     head = 'head'
     token_transfer = 'token_transfer'
-    origination = 'origination'
 
 
 class IndexType(Enum):

@@ -523,9 +523,6 @@ class MatcherTest(IsolatedAsyncioTestCase):
         index = OperationIndex(None, index_config, None)  # type: ignore
         index._prepare_handler_args = AsyncMock()  # type: ignore
 
-        all_filtered = tuple(extract_operation_subgroups(add_liquidity_operations, set(), set()))
-        assert not all_filtered
-
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 add_liquidity_operations,
@@ -552,14 +549,10 @@ class MatcherTest(IsolatedAsyncioTestCase):
             )
         )
         assert len(operation_subgroups) == 4
-        matched_handlers_0 = await index._match_operation_subgroup(
-            operation_subgroups[0])
-        matched_handlers_1 = await index._match_operation_subgroup(
-            operation_subgroups[1])
-        matched_handlers_2 = await index._match_operation_subgroup(
-            operation_subgroups[2])
-        matched_handlers_3 = await index._match_operation_subgroup(
-            operation_subgroups[3])
+        matched_handlers_0 = await index._match_operation_subgroup(operation_subgroups[0])
+        matched_handlers_1 = await index._match_operation_subgroup(operation_subgroups[1])
+        matched_handlers_2 = await index._match_operation_subgroup(operation_subgroups[2])
+        matched_handlers_3 = await index._match_operation_subgroup(operation_subgroups[3])
         assert len(matched_handlers_0) == 1
         assert len(matched_handlers_1) == 1
         assert len(matched_handlers_2) == 1

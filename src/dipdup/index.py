@@ -97,8 +97,7 @@ def extract_operation_subgroups(
             if operation.entrypoint not in entrypoints and len(entrypoints) != 0:
                 filtered += 1
                 continue
-            if operation.sender_address not in addresses and operation.target_address\
-                    not in addresses and len(addresses) != 0:
+            if operation.sender_address not in addresses and operation.target_address not in addresses and len(addresses) != 0:
                 filtered += 1
                 continue
 
@@ -1016,13 +1015,11 @@ class OperationUnfilteredIndex(OperationIndex):
         self._queue: Deque[Tuple[OperationSubgroup, ...]] = deque()
         self._contract_hashes: Dict[str, Tuple[int, int]] = {}
 
-    async def _match_operation(self, operation: OperationData) -> bool:
+    async def _match_unfiltered_operation(self, operation: OperationData) -> bool:
         """Match single operation with pattern"""
-        if OperationType.origination not in self._config.types and operation.type\
-                == "origination":
+        if OperationType.origination not in self._config.types and operation.type == "origination":
             return False
-        elif OperationType.transaction not in self._config.types and operation.type \
-                == "operation":
+        elif OperationType.transaction not in self._config.types and operation.type == "operation":
             return False
         return True
 
@@ -1037,7 +1034,7 @@ class OperationUnfilteredIndex(OperationIndex):
 
             while operation_idx < len(operations):
                 operation = operations[operation_idx]
-                operation_matched = await self._match_operation(operation)
+                operation_matched = await self._match_unfiltered_operation(operation)
 
                 if operation_matched:
                     matched_operations.append(operation)
