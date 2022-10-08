@@ -17,7 +17,7 @@ You can use environment variables anywhere throughout the configuration file. Co
 custom:
   ${FOO}: ${BAR:-bar}
   ${FIZZ:-fizz}: ${BUZZ}
-```      
+```
 
 Running `FOO=foo BUZZ=buzz dipdup config export --unsafe` will produce the following output:
 

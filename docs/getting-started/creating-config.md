@@ -34,6 +34,10 @@ Run [`config export`](../cli-reference.md#dipdup-config-export) command if unsur
 
 ## Full example
 
+> 🚧 **UNDER CONSTRUCTION**
+>
+> This page or paragraph is yet to be written. Come back later.
+
 Let's put it all together. Config below is an artificial example but contains almost all available options.
 
 ```yaml

@@ -1,6 +1,6 @@
 # big_map
 
-big_map index allows querying only updates of a specific big map (or several). In some cases, it can drastically reduce the amount of data transferred and speed up the indexing process.
+big_map index allows querying only updates of a specific big map (or several). In some cases, it can drastically reduce the amount of data transferred and thus indexing speed comparing to fetching all operations
 
 ```yaml
 indexes:

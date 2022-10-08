@@ -12,7 +12,7 @@ See the links below to learn how to use this library.
 
 ## Limitations
 
-There are some limitations introduced to make Hasura GraphQL integration easier.
+Some limitations are applied to model names and fields to avoid ambiguity in GraphQL API.
 
 * Table names must be in `snake_case`
 * Model fields must be in `snake_case`
