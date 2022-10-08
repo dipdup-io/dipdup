@@ -1,24 +1,27 @@
 # indexes
 
-_Index_ — is a basic DipDup entity connecting the inventory and specifying data handling rules.
+_Index_ — is a primary DipDup entity connecting the inventory and specifying data handling rules.
 
-Each index has a unique string identifier acting as a key under the `indexes` config section:
+Each index has a linked TzKT datasource and a set of handlers. Indexes can join multiple contracts considered as a single application. Also, contracts can be used by multiple indexes of any kind, but make sure that data don't overlap. See {{ #summary getting-started/core-concepts.md#atomicity-and-persistency }}.
 
 ```yaml
 indexes:
-  my_index:
+  contract_operations:
     kind: operation
     datasource: tzkt_mainnet
+    handlers:
+      - callback: on_operation
+        pattern: ...
 ```
 
-There can be various index kinds; currently, the following options are supported for the `kind` field:
+Multiple indexes are available for different kinds of blockchain data. Currently, the following options are available:
 
 * `big_map`
 * `head`
 * `operation`
 * `token_transfer`
 
-There's also a special `template` kind, which is used to generate new indexes from a template during startup.
+There's also a special `template` kind to generate new indexes from a template during startup.
 
 All the indexes have to specify the `datasource` field, an alias of an existing entry under the [datasources](../datasources.md) section.
 
@@ -35,7 +38,9 @@ indexes:
       placeholder2: value2
 ```
 
-For a static template instance (specified in the DipDup config) there are two fields:
+By static, we mean that the index is defined in the config file and not created in runtime. See {{ #summary getting-started/templates-and-variables.md }.
+
+For a static template instance (specified in the DipDup config), there are two fields:
 
 * `template` — template name (from [templates](../templates.md) section)
 * `values` — concrete values for each [placeholder](../templates.md#placeholders) used in a chosen template
