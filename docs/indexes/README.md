@@ -1,4 +1,4 @@
-# indexes
+# Indexes
 
 _Index_ — is a primary DipDup entity connecting the inventory and specifying data handling rules.
 
@@ -17,33 +17,32 @@ indexes:
 Multiple indexes are available for different kinds of blockchain data. Currently, the following options are available:
 
 * `big_map`
+* `event`
 * `head`
 * `operation`
 * `token_transfer`
 
-There's also a special `template` kind to generate new indexes from a template during startup.
+Every index is linked to specific datasource from {{ #summary config/datasources.md }} config section.
 
-All the indexes have to specify the `datasource` field, an alias of an existing entry under the [datasources](../datasources.md) section.
+## Using templates
 
-# Templates
-
-This index type is used for creating a static template instance.
+Index definitions can be templated to reduce the amount of boilerplate code. To create an index from the template during startup, add an item with the `template` and `values` field to the `indexes` section:
 
 ```yaml
+templates:
+  operation_index_template:
+    kind: operation
+    datasource: <datasource>
+    ...
+
 indexes:
-  my_index:
-    template: my_template
+  template_instance:
+    template: operation_index_template
     values:
-      placeholder1: value1
-      placeholder2: value2
+      datasource: tzkt_mainnet
 ```
 
-By static, we mean that the index is defined in the config file and not created in runtime. See {{ #summary getting-started/templates-and-variables.md }.
-
-For a static template instance (specified in the DipDup config), there are two fields:
-
-* `template` — template name (from [templates](../templates.md) section)
-* `values` — concrete values for each [placeholder](../templates.md#placeholders) used in a chosen template
+You can also create indexes from templates later in runtime. See {{ #summary getting-started/templates-and-variables.md }} page.
 
 ## Indexing scope
 

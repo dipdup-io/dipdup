@@ -5,7 +5,7 @@
 
 # operation
 
-Operation index allows you to query only operations related to your dapp and match them with handlers by content. A single contract call consists of implicit operation and, optionally, internal operations. For each of them, you can specify a handler that will be called when operation group. As a result, you get something like an event log for your dapp.
+Operation index allows you to query only operations related to your dapp and match them with handlers by content. A single contract call consists of implicit operation and, optionally, internal operations. For each of them, you can specify a handler that will be called when the operation group matches. As a result, you get something like an event log for your dapp.
 
 ## Filters
 
@@ -21,15 +21,15 @@ indexes:
     kind: operation
     datasource: tzkt
     contracts:
-      - contract1
-      - contract2
+      - foo
+      - bar
 ```
 
-In this example, DipDup will fetch all the operations where any of source and destination is equal to either _contract1_ or _contract2_ address. `contracts` field is obligatory, there has to be at least one contract alias (from the [inventory](../contracts.md)).
+In this example, DipDup will fetch all the operations where any of the source and destination is equal to either _foo_ or _bar_ address. `contracts` field is obligatory; there has to be at least one contract alias.
 
 ### types
 
-By default, DipDup works only with transactions, but you can explicitly list operation types you want to subscribe to (currently `transaction`, `origination` and `migration` types are supported):
+By default, DipDup works only with transactions, but you can explicitly list operation types you want to subscribe to (currently, `transaction`, `origination`, and `migration` types are supported):
 
 ```yaml
 indexes:
@@ -49,7 +49,7 @@ Note that in the case of originations, DipDup will query operations where either
 
 Each operation handler contains two required fields:
 
-* `callback` —  name of the _async_ function with a particular signature; DipDup will create it on init and in the module with the same name `<package_name>.handlers.<callback>`.
+* `callback` —  a name of async function with a particular signature; DipDup will search for it in `<package>.handlers.<callback>` module.
 * `pattern` — a non-empty list of items that need to be matched.
 
 ```yaml
@@ -66,18 +66,18 @@ indexes:
             entrypoint: transfer
 ```
 
-You can think of operation pattern as a regular expression on a sequence of operations (both external and internal) with global flag enabled (can be multiple matches) and where various operation parameters (type, source, destination, entrypoint, originated contract) are used for matching.
+You can think of the operation pattern as a regular expression on a sequence of operations (both external and internal) with a global flag enabled (there can be multiple matches). Multiple operation parameters can be used for matching (source, destination, etc.).
 
 ### Pattern
 
 Here are the supported filters for matching operations (all optional):
 
 * `type` — _transaction_ or _origination_; usually inferred from the existence of other fields
-* `destination` — invoked contract alias (from the [inventory](../contracts.md))
+* `destination` — invoked contract alias
 * `entrypoint` — invoked entrypoint name
-* `source` — operation sender alias (from the [inventory](../contracts.md))
-* `originated_contract` — originated contract alias (from the [inventory](../contracts.md))
-* `similar_to` — originated contract has the same parameter and storage types as the reference one (from the [inventory](../contracts.md))
+* `source` — operation sender alias
+* `originated_contract` — originated contract alias
+* `similar_to` — originated contract has the same parameter and storage types as the reference one
 * `strict` — stronger the `similar_to` filter by comparing the entire code rather than just parameter+storage
 * `optional` — continue matching even if this item is not found (with limitations, see below)
 

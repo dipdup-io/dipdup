@@ -11,7 +11,7 @@ database:
   password: ${POSTGRES_PASSWORD}
 ```
 
-You can use environment variables anywhere throughout the configuration file. Consider the following example (absolutely useless, but illustrative):
+You can use environment variables anywhere throughout the configuration file. Consider the following example (absolutely useless but illustrative):
 
 ```yaml
 custom:
@@ -31,7 +31,7 @@ Use this feature to store sensitive data outside of the configuration file and m
 
 ## Index templates
 
-Templates allow you to reuse index configuration, e.g., for different networks (mainnet/testnet) or multiple contracts sharing the same codebase.
+Templates allow you to reuse index configuration, e.g., for different networks (mainnet/ghostnet) or multiple contracts sharing the same codebase.
 
 ```yaml
 templates:
@@ -47,13 +47,13 @@ templates:
             entrypoint: call
 ```
 
-Templates have the same syntax as [indexes](../config.md) of all kinds; the only difference is that they additionally support placeholders enabling parameterization:
+Templates have the same syntax as indexes of all kinds; the only difference is that they additionally support placeholders enabling parameterization:
 
 ```yaml
 field: <placeholder>
 ```
 
-Template above can be resolved in a following way:
+The template above can be resolved in the following way:
 
 ```yaml
 contracts:
@@ -72,7 +72,7 @@ indexes:
 
 Any string value wrapped in angle brackets is treated as a placeholder, so make sure there are no collisions with the actual values. You can use a single placeholder multiple times. In contradiction to environment variables, dictionary keys cannot be placeholders.
 
-Index created from a template must have a value for each placeholder in it; the exception raised otherwise. These values are available in the handler context as `ctx.template_values` dictionary.
+An index created from a template must have a value for each placeholder; the exception is raised otherwise. These values are available in the handler context as `ctx.template_values` dictionary.
 
 You can also spawn indexes from templates in runtime. To achieve the same effect as above, you can use the following code:
 

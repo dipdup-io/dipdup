@@ -25,6 +25,7 @@ from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
+IGNORE_SIGINT = (None, 'new', 'schema', 'wipe', 'install', 'update', 'uninstall')
 
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
@@ -75,7 +76,7 @@ def cli_wrapper(fn):
     async def wrapper(*args, **kwargs) -> None:
         # NOTE: Avoid catching Click prompts
         ctx = args[0]
-        if ctx.invoked_subcommand not in (None, 'new', 'schema', 'wipe', 'install', 'update', 'uninstall'):
+        if ctx.invoked_subcommand not in IGNORE_SIGINT:
             loop = asyncio.get_running_loop()
             loop.add_signal_handler(
                 signal.SIGINT,
