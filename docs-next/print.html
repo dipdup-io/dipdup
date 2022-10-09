@@ -119,12 +119,10 @@
                             stable_a = document.getElementById("stable");
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
-                                this.console.log('asdf');
                                 stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
-                                this.console.log('asdf');
                                 latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
@@ -470,7 +468,7 @@ async def on_mint(
 </code></pre>
 <p>This script uses pipx under the hood to install <code>dipdup</code> and <code>datamodel-codegen</code> as CLI tools. Then you can use any package manager of your choice to manage versions of DipDup and other project dependencies.</p>
 <h3 id="manually"><a class="header" href="#manually">Manually</a></h3>
-<p>Currently, we mainly use <a href="https://python-poetry.org">Poetry</a>](<a href="https://python-poetry.org">https://python-poetry.org</a>) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.</p>
+<p>Currently, we mainly use <a href="https://python-poetry.org">Poetry</a> for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.</p>
 <pre><code class="language-shell"># Create a new project directory
 mkdir dipdup-indexer; cd dipdup-indexer
 
@@ -542,18 +540,22 @@ poetry shell
 </tbody></table>
 </div>
 <p><strong>Header</strong> contains two required fields, <code>package</code> and <code>spec_version</code>. They are used to identify the project and the version of the DipDup specification. All other fields in the config are optional.</p>
-<p><strong>Inventory</strong> specifies contracts that need to be indexed, datasources to fetch data from and the database to store data in.</p>
+<p><strong>Inventory</strong> specifies contracts that need to be indexed, datasources to fetch data from, and the database to store data in.</p>
 <p><strong>Index definitions</strong> define the index templates that will be used to index the contract data.</p>
 <p><strong>Hook definitions</strong> define callback functions that will be called manually or on schedule.</p>
 <p><strong>Integrations</strong> are used to integrate with third-party services.</p>
 <p><strong>Tunables</strong> affect the behavior of the whole framework.</p>
 <h2 id="merging-config-files"><a class="header" href="#merging-config-files">Merging config files</a></h2>
-<p>DipDup allows you to customize the configuration for a specific environment or a workflow. It works similar to docker-compose, but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the <code>-c</code> command-line option multiple times:</p>
+<p>DipDup allows you to customize the configuration for a specific environment or workflow. It works similarly to docker-compose anchors but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the <code>-c</code> command-line option multiple times:</p>
 <pre><code class="language-shell">dipdup -c dipdup.yml -c dipdup.prod.yml run
 </code></pre>
-<p>Run <a href="getting-started/../cli-reference.html#dipdup-config-export"><code>config export</code></a> command if unsure about the final config used by DipDup.</p>
+<p>Run <code>config export</code> command if unsure about the final config used by DipDup.</p>
 <h2 id="full-example"><a class="header" href="#full-example">Full example</a></h2>
-<p>Let's put it all together. Config below is an artificial example but contains almost all available options.</p>
+<blockquote>
+<p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
+<p>This page or paragraph is yet to be written. Come back later.</p>
+</blockquote>
+<p>Let's put it all together. The config below is an artificial example but contains almost all available options.</p>
 <pre><code class="language-yaml">spec_version: 1.2
 package: my_indexer
 
@@ -746,11 +748,13 @@ logging: verbose
 <!-- TODO: Move somewhere -->
 <p>DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) in normalized form (<a href="https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/">read more</a> about how TzKT handles Michelson expressions) but still as raw JSON. DipDup uses contract type information to generate data classes, which allow developers to work with strictly typed data.</p>
 <p>DipDup generates <a href="https://pydantic-docs.helpmanual.io/datamodel_code_generator/">Pydantic</a> models out of JSONSchema. You might want to install additional plugins (<a href="https://pydantic-docs.helpmanual.io/pycharm_plugin/">PyCharm</a>, <a href="https://pydantic-docs.helpmanual.io/mypy_plugin/">mypy</a>) for convenient work with this library.</p>
-<p>The following models are created at <code>init</code>:</p>
+<p>The following models are created at <code>init</code> for different indexes:</p>
 <ul>
-<li><code>operation</code> indexes: storage type for all contracts met in handler patterns plus parameter type for all destination+entrypoint pairs.</li>
-<li><code>big_map</code> indexes: key and storage types for all big map paths in handler configs.</li>
+<li><code>operation</code>: storage type for all contracts in handler patterns plus parameter type for all destination+entrypoint pairs.</li>
+<li><code>big_map</code>: key and storage types for all used contracts and big map paths.</li>
+<li><code>event</code>: payload types for all used contracts and tags.</li>
 </ul>
+<p>Other index kinds do not use code generated types.</p>
 <h2 id="nested-packages"><a class="header" href="#nested-packages">Nested packages</a></h2>
 <p>Callback modules don't have to be in top-level <code>hooks</code>/<code>handlers</code> directories. Add one or multiple dots to the callback name to define nested packages:</p>
 <pre><code class="language-yaml">package: indexer
@@ -814,7 +818,7 @@ class Record(Model):
 </code></pre>
 <p>See the links below to learn how to use this library.</p>
 <h2 id="limitations"><a class="header" href="#limitations">Limitations</a></h2>
-<p>There are some limitations introduced to make Hasura GraphQL integration easier.</p>
+<p>Some limitations are applied to model names and fields to avoid ambiguity in GraphQL API.</p>
 <ul>
 <li>Table names must be in <code>snake_case</code></li>
 <li>Model fields must be in <code>snake_case</code></li>
@@ -832,21 +836,22 @@ class Record(Model):
 <div style="break-before: page; page-break-before: always;"></div><h1 id="implementing-handlers"><a class="header" href="#implementing-handlers">Implementing handlers</a></h1>
 <p>DipDup generates a separate file with a callback stub for each handler in every index specified in the configuration file.</p>
 <p>In the case of the <code>transaction</code> handler, the callback method signature is the following:</p>
-<pre><code class="language-python">from &lt;package&gt;.types.&lt;typename&gt;.parameter.&lt;entrypoint_1&gt; import EntryPoint1Parameter
-from &lt;package&gt;.types.&lt;typename&gt;.parameter.&lt;entrypoint_n&gt; import EntryPointNParameter
+<!-- FIXME: Includes -->
+<pre><code class="language-python">from &lt;package&gt;.types.&lt;typename&gt;.parameter.entrypoint_foo import EntryPointFooParameter
+from &lt;package&gt;.types.&lt;typename&gt;.parameter.entrypoint_bar import EntryPointBarParameter
 from &lt;package&gt;.types.&lt;typename&gt;.storage import TypeNameStorage
 
 
 async def on_transaction(
     ctx: HandlerContext,
-    entrypoint_1: Transaction[EntryPoint1Parameter, TypeNameStorage],
-    entrypoint_n: Transaction[EntryPointNParameter, TypeNameStorage]
+    entrypoint_foo: Transaction[EntryPointFooParameter, TypeNameStorage],
+    entrypoint_bar: Transaction[EntryPointBarParameter, TypeNameStorage]
 ) -&gt; None:
     ...
 </code></pre>
 <p>where:</p>
 <ul>
-<li><code>entrypoint_1 ... entrypoint_n</code> are items from the according to handler pattern.</li>
+<li><code>entrypoint_foo ... entrypoint_bar</code> are items from the according to handler pattern.</li>
 <li><code>ctx: HandlerContext</code> provides useful helpers and contains an internal state (see ).</li>
 <li>A <code>Transaction</code> model contains transaction typed parameter and storage, plus other fields.</li>
 </ul>
@@ -871,7 +876,6 @@ async def on_update(
 )
 </code></pre>
 <p><code>BigMapDiff</code> contains action (allocate, update, or remove), nullable key and value (typed).</p>
-<p>You can safely change argument names (e.g., in case of collisions).</p>
 <!--
 TODO: Rewrite
 
@@ -888,12 +892,55 @@ from &lt;package&gt;.types.&lt;typename&gt;.big_map.&lt;path&gt;_key import Path
 from &lt;package&gt;.types.&lt;typename&gt;.big_map.&lt;path&gt;_value import PathValue
 </code></pre>
 <p>Here <code>typename</code> is defined in the contract inventory, <code>entrypoint</code> is specified in the handler pattern, and <code>path</code> is in the handler config.</p>
-<p>DipDup does not automatically handle name collisions. Use <code>import ... as</code> if multiple contracts have entrypoints that share the same name:</p>
-<pre><code class="language-python">from &lt;package&gt;.types.&lt;typename&gt;.parameter.&lt;entrypoint&gt; import EntryPointParameter as Alias
+<h2 id="handling-name-collisions"><a class="header" href="#handling-name-collisions">Handling name collisions</a></h2>
+<p>Indexing operations of multiple contracts with the same entrypoints can lead to name collisions during code generation. In this case DipDup raises a <code>ConfigurationError</code> and suggests to set alias for each conflicting handler. That applies to <code>operation</code> indexes only. Consider the following index definition, some kind of &quot;chain minting&quot; contract:</p>
+<pre><code class="language-yaml">kind: operation
+handlers:
+  - callback: on_mint
+    pattern:
+    - type: transaction
+      entrypoint: mint
+      alias: foo_mint
+    - type: transaction
+      entrypoint: mint
+      alias: bar_mint
 </code></pre>
+<p>The following code will be generated for <code>on_mint</code> callback:</p>
+<pre><code class="language-python">from example.types.foo.parameter.mint import MintParameter as FooMintParameter
+from example.types.foo.storage import FooStorage
+from example.types.bar.parameter.mint import MintParameter as BarMintParameter
+from example.types.bar.storage import BarStorage
+
+
+async def on_transaction(
+    ctx: HandlerContext,
+    foo_mint: Transaction[FooMintParameter, FooStorage],
+    bar_mint: Transaction[BarMintParameter, BarStorage]
+) -&gt; None:
+    ...
+</code></pre>
+<p>You can safely change argument names if you want to.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="templates-and-variables"><a class="header" href="#templates-and-variables">Templates and variables</a></h1>
+<h2 id="environment-variables"><a class="header" href="#environment-variables">Environment variables</a></h2>
+<p>DipDup supports compose-style variable expansion with optional default value:</p>
+<pre><code class="language-yaml">database:
+  kind: postgres
+  host: ${POSTGRES_HOST:-localhost}
+  password: ${POSTGRES_PASSWORD}
+</code></pre>
+<p>You can use environment variables anywhere throughout the configuration file. Consider the following example (absolutely useless but illustrative):</p>
+<pre><code class="language-yaml">custom:
+  ${FOO}: ${BAR:-bar}
+  ${FIZZ:-fizz}: ${BUZZ}
+</code></pre>
+<p>Running <code>FOO=foo BUZZ=buzz dipdup config export --unsafe</code> will produce the following output:</p>
+<pre><code class="language-yaml">custom:
+  fizz: buzz
+  foo: bar
+</code></pre>
+<p>Use this feature to store sensitive data outside of the configuration file and make your app fully declarative.</p>
 <h2 id="index-templates"><a class="header" href="#index-templates">Index templates</a></h2>
-<p>Templates allow you to reuse index configuration, e.g., for different networks (mainnet/testnet) or multiple contracts sharing the same codebase.</p>
+<p>Templates allow you to reuse index configuration, e.g., for different networks (mainnet/ghostnet) or multiple contracts sharing the same codebase.</p>
 <pre><code class="language-yaml">templates:
   my_template:
     kind: operation
@@ -906,10 +953,10 @@ from &lt;package&gt;.types.&lt;typename&gt;.big_map.&lt;path&gt;_value import Pa
           - destination: &lt;contract&gt;
             entrypoint: call
 </code></pre>
-<p>Templates have the same syntax as <a href="getting-started/../config.html">indexes</a> of all kinds; the only difference is that they additionally support placeholders enabling parameterization:</p>
+<p>Templates have the same syntax as indexes of all kinds; the only difference is that they additionally support placeholders enabling parameterization:</p>
 <pre><code class="language-yaml">field: &lt;placeholder&gt;
 </code></pre>
-<p>Template above can be resolved in a following way:</p>
+<p>The template above can be resolved in the following way:</p>
 <pre><code class="language-yaml">contracts:
   some_dex: ...
 
@@ -923,15 +970,18 @@ indexes:
       datasource: tzkt_mainnet
       contract: some_dex
 </code></pre>
-<p>Any string value wrapped in angle brackets is treated as a placeholder, so make sure there are no collisions with the actual values. You can use a single placeholder multiple times.</p>
-<p>Any index implementing a template must have a value for each existing placeholder; the exception raised otherwise. These values are available in the handler context at <code>ctx.template_values</code>.</p>
-<h2 id="environment-variables"><a class="header" href="#environment-variables">Environment variables</a></h2>
-<p>DipDup supports compose-style variable expansion with optional default value:</p>
-<pre><code class="language-yaml">database:
-  ...
-  password: ${POSTGRES_PASSWORD:-changeme}
+<p>Any string value wrapped in angle brackets is treated as a placeholder, so make sure there are no collisions with the actual values. You can use a single placeholder multiple times. In contradiction to environment variables, dictionary keys cannot be placeholders.</p>
+<p>An index created from a template must have a value for each placeholder; the exception is raised otherwise. These values are available in the handler context as <code>ctx.template_values</code> dictionary.</p>
+<p>You can also spawn indexes from templates in runtime. To achieve the same effect as above, you can use the following code:</p>
+<pre><code class="language-python">ctx.add_index(
+    name='my_template_instance',
+    template='my_template',
+    values={
+        'datasource': 'tzkt_mainnet',
+        'contract': 'some_dex',
+    },
+)
 </code></pre>
-<p>You can use environment variables throughout the configuration file, except for property names (YAML object keys).</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
@@ -939,37 +989,41 @@ indexes:
 <li><a href="https://docs-next.dipdup.io/config/templates.html">15.16. templates</a></li>
 </ul>
 </blockquote>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="indexes"><a class="header" href="#indexes">indexes</a></h1>
-<p><em>Index</em> — is a basic DipDup entity connecting the inventory and specifying data handling rules.</p>
-<p>Each index has a unique string identifier acting as a key under the <code>indexes</code> config section:</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="indexes"><a class="header" href="#indexes">Indexes</a></h1>
+<p><em>Index</em> — is a primary DipDup entity connecting the inventory and specifying data handling rules.</p>
+<p>Each index has a linked TzKT datasource and a set of handlers. Indexes can join multiple contracts considered as a single application. Also, contracts can be used by multiple indexes of any kind, but make sure that data don't overlap. See <a href="https://docs-next.dipdup.io/getting-started/core-concepts.html#atomicity-and-persistency">2.2. Core concepts → atomicity-and-persistency</a>.</p>
 <pre><code class="language-yaml">indexes:
-  my_index:
+  contract_operations:
     kind: operation
     datasource: tzkt_mainnet
+    handlers:
+      - callback: on_operation
+        pattern: ...
 </code></pre>
-<p>There can be various index kinds; currently, the following options are supported for the <code>kind</code> field:</p>
+<p>Multiple indexes are available for different kinds of blockchain data. Currently, the following options are available:</p>
 <ul>
 <li><code>big_map</code></li>
+<li><code>event</code></li>
 <li><code>head</code></li>
 <li><code>operation</code></li>
 <li><code>token_transfer</code></li>
 </ul>
-<p>There's also a special <code>template</code> kind, which is used to generate new indexes from a template during startup.</p>
-<p>All the indexes have to specify the <code>datasource</code> field, an alias of an existing entry under the <a href="indexes/../datasources.html">datasources</a> section.</p>
-<h1 id="templates"><a class="header" href="#templates">Templates</a></h1>
-<p>This index type is used for creating a static template instance.</p>
-<pre><code class="language-yaml">indexes:
-  my_index:
-    template: my_template
+<p>Every index is linked to specific datasource from <a href="https://docs-next.dipdup.io/config/datasources.html">15.6. datasources</a> config section.</p>
+<h2 id="using-templates"><a class="header" href="#using-templates">Using templates</a></h2>
+<p>Index definitions can be templated to reduce the amount of boilerplate code. To create an index from the template during startup, add an item with the <code>template</code> and <code>values</code> field to the <code>indexes</code> section:</p>
+<pre><code class="language-yaml">templates:
+  operation_index_template:
+    kind: operation
+    datasource: &lt;datasource&gt;
+    ...
+
+indexes:
+  template_instance:
+    template: operation_index_template
     values:
-      placeholder1: value1
-      placeholder2: value2
+      datasource: tzkt_mainnet
 </code></pre>
-<p>For a static template instance (specified in the DipDup config) there are two fields:</p>
-<ul>
-<li><code>template</code> — template name (from <a href="indexes/../templates.html">templates</a> section)</li>
-<li><code>values</code> — concrete values for each <a href="indexes/../templates.html#placeholders">placeholder</a> used in a chosen template</li>
-</ul>
+<p>You can also create indexes from templates later in runtime. See <a href="https://docs-next.dipdup.io/getting-started/templates-and-variables.html">2.7. Templates and variables</a> page.</p>
 <h2 id="indexing-scope"><a class="header" href="#indexing-scope">Indexing scope</a></h2>
 <p>One can optionally specify block levels DipDup has to start and stop indexing at, e.g., there's a new version of the contract, and there's no need to track the old one anymore.</p>
 <pre><code class="language-yaml">indexes:
@@ -978,30 +1032,30 @@ indexes:
     last_level: 2000000
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="big_map"><a class="header" href="#big_map">big_map</a></h1>
-<p>big_map index allows querying only updates of a specific big map (or several). In some cases, it can drastically reduce the amount of data transferred and speed up the indexing process.</p>
+<p><code>big_map</code> index allows querying only updates of specific big maps. In some cases, it can drastically reduce the amount of data transferred and thus indexing speed compared to fetching all operations.</p>
 <pre><code class="language-yaml">indexes:
-  my_index:
+  token_big_map_index:
     kind: big_map
     datasource: tzkt
     skip_history: never
     handlers:
-      - callback: on_leger_update
-        contract: contract1
+      - callback: on_ledger_update
+        contract: token
         path: data.ledger
       - callback: on_token_metadata_update
-        contract: contract1
+        contract: token
         path: token_metadata
 </code></pre>
 <h2 id="handlers"><a class="header" href="#handlers">Handlers</a></h2>
-<p>Each big_map handler contains three required fields:</p>
+<p>Each big map handler contains three required fields:</p>
 <ul>
-<li><code>callback</code> —  name of the <em>async</em> function with a particular signature; DipDup will try to load it from the module with the same name <code>&lt;package_name&gt;.handlers.&lt;callback&gt;</code></li>
-<li><code>contract</code> — Big map parent contract (from the <a href="indexes/../contracts.html">inventory</a>)</li>
-<li><code>path</code> — path to the Big map in the contract storage (use dot as a delimiter)</li>
+<li><code>callback</code> —  a name of async function with a particular signature; DipDup will search for it in <code>&lt;package&gt;.handlers.&lt;callback&gt;</code> module.</li>
+<li><code>contract</code> — big map parent contract</li>
+<li><code>path</code> — path to the big map in the contract storage (use dot as a delimiter)</li>
 </ul>
-<h2 id="index-only-the-current-state-of-big-maps"><a class="header" href="#index-only-the-current-state-of-big-maps">Index only the current state of big maps</a></h2>
-<p>When <code>skip_history</code> field is set to <code>once</code>, DipDup will skip historical changes only on initial sync and switch to regular indexing afterward. When the value is <code>always</code>, DipDup will fetch all big map keys on every restart. Preferrable mode depends on your workload.</p>
-<p>All big map diffs DipDup pass to handlers during fast sync have <code>action</code> field set to <code>BigMapAction.ADD_KEY</code>. Keep in mind that DipDup fetches all keys in this mode, including ones removed from the big map. You can filter out latter by <code>BigMapDiff.data.active</code> field if needed.</p>
+<h2 id="index-only-the-current-state"><a class="header" href="#index-only-the-current-state">Index only the current state</a></h2>
+<p>When the <code>skip_history</code> field is set to <code>once</code>, DipDup will skip historical changes only on initial sync and switch to regular indexing afterward. When the value is <code>always</code>, DipDup will fetch all big map keys on every restart. Preferrable mode depends on your workload.</p>
+<p>All big map diffs DipDup passes to handlers during fast sync have the <code>action</code> field set to <code>BigMapAction.ADD_KEY</code>. Remember that DipDup fetches all keys in this mode, including ones removed from the big map. You can filter them out later by <code>BigMapDiff.data.active</code> field if needed.</p>
 <div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="head"><a class="header" href="#head">head</a></h1>
 <blockquote>
 <p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
@@ -1012,7 +1066,7 @@ indexes:
   <img src="indexes/../../assets/operation-config.png" alt="`operation` index config">
 </div>
 <h1 id="operation"><a class="header" href="#operation">operation</a></h1>
-<p>Operation index allows you to query only operations related to your dapp and match them with handlers by content. A single contract call consists of implicit operation and, optionally, internal operations. For each of them, you can specify a handler that will be called when operation group. As a result, you get something like an event log for your dapp.</p>
+<p>Operation index allows you to query only operations related to your dapp and match them with handlers by content. A single contract call consists of implicit operation and, optionally, internal operations. For each of them, you can specify a handler that will be called when the operation group matches. As a result, you get something like an event log for your dapp.</p>
 <h2 id="filters"><a class="header" href="#filters">Filters</a></h2>
 <p>DipDup supports filtering operations by <code>source</code>, <code>destination</code> (if applicable), and <code>originated_contract</code> (if applicable).</p>
 <p>DipDup fetches only <em>applied</em> operations.</p>
@@ -1022,12 +1076,12 @@ indexes:
     kind: operation
     datasource: tzkt
     contracts:
-      - contract1
-      - contract2
+      - foo
+      - bar
 </code></pre>
-<p>In this example, DipDup will fetch all the operations where any of source and destination is equal to either <em>contract1</em> or <em>contract2</em> address. <code>contracts</code> field is obligatory, there has to be at least one contract alias (from the <a href="indexes/../contracts.html">inventory</a>).</p>
+<p>In this example, DipDup will fetch all the operations where any of the source and destination is equal to either <em>foo</em> or <em>bar</em> address. <code>contracts</code> field is obligatory; there has to be at least one contract alias.</p>
 <h3 id="types"><a class="header" href="#types">types</a></h3>
-<p>By default, DipDup works only with transactions, but you can explicitly list operation types you want to subscribe to (currently <code>transaction</code>, <code>origination</code> and <code>migration</code> types are supported):</p>
+<p>By default, DipDup works only with transactions, but you can explicitly list operation types you want to subscribe to (currently, <code>transaction</code>, <code>origination</code>, and <code>migration</code> types are supported):</p>
 <pre><code class="language-yaml">indexes:
   my_index:
     kind: operation
@@ -1042,7 +1096,7 @@ indexes:
 <h2 id="handlers-1"><a class="header" href="#handlers-1">Handlers</a></h2>
 <p>Each operation handler contains two required fields:</p>
 <ul>
-<li><code>callback</code> —  name of the <em>async</em> function with a particular signature; DipDup will create it on init and in the module with the same name <code>&lt;package_name&gt;.handlers.&lt;callback&gt;</code>.</li>
+<li><code>callback</code> —  a name of async function with a particular signature; DipDup will search for it in <code>&lt;package&gt;.handlers.&lt;callback&gt;</code> module.</li>
 <li><code>pattern</code> — a non-empty list of items that need to be matched.</li>
 </ul>
 <pre><code class="language-yaml">indexes:
@@ -1057,16 +1111,16 @@ indexes:
           - destination: some_contract
             entrypoint: transfer
 </code></pre>
-<p>You can think of operation pattern as a regular expression on a sequence of operations (both external and internal) with global flag enabled (can be multiple matches) and where various operation parameters (type, source, destination, entrypoint, originated contract) are used for matching.</p>
+<p>You can think of the operation pattern as a regular expression on a sequence of operations (both external and internal) with a global flag enabled (there can be multiple matches). Multiple operation parameters can be used for matching (source, destination, etc.).</p>
 <h3 id="pattern"><a class="header" href="#pattern">Pattern</a></h3>
 <p>Here are the supported filters for matching operations (all optional):</p>
 <ul>
 <li><code>type</code> — <em>transaction</em> or <em>origination</em>; usually inferred from the existence of other fields</li>
-<li><code>destination</code> — invoked contract alias (from the <a href="indexes/../contracts.html">inventory</a>)</li>
+<li><code>destination</code> — invoked contract alias</li>
 <li><code>entrypoint</code> — invoked entrypoint name</li>
-<li><code>source</code> — operation sender alias (from the <a href="indexes/../contracts.html">inventory</a>)</li>
-<li><code>originated_contract</code> — originated contract alias (from the <a href="indexes/../contracts.html">inventory</a>)</li>
-<li><code>similar_to</code> — originated contract has the same parameter and storage types as the reference one (from the <a href="indexes/../contracts.html">inventory</a>)</li>
+<li><code>source</code> — operation sender alias</li>
+<li><code>originated_contract</code> — originated contract alias</li>
+<li><code>similar_to</code> — originated contract has the same parameter and storage types as the reference one</li>
 <li><code>strict</code> — stronger the <code>similar_to</code> filter by comparing the entire code rather than just parameter+storage</li>
 <li><code>optional</code> — continue matching even if this item is not found (with limitations, see below)</li>
 </ul>
@@ -1201,8 +1255,8 @@ assert protocol_json['hash'] == 'PtHangz2aRngywmSRGGvrcTyMbbdpWdpFKuS4uMWxg2RaH9
 </ul>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="hooks"><a class="header" href="#hooks">Hooks</a></h1>
-<p>Hooks are user-defined callbacks called either from the <a href="advanced/../context/reference.html"><code>ctx.fire_hook</code></a> method or by scheduler (<a href="advanced/jobs.html"><code>jobs</code></a> config section, we'll return to this topic later).</p>
-<p>Let's assume we want to calculate some statistics on-demand to avoid blocking an indexer with heavy computations. Add the following lines to DipDup config:</p>
+<p>Hooks are user-defined callbacks called either from the <code>ctx.fire_hook</code> method or by the job scheduler.</p>
+<p>Let's assume we want to calculate some statistics on-demand to avoid blocking an indexer with heavy computations. Add the following lines to the DipDup config:</p>
 <pre><code class="language-yaml">hooks:
   calculate_stats:
     callback: calculate_stats
@@ -1211,9 +1265,9 @@ assert protocol_json['hash'] == 'PtHangz2aRngywmSRGGvrcTyMbbdpWdpFKuS4uMWxg2RaH9
      major: bool
      depth: int
 </code></pre>
-<p>A couple of things here to pay attention to:</p>
+<p>Here are a couple of things here to pay attention to:</p>
 <ul>
-<li>An <code>atomic</code> option defines whether hook callback will be wrapped in a single SQL transaction or not. If this option is set to true main indexing loop will be blocked until hook execution is complete. Some statements like <code>REFRESH MATERIALIZED VIEW</code> do not require to be wrapped in transactions, so choosing a value of the <code>atomic</code> option could decrease the time needed to perform initial indexing.</li>
+<li>An <code>atomic</code> option defines whether the hook callback will be wrapped in a single SQL transaction or not. If this option is set to true main indexing loop will be blocked until hook execution is complete. Some statements, like <code>REFRESH MATERIALIZED VIEW</code>, do not require to be wrapped in transactions, so choosing a value of the <code>atomic</code> option could decrease the time needed to perform initial indexing.</li>
 <li>Values of <code>args</code> mapping are used as type hints in a signature of a generated callback. We will return to this topic later in this article.</li>
 </ul>
 <p>Now it's time to call <code>dipdup init</code>. The following files will be created in the project's root:</p>
@@ -1234,6 +1288,8 @@ async def calculate_stats(
     await ctx.execute_sql('calculate_stats')
 </code></pre>
 <p>By default, hooks execute SQL scripts from the corresponding subdirectory of <code>sql/</code>. Remove or comment out the <code>execute_sql</code> call to prevent this. This way, both Python and SQL code may be executed in a single hook if needed.</p>
+<h2 id="arguments-typechecking"><a class="header" href="#arguments-typechecking">Arguments typechecking</a></h2>
+<p>DipDup will ensure that arguments passed to the hooks have the correct types when possible. <code>CallbackTypeError</code> exception will be raised otherwise. Values of an <code>args</code> mapping in a hook config should be either built-in types or <code>__qualname__</code> of external type like <code>decimal.Decimal</code>. Generic types are not supported: hints like <code>Optional[int] = None</code> will be correctly parsed during codegen but ignored on type checking.</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
@@ -1261,9 +1317,6 @@ async def calculate_stats(
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="job-scheduler"><a class="header" href="#job-scheduler">Job scheduler</a></h1>
 <p>Jobs are schedules for hooks. In some cases, it may come in handy to have the ability to run some code on schedule. For example, you want to calculate statistics once per hour instead of every time handler gets matched.</p>
-<h2 id="arguments-typechecking"><a class="header" href="#arguments-typechecking">Arguments typechecking</a></h2>
-<p>DipDup will ensure that arguments passed to the hooks have correct types when possible. <code>CallbackTypeError</code> exception will be raised otherwise. Values of an <code>args</code> mapping in a hook config should be either built-in types or <code>__qualname__</code> of external type like <code>decimal.Decimal</code>. Generic types are not supported: hints like <code>Optional[int] = None</code> will be correctly parsed during codegen but ignored on type checking.</p>
-<p>See <a href="advanced/../../config/jobs.html">12.8. jobs</a> for details.</p>
 <h2 id="scheduler-configuration"><a class="header" href="#scheduler-configuration">Scheduler configuration</a></h2>
 <p>DipDup utilizes <code>apscheduler</code> library to run hooks according to schedules in <code>jobs</code> config section. In the following example, <code>apscheduler</code> will spawn up to three instances of the same job every time the trigger is fired, even if previous runs are in progress:</p>
 <pre><code class="language-yaml">advanced:
@@ -1274,16 +1327,16 @@ async def calculate_stats(
 <p>See <a href="https://apscheduler.readthedocs.io/en/stable/userguide.html#configuring-the-scheduler"><code>apscheduler</code> docs</a> for details.</p>
 <p>Note that you can't use executors from <code>apscheduler.executors.pool</code> module - <code>ConfigurationError</code> exception will be raised.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="reindexing"><a class="header" href="#reindexing">Reindexing</a></h1>
-<p>In some cases, DipDup can't proceed with indexing without a full wipe. Several reasons trigger reindexing; some are avoidable, some are not:</p>
+<p>In some cases, DipDup can't proceed with indexing without a full wipe. Several reasons trigger reindexing:</p>
 <div class="table-wrapper"><table><thead><tr><th>reason</th><th>description</th></tr></thead><tbody>
 <tr><td><code>manual</code></td><td>Reindexing triggered manually from callback with <code>ctx.reindex</code>.</td></tr>
 <tr><td><code>migration</code></td><td>Applied migration requires reindexing. Check release notes before switching between major DipDup versions to be prepared.</td></tr>
 <tr><td><code>rollback</code></td><td>Reorg message received from TzKT can not be processed.</td></tr>
 <tr><td><code>config_modified</code></td><td>One of the index configs has been modified.</td></tr>
-<tr><td><code>schema_modified</code></td><td>Database schema has been modified. Try to avoid manual schema modifications in favor of <a href="advanced/../advanced/sql.html">SQL scripts</a>.</td></tr>
+<tr><td><code>schema_modified</code></td><td>Database schema has been modified. Try to avoid manual schema modifications in favor of <a href="https://docs-next.dipdup.io/advanced/sql.html">4.7. SQL scripts</a>.</td></tr>
 </tbody></table>
 </div>
-<p>It is possible to configure desirable action on reindexing triggered by the specific reason.</p>
+<p>It is possible to configure desirable action on reindexing triggered by a specific reason.</p>
 <div class="table-wrapper"><table><thead><tr><th>action</th><th>description</th></tr></thead><tbody>
 <tr><td><code>exception</code> (default)</td><td>Raise <code>ReindexingRequiredError</code> and quit with error code. The safest option since you can trigger reindexing accidentally, e.g., by a typo in config. Don't forget to set up the correct restart policy when using it with containers.</td></tr>
 <tr><td><code>wipe</code></td><td>Drop the whole database and start indexing from scratch. Be careful with this option!</td></tr>
@@ -1795,20 +1848,20 @@ We can go further and put the entire token info structure to IPFS:</p>
 <ul>
 <li>Generic query enabling filters by all columns</li>
 <li>Single item query (by primary key)</li>
-<li>Aggregation query (can be <a href="graphql/../config/hasura.html#disable-aggregation-queries">disabled</a>)</li>
+<li>Aggregation query (can be disabled in config)</li>
 </ul>
 <p>All the GQL features such as fragments, variables, aliases, directives are supported, as well as batching.<br />
 Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/index.html">Hasura docs</a>.</p>
-<p>It's important to understand that GraphQL query is just a <a href="https://graphql.org/graphql-js/graphql-clients/">POST request</a> with JSON payload, and in some instances, you don't need a complicated library to talk to your backend.</p>
+<p>It's important to understand that a GraphQL query is just a <a href="https://graphql.org/graphql-js/graphql-clients/">POST request</a> with JSON payload, and in some instances, you don't need a complicated library to talk to your backend.</p>
 <h3 id="pagination"><a class="header" href="#pagination">Pagination</a></h3>
-<p>By default, Hasura does not restrict the number of rows returned per request, which could lead to abuses and heavy load to your server. You can set up limits in the configuration file. See <a href="graphql/../config/hasura.html#limit-number-of-rows">12.5. hasura</a> for details. But then you will face the need to <a href="https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/pagination.html">paginate</a> over the items if the response does not fit into the limits.</p>
+<p>By default, Hasura does not restrict the number of rows returned per request, which could lead to abuses and a heavy load on your server. You can set up limits in the configuration file. See <a href="https://docs-next.dipdup.io/config/hasura.html#limit-number-of-rows">15.7. hasura → limit-number-of-rows</a>. But then, you will face the need to <a href="https://hasura.io/docs/latest/graphql/core/databases/postgres/queries/pagination.html">paginate</a> over the items if the response does not fit the limits.</p>
 <h2 id="subscriptions"><a class="header" href="#subscriptions">Subscriptions</a></h2>
 <p>From <a href="https://hasura.io/docs/latest/graphql/core/databases/postgres/subscriptions/index.html">Hasura documentation</a>:</p>
 <p>Hasura GraphQL engine subscriptions are <strong>live queries</strong>, i.e., a subscription will return the latest result of the query and not necessarily all the individual events leading up to it.</p>
 <p>This feature is essential to avoid complex state management (merging query results and subscription feed). In most scenarios, live queries are what you need to sync the latest changes from the backend.</p>
 <blockquote>
 <p>⚠ <strong>WARNING</strong></p>
-<p>If the live query has a significant response size that does not fit into the <a href="graphql/../config/hasura.html#limit-number-of-rows">limits</a>, you need one of the following:</p>
+<p>If the live query has a significant response size that does not fit into the limits, you need one of the following:</p>
 <ol>
 <li>Paginate with offset (which is not convenient)</li>
 <li>Use cursor-based pagination (e.g., by an increasing unique id).</li>
@@ -1817,9 +1870,9 @@ Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postg
 </blockquote>
 <p>Ultimately you can get &quot;subscriptions&quot; on top of live quires by requesting all the items having ID greater than the maximum existing or all the items with a timestamp greater than now.</p>
 <h3 id="websocket-transport"><a class="header" href="#websocket-transport">Websocket transport</a></h3>
-<p>Hasura is compatible with <a href="https://github.com/apollographql/subscriptions-transport-ws">subscriptions-transport-ws</a> library, which is currently deprecated by still used by the majority of the clients.</p>
+<p>Hasura is compatible with <a href="https://github.com/apollographql/subscriptions-transport-ws">subscriptions-transport-ws</a> library, which is currently deprecated but still used by most clients.</p>
 <h2 id="mutations"><a class="header" href="#mutations">Mutations</a></h2>
-<p>The purpose of DipDup is to create indexers, which means you can consistently reproduce the state as long as data sources are accessible. It makes your backend &quot;stateless&quot; in a sense because it's tolerant of data loss.</p>
+<p>The purpose of DipDup is to create indexers, which means you can consistently reproduce the state as long as data sources are accessible. It makes your backend &quot;stateless&quot;, meaning tolerant to data loss.</p>
 <p>However, you might need to introduce a non-recoverable state and mix indexed and user-generated content in some cases. DipDup allows marking these UGC tables &quot;immune&quot;, protecting them from being wiped. In addition to that, you will need to set up <a href="https://hasura.io/docs/latest/graphql/core/auth/index.html">Hasura Auth</a> and adjust write permissions for the tables (by default, they are read-only).</p>
 <p>Lastly, you will need to execute GQL mutations to modify the state from the client side. <a href="https://hasura.io/docs/latest/graphql/core/databases/postgres/mutations/index.html">Read more</a> about how to do that with Hasura.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="hasura-integration"><a class="header" href="#hasura-integration">Hasura integration</a></h1>
@@ -1832,7 +1885,7 @@ Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postg
 <p>Hasura metadata is all about data representation in GraphQL API. The structure of the database itself is managed solely by Tortoise ORM.</p>
 <p>Metadata configuration is idempotent: each time you call <code>run</code> or <code>hasura configure</code> command, DipDup queries the existing schema and does the merge if required. DipDup configures Hasura after reindexing, saves the hash of resulting metadata in the <code>dipdup_schema</code> table, and doesn't touch Hasura until needed.</p>
 <h2 id="database-limitations"><a class="header" href="#database-limitations">Database limitations</a></h2>
-<p>The current version of Hasura GraphQL Engine treats <code>public</code> and other schemas differently. Table <code>schema.customer</code> becomes <code>schema_customer</code> root field (or <code>schemaCustomer</code> if <code>camel_case</code> option is enabled in DipDup config). Table <code>public.customer</code> becomes <code>customer</code> field, without schema prefix. There's no way to remove this prefix for now. You can track related <a href="https://github.com/hasura/graphql-engine/issues/5394">issue (opens new window)</a>at Hasura's GitHub to know when the situation will change. Since 3.0.0-rc1, DipDup enforces <code>public</code> schema name to avoid ambiguity and issues with the GenQL library. You can still use any schema name if Hasura integration is not enabled.</p>
+<p>The current version of Hasura GraphQL Engine treats <code>public</code> and other schemas differently. Table <code>schema.customer</code> becomes <code>schema_customer</code> root field (or <code>schemaCustomer</code> if <code>camel_case</code> option is enabled in DipDup config). Table <code>public.customer</code> becomes <code>customer</code> field, without schema prefix. There's no way to remove this prefix for now. You can track related <a href="https://github.com/hasura/graphql-engine/issues/5394">issue</a> on Hasura's GitHub to know when the situation will change. Starting with 3.0.0-rc1, DipDup enforces <code>public</code> schema name to avoid ambiguity and issues with the GenQL library. You can still use any schema name if Hasura integration is not enabled.</p>
 <h2 id="authentication"><a class="header" href="#authentication">Authentication</a></h2>
 <p>DipDup sets read-only permissions for all tables and enables non-authorized access to the <code>/graphql</code> endpoint.</p>
 <h2 id="limit-the-number-of-rows"><a class="header" href="#limit-the-number-of-rows">Limit the number of rows</a></h2>
@@ -1866,8 +1919,8 @@ Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postg
   }
 }
 </code></pre>
-<p>All fields auto generated by Hasura will be renamed accordingly: <code>hic_et_nunc_token_by_pk</code> to <code>hicEtNuncTokenByPk</code>, <code>delete_hic_et_nunc_token</code> to <code>deleteHicEtNuncToken</code> and so on. To return to defaults, set <code>camel_case</code> to False and run <code>hasura configure --force</code>.</p>
-<p>Keep in mind that &quot;camelcasing&quot; is a separate stage performed after all tables are registered. So during configuration, you can observe fields in <code>snake_case</code> for several seconds even if <code>hasura.camel_case</code> flag is set.</p>
+<p>All fields auto-generated by Hasura will be renamed accordingly: <code>hic_et_nunc_token_by_pk</code> to <code>hicEtNuncTokenByPk</code>, <code>delete_hic_et_nunc_token</code> to <code>deleteHicEtNuncToken</code> and so on. To return to defaults, set <code>camel_case</code> to False and run <code>hasura configure --force</code>.</p>
+<p>Remember that &quot;camelcasing&quot; is a separate stage performed after all tables are registered. So during configuration, you can observe fields in <code>snake_case</code> for several seconds even if conversion to camel case is enabled.</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
@@ -1991,20 +2044,20 @@ client.chain.query
 <div style="break-before: page; page-break-before: always;"></div><h1 id="database-engines"><a class="header" href="#database-engines">Database engines</a></h1>
 <p>DipDup officially supports the following databases: SQLite, PostgreSQL, TimescaleDB. This table will help you choose a database engine that mostly suits your needs.</p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: right"></th><th style="text-align: center">SQLite</th><th style="text-align: center">PostgreSQL</th><th style="text-align: center">TimescaleDB</th></tr></thead><tbody>
-<tr><td style="text-align: right">Supported versions</td><td style="text-align: center"><code>latest</code></td><td style="text-align: center"><code>13</code>, <code>14</code>, <code>15</code></td><td style="text-align: center"><code>pg13</code>, <code>pg14</code></td></tr>
-<tr><td style="text-align: right">When to use</td><td style="text-align: center">early development</td><td style="text-align: center">general usage</td><td style="text-align: center">working with timeseries</td></tr>
-<tr><td style="text-align: right">Performance</td><td style="text-align: center">good</td><td style="text-align: center">better</td><td style="text-align: center">great in some scenarios</td></tr>
+<tr><td style="text-align: right">Supported versions</td><td style="text-align: center"><code>latest</code></td><td style="text-align: center"><code>13</code>, <code>14</code></td><td style="text-align: center"><code>pg13</code>, <code>pg14</code></td></tr>
+<tr><td style="text-align: right">Best application</td><td style="text-align: center">development</td><td style="text-align: center">general usage</td><td style="text-align: center">working with timeseries</td></tr>
 <tr><td style="text-align: right">SQL scripts</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
 <tr><td style="text-align: right">Immune tables</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
 <tr><td style="text-align: right">Hasura integration</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
 </tbody></table>
 </div>
-<p>While sometimes it's convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines.</p>
+<p>By default DipDup uses in-memory SQLite database that destroys after the process exits.</p>
+<p>While sometimes it's convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines. However, Tortoise ORM mostly hides these differences.</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
 <li><a href="https://docs-next.dipdup.io/advanced/sql.html">4.7. SQL scripts</a></li>
-<li><a href="https://docs-next.dipdup.io/config/database.html#immune-tables">15.5. database → immune-tables</a></li>
+<li><a href="https://docs-next.dipdup.io/config/database.html">15.5. database</a></li>
 </ul>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="running-in-docker"><a class="header" href="#running-in-docker">Running in Docker</a></h1>
@@ -3707,7 +3760,7 @@ http: HTTP client configuration</p>
 </ul>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="contracts-1"><a class="header" href="#contracts-1">contracts</a></h1>
-<p>A list of the contract definitions you might use in the indexer patterns or templates. Each contract entry has two fields:</p>
+<p>A list of the contracts you can use in the index definitions. Each contract entry has two fields:</p>
 <ul>
 <li><code>address</code> — either originated or implicit account address encoded in base58.</li>
 <li><code>typename</code> — an alias for the particular contract script, meaning that two contracts sharing the same code can have the same type name.</li>
@@ -3726,9 +3779,9 @@ http: HTTP client configuration</p>
     address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
     typename: tzbtc_token
 </code></pre>
-<p>A <code>typename</code> field is only required when using index templates, but it helps to improve the readability of auto-generated code and avoid repetition.</p>
-<p>Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See <a href="config/../getting-started/templates-and-variables.html">4.5. Templates and variables</a> for details.</p>
-<p>If multiple contracts you index have the same interface but different code, see <a href="config/../cookbook/reusing-typenames.html">8.2. Reusing typename for different contracts</a>.</p>
+<p>If the <code>typename</code> field is not set, a contract alias will be used instead.</p>
+<p>Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See <a href="https://docs-next.dipdup.io/getting-started/templates-and-variables.html">2.7. Templates and variables</a> for details.</p>
+<p>If multiple contracts you index have the same interface but different code, see <a href="https://docs-next.dipdup.io/faq.html">7. F.A.Q.</a> to learn how to avoid conflicts.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="custom"><a class="header" href="#custom">custom</a></h1>
 <p>An arbitrary YAML object you can use to store internal indexer configuration.</p>
 <pre><code class="language-yaml">package: my_indexer
@@ -3745,7 +3798,7 @@ custom:
 <li><code>sqlite</code></li>
 <li><code>postgres</code> (and compatible engines)</li>
 </ul>
-<p><a href="config/../deployment/database-engines.html">Database engines</a> article may help you choose a database that better suits your needs.</p>
+<p><a href="https://docs-next.dipdup.io/deployment/database-engines.html">6.1. Database engines</a> article may help you choose a database that better suits your needs.</p>
 <h2 id="sqlite"><a class="header" href="#sqlite">SQLite</a></h2>
 <p><code>path</code> field must be either path to the .sqlite3 file or <code>:memory:</code> to keep a database in memory only (default):</p>
 <pre><code class="language-yaml">database:
@@ -3780,16 +3833,14 @@ custom:
 <tr><td><code>connection_timeout</code></td><td>Connection timeout in seconds</td></tr>
 </tbody></table>
 </div><!-- TODO: Move to the upper level -->
-<p>You can also use compose-style environment variable substitutions with default values for secrets and other fields. See <a href="config/../getting-started/templates-and-variables.html#">Templates and variables</a> for details.</p>
+<p>You can also use compose-style environment variable substitutions with default values for secrets and other fields. See <a href="https://docs-next.dipdup.io/getting-started/templates-and-variables.html">2.7. Templates and variables</a>.</p>
 <h3 id="immune-tables"><a class="header" href="#immune-tables">Immune tables</a></h3>
-<p>In some cases, DipDup can't continue indexing with an existing database. See <a href="config/../advanced/reindexing.html">5.3. Reindexing</a> for details. One of the solutions to resolve reindexing state is to drop the database and start indexing from scratch. To achieve this, either invoke the <a href="config/../cli-reference.md#dipdup-schema-wipe.html"><code>schema wipe</code> command</a> or set an action to <code>wipe</code> in the <a href="config/../config/advanced.html"><code>advanced.reindex</code> config section</a>.</p>
-<p>You might want to keep several tables during schema wipe if data in them is not dependent on index states yet heavy. A typical example is indexing IPFS data — rollbacks do not affect off-chain storage, so you can safely continue after receiving a reorg message.</p>
+<p>You might want to keep several tables during schema wipe if the data in them is not dependent on index states yet heavy. A typical example is indexing IPFS data — changes in your code won't affect off-chain storage, so you can safely reuse this data.</p>
 <pre><code class="language-yaml">database:
   immune_tables:
-    - token_metadata
-    - contract_metadata
+    - ipfs_assets
 </code></pre>
-<p><code>immune_tables</code> is an optional array of table names that will be ignored during schema wipe. Once an immune table is created, DipDup will never touch it again; to change the schema of an immune table, you need to perform a migration manually. Check <code>schema export</code> output before doing this to ensure the resulting schema is the same TortoiseORM would generate.</p>
+<p><code>immune_tables</code> is an optional array of table names that will be ignored during schema wipe. Once an immune table is created, DipDup will never touch it again; to change the schema of an immune table, you need to perform a migration manually. Check <code>schema export</code> output before doing this to ensure the resulting schema is the same as Tortoise ORM would generate.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="datasources-3"><a class="header" href="#datasources-3">datasources</a></h1>
 <p>A list of API endpoints DipDup uses to retrieve indexing data to process.</p>
 <p>A datasource config entry is an alias for the endpoint URI; there's no network mention. Thus it's good to add a network name to the datasource alias, e.g. <code>tzkt_mainnet</code>.</p>
@@ -3923,7 +3974,7 @@ custom:
 </ul>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="spec_version"><a class="header" href="#spec_version">spec_version</a></h1>
-<p>DipDup specification version is used to determine the compatibility of the toolkit and configuration file format and/or features.</p>
+<p>The DipDup specification version defines the format of the configuration file and available features.</p>
 <pre><code class="language-yaml">spec_version: 1.2
 </code></pre>
 <p>This table shows which specific SDK releases support which DipDup file versions.</p>
@@ -3934,8 +3985,9 @@ custom:
 <tr><td style="text-align: left">1.2</td><td style="text-align: left">&gt;=3.0.0</td></tr>
 </tbody></table>
 </div>
-<p>If you're getting <code>MigrationRequiredError</code> after updating the framework, run <a href="config/../cli-reference.html#migrate"><code>dipdup migrate</code></a> command to perform project migration.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="templates-1"><a class="header" href="#templates-1">templates</a></h1>
+<p>If you're getting <code>MigrationRequiredError</code> after updating the framework, run the <code>dipdup migrate</code> command to perform project migration.</p>
+<p>At the moment, <code>spec_version</code> has not changed for a very long time. Consider recreating the package from scratch and migrating logic manually if you have another value in your configuration file.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="templates"><a class="header" href="#templates">templates</a></h1>
 <pre><code class="language-yaml">indexes:
   foo:
     kind: template
@@ -3974,6 +4026,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>codegen: Fail lately when datamodel-codegen is not available.</li>
 <li>codegen: Fixed Jinja2 template caching.</li>
 <li>config: Allow <code>dsn</code> field to be empty.</li>
+<li>config: Fixed greedy environment variable expansion regex.</li>
 <li>hooks: Raise a <code>FeatureAvailabilityHook</code> instead of a warning when trying to execute hooks on SQLite.</li>
 </ul>
 <h3 id="improved"><a class="header" href="#improved">Improved</a></h3>
@@ -5045,7 +5098,7 @@ if __name__ == '__main__':
 <li>Run <code>dipdup schema init</code> on the existing database to enable <code>dipdup_head_status</code> view and REST endpoint.</li>
 </ul>
 <h2 id="whats-new-4"><a class="header" href="#whats-new-4">What's New</a></h2>
-<h3 id="index-only-the-current-state-of-big-maps-1"><a class="header" href="#index-only-the-current-state-of-big-maps-1">Index only the current state of big maps</a></h3>
+<h3 id="index-only-the-current-state-of-big-maps"><a class="header" href="#index-only-the-current-state-of-big-maps">Index only the current state of big maps</a></h3>
 <p><code>big_map</code> indexes allow achieving faster processing times than <code>operation</code> ones when storage updates are the only on-chain data your dapp needs to function. With this DipDup release, you can go even further and index only the current storage state, ignoring historical changes.</p>
 <pre><code class="language-yaml">indexes:
   foo:

@@ -118,12 +118,10 @@
                             stable_a = document.getElementById("stable");
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
-                                this.console.log('asdf');
                                 stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
-                                this.console.log('asdf');
                                 latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
@@ -170,7 +168,7 @@
 <li><code>sqlite</code></li>
 <li><code>postgres</code> (and compatible engines)</li>
 </ul>
-<p><a href="../deployment/database-engines.html">Database engines</a> article may help you choose a database that better suits your needs.</p>
+<p><a href="https://docs-next.dipdup.io/deployment/database-engines.html">6.1. Database engines</a> article may help you choose a database that better suits your needs.</p>
 <h2 id="sqlite"><a class="header" href="#sqlite">SQLite</a></h2>
 <p><code>path</code> field must be either path to the .sqlite3 file or <code>:memory:</code> to keep a database in memory only (default):</p>
 <pre><code class="language-yaml">database:
@@ -205,16 +203,14 @@
 <tr><td><code>connection_timeout</code></td><td>Connection timeout in seconds</td></tr>
 </tbody></table>
 </div><!-- TODO: Move to the upper level -->
-<p>You can also use compose-style environment variable substitutions with default values for secrets and other fields. See <a href="../getting-started/templates-and-variables.html#">Templates and variables</a> for details.</p>
+<p>You can also use compose-style environment variable substitutions with default values for secrets and other fields. See <a href="https://docs-next.dipdup.io/getting-started/templates-and-variables.html">2.7. Templates and variables</a>.</p>
 <h3 id="immune-tables"><a class="header" href="#immune-tables">Immune tables</a></h3>
-<p>In some cases, DipDup can't continue indexing with an existing database. See <a href="../advanced/reindexing.html">5.3. Reindexing</a> for details. One of the solutions to resolve reindexing state is to drop the database and start indexing from scratch. To achieve this, either invoke the <a href="../cli-reference.md#dipdup-schema-wipe.html"><code>schema wipe</code> command</a> or set an action to <code>wipe</code> in the <a href="../config/advanced.html"><code>advanced.reindex</code> config section</a>.</p>
-<p>You might want to keep several tables during schema wipe if data in them is not dependent on index states yet heavy. A typical example is indexing IPFS data — rollbacks do not affect off-chain storage, so you can safely continue after receiving a reorg message.</p>
+<p>You might want to keep several tables during schema wipe if the data in them is not dependent on index states yet heavy. A typical example is indexing IPFS data — changes in your code won't affect off-chain storage, so you can safely reuse this data.</p>
 <pre><code class="language-yaml">database:
   immune_tables:
-    - token_metadata
-    - contract_metadata
+    - ipfs_assets
 </code></pre>
-<p><code>immune_tables</code> is an optional array of table names that will be ignored during schema wipe. Once an immune table is created, DipDup will never touch it again; to change the schema of an immune table, you need to perform a migration manually. Check <code>schema export</code> output before doing this to ensure the resulting schema is the same TortoiseORM would generate.</p>
+<p><code>immune_tables</code> is an optional array of table names that will be ignored during schema wipe. Once an immune table is created, DipDup will never touch it again; to change the schema of an immune table, you need to perform a migration manually. Check <code>schema export</code> output before doing this to ensure the resulting schema is the same as Tortoise ORM would generate.</p>
 
                     </main>
 

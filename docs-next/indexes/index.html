@@ -118,12 +118,10 @@
                             stable_a = document.getElementById("stable");
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
-                                this.console.log('asdf');
                                 stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
-                                this.console.log('asdf');
                                 latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
@@ -164,37 +162,41 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="indexes"><a class="header" href="#indexes">indexes</a></h1>
-<p><em>Index</em> — is a basic DipDup entity connecting the inventory and specifying data handling rules.</p>
-<p>Each index has a unique string identifier acting as a key under the <code>indexes</code> config section:</p>
+                        <h1 id="indexes"><a class="header" href="#indexes">Indexes</a></h1>
+<p><em>Index</em> — is a primary DipDup entity connecting the inventory and specifying data handling rules.</p>
+<p>Each index has a linked TzKT datasource and a set of handlers. Indexes can join multiple contracts considered as a single application. Also, contracts can be used by multiple indexes of any kind, but make sure that data don't overlap. See <a href="https://docs-next.dipdup.io/getting-started/core-concepts.html#atomicity-and-persistency">2.2. Core concepts → atomicity-and-persistency</a>.</p>
 <pre><code class="language-yaml">indexes:
-  my_index:
+  contract_operations:
     kind: operation
     datasource: tzkt_mainnet
+    handlers:
+      - callback: on_operation
+        pattern: ...
 </code></pre>
-<p>There can be various index kinds; currently, the following options are supported for the <code>kind</code> field:</p>
+<p>Multiple indexes are available for different kinds of blockchain data. Currently, the following options are available:</p>
 <ul>
 <li><code>big_map</code></li>
+<li><code>event</code></li>
 <li><code>head</code></li>
 <li><code>operation</code></li>
 <li><code>token_transfer</code></li>
 </ul>
-<p>There's also a special <code>template</code> kind, which is used to generate new indexes from a template during startup.</p>
-<p>All the indexes have to specify the <code>datasource</code> field, an alias of an existing entry under the <a href="../datasources.html">datasources</a> section.</p>
-<h1 id="templates"><a class="header" href="#templates">Templates</a></h1>
-<p>This index type is used for creating a static template instance.</p>
-<pre><code class="language-yaml">indexes:
-  my_index:
-    template: my_template
+<p>Every index is linked to specific datasource from <a href="https://docs-next.dipdup.io/config/datasources.html">15.6. datasources</a> config section.</p>
+<h2 id="using-templates"><a class="header" href="#using-templates">Using templates</a></h2>
+<p>Index definitions can be templated to reduce the amount of boilerplate code. To create an index from the template during startup, add an item with the <code>template</code> and <code>values</code> field to the <code>indexes</code> section:</p>
+<pre><code class="language-yaml">templates:
+  operation_index_template:
+    kind: operation
+    datasource: &lt;datasource&gt;
+    ...
+
+indexes:
+  template_instance:
+    template: operation_index_template
     values:
-      placeholder1: value1
-      placeholder2: value2
+      datasource: tzkt_mainnet
 </code></pre>
-<p>For a static template instance (specified in the DipDup config) there are two fields:</p>
-<ul>
-<li><code>template</code> — template name (from <a href="../templates.html">templates</a> section)</li>
-<li><code>values</code> — concrete values for each <a href="../templates.html#placeholders">placeholder</a> used in a chosen template</li>
-</ul>
+<p>You can also create indexes from templates later in runtime. See <a href="https://docs-next.dipdup.io/getting-started/templates-and-variables.html">2.7. Templates and variables</a> page.</p>
 <h2 id="indexing-scope"><a class="header" href="#indexing-scope">Indexing scope</a></h2>
 <p>One can optionally specify block levels DipDup has to start and stop indexing at, e.g., there's a new version of the contract, and there's no need to track the old one anymore.</p>
 <pre><code class="language-yaml">indexes:

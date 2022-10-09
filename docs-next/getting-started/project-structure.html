@@ -118,12 +118,10 @@
                             stable_a = document.getElementById("stable");
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
-                                this.console.log('asdf');
                                 stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
-                                this.console.log('asdf');
                                 latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
@@ -209,11 +207,13 @@
 <!-- TODO: Move somewhere -->
 <p>DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) in normalized form (<a href="https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/">read more</a> about how TzKT handles Michelson expressions) but still as raw JSON. DipDup uses contract type information to generate data classes, which allow developers to work with strictly typed data.</p>
 <p>DipDup generates <a href="https://pydantic-docs.helpmanual.io/datamodel_code_generator/">Pydantic</a> models out of JSONSchema. You might want to install additional plugins (<a href="https://pydantic-docs.helpmanual.io/pycharm_plugin/">PyCharm</a>, <a href="https://pydantic-docs.helpmanual.io/mypy_plugin/">mypy</a>) for convenient work with this library.</p>
-<p>The following models are created at <code>init</code>:</p>
+<p>The following models are created at <code>init</code> for different indexes:</p>
 <ul>
-<li><code>operation</code> indexes: storage type for all contracts met in handler patterns plus parameter type for all destination+entrypoint pairs.</li>
-<li><code>big_map</code> indexes: key and storage types for all big map paths in handler configs.</li>
+<li><code>operation</code>: storage type for all contracts in handler patterns plus parameter type for all destination+entrypoint pairs.</li>
+<li><code>big_map</code>: key and storage types for all used contracts and big map paths.</li>
+<li><code>event</code>: payload types for all used contracts and tags.</li>
 </ul>
+<p>Other index kinds do not use code generated types.</p>
 <h2 id="nested-packages"><a class="header" href="#nested-packages">Nested packages</a></h2>
 <p>Callback modules don't have to be in top-level <code>hooks</code>/<code>handlers</code> directories. Add one or multiple dots to the callback name to define nested packages:</p>
 <pre><code class="language-yaml">package: indexer

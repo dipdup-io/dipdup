@@ -118,12 +118,10 @@
                             stable_a = document.getElementById("stable");
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
-                                this.console.log('asdf');
                                 stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
-                                this.console.log('asdf');
                                 latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
@@ -165,8 +163,26 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="templates-and-variables"><a class="header" href="#templates-and-variables">Templates and variables</a></h1>
+<h2 id="environment-variables"><a class="header" href="#environment-variables">Environment variables</a></h2>
+<p>DipDup supports compose-style variable expansion with optional default value:</p>
+<pre><code class="language-yaml">database:
+  kind: postgres
+  host: ${POSTGRES_HOST:-localhost}
+  password: ${POSTGRES_PASSWORD}
+</code></pre>
+<p>You can use environment variables anywhere throughout the configuration file. Consider the following example (absolutely useless but illustrative):</p>
+<pre><code class="language-yaml">custom:
+  ${FOO}: ${BAR:-bar}
+  ${FIZZ:-fizz}: ${BUZZ}
+</code></pre>
+<p>Running <code>FOO=foo BUZZ=buzz dipdup config export --unsafe</code> will produce the following output:</p>
+<pre><code class="language-yaml">custom:
+  fizz: buzz
+  foo: bar
+</code></pre>
+<p>Use this feature to store sensitive data outside of the configuration file and make your app fully declarative.</p>
 <h2 id="index-templates"><a class="header" href="#index-templates">Index templates</a></h2>
-<p>Templates allow you to reuse index configuration, e.g., for different networks (mainnet/testnet) or multiple contracts sharing the same codebase.</p>
+<p>Templates allow you to reuse index configuration, e.g., for different networks (mainnet/ghostnet) or multiple contracts sharing the same codebase.</p>
 <pre><code class="language-yaml">templates:
   my_template:
     kind: operation
@@ -179,10 +195,10 @@
           - destination: &lt;contract&gt;
             entrypoint: call
 </code></pre>
-<p>Templates have the same syntax as <a href="../config.html">indexes</a> of all kinds; the only difference is that they additionally support placeholders enabling parameterization:</p>
+<p>Templates have the same syntax as indexes of all kinds; the only difference is that they additionally support placeholders enabling parameterization:</p>
 <pre><code class="language-yaml">field: &lt;placeholder&gt;
 </code></pre>
-<p>Template above can be resolved in a following way:</p>
+<p>The template above can be resolved in the following way:</p>
 <pre><code class="language-yaml">contracts:
   some_dex: ...
 
@@ -196,15 +212,18 @@ indexes:
       datasource: tzkt_mainnet
       contract: some_dex
 </code></pre>
-<p>Any string value wrapped in angle brackets is treated as a placeholder, so make sure there are no collisions with the actual values. You can use a single placeholder multiple times.</p>
-<p>Any index implementing a template must have a value for each existing placeholder; the exception raised otherwise. These values are available in the handler context at <code>ctx.template_values</code>.</p>
-<h2 id="environment-variables"><a class="header" href="#environment-variables">Environment variables</a></h2>
-<p>DipDup supports compose-style variable expansion with optional default value:</p>
-<pre><code class="language-yaml">database:
-  ...
-  password: ${POSTGRES_PASSWORD:-changeme}
+<p>Any string value wrapped in angle brackets is treated as a placeholder, so make sure there are no collisions with the actual values. You can use a single placeholder multiple times. In contradiction to environment variables, dictionary keys cannot be placeholders.</p>
+<p>An index created from a template must have a value for each placeholder; the exception is raised otherwise. These values are available in the handler context as <code>ctx.template_values</code> dictionary.</p>
+<p>You can also spawn indexes from templates in runtime. To achieve the same effect as above, you can use the following code:</p>
+<pre><code class="language-python">ctx.add_index(
+    name='my_template_instance',
+    template='my_template',
+    values={
+        'datasource': 'tzkt_mainnet',
+        'contract': 'some_dex',
+    },
+)
 </code></pre>
-<p>You can use environment variables throughout the configuration file, except for property names (YAML object keys).</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>

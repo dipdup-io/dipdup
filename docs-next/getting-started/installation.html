@@ -118,12 +118,10 @@
                             stable_a = document.getElementById("stable");
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
-                                this.console.log('asdf');
                                 stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
-                                this.console.log('asdf');
                                 latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
@@ -186,7 +184,7 @@
 </code></pre>
 <p>This script uses pipx under the hood to install <code>dipdup</code> and <code>datamodel-codegen</code> as CLI tools. Then you can use any package manager of your choice to manage versions of DipDup and other project dependencies.</p>
 <h3 id="manually"><a class="header" href="#manually">Manually</a></h3>
-<p>Currently, we mainly use <a href="https://python-poetry.org">Poetry</a>](<a href="https://python-poetry.org">https://python-poetry.org</a>) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.</p>
+<p>Currently, we mainly use <a href="https://python-poetry.org">Poetry</a> for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.</p>
 <pre><code class="language-shell"># Create a new project directory
 mkdir dipdup-indexer; cd dipdup-indexer
 

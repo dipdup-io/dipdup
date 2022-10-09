@@ -118,12 +118,10 @@
                             stable_a = document.getElementById("stable");
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
-                                this.console.log('asdf');
                                 stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
-                                this.console.log('asdf');
                                 latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
@@ -165,30 +163,30 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="big_map"><a class="header" href="#big_map">big_map</a></h1>
-<p>big_map index allows querying only updates of a specific big map (or several). In some cases, it can drastically reduce the amount of data transferred and speed up the indexing process.</p>
+<p><code>big_map</code> index allows querying only updates of specific big maps. In some cases, it can drastically reduce the amount of data transferred and thus indexing speed compared to fetching all operations.</p>
 <pre><code class="language-yaml">indexes:
-  my_index:
+  token_big_map_index:
     kind: big_map
     datasource: tzkt
     skip_history: never
     handlers:
-      - callback: on_leger_update
-        contract: contract1
+      - callback: on_ledger_update
+        contract: token
         path: data.ledger
       - callback: on_token_metadata_update
-        contract: contract1
+        contract: token
         path: token_metadata
 </code></pre>
 <h2 id="handlers"><a class="header" href="#handlers">Handlers</a></h2>
-<p>Each big_map handler contains three required fields:</p>
+<p>Each big map handler contains three required fields:</p>
 <ul>
-<li><code>callback</code> —  name of the <em>async</em> function with a particular signature; DipDup will try to load it from the module with the same name <code>&lt;package_name&gt;.handlers.&lt;callback&gt;</code></li>
-<li><code>contract</code> — Big map parent contract (from the <a href="../contracts.html">inventory</a>)</li>
-<li><code>path</code> — path to the Big map in the contract storage (use dot as a delimiter)</li>
+<li><code>callback</code> —  a name of async function with a particular signature; DipDup will search for it in <code>&lt;package&gt;.handlers.&lt;callback&gt;</code> module.</li>
+<li><code>contract</code> — big map parent contract</li>
+<li><code>path</code> — path to the big map in the contract storage (use dot as a delimiter)</li>
 </ul>
-<h2 id="index-only-the-current-state-of-big-maps"><a class="header" href="#index-only-the-current-state-of-big-maps">Index only the current state of big maps</a></h2>
-<p>When <code>skip_history</code> field is set to <code>once</code>, DipDup will skip historical changes only on initial sync and switch to regular indexing afterward. When the value is <code>always</code>, DipDup will fetch all big map keys on every restart. Preferrable mode depends on your workload.</p>
-<p>All big map diffs DipDup pass to handlers during fast sync have <code>action</code> field set to <code>BigMapAction.ADD_KEY</code>. Keep in mind that DipDup fetches all keys in this mode, including ones removed from the big map. You can filter out latter by <code>BigMapDiff.data.active</code> field if needed.</p>
+<h2 id="index-only-the-current-state"><a class="header" href="#index-only-the-current-state">Index only the current state</a></h2>
+<p>When the <code>skip_history</code> field is set to <code>once</code>, DipDup will skip historical changes only on initial sync and switch to regular indexing afterward. When the value is <code>always</code>, DipDup will fetch all big map keys on every restart. Preferrable mode depends on your workload.</p>
+<p>All big map diffs DipDup passes to handlers during fast sync have the <code>action</code> field set to <code>BigMapAction.ADD_KEY</code>. Remember that DipDup fetches all keys in this mode, including ones removed from the big map. You can filter them out later by <code>BigMapDiff.data.active</code> field if needed.</p>
 
                     </main>
 

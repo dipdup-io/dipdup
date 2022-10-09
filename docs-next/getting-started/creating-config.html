@@ -118,12 +118,10 @@
                             stable_a = document.getElementById("stable");
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
-                                this.console.log('asdf');
                                 stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
-                                this.console.log('asdf');
                                 latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
@@ -188,18 +186,22 @@
 </tbody></table>
 </div>
 <p><strong>Header</strong> contains two required fields, <code>package</code> and <code>spec_version</code>. They are used to identify the project and the version of the DipDup specification. All other fields in the config are optional.</p>
-<p><strong>Inventory</strong> specifies contracts that need to be indexed, datasources to fetch data from and the database to store data in.</p>
+<p><strong>Inventory</strong> specifies contracts that need to be indexed, datasources to fetch data from, and the database to store data in.</p>
 <p><strong>Index definitions</strong> define the index templates that will be used to index the contract data.</p>
 <p><strong>Hook definitions</strong> define callback functions that will be called manually or on schedule.</p>
 <p><strong>Integrations</strong> are used to integrate with third-party services.</p>
 <p><strong>Tunables</strong> affect the behavior of the whole framework.</p>
 <h2 id="merging-config-files"><a class="header" href="#merging-config-files">Merging config files</a></h2>
-<p>DipDup allows you to customize the configuration for a specific environment or a workflow. It works similar to docker-compose, but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the <code>-c</code> command-line option multiple times:</p>
+<p>DipDup allows you to customize the configuration for a specific environment or workflow. It works similarly to docker-compose anchors but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the <code>-c</code> command-line option multiple times:</p>
 <pre><code class="language-shell">dipdup -c dipdup.yml -c dipdup.prod.yml run
 </code></pre>
-<p>Run <a href="../cli-reference.html#dipdup-config-export"><code>config export</code></a> command if unsure about the final config used by DipDup.</p>
+<p>Run <code>config export</code> command if unsure about the final config used by DipDup.</p>
 <h2 id="full-example"><a class="header" href="#full-example">Full example</a></h2>
-<p>Let's put it all together. Config below is an artificial example but contains almost all available options.</p>
+<blockquote>
+<p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
+<p>This page or paragraph is yet to be written. Come back later.</p>
+</blockquote>
+<p>Let's put it all together. The config below is an artificial example but contains almost all available options.</p>
 <pre><code class="language-yaml">spec_version: 1.2
 package: my_indexer
 

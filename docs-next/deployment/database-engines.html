@@ -118,12 +118,10 @@
                             stable_a = document.getElementById("stable");
                             latest_a = document.getElementById("latest");
                             if (window.location.href.includes("docs.")) {
-                                this.console.log('asdf');
                                 stable_a.style.color = "dimgray";
                                 latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
                             }
                             else if (window.location.href.includes('docs-next.')) {
-                                this.console.log('asdf');
                                 latest_a.style.color = "dimgray";
                                 stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
                             }
@@ -167,20 +165,20 @@
                         <h1 id="database-engines"><a class="header" href="#database-engines">Database engines</a></h1>
 <p>DipDup officially supports the following databases: SQLite, PostgreSQL, TimescaleDB. This table will help you choose a database engine that mostly suits your needs.</p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: right"></th><th style="text-align: center">SQLite</th><th style="text-align: center">PostgreSQL</th><th style="text-align: center">TimescaleDB</th></tr></thead><tbody>
-<tr><td style="text-align: right">Supported versions</td><td style="text-align: center"><code>latest</code></td><td style="text-align: center"><code>13</code>, <code>14</code>, <code>15</code></td><td style="text-align: center"><code>pg13</code>, <code>pg14</code></td></tr>
-<tr><td style="text-align: right">When to use</td><td style="text-align: center">early development</td><td style="text-align: center">general usage</td><td style="text-align: center">working with timeseries</td></tr>
-<tr><td style="text-align: right">Performance</td><td style="text-align: center">good</td><td style="text-align: center">better</td><td style="text-align: center">great in some scenarios</td></tr>
+<tr><td style="text-align: right">Supported versions</td><td style="text-align: center"><code>latest</code></td><td style="text-align: center"><code>13</code>, <code>14</code></td><td style="text-align: center"><code>pg13</code>, <code>pg14</code></td></tr>
+<tr><td style="text-align: right">Best application</td><td style="text-align: center">development</td><td style="text-align: center">general usage</td><td style="text-align: center">working with timeseries</td></tr>
 <tr><td style="text-align: right">SQL scripts</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
 <tr><td style="text-align: right">Immune tables</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
 <tr><td style="text-align: right">Hasura integration</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
 </tbody></table>
 </div>
-<p>While sometimes it's convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines.</p>
+<p>By default DipDup uses in-memory SQLite database that destroys after the process exits.</p>
+<p>While sometimes it's convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines. However, Tortoise ORM mostly hides these differences.</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
 <li><a href="https://docs-next.dipdup.io/advanced/sql.html">4.7. SQL scripts</a></li>
-<li><a href="https://docs-next.dipdup.io/config/database.html#immune-tables">15.5. database → immune-tables</a></li>
+<li><a href="https://docs-next.dipdup.io/config/database.html">15.5. database</a></li>
 </ul>
 </blockquote>
 
