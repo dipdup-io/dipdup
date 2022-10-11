@@ -934,7 +934,7 @@ format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 
 [[package]]
 name = "jupyter-client"
-version = "7.3.5"
+version = "7.4.1"
 description = "Jupyter protocol implementation and client libraries"
 category = "main"
 optional = true
@@ -3119,8 +3119,8 @@ jsonschema = [
     {file = "jsonschema-4.16.0.tar.gz", hash = "sha256:165059f076eff6971bae5b742fc029a7b4ef3f9bcf04c14e4776a7605de14b23"},
 ]
 jupyter-client = [
-    {file = "jupyter_client-7.3.5-py3-none-any.whl", hash = "sha256:b33222bdc9dd1714228bd286af006533a0abe2bbc093e8f3d29dc0b91bdc2be4"},
-    {file = "jupyter_client-7.3.5.tar.gz", hash = "sha256:3c58466a1b8d55dba0bf3ce0834e4f5b7760baf98d1d73db0add6f19de9ecd1d"},
+    {file = "jupyter_client-7.4.1-py3-none-any.whl", hash = "sha256:bbf6404ef64afff3d4f583c90c6335545959657b7dec3a86c440d7b1368407ea"},
+    {file = "jupyter_client-7.4.1.tar.gz", hash = "sha256:3f30b1f27dc61adf5d0f5d466ef7185f6a19140c54395600b6df9adbe7d5ebcf"},
 ]
 jupyter-core = [
     {file = "jupyter_core-4.11.1-py3-none-any.whl", hash = "sha256:715e22bb6cc7db3718fddfac1f69f1c7e899ca00e42bdfd4bf3705452b9fd84a"},
