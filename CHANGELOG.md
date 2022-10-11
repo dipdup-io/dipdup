@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning].
 
 - cli: `new` command to create a new project interactively.
 - cli: `install/update/uninstall` commands to manage local DipDup installation.
-- config: `sentry.user_id` option to set user ID for Sentry (affects release adoption data).
 - index: New index kind `event` to process contract events.
 - install: New interactive installer based on pipx (`install.py` or `dipdup-install`).
 
@@ -28,7 +27,9 @@ and this project adheres to [Semantic Versioning].
 
 - cli: Detect `src/` layout when guessing package path.
 - codegen: Improved cross-platform compatibility.
+- config: `sentry.user_id` option to set user ID for Sentry (affects release adoption data).
 - sentry: Detect environment when not set in config (docker/gha/tests/local)
+- sentry: Expose more tags under the `dipdup` namespace.
 
 ### Performance
 

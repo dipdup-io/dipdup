@@ -213,16 +213,18 @@ def _init_sentry(config) -> None:
 
     # NOTE: Setting session tags
     tags = {
-        'dipdup.version': __version__,
-        'dipdup.package': package,
-        'dipdup.release': release,
-        'dipdup.environment': environment,
-        'dipdup.server_name': server_name,
-        'dipdup.crash_reporting': crash_reporting,
+        'python': platform.python_version(),
+        'os': f'{platform.system().lower()}-{platform.machine()}',
+        'version': __version__,
+        'package': package,
+        'release': release,
+        'environment': environment,
+        'server_name': server_name,
+        'crash_reporting': crash_reporting,
     }
     _logger.debug('Sentry tags: %s', ', '.join(f'{k}={v}' for k, v in tags.items()))
     for tag, value in tags.items():
-        sentry_sdk.set_tag(tag, value)
+        sentry_sdk.set_tag(f'dipdup.{tag}', value)
 
     # NOTE: User ID allows to track release adoption. It's sent on every session,
     # NOTE: but obfuscated below, so it's not a privacy issue. However, randomly
