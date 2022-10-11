@@ -175,11 +175,11 @@
 <tr><td>PyTezos included</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td></tr>
 </tbody></table>
 </div>
-<p>Default DipDup image is suitable for development and testing. It includes some development tools to make package management easier. If unsure, use this image.</p>
+<p>The default DipDup image is suitable for development and testing. It also includes some tools to make package management easier. If unsure, use this image.</p>
 <h3 id="-slim-image"><a class="header" href="#-slim-image"><code>-slim</code> image</a></h3>
-<p>This image is based on Alpine Linux and has a much smaller size than the default one. As a tradeoff, it doesn't include codegen functionality (unlikely to be useful in production).</p>
+<p>Based on Alpine Linux, this image is much smaller than the default one. Also, it doesn't include codegen functionality (<code>init</code> command, unlikely to be useful in production).</p>
 <h3 id="-pytezos-image"><a class="header" href="#-pytezos-image"><code>-pytezos</code> image</a></h3>
-<p>The only difference with the default image is the pre-installed PyTezos library, the same as <code>pip install dipdup -E pytezos</code>. DipDup doesn't provide any further PyPoetry integration. Having some patience you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!</p>
+<p>The only difference with the default image is the pre-installed PyTezos library, the same as <code>pip install dipdup -E pytezos</code>. DipDup doesn't provide any further PyPoetry integration. Having some patience, you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!</p>
 <h3 id="nightly-builds-ghcrio"><a class="header" href="#nightly-builds-ghcrio">Nightly builds (ghcr.io)</a></h3>
 <p>In addition to <a href="https://hub.docker.com/r/dipdup/dipdup">Docker Hub</a> we also publish images on <a href="https://github.com/dipdup-net/dipdup/pkgs/container/dipdup">GitHub Packages</a>. Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!</p>
 <pre><code class="language-Dockerfile"># Slim image for `aux/arm64` branch
@@ -309,7 +309,7 @@ advanced:
 <p>Build and run the containers:</p>
 <pre><code class="language-shell">docker-compose up -d --build
 </code></pre>
-<p>We recommend <a href="https://github.com/jesseduffield/lazydocker">lazydocker</a> for monitoring your application.</p>
+<p>Try <a href="https://github.com/jesseduffield/lazydocker">lazydocker</a> tool to manage Docker containers interactively.</p>
 <h2 id="deploying-with-docker-swarm"><a class="header" href="#deploying-with-docker-swarm">Deploying with Docker Swarm</a></h2>
 <blockquote>
 <p>🚧 <strong>UNDER CONSTRUCTION</strong></p>

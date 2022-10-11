@@ -1031,7 +1031,7 @@ indexes:
     first_level: 1000000
     last_level: 2000000
 </code></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="big_map"><a class="header" href="#big_map">big_map</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="big_map-index"><a class="header" href="#big_map-index"><code>big_map</code> index</a></h1>
 <p><code>big_map</code> index allows querying only updates of specific big maps. In some cases, it can drastically reduce the amount of data transferred and thus indexing speed compared to fetching all operations.</p>
 <pre><code class="language-yaml">indexes:
   token_big_map_index:
@@ -1056,16 +1056,41 @@ indexes:
 <h2 id="index-only-the-current-state"><a class="header" href="#index-only-the-current-state">Index only the current state</a></h2>
 <p>When the <code>skip_history</code> field is set to <code>once</code>, DipDup will skip historical changes only on initial sync and switch to regular indexing afterward. When the value is <code>always</code>, DipDup will fetch all big map keys on every restart. Preferrable mode depends on your workload.</p>
 <p>All big map diffs DipDup passes to handlers during fast sync have the <code>action</code> field set to <code>BigMapAction.ADD_KEY</code>. Remember that DipDup fetches all keys in this mode, including ones removed from the big map. You can filter them out later by <code>BigMapDiff.data.active</code> field if needed.</p>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="head"><a class="header" href="#head">head</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="event-index"><a class="header" href="#event-index"><code>event</code> index</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="head-index"><a class="header" href="#head-index"><code>head</code> index</a></h1>
+<p>This very simple index provides metadata of the latest block when it's baked. Only realtime data is processed; the synchronization stage is skipped for this index.</p>
+<pre><code class="language-yaml">spec_version: 1.2
+package: demo_head
+
+database:
+  kind: sqlite
+  path: demo-head.sqlite3
+
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+indexes:
+  mainnet_head:
+    kind: head
+    datasource: tzkt_mainnet
+    handlers:
+      - callback: on_mainnet_head
+</code></pre>
+<p>Head index callback receives <code>HeadBlockData</code> model that contains only basic info; no operations are included. Being useless by itself, this index is helpful for monitoring and cron-like tasks. You can define multiple indexes for each datasource used.</p>
+<p>Subscription to the head channel is enabled by default, even if no head indexes are defined. Each time the block is baked, the <code>dipdup_head</code> table is updated per datasource. Use it to ensure that both index datasouce and underlying blockchain are up and running.</p>
 <blockquote>
-<p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
-<p>This page or paragraph is yet to be written. Come back later.</p>
+<p>💡 <strong>SEE ALSO</strong></p>
+<ul>
+<li><a href="https://docs-next.dipdup.io/deployment/monitoring.html">6.7. Monitoring</a></li>
+</ul>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><div class="float-img">
   <img src="indexes/../../assets/operation-bcd.png" alt="Operation group in BCD explorer">
   <img src="indexes/../../assets/operation-config.png" alt="`operation` index config">
 </div>
-<h1 id="operation"><a class="header" href="#operation">operation</a></h1>
+<h1 id="operation-index"><a class="header" href="#operation-index"><code>operation</code> index</a></h1>
 <p>Operation index allows you to query only operations related to your dapp and match them with handlers by content. A single contract call consists of implicit operation and, optionally, internal operations. For each of them, you can specify a handler that will be called when the operation group matches. As a result, you get something like an event log for your dapp.</p>
 <h2 id="filters"><a class="header" href="#filters">Filters</a></h2>
 <p>DipDup supports filtering operations by <code>source</code>, <code>destination</code> (if applicable), and <code>originated_contract</code> (if applicable).</p>
@@ -1138,11 +1163,7 @@ indexes:
     type: transaction
 </code></pre>
 <p>You will get slightly different callback argument types depending on whether you specify <em>destination+entrypoint</em> for transactions and <em>originated_contract</em> for originations. Namely, in the first case, DipDup will generate the dataclass for a particular entrypoint/storage, and in the second case not (meaning you will have to handle untyped parameters/storage updates).</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="token_transfer"><a class="header" href="#token_transfer">token_transfer</a></h1>
-<blockquote>
-<p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
-<p>This page or paragraph is yet to be written. Come back later.</p>
-</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="token_transfer-index"><a class="header" href="#token_transfer-index"><code>token_transfer</code> index</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="advanced-usage"><a class="header" href="#advanced-usage">Advanced usage</a></h1>
 <p>In this section, you will find information about advanced DipDup features.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="datasources"><a class="header" href="#datasources">Datasources</a></h1>
@@ -2073,11 +2094,11 @@ client.chain.query
 <tr><td>PyTezos included</td><td style="text-align: center">❌</td><td style="text-align: center">✅</td><td style="text-align: center">❌</td></tr>
 </tbody></table>
 </div>
-<p>Default DipDup image is suitable for development and testing. It includes some development tools to make package management easier. If unsure, use this image.</p>
+<p>The default DipDup image is suitable for development and testing. It also includes some tools to make package management easier. If unsure, use this image.</p>
 <h3 id="-slim-image"><a class="header" href="#-slim-image"><code>-slim</code> image</a></h3>
-<p>This image is based on Alpine Linux and has a much smaller size than the default one. As a tradeoff, it doesn't include codegen functionality (unlikely to be useful in production).</p>
+<p>Based on Alpine Linux, this image is much smaller than the default one. Also, it doesn't include codegen functionality (<code>init</code> command, unlikely to be useful in production).</p>
 <h3 id="-pytezos-image"><a class="header" href="#-pytezos-image"><code>-pytezos</code> image</a></h3>
-<p>The only difference with the default image is the pre-installed PyTezos library, the same as <code>pip install dipdup -E pytezos</code>. DipDup doesn't provide any further PyPoetry integration. Having some patience you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!</p>
+<p>The only difference with the default image is the pre-installed PyTezos library, the same as <code>pip install dipdup -E pytezos</code>. DipDup doesn't provide any further PyPoetry integration. Having some patience, you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!</p>
 <h3 id="nightly-builds-ghcrio"><a class="header" href="#nightly-builds-ghcrio">Nightly builds (ghcr.io)</a></h3>
 <p>In addition to <a href="https://hub.docker.com/r/dipdup/dipdup">Docker Hub</a> we also publish images on <a href="https://github.com/dipdup-net/dipdup/pkgs/container/dipdup">GitHub Packages</a>. Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!</p>
 <pre><code class="language-Dockerfile"># Slim image for `aux/arm64` branch
@@ -2207,7 +2228,7 @@ advanced:
 <p>Build and run the containers:</p>
 <pre><code class="language-shell">docker-compose up -d --build
 </code></pre>
-<p>We recommend <a href="https://github.com/jesseduffield/lazydocker">lazydocker</a> for monitoring your application.</p>
+<p>Try <a href="https://github.com/jesseduffield/lazydocker">lazydocker</a> tool to manage Docker containers interactively.</p>
 <h2 id="deploying-with-docker-swarm"><a class="header" href="#deploying-with-docker-swarm">Deploying with Docker Swarm</a></h2>
 <blockquote>
 <p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
@@ -2515,14 +2536,13 @@ async def simulate_reorg(
         )
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="monitoring"><a class="header" href="#monitoring">Monitoring</a></h1>
-<p>In order to perform up-to-date and freshness checks, DipDup provides a standard REST endpoint you can use together with Betteruptime or similar services that can search for a keyword in the response.</p>
-<p>This check basically says that DipDup is not stuck and keeps receiving new data (last known block timestamp is not older than <strong>three minutes</strong> from now).<br />
-Note that this is not enough to ensure everything works as expected, but it can at least cover the cases when there is an issue with the datasource or your indexer stops working due to an exception.</p>
-<h3 id="uri-format"><a class="header" href="#uri-format">URI format</a></h3>
-<pre><code>https://&lt;your-indexer-host&gt;/api/rest/dipdup_head_status?name=&lt;datasource-uri&gt;
+<p>To perform up-to-date and freshness checks, DipDup provides a standard REST endpoint you can use together with Betteruptime or similar services that can search for a keyword in the response.</p>
+<p>This check says that DipDup is not stuck and keeps receiving new data (the last known block timestamp is not older than <strong>three minutes</strong> from now). Note that this is not enough to ensure everything works as expected. But it can at least cover the cases when datasource API is down or your indexer has crashed.</p>
+<h2 id="uri-format"><a class="header" href="#uri-format">URI format</a></h2>
+<pre><code class="language-text">https://&lt;your-indexer-host&gt;/api/rest/dipdup_head_status?name=&lt;datasource-uri&gt;
 </code></pre>
 <p>If you have camel case enabled in the Hasura config:</p>
-<pre><code>https://&lt;your-indexer-host&gt;/api/rest/dipdupHeadStatus?name=&lt;datasource-uri&gt;
+<pre><code class="language-text">https://&lt;your-indexer-host&gt;/api/rest/dipdupHeadStatus?name=&lt;datasource-uri&gt;
 </code></pre>
 <p>For example:</p>
 <ul>
@@ -2561,7 +2581,7 @@ SELECT
 FROM
     dipdup_head;
 </code></pre>
-<p>You can also create your custom alert endpoints using SQL views and functions and then converting them to Hasura REST endpoints.</p>
+<p>You can also create your custom alert endpoints using SQL views and functions and then convert them to Hasura REST endpoints.</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
@@ -2699,31 +2719,48 @@ poetry run mypy
 <p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
 <p>This page or paragraph is yet to be written. Come back later.</p>
 </blockquote>
-<h2 id="preparation"><a class="header" href="#preparation">Preparation</a></h2>
+<p>The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL NOT&quot;, &quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;, &quot;MAY&quot;, and &quot;OPTIONAL&quot; in this document are to be interpreted as described in <a href="https://www.ietf.org/rfc/rfc2119.txt">RFC 2119</a>.</p>
+<h2 id="general"><a class="header" href="#general">General</a></h2>
 <ul>
-<li>To set up the development environment, you need to install <a href="https://python-poetry.org/docs/#installation">Poetry</a> package manager and GNU Make.</li>
-<li>Run <code>make help</code> to get available commands.</li>
+<li>All code in this repository MUST be licensed under the <a href="LICENSE">MIT License</a>.</li>
+<li>Python code in this repository MUST run on Python 3.10. It also MAY run on Python 3.11. Using modern language features is encouraged.</li>
+<li>Python code in this repository MUST run in Linux, macOS, Docker, and <code>amd64</code>/<code>arm64</code> environments. Windows environments SHOULD be supported as well.</li>
+<li>We use the <a href="https://python-poetry.org/docs/#installation">Poetry</a> package manager and GNU Make to set up the development environment. You SHOULD install both tools and run <code>make help</code> to see available shortcuts.</li>
 </ul>
-<h2 id="git"><a class="header" href="#git">Git</a></h2>
+<h2 id="github"><a class="header" href="#github">GitHub</a></h2>
 <ul>
-<li>Branch names MUST follow <code>prefix/short-descriptions</code> format. Prefixes we currently use: <code>feat</code> for features, <code>fix</code> for bugfixes, <code>docs</code> for documentation, <code>aux</code> for miscellaneous, <code>exp</code> for experiments.</li>
+<li>Branch names MUST follow <code>prefix/short-description</code> format. Prefixes currently in use: <code>feat</code> for features, <code>fix</code> for bugfixes, <code>docs</code> for documentation, <code>aux</code> for miscellaneous, <code>exp</code> for experiments.</li>
+<li>Pull requests MUST be squashed when merging to <code>master</code>.</li>
+<li>Issues and pull requests MUST have a descriptive title; they SHOULD be linked to each other, appropriately labeled, and assigned to maintainers while in progress.</li>
 </ul>
 <h2 id="codestyle"><a class="header" href="#codestyle">Codestyle</a></h2>
 <ul>
-<li>We use the following combo of linters and formatters: <code>isort</code>, <code>black</code>, <code>flake8</code>, <code>mypy</code>. All linter checks MUST pass before merging code to master.</li>
+<li>We use the following combo of linters and formatters: <code>isort</code>, <code>black</code>, <code>flake8</code>, <code>mypy</code>. All linter checks MUST pass before merging code to <code>master</code> (CI will fail otherwise).</li>
+<li>Single quotes are RECOMMENDED for string literals.</li>
+<li>Meaningful comments are highly RECOMMENDED to begin with <code># NOTE:</code>, <code># TODO:</code>, or <code># FIXME: ...</code>.</li>
+<li>Developers SHOULD avoid </li>
 </ul>
 <h2 id="releases"><a class="header" href="#releases">Releases</a></h2>
 <ul>
-<li>Release versions SHOULD conform to <a href="https://semver.org/">Semantic Versioning</a>. Releases that introduce breaking changes MUST be major ones.</li>
-<li>Only the latest major version is supported in general. Critical fixes CAN be backported to the previous major release. To do so, git checkout from the latest stable tag, bump DipDup version manually and add a new tag.</li>
+<li>Release versions MUST conform to <a href="https://semver.org/">Semantic Versioning</a>. Releases that introduce breaking changes MUST be major ones.</li>
+<li>Only the latest major version is supported in general. Critical fixes MAY be backported to the previous major release. To do so, create an <code>aux/X.Y.Z</code> branch from the latest stable tag, bump the DipDup version manually, and add a new tag.</li>
 </ul>
 <h2 id="documentation"><a class="header" href="#documentation">Documentation</a></h2>
 <ul>
-<li>All changes that affect user experience MUST be documented in CHANGELOG.md file.</li>
-<li>Changelog formatting SHOULD stick to GitLab changelog <a href="https://docs.gitlab.com/ee/development/changelog.html">guidelines</a>.</li>
+<li>All changes that affect user experience MUST be documented in the CHANGELOG.md file.</li>
+<li>Changes that significantly affect DipDup maintainers' experience MAY be documented in the CHANGELOG.md file.</li>
+<li>The changelog MUST conform to the &quot;Keep a Changelog&quot; specification (CI will break otherwise).</li>
+<li>A page in Release Notes SHOULD accompany all major releases.</li>
+<li>All internal links MUST be created with <code>{{ #sumary ... }}</code> shortcodes.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="demo-projects"><a class="header" href="#demo-projects">Demo projects</a></h1>
-<p>DipDup repository contains several minimal examples of how to use various features for real-case scenarios. Please, do not use these examples in production unmodified. We have not put a production-grade amount of effort into developing them, so they may contain flaws in indexing logic.</p>
+<h2 id="demo-projects"><a class="header" href="#demo-projects">Demo Projects</a></h2>
+<h2 id="installer"><a class="header" href="#installer">Installer</a></h2>
+<h2 id="docker-images"><a class="header" href="#docker-images">Docker Images</a></h2>
+<h2 id="tests"><a class="header" href="#tests">Tests</a></h2>
+<h2 id="code-review"><a class="header" href="#code-review">Code Review</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="demo-projects-1"><a class="header" href="#demo-projects-1">Demo projects</a></h1>
+<!-- TODO: More demo descriptions -->
+<p>The DipDup repository contains several minimal examples of how to use various features for real-case scenarios. Please, do not use these examples in production unmodified. We have not put a production-grade amount of effort into developing them, so they may contain flaws in indexing logic.</p>
 <p>Some projects that started as a demo now evolved into full-fledged applications running in production. Check out <a href="https://docs-next.dipdup.io/examples/built-with-dipdup.html">11. Built with DipDup</a> page.</p>
 <h2 id="tzbtc-token"><a class="header" href="#tzbtc-token">TzBTC token</a></h2>
 <p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tzbtc">demo_tzbtc</a></p>
@@ -2742,16 +2779,16 @@ poetry run mypy
 <p>Tezos Domains is a distributed naming system. You probably have seen those fancy <code>user.tez</code> names while browsing explorers. This is a pretty basic example of how to index them.</p>
 <h2 id="tezos-domains-big_map"><a class="header" href="#tezos-domains-big_map">Tezos Domains (<code>big_map</code>)</a></h2>
 <p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_domains_big_map">demo_domains_big_map</a></p>
-<p>The same as above, but uses <code>big_map</code> index instead of <code>operation</code> one. The storage structure of this contract is pretty straightforward; we only need to track a single big map. To speed up indexing more, this example contains <code>skip_history: once</code> directive to index only the current state of the contract before switching to realtime processing.</p>
+<p>The same as above, but uses <code>big_map</code> index instead of <code>operation</code> one. The storage structure of this contract is pretty straightforward; we only need to track a single big map. This example contains <code>skip_history: once</code> directive to index only the current state of the contract before switching to realtime processing. It allows to speed up indexing even more.</p>
 <h2 id="tzcolors"><a class="header" href="#tzcolors">TzColors</a></h2>
 <p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tzcolors">demo_tzcolors</a></p>
 <p>A very basic indexer of TzColors NFT token and marketplace. Unlike <code>hic et nunc</code> this marketplace provides auction functionality. Other than that, it is pretty much the same.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="built-with-dipdup"><a class="header" href="#built-with-dipdup">Built with DipDup</a></h1>
 <p>This page is a brief overview of projects which use DipDup as an indexing solution.</p>
-<p>Want to see your project at this page? Create an issue on <a href="https://github.com/dipdup-net/dipdup-docs/issues">GitHub</a>!</p>
+<p>Want to see your project on this page? Create an issue on <a href="https://github.com/dipdup-net/dipdup-docs/issues">GitHub</a>!</p>
 <h2 id="hicdex"><a class="header" href="#hicdex">HicDEX</a></h2>
 <p><a href="https://hicdex.com/">Homepage</a> | <a href="https://api.hicdex.com/graphiql/">API</a> | <a href="https://github.com/hicdex/hicdex">GitHub</a></p>
-<p>HicDEX is a Tezos indexer for hicetnunc.art marketplace. Indexed data is available with a public GraphQL endpoint.</p>
+<p>HicDEX is a Tezos indexer for hicetnunc.art marketplace (currently teia.art). Indexed data is available with a public GraphQL endpoint.</p>
 <ul>
 <li><a href="https://leonnicholls.medium.com/hicdex-the-hic-et-nunc-indexer-bd45f27a228f">Hicdex: the Hic Et Nunc indexer (Medium)</a></li>
 </ul>
@@ -3649,16 +3686,17 @@ http: HTTP client configuration</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.config.SentryConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">SentryConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dsn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">release</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.SentryConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">SentryConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dsn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">release</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.SentryConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Config for Sentry integration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dsn</strong> – DSN of the Sentry instance</p></li>
-<li><p><strong>environment</strong> – Environment (defaults to <cite>production</cite>)</p></li>
-<li><p><strong>server_name</strong> – Server name (defaults to hostname)</p></li>
-<li><p><strong>release</strong> – Release version (defaults to DipDup version)</p></li>
-<li><p><strong>debug</strong> – Catch warning messages and more context</p></li>
+<li><p><strong>environment</strong> – Environment; if not set, guessed from docker/ci/gha/local.</p></li>
+<li><p><strong>server_name</strong> – Server name; defaults to obfuscated hostname.</p></li>
+<li><p><strong>release</strong> – Release version; defaults to DipDup package version.</p></li>
+<li><p><strong>user_id</strong> – User ID; defaults to obfuscated package/environment.</p></li>
+<li><p><strong>debug</strong> – Catch warning messages, increase verbosity.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4011,33 +4049,45 @@ templates:
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to this project will be documented in this file.</p>
-<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
-and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-net/dipdup/compare/6.1.3...HEAD">Unreleased</a></a></h2>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
 <ul>
-<li>install: New install script based on pipx.</li>
-<li>cli: <code>dipdup new</code> command to create a new project (ex. cookiecutter).</li>
-<li>cli: <code>dipdup update</code> command to update local pipx and poetry installations.</li>
+<li>cli: <code>new</code> command to create a new project interactively.</li>
+<li>cli: <code>install/update/uninstall</code> commands to manage local DipDup installation.</li>
+<li>index: New index kind <code>event</code> to process contract events.</li>
+<li>install: New interactive installer based on pipx (<code>install.py</code> or <code>dipdup-install</code>).</li>
 </ul>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
-<li>cli: Commands that only print help pages no longer require a valid config.</li>
-<li>codegen: Fail lately when datamodel-codegen is not available.</li>
+<li>cli: Fixed commands that don't require a valid config yet crash with <code>ConfigurationError</code>.</li>
+<li>codegen: Fail on demand when <code>datamodel-codegen</code> is not available.</li>
 <li>codegen: Fixed Jinja2 template caching.</li>
-<li>config: Allow <code>dsn</code> field to be empty.</li>
-<li>config: Fixed greedy environment variable expansion regex.</li>
+<li>config: Allow <code>sentry.dsn</code> field to be empty.</li>
+<li>config: Fixed greedy environment variable regex.</li>
 <li>hooks: Raise a <code>FeatureAvailabilityHook</code> instead of a warning when trying to execute hooks on SQLite.</li>
 </ul>
 <h3 id="improved"><a class="header" href="#improved">Improved</a></h3>
 <ul>
+<li>cli: Detect <code>src/</code> layout when guessing package path.</li>
 <li>codegen: Improved cross-platform compatibility.</li>
-<li>cli: Detect <code>src/</code> layout and use it as a package path.</li>
+<li>config: <code>sentry.user_id</code> option to set user ID for Sentry (affects release adoption data).</li>
+<li>sentry: Detect environment when not set in config (docker/gha/tests/local)</li>
+<li>sentry: Expose more tags under the <code>dipdup</code> namespace.</li>
 </ul>
 <h3 id="performance"><a class="header" href="#performance">Performance</a></h3>
 <ul>
 <li>cli: Up to 5x faster startup for some commands.</li>
-<li>ci: A significantly faster test and build workflows.</li>
+</ul>
+<h3 id="security"><a class="header" href="#security">Security</a></h3>
+<ul>
+<li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
+<li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
+</ul>
+<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<ul>
+<li>ci: A significantly faster execution of GitHub Actions.</li>
+<li>docs: Updated &quot;Contributing Guide&quot; page.</li>
 </ul>
 <h2 id="613---2022-09-21"><a class="header" href="#613---2022-09-21"><a href="https://github.com/dipdup-net/dipdup/compare/6.1.2...6.1.3">6.1.3</a> - 2022-09-21</a></h2>
 <h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
@@ -4050,7 +4100,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>sentry: Unwrap <code>CallbackError</code> traceback to fix event grouping.</li>
 <li>sentry: Hide &quot;attempting to send...&quot; message on shutdown.</li>
 </ul>
-<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
 <ul>
 <li>ci: Do not build default and <code>-pytezos</code> nightly images.</li>
 </ul>
@@ -4198,7 +4248,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>cli: Lazy import dependencies to speed up startup.</li>
 </ul>
-<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
+<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
 <ul>
 <li>docs: Migrate docs from GitBook to mdbook.</li>
 </ul>
@@ -4239,7 +4289,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>jobs: Fixed jobs with <code>daemon</code> schedule never start.</li>
 <li>jobs: Fixed failed jobs not throwing exceptions into the main loop.</li>
 </ul>
-<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
+<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
 <ul>
 <li>database: Tortoise ORM updated to <code>0.19.1</code>.</li>
 </ul>
@@ -4390,7 +4440,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>database: Fixed excess increasing of <code>decimal</code> context precision.</li>
 <li>index: Fixed loading handler callbacks from nested packages (<a href="https://github.com/veqtor">@veqtor</a>).</li>
 </ul>
-<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
+<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
 <ul>
 <li>ci: Added GitHub Action to build and publish Docker images for each PR opened.</li>
 </ul>
@@ -4434,7 +4484,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>bcd: Added deprecation notice.</li>
 </ul>
-<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
+<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
 <ul>
 <li>dipdup: Removed unused internal methods.</li>
 </ul>
@@ -4497,7 +4547,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>dipdup: Minor overall performance improvements.</li>
 </ul>
-<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
+<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
 <ul>
 <li>ci: Cache virtual environment in GitHub Actions.</li>
 <li>ci: Detect CI environment and skip tests that fail in GitHub Actions.</li>

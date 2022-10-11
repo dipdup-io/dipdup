@@ -167,29 +167,45 @@
 <p>🚧 <strong>UNDER CONSTRUCTION</strong></p>
 <p>This page or paragraph is yet to be written. Come back later.</p>
 </blockquote>
-<h2 id="preparation"><a class="header" href="#preparation">Preparation</a></h2>
+<p>The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL NOT&quot;, &quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;, &quot;MAY&quot;, and &quot;OPTIONAL&quot; in this document are to be interpreted as described in <a href="https://www.ietf.org/rfc/rfc2119.txt">RFC 2119</a>.</p>
+<h2 id="general"><a class="header" href="#general">General</a></h2>
 <ul>
-<li>To set up the development environment, you need to install <a href="https://python-poetry.org/docs/#installation">Poetry</a> package manager and GNU Make.</li>
-<li>Run <code>make help</code> to get available commands.</li>
+<li>All code in this repository MUST be licensed under the <a href="LICENSE">MIT License</a>.</li>
+<li>Python code in this repository MUST run on Python 3.10. It also MAY run on Python 3.11. Using modern language features is encouraged.</li>
+<li>Python code in this repository MUST run in Linux, macOS, Docker, and <code>amd64</code>/<code>arm64</code> environments. Windows environments SHOULD be supported as well.</li>
+<li>We use the <a href="https://python-poetry.org/docs/#installation">Poetry</a> package manager and GNU Make to set up the development environment. You SHOULD install both tools and run <code>make help</code> to see available shortcuts.</li>
 </ul>
-<h2 id="git"><a class="header" href="#git">Git</a></h2>
+<h2 id="github"><a class="header" href="#github">GitHub</a></h2>
 <ul>
-<li>Branch names MUST follow <code>prefix/short-descriptions</code> format. Prefixes we currently use: <code>feat</code> for features, <code>fix</code> for bugfixes, <code>docs</code> for documentation, <code>aux</code> for miscellaneous, <code>exp</code> for experiments.</li>
+<li>Branch names MUST follow <code>prefix/short-description</code> format. Prefixes currently in use: <code>feat</code> for features, <code>fix</code> for bugfixes, <code>docs</code> for documentation, <code>aux</code> for miscellaneous, <code>exp</code> for experiments.</li>
+<li>Pull requests MUST be squashed when merging to <code>master</code>.</li>
+<li>Issues and pull requests MUST have a descriptive title; they SHOULD be linked to each other, appropriately labeled, and assigned to maintainers while in progress.</li>
 </ul>
 <h2 id="codestyle"><a class="header" href="#codestyle">Codestyle</a></h2>
 <ul>
-<li>We use the following combo of linters and formatters: <code>isort</code>, <code>black</code>, <code>flake8</code>, <code>mypy</code>. All linter checks MUST pass before merging code to master.</li>
+<li>We use the following combo of linters and formatters: <code>isort</code>, <code>black</code>, <code>flake8</code>, <code>mypy</code>. All linter checks MUST pass before merging code to <code>master</code> (CI will fail otherwise).</li>
+<li>Single quotes are RECOMMENDED for string literals.</li>
+<li>Meaningful comments are highly RECOMMENDED to begin with <code># NOTE:</code>, <code># TODO:</code>, or <code># FIXME: ...</code>.</li>
+<li>Developers SHOULD avoid </li>
 </ul>
 <h2 id="releases"><a class="header" href="#releases">Releases</a></h2>
 <ul>
-<li>Release versions SHOULD conform to <a href="https://semver.org/">Semantic Versioning</a>. Releases that introduce breaking changes MUST be major ones.</li>
-<li>Only the latest major version is supported in general. Critical fixes CAN be backported to the previous major release. To do so, git checkout from the latest stable tag, bump DipDup version manually and add a new tag.</li>
+<li>Release versions MUST conform to <a href="https://semver.org/">Semantic Versioning</a>. Releases that introduce breaking changes MUST be major ones.</li>
+<li>Only the latest major version is supported in general. Critical fixes MAY be backported to the previous major release. To do so, create an <code>aux/X.Y.Z</code> branch from the latest stable tag, bump the DipDup version manually, and add a new tag.</li>
 </ul>
 <h2 id="documentation"><a class="header" href="#documentation">Documentation</a></h2>
 <ul>
-<li>All changes that affect user experience MUST be documented in CHANGELOG.md file.</li>
-<li>Changelog formatting SHOULD stick to GitLab changelog <a href="https://docs.gitlab.com/ee/development/changelog.html">guidelines</a>.</li>
+<li>All changes that affect user experience MUST be documented in the CHANGELOG.md file.</li>
+<li>Changes that significantly affect DipDup maintainers' experience MAY be documented in the CHANGELOG.md file.</li>
+<li>The changelog MUST conform to the &quot;Keep a Changelog&quot; specification (CI will break otherwise).</li>
+<li>A page in Release Notes SHOULD accompany all major releases.</li>
+<li>All internal links MUST be created with <code>{{ #sumary ... }}</code> shortcodes.</li>
 </ul>
+<h2 id="demo-projects"><a class="header" href="#demo-projects">Demo Projects</a></h2>
+<h2 id="installer"><a class="header" href="#installer">Installer</a></h2>
+<h2 id="docker-images"><a class="header" href="#docker-images">Docker Images</a></h2>
+<h2 id="tests"><a class="header" href="#tests">Tests</a></h2>
+<h2 id="code-review"><a class="header" href="#code-review">Code Review</a></h2>
 
                     </main>
 

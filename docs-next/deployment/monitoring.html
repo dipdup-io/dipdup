@@ -163,14 +163,13 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="monitoring"><a class="header" href="#monitoring">Monitoring</a></h1>
-<p>In order to perform up-to-date and freshness checks, DipDup provides a standard REST endpoint you can use together with Betteruptime or similar services that can search for a keyword in the response.</p>
-<p>This check basically says that DipDup is not stuck and keeps receiving new data (last known block timestamp is not older than <strong>three minutes</strong> from now).<br />
-Note that this is not enough to ensure everything works as expected, but it can at least cover the cases when there is an issue with the datasource or your indexer stops working due to an exception.</p>
-<h3 id="uri-format"><a class="header" href="#uri-format">URI format</a></h3>
-<pre><code>https://&lt;your-indexer-host&gt;/api/rest/dipdup_head_status?name=&lt;datasource-uri&gt;
+<p>To perform up-to-date and freshness checks, DipDup provides a standard REST endpoint you can use together with Betteruptime or similar services that can search for a keyword in the response.</p>
+<p>This check says that DipDup is not stuck and keeps receiving new data (the last known block timestamp is not older than <strong>three minutes</strong> from now). Note that this is not enough to ensure everything works as expected. But it can at least cover the cases when datasource API is down or your indexer has crashed.</p>
+<h2 id="uri-format"><a class="header" href="#uri-format">URI format</a></h2>
+<pre><code class="language-text">https://&lt;your-indexer-host&gt;/api/rest/dipdup_head_status?name=&lt;datasource-uri&gt;
 </code></pre>
 <p>If you have camel case enabled in the Hasura config:</p>
-<pre><code>https://&lt;your-indexer-host&gt;/api/rest/dipdupHeadStatus?name=&lt;datasource-uri&gt;
+<pre><code class="language-text">https://&lt;your-indexer-host&gt;/api/rest/dipdupHeadStatus?name=&lt;datasource-uri&gt;
 </code></pre>
 <p>For example:</p>
 <ul>
@@ -209,7 +208,7 @@ SELECT
 FROM
     dipdup_head;
 </code></pre>
-<p>You can also create your custom alert endpoints using SQL views and functions and then converting them to Hasura REST endpoints.</p>
+<p>You can also create your custom alert endpoints using SQL views and functions and then convert them to Hasura REST endpoints.</p>
 <blockquote>
 <p>💡 <strong>SEE ALSO</strong></p>
 <ul>
