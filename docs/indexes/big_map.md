@@ -1,4 +1,4 @@
-# big_map
+# `big_map` index
 
 `big_map` index allows querying only updates of specific big maps. In some cases, it can drastically reduce the amount of data transferred and thus indexing speed compared to fetching all operations.
 

@@ -3,7 +3,7 @@
   <img src="../../assets/operation-config.png" alt="`operation` index config">
 </div>
 
-# operation
+# `operation` index
 
 Operation index allows you to query only operations related to your dapp and match them with handlers by content. A single contract call consists of implicit operation and, optionally, internal operations. For each of them, you can specify a handler that will be called when the operation group matches. As a result, you get something like an event log for your dapp.
 
