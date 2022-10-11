@@ -9,28 +9,39 @@ and this project adheres to [Semantic Versioning].
 
 ### Added
 
-- install: New install script based on pipx.
-- cli: `dipdup new` command to create a new project (ex. cookiecutter).
-- cli: `dipdup update` command to update local pipx and poetry installations.
+- cli: `new` command to create a new project interactively.
+- cli: `install/update/uninstall` commands to manage local DipDup installation.
+- config: `sentry.user_id` option to set user ID for Sentry (affects release adoption data).
+- index: New index kind `event` to process contract events.
+- install: New interactive installer based on pipx (`install.py` or `dipdup-install`).
 
 ### Fixed
 
-- cli: Commands that only print help pages no longer require a valid config.
-- codegen: Fail lately when datamodel-codegen is not available.
+- cli: Fixed commands that don't require a valid config yet crash with `ConfigurationError`.
+- codegen: Fail on demand when `datamodel-codegen` is not available.
 - codegen: Fixed Jinja2 template caching.
-- config: Allow `dsn` field to be empty.
-- config: Fixed greedy environment variable expansion regex.
+- config: Allow `sentry.dsn` field to be empty.
+- config: Fixed greedy environment variable regex.
 - hooks: Raise a `FeatureAvailabilityHook` instead of a warning when trying to execute hooks on SQLite.
 
 ### Improved
 
+- cli: Detect `src/` layout when guessing package path.
 - codegen: Improved cross-platform compatibility.
-- cli: Detect `src/` layout and use it as a package path.
+- sentry: Detect environment when not set in config (docker/gha/tests/local)
 
 ### Performance
 
 - cli: Up to 5x faster startup for some commands.
-- ci: A significantly faster test and build workflows.
+
+### Security
+
+- sentry: Prevent Sentry from leaking hostname if `server_name` is not set.
+- sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.
+
+### Other
+
+- ci: Faster test and build workflow execution.
 
 ## [6.1.3] - 2022-09-21
 

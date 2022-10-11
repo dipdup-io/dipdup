@@ -1260,16 +1260,18 @@ class SentryConfig:
     """Config for Sentry integration.
 
     :param dsn: DSN of the Sentry instance
-    :param environment: Environment (defaults to `production`)
-    :param server_name: Server name (defaults to hostname)
-    :param release: Release version (defaults to DipDup version)
-    :param debug: Catch warning messages and more context
+    :param environment: Environment; if not set, guessed from docker/ci/gha/local.
+    :param server_name: Server name; defaults to obfuscated hostname.
+    :param release: Release version; defaults to DipDup package version.
+    :param user_id: User ID; defaults to obfuscated package/environment.
+    :param debug: Catch warning messages, increase verbosity.
     """
 
     dsn: str = ''
     environment: Optional[str] = None
     server_name: Optional[str] = None
     release: Optional[str] = None
+    user_id: Optional[str] = None
     debug: bool = False
 
 

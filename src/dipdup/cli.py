@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import os
+import platform
 import signal
 import sys
 from contextlib import AsyncExitStack
@@ -137,17 +138,23 @@ def _init_sentry(config) -> None:
     if not config.sentry:
         config.sentry = SentryConfig()
 
-    if not config.sentry.dsn:
-        if config.advanced.crash_reporting:
-            return
-        config.sentry.dsn = baking_bad.SENTRY_DSN
+    crash_reporting = config.advanced.crash_reporting
+    dsn = config.sentry.dsn
 
+    if dsn:
+        pass
+    elif crash_reporting:
+        dsn = baking_bad.SENTRY_DSN
+    else:
+        _logger.info('Crash reporting is disabled in config')
+        return
+
+    _logger.info('Crash reporting is enabled: %s', '@'.split(dsn)[1])
     if config.sentry.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
         level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
 
-    # NOTE: Lazy import to speed up startup
     import hashlib
 
     import sentry_sdk
@@ -161,32 +168,67 @@ def _init_sentry(config) -> None:
             level=level,
             event_level=event_level,
         ),
+        # NOTE: Suppresses `atexit` notification
         AtexitIntegration(lambda _, __: None),
     ]
-    init_kwargs: Dict[str, Any] = {
-        'dsn': config.sentry.dsn,
-        'integrations': integrations,
-        'attach_stacktrace': attach_stacktrace,
-        'before_send': partial(
-            _sentry_before_send,
-            crash_reporting=config.advanced.crash_reporting,
-        ),
-        'release': config.sentry.release or __version__,
+    package = config.package or 'dipdup'
+    release = config.sentry.release or __version__
+    environment = config.sentry.environment
+    server_name = config.sentry.server_name
+    before_send = partial(
+        _sentry_before_send,
+        crash_reporting=crash_reporting,
+    )
+
+    in_docker = platform.system() == 'Linux' and Path('/.dockerenv').exists()
+    in_tests = 'pytest' in sys.modules
+    in_gha = 'CI' in os.environ
+
+    if not environment:
+        if in_docker:
+            environment = 'docker'
+        elif in_tests:
+            environment = 'tests'
+        elif in_gha:
+            environment = 'gha'
+        else:
+            environment = 'local'
+
+    if not server_name:
+        if crash_reporting:
+            # NOTE: Prevent Sentry from leaking hostnames
+            server_name = hashlib.sha256(platform.node().encode()).hexdigest()[:8]
+        else:
+            server_name = platform.node()
+
+    sentry_sdk.init(
+        dsn=config.sentry.dsn,
+        integrations=integrations,
+        attach_stacktrace=attach_stacktrace,
+        before_send=before_send,
+        release=release,
+        environment=environment,
+        server_name=server_name,
+    )
+
+    # NOTE: Setting session tags
+    tags = {
+        'dipdup.version': __version__,
+        'dipdup.package': package,
+        'dipdup.release': release,
+        'dipdup.environment': environment,
+        'dipdup.server_name': server_name,
+        'dipdup.crash_reporting': crash_reporting,
     }
-    if config.sentry.environment:
-        init_kwargs['environment'] = config.sentry.environment
-    if config.sentry.server_name:
-        init_kwargs['server_name'] = config.sentry.server_name
+    _logger.debug('Sentry tags: %s', ', '.join(f'{k}={v}' for k, v in tags.items()))
+    for tag, value in tags.items():
+        sentry_sdk.set_tag(tag, value)
 
-    sentry_sdk.init(**init_kwargs)
-
-    sentry_sdk.set_tag('dipdup_version', __version__)
-    sentry_sdk.set_tag('dipdup_package', config.package)
-
-    # NOTE: Obfuscated package/connection pair (also truncated by Sentry)
-    user_id = hashlib.sha256(
-        (config.package + config.database.connection_string).encode(),
-    ).hexdigest()
+    # NOTE: User ID allows to track release adoption. It's sent on every session,
+    # NOTE: but obfuscated below, so it's not a privacy issue. However, randomly
+    # NOTE: generated Docker hostnames may spoil this metric.
+    user_id = config.sentry.user_id or hashlib.sha256((package + environment).encode()).hexdigest()
+    _logger.debug('Sentry user_id: %s', user_id)
 
     sentry_sdk.set_user({'id': user_id})
     sentry_sdk.Hub.current.start_session()
