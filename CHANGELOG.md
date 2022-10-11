@@ -2,8 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog],
-and this project adheres to [Semantic Versioning].
+The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
@@ -42,7 +41,8 @@ and this project adheres to [Semantic Versioning].
 
 ### Other
 
-- ci: Faster test and build workflow execution.
+- ci: A significantly faster execution of GitHub Actions.
+- docs: Updated "Contributing Guide" page.
 
 ## [6.1.3] - 2022-09-21
 
