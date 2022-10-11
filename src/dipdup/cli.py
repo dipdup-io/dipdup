@@ -146,10 +146,9 @@ def _init_sentry(config) -> None:
     elif crash_reporting:
         dsn = baking_bad.SENTRY_DSN
     else:
-        _logger.info('Crash reporting is disabled in config')
         return
 
-    _logger.info('Crash reporting is enabled: %s', '@'.split(dsn)[1])
+    _logger.info('Crash reporting is enabled: %s', dsn)
     if config.sentry.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:

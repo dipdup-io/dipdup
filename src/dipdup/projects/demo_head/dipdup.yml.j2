@@ -1,0 +1,18 @@
+spec_version: 1.2
+package: {{ cookiecutter.package }}
+
+database:
+  kind: sqlite
+  path: {{ cookiecutter.project_name }}.sqlite3
+
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+indexes:
+  mainnet_head:
+    kind: head
+    datasource: tzkt_mainnet
+    handlers:
+      - callback: on_mainnet_head
