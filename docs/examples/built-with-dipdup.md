@@ -2,13 +2,13 @@
 
 This page is a brief overview of projects which use DipDup as an indexing solution.
 
-Want to see your project at this page? Create an issue on [GitHub](https://github.com/dipdup-net/dipdup-docs/issues)!
+Want to see your project on this page? Create an issue on [GitHub](https://github.com/dipdup-net/dipdup-docs/issues)!
 
 ## HicDEX
 
 [Homepage](https://hicdex.com/) | [API](https://api.hicdex.com/graphiql/) | [GitHub](https://github.com/hicdex/hicdex)
 
-HicDEX is a Tezos indexer for hicetnunc.art marketplace. Indexed data is available with a public GraphQL endpoint.
+HicDEX is a Tezos indexer for hicetnunc.art marketplace (currently teia.art). Indexed data is available with a public GraphQL endpoint.
 
 * [Hicdex: the Hic Et Nunc indexer (Medium)](https://leonnicholls.medium.com/hicdex-the-hic-et-nunc-indexer-bd45f27a228f)
 

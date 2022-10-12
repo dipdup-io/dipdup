@@ -6,8 +6,7 @@ import re
 from contextlib import suppress
 from http import HTTPStatus
 from json import dumps as dump_json
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import Iterable
@@ -285,8 +284,7 @@ class HasuraGateway(HTTPGateway):
 
     def _iterate_graphql_queries(self) -> Iterator[Tuple[str, str]]:
         package = importlib.import_module(self._package)
-        package_path = dirname(cast(str, package.__file__))
-        graphql_path = join(package_path, 'graphql')
+        graphql_path = Path(cast(str, package.__file__)) / 'graphql'
         for file in iter_files(graphql_path, '.graphql'):
             yield file.name.split('/')[-1][:-8], file.read()
 

@@ -5,8 +5,6 @@ import importlib
 import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
-from os.path import dirname
-from os.path import join
 from pathlib import Path
 from typing import Any
 from typing import AsyncIterator
@@ -37,7 +35,7 @@ from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.database')
-_truncate_schema_sql = Path(join(dirname(__file__), 'truncate_schema.sql')).read_text()
+_truncate_schema_path = Path(__file__).parent / 'truncate_schema.sql'
 
 DEFAULT_CONNECTION_NAME = 'default'
 
@@ -131,10 +129,13 @@ async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
 
     await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
     # NOTE: Recreate `truncate_schema` function on fresh schema
-    await conn.execute_script(_truncate_schema_sql)
+    await conn.execute_script(_truncate_schema_path.read_text())
 
 
-async def execute_sql_scripts(conn: BaseDBAsyncClient, path: str) -> None:
+async def execute_sql_scripts(conn: BaseDBAsyncClient, path: str | Path) -> None:
+    if isinstance(path, str):
+        path = Path(path)
+
     supported = isinstance(conn, AsyncpgDBClient)
 
     for file in iter_files(path, '.sql'):
@@ -160,7 +161,7 @@ async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
         await Tortoise.generate_schemas()
 
         # NOTE: Apply built-in scripts before project ones
-        sql_path = join(dirname(__file__), '..', 'sql', 'on_reindex')
+        sql_path = Path(__file__).parent.parent / 'sql' / 'on_reindex'
         await execute_sql_scripts(conn, sql_path)
     else:
         raise NotImplementedError
@@ -170,7 +171,7 @@ async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
 
-    await conn.execute_script(_truncate_schema_sql)
+    await conn.execute_script(_truncate_schema_path.read_text())
     await conn.execute_script(f"SELECT truncate_schema('{name}')")
 
 

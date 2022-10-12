@@ -66,7 +66,8 @@ def ask(msg: str, default: bool, quiet: bool) -> bool:
         return input().lower() in ('y', 'yes')
 
 
-def tab(text: str, indent: int = 20) -> str:
+# NOTE: DipDup has `tabulate` dep, don't use this one elsewhere
+def _tab(text: str, indent: int = 20) -> str:
     return text + " " * (indent - len(text))
 
 
@@ -81,10 +82,10 @@ class DipDupEnvironment:
     def refresh(self) -> None:
         if not self._quiet and not self._commands:
             print()
-            print(tab('OS:') + self._os)
-            print(tab('Arch:') + self._arch)
-            print(tab('Python:') + sys.version)
-            print(tab('PATH:') + os.environ['PATH'])
+            print(_tab('OS:') + self._os)
+            print(_tab('Arch:') + self._arch)
+            print(_tab('Python:') + sys.version)
+            print(_tab('PATH:') + os.environ['PATH'])
             print()
 
         for command in WHICH_CMDS:
@@ -92,7 +93,7 @@ class DipDupEnvironment:
             if old == new:
                 continue
             self._commands[command] = new
-            self._quiet or print(tab(command) + (new or ''))
+            self._quiet or print(_tab(command) + (new or ''))
 
         print()
 
@@ -101,7 +102,7 @@ class DipDupEnvironment:
         self.ensure_pipx()
         pipx_packages_raw = self.run_cmd('pipx', 'list', '--short', capture_output=True).stdout
         self._pipx_packages = {p.split()[0].decode() for p in pipx_packages_raw.splitlines()}
-        self._quiet or print(tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
+        self._quiet or print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
     def check(self) -> None:
         if not sys.version.startswith('3.10'):

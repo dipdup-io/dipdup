@@ -2,12 +2,14 @@
 import asyncio
 import logging
 import os
+import platform
 import signal
 import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from functools import partial
 from functools import wraps
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -24,6 +26,7 @@ from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
+IGNORE_SIGINT = (None, 'new', 'schema', 'wipe', 'install', 'update', 'uninstall')
 
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
@@ -74,7 +77,7 @@ def cli_wrapper(fn):
     async def wrapper(*args, **kwargs) -> None:
         # NOTE: Avoid catching Click prompts
         ctx = args[0]
-        if ctx.invoked_subcommand not in (None, 'new', 'schema', 'wipe', 'install', 'update', 'uninstall'):
+        if ctx.invoked_subcommand not in IGNORE_SIGINT:
             loop = asyncio.get_running_loop()
             loop.add_signal_handler(
                 signal.SIGINT,
@@ -135,17 +138,22 @@ def _init_sentry(config) -> None:
     if not config.sentry:
         config.sentry = SentryConfig()
 
-    if not config.sentry.dsn:
-        if config.advanced.crash_reporting:
-            return
-        config.sentry.dsn = baking_bad.SENTRY_DSN
+    crash_reporting = config.advanced.crash_reporting
+    dsn = config.sentry.dsn
 
+    if dsn:
+        pass
+    elif crash_reporting:
+        dsn = baking_bad.SENTRY_DSN
+    else:
+        return
+
+    _logger.info('Crash reporting is enabled: %s', dsn)
     if config.sentry.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
         level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
 
-    # NOTE: Lazy import to speed up startup
     import hashlib
 
     import sentry_sdk
@@ -159,32 +167,69 @@ def _init_sentry(config) -> None:
             level=level,
             event_level=event_level,
         ),
+        # NOTE: Suppresses `atexit` notification
         AtexitIntegration(lambda _, __: None),
     ]
-    init_kwargs: Dict[str, Any] = {
-        'dsn': config.sentry.dsn,
-        'integrations': integrations,
-        'attach_stacktrace': attach_stacktrace,
-        'before_send': partial(
-            _sentry_before_send,
-            crash_reporting=config.advanced.crash_reporting,
-        ),
-        'release': config.sentry.release or __version__,
+    package = config.package or 'dipdup'
+    release = config.sentry.release or __version__
+    environment = config.sentry.environment
+    server_name = config.sentry.server_name
+    before_send = partial(
+        _sentry_before_send,
+        crash_reporting=crash_reporting,
+    )
+
+    in_docker = platform.system() == 'Linux' and Path('/.dockerenv').exists()
+    in_tests = 'pytest' in sys.modules
+    in_gha = 'CI' in os.environ
+
+    if not environment:
+        if in_docker:
+            environment = 'docker'
+        elif in_tests:
+            environment = 'tests'
+        elif in_gha:
+            environment = 'gha'
+        else:
+            environment = 'local'
+
+    if not server_name:
+        if crash_reporting:
+            # NOTE: Prevent Sentry from leaking hostnames
+            server_name = hashlib.sha256(platform.node().encode()).hexdigest()[:8]
+        else:
+            server_name = platform.node()
+
+    sentry_sdk.init(
+        dsn=config.sentry.dsn,
+        integrations=integrations,
+        attach_stacktrace=attach_stacktrace,
+        before_send=before_send,
+        release=release,
+        environment=environment,
+        server_name=server_name,
+    )
+
+    # NOTE: Setting session tags
+    tags = {
+        'python': platform.python_version(),
+        'os': f'{platform.system().lower()}-{platform.machine()}',
+        'version': __version__,
+        'package': package,
+        'release': release,
+        'environment': environment,
+        'server_name': server_name,
+        'crash_reporting': crash_reporting,
     }
-    if config.sentry.environment:
-        init_kwargs['environment'] = config.sentry.environment
-    if config.sentry.server_name:
-        init_kwargs['server_name'] = config.sentry.server_name
+    _logger.debug('Sentry tags: %s', ', '.join(f'{k}={v}' for k, v in tags.items()))
+    for tag, value in tags.items():
+        sentry_sdk.set_tag(f'dipdup.{tag}', value)
 
-    sentry_sdk.init(**init_kwargs)
-
-    sentry_sdk.set_tag('dipdup_version', __version__)
-    sentry_sdk.set_tag('dipdup_package', config.package)
-
-    # NOTE: Obfuscated package/connection pair (also truncated by Sentry)
-    user_id = hashlib.sha256(
-        (config.package + config.database.connection_string).encode(),
-    ).hexdigest()
+    # NOTE: User ID allows to track release adoption. It's sent on every session,
+    # NOTE: but obfuscated below, so it's not a privacy issue. However, randomly
+    # NOTE: generated Docker hostnames may spoil this metric.
+    user_id = config.sentry.user_id or hashlib.sha256((package + environment).encode()).hexdigest()
+    _logger.debug('Sentry user_id: %s', user_id)
 
     sentry_sdk.set_user({'id': user_id})
     sentry_sdk.Hub.current.start_session()
@@ -244,19 +289,18 @@ async def cli(ctx, config: List[str], env_file: List[str]):
     if '--help' in args or args in ([], ['config'], ['hasura'], ['schema']):
         return
 
-    from os.path import exists
-    from os.path import join
-
     from dotenv import load_dotenv
 
     from dipdup.exceptions import ConfigurationError
 
     set_up_logging()
 
+    env_file_paths = [Path(file) for file in env_file]
+    config_paths = [Path(file) for file in config]
+
     # NOTE: Apply env files before loading config
-    for env_path in env_file:
-        env_path = join(os.getcwd(), env_path)
-        if not exists(env_path):
+    for env_path in env_file_paths:
+        if not env_path.is_file():
             raise ConfigurationError(f'env file `{env_path}` does not exist')
         _logger.info('Applying env_file `%s`', env_path)
         load_dotenv(env_path, override=True)
@@ -274,7 +318,7 @@ async def cli(ctx, config: List[str], env_file: List[str]):
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.exceptions import MigrationRequiredError
 
-    _config = DipDupConfig.load(config)
+    _config = DipDupConfig.load(config_paths)
     _config.set_up_logging()
 
     # NOTE: Imports will be loaded later if needed
@@ -604,9 +648,6 @@ async def schema_export(ctx) -> None:
 
     This command may help you debug inconsistency between project models and expected SQL schema.
     """
-    from os.path import dirname
-    from os.path import join
-
     from tortoise.utils import get_schema_sql
 
     from dipdup.config import DipDupConfig
@@ -621,8 +662,8 @@ async def schema_export(ctx) -> None:
     async with tortoise_wrapper(url, models):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
-        dipdup_sql_path = join(dirname(__file__), 'sql', 'on_reindex')
-        project_sql_path = join(config.package_path, 'sql', 'on_reindex')
+        dipdup_sql_path = Path(__file__).parent / 'sql' / 'on_reindex'
+        project_sql_path = Path(config.package_path) / 'sql' / 'on_reindex'
 
         for sql_path in (dipdup_sql_path, project_sql_path):
             for file in iter_files(sql_path):

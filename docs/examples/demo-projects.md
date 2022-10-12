@@ -1,6 +1,8 @@
 # Demo projects
 
-DipDup repository contains several minimal examples of how to use various features for real-case scenarios. Please, do not use these examples in production unmodified. We have not put a production-grade amount of effort into developing them, so they may contain flaws in indexing logic.
+<!-- TODO: More demo descriptions -->
+
+The DipDup repository contains several minimal examples of how to use various features for real-case scenarios. Please, do not use these examples in production unmodified. We have not put a production-grade amount of effort into developing them, so they may contain flaws in indexing logic.
 
 Some projects that started as a demo now evolved into full-fledged applications running in production. Check out {{ #summary examples/built-with-dipdup.md }} page.
 
@@ -38,7 +40,7 @@ Tezos Domains is a distributed naming system. You probably have seen those fancy
 
 source: [demo_domains_big_map](https://github.com/dipdup-net/dipdup/tree/master/src/demo_domains_big_map)
 
-The same as above, but uses `big_map` index instead of `operation` one. The storage structure of this contract is pretty straightforward; we only need to track a single big map. To speed up indexing more, this example contains `skip_history: once` directive to index only the current state of the contract before switching to realtime processing.
+The same as above, but uses `big_map` index instead of `operation` one. The storage structure of this contract is pretty straightforward; we only need to track a single big map. This example contains `skip_history: once` directive to index only the current state of the contract before switching to realtime processing. It allows to speed up indexing even more.
 
 ## TzColors
 

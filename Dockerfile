@@ -8,7 +8,7 @@ RUN <<eot
     apt update
     apt install -y gcc make git `if [[ $PYTEZOS = "1" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
 
-    pip install --no-cache-dir poetry==1.2.1
+    pip install --no-cache-dir poetry==1.2.2
 
     mkdir -p /opt/dipdup
  
@@ -37,7 +37,7 @@ SHELL ["/bin/bash", "-c"]
 
 RUN <<eot
     useradd -ms /bin/bash dipdup
-    pip install --no-cache-dir poetry==1.2.1 setuptools
+    pip install --no-cache-dir poetry==1.2.2 setuptools
 
     apt update
     apt install -y --no-install-recommends git `if [[ $PYTEZOS = "1" ]]; then echo libsodium-dev libsecp256k1-dev libgmp-dev; fi`

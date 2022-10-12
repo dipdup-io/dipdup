@@ -5,6 +5,11 @@ database:
   kind: sqlite
   path: {{ cookiecutter.project_name }}.sqlite3
 
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
 contracts:
   HEN_objkts:
     address: ${HEN_OBJKTS:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
@@ -12,11 +17,6 @@ contracts:
   HEN_minter:
     address: ${HEN_MINTER:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
     typename: hen_minter
-
-datasources:
-  tzkt_mainnet:
-    kind: tzkt
-    url: ${TZKT_URL:-https://api.tzkt.io}
 
 indexes:
   hen_mainnet:

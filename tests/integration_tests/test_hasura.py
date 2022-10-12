@@ -1,7 +1,6 @@
 from contextlib import AsyncExitStack
 from os import environ as env
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 
 import pytest
@@ -16,7 +15,7 @@ from dipdup.hasura import HasuraGateway
 from dipdup.project import BaseProject
 from dipdup.utils.database import tortoise_wrapper
 
-if env.get('CI') == 'true':
+if env.get('CI') == 'true' and env.get('RUNNER_OS') != 'Linux':
     pytest.skip('skipping integration tests on CI', allow_module_level=True)
 
 
@@ -25,8 +24,8 @@ class HasuraTest(IsolatedAsyncioTestCase):
 
     async def test_configure_hasura(self) -> None:
         project_defaults = BaseProject().get_defaults()
+        config_path = Path(__file__).parent / 'hic_et_nunc.yml'
 
-        config_path = join(dirname(__file__), 'hic_et_nunc.yml')
         config = DipDupConfig.load([config_path])
         config.initialize(skip_imports=True)
 
@@ -90,5 +89,5 @@ class HasuraTest(IsolatedAsyncioTestCase):
 
                 await hasura_gateway.configure(force=True)
             except HasuraError:
-                dipdup._ctx.logger.info(hasura_container.get_logs())
+                dipdup._ctx.logger.info(hasura_container.logs())
                 raise

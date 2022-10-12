@@ -9,12 +9,13 @@ from typing import Tuple
 from aiohttp.hdrs import METH_GET
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import SubscriptionManager
+from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData
+from dipdup.models import EventData
 from dipdup.models import HeadBlockData
 from dipdup.models import OperationData
 from dipdup.models import TokenTransferData
@@ -28,6 +29,7 @@ HeadCallbackT = Callable[['IndexDatasource', HeadBlockData], Awaitable[None]]
 OperationsCallbackT = Callable[['IndexDatasource', Tuple[OperationData, ...]], Awaitable[None]]
 TokenTransfersCallbackT = Callable[['IndexDatasource', Tuple[TokenTransferData, ...]], Awaitable[None]]
 BigMapsCallbackT = Callable[['IndexDatasource', Tuple[BigMapData, ...]], Awaitable[None]]
+EventsCallbackT = Callable[['IndexDatasource', Tuple[EventData, ...]], Awaitable[None]]
 RollbackCallbackT = Callable[['IndexDatasource', MessageType, int, int], Awaitable[None]]
 
 
@@ -77,6 +79,7 @@ class IndexDatasource(Datasource):
         self._on_operations_callbacks: Set[OperationsCallbackT] = set()
         self._on_token_transfers_callbacks: Set[TokenTransfersCallbackT] = set()
         self._on_big_maps_callbacks: Set[BigMapsCallbackT] = set()
+        self._on_events_callbacks: Set[EventsCallbackT] = set()
         self._on_rollback_callbacks: Set[RollbackCallbackT] = set()
         self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
         self._subscriptions.add(HeadSubscription())
@@ -108,6 +111,9 @@ class IndexDatasource(Datasource):
     def call_on_big_maps(self, fn: BigMapsCallbackT) -> None:
         self._on_big_maps_callbacks.add(fn)
 
+    def call_on_events(self, fn: EventsCallbackT) -> None:
+        self._on_events_callbacks.add(fn)
+
     def call_on_rollback(self, fn: RollbackCallbackT) -> None:
         self._on_rollback_callbacks.add(fn)
 
@@ -132,6 +138,10 @@ class IndexDatasource(Datasource):
     async def emit_big_maps(self, big_maps: Tuple[BigMapData, ...]) -> None:
         for fn in self._on_big_maps_callbacks:
             await fn(self, big_maps)
+
+    async def emit_events(self, events: Tuple[EventData, ...]) -> None:
+        for fn in self._on_events_callbacks:
+            await fn(self, events)
 
     async def emit_rollback(self, type_: MessageType, from_level: int, to_level: int) -> None:
         for fn in self._on_rollback_callbacks:

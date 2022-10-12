@@ -30,7 +30,7 @@ for demo in list(demos_path.iterdir()):
 
     print(f'Initializing {demo.name}')
     subprocess.run(
-        ['dipdup', '-c', '../dipdup.yml', 'init', '--overwrite-types'],
-        cwd=demo / 'src',
+        ['dipdup', 'init', '--overwrite-types'],
+        cwd=demo,
         check=True,
     )

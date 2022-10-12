@@ -1,6 +1,6 @@
 # contracts
 
-A list of the contract definitions you might use in the indexer patterns or templates. Each contract entry has two fields:
+A list of the contracts you can use in the index definitions. Each contract entry has two fields:
 
 * `address` — either originated or implicit account address encoded in base58.
 * `typename` — an alias for the particular contract script, meaning that two contracts sharing the same code can have the same type name.
@@ -21,8 +21,8 @@ contracts:
     typename: tzbtc_token
 ```
 
-A `typename` field is only required when using index templates, but it helps to improve the readability of auto-generated code and avoid repetition.
+If the `typename` field is not set, a contract alias will be used instead.
 
-Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See [4.5. Templates and variables](../getting-started/templates-and-variables.md) for details.
+Contract entry does not contain information about the network, so it's a good idea to include the network name in the alias. This design choice makes possible a generic index parameterization via templates. See {{ #summary getting-started/templates-and-variables.md }} for details.
 
-If multiple contracts you index have the same interface but different code, see [8.2. Reusing typename for different contracts](../cookbook/reusing-typenames.md).
+If multiple contracts you index have the same interface but different code, see {{ #summary faq.md }} to learn how to avoid conflicts.

@@ -1,9 +1,5 @@
 import logging
-from glob import glob
-from os.path import dirname
-from os.path import exists
-from os.path import isdir
-from os.path import join
+from pathlib import Path
 from types import NoneType
 from typing import Any
 
@@ -11,12 +7,11 @@ import asyncclick as cl
 import orjson as json
 from pydantic import BaseModel
 from pydantic import Field
+from tabulate import tabulate
 
 from dipdup.exceptions import ConfigurationError
-from dipdup.install import tab
-from dipdup.utils import load_template
-from dipdup.utils import mkdir_p
-from dipdup.utils import write
+from dipdup.utils.codegen import load_template
+from dipdup.utils.codegen import write
 
 _logger = logging.getLogger('dipdup.project')
 
@@ -94,11 +89,15 @@ class ChoiceQuestion(Question):
         return f'{self.name} [{self.default_choice}]'
 
     def prompt(self) -> str:
+        rows = [f'{i})' for i in range(len(self.choices))]
+        table = tabulate(
+            zip(rows, self.choices, self.comments),
+            colalign=('right', 'left', 'left'),
+        )
         cl.secho(f'=> {self.description}', fg='blue')
-        for i, choice_pair in enumerate(zip(self.choices, self.comments)):
-            choice, comment = choice_pair
-            cl.echo(f'  {i}) {tab(choice, 40)}{comment}')
-        print()
+        cl.echo(table)
+        return self.choices[super().prompt()]
+
         value: int = super().prompt()
         return self.choices[value]
 
@@ -109,7 +108,7 @@ class JinjaAnswers(dict):
 
 
 class Project(BaseModel):
-    path: str
+    path: Path
     description: str
     questions: tuple[Question, ...]
     answers: JinjaAnswers = Field(default_factory=JinjaAnswers)
@@ -144,45 +143,38 @@ class Project(BaseModel):
 
             self.answers[question.name] = value
 
-    def write_cookiecutter_json(self, path: str) -> None:
-        with open(path, 'wb') as f:
-            f.write(
-                json.dumps(
-                    {k: v for k, v in self.answers.items() if not k.startswith('_')},
-                    option=json.OPT_INDENT_2,
-                )
+    def write_cookiecutter_json(self, path: Path) -> None:
+        path.write_bytes(
+            json.dumps(
+                {k: v for k, v in self.answers.items() if not k.startswith('_')},
+                option=json.OPT_INDENT_2,
             )
+        )
 
-    def _render(self, path: str, output_path: str, force: bool) -> None:
-        if exists(output_path) and not force:
+    def _render(self, template_path: Path, output_path: Path, force: bool) -> None:
+        if output_path.exists() and not force:
             _logger.warning('File `%s` already exists, skipping', output_path)
 
         _logger.info('Generating `%s`', output_path)
-        template = load_template(path)
+        template = load_template(template_path)
         content = template.render(cookiecutter=self.answers)
         write(output_path, content, overwrite=force)
 
     def render(self, force: bool = False) -> None:
         from jinja2 import Template
 
-        base_path = join(dirname(__file__), 'projects')
-        project_path = join(base_path, self.path)
-        project_paths = glob(
-            '**',
-            root_dir=project_path,
-            recursive=True,
-        )
+        project_path = Path(__file__).parent / 'projects' / self.path
+        project_paths = project_path.glob('**/*.j2')
 
         for path in project_paths:
-            output_path = join(self.answers['project_name'], path.replace('.j2', ''))
-            output_path = Template(output_path).render(cookiecutter=self.answers)
-            mkdir_p(dirname(output_path))
-            path = join(project_path, path)
-
-            if isdir(path):
-                continue
-
-            self._render(join(project_path, path), output_path, force)
+            template_path = path.relative_to(Path(__file__).parent)
+            output_path = Path(
+                self.answers['project_name'],
+                *path.relative_to(project_path).parts,
+                # NOTE: Remove ".j2" from extension
+            ).with_suffix(path.suffix[:-3])
+            output_path = Path(Template(str(output_path)).render(cookiecutter=self.answers))
+            self._render(template_path, output_path, force)
 
     def get_defaults(self) -> dict[str, Any]:
         return {
@@ -192,7 +184,7 @@ class Project(BaseModel):
 
 
 class BaseProject(Project):
-    path = 'base'
+    path = Path('base')
     description = 'Default DipDup project, ex. cookiecutter template'
     questions: tuple[Question, ...] = (
         NotifyQuestion(
@@ -200,17 +192,19 @@ class BaseProject(Project):
             default=None,
             description=(
                 'Welcome to DipDup! This command will help you to create a new project.\n'
-                'You can abort at any time by pressing Ctrl+C.\n'
-                'Let\'s start with some basic questions.  Press Enter to use default value.'
+                'You can abort at any time by pressing Ctrl+C. Press Enter to use default value.\n'
+                'Let\'s start with some basic questions.'
             ),
         ),
         ChoiceQuestion(
             name='template',
             description=('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n'),
-            default=0,
+            default=7,
             choices=(
                 'demo_domains',
                 'demo_domains_big_map',
+                'demo_events',
+                'demo_head',
                 'demo_hic_et_nunc',
                 'demo_quipuswap',
                 'demo_registrydao',
@@ -220,15 +214,18 @@ class BaseProject(Project):
                 'blank',
             ),
             comments=(
-                'Tezos Domains name service',
-                'Tezos Domains name service (big maps only)',
-                'hic at nunc NFT marketplace',
-                'Quipuswap DEX balances and liquidity',
-                'Homebase DAO registry (index factory)',
-                'TzBTC FA1.2 token transfers',
-                'TzBTC FA1.2 token transfers (transfers only)',
-                'TzColors NFT marketplace',
-                'Empty config for a fresh start',
+                '[operation]      Tezos Domains name service',
+                '[big_map]        Tezos Domains name service',
+                '[event]          Processing contract events (new in Kathmandu)',
+                '[head]           Processing head block metadata',
+                '[operation]      hic at nunc NFT marketplace',
+                '[operation]      Quipuswap DEX balances and liquidity',
+                '[operation]      Homebase DAO registry (index factory)',
+                '[operation]      TzBTC FA1.2 token transfers',
+                '[token_transfer] TzBTC FA1.2 token transfers',
+                '[operation]      TzColors NFT marketplace',
+                '[n/a]            Empty config for a fresh start',
+                # TODO: Hooks and jobs demo
             ),
         ),
         InputQuestion(
@@ -300,13 +297,13 @@ class BaseProject(Project):
             default=0,
             choices=(
                 'hasura/graphql-engine:v2.11.2',
-                'hasura/graphql-engine:v2.12.0',
-                'hasura/graphql-engine:v2.13.0-beta.1',
+                'hasura/graphql-engine:v2.13.0',
+                'hasura/graphql-engine:v2.14.0-beta.1',
             ),
             comments=(
                 'tested with DipDup',
-                '',
-                '',
+                'latest',
+                'beta',
             ),
         ),
         NotifyQuestion(

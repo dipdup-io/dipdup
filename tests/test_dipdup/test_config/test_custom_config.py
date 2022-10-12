@@ -1,6 +1,5 @@
 import os
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 
 import pytest
 from _pytest.tmpdir import TempPathFactory
@@ -11,8 +10,8 @@ from dipdup.exceptions import ConfigurationError
 
 class TestCustomConfig:
     @pytest.fixture(scope="session")
-    def dummy_config_path(self) -> str:
-        return join(dirname(dirname(__file__)), 'dipdup.yml')
+    def dummy_config_path(self) -> Path:
+        return Path(__file__).parent.parent / 'dipdup.yml'
 
     @staticmethod
     def appended_config_path(dummy_config_path: str, tmp_path_factory: TempPathFactory, append_raw: str) -> str:
@@ -46,14 +45,14 @@ custom:
 
     @staticmethod
     def test_empty_custom_section(dummy_config_path: str) -> None:
-        config = DipDupConfig.load([dummy_config_path], False)
+        config = DipDupConfig.load([Path(dummy_config_path)], False)
         config.initialize(True)
         assert hasattr(config, 'custom')
         assert config.custom == {}
 
     @staticmethod
     def test_custom_section_items(config_with_custom_section_path: str) -> None:
-        config = DipDupConfig.load([config_with_custom_section_path], False)
+        config = DipDupConfig.load([Path(config_with_custom_section_path)], False)
         config.initialize(True)
 
         assert hasattr(config, 'custom')
@@ -82,7 +81,7 @@ custom:
     var_from_env: {value}
 """
         config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
-        config = DipDupConfig.load([config_path], True)
+        config = DipDupConfig.load([Path(config_path)], True)
         config.initialize(True)
 
         assert hasattr(config, 'custom')
@@ -105,7 +104,7 @@ custom:
         config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
 
         try:
-            DipDupConfig.load([config_path], True)
+            DipDupConfig.load([Path(config_path)], True)
         except ConfigurationError as exc:
             assert str(exc) == 'DipDup YAML config is invalid'
             assert exc.args[0] == 'Environment variable `DEFINITELY_NOT_DEFINED` is not set'
@@ -124,4 +123,4 @@ custom:
   #  some commented line corresponding to ENV_VARIABLE_REGEX with {value}
 """
         config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
-        DipDupConfig.load([config_path], True)
+        DipDupConfig.load([Path(config_path)], True)
