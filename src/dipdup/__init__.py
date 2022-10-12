@@ -4,7 +4,7 @@ import warnings
 from pathlib import Path
 
 # NOTE: Updated by bumpversion
-__version__ = '6.1.3'
+__version__ = '6.2.0'
 __spec_version__ = '1.2'
 
 spec_version_mapping = {
