@@ -8,7 +8,7 @@ An example below is artificial since no known contracts in mainnet are currently
 {{ #include ../../demos/demo-events/dipdup.yml:23:32 }}
 ```
 
-Contracts may introduce new event tags and payloads at any time, so the index must be updated accordingly.
+Unlike big maps, contracts may introduce new event tags and payloads at any time, so the index must be updated accordingly.
 
 ```python
 {{ #include ../../demos/demo-events/src/demo_events/handlers/on_events_xrate.py:7: }}
