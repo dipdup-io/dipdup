@@ -7,9 +7,9 @@ import asyncclick as cl
 import orjson as json
 from pydantic import BaseModel
 from pydantic import Field
+from tabulate import tabulate
 
 from dipdup.exceptions import ConfigurationError
-from dipdup.install import tab
 from dipdup.utils.codegen import load_template
 from dipdup.utils.codegen import write
 
@@ -89,11 +89,15 @@ class ChoiceQuestion(Question):
         return f'{self.name} [{self.default_choice}]'
 
     def prompt(self) -> str:
+        rows = [f'{i})' for i in range(len(self.choices))]
+        table = tabulate(
+            zip(rows, self.choices, self.comments),
+            colalign=('right', 'left', 'left'),
+        )
         cl.secho(f'=> {self.description}', fg='blue')
-        for i, choice_pair in enumerate(zip(self.choices, self.comments)):
-            choice, comment = choice_pair
-            cl.echo(f'  {i}) {tab(choice, 40)}{comment}')
-        print()
+        cl.echo(table)
+        return self.choices[super().prompt()]
+
         value: int = super().prompt()
         return self.choices[value]
 
@@ -188,8 +192,8 @@ class BaseProject(Project):
             default=None,
             description=(
                 'Welcome to DipDup! This command will help you to create a new project.\n'
-                'You can abort at any time by pressing Ctrl+C.\n'
-                'Let\'s start with some basic questions.  Press Enter to use default value.'
+                'You can abort at any time by pressing Ctrl+C. Press Enter to use default value.\n'
+                'Let\'s start with some basic questions.'
             ),
         ),
         ChoiceQuestion(
@@ -220,7 +224,7 @@ class BaseProject(Project):
                 '[operation]      TzBTC FA1.2 token transfers',
                 '[token_transfer] TzBTC FA1.2 token transfers',
                 '[operation]      TzColors NFT marketplace',
-                '                 Empty config for a fresh start',
+                '[n/a]            Empty config for a fresh start',
                 # TODO: Hooks and jobs demo
             ),
         ),
