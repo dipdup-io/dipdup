@@ -13,6 +13,7 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" />
    
@@ -87,7 +88,13 @@
       <ul>
         <li><a href="cli-reference.html#cmdoption-dipdup-hasura-configure-force">dipdup-hasura-configure command line option</a>
 </li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-f">dipdup-install command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-f">dipdup-new command line option</a>
+</li>
         <li><a href="cli-reference.html#cmdoption-dipdup-schema-wipe-force">dipdup-schema-wipe command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-f">dipdup-update command line option</a>
 </li>
       </ul></li>
       <li>
@@ -104,8 +111,6 @@
         <li><a href="cli-reference.html#cmdoption-dipdup-schema-wipe-immune">dipdup-schema-wipe command line option</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     --keep-schemas
 
@@ -118,6 +123,42 @@
 
       <ul>
         <li><a href="cli-reference.html#cmdoption-dipdup-init-overwrite-types">dipdup-init command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --path
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-p">dipdup-install command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --quiet
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-q">dipdup-install command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-q">dipdup-new command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-uninstall-q">dipdup-uninstall command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-q">dipdup-update command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    --ref
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-r">dipdup-install command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --replay
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-r">dipdup-new command line option</a>
 </li>
       </ul></li>
       <li>
@@ -153,6 +194,41 @@
 
       <ul>
         <li><a href="cli-reference.html#cmdoption-dipdup-config-env-f">dipdup-config-env command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-f">dipdup-install command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-f">dipdup-new command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-f">dipdup-update command line option</a>
+</li>
+      </ul></li>
+      <li>
+    -p
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-p">dipdup-install command line option</a>
+</li>
+      </ul></li>
+      <li>
+    -q
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-q">dipdup-install command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-q">dipdup-new command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-uninstall-q">dipdup-uninstall command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-q">dipdup-update command line option</a>
+</li>
+      </ul></li>
+      <li>
+    -r
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-r">dipdup-install command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-r">dipdup-new command line option</a>
 </li>
       </ul></li>
   </ul></td>
@@ -245,8 +321,6 @@
         <li><a href="cli-reference.html#cmdoption-dipdup-hasura-configure-force">--force</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     dipdup-init command line option
 
@@ -257,12 +331,74 @@
 </li>
       </ul></li>
       <li>
+    dipdup-install command line option
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-f">--force</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-p">--path</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-q">--quiet</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-r">--ref</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-f">-f</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-p">-p</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-q">-q</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-r">-r</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    dipdup-new command line option
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-f">--force</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-q">--quiet</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-r">--replay</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-f">-f</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-q">-q</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-r">-r</a>
+</li>
+      </ul></li>
+      <li>
     dipdup-schema-wipe command line option
 
       <ul>
         <li><a href="cli-reference.html#cmdoption-dipdup-schema-wipe-force">--force</a>
 </li>
         <li><a href="cli-reference.html#cmdoption-dipdup-schema-wipe-immune">--immune</a>
+</li>
+      </ul></li>
+      <li>
+    dipdup-uninstall command line option
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-uninstall-q">--quiet</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-uninstall-q">-q</a>
+</li>
+      </ul></li>
+      <li>
+    dipdup-update command line option
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-f">--force</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-q">--quiet</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-f">-f</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-q">-q</a>
 </li>
       </ul></li>
       <li>
@@ -291,9 +427,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config-reference.html#dipdup.config.OperationIndexConfig.entrypoint_filter">entrypoint_filter (dipdup.config.OperationIndexConfig property)</a>
 </li>
+      <li><a href="config-reference.html#dipdup.config.EventHandlerConfig">EventHandlerConfig (class in dipdup.config)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config-reference.html#dipdup.config.EventHookConfig">EventHookConfig (class in dipdup.config)</a>
+</li>
+      <li><a href="config-reference.html#dipdup.config.EventIndexConfig">EventIndexConfig (class in dipdup.config)</a>
 </li>
       <li><a href="context-reference.html#dipdup.context.DipDupContext.execute_sql">execute_sql() (dipdup.context.DipDupContext method)</a>
 </li>
@@ -366,6 +506,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config-reference.html#dipdup.config.BigMapHandlerConfig.initialize_big_map_type">initialize_big_map_type() (dipdup.config.BigMapHandlerConfig method)</a>
+</li>
+      <li><a href="config-reference.html#dipdup.config.EventHandlerConfig.initialize_event_type">initialize_event_type() (dipdup.config.EventHandlerConfig method)</a>
 </li>
       <li><a href="config-reference.html#dipdup.config.IpfsDatasourceConfig">IpfsDatasourceConfig (class in dipdup.config)</a>
 </li>
@@ -514,10 +656,12 @@
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="context-reference.html#dipdup.context.DipDupContext.update_contract_metadata">update_contract_metadata() (dipdup.context.DipDupContext method)</a>
+      <li><a href="config-reference.html#dipdup.config.UnknownEventHandlerConfig">UnknownEventHandlerConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.update_contract_metadata">update_contract_metadata() (dipdup.context.DipDupContext method)</a>
+</li>
       <li><a href="context-reference.html#dipdup.context.DipDupContext.update_token_metadata">update_token_metadata() (dipdup.context.DipDupContext method)</a>
 </li>
   </ul></td>
@@ -575,7 +719,7 @@
       &copy;2022, Baking Bad.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.2.3</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
