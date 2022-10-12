@@ -293,13 +293,13 @@ class BaseProject(Project):
             default=0,
             choices=(
                 'hasura/graphql-engine:v2.11.2',
-                'hasura/graphql-engine:v2.12.0',
-                'hasura/graphql-engine:v2.13.0-beta.1',
+                'hasura/graphql-engine:v2.13.0',
+                'hasura/graphql-engine:v2.14.0-beta.1',
             ),
             comments=(
                 'tested with DipDup',
-                '',
-                '',
+                'latest',
+                'beta',
             ),
         ),
         NotifyQuestion(
