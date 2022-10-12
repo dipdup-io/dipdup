@@ -1,7 +1,6 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 
 from pytz import UTC
@@ -38,7 +37,7 @@ async def spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
 class IndexStateTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         name = 'hic_et_nunc.yml'
-        config_path = join(dirname(__file__), '..', 'integration_tests', name)
+        config_path = Path(__file__).parent.parent / 'integration_tests' / name
         self.config = DipDupConfig.load([config_path])
 
         self.new_hash = '98858ec743f2c84ef9505ccefa2235fc6bb9e9b209b14b2028dd4650eaf96756'

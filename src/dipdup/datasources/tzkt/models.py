@@ -7,6 +7,7 @@ from typing import Dict
 from typing import Hashable
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -16,17 +17,89 @@ from typing import cast
 
 from pydantic import BaseModel
 from pydantic import Extra
-from pydantic.error_wrappers import ValidationError
+from pydantic.dataclasses import dataclass
 from typing_extensions import get_args
 from typing_extensions import get_origin
 
-from dipdup.exceptions import InvalidDataError
+from dipdup.datasources.subscription import Subscription
 from dipdup.models import OperationData
 from dipdup.models import StorageType
+from dipdup.utils.codegen import parse_object
 
 IntrospectionError = (KeyError, IndexError, AttributeError)
 
 T = TypeVar('T', Hashable, Type[BaseModel])
+
+
+@dataclass(frozen=True)
+class HeadSubscription(Subscription):
+    type: Literal['head'] = 'head'
+    method: Literal['SubscribeToHead'] = 'SubscribeToHead'
+
+    def get_request(self) -> Any:
+        return []
+
+
+@dataclass(frozen=True)
+class OriginationSubscription(Subscription):
+    type: Literal['origination'] = 'origination'
+    method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
+
+    def get_request(self) -> Any:
+        return [{'types': 'origination'}]
+
+
+@dataclass(frozen=True)
+class TransactionSubscription(Subscription):
+    type: Literal['transaction'] = 'transaction'
+    method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
+    address: Optional[str] = None
+
+    def get_request(self) -> Any:
+        request = [{'types': 'transaction'}]
+        if self.address:
+            request[0]['address'] = self.address
+        return request
+
+
+# TODO: Add `ptr` and `tags` filters?
+@dataclass(frozen=True)
+class BigMapSubscription(Subscription):
+    type: Literal['big_map'] = 'big_map'
+    method: Literal['SubscribeToBigMaps'] = 'SubscribeToBigMaps'
+    address: Optional[str] = None
+    path: Optional[str] = None
+
+    def get_request(self) -> Any:
+        if self.address and self.path:
+            return [{'address': self.address, 'paths': [self.path]}]
+        elif not self.address and not self.path:
+            return [{}]
+        else:
+            raise RuntimeError
+
+
+@dataclass(frozen=True)
+class TokenTransferSubscription(Subscription):
+    type: Literal['token_transfer'] = 'token_transfer'
+    method: Literal['SubscribeToTokenTransfers'] = 'SubscribeToTokenTransfers'
+
+    # NOTE: No filters applied
+    def get_request(self) -> Any:
+        return [{}]
+
+
+@dataclass(frozen=True)
+class EventSubscription(Subscription):
+    type: Literal['event'] = 'event'
+    method: Literal['SubscribeToEvents'] = 'SubscribeToEvents'
+    address: Optional[str] = None
+
+    def get_request(self) -> Any:
+        if self.address:
+            return [{'address': self.address}]
+
+        return [{}]
 
 
 def extract_root_outer_type(storage_type: Type[BaseModel]) -> T:
@@ -35,8 +108,8 @@ def extract_root_outer_type(storage_type: Type[BaseModel]) -> T:
     if root_field.allow_none:
         # NOTE: Optional is a magic _SpecialForm
         return cast(Type[BaseModel], typing.Optional[root_field.type_])
-    else:
-        return root_field.outer_type_
+
+    return root_field.outer_type_
 
 
 @lru_cache(None)
@@ -191,12 +264,4 @@ def deserialize_storage(operation_data: OperationData, storage_type: Type[Storag
         storage_type=storage_type,
         bigmap_diffs=bigmap_diffs,
     )
-
-    try:
-        return storage_type.parse_obj(operation_data.storage)
-    except ValidationError as e:
-        raise InvalidDataError(
-            type_cls=storage_type,
-            data=operation_data.storage,
-            parsed_object=operation_data,
-        ) from e
+    return parse_object(storage_type, operation_data.storage)

@@ -1,6 +1,5 @@
 from contextlib import AsyncExitStack
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 
 from dipdup.config import DipDupConfig
@@ -25,7 +24,7 @@ async def _create_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:
 
 class ReindexingTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.path = join(dirname(__file__), 'dipdup.yml')
+        self.path = Path(__file__).parent / 'dipdup.yml'
 
     async def test_reindex_manual(self) -> None:
         async with AsyncExitStack() as stack:

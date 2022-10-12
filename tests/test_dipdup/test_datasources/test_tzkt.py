@@ -1,16 +1,16 @@
-import json
 from contextlib import asynccontextmanager
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from typing import AsyncIterator
 from typing import Tuple
 from typing import TypeVar
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock
 
+import orjson as json
+
 from dipdup.config import HTTPConfig
-from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.exceptions import InvalidRequestError
 from dipdup.models import OperationData
@@ -211,8 +211,8 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertEqual(('fa12',), originations[0].originated_contract_tzips)
 
     async def test_on_operation_message_data(self) -> None:
-        with open(join(dirname(__file__), '..', 'ftzfun.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent.parent / 'ftzfun.json'
+        operations_json = json.loads(json_path.read_text())
 
         message = {'type': 1, 'state': 2, 'data': operations_json}
         async with with_tzkt(1) as tzkt:

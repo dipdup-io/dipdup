@@ -33,7 +33,7 @@ This script uses pipx under the hood to install `dipdup` and `datamodel-codegen`
 
 ### Manually
 
-Currently, we mainly use [Poetry](https://python-poetry.org)](<https://python-poetry.org>) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.
+Currently, we mainly use [Poetry](https://python-poetry.org) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.
 
 ```shell
 # Create a new project directory

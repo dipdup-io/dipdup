@@ -1,0 +1,71 @@
+spec_version: 1.2
+package: {{ cookiecutter.package }}
+
+database:
+  kind: sqlite
+  path: {{ cookiecutter.project_name }}.sqlite3
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.kathmandunet.tzkt.io/
+
+contracts:
+  events:
+    address: KT1F3Ai1GV6HXA7mzV8BZiPS9NEtDrRn9odn
+  events_null:
+    address: KT1F6nCM9Ks3aDT3FiSakQhCEbwGX3G91LjH
+  events_tzconst:
+    address: KT1Jw6Y8AJ1a4EeTN5XFeW6fmEgJsVnCHGAt
+  events_no_payload:
+    address: KT1KUnmrfPMPcwsiNTHHm4Y2ufNuExW3m7Y5
+
+indexes:
+  events:
+    kind: event
+    datasource: tzkt
+    handlers:
+      - callback: on_events_xrate
+        contract: events
+        tag: xrate
+      - callback: on_events_unknown
+        contract: events
+
+  events_null:
+    kind: event
+    datasource: tzkt
+    handlers:
+      - callback: on_events_null_null
+        contract: events_null
+        tag: "null"
+      - callback: on_events_null_none
+        contract: events_null
+        tag: "None"
+      - callback: on_events_null_unknown
+        contract: events_null
+
+  events_tzconst:
+    kind: event
+    datasource: tzkt
+    handlers:
+      - callback: on_events_tzconst_unit
+        contract: events_tzconst
+        tag: unit
+      - callback: on_events_tzconst_option
+        contract: events_tzconst
+        tag: option
+      - callback: on_events_tzconst_unknown
+        contract: events_tzconst
+
+  events_no_payload:
+    kind: event
+    datasource: tzkt
+    handlers:
+      - callback: on_events_no_payload_unit
+        contract: events_no_payload
+        tag: unit
+      - callback: on_events_no_payload_option
+        contract: events_no_payload
+        tag: option
+      - callback: on_events_no_payload_unknown
+        contract: events_no_payload

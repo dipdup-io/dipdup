@@ -2,31 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog],
-and this project adheres to [Semantic Versioning].
+The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [6.2.0] - 2022-10-12
 
 ### Added
 
-- install: New install script based on pipx.
-- cli: `dipdup new` command to create a new project (ex. cookiecutter).
-- cli: `dipdup update` command to update local pipx and poetry installations.
+- cli: `new` command to create a new project interactively.
+- cli: `install/update/uninstall` commands to manage local DipDup installation.
+- index: New index kind `event` to process contract events.
+- install: New interactive installer based on pipx (`install.py` or `dipdup-install`).
 
 ### Fixed
 
-- cli: Commands that only print help pages no longer require a valid config.
-- codegen: Fail lately when datamodel-codegen is not available.
-- config: Allow `dsn` field to be empty.
+- cli: Fixed commands that don't require a valid config yet crash with `ConfigurationError`.
+- codegen: Fail on demand when `datamodel-codegen` is not available.
+- codegen: Fixed Jinja2 template caching.
+- config: Allow `sentry.dsn` field to be empty.
+- config: Fixed greedy environment variable regex.
 - hooks: Raise a `FeatureAvailabilityHook` instead of a warning when trying to execute hooks on SQLite.
 
-### Removed
+### Improved
 
-- install: Cookiecutter template is no longer supported.
+- cli: Detect `src/` layout when guessing package path.
+- codegen: Improved cross-platform compatibility.
+- config: `sentry.user_id` option to set user ID for Sentry (affects release adoption data).
+- sentry: Detect environment when not set in config (docker/gha/tests/local)
+- sentry: Expose more tags under the `dipdup` namespace.
 
 ### Performance
 
-- cli: Up to 5x decrease in startup time.
+- cli: Up to 5x faster startup for some commands.
+
+### Security
+
+- sentry: Prevent Sentry from leaking hostname if `server_name` is not set.
+- sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.
+
+### Other
+
+- ci: A significantly faster execution of GitHub Actions.
+- docs: Updated "Contributing Guide" page.
 
 ## [6.1.3] - 2022-09-21
 

@@ -1,5 +1,5 @@
 {
-  "template": "demo_domains",
+  "template": "demo_tzbtc",
   "project_name": "dipdup-indexer",
   "package": "dipdup_indexer",
   "version": "0.0.1",

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import Tuple
 from unittest import TestCase
+
+import orjson as json
 
 from demo_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -223,8 +223,8 @@ class ModelsTest(TestCase):
 
     def test_convert_operation_with_default_entrypoint(self) -> None:
         # Arrange
-        with open(join(dirname(__file__), 'ooQuCAKBHkmWy2VciDAV9c6CFTywuMLupLzVoKDwS1xvR4EdRng.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'ooQuCAKBHkmWy2VciDAV9c6CFTywuMLupLzVoKDwS1xvR4EdRng.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -237,8 +237,8 @@ class ModelsTest(TestCase):
 
     def test_deserialize_storage_dict_key(self) -> None:
         # Arrange
-        with open(join(dirname(__file__), 'ftzfun.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'ftzfun.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -251,8 +251,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.assets.operators[0].value, {})
 
     def test_qwer(self) -> None:
-        with open(join(dirname(__file__), 'qwer.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'qwer.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -265,8 +265,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.__root__[0][1].R['2'], '2')  # type: ignore
 
     def test_asdf(self) -> None:
-        with open(join(dirname(__file__), 'asdf.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'asdf.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -278,8 +278,8 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj.__root__[0]['pupa'], list)
 
     def test_hjkl(self) -> None:
-        with open(join(dirname(__file__), 'hjkl.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'hjkl.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -292,8 +292,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.__root__[0].value.mr['111'], True)  # type: ignore
 
     def test_zxcv(self) -> None:
-        with open(join(dirname(__file__), 'zxcv.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'zxcv.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -309,8 +309,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.unit, {})
 
     def test_rewq(self) -> None:
-        with open(join(dirname(__file__), 'rewq.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'rewq.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -325,8 +325,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.or_.L['333'], '444')  # type: ignore
 
     def test_hen_subjkt(self) -> None:
-        with open(join(dirname(__file__), 'hen_subjkt.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'hen_subjkt.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -338,8 +338,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.entries['tz1Y1j7FK1X9Rrv2VdPz5bXoU7SszF8W1RnK'], True)
 
     def test_kolibri_ovens(self) -> None:
-        with open(join(dirname(__file__), 'kolibri_ovens.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'kolibri_ovens.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -352,8 +352,8 @@ class ModelsTest(TestCase):
         self.assertEqual(parameter_obj.__root__, None)
 
     def test_yupana(self) -> None:
-        with open(join(dirname(__file__), 'yupana.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'yupana.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]

@@ -2,7 +2,7 @@ import tempfile
 import textwrap
 from dataclasses import dataclass
 from dataclasses import field
-from os.path import join
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import Dict
@@ -35,14 +35,12 @@ def save_crashdump(error: Exception) -> str:
     import sentry_sdk.serializer
     import sentry_sdk.utils
 
-    from dipdup.utils import mkdir_p
-
     exc_info = sentry_sdk.utils.exc_info_from_error(error)
     event, _ = sentry_sdk.utils.event_from_exception(exc_info)
     event = sentry_sdk.serializer.serialize(event)
 
-    tmp_dir = join(tempfile.gettempdir(), 'dipdup', 'crashdumps')
-    mkdir_p(tmp_dir)
+    tmp_dir = Path(tempfile.gettempdir()) / 'dipdup' / 'crashdumps'
+    tmp_dir.mkdir(parents=True, exist_ok=True)
 
     crashdump_file = NamedTemporaryFile(
         mode='ab',
@@ -310,23 +308,19 @@ class IndexAlreadyExistsError(DipDupError):
 class InvalidDataError(DipDupError):
     """Failed to validate datasource message against generated type class"""
 
-    type_cls: Type[Any]
+    msg: str
+    type_: Type[Any]
     data: Any
-    parsed_object: Any
 
     def _help(self) -> str:
 
         return f"""
             Failed to validate datasource message against generated type class.
 
-            Expected type:
-            `{self.type_cls.__name__}`
+              {self.msg}
 
-            Invalid data:
-            {self.data}
-
-            Parsed object:
-            {self.parsed_object}
+            Type class: `{self.type_.__name__}`
+            Data: `{self.data}`
         """
 
 

@@ -11,7 +11,8 @@ You should add indexes on columns often appearing in `WHERE`` clauses in your Gr
 Tortoise ORM uses BTree indexes by default. To set index on a field, add `index=True` to the field definition:
 
 ```python
-from tortoise import Model, fields
+from dipdup.models import Model
+from tortoise import fields
 
 
 class Trade(Model):

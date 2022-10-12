@@ -36,23 +36,20 @@ from dipdup import baking_bad
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
-from dipdup.datasources.subscription import BigMapSubscription
-from dipdup.datasources.subscription import HeadSubscription
-from dipdup.datasources.subscription import OriginationSubscription
 from dipdup.datasources.subscription import Subscription
-from dipdup.datasources.subscription import TokenTransferSubscription
-from dipdup.datasources.subscription import TransactionSubscription
 from dipdup.datasources.tzkt.enums import ORIGINATION_MIGRATION_FIELDS
 from dipdup.datasources.tzkt.enums import ORIGINATION_OPERATION_FIELDS
 from dipdup.datasources.tzkt.enums import TRANSACTION_OPERATION_FIELDS
 from dipdup.datasources.tzkt.enums import OperationFetcherRequest
 from dipdup.datasources.tzkt.enums import TzktMessageType
+from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.enums import TokenStandard
 from dipdup.exceptions import DatasourceError
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BlockData
+from dipdup.models import EventData
 from dipdup.models import HeadBlockData
 from dipdup.models import OperationData
 from dipdup.models import QuoteData
@@ -296,6 +293,59 @@ class TokenTransferFetcher:
 
         if token_transfers:
             yield token_transfers[0].level, token_transfers
+
+
+class EventFetcher:
+    """Fetches contract events from REST API, merges them and yields by level."""
+
+    def __init__(
+        self,
+        datasource: 'TzktDatasource',
+        first_level: int,
+        last_level: int,
+        event_addresses: Set[str],
+        event_tags: Set[str],
+    ) -> None:
+        self._logger = logging.getLogger('dipdup.tzkt')
+        self._datasource = datasource
+        self._first_level = first_level
+        self._last_level = last_level
+        self._event_addresses = event_addresses
+        self._event_tags = event_tags
+
+    async def fetch_events_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[EventData, ...]], None]:
+        """Iterate over events fetched fetched from REST.
+
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by EventIndex.
+        """
+
+        events: Tuple[EventData, ...] = ()
+
+        # TODO: Share code between this and OperationFetcher
+        event_iter = self._datasource.iter_events(
+            self._event_addresses,
+            self._event_tags,
+            self._first_level,
+            self._last_level,
+        )
+        async for fetched_events in event_iter:
+            events = events + fetched_events
+
+            # NOTE: Yield big map slices by level except the last one
+            while True:
+                for i in range(len(events) - 1):
+                    curr_level, next_level = events[i].level, events[i + 1].level
+
+                    # NOTE: Level boundaries found. Exit for loop, stay in while.
+                    if curr_level != next_level:
+                        yield curr_level, events[: i + 1]
+                        events = events[i + 1 :]
+                        break
+                else:
+                    break
+
+        if events:
+            yield events[0].level, events
 
 
 MessageData = Union[Dict[str, Any], List[Dict[str, Any]]]
@@ -797,6 +847,48 @@ class TzktDatasource(IndexDatasource):
         ):
             yield batch
 
+    async def get_events(
+        self,
+        addresses: Set[str],
+        tags: Set[str],
+        first_level: int,
+        last_level: int,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Tuple[EventData, ...]:
+        offset, limit = offset or 0, limit or self.request_limit
+        raw_events = await self.request(
+            'get',
+            url='v1/contracts/events',
+            params={
+                "contract.in": ",".join(addresses),
+                "tag.in": ",".join(tags),
+                "level.ge": first_level,
+                "level.le": last_level,
+                # TODO: Cursor supported?
+                "offset": offset,
+                "limit": limit,
+            },
+        )
+        return tuple(self.convert_event(e) for e in raw_events)
+
+    async def iter_events(
+        self,
+        addresses: Set[str],
+        tags: Set[str],
+        first_level: int,
+        last_level: int,
+    ) -> AsyncIterator[Tuple[EventData, ...]]:
+        async for batch in self._iter_batches(
+            self.get_events,
+            addresses,
+            tags,
+            first_level,
+            last_level,
+            cursor=False,
+        ):
+            yield batch
+
     async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
         for subscription in index_config.subscriptions:
@@ -814,36 +906,8 @@ class TzktDatasource(IndexDatasource):
 
     async def _subscribe(self, subscription: Subscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
-        request: List[Dict[str, Any]]
-
-        if isinstance(subscription, TransactionSubscription):
-            method = 'SubscribeToOperations'
-            request = [{'types': 'transaction'}]
-            if subscription.address:
-                request[0]['address'] = subscription.address
-
-        elif isinstance(subscription, OriginationSubscription):
-            method = 'SubscribeToOperations'
-            request = [{'types': 'origination'}]
-
-        elif isinstance(subscription, HeadSubscription):
-            method, request = 'SubscribeToHead', []
-
-        elif isinstance(subscription, BigMapSubscription):
-            method = 'SubscribeToBigMaps'
-            if subscription.address and subscription.path:
-                request = [{'address': subscription.address, 'paths': [subscription.path]}]
-            elif not subscription.address and not subscription.path:
-                request = [{}]
-            else:
-                raise RuntimeError
-
-        elif isinstance(subscription, TokenTransferSubscription):
-            method = 'SubscribeToTokenTransfers'
-            request = [{}]
-
-        else:
-            raise NotImplementedError
+        method = subscription.method
+        request: List[Dict[str, Any]] = subscription.get_request()
 
         event = Event()
 
@@ -898,6 +962,7 @@ class TzktDatasource(IndexDatasource):
         self._ws_client.on('transfers', partial(self._on_message, MessageType.token_transfer))
         self._ws_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
         self._ws_client.on('head', partial(self._on_message, MessageType.head))
+        self._ws_client.on('events', partial(self._on_message, MessageType.event))
 
         return self._ws_client
 
@@ -975,6 +1040,8 @@ class TzktDatasource(IndexDatasource):
                 await self._process_big_maps_data(cast(list, buffered_message.data))
             elif buffered_message.type == MessageType.head:
                 await self._process_head_data(cast(dict, buffered_message.data))
+            elif buffered_message.type == MessageType.event:
+                await self._process_events_data(cast(list, buffered_message.data))
             else:
                 raise NotImplementedError(f'Unknown message type: {buffered_message.type}')
 
@@ -1018,6 +1085,18 @@ class TzktDatasource(IndexDatasource):
         """Parse and emit raw head block from WS"""
         block = self.convert_head_block(data)
         await self.emit_head(block)
+
+    async def _process_events_data(self, data: List[Dict[str, Any]]) -> None:
+        """Parse and emit raw big map diffs from WS"""
+        level_events: DefaultDict[int, Deque[EventData]] = defaultdict(deque)
+
+        events: Deque[EventData] = deque()
+        for event_json in data:
+            event = self.convert_event(event_json)
+            level_events[event.level].append(event)
+
+        for _level, events in level_events.items():
+            await self.emit_events(tuple(events))
 
     @classmethod
     def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:
@@ -1201,6 +1280,18 @@ class TzktDatasource(IndexDatasource):
             tzkt_transaction_id=token_transfer_json.get('transactionId'),
             tzkt_origination_id=token_transfer_json.get('originationId'),
             tzkt_migration_id=token_transfer_json.get('migrationId'),
+        )
+
+    @classmethod
+    def convert_event(cls, event_json: Dict[str, Any]) -> EventData:
+        """Convert raw event message from WS/REST into dataclass"""
+        return EventData(
+            id=event_json['id'],
+            level=event_json['level'],
+            timestamp=cls._parse_timestamp(event_json['timestamp']),
+            contract_address=event_json['contract']['address'],
+            tag=event_json['tag'],
+            payload=event_json.get('payload'),
         )
 
     async def _send(

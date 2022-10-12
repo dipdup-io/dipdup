@@ -52,10 +52,13 @@ DipDup receives all smart contract data (transaction parameters, resulting stora
 
 DipDup generates [Pydantic](https://pydantic-docs.helpmanual.io/datamodel_code_generator/) models out of JSONSchema. You might want to install additional plugins ([PyCharm](https://pydantic-docs.helpmanual.io/pycharm_plugin/), [mypy](https://pydantic-docs.helpmanual.io/mypy_plugin/)) for convenient work with this library.
 
-The following models are created at `init`:
+The following models are created at `init` for different indexes:
 
-* `operation` indexes: storage type for all contracts met in handler patterns plus parameter type for all destination+entrypoint pairs.
-* `big_map` indexes: key and storage types for all big map paths in handler configs.
+* `operation`: storage type for all contracts in handler patterns plus parameter type for all destination+entrypoint pairs.
+* `big_map`: key and storage types for all used contracts and big map paths.
+* `event`: payload types for all used contracts and tags.
+
+Other index kinds do not use code generated types.
 
 ## Nested packages
 
