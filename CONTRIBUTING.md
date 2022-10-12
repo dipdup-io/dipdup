@@ -34,8 +34,8 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 * Changes that significantly affect DipDup maintainers' experience MAY be documented in the CHANGELOG.md file.
 * The changelog MUST conform to the "Keep a Changelog" specification (CI will break otherwise).
 * A page in Release Notes SHOULD accompany all major releases.
-* All internal links MUST be created with `{{ #summary ... }}` shortcodes.
-* All values used in project templates MUST be replaced with `{{ #cookiecutter ... }}` shortcodes.
+* All internal links MUST be created with `{{ #summary ...` shortcodes.
+* All values used in project templates MUST be replaced with `{{ #cookiecutter ...` shortcodes.
 
 > 🚧 **UNDER CONSTRUCTION**
 >
