@@ -19,7 +19,7 @@ services:
     ...
 
   backuper:
-    image: ghcr.io/dipdup-net/postgres-s3-backup:master
+    image: ghcr.io/dipdup-io/postgres-s3-backup:master
     environment:
       - S3_ENDPOINT=${S3_ENDPOINT:-https://fra1.digitaloceanspaces.com}
       - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}

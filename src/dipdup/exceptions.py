@@ -82,7 +82,7 @@ class DipDupError(Exception):
         return """
             An unexpected error has occurred!
 
-            Please file a bug report at https://github.com/dipdup-net/dipdup/issues
+            Please file a bug report at https://github.com/dipdup-io/dipdup/issues
         """
 
     def help(self) -> str:
@@ -103,7 +103,7 @@ class DatasourceError(DipDupError):
         return f"""
             `{self.datasource}` datasource returned an error: {self.msg}
 
-            Please file a bug report at https://github.com/dipdup-net/dipdup/issues
+            Please file a bug report at https://github.com/dipdup-io/dipdup/issues
         """
 
 

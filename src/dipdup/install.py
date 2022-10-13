@@ -18,7 +18,7 @@ from typing import NoReturn
 from typing import Optional
 from typing import Set
 
-GITHUB = 'https://github.com/dipdup-net/dipdup.git'
+GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
     'python3',
     'pipx',

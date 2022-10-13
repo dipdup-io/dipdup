@@ -74,7 +74,7 @@ Please note that Coinbase can't replace TzKT being an index datasource. But you 
 
 ## DipDup Metadata
 
-[dipdup-metadata](https://github.com/dipdup-net/metadata) is a standalone companion indexer for DipDup written in Go. Configure datasource in the following way:
+[dipdup-metadata](https://github.com/dipdup-io/metadata) is a standalone companion indexer for DipDup written in Go. Configure datasource in the following way:
 
 ```yaml
 datasources:

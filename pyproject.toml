@@ -4,17 +4,24 @@ description = "Python SDK for developing indexers of Tezos smart contracts inspi
 version = "6.2.0"
 license = "MIT"
 authors = [
-    "Lev Gorodetskiy <github@droserasprout.space>",
+    "Lev Gorodetskiy <dipdup@drsr.io>",
     "Michael Zaikin <mz@baking-bad.org>"
 ]
 readme = "README.md"
-repository = "https://github.com/dipdup-net/dipdup"
+repository = "https://github.com/dipdup-io/dipdup"
 homepage = "https://dipdup.io/"
 keywords = ['tezos', 'blockchain', 'sdk', 'michelson', 'indexers', 'tzkt', 'cryptocurrencies', 'smart-contracts']
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
 ]
 packages = [
     { include = "dipdup", from = "src" },

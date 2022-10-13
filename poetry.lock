@@ -934,7 +934,7 @@ format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 
 [[package]]
 name = "jupyter-client"
-version = "7.4.1"
+version = "7.4.2"
 description = "Jupyter protocol implementation and client libraries"
 category = "main"
 optional = true
@@ -967,6 +967,35 @@ traitlets = "*"
 
 [package.extras]
 test = ["ipykernel", "pre-commit", "pytest", "pytest-cov", "pytest-timeout"]
+
+[[package]]
+name = "jupyter-server"
+version = "1.21.0"
+description = "The backend—i.e. core services, APIs, and REST endpoints—to Jupyter web applications."
+category = "main"
+optional = true
+python-versions = ">=3.7"
+
+[package.dependencies]
+anyio = ">=3.1.0,<4"
+argon2-cffi = "*"
+jinja2 = "*"
+jupyter-client = ">=6.1.12"
+jupyter-core = ">=4.7.0"
+nbconvert = ">=6.4.4"
+nbformat = ">=5.2.0"
+packaging = "*"
+prometheus-client = "*"
+pywinpty = {version = "*", markers = "os_name == \"nt\""}
+pyzmq = ">=17"
+Send2Trash = "*"
+terminado = ">=0.8.3"
+tornado = ">=6.1.0"
+traitlets = ">=5.1"
+websocket-client = "*"
+
+[package.extras]
+test = ["coverage", "ipykernel", "pre-commit", "pytest (>=7.0)", "pytest-console-scripts", "pytest-cov", "pytest-mock", "pytest-timeout", "pytest-tornasync", "requests"]
 
 [[package]]
 name = "jupyterlab-pygments"
@@ -1062,6 +1091,38 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "nbclassic"
+version = "0.4.5"
+description = "A web-based notebook environment for interactive computing"
+category = "main"
+optional = true
+python-versions = ">=3.7"
+
+[package.dependencies]
+argon2-cffi = "*"
+ipykernel = "*"
+ipython-genutils = "*"
+jinja2 = "*"
+jupyter-client = ">=6.1.1"
+jupyter-core = ">=4.6.1"
+jupyter-server = ">=1.8"
+nbconvert = ">=5"
+nbformat = "*"
+nest-asyncio = ">=1.5"
+notebook-shim = ">=0.1.0"
+prometheus-client = "*"
+pyzmq = ">=17"
+Send2Trash = ">=1.8.0"
+terminado = ">=0.8.3"
+tornado = ">=6.1"
+traitlets = ">=4.2.1"
+
+[package.extras]
+docs = ["myst-parser", "nbsphinx", "sphinx", "sphinx-rtd-theme", "sphinxcontrib-github-alt"]
+json-logging = ["json-logging"]
+test = ["coverage", "nbval", "pytest", "pytest-cov", "pytest-tornasync", "requests", "requests-unixsocket", "selenium (==4.1.5)", "testpath"]
+
+[[package]]
 name = "nbclient"
 version = "0.7.0"
 description = "A client library for executing notebooks. Formerly nbconvert's ExecutePreprocessor."
@@ -1148,7 +1209,7 @@ python-versions = "*"
 
 [[package]]
 name = "notebook"
-version = "6.4.12"
+version = "6.5.1"
 description = "A web-based notebook environment for interactive computing"
 category = "main"
 optional = true
@@ -1161,6 +1222,7 @@ ipython-genutils = "*"
 jinja2 = "*"
 jupyter-client = ">=5.3.4"
 jupyter-core = ">=4.6.1"
+nbclassic = "0.4.5"
 nbconvert = ">=5"
 nbformat = "*"
 nest-asyncio = ">=1.5"
@@ -1174,7 +1236,21 @@ traitlets = ">=4.2.1"
 [package.extras]
 docs = ["myst-parser", "nbsphinx", "sphinx", "sphinx-rtd-theme", "sphinxcontrib-github-alt"]
 json-logging = ["json-logging"]
-test = ["coverage", "nbval", "pytest", "pytest-cov", "requests", "requests-unixsocket", "selenium", "testpath"]
+test = ["coverage", "nbval", "pytest", "pytest-cov", "requests", "requests-unixsocket", "selenium (==4.1.5)", "testpath"]
+
+[[package]]
+name = "notebook-shim"
+version = "0.1.0"
+description = "A shim layer for notebook traits and config"
+category = "main"
+optional = true
+python-versions = ">=3.7"
+
+[package.dependencies]
+jupyter-server = ">=1.8,<2.0"
+
+[package.extras]
+test = ["pytest", "pytest-console-scripts", "pytest-tornasync"]
 
 [[package]]
 name = "openapi-schema-validator"
@@ -2280,7 +2356,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "tzdata"
-version = "2022.4"
+version = "2022.5"
 description = "Provider of IANA time zone data"
 category = "main"
 optional = false
@@ -3119,12 +3195,16 @@ jsonschema = [
     {file = "jsonschema-4.16.0.tar.gz", hash = "sha256:165059f076eff6971bae5b742fc029a7b4ef3f9bcf04c14e4776a7605de14b23"},
 ]
 jupyter-client = [
-    {file = "jupyter_client-7.4.1-py3-none-any.whl", hash = "sha256:bbf6404ef64afff3d4f583c90c6335545959657b7dec3a86c440d7b1368407ea"},
-    {file = "jupyter_client-7.4.1.tar.gz", hash = "sha256:3f30b1f27dc61adf5d0f5d466ef7185f6a19140c54395600b6df9adbe7d5ebcf"},
+    {file = "jupyter_client-7.4.2-py3-none-any.whl", hash = "sha256:f8929321204d3f0b446401cfadc04ed8226e77002a9e379416df8c252607f695"},
+    {file = "jupyter_client-7.4.2.tar.gz", hash = "sha256:b91a9a7b91ac69adf170d98c87917320f6b466e1c5e89b300226ef4047193376"},
 ]
 jupyter-core = [
     {file = "jupyter_core-4.11.1-py3-none-any.whl", hash = "sha256:715e22bb6cc7db3718fddfac1f69f1c7e899ca00e42bdfd4bf3705452b9fd84a"},
     {file = "jupyter_core-4.11.1.tar.gz", hash = "sha256:2e5f244d44894c4154d06aeae3419dd7f1b0ef4494dc5584929b398c61cfd314"},
+]
+jupyter-server = [
+    {file = "jupyter_server-1.21.0-py3-none-any.whl", hash = "sha256:992531008544d77e05a16251cdfbd0bdff1b1efa14760c79b9cc776ac9214cf1"},
+    {file = "jupyter_server-1.21.0.tar.gz", hash = "sha256:d0adca19913a3763359be7f0b8c2ea8bfde356f4b8edd8e3149d7d0fbfaa248b"},
 ]
 jupyterlab-pygments = [
     {file = "jupyterlab_pygments-0.2.2-py2.py3-none-any.whl", hash = "sha256:2405800db07c9f770863bcf8049a529c3dd4d3e28536638bd7c1c01d2748309f"},
@@ -3333,6 +3413,10 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
+nbclassic = [
+    {file = "nbclassic-0.4.5-py3-none-any.whl", hash = "sha256:07fba5a9e52a6ed7e795b45d300629b2a07a69e5a47398833b7977a7ecc8a3c1"},
+    {file = "nbclassic-0.4.5.tar.gz", hash = "sha256:05704c6cdd8301bf52e40ed9fae39e80d6bc5d2d447dc67831c145b4dd928779"},
+]
 nbclient = [
     {file = "nbclient-0.7.0-py3-none-any.whl", hash = "sha256:434c91385cf3e53084185334d675a0d33c615108b391e260915d1aa8e86661b8"},
     {file = "nbclient-0.7.0.tar.gz", hash = "sha256:a1d844efd6da9bc39d2209bf996dbd8e07bf0f36b796edfabaa8f8a9ab77c3aa"},
@@ -3353,8 +3437,12 @@ netstruct = [
     {file = "netstruct-1.1.2.zip", hash = "sha256:70b6a5c73f5bbc7ab57b019369642adfb34dd8af41b948c400ce95f952b7df9a"},
 ]
 notebook = [
-    {file = "notebook-6.4.12-py3-none-any.whl", hash = "sha256:8c07a3bb7640e371f8a609bdbb2366a1976c6a2589da8ef917f761a61e3ad8b1"},
-    {file = "notebook-6.4.12.tar.gz", hash = "sha256:6268c9ec9048cff7a45405c990c29ac9ca40b0bc3ec29263d218c5e01f2b4e86"},
+    {file = "notebook-6.5.1-py3-none-any.whl", hash = "sha256:660849b12a1e03f98bfc84ec73422f09a4fdd1af6679c1935b1baf426b864fca"},
+    {file = "notebook-6.5.1.tar.gz", hash = "sha256:f69fd3b13df092af3a66c8797fa8ce00608db71cade89105ac4178b8d8d154aa"},
+]
+notebook-shim = [
+    {file = "notebook_shim-0.1.0-py3-none-any.whl", hash = "sha256:02432d55a01139ac16e2100888aa2b56c614720cec73a27e71f40a5387e45324"},
+    {file = "notebook_shim-0.1.0.tar.gz", hash = "sha256:7897e47a36d92248925a2143e3596f19c60597708f7bef50d81fcd31d7263e85"},
 ]
 openapi-schema-validator = [
     {file = "openapi-schema-validator-0.3.4.tar.gz", hash = "sha256:7cf27585dd7970b7257cefe48e1a3a10d4e34421831bdb472d96967433bc27bd"},
@@ -4150,8 +4238,8 @@ typing-extensions = [
     {file = "typing_extensions-4.4.0.tar.gz", hash = "sha256:1511434bb92bf8dd198c12b1cc812e800d4181cfcb867674e0f8279cc93087aa"},
 ]
 tzdata = [
-    {file = "tzdata-2022.4-py2.py3-none-any.whl", hash = "sha256:74da81ecf2b3887c94e53fc1d466d4362aaf8b26fc87cda18f22004544694583"},
-    {file = "tzdata-2022.4.tar.gz", hash = "sha256:ada9133fbd561e6ec3d1674d3fba50251636e918aa97bd59d63735bef5a513bb"},
+    {file = "tzdata-2022.5-py2.py3-none-any.whl", hash = "sha256:323161b22b7802fdc78f20ca5f6073639c64f1a7227c40cd3e19fd1d0ce6650a"},
+    {file = "tzdata-2022.5.tar.gz", hash = "sha256:e15b2b3005e2546108af42a0eb4ccab4d9e225e2dfbf4f77aad50c70a4b1f3ab"},
 ]
 tzlocal = [
     {file = "tzlocal-4.2-py3-none-any.whl", hash = "sha256:89885494684c929d9191c57aa27502afc87a579be5cdd3225c77c463ea043745"},

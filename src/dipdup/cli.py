@@ -246,7 +246,7 @@ async def _check_version() -> None:
     async with AsyncExitStack() as stack:
         stack.enter_context(suppress(Exception))
         session = await stack.enter_async_context(aiohttp.ClientSession())
-        response = await session.get('https://api.github.com/repos/dipdup-net/dipdup/releases/latest')
+        response = await session.get('https://api.github.com/repos/dipdup-io/dipdup/releases/latest')
         response_json = await response.json()
         latest_version = response_json['tag_name']
 
@@ -282,7 +282,7 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 
     Documentation: https://docs.dipdup.io
 
-    Issues: https://github.com/dipdup-net/dipdup/issues
+    Issues: https://github.com/dipdup-io/dipdup/issues
     """
     # NOTE: Workaround for help pages
     args = sys.argv[1:]

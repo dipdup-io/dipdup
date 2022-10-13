@@ -1,6 +1,6 @@
 # metadata
 
-This is an optional section used by the [metadata](https://github.com/dipdup-net/metadata) indexer plugin. It uses [`contracts`](../config/contracts.md) and [`datasources`](../config/datasources.md) aliases as well as the [`database`](../config/database.md) connection.
+This is an optional section used by the [metadata](https://github.com/dipdup-io/metadata) indexer plugin. It uses [`contracts`](../config/contracts.md) and [`datasources`](../config/datasources.md) aliases as well as the [`database`](../config/database.md) connection.
 
 Metadata configuration has two required sections: `settings` and `indexers`
 

@@ -2,7 +2,7 @@
 
 This page is a brief overview of projects which use DipDup as an indexing solution.
 
-Want to see your project on this page? Create an issue on [GitHub](https://github.com/dipdup-net/dipdup-docs/issues)!
+Want to see your project on this page? Create an issue on [GitHub](https://github.com/dipdup-io/dipdup-docs/issues)!
 
 ## HicDEX
 

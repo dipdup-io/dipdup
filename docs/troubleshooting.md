@@ -64,7 +64,7 @@ poetry run flake8
 poetry run mypy
 ```
 
-You can find a more complex example in DipDup's [pyproject.toml](https://raw.githubusercontent.com/dipdup-net/dipdup/master/pyproject.toml) or use the cookiecutter template to create a new project with all recommended bells and whistles (see {{ #summary quickstart.md#from-template }}).
+You can find a more complex example in DipDup's [pyproject.toml](https://raw.githubusercontent.com/dipdup-io/dipdup/master/pyproject.toml) or use the cookiecutter template to create a new project with all recommended bells and whistles (see {{ #summary quickstart.md#from-template }}).
 
 ## Explore contract calls in Better Call Dev
 
@@ -86,7 +86,7 @@ Poetry package manager we recommend using with DipDup is not the most stable sof
 
 We are always ready to answer your questions!
 
-If you think you've found a bug, please report it directly to the [GitHub Issues](https://github.com/dipdup-net/dipdup). For all other discussions, join our socials:
+If you think you've found a bug, please report it directly to the [GitHub Issues](https://github.com/dipdup-io/dipdup). For all other discussions, join our socials:
 
 * [Discord](https://discord.com/invite/RcPGSdcVSx) (preferred)
 * [Telegram](https://t.me/baking_bad_chat)
