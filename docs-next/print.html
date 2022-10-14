@@ -1411,6 +1411,20 @@ async def calculate_stats(
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="job-scheduler"><a class="header" href="#job-scheduler">Job scheduler</a></h1>
 <p>Jobs are schedules for hooks. In some cases, it may come in handy to have the ability to run some code on schedule. For example, you want to calculate statistics once per hour instead of every time handler gets matched.</p>
+<p>Add the following section to the DipDup config:</p>
+<pre><code class="language-yaml">jobs:
+  midnight_stats:
+    hook: calculate_stats
+    crontab: &quot;0 0 * * *&quot;
+    args:
+      major: True
+  leet_stats:
+    hook: calculate_stats
+    interval: 1337  # in seconds
+    args:
+      major: False
+</code></pre>
+<p>If you're unfamiliar with the crontab syntax, an online service <a href="https://crontab.guru/">crontab.guru</a> will help you build the desired expression.</p>
 <h2 id="scheduler-configuration"><a class="header" href="#scheduler-configuration">Scheduler configuration</a></h2>
 <p>DipDup utilizes <code>apscheduler</code> library to run hooks according to schedules in <code>jobs</code> config section. In the following example, <code>apscheduler</code> will spawn up to three instances of the same job every time the trigger is fired, even if previous runs are in progress:</p>
 <pre><code class="language-yaml">advanced:
@@ -4045,7 +4059,7 @@ custom:
     args:
       major: False
 </code></pre>
-<p>If you're not familiar with the crontab syntax, there's an online service <a href="https://crontab.guru/">crontab.guru</a> that will help you build the desired expression.</p>
+<p>If you're unfamiliar with the crontab syntax, an online service <a href="https://crontab.guru/">crontab.guru</a> will help you build the desired expression.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="logging-1"><a class="header" href="#logging-1">logging</a></h1>
 <p>You can configure an amount of logging output by modifying the <code>logging</code> field.</p>
 <pre><code class="language-yaml">logging: default | quiet | verbose
