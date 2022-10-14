@@ -13,7 +13,7 @@ A modern Linux/macOS distribution with Python 3.10 installed is required to run 
 You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install DipDup for the current user:
 
 ```shell
-python -c "$(curl -sSL https://dipdup.io/install.py)"
+python -c "$(curl -sSL https://dipdup-net.github.io/dipdup/install.py)"
 ```
 
 Now, let's create a new project:
