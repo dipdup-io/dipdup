@@ -1,5 +1,8 @@
 name: Docs
-concurrency: gh-pages
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
 on:
   push:
     tags:

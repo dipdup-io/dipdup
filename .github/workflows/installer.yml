@@ -1,5 +1,8 @@
 name: Installer
-concurrency: gh-pages
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
 on:
   push:
     paths:
