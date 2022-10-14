@@ -6,6 +6,8 @@ on:
       - '*.*.*'
     branches:
       - master
+      # FIXME:
+      - fix/installer-link
     paths:
       - 'docs/**'
       - 'scripts/**'
