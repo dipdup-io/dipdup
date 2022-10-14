@@ -1,7 +1,4 @@
 name: Docs
-concurrency:
-  group: gh-pages
-  cancel-in-progress: false
 
 on:
   push:
