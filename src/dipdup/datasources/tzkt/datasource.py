@@ -379,7 +379,7 @@ class MessageBuffer:
         levels = range(channel_level, message_level, -1)
         for level in levels:
             if level not in self._messages:
-                self._logger.info('Level %s is not buffered, can\'t avoid rollback', level)
+                self._logger.info("Level %s is not buffered, can't avoid rollback", level)
                 return False
 
             for i, message in enumerate(self._messages[level]):
@@ -440,7 +440,7 @@ class TzktDatasource(IndexDatasource):
             self._logger.info(
                 '%s, protocol v%s (%s)',
                 category,
-                protocol["code"],
+                protocol['code'],
                 protocol['hash'][:8] + '…' + protocol['hash'][-6:],
             )
         except Exception as e:
@@ -675,11 +675,11 @@ class TzktDatasource(IndexDatasource):
                 'get',
                 url='v1/operations/originations',
                 params={
-                    "originatedContract.in": ','.join(addresses_chunk),
-                    "level.ge": first_level,
-                    "level.le": last_level,
-                    "select": ','.join(ORIGINATION_OPERATION_FIELDS),
-                    "status": "applied",
+                    'originatedContract.in': ','.join(addresses_chunk),
+                    'level.ge': first_level,
+                    'level.le': last_level,
+                    'select': ','.join(ORIGINATION_OPERATION_FIELDS),
+                    'status': 'applied',
                 },
             )
 
@@ -700,13 +700,13 @@ class TzktDatasource(IndexDatasource):
             'get',
             url='v1/operations/transactions',
             params={
-                f"{field}.in": ','.join(addresses),
-                "offset.cr": offset,
-                "limit": limit,
-                "level.ge": first_level,
-                "level.le": last_level,
-                "select": ','.join(TRANSACTION_OPERATION_FIELDS),
-                "status": "applied",
+                f'{field}.in': ','.join(addresses),
+                'offset.cr': offset,
+                'limit': limit,
+                'level.ge': first_level,
+                'level.le': last_level,
+                'select': ','.join(TRANSACTION_OPERATION_FIELDS),
+                'status': 'applied',
             },
         )
 
@@ -743,12 +743,12 @@ class TzktDatasource(IndexDatasource):
             'get',
             url='v1/bigmaps/updates',
             params={
-                "contract.in": ",".join(addresses),
-                "path.in": ",".join(paths),
-                "level.ge": first_level,
-                "level.le": last_level,
-                "offset": offset,
-                "limit": limit,
+                'contract.in': ','.join(addresses),
+                'path.in': ','.join(paths),
+                'level.ge': first_level,
+                'level.le': last_level,
+                'offset': offset,
+                'limit': limit,
             },
         )
         return tuple(self.convert_big_map(bm) for bm in raw_big_maps)
@@ -776,7 +776,7 @@ class TzktDatasource(IndexDatasource):
         quote_json = await self.request(
             'get',
             url='v1/quotes',
-            params={"level": level},
+            params={'level': level},
         )
         return self.convert_quote(quote_json[0])
 
@@ -794,10 +794,10 @@ class TzktDatasource(IndexDatasource):
             'get',
             url='v1/quotes',
             params={
-                "level.ge": first_level,
-                "level.le": last_level,
-                "offset.cr": offset,
-                "limit": limit,
+                'level.ge': first_level,
+                'level.le': last_level,
+                'offset.cr': offset,
+                'limit': limit,
             },
         )
         return tuple(self.convert_quote(quote) for quote in quotes_json)
@@ -829,7 +829,14 @@ class TzktDatasource(IndexDatasource):
         raw_token_transfers = await self.request(
             'get',
             url='v1/tokens/transfers',
-            params={**params, 'level.ge': first_level, 'level.lt': last_level, 'offset': offset, 'limit': limit, 'sort.asc': 'level'},
+            params={
+                **params,
+                'level.ge': first_level,
+                'level.lt': last_level,
+                'offset': offset,
+                'limit': limit,
+                'sort.asc': 'level',
+            },
         )
         return tuple(self.convert_token_transfer(item) for item in raw_token_transfers)
 
@@ -861,13 +868,13 @@ class TzktDatasource(IndexDatasource):
             'get',
             url='v1/contracts/events',
             params={
-                "contract.in": ",".join(addresses),
-                "tag.in": ",".join(tags),
-                "level.ge": first_level,
-                "level.le": last_level,
+                'contract.in': ','.join(addresses),
+                'tag.in': ','.join(tags),
+                'level.ge': first_level,
+                'level.le': last_level,
                 # TODO: Cursor supported?
-                "offset": offset,
-                "limit": limit,
+                'offset': offset,
+                'limit': limit,
             },
         )
         return tuple(self.convert_event(e) for e in raw_events)

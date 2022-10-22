@@ -69,7 +69,9 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
     if 'properties' in schema:
         return {
             **schema,
-            'properties': {prop: preprocess_storage_jsonschema(sub_schema) for prop, sub_schema in schema['properties'].items()},
+            'properties': {
+                prop: preprocess_storage_jsonschema(sub_schema) for prop, sub_schema in schema['properties'].items()
+            },
         }
     elif 'items' in schema:
         return {
@@ -135,7 +137,10 @@ class CodeGenerator:
         operation_pattern_config: OperationHandlerPatternConfigT,
         datasource_config: TzktDatasourceConfig,
     ) -> None:
-        if isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig) and operation_pattern_config.entrypoint:
+        if (
+            isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig)
+            and operation_pattern_config.entrypoint
+        ):
             contract_config = operation_pattern_config.destination_contract_config
             originated = False
         elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
@@ -162,7 +167,9 @@ class CodeGenerator:
         entrypoint = cast(str, operation_pattern_config.entrypoint)
 
         try:
-            entrypoint_schema = next(ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint)
+            entrypoint_schema = next(
+                ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint
+            )
         except StopIteration as e:
             raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e
 
@@ -173,7 +180,9 @@ class CodeGenerator:
             with open(entrypoint_schema_path, 'r') as file:
                 existing_schema = json.loads(file.read())
             if entrypoint_schema != existing_schema:
-                self._logger.warning('Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename)
+                self._logger.warning(
+                    'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename
+                )
 
     async def _fetch_operation_index_schema(self, index_config: OperationIndexConfig) -> None:
         for handler_config in index_config.handlers:
@@ -195,7 +204,9 @@ class CodeGenerator:
             try:
                 big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == handler_config.path)
             except StopIteration as e:
-                raise ConfigurationError(f'Contract `{contract_config.address}` has no big map path `{handler_config.path}`') from e
+                raise ConfigurationError(
+                    f'Contract `{contract_config.address}` has no big map path `{handler_config.path}`'
+                ) from e
             big_map_path = handler_config.path.replace('.', '_')
             big_map_key_schema = big_map_schema['keySchema']
             big_map_key_schema_path = big_map_schemas_path / f'{big_map_path}_key.json'
@@ -222,7 +233,9 @@ class CodeGenerator:
             try:
                 event_schema = next(ep for ep in contract_schemas['events'] if ep['tag'] == handler_config.tag)
             except StopIteration as e:
-                raise ConfigurationError(f'Contract `{contract_config.address}` has no event with tag `{handler_config.tag}`') from e
+                raise ConfigurationError(
+                    f'Contract `{contract_config.address}` has no event with tag `{handler_config.tag}`'
+                ) from e
 
             event_tag = handler_config.tag.replace('.', '_')
             event_schema = event_schema['eventSchema']
@@ -360,7 +373,9 @@ class CodeGenerator:
                     address = (await datasource.get_originated_contracts(address))[0]
                 except IndexError as e:
                     raise ConfigurationError(f'No contracts were originated from `{address}`') from e
-                self._logger.info('Fetching schemas for contract `%s` (originated from `%s`)', address, contract_config.address)
+                self._logger.info(
+                    'Fetching schemas for contract `%s` (originated from `%s`)', address, contract_config.address
+                )
             else:
                 self._logger.info('Fetching schemas for contract `%s`', address)
 

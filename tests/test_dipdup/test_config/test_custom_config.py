@@ -9,7 +9,7 @@ from dipdup.exceptions import ConfigurationError
 
 
 class TestCustomConfig:
-    @pytest.fixture(scope="session")
+    @pytest.fixture(scope='session')
     def dummy_config_path(self) -> Path:
         return Path(__file__).parent.parent / 'dipdup.yml'
 
@@ -26,7 +26,7 @@ class TestCustomConfig:
         return str(config_file)
 
     @pytest.fixture(
-        scope="session",
+        scope='session',
         params=(
             [
                 """
@@ -40,7 +40,9 @@ custom:
             ]
         ),
     )
-    def config_with_custom_section_path(self, dummy_config_path: str, tmp_path_factory: TempPathFactory, request) -> str:
+    def config_with_custom_section_path(
+        self, dummy_config_path: str, tmp_path_factory: TempPathFactory, request
+    ) -> str:
         return self.appended_config_path(dummy_config_path, tmp_path_factory, request.param)
 
     @staticmethod

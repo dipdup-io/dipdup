@@ -251,17 +251,25 @@ class IndexDispatcher:
         if not operation_subgroups:
             return
 
-        operation_indexes = (i for i in self._indexes.values() if isinstance(i, OperationIndex) and i.datasource == datasource)
+        operation_indexes = (
+            i for i in self._indexes.values() if isinstance(i, OperationIndex) and i.datasource == datasource
+        )
         for index in operation_indexes:
             index.push_operations(operation_subgroups)
 
-    async def _on_token_transfers(self, datasource: IndexDatasource, token_transfers: Tuple[TokenTransferData, ...]) -> None:
-        token_transfer_indexes = (i for i in self._indexes.values() if isinstance(i, TokenTransferIndex) and i.datasource == datasource)
+    async def _on_token_transfers(
+        self, datasource: IndexDatasource, token_transfers: Tuple[TokenTransferData, ...]
+    ) -> None:
+        token_transfer_indexes = (
+            i for i in self._indexes.values() if isinstance(i, TokenTransferIndex) and i.datasource == datasource
+        )
         for index in token_transfer_indexes:
             index.push_token_transfers(token_transfers)
 
     async def _on_big_maps(self, datasource: IndexDatasource, big_maps: Tuple[BigMapData, ...]) -> None:
-        big_map_indexes = (i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource)
+        big_map_indexes = (
+            i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource
+        )
         for index in big_map_indexes:
             index.push_big_maps(big_maps)
 
@@ -270,7 +278,9 @@ class IndexDispatcher:
         for index in event_indexes:
             index.push_events(events)
 
-    async def _on_rollback(self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int) -> None:
+    async def _on_rollback(
+        self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int
+    ) -> None:
         """Call `on_index_rollback` hook for each index that is affected by rollback"""
         if from_level <= to_level:
             raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
@@ -311,7 +321,7 @@ class IndexDispatcher:
 
         hook_name = 'on_index_rollback'
         for index_name in affected_indexes:
-            self._logger.warning('`%s`: can\'t process, firing `%s` hook', index_name, hook_name)
+            self._logger.warning("`%s`: can't process, firing `%s` hook", index_name, hook_name)
             await self._ctx.fire_hook(
                 hook_name,
                 index=self._indexes[index_name],
@@ -395,7 +405,9 @@ class DipDup:
             spawn_index_tasks = (create_task(self._ctx._spawn_index(name)) for name in self._config.indexes)
             await gather(*spawn_index_tasks)
 
-            await self._set_up_index_dispatcher(tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime)
+            await self._set_up_index_dispatcher(
+                tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime
+            )
 
             await gather(*tasks)
 

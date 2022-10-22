@@ -167,7 +167,11 @@ add_liquidity_operations = (
         target_alias='Smartlink',
         initiator_alias=None,
         entrypoint='transfer',
-        parameter_json={'to': 'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU', 'from': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4', 'value': '16000000'},
+        parameter_json={
+            'to': 'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU',
+            'from': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4',
+            'value': '16000000',
+        },
         originated_contract_address=None,
         originated_contract_alias=None,
         originated_contract_type_hash=None,
@@ -253,7 +257,9 @@ index_config = OperationIndexConfig(
                 OperationHandlerTransactionPatternConfig(
                     type='transaction',
                     source=None,
-                    destination=ContractConfig(address='KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU', typename='plenty_smak_amm'),
+                    destination=ContractConfig(
+                        address='KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU', typename='plenty_smak_amm'
+                    ),
                     entrypoint='AddLiquidity',
                     optional=False,
                 ),
@@ -274,7 +280,9 @@ index_config = OperationIndexConfig(
                 OperationHandlerTransactionPatternConfig(
                     type='transaction',
                     source=None,
-                    destination=ContractConfig(address='KT1NLZah1MKeWuveQvdsCqAUCjksKw8J296z', typename='plenty_smak_lp'),
+                    destination=ContractConfig(
+                        address='KT1NLZah1MKeWuveQvdsCqAUCjksKw8J296z', typename='plenty_smak_lp'
+                    ),
                     entrypoint='mint',
                     optional=False,
                 ),

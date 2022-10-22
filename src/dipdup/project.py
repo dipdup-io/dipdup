@@ -178,7 +178,9 @@ class Project(BaseModel):
 
     def get_defaults(self) -> dict[str, Any]:
         return {
-            question.name: question.choices[question.default] if isinstance(question, ChoiceQuestion) else question.default
+            question.name: question.choices[question.default]
+            if isinstance(question, ChoiceQuestion)
+            else question.default
             for question in self.questions
         }
 
@@ -193,7 +195,7 @@ class BaseProject(Project):
             description=(
                 'Welcome to DipDup! This command will help you to create a new project.\n'
                 'You can abort at any time by pressing Ctrl+C. Press Enter to use default value.\n'
-                'Let\'s start with some basic questions.'
+                "Let's start with some basic questions."
             ),
         ),
         ChoiceQuestion(
@@ -293,7 +295,10 @@ class BaseProject(Project):
         ),
         ChoiceQuestion(
             name='hasura_image',
-            description=('Choose Hasura version\n' 'Test new releases before using in production; new versions may break compatibility.'),
+            description=(
+                'Choose Hasura version\n'
+                'Test new releases before using in production; new versions may break compatibility.'
+            ),
             default=0,
             choices=(
                 'hasura/graphql-engine:v2.11.2',
@@ -318,7 +323,9 @@ class BaseProject(Project):
         ),
         ChoiceQuestion(
             name='linters',
-            description=('Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.'),
+            description=(
+                'Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.'
+            ),
             default=0,
             choices=(
                 'default',

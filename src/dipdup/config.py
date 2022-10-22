@@ -160,7 +160,9 @@ class PostgresDatabaseConfig:
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
-        connection_string = f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}?maxsize=1'
+        connection_string = (
+            f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}?maxsize=1'
+        )
         if self.schema_name != DEFAULT_POSTGRES_SCHEMA:
             connection_string += f'&schema={self.schema_name}'
         return connection_string
@@ -179,7 +181,7 @@ class PostgresDatabaseConfig:
     def _valid_immune_tables(cls, v) -> None:
         for table in v:
             if table.startswith('dipdup'):
-                raise ConfigurationError('Tables with `dipdup` prefix can\'t be immune')
+                raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
         return v
 
 
@@ -570,7 +572,9 @@ class TransactionIdxMixin:
 
 
 @dataclass
-class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, ParameterTypeMixin, TransactionIdxMixin):
+class OperationHandlerTransactionPatternConfig(
+    PatternConfig, StorageTypeMixin, ParameterTypeMixin, TransactionIdxMixin
+):
     """Operation handler pattern config
 
     :param type: always 'transaction'
@@ -674,7 +678,9 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
         elif self.originated_contract:
             module_name = self.originated_contract_config.module_name
         else:
-            raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
+            raise ConfigurationError(
+                'Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields'
+            )
         yield 'dipdup.models', 'Origination'
         yield self.format_storage_import(package, module_name)
 
@@ -882,7 +888,7 @@ class OperationIndexConfig(IndexConfig):
     :param last_level: Level to stop indexing at (DipDup will terminate at this level)
     """
 
-    kind: Literal["operation"]
+    kind: Literal['operation']
     handlers: Tuple[OperationHandlerConfig, ...]
     types: Tuple[OperationType, ...] = (OperationType.transaction,)
     contracts: List[Union[str, ContractConfig]] = field(default_factory=list)
@@ -1626,7 +1632,9 @@ class DipDupConfig:
             if not isinstance(datasource_config, TzktDatasourceConfig):
                 continue
             if datasource_config.buffer_size and self.advanced.rollback_depth:
-                raise ConfigurationError(f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`')
+                raise ConfigurationError(
+                    f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
+                )
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
@@ -1638,7 +1646,9 @@ class DipDupConfig:
             raw_template = re.sub(value_regex, value, raw_template)
 
         if missing_value := re.search(r'<*>', raw_template):
-            raise ConfigurationError(f'`{template_config.name}` index config is missing required template value `{missing_value}`')
+            raise ConfigurationError(
+                f'`{template_config.name}` index config is missing required template value `{missing_value}`'
+            )
 
         json_template = json.loads(raw_template)
         new_index_config = template.__class__(**json_template)
@@ -1812,7 +1822,9 @@ class DipDupConfig:
                     if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                         if pattern_config.entrypoint:
                             module_name = pattern_config.destination_contract_config.module_name
-                            pattern_config.initialize_parameter_cls(self.package, module_name, pattern_config.entrypoint)
+                            pattern_config.initialize_parameter_cls(
+                                self.package, module_name, pattern_config.entrypoint
+                            )
                             pattern_config.initialize_storage_cls(self.package, module_name)
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                         module_name = pattern_config.module_name
