@@ -29,6 +29,9 @@ lint:           ## Lint with all tools
 test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
 
+test-manual:
+	CI=true poetry run pytest -s -v tests
+
 docs:           ## Build docs
 	scripts/update_cookiecutter.py
 	cd docs
