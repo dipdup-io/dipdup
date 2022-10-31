@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from tabulate import tabulate
 
+from dipdup import __version__
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils.codegen import load_template
 from dipdup.utils.codegen import write
@@ -296,14 +297,14 @@ class BaseProject(Project):
             description=('Choose Hasura version\n' 'Test new releases before using in production; new versions may break compatibility.'),
             default=0,
             choices=(
-                'hasura/graphql-engine:v2.11.2',
-                'hasura/graphql-engine:v2.13.0',
-                'hasura/graphql-engine:v2.14.0-beta.1',
+                'hasura/graphql-engine:v2.14.0',
+                'hasura/graphql-engine:v2.14.0',
+                # 'hasura/graphql-engine:v2.15.0-beta.1',
             ),
             comments=(
-                'tested with DipDup',
+                f'tested with DipDup {__version__}',
                 'latest',
-                'beta',
+                # 'beta',
             ),
         ),
         NotifyQuestion(
