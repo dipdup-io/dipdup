@@ -92,6 +92,7 @@ release-major:  ## Release major version
 
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
+	rm -r ~/.cache/flakeheaven
 
 update:         ## Update dependencies, export requirements.txt
 	make install

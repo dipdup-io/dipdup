@@ -82,8 +82,8 @@ jobs:
           file: ${{ matrix.image.dockerfile }}
           platforms: ${{ matrix.image.platforms }}
           push: true
-          cache-from: type=gha,scope={{ matrix.image.name }}
-          cache-to: type=gha,scope={{ matrix.image.name }},mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: ${{ matrix.image.build_args }}
