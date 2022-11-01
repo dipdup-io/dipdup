@@ -616,11 +616,11 @@ class Model(TortoiseModel):
     ) -> BulkCreateQuery:
         if ignore_conflicts and update_fields:
             raise ValueError(
-                "ignore_conflicts and update_fields are mutually exclusive.",
+                'ignore_conflicts and update_fields are mutually exclusive.',
             )
         if not ignore_conflicts:
             if (update_fields and not on_conflict) or (on_conflict and not update_fields):
-                raise ValueError("update_fields and on_conflict need set in same time.")
+                raise ValueError('update_fields and on_conflict need set in same time.')
 
         return BulkCreateQuery(
             db=using_db or cls._choose_db(True),
@@ -641,7 +641,7 @@ class Model(TortoiseModel):
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> BulkUpdateQuery:
         if any(obj.pk is None for obj in objects):
-            raise ValueError("All bulk_update() objects must have a primary key set.")
+            raise ValueError('All bulk_update() objects must have a primary key set.')
 
         self = QuerySet(cls)
         return BulkUpdateQuery(  # type:ignore

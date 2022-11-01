@@ -454,7 +454,9 @@ class TemplateValuesDict(dict):
         try:
             return dict.__getitem__(self, key)
         except KeyError as e:
-            raise ConfigurationError(f'Index `{self.ctx.index_config.name}` requires `{key}` template value to be set') from e
+            raise ConfigurationError(
+                f'Index `{self.ctx.index_config.name}` requires `{key}` template value to be set'
+            ) from e
 
 
 class HandlerContext(DipDupContext):

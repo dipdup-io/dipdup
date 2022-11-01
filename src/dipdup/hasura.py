@@ -43,7 +43,7 @@ RelationalFieldT = Union[
     fields.relational.ForeignKeyFieldInstance,
     fields.relational.ManyToManyFieldInstance,
 ]
-_get_fields_query = '''
+_get_fields_query = """
 query introspectionQuery($name: String!) {
   __type(name: $name) {
     kind
@@ -62,7 +62,7 @@ query introspectionQuery($name: String!) {
     }
   }
 }
-'''.replace(
+""".replace(
     '\n', ' '
 ).replace(
     '  ', ''
@@ -128,7 +128,9 @@ class HasuraGateway(HTTPGateway):
 
         if (source := self._get_source(metadata, source_name)) is None:
             if not self._hasura_config.create_source:
-                raise HasuraError(f'Source `{source_name}` not found in metadata. Set `create_source` flag to create it.')
+                raise HasuraError(
+                    f'Source `{source_name}` not found in metadata. Set `create_source` flag to create it.'
+                )
 
             await self._create_source()
             metadata = await self._fetch_metadata()
@@ -154,8 +156,8 @@ class HasuraGateway(HTTPGateway):
         self._logger.info('Adding %s generated and user-defined queries', len(query_collections_metadata))
         metadata['query_collections'] = [
             {
-                "name": "allowed-queries",
-                "definition": {"queries": query_collections_metadata},
+                'name': 'allowed-queries',
+                'definition': {'queries': query_collections_metadata},
             }
         ]
 
@@ -419,7 +421,7 @@ class HasuraGateway(HTTPGateway):
             # NOTE: An issue with decamelizing the table name?
             # NOTE: dex_quotes_15m -> dexQuotes15m -> dex_quotes15m -> FAIL
             # NOTE: Let's prefix every numeric with underscore. Won't help in complex cases but worth a try.
-            alternative_name = ''.join([f"_{w}" if w.isnumeric() else w for w in re.split(r'(\d+)', name)])
+            alternative_name = ''.join([f'_{w}' if w.isnumeric() else w for w in re.split(r'(\d+)', name)])
             fields_json = await self._get_fields_json(alternative_name)
 
         fields = []
@@ -504,7 +506,17 @@ class HasuraGateway(HTTPGateway):
         query_fields = ' '.join(f.name for f in fields)
         return {
             'name': name,
-            'query': 'query ' + name + ' (' + query_arg + ') {' + table + '(' + query_filter + ') {' + query_fields + '}}',
+            'query': 'query '
+            + name
+            + ' ('
+            + query_arg
+            + ') {'
+            + table
+            + '('
+            + query_filter
+            + ') {'
+            + query_fields
+            + '}}',
         }
 
     def _format_rest_head_status_query(self) -> Dict[str, Any]:
@@ -519,16 +531,16 @@ class HasuraGateway(HTTPGateway):
 
     def _format_rest_endpoint(self, query_name: str) -> Dict[str, Any]:
         return {
-            "definition": {
-                "query": {
-                    "collection_name": "allowed-queries",
-                    "query_name": query_name,
+            'definition': {
+                'query': {
+                    'collection_name': 'allowed-queries',
+                    'query_name': query_name,
                 },
             },
-            "url": query_name,
-            "methods": ["GET", "POST"],
-            "name": query_name,
-            "comment": None,
+            'url': query_name,
+            'methods': ['GET', 'POST'],
+            'name': query_name,
+            'comment': None,
         }
 
     def _format_custom_root_fields(self, table_name: str) -> Dict[str, Any]:
@@ -558,17 +570,17 @@ class HasuraGateway(HTTPGateway):
 
     def _format_table(self, name: str) -> Dict[str, Any]:
         return {
-            "table": self._format_table_table(name),
-            "object_relationships": [],
-            "array_relationships": [],
-            "select_permissions": [
+            'table': self._format_table_table(name),
+            'object_relationships': [],
+            'array_relationships': [],
+            'select_permissions': [
                 self._format_select_permissions(),
             ],
         }
 
     def _format_table_table(self, name: str) -> Dict[str, Any]:
         return {
-            "schema": self._database_config.schema_name,
+            'schema': self._database_config.schema_name,
             'name': name,
         }
 
@@ -579,13 +591,13 @@ class HasuraGateway(HTTPGateway):
         column: str,
     ) -> Dict[str, Any]:
         return {
-            "name": related_name if not self._hasura_config.camel_case else humps.camelize(related_name),
-            "using": {
-                "foreign_key_constraint_on": {
-                    "column": column,
-                    "table": {
-                        "schema": self._database_config.schema_name,
-                        "name": table,
+            'name': related_name if not self._hasura_config.camel_case else humps.camelize(related_name),
+            'using': {
+                'foreign_key_constraint_on': {
+                    'column': column,
+                    'table': {
+                        'schema': self._database_config.schema_name,
+                        'name': table,
                     },
                 },
             },
@@ -593,20 +605,20 @@ class HasuraGateway(HTTPGateway):
 
     def _format_object_relationship(self, name: str, column: str) -> Dict[str, Any]:
         return {
-            "name": name if not self._hasura_config.camel_case else humps.camelize(name),
-            "using": {
-                "foreign_key_constraint_on": column,
+            'name': name if not self._hasura_config.camel_case else humps.camelize(name),
+            'using': {
+                'foreign_key_constraint_on': column,
             },
         }
 
     def _format_select_permissions(self) -> Dict[str, Any]:
         return {
-            "role": "user",
-            "permission": {
-                "columns": "*",
-                "filter": {},
-                "allow_aggregations": self._hasura_config.allow_aggregations,
-                "limit": self._hasura_config.select_limit,
+            'role': 'user',
+            'permission': {
+                'columns': '*',
+                'filter': {},
+                'allow_aggregations': self._hasura_config.allow_aggregations,
+                'limit': self._hasura_config.select_limit,
             },
         }
 

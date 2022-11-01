@@ -237,7 +237,9 @@ def _init_sentry(config) -> None:
 
 async def _check_version() -> None:
     if 'rc' in __version__:
-        _logger.warning('You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.')
+        _logger.warning(
+            'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
+        )
         _logger.info('Set `skip_version_check` flag in config to hide this message.')
         return
 
@@ -583,7 +585,10 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
     if not force:
         try:
             assert sys.__stdin__.isatty()
-            click.confirm(f'You\'re about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?', abort=True)
+            click.confirm(
+                f"You're about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?",
+                abort=True,
+            )
         except AssertionError:
             click.echo('Not in a TTY, skipping confirmation')
         except click.Abort:

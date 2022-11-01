@@ -111,7 +111,11 @@ def extract_operation_subgroups(
             if operation.entrypoint not in entrypoints and len(entrypoints) != 0:
                 filtered += 1
                 continue
-            if operation.sender_address not in addresses and operation.target_address not in addresses and len(addresses) != 0:
+            if (
+                operation.sender_address not in addresses
+                and operation.target_address not in addresses
+                and len(addresses) != 0
+            ):
                 filtered += 1
                 continue
 
@@ -440,7 +444,9 @@ class OperationIndex(Index):
                 if pattern_config.originated_contract_config.address != operation.originated_contract_address:
                     return False
             if pattern_config.similar_to:
-                code_hash, type_hash = await self._get_contract_hashes(pattern_config.similar_to_contract_config.address)
+                code_hash, type_hash = await self._get_contract_hashes(
+                    pattern_config.similar_to_contract_config.address
+                )
                 if pattern_config.strict:
                     if code_hash != operation.originated_contract_code_hash:
                         return False
@@ -467,9 +473,13 @@ class OperationIndex(Index):
                 operation, pattern_config = operations[operation_idx], handler_config.pattern[pattern_idx]
                 operation_matched = await self._match_operation(pattern_config, operation)
 
-                if operation.type == 'origination' and isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                if operation.type == 'origination' and isinstance(
+                    pattern_config, OperationHandlerOriginationPatternConfig
+                ):
 
-                    if operation_matched is True and pattern_config.origination_processed(cast(str, operation.originated_contract_address)):
+                    if operation_matched is True and pattern_config.origination_processed(
+                        cast(str, operation.originated_contract_address)
+                    ):
                         operation_matched = False
 
                 if operation_matched:
@@ -544,7 +554,10 @@ class OperationIndex(Index):
         return args
 
     async def _call_matched_handler(
-        self, handler_config: OperationHandlerConfig, operation_subgroup: OperationSubgroup, args: Sequence[OperationHandlerArgumentT]
+        self,
+        handler_config: OperationHandlerConfig,
+        operation_subgroup: OperationSubgroup,
+        args: Sequence[OperationHandlerArgumentT],
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
@@ -946,7 +959,9 @@ class TokenTransferIndex(Index):
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=batch_level)
 
-    async def _call_matched_handler(self, handler_config: TokenTransferHandlerConfig, token_transfer: TokenTransferData) -> None:
+    async def _call_matched_handler(
+        self, handler_config: TokenTransferHandlerConfig, token_transfer: TokenTransferData
+    ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -1020,9 +1035,9 @@ class OperationUnfilteredIndex(OperationIndex):
 
     async def _match_unfiltered_operation(self, operation: OperationData) -> bool:
         """Match single operation with pattern"""
-        if OperationType.origination not in self._config.types and operation.type == "origination":
+        if OperationType.origination not in self._config.types and operation.type == 'origination':
             return False
-        elif OperationType.transaction not in self._config.types and operation.type == "operation":
+        elif OperationType.transaction not in self._config.types and operation.type == 'operation':
             return False
         return True
 

@@ -52,7 +52,7 @@ tabulate = "^0.8.9"
 pytezos = {version = "3.7.1", optional = true}
 
 [tool.poetry.group.dev.dependencies]
-black = "*"
+blue = "*"
 bump2version = "*"
 diff-cover = "*"
 docker = "*"
@@ -79,16 +79,15 @@ dipdup = "dipdup.cli:cli"
 dipdup-install = "dipdup.install:cli"
 
 [tool.isort]
-line_length = 140
+line_length = 120
 force_single_line = true
 
-[tool.black]
-line-length = 140
+[tool.blue]
+line-length = 120
 target-version = ["py310"]
-skip-string-normalization = true
 
 [tool.flakeheaven]
-max_line_length = 140
+max_line_length = 120
 
 [tool.flakeheaven.plugins]
 "*" = ["+*"]
