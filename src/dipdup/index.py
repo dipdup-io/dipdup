@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
+from typing import Generic
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -16,6 +17,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Set
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 from typing import cast
 
@@ -36,6 +38,7 @@ from dipdup.config import OperationHandlerPatternConfigT
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import OperationType
+from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import SkipHistory
 from dipdup.config import TokenTransferHandlerConfig
@@ -70,6 +73,8 @@ from dipdup.utils import FormattedLogger
 from dipdup.utils.codegen import parse_object
 
 _logger = logging.getLogger(__name__)
+
+ConfigT = TypeVar('ConfigT', bound=ResolvedIndexConfigT)
 
 
 @dataclass(frozen=True)
@@ -142,7 +147,7 @@ def extract_operation_subgroups(
         )
 
 
-class Index:
+class Index(Generic[ConfigT]):
     """Base class for index implementations
 
     Provides common interface for managing index state and switching between sync and realtime modes.
@@ -151,7 +156,7 @@ class Index:
     message_type: MessageType
     _queue: Deque
 
-    def __init__(self, ctx: DipDupContext, config: ResolvedIndexConfigT, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: ConfigT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
         self._config = config
         self._datasource = datasource
@@ -294,9 +299,8 @@ class Index:
         return batch_levels.pop()
 
 
-class OperationIndex(Index):
+class OperationIndex(Index[OperationIndexConfig]):
     message_type = MessageType.operation
-    _config: OperationIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
@@ -607,7 +611,6 @@ class OperationIndex(Index):
 
 class BigMapIndex(Index):
     message_type = MessageType.big_map
-    _config: BigMapIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
@@ -834,7 +837,6 @@ class BigMapIndex(Index):
 
 class HeadIndex(Index):
     message_type: MessageType = MessageType.head
-    _config: HeadIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: HeadIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
@@ -883,7 +885,6 @@ class HeadIndex(Index):
 
 class TokenTransferIndex(Index):
     message_type = MessageType.token_transfer
-    _config: TokenTransferIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: TokenTransferIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
@@ -1022,10 +1023,10 @@ class TokenTransferIndex(Index):
 
 class OperationUnfilteredIndex(OperationIndex):
     message_type = MessageType.operation
-    _config: OperationIndexConfig
 
-    def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
-        super().__init__(ctx, config, datasource)
+    def __init__(self, ctx: DipDupContext, config: OperationUnfilteredIndexConfig, datasource: TzktDatasource) -> None:
+        # FIXME: Ugly inheritance hack
+        Index.__init__(self, ctx, config, datasource)  # type: ignore
         self._queue: Deque[Tuple[OperationSubgroup, ...]] = deque()
         self._contract_hashes: Dict[str, Tuple[int, int]] = {}
 
@@ -1067,7 +1068,6 @@ class OperationUnfilteredIndex(OperationIndex):
 
 class EventIndex(Index):
     message_type = MessageType.event
-    _config: EventIndexConfig
 
     def __init__(self, ctx: DipDupContext, config: EventIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
