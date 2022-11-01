@@ -42,3 +42,8 @@ input#searchbar, input#searchbar:focus {
     border-radius: 20px;
     border: 1px solid var(--sidebar-bg);
 }
+
+img.logo {
+    height: 1em;
+    opacity: 50%;
+}
