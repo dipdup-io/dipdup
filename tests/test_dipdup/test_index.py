@@ -124,7 +124,11 @@ unfiltered_operations = (
         target_alias='Smartlink',
         initiator_alias=None,
         entrypoint='transfer',
-        parameter_json={'to': 'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU', 'from': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4', 'value': '16000000'},
+        parameter_json={
+            'to': 'KT1BEC9uHmADgVLXCm3wxN52qJJ85ohrWEaU',
+            'from': 'tz1cmAfyjWW3Rf3tH3M3maCpwsiAwBKbtmG4',
+            'value': '16000000',
+        },
         originated_contract_address=None,
         originated_contract_alias=None,
         originated_contract_type_hash=None,
@@ -173,7 +177,7 @@ unfiltered_operations = (
         initiator_alias=None,
         entrypoint=None,
         parameter_json=None,
-        originated_contract_address="KT1SfJpAGDasNQRQPpdCM1CWnJNQ6Khs7c1R",
+        originated_contract_address='KT1SfJpAGDasNQRQPpdCM1CWnJNQ6Khs7c1R',
         originated_contract_alias=None,
         originated_contract_type_hash=-1552513651,
         originated_contract_code_hash=1941250399,
@@ -199,7 +203,7 @@ unfiltered_operations = (
         initiator_alias=None,
         entrypoint=None,
         parameter_json=None,
-        originated_contract_address="KT1D5KXV95aKKWVnoKCbyW87SxkRMcCF6MJH",
+        originated_contract_address='KT1D5KXV95aKKWVnoKCbyW87SxkRMcCF6MJH',
         originated_contract_alias=None,
         originated_contract_type_hash=1167792881,
         originated_contract_code_hash=178659938,
@@ -225,7 +229,7 @@ unfiltered_operations = (
         initiator_alias=None,
         entrypoint=None,
         parameter_json=None,
-        originated_contract_address="KT1GwcbcRrrAAKXNQW6w4a9D5n3qtTfet2ti",
+        originated_contract_address='KT1GwcbcRrrAAKXNQW6w4a9D5n3qtTfet2ti',
         originated_contract_alias=None,
         originated_contract_type_hash=-1552513651,
         originated_contract_code_hash=1941250399,
@@ -547,7 +551,7 @@ class MatcherTest(IsolatedAsyncioTestCase):
     async def test_match_unfiltered_operations(self) -> None:
         index = OperationUnfilteredIndex(None, operation_unfiltered_index_config, None)  # type: ignore
         index._prepare_handler_args = AsyncMock()  # type: ignore
-        await index.initialize_state(Index(name="operations", level=1, status=IndexStatus.SYNCING))
+        await index.initialize_state(Index(name='operations', level=1, status=IndexStatus.SYNCING))
 
         operation_subgroups = tuple(
             extract_operation_subgroups(

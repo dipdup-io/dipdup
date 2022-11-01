@@ -955,7 +955,7 @@ class OperationUnfilteredIndexConfig(IndexConfig):
     :param last_level: Level to stop indexing at (DipDup will terminate at this level)
     """
 
-    kind: Literal["operation_unfiltered"]
+    kind: Literal['operation_unfiltered']
     handlers: Tuple[OperationUnfilteredHandlerConfig, ...]
     types: Tuple[OperationType, ...] = (OperationType.transaction,)
 

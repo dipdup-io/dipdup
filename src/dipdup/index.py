@@ -111,7 +111,11 @@ def extract_operation_subgroups(
             if operation.entrypoint not in entrypoints and len(entrypoints) != 0:
                 filtered += 1
                 continue
-            if operation.sender_address not in addresses and operation.target_address not in addresses and len(addresses) != 0:
+            if (
+                operation.sender_address not in addresses
+                and operation.target_address not in addresses
+                and len(addresses) != 0
+            ):
                 filtered += 1
                 continue
 
@@ -1031,9 +1035,9 @@ class OperationUnfilteredIndex(OperationIndex):
 
     async def _match_unfiltered_operation(self, operation: OperationData) -> bool:
         """Match single operation with pattern"""
-        if OperationType.origination not in self._config.types and operation.type == "origination":
+        if OperationType.origination not in self._config.types and operation.type == 'origination':
             return False
-        elif OperationType.transaction not in self._config.types and operation.type == "operation":
+        elif OperationType.transaction not in self._config.types and operation.type == 'operation':
             return False
         return True
 
