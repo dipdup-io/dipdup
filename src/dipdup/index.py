@@ -108,10 +108,10 @@ def extract_operation_subgroups(
     for _operation_index, operation in enumerate(operations):
         # NOTE: Filtering out operations that are not part of any index
         if operation.type == 'transaction':
-            if operation.entrypoint not in entrypoints:
+            if operation.entrypoint not in entrypoints and len(entrypoints) != 0:
                 filtered += 1
                 continue
-            if operation.sender_address not in addresses and operation.target_address not in addresses:
+            if operation.sender_address not in addresses and operation.target_address not in addresses and len(addresses) != 0:
                 filtered += 1
                 continue
 
@@ -1007,6 +1007,51 @@ class TokenTransferIndex(Index):
             if handler_config.token_id is not None:
                 ids.add(handler_config.token_id)
         return ids
+
+
+class OperationUnfilteredIndex(OperationIndex):
+    message_type = MessageType.operation
+    _config: OperationIndexConfig
+
+    def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
+        super().__init__(ctx, config, datasource)
+        self._queue: Deque[Tuple[OperationSubgroup, ...]] = deque()
+        self._contract_hashes: Dict[str, Tuple[int, int]] = {}
+
+    async def _match_unfiltered_operation(self, operation: OperationData) -> bool:
+        """Match single operation with pattern"""
+        if OperationType.origination not in self._config.types and operation.type == "origination":
+            return False
+        elif OperationType.transaction not in self._config.types and operation.type == "operation":
+            return False
+        return True
+
+    async def _match_operation_subgroup(self, operation_subgroup: OperationSubgroup) -> Deque[MatchedOperationsT]:
+        """Try to match operation subgroup with all patterns from indexes."""
+        matched_handlers: Deque[MatchedOperationsT] = deque()
+        operations = operation_subgroup.operations
+
+        for handler_config in self._config.handlers:
+            operation_idx = 0
+            matched_operations: Deque[Optional[OperationData]] = deque()
+
+            while operation_idx < len(operations):
+                operation = operations[operation_idx]
+                operation_matched = await self._match_unfiltered_operation(operation)
+
+                if operation_matched:
+                    matched_operations.append(operation)
+                    operation_idx += 1
+                else:
+                    operation_idx += 1
+
+            if len(matched_operations) >= 0:
+                self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+
+                args = await self._prepare_handler_args(handler_config, matched_operations)
+                matched_handlers.append((operation_subgroup, handler_config, args))
+
+        return matched_handlers
 
 
 class EventIndex(Index):
