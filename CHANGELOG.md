@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- index: New index kind `operation_unfiltered`.
+
 ## [6.2.0] - 2022-10-12
 
 ### Added

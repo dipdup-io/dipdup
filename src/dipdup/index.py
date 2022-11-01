@@ -108,14 +108,10 @@ def extract_operation_subgroups(
     for _operation_index, operation in enumerate(operations):
         # NOTE: Filtering out operations that are not part of any index
         if operation.type == 'transaction':
-            if operation.entrypoint not in entrypoints and len(entrypoints) != 0:
+            if entrypoints and operation.entrypoint not in entrypoints:
                 filtered += 1
                 continue
-            if (
-                operation.sender_address not in addresses
-                and operation.target_address not in addresses
-                and len(addresses) != 0
-            ):
+            if addresses and operation.sender_address not in addresses and operation.target_address not in addresses:
                 filtered += 1
                 continue
 
