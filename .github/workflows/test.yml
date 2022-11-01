@@ -41,9 +41,8 @@ jobs:
         id: cache-replays
         with:
           path: ~/.cache/dipdup/replays
-          key: ${{ matrix.os }}-${{ matrix.arch }}-replays
-          restore-keys: |
-            ${{ matrix.os }}-${{ matrix.arch }}-replays
+          key: dipdup-replays-${{ matrix.os }}-${{ matrix.arch }}
+          restore-keys: dipdup-replays-${{ matrix.os }}-${{ matrix.arch }}
 
       - name: Install project
         run: make install

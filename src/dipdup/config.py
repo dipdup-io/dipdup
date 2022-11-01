@@ -799,6 +799,18 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
+class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
+    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'OperationData'
+        yield package, 'models as models'
+
+    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'origination', 'OperationData'
+
+
+@dataclass
 class TemplateValuesMixin:
     """`template_values` field"""
 
@@ -931,6 +943,24 @@ class OperationIndexConfig(IndexConfig):
                         raise ConfigInitializationException
 
         return addresses
+
+
+@dataclass
+class OperationUnfilteredIndexConfig(IndexConfig):
+    """Operation index config
+
+    :param kind: always `operation`
+    :param handlers: List of indexer handlers
+    :param first_level: Level to start indexing from
+    :param last_level: Level to stop indexing at (DipDup will terminate at this level)
+    """
+
+    kind: Literal["operation_unfiltered"]
+    handlers: Tuple[OperationUnfilteredHandlerConfig, ...]
+    types: Tuple[OperationType, ...] = (OperationType.transaction,)
+
+    first_level: int = 0
+    last_level: int = 0
 
 
 @dataclass
@@ -1176,6 +1206,7 @@ ResolvedIndexConfigT = Union[
     BigMapIndexConfig,
     HeadIndexConfig,
     TokenTransferIndexConfig,
+    OperationUnfilteredIndexConfig,
     EventIndexConfig,
 ]
 IndexConfigT = Union[
@@ -1537,18 +1568,6 @@ class DipDupConfig:
 
         if isinstance(index_config, IndexTemplateConfig):
             raise ConfigInitializationException
-        elif isinstance(index_config, OperationIndexConfig):
-            pass
-        elif isinstance(index_config, BigMapIndexConfig):
-            pass
-        elif isinstance(index_config, HeadIndexConfig):
-            pass
-        elif isinstance(index_config, TokenTransferIndexConfig):
-            pass
-        elif isinstance(index_config, EventIndexConfig):
-            pass
-        else:
-            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
         self._import_index_types(index_config)
         self._import_index_callbacks(index_config)
@@ -1711,6 +1730,9 @@ class DipDupConfig:
         elif isinstance(index_config, TokenTransferIndexConfig):
             index_config.subscriptions.add(TokenTransferSubscription())
 
+        elif isinstance(index_config, OperationUnfilteredIndexConfig):
+            index_config.subscriptions.add(TransactionSubscription())
+
         elif isinstance(index_config, EventIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(EventSubscription())
@@ -1779,6 +1801,13 @@ class DipDupConfig:
 
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
+
+        elif isinstance(index_config, OperationUnfilteredIndexConfig):
+            if isinstance(index_config.datasource, str):
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+
+            for operation_unfiltered_handler_config in index_config.handlers:
+                operation_unfiltered_handler_config.parent = index_config
 
         elif isinstance(index_config, EventIndexConfig):
             if isinstance(index_config.datasource, str):
