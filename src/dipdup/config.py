@@ -957,7 +957,7 @@ class OperationUnfilteredIndexConfig(IndexConfig):
 
     kind: Literal['operation_unfiltered']
     handlers: Tuple[OperationUnfilteredHandlerConfig, ...]
-    types: Tuple[OperationType, ...] = (OperationType.transaction,)
+    types: Tuple[OperationType, ...] = (OperationType.origination,)
 
     first_level: int = 0
     last_level: int = 0
