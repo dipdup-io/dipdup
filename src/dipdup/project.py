@@ -304,12 +304,12 @@ class BaseProject(Project):
             choices=(
                 'hasura/graphql-engine:v2.14.0',
                 'hasura/graphql-engine:v2.14.0',
-                # 'hasura/graphql-engine:v2.15.0-beta.1',
+                'hasura/graphql-engine:v2.15.0-beta.1',
             ),
             comments=(
                 f'tested with DipDup {__version__}',
-                'latest',
-                # 'beta',
+                'latest stable',
+                'latest beta',
             ),
         ),
         NotifyQuestion(
