@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - index: New index kind `operation_unfiltered`.
 
+### Fixed
+
+- project: Fixed options in DipDup version question.
+
 ## [6.2.0] - 2022-10-12
 
 ### Added
