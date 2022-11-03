@@ -6,13 +6,13 @@ This page covers the installation of DipDup in different environments.
 
 A *Linux*/*MacOS* environment with *Python 3.10* installed is required to use DipDup. Other UNIX-like systems should work but are not supported officially.
 
-Minimum hardware requirements are 256 MB RAM, 1 CPU core, and some disk space for the database. RAM requirements increase with the number of indexes.
+Minimum hardware requirements are *256 MB RAM*, *1 CPU core*, and some disk space for the database. RAM requirements increase with the number of indexes.
 
 ### Non-UNIX environments
 
-DipDup currently doesn't work in Windows environments due to incompatibilities in libraries it depends on. Please use WSL or Docker.
+Windows is not officially supported, but there's a possibility everything will work fine. In case of issues throw us a message and use WSL or Docker.
 
-We aim to improve cross-platform compatibility in future releases ([issue](https://github.com/dipdup-net/dipdup-py/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+)).
+We aim to improve cross-platform compatibility in future releases ([issue](https://github.com/dipdup-net/dipdup/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+)).
 
 > 💡 **SEE ALSO**
 >
@@ -23,38 +23,31 @@ We aim to improve cross-platform compatibility in future releases ([issue](https
 
 ### Interactively (recommended)
 
-You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/README.html) and create a new project in the current directory.
+The following command will install DipDup for the current user:
 
 ```shell
-python -c "$(curl -sSL https://dipdup.net/install.py)"
+python -c "$(curl -sSL https://dipdup.io/install.py)"
 ```
 
-### Poetry
+This script uses pipx under the hood to install `dipdup` and `datamodel-codegen` as CLI tools. Then you can use any package manager of your choice to manage versions of DipDup and other project dependencies.
 
-We advise using the [Poetry](https://python-poetry.org) package manager for new projects. However, it's not a requirement. If you prefer pdb, piptools, pipenv or other tools — use them instead.
+### Manually
 
-```shell
-# Create a new project
-mkdir my-indexer; cd my-indexer
-poetry init --python ">=3.10,<3.11"
-# Add dipdup as a dependency
-poetry add dipdup
-# Enter the virtualenv
-poetry shell
-```
-
-> 💡 **SEE ALSO**
->
-> * [Poetry documentation](https://python-poetry.org/docs/)
-
-### pip
-
-Create a new virtual environment and install DipDup in it.
+Currently, we mainly use [Poetry](https://python-poetry.org) for dependency management in DipDup. If you prefer hatch, pdb, piptools or others — use them instead. Below are some snippets to get you started.
 
 ```shell
+# Create a new project directory
+mkdir dipdup-indexer; cd dipdup-indexer
+
+# Plain pip
 python -m venv .venv
-source .venv/bin/activate
+. .venv/bin/activate
 pip install dipdup
+
+# or Poetry
+poetry init --python ">=3.10,<3.11"
+poetry add dipdup
+poetry shell
 ```
 
 ## Docker

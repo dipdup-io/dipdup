@@ -1,56 +1,44 @@
 name: Docs
-concurrency: ci-${{ github.ref }}
+
 on:
   push:
     tags:
-      - "*.*.*"
+      - '*.*.*'
     branches:
       - master
     paths:
       - 'docs/**'
       - 'scripts/**'
-      - ".github/workflows/docs.yml"
+      - '.github/workflows/docs.yml'
 
 jobs:
   docs:
     name: Docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Check out the repo
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      uses: actions/checkout@v3
+
+    - name: Install poetry
+      run: pipx install poetry
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: "3.10.x"
-
-    - name: Set up Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: "1.1.13"
-
-    - name: Set up cache
-      uses: actions/cache@v2
-      id: cache-venv
-      with:
-        path: /home/runner/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-venv-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-venv-
+        python-version: '3.10'
+        cache: 'poetry'
 
     - name: Set up mdBook
       uses: peaceiris/actions-mdbook@v1
       with:
-        mdbook-version: '0.4.18'
+        mdbook-version: '0.4.21'
 
     - name: Install project
       run: make install
 
     - name: Build docs (docs)
       if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, '-rc')
-      run: MDBOOK_ROOT=https://dipdup.net/docs make docs
+      run: MDBOOK_ROOT=https://docs.dipdup.io make docs
 
     - name: Deploy to GH Pages (docs)
       if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, '-rc')
@@ -62,7 +50,7 @@ jobs:
 
     - name: Build docs (docs-next)
       if: startsWith(github.ref, 'refs/heads') || contains(github.ref, '-rc')
-      run: MDBOOK_ROOT=https://dipdup.net/docs-next make docs
+      run: MDBOOK_ROOT=https://docs-next.dipdup.io make docs
 
     - name: Deploy to GH Pages (docs-next)
       if: startsWith(github.ref, 'refs/heads') || contains(github.ref, '-rc')
@@ -71,11 +59,3 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/dist/docs
         destination_dir: docs-next
-
-    - name: Deploy scripts to GH Pages
-      if: startsWith(github.ref, 'refs/heads') || contains(github.ref, '-rc')
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./scripts
-        keep_files: true

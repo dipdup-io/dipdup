@@ -14,6 +14,8 @@ datasources:
   tzkt:
     kind: tzkt
     url: https://api.tzkt.io
+    http:
+      replay_path: ~/.cache/dipdup/replays
 
 indexes:
   tzbtc_holders_mainnet:

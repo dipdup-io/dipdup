@@ -1,0 +1,44 @@
+name: Installer
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'scripts/install.py'
+      - '.github/workflows/installer.yml'
+
+jobs:
+  installer:
+    name: Installer
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install DipDup
+        run: python src/dipdup/install.py --quiet --path .
+
+      - name: dipdup new
+        run: dipdup new --quiet
+
+      - name: dipdup init
+        run: cd dipdup-indexer; dipdup init
+
+      - name: make install
+        run: cd dipdup-indexer; make install
+
+      - name: make lint
+        run: cd dipdup-indexer; make lint
+
+      - name: Deploy scripts to GH Pages
+        if: contains(github.ref, 'master')
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./scripts
+          keep_files: true

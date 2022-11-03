@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import Tuple
 from unittest import TestCase
 
-from demo_tezos_domains.types.name_registry.storage import NameRegistryStorage
+import orjson as json
+
+from demo_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
@@ -159,19 +159,19 @@ class ModelsTest(TestCase):
         storage = 750
         diffs = (
             {
-                "bigmap": 750,
-                "path": "",
-                "action": "add_key",
-                "content": {
-                    "hash": "exprtkgkbpybdsS74tPVswD6MjtdMZksCF8NQjSPScrq1Qk1m9mGzR",
-                    "key": {
-                        "sale_token": {
-                            "token_for_sale_address": "KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2",
-                            "token_for_sale_token_id": "0",
+                'bigmap': 750,
+                'path': '',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprtkgkbpybdsS74tPVswD6MjtdMZksCF8NQjSPScrq1Qk1m9mGzR',
+                    'key': {
+                        'sale_token': {
+                            'token_for_sale_address': 'KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2',
+                            'token_for_sale_token_id': '0',
                         },
-                        "sale_seller": "tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb",
+                        'sale_seller': 'tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb',
                     },
-                    "value": "1000000",
+                    'value': '1000000',
                 },
             },
         )
@@ -189,27 +189,39 @@ class ModelsTest(TestCase):
         # Arrange
         storage = [164576, 164577, 164578]
         diffs = (
-            {"bigmap": 164578, "path": "2", "action": "allocate"},
+            {'bigmap': 164578, 'path': '2', 'action': 'allocate'},
             {
-                "bigmap": 164578,
-                "path": "2",
-                "action": "add_key",
-                "content": {"hash": "exprtsjEVVZk3Gm82U9wEs8kvwRiQwUT7zipJwvCeFMNsApe2tQ15s", "key": "hello", "value": "42"},
+                'bigmap': 164578,
+                'path': '2',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprtsjEVVZk3Gm82U9wEs8kvwRiQwUT7zipJwvCeFMNsApe2tQ15s',
+                    'key': 'hello',
+                    'value': '42',
+                },
             },
             {
-                "bigmap": 164578,
-                "path": "2",
-                "action": "add_key",
-                "content": {"hash": "exprv9qnaSha415Hm49U3YxG2Q3EAyhabvky3avPRGG8AX9Nk69SbN", "key": "hi", "value": "100500"},
+                'bigmap': 164578,
+                'path': '2',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprv9qnaSha415Hm49U3YxG2Q3EAyhabvky3avPRGG8AX9Nk69SbN',
+                    'key': 'hi',
+                    'value': '100500',
+                },
             },
-            {"bigmap": 164577, "path": "1", "action": "allocate"},
+            {'bigmap': 164577, 'path': '1', 'action': 'allocate'},
             {
-                "bigmap": 164577,
-                "path": "1",
-                "action": "add_key",
-                "content": {"hash": "exprvNX6heZJnVkgZf8Xvq9DKEJE3mazxE69KxVSFxGi2RYQqNpKWz", "key": "test", "value": "123"},
+                'bigmap': 164577,
+                'path': '1',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprvNX6heZJnVkgZf8Xvq9DKEJE3mazxE69KxVSFxGi2RYQqNpKWz',
+                    'key': 'test',
+                    'value': '123',
+                },
             },
-            {"bigmap": 164576, "path": "0", "action": "allocate"},
+            {'bigmap': 164576, 'path': '0', 'action': 'allocate'},
         )
         operation_data = get_operation_data(storage, diffs)
 
@@ -223,8 +235,8 @@ class ModelsTest(TestCase):
 
     def test_convert_operation_with_default_entrypoint(self) -> None:
         # Arrange
-        with open(join(dirname(__file__), 'ooQuCAKBHkmWy2VciDAV9c6CFTywuMLupLzVoKDwS1xvR4EdRng.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'ooQuCAKBHkmWy2VciDAV9c6CFTywuMLupLzVoKDwS1xvR4EdRng.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -237,8 +249,8 @@ class ModelsTest(TestCase):
 
     def test_deserialize_storage_dict_key(self) -> None:
         # Arrange
-        with open(join(dirname(__file__), 'ftzfun.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'ftzfun.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -251,8 +263,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.assets.operators[0].value, {})
 
     def test_qwer(self) -> None:
-        with open(join(dirname(__file__), 'qwer.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'qwer.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -265,8 +277,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.__root__[0][1].R['2'], '2')  # type: ignore
 
     def test_asdf(self) -> None:
-        with open(join(dirname(__file__), 'asdf.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'asdf.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -278,8 +290,8 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj.__root__[0]['pupa'], list)
 
     def test_hjkl(self) -> None:
-        with open(join(dirname(__file__), 'hjkl.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'hjkl.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -292,8 +304,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.__root__[0].value.mr['111'], True)  # type: ignore
 
     def test_zxcv(self) -> None:
-        with open(join(dirname(__file__), 'zxcv.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'zxcv.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -309,8 +321,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.unit, {})
 
     def test_rewq(self) -> None:
-        with open(join(dirname(__file__), 'rewq.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'rewq.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -325,8 +337,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.or_.L['333'], '444')  # type: ignore
 
     def test_hen_subjkt(self) -> None:
-        with open(join(dirname(__file__), 'hen_subjkt.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'hen_subjkt.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -338,8 +350,8 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.entries['tz1Y1j7FK1X9Rrv2VdPz5bXoU7SszF8W1RnK'], True)
 
     def test_kolibri_ovens(self) -> None:
-        with open(join(dirname(__file__), 'kolibri_ovens.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'kolibri_ovens.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]
@@ -352,8 +364,8 @@ class ModelsTest(TestCase):
         self.assertEqual(parameter_obj.__root__, None)
 
     def test_yupana(self) -> None:
-        with open(join(dirname(__file__), 'yupana.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent / 'yupana.json'
+        operations_json = json.loads(json_path.read_bytes())
 
         # Act
         operations = [TzktDatasource.convert_operation(op) for op in operations_json]

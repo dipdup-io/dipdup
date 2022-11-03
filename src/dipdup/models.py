@@ -40,12 +40,13 @@ from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.enums import ReindexingReason
 from dipdup.enums import TokenStandard
-from dipdup.utils import json_dumps
+from dipdup.utils import json_dumps_decimals
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
+EventType = TypeVar('EventType', bound=BaseModel)
 
 
 _logger = logging.getLogger(__name__)
@@ -157,12 +158,12 @@ class BlockData:
     hash: str
     timestamp: datetime
     proto: int
-    priority: int
     validations: int
     deposit: int
     reward: int
     fees: int
     nonce_revealed: bool
+    priority: Optional[int] = None
     baker_address: Optional[str] = None
     baker_alias: Optional[str] = None
 
@@ -208,6 +209,7 @@ class QuoteData:
     jpy: Decimal
     krw: Decimal
     eth: Decimal
+    gbp: Decimal
 
 
 @dataclass
@@ -231,6 +233,33 @@ class TokenTransferData:
     tzkt_transaction_id: Optional[int] = None
     tzkt_origination_id: Optional[int] = None
     tzkt_migration_id: Optional[int] = None
+
+
+@dataclass
+class EventData:
+    """Basic structure for events received from TzKT REST API"""
+
+    id: int
+    level: int
+    timestamp: datetime
+    tag: str
+    payload: Any | None
+    contract_address: str
+    contract_alias: Optional[str] = None
+    contract_code_hash: Optional[int] = None
+    transaction_id: Optional[int] = None
+
+
+@dataclass
+class Event(Generic[EventType]):
+    data: EventData
+    payload: EventType
+
+
+@dataclass
+class UnknownEvent:
+    data: EventData
+    payload: Any | None
 
 
 # ===> Model Versioning
@@ -277,7 +306,7 @@ class ModelUpdate(TortoiseModel):
     index = fields.CharField(256)
 
     action = fields.CharEnumField(ModelUpdateAction)
-    data: Dict[str, Any] = fields.JSONField(encoder=json_dumps, null=True)
+    data: Dict[str, Any] = fields.JSONField(encoder=json_dumps_decimals, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -587,11 +616,11 @@ class Model(TortoiseModel):
     ) -> BulkCreateQuery:
         if ignore_conflicts and update_fields:
             raise ValueError(
-                "ignore_conflicts and update_fields are mutually exclusive.",
+                'ignore_conflicts and update_fields are mutually exclusive.',
             )
         if not ignore_conflicts:
             if (update_fields and not on_conflict) or (on_conflict and not update_fields):
-                raise ValueError("update_fields and on_conflict need set in same time.")
+                raise ValueError('update_fields and on_conflict need set in same time.')
 
         return BulkCreateQuery(
             db=using_db or cls._choose_db(True),
@@ -612,7 +641,7 @@ class Model(TortoiseModel):
         using_db: Optional[BaseDBAsyncClient] = None,
     ) -> BulkUpdateQuery:
         if any(obj.pk is None for obj in objects):
-            raise ValueError("All bulk_update() objects must have a primary key set.")
+            raise ValueError('All bulk_update() objects must have a primary key set.')
 
         self = QuerySet(cls)
         return BulkUpdateQuery(  # type:ignore

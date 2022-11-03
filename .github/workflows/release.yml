@@ -2,19 +2,15 @@ name: Release
 on:
   push:
     tags:
-      - "*.*.*"
+      - '*.*.*'
 
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-latest
-    env:
-      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v3
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -69,12 +65,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10.x"
+          python-version: '3.10.x'
 
       - name: Set up Poetry
         uses: snok/install-poetry@v1
         with:
-          version: "1.1.13"
+          version: '1.2.2'
 
       - name: Install project
         run: make install
@@ -84,7 +80,7 @@ jobs:
         run: make test
 
       - name: Publish stable image (default)
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           file: Dockerfile
@@ -95,7 +91,7 @@ jobs:
           build-args: PYTEZOS=0
 
       - name: Publish stable image (pytezos)
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           file: Dockerfile

@@ -11,15 +11,17 @@ If you're using Poetry, set caret version constraint in `pyproject.toml` to use 
 ```toml
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-dipdup = "^6.0.0"
+dipdup = "^{{ cookiecutter.dipdup_version }}"
 ```
 
-Run `poetry update dipdup` periodically to update to the latest version.
+pipx installations always use latest version.
+
+Run `dipdup update` periodically to update to the latest version.
 
 While building Docker images you can use `X` and `X.Y` tags to lock to specific major/minor releases:
 
 ```Dockerfile
-FROM dipdup/dipdup:6.0
+FROM dipdup/dipdup:{{ cookiecutter.dipdup_version }}
 ```
 
 ## Ensure that config is correct
@@ -45,7 +47,7 @@ More logs can give you a clue about the reason for an issue. Enable them in conf
 logging: verbose
 ```
 
-When an exception occurs DipDup saves crash dumps to `/tmp/dipdup-tombstone_XXXXXXX.json`. You can send those dumps to Baking Bad automatically:
+When an exception occurs DipDup saves crash dumps to `/tmp/dipdup/crashdumps/XXXXXXX.json`. You can send those dumps to Baking Bad automatically:
 
 ```yaml
 advanced:
@@ -57,12 +59,12 @@ advanced:
 Exceptions that occurred during callback execution are reraised as `CallbackError`s. If you experience this issue, most likely your code is incorrect. Luckily, the Python ecosystem has lots of tools called linters to help you find mistakes. In DipDup we mostly use a combo of `flake8` and `mypy`. You can start using both with zero configuration:
 
 ```shell
-poetry add --dev flake8 mypy
+poetry add --with dev flake8 mypy
 poetry run flake8
 poetry run mypy
 ```
 
-You can find a more complex example in DipDup's [pyproject.toml](https://raw.githubusercontent.com/dipdup-net/dipdup-py/master/pyproject.toml) or use the cookiecutter template to create a new project with all recommended bells and whistles (see {{ #summary quickstart.md#from-template }}).
+You can find a more complex example in DipDup's [pyproject.toml](https://raw.githubusercontent.com/dipdup-net/dipdup/master/pyproject.toml) or use the cookiecutter template to create a new project with all recommended bells and whistles (see {{ #summary quickstart.md#from-template }}).
 
 ## Explore contract calls in Better Call Dev
 
@@ -84,7 +86,7 @@ Poetry package manager we recommend using with DipDup is not the most stable sof
 
 We are always ready to answer your questions!
 
-If you think you've found a bug, please report it directly to the [GitHub Issues](https://github.com/dipdup-net/dipdup-py). For all other discussions, join our socials:
+If you think you've found a bug, please report it directly to the [GitHub Issues](https://github.com/dipdup-net/dipdup). For all other discussions, join our socials:
 
 * [Discord](https://discord.com/invite/RcPGSdcVSx) (preferred)
 * [Telegram](https://t.me/baking_bad_chat)

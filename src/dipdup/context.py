@@ -8,7 +8,7 @@ from contextlib import AsyncExitStack
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
-from os.path import join
+from pathlib import Path
 from pprint import pformat
 from typing import Any
 from typing import Awaitable
@@ -30,6 +30,7 @@ from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import EventHookConfig
+from dipdup.config import EventIndexConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import HookConfig
@@ -50,8 +51,8 @@ from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import ContractAlreadyExistsError
-from dipdup.exceptions import DatabaseEngineError
 from dipdup.exceptions import DipDupError
+from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
 from dipdup.models import ContractMetadata
@@ -269,12 +270,13 @@ class DipDupContext:
     async def _spawn_index(self, name: str, state: Optional[Index] = None) -> None:
         # NOTE: Avoiding circular import
         from dipdup.index import BigMapIndex
+        from dipdup.index import EventIndex
         from dipdup.index import HeadIndex
         from dipdup.index import OperationIndex
         from dipdup.index import TokenTransferIndex
 
         index_config = cast(ResolvedIndexConfigT, self.config.get_index(name))
-        index: Union[OperationIndex, BigMapIndex, HeadIndex, TokenTransferIndex]
+        index: OperationIndex | BigMapIndex | HeadIndex | TokenTransferIndex | EventIndex
 
         datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
         datasource = self.get_tzkt_datasource(datasource_name)
@@ -287,6 +289,8 @@ class DipDupContext:
             index = HeadIndex(self, index_config, datasource)
         elif isinstance(index_config, TokenTransferIndexConfig):
             index = TokenTransferIndex(self, index_config, datasource)
+        elif isinstance(index_config, EventIndexConfig):
+            index = EventIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 
@@ -458,7 +462,9 @@ class TemplateValuesDict(dict):
         try:
             return dict.__getitem__(self, key)
         except KeyError as e:
-            raise ConfigurationError(f'Index `{self.ctx.index_config.name}` requires `{key}` template value to be set') from e
+            raise ConfigurationError(
+                f'Index `{self.ctx.index_config.name}` requires `{key}` template value to be set'
+            ) from e
 
 
 class HandlerContext(DipDupContext):
@@ -602,9 +608,7 @@ class CallbackManager:
         **kwargs: Any,
     ) -> None:
         """Execute SQL script included with the project"""
-        subpackages = name.split('.')
-        sql_path = join(ctx.config.package_path, 'sql', *subpackages)
-
+        sql_path = self._get_sql_path(ctx, name)
         conn = get_connection()
         await execute_sql(conn, sql_path, *args, **kwargs)
 
@@ -615,16 +619,7 @@ class CallbackManager:
         *values: Any,
     ) -> Any:
         """Execute SQL query included with the project"""
-        if not isinstance(ctx.config.database, PostgresDatabaseConfig):
-            raise DatabaseEngineError(
-                msg=f'Can\'t execute SQL query `{name}`',
-                kind=ctx.config.database.kind,
-                required='postgres',
-            )
-
-        subpackages = name.split('.')
-        sql_path = join(ctx.config.package_path, 'sql', *subpackages)
-
+        sql_path = self._get_sql_path(ctx, name)
         conn = get_connection()
         return await execute_sql_query(conn, sql_path, *values)
 
@@ -670,3 +665,11 @@ class CallbackManager:
             return self._hooks[name]
         except KeyError as e:
             raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
+
+    def _get_sql_path(self, ctx: 'DipDupContext', name: str) -> Path:
+        subpackages = name.split('.')
+        sql_path = Path(ctx.config.package_path, 'sql', *subpackages)
+        if not sql_path.exists():
+            raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
+
+        return sql_path

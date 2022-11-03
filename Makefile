@@ -15,35 +15,35 @@ TAG=latest
 help:           ## Show this help (default)
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-all:            ## Run a whole CI pipeline: lint, run tests, build docs
+all:            ## Run a whole CI pipeline: formatters, linters and tests
 	make install lint test docs
 
 install:        ## Install project dependencies
 	poetry install \
 	`if [ "${PYTEZOS}" = "1" ]; then echo "-E pytezos "; fi` \
-	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
+	`if [ "${DEV}" = "0" ]; then echo "--without dev"; fi`
 
 lint:           ## Lint with all tools
-	make isort black flake mypy
+	make isort blue flake mypy
 
 test:           ## Run test suite
-	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto --dist loadscope -s -v tests
+	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
+
+test-ci:
+	CI=true poetry run pytest -s -v tests
 
 docs:           ## Build docs
+	scripts/update_cookiecutter.py
 	cd docs
 	make -s clean docs markdownlint orphans || true
-
-homepage:       ## Build homepage
-	cd docs
-	make homepage
 
 ##
 
 isort:          ## Format with isort
 	poetry run isort src tests scripts
 
-black:          ## Format with black
-	poetry run black src tests scripts
+blue:          ## Format with blue
+	poetry run blue src tests scripts
 
 flake:          ## Lint with flake8
 	poetry run flakeheaven lint src tests scripts
@@ -74,16 +74,19 @@ image-slim:     ## Build slim Docker image
 ##
 
 release-patch:  ## Release patch version
+	make update all build image
 	bumpversion patch
 	git push --tags
 	git push
 
 release-minor:  ## Release minor version
+	make update all build image
 	bumpversion minor
 	git push --tags
 	git push
 
 release-major:  ## Release major version
+	make update all build image
 	bumpversion major
 	git push --tags
 	git push
@@ -92,26 +95,30 @@ release-major:  ## Release major version
 
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
+	rm -r ~/.cache/flakeheaven
 
-update:         ## Update dependencies, export requirements.txt (wait an eternity)
+update:         ## Update dependencies, export requirements.txt
 	make install
 	poetry update
 
 	cp pyproject.toml pyproject.toml.bak
 	cp poetry.lock poetry.lock.bak
 
-	poetry export -o requirements.txt
-	poetry export -o requirements.pytezos.txt -E pytezos
-	poetry export -o requirements.dev.txt --dev
-
+	poetry export --without-hashes -o requirements.txt
+	poetry export --without-hashes -o requirements.pytezos.txt -E pytezos
+	poetry export --without-hashes -o requirements.dev.txt --with dev
 	poetry remove datamodel-code-generator
-	poetry export -o requirements.slim.txt
+	poetry export --without-hashes -o requirements.slim.txt
 
 	mv pyproject.toml.bak pyproject.toml
 	mv poetry.lock.bak poetry.lock
 
 	make install
 
-	scripts/update-demos.sh
+scripts:
+	python scripts/update_cookiecutter.py
+	python scripts/update_demos.py
+	make lint
 
+##
 ##

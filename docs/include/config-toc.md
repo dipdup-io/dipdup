@@ -6,7 +6,7 @@
 |                   | `contracts`     | {{ #summary config/contracts.md}}      |
 |                   | `datasources`   | {{ #summary config/datasources.md}}    |
 |                   | `custom`        | {{ #summary config/custom.md}}         |
-| Index definitions | `indexes`       | {{ #summary config/indexes/README.md}} |
+| Index definitions | `indexes`       | {{ #summary config/indexes.md}} |
 |                   | `templates`     | {{ #summary config/templates.md}}      |
 | Hook definitions  | `hooks`         | {{ #summary config/hooks.md}}          |
 |                   | `jobs`          | {{ #summary config/jobs.md}}           |

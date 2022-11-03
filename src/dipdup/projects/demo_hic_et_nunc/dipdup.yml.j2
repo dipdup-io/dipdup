@@ -1,0 +1,50 @@
+spec_version: 1.2
+package: {{ cookiecutter.package }}
+
+database:
+  kind: sqlite
+  path: {{ cookiecutter.project_name }}.sqlite3
+
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+contracts:
+  HEN_objkts:
+    address: ${HEN_OBJKTS:-KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton}
+    typename: hen_objkts
+  HEN_minter:
+    address: ${HEN_MINTER:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
+    typename: hen_minter
+
+indexes:
+  hen_mainnet:
+    kind: operation
+    datasource: tzkt_mainnet
+    contracts:
+      - HEN_minter
+    handlers:
+      - callback: on_mint
+        pattern:
+          - type: transaction
+            destination: HEN_minter
+            entrypoint: mint_OBJKT
+          - type: transaction
+            destination: HEN_objkts
+            entrypoint: mint
+      - callback: on_swap
+        pattern:
+          - type: transaction
+            destination: HEN_minter
+            entrypoint: swap
+      - callback: on_cancel_swap
+        pattern:
+          - type: transaction
+            destination: HEN_minter
+            entrypoint: cancel_swap
+      - callback: on_collect
+        pattern:
+          - type: transaction
+            destination: HEN_minter
+            entrypoint: collect

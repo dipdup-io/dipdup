@@ -1,0 +1,18 @@
+{
+  "_other": null,
+  "_versions": null,
+  "_welcome": null,
+  "author": "John Smith \u003cjohn_smith@localhost.lan\u003e",
+  "crash_reporting": false,
+  "description": "My shiny new indexer based on DipDup",
+  "dipdup_version": "6",
+  "hasura_image": "hasura/graphql-engine:v2.14.0",
+  "license": "MIT",
+  "line_length": "120",
+  "linters": "default",
+  "package": "demo_registrydao",
+  "postgresql_image": "postgres:14",
+  "project_name": "demo-registrydao",
+  "template": "demo_registrydao",
+  "version": "0.0.1"
+}

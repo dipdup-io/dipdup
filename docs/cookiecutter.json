@@ -1,0 +1,15 @@
+{
+  "template": "demo_tzbtc",
+  "project_name": "dipdup-indexer",
+  "package": "dipdup_indexer",
+  "version": "0.0.1",
+  "description": "My shiny new indexer based on DipDup",
+  "license": "MIT",
+  "author": "John Smith <john_smith@localhost.lan>",
+  "dipdup_version": "6",
+  "postgresql_image": "postgres:14",
+  "hasura_image": "hasura/graphql-engine:v2.14.0",
+  "crash_reporting": false,
+  "linters": "default",
+  "line_length": "120"
+}

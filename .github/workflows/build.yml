@@ -2,44 +2,42 @@ name: Build
 on:
   push:
     branches:
-      - "**"
+      - '**'
     tags:
       - '*.*.*'
     paths:
-      - "src/**"
-      - "Dockerfile"
-      - "Dockerfile.slim"
-      - "pyproject.toml"
-      - "poetry.lock"
-      - "Makefile"
-      - ".github/workflows/build.yml"
+      - 'src/**'
+      - 'Dockerfile'
+      - 'Dockerfile.slim'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/build.yml'
 
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
-      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       DOCKER_REGISTRY: ghcr.io
       DOCKER_IMAGE_NAME: ${{ github.repository }}
 
     strategy:
       matrix:
         image:
-          - name: default
-            suffix: ''
-            platforms: linux/amd64,linux/arm64
-            dockerfile: Dockerfile
-            build_args: 'PYTEZOS=0'
+          # - name: default
+          #   suffix: ''
+          #   platforms: linux/amd64,linux/arm64
+          #   dockerfile: Dockerfile
+          #   build_args: 'PYTEZOS=0'
 
-          - name: pytezos
-            suffix: -pytezos
-            platforms: linux/amd64,linux/arm64
-            dockerfile: Dockerfile
-            build_args: 'PYTEZOS=1'
+          # - name: pytezos
+          #   suffix: -pytezos
+          #   platforms: linux/amd64,linux/arm64
+          #   dockerfile: Dockerfile
+          #   build_args: 'PYTEZOS=1'
 
           - name: slim
-            suffix: -slim
+            suffix: ''
             dockerfile: Dockerfile.slim
             platforms: linux/amd64,linux/arm64
             build_args: ''
@@ -84,8 +82,8 @@ jobs:
           file: ${{ matrix.image.dockerfile }}
           platforms: ${{ matrix.image.platforms }}
           push: true
-          cache-from: type=gha,scope={{ matrix.image.name }}
-          cache-to: type=gha,scope={{ matrix.image.name }},mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: ${{ matrix.image.build_args }}

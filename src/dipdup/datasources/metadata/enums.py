@@ -2,6 +2,8 @@ from enum import Enum
 
 
 class MetadataNetwork(Enum):
-    hangzhounet = 'hangzhounet'
-    ithacanet = 'ithacanet'
+    ghostnet = 'ghostnet'
+    # FIXME: Deactivated?
+    jakartanet = 'jakartanet'
+    kathmandunet = 'kathmandunet'
     mainnet = 'mainnet'

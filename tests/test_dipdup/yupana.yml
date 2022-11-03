@@ -10,6 +10,8 @@ datasources:
   tzkt_testnet:
     kind: tzkt
     url: https://api.hangzhou2net.tzkt.io/
+    http:
+      replay_path: ~/.cache/dipdup/replays
 
 indexes:
   yupana:

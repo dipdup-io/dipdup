@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "{{ cookiecutter.project_name }}"
+version = "{{ cookiecutter.version }}"
+description = "{{ cookiecutter.description }}"
+license = "{{ cookiecutter.license }}"
+authors = [
+    "{{ cookiecutter.author }}"
+]
+readme = "README.md"
+packages = [
+    { include = "{{ cookiecutter.package }}", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+dipdup = "^{{ cookiecutter.dipdup_version }}"
+
+[tool.poetry.group.dev.dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

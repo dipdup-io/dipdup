@@ -8,40 +8,40 @@ class TzktMessageType(Enum):
 
 
 OPERATION_FIELDS = (
-    "type",
-    "id",
-    "level",
-    "timestamp",
-    "hash",
-    "counter",
-    "sender",
-    "nonce",
-    "target",
-    "initiator",
-    "amount",
-    "storage",
-    "status",
-    "hasInternals",
-    "diffs",
-    "delegate",
+    'type',
+    'id',
+    'level',
+    'timestamp',
+    'hash',
+    'counter',
+    'sender',
+    'nonce',
+    'target',
+    'initiator',
+    'amount',
+    'storage',
+    'status',
+    'hasInternals',
+    'diffs',
+    'delegate',
 )
 ORIGINATION_MIGRATION_FIELDS = (
-    "id",
-    "level",
-    "timestamp",
-    "storage",
-    "diffs",
-    "account",
-    "balanceChange",
+    'id',
+    'level',
+    'timestamp',
+    'storage',
+    'diffs',
+    'account',
+    'balanceChange',
 )
 ORIGINATION_OPERATION_FIELDS = (
     *OPERATION_FIELDS,
-    "originatedContract",
+    'originatedContract',
 )
 TRANSACTION_OPERATION_FIELDS = (
     *OPERATION_FIELDS,
-    "parameter",
-    "hasInternals",
+    'parameter',
+    'hasInternals',
 )
 
 

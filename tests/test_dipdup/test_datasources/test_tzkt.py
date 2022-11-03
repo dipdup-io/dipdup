@@ -1,23 +1,27 @@
-import json
 from contextlib import asynccontextmanager
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from typing import AsyncIterator
 from typing import Tuple
 from typing import TypeVar
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock
 
+import orjson as json
+
 from dipdup.config import HTTPConfig
-from dipdup.datasources.subscription import HeadSubscription
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
+from dipdup.exceptions import InvalidRequestError
 from dipdup.models import OperationData
 
 
 @asynccontextmanager
 async def with_tzkt(batch_size: int, url: str | None = None) -> AsyncIterator[TzktDatasource]:
-    config = HTTPConfig(batch_size=batch_size)
+    config = HTTPConfig(
+        batch_size=batch_size,
+        replay_path='~/.cache/dipdup/replays',
+    )
     datasource = TzktDatasource(url or 'https://api.tzkt.io', config)
     async with datasource:
         yield datasource
@@ -191,24 +195,24 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
     async def test_get_migration_originations(self) -> None:
         async with with_tzkt(2) as tzkt:
             originations = await tzkt.get_migration_originations()
-            self.assertEqual(67955553, originations[0].id)
-            self.assertEqual(67955554, originations[1].id)
+            self.assertEqual(66864948445184, originations[0].id)
+            self.assertEqual(66864949493760, originations[1].id)
 
     async def test_iter_migration_originations(self) -> None:
         async with with_tzkt(1) as tzkt:
             originations = await take_two(tzkt.iter_migration_originations())
-            self.assertEqual(67955553, originations[0].id)
-            self.assertEqual(67955554, originations[1].id)
+            self.assertEqual(66864948445184, originations[0].id)
+            self.assertEqual(66864949493760, originations[1].id)
 
     async def test_get_originations(self) -> None:
-        async with with_tzkt(1, 'https://tzkt-mainnet.dipdup.net') as tzkt:
+        async with with_tzkt(1) as tzkt:
             originations = await tzkt.get_originations({'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'}, 889027, 889027)
-            self.assertEqual(23812803, originations[0].id)
+            self.assertEqual(24969533718528, originations[0].id)
             self.assertEqual(('fa12',), originations[0].originated_contract_tzips)
 
     async def test_on_operation_message_data(self) -> None:
-        with open(join(dirname(__file__), '..', 'ftzfun.json')) as f:
-            operations_json = json.load(f)
+        json_path = Path(__file__).parent.parent / 'ftzfun.json'
+        operations_json = json.loads(json_path.read_text())
 
         message = {'type': 1, 'state': 2, 'data': operations_json}
         async with with_tzkt(1) as tzkt:
@@ -224,3 +228,8 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             level = tzkt.get_channel_level(MessageType.operation)
             self.assertEqual(2, level)
             self.assertIsInstance(emit_mock.await_args_list[0][0][1][0], OperationData)
+
+    async def test_no_content(self) -> None:
+        async with with_tzkt(1, 'https://api.jakartanet.tzkt.io') as tzkt:
+            with self.assertRaises(InvalidRequestError):
+                await tzkt.get_jsonschemas('KT1EHdK9asB6BtPLvt1ipKRuxsrKoQhDoKgs')

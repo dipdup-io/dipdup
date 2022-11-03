@@ -38,7 +38,9 @@ class CoinbaseDatasource(Datasource):
             url='oracle',
         )
 
-    async def get_candles(self, since: datetime, until: datetime, interval: CandleInterval, ticker: str = 'XTZ-USD') -> List[CandleData]:
+    async def get_candles(
+        self, since: datetime, until: datetime, interval: CandleInterval, ticker: str = 'XTZ-USD'
+    ) -> List[CandleData]:
         candles = []
         for _since, _until in self._split_candle_requests(since, until, interval):
             candles_json = await self.request(
@@ -53,7 +55,9 @@ class CoinbaseDatasource(Datasource):
             candles += [CandleData.from_json(c) for c in candles_json]
         return sorted(candles, key=lambda c: c.timestamp)
 
-    def _split_candle_requests(self, since: datetime, until: datetime, interval: CandleInterval) -> List[Tuple[datetime, datetime]]:
+    def _split_candle_requests(
+        self, since: datetime, until: datetime, interval: CandleInterval
+    ) -> List[Tuple[datetime, datetime]]:
         request_interval_limit = timedelta(seconds=interval.seconds * CANDLES_REQUEST_LIMIT)
         request_intervals = []
         while since + request_interval_limit < until:

@@ -1,6 +1,8 @@
+import tempfile
 import textwrap
 from dataclasses import dataclass
 from dataclasses import field
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import Dict
@@ -14,7 +16,7 @@ from tortoise.models import Model
 from dipdup import spec_version_mapping
 from dipdup.enums import ReindexingReason
 
-_tab = ('_' * 80) + '\n\n'
+tab = ('_' * 80) + '\n\n'
 
 
 def unindent(text: str) -> str:
@@ -27,8 +29,8 @@ def indent(text: str, indent: int = 2) -> str:
     return textwrap.indent(text, ' ' * indent)
 
 
-def save_tombstone(error: Exception) -> str:
-    """Saves a tombstone file with Sentry error data, returns the path to the tempfile"""
+def save_crashdump(error: Exception) -> str:
+    """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
     # NOTE: Lazy import to speed up startup
     import sentry_sdk.serializer
     import sentry_sdk.utils
@@ -37,20 +39,23 @@ def save_tombstone(error: Exception) -> str:
     event, _ = sentry_sdk.utils.event_from_exception(exc_info)
     event = sentry_sdk.serializer.serialize(event)
 
-    tombstone_file = NamedTemporaryFile(
-        mode='wb',
+    tmp_dir = Path(tempfile.gettempdir()) / 'dipdup' / 'crashdumps'
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+
+    crashdump_file = NamedTemporaryFile(
+        mode='ab',
         suffix='.json',
-        prefix='dipdup-tombstone_',
+        dir=tmp_dir,
         delete=False,
     )
-    with tombstone_file as f:
+    with crashdump_file as f:
         f.write(
             json.dumps(
                 event,
                 option=json.OPT_INDENT_2,
             ),
         )
-    return tombstone_file.name
+    return crashdump_file.name
 
 
 class DipDupException(Exception):
@@ -84,7 +89,7 @@ class DipDupError(Exception):
         return unindent(self._help())
 
     def format(self) -> str:
-        return _tab + self.help() + '\n'
+        return tab + self.help() + '\n'
 
 
 @dataclass(repr=False)
@@ -103,6 +108,23 @@ class DatasourceError(DipDupError):
 
 
 @dataclass(repr=False)
+class InvalidRequestError(DipDupError):
+    """API returned an unexpected response"""
+
+    msg: str
+    url: str
+
+    def _help(self) -> str:
+        return f"""
+            Unexpected response: {self.msg}
+
+            URL: `{self.url}`
+
+            Make sure that config is correct and you're calling the correct API.
+        """
+
+
+@dataclass(repr=False)
 class ConfigurationError(DipDupError):
     """DipDup YAML config is invalid"""
 
@@ -112,12 +134,12 @@ class ConfigurationError(DipDupError):
         return f"""
             {self.msg}
 
-            DipDup config reference: https://dipdup.net/docs/config
+            DipDup config reference: https://docs.dipdup.io/config
         """
 
 
 @dataclass(repr=False)
-class DatabaseConfigurationError(DipDupError):
+class InvalidModelsError(DipDupError):
     """Can't initialize database, `models.py` module is invalid"""
 
     msg: str
@@ -132,9 +154,9 @@ class DatabaseConfigurationError(DipDupError):
               table: `{self.model._meta.db_table}`
               field: `{self.field or ''}`
 
-            See https://dipdup.net/docs/getting-started/defining-models
-            See https://dipdup.net/docs/config/database
-            See https://dipdup.net/docs/advanced/internal-models
+            See https://docs.dipdup.io/getting-started/defining-models
+            See https://docs.dipdup.io/config/database
+            See https://docs.dipdup.io/advanced/internal-models
         """
 
 
@@ -175,7 +197,7 @@ class MigrationRequiredError(DipDupError):
             ],
             headers=['', 'spec_version', 'DipDup version'],
         )
-        reindex = '\n\n' + _tab + ReindexingRequiredError(ReindexingReason.migration).help() if self.reindex else ''
+        reindex = '\n\n' + tab + ReindexingRequiredError(ReindexingReason.migration).help() if self.reindex else ''
         return f"""
             Project migration required!
 
@@ -186,7 +208,7 @@ class MigrationRequiredError(DipDupError):
               1. Run `dipdup migrate`.
               2. Review and commit changes.
 
-            See https://dipdup.net/docs/release-notes for more information. {reindex}
+            See https://docs.dipdup.io/release-notes for more information. {reindex}
         """
 
 
@@ -212,7 +234,7 @@ class ReindexingRequiredError(DipDupError):
               * Eliminate the cause of reindexing and run `dipdup schema approve`.
               * Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
-            See https://dipdup.net/docs/advanced/reindexing for more information.
+            See https://docs.dipdup.io/advanced/reindexing for more information.
         """.format(
             reason=self.reason.value,
             context=context,
@@ -283,7 +305,7 @@ class ContractAlreadyExistsError(DipDupError):
 
 @dataclass(repr=False)
 class IndexAlreadyExistsError(DipDupError):
-    """Attemp to add an index with an alias already in use"""
+    """Attempt to add an index with an alias already in use"""
 
     ctx: Any
     name: str
@@ -308,23 +330,19 @@ class IndexAlreadyExistsError(DipDupError):
 class InvalidDataError(DipDupError):
     """Failed to validate datasource message against generated type class"""
 
-    type_cls: Type[Any]
+    msg: str
+    type_: Type[Any]
     data: Any
-    parsed_object: Any
 
     def _help(self) -> str:
 
         return f"""
             Failed to validate datasource message against generated type class.
 
-            Expected type:
-            `{self.type_cls.__name__}`
+              {self.msg}
 
-            Invalid data:
-            {self.data}
-
-            Parsed object:
-            {self.parsed_object}
+            Type class: `{self.type_.__name__}`
+            Data: `{self.data}`
         """
 
 
@@ -366,8 +384,8 @@ class CallbackTypeError(DipDupError):
 
             Make sure to set correct typenames in config and run `dipdup init --overwrite-types` to regenerate typeclasses.
 
-            See https://dipdup.net/docs/getting-started/project-structure
-            See https://dipdup.net/docs/cli-reference#init
+            See https://docs.dipdup.io/getting-started/project-structure
+            See https://docs.dipdup.io/cli-reference#init
         """
 
 
@@ -385,7 +403,25 @@ class HasuraError(DipDupError):
 
             If it's `400 Bad Request`, check out Hasura logs for more information.
 
-            See https://dipdup.net/docs/graphql/
-            See https://dipdup.net/docs/config/hasura.html
-            See https://dipdup.net/docs/cli-reference.html#dipdup-hasura-configure
+            See https://docs.dipdup.io/graphql/
+            See https://docs.dipdup.io/config/hasura
+            See https://docs.dipdup.io/cli-reference#dipdup-hasura-configure
+        """
+
+
+@dataclass(repr=False)
+class FeatureAvailabilityError(DipDupError):
+    """Requested feature is not supported in the current environment"""
+
+    feature: str
+    reason: str
+
+    def _help(self) -> str:
+        return f"""
+            Feature `{self.feature}` is not available in the current environment.
+
+            {self.reason}
+
+            See https://docs.dipdup.io/installation
+            See https://docs.dipdup.io/advanced/docker
         """

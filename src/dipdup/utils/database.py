@@ -5,9 +5,6 @@ import importlib
 import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
-from os.path import dirname
-from os.path import isfile
-from os.path import join
 from pathlib import Path
 from typing import Any
 from typing import AsyncIterator
@@ -32,13 +29,13 @@ from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
 from tortoise.utils import get_schema_sql
 
-from dipdup.exceptions import DatabaseConfigurationError
 from dipdup.exceptions import DatabaseEngineError
+from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.database')
-_truncate_schema_sql = Path(join(dirname(__file__), 'truncate_schema.sql')).read_text()
+_truncate_schema_path = Path(__file__).parent / 'truncate_schema.sql'
 
 DEFAULT_CONNECTION_NAME = 'default'
 
@@ -77,7 +74,7 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
                 await conn.execute_query('SELECT 1')
             # FIXME: Logging
             except OSError:
-                _logger.warning('Can\'t establish database connection, attempt %s/%s', attempt, timeout)
+                _logger.warning("Can't establish database connection, attempt %s/%s", attempt, timeout)
                 if attempt == timeout - 1:
                     raise
                 await asyncio.sleep(1)
@@ -132,12 +129,12 @@ async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
 
     await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
     # NOTE: Recreate `truncate_schema` function on fresh schema
-    await conn.execute_script(_truncate_schema_sql)
+    await conn.execute_script(_truncate_schema_path.read_text())
 
 
 async def execute_sql(
     conn: BaseDBAsyncClient,
-    path: str,
+    path: Path,
     *args: Any,
     **kwargs: Any,
 ) -> None:
@@ -149,7 +146,7 @@ async def execute_sql(
 
         if not supported:
             raise DatabaseEngineError(
-                msg=f'Can\'t execute SQL query `{path}`: not supported',
+                msg=f"Can't execute SQL query `{path}`: not supported",
                 kind='sqlite',
                 required='postgres',
             )
@@ -166,29 +163,24 @@ async def execute_sql(
 
 async def execute_sql_query(
     conn: BaseDBAsyncClient,
-    path: str,
+    path: Path,
     *values: Any,
 ) -> Any:
-    if not isinstance(conn, AsyncpgDBClient):
-        raise DatabaseEngineError(
-            msg=f'Can\'t execute SQL query `{path}`: not supported',
-            kind='sqlite',
-            required='postgres',
-        )
-
-    if not isfile(path):
-        raise DatabaseEngineError(
-            msg=f'Can\'t execute SQL query `{path}`: path must be a file',
-            kind='postgres',
-            required='postgres',
-        )
+    # NOTE: Fail later, directory can be empty
+    supported = True if isinstance(conn, AsyncpgDBClient) else False
 
     for file in iter_files(path, ext='.sql'):
         _logger.info('Executing query `%s`', file.name)
+
+        if not supported:
+            raise DatabaseEngineError(
+                msg=f"Can't execute SQL query `{path}`: not supported",
+                kind='sqlite',
+                required='postgres',
+            )
+
         sql = file.read()
         return await conn.execute_query(sql, list(values))
-    else:
-        raise RuntimeError(f'Can\'t find SQL query `{path}`')
 
 
 async def generate_schema(
@@ -203,7 +195,8 @@ async def generate_schema(
         await Tortoise.generate_schemas()
 
         # NOTE: Create a view for monitoring head status
-        sql_path = join(dirname(__file__), '..', 'sql', 'dipdup_head_status.sql')
+        # NOTE: Create a view for monitoring head status
+        sql_path = Path(__file__).parent.parent / 'sql' / 'dipdup_head_status.sql'
         await execute_sql(conn, sql_path, head_status_timeout)
     else:
         raise NotImplementedError(f'`{conn.__class__.__name__}` is not supported')
@@ -213,7 +206,7 @@ async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
 
-    await conn.execute_script(_truncate_schema_sql)
+    await conn.execute_script(_truncate_schema_path.read_text())
     await conn.execute_script(f"SELECT truncate_schema('{name}')")
 
 
@@ -271,7 +264,7 @@ def prepare_models(package: Optional[str]) -> None:
     for app, model in iter_models(package):
         # NOTE: Enforce our class for user models
         if app == 'models' and not issubclass(model, dipdup.models.Model):
-            raise DatabaseConfigurationError(
+            raise InvalidModelsError(
                 'Project models must be subclassed from `dipdup.models.Model`.'
                 '\n\n'
                 'Replace `from tortoise import Model` import with `from dipdup.models import Model`.',
@@ -285,7 +278,7 @@ def prepare_models(package: Optional[str]) -> None:
         if model._meta.db_table not in db_tables:
             db_tables.add(model._meta.db_table)
         else:
-            raise DatabaseConfigurationError(
+            raise InvalidModelsError(
                 'Table name is duplicated or reserved. Make sure that all models have unique table names.',
                 model,
             )
@@ -293,7 +286,7 @@ def prepare_models(package: Optional[str]) -> None:
         # NOTE: Enforce tables in snake_case
         table_name = model._meta.db_table
         if table_name != pascal_to_snake(table_name):
-            raise DatabaseConfigurationError(
+            raise InvalidModelsError(
                 'Table name must be in snake_case.',
                 model,
             )
@@ -302,7 +295,7 @@ def prepare_models(package: Optional[str]) -> None:
             # NOTE: Enforce fields in snake_case
             field_name = field.model_field_name
             if field_name != pascal_to_snake(field_name):
-                raise DatabaseConfigurationError(
+                raise InvalidModelsError(
                     'Model fields must be in snake_case.',
                     model,
                     field_name,
@@ -310,7 +303,7 @@ def prepare_models(package: Optional[str]) -> None:
 
             # NOTE: Enforce unique field names to avoid GraphQL issues
             if field_name == table_name:
-                raise DatabaseConfigurationError(
+                raise InvalidModelsError(
                     'Model field names must differ from table name.',
                     model,
                     field_name,
@@ -318,7 +311,7 @@ def prepare_models(package: Optional[str]) -> None:
 
             # NOTE: The same for backward relations
             if isinstance(field, ForeignKeyFieldInstance) and field.related_name == table_name:
-                raise DatabaseConfigurationError(
+                raise InvalidModelsError(
                     'Model field names must differ from table name.',
                     model,
                     f'related_name={field.related_name}',

@@ -1,0 +1,24 @@
+database:
+  kind: postgres
+  host: 127.0.0.1
+  port: 5432
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD:-changeme}
+  database: ${POSTGRES_DB:-dipdup}
+
+hasura:
+  url: http://127.0.0.1:8080
+  admin_secret: ${HASURA_SECRET:-changeme}
+  allow_aggregations: true
+  camel_case: true
+
+sentry:
+  dsn: ${SENTRY_DSN:-""}
+  environment: ${SENTRY_ENVIRONMENT:-dev}
+
+prometheus:
+  host: 0.0.0.0
+
+advanced:
+  early_realtime: True
+  crash_reporting: {{ cookiecutter.crash_reporting }}
