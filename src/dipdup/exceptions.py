@@ -175,9 +175,9 @@ class DatabaseEngineError(DipDupError):
               database: `{self.kind}`
               required: `{self.required}`
 
-            See https://dipdup.net/docs/deployment/database-engines.html
-            See https://dipdup.net/docs/advanced/sql.html
-            See https://dipdup.net/docs/config/database
+            See https://docs.dipdup.io/deployment/database-engines
+            See https://docs.dipdup.io/advanced/sql
+            See https://docs.dipdup.io/config/database
         """
 
 
