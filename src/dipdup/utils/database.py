@@ -195,7 +195,6 @@ async def generate_schema(
         await Tortoise.generate_schemas()
 
         # NOTE: Create a view for monitoring head status
-        # NOTE: Create a view for monitoring head status
         sql_path = Path(__file__).parent.parent / 'sql' / 'dipdup_head_status.sql'
         await execute_sql(conn, sql_path, head_status_timeout)
     else:
