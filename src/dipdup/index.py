@@ -6,6 +6,7 @@ from contextlib import ExitStack
 from contextlib import suppress
 from copy import copy
 from datetime import datetime
+from typing import Any
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
@@ -531,7 +532,7 @@ class OperationIndex(Index):
                 storage_type = pattern_config.storage_type_cls
                 storage = deserialize_storage(operation_data, storage_type)
 
-                transaction_context = Transaction(
+                transaction_context: Transaction[Any, Any] = Transaction(
                     data=operation_data,
                     parameter=parameter,
                     storage=storage,
@@ -1181,7 +1182,7 @@ class EventIndex(Index):
 
         with suppress(InvalidDataError):
             type_ = handler_config.event_type_cls
-            payload = parse_object(type_, matched_event.payload)
+            payload: Event[Any] = parse_object(type_, matched_event.payload)
             return Event(
                 data=matched_event,
                 payload=payload,
