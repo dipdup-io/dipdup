@@ -1563,6 +1563,7 @@ class DipDupConfig:
             LoggingValues.verbose: logging.DEBUG,
         }[self.logging]
         logging.getLogger('dipdup').setLevel(level)
+        logging.getLogger(self.package).setLevel(level)
 
     def _import_index(self, index_config: IndexConfigT) -> None:
         _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)

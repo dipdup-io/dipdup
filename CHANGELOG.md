@@ -13,7 +13,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-* context: Fixed `execute_sql` method crashes when the path is a file.
+- cli: Configure package logger in addition to `dipdup` one.
+- context: Fixed `execute_sql` method crashes when the path is a file.
 - tzkt: Fixed deserializing `EventData` model.
 
 ## [6.2.0] - 2022-10-12
