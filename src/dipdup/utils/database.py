@@ -35,7 +35,7 @@ from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.database')
-_truncate_schema_path = Path(__file__).parent / 'truncate_schema.sql'
+_truncate_schema_path = Path(__file__).parent.parent / 'sql' / 'truncate_schema.sql'
 
 DEFAULT_CONNECTION_NAME = 'default'
 
