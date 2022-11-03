@@ -98,7 +98,10 @@ class BufferedMessage(NamedTuple):
 
 
 class MessageBuffer:
-    """Buffers realtime TzKT messages and yields them in by level."""
+    """Buffers realtime TzKT messages and yields them by level.
+
+    Initially, it was a mitigation for TzKT's reorgs.
+    """
 
     def __init__(self, size: int) -> None:
         self._logger = logging.getLogger('dipdup.tzkt')
@@ -558,6 +561,10 @@ class TzktDatasource(IndexDatasource):
 
     async def get_token_transfers(
         self,
+        token_addresses: set[str],
+        token_ids: set[int],
+        from_addresses: set[str],
+        to_addresses: set[str],
         first_level: int,
         last_level: int,
         offset: int | None = None,
@@ -572,23 +579,34 @@ class TzktDatasource(IndexDatasource):
             url='v1/tokens/transfers',
             params={
                 **params,
+                'token.contract.in': ','.join(token_addresses),
+                'token.id.in': ','.join(str(token_id) for token_id in token_ids),
+                'from.in': ','.join(from_addresses),
+                'to.in': ','.join(to_addresses),
                 'level.ge': first_level,
                 'level.lt': last_level,
                 'offset': offset,
                 'limit': limit,
-                'sort.asc': 'level',
             },
         )
         return tuple(self.convert_token_transfer(item) for item in raw_token_transfers)
 
     async def iter_token_transfers(
         self,
+        token_addresses: set[str],
+        token_ids: set[int],
+        from_addresses: set[str],
+        to_addresses: set[str],
         first_level: int,
         last_level: int,
     ) -> AsyncIterator[tuple[TokenTransferData, ...]]:
         """Iterate token transfers for contract"""
         async for batch in self._iter_batches(
             self.get_token_transfers,
+            token_addresses,
+            token_ids,
+            from_addresses,
+            to_addresses,
             first_level,
             last_level,
             cursor=False,

@@ -248,16 +248,28 @@ class TokenTransferFetcher(DataFetcher[TokenTransferData]):
     def __init__(
         self,
         datasource: 'TzktDatasource',
+        token_addresses: set[str],
+        token_ids: set[int],
+        from_addresses: set[str],
+        to_addresses: set[str],
         first_level: int,
         last_level: int,
     ) -> None:
         self._logger = logging.getLogger('dipdup.tzkt')
         self._datasource = datasource
+        self._token_addresses = token_addresses
+        self._token_ids = token_ids
+        self._from_addresses = from_addresses
+        self._to_addresses = to_addresses
         self._first_level = first_level
         self._last_level = last_level
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TokenTransferData, ...]]]:
         token_transfer_iter = self._datasource.iter_token_transfers(
+            self._token_addresses,
+            self._token_ids,
+            self._from_addresses,
+            self._to_addresses,
             self._first_level,
             self._last_level,
         )

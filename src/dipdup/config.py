@@ -41,6 +41,7 @@ from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
+from pydantic import Field
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -61,7 +62,6 @@ from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
-from dipdup.enums import TokenStandard
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import IndexAlreadyExistsError
@@ -1091,7 +1091,8 @@ class HeadIndexConfig(IndexConfig):
 class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
     contract: str | ContractConfig | None = None
     token_id: int | None = None
-    standard: TokenStandard | None = None
+    from_: str | ContractConfig | None = Field(default=None, alias='from')
+    to: str | ContractConfig | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -1785,6 +1786,9 @@ class DipDupConfig:
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
 
+                if isinstance(token_transfer_handler_config.contract, str):
+                    token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
+
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
             for operation_unfiltered_handler_config in index_config.handlers:
                 operation_unfiltered_handler_config.parent = index_config
@@ -1800,7 +1804,7 @@ class DipDupConfig:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     def _set_names(self) -> None:
-        # TODO: Forbid reusing names?
+        # TODO: Forbid reusing names between sections?
         named_config_sections = cast(
             tuple[dict[str, NameMixin], ...],
             (
