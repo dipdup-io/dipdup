@@ -14,11 +14,6 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 * context: Fixed `execute_sql` method crashes when the path is a file.
-
-## [Unreleased]
-
-### Fixed
-
 - tzkt: Fixed deserializing `EventData` model.
 
 ## [6.2.0] - 2022-10-12
