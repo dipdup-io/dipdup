@@ -23,8 +23,10 @@ from typing import List
 from typing import NamedTuple
 from typing import NoReturn
 from typing import Optional
+from typing import Protocol
 from typing import Set
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 from typing import cast
 
@@ -68,6 +70,38 @@ def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationDa
             key=lambda op: op.id,
         )
     )
+
+
+class HasLevel(Protocol):
+    level: int
+
+
+HasLevelT = TypeVar('HasLevelT', bound=HasLevel)
+
+
+async def yield_by_level(
+    iterable: AsyncIterator[Tuple[HasLevelT, ...]]
+) -> AsyncGenerator[Tuple[int, Tuple[HasLevelT, ...]], None]:
+    items: Tuple[HasLevelT, ...] = ()
+
+    async for item_batch in iterable:
+        items = items + item_batch
+
+        # NOTE: Yield slices by level except the last one
+        while True:
+            for i in range(len(items) - 1):
+                curr_level, next_level = items[i].level, items[i + 1].level
+
+                # NOTE: Level boundaries found. Exit for loop, stay in while.
+                if curr_level != next_level:
+                    yield curr_level, items[: i + 1]
+                    items = items[i + 1 :]
+                    break
+            else:
+                break
+
+    if items:
+        yield items[0].level, items
 
 
 class OperationFetcher:
@@ -225,34 +259,14 @@ class BigMapFetcher:
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by BigMapIndex.
         """
-
-        big_maps: Tuple[BigMapData, ...] = ()
-
-        # TODO: Share code between this and OperationFetcher
         big_map_iter = self._datasource.iter_big_maps(
             self._big_map_addresses,
             self._big_map_paths,
             self._first_level,
             self._last_level,
         )
-        async for fetched_big_maps in big_map_iter:
-            big_maps = big_maps + fetched_big_maps
-
-            # NOTE: Yield big map slices by level except the last one
-            while True:
-                for i in range(len(big_maps) - 1):
-                    curr_level, next_level = big_maps[i].level, big_maps[i + 1].level
-
-                    # NOTE: Level boundaries found. Exit for loop, stay in while.
-                    if curr_level != next_level:
-                        yield curr_level, big_maps[: i + 1]
-                        big_maps = big_maps[i + 1 :]
-                        break
-                else:
-                    break
-
-        if big_maps:
-            yield big_maps[0].level, big_maps
+        async for level, batch in yield_by_level(big_map_iter):
+            yield level, batch
 
 
 class TokenTransferFetcher:
