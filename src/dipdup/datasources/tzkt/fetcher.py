@@ -1,13 +1,16 @@
 import logging
+from abc import ABC
+from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
+from enum import Enum
 from typing import TYPE_CHECKING
 from typing import AsyncGenerator
 from typing import AsyncIterator
+from typing import Generic
 from typing import Protocol
 from typing import TypeVar
 
-from dipdup.datasources.tzkt.enums import OperationFetcherRequest
 from dipdup.models import BigMapData
 from dipdup.models import EventData
 from dipdup.models import OperationData
@@ -15,6 +18,14 @@ from dipdup.models import TokenTransferData
 
 if TYPE_CHECKING:
     from dipdup.datasources.tzkt.datasource import TzktDatasource
+
+
+class OperationFetcherRequest(Enum):
+    """Represents multiple TzKT calls to be merged into a single batch of operations"""
+
+    sender_transactions = 'sender_transactions'
+    target_transactions = 'target_transactions'
+    originations = 'originations'
 
 
 class HasLevel(Protocol):
@@ -49,7 +60,13 @@ async def yield_by_level(
         yield items[0].level, items
 
 
-class OperationFetcher:
+class DataFetcher(Generic[HasLevelT], ABC):
+    @abstractmethod
+    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[HasLevelT, ...]]]:
+        ...
+
+
+class OperationFetcher(DataFetcher[OperationData]):
     """Fetches operations from multiple REST API endpoints, merges them and yields by level.
 
     Offet of every endpoint is tracked separately.
@@ -62,7 +79,7 @@ class OperationFetcher:
         last_level: int,
         transaction_addresses: set[str],
         origination_addresses: set[str],
-        migration_originations: tuple[OperationData, ...] = None,
+        migration_originations: tuple[OperationData, ...] = (),
     ) -> None:
         self._datasource = datasource
         self._first_level = first_level
@@ -77,7 +94,7 @@ class OperationFetcher:
         self._fetched: dict[OperationFetcherRequest, bool] = {}
 
         self._operations: defaultdict[int, deque[OperationData]] = defaultdict(deque)
-        for origination in migration_originations or ():
+        for origination in migration_originations:
             self._operations[origination.level].append(origination)
 
     def _get_operations_head(self, operations: tuple[OperationData, ...]) -> int:
@@ -155,7 +172,7 @@ class OperationFetcher:
             )
         )
 
-    async def fetch_operations_by_level(self) -> AsyncGenerator[tuple[int, tuple[OperationData, ...]], None]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[OperationData, ...]]]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
@@ -194,7 +211,7 @@ class OperationFetcher:
             raise RuntimeError('Operations left in queue')
 
 
-class BigMapFetcher:
+class BigMapFetcher(DataFetcher[BigMapData]):
     """Fetches bigmap diffs from REST API, merges them and yields by level."""
 
     def __init__(
@@ -212,7 +229,7 @@ class BigMapFetcher:
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
 
-    async def fetch_big_maps_by_level(self) -> AsyncGenerator[tuple[int, tuple[BigMapData, ...]], None]:
+    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[BigMapData, ...]], None]:
         """Iterate over big map diffs fetched fetched from REST.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by BigMapIndex.
@@ -227,7 +244,7 @@ class BigMapFetcher:
             yield level, batch
 
 
-class TokenTransferFetcher:
+class TokenTransferFetcher(DataFetcher[TokenTransferData]):
     def __init__(
         self,
         datasource: 'TzktDatasource',
@@ -239,7 +256,7 @@ class TokenTransferFetcher:
         self._first_level = first_level
         self._last_level = last_level
 
-    async def fetch_token_transfers_by_level(self) -> AsyncGenerator[tuple[int, tuple[TokenTransferData, ...]], None]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TokenTransferData, ...]]]:
         token_transfer_iter = self._datasource.iter_token_transfers(
             self._first_level,
             self._last_level,
@@ -248,7 +265,7 @@ class TokenTransferFetcher:
             yield level, batch
 
 
-class EventFetcher:
+class EventFetcher(DataFetcher[EventData]):
     """Fetches contract events from REST API, merges them and yields by level."""
 
     def __init__(
@@ -266,7 +283,7 @@ class EventFetcher:
         self._event_addresses = event_addresses
         self._event_tags = event_tags
 
-    async def fetch_events_by_level(self) -> AsyncGenerator[tuple[int, tuple[EventData, ...]], None]:
+    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[EventData, ...]], None]:
         """Iterate over events fetched fetched from REST.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by EventIndex.

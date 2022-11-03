@@ -8,6 +8,7 @@ from collections import deque
 from datetime import datetime
 from datetime import timezone
 from decimal import Decimal
+from enum import Enum
 from functools import partial
 from os import environ as env
 from typing import Any
@@ -28,10 +29,6 @@ from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.subscription import Subscription
-from dipdup.datasources.tzkt.enums import ORIGINATION_MIGRATION_FIELDS
-from dipdup.datasources.tzkt.enums import ORIGINATION_OPERATION_FIELDS
-from dipdup.datasources.tzkt.enums import TRANSACTION_OPERATION_FIELDS
-from dipdup.datasources.tzkt.enums import TzktMessageType
 from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.enums import TokenStandard
@@ -47,7 +44,49 @@ from dipdup.models import TokenTransferData
 from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
 
-TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
+ORIGINATION_REQUEST_LIMIT = 100
+OPERATION_FIELDS = (
+    'type',
+    'id',
+    'level',
+    'timestamp',
+    'hash',
+    'counter',
+    'sender',
+    'nonce',
+    'target',
+    'initiator',
+    'amount',
+    'storage',
+    'status',
+    'hasInternals',
+    'diffs',
+    'delegate',
+)
+ORIGINATION_MIGRATION_FIELDS = (
+    'id',
+    'level',
+    'timestamp',
+    'storage',
+    'diffs',
+    'account',
+    'balanceChange',
+)
+ORIGINATION_OPERATION_FIELDS = (
+    *OPERATION_FIELDS,
+    'originatedContract',
+)
+TRANSACTION_OPERATION_FIELDS = (
+    *OPERATION_FIELDS,
+    'parameter',
+    'hasInternals',
+)
+
+
+class TzktMessageType(Enum):
+    STATE = 0
+    DATA = 1
+    REORG = 2
 
 
 MessageData = dict[str, Any] | list[dict[str, Any]]
@@ -372,7 +411,7 @@ class TzktDatasource(IndexDatasource):
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
         # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
         # NOTE: Other operation requests won't hit that limit.
-        for addresses_chunk in split_by_chunks(list(addresses), TZKT_ORIGINATIONS_REQUEST_LIMIT):
+        for addresses_chunk in split_by_chunks(list(addresses), ORIGINATION_REQUEST_LIMIT):
             raw_originations += await self.request(
                 'get',
                 url='v1/operations/originations',

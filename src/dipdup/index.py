@@ -370,7 +370,7 @@ class OperationIndex(Index):
             migration_originations=migration_originations,
         )
 
-        async for level, operations in fetcher.fetch_operations_by_level():
+        async for level, operations in fetcher.fetch_by_level():
             if Metrics.enabled:
                 Metrics.set_levels_to_sync(self._config.name, sync_level - level)
 
@@ -672,7 +672,7 @@ class BigMapIndex(Index):
             big_map_paths=big_map_paths,
         )
 
-        async for level, big_maps in fetcher.fetch_big_maps_by_level():
+        async for level, big_maps in fetcher.fetch_by_level():
             with ExitStack() as stack:
                 if Metrics.enabled:
                     Metrics.set_levels_to_sync(self._config.name, sync_level - level)
@@ -913,7 +913,7 @@ class TokenTransferIndex(Index):
             last_level=sync_level,
         )
 
-        async for level, token_transfers in fetcher.fetch_token_transfers_by_level():
+        async for level, token_transfers in fetcher.fetch_by_level():
             with ExitStack() as stack:
                 if Metrics.enabled:
                     Metrics.set_levels_to_sync(self._config.name, sync_level - level)
@@ -1119,7 +1119,7 @@ class EventIndex(Index):
             event_tags=event_tags,
         )
 
-        async for level, events in fetcher.fetch_events_by_level():
+        async for level, events in fetcher.fetch_by_level():
             with ExitStack() as stack:
                 if Metrics.enabled:
                     Metrics.set_levels_to_sync(self._config.name, sync_level - level)
