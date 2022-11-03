@@ -43,11 +43,11 @@ from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import UnknownEventHandlerConfig
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
-from dipdup.datasources.tzkt.datasource import BigMapFetcher
-from dipdup.datasources.tzkt.datasource import EventFetcher
-from dipdup.datasources.tzkt.datasource import OperationFetcher
-from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.fetcher import BigMapFetcher
+from dipdup.datasources.tzkt.fetcher import EventFetcher
+from dipdup.datasources.tzkt.fetcher import OperationFetcher
+from dipdup.datasources.tzkt.fetcher import TokenTransferFetcher
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
