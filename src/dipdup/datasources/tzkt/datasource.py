@@ -15,19 +15,11 @@ from typing import AsyncGenerator
 from typing import AsyncIterator
 from typing import Awaitable
 from typing import Callable
-from typing import DefaultDict
-from typing import Deque
-from typing import Dict
 from typing import Generator
-from typing import List
 from typing import NamedTuple
 from typing import NoReturn
-from typing import Optional
 from typing import Protocol
-from typing import Set
-from typing import Tuple
 from typing import TypeVar
-from typing import Union
 from typing import cast
 
 from pysignalr.client import SignalRClient
@@ -70,9 +62,9 @@ HasLevelT = TypeVar('HasLevelT', bound=HasLevel)
 
 
 async def yield_by_level(
-    iterable: AsyncIterator[Tuple[HasLevelT, ...]]
-) -> AsyncGenerator[Tuple[int, Tuple[HasLevelT, ...]], None]:
-    items: Tuple[HasLevelT, ...] = ()
+    iterable: AsyncIterator[tuple[HasLevelT, ...]]
+) -> AsyncGenerator[tuple[int, tuple[HasLevelT, ...]], None]:
+    items: tuple[HasLevelT, ...] = ()
 
     async for item_batch in iterable:
         items = items + item_batch
@@ -95,16 +87,19 @@ async def yield_by_level(
 
 
 class OperationFetcher:
-    """Fetches operations from multiple REST API endpoints, merges them and yields by level. Offet of every endpoint is tracked separately."""
+    """Fetches operations from multiple REST API endpoints, merges them and yields by level.
+
+    Offet of every endpoint is tracked separately.
+    """
 
     def __init__(
         self,
         datasource: 'TzktDatasource',
         first_level: int,
         last_level: int,
-        transaction_addresses: Set[str],
-        origination_addresses: Set[str],
-        migration_originations: Tuple[OperationData, ...] = None,
+        transaction_addresses: set[str],
+        origination_addresses: set[str],
+        migration_originations: tuple[OperationData, ...] = None,
     ) -> None:
         self._datasource = datasource
         self._first_level = first_level
@@ -114,15 +109,15 @@ class OperationFetcher:
 
         self._logger = logging.getLogger('dipdup.tzkt')
         self._head: int = 0
-        self._heads: Dict[OperationFetcherRequest, int] = {}
-        self._offsets: Dict[OperationFetcherRequest, int] = {}
-        self._fetched: Dict[OperationFetcherRequest, bool] = {}
+        self._heads: dict[OperationFetcherRequest, int] = {}
+        self._offsets: dict[OperationFetcherRequest, int] = {}
+        self._fetched: dict[OperationFetcherRequest, bool] = {}
 
-        self._operations: DefaultDict[int, Deque[OperationData]] = defaultdict(deque)
+        self._operations: defaultdict[int, deque[OperationData]] = defaultdict(deque)
         for origination in migration_originations or ():
             self._operations[origination.level].append(origination)
 
-    def _get_operations_head(self, operations: Tuple[OperationData, ...]) -> int:
+    def _get_operations_head(self, operations: tuple[OperationData, ...]) -> int:
         """Get latest block level (head) of sorted operations batch"""
         for i in range(len(operations) - 1)[::-1]:
             if operations[i].level != operations[i + 1].level:
@@ -188,7 +183,7 @@ class OperationFetcher:
             self._heads[key] = self._get_operations_head(transactions)
 
     @staticmethod
-    def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationData, ...]:
+    def dedup_operations(operations: tuple[OperationData, ...]) -> tuple[OperationData, ...]:
         """Merge and sort operations fetched from multiple endpoints"""
         return tuple(
             sorted(
@@ -197,7 +192,7 @@ class OperationFetcher:
             )
         )
 
-    async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[OperationData, ...]], None]:
+    async def fetch_operations_by_level(self) -> AsyncGenerator[tuple[int, tuple[OperationData, ...]], None]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
@@ -244,8 +239,8 @@ class BigMapFetcher:
         datasource: 'TzktDatasource',
         first_level: int,
         last_level: int,
-        big_map_addresses: Set[str],
-        big_map_paths: Set[str],
+        big_map_addresses: set[str],
+        big_map_paths: set[str],
     ) -> None:
         self._logger = logging.getLogger('dipdup.tzkt')
         self._datasource = datasource
@@ -254,7 +249,7 @@ class BigMapFetcher:
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
 
-    async def fetch_big_maps_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[BigMapData, ...]], None]:
+    async def fetch_big_maps_by_level(self) -> AsyncGenerator[tuple[int, tuple[BigMapData, ...]], None]:
         """Iterate over big map diffs fetched fetched from REST.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by BigMapIndex.
@@ -281,7 +276,7 @@ class TokenTransferFetcher:
         self._first_level = first_level
         self._last_level = last_level
 
-    async def fetch_token_transfers_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[TokenTransferData, ...]], None]:
+    async def fetch_token_transfers_by_level(self) -> AsyncGenerator[tuple[int, tuple[TokenTransferData, ...]], None]:
         token_transfer_iter = self._datasource.iter_token_transfers(
             self._first_level,
             self._last_level,
@@ -298,8 +293,8 @@ class EventFetcher:
         datasource: 'TzktDatasource',
         first_level: int,
         last_level: int,
-        event_addresses: Set[str],
-        event_tags: Set[str],
+        event_addresses: set[str],
+        event_tags: set[str],
     ) -> None:
         self._logger = logging.getLogger('dipdup.tzkt')
         self._datasource = datasource
@@ -308,7 +303,7 @@ class EventFetcher:
         self._event_addresses = event_addresses
         self._event_tags = event_tags
 
-    async def fetch_events_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[EventData, ...]], None]:
+    async def fetch_events_by_level(self) -> AsyncGenerator[tuple[int, tuple[EventData, ...]], None]:
         """Iterate over events fetched fetched from REST.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by EventIndex.
@@ -323,7 +318,7 @@ class EventFetcher:
             yield level, batch
 
 
-MessageData = Union[Dict[str, Any], List[Dict[str, Any]]]
+MessageData = dict[str, Any] | list[dict[str, Any]]
 
 
 class BufferedMessage(NamedTuple):
@@ -337,7 +332,7 @@ class MessageBuffer:
     def __init__(self, size: int) -> None:
         self._logger = logging.getLogger('dipdup.tzkt')
         self._size = size
-        self._messages: Dict[int, List[BufferedMessage]] = {}
+        self._messages: dict[int, list[BufferedMessage]] = {}
 
     def __len__(self) -> int:
         return len(self._messages)
@@ -385,7 +380,7 @@ class TzktDatasource(IndexDatasource):
     def __init__(
         self,
         url: str,
-        http_config: Optional[HTTPConfig] = None,
+        http_config: HTTPConfig | None = None,
         merge_subscriptions: bool = False,
         buffer_size: int = 0,
     ) -> None:
@@ -397,8 +392,8 @@ class TzktDatasource(IndexDatasource):
         self._logger = logging.getLogger('dipdup.tzkt')
         self._buffer = MessageBuffer(buffer_size)
 
-        self._ws_client: Optional[SignalRClient] = None
-        self._level: DefaultDict[MessageType, Optional[int]] = defaultdict(lambda: None)
+        self._ws_client: SignalRClient | None = None
+        self._level: defaultdict[MessageType, int | None] = defaultdict(lambda: None)
 
     async def __aenter__(self) -> None:
         try:
@@ -448,9 +443,9 @@ class TzktDatasource(IndexDatasource):
         self,
         address: str,
         strict: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[str, ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[str, ...]:
         """Get addresses of contracts that share the same code hash or type hash"""
         offset, limit = offset or 0, limit or self.request_limit
         entrypoint = 'same' if strict else 'similar'
@@ -470,16 +465,16 @@ class TzktDatasource(IndexDatasource):
         self,
         address: str,
         strict: bool = False,
-    ) -> AsyncIterator[Tuple[str, ...]]:
+    ) -> AsyncIterator[tuple[str, ...]]:
         async for batch in self._iter_batches(self.get_similar_contracts, address, strict, cursor=False):
             yield batch
 
     async def get_originated_contracts(
         self,
         address: str,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[str, ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[str, ...]:
         """Get addresses of contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s', address)
         offset, limit = offset or 0, limit or self.request_limit
@@ -494,11 +489,11 @@ class TzktDatasource(IndexDatasource):
         )
         return tuple(item['address'] for item in response)
 
-    async def iter_originated_contracts(self, address: str) -> AsyncIterator[Tuple[str, ...]]:
+    async def iter_originated_contracts(self, address: str) -> AsyncIterator[tuple[str, ...]]:
         async for batch in self._iter_batches(self.get_originated_contracts, address, cursor=False):
             yield batch
 
-    async def get_contract_summary(self, address: str) -> Dict[str, Any]:
+    async def get_contract_summary(self, address: str) -> dict[str, Any]:
         """Get contract summary"""
         self._logger.info('Fetching contract summary for address `%s', address)
         return await self.request(
@@ -506,7 +501,7 @@ class TzktDatasource(IndexDatasource):
             url=f'v1/contracts/{address}',
         )
 
-    async def get_contract_storage(self, address: str) -> Dict[str, Any]:
+    async def get_contract_storage(self, address: str) -> dict[str, Any]:
         """Get contract storage"""
         self._logger.info('Fetching contract storage for address `%s', address)
         return await self.request(
@@ -514,7 +509,7 @@ class TzktDatasource(IndexDatasource):
             url=f'v1/contracts/{address}/storage',
         )
 
-    async def get_jsonschemas(self, address: str) -> Dict[str, Any]:
+    async def get_jsonschemas(self, address: str) -> dict[str, Any]:
         """Get JSONSchemas for contract's storage/parameter/bigmap types"""
         self._logger.info('Fetching jsonschemas for address `%s', address)
         return await self.request(
@@ -525,11 +520,11 @@ class TzktDatasource(IndexDatasource):
     async def get_big_map(
         self,
         big_map_id: int,
-        level: Optional[int] = None,
+        level: int | None = None,
         active: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[Dict[str, Any], ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[dict[str, Any], ...]:
         self._logger.info('Fetching keys of bigmap `%s`', big_map_id)
         offset, limit = offset or 0, limit or self.request_limit
         kwargs = {'active': str(active).lower()} if active else {}
@@ -548,9 +543,9 @@ class TzktDatasource(IndexDatasource):
     async def iter_big_map(
         self,
         big_map_id: int,
-        level: Optional[int] = None,
+        level: int | None = None,
         active: bool = False,
-    ) -> AsyncIterator[Tuple[Dict[str, Any], ...]]:
+    ) -> AsyncIterator[tuple[dict[str, Any], ...]]:
         async for batch in self._iter_batches(
             self.get_big_map,
             big_map_id,
@@ -563,9 +558,9 @@ class TzktDatasource(IndexDatasource):
     async def get_contract_big_maps(
         self,
         address: str,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[Dict[str, Any], ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[dict[str, Any], ...]:
         offset, limit = offset or 0, limit or self.request_limit
         big_maps = await self.request(
             'get',
@@ -580,7 +575,7 @@ class TzktDatasource(IndexDatasource):
     async def iter_contract_big_maps(
         self,
         address: str,
-    ) -> AsyncIterator[Tuple[Dict[str, Any], ...]]:
+    ) -> AsyncIterator[tuple[dict[str, Any], ...]]:
         async for batch in self._iter_batches(self.get_contract_big_maps, address, cursor=False):
             yield batch
 
@@ -605,9 +600,9 @@ class TzktDatasource(IndexDatasource):
     async def get_migration_originations(
         self,
         first_level: int = 0,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[OperationData, ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[OperationData, ...]:
         """Get contracts originated from migrations"""
         offset, limit = offset or 0, limit or self.request_limit
         self._logger.info('Fetching contracts originated with migrations')
@@ -627,7 +622,7 @@ class TzktDatasource(IndexDatasource):
     async def iter_migration_originations(
         self,
         first_level: int = 0,
-    ) -> AsyncIterator[Tuple[OperationData, ...]]:
+    ) -> AsyncIterator[tuple[OperationData, ...]]:
         async for batch in self._iter_batches(
             self.get_migration_originations,
             first_level,
@@ -637,10 +632,10 @@ class TzktDatasource(IndexDatasource):
     # FIXME: No pagination because of URL length limit workaround
     async def get_originations(
         self,
-        addresses: Set[str],
+        addresses: set[str],
         first_level: int,
         last_level: int,
-    ) -> Tuple[OperationData, ...]:
+    ) -> tuple[OperationData, ...]:
         raw_originations = []
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
         # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
@@ -664,12 +659,12 @@ class TzktDatasource(IndexDatasource):
     async def get_transactions(
         self,
         field: str,
-        addresses: Set[str],
+        addresses: set[str],
         first_level: int,
         last_level: int,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[OperationData, ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[OperationData, ...]:
         offset, limit = offset or 0, limit or self.request_limit
         raw_transactions = await self.request(
             'get',
@@ -691,10 +686,10 @@ class TzktDatasource(IndexDatasource):
     async def iter_transactions(
         self,
         field: str,
-        addresses: Set[str],
+        addresses: set[str],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[Tuple[OperationData, ...]]:
+    ) -> AsyncIterator[tuple[OperationData, ...]]:
         async for batch in self._iter_batches(
             self.get_transactions,
             field,
@@ -706,13 +701,13 @@ class TzktDatasource(IndexDatasource):
 
     async def get_big_maps(
         self,
-        addresses: Set[str],
-        paths: Set[str],
+        addresses: set[str],
+        paths: set[str],
         first_level: int,
         last_level: int,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[BigMapData, ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[BigMapData, ...]:
         offset, limit = offset or 0, limit or self.request_limit
         raw_big_maps = await self.request(
             'get',
@@ -730,11 +725,11 @@ class TzktDatasource(IndexDatasource):
 
     async def iter_big_maps(
         self,
-        addresses: Set[str],
-        paths: Set[str],
+        addresses: set[str],
+        paths: set[str],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[Tuple[BigMapData, ...]]:
+    ) -> AsyncIterator[tuple[BigMapData, ...]]:
         async for batch in self._iter_batches(
             self.get_big_maps,
             addresses,
@@ -759,9 +754,9 @@ class TzktDatasource(IndexDatasource):
         self,
         first_level: int,
         last_level: int,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[QuoteData, ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[QuoteData, ...]:
         """Get quotes for blocks"""
         offset, limit = offset or 0, limit or self.request_limit
         self._logger.info('Fetching quotes for levels %s-%s', first_level, last_level)
@@ -781,7 +776,7 @@ class TzktDatasource(IndexDatasource):
         self,
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[Tuple[QuoteData, ...]]:
+    ) -> AsyncIterator[tuple[QuoteData, ...]]:
         """Iterate quotes for blocks"""
         async for batch in self._iter_batches(
             self.get_quotes,
@@ -794,9 +789,9 @@ class TzktDatasource(IndexDatasource):
         self,
         first_level: int,
         last_level: int,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[TokenTransferData, ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[TokenTransferData, ...]:
         """Get token transfers for contract"""
         offset, limit = offset or 0, limit or self.request_limit
         params: dict = {}
@@ -819,7 +814,7 @@ class TzktDatasource(IndexDatasource):
         self,
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[Tuple[TokenTransferData, ...]]:
+    ) -> AsyncIterator[tuple[TokenTransferData, ...]]:
         """Iterate token transfers for contract"""
         async for batch in self._iter_batches(
             self.get_token_transfers,
@@ -831,13 +826,13 @@ class TzktDatasource(IndexDatasource):
 
     async def get_events(
         self,
-        addresses: Set[str],
-        tags: Set[str],
+        addresses: set[str],
+        tags: set[str],
         first_level: int,
         last_level: int,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[EventData, ...]:
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[EventData, ...]:
         offset, limit = offset or 0, limit or self.request_limit
         raw_events = await self.request(
             'get',
@@ -856,11 +851,11 @@ class TzktDatasource(IndexDatasource):
 
     async def iter_events(
         self,
-        addresses: Set[str],
-        tags: Set[str],
+        addresses: set[str],
+        tags: set[str],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[Tuple[EventData, ...]]:
+    ) -> AsyncIterator[tuple[EventData, ...]]:
         async for batch in self._iter_batches(
             self.get_events,
             addresses,
@@ -889,7 +884,7 @@ class TzktDatasource(IndexDatasource):
     async def _subscribe(self, subscription: Subscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
         method = subscription.method
-        request: List[Dict[str, Any]] = subscription.get_request()
+        request: list[dict[str, Any]] = subscription.get_request()
 
         event = Event()
 
@@ -979,7 +974,7 @@ class TzktDatasource(IndexDatasource):
         """Raise exception from WS server's error message"""
         raise DatasourceError(datasource=self.name, msg=cast(str, message.error))
 
-    async def _on_message(self, type_: MessageType, message: List[Dict[str, Any]]) -> None:
+    async def _on_message(self, type_: MessageType, message: list[dict[str, Any]]) -> None:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         # NOTE: Parse messages and either buffer or yield data
         for item in message:
@@ -1027,9 +1022,9 @@ class TzktDatasource(IndexDatasource):
             else:
                 raise NotImplementedError(f'Unknown message type: {buffered_message.type}')
 
-    async def _process_operations_data(self, data: List[Dict[str, Any]]) -> None:
+    async def _process_operations_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
-        level_operations: DefaultDict[int, Deque[OperationData]] = defaultdict(deque)
+        level_operations: defaultdict[int, deque[OperationData]] = defaultdict(deque)
 
         for operation_json in data:
             if operation_json['status'] != 'applied':
@@ -1040,9 +1035,9 @@ class TzktDatasource(IndexDatasource):
         for _level, operations in level_operations.items():
             await self.emit_operations(tuple(operations))
 
-    async def _process_token_transfers_data(self, data: List[Dict[str, Any]]) -> None:
+    async def _process_token_transfers_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw token transfers from WS"""
-        level_token_transfers: DefaultDict[int, Deque[TokenTransferData]] = defaultdict(deque)
+        level_token_transfers: defaultdict[int, deque[TokenTransferData]] = defaultdict(deque)
 
         for token_transfer_json in data:
             token_transfer = self.convert_token_transfer(token_transfer_json)
@@ -1051,11 +1046,11 @@ class TzktDatasource(IndexDatasource):
         for _level, token_transfers in level_token_transfers.items():
             await self.emit_token_transfers(tuple(token_transfers))
 
-    async def _process_big_maps_data(self, data: List[Dict[str, Any]]) -> None:
+    async def _process_big_maps_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        level_big_maps: DefaultDict[int, Deque[BigMapData]] = defaultdict(deque)
+        level_big_maps: defaultdict[int, deque[BigMapData]] = defaultdict(deque)
 
-        big_maps: Deque[BigMapData] = deque()
+        big_maps: deque[BigMapData] = deque()
         for big_map_json in data:
             big_map = self.convert_big_map(big_map_json)
             level_big_maps[big_map.level].append(big_map)
@@ -1063,16 +1058,16 @@ class TzktDatasource(IndexDatasource):
         for _level, big_maps in level_big_maps.items():
             await self.emit_big_maps(tuple(big_maps))
 
-    async def _process_head_data(self, data: Dict[str, Any]) -> None:
+    async def _process_head_data(self, data: dict[str, Any]) -> None:
         """Parse and emit raw head block from WS"""
         block = self.convert_head_block(data)
         await self.emit_head(block)
 
-    async def _process_events_data(self, data: List[Dict[str, Any]]) -> None:
+    async def _process_events_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        level_events: DefaultDict[int, Deque[EventData]] = defaultdict(deque)
+        level_events: defaultdict[int, deque[EventData]] = defaultdict(deque)
 
-        events: Deque[EventData] = deque()
+        events: deque[EventData] = deque()
         for event_json in data:
             event = self.convert_event(event_json)
             level_events[event.level].append(event)
@@ -1081,7 +1076,11 @@ class TzktDatasource(IndexDatasource):
             await self.emit_events(tuple(events))
 
     @classmethod
-    def convert_operation(cls, operation_json: Dict[str, Any], type_: Optional[str] = None) -> OperationData:
+    def convert_operation(
+        cls,
+        operation_json: dict[str, Any],
+        type_: str | None = None,
+    ) -> OperationData:
         """Convert raw operation message from WS/REST into dataclass"""
         sender_json = operation_json.get('sender') or {}
         target_json = operation_json.get('target') or {}
@@ -1131,7 +1130,10 @@ class TzktDatasource(IndexDatasource):
         )
 
     @classmethod
-    def convert_migration_origination(cls, migration_origination_json: Dict[str, Any]) -> OperationData:
+    def convert_migration_origination(
+        cls,
+        migration_origination_json: dict[str, Any],
+    ) -> OperationData:
         """Convert raw migration message from REST into dataclass"""
         return OperationData(
             type='origination',
@@ -1154,7 +1156,10 @@ class TzktDatasource(IndexDatasource):
         )
 
     @classmethod
-    def convert_big_map(cls, big_map_json: Dict[str, Any]) -> BigMapData:
+    def convert_big_map(
+        cls,
+        big_map_json: dict[str, Any],
+    ) -> BigMapData:
         """Convert raw big map diff message from WS/REST into dataclass"""
         action = BigMapAction(big_map_json['action'])
         active = action not in (BigMapAction.REMOVE, BigMapAction.REMOVE_KEY)
@@ -1174,7 +1179,10 @@ class TzktDatasource(IndexDatasource):
         )
 
     @classmethod
-    def convert_block(cls, block_json: Dict[str, Any]) -> BlockData:
+    def convert_block(
+        cls,
+        block_json: dict[str, Any],
+    ) -> BlockData:
         """Convert raw block message from REST into dataclass"""
         return BlockData(
             level=block_json['level'],
@@ -1192,7 +1200,10 @@ class TzktDatasource(IndexDatasource):
         )
 
     @classmethod
-    def convert_head_block(cls, head_block_json: Dict[str, Any]) -> HeadBlockData:
+    def convert_head_block(
+        cls,
+        head_block_json: dict[str, Any],
+    ) -> HeadBlockData:
         """Convert raw head block message from WS/REST into dataclass"""
         return HeadBlockData(
             chain=head_block_json['chain'],
@@ -1220,7 +1231,7 @@ class TzktDatasource(IndexDatasource):
         )
 
     @classmethod
-    def convert_quote(cls, quote_json: Dict[str, Any]) -> QuoteData:
+    def convert_quote(cls, quote_json: dict[str, Any]) -> QuoteData:
         """Convert raw quote message from REST into dataclass"""
         return QuoteData(
             level=quote_json['level'],
@@ -1236,7 +1247,7 @@ class TzktDatasource(IndexDatasource):
         )
 
     @classmethod
-    def convert_token_transfer(cls, token_transfer_json: Dict[str, Any]) -> TokenTransferData:
+    def convert_token_transfer(cls, token_transfer_json: dict[str, Any]) -> TokenTransferData:
         """Convert raw token transfer message from REST or WS into dataclass"""
         token_json = token_transfer_json.get('token') or {}
         contract_json = token_json.get('contract') or {}
@@ -1265,7 +1276,7 @@ class TzktDatasource(IndexDatasource):
         )
 
     @classmethod
-    def convert_event(cls, event_json: Dict[str, Any]) -> EventData:
+    def convert_event(cls, event_json: dict[str, Any]) -> EventData:
         """Convert raw event message from WS/REST into dataclass"""
         return EventData(
             id=event_json['id'],
@@ -1282,8 +1293,8 @@ class TzktDatasource(IndexDatasource):
     async def _send(
         self,
         method: str,
-        arguments: List[Dict[str, Any]],
-        on_invocation: Optional[Callable[[CompletionMessage], Awaitable[None]]] = None,
+        arguments: list[dict[str, Any]],
+        on_invocation: Callable[[CompletionMessage], Awaitable[None]] | None = None,
     ) -> None:
         client = self._get_ws_client()
         await client.send(method, arguments, on_invocation)
