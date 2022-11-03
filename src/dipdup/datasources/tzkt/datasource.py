@@ -62,16 +62,6 @@ from dipdup.utils import split_by_chunks
 TZKT_ORIGINATIONS_REQUEST_LIMIT = 100
 
 
-def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationData, ...]:
-    """Merge and sort operations fetched from multiple endpoints"""
-    return tuple(
-        sorted(
-            (({op.id: op for op in operations}).values()),
-            key=lambda op: op.id,
-        )
-    )
-
-
 class HasLevel(Protocol):
     level: int
 
@@ -197,6 +187,16 @@ class OperationFetcher:
             self._offsets[key] = transactions[-1].id
             self._heads[key] = self._get_operations_head(transactions)
 
+    @staticmethod
+    def dedup_operations(operations: Tuple[OperationData, ...]) -> Tuple[OperationData, ...]:
+        """Merge and sort operations fetched from multiple endpoints"""
+        return tuple(
+            sorted(
+                (({op.id: op for op in operations}).values()),
+                key=lambda op: op.id,
+            )
+        )
+
     async def fetch_operations_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[OperationData, ...]], None]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
@@ -226,7 +226,7 @@ class OperationFetcher:
             while self._head <= head:
                 if self._head in self._operations:
                     operations = self._operations.pop(self._head)
-                    yield self._head, dedup_operations(tuple(operations))
+                    yield self._head, self.dedup_operations(tuple(operations))
                 self._head += 1
 
             if all(self._fetched.values()):
@@ -282,31 +282,12 @@ class TokenTransferFetcher:
         self._last_level = last_level
 
     async def fetch_token_transfers_by_level(self) -> AsyncGenerator[Tuple[int, Tuple[TokenTransferData, ...]], None]:
-        token_transfers: Tuple[TokenTransferData, ...] = ()
-
-        # TODO: Share code between this and OperationFetcher
         token_transfer_iter = self._datasource.iter_token_transfers(
             self._first_level,
             self._last_level,
         )
-        async for fetched_token_transfers in token_transfer_iter:
-            token_transfers = token_transfers + fetched_token_transfers
-
-            # NOTE: Yield token transfer slices by level except the last one
-            while True:
-                for i in range(len(token_transfers) - 1):
-                    curr_level, next_level = token_transfers[i].level, token_transfers[i + 1].level
-
-                    # NOTE: Level boundaries found. Exit for loop, stay in while.
-                    if curr_level != next_level:
-                        yield curr_level, token_transfers[: i + 1]
-                        token_transfers = token_transfers[i + 1 :]
-                        break
-                else:
-                    break
-
-        if token_transfers:
-            yield token_transfers[0].level, token_transfers
+        async for level, batch in yield_by_level(token_transfer_iter):
+            yield level, batch
 
 
 class EventFetcher:
@@ -332,34 +313,14 @@ class EventFetcher:
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by EventIndex.
         """
-
-        events: Tuple[EventData, ...] = ()
-
-        # TODO: Share code between this and OperationFetcher
         event_iter = self._datasource.iter_events(
             self._event_addresses,
             self._event_tags,
             self._first_level,
             self._last_level,
         )
-        async for fetched_events in event_iter:
-            events = events + fetched_events
-
-            # NOTE: Yield big map slices by level except the last one
-            while True:
-                for i in range(len(events) - 1):
-                    curr_level, next_level = events[i].level, events[i + 1].level
-
-                    # NOTE: Level boundaries found. Exit for loop, stay in while.
-                    if curr_level != next_level:
-                        yield curr_level, events[: i + 1]
-                        events = events[i + 1 :]
-                        break
-                else:
-                    break
-
-        if events:
-            yield events[0].level, events
+        async for level, batch in yield_by_level(event_iter):
+            yield level, batch
 
 
 MessageData = Union[Dict[str, Any], List[Dict[str, Any]]]
