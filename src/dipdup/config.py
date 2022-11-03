@@ -1676,6 +1676,9 @@ class DipDupConfig:
 
     def _resolve_links(self) -> None:
         for index_config in self.indexes.values():
+            if isinstance(index_config, IndexTemplateConfig):
+                raise ConfigInitializationException('Index templates must be resolved first')
+
             self._resolve_index_links(index_config)
             # TODO: Not exactly link resolving, move somewhere else
             self._resolve_index_subscriptions(index_config)
@@ -1718,6 +1721,7 @@ class DipDupConfig:
             index_config.subscriptions.add(HeadSubscription())
 
         elif isinstance(index_config, TokenTransferIndexConfig):
+            # FIXME:
             index_config.subscriptions.add(TokenTransferSubscription())
 
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
@@ -1734,13 +1738,13 @@ class DipDupConfig:
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-    def _resolve_index_links(self, index_config: IndexConfigT) -> None:
+    def _resolve_index_links(self, index_config: ResolvedIndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
+        # NOTE: Each index must have a corresponding (currently) TzKT datasource
+        if isinstance(index_config.datasource, str):
+            index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
         if isinstance(index_config, OperationIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             if index_config.contracts is not None:
                 for i, contract in enumerate(index_config.contracts):
                     if isinstance(contract, str):
@@ -1768,9 +1772,6 @@ class DipDupConfig:
                             pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 
         elif isinstance(index_config, BigMapIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             for handler in index_config.handlers:
                 handler.parent = index_config
                 # TODO: Verify callback uniqueness
@@ -1779,30 +1780,18 @@ class DipDupConfig:
                     handler.contract = self.get_contract(handler.contract)
 
         elif isinstance(index_config, HeadIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             for head_handler_config in index_config.handlers:
                 head_handler_config.parent = index_config
 
         elif isinstance(index_config, TokenTransferIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
 
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             for operation_unfiltered_handler_config in index_config.handlers:
                 operation_unfiltered_handler_config.parent = index_config
 
         elif isinstance(index_config, EventIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             for event_handler_config in index_config.handlers:
                 event_handler_config.parent = index_config
 
