@@ -36,8 +36,6 @@ from typing import Callable
 from typing import Generic
 from typing import Iterator
 from typing import Sequence
-from typing import Set
-from typing import Type
 from typing import TypeVar
 from typing import cast
 from urllib.parse import quote_plus
@@ -119,7 +117,7 @@ class SqliteDatabaseConfig:
         return f'{self.kind}://{self.path}'
 
     @property
-    def immune_tables(self) -> Set[str]:
+    def immune_tables(self) -> set[str]:
         return set()
 
     @property
@@ -150,7 +148,7 @@ class PostgresDatabaseConfig:
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
     password: str = field(default='', repr=False)
-    immune_tables: Set[str] = field(default_factory=set)
+    immune_tables: set[str] = field(default_factory=set)
     connection_timeout: int = 60
 
     @cached_property
@@ -399,12 +397,12 @@ class CodegenMixin(ABC):
             else:
                 yield f'{name}: {cls}'
 
-    def locate_arguments(self) -> dict[str, Type | None]:
+    def locate_arguments(self) -> dict[str, type | None]:
         """Try to resolve scope annotations for arguments"""
-        kwargs: dict[str, Type[Any] | None] = {}
+        kwargs: dict[str, type[Any] | None] = {}
         for name, cls in self.iter_arguments():
             cls = cls.split(' as ')[0]
-            kwargs[name] = cast(Type | None, locate(cls))
+            kwargs[name] = cast(type | None, locate(cls))
         return kwargs
 
 
@@ -488,10 +486,10 @@ class StorageTypeMixin:
     """`storage_type_cls` field"""
 
     def __post_init_post_parse__(self) -> None:
-        self._storage_type_cls: Type[Any] | None = None
+        self._storage_type_cls: type[Any] | None = None
 
     @cached_property
-    def storage_type_cls(self) -> Type[Any]:
+    def storage_type_cls(self) -> type[Any]:
         if self._storage_type_cls is None:
             raise ConfigInitializationException
         return self._storage_type_cls
@@ -503,22 +501,22 @@ class StorageTypeMixin:
         self.storage_type_cls = import_from(module_name, cls_name)
 
 
-T = TypeVar('T')
+ParentT = TypeVar('ParentT')
 
 
 @dataclass
-class ParentMixin(Generic[T]):
+class ParentMixin(Generic[ParentT]):
     """`parent` field for index and template configs"""
 
     def __post_init_post_parse__(self: ParentMixin) -> None:
-        self._parent: T | None = None
+        self._parent: ParentT | None = None
 
     @property
-    def parent(self) -> T | None:
+    def parent(self) -> ParentT | None:
         return self._parent
 
     @parent.setter
-    def parent(self, value: T) -> None:
+    def parent(self, value: ParentT) -> None:
         self._parent = value
 
 
@@ -527,16 +525,16 @@ class ParameterTypeMixin:
     """`parameter_type_cls` field"""
 
     def __post_init_post_parse__(self) -> None:
-        self._parameter_type_cls: Type | None = None
+        self._parameter_type_cls: type | None = None
 
     @property
-    def parameter_type_cls(self) -> Type:
+    def parameter_type_cls(self) -> type:
         if self._parameter_type_cls is None:
             raise ConfigInitializationException
         return self._parameter_type_cls
 
     @parameter_type_cls.setter
-    def parameter_type_cls(self, value: Type) -> None:
+    def parameter_type_cls(self, value: type) -> None:
         self._parameter_type_cls = value
 
     def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
@@ -821,7 +819,7 @@ class SubscriptionsMixin:
     """`subscriptions` field"""
 
     def __post_init_post_parse__(self) -> None:
-        self.subscriptions: Set[Subscription] = set()
+        self.subscriptions: set[Subscription] = set()
 
 
 @dataclass
@@ -888,7 +886,7 @@ class OperationIndexConfig(IndexConfig):
 
     :param kind: always `operation`
     :param handlers: List of indexer handlers
-    :param types: Types of transaction to fetch
+    :param types: types of transaction to fetch
     :param contracts: Aliases of contracts being indexed in `contracts` section
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at (DipDup will terminate at this level)
@@ -910,7 +908,7 @@ class OperationIndexConfig(IndexConfig):
                 item.pop('alias', None)
 
     @cached_property
-    def entrypoint_filter(self) -> Set[str | None]:
+    def entrypoint_filter(self) -> set[str | None]:
         """Set of entrypoints to filter operations with before an actual matching"""
         entrypoints = set()
         for handler_config in self.handlers:
@@ -920,7 +918,7 @@ class OperationIndexConfig(IndexConfig):
         return set(entrypoints)
 
     @cached_property
-    def address_filter(self) -> Set[str]:
+    def address_filter(self) -> set[str]:
         """Set of addresses (any field) to filter operations with before an actual matching"""
         addresses = set()
         for handler_config in self.handlers:
@@ -970,8 +968,8 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
-        self._key_type_cls: Type[Any] | None = None
-        self._value_type_cls: Type[Any] | None = None
+        self._key_type_cls: type[Any] | None = None
+        self._value_type_cls: type[Any] | None = None
 
     @classmethod
     def format_key_import(cls, package: str, module_name: str, path: str) -> tuple[str, str]:
@@ -1010,13 +1008,13 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         return self.contract
 
     @cached_property
-    def key_type_cls(self) -> Type:
+    def key_type_cls(self) -> type:
         if self._key_type_cls is None:
             raise ConfigInitializationException
         return self._key_type_cls
 
     @cached_property
-    def value_type_cls(self) -> Type:
+    def value_type_cls(self) -> type:
         if self._value_type_cls is None:
             raise ConfigInitializationException
         return self._value_type_cls
@@ -1057,7 +1055,7 @@ class BigMapIndexConfig(IndexConfig):
     last_level: int = 0
 
     @cached_property
-    def contracts(self) -> Set[ContractConfig]:
+    def contracts(self) -> set[ContractConfig]:
         return {handler_config.contract_config for handler_config in self.handlers}
 
     @classmethod
@@ -1124,7 +1122,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
-        self._event_type_cls: Type[Any] | None = None
+        self._event_type_cls: type[Any] | None = None
 
     @cached_property
     def contract_config(self) -> ContractConfig:
@@ -1133,7 +1131,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
         return self.contract
 
     @cached_property
-    def event_type_cls(self) -> Type:
+    def event_type_cls(self) -> type:
         if self._event_type_cls is None:
             raise ConfigInitializationException
         return self._event_type_cls
