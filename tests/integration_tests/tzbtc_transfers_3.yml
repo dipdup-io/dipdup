@@ -5,6 +5,11 @@ database:
   kind: sqlite
   path: db.sqlite3
 
+contracts:
+  tzbtc_mainnet:
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: tzbtc
+
 datasources:
   tzkt:
     kind: tzkt
@@ -18,6 +23,7 @@ indexes:
     datasource: tzkt
     handlers:
       - callback: on_token_transfer
+        contract: tzbtc_mainnet
     first_level: 2315000
     last_level: 2315100
 

@@ -584,7 +584,7 @@ class TzktDatasource(IndexDatasource):
                 'from.in': ','.join(from_addresses),
                 'to.in': ','.join(to_addresses),
                 'level.ge': first_level,
-                'level.lt': last_level,
+                'level.le': last_level,
                 'offset': offset,
                 'limit': limit,
             },

@@ -46,6 +46,7 @@ from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.fetcher import BigMapFetcher
+from dipdup.datasources.tzkt.fetcher import DataFetcher
 from dipdup.datasources.tzkt.fetcher import EventFetcher
 from dipdup.datasources.tzkt.fetcher import OperationFetcher
 from dipdup.datasources.tzkt.fetcher import TokenTransferFetcher
@@ -260,11 +261,15 @@ class Index:
         return True
 
     @abstractmethod
-    async def _synchronize(self, head_level: int) -> None:
+    async def _synchronize(self, sync_level: int) -> None:
         ...
 
     @abstractmethod
     async def _process_queue(self) -> None:
+        ...
+
+    @abstractmethod
+    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
         ...
 
     async def _enter_sync_state(self, head_level: int) -> Optional[int]:
@@ -342,18 +347,7 @@ class OperationIndex(Index):
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, 0)
 
-    async def _synchronize(self, sync_level: int) -> None:
-        """Fetch operations via Fetcher and pass to message callback"""
-        index_level = await self._enter_sync_state(sync_level)
-        if index_level is None:
-            return
-
-        first_level = index_level + 1
-
-        self._logger.info('Fetching operations from level %s to %s', first_level, sync_level)
-        transaction_addresses = await self._get_transaction_addresses()
-        origination_addresses = await self._get_origination_addresses()
-
+    async def _create_fetcher(self, first_level: int, last_level: int) -> OperationFetcher:
         migration_originations: Tuple[OperationData, ...] = ()
         if OperationType.migration in self._config.types:
             async for batch in self._datasource.iter_migration_originations(first_level):
@@ -362,14 +356,27 @@ class OperationIndex(Index):
                     op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
                     migration_originations += (op,)
 
-        fetcher = OperationFetcher(
+        transaction_addresses = await self._get_transaction_addresses()
+        origination_addresses = await self._get_origination_addresses()
+
+        return OperationFetcher(
             datasource=self._datasource,
             first_level=first_level,
-            last_level=sync_level,
+            last_level=last_level,
             transaction_addresses=transaction_addresses,
             origination_addresses=origination_addresses,
             migration_originations=migration_originations,
         )
+
+    async def _synchronize(self, sync_level: int) -> None:
+        """Fetch operations via Fetcher and pass to message callback"""
+        index_level = await self._enter_sync_state(sync_level)
+        if index_level is None:
+            return
+
+        first_level = index_level + 1
+        self._logger.info('Fetching operations from level %s to %s', first_level, sync_level)
+        fetcher = await self._create_fetcher(first_level, sync_level)
 
         async for level, operations in fetcher.fetch_by_level():
             if Metrics.enabled:
@@ -640,6 +647,18 @@ class BigMapIndex(Index):
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_big_maps(big_maps, message_level)
 
+    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+        big_map_addresses = self._get_big_map_addresses()
+        big_map_paths = self._get_big_map_paths()
+
+        return BigMapFetcher(
+            datasource=self._datasource,
+            first_level=first_level,
+            last_level=last_level,
+            big_map_addresses=big_map_addresses,
+            big_map_paths=big_map_paths,
+        )
+
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         index_level = await self._enter_sync_state(sync_level)
@@ -662,16 +681,7 @@ class BigMapIndex(Index):
         first_level = index_level + 1
         self._logger.info('Fetching big map diffs from level %s to %s', first_level, sync_level)
 
-        big_map_addresses = self._get_big_map_addresses()
-        big_map_paths = self._get_big_map_paths()
-
-        fetcher = BigMapFetcher(
-            datasource=self._datasource,
-            first_level=first_level,
-            last_level=sync_level,
-            big_map_addresses=big_map_addresses,
-            big_map_paths=big_map_paths,
-        )
+        fetcher = await self._create_fetcher(first_level, sync_level)
 
         async for level, big_maps in fetcher.fetch_by_level():
             with ExitStack() as stack:
@@ -845,9 +855,12 @@ class HeadIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[HeadBlockData] = deque()
 
-    async def _synchronize(self, head_level: int) -> None:
-        self._logger.info('Setting index level to %s and moving on', head_level)
-        await self.state.update_status(status=IndexStatus.REALTIME, level=head_level)
+    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+        raise NotImplementedError('HeadIndex has no fetcher')
+
+    async def _synchronize(self, sync_level: int) -> None:
+        self._logger.info('Setting index level to %s and moving on', sync_level)
+        await self.state.update_status(status=IndexStatus.REALTIME, level=sync_level)
 
     async def _process_queue(self) -> None:
         while self._queue:
@@ -900,19 +913,40 @@ class TokenTransferIndex(Index):
         if Metrics.enabled:
             Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
 
+    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+        token_addresses: set[str] = set()
+        token_ids: set[int] = set()
+        from_addresses: set[str] = set()
+        to_addresses: set[str] = set()
+        for handler_config in self._config.handlers:
+            if handler_config.contract:
+                token_addresses.add(cast(ContractConfig, handler_config.contract).address)
+            if handler_config.token_id is not None:
+                token_ids.add(handler_config.token_id)
+            if handler_config.from_:
+                from_addresses.add(cast(ContractConfig, handler_config.from_).address)
+            if handler_config.to:
+                to_addresses.add(cast(ContractConfig, handler_config.to).address)
+
+        return TokenTransferFetcher(
+            datasource=self._datasource,
+            token_addresses=token_addresses,
+            token_ids=token_ids,
+            from_addresses=from_addresses,
+            to_addresses=to_addresses,
+            first_level=first_level,
+            last_level=last_level,
+        )
+
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch token transfers via Fetcher and pass to message callback"""
-        first_level = await self._enter_sync_state(sync_level)
-        if first_level is None:
+        index_level = await self._enter_sync_state(sync_level)
+        if index_level is None:
             return
 
+        first_level = index_level + 1
         self._logger.info('Fetching token transfers from level %s to %s', first_level, sync_level)
-
-        fetcher = TokenTransferFetcher(
-            datasource=self._datasource,
-            first_level=first_level,
-            last_level=sync_level,
-        )
+        fetcher = await self._create_fetcher(first_level, sync_level)
 
         async for level, token_transfers in fetcher.fetch_by_level():
             with ExitStack() as stack:
@@ -931,18 +965,10 @@ class TokenTransferIndex(Index):
         if not token_transfers:
             return
 
-        # FIXME: Why is this needed?
         batch_level = self._extract_level(token_transfers)
-        if self.state.status == IndexStatus.SYNCING:
-            if batch_level < self.state.level:
-                raise RuntimeError(
-                    f'Level of token transfer batch must be not lower than index state level: {batch_level} < {self.state.level}'
-                )
-        else:
-            if batch_level <= self.state.level:
-                raise RuntimeError(
-                    f'Level of token transfer batch must be higher than index state level: {batch_level} <= {self.state.level}'
-                )
+        index_level = self.state.level
+        if batch_level <= index_level:
+            raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing token transfers of level %s', batch_level)
         matched_handlers = await self._match_token_transfers(token_transfers)
@@ -1100,6 +1126,17 @@ class EventIndex(Index):
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_events(events, message_level)
 
+    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+        event_addresses = self._get_event_addresses()
+        event_tags = self._get_event_tags()
+        return EventFetcher(
+            datasource=self._datasource,
+            first_level=first_level,
+            last_level=last_level,
+            event_addresses=event_addresses,
+            event_tags=event_tags,
+        )
+
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         index_level = await self._enter_sync_state(sync_level)
@@ -1108,17 +1145,7 @@ class EventIndex(Index):
 
         first_level = index_level + 1
         self._logger.info('Fetching contract events from level %s to %s', first_level, sync_level)
-
-        event_addresses = self._get_event_addresses()
-        event_tags = self._get_event_tags()
-
-        fetcher = EventFetcher(
-            datasource=self._datasource,
-            first_level=first_level,
-            last_level=sync_level,
-            event_addresses=event_addresses,
-            event_tags=event_tags,
-        )
+        fetcher = await self._create_fetcher(first_level, sync_level)
 
         async for level, events in fetcher.fetch_by_level():
             with ExitStack() as stack:
