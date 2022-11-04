@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - cli: Configure package logger in addition to `dipdup` one.
+- database: Fixed crash when using F expressions inside versioned transactions.
 - tzkt: Fixed deserializing `EventData` model.
 
 ## [6.2.0] - 2022-10-12
