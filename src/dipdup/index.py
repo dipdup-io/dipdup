@@ -12,7 +12,6 @@ from typing import Deque
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
-from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -95,6 +94,7 @@ MatchedEventsT = Union[
     Tuple[EventHandlerConfig, Event],
     Tuple[UnknownEventHandlerConfig, UnknownEvent],
 ]
+MatchedTokenTransfersT = Tuple[TokenTransferHandlerConfig, TokenTransferData]
 
 
 def extract_operation_subgroups(
@@ -466,7 +466,7 @@ class OperationIndex(Index):
             raise NotImplementedError
 
     async def _match_operation_subgroup(self, operation_subgroup: OperationSubgroup) -> Deque[MatchedOperationsT]:
-        """Try to match operation subgroup with all patterns from indexes."""
+        """Try to match operation subgroup with all index handlers."""
         matched_handlers: Deque[MatchedOperationsT] = deque()
         operations = operation_subgroup.operations
 
@@ -795,7 +795,7 @@ class BigMapIndex(Index):
         )
 
     async def _match_big_maps(self, big_maps: Iterable[BigMapData]) -> Deque[MatchedBigMapsT]:
-        """Try to match big map diffs in cache with all patterns from indexes."""
+        """Try to match big map diffs with all index handlers."""
         matched_handlers: Deque[MatchedBigMapsT] = deque()
 
         for handler_config in self._config.handlers:
@@ -982,8 +982,8 @@ class TokenTransferIndex(Index):
             return
 
         async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
-            for handler_config, big_map_diff in matched_handlers:
-                await self._call_matched_handler(handler_config, big_map_diff)
+            for handler_config, token_transfer in matched_handlers:
+                await self._call_matched_handler(handler_config, token_transfer)
             await self.state.update_status(level=batch_level)
 
     async def _call_matched_handler(
@@ -1001,13 +1001,37 @@ class TokenTransferIndex(Index):
             token_transfer,
         )
 
+    async def _match_token_transfer(
+        self, handler_config: TokenTransferHandlerConfig, token_transfer: TokenTransferData
+    ) -> bool:
+        """Match single token transfer with pattern"""
+        if isinstance(handler_config.contract, ContractConfig):
+            if handler_config.contract.address != token_transfer.contract_address:
+                return False
+        if handler_config.token_id is not None:
+            if handler_config.token_id != token_transfer.token_id:
+                return False
+        if isinstance(handler_config.from_, ContractConfig):
+            if handler_config.from_.address != token_transfer.from_address:
+                return False
+        if isinstance(handler_config.to, ContractConfig):
+            if handler_config.to.address != token_transfer.to_address:
+                return False
+        return True
+
     async def _match_token_transfers(
         self, token_transfers: Iterable[TokenTransferData]
-    ) -> List[Tuple[TokenTransferHandlerConfig, TokenTransferData]]:
-        matched_handlers: List[Tuple[TokenTransferHandlerConfig, TokenTransferData]] = []
+    ) -> Deque[MatchedTokenTransfersT]:
+        """Try to match token transfers with all index handlers."""
+
+        matched_handlers: Deque[MatchedTokenTransfersT] = deque()
+
         for token_transfer in token_transfers:
             for handler_config in self._config.handlers:
-                matched_handlers.append((handler_config, token_transfer))
+                token_transfer_matched = await self._match_token_transfer(handler_config, token_transfer)
+                if token_transfer_matched:
+                    self._logger.info('%s: `%s` handler matched!', token_transfer.level, handler_config.callback)
+                    matched_handlers.append((handler_config, token_transfer))
 
         return matched_handlers
 
@@ -1069,7 +1093,7 @@ class OperationUnfilteredIndex(OperationIndex):
         return True
 
     async def _match_operation_subgroup(self, operation_subgroup: OperationSubgroup) -> Deque[MatchedOperationsT]:
-        """Try to match operation subgroup with all patterns from indexes."""
+        """Try to match operation subgroup with all index handlers."""
         matched_handlers: Deque[MatchedOperationsT] = deque()
         operations = operation_subgroup.operations
 
