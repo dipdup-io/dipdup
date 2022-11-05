@@ -941,7 +941,7 @@ class OperationIndexConfig(IndexConfig):
 class OperationUnfilteredIndexConfig(IndexConfig):
     """Operation index config
 
-    :param kind: always `operation`
+    :param kind: always `operation_unfiltered`
     :param handlers: List of indexer handlers
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at (DipDup will terminate at this level)
@@ -949,7 +949,7 @@ class OperationUnfilteredIndexConfig(IndexConfig):
 
     kind: Literal['operation_unfiltered']
     handlers: tuple[OperationUnfilteredHandlerConfig, ...]
-    types: tuple[OperationType, ...] = (OperationType.transaction,)
+    types: tuple[OperationType, ...] = (OperationType.origination,)
 
     first_level: int = 0
     last_level: int = 0
@@ -1085,6 +1085,14 @@ class HeadIndexConfig(IndexConfig):
     kind: Literal['head']
     datasource: str | TzktDatasourceConfig
     handlers: tuple[HeadHandlerConfig, ...]
+
+    @property
+    def first_level(self) -> int:
+        return 0
+
+    @property
+    def last_level(self) -> int:
+        return 0
 
 
 @dataclass
