@@ -425,7 +425,9 @@ class UpdateQuery(TortoiseUpdateQuery):
         _logger.debug('Got %s', len(models))
 
         for model in models:
-            model._set_kwargs(self.update_kwargs)
+            for key, value in self.update_kwargs.items():
+                setattr(model, key, value)
+
             if update := ModelUpdate.from_model(model, ModelUpdateAction.UPDATE):
                 get_pending_updates().append(update)
 
