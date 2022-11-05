@@ -1722,8 +1722,20 @@ class DipDupConfig:
             index_config.subscriptions.add(HeadSubscription())
 
         elif isinstance(index_config, TokenTransferIndexConfig):
-            # FIXME:
-            index_config.subscriptions.add(TokenTransferSubscription())
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(TokenTransferSubscription())
+            else:
+                for handler_config in index_config.handlers:
+                    contract = (
+                        handler_config.contract.address if isinstance(handler_config.contract, ContractConfig) else None
+                    )
+                    from_ = handler_config.from_.address if isinstance(handler_config.from_, ContractConfig) else None
+                    to = handler_config.to.address if isinstance(handler_config.to, ContractConfig) else None
+                    index_config.subscriptions.add(
+                        TokenTransferSubscription(
+                            contract=contract, from_=from_, to=to, token_id=handler_config.token_id
+                        )
+                    )
 
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
             index_config.subscriptions.add(TransactionSubscription())
