@@ -9,7 +9,8 @@ from pydantic import BaseModel
 from pydantic import Field
 from tabulate import tabulate
 
-from dipdup import __version__
+from dipdup import major_version
+from dipdup import minor_version
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils.codegen import load_template
 from dipdup.utils.codegen import write
@@ -271,12 +272,12 @@ class BaseProject(Project):
             description='Choose DipDup version',
             default=0,
             choices=(
-                '6',
-                '6.1',
+                major_version,
+                minor_version,
             ),
             comments=(
-                'Latest stable release',
-                'Latest release of 6.1 branch',
+                'latest stable',
+                'current stable',
             ),
         ),
         ChoiceQuestion(
@@ -304,12 +305,12 @@ class BaseProject(Project):
             choices=(
                 'hasura/graphql-engine:v2.14.0',
                 'hasura/graphql-engine:v2.14.0',
-                # 'hasura/graphql-engine:v2.15.0-beta.1',
+                'hasura/graphql-engine:v2.15.0-beta.1',
             ),
             comments=(
-                f'tested with DipDup {__version__}',
-                'latest',
-                # 'beta',
+                f'tested with DipDup {minor_version}',
+                'latest stable',
+                'latest beta',
             ),
         ),
         NotifyQuestion(

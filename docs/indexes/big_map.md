@@ -1,5 +1,7 @@
 # `big_map` index
 
+Big maps are lazy structures allowing to access and update only exact keys. Gas costs for these operations doesn't depend on the size of a big map, but you can't iterate over it's keys onchain.
+
 `big_map` index allows querying only updates of specific big maps. In some cases, it can drastically reduce the amount of data transferred and thus indexing speed compared to fetching all operations.
 
 ```yaml
