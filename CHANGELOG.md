@@ -9,12 +9,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - index: New index kind `operation_unfiltered`.
+- index: New filters for `token_transfer` index.
 
 ### Fixed
 
-- cli: Configure package logger in addition to `dipdup` one.
+- cli: Fixed missing log messages from `ctx.logger`.
 - database: Fixed crash when using F expressions inside versioned transactions.
-- project: Fixed options in DipDup version question.
+- project: Fixed outdated options in DipDup version question.
 - tzkt: Fixed deserializing `EventData` model.
 
 ## [6.2.0] - 2022-10-12

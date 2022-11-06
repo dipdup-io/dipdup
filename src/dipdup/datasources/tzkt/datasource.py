@@ -123,14 +123,12 @@ class MessageBuffer:
         levels = range(channel_level, message_level, -1)
         for level in levels:
             if level not in self._messages:
-                self._logger.info("Level %s is not buffered, can't avoid rollback", level)
                 return False
 
             for i, message in enumerate(self._messages[level]):
                 if message.type == type_:
                     del self._messages[level][i]
 
-        self._logger.info('All rolled back levels are buffered, no action required')
         return True
 
     def yield_from(self) -> Generator[BufferedMessage, None, None]:
@@ -790,7 +788,10 @@ class TzktDatasource(IndexDatasource):
 
             # NOTE: Try to process rollback automatically, emit if failed
             elif tzkt_type == TzktMessageType.REORG:
-                if not self._buffer.rollback(type_, channel_level, message_level):
+                if self._buffer.rollback(type_, channel_level, message_level):
+                    self._logger.info('Rolled back blocks were dropped from realtime message buffer')
+                else:
+                    self._logger.info('Rolled back are not buffered; proceeding to database rollback')
                     await self.emit_rollback(type_, channel_level, message_level)
 
             else:
