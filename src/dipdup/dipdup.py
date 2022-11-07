@@ -306,28 +306,20 @@ class IndexDispatcher:
                 self._logger.debug('%s: level is too low, skipping', index_name)
 
             else:
-                self._logger.debug('%s: unprocessed', index_name)
+                self._logger.debug('%s: affected', index_name)
                 affected_indexes.add(index_name)
-
-        self._logger.info(
-            '%s/%s indexes affected',
-            len(affected_indexes),
-            len(self._indexes),
-        )
-
-        if not affected_indexes:
-            self._logger.info('`%s` rollback complete', channel)
-            return
 
         hook_name = 'on_index_rollback'
         for index_name in affected_indexes:
-            self._logger.warning("`%s`: can't process, firing `%s` hook", index_name, hook_name)
+            self._logger.warning('`%s` index is affected by rollback; firing `%s` hook', index_name, hook_name)
             await self._ctx.fire_hook(
                 hook_name,
                 index=self._indexes[index_name],
                 from_level=from_level,
                 to_level=to_level,
             )
+
+        self._logger.info('`%s` rollback complete', channel)
 
 
 class DipDup:
