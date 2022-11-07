@@ -173,6 +173,11 @@ database:
   kind: sqlite
   path: demo-tzbtc-transfers.sqlite3
 
+contracts:
+  tzbtc_mainnet:
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: tzbtc
+
 datasources:
   tzkt:
     kind: tzkt
@@ -184,6 +189,7 @@ indexes:
     datasource: tzkt
     handlers:
       - callback: on_token_transfer
+        contract: tzbtc_mainnet
 </code></pre>
 <p>Callback receives <code>TokenTransferData</code> model that optionally contains the transfer sender, receiver, amount, and token metadata.</p>
 <pre><code class="language-python">from decimal import Decimal
