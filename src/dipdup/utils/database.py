@@ -38,6 +38,7 @@ _logger = logging.getLogger('dipdup.database')
 _truncate_schema_path = Path(__file__).parent.parent / 'sql' / 'truncate_schema.sql'
 
 DEFAULT_CONNECTION_NAME = 'default'
+HEAD_STATUS_TIMEOUT = 3 * 60
 
 
 def get_connection() -> BaseDBAsyncClient:
@@ -146,7 +147,7 @@ async def execute_sql(
 
         if not supported:
             raise DatabaseEngineError(
-                msg=f"Can't execute SQL query `{path}`: not supported",
+                msg=f"Can't execute SQL script `{path}`: not supported",
                 kind='sqlite',
                 required='postgres',
             )
@@ -186,7 +187,6 @@ async def execute_sql_query(
 async def generate_schema(
     conn: BaseDBAsyncClient,
     name: str,
-    head_status_timeout: int,
 ) -> None:
     if isinstance(conn, SqliteClient):
         await Tortoise.generate_schemas()
@@ -196,7 +196,8 @@ async def generate_schema(
 
         # NOTE: Create a view for monitoring head status
         sql_path = Path(__file__).parent.parent / 'sql' / 'dipdup_head_status.sql'
-        await execute_sql(conn, sql_path, head_status_timeout)
+        # TODO: Configurable interval
+        await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
     else:
         raise NotImplementedError(f'`{conn.__class__.__name__}` is not supported')
 

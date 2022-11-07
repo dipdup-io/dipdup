@@ -434,11 +434,10 @@ class DipDup:
             except KeyError:
                 await self._ctx.reindex(ReindexingReason.schema_modified)
 
-        # NOTE: Call even if Schema is present; there may be new tables
+        # NOTE: Call even if Schema is present to create new tables
         await generate_schema(
             conn,
             schema_name,
-            self._config.advanced.head_status_timeout,
         )
         schema_hash = get_schema_hash(conn)
 

@@ -27,10 +27,10 @@ class ConfigTest(IsolatedAsyncioTestCase):
         self.assertIsInstance(config, DipDupConfig)
         self.assertEqual(
             config.contracts['HEN_minter'],
-            config.indexes['hen_mainnet'].handlers[0].pattern[0].destination,
+            config.indexes['hen_mainnet'].handlers[0].pattern[0].destination,  # type: ignore
         )
-        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].callback_fn, Callable)
-        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)
+        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].callback_fn, Callable)  # type: ignore
+        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)  # type: ignore
 
     async def test_subscriptions(self) -> None:
         config = DipDupConfig.load([self.path])
@@ -76,7 +76,7 @@ class ConfigTest(IsolatedAsyncioTestCase):
         with open(tmp, 'w') as f:
             f.write(config.dump())
 
-        config = DipDupConfig.load([tmp], environment=False)
+        config = DipDupConfig.load([Path(tmp)], environment=False)
         config.initialize()
 
     async def test_secrets(self) -> None:

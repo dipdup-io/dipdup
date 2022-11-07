@@ -643,7 +643,6 @@ async def schema_init(ctx) -> None:
         await generate_schema(
             conn,
             config.database.schema_name,
-            config.advanced.head_status_timeout,
         )
 
     _logger.info('Schema initialized')
