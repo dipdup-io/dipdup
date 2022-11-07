@@ -886,7 +886,7 @@ class OperationIndexConfig(IndexConfig):
 
     :param kind: always `operation`
     :param handlers: List of indexer handlers
-    :param types: types of transaction to fetch
+    :param types: Types of transaction to fetch
     :param contracts: Aliases of contracts being indexed in `contracts` section
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at (DipDup will terminate at this level)

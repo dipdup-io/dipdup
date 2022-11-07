@@ -436,7 +436,7 @@ http: HTTP client configuration</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> – always <cite>operation</cite></p></li>
 <li><p><strong>handlers</strong> – List of indexer handlers</p></li>
-<li><p><strong>types</strong> – types of transaction to fetch</p></li>
+<li><p><strong>types</strong> – Types of transaction to fetch</p></li>
 <li><p><strong>contracts</strong> – Aliases of contracts being indexed in <cite>contracts</cite> section</p></li>
 <li><p><strong>first_level</strong> – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> – Level to stop indexing at (DipDup will terminate at this level)</p></li>

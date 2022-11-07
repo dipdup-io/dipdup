@@ -791,7 +791,7 @@ class TzktDatasource(IndexDatasource):
                 if self._buffer.rollback(type_, channel_level, message_level):
                     self._logger.info('Rolled back blocks were dropped from realtime message buffer')
                 else:
-                    self._logger.info('Rolled back are not buffered; proceeding to database rollback')
+                    self._logger.info('Rolled back blocks are not buffered; proceeding to database rollback')
                     await self.emit_rollback(type_, channel_level, message_level)
 
             else:
