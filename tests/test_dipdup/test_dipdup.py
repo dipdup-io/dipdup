@@ -40,7 +40,7 @@ class IndexStateTest(IsolatedAsyncioTestCase):
         config_path = Path(__file__).parent.parent / 'integration_tests' / name
         self.config = DipDupConfig.load([config_path])
 
-        self.new_hash = 'dd4a0a2dd0fc02cf95c67682e99b97131a4d7fde3fba731f76ced09f2d186bd0'
+        self.new_hash = '98858ec743f2c84ef9505ccefa2235fc6bb9e9b209b14b2028dd4650eaf96756'
 
     async def test_first_run(self) -> None:
         async with AsyncExitStack() as stack:

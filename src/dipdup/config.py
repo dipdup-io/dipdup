@@ -271,7 +271,6 @@ class TzktDatasourceConfig(NameMixin):
     url: str = DEFAULT_TZKT_URL
     http: HTTPConfig | None = None
     buffer_size: int = 0
-    head_timeout: int = 3 * 60
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url)
