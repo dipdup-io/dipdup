@@ -49,7 +49,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 - Crash reporting MUST be opt-in (disabled by default) both in config and project templates.
 - Sentry events and crash reports MUST NOT contain any sensitive information (IP addresses, hostnames, etc.)
-- DipDup SHOULD NOT perform network requests to APIs not defined in config as datasources.
+- DipDup SHOULD NOT perform network requests to APIs not defined in config as datasources. Current exceptions: GitHub.
 
 ## Docker images
 

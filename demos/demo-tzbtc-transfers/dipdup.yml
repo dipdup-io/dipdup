@@ -5,6 +5,11 @@ database:
   kind: sqlite
   path: demo-tzbtc-transfers.sqlite3
 
+contracts:
+  tzbtc_mainnet:
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: tzbtc
+
 datasources:
   tzkt:
     kind: tzkt
@@ -16,3 +21,4 @@ indexes:
     datasource: tzkt
     handlers:
       - callback: on_token_transfer
+        contract: tzbtc_mainnet

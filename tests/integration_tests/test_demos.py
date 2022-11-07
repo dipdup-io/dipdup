@@ -107,10 +107,10 @@ class TestDemos:
     @pytest.mark.parametrize(
         'config_file, expected_holders, expected_balance',
         [
-            ('tzbtc_transfers.yml', 115, '-91396645150.66341801'),
-            ('tzbtc_transfers_2.yml', 67, '-22379464893.89105268'),
-            ('tzbtc_transfers_3.yml', 506, '-0.00000044'),
-            ('tzbtc_transfers_4.yml', 50, '-0.00000001'),
+            ('tzbtc_transfers.yml', 4, '-0.01912431'),
+            ('tzbtc_transfers_2.yml', 12, '0.26554711'),
+            ('tzbtc_transfers_3.yml', 9, '0.15579888'),
+            ('tzbtc_transfers_4.yml', 2, '-0.00767376'),
         ],
     )
     async def test_tzbtc_transfers(self, config_file, expected_holders, expected_balance) -> None:
