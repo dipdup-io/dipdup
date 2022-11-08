@@ -1,0 +1,173 @@
+@startuml
+
+<style>
+label {
+HorizontalAlignment center
+FontSize 13
+}
+
+card {
+HorizontalAlignment center
+}
+
+database {
+HorizontalAlignment center
+}
+
+</style>
+
+skinparam linetype ortho
+skinparam maxMessageSize 100
+
+
+file dipdup[
+<b>dipdup.yml</b>
+]
+
+label steps[
+Expand env variables
+Resolve aliases (contracts, datasources)
+Expand templates
+Validate
+]
+
+frame config[
+<b>config</b>
+]
+
+card generator[
+<b>Code Generator</b>
+]
+
+label generate_types_handlers [
+Generates types and handlers
+]
+
+file types_handlers[
+<b>Types & handlers</b>
+]
+
+card index_dispatcher[
+<b>Index Dispatcher</b>
+
+Stores an extendable list of indexes.
+
+Sequentially transfers control to the next 
+index in an infinite loop and is responsible
+for spawning new indexes.
+]
+
+label new_instance[
+Creates new instance
+]
+
+label new_instance_2[
+Creates new instance
+]
+
+card datasource[
+<b>Datasource</b>
+
+Stores internal subscriptions and
+aggregates them. Manages incoming
+feed and routes data updates for each
+internal subscription.
+
+Also acts as a convenient REST
+wrapper (parses TzKT responses)
+
+Maintains WS state — handlers 
+reconnections and stores feed start
+level
+]
+
+cloud tzkt[
+TzKT API
+]
+
+label execute [
+Executes
+]
+
+card index[
+<b>Index</b>
+
+Encapsulates:
+- Index config
+- Index state
+- Operation queue (WS)
+- Operation cache (REST)
+
+Handlers:
+- switching between sync/realtime modes
+- atomic updates (be level)
+- pattern matching
+]
+
+label places_operations[
+Places operations (WS) in queue (async)
+]
+
+label subscribes_queries[
+Subscribes to operations
+Queries historical operations (sync)
+]
+
+label loads_handlers[
+Loads handlers
+]
+
+label state_indexes_data[
+Writes state and 
+indexed data
+]
+
+label requests_state_data[
+Requests state and data
+]
+
+database db[
+<b>Database</b>
+
+Index states
+Runtime index configs
+Indexed data
+]
+
+dipdup -- steps
+steps --> config
+
+config --> generator
+
+generator -down- generate_types_handlers
+generate_types_handlers -down-> types_handlers
+
+config -> index_dispatcher
+index_dispatcher - new_instance
+new_instance -> datasource
+
+
+tzkt <-down-> datasource : WS
+tzkt <-down- datasource : REST
+
+index_dispatcher -right- execute
+execute -> index
+index_dispatcher -down- new_instance_2
+new_instance_2 --> index
+
+datasource -down- places_operations
+places_operations -down-> index
+datasource -down- subscribes_queries
+index <-right- subscribes_queries
+
+index -> loads_handlers
+types_handlers <-right- loads_handlers
+'loads_handlers -> types_handlers
+
+db -up- requests_state_data
+requests_state_data -up-> index
+
+db <-left- state_indexes_data
+state_indexes_data -up- index
+
+@enduml
