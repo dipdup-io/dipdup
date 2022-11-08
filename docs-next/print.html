@@ -1685,12 +1685,22 @@ if __name__ == '__main__':
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext.execute_sql">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext.execute_sql" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext.execute_sql" title="Permalink to this definition">¶</a></dt>
 <dd><p>Executes SQL script(s) with given name.</p>
 <p>If the <cite>name</cite> path is a directory, all <cite>.sql</cite> scripts within it will be executed in alphabetical order.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>name</strong> – File or directory within project’s <cite>sql</cite> directory</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dipdup.context.DipDupContext.execute_sql_query">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_sql_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext.execute_sql_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes SQL query with given name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – SQL query name within <cite>&lt;project&gt;/sql</cite> directory</p>
 </dd>
 </dl>
 </dd></dl>
@@ -4237,13 +4247,19 @@ templates:
 <h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-net/dipdup/compare/6.2.0...HEAD">Unreleased</a></a></h2>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
 <ul>
+<li>context: Added <code>execute_sql_query</code> method to run queries from <code>sql</code> project directory.</li>
+<li>context: <code>execute_sql</code> method now accepts arbitrary arguments to format SQL script (unsafe, use with caution)</li>
 <li>index: New index kind <code>operation_unfiltered</code>.</li>
 <li>index: New filters for <code>token_transfer</code> index.</li>
 </ul>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
 <li>cli: Fixed missing log messages from <code>ctx.logger</code>.</li>
+<li>cli: Configure package logger in addition to <code>dipdup</code> one.</li>
+<li>context: Fixed <code>execute_sql</code> method crashes when the path is a file.</li>
 <li>database: Fixed crash when using F expressions inside versioned transactions.</li>
+<li>http: Fixed caching datasource responses to <code>replay_path</code> if set.</li>
+<li>http: Adjusted per-datasource default config values.</li>
 <li>project: Fixed outdated options in DipDup version question.</li>
 <li>tzkt: Fixed deserializing <code>EventData</code> model.</li>
 </ul>
