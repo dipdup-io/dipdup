@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- codegen: Better PEP 8 compatibility of generated callbacks.
 - cli: Fixed missing log messages from `ctx.logger`.
 - cli: Configure package logger in addition to `dipdup` one.
 - context: Fixed `execute_sql` method crashes when the path is a file.
