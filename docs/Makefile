@@ -27,6 +27,13 @@ docs:
 	tail -n '+35' _build/html/context-reference.html | head -n '-63' > include/context-reference.md
 	mdbook build  --dest-dir=dist/docs
 
+# TODO: finish display svg in docs
+plantuml:
+	wget https://github.com/plantuml/plantuml/releases/download/v1.2022.12/plantuml.jar
+	java -jar plantuml.jar -v -tsvg assets/dipdup.wsd
+	...
+	rm plantuml.jar
+
 homepage:
 	npm i
 	npm run build
