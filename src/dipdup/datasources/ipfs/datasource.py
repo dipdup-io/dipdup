@@ -8,10 +8,11 @@ from dipdup.datasources.datasource import Datasource
 
 class IpfsDatasource(Datasource):
     _default_http_config = HTTPConfig(
-        retry_count=1,
+        retry_sleep=1,
+        retry_count=3,
     )
 
-    def __init__(self, url, http_config: Optional[HTTPConfig] = None) -> None:
+    def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
         super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = logging.getLogger('dipdup.ipfs')
 

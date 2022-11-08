@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Configure package logger in addition to `dipdup` one.
 - context: Fixed `execute_sql` method crashes when the path is a file.
 - database: Fixed crash when using F expressions inside versioned transactions.
+- http: Fixed caching datasource responses to `replay_path` if set.
+- http: Adjusted per-datasource default config values.
 - project: Fixed outdated options in DipDup version question.
 - tzkt: Fixed deserializing `EventData` model.
 

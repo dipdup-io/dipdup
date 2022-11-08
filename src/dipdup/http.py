@@ -217,17 +217,24 @@ class _HTTPGateway:
         request_hash = hashlib.sha256(
             f'{self._url} {method} {url} {kwargs}'.encode(),
         ).hexdigest()
-        replay_path = Path(self._config.replay_path) / request_hash
+        replay_path = Path(self._config.replay_path).joinpath(request_hash).expanduser()
 
         if replay_path.exists():
             if not replay_path.stat().st_size:
                 return None
-            return orjson.loads(replay_path.read_bytes())
+
+            content = replay_path.read_bytes()
+            with suppress(JSONDecodeError):
+                return orjson.loads(content)
+            return content
 
         response = await self._retry_request(method, url, weight, **kwargs)
-        with suppress(OSError):
-            replay_path.touch(exist_ok=True)
+        replay_path.touch(exist_ok=True)
+        if isinstance(response, bytes):
+            replay_path.write_bytes(response)
+        else:
             replay_path.write_bytes(orjson.dumps(response))
+
         return response
 
     async def request(
