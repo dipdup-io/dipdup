@@ -159,19 +159,19 @@ class ModelsTest(TestCase):
         storage = 750
         diffs = (
             {
-                "bigmap": 750,
-                "path": "",
-                "action": "add_key",
-                "content": {
-                    "hash": "exprtkgkbpybdsS74tPVswD6MjtdMZksCF8NQjSPScrq1Qk1m9mGzR",
-                    "key": {
-                        "sale_token": {
-                            "token_for_sale_address": "KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2",
-                            "token_for_sale_token_id": "0",
+                'bigmap': 750,
+                'path': '',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprtkgkbpybdsS74tPVswD6MjtdMZksCF8NQjSPScrq1Qk1m9mGzR',
+                    'key': {
+                        'sale_token': {
+                            'token_for_sale_address': 'KT1X6Z5dxjhmy7eMZPwCMrf5EagG9MgSS8G2',
+                            'token_for_sale_token_id': '0',
                         },
-                        "sale_seller": "tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb",
+                        'sale_seller': 'tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb',
                     },
-                    "value": "1000000",
+                    'value': '1000000',
                 },
             },
         )
@@ -189,27 +189,39 @@ class ModelsTest(TestCase):
         # Arrange
         storage = [164576, 164577, 164578]
         diffs = (
-            {"bigmap": 164578, "path": "2", "action": "allocate"},
+            {'bigmap': 164578, 'path': '2', 'action': 'allocate'},
             {
-                "bigmap": 164578,
-                "path": "2",
-                "action": "add_key",
-                "content": {"hash": "exprtsjEVVZk3Gm82U9wEs8kvwRiQwUT7zipJwvCeFMNsApe2tQ15s", "key": "hello", "value": "42"},
+                'bigmap': 164578,
+                'path': '2',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprtsjEVVZk3Gm82U9wEs8kvwRiQwUT7zipJwvCeFMNsApe2tQ15s',
+                    'key': 'hello',
+                    'value': '42',
+                },
             },
             {
-                "bigmap": 164578,
-                "path": "2",
-                "action": "add_key",
-                "content": {"hash": "exprv9qnaSha415Hm49U3YxG2Q3EAyhabvky3avPRGG8AX9Nk69SbN", "key": "hi", "value": "100500"},
+                'bigmap': 164578,
+                'path': '2',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprv9qnaSha415Hm49U3YxG2Q3EAyhabvky3avPRGG8AX9Nk69SbN',
+                    'key': 'hi',
+                    'value': '100500',
+                },
             },
-            {"bigmap": 164577, "path": "1", "action": "allocate"},
+            {'bigmap': 164577, 'path': '1', 'action': 'allocate'},
             {
-                "bigmap": 164577,
-                "path": "1",
-                "action": "add_key",
-                "content": {"hash": "exprvNX6heZJnVkgZf8Xvq9DKEJE3mazxE69KxVSFxGi2RYQqNpKWz", "key": "test", "value": "123"},
+                'bigmap': 164577,
+                'path': '1',
+                'action': 'add_key',
+                'content': {
+                    'hash': 'exprvNX6heZJnVkgZf8Xvq9DKEJE3mazxE69KxVSFxGi2RYQqNpKWz',
+                    'key': 'test',
+                    'value': '123',
+                },
             },
-            {"bigmap": 164576, "path": "0", "action": "allocate"},
+            {'bigmap': 164576, 'path': '0', 'action': 'allocate'},
         )
         operation_data = get_operation_data(storage, diffs)
 

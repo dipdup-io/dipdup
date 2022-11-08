@@ -16,4 +16,4 @@ jobs:
       major: False
 ```
 
-If you're not familiar with the crontab syntax, there's an online service [crontab.guru](https://crontab.guru/) that will help you build the desired expression.
+If you're unfamiliar with the crontab syntax, an online service [crontab.guru](https://crontab.guru/) will help you build the desired expression.

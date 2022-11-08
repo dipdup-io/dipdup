@@ -4,6 +4,7 @@ from os import environ as env
 from typing import List
 
 import pytest
+from tortoise.expressions import F
 
 import demo_domains.models as domains_models
 import demo_hic_et_nunc.models as hen_models
@@ -361,3 +362,59 @@ async def test_update_prefetch() -> None:
 
         model_updates = await ModelUpdate.filter().count()
         assert model_updates == 3
+
+
+async def test_update_arithmetics() -> None:
+    config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
+    config.initialize()
+    dipdup = DipDup(config)
+    in_transaction = dipdup._transactions.in_transaction
+
+    async with AsyncExitStack() as stack:
+        await dipdup._set_up_database(stack)
+        await dipdup._set_up_transactions(stack)
+        await dipdup._set_up_hooks(set())
+        await dipdup._initialize_schema()
+
+        # NOTE: INSERT
+        async with in_transaction(level=1000, index='test'):
+            creator = hen_models.Holder(address='')
+            await creator.save()
+
+            for i in range(3):
+                await hen_models.Token(
+                    creator=creator,
+                    level=i,
+                    supply=i,
+                    timestamp=i,
+                ).save()
+
+        supply = await hen_models.Token.filter().values_list('supply', flat=True)
+        assert supply == [0, 1, 2]
+
+        model_updates = await ModelUpdate.filter().count()
+        assert model_updates == 4
+
+        # NOTE: UPDATE with arithmetics
+        async with in_transaction(level=1001, index='test'):
+            await hen_models.Token.filter().update(supply=F('supply') * 2)
+
+        supply = await hen_models.Token.filter().values_list('supply', flat=True)
+        assert supply == [0, 2, 4]
+
+        model_updates = await ModelUpdate.filter().count()
+        assert model_updates == 7
+
+        # NOTE: Rollback UPDATE with arithmetics
+        await HookContext.rollback(
+            self=dipdup._ctx,  # type: ignore
+            index='test',
+            from_level=1001,
+            to_level=1000,
+        )
+
+        supply = await hen_models.Token.filter().values_list('supply', flat=True)
+        assert supply == [0, 1, 2]
+
+        model_updates = await ModelUpdate.filter().count()
+        assert model_updates == 4

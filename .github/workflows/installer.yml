@@ -1,4 +1,5 @@
 name: Installer
+
 on:
   push:
     paths:
@@ -7,7 +8,7 @@ on:
       - '.github/workflows/installer.yml'
 
 jobs:
-  test:
+  installer:
     name: Installer
     runs-on: ubuntu-22.04
     steps:
@@ -33,3 +34,11 @@ jobs:
 
       - name: make lint
         run: cd dipdup-indexer; make lint
+
+      - name: Deploy scripts to GH Pages
+        if: contains(github.ref, 'master')
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./scripts
+          keep_files: true

@@ -139,9 +139,10 @@ class ConfigurationError(DipDupError):
 
 
 @dataclass(repr=False)
-class InvalidModelsError(ConfigurationError):
+class InvalidModelsError(DipDupError):
     """Can't initialize database, `models.py` module is invalid"""
 
+    msg: str
     model: Type[Model]
     field: Optional[str] = None
 
@@ -156,6 +157,27 @@ class InvalidModelsError(ConfigurationError):
             See https://docs.dipdup.io/getting-started/defining-models
             See https://docs.dipdup.io/config/database
             See https://docs.dipdup.io/advanced/internal-models
+        """
+
+
+@dataclass(repr=False)
+class DatabaseEngineError(DipDupError):
+    """Some of the features are not supported with the current database engine"""
+
+    msg: str
+    kind: str
+    required: str
+
+    def _help(self) -> str:
+        return f"""
+            {self.msg}
+
+              database: `{self.kind}`
+              required: `{self.required}`
+
+            See https://docs.dipdup.io/deployment/database-engines
+            See https://docs.dipdup.io/advanced/sql
+            See https://docs.dipdup.io/config/database
         """
 
 

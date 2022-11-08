@@ -68,7 +68,7 @@ def ask(msg: str, default: bool, quiet: bool) -> bool:
 
 # NOTE: DipDup has `tabulate` dep, don't use this one elsewhere
 def _tab(text: str, indent: int = 20) -> str:
-    return text + " " * (indent - len(text))
+    return text + ' ' * (indent - len(text))
 
 
 class DipDupEnvironment:
@@ -148,7 +148,7 @@ class DipDupEnvironment:
             return
 
         if sys.prefix != sys.base_prefix:
-            fail('pipx can\'t be installed in virtualenv, run `deactivate` and try again')
+            fail("pipx can't be installed in virtualenv, run `deactivate` and try again")
 
         echo('Installing pipx')
         self.run_cmd('python3', '-m', 'pip', 'install', '--user', '-q', 'pipx')
@@ -207,7 +207,9 @@ def install(
         env._commands['poetry'] = which('poetry')
         pipx_poetry = True
 
-    done('Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available commands.')
+    done(
+        'Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available commands.'
+    )
 
 
 def uninstall(quiet: bool) -> NoReturn:

@@ -24,10 +24,13 @@ install:        ## Install project dependencies
 	`if [ "${DEV}" = "0" ]; then echo "--without dev"; fi`
 
 lint:           ## Lint with all tools
-	make isort black flake mypy
+	make isort blue flake mypy
 
 test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
+
+test-ci:
+	CI=true poetry run pytest -s -v tests
 
 docs:           ## Build docs
 	scripts/update_cookiecutter.py
@@ -39,8 +42,8 @@ docs:           ## Build docs
 isort:          ## Format with isort
 	poetry run isort src tests scripts
 
-black:          ## Format with black
-	poetry run black src tests scripts
+blue:          ## Format with blue
+	poetry run blue src tests scripts
 
 flake:          ## Lint with flake8
 	poetry run flakeheaven lint src tests scripts
@@ -92,6 +95,7 @@ release-major:  ## Release major version
 
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
+	rm -r ~/.cache/flakeheaven
 
 update:         ## Update dependencies, export requirements.txt
 	make install

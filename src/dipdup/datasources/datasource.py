@@ -48,10 +48,8 @@ class Datasource(HTTPGateway):
 
 class HttpDatasource(Datasource):
     _default_http_config = HTTPConfig(
-        retry_count=5,
         retry_sleep=1,
-        ratelimit_rate=0,
-        ratelimit_period=0,
+        retry_multiplier=1.1,
     )
 
     def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:

@@ -1,15 +1,11 @@
-import typing
 from contextlib import suppress
 from functools import lru_cache
 from itertools import groupby
 from typing import Any
-from typing import Dict
 from typing import Hashable
 from typing import Iterable
-from typing import List
 from typing import Literal
 from typing import Optional
-from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -17,6 +13,7 @@ from typing import cast
 
 from pydantic import BaseModel
 from pydantic import Extra
+from pydantic import Field
 from pydantic.dataclasses import dataclass
 from typing_extensions import get_args
 from typing_extensions import get_origin
@@ -36,7 +33,7 @@ class HeadSubscription(Subscription):
     type: Literal['head'] = 'head'
     method: Literal['SubscribeToHead'] = 'SubscribeToHead'
 
-    def get_request(self) -> Any:
+    def get_request(self) -> list[dict[str, str]]:
         return []
 
 
@@ -45,7 +42,7 @@ class OriginationSubscription(Subscription):
     type: Literal['origination'] = 'origination'
     method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
 
-    def get_request(self) -> Any:
+    def get_request(self) -> list[dict[str, Any]]:
         return [{'types': 'origination'}]
 
 
@@ -53,13 +50,13 @@ class OriginationSubscription(Subscription):
 class TransactionSubscription(Subscription):
     type: Literal['transaction'] = 'transaction'
     method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
-    address: Optional[str] = None
+    address: str | None = None
 
-    def get_request(self) -> Any:
-        request = [{'types': 'transaction'}]
+    def get_request(self) -> list[dict[str, Any]]:
+        request: dict[str, Any] = {'types': 'transaction'}
         if self.address:
-            request[0]['address'] = self.address
-        return request
+            request['address'] = self.address
+        return [request]
 
 
 # TODO: Add `ptr` and `tags` filters?
@@ -67,10 +64,10 @@ class TransactionSubscription(Subscription):
 class BigMapSubscription(Subscription):
     type: Literal['big_map'] = 'big_map'
     method: Literal['SubscribeToBigMaps'] = 'SubscribeToBigMaps'
-    address: Optional[str] = None
-    path: Optional[str] = None
+    address: str | None = None
+    path: str | None = None
 
-    def get_request(self) -> Any:
+    def get_request(self) -> list[dict[str, Any]]:
         if self.address and self.path:
             return [{'address': self.address, 'paths': [self.path]}]
         elif not self.address and not self.path:
@@ -83,19 +80,31 @@ class BigMapSubscription(Subscription):
 class TokenTransferSubscription(Subscription):
     type: Literal['token_transfer'] = 'token_transfer'
     method: Literal['SubscribeToTokenTransfers'] = 'SubscribeToTokenTransfers'
+    contract: str | None = None
+    token_id: int | None = None
+    from_: str | None = Field(None, alias='from')
+    to: str | None = None
 
-    # NOTE: No filters applied
-    def get_request(self) -> Any:
-        return [{}]
+    def get_request(self) -> list[dict[str, Any]]:
+        request: dict[str, Any] = {}
+        if self.token_id:
+            request['token_id'] = self.token_id
+        if self.contract:
+            request['contract'] = self.contract
+        if self.from_:
+            request['from'] = self.from_
+        if self.to:
+            request['to'] = self.to
+        return [request]
 
 
 @dataclass(frozen=True)
 class EventSubscription(Subscription):
     type: Literal['event'] = 'event'
     method: Literal['SubscribeToEvents'] = 'SubscribeToEvents'
-    address: Optional[str] = None
+    address: str | None = None
 
-    def get_request(self) -> Any:
+    def get_request(self) -> list[dict[str, Any]]:
         if self.address:
             return [{'address': self.address}]
 
@@ -107,15 +116,16 @@ def extract_root_outer_type(storage_type: Type[BaseModel]) -> T:
     root_field = storage_type.__fields__['__root__']
     if root_field.allow_none:
         # NOTE: Optional is a magic _SpecialForm
-        return cast(Type[BaseModel], typing.Optional[root_field.type_])
+        return cast(Type[BaseModel], Optional[root_field.type_])
 
     return root_field.outer_type_
 
 
+# FIXME: Unsafe cache size here and below
 @lru_cache(None)
 def is_array_type(storage_type: Type) -> bool:
     """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
-    # NOTE: List[...]
+    # NOTE: list[...]
     if get_origin(storage_type) == list:
         return True
 
@@ -141,7 +151,7 @@ def get_list_elt_type(list_type: Type[Any]) -> Type[Any]:
 
 
 @lru_cache(None)
-def get_dict_value_type(dict_type: Type[Any], key: Optional[str] = None) -> Type[Any]:
+def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[Any]:
     """Extract dict value types from field type"""
     # NOTE: Regular dict
     if get_origin(dict_type) == dict:
@@ -161,7 +171,7 @@ def get_dict_value_type(dict_type: Type[Any], key: Optional[str] = None) -> Type
         if key in (field.name, field.alias):
             # NOTE: Pydantic does not preserve outer_type_ for Optional
             if field.allow_none:
-                return cast(Type[Any], typing.Optional[field.type_])
+                return cast(Type[Any], Optional[field.type_])
             else:
                 return field.outer_type_
 
@@ -170,7 +180,7 @@ def get_dict_value_type(dict_type: Type[Any], key: Optional[str] = None) -> Type
 
 
 @lru_cache(None)
-def unwrap_union_type(union_type: Type) -> Tuple[bool, Tuple[Type, ...]]:
+def unwrap_union_type(union_type: Type) -> tuple[bool, tuple[Type, ...]]:
     """Check if the type is either optional or union and return arg types if so"""
     if get_origin(union_type) == Union:
         return True, get_args(union_type)
@@ -182,7 +192,7 @@ def unwrap_union_type(union_type: Type) -> Tuple[bool, Tuple[Type, ...]]:
     return False, ()
 
 
-def _preprocess_bigmap_diffs(diffs: Iterable[Dict[str, Any]]) -> Dict[int, Iterable[Dict[str, Any]]]:
+def _preprocess_bigmap_diffs(diffs: Iterable[dict[str, Any]]) -> dict[int, Iterable[dict[str, Any]]]:
     """Filter out bigmap diffs and group them by bigmap id"""
     return {
         k: tuple(v)
@@ -195,29 +205,29 @@ def _preprocess_bigmap_diffs(diffs: Iterable[Dict[str, Any]]) -> Dict[int, Itera
 
 def _apply_bigmap_diffs(
     bigmap_id: int,
-    bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]],
+    bigmap_diffs: dict[int, Iterable[dict[str, Any]]],
     is_array: bool,
-) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
+) -> Union[list[dict[str, Any]], dict[str, Any]]:
     """Apply bigmap diffs to the storage"""
     diffs = bigmap_diffs.get(bigmap_id, ())
     diffs_items = ((d['content']['key'], d['content']['value']) for d in diffs)
 
     if is_array:
-        list_storage: List[Dict[str, Any]] = []
+        list_storage: list[dict[str, Any]] = []
         for key, value in diffs_items:
             list_storage.append({'key': key, 'value': value})
         return list_storage
 
     else:
-        dict_storage: Dict[str, Any] = {}
+        dict_storage: dict[str, Any] = {}
         for key, value in diffs_items:
             dict_storage[key] = value
         return dict_storage
 
 
-def _process_storage(storage: Any, storage_type: T, bigmap_diffs: Dict[int, Iterable[Dict[str, Any]]]) -> Any:
+def _process_storage(storage: Any, storage_type: T, bigmap_diffs: dict[int, Iterable[dict[str, Any]]]) -> Any:
     """Replace bigmap pointers with actual data from diffs"""
-    # Check if Union or Optional (== Union[Any, NoneType])
+    # NOTE: First, check if the type is a Union. Remember, Optional is a Union too.
     is_union, arg_types = unwrap_union_type(storage_type)
     if is_union:
         # NOTE: We have no way but trying every possible branch until first success
@@ -225,7 +235,7 @@ def _process_storage(storage: Any, storage_type: T, bigmap_diffs: Dict[int, Iter
             with suppress(*IntrospectionError):
                 return _process_storage(storage, arg_type, bigmap_diffs)
 
-    # NOTE: Bigmap pointer, apply diffs
+    # NOTE: Value is a bigmap pointer; apply diffs according to array type
     if isinstance(storage, int) and type(storage) != storage_type:
         is_array = is_array_type(storage_type)
         storage = _apply_bigmap_diffs(storage, bigmap_diffs, is_array)
@@ -248,7 +258,7 @@ def _process_storage(storage: Any, storage_type: T, bigmap_diffs: Dict[int, Iter
             except IntrospectionError:
                 if not ignore:
                     raise
-
+    # NOTE: Leave others untouched
     else:
         pass
 

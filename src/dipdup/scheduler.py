@@ -33,10 +33,14 @@ def _verify_config(config: Dict[str, Any]) -> None:
     """Ensure that dict is a valid `apscheduler` config"""
     json_config = json.dumps(config)
     if 'apscheduler.executors.pool' in json_config:
-        raise ConfigurationError('`apscheduler.executors.pool` is not supported. If needed, create a pool inside a regular hook.')
+        raise ConfigurationError(
+            '`apscheduler.executors.pool` is not supported. If needed, create a pool inside a regular hook.'
+        )
     for key in config:
         if not key.startswith('apscheduler.'):
-            raise ConfigurationError('`advanced.scheduler` config keys must start with `apscheduler.`, see apscheduler library docs')
+            raise ConfigurationError(
+                '`advanced.scheduler` config keys must start with `apscheduler.`, see apscheduler library docs'
+            )
 
 
 class SchedulerManager:

@@ -12,6 +12,7 @@ Dataclasses are used in this module instead of BaseModel for historical reasons 
 something about ruamel.yaml compatibility), thus "...Mixin" classes to workaround the lack of proper
 inheritance.
 """
+from __future__ import annotations
 
 import hashlib
 import importlib
@@ -32,21 +33,15 @@ from pathlib import Path
 from pydoc import locate
 from typing import Any
 from typing import Callable
-from typing import Dict
 from typing import Generic
 from typing import Iterator
-from typing import List
-from typing import Optional
 from typing import Sequence
-from typing import Set
-from typing import Tuple
-from typing import Type
 from typing import TypeVar
-from typing import Union
 from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
+from pydantic import Field
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -122,7 +117,7 @@ class SqliteDatabaseConfig:
         return f'{self.kind}://{self.path}'
 
     @property
-    def immune_tables(self) -> Set[str]:
+    def immune_tables(self) -> set[str]:
         return set()
 
     @property
@@ -153,20 +148,22 @@ class PostgresDatabaseConfig:
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
     password: str = field(default='', repr=False)
-    immune_tables: Set[str] = field(default_factory=set)
+    immune_tables: set[str] = field(default_factory=set)
     connection_timeout: int = 60
 
     @cached_property
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
-        connection_string = f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}?maxsize=1'
+        connection_string = (
+            f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}?maxsize=1'
+        )
         if self.schema_name != DEFAULT_POSTGRES_SCHEMA:
             connection_string += f'&schema={self.schema_name}'
         return connection_string
 
     @cached_property
-    def hasura_connection_parameters(self) -> Dict[str, Any]:
+    def hasura_connection_parameters(self) -> dict[str, Any]:
         return {
             'username': self.user,
             'password': self.password,
@@ -175,11 +172,11 @@ class PostgresDatabaseConfig:
             'port': self.port,
         }
 
-    @validator('immune_tables')
+    @validator('immune_tables', allow_reuse=True)
     def _valid_immune_tables(cls, v) -> None:
         for table in v:
             if table.startswith('dipdup'):
-                raise ConfigurationError('Tables with `dipdup` prefix can\'t be immune')
+                raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
         return v
 
 
@@ -198,17 +195,17 @@ class HTTPConfig:
     :param replay_path: Development-only option to replay HTTP requests from a file
     """
 
-    retry_count: Optional[int] = None
-    retry_sleep: Optional[float] = None
-    retry_multiplier: Optional[float] = None
-    ratelimit_rate: Optional[int] = None
-    ratelimit_period: Optional[int] = None
-    connection_limit: Optional[int] = None  # default 100
-    connection_timeout: Optional[int] = None  # default 60
-    batch_size: Optional[int] = None
-    replay_path: Optional[str] = None
+    retry_count: int | None = None         # default: inf
+    retry_sleep: float | None = None       # default: 1
+    retry_multiplier: float | None = None  # default: 1.25
+    ratelimit_rate: int | None = None
+    ratelimit_period: int | None = None
+    connection_limit: int | None = None    # default: 100
+    connection_timeout: int | None = None  # default: 60
+    batch_size: int | None = None
+    replay_path: str | None = None
 
-    def merge(self, other: Optional['HTTPConfig']) -> 'HTTPConfig':
+    def merge(self, other: HTTPConfig | None) -> 'HTTPConfig':
         """Set missing values from other config"""
         config = copy(self)
         if other:
@@ -221,7 +218,7 @@ class HTTPConfig:
 @dataclass
 class NameMixin:
     def __post_init_post_parse__(self) -> None:
-        self._name: Optional[str] = None
+        self._name: str | None = None
 
     @cached_property
     def name(self) -> str:
@@ -239,7 +236,7 @@ class ContractConfig(NameMixin):
     """
 
     address: str
-    typename: Optional[str] = None
+    typename: str | None = None
 
     def __hash__(self) -> int:
         return hash(f'{self.address}{self.typename or ""}')
@@ -272,7 +269,7 @@ class TzktDatasourceConfig(NameMixin):
 
     kind: Literal['tzkt']
     url: str = DEFAULT_TZKT_URL
-    http: Optional[HTTPConfig] = None
+    http: HTTPConfig | None = None
     buffer_size: int = 0
 
     def __hash__(self) -> int:
@@ -302,10 +299,10 @@ class CoinbaseDatasourceConfig(NameMixin):
     """
 
     kind: Literal['coinbase']
-    api_key: Optional[str] = None
-    secret_key: Optional[str] = None
-    passphrase: Optional[str] = None
-    http: Optional[HTTPConfig] = None
+    api_key: str | None = None
+    secret_key: str | None = None
+    passphrase: str | None = None
+    http: HTTPConfig | None = None
 
     def __hash__(self) -> int:
         return hash(self.kind)
@@ -324,7 +321,7 @@ class MetadataDatasourceConfig(NameMixin):
     kind: Literal['metadata']
     network: MetadataNetwork
     url: str = DEFAULT_METADATA_URL
-    http: Optional[HTTPConfig] = None
+    http: HTTPConfig | None = None
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url + self.network.value)
@@ -341,7 +338,7 @@ class IpfsDatasourceConfig(NameMixin):
 
     kind: Literal['ipfs']
     url: str = DEFAULT_IPFS_URL
-    http: Optional[HTTPConfig] = None
+    http: HTTPConfig | None = None
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url)
@@ -358,19 +355,19 @@ class HttpDatasourceConfig(NameMixin):
 
     kind: Literal['http']
     url: str
-    http: Optional[HTTPConfig] = None
+    http: HTTPConfig | None = None
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url)
 
 
-DatasourceConfigT = Union[
-    TzktDatasourceConfig,
-    CoinbaseDatasourceConfig,
-    MetadataDatasourceConfig,
-    IpfsDatasourceConfig,
-    HttpDatasourceConfig,
-]
+DatasourceConfigT = (
+    TzktDatasourceConfig
+    | CoinbaseDatasourceConfig
+    | MetadataDatasourceConfig
+    | IpfsDatasourceConfig
+    | HttpDatasourceConfig
+)
 
 
 @dataclass
@@ -378,11 +375,11 @@ class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 
     @abstractmethod
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         ...
 
     @abstractmethod
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         ...
 
     def format_imports(self, package: str) -> Iterator[str]:
@@ -400,12 +397,12 @@ class CodegenMixin(ABC):
             else:
                 yield f'{name}: {cls}'
 
-    def locate_arguments(self) -> Dict[str, Optional[Type]]:
+    def locate_arguments(self) -> dict[str, type | None]:
         """Try to resolve scope annotations for arguments"""
-        kwargs: Dict[str, Optional[Type[Any]]] = {}
+        kwargs: dict[str, type[Any] | None] = {}
         for name, cls in self.iter_arguments():
             cls = cls.split(' as ')[0]
-            kwargs[name] = cast(Optional[Type], locate(cls))
+            kwargs[name] = cast(type | None, locate(cls))
         return kwargs
 
 
@@ -420,7 +417,7 @@ class PatternConfig(CodegenMixin):
         cls,
         package: str,
         module_name: str,
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         return f'{package}.types.{module_name}.storage', storage_cls
 
@@ -430,8 +427,8 @@ class PatternConfig(CodegenMixin):
         package: str,
         module_name: str,
         entrypoint: str,
-        alias: Optional[str],
-    ) -> Tuple[str, str]:
+        alias: str | None,
+    ) -> tuple[str, str]:
         entrypoint = entrypoint.lstrip('_')
         parameter_module = pascal_to_snake(entrypoint)
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
@@ -441,7 +438,7 @@ class PatternConfig(CodegenMixin):
         return f'{package}.types.{module_name}.parameter.{parameter_module}', parameter_cls
 
     @classmethod
-    def format_untyped_operation_import(cls) -> Tuple[str, str]:
+    def format_untyped_operation_import(cls) -> tuple[str, str]:
         return 'dipdup.models', 'OperationData'
 
     @classmethod
@@ -449,7 +446,7 @@ class PatternConfig(CodegenMixin):
         cls,
         module_name: str,
         optional: bool,
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
             return f'{module_name}_origination', f'Optional[Origination[{storage_cls}]] = None'
@@ -461,8 +458,8 @@ class PatternConfig(CodegenMixin):
         module_name: str,
         entrypoint: str,
         optional: bool,
-        alias: Optional[str],
-    ) -> Tuple[str, str]:
+        alias: str | None,
+    ) -> tuple[str, str]:
         arg_name = pascal_to_snake(alias or entrypoint)
         entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(arg_name)}Parameter'
@@ -476,8 +473,8 @@ class PatternConfig(CodegenMixin):
         cls,
         transaction_idx: int,
         optional: bool,
-        alias: Optional[str],
-    ) -> Tuple[str, str]:
+        alias: str | None,
+    ) -> tuple[str, str]:
         arg_name = pascal_to_snake(alias or f'transaction_{transaction_idx}')
         if optional:
             return arg_name, 'Optional[OperationData] = None'
@@ -489,10 +486,10 @@ class StorageTypeMixin:
     """`storage_type_cls` field"""
 
     def __post_init_post_parse__(self) -> None:
-        self._storage_type_cls: Optional[Type[Any]] = None
+        self._storage_type_cls: type[Any] | None = None
 
     @cached_property
-    def storage_type_cls(self) -> Type[Any]:
+    def storage_type_cls(self) -> type[Any]:
         if self._storage_type_cls is None:
             raise ConfigInitializationException
         return self._storage_type_cls
@@ -504,22 +501,22 @@ class StorageTypeMixin:
         self.storage_type_cls = import_from(module_name, cls_name)
 
 
-T = TypeVar('T')
+ParentT = TypeVar('ParentT')
 
 
 @dataclass
-class ParentMixin(Generic[T]):
+class ParentMixin(Generic[ParentT]):
     """`parent` field for index and template configs"""
 
-    def __post_init_post_parse__(self: 'ParentMixin') -> None:
-        self._parent: Optional[T] = None
+    def __post_init_post_parse__(self: ParentMixin) -> None:
+        self._parent: ParentT | None = None
 
     @property
-    def parent(self) -> Optional[T]:
+    def parent(self) -> ParentT | None:
         return self._parent
 
     @parent.setter
-    def parent(self, value: T) -> None:
+    def parent(self, value: ParentT) -> None:
         self._parent = value
 
 
@@ -528,16 +525,16 @@ class ParameterTypeMixin:
     """`parameter_type_cls` field"""
 
     def __post_init_post_parse__(self) -> None:
-        self._parameter_type_cls: Optional[Type] = None
+        self._parameter_type_cls: type | None = None
 
     @property
-    def parameter_type_cls(self) -> Type:
+    def parameter_type_cls(self) -> type:
         if self._parameter_type_cls is None:
             raise ConfigInitializationException
         return self._parameter_type_cls
 
     @parameter_type_cls.setter
-    def parameter_type_cls(self, value: Type) -> None:
+    def parameter_type_cls(self, value: type) -> None:
         self._parameter_type_cls = value
 
     def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
@@ -556,7 +553,7 @@ class TransactionIdxMixin:
     """
 
     def __post_init_post_parse__(self) -> None:
-        self._transaction_idx: Optional[int] = None
+        self._transaction_idx: int | None = None
 
     @property
     def transaction_idx(self) -> int:
@@ -570,7 +567,9 @@ class TransactionIdxMixin:
 
 
 @dataclass
-class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, ParameterTypeMixin, TransactionIdxMixin):
+class OperationHandlerTransactionPatternConfig(
+    PatternConfig, StorageTypeMixin, ParameterTypeMixin, TransactionIdxMixin
+):
     """Operation handler pattern config
 
     :param type: always 'transaction'
@@ -582,11 +581,11 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
     """
 
     type: Literal['transaction'] = 'transaction'
-    source: Optional[Union[str, ContractConfig]] = None
-    destination: Optional[Union[str, ContractConfig]] = None
-    entrypoint: Optional[str] = None
+    source: str | ContractConfig | None = None
+    destination: str | ContractConfig | None = None
+    entrypoint: str | None = None
     optional: bool = False
-    alias: Optional[str] = None
+    alias: str | None = None
 
     def __post_init_post_parse__(self) -> None:
         StorageTypeMixin.__post_init_post_parse__(self)
@@ -595,7 +594,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.entrypoint:
             module_name = self.destination_contract_config.module_name
             yield 'dipdup.models', 'Transaction'
@@ -604,7 +603,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         else:
             yield self.format_untyped_operation_import()
 
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         if self.entrypoint:
             module_name = self.destination_contract_config.module_name
             yield self.format_operation_argument(module_name, self.entrypoint, self.optional, self.alias)
@@ -638,16 +637,16 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
     """
 
     type: Literal['origination'] = 'origination'
-    source: Optional[Union[str, ContractConfig]] = None
-    similar_to: Optional[Union[str, ContractConfig]] = None
-    originated_contract: Optional[Union[str, ContractConfig]] = None
+    source: str | ContractConfig | None = None
+    similar_to: str | ContractConfig | None = None
+    originated_contract: str | ContractConfig | None = None
     optional: bool = False
     strict: bool = False
-    alias: Optional[str] = None
+    alias: str | None = None
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
-        self._matched_originations: List[str] = []
+        self._matched_originations: list[str] = []
 
     def origination_processed(self, address: str) -> bool:
         if address in self._matched_originations:
@@ -666,7 +665,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
             )
         )
 
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.source:
             module_name = self.source_contract_config.module_name
         elif self.similar_to:
@@ -674,11 +673,13 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
         elif self.originated_contract:
             module_name = self.originated_contract_config.module_name
         else:
-            raise ConfigurationError('Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields')
+            raise ConfigurationError(
+                'Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields'
+            )
         yield 'dipdup.models', 'Origination'
         yield self.format_storage_import(package, module_name)
 
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield self.format_origination_argument(self.module_name, self.optional)
 
     @cached_property
@@ -757,10 +758,7 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig'], kind='handler'):
         ParentMixin.__post_init_post_parse__(self)
 
 
-OperationHandlerPatternConfigT = Union[
-    OperationHandlerOriginationPatternConfig,
-    OperationHandlerTransactionPatternConfig,
-]
+OperationHandlerPatternConfigT = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
 
 
 @dataclass
@@ -771,14 +769,14 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
     :param pattern: Filters to match operation groups
     """
 
-    pattern: Tuple[OperationHandlerPatternConfigT, ...]
+    pattern: tuple[OperationHandlerPatternConfigT, ...]
 
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         for pattern in self.pattern:
             yield from pattern.iter_imports(package)
 
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
 
         arg_names: set[str] = set()
@@ -793,14 +791,26 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
+class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'OperationData'
+        yield package, 'models as models'
+
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'origination', 'OperationData'
+
+
+@dataclass
 class TemplateValuesMixin:
     """`template_values` field"""
 
     def __post_init_post_parse__(self) -> None:
-        self._template_values: Dict[str, str] = {}
+        self._template_values: dict[str, str] = {}
 
     @cached_property
-    def template_values(self) -> Dict[str, str]:
+    def template_values(self) -> dict[str, str]:
         return self._template_values
 
 
@@ -809,7 +819,7 @@ class SubscriptionsMixin:
     """`subscriptions` field"""
 
     def __post_init_post_parse__(self) -> None:
-        self.subscriptions: Set[Subscription] = set()
+        self.subscriptions: set[Subscription] = set()
 
 
 @dataclass
@@ -825,7 +835,7 @@ class IndexTemplateConfig(NameMixin):
 
     kind = 'template'
     template: str
-    values: Dict[str, str]
+    values: dict[str, str]
     first_level: int = 0
     last_level: int = 0
 
@@ -838,7 +848,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
     """
 
     kind: str
-    datasource: Union[str, TzktDatasourceConfig]
+    datasource: str | TzktDatasourceConfig
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
@@ -864,7 +874,7 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         return hashlib.sha256(config_json.encode()).hexdigest()
 
     @classmethod
-    def strip(cls, config_dict: Dict[str, Any]) -> None:
+    def strip(cls, config_dict: dict[str, Any]) -> None:
         """Strip config from tunables that are not needed for hash calculation."""
         config_dict['datasource'].pop('http', None)
         config_dict['datasource'].pop('buffer_size', None)
@@ -882,23 +892,23 @@ class OperationIndexConfig(IndexConfig):
     :param last_level: Level to stop indexing at (DipDup will terminate at this level)
     """
 
-    kind: Literal["operation"]
-    handlers: Tuple[OperationHandlerConfig, ...]
-    types: Tuple[OperationType, ...] = (OperationType.transaction,)
-    contracts: List[Union[str, ContractConfig]] = field(default_factory=list)
+    kind: Literal['operation']
+    handlers: tuple[OperationHandlerConfig, ...]
+    types: tuple[OperationType, ...] = (OperationType.transaction,)
+    contracts: list[str | ContractConfig] = field(default_factory=list)
 
     first_level: int = 0
     last_level: int = 0
 
     @classmethod
-    def strip(cls, config_dict: Dict[str, Any]) -> None:
+    def strip(cls, config_dict: dict[str, Any]) -> None:
         super().strip(config_dict)
         for handler in config_dict['handlers']:
             for item in handler['pattern']:
                 item.pop('alias', None)
 
     @cached_property
-    def entrypoint_filter(self) -> Set[Optional[str]]:
+    def entrypoint_filter(self) -> set[str | None]:
         """Set of entrypoints to filter operations with before an actual matching"""
         entrypoints = set()
         for handler_config in self.handlers:
@@ -908,7 +918,7 @@ class OperationIndexConfig(IndexConfig):
         return set(entrypoints)
 
     @cached_property
-    def address_filter(self) -> Set[str]:
+    def address_filter(self) -> set[str]:
         """Set of addresses (any field) to filter operations with before an actual matching"""
         addresses = set()
         for handler_config in self.handlers:
@@ -928,6 +938,24 @@ class OperationIndexConfig(IndexConfig):
 
 
 @dataclass
+class OperationUnfilteredIndexConfig(IndexConfig):
+    """Operation index config
+
+    :param kind: always `operation_unfiltered`
+    :param handlers: List of indexer handlers
+    :param first_level: Level to start indexing from
+    :param last_level: Level to stop indexing at (DipDup will terminate at this level)
+    """
+
+    kind: Literal['operation_unfiltered']
+    handlers: tuple[OperationUnfilteredHandlerConfig, ...]
+    types: tuple[OperationType, ...] = (OperationType.origination,)
+
+    first_level: int = 0
+    last_level: int = 0
+
+
+@dataclass
 class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     """Big map handler config
 
@@ -935,33 +963,33 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     :param path: Path to big map (alphanumeric string with dots)
     """
 
-    contract: Union[str, ContractConfig]
+    contract: str | ContractConfig
     path: str
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
-        self._key_type_cls: Optional[Type[Any]] = None
-        self._value_type_cls: Optional[Type[Any]] = None
+        self._key_type_cls: type[Any] | None = None
+        self._value_type_cls: type[Any] | None = None
 
     @classmethod
-    def format_key_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
+    def format_key_import(cls, package: str, module_name: str, path: str) -> tuple[str, str]:
         key_cls = f'{snake_to_pascal(path)}Key'
         key_module = f'{pascal_to_snake(path)}_key'
         return f'{package}.types.{module_name}.big_map.{key_module}', key_cls
 
     @classmethod
-    def format_value_import(cls, package: str, module_name: str, path: str) -> Tuple[str, str]:
+    def format_value_import(cls, package: str, module_name: str, path: str) -> tuple[str, str]:
         value_cls = f'{snake_to_pascal(path)}Value'
         value_module = f'{pascal_to_snake(path)}_value'
         return f'{package}.types.{module_name}.big_map.{value_module}', value_cls
 
     @classmethod
-    def format_big_map_diff_argument(cls, path: str) -> Tuple[str, str]:
+    def format_big_map_diff_argument(cls, path: str) -> tuple[str, str]:
         key_cls = f'{snake_to_pascal(path)}Key'
         value_cls = f'{snake_to_pascal(path)}Value'
         return pascal_to_snake(path), f'BigMapDiff[{key_cls}, {value_cls}]'
 
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'BigMapDiff'
         yield package, 'models as models'
@@ -969,7 +997,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         yield self.format_key_import(package, self.contract_config.module_name, self.path)
         yield self.format_value_import(package, self.contract_config.module_name, self.path)
 
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
         yield self.format_big_map_diff_argument(self.path)
 
@@ -980,13 +1008,13 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         return self.contract
 
     @cached_property
-    def key_type_cls(self) -> Type:
+    def key_type_cls(self) -> type:
         if self._key_type_cls is None:
             raise ConfigInitializationException
         return self._key_type_cls
 
     @cached_property
-    def value_type_cls(self) -> Type:
+    def value_type_cls(self) -> type:
         if self._value_type_cls is None:
             raise ConfigInitializationException
         return self._value_type_cls
@@ -1018,8 +1046,8 @@ class BigMapIndexConfig(IndexConfig):
     """
 
     kind: Literal['big_map']
-    datasource: Union[str, TzktDatasourceConfig]
-    handlers: Tuple[BigMapHandlerConfig, ...]
+    datasource: str | TzktDatasourceConfig
+    handlers: tuple[BigMapHandlerConfig, ...]
 
     skip_history: SkipHistory = SkipHistory.never
 
@@ -1027,11 +1055,11 @@ class BigMapIndexConfig(IndexConfig):
     last_level: int = 0
 
     @cached_property
-    def contracts(self) -> Set[ContractConfig]:
+    def contracts(self) -> set[ContractConfig]:
         return {handler_config.contract_config for handler_config in self.handlers}
 
     @classmethod
-    def strip(cls, config_dict: Dict[str, Any]) -> None:
+    def strip(cls, config_dict: dict[str, Any]) -> None:
         super().strip(config_dict)
         config_dict.pop('skip_history', None)
 
@@ -1040,12 +1068,12 @@ class BigMapIndexConfig(IndexConfig):
 class HeadHandlerConfig(HandlerConfig, kind='handler'):
     """Head block handler config"""
 
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'HeadBlockData'
         yield package, 'models as models'
 
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
         yield 'head', 'HeadBlockData'
 
@@ -1055,18 +1083,31 @@ class HeadIndexConfig(IndexConfig):
     """Head block index config"""
 
     kind: Literal['head']
-    datasource: Union[str, TzktDatasourceConfig]
-    handlers: Tuple[HeadHandlerConfig, ...]
+    datasource: str | TzktDatasourceConfig
+    handlers: tuple[HeadHandlerConfig, ...]
+
+    @property
+    def first_level(self) -> int:
+        return 0
+
+    @property
+    def last_level(self) -> int:
+        return 0
 
 
 @dataclass
 class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    contract: str | ContractConfig | None = None
+    token_id: int | None = None
+    from_: str | ContractConfig | None = Field(default=None, alias='from')
+    to: str | ContractConfig | None = None
+
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'TokenTransferData'
         yield package, 'models as models'
 
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
         yield 'token_transfer', 'TokenTransferData'
 
@@ -1076,8 +1117,8 @@ class TokenTransferIndexConfig(IndexConfig):
     """Token index config"""
 
     kind: Literal['token_transfer']
-    datasource: Union[str, TzktDatasourceConfig]
-    handlers: Tuple[TokenTransferHandlerConfig, ...] = field(default_factory=tuple)
+    datasource: str | TzktDatasourceConfig
+    handlers: tuple[TokenTransferHandlerConfig, ...] = field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0
@@ -1085,12 +1126,12 @@ class TokenTransferIndexConfig(IndexConfig):
 
 @dataclass
 class EventHandlerConfig(HandlerConfig, kind='handler'):
-    contract: Union[str, ContractConfig]
+    contract: str | ContractConfig
     tag: str
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
-        self._event_type_cls: Optional[Type[Any]] = None
+        self._event_type_cls: type[Any] | None = None
 
     @cached_property
     def contract_config(self) -> ContractConfig:
@@ -1099,7 +1140,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
         return self.contract
 
     @cached_property
-    def event_type_cls(self) -> Type:
+    def event_type_cls(self) -> type:
         if self._event_type_cls is None:
             raise ConfigInitializationException
         return self._event_type_cls
@@ -1113,7 +1154,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
         cls_name = snake_to_pascal(f'{tag}_payload')
         self._event_type_cls = import_from(module_name, cls_name)
 
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'Event'
         yield package, 'models as models'
@@ -1123,7 +1164,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
         module_name = self.contract_config.module_name
         yield f'{package}.types.{module_name}.event.{event_module}', event_cls
 
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         event_cls = snake_to_pascal(self.tag + '_payload')
         yield 'ctx', 'HandlerContext'
         yield 'event', f'Event[{event_cls}]'
@@ -1131,7 +1172,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
 @dataclass
 class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
-    contract: Union[str, ContractConfig]
+    contract: str | ContractConfig
 
     @cached_property
     def contract_config(self) -> ContractConfig:
@@ -1139,47 +1180,39 @@ class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
             raise ConfigInitializationException
         return self.contract
 
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'UnknownEvent'
         yield package, 'models as models'
 
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
         yield 'event', 'UnknownEvent'
 
 
-EventHandlerConfigT = Union[
-    EventHandlerConfig,
-    UnknownEventHandlerConfig,
-]
+EventHandlerConfigT = EventHandlerConfig | UnknownEventHandlerConfig
 
 
 @dataclass
 class EventIndexConfig(IndexConfig):
     kind: Literal['event']
-    datasource: Union[str, TzktDatasourceConfig]
-    handlers: Tuple[EventHandlerConfigT, ...] = field(default_factory=tuple)
+    datasource: str | TzktDatasourceConfig
+    handlers: tuple[EventHandlerConfigT, ...] = field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0
 
 
-ResolvedIndexConfigT = Union[
-    OperationIndexConfig,
-    BigMapIndexConfig,
-    HeadIndexConfig,
-    TokenTransferIndexConfig,
-    EventIndexConfig,
-]
-IndexConfigT = Union[
-    ResolvedIndexConfigT,
-    IndexTemplateConfig,
-]
-HandlerPatternConfigT = Union[
-    OperationHandlerOriginationPatternConfig,
-    OperationHandlerTransactionPatternConfig,
-]
+ResolvedIndexConfigT = (
+    OperationIndexConfig
+    | BigMapIndexConfig
+    | HeadIndexConfig
+    | TokenTransferIndexConfig
+    | OperationUnfilteredIndexConfig
+    | EventIndexConfig
+)
+IndexConfigT = ResolvedIndexConfigT | IndexTemplateConfig
+HandlerPatternConfigT = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
 
 
 @dataclass
@@ -1198,14 +1231,14 @@ class HasuraConfig:
     """
 
     url: str
-    admin_secret: Optional[str] = field(default=None, repr=False)
+    admin_secret: str | None = field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
     select_limit: int = 100
     allow_aggregations: bool = True
     camel_case: bool = False
     rest: bool = True
-    http: Optional[HTTPConfig] = None
+    http: HTTPConfig | None = None
 
     @validator('url', allow_reuse=True)
     def _valid_url(cls, v):
@@ -1215,7 +1248,7 @@ class HasuraConfig:
         return v.rstrip('/')
 
     @cached_property
-    def headers(self) -> Dict[str, str]:
+    def headers(self) -> dict[str, str]:
         """Headers to include with every request"""
         if self.admin_secret:
             return {'X-Hasura-Admin-Secret': self.admin_secret}
@@ -1233,11 +1266,11 @@ class JobConfig(NameMixin):
     :param args: Arguments to pass to the hook
     """
 
-    hook: Union[str, 'HookConfig']
-    crontab: Optional[str] = None
-    interval: Optional[int] = None
+    hook: str | HookConfig
+    crontab: str | None = None
+    interval: int | None = None
     daemon: bool = False
-    args: Dict[str, Any] = field(default_factory=dict)
+    args: dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self) -> None:
         schedules_enabled = sum(int(bool(x)) for x in (self.crontab, self.interval, self.daemon))
@@ -1268,10 +1301,10 @@ class SentryConfig:
     """
 
     dsn: str = ''
-    environment: Optional[str] = None
-    server_name: Optional[str] = None
-    release: Optional[str] = None
-    user_id: Optional[str] = None
+    environment: str | None = None
+    server_name: str | None = None
+    release: str | None = None
+    user_id: str | None = None
     debug: bool = False
 
 
@@ -1297,15 +1330,15 @@ class HookConfig(CallbackMixin, kind='hook'):
     :param atomic: Wrap hook in a single database transaction
     """
 
-    args: Dict[str, str] = field(default_factory=dict)
+    args: dict[str, str] = field(default_factory=dict)
     atomic: bool = False
 
-    def iter_arguments(self) -> Iterator[Tuple[str, str]]:
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HookContext'
         for name, annotation in self.args.items():
             yield name, annotation.split('.')[-1]
 
-    def iter_imports(self, package: str) -> Iterator[Tuple[str, str]]:
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HookContext'
         for _, annotation in self.args.items():
             with suppress(ValueError):
@@ -1362,8 +1395,8 @@ class AdvancedConfig:
     :param crash_reporting: Enable crash reporting
     """
 
-    reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
-    scheduler: Optional[Dict[str, Any]] = None
+    reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
+    scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
     merge_subscriptions: bool = False
@@ -1395,24 +1428,24 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    datasources: Dict[str, DatasourceConfigT] = field(default_factory=dict)
-    database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
-    contracts: Dict[str, ContractConfig] = field(default_factory=dict)
-    indexes: Dict[str, IndexConfigT] = field(default_factory=dict)
-    templates: Dict[str, ResolvedIndexConfigT] = field(default_factory=dict)
-    jobs: Dict[str, JobConfig] = field(default_factory=dict)
-    hooks: Dict[str, HookConfig] = field(default_factory=dict)
-    hasura: Optional[HasuraConfig] = None
-    sentry: Optional[SentryConfig] = None
-    prometheus: Optional[PrometheusConfig] = None
+    datasources: dict[str, DatasourceConfigT] = field(default_factory=dict)
+    database: SqliteDatabaseConfig | PostgresDatabaseConfig = SqliteDatabaseConfig(kind='sqlite')
+    contracts: dict[str, ContractConfig] = field(default_factory=dict)
+    indexes: dict[str, IndexConfigT] = field(default_factory=dict)
+    templates: dict[str, ResolvedIndexConfigT] = field(default_factory=dict)
+    jobs: dict[str, JobConfig] = field(default_factory=dict)
+    hooks: dict[str, HookConfig] = field(default_factory=dict)
+    hasura: HasuraConfig | None = None
+    sentry: SentryConfig | None = None
+    prometheus: PrometheusConfig | None = None
     advanced: AdvancedConfig = AdvancedConfig()
-    custom: Dict[str, Any] = field(default_factory=dict)
+    custom: dict[str, Any] = field(default_factory=dict)
     logging: LoggingValues = LoggingValues.default
 
     def __post_init_post_parse__(self) -> None:
-        self.paths: List[Path] = []
-        self.environment: Dict[str, str] = {}
-        self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
+        self.paths: list[Path] = []
+        self.environment: dict[str, str] = {}
+        self._callback_patterns: dict[str, list[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
         self._contract_addresses = {contract.address for contract in self.contracts.values()}
 
     @cached_property
@@ -1447,13 +1480,13 @@ class DipDupConfig:
     @classmethod
     def load(
         cls,
-        paths: List[Path],
+        paths: list[Path],
         environment: bool = True,
     ) -> 'DipDupConfig':
         yaml = YAML(typ='base')
 
-        json_config: Dict[str, Any] = {}
-        config_environment: Dict[str, str] = {}
+        json_config: dict[str, Any] = {}
+        config_environment: dict[str, str] = {}
         for path in paths:
             raw_config = cls._load_raw_config(path)
 
@@ -1525,24 +1558,15 @@ class DipDupConfig:
             LoggingValues.verbose: logging.DEBUG,
         }[self.logging]
         logging.getLogger('dipdup').setLevel(level)
+        # NOTE: Hack for some mocked tests
+        if isinstance(self.package, str):
+            logging.getLogger(self.package).setLevel(level)
 
     def _import_index(self, index_config: IndexConfigT) -> None:
         _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
 
         if isinstance(index_config, IndexTemplateConfig):
             raise ConfigInitializationException
-        elif isinstance(index_config, OperationIndexConfig):
-            pass
-        elif isinstance(index_config, BigMapIndexConfig):
-            pass
-        elif isinstance(index_config, HeadIndexConfig):
-            pass
-        elif isinstance(index_config, TokenTransferIndexConfig):
-            pass
-        elif isinstance(index_config, EventIndexConfig):
-            pass
-        else:
-            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
         self._import_index_types(index_config)
         self._import_index_callbacks(index_config)
@@ -1559,7 +1583,7 @@ class DipDupConfig:
         for index_config in self.indexes.values():
             self._import_index(index_config)
 
-    def add_index(self, name: str, template: str, values: Dict[str, str]) -> None:
+    def add_index(self, name: str, template: str, values: dict[str, str]) -> None:
         if name in self.indexes:
             raise IndexAlreadyExistsError(self, name)
         template_config = IndexTemplateConfig(
@@ -1588,9 +1612,9 @@ class DipDupConfig:
         return '#' not in line or line.lstrip()[0] != '#'
 
     @classmethod
-    def _substitute_env_variables(cls, raw_config: str) -> Tuple[str, Dict[str, str]]:
+    def _substitute_env_variables(cls, raw_config: str) -> tuple[str, dict[str, str]]:
         _logger.debug('Substituting environment variables')
-        environment: Dict[str, str] = {}
+        environment: dict[str, str] = {}
 
         for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
             variable, default_value = match.group('var_name'), match.group('default_value')
@@ -1626,7 +1650,9 @@ class DipDupConfig:
             if not isinstance(datasource_config, TzktDatasourceConfig):
                 continue
             if datasource_config.buffer_size and self.advanced.rollback_depth:
-                raise ConfigurationError(f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`')
+                raise ConfigurationError(
+                    f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
+                )
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
@@ -1638,7 +1664,9 @@ class DipDupConfig:
             raw_template = re.sub(value_regex, value, raw_template)
 
         if missing_value := re.search(r'<*>', raw_template):
-            raise ConfigurationError(f'`{template_config.name}` index config is missing required template value `{missing_value}`')
+            raise ConfigurationError(
+                f'`{template_config.name}` index config is missing required template value `{missing_value}`'
+            )
 
         json_template = json.loads(raw_template)
         new_index_config = template.__class__(**json_template)
@@ -1657,6 +1685,9 @@ class DipDupConfig:
 
     def _resolve_links(self) -> None:
         for index_config in self.indexes.values():
+            if isinstance(index_config, IndexTemplateConfig):
+                raise ConfigInitializationException('Index templates must be resolved first')
+
             self._resolve_index_links(index_config)
             # TODO: Not exactly link resolving, move somewhere else
             self._resolve_index_subscriptions(index_config)
@@ -1665,7 +1696,7 @@ class DipDupConfig:
             if isinstance(job_config.hook, str):
                 hook_config = self.get_hook(job_config.hook)
                 if job_config.daemon and hook_config.atomic:
-                    raise ConfigurationError('`HookConfig.atomic` and `JobConifg.daemon` flags are mutually exclusive')
+                    raise ConfigurationError('`HookConfig.atomic` and `JobConfig.daemon` flags are mutually exclusive')
                 job_config.hook = hook_config
 
     def _resolve_index_subscriptions(self, index_config: IndexConfigT) -> None:
@@ -1699,7 +1730,23 @@ class DipDupConfig:
             index_config.subscriptions.add(HeadSubscription())
 
         elif isinstance(index_config, TokenTransferIndexConfig):
-            index_config.subscriptions.add(TokenTransferSubscription())
+            if self.advanced.merge_subscriptions:
+                index_config.subscriptions.add(TokenTransferSubscription())
+            else:
+                for handler_config in index_config.handlers:
+                    contract = (
+                        handler_config.contract.address if isinstance(handler_config.contract, ContractConfig) else None
+                    )
+                    from_ = handler_config.from_.address if isinstance(handler_config.from_, ContractConfig) else None
+                    to = handler_config.to.address if isinstance(handler_config.to, ContractConfig) else None
+                    index_config.subscriptions.add(
+                        TokenTransferSubscription(
+                            contract=contract, from_=from_, to=to, token_id=handler_config.token_id
+                        )
+                    )
+
+        elif isinstance(index_config, OperationUnfilteredIndexConfig):
+            index_config.subscriptions.add(TransactionSubscription())
 
         elif isinstance(index_config, EventIndexConfig):
             if self.advanced.merge_subscriptions:
@@ -1712,13 +1759,13 @@ class DipDupConfig:
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-    def _resolve_index_links(self, index_config: IndexConfigT) -> None:
+    def _resolve_index_links(self, index_config: ResolvedIndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
+        # NOTE: Each index must have a corresponding (currently) TzKT datasource
+        if isinstance(index_config.datasource, str):
+            index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
         if isinstance(index_config, OperationIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             if index_config.contracts is not None:
                 for i, contract in enumerate(index_config.contracts):
                     if isinstance(contract, str):
@@ -1746,9 +1793,6 @@ class DipDupConfig:
                             pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 
         elif isinstance(index_config, BigMapIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             for handler in index_config.handlers:
                 handler.parent = index_config
                 # TODO: Verify callback uniqueness
@@ -1757,23 +1801,21 @@ class DipDupConfig:
                     handler.contract = self.get_contract(handler.contract)
 
         elif isinstance(index_config, HeadIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             for head_handler_config in index_config.handlers:
                 head_handler_config.parent = index_config
 
         elif isinstance(index_config, TokenTransferIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
 
-        elif isinstance(index_config, EventIndexConfig):
-            if isinstance(index_config.datasource, str):
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+                if isinstance(token_transfer_handler_config.contract, str):
+                    token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
 
+        elif isinstance(index_config, OperationUnfilteredIndexConfig):
+            for operation_unfiltered_handler_config in index_config.handlers:
+                operation_unfiltered_handler_config.parent = index_config
+
+        elif isinstance(index_config, EventIndexConfig):
             for event_handler_config in index_config.handlers:
                 event_handler_config.parent = index_config
 
@@ -1784,9 +1826,9 @@ class DipDupConfig:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     def _set_names(self) -> None:
-        # TODO: Forbid reusing names?
+        # TODO: Forbid reusing names between sections?
         named_config_sections = cast(
-            Tuple[Dict[str, NameMixin], ...],
+            tuple[dict[str, NameMixin], ...],
             (
                 self.contracts,
                 self.datasources,
@@ -1812,7 +1854,9 @@ class DipDupConfig:
                     if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                         if pattern_config.entrypoint:
                             module_name = pattern_config.destination_contract_config.module_name
-                            pattern_config.initialize_parameter_cls(self.package, module_name, pattern_config.entrypoint)
+                            pattern_config.initialize_parameter_cls(
+                                self.package, module_name, pattern_config.entrypoint
+                            )
                             pattern_config.initialize_storage_cls(self.package, module_name)
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                         module_name = pattern_config.module_name
