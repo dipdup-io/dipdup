@@ -31,6 +31,7 @@ packages = [
 python = ">=3.10,<3.11"
 
 asyncpg = "0.26.0"
+datamodel-code-generator = "0.13.1"
 pydantic = "1.9.2"
 pysignalr = "0.1.2"
 tortoise-orm = "0.19.2"
