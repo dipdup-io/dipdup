@@ -96,6 +96,8 @@ class FormattedLogger(Logger):
 
 def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
     """Iterate over files in a directory. Or a single file. Sort alphabetically, filter by extension, skip empty files."""
+    if not path.exists() and ext:
+        path = Path(f'{path}{ext}')
     if not path.exists():
         return
     elif path.is_file():

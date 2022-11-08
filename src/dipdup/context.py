@@ -63,7 +63,8 @@ from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
-from dipdup.utils.database import execute_sql_scripts
+from dipdup.utils.database import execute_sql
+from dipdup.utils.database import execute_sql_query
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import wipe_schema
 
@@ -160,14 +161,21 @@ class DipDupContext:
         """
         await self._callbacks._fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
-    async def execute_sql(self, name: str) -> None:
+    async def execute_sql(self, name: str, *args: Any, **kwargs) -> None:
         """Executes SQL script(s) with given name.
 
         If the `name` path is a directory, all `.sql` scripts within it will be executed in alphabetical order.
 
         :param name: File or directory within project's `sql` directory
         """
-        await self._callbacks.execute_sql(self, name)
+        await self._callbacks.execute_sql(self, name, *args, **kwargs)
+
+    async def execute_sql_query(self, name: str, *args: Any) -> Any:
+        """Executes SQL query with given name
+
+        :param name: SQL query name within `<project>/sql` directory
+        """
+        return await self._callbacks.execute_sql_query(self, name, *args)
 
     async def restart(self) -> None:
         """Restart process and continue indexing."""
@@ -592,16 +600,28 @@ class CallbackManager:
         else:
             pending_hooks.append(_wrapper())
 
-    async def execute_sql(self, ctx: 'DipDupContext', name: str) -> None:
-        """Execute SQL included with project"""
-        subpackages = name.split('.')
-        sql_path = Path(ctx.config.package_path, 'sql', *subpackages)
-        if not sql_path.exists():
-            raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
-
-        # NOTE: SQL scripts are not wrapped in transaction
+    async def execute_sql(
+        self,
+        ctx: 'DipDupContext',
+        name: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """Execute SQL script included with the project"""
+        sql_path = self._get_sql_path(ctx, name)
         conn = get_connection()
-        await execute_sql_scripts(conn, sql_path)
+        await execute_sql(conn, sql_path, *args, **kwargs)
+
+    async def execute_sql_query(
+        self,
+        ctx: 'DipDupContext',
+        name: str,
+        *values: Any,
+    ) -> Any:
+        """Execute SQL query included with the project"""
+        sql_path = self._get_sql_path(ctx, name)
+        conn = get_connection()
+        return await execute_sql_query(conn, sql_path, *values)
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:
@@ -645,3 +665,11 @@ class CallbackManager:
             return self._hooks[name]
         except KeyError as e:
             raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
+
+    def _get_sql_path(self, ctx: 'DipDupContext', name: str) -> Path:
+        subpackages = name.split('.')
+        sql_path = Path(ctx.config.package_path, 'sql', *subpackages)
+        if not sql_path.exists():
+            raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
+
+        return sql_path

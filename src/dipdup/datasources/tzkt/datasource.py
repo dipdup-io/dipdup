@@ -141,8 +141,6 @@ class MessageBuffer:
 
 class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
-        retry_sleep=1,
-        retry_multiplier=1.1,
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,

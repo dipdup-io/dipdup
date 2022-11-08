@@ -640,7 +640,10 @@ async def schema_init(ctx) -> None:
 
         # NOTE: It's not necessary a reindex, but it's safe to execute built-in scripts to (re)create views.
         conn = get_connection()
-        await generate_schema(conn, config.database.schema_name)
+        await generate_schema(
+            conn,
+            config.database.schema_name,
+        )
 
     _logger.info('Schema initialized')
 

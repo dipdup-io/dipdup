@@ -195,13 +195,13 @@ class HTTPConfig:
     :param replay_path: Development-only option to replay HTTP requests from a file
     """
 
-    retry_count: int | None = None
-    retry_sleep: float | None = None
-    retry_multiplier: float | None = None
+    retry_count: int | None = None         # default: inf
+    retry_sleep: float | None = None       # default: 1
+    retry_multiplier: float | None = None  # default: 1.25
     ratelimit_rate: int | None = None
     ratelimit_period: int | None = None
-    connection_limit: int | None = None  # default 100
-    connection_timeout: int | None = None  # default 60
+    connection_limit: int | None = None    # default: 100
+    connection_timeout: int | None = None  # default: 60
     batch_size: int | None = None
     replay_path: str | None = None
 

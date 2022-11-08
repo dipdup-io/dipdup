@@ -8,13 +8,19 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- context: Added `execute_sql_query` method to run queries from `sql` project directory.
+- context: `execute_sql` method now accepts arbitrary arguments to format SQL script (unsafe, use with caution)
 - index: New index kind `operation_unfiltered`.
 - index: New filters for `token_transfer` index.
 
 ### Fixed
 
 - cli: Fixed missing log messages from `ctx.logger`.
+- cli: Configure package logger in addition to `dipdup` one.
+- context: Fixed `execute_sql` method crashes when the path is a file.
 - database: Fixed crash when using F expressions inside versioned transactions.
+- http: Fixed caching datasource responses to `replay_path` if set.
+- http: Adjusted per-datasource default config values.
 - project: Fixed outdated options in DipDup version question.
 - tzkt: Fixed deserializing `EventData` model.
 

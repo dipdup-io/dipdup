@@ -29,15 +29,16 @@ from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
 from tortoise.utils import get_schema_sql
 
-from dipdup.exceptions import FeatureAvailabilityError
+from dipdup.exceptions import DatabaseEngineError
 from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.database')
-_truncate_schema_path = Path(__file__).parent / 'truncate_schema.sql'
+_truncate_schema_path = Path(__file__).parent.parent / 'sql' / 'truncate_schema.sql'
 
 DEFAULT_CONNECTION_NAME = 'default'
+HEAD_STATUS_TIMEOUT = 3 * 60
 
 
 def get_connection() -> BaseDBAsyncClient:
@@ -132,39 +133,73 @@ async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
     await conn.execute_script(_truncate_schema_path.read_text())
 
 
-async def execute_sql_scripts(conn: BaseDBAsyncClient, path: str | Path) -> None:
-    if isinstance(path, str):
-        path = Path(path)
+async def execute_sql(
+    conn: BaseDBAsyncClient,
+    path: Path,
+    *args: Any,
+    **kwargs: Any,
+) -> None:
+    # NOTE: Fail later, directory can be empty
+    supported = True if isinstance(conn, AsyncpgDBClient) else False
 
-    supported = isinstance(conn, AsyncpgDBClient)
+    for file in iter_files(path, ext='.sql'):
+        _logger.info('Executing script `%s`', file.name)
 
-    for file in iter_files(path, '.sql'):
         if not supported:
-            raise FeatureAvailabilityError(
-                feature='sql_scripts',
-                reason='SQL scripts are not supported for SQLite database.',
+            raise DatabaseEngineError(
+                msg=f"Can't execute SQL script `{path}`: not supported",
+                kind='sqlite',
+                required='postgres',
             )
 
-        _logger.info('Executing `%s`', file.name)
         sql = file.read()
+        # NOTE: Generally it's a very bad idea to format SQL scripts with arbitrary arguments.
+        # NOTE: We trust package developers here.
+        sql = sql.format(*args, **kwargs)
         for statement in sqlparse.split(sql):
             # NOTE: Ignore empty statements
             with suppress(AttributeError):
                 await conn.execute_script(statement)
 
 
-async def generate_schema(conn: BaseDBAsyncClient, name: str) -> None:
+async def execute_sql_query(
+    conn: BaseDBAsyncClient,
+    path: Path,
+    *values: Any,
+) -> Any:
+    # NOTE: Fail later, directory can be empty
+    supported = True if isinstance(conn, AsyncpgDBClient) else False
+
+    for file in iter_files(path, ext='.sql'):
+        _logger.info('Executing query `%s`', file.name)
+
+        if not supported:
+            raise DatabaseEngineError(
+                msg=f"Can't execute SQL query `{path}`: not supported",
+                kind='sqlite',
+                required='postgres',
+            )
+
+        sql = file.read()
+        return await conn.execute_query(sql, list(values))
+
+
+async def generate_schema(
+    conn: BaseDBAsyncClient,
+    name: str,
+) -> None:
     if isinstance(conn, SqliteClient):
         await Tortoise.generate_schemas()
     elif isinstance(conn, AsyncpgDBClient):
         await create_schema(conn, name)
         await Tortoise.generate_schemas()
 
-        # NOTE: Apply built-in scripts before project ones
-        sql_path = Path(__file__).parent.parent / 'sql' / 'on_reindex'
-        await execute_sql_scripts(conn, sql_path)
+        # NOTE: Create a view for monitoring head status
+        sql_path = Path(__file__).parent.parent / 'sql' / 'dipdup_head_status.sql'
+        # TODO: Configurable interval
+        await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f'`{conn.__class__.__name__}` is not supported')
 
 
 async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:

@@ -87,9 +87,10 @@ class Field:
 
 class HasuraGateway(HTTPGateway):
     _default_http_config = HTTPConfig(
+        # NOTE: Fail fast; most Hasura errors are 500's that won't fix by themselves.
         # NOTE: Does not apply to initial healthcheck
-        retry_count=3,
         retry_sleep=1,
+        retry_count=3,
     )
 
     def __init__(
