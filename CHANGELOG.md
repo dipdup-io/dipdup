@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+## [6.3.0] - 2022-11-09
+
 ### Added
 
 - context: Added `execute_sql_query` method to run queries from `sql` project directory.
@@ -15,9 +17,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- codegen: Better PEP 8 compatibility of generated callbacks.
 - cli: Fixed missing log messages from `ctx.logger`.
 - cli: Configure package logger in addition to `dipdup` one.
+- codegen: Better PEP 8 compatibility of generated callbacks.
 - context: Fixed `execute_sql` method crashes when the path is a file.
 - database: Fixed crash when using F expressions inside versioned transactions.
 - http: Fixed caching datasource responses to `replay_path` if set.
@@ -811,7 +813,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-net/dipdup/compare/6.2.0...HEAD
+[Unreleased]: https://github.com/dipdup-net/dipdup/compare/6.3.0...HEAD
+[6.3.0]: https://github.com/dipdup-net/dipdup/compare/6.2.0...6.3.0
 [6.2.0]: https://github.com/dipdup-net/dipdup/compare/6.1.3...6.2.0
 [6.1.3]: https://github.com/dipdup-net/dipdup/compare/6.1.2...6.1.3
 [6.1.2]: https://github.com/dipdup-net/dipdup/compare/6.1.1...6.1.2
