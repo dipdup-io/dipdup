@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-## [6.3.0] - 2022-11-09
+## [6.3.0] - 2022-11-10
 
 ### Added
 
@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Configure package logger in addition to `dipdup` one.
 - codegen: Better PEP 8 compatibility of generated callbacks.
 - context: Fixed `execute_sql` method crashes when the path is a file.
+- database: Fixed crash with `CannotConnectNowError` before establishing the database connection.
 - database: Fixed crash when using F expressions inside versioned transactions.
 - http: Fixed caching datasource responses to `replay_path` if set.
 - http: Adjusted per-datasource default config values.
