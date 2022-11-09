@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v3
         id: cache-replays
         with:
-          path: ~/.cache/dipdup/replays
+          path: /home/runner/.cache/dipdup/replays
           key: dipdup-replays-${{ matrix.os }}-${{ matrix.arch }}
           restore-keys: dipdup-replays-${{ matrix.os }}-${{ matrix.arch }}
 
