@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - http: Adjusted per-datasource default config values.
 - project: Fixed outdated options in DipDup version question.
 - tzkt: Fixed deserializing `EventData` model.
+- tzkt: Fixed empty contract balance in the `amount` field.
 
 ## [6.2.0] - 2022-10-12
 

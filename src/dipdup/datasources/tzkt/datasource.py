@@ -877,6 +877,9 @@ class TzktDatasource(IndexDatasource):
         parameter_json = operation_json.get('parameter') or {}
         originated_contract_json = operation_json.get('originatedContract') or {}
 
+        if (amount := operation_json.get('contractBalance')) is None:
+            amount = operation_json.get('amount')
+
         entrypoint, parameter = parameter_json.get('entrypoint'), parameter_json.get('value')
         if target_json.get('address', '').startswith('KT1'):
             # NOTE: TzKT returns None for `default` entrypoint
@@ -898,7 +901,7 @@ class TzktDatasource(IndexDatasource):
             sender_address=sender_json.get('address'),
             target_address=target_json.get('address'),
             initiator_address=initiator_json.get('address'),
-            amount=operation_json.get('amount', operation_json.get('contractBalance')),
+            amount=amount,
             status=operation_json['status'],
             has_internals=operation_json.get('hasInternals'),
             sender_alias=operation_json['sender'].get('alias'),

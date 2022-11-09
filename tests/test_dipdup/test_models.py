@@ -375,3 +375,15 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj, YupanaStorage)
         self.assertIsInstance(storage_obj.storage.markets, dict)
         self.assertEqual(storage_obj.storage.markets['tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw'], ['0'])
+
+
+def _load_response(name: str) -> Any:
+    path = Path(__file__).parent / 'responses' / name
+    return json.loads(path.read_bytes())
+
+
+def test_origination_amount() -> None:
+    operations_json = _load_response('origination_amount.json')
+    operation = TzktDatasource.convert_operation(operations_json[0])
+
+    assert operation.amount == 31000000

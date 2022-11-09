@@ -1,0 +1,56 @@
+[
+    {
+        "type": "origination",
+        "id": 71515915681792,
+        "level": 1414413,
+        "timestamp": "2022-10-29T13:31:45Z",
+        "block": "BLtUaExwJnDyVJMAjseVhimNsQ5QCzr3ABDcCC5x9Hi4QyKtaA6",
+        "hash": "ooFPKF1FGeMBHyP8YDtrhTsWX6dodMYRpBiNSCE5Qgj4JZofJA2",
+        "counter": 397773,
+        "sender": {
+            "address": "tz1bgvq6y5RdjAUzBNNovqoAgBXv77dbkdhT"
+        },
+        "gasLimit": 12351,
+        "gasUsed": 12251,
+        "storageLimit": 17119,
+        "storageUsed": 16762,
+        "bakerFee": 17969,
+        "storageFee": 4190500,
+        "allocationFee": 64250,
+        "contractBalance": 31000000,
+        "code": [],
+        "storage": {
+            "lines": 194290,
+            "claims": 194287,
+            "events": 194289,
+            "entries": 194288,
+            "manager": "tz1bgvq6y5RdjAUzBNNovqoAgBXv77dbkdhT",
+            "metadata": 194291,
+            "maxEvents": "0",
+            "positions": 194292,
+            "precision": "1000000",
+            "nextLineId": "0",
+            "nextEntryId": "0",
+            "totalShares": "0",
+            "withdrawals": 194293,
+            "activeEvents": {},
+            "liquidityUnits": "0",
+            "nextPositionId": "0",
+            "entryLiquidityF": "0",
+            "entryLockPeriod": "0",
+            "isDepositPaused": false,
+            "proposedManager": "tz1bgvq6y5RdjAUzBNNovqoAgBXv77dbkdhT",
+            "activeLiquidityF": "0",
+            "nextWithdrawalId": "0",
+            "withdrawableLiquidityF": "0"
+        },
+        "diffs": [],
+        "status": "applied",
+        "originatedContract": {
+            "kind": "smart_contract",
+            "address": "KT18yRWV3SxjQXTHAmYMrsVCxapDjAyRc6NX",
+            "typeHash": 1717450189,
+            "codeHash": -1823060929
+        }
+    }
+]
