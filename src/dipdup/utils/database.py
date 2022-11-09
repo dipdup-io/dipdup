@@ -18,7 +18,7 @@ from typing import Type
 from typing import Union
 
 import sqlparse  # type: ignore
-from asyncpg import CannotConnectNowError
+from asyncpg import CannotConnectNowError  # type: ignore
 from tortoise import ForeignKeyFieldInstance
 from tortoise import Model as TortoiseModel
 from tortoise import ModuleType
