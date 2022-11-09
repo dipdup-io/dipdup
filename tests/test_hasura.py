@@ -1,8 +1,10 @@
+import sys
 from contextlib import AsyncExitStack
 from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 
-from docker.client import DockerClient  # type: ignore
+import pytest  # type: ignore
+from docker.client import DockerClient
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
@@ -12,6 +14,9 @@ from dipdup.exceptions import HasuraError
 from dipdup.hasura import HasuraGateway
 from dipdup.project import BaseProject
 from dipdup.utils.database import tortoise_wrapper
+
+if sys.platform != 'linux':
+    pytest.skip("Hasura tests doesn't work on macOS", allow_module_level=True)
 
 
 class HasuraTest(IsolatedAsyncioTestCase):
