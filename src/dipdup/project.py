@@ -100,9 +100,6 @@ class ChoiceQuestion(Question):
         cl.echo(table)
         return self.choices[super().prompt()]
 
-        value: int = super().prompt()
-        return self.choices[value]
-
 
 class JinjaAnswers(dict):
     def __getattr__(self, item):
