@@ -56,6 +56,7 @@ class TestDemos:
             assert swaps == 20
             assert trades == 24
 
+    @pytest.mark.skip(reason='FIXME: Huge replay')
     async def test_quipuswap(self) -> None:
         async with run_dipdup_demo('quipuswap.yml', 'demo_quipuswap'):
             trades = await demo_quipuswap.models.Trade.filter().count()
@@ -78,6 +79,7 @@ class TestDemos:
             assert auctions == 14
             assert bids == 44
 
+    @pytest.mark.skip(reason='FIXME: Huge replay')
     async def test_domains(self) -> None:
         async with run_dipdup_demo('domains.yml', 'demo_domains'):
             tlds = await demo_domains.models.TLD.filter().count()
@@ -86,6 +88,7 @@ class TestDemos:
             assert tlds == 1
             assert domains == 145
 
+    @pytest.mark.skip(reason='FIXME: Huge replay')
     async def test_domains_big_map(self) -> None:
         async with run_dipdup_demo('domains_big_map.yml', 'demo_domains_big_map'):
             tlds = await demo_domains_big_map.models.TLD.filter().count()
