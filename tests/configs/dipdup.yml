@@ -18,7 +18,7 @@ datasources:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
-      replay_path: ${REPLAY_PATH:-~/.cache/dipdup/replays}
+      replay_path: ~/.cache/dipdup/replays
 
 indexes:
   hen_mainnet:
