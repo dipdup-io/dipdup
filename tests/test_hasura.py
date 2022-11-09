@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 
 import pytest  # type: ignore
-from docker.client import DockerClient
+from docker.client import DockerClient  # type: ignore
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
