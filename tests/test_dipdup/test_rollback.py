@@ -1,9 +1,7 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
-from os import environ as env
 from typing import List
 
-import pytest
 from tortoise.expressions import F
 
 import demo_domains.models as domains_models
@@ -15,9 +13,6 @@ from dipdup.enums import IndexType
 from dipdup.models import Index
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
-
-if env.get('CI') == 'true':
-    pytest.skip('FIXME: pytest-xdist conflicts with TransactionManager injection', allow_module_level=True)
 
 
 async def test_model_updates() -> None:

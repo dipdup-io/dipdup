@@ -10,7 +10,6 @@ from datetime import timezone
 from decimal import Decimal
 from enum import Enum
 from functools import partial
-from os import environ as env
 from typing import Any
 from typing import AsyncIterator
 from typing import Awaitable
@@ -168,10 +167,6 @@ class TzktDatasource(IndexDatasource):
     async def __aenter__(self) -> None:
         try:
             await super().__aenter__()
-
-            # FIXME: Doesn't help much, tests still run against real TzKT instance
-            if env.get('CI') == 'true':
-                return
 
             protocol = await self.request('get', 'v1/protocols/current')
             category = 'self-hosted'
