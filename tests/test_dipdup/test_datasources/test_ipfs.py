@@ -14,8 +14,8 @@ class IpfsDatasourceTest(IsolatedAsyncioTestCase):
             ),
         )
         async with ipfs:
-            file = await ipfs.get('QmdCz7XGkBtd5DFmpDPDN3KFRmpkQHJsDgGiG16cgVbUYu')
-            self.assertEqual(file[:4].decode()[1:], 'PDF')
+            file = await ipfs.get('bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m')
+            self.assertEqual(file[:5].decode(), 'Hello')
 
             file = await ipfs.get('QmSgSC7geYH3Ae4SpUHy4KutxqNH9ESKBGXoCN4JQdbtEz/package.json')
             self.assertEqual(file['name'], 'json-buffer')
