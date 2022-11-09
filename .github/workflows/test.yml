@@ -37,7 +37,7 @@ jobs:
           cache: 'poetry'
 
       - name: Set up cache (replays)
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-replays
         with:
           path: ~/.cache/dipdup/replays
