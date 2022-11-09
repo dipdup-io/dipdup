@@ -211,7 +211,7 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertEqual(('fa12',), originations[0].originated_contract_tzips)
 
     async def test_on_operation_message_data(self) -> None:
-        json_path = Path(__file__).parent.parent / 'ftzfun.json'
+        json_path = Path(__file__).parent.parent / 'responses' / 'ftzfun.json'
         operations_json = json.loads(json_path.read_text())
 
         message = {'type': 1, 'state': 2, 'data': operations_json}

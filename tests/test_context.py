@@ -24,7 +24,7 @@ async def _create_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:
 
 class ReindexingTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.path = Path(__file__).parent / 'dipdup.yml'
+        self.path = Path(__file__).parent / 'configs' / 'dipdup.yml'
 
     async def test_reindex_manual(self) -> None:
         async with AsyncExitStack() as stack:

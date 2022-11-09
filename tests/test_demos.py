@@ -21,7 +21,7 @@ from dipdup.utils.database import tortoise_wrapper
 
 @asynccontextmanager
 async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncIterator[Path]:
-    config_path = Path(__file__).parent / config
+    config_path = Path(__file__).parent / 'configs' / config
     stack = AsyncExitStack()
     async with stack:
         # NOTE: Prepare a temporary directory for each test

@@ -19,7 +19,7 @@ class HasuraTest(IsolatedAsyncioTestCase):
 
     async def test_configure_hasura(self) -> None:
         project_defaults = BaseProject().get_defaults()
-        config_path = Path(__file__).parent / 'hic_et_nunc.yml'
+        config_path = Path(__file__).parent / 'configs' / 'hic_et_nunc.yml'
 
         config = DipDupConfig.load([config_path])
         config.initialize(skip_imports=True)

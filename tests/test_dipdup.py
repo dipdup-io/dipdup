@@ -12,7 +12,7 @@ from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Index
-from tests.test_dipdup import create_test_dipdup
+from tests import create_test_dipdup
 
 
 async def _create_index(hash_: str) -> None:
@@ -37,7 +37,7 @@ async def spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
 class IndexStateTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         name = 'hic_et_nunc.yml'
-        config_path = Path(__file__).parent.parent / 'integration_tests' / name
+        config_path = Path(__file__).parent / 'configs' / name
         self.config = DipDupConfig.load([config_path])
 
         self.new_hash = '98858ec743f2c84ef9505ccefa2235fc6bb9e9b209b14b2028dd4650eaf96756'

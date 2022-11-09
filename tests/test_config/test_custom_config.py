@@ -11,7 +11,7 @@ from dipdup.exceptions import ConfigurationError
 class TestCustomConfig:
     @pytest.fixture(scope='session')
     def dummy_config_path(self) -> Path:
-        return Path(__file__).parent.parent / 'dipdup.yml'
+        return Path(__file__).parent.parent / 'configs' / 'dipdup.yml'
 
     @staticmethod
     def appended_config_path(dummy_config_path: str, tmp_path_factory: TempPathFactory, append_raw: str) -> str:

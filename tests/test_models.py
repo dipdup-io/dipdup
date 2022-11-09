@@ -13,19 +13,19 @@ from demo_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.models import OperationData
-from tests.test_dipdup.types.asdf.storage import AsdfStorage
-from tests.test_dipdup.types.bazaar.storage import BazaarMarketPlaceStorage
-from tests.test_dipdup.types.ftzfun.storage import FtzFunStorage
-from tests.test_dipdup.types.hen_subjkt.storage import HenSubjktStorage
-from tests.test_dipdup.types.hjkl.storage import HjklStorage
-from tests.test_dipdup.types.kolibri_ovens.set_delegate import SetDelegateParameter
-from tests.test_dipdup.types.kolibri_ovens.storage import KolibriOvensStorage
-from tests.test_dipdup.types.listofmaps.storage import ListOfMapsStorage
-from tests.test_dipdup.types.qwer.storage import QwerStorage
-from tests.test_dipdup.types.rewq.storage import RewqStorage
-from tests.test_dipdup.types.tezotop.storage import ResourceCollectorStorage
-from tests.test_dipdup.types.yupana.storage import YupanaStorage
-from tests.test_dipdup.types.zxcv.storage import ZxcvStorage
+from tests.types.asdf.storage import AsdfStorage
+from tests.types.bazaar.storage import BazaarMarketPlaceStorage
+from tests.types.ftzfun.storage import FtzFunStorage
+from tests.types.hen_subjkt.storage import HenSubjktStorage
+from tests.types.hjkl.storage import HjklStorage
+from tests.types.kolibri_ovens.set_delegate import SetDelegateParameter
+from tests.types.kolibri_ovens.storage import KolibriOvensStorage
+from tests.types.listofmaps.storage import ListOfMapsStorage
+from tests.types.qwer.storage import QwerStorage
+from tests.types.rewq.storage import RewqStorage
+from tests.types.tezotop.storage import ResourceCollectorStorage
+from tests.types.yupana.storage import YupanaStorage
+from tests.types.zxcv.storage import ZxcvStorage
 
 
 def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> OperationData:
@@ -235,7 +235,7 @@ class ModelsTest(TestCase):
 
     def test_convert_operation_with_default_entrypoint(self) -> None:
         # Arrange
-        json_path = Path(__file__).parent / 'ooQuCAKBHkmWy2VciDAV9c6CFTywuMLupLzVoKDwS1xvR4EdRng.json'
+        json_path = Path(__file__).parent / 'responses' / 'ooQuCAKBHkmWy2VciDAV9c6CFTywuMLupLzVoKDwS1xvR4EdRng.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act
@@ -249,7 +249,7 @@ class ModelsTest(TestCase):
 
     def test_deserialize_storage_dict_key(self) -> None:
         # Arrange
-        json_path = Path(__file__).parent / 'ftzfun.json'
+        json_path = Path(__file__).parent / 'responses' / 'ftzfun.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act
@@ -263,7 +263,7 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.assets.operators[0].value, {})
 
     def test_qwer(self) -> None:
-        json_path = Path(__file__).parent / 'qwer.json'
+        json_path = Path(__file__).parent / 'responses' / 'qwer.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act
@@ -277,7 +277,7 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.__root__[0][1].R['2'], '2')  # type: ignore
 
     def test_asdf(self) -> None:
-        json_path = Path(__file__).parent / 'asdf.json'
+        json_path = Path(__file__).parent / 'responses' / 'asdf.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act
@@ -290,7 +290,7 @@ class ModelsTest(TestCase):
         self.assertIsInstance(storage_obj.__root__[0]['pupa'], list)
 
     def test_hjkl(self) -> None:
-        json_path = Path(__file__).parent / 'hjkl.json'
+        json_path = Path(__file__).parent / 'responses' / 'hjkl.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act
@@ -304,7 +304,7 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.__root__[0].value.mr['111'], True)  # type: ignore
 
     def test_zxcv(self) -> None:
-        json_path = Path(__file__).parent / 'zxcv.json'
+        json_path = Path(__file__).parent / 'responses' / 'zxcv.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act
@@ -321,7 +321,7 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.unit, {})
 
     def test_rewq(self) -> None:
-        json_path = Path(__file__).parent / 'rewq.json'
+        json_path = Path(__file__).parent / 'responses' / 'rewq.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act
@@ -337,7 +337,7 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.or_.L['333'], '444')  # type: ignore
 
     def test_hen_subjkt(self) -> None:
-        json_path = Path(__file__).parent / 'hen_subjkt.json'
+        json_path = Path(__file__).parent / 'responses' / 'hen_subjkt.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act
@@ -350,7 +350,7 @@ class ModelsTest(TestCase):
         self.assertEqual(storage_obj.entries['tz1Y1j7FK1X9Rrv2VdPz5bXoU7SszF8W1RnK'], True)
 
     def test_kolibri_ovens(self) -> None:
-        json_path = Path(__file__).parent / 'kolibri_ovens.json'
+        json_path = Path(__file__).parent / 'responses' / 'kolibri_ovens.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act
@@ -364,7 +364,7 @@ class ModelsTest(TestCase):
         self.assertEqual(parameter_obj.__root__, None)
 
     def test_yupana(self) -> None:
-        json_path = Path(__file__).parent / 'yupana.json'
+        json_path = Path(__file__).parent / 'responses' / 'yupana.json'
         operations_json = json.loads(json_path.read_bytes())
 
         # Act

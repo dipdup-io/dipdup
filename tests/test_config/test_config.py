@@ -17,7 +17,7 @@ from dipdup.exceptions import ConfigurationError
 
 class ConfigTest(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.path = Path(__file__).parent / 'dipdup.yml'
+        self.path = Path(__file__).parent.parent / 'configs' / 'dipdup.yml'
 
     async def test_load_initialize(self) -> None:
         config = DipDupConfig.load([self.path])
