@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 
 from dipdup.config import DEFAULT_IPFS_URL
@@ -10,7 +11,7 @@ class IpfsDatasourceTest(IsolatedAsyncioTestCase):
         ipfs = IpfsDatasource(
             url=DEFAULT_IPFS_URL,
             http_config=HTTPConfig(
-                replay_path='~/.cache/dipdup/replays',
+                replay_path=str(Path(__file__).parent.parent / 'replays'),
             ),
         )
         async with ipfs:
