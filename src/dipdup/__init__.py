@@ -11,7 +11,7 @@ from pathlib import Path
 __version__ = '6.2.0'
 __spec_version__ = '1.2'
 
-version = tuple(int(x) for x in __version__.split('.'))
+version = tuple(__version__.split('.'))
 major_version = version[0]
 minor_version = f'{version[0]}.{version[1]}'
 
