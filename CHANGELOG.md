@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - tzkt: Fixed deserializing `EventData` model.
 - tzkt: Fixed empty contract balance in the `amount` field.
 
+### Deprecated
+
+- ci: `pytezos` extra and corresponding Docker image are deprecated. 
+
 ## [6.2.0] - 2022-10-12
 
 ### Added

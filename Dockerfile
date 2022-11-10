@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.3-labs
 FROM python:3.10-slim-buster AS compile-image
 ARG PYTEZOS=0
+ENV DIPDUP_PYTEZOS=${PYTEZOS}
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
@@ -32,6 +33,7 @@ eot
 
 FROM python:3.10-slim-buster AS build-image
 ARG PYTEZOS=0
+ENV DIPDUP_PYTEZOS=${PYTEZOS}
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 SHELL ["/bin/bash", "-c"]
 
