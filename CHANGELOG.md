@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - database: Fixed crash when using F expressions inside versioned transactions.
 - http: Fixed caching datasource responses when `replay_path` contains tilde.
 - http: Adjusted per-datasource default config values.
-- project: Fixed outdated options in DipDup version question.
+- project: Use the latest stable version instead of hardcoded values.
 - tzkt: Fixed deserializing `EventData` model.
 - tzkt: Fixed empty contract balance in the `amount` field.
 
