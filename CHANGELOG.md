@@ -19,14 +19,15 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Fixed missing log messages from `ctx.logger`.
 - codegen: Better PEP 8 compatibility of generated callbacks.
-- context: Fixed `execute_sql` method crashes when the path is a file.
+- context: Fixed SQL scripts executed in the wrong order.
+- context: Fixed `execute_sql` method crashes when the path is not a directory.
 - database: Fixed crash with `CannotConnectNowError` before establishing the database connection.
 - database: Fixed crash when using F expressions inside versioned transactions.
 - http: Fixed caching datasource responses when `replay_path` contains tilde.
 - http: Adjusted per-datasource default config values.
 - project: Use the latest stable version instead of hardcoded values.
-- tzkt: Fixed deserializing `EventData` model.
-- tzkt: Fixed empty contract balance in the `amount` field.
+- tzkt: Fixed deserializing of `EventData` and `OperationData` models.
+- tzkt: Fixed matching migration originations by address.
 
 ### Deprecated
 

@@ -102,7 +102,7 @@ def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
     elif path.is_file():
         paths = [path]
     elif path.is_dir():
-        paths = list(path.glob('**/*'))
+        paths = sorted(path.glob('**/*'))
     else:
         raise RuntimeError(f'Path `{path}` exists but is neither a file nor a directory')
 

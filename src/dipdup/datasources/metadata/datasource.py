@@ -10,6 +10,8 @@ from dipdup.datasources.metadata.enums import MetadataNetwork
 
 class MetadataDatasource(GraphQLDatasource):
     _default_http_config = HTTPConfig(
+        retry_sleep=1,
+        retry_multiplier=1.1,
         retry_count=10,
         ratelimit_rate=10,
         ratelimit_period=1,
