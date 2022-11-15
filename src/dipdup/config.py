@@ -789,18 +789,6 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'OperationData'
-        yield package, 'models as models'
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield 'ctx', 'HandlerContext'
-        yield 'origination', 'OperationData'
-
-
-@dataclass
 class TemplateValuesMixin:
     """`template_values` field"""
 
@@ -933,24 +921,6 @@ class OperationIndexConfig(IndexConfig):
                         raise ConfigInitializationException
 
         return addresses
-
-
-@dataclass
-class OperationUnfilteredIndexConfig(IndexConfig):
-    """Operation index config
-
-    :param kind: always `operation_unfiltered`
-    :param handlers: List of indexer handlers
-    :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at (DipDup will terminate at this level)
-    """
-
-    kind: Literal['operation_unfiltered']
-    handlers: tuple[OperationUnfilteredHandlerConfig, ...]
-    types: tuple[OperationType, ...] = (OperationType.origination,)
-
-    first_level: int = 0
-    last_level: int = 0
 
 
 @dataclass
@@ -1202,12 +1172,7 @@ class EventIndexConfig(IndexConfig):
 
 
 ResolvedIndexConfigT = (
-    OperationIndexConfig
-    | BigMapIndexConfig
-    | HeadIndexConfig
-    | TokenTransferIndexConfig
-    | OperationUnfilteredIndexConfig
-    | EventIndexConfig
+    OperationIndexConfig | BigMapIndexConfig | HeadIndexConfig | TokenTransferIndexConfig | EventIndexConfig
 )
 IndexConfigT = ResolvedIndexConfigT | IndexTemplateConfig
 HandlerPatternConfigT = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
@@ -1745,9 +1710,6 @@ class DipDupConfig:
                         )
                     )
 
-        elif isinstance(index_config, OperationUnfilteredIndexConfig):
-            index_config.subscriptions.add(TransactionSubscription())
-
         elif isinstance(index_config, EventIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(EventSubscription())
@@ -1810,10 +1772,6 @@ class DipDupConfig:
 
                 if isinstance(token_transfer_handler_config.contract, str):
                     token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
-
-        elif isinstance(index_config, OperationUnfilteredIndexConfig):
-            for operation_unfiltered_handler_config in index_config.handlers:
-                operation_unfiltered_handler_config.parent = index_config
 
         elif isinstance(index_config, EventIndexConfig):
             for event_handler_config in index_config.handlers:

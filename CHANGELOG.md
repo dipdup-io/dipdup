@@ -4,13 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [6.3.0] - 2022-11-15
 
 ### Added
 
 - context: Added `execute_sql_query` method to run queries from `sql` project directory.
 - context: `execute_sql` method now accepts arbitrary arguments to format SQL script (unsafe, use with caution).
-- index: New index kind `operation_unfiltered`.
 - index: New filters for `token_transfer` index.
 
 ### Fixed
