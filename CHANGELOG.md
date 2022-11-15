@@ -4,25 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [6.3.0] - 2022-11-15
 
 ### Added
 
 - context: Added `execute_sql_query` method to run queries from `sql` project directory.
-- context: `execute_sql` method now accepts arbitrary arguments to format SQL script (unsafe, use with caution)
-- index: New index kind `operation_unfiltered`.
+- context: `execute_sql` method now accepts arbitrary arguments to format SQL script (unsafe, use with caution).
 - index: New filters for `token_transfer` index.
 
 ### Fixed
 
 - cli: Fixed missing log messages from `ctx.logger`.
-- cli: Configure package logger in addition to `dipdup` one.
-- context: Fixed `execute_sql` method crashes when the path is a file.
+- codegen: Better PEP 8 compatibility of generated callbacks.
+- context: Fixed SQL scripts executed in the wrong order.
+- context: Fixed `execute_sql` method crashes when the path is not a directory.
+- database: Fixed crash with `CannotConnectNowError` before establishing the database connection.
 - database: Fixed crash when using F expressions inside versioned transactions.
-- http: Fixed caching datasource responses to `replay_path` if set.
+- http: Fixed caching datasource responses when `replay_path` contains tilde.
 - http: Adjusted per-datasource default config values.
-- project: Fixed outdated options in DipDup version question.
-- tzkt: Fixed deserializing `EventData` model.
+- project: Use the latest stable version instead of hardcoded values.
+- tzkt: Fixed deserializing of `EventData` and `OperationData` models.
+- tzkt: Fixed matching migration originations by address.
+
+### Deprecated
+
+- ci: `pytezos` extra and corresponding Docker image are deprecated. 
 
 ## [6.2.0] - 2022-10-12
 
@@ -809,7 +815,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.2.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.3.0...HEAD
+[6.3.0]: https://github.com/dipdup-io/dipdup/compare/6.2.0...6.3.0
 [6.2.0]: https://github.com/dipdup-io/dipdup/compare/6.1.3...6.2.0
 [6.1.3]: https://github.com/dipdup-io/dipdup/compare/6.1.2...6.1.3
 [6.1.2]: https://github.com/dipdup-io/dipdup/compare/6.1.1...6.1.2

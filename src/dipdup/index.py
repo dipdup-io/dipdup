@@ -38,7 +38,6 @@ from dipdup.config import OperationHandlerPatternConfigT
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import OperationType
-from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.config import ResolvedIndexConfigT
 from dipdup.config import SkipHistory
 from dipdup.config import TokenTransferHandlerConfig
@@ -91,7 +90,6 @@ class OperationSubgroup:
         return hash(f'{self.hash}:{self.counter}')
 
 
-Operations = Tuple[OperationData, ...]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
 MatchedOperationsT = Tuple[OperationSubgroup, OperationHandlerConfig, Deque[OperationHandlerArgumentT]]
 MatchedBigMapsT = Tuple[BigMapHandlerConfig, BigMapDiff]
@@ -179,10 +177,6 @@ class Index(Generic[ConfigT]):
         if self._state is None:
             raise RuntimeError('Index state is not initialized')
         return self._state
-
-    @property
-    def queue_size(self) -> int:
-        return len(self._queue)
 
     @property
     def synchronized(self) -> bool:
@@ -1047,74 +1041,6 @@ class TokenTransferIndex(Index):
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_token_transfers(token_transfers, message_level)
-
-    def _get_token_addresses(self) -> Set[str]:
-        """Get addresses to fetch transfers from during initial synchronization"""
-        addresses: set[str] = set()
-        for handler_config in self._config.handlers:
-            if isinstance(handler_config, TokenTransferHandlerConfig):
-                continue
-            if not hasattr(handler_config, 'contract'):
-                continue
-            addresses.add(cast(ContractConfig, handler_config.contract).address)
-        return addresses
-
-    def _get_token_ids(self) -> Set[int]:
-        """Get token ids to fetch transfers from during initial synchronization"""
-        ids: set[int] = set()
-        for handler_config in self._config.handlers:
-            if isinstance(handler_config, TokenTransferHandlerConfig):
-                continue
-            if not hasattr(handler_config, 'token_id'):
-                continue
-            if handler_config.token_id is not None:
-                ids.add(handler_config.token_id)
-        return ids
-
-
-class OperationUnfilteredIndex(OperationIndex):
-    message_type = MessageType.operation
-
-    def __init__(self, ctx: DipDupContext, config: OperationUnfilteredIndexConfig, datasource: TzktDatasource) -> None:
-        # FIXME: Ugly inheritance hack
-        Index.__init__(self, ctx, config, datasource)  # type: ignore
-        self._queue: Deque[Tuple[OperationSubgroup, ...]] = deque()
-        self._contract_hashes: Dict[str, Tuple[int, int]] = {}
-
-    async def _match_unfiltered_operation(self, operation: OperationData) -> bool:
-        """Match single operation with pattern"""
-        if OperationType.origination not in self._config.types and operation.type == 'origination':
-            return False
-        elif OperationType.transaction not in self._config.types and operation.type == 'operation':
-            return False
-        return True
-
-    async def _match_operation_subgroup(self, operation_subgroup: OperationSubgroup) -> Deque[MatchedOperationsT]:
-        """Try to match operation subgroup with all index handlers."""
-        matched_handlers: Deque[MatchedOperationsT] = deque()
-        operations = operation_subgroup.operations
-
-        for handler_config in self._config.handlers:
-            operation_idx = 0
-            matched_operations: Deque[Optional[OperationData]] = deque()
-
-            while operation_idx < len(operations):
-                operation = operations[operation_idx]
-                operation_matched = await self._match_unfiltered_operation(operation)
-
-                if operation_matched:
-                    matched_operations.append(operation)
-                    operation_idx += 1
-                else:
-                    operation_idx += 1
-
-            if len(matched_operations) >= 0:
-                self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
-
-                args = await self._prepare_handler_args(handler_config, matched_operations)
-                matched_handlers.append((operation_subgroup, handler_config, args))
-
-        return matched_handlers
 
 
 class EventIndex(Index):

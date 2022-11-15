@@ -1,0 +1,26 @@
+spec_version: 1.2
+package: hjkl
+
+contracts:
+  hjkl:
+    address: KT1WvYvgUhxYEe4NhqqazwXUhUEhcjMcdjHA
+    typename: hjkl
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.hangzhou2net.tzkt.io
+    http:
+      replay_path: ${REPLAY_PATH:-~/.cache/dipdup/replays}
+
+indexes:
+  hjkl:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - hjkl
+    handlers:
+      - callback: on_default
+        pattern:
+          - destination: hjkl
+            entrypoint: default

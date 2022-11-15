@@ -72,8 +72,6 @@ from dipdup.utils import snake_to_pascal
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
-DEFAULT_RETRY_COUNT = 3
-DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = baking_bad.METADATA_API_URL
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 DEFAULT_TZKT_URL = next(iter(baking_bad.TZKT_API_URLS.keys()))
@@ -196,8 +194,8 @@ class HTTPConfig:
     """
 
     retry_count: int | None = None         # default: inf
-    retry_sleep: float | None = None       # default: 1
-    retry_multiplier: float | None = None  # default: 1.25
+    retry_sleep: float | None = None       # default: 0
+    retry_multiplier: float | None = None  # default: 0
     ratelimit_rate: int | None = None
     ratelimit_period: int | None = None
     connection_limit: int | None = None    # default: 100
@@ -791,18 +789,6 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'OperationData'
-        yield package, 'models as models'
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield 'ctx', 'HandlerContext'
-        yield 'origination', 'OperationData'
-
-
-@dataclass
 class TemplateValuesMixin:
     """`template_values` field"""
 
@@ -935,24 +921,6 @@ class OperationIndexConfig(IndexConfig):
                         raise ConfigInitializationException
 
         return addresses
-
-
-@dataclass
-class OperationUnfilteredIndexConfig(IndexConfig):
-    """Operation index config
-
-    :param kind: always `operation_unfiltered`
-    :param handlers: List of indexer handlers
-    :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at (DipDup will terminate at this level)
-    """
-
-    kind: Literal['operation_unfiltered']
-    handlers: tuple[OperationUnfilteredHandlerConfig, ...]
-    types: tuple[OperationType, ...] = (OperationType.origination,)
-
-    first_level: int = 0
-    last_level: int = 0
 
 
 @dataclass
@@ -1204,12 +1172,7 @@ class EventIndexConfig(IndexConfig):
 
 
 ResolvedIndexConfigT = (
-    OperationIndexConfig
-    | BigMapIndexConfig
-    | HeadIndexConfig
-    | TokenTransferIndexConfig
-    | OperationUnfilteredIndexConfig
-    | EventIndexConfig
+    OperationIndexConfig | BigMapIndexConfig | HeadIndexConfig | TokenTransferIndexConfig | EventIndexConfig
 )
 IndexConfigT = ResolvedIndexConfigT | IndexTemplateConfig
 HandlerPatternConfigT = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
@@ -1282,7 +1245,7 @@ class JobConfig(NameMixin):
         NameMixin.__post_init_post_parse__(self)
 
     @cached_property
-    def hook_config(self) -> 'HookConfig':
+    def hook_config(self) -> HookConfig:
         if not isinstance(self.hook, HookConfig):
             raise ConfigInitializationException
         return self.hook
@@ -1482,7 +1445,9 @@ class DipDupConfig:
         cls,
         paths: list[Path],
         environment: bool = True,
-    ) -> 'DipDupConfig':
+    ) -> DipDupConfig:
+        JobConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]
+
         yaml = YAML(typ='base')
 
         json_config: dict[str, Any] = {}
@@ -1745,9 +1710,6 @@ class DipDupConfig:
                         )
                     )
 
-        elif isinstance(index_config, OperationUnfilteredIndexConfig):
-            index_config.subscriptions.add(TransactionSubscription())
-
         elif isinstance(index_config, EventIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(EventSubscription())
@@ -1810,10 +1772,6 @@ class DipDupConfig:
 
                 if isinstance(token_transfer_handler_config.contract, str):
                     token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
-
-        elif isinstance(index_config, OperationUnfilteredIndexConfig):
-            for operation_unfiltered_handler_config in index_config.handlers:
-                operation_unfiltered_handler_config.parent = index_config
 
         elif isinstance(index_config, EventIndexConfig):
             for event_handler_config in index_config.handlers:

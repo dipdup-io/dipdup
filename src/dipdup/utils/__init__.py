@@ -3,7 +3,6 @@ import logging
 import pkgutil
 import types
 from collections import defaultdict
-from contextlib import suppress
 from decimal import Decimal
 from functools import reduce
 from logging import Logger
@@ -103,7 +102,7 @@ def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
     elif path.is_file():
         paths = [path]
     elif path.is_dir():
-        paths = list(path.glob('**/*'))
+        paths = sorted(path.glob('**/*'))
     else:
         raise RuntimeError(f'Path `{path}` exists but is neither a file nor a directory')
 
@@ -124,14 +123,6 @@ def import_from(module: str, obj: str) -> Any:
         return getattr(importlib.import_module(module), obj)
     except (ImportError, AttributeError) as e:
         raise ProjectImportError(module, obj) from e
-
-
-def is_importable(module: str, obj: str) -> bool:
-    """Check if object can be imported from module"""
-    with suppress(ProjectImportError):
-        import_from(module, obj)
-        return True
-    return False
 
 
 def exclude_none(config_json: Any) -> Any:

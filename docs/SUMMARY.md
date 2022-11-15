@@ -46,7 +46,6 @@
   * [Monitoring](deployment/monitoring.md)
 * [F.A.Q.](faq.md)
 * [Troubleshooting](troubleshooting.md)
-* [Contribution guide](CONTRIBUTING.md)
 
 # Examples
 
@@ -90,3 +89,8 @@
   * [4.2.0](release-notes/4.2.0.md)
   * [4.1.0](release-notes/4.1.0.md)
   * [4.0.0](release-notes/4.0.0.md)
+
+# Community
+
+* [Contribution guide](CONTRIBUTING.md)
+* [MIT License](LICENSE.md)

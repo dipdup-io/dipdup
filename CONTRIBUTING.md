@@ -4,7 +4,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ## General
 
-- All code in this repository MUST be licensed under the [MIT License](LICENSE).
+- All code in this repository MUST be licensed under the [MIT License](./LICENSE.md).
 - Python code in this repository MUST run on Python 3.10. It also SHOULD run on Python 3.11. Using modern language features is encouraged.
 - Python code in this repository MUST run in Linux, macOS, Docker, and `amd64`/`arm64` environments. Windows SHOULD be supported as well.
 - We use the [Poetry](https://python-poetry.org/docs/#installation) package manager and GNU Make to set up the development environment. You SHOULD install both tools and run `make help` to see available shortcuts.

@@ -417,7 +417,7 @@ class CodeGenerator:
             callback_code = callback_template.render(
                 callback=callback,
                 arguments=tuple(dict.fromkeys(arguments)),
-                imports=tuple(dict.fromkeys(imports)),
+                imports=sorted(dict.fromkeys(imports)),
                 code=code,
             )
             write(callback_path, callback_code)

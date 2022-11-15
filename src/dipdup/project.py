@@ -10,7 +10,6 @@ from pydantic import Field
 from tabulate import tabulate
 
 from dipdup import major_version
-from dipdup import minor_version
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils.codegen import load_template
 from dipdup.utils.codegen import write
@@ -100,12 +99,13 @@ class ChoiceQuestion(Question):
         cl.echo(table)
         return self.choices[super().prompt()]
 
-        value: int = super().prompt()
-        return self.choices[value]
 
+class JinjaAnswers(dict[str, Any]):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self['dipdup_version'] = major_version
 
-class JinjaAnswers(dict):
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         return self[item]
 
 
@@ -126,8 +126,6 @@ class Project(BaseModel):
     def run(self, quiet: bool, replay: str | None) -> None:
         if not self.questions:
             raise ConfigurationError('No questions defined')
-        if self.answers:
-            raise ConfigurationError('Answers already exist')
 
         if replay:
             with open(replay, 'rb') as f:
@@ -135,6 +133,7 @@ class Project(BaseModel):
 
         for question in self.questions:
             if question.name in self.answers:
+                _logger.info('Skipping question `%s`', question.name)
                 continue
 
             if quiet:
@@ -146,9 +145,10 @@ class Project(BaseModel):
             self.answers[question.name] = value
 
     def write_cookiecutter_json(self, path: Path) -> None:
+        values = {k: v for k, v in self.answers.items() if not k.startswith('_')}
         path.write_bytes(
             json.dumps(
-                {k: v for k, v in self.answers.items() if not k.startswith('_')},
+                values,
                 option=json.OPT_INDENT_2,
             )
         )
@@ -268,19 +268,6 @@ class BaseProject(Project):
             description='Now choose versions of software you want to use.',
         ),
         ChoiceQuestion(
-            name='dipdup_version',
-            description='Choose DipDup version',
-            default=0,
-            choices=(
-                major_version,
-                minor_version,
-            ),
-            comments=(
-                'latest stable',
-                'current stable',
-            ),
-        ),
-        ChoiceQuestion(
             name='postgresql_image',
             description=('Choose PostgreSQL version\n' 'Try TimescaleDB when working with time series.'),
             default=0,
@@ -290,7 +277,7 @@ class BaseProject(Project):
                 'timescale/timescaledb-ha:pg14-latest',
             ),
             comments=(
-                'Official PostgreSQL',
+                'PostgreSQL',
                 'TimescaleDB',
                 'TimescaleDB HA (more extensions)',
             ),
@@ -303,14 +290,12 @@ class BaseProject(Project):
             ),
             default=0,
             choices=(
-                'hasura/graphql-engine:v2.14.0',
-                'hasura/graphql-engine:v2.14.0',
-                'hasura/graphql-engine:v2.15.0-beta.1',
+                'hasura/graphql-engine:v2.15.0',
+                'hasura/graphql-engine:v2.15.0',
             ),
             comments=(
-                f'tested with DipDup {minor_version}',
-                'latest stable',
-                'latest beta',
+                f'tested with DipDup {major_version}',
+                'latest',
             ),
         ),
         NotifyQuestion(

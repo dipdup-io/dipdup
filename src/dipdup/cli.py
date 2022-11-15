@@ -9,6 +9,7 @@ from contextlib import AsyncExitStack
 from contextlib import suppress
 from functools import partial
 from functools import wraps
+from os import environ as env
 from pathlib import Path
 from typing import Any
 from typing import Dict
@@ -286,6 +287,10 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 
     Issues: https://github.com/dipdup-io/dipdup/issues
     """
+    # TODO: Remove in 7.0
+    if env.get('DIPDUP_PYTEZOS'):
+        _logger.warning('PyTezos extra and corresponding Docker image is deprecated!')
+
     # NOTE: Workaround for help pages
     args = sys.argv[1:]
     if '--help' in args or args in ([], ['config'], ['hasura'], ['schema']):
