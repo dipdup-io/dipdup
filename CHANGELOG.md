@@ -6,8 +6,6 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-## [6.3.0] - 2022-11-14
-
 ### Added
 
 - context: Added `execute_sql_query` method to run queries from `sql` project directory.
