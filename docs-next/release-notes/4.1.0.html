@@ -137,7 +137,7 @@
                         <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
-                        <a href="https://github.com/dipdup-net/dipdup.git" title="Git repository" aria-label="Git repository">
+                        <a href="https://github.com/dipdup-io/dipdup.git" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
                     </div>
@@ -182,7 +182,7 @@
 <p>All big map diffs DipDup pass to handlers during fast sync have <code>action</code> field set to <code>BigMapAction.ADD_KEY</code>. Keep in mind that DipDup fetches all keys in this mode, including ones removed from the big map. If needed, you can filter out the latter by <code>BigMapDiff.data.active</code> field.</p>
 <h3 id="new-datasource-for-contract-and-token-metadata"><a class="header" href="#new-datasource-for-contract-and-token-metadata">New datasource for contract and token metadata</a></h3>
 <p>Since the first version DipDup allows to fetch token metadata from Better Call Dev API with <code>bcd</code> datasource. Now it's time for a better solution. Firstly, BCD is far from being reliable in terms of metadata indexing. Secondly, spinning up your own instance of BCD requires significant effort and computing power. Lastly, we plan to deprecate Better Call Dev API soon (but do not worry - it won't affect the explorer frontend).</p>
-<p>Luckily, we have <a href="https://github.com/dipdup-net/metadata">dipdup-metadata</a>, a standalone companion indexer for DipDup written in Go. Configure a new datasource in the following way:</p>
+<p>Luckily, we have <a href="https://github.com/dipdup-io/metadata">dipdup-metadata</a>, a standalone companion indexer for DipDup written in Go. Configure a new datasource in the following way:</p>
 <pre><code class="language-yaml">datasources:
   metadata:
     kind: metadata

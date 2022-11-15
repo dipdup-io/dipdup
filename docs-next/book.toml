@@ -11,7 +11,7 @@ create-missing = false
 [output.html]
 default-theme = "coal"
 additional-css = ["book.css"]
-git-repository-url = "https://github.com/dipdup-net/dipdup.git"
+git-repository-url = "https://github.com/dipdup-io/dipdup.git"
 
 [preprocessor.summary]
 command = "python mdbook-summary"

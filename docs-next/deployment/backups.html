@@ -137,7 +137,7 @@
                         <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
-                        <a href="https://github.com/dipdup-net/dipdup.git" title="Git repository" aria-label="Git repository">
+                        <a href="https://github.com/dipdup-io/dipdup.git" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
                     </div>
@@ -179,7 +179,7 @@ services:
     ...
 
   backuper:
-    image: ghcr.io/dipdup-net/postgres-s3-backup:master
+    image: ghcr.io/dipdup-io/postgres-s3-backup:master
     environment:
       - S3_ENDPOINT=${S3_ENDPOINT:-https://fra1.digitaloceanspaces.com}
       - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}

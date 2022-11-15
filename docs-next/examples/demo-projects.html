@@ -137,7 +137,7 @@
                         <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
-                        <a href="https://github.com/dipdup-net/dipdup.git" title="Git repository" aria-label="Git repository">
+                        <a href="https://github.com/dipdup-io/dipdup.git" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
                     </div>
@@ -169,25 +169,25 @@
 <p>The DipDup repository contains several minimal examples of how to use various features for real-case scenarios. Please, do not use these examples in production unmodified. We have not put a production-grade amount of effort into developing them, so they may contain flaws in indexing logic.</p>
 <p>Some projects that started as a demo now evolved into full-fledged applications running in production. Check out <a href="https://docs-next.dipdup.io/examples/built-with-dipdup.html">10. Built with DipDup</a> page.</p>
 <h2 id="tzbtc-token"><a class="header" href="#tzbtc-token">TzBTC token</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tzbtc">demo_tzbtc</a></p>
+<p>source: <a href="https://github.com/dipdup-io/dipdup/tree/master/src/demo_tzbtc">demo_tzbtc</a></p>
 <p>The most basic indexer used in Quickstart. A single <code>operation</code> index to track balances of TzBTC token holders, nothing else.</p>
 <h2 id="hic-et-nunc"><a class="header" href="#hic-et-nunc">hic et nunc</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_hic_et_nunc">demo_hic_et_nunc</a></p>
+<p>source: <a href="https://github.com/dipdup-io/dipdup/tree/master/src/demo_hic_et_nunc">demo_hic_et_nunc</a></p>
 <p>Indexes trades and swaps of &quot;hic et nunc&quot;, one of the most popular NFT marketplaces on Tezos.</p>
 <h2 id="quipuswap"><a class="header" href="#quipuswap">Quipuswap</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_quipuswap">demo_quipuswap</a></p>
+<p>source: <a href="https://github.com/dipdup-io/dipdup/tree/master/src/demo_quipuswap">demo_quipuswap</a></p>
 <p>Covers all available operations of Quipuswap DEX contracts: trades, transfers, moving liquidity. A more complex example with index templates.</p>
 <h2 id="homebase-registrydao"><a class="header" href="#homebase-registrydao">Homebase RegistryDAO</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_registrydao">demo_registrydao</a></p>
+<p>source: <a href="https://github.com/dipdup-io/dipdup/tree/master/src/demo_registrydao">demo_registrydao</a></p>
 <p>Homebase enables users to create DAO contracts. In this example indexes are spawned in runtime (<a href="https://docs-next.dipdup.io/advanced/index-factories.html">4.11. Index factories</a>) for all contracts having the same script.</p>
 <h2 id="tezos-domains-operation"><a class="header" href="#tezos-domains-operation">Tezos Domains (<code>operation</code>)</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_domains">demo_domains</a></p>
+<p>source: <a href="https://github.com/dipdup-io/dipdup/tree/master/src/demo_domains">demo_domains</a></p>
 <p>Tezos Domains is a distributed naming system. You probably have seen those fancy <code>user.tez</code> names while browsing explorers. This is a pretty basic example of how to index them.</p>
 <h2 id="tezos-domains-big_map"><a class="header" href="#tezos-domains-big_map">Tezos Domains (<code>big_map</code>)</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_domains_big_map">demo_domains_big_map</a></p>
+<p>source: <a href="https://github.com/dipdup-io/dipdup/tree/master/src/demo_domains_big_map">demo_domains_big_map</a></p>
 <p>The same as above, but uses <code>big_map</code> index instead of <code>operation</code> one. The storage structure of this contract is pretty straightforward; we only need to track a single big map. This example contains <code>skip_history: once</code> directive to index only the current state of the contract before switching to realtime processing. It allows to speed up indexing even more.</p>
 <h2 id="tzcolors"><a class="header" href="#tzcolors">TzColors</a></h2>
-<p>source: <a href="https://github.com/dipdup-net/dipdup/tree/master/src/demo_tzcolors">demo_tzcolors</a></p>
+<p>source: <a href="https://github.com/dipdup-io/dipdup/tree/master/src/demo_tzcolors">demo_tzcolors</a></p>
 <p>A very basic indexer of TzColors NFT token and marketplace. Unlike <code>hic et nunc</code> this marketplace provides auction functionality. Other than that, it is pretty much the same.</p>
 
                     </main>
