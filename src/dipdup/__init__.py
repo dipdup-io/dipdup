@@ -8,7 +8,7 @@ import warnings
 from pathlib import Path
 
 # NOTE: Updated by bumpversion
-__version__ = '6.2.0'
+__version__ = '6.3.0'
 __spec_version__ = '1.2'
 
 version = tuple(__version__.split('.'))
