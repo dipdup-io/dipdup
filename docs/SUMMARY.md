@@ -18,6 +18,7 @@
   * [Contract events](indexes/event.md)
   * [Head blocks](indexes/head.md)
   * [Operations](indexes/operation.md)
+  * [Unfiltered operations](indexes/operation_unfiltered.md)
   * [Token transfers](indexes/token_transfer.md)
 * [Advanced usage](advanced/README.md)
   * [Datasources](advanced/datasources.md)

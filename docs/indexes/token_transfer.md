@@ -6,15 +6,6 @@ This index allows indexing token transfers of contracts compatible with [FA1.2](
 {{ #include ../../demos/demo-tzbtc-transfers/dipdup.yml }}
 ```
 
-You can also filter transfers by token ID or sender/receiver address.
-
-```yaml
-    handlers:
-      - callback: on_token_transfer
-        token_id: 1
-        to: tzbtc_mainnet
-```
-
 Callback receives `TokenTransferData` model that optionally contains the transfer sender, receiver, amount, and token metadata.
 
 ```python
