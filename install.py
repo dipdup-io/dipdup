@@ -137,11 +137,6 @@ class DipDupEnvironment:
             self._quiet or fail(f'{cmd} failed: {e.cmd} {e.returncode}')
             raise
 
-    def ensure_git(self) -> None:
-        """Ensure git is installed"""
-        if not self._commands.get('git'):
-            fail('git is required for this action')
-
     def ensure_pipx(self) -> None:
         """Ensure pipx is installed for current user"""
         if self._commands.get('pipx'):
