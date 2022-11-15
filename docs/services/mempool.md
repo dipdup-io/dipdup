@@ -1,6 +1,6 @@
 # mempool
 
-This is an optional section used by the [mempool](https://github.com/dipdup-net/mempool) indexer plugin. It uses [`contracts`](../config/contracts.md) and [`datasources`](../config/datasources.md) aliases as well as the [`database`](../config/database.md) connection.
+This is an optional section used by the [mempool](https://github.com/dipdup-io/mempool) indexer plugin. It uses [`contracts`](../config/contracts.md) and [`datasources`](../config/datasources.md) aliases as well as the [`database`](../config/database.md) connection.
 
 Mempool configuration has two sections: `settings` and `indexers` (required).
 

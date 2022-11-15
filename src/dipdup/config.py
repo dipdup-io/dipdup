@@ -85,7 +85,7 @@ ADDRESS_PREFIXES = (
     'KT1',
     # NOTE: Wallet addresses are allowed during config validation for debugging purposes.
     # NOTE: It's a undocumented hack to filter by `source` field. Wallet indexing is not supported.
-    # NOTE: See https://github.com/dipdup-net/dipdup/issues/291
+    # NOTE: See https://github.com/dipdup-io/dipdup/issues/291
     'tz1',
     'tz2',
     'tz3',

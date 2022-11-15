@@ -2,7 +2,7 @@
 
 This page is a brief overview of projects which use DipDup as an indexing solution.
 
-Want to see your project on this page? Create an issue on [GitHub](https://github.com/dipdup-net/dipdup-docs/issues)!
+Want to see your project on this page? Create an issue on [GitHub](https://github.com/dipdup-io/dipdup-docs/issues)!
 
 ## Rarible / Tezos marketplace indexer
 
@@ -14,7 +14,7 @@ Rarible is a multichain community-centric NFT marketplace, that also allows to t
 
 ## Ubisoft / Quartz tokens metadata
 
-[Homepage](https://quartz.ubisoft.com/) | [API](https://quartz.dipdup.net/v1/graphql) | [Github](https://github.com/dipdup-net/quartz-metadata)
+[Homepage](https://quartz.ubisoft.com/) | [API](https://quartz.dipdup.net/v1/graphql) | [Github](https://github.com/dipdup-io/quartz-metadata)
 
 Ubisoft Quartz is a new platform for players to get Digits, the first NFTs playable in AAA games. Under the hood Quartz uses Aleph as persistent token metadata storage and a non-standard token metadata signalling schema. In order to enable wallets and other TzKT API consumers with Quartz NFTs data we created a custom indexing plugin.
 
