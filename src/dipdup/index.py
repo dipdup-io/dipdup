@@ -91,7 +91,6 @@ class OperationSubgroup:
         return hash(f'{self.hash}:{self.counter}')
 
 
-Operations = Tuple[OperationData, ...]
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
 MatchedOperationsT = Tuple[OperationSubgroup, OperationHandlerConfig, Deque[OperationHandlerArgumentT]]
 MatchedBigMapsT = Tuple[BigMapHandlerConfig, BigMapDiff]
@@ -179,10 +178,6 @@ class Index(Generic[ConfigT]):
         if self._state is None:
             raise RuntimeError('Index state is not initialized')
         return self._state
-
-    @property
-    def queue_size(self) -> int:
-        return len(self._queue)
 
     @property
     def synchronized(self) -> bool:
@@ -1047,29 +1042,6 @@ class TokenTransferIndex(Index):
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_token_transfers(token_transfers, message_level)
-
-    def _get_token_addresses(self) -> Set[str]:
-        """Get addresses to fetch transfers from during initial synchronization"""
-        addresses: set[str] = set()
-        for handler_config in self._config.handlers:
-            if isinstance(handler_config, TokenTransferHandlerConfig):
-                continue
-            if not hasattr(handler_config, 'contract'):
-                continue
-            addresses.add(cast(ContractConfig, handler_config.contract).address)
-        return addresses
-
-    def _get_token_ids(self) -> Set[int]:
-        """Get token ids to fetch transfers from during initial synchronization"""
-        ids: set[int] = set()
-        for handler_config in self._config.handlers:
-            if isinstance(handler_config, TokenTransferHandlerConfig):
-                continue
-            if not hasattr(handler_config, 'token_id'):
-                continue
-            if handler_config.token_id is not None:
-                ids.add(handler_config.token_id)
-        return ids
 
 
 class OperationUnfilteredIndex(OperationIndex):

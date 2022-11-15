@@ -18,6 +18,7 @@
   * [Contract events](indexes/event.md)
   * [Head blocks](indexes/head.md)
   * [Operations](indexes/operation.md)
+  * [Unfiltered operations](indexes/operation_unfiltered.md)
   * [Token transfers](indexes/token_transfer.md)
 * [Advanced usage](advanced/README.md)
   * [Datasources](advanced/datasources.md)
@@ -46,7 +47,6 @@
   * [Monitoring](deployment/monitoring.md)
 * [F.A.Q.](faq.md)
 * [Troubleshooting](troubleshooting.md)
-* [Contribution guide](CONTRIBUTING.md)
 
 # Examples
 
@@ -90,3 +90,8 @@
   * [4.2.0](release-notes/4.2.0.md)
   * [4.1.0](release-notes/4.1.0.md)
   * [4.0.0](release-notes/4.0.0.md)
+
+# Community
+
+* [Contribution guide](CONTRIBUTING.md)
+* [MIT License](LICENSE.md)

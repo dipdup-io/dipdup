@@ -90,6 +90,7 @@ class HasuraGateway(HTTPGateway):
         # NOTE: Fail fast; most Hasura errors are 500's that won't fix by themselves.
         # NOTE: Does not apply to initial healthcheck
         retry_sleep=1,
+        retry_multiplier=1.1,
         retry_count=3,
     )
 
@@ -460,7 +461,8 @@ class HasuraGateway(HTTPGateway):
         table_names = {t['table']['name'] for t in source['tables']}
         tables = await self._get_fields()
 
-        # TODO: Bulk request
+        # TODO: Use new API
+        self._logger.info('Applying table customizations (could take some time)')
         for table in tables:
             if table.root not in table_names:
                 continue
@@ -478,7 +480,6 @@ class HasuraGateway(HTTPGateway):
                 },
             }
 
-            self._logger.info('Applying `%s` table customization', table.root)
             await self._hasura_request(
                 endpoint='metadata',
                 json={

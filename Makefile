@@ -5,6 +5,7 @@
 ##
 ## DEV=1                Install dev dependencies
 DEV=1
+# TODO: Remove in 7.0
 ## PYTEZOS=0            Install PyTezos
 PYTEZOS=0
 ## TAG=latest           Tag for the `image` command
@@ -13,7 +14,7 @@ TAG=latest
 ##
 
 help:           ## Show this help (default)
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
+	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
 all:            ## Run a whole CI pipeline: formatters, linters and tests
 	make install lint test docs
@@ -29,7 +30,7 @@ lint:           ## Lint with all tools
 test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
 
-test-ci:
+test-ci:        ## Run test suite without xdist, coverage and some tests (avoid macOS issues)
 	CI=true poetry run pytest -s -v tests
 
 docs:           ## Build docs
@@ -42,7 +43,7 @@ docs:           ## Build docs
 isort:          ## Format with isort
 	poetry run isort src tests scripts
 
-blue:          ## Format with blue
+blue:           ## Format with blue
 	poetry run blue src tests scripts
 
 flake:          ## Lint with flake8
@@ -65,6 +66,7 @@ image:          ## Build all Docker images
 image-default:  ## Build default Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}
 
+# TODO: Remove in 7.0
 image-pytezos:  ## Build pytezos Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
 
@@ -96,6 +98,7 @@ release-major:  ## Release major version
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 	rm -r ~/.cache/flakeheaven
+	rm -r ~/.cache/dipdup
 
 update:         ## Update dependencies, export requirements.txt
 	make install
@@ -120,5 +123,4 @@ scripts:
 	python scripts/update_demos.py
 	make lint
 
-##
 ##

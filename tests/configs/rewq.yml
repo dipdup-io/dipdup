@@ -1,0 +1,26 @@
+spec_version: 1.2
+package: rewq
+
+contracts:
+  rewq:
+    address: KT1T8Xvopnfr9n2jMV6wJHPBkB7VFi3rXAY9
+    typename: rewq
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.hangzhou2net.tzkt.io
+    http:
+      replay_path: ${REPLAY_PATH:-~/.cache/dipdup/replays}
+
+indexes:
+  rewq:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - rewq
+    handlers:
+      - callback: on_default
+        pattern:
+          - destination: rewq
+            entrypoint: default

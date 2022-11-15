@@ -63,9 +63,9 @@ jobs:
             type=pep440,pattern={{major}}.{{minor}}-slim
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10.x'
+          python-version: '3.10'
 
       - name: Set up Poetry
         uses: snok/install-poetry@v1
@@ -135,3 +135,11 @@ jobs:
             ${{ steps.changelog.outputs.changes }}
           draft: true
           prerelease: ${{ steps.changelog.outputs.status == 'prereleased' }}
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ secrets.SENTRY_URL }}

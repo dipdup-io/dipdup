@@ -72,8 +72,6 @@ from dipdup.utils import snake_to_pascal
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
-DEFAULT_RETRY_COUNT = 3
-DEFAULT_RETRY_SLEEP = 1
 DEFAULT_METADATA_URL = baking_bad.METADATA_API_URL
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 DEFAULT_TZKT_URL = next(iter(baking_bad.TZKT_API_URLS.keys()))
@@ -196,8 +194,8 @@ class HTTPConfig:
     """
 
     retry_count: int | None = None         # default: inf
-    retry_sleep: float | None = None       # default: 1
-    retry_multiplier: float | None = None  # default: 1.25
+    retry_sleep: float | None = None       # default: 0
+    retry_multiplier: float | None = None  # default: 0
     ratelimit_rate: int | None = None
     ratelimit_period: int | None = None
     connection_limit: int | None = None    # default: 100
@@ -1282,7 +1280,7 @@ class JobConfig(NameMixin):
         NameMixin.__post_init_post_parse__(self)
 
     @cached_property
-    def hook_config(self) -> 'HookConfig':
+    def hook_config(self) -> HookConfig:
         if not isinstance(self.hook, HookConfig):
             raise ConfigInitializationException
         return self.hook
@@ -1482,7 +1480,9 @@ class DipDupConfig:
         cls,
         paths: list[Path],
         environment: bool = True,
-    ) -> 'DipDupConfig':
+    ) -> DipDupConfig:
+        JobConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]
+
         yaml = YAML(typ='base')
 
         json_config: dict[str, Any] = {}

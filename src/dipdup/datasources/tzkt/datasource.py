@@ -10,7 +10,6 @@ from datetime import timezone
 from decimal import Decimal
 from enum import Enum
 from functools import partial
-from os import environ as env
 from typing import Any
 from typing import AsyncIterator
 from typing import Awaitable
@@ -141,6 +140,9 @@ class MessageBuffer:
 
 class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
+        retry_sleep=1,
+        retry_multiplier=1.1,
+        retry_count=10,
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
@@ -168,10 +170,6 @@ class TzktDatasource(IndexDatasource):
     async def __aenter__(self) -> None:
         try:
             await super().__aenter__()
-
-            # FIXME: Doesn't help much, tests still run against real TzKT instance
-            if env.get('CI') == 'true':
-                return
 
             protocol = await self.request('get', 'v1/protocols/current')
             category = 'self-hosted'
@@ -246,7 +244,7 @@ class TzktDatasource(IndexDatasource):
         limit: int | None = None,
     ) -> tuple[str, ...]:
         """Get addresses of contracts originated from given address"""
-        self._logger.info('Fetching originated contracts for address `%s', address)
+        self._logger.info('Fetching originated contracts for address `%s`', address)
         offset, limit = offset or 0, limit or self.request_limit
         response = await self.request(
             'get',
@@ -265,7 +263,7 @@ class TzktDatasource(IndexDatasource):
 
     async def get_contract_summary(self, address: str) -> dict[str, Any]:
         """Get contract summary"""
-        self._logger.info('Fetching contract summary for address `%s', address)
+        self._logger.info('Fetching contract summary for address `%s`', address)
         return await self.request(
             'get',
             url=f'v1/contracts/{address}',
@@ -273,7 +271,7 @@ class TzktDatasource(IndexDatasource):
 
     async def get_contract_storage(self, address: str) -> dict[str, Any]:
         """Get contract storage"""
-        self._logger.info('Fetching contract storage for address `%s', address)
+        self._logger.info('Fetching contract storage for address `%s`', address)
         return await self.request(
             'get',
             url=f'v1/contracts/{address}/storage',
@@ -281,7 +279,7 @@ class TzktDatasource(IndexDatasource):
 
     async def get_jsonschemas(self, address: str) -> dict[str, Any]:
         """Get JSONSchemas for contract's storage/parameter/bigmap types"""
-        self._logger.info('Fetching jsonschemas for address `%s', address)
+        self._logger.info('Fetching jsonschemas for address `%s`', address)
         return await self.request(
             'get',
             url=f'v1/contracts/{address}/interface',
@@ -870,6 +868,7 @@ class TzktDatasource(IndexDatasource):
         type_: str | None = None,
     ) -> OperationData:
         """Convert raw operation message from WS/REST into dataclass"""
+        # NOTE: Migration originations are handled in a separate method
         sender_json = operation_json.get('sender') or {}
         target_json = operation_json.get('target') or {}
         initiator_json = operation_json.get('initiator') or {}
@@ -911,6 +910,7 @@ class TzktDatasource(IndexDatasource):
             entrypoint=entrypoint,
             parameter_json=parameter,
             originated_contract_address=originated_contract_json.get('address'),
+            originated_contract_alias=originated_contract_json.get('alias'),
             originated_contract_type_hash=originated_contract_json.get('typeHash'),
             originated_contract_code_hash=originated_contract_json.get('codeHash'),
             originated_contract_tzips=originated_contract_json.get('tzips'),

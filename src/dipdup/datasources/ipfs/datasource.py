@@ -9,7 +9,8 @@ from dipdup.datasources.datasource import Datasource
 class IpfsDatasource(Datasource):
     _default_http_config = HTTPConfig(
         retry_sleep=1,
-        retry_count=3,
+        retry_multiplier=1.1,
+        retry_count=10,
     )
 
     def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:

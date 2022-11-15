@@ -1,0 +1,26 @@
+spec_version: 1.2
+package: asdf
+
+contracts:
+  asdf:
+    address: KT1DykwBRr4GGN88GNKNKzrTH4VjhRRUHrkg
+    typename: asdf
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.hangzhou2net.tzkt.io
+    http:
+      replay_path: ${REPLAY_PATH:-~/.cache/dipdup/replays}
+
+indexes:
+  asdf:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - asdf
+    handlers:
+      - callback: on_default
+        pattern:
+          - destination: asdf
+            entrypoint: default

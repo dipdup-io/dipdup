@@ -18,6 +18,7 @@ from typing import Type
 from typing import Union
 
 import sqlparse  # type: ignore
+from asyncpg import CannotConnectNowError  # type: ignore
 from tortoise import ForeignKeyFieldInstance
 from tortoise import Model as TortoiseModel
 from tortoise import ModuleType
@@ -74,7 +75,7 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
                 conn = get_connection()
                 await conn.execute_query('SELECT 1')
             # FIXME: Logging
-            except OSError:
+            except (OSError, CannotConnectNowError):
                 _logger.warning("Can't establish database connection, attempt %s/%s", attempt, timeout)
                 if attempt == timeout - 1:
                     raise
