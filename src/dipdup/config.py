@@ -846,7 +846,7 @@ class IndexTemplateConfig(NameMixin):
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigT']):
+class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigT']):
     """Index config
 
     :param datasource: Alias of index datasource in `datasources` section
@@ -883,6 +883,10 @@ class IndexConfig(TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixi
         """Strip config from tunables that are not needed for hash calculation."""
         config_dict['datasource'].pop('http', None)
         config_dict['datasource'].pop('buffer_size', None)
+
+    @abstractmethod
+    def import_objects(self, package: str) -> None:
+        ...
 
 
 @dataclass
@@ -940,6 +944,29 @@ class OperationIndexConfig(IndexConfig):
                         raise ConfigInitializationException
 
         return addresses
+
+    def import_objects(self, package: str) -> None:
+        for handler_config in self.handlers:
+            handler_config.initialize_callback_fn(package)
+
+            for pattern_config in handler_config.pattern:
+                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    if not pattern_config.entrypoint:
+                        continue
+
+                    module_name = pattern_config.destination_contract_config.module_name
+                    pattern_config.initialize_parameter_cls(package, module_name, pattern_config.entrypoint)
+                    pattern_config.initialize_storage_cls(package, module_name)
+
+                elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                    if not (pattern_config.originated_contract or pattern_config.similar_to):
+                        continue
+
+                    module_name = pattern_config.module_name
+                    pattern_config.initialize_storage_cls(package, module_name)
+
+                else:
+                    raise NotImplementedError
 
 
 @dataclass
@@ -1050,6 +1077,11 @@ class BigMapIndexConfig(IndexConfig):
         super().strip(config_dict)
         config_dict.pop('skip_history', None)
 
+    def import_objects(self, package: str) -> None:
+        for handler_config in self.handlers:
+            handler_config.initialize_callback_fn(package)
+            handler_config.initialize_big_map_type(package)
+
 
 @dataclass
 class HeadHandlerConfig(HandlerConfig, kind='handler'):
@@ -1081,6 +1113,10 @@ class HeadIndexConfig(IndexConfig):
     def last_level(self) -> int:
         return 0
 
+    def import_objects(self, package: str) -> None:
+        for handler_config in self.handlers:
+            handler_config.initialize_callback_fn(package)
+
 
 @dataclass
 class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
@@ -1109,6 +1145,10 @@ class TokenTransferIndexConfig(IndexConfig):
 
     first_level: int = 0
     last_level: int = 0
+
+    def import_objects(self, package: str) -> None:
+        for handler_config in self.handlers:
+            handler_config.initialize_callback_fn(package)
 
 
 @dataclass
@@ -1188,6 +1228,13 @@ class EventIndexConfig(IndexConfig):
 
     first_level: int = 0
     last_level: int = 0
+
+    def import_objects(self, package: str) -> None:
+        for handler_config in self.handlers:
+            handler_config.initialize_callback_fn(package)
+
+            if isinstance(handler_config, EventHandlerConfig):
+                handler_config.initialize_event_type(package)
 
 
 ResolvedIndexConfigT = (
@@ -1546,15 +1593,6 @@ class DipDupConfig:
         if isinstance(self.package, str):
             logging.getLogger(self.package).setLevel(level)
 
-    def _import_index(self, index_config: IndexConfigT) -> None:
-        _logger.debug('Loading callbacks and typeclasses of index `%s`', index_config.name)
-
-        if isinstance(index_config, IndexTemplateConfig):
-            raise ConfigInitializationException
-
-        self._import_index_types(index_config)
-        self._import_index_callbacks(index_config)
-
     def initialize(self, skip_imports: bool = False) -> None:
         self._set_names()
         self._resolve_templates()
@@ -1565,7 +1603,9 @@ class DipDupConfig:
             return
 
         for index_config in self.indexes.values():
-            self._import_index(index_config)
+            if isinstance(index_config, IndexTemplateConfig):
+                raise ConfigInitializationException
+            index_config.import_objects(self.package)
 
     def add_index(self, name: str, template: str, values: dict[str, str]) -> None:
         if name in self.indexes:
@@ -1580,7 +1620,7 @@ class DipDupConfig:
         self._resolve_index_links(index_config)
         self._resolve_index_subscriptions(index_config)
         index_config.name = name
-        self._import_index(index_config)
+        index_config.import_objects(self.package)
 
     @classmethod
     def _load_raw_config(cls, path: Path) -> str:
@@ -1819,38 +1859,3 @@ class DipDupConfig:
         for named_configs in named_config_sections:
             for name, config in named_configs.items():
                 config.name = name
-
-    def _import_index_callbacks(self, index_config: ResolvedIndexConfigT) -> None:
-        for handler_config in index_config.handlers:
-            handler_config.initialize_callback_fn(self.package)
-
-    def _import_index_types(self, index_config: ResolvedIndexConfigT) -> None:
-        if isinstance(index_config, OperationIndexConfig):
-            for handler_config in index_config.handlers:
-                for pattern_config in handler_config.pattern:
-                    if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                        if not pattern_config.entrypoint:
-                            continue
-
-                        module_name = pattern_config.destination_contract_config.module_name
-                        pattern_config.initialize_parameter_cls(self.package, module_name, pattern_config.entrypoint)
-                        pattern_config.initialize_storage_cls(self.package, module_name)
-
-                    elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                        if not (pattern_config.originated_contract or pattern_config.similar_to):
-                            continue
-
-                        module_name = pattern_config.module_name
-                        pattern_config.initialize_storage_cls(self.package, module_name)
-
-                    else:
-                        raise NotImplementedError
-
-        elif isinstance(index_config, BigMapIndexConfig):
-            for big_map_handler_config in index_config.handlers:
-                big_map_handler_config.initialize_big_map_type(self.package)
-
-        elif isinstance(index_config, EventIndexConfig):
-            for event_handler_config in index_config.handlers:
-                if isinstance(event_handler_config, EventHandlerConfig):
-                    event_handler_config.initialize_event_type(self.package)
