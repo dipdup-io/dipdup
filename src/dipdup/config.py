@@ -469,11 +469,12 @@ class PatternConfig(CodegenMixin):
     @classmethod
     def format_untyped_operation_argument(
         cls,
-        transaction_idx: int,
+        type_: str,
+        subgroup_index: int,
         optional: bool,
         alias: str | None,
     ) -> tuple[str, str]:
-        arg_name = pascal_to_snake(alias or f'transaction_{transaction_idx}')
+        arg_name = pascal_to_snake(alias or f'{type_}_{subgroup_index}')
         if optional:
             return arg_name, 'Optional[OperationData] = None'
         return arg_name, 'OperationData'
@@ -544,30 +545,28 @@ class ParameterTypeMixin:
 
 
 @dataclass
-class TransactionIdxMixin:
-    """`transaction_idx` field to track index of operation in group
+class SubgroupIndexMixin:
+    """`subgroup_index` field to track index of operation in group
 
-    :param transaction_idx:
+    :param subgroup_index:
     """
 
     def __post_init_post_parse__(self) -> None:
-        self._transaction_idx: int | None = None
+        self._subgroup_index: int | None = None
 
     @property
-    def transaction_idx(self) -> int:
-        if self._transaction_idx is None:
+    def subgroup_index(self) -> int:
+        if self._subgroup_index is None:
             raise ConfigInitializationException
-        return self._transaction_idx
+        return self._subgroup_index
 
-    @transaction_idx.setter
-    def transaction_idx(self, value: int) -> None:
-        self._transaction_idx = value
+    @subgroup_index.setter
+    def subgroup_index(self, value: int) -> None:
+        self._subgroup_index = value
 
 
 @dataclass
-class OperationHandlerTransactionPatternConfig(
-    PatternConfig, StorageTypeMixin, ParameterTypeMixin, TransactionIdxMixin
-):
+class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, ParameterTypeMixin, SubgroupIndexMixin):
     """Operation handler pattern config
 
     :param type: always 'transaction'
@@ -588,7 +587,7 @@ class OperationHandlerTransactionPatternConfig(
     def __post_init_post_parse__(self) -> None:
         StorageTypeMixin.__post_init_post_parse__(self)
         ParameterTypeMixin.__post_init_post_parse__(self)
-        TransactionIdxMixin.__post_init_post_parse__(self)
+        SubgroupIndexMixin.__post_init_post_parse__(self)
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
@@ -604,9 +603,19 @@ class OperationHandlerTransactionPatternConfig(
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         if self.entrypoint:
             module_name = self.destination_contract_config.module_name
-            yield self.format_operation_argument(module_name, self.entrypoint, self.optional, self.alias)
+            yield self.format_operation_argument(
+                module_name,
+                self.entrypoint,
+                self.optional,
+                self.alias,
+            )
         else:
-            yield self.format_untyped_operation_argument(self.transaction_idx, self.optional, self.alias)
+            yield self.format_untyped_operation_argument(
+                'transaction',
+                self.subgroup_index,
+                self.optional,
+                self.alias,
+            )
 
     @cached_property
     def source_contract_config(self) -> ContractConfig:
@@ -622,7 +631,7 @@ class OperationHandlerTransactionPatternConfig(
 
 
 @dataclass
-class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
+class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, SubgroupIndexMixin):
     """Origination handler pattern config
 
     :param type: always 'origination'
@@ -664,21 +673,31 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
         )
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        if self.source:
-            module_name = self.source_contract_config.module_name
+        if self.originated_contract:
+            module_name = self.originated_contract_config.module_name
         elif self.similar_to:
             module_name = self.similar_to_contract_config.module_name
-        elif self.originated_contract:
-            module_name = self.originated_contract_config.module_name
+        elif self.source:
+            yield 'dipdup.models', 'OperationData'
+            return
         else:
             raise ConfigurationError(
                 'Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields'
             )
+
         yield 'dipdup.models', 'Origination'
         yield self.format_storage_import(package, module_name)
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield self.format_origination_argument(self.module_name, self.optional)
+        if self.originated_contract or self.similar_to:
+            yield self.format_origination_argument(self.module_name, self.optional)
+        else:
+            yield self.format_untyped_operation_argument(
+                'origination',
+                self.subgroup_index,
+                self.optional,
+                self.alias,
+            )
 
     @cached_property
     def module_name(self) -> str:
@@ -1737,14 +1756,14 @@ class DipDupConfig:
                 handler_config.parent = index_config
                 self._callback_patterns[handler_config.callback].append(handler_config.pattern)
                 for idx, pattern_config in enumerate(handler_config.pattern):
-                    # NOTE: Untyped operations are named as `transaction_N` based on their index
+                    # NOTE: Untyped operations are named as `transaction_N` or `origination_N` based on their index
+                    pattern_config._subgroup_index = idx
+
                     if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
                             pattern_config.destination = self.get_contract(pattern_config.destination)
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_contract(pattern_config.source)
-                        if not pattern_config.entrypoint:
-                            pattern_config._transaction_idx = idx
 
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                         if isinstance(pattern_config.source, str):
@@ -1810,15 +1829,20 @@ class DipDupConfig:
             for handler_config in index_config.handlers:
                 for pattern_config in handler_config.pattern:
                     if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                        if pattern_config.entrypoint:
-                            module_name = pattern_config.destination_contract_config.module_name
-                            pattern_config.initialize_parameter_cls(
-                                self.package, module_name, pattern_config.entrypoint
-                            )
-                            pattern_config.initialize_storage_cls(self.package, module_name)
+                        if not pattern_config.entrypoint:
+                            continue
+
+                        module_name = pattern_config.destination_contract_config.module_name
+                        pattern_config.initialize_parameter_cls(self.package, module_name, pattern_config.entrypoint)
+                        pattern_config.initialize_storage_cls(self.package, module_name)
+
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                        if not (pattern_config.originated_contract or pattern_config.similar_to):
+                            continue
+
                         module_name = pattern_config.module_name
                         pattern_config.initialize_storage_cls(self.package, module_name)
+
                     else:
                         raise NotImplementedError
 

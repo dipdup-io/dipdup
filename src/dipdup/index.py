@@ -465,14 +465,14 @@ class OperationIndex(Index[OperationIndexConfig]):
         operations = operation_subgroup.operations
 
         for handler_config in self._config.handlers:
-            operation_idx = 0
+            subgroup_index = 0
             pattern_idx = 0
             matched_operations: Deque[Optional[OperationData]] = deque()
 
             # TODO: Ensure complex cases work, e.g. when optional argument is followed by required one
             # TODO: Add None to matched_operations where applicable (pattern is optional and operation not found)
-            while operation_idx < len(operations):
-                operation, pattern_config = operations[operation_idx], handler_config.pattern[pattern_idx]
+            while subgroup_index < len(operations):
+                operation, pattern_config = operations[subgroup_index], handler_config.pattern[pattern_idx]
                 operation_matched = await self._match_operation(pattern_config, operation)
 
                 if operation.type == 'origination' and isinstance(
@@ -487,12 +487,12 @@ class OperationIndex(Index[OperationIndexConfig]):
                 if operation_matched:
                     matched_operations.append(operation)
                     pattern_idx += 1
-                    operation_idx += 1
+                    subgroup_index += 1
                 elif pattern_config.optional:
                     matched_operations.append(None)
                     pattern_idx += 1
                 else:
-                    operation_idx += 1
+                    subgroup_index += 1
 
                 if pattern_idx == len(handler_config.pattern):
                     self._logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
@@ -533,22 +533,26 @@ class OperationIndex(Index[OperationIndexConfig]):
                 storage_type = pattern_config.storage_type_cls
                 storage = deserialize_storage(operation_data, storage_type)
 
-                transaction_context: Transaction[Any, Any] = Transaction(
+                wrapped_transaction: Transaction[Any, Any] = Transaction(
                     data=operation_data,
                     parameter=parameter,
                     storage=storage,
                 )
-                args.append(transaction_context)
+                args.append(wrapped_transaction)
 
             elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                if not (pattern_config.originated_contract or pattern_config.similar_to):
+                    args.append(operation_data)
+                    continue
+
                 storage_type = pattern_config.storage_type_cls
                 storage = deserialize_storage(operation_data, storage_type)
 
-                origination_context = Origination(
+                wrapped_origination = Origination(
                     data=operation_data,
                     storage=storage,
                 )
-                args.append(origination_context)
+                args.append(wrapped_origination)
 
             else:
                 raise NotImplementedError
