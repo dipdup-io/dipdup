@@ -13,6 +13,7 @@ from typing import Dict
 from typing import Generic
 from typing import Iterable
 from typing import Iterator
+from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -644,7 +645,7 @@ class BigMapIndex(Index):
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_big_maps(big_maps, message_level)
 
-    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+    async def _create_fetcher(self, first_level: int, last_level: int) -> BigMapFetcher:
         big_map_addresses = self._get_big_map_addresses()
         big_map_paths = self._get_big_map_paths()
 
@@ -851,7 +852,7 @@ class HeadIndex(Index):
         super().__init__(ctx, config, datasource)
         self._queue: Deque[HeadBlockData] = deque()
 
-    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+    async def _create_fetcher(self, first_level: int, last_level: int) -> NoReturn:
         raise NotImplementedError('HeadIndex has no fetcher')
 
     async def _synchronize(self, sync_level: int) -> None:
@@ -908,7 +909,7 @@ class TokenTransferIndex(Index):
         if Metrics.enabled:
             Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
 
-    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+    async def _create_fetcher(self, first_level: int, last_level: int) -> TokenTransferFetcher:
         token_addresses: set[str] = set()
         token_ids: set[int] = set()
         from_addresses: set[str] = set()
@@ -1076,7 +1077,7 @@ class EventIndex(Index):
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_events(events, message_level)
 
-    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+    async def _create_fetcher(self, first_level: int, last_level: int) -> EventFetcher:
         event_addresses = self._get_event_addresses()
         event_tags = self._get_event_tags()
         return EventFetcher(
