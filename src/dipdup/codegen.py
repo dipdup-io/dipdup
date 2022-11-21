@@ -17,6 +17,7 @@ from shutil import which
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import TypeGuard
 from typing import cast
 
 import orjson as json
@@ -33,6 +34,7 @@ from dipdup.config import OperationHandlerOriginationPatternConfig
 from dipdup.config import OperationHandlerPatternConfigT
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
+from dipdup.config import PatternConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.config import UnknownEventHandlerConfig
@@ -54,6 +56,18 @@ PYTHON_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 CALLBACK_TEMPLATE = 'callback.py.j2'
+
+
+def _is_typed_transaction(config: PatternConfig) -> TypeGuard[OperationHandlerTransactionPatternConfig]:
+    if isinstance(config, OperationHandlerTransactionPatternConfig):
+        return config.destination is not None and config.entrypoint is not None
+    return False
+
+
+def _is_typed_origination(config: PatternConfig) -> TypeGuard[OperationHandlerOriginationPatternConfig]:
+    if isinstance(config, OperationHandlerOriginationPatternConfig):
+        return config.originated_contract is not None or config.similar_to is not None
+    return False
 
 
 def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -149,21 +163,15 @@ class CodeGenerator:
         operation_pattern_config: OperationHandlerPatternConfigT,
         datasource_config: TzktDatasourceConfig,
     ) -> None:
-        if (
-            isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig)
-            and operation_pattern_config.entrypoint
-        ):
+        if _is_typed_transaction(operation_pattern_config):
             contract_config = operation_pattern_config.destination_contract_config
-            originated = False
-        elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
+        elif _is_typed_origination(operation_pattern_config):
             contract_config = operation_pattern_config.contract_config
-            originated = bool(operation_pattern_config.source)
         else:
-            # NOTE: Operations without destination+entrypoint are untyped
             return
 
         self._logger.debug(contract_config)
-        contract_schemas = await self._get_schema(datasource_config, contract_config, originated)
+        contract_schemas = await self._get_schema(datasource_config, contract_config)
 
         contract_schemas_path = self._pkg.schemas / contract_config.module_name
 
@@ -208,7 +216,7 @@ class CodeGenerator:
         for handler_config in index_config.handlers:
             contract_config = handler_config.contract_config
 
-            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
+            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
 
             contract_schemas_path = self._pkg.schemas / contract_config.module_name
             big_map_schemas_path = contract_schemas_path / 'big_map'
@@ -237,7 +245,6 @@ class CodeGenerator:
             contract_schemas = await self._get_schema(
                 index_config.datasource_config,
                 contract_config,
-                False,
             )
             contract_schemas_path = self._pkg.schemas / contract_config.module_name
             event_schemas_path = contract_schemas_path / 'event'
@@ -369,7 +376,6 @@ class CodeGenerator:
         self,
         datasource_config: TzktDatasourceConfig,
         contract_config: ContractConfig,
-        originated: bool,
     ) -> Dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
         datasource = self._datasources.get(datasource_config)
@@ -381,17 +387,7 @@ class CodeGenerator:
         if datasource_config not in self._schemas:
             self._schemas[datasource_config] = {}
         if address not in self._schemas[datasource_config]:
-            if originated:
-                try:
-                    address = (await datasource.get_originated_contracts(address))[0]
-                except IndexError as e:
-                    raise ConfigurationError(f'No contracts were originated from `{address}`') from e
-                self._logger.info(
-                    'Fetching schemas for contract `%s` (originated from `%s`)', address, contract_config.address
-                )
-            else:
-                self._logger.info('Fetching schemas for contract `%s`', address)
-
+            self._logger.info('Fetching schemas for contract `%s`', address)
             address_schemas_json = await datasource.get_jsonschemas(address)
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
