@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+* codegen: Include PEP 561 marker in generated packages
 * codegen: Untyped originations are now correctly handled.
 * index: Do not deserialize originations matched by the `source` filter.
 

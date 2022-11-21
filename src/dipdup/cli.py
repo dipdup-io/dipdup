@@ -313,7 +313,7 @@ async def cli(ctx, config: List[str], env_file: List[str]):
         load_dotenv(env_path, override=True)
 
     # NOTE: These commands need no other preparations
-    if ctx.invoked_subcommand in ('new', 'update', 'install', 'update', 'uninstall'):
+    if ctx.invoked_subcommand in ('new', 'update', 'install', 'uninstall'):
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
@@ -338,9 +338,9 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 
     # NOTE: Avoid import errors if project package is incomplete
     try:
-        await CodeGenerator(_config, {}).create_package()
+        CodeGenerator(_config, {}).create_package()
     except Exception as e:
-        raise InitializationRequiredError('Failed to create a project package.') from e
+        raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
 
     # NOTE: Ensure that `spec_version` is valid and supported
     if _config.spec_version not in spec_version_mapping:
