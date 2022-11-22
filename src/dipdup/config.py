@@ -26,7 +26,8 @@ from collections import defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
-from functools import cached_property, partial
+from functools import cached_property
+from functools import partial
 from io import StringIO
 from os import environ as env
 from pathlib import Path
@@ -1475,7 +1476,9 @@ class DipDupConfig:
     spec_version: str
     package: str
     datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
-    database: SqliteDatabaseConfig | PostgresDatabaseConfig = field(default_factory=partial(SqliteDatabaseConfig, kind='sqlite'))
+    database: SqliteDatabaseConfig | PostgresDatabaseConfig = field(
+        default_factory=partial(SqliteDatabaseConfig, kind='sqlite')
+    )
     contracts: dict[str, ContractConfig] = field(default_factory=dict)
     indexes: dict[str, IndexConfigU] = field(default_factory=dict)
     templates: dict[str, ResolvedIndexConfigU] = field(default_factory=dict)
