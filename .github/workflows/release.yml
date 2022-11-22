@@ -130,16 +130,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: ${{ steps.changelog.outputs.version }} - ${{ steps.changelog.outputs.date }}
+          release_name: ${{ steps.changelog.outputs.version }}
           body: |
+            ## ${{ steps.changelog.outputs.version }} - ${{ steps.changelog.outputs.date }}
+
             ${{ steps.changelog.outputs.changes }}
           draft: true
           prerelease: ${{ steps.changelog.outputs.status == 'prereleased' }}
 
       - name: Create Sentry release
         uses: getsentry/action-release@v1
+        with:
+          version: ${{ steps.changelog.outputs.version }}
+          ignore_missing: true
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_ORG: sentry
+          SENTRY_PROJECT: dipdup
           SENTRY_URL: ${{ secrets.SENTRY_URL }}
