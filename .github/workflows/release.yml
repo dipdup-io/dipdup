@@ -11,6 +11,9 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
+        # NOTE: Fetch full history for Sentry release
+        with:
+          fetch-depth: 0
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -142,7 +145,6 @@ jobs:
         uses: getsentry/action-release@v1
         with:
           version: ${{ steps.changelog.outputs.version }}
-          ignore_missing: true
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: sentry
