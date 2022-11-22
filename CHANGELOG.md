@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 * codegen: Untyped originations are now correctly handled.
 * codegen: Fixed `alias` config field having no effect on originations.
 * codegen: Fixed optional arguments in generated callbacks.
-* config: Enforce snake_case for package name.
+* config: Suggest snake_case for package name.
 * index: Do not deserialize originations matched by the `source` filter.
 
 ## [6.3.0] - 2022-11-15
