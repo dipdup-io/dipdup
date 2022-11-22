@@ -11,6 +11,7 @@ from functools import partial
 from functools import wraps
 from os import environ as env
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
@@ -27,10 +28,16 @@ from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
-IGNORE_SIGINT = (None, 'new', 'schema', 'wipe', 'install', 'update', 'uninstall')
+IGNORE_CONFIG_CMDS = {'new', 'install', 'uninstall' 'update'}
+# NOTE: Our signal handler conflicts with Click's one in prompt mode
+IGNORE_SIGINT_CMDS = {*IGNORE_CONFIG_CMDS, None, 'schema', 'wipe'}
 
 _logger = logging.getLogger('dipdup.cli')
 _is_shutting_down = False
+
+
+if TYPE_CHECKING:
+    from dipdup.config import DipDupConfig
 
 
 def set_up_logging() -> None:
@@ -78,7 +85,7 @@ def cli_wrapper(fn):
     async def wrapper(*args, **kwargs) -> None:
         # NOTE: Avoid catching Click prompts
         ctx = args[0]
-        if ctx.invoked_subcommand not in IGNORE_SIGINT:
+        if ctx.invoked_subcommand not in IGNORE_SIGINT_CMDS:
             loop = asyncio.get_running_loop()
             loop.add_signal_handler(
                 signal.SIGINT,
@@ -118,7 +125,7 @@ def _sentry_before_send(
         if crash_reporting and not logger_name.startswith('dipdup'):
             return None
 
-    # NOTE: Dark magic ahead. Merge CallbackError and its cause when possible.
+    # NOTE: Dark magic ahead. Merge `CallbackError` and its cause when possible.
     with suppress(KeyError, IndexError):
         exceptions = event['exception']['values']
         if exceptions[-1]['type'] == 'CallbackError':
@@ -131,7 +138,7 @@ def _sentry_before_send(
     return event
 
 
-def _init_sentry(config) -> None:
+def _init_sentry(config: 'DipDupConfig') -> None:
     from dipdup.config import DipDupConfig
     from dipdup.config import SentryConfig
 
@@ -280,7 +287,7 @@ async def _check_version() -> None:
 )
 @click.pass_context
 @cli_wrapper
-async def cli(ctx, config: List[str], env_file: List[str]):
+async def cli(ctx: click.Context, config: List[str], env_file: List[str]):
     """Manage and run DipDup indexers.
 
     Documentation: https://docs.dipdup.io
@@ -313,7 +320,7 @@ async def cli(ctx, config: List[str], env_file: List[str]):
         load_dotenv(env_path, override=True)
 
     # NOTE: These commands need no other preparations
-    if ctx.invoked_subcommand in ('new', 'update', 'install', 'update', 'uninstall'):
+    if ctx.invoked_subcommand in IGNORE_CONFIG_CMDS:
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
@@ -338,9 +345,9 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 
     # NOTE: Avoid import errors if project package is incomplete
     try:
-        await CodeGenerator(_config, {}).create_package()
+        CodeGenerator(_config, {}).create_package()
     except Exception as e:
-        raise InitializationRequiredError('Failed to create a project package.') from e
+        raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
 
     # NOTE: Ensure that `spec_version` is valid and supported
     if _config.spec_version not in spec_version_mapping:
@@ -363,7 +370,7 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 @cli.command()
 @click.pass_context
 @cli_wrapper
-async def run(ctx) -> None:
+async def run(ctx: click.Context) -> None:
     """Run indexer.
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
@@ -383,7 +390,7 @@ async def run(ctx) -> None:
 @click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types.')
 @click.pass_context
 @cli_wrapper
-async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
+async def init(ctx: click.Context, overwrite_types: bool, keep_schemas: bool) -> None:
     """Generate project tree, callbacks and types.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
@@ -399,7 +406,7 @@ async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
 @cli.command()
 @click.pass_context
 @cli_wrapper
-async def migrate(ctx) -> None:
+async def migrate(ctx: click.Context) -> None:
     """
     Migrate project to the new spec version.
 
@@ -411,7 +418,7 @@ async def migrate(ctx) -> None:
 @cli.command()
 @click.pass_context
 @cli_wrapper
-async def status(ctx) -> None:
+async def status(ctx: click.Context) -> None:
     """Show the current status of indexes in the database."""
     from dipdup.config import DipDupConfig
     from dipdup.models import Index
@@ -436,7 +443,7 @@ async def status(ctx) -> None:
 @cli.group()
 @click.pass_context
 @cli_wrapper
-async def config(ctx) -> None:
+async def config(ctx: click.Context) -> None:
     """Commands to manage DipDup configuration."""
     ...
 
@@ -446,7 +453,7 @@ async def config(ctx) -> None:
 @click.option('--full', is_flag=True, help='Resolve index templates.')
 @click.pass_context
 @cli_wrapper
-async def config_export(ctx, unsafe: bool, full: bool) -> None:
+async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
     """
     Print config after resolving all links and, optionally, templates.
 
@@ -467,7 +474,7 @@ async def config_export(ctx, unsafe: bool, full: bool) -> None:
 @click.option('--file', '-f', type=str, default=None, help='Output to file instead of stdout.')
 @click.pass_context
 @cli_wrapper
-async def config_env(ctx, file: Optional[str]) -> None:
+async def config_env(ctx: click.Context, file: Optional[str]) -> None:
     """Dump environment variables used in DipDup config.
 
     If variable is not set, default value will be used.
@@ -489,7 +496,7 @@ async def config_env(ctx, file: Optional[str]) -> None:
 @cli.group(help='Commands related to Hasura integration.')
 @click.pass_context
 @cli_wrapper
-async def hasura(ctx) -> None:
+async def hasura(ctx: click.Context) -> None:
     ...
 
 
@@ -497,7 +504,7 @@ async def hasura(ctx) -> None:
 @click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
 @cli_wrapper
-async def hasura_configure(ctx, force: bool) -> None:
+async def hasura_configure(ctx: click.Context, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
     from dipdup.config import DipDupConfig
     from dipdup.config import PostgresDatabaseConfig
@@ -530,7 +537,7 @@ async def hasura_configure(ctx, force: bool) -> None:
 @cli.group()
 @click.pass_context
 @cli_wrapper
-async def schema(ctx) -> None:
+async def schema(ctx: click.Context) -> None:
     """Commands to manage database schema."""
     ...
 
@@ -538,7 +545,7 @@ async def schema(ctx) -> None:
 @schema.command(name='approve')
 @click.pass_context
 @cli_wrapper
-async def schema_approve(ctx) -> None:
+async def schema_approve(ctx: click.Context) -> None:
     """Continue to use existing schema after reindexing was triggered."""
     from dipdup.config import DipDupConfig
     from dipdup.models import Index
@@ -569,7 +576,7 @@ async def schema_approve(ctx) -> None:
 @click.option('--force', is_flag=True, help='Skip confirmation prompt.')
 @click.pass_context
 @cli_wrapper
-async def schema_wipe(ctx, immune: bool, force: bool) -> None:
+async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     """
     Drop all database tables, functions and views.
 
@@ -620,7 +627,7 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
 @schema.command(name='init')
 @click.pass_context
 @cli_wrapper
-async def schema_init(ctx) -> None:
+async def schema_init(ctx: click.Context) -> None:
     """
     Prepare a database for running DipDip.
 
@@ -656,7 +663,7 @@ async def schema_init(ctx) -> None:
 @schema.command(name='export')
 @click.pass_context
 @cli_wrapper
-async def schema_export(ctx) -> None:
+async def schema_export(ctx: click.Context) -> None:
     """Print SQL schema including scripts from `sql/on_reindex`.
 
     This command may help you debug inconsistency between project models and expected SQL schema.

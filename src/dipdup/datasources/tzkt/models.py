@@ -19,6 +19,7 @@ from typing_extensions import get_args
 from typing_extensions import get_origin
 
 from dipdup.datasources.subscription import Subscription
+from dipdup.exceptions import InvalidDataError
 from dipdup.models import OperationData
 from dipdup.models import StorageType
 from dipdup.utils.codegen import parse_object
@@ -269,9 +270,12 @@ def deserialize_storage(operation_data: OperationData, storage_type: Type[Storag
     """Merge big map diffs and deserialize raw storage into typeclass"""
     bigmap_diffs = _preprocess_bigmap_diffs(operation_data.diffs)
 
-    operation_data.storage = _process_storage(
-        storage=operation_data.storage,
-        storage_type=storage_type,
-        bigmap_diffs=bigmap_diffs,
-    )
-    return parse_object(storage_type, operation_data.storage)
+    try:
+        operation_data.storage = _process_storage(
+            storage=operation_data.storage,
+            storage_type=storage_type,
+            bigmap_diffs=bigmap_diffs,
+        )
+        return parse_object(storage_type, operation_data.storage)
+    except IntrospectionError as e:
+        raise InvalidDataError(e.args[0], storage_type, operation_data.storage) from e
