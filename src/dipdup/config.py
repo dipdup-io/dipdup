@@ -32,6 +32,7 @@ from os import environ as env
 from pathlib import Path
 from pydoc import locate
 from typing import Any
+from typing import Awaitable
 from typing import Callable
 from typing import Generic
 from typing import Iterator
@@ -171,7 +172,7 @@ class PostgresDatabaseConfig:
         }
 
     @validator('immune_tables', allow_reuse=True)
-    def _valid_immune_tables(cls, v) -> None:
+    def _valid_immune_tables(cls, v: set[str]) -> set[str]:
         for table in v:
             if table.startswith('dipdup'):
                 raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
@@ -509,7 +510,7 @@ ParentT = TypeVar('ParentT')
 class ParentMixin(Generic[ParentT]):
     """`parent` field for index and template configs"""
 
-    def __post_init_post_parse__(self: ParentMixin) -> None:
+    def __post_init_post_parse__(self: ParentMixin[ParentT]) -> None:
         self._parent: ParentT | None = None
 
     @property
@@ -760,12 +761,12 @@ class CallbackMixin(CodegenMixin):
         return self._kind  # type: ignore
 
     @cached_property
-    def callback_fn(self) -> Callable:
+    def callback_fn(self) -> Callable[..., Awaitable[None]]:
         if self._callback_fn is None:
             raise ConfigInitializationException
         return self._callback_fn
 
-    def initialize_callback_fn(self, package: str):
+    def initialize_callback_fn(self, package: str) -> None:
         if self._callback_fn:
             return
         _logger.debug('Registering %s callback `%s`', self.kind, self.callback)
@@ -1276,7 +1277,7 @@ class HasuraConfig:
     http: HTTPConfig | None = None
 
     @validator('url', allow_reuse=True)
-    def _valid_url(cls, v):
+    def _valid_url(cls, v: str) -> str:
         parsed_url = urlparse(v)
         if not (parsed_url.scheme and parsed_url.netloc):
             raise ConfigurationError(f'`{v}` is not a valid Hasura URL')

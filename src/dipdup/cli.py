@@ -13,10 +13,13 @@ from os import environ as env
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Awaitable
+from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import TypeVar
 from typing import cast
 
 import asyncclick as click
@@ -80,11 +83,13 @@ def _print_help(error: Exception, crashdump_path: str) -> None:
     atexit.register(partial(click.echo, help_message, err=True))
 
 
-def cli_wrapper(fn):
+WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
+
+
+def cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
-    async def wrapper(*args, **kwargs) -> None:
+    async def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
         # NOTE: Avoid catching Click prompts
-        ctx = args[0]
         if ctx.invoked_subcommand not in IGNORE_SIGINT_CMDS:
             loop = asyncio.get_running_loop()
             loop.add_signal_handler(
@@ -93,7 +98,7 @@ def cli_wrapper(fn):
             )
 
         try:
-            await fn(*args, **kwargs)
+            await fn(ctx, *args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
@@ -104,7 +109,7 @@ def cli_wrapper(fn):
             _print_help(e, crashdump_path)
             raise
 
-    return wrapper
+    return cast(WrappedCommandT, wrapper)
 
 
 def _sentry_before_send(
@@ -287,7 +292,7 @@ async def _check_version() -> None:
 )
 @click.pass_context
 @cli_wrapper
-async def cli(ctx: click.Context, config: List[str], env_file: List[str]):
+async def cli(ctx: click.Context, config: List[str], env_file: List[str]) -> None:
     """Manage and run DipDup indexers.
 
     Documentation: https://docs.dipdup.io
@@ -699,7 +704,7 @@ async def schema_export(ctx: click.Context) -> None:
 @click.option('--replay', '-r', type=click.Path(exists=True), default=None, help='Replay a previously saved state.')
 @cli_wrapper
 async def new(
-    ctx,
+    ctx: click.Context,
     quiet: bool,
     force: bool,
     replay: str | None,
@@ -720,7 +725,7 @@ async def new(
 @click.option('--path', '-p', default=None, help='Install DipDup from a local path.')
 @cli_wrapper
 async def install(
-    ctx,
+    ctx: click.Context,
     quiet: bool,
     force: bool,
     ref: str | None,
@@ -737,7 +742,7 @@ async def install(
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @cli_wrapper
 async def uninstall(
-    ctx,
+    ctx: click.Context,
     quiet: bool,
 ) -> None:
     """Uninstall DipDup for the current user."""
@@ -752,7 +757,7 @@ async def uninstall(
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
 @cli_wrapper
 async def update(
-    ctx,
+    ctx: click.Context,
     quiet: bool,
     force: bool,
 ) -> None:

@@ -1,5 +1,6 @@
 import logging
 from abc import abstractmethod
+from typing import Any
 from typing import Awaitable
 from typing import Callable
 from typing import Optional
@@ -56,7 +57,7 @@ class HttpDatasource(Datasource):
         super().__init__(url, self._default_http_config.merge(http_config))
         self._logger = _logger
 
-    async def get(self, url: str, weight: int = 1, **kwargs):
+    async def get(self, url: str, weight: int = 1, **kwargs: Any) -> Any:
         return await self.request(METH_GET, url, weight, **kwargs)
 
     async def run(self) -> None:

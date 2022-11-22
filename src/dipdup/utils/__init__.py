@@ -13,11 +13,12 @@ from typing import DefaultDict
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
-from typing import cast
+from typing import Union
 
 import orjson
 from humps import main as humps
@@ -42,7 +43,7 @@ def snake_to_pascal(value: str) -> str:
     # NOTE: Special case, humps returns uppercase otherwise
     if value.isupper():
         value = value.lower()
-    return cast(str, humps.pascalize(value))
+    return humps.pascalize(value)
 
 
 def pascal_to_snake(value: str, strip_dots: bool = True) -> str:
@@ -87,7 +88,25 @@ class FormattedLogger(Logger):
             return self._log
         return getattr(self.logger, name)
 
-    def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, stacklevel=1) -> None:
+    def _log(
+        self,
+        level: int,
+        msg: object,
+        args: Any,
+        exc_info: Optional[
+            Union[
+                None,
+                bool,
+                Union[
+                    tuple[type[BaseException], BaseException, Optional[types.TracebackType]], tuple[None, None, None]
+                ],
+                BaseException,
+            ]
+        ] = None,
+        extra: Mapping[str, Any] | None = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+    ) -> None:
         if self.fmt:
             msg = self.fmt.format(msg)
         self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
@@ -133,8 +152,8 @@ def exclude_none(config_json: Any) -> Any:
     return config_json
 
 
-def json_dumps_decimals(obj):
-    def _default(obj):
+def json_dumps_decimals(obj: Any) -> str:
+    def _default(obj: Any) -> Any:
         if isinstance(obj, Decimal):
             return str(obj)
         raise TypeError

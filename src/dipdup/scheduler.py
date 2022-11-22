@@ -82,7 +82,11 @@ class SchedulerManager:
             fmt=job_config.name + ': {}',
         )
 
-        async def _job_wrapper(ctx: DipDupContext, *args, **kwargs) -> None:
+        async def _job_wrapper(
+            ctx: DipDupContext,
+            *args: Any,
+            **kwargs: Any,
+        ) -> None:
             nonlocal job_config, hook_config
             job_ctx = HookContext(
                 config=ctx.config,

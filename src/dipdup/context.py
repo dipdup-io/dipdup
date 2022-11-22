@@ -15,6 +15,7 @@ from typing import Awaitable
 from typing import Deque
 from typing import Dict
 from typing import Iterator
+from typing import NoReturn
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -79,7 +80,7 @@ class MetadataCursor:
     _contract = 0
     _token = 0
 
-    def __new__(cls):
+    def __call__(cls) -> NoReturn:
         raise NotImplementedError('MetadataCursor is a singleton class')
 
     @classmethod
@@ -132,7 +133,7 @@ class DipDupContext:
         name: str,
         fmt: Optional[str] = None,
         wait: bool = True,
-        *args,
+        *args: Any,
         **kwargs: Any,
     ) -> None:
         """Fire hook with given name and arguments.
@@ -149,7 +150,7 @@ class DipDupContext:
         index: str,
         datasource: TzktDatasource,
         fmt: Optional[str] = None,
-        *args,
+        *args: Any,
         **kwargs: Any,
     ) -> None:
         """Fire handler with given name and arguments.
@@ -161,7 +162,7 @@ class DipDupContext:
         """
         await self._callbacks._fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
 
-    async def execute_sql(self, name: str, *args: Any, **kwargs) -> None:
+    async def execute_sql(self, name: str, *args: Any, **kwargs: Any) -> None:
         """Executes SQL script(s) with given name.
 
         If the `name` path is a directory, all `.sql` scripts within it will be executed in alphabetical order.
@@ -181,7 +182,7 @@ class DipDupContext:
         """Restart process and continue indexing."""
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context) -> None:
+    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context: Any) -> None:
         """Drops the entire database and starts the indexing process from scratch.
 
         :param reason: Reason for reindexing in free-form string
@@ -451,14 +452,14 @@ class HookContext(DipDupContext):
         rolled_back_indexes.add(index)
 
 
-class TemplateValuesDict(dict):
+class TemplateValuesDict(dict[str, Any]):
     """Dictionary with template values."""
 
-    def __init__(self, ctx, **kwargs):
+    def __init__(self, ctx: Any, **kwargs: Any) -> None:
         self.ctx = ctx
         super().__init__(**kwargs)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         try:
             return dict.__getitem__(self, key)
         except KeyError as e:
@@ -547,7 +548,7 @@ class CallbackManager:
         index: str,
         datasource: TzktDatasource,
         fmt: Optional[str] = None,
-        *args,
+        *args: Any,
         **kwargs: Any,
     ) -> None:
         module = f'{self._package}.handlers.{name}'
@@ -568,7 +569,7 @@ class CallbackManager:
         name: str,
         fmt: Optional[str] = None,
         wait: bool = True,
-        *args,
+        *args: Any,
         **kwargs: Any,
     ) -> None:
         module = f'{self._package}.hooks.{name}'
@@ -586,7 +587,7 @@ class CallbackManager:
 
         self._verify_arguments(new_ctx, *args, **kwargs)
 
-        async def _wrapper():
+        async def _wrapper() -> None:
             async with AsyncExitStack() as stack:
                 stack.enter_context(self._callback_wrapper(module))
                 if hook_config.atomic:
@@ -636,8 +637,9 @@ class CallbackManager:
                 raise
             raise CallbackError(module, e) from e
 
+    # FIXME: kwargs are ignored, no false alarms though
     @classmethod
-    def _verify_arguments(cls, ctx: HookContext, *args, **kwargs) -> None:
+    def _verify_arguments(cls, ctx: HookContext, *args: Any, **kwargs: Any) -> None:
         kwargs_annotations = ctx.hook_config.locate_arguments()
         args_names = tuple(kwargs_annotations.keys())
         args_annotations = tuple(kwargs_annotations.values())

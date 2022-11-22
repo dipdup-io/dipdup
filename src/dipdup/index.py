@@ -38,9 +38,7 @@ from dipdup.config import OperationHandlerOriginationPatternConfig
 from dipdup.config import OperationHandlerPatternConfigT
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
-from dipdup.config import OperationType
 from dipdup.config import ResolvedIndexConfigT
-from dipdup.config import SkipHistory
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import UnknownEventHandlerConfig
@@ -53,7 +51,10 @@ from dipdup.datasources.tzkt.fetcher import EventFetcher
 from dipdup.datasources.tzkt.fetcher import OperationFetcher
 from dipdup.datasources.tzkt.fetcher import TokenTransferFetcher
 from dipdup.datasources.tzkt.models import deserialize_storage
+from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
+from dipdup.enums import OperationType
+from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import InvalidDataError
@@ -63,7 +64,6 @@ from dipdup.models import BigMapDiff
 from dipdup.models import Event
 from dipdup.models import EventData
 from dipdup.models import HeadBlockData
-from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Origination
 from dipdup.models import TokenTransferData
@@ -155,7 +155,7 @@ class Index(Generic[ConfigT]):
     """
 
     message_type: MessageType
-    _queue: Deque
+    _queue: Deque[Any]
 
     def __init__(self, ctx: DipDupContext, config: ConfigT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
@@ -265,7 +265,7 @@ class Index(Generic[ConfigT]):
         ...
 
     @abstractmethod
-    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher[Any]:
         ...
 
     async def _enter_sync_state(self, head_level: int) -> Optional[int]:
@@ -616,7 +616,7 @@ class OperationIndex(Index[OperationIndexConfig]):
         return self._contract_hashes[address]
 
 
-class BigMapIndex(Index):
+class BigMapIndex(Index[BigMapIndexConfig]):
     message_type = MessageType.big_map
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
@@ -769,7 +769,7 @@ class BigMapIndex(Index):
         self,
         handler_config: BigMapHandlerConfig,
         matched_big_map: BigMapData,
-    ) -> BigMapDiff:
+    ) -> BigMapDiff[Any, Any]:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
 
@@ -805,7 +805,9 @@ class BigMapIndex(Index):
 
         return matched_handlers
 
-    async def _call_matched_handler(self, handler_config: BigMapHandlerConfig, big_map_diff: BigMapDiff) -> None:
+    async def _call_matched_handler(
+        self, handler_config: BigMapHandlerConfig, big_map_diff: BigMapDiff[Any, Any]
+    ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -845,7 +847,7 @@ class BigMapIndex(Index):
         return pairs
 
 
-class HeadIndex(Index):
+class HeadIndex(Index[HeadIndexConfig]):
     message_type: MessageType = MessageType.head
 
     def __init__(self, ctx: DipDupContext, config: HeadIndexConfig, datasource: TzktDatasource) -> None:
@@ -896,7 +898,7 @@ class HeadIndex(Index):
         self._queue.append(head)
 
 
-class TokenTransferIndex(Index):
+class TokenTransferIndex(Index[TokenTransferIndexConfig]):
     message_type = MessageType.token_transfer
 
     def __init__(self, ctx: DipDupContext, config: TokenTransferIndexConfig, datasource: TzktDatasource) -> None:
@@ -1048,7 +1050,7 @@ class TokenTransferIndex(Index):
                 await self._process_level_token_transfers(token_transfers, message_level)
 
 
-class EventIndex(Index):
+class EventIndex(Index[EventIndexConfig]):
     message_type = MessageType.event
 
     def __init__(self, ctx: DipDupContext, config: EventIndexConfig, datasource: TzktDatasource) -> None:
@@ -1148,7 +1150,7 @@ class EventIndex(Index):
         self,
         handler_config: EventHandlerConfigT,
         matched_event: EventData,
-    ) -> Event | UnknownEvent | None:
+    ) -> Event[Any] | UnknownEvent | None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
@@ -1198,7 +1200,9 @@ class EventIndex(Index):
 
         return matched_handlers
 
-    async def _call_matched_handler(self, handler_config: EventHandlerConfigT, event: Event | UnknownEvent):
+    async def _call_matched_handler(
+        self, handler_config: EventHandlerConfigT, event: Event[Any] | UnknownEvent
+    ) -> None:
         if isinstance(handler_config, EventHandlerConfig) != isinstance(event, Event):
             raise RuntimeError(f'Invalid handler config and event types: {handler_config}, {event}')
 

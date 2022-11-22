@@ -8,6 +8,7 @@ from asyncio import gather
 from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import suppress
+from typing import Any
 from typing import Awaitable
 from typing import Deque
 from typing import Dict
@@ -33,6 +34,7 @@ from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
@@ -51,7 +53,6 @@ from dipdup.models import EventData
 from dipdup.models import Head
 from dipdup.models import HeadBlockData
 from dipdup.models import Index as IndexState
-from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Schema
 from dipdup.models import TokenTransferData
@@ -69,7 +70,7 @@ class IndexDispatcher:
         self._ctx = ctx
 
         self._logger = logging.getLogger('dipdup')
-        self._indexes: Dict[str, Index] = {}
+        self._indexes: Dict[str, Index[Any]] = {}
 
         self._entrypoint_filter: Set[Optional[str]] = set()
         self._address_filter: Set[str] = set()
@@ -100,7 +101,7 @@ class IndexDispatcher:
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
-            tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
+            tasks: Deque[Awaitable[bool]] = deque(index.process() for index in self._indexes.values())
             indexes_processed = await gather(*tasks)
 
             indexes_spawned = False
@@ -365,7 +366,7 @@ class DipDup:
     async def run(self) -> None:
         """Run indexing process"""
         advanced_config = self._config.advanced
-        tasks: Set[Task] = set()
+        tasks: Set[Task[None]] = set()
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
@@ -477,7 +478,7 @@ class DipDup:
             )
         )
 
-    async def _set_up_hooks(self, tasks: Set[Task], run: bool = False) -> None:
+    async def _set_up_hooks(self, tasks: Set[Task[None]], run: bool = False) -> None:
         for event_hook_config in event_hooks.values():
             self._callbacks.register_hook(event_hook_config)
 
@@ -489,7 +490,7 @@ class DipDup:
 
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus:
-            from prometheus_client import start_http_server  # type: ignore
+            from prometheus_client import start_http_server
 
             Metrics.enabled = True
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
@@ -538,7 +539,7 @@ class DipDup:
 
     async def _set_up_index_dispatcher(
         self,
-        tasks: Set[Task],
+        tasks: Set[Task[None]],
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
@@ -556,10 +557,10 @@ class DipDup:
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
 
-    async def _spawn_datasources(self, tasks: Set[Task]) -> Event:
+    async def _spawn_datasources(self, tasks: Set[Task[None]]) -> Event:
         event = Event()
 
-        async def _event_wrapper():
+        async def _event_wrapper() -> None:
             self._logger.info('Waiting for indexes to synchronize before spawning datasources')
             await event.wait()
 
@@ -570,7 +571,7 @@ class DipDup:
         tasks.add(create_task(_event_wrapper()))
         return event  # noqa: R504
 
-    async def _set_up_scheduler(self, tasks: Set[Task]) -> Event:
+    async def _set_up_scheduler(self, tasks: Set[Task[None]]) -> Event:
         # NOTE: Prepare SchedulerManager
         event = Event()
         scheduler = SchedulerManager(self._config.advanced.scheduler)

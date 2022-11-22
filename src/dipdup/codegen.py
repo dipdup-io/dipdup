@@ -99,7 +99,7 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
             'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
     elif schema.get('$comment') == 'big_map':
-        return schema['oneOf'][1]
+        return cast(dict[str, Any], schema['oneOf'][1])
     else:
         return schema
 

@@ -17,6 +17,7 @@ from typing import Callable
 from typing import Generator
 from typing import NamedTuple
 from typing import NoReturn
+from typing import Sequence
 from typing import cast
 
 from pysignalr.client import SignalRClient
@@ -264,25 +265,34 @@ class TzktDatasource(IndexDatasource):
     async def get_contract_summary(self, address: str) -> dict[str, Any]:
         """Get contract summary"""
         self._logger.info('Fetching contract summary for address `%s`', address)
-        return await self.request(
-            'get',
-            url=f'v1/contracts/{address}',
+        return cast(
+            dict[str, Any],
+            await self.request(
+                'get',
+                url=f'v1/contracts/{address}',
+            ),
         )
 
     async def get_contract_storage(self, address: str) -> dict[str, Any]:
         """Get contract storage"""
         self._logger.info('Fetching contract storage for address `%s`', address)
-        return await self.request(
-            'get',
-            url=f'v1/contracts/{address}/storage',
+        return cast(
+            dict[str, Any],
+            await self.request(
+                'get',
+                url=f'v1/contracts/{address}/storage',
+            ),
         )
 
     async def get_jsonschemas(self, address: str) -> dict[str, Any]:
         """Get JSONSchemas for contract's storage/parameter/bigmap types"""
         self._logger.info('Fetching jsonschemas for address `%s`', address)
-        return await self.request(
-            'get',
-            url=f'v1/contracts/{address}/interface',
+        return cast(
+            dict[str, Any],
+            await self.request(
+                'get',
+                url=f'v1/contracts/{address}/interface',
+            ),
         )
 
     async def get_big_map(
@@ -566,13 +576,11 @@ class TzktDatasource(IndexDatasource):
     ) -> tuple[TokenTransferData, ...]:
         """Get token transfers for contract"""
         offset, limit = offset or 0, limit or self.request_limit
-        params: dict = {}
 
         raw_token_transfers = await self.request(
             'get',
             url='v1/tokens/transfers',
             params={
-                **params,
                 'token.contract.in': ','.join(token_addresses),
                 'token.id.in': ','.join(str(token_id) for token_id in token_ids),
                 'from.in': ','.join(from_addresses),
@@ -681,7 +689,9 @@ class TzktDatasource(IndexDatasource):
         await self._send(method, request, _on_subscribe)
         await event.wait()
 
-    async def _iter_batches(self, fn, *args, cursor: bool = True, **kwargs) -> AsyncIterator:
+    async def _iter_batches(
+        self, fn: Callable[..., Awaitable[Sequence[Any]]], *args: Any, cursor: bool = True, **kwargs: Any
+    ) -> AsyncIterator[Any]:
         if set(kwargs).intersection(('offset', 'offset.cr', 'limit')):
             raise ValueError('`offset` and `limit` arguments are not allowed')
 
@@ -730,16 +740,19 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Establishing realtime connection')
         ws = self._get_ws_client()
 
-        async def _wrapper():
-            retry_sleep = self._http_config.retry_sleep
-            for _ in range(self._http_config.retry_count or sys.maxsize):
+        async def _wrapper() -> None:
+            retry_sleep = self._http_config.retry_sleep or 0
+            retry_multiplier = self._http_config.retry_multiplier or 1
+            retry_count = self._http_config.retry_count or sys.maxsize
+
+            for _ in range(retry_count):
                 try:
                     await ws.run()
                 except WebsocketConnectionError as e:
                     self._logger.error('Websocket connection error: %s', e)
                     await self.emit_disconnected()
                     await asyncio.sleep(retry_sleep)
-                    retry_sleep *= self._http_config.retry_multiplier
+                    retry_sleep *= retry_multiplier
 
         await create_task(_wrapper())
 
@@ -796,15 +809,15 @@ class TzktDatasource(IndexDatasource):
         # NOTE: Process extensive data from buffer
         for buffered_message in self._buffer.yield_from():
             if buffered_message.type == MessageType.operation:
-                await self._process_operations_data(cast(list, buffered_message.data))
+                await self._process_operations_data(cast(list[dict[str, Any]], buffered_message.data))
             elif buffered_message.type == MessageType.token_transfer:
-                await self._process_token_transfers_data(cast(list, buffered_message.data))
+                await self._process_token_transfers_data(cast(list[dict[str, Any]], buffered_message.data))
             elif buffered_message.type == MessageType.big_map:
-                await self._process_big_maps_data(cast(list, buffered_message.data))
+                await self._process_big_maps_data(cast(list[dict[str, Any]], buffered_message.data))
             elif buffered_message.type == MessageType.head:
-                await self._process_head_data(cast(dict, buffered_message.data))
+                await self._process_head_data(cast(dict[str, Any], buffered_message.data))
             elif buffered_message.type == MessageType.event:
-                await self._process_events_data(cast(list, buffered_message.data))
+                await self._process_events_data(cast(list[dict[str, Any]], buffered_message.data))
             else:
                 raise NotImplementedError(f'Unknown message type: {buffered_message.type}')
 

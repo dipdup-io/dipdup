@@ -101,7 +101,7 @@ def delete_old_backups():
 
 async def on_index_rollback(
     ctx: HookContext,
-    index: Index,
+    index: Index,  # type: ignore[type-arg]
     from_level: int,
     to_level: int,
 ) -> None:

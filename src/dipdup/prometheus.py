@@ -1,8 +1,9 @@
 import time
 from contextlib import contextmanager
 from typing import Generator
+from typing import NoReturn
 
-from prometheus_client import Counter  # type: ignore
+from prometheus_client import Counter
 from prometheus_client import Gauge
 from prometheus_client import Histogram
 
@@ -70,7 +71,7 @@ _callback_duration = Histogram(
 class Metrics:
     enabled = False
 
-    def __new__(cls):
+    def __call__(cls) -> NoReturn:
         raise TypeError('Metrics is a singleton')
 
     @classmethod
