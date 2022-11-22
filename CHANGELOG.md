@@ -8,8 +8,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-* codegen: Include PEP 561 marker in generated packages
+* codegen: Include PEP 561 marker in generated packages.
 * codegen: Untyped originations are now correctly handled.
+* codegen: Fixed `alias` config field having no effect on originations.
+* codegen: Fixed optional arguments in generated callbacks.
 * index: Do not deserialize originations matched by the `source` filter.
 
 ## [6.3.0] - 2022-11-15

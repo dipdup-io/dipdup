@@ -444,11 +444,13 @@ class PatternConfig(CodegenMixin):
         cls,
         module_name: str,
         optional: bool,
+        alias: str | None,
     ) -> tuple[str, str]:
+        arg_name = pascal_to_snake(alias or f'{module_name}_origination')
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return f'{module_name}_origination', f'Optional[Origination[{storage_cls}]] = None'
-        return f'{module_name}_origination', f'Origination[{storage_cls}]'
+            return arg_name, f'Origination[{storage_cls}] | None'
+        return arg_name, f'Origination[{storage_cls}]'
 
     @classmethod
     def format_operation_argument(
@@ -463,7 +465,7 @@ class PatternConfig(CodegenMixin):
         parameter_cls = f'{snake_to_pascal(arg_name)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return arg_name, f'Optional[Transaction[{parameter_cls}, {storage_cls}]] = None'
+            return arg_name, f'Transaction[{parameter_cls}, {storage_cls}] | None'
         return arg_name, f'Transaction[{parameter_cls}, {storage_cls}]'
 
     @classmethod
@@ -476,7 +478,7 @@ class PatternConfig(CodegenMixin):
     ) -> tuple[str, str]:
         arg_name = pascal_to_snake(alias or f'{type_}_{subgroup_index}')
         if optional:
-            return arg_name, 'Optional[OperationData] = None'
+            return arg_name, 'OperationData | None'
         return arg_name, 'OperationData'
 
 
@@ -690,7 +692,11 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         if self.originated_contract or self.similar_to:
-            yield self.format_origination_argument(self.module_name, self.optional)
+            yield self.format_origination_argument(
+                self.module_name,
+                self.optional,
+                self.alias,
+            )
         else:
             yield self.format_untyped_operation_argument(
                 'origination',
