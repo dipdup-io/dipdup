@@ -534,12 +534,12 @@ class OperationIndex(Index[OperationIndexConfig]):
                 storage_type = pattern_config.storage_type_cls
                 storage = deserialize_storage(operation_data, storage_type)
 
-                wrapped_transaction: Transaction[Any, Any] = Transaction(
+                typed_transaction: Transaction[Any, Any] = Transaction(
                     data=operation_data,
                     parameter=parameter,
                     storage=storage,
                 )
-                args.append(wrapped_transaction)
+                args.append(typed_transaction)
 
             elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
                 if not (pattern_config.originated_contract or pattern_config.similar_to):
@@ -549,11 +549,11 @@ class OperationIndex(Index[OperationIndexConfig]):
                 storage_type = pattern_config.storage_type_cls
                 storage = deserialize_storage(operation_data, storage_type)
 
-                wrapped_origination = Origination(
+                typed_origination = Origination(
                     data=operation_data,
                     storage=storage,
                 )
-                args.append(wrapped_origination)
+                args.append(typed_origination)
 
             else:
                 raise NotImplementedError

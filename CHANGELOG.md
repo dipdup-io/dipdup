@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 * codegen: Fixed optional arguments in generated callbacks.
 * config: Suggest snake_case for package name.
 * index: Do not deserialize originations matched by the `source` filter.
+* index: Wrap storage deserialization exceptions with `InvalidDataError`.
 
 ## [6.3.0] - 2022-11-15
 
