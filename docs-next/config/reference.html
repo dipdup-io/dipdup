@@ -673,6 +673,16 @@ http: HTTP client configuration</p>
 <dd><p><cite>storage_type_cls</cite> field</p>
 </dd></dl>
 <dl class="py class">
+<dt class="sig sig-object py" id="dipdup.config.SubgroupIndexMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">SubgroupIndexMixin</span></span><a class="headerlink" href="#dipdup.config.SubgroupIndexMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p><cite>subgroup_index</cite> field to track index of operation in group</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subgroup_index</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
 <dt class="sig sig-object py" id="dipdup.config.SubscriptionsMixin">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">SubscriptionsMixin</span></span><a class="headerlink" href="#dipdup.config.SubscriptionsMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p><cite>subscriptions</cite> field</p>
@@ -690,16 +700,6 @@ http: HTTP client configuration</p>
 <dt class="sig sig-object py" id="dipdup.config.TokenTransferIndexConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">TokenTransferIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">kind:</span> <span class="pre">~typing.Literal['token_transfer'],</span> <span class="pre">datasource:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">dipdup.config.TzktDatasourceConfig,</span> <span class="pre">handlers:</span> <span class="pre">tuple[dipdup.config.TokenTransferHandlerConfig,</span> <span class="pre">...]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">first_level:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0,</span> <span class="pre">last_level:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.config.TokenTransferIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Token index config</p>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.TransactionIdxMixin">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">TransactionIdxMixin</span></span><a class="headerlink" href="#dipdup.config.TransactionIdxMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p><cite>transaction_idx</cite> field to track index of operation in group</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>transaction_idx</strong> – </p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.config.TzktDatasourceConfig">
