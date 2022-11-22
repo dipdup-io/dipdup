@@ -1478,6 +1478,9 @@ class DipDupConfig:
     logging: LoggingValues = LoggingValues.default
 
     def __post_init_post_parse__(self) -> None:
+        if self.package != pascal_to_snake(self.package):
+            raise ConfigurationError('Python package name must be in snake_case.')
+
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
         self._callback_patterns: dict[str, list[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
@@ -1518,6 +1521,7 @@ class DipDupConfig:
         paths: list[Path],
         environment: bool = True,
     ) -> DipDupConfig:
+        # NOTE: __future__.annotations
         JobConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]
 
         yaml = YAML(typ='base')
@@ -1535,10 +1539,13 @@ class DipDupConfig:
 
         try:
             config = cls(**json_config)
-            config.environment = config_environment
-            config.paths = paths
+        except ConfigurationError:
+            raise
         except Exception as e:
             raise ConfigurationError(str(e)) from e
+
+        config.environment = config_environment
+        config.paths = paths
         return config
 
     def dump(self) -> str:
