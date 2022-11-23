@@ -1,20 +1,13 @@
 import os
 from contextlib import AsyncExitStack
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from dipdup.config import DipDupConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.dipdup import DipDup
 
-os.environ['REPLAY_PATH'] = str(Path(__file__).parent / 'replays')
-
-if os.environ.get('DEBUG'):
-    from dipdup.cli import set_up_logging
-    from dipdup.config import LoggingValues
-
-    set_up_logging()
-    DipDupConfig.set_up_logging(MagicMock(logging=LoggingValues.verbose))
+os.environ['DIPDUP_TEST'] = '1'
+os.environ['DIPDUP_REPLAY_PATH'] = str(Path(__file__).parent / 'replays')
 
 
 async def create_test_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:

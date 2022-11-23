@@ -5,6 +5,7 @@ import os
 import platform
 import signal
 import sys
+import warnings
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from functools import partial
@@ -54,6 +55,31 @@ def set_up_logging() -> None:
     logging.getLogger('tortoise').setLevel(logging.WARNING)
 
 
+def set_up_process(cmd: str | None) -> None:
+    """Some ugly hacks acceptable for a CLI app"""
+    # NOTE: Register shutdown handler avoiding Click prompts conflicts
+    if cmd not in IGNORE_SIGINT_CMDS:
+        loop = asyncio.get_running_loop()
+        loop.add_signal_handler(
+            signal.SIGINT,
+            lambda: asyncio.ensure_future(_shutdown()),
+        )
+
+    # NOTE: Better discoverability of DipDup packages and configs
+    sys.path.append(str(Path.cwd()))
+    sys.path.append(str(Path.cwd() / 'src'))
+
+    # NOTE: Format warnings as normal log messages
+    logging.captureWarnings(True)
+    warnings.simplefilter('always', DeprecationWarning)
+    warnings.formatwarning = lambda msg, *a, **kw: str(msg)
+
+
+def revert_cli_hacks() -> None:
+    sys.path.remove(str(Path.cwd()))
+    sys.path.remove(str(Path.cwd() / 'src'))
+
+
 def echo(message: str) -> None:
     with suppress(BrokenPipeError):
         click.echo(message)
@@ -89,13 +115,7 @@ WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]
 def cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
     async def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
-        # NOTE: Avoid catching Click prompts
-        if ctx.invoked_subcommand not in IGNORE_SIGINT_CMDS:
-            loop = asyncio.get_running_loop()
-            loop.add_signal_handler(
-                signal.SIGINT,
-                lambda: asyncio.ensure_future(_shutdown()),
-            )
+        set_up_process(ctx.invoked_subcommand)
 
         try:
             await fn(ctx, *args, **kwargs)
@@ -303,9 +323,9 @@ async def cli(ctx: click.Context, config: List[str], env_file: List[str]) -> Non
     if env.get('DIPDUP_PYTEZOS'):
         _logger.warning('PyTezos extra and corresponding Docker image is deprecated!')
 
-    # NOTE: Workaround for help pages
-    args = sys.argv[1:]
-    if '--help' in args or args in ([], ['config'], ['hasura'], ['schema']):
+    # NOTE: Workaround for help pages. First argument check is for the test runner.
+    args = sys.argv[1:] if sys.argv else ['--help']
+    if '--help' in args or args in (['config'], ['hasura'], ['schema']):
         return
 
     from dotenv import load_dotenv
@@ -345,7 +365,7 @@ async def cli(ctx: click.Context, config: List[str], env_file: List[str]) -> Non
     _init_sentry(_config)
 
     # NOTE: Fire and forget, do not block instant commands
-    if not _config.advanced.skip_version_check:
+    if not _config.advanced.skip_version_check and 'pytest' not in sys.modules:
         asyncio.ensure_future(_check_version())
 
     # NOTE: Avoid import errors if project package is incomplete

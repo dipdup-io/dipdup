@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+* cli: Do not apply cli hacks in module import.
 * codegen: Include PEP 561 marker in generated packages.
 * codegen: Untyped originations are now correctly handled.
 * codegen: Fixed `alias` config field having no effect on originations.
