@@ -1,13 +1,11 @@
-import os
 from contextlib import AsyncExitStack
-from pathlib import Path
 
 from dipdup.config import DipDupConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.dipdup import DipDup
+from dipdup.utils.sys import set_in_tests
 
-os.environ['DIPDUP_TEST'] = '1'
-os.environ['DIPDUP_REPLAY_PATH'] = str(Path(__file__).parent / 'replays')
+set_in_tests()
 
 
 async def create_test_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:

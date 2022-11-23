@@ -3,9 +3,7 @@ import asyncio
 import logging
 import os
 import platform
-import signal
 import sys
-import warnings
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from functools import partial
@@ -30,70 +28,24 @@ from dipdup import __version__
 from dipdup import baking_bad
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
+from dipdup.utils.sys import IGNORE_CONFIG_CMDS
+from dipdup.utils.sys import is_shutting_down
+from dipdup.utils.sys import set_up_logging
+from dipdup.utils.sys import set_up_process
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
-IGNORE_CONFIG_CMDS = {'new', 'install', 'uninstall' 'update'}
-# NOTE: Our signal handler conflicts with Click's one in prompt mode
-IGNORE_SIGINT_CMDS = {*IGNORE_CONFIG_CMDS, None, 'schema', 'wipe'}
+
 
 _logger = logging.getLogger('dipdup.cli')
-_is_shutting_down = False
 
 
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
 
 
-def set_up_logging() -> None:
-    root = logging.getLogger()
-    handler = logging.StreamHandler(stream=sys.stdout)
-    formatter = logging.Formatter('%(levelname)-8s %(name)-20s %(message)s')
-    handler.setFormatter(formatter)
-    root.addHandler(handler)
-
-    # NOTE: Nothing useful there
-    logging.getLogger('tortoise').setLevel(logging.WARNING)
-
-
-def set_up_process(cmd: str | None) -> None:
-    """Set up interpreter process-wide state"""
-    # NOTE: Skip for integration tests
-    if env.get('DIPDUP_TEST', '0') == '1':
-        return
-
-    # NOTE: Register shutdown handler avoiding Click prompts conflicts
-    if cmd not in IGNORE_SIGINT_CMDS:
-        loop = asyncio.get_running_loop()
-        loop.add_signal_handler(
-            signal.SIGINT,
-            lambda: asyncio.ensure_future(_shutdown()),
-        )
-
-    # NOTE: Better discoverability of DipDup packages and configs
-    sys.path.append(str(Path.cwd()))
-    sys.path.append(str(Path.cwd() / 'src'))
-
-    # NOTE: Format warnings as normal log messages
-    logging.captureWarnings(True)
-    warnings.simplefilter('always', DeprecationWarning)
-    warnings.formatwarning = lambda msg, *a, **kw: str(msg)
-
-
 def echo(message: str) -> None:
     with suppress(BrokenPipeError):
         click.echo(message)
-
-
-async def _shutdown() -> None:
-    global _is_shutting_down
-    if _is_shutting_down:
-        return
-    _is_shutting_down = True
-
-    _logger.info('Shutting down')
-    tasks = filter(lambda t: t != asyncio.current_task(), asyncio.all_tasks())
-    list(map(asyncio.Task.cancel, tasks))
-    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def _print_help(error: Exception, crashdump_path: str) -> None:
@@ -137,7 +89,7 @@ def _sentry_before_send(
     crash_reporting: bool,
 ) -> Optional[Dict[str, Any]]:
     # NOTE: Terminated connections, cancelled tasks, etc.
-    if _is_shutting_down:
+    if is_shutting_down():
         return None
 
     # NOTE: Tests and CI
