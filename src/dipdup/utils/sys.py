@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import platform
 import signal
 import sys
 import warnings
@@ -32,6 +33,14 @@ def is_shutting_down() -> bool:
 
 def is_in_tests() -> bool:
     return env.get('DIPDUP_TEST', '0') == '1'
+
+
+def is_in_ci() -> bool:
+    return env.get('CI') == 'true'
+
+
+def is_in_docker() -> bool:
+    return platform.system() == 'Linux' and Path('/.dockerenv').exists()
 
 
 def set_in_tests() -> None:
