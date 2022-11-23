@@ -1,6 +1,7 @@
 """Root DipDup package.
 
-Contains software versions and other metadata."""
+Contains software versions and other metadata.
+"""
 # NOTE: Do not edit __version__; managed by bumpversion
 __version__ = '6.3.0'
 __spec_version__ = '1.2'

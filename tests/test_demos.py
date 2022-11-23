@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 from contextlib import AsyncExitStack
@@ -5,36 +6,65 @@ from contextlib import asynccontextmanager
 from decimal import Decimal
 from functools import partial
 from pathlib import Path
+from shutil import which
 from typing import AsyncIterator
 from typing import Awaitable
 from typing import Callable
 
 import pytest
-from tortoise.backends.base.executor import EXECUTOR_CACHE
 
 from dipdup.utils import import_submodules
 from dipdup.utils.database import tortoise_wrapper
 
 
 @asynccontextmanager
-async def run_dipdup_demo(config: str, cmd: str = 'run') -> AsyncIterator[Path]:
+async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncIterator[Path]:
     config_path = Path(__file__).parent / 'configs' / config
+    dipdup_pkg_path = Path(__file__).parent.parent / 'src' / 'dipdup'
+    demo_pkg_path = Path(__file__).parent.parent / 'src' / package
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_config_path = Path(tmp_dir) / 'dipdup.yml'
-        tmp_config_path.write_text(config_path.read_text())
+    with tempfile.TemporaryDirectory() as tmp_root_path:
+        # NOTE: Symlink configs, packages and executables
+        tmp_config_path = Path(tmp_root_path) / 'dipdup.yml'
+        os.symlink(config_path, tmp_config_path)
+
+        tmp_bin_path = Path(tmp_root_path) / 'bin'
+        os.mkdir(tmp_bin_path)
+        for executable in ('dipdup', 'datamodel-codegen'):
+            if (executable_path := which(executable)) is None:
+                raise RuntimeError(f'Executable `{executable}` not found')
+            os.symlink(executable_path, tmp_bin_path / executable)
+
+        tmp_dipdup_pkg_path = Path(tmp_root_path) / 'dipdup'
+        os.symlink(dipdup_pkg_path, tmp_dipdup_pkg_path)
+
+        # NOTE: Ensure that `run` uses existing package and `init` creates a new one
+        if cmd == 'run':
+            tmp_demo_pkg_path = Path(tmp_root_path) / package
+            os.symlink(demo_pkg_path, tmp_demo_pkg_path)
+
+        # NOTE: Prepare environment
+        env = {
+            **os.environ,
+            'PATH': str(tmp_bin_path),
+            'PYTHONPATH': str(tmp_root_path),
+            'DIPDUP_TEST': '1',
+        }
 
         subprocess.run(
             f'dipdup -c {tmp_config_path} {cmd}',
-            cwd=tmp_dir,
+            cwd=tmp_root_path,
             check=True,
             shell=True,
+            env=env,
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
         )
 
-        yield Path(tmp_dir)
+        yield Path(tmp_root_path)
 
     # FIXME: Models with the same name in different packages cause conflicts
-    EXECUTOR_CACHE.clear()
+    # EXECUTOR_CACHE.clear()
 
 
 async def assert_run_tzbtc() -> None:
@@ -121,12 +151,12 @@ async def test_demos(
     assert_fn: Callable[[], Awaitable[None]],
 ) -> None:
     async with AsyncExitStack() as stack:
-        tmp_dir = await stack.enter_async_context(
-            run_dipdup_demo(config, cmd),
+        tmp_root_path = await stack.enter_async_context(
+            run_dipdup_demo(config, package, cmd),
         )
         await stack.enter_async_context(
             tortoise_wrapper(
-                f'sqlite://{tmp_dir}/db.sqlite3',
+                f'sqlite://{tmp_root_path}/db.sqlite3',
                 f'{package}.models',
             )
         )

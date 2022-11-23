@@ -8,6 +8,7 @@ from contextlib import AsyncExitStack
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
+from os import environ as env
 from pathlib import Path
 from pprint import pformat
 from typing import Any
@@ -609,6 +610,10 @@ class CallbackManager:
         **kwargs: Any,
     ) -> None:
         """Execute SQL script included with the project"""
+        # NOTE: Modified `package_path` breaks SQL discovery.
+        if env.get('DIPDUP_TEST', '0') == '1':
+            return
+
         sql_path = self._get_sql_path(ctx, name)
         conn = get_connection()
         await execute_sql(conn, sql_path, *args, **kwargs)

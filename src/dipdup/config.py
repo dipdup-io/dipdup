@@ -1499,9 +1499,15 @@ class DipDupConfig:
     @cached_property
     def package_path(self) -> Path:
         """Absolute path to the indexer package, existing or default"""
+        # NOTE: Integration tests run in isolated environment
+        if env.get('DIPDUP_TEST', '0') == '1':
+            return Path.cwd() / self.package
+
         with suppress(ImportError):
             package = importlib.import_module(self.package)
-            return Path(cast(str, package.__file__)).parent
+            if package.__file__ is None:
+                raise RuntimeError(f'`{package.__name__}` package has no `__file__` attribute')
+            return Path(package.__file__).parent
 
         # NOTE: Detect src/<package> layout
         if Path('src').is_dir():

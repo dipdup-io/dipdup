@@ -56,7 +56,11 @@ def set_up_logging() -> None:
 
 
 def set_up_process(cmd: str | None) -> None:
-    """Some ugly hacks acceptable for a CLI app"""
+    """Set up interpreter process-wide state"""
+    # NOTE: Skip for integration tests
+    if env.get('DIPDUP_TEST', '0') == '1':
+        return
+
     # NOTE: Register shutdown handler avoiding Click prompts conflicts
     if cmd not in IGNORE_SIGINT_CMDS:
         loop = asyncio.get_running_loop()
@@ -73,11 +77,6 @@ def set_up_process(cmd: str | None) -> None:
     logging.captureWarnings(True)
     warnings.simplefilter('always', DeprecationWarning)
     warnings.formatwarning = lambda msg, *a, **kw: str(msg)
-
-
-def revert_cli_hacks() -> None:
-    sys.path.remove(str(Path.cwd()))
-    sys.path.remove(str(Path.cwd() / 'src'))
 
 
 def echo(message: str) -> None:
