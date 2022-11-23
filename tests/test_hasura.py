@@ -1,7 +1,6 @@
 from contextlib import AsyncExitStack
 from pathlib import Path
 
-import pytest  # type: ignore
 from docker.client import DockerClient  # type: ignore
 
 from dipdup.config import DipDupConfig
@@ -14,7 +13,6 @@ from dipdup.project import BaseProject
 from dipdup.utils.database import tortoise_wrapper
 
 
-@pytest.mark.skip('FIXME: syntax error at or near ","')
 async def test_configure_hasura() -> None:
     project_defaults = BaseProject().get_defaults()
     config_path = Path(__file__).parent / 'configs' / 'hic_et_nunc.yml'
