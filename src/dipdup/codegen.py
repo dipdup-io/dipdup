@@ -404,39 +404,48 @@ class CodeGenerator:
             f'{callback}.py',
         )
 
-        if not callback_path.exists():
-            self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
-            callback_template = load_template('templates', CALLBACK_TEMPLATE)
+        if callback_path.exists():
+            return
 
-            arguments = callback_config.format_arguments()
-            imports = set(callback_config.format_imports(self._config.package))
+        self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
+        callback_template = load_template('templates', CALLBACK_TEMPLATE)
 
-            code: List[str] = []
-            if sql:
-                code.append(f"await ctx.execute_sql('{original_callback}')")
-                if callback == 'on_index_rollback':
-                    code.append('await ctx.rollback(')
-                    code.append('    index=index.name,')
-                    code.append('    from_level=from_level,')
-                    code.append('    to_level=to_level,')
-                    code.append(')')
-            else:
-                code.append('...')
+        arguments = callback_config.format_arguments()
+        imports = set(callback_config.format_imports(self._config.package))
 
-            callback_code = callback_template.render(
-                callback=callback,
-                arguments=tuple(dict.fromkeys(arguments)),
-                imports=sorted(dict.fromkeys(imports)),
-                code=code,
-            )
-            write(callback_path, callback_code)
-
+        code: List[str] = []
         if sql:
-            # NOTE: Preserve the same structure as in `handlers`
-            sql_path = Path(
-                self._pkg.sql,
-                *subpackages,
-                callback,
-                KEEP_MARKER,
-            )
-            touch(sql_path)
+            code.append(f"await ctx.execute_sql('{original_callback}')")
+            if callback == 'on_index_rollback':
+                code.append('await ctx.rollback(')
+                code.append('    index=index.name,')
+                code.append('    from_level=from_level,')
+                code.append('    to_level=to_level,')
+                code.append(')')
+        else:
+            code.append('...')
+
+        # NOTE: Fix missing generic type annotation for `Index[IndexConfig]` to comply with `mypy --strict`
+        processed_arguments = tuple(
+            f'{a},  # type: ignore[type-arg]' if a.startswith('index: Index') else a for a in arguments
+        )
+
+        callback_code = callback_template.render(
+            callback=callback,
+            arguments=tuple(processed_arguments),
+            imports=sorted(dict.fromkeys(imports)),
+            code=code,
+        )
+        write(callback_path, callback_code)
+
+        if not sql:
+            return
+
+        # NOTE: Preserve the same structure as in `handlers`
+        sql_path = Path(
+            self._pkg.sql,
+            *subpackages,
+            callback,
+            KEEP_MARKER,
+        )
+        touch(sql_path)
