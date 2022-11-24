@@ -1812,6 +1812,11 @@ class DipDupConfig:
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
+        if not index_config.subscriptions:
+            raise ConfigurationError(
+                f'`{index_config.name}` index has no subscriptions; ensure that config is correct.'
+            )
+
     def _resolve_index_links(self, index_config: ResolvedIndexConfigU) -> None:
         """Resolve contract and datasource configs by aliases"""
         # NOTE: Each index must have a corresponding (currently) TzKT datasource

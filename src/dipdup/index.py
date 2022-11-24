@@ -188,9 +188,9 @@ class Index(Generic[ConfigT]):
         """Get level index needs to be synchronized to depending on its subscription status"""
         sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
         if not sync_levels:
-            raise RuntimeError('Index has no subscriptions')
+            raise RuntimeError('Initialize config before starting `IndexDispatcher`')
         if None in sync_levels:
-            raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
+            raise RuntimeError('Call `set_sync_level` before starting `IndexDispatcher`')
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
         return max(cast(Set[int], sync_levels))
