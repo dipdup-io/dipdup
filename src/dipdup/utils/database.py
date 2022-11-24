@@ -23,6 +23,7 @@ from asyncpg import CannotConnectNowError  # type: ignore
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
+from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
 from tortoise.fields import DecimalField
@@ -257,6 +258,9 @@ def prepare_models(package: Optional[str]) -> None:
     """
     # NOTE: Circular imports
     import dipdup.models
+
+    # NOTE: Required for pytest-xdist
+    EXECUTOR_CACHE.clear()
 
     db_tables: Set[str] = set()
     decimal_context = decimal.getcontext()
