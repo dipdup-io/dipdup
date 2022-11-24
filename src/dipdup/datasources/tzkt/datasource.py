@@ -26,7 +26,7 @@ from pysignalr.messages import CompletionMessage
 
 from dipdup import baking_bad
 from dipdup.config import HTTPConfig
-from dipdup.config import ResolvedIndexConfigT
+from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.tzkt.models import HeadSubscription
@@ -657,7 +657,7 @@ class TzktDatasource(IndexDatasource):
         ):
             yield batch
 
-    async def add_index(self, index_config: ResolvedIndexConfigT) -> None:
+    async def add_index(self, index_config: ResolvedIndexConfigU) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
         for subscription in index_config.subscriptions:
             self._subscriptions.add(subscription)

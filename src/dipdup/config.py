@@ -256,9 +256,17 @@ class ContractConfig(NameMixin):
         return v
 
 
-# NOTE: Don't forget `http` and `__hash__` in all datasource configs
+class DatasourceConfig(ABC, NameMixin):
+    kind: str
+    http: HTTPConfig | None
+
+    @abstractmethod
+    def __hash__(self) -> int:
+        ...
+
+
 @dataclass
-class TzktDatasourceConfig(NameMixin):
+class TzktDatasourceConfig(DatasourceConfig):
     """TzKT datasource config
 
     :param kind: always 'tzkt'
@@ -288,7 +296,7 @@ class TzktDatasourceConfig(NameMixin):
 
 
 @dataclass
-class CoinbaseDatasourceConfig(NameMixin):
+class CoinbaseDatasourceConfig(DatasourceConfig):
     """Coinbase datasource config
 
     :param kind: always 'coinbase'
@@ -328,7 +336,7 @@ class MetadataDatasourceConfig(NameMixin):
 
 
 @dataclass
-class IpfsDatasourceConfig(NameMixin):
+class IpfsDatasourceConfig(DatasourceConfig):
     """IPFS datasource config
 
     :param kind: always 'ipfs'
@@ -345,7 +353,7 @@ class IpfsDatasourceConfig(NameMixin):
 
 
 @dataclass
-class HttpDatasourceConfig(NameMixin):
+class HttpDatasourceConfig(DatasourceConfig):
     """Generic HTTP datasource config
 
     kind: always 'http'
@@ -361,7 +369,8 @@ class HttpDatasourceConfig(NameMixin):
         return hash(self.kind + self.url)
 
 
-DatasourceConfigT = (
+# NOTE: We need unions for Pydantic deserialization
+DatasourceConfigU = (
     TzktDatasourceConfig
     | CoinbaseDatasourceConfig
     | MetadataDatasourceConfig
@@ -783,7 +792,7 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig'], kind='handler'):
         ParentMixin.__post_init_post_parse__(self)
 
 
-OperationHandlerPatternConfigT = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
+OperationHandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
 
 
 @dataclass
@@ -794,7 +803,7 @@ class OperationHandlerConfig(HandlerConfig, kind='handler'):
     :param pattern: Filters to match operation groups
     """
 
-    pattern: tuple[OperationHandlerPatternConfigT, ...]
+    pattern: tuple[OperationHandlerPatternConfigU, ...]
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -854,7 +863,7 @@ class IndexTemplateConfig(NameMixin):
 
 
 @dataclass
-class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigT']):
+class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigU']):
     """Index config
 
     :param datasource: Alias of index datasource in `datasources` section
@@ -1225,14 +1234,14 @@ class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
         yield 'event', 'UnknownEvent'
 
 
-EventHandlerConfigT = EventHandlerConfig | UnknownEventHandlerConfig
+EventHandlerConfigU = EventHandlerConfig | UnknownEventHandlerConfig
 
 
 @dataclass
 class EventIndexConfig(IndexConfig):
     kind: Literal['event']
     datasource: str | TzktDatasourceConfig
-    handlers: tuple[EventHandlerConfigT, ...] = field(default_factory=tuple)
+    handlers: tuple[EventHandlerConfigU, ...] = field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0
@@ -1245,11 +1254,11 @@ class EventIndexConfig(IndexConfig):
                 handler_config.initialize_event_type(package)
 
 
-ResolvedIndexConfigT = (
+ResolvedIndexConfigU = (
     OperationIndexConfig | BigMapIndexConfig | HeadIndexConfig | TokenTransferIndexConfig | EventIndexConfig
 )
-IndexConfigT = ResolvedIndexConfigT | IndexTemplateConfig
-HandlerPatternConfigT = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
+IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
+HandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
 
 
 @dataclass
@@ -1465,11 +1474,11 @@ class DipDupConfig:
 
     spec_version: str
     package: str
-    datasources: dict[str, DatasourceConfigT] = field(default_factory=dict)
+    datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = SqliteDatabaseConfig(kind='sqlite')
     contracts: dict[str, ContractConfig] = field(default_factory=dict)
-    indexes: dict[str, IndexConfigT] = field(default_factory=dict)
-    templates: dict[str, ResolvedIndexConfigT] = field(default_factory=dict)
+    indexes: dict[str, IndexConfigU] = field(default_factory=dict)
+    templates: dict[str, ResolvedIndexConfigU] = field(default_factory=dict)
     jobs: dict[str, JobConfig] = field(default_factory=dict)
     hooks: dict[str, HookConfig] = field(default_factory=dict)
     hasura: HasuraConfig | None = None
@@ -1487,7 +1496,7 @@ class DipDupConfig:
 
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
-        self._callback_patterns: dict[str, list[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
+        self._callback_patterns: dict[str, list[Sequence[HandlerPatternConfigU]]] = defaultdict(list)
         self._contract_addresses = {contract.address for contract in self.contracts.values()}
 
     @cached_property
@@ -1575,19 +1584,19 @@ class DipDupConfig:
         except KeyError as e:
             raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
 
-    def get_datasource(self, name: str) -> DatasourceConfigT:
+    def get_datasource(self, name: str) -> DatasourceConfigU:
         try:
             return self.datasources[name]
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
 
-    def get_index(self, name: str) -> IndexConfigT:
+    def get_index(self, name: str) -> IndexConfigU:
         try:
             return self.indexes[name]
         except KeyError as e:
             raise ConfigurationError(f'Index `{name}` not found in `indexes` config section') from e
 
-    def get_template(self, name: str) -> ResolvedIndexConfigT:
+    def get_template(self, name: str) -> ResolvedIndexConfigU:
         try:
             return self.templates[name]
         except KeyError as e:
@@ -1639,7 +1648,7 @@ class DipDupConfig:
         )
         template_config.name = name
         self._resolve_template(template_config)
-        index_config = cast(ResolvedIndexConfigT, self.indexes[name])
+        index_config = cast(ResolvedIndexConfigU, self.indexes[name])
         self._resolve_index_links(index_config)
         self._resolve_index_subscriptions(index_config)
         index_config.name = name
@@ -1746,7 +1755,7 @@ class DipDupConfig:
                     raise ConfigurationError('`HookConfig.atomic` and `JobConfig.daemon` flags are mutually exclusive')
                 job_config.hook = hook_config
 
-    def _resolve_index_subscriptions(self, index_config: IndexConfigT) -> None:
+    def _resolve_index_subscriptions(self, index_config: IndexConfigU) -> None:
         if isinstance(index_config, IndexTemplateConfig):
             return
         if index_config.subscriptions:
@@ -1803,7 +1812,7 @@ class DipDupConfig:
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
-    def _resolve_index_links(self, index_config: ResolvedIndexConfigT) -> None:
+    def _resolve_index_links(self, index_config: ResolvedIndexConfigU) -> None:
         """Resolve contract and datasource configs by aliases"""
         # NOTE: Each index must have a corresponding (currently) TzKT datasource
         if isinstance(index_config.datasource, str):

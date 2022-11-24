@@ -25,13 +25,13 @@ import orjson as json
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
-from dipdup.config import DatasourceConfigT
+from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import EventIndexConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationHandlerPatternConfigT
+from dipdup.config import OperationHandlerPatternConfigU
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PatternConfig
@@ -136,7 +136,7 @@ class ProjectPaths:
 class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, Datasource]) -> None:
+    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigU, Datasource]) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
@@ -160,7 +160,7 @@ class CodeGenerator:
 
     async def _fetch_operation_pattern_schema(
         self,
-        operation_pattern_config: OperationHandlerPatternConfigT,
+        operation_pattern_config: OperationHandlerPatternConfigU,
         datasource_config: TzktDatasourceConfig,
     ) -> None:
         if _is_typed_transaction(operation_pattern_config):

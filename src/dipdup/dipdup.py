@@ -20,7 +20,7 @@ from tortoise.exceptions import OperationalError
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import ContractConfig
-from dipdup.config import DatasourceConfigT
+from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationIndexConfig
@@ -333,7 +333,7 @@ class DipDup:
         self._logger = logging.getLogger('dipdup')
         self._config = config
         self._datasources: Dict[str, Datasource] = {}
-        self._datasources_by_config: Dict[DatasourceConfigT, Datasource] = {}
+        self._datasources_by_config: Dict[DatasourceConfigU, Datasource] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
             depth=self._config.advanced.rollback_depth,

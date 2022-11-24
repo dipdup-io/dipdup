@@ -29,16 +29,16 @@ from dipdup.config import BigMapHandlerConfig
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import EventHandlerConfig
-from dipdup.config import EventHandlerConfigT
+from dipdup.config import EventHandlerConfigU
 from dipdup.config import EventIndexConfig
 from dipdup.config import HeadHandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import OperationHandlerConfig
 from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationHandlerPatternConfigT
+from dipdup.config import OperationHandlerPatternConfigU
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
-from dipdup.config import ResolvedIndexConfigT
+from dipdup.config import ResolvedIndexConfigU
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import UnknownEventHandlerConfig
@@ -75,7 +75,7 @@ from dipdup.utils.codegen import parse_object
 
 _logger = logging.getLogger(__name__)
 
-ConfigT = TypeVar('ConfigT', bound=ResolvedIndexConfigT)
+ConfigT = TypeVar('ConfigT', bound=ResolvedIndexConfigU)
 
 
 @dataclass(frozen=True)
@@ -86,9 +86,6 @@ class OperationSubgroup:
     counter: int
     operations: Tuple[OperationData, ...]
     entrypoints: Set[Optional[str]]
-
-    def __hash__(self) -> int:
-        return hash(f'{self.hash}:{self.counter}')
 
 
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
@@ -424,7 +421,7 @@ class OperationIndex(Index[OperationIndexConfig]):
                 await self._call_matched_handler(handler_config, operation_subgroup, args)
             await self.state.update_status(level=batch_level)
 
-    async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
+    async def _match_operation(self, pattern_config: OperationHandlerPatternConfigU, operation: OperationData) -> bool:
         """Match single operation with pattern"""
         # NOTE: Reversed conditions are intentional
         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
@@ -1138,7 +1135,7 @@ class EventIndex(Index[EventIndexConfig]):
                 await self._call_matched_handler(handler_config, event)
             await self.state.update_status(level=batch_level)
 
-    async def _match_event(self, handler_config: EventHandlerConfigT, event: EventData) -> bool:
+    async def _match_event(self, handler_config: EventHandlerConfigU, event: EventData) -> bool:
         """Match single contract event with pattern"""
         if isinstance(handler_config, EventHandlerConfig) and handler_config.tag != event.tag:
             return False
@@ -1148,7 +1145,7 @@ class EventIndex(Index[EventIndexConfig]):
 
     async def _prepare_handler_args(
         self,
-        handler_config: EventHandlerConfigT,
+        handler_config: EventHandlerConfigU,
         matched_event: EventData,
     ) -> Event[Any] | UnknownEvent | None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
@@ -1201,7 +1198,7 @@ class EventIndex(Index[EventIndexConfig]):
         return matched_handlers
 
     async def _call_matched_handler(
-        self, handler_config: EventHandlerConfigT, event: Event[Any] | UnknownEvent
+        self, handler_config: EventHandlerConfigU, event: Event[Any] | UnknownEvent
     ) -> None:
         if isinstance(handler_config, EventHandlerConfig) != isinstance(event, Event):
             raise RuntimeError(f'Invalid handler config and event types: {handler_config}, {event}')
