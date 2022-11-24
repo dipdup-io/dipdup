@@ -2,7 +2,8 @@ import asyncio
 from contextlib import AsyncExitStack
 from pathlib import Path
 
-from docker.client import DockerClient  # type: ignore[import]
+import pytest  # type: ignore[import]
+from docker.client import DockerClient
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
@@ -13,11 +14,25 @@ from dipdup.enums import ReindexingReason
 from dipdup.hasura import HasuraGateway
 from dipdup.project import BaseProject
 
+
 project_defaults = BaseProject().get_defaults()
-docker = DockerClient.from_env()
+
+
+def get_docker_client() -> DockerClient:
+    docker_socks = (
+        Path('/var/run/docker.sock'),
+        Path.home() / 'Library' / 'Containers' / 'com.docker.docker' / 'Data' / 'vms' / '0' / 'docker.sock',
+        Path.home() / 'Library' / 'Containers' / 'com.docker.docker' / 'Data' / 'docker.sock',
+    )
+    for path in docker_socks:
+        if path.exists():
+            return DockerClient(base_url=f'unix://{path}')
+    else:
+        pytest.skip('Docker socket not found', allow_module_level=True)
 
 
 async def run_postgres_container() -> PostgresDatabaseConfig:
+    docker = get_docker_client()
     postgres_container = docker.containers.run(
         image=project_defaults['postgresql_image'],
         environment={
@@ -45,6 +60,7 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
 
 
 async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
+    docker = get_docker_client()
     hasura_container = docker.containers.run(
         image=project_defaults['hasura_image'],
         environment={
