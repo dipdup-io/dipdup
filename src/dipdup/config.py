@@ -70,6 +70,7 @@ from dipdup.utils import exclude_none
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+from dipdup.utils.sys import is_in_tests
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -1500,7 +1501,7 @@ class DipDupConfig:
     def package_path(self) -> Path:
         """Absolute path to the indexer package, existing or default"""
         # NOTE: Integration tests run in isolated environment
-        if env.get('DIPDUP_TEST', '0') == '1':
+        if is_in_tests():
             return Path.cwd() / self.package
 
         with suppress(ImportError):

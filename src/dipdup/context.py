@@ -8,7 +8,6 @@ from contextlib import AsyncExitStack
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
-from os import environ as env
 from pathlib import Path
 from pprint import pformat
 from typing import Any
@@ -69,6 +68,7 @@ from dipdup.utils.database import execute_sql
 from dipdup.utils.database import execute_sql_query
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import wipe_schema
+from dipdup.utils.sys import is_in_tests
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 # NOTE: Dependency cycle
@@ -611,7 +611,7 @@ class CallbackManager:
     ) -> None:
         """Execute SQL script included with the project"""
         # NOTE: Modified `package_path` breaks SQL discovery.
-        if env.get('DIPDUP_TEST', '0') == '1':
+        if is_in_tests():
             return
 
         sql_path = self._get_sql_path(ctx, name)
