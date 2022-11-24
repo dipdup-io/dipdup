@@ -214,7 +214,7 @@ class HasuraGateway(HTTPGateway):
         try:
             result = await self.request(
                 method='post',
-                url=f'{self._hasura_config.url}/v1/{endpoint}',
+                url='/v1/{endpoint}',
                 json=json,
                 headers=self._hasura_config.headers,
             )
@@ -232,7 +232,7 @@ class HasuraGateway(HTTPGateway):
         timeout = self._http_config.connection_timeout or 60
         for _ in range(timeout):
             with suppress(ClientConnectorError, ClientOSError, ServerDisconnectedError):
-                response = await self._http._session.get(f'{self._hasura_config.url}/healthz')
+                response = await self._http._session.get('/healthz')
                 if response.status == HTTPStatus.OK:
                     break
             await asyncio.sleep(1)
@@ -241,7 +241,7 @@ class HasuraGateway(HTTPGateway):
 
         version_json = await (
             await self._http._session.get(
-                f'{self._hasura_config.url}/v1/version',
+                '/v1/version',
             )
         ).json()
         version = version_json['version']
