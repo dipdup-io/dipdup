@@ -25,6 +25,7 @@ from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import event_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
@@ -353,6 +354,39 @@ class DipDup:
             raise DipDupException('Schema is not initialized')
         return self._schema
 
+    @classmethod
+    async def create_dummy(
+        cls,
+        config: DipDupConfig,
+        stack: AsyncExitStack,
+        in_memory: bool = False,
+    ) -> 'DipDup':
+        """Create a dummy DipDup instance for testing purposes.
+
+        Only basic initialization is performed:
+
+          - Create datasources without spawning them
+          - Register event hooks
+          - Initialize Tortoise ORM and create schema
+
+        You need to enter `AsyncExitStack` context manager prior to calling this method.
+        """
+        if in_memory:
+            config.database = SqliteDatabaseConfig(
+                kind='sqlite',
+                path=':memory:',
+            )
+        config.initialize(skip_imports=True)
+
+        dipdup = DipDup(config)
+        await dipdup._create_datasources()
+        await dipdup._set_up_database(stack)
+        await dipdup._set_up_hooks(set())
+        await dipdup._initialize_schema()
+        await dipdup._set_up_transactions(stack)
+
+        return dipdup
+
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         """Create new or update existing dipdup project"""
         await self._create_datasources()
@@ -377,7 +411,10 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            await self._set_up_hasura(stack)
+
+            hasura_gateway = await self._set_up_hasura(stack)
+            if hasura_gateway:
+                await hasura_gateway.configure()
 
             if advanced_config.metadata_interface:
                 await MetadataCursor.initialize()
@@ -467,7 +504,7 @@ class DipDup:
         await self._ctx.fire_hook('on_restart')
 
     async def _set_up_transactions(self, stack: AsyncExitStack) -> None:
-        stack.enter_context(self._transactions.register())
+        await stack.enter_async_context(self._transactions.register())
 
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
         await stack.enter_async_context(
@@ -495,15 +532,20 @@ class DipDup:
             Metrics.enabled = True
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
-    async def _set_up_hasura(self, stack: AsyncExitStack) -> None:
+    async def _set_up_hasura(self, stack: AsyncExitStack) -> HasuraGateway | None:
         if not self._config.hasura:
-            return
+            return None
 
         if not isinstance(self._config.database, PostgresDatabaseConfig):
             raise RuntimeError
-        hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
+
+        hasura_gateway = HasuraGateway(
+            self._config.package,
+            self._config.hasura,
+            self._config.database,
+        )
         await stack.enter_async_context(hasura_gateway)
-        await hasura_gateway.configure()
+        return hasura_gateway
 
     async def _set_up_datasources(self, stack: AsyncExitStack) -> None:
         await self._create_datasources()
