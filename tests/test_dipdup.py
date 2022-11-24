@@ -1,8 +1,8 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
 from pathlib import Path
-from unittest import IsolatedAsyncioTestCase
 
+import pytest
 from pytz import UTC
 
 from dipdup.config import DipDupConfig
@@ -34,8 +34,8 @@ async def spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
     dispatcher._indexes[name] = pending_indexes.pop()
 
 
-class IndexStateTest(IsolatedAsyncioTestCase):
-    async def asyncSetUp(self) -> None:
+class IndexStateTest:
+    def __init__(self) -> None:
         name = 'hic_et_nunc.yml'
         config_path = Path(__file__).parent / 'configs' / name
         self.config = DipDupConfig.load([config_path])
@@ -54,7 +54,7 @@ class IndexStateTest(IsolatedAsyncioTestCase):
 
             # Assert
             index = await Index.filter().get()
-            self.assertEqual(self.new_hash, index.config_hash)
+            assert index.config_hash == self.new_hash
 
     async def test_new_hash(self) -> None:
         async with AsyncExitStack() as stack:
@@ -68,7 +68,7 @@ class IndexStateTest(IsolatedAsyncioTestCase):
 
             # Assert
             index = await Index.filter().get()
-            self.assertEqual(self.new_hash, index.config_hash)
+            assert index.config_hash == self.new_hash
 
     async def test_invalid_hash(self) -> None:
         async with AsyncExitStack() as stack:
@@ -78,5 +78,5 @@ class IndexStateTest(IsolatedAsyncioTestCase):
             await _create_index('hehehe')
 
             # Act, Assert
-            with self.assertRaises(ReindexingRequiredError):
+            with pytest.raises(ReindexingRequiredError):
                 await dispatcher._load_index_states()

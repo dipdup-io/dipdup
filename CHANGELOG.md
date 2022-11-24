@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-* cli: Do not apply cli hacks in module import.
+* cli: Do not apply cli hacks on module import.
 * codegen: Include PEP 561 marker in generated packages.
 * codegen: Untyped originations are now correctly handled.
 * codegen: Fixed `alias` config field having no effect on originations.
@@ -16,6 +16,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 * config: Suggest snake_case for package name.
 * index: Do not deserialize originations matched by the `source` filter.
 * index: Wrap storage deserialization exceptions with `InvalidDataError`.
+* projects: Fixed Hasura environment in docker-compose examples.
+
+### Other
+
+* ci: `mypy --strict` is now enforced on a codebase.
+* ci: Finished migration to `pytest`.
 
 ## [6.3.0] - 2022-11-15
 
