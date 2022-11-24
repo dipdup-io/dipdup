@@ -2,8 +2,8 @@ import asyncio
 from contextlib import AsyncExitStack
 from pathlib import Path
 
-import pytest  # type: ignore[import]
-from docker.client import DockerClient
+import pytest
+from docker.client import DockerClient  # type: ignore[import]
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
@@ -13,7 +13,6 @@ from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReason
 from dipdup.hasura import HasuraGateway
 from dipdup.project import BaseProject
-
 
 project_defaults = BaseProject().get_defaults()
 
