@@ -47,8 +47,7 @@ flake:          ## Lint with flake8
 	poetry run flakeheaven lint src tests scripts
 
 mypy:           ## Lint with mypy
-	poetry run mypy --strict src
-	poetry run mypy tests scripts
+	poetry run mypy --strict src tests scripts
 
 cover:          ## Print coverage for the current branch
 	poetry run diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml

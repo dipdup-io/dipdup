@@ -7,6 +7,7 @@ import warnings
 from os import environ as env
 from pathlib import Path
 
+# NOTE: Do not try to load config for these commands as they don't need it
 IGNORE_CONFIG_CMDS = {'new', 'install', 'uninstall' 'update'}
 # NOTE: Our signal handler conflicts with Click's one in prompt mode
 IGNORE_SIGINT_CMDS = {*IGNORE_CONFIG_CMDS, None, 'schema', 'wipe'}
@@ -15,7 +16,7 @@ _is_shutting_down = False
 _logger = logging.getLogger('dipdup.cli')
 
 
-async def _shutdown() -> None:
+async def _shutdown() -> None:  # pragma: no cover
     global _is_shutting_down
     if _is_shutting_down:
         return
@@ -62,10 +63,10 @@ def set_up_logging() -> None:
 def set_up_process(cmd: str | None) -> None:
     """Set up interpreter process-wide state"""
     # NOTE: Skip for integration tests
-    if env.get('DIPDUP_TEST', '0') == '1':
+    if is_in_tests():
         return
 
-    # NOTE: Register shutdown handler avoiding Click prompts conflicts
+    # NOTE: Register shutdown handler for non-interactive commands (avoiding conflicts with Click prompts)
     if cmd not in IGNORE_SIGINT_CMDS:
         loop = asyncio.get_running_loop()
         loop.add_signal_handler(

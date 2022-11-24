@@ -741,6 +741,7 @@ class TzktDatasource(IndexDatasource):
         ws = self._get_ws_client()
 
         async def _wrapper() -> None:
+            # FIXME: These defaults should be somewhere else
             retry_sleep = self._http_config.retry_sleep or 0
             retry_multiplier = self._http_config.retry_multiplier or 1
             retry_count = self._http_config.retry_count or sys.maxsize

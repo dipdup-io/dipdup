@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any
 
 import pytest
 from _pytest.tmpdir import TempPathFactory
@@ -41,7 +42,7 @@ custom:
         ),
     )
     def config_with_custom_section_path(
-        self, dummy_config_path: str, tmp_path_factory: TempPathFactory, request
+        self, dummy_config_path: str, tmp_path_factory: TempPathFactory, request: Any
     ) -> str:
         return self.appended_config_path(dummy_config_path, tmp_path_factory, request.param)
 
@@ -77,7 +78,9 @@ custom:
             ('${DEFINITELY_NOT_DEFINED:- some_spaces_is_ok  }', 'some_spaces_is_ok'),
         ),
     )
-    def test_env_parsing_positive(self, value, expected, dummy_config_path, tmp_path_factory) -> None:
+    def test_env_parsing_positive(
+        self, value: str, expected: str, dummy_config_path: str, tmp_path_factory: TempPathFactory
+    ) -> None:
         append_raw = f"""
 custom:
     var_from_env: {value}
@@ -98,7 +101,7 @@ custom:
             '${DEFINITELY_NOT_DEFINED:-}',
         ),
     )
-    def test_env_parsing_negative(self, value, dummy_config_path, tmp_path_factory) -> None:
+    def test_env_parsing_negative(self, value: str, dummy_config_path: str, tmp_path_factory: TempPathFactory) -> None:
         append_raw = f"""
 custom:
     var_from_env: {value}
@@ -120,7 +123,9 @@ custom:
             '${DEFINITELY_NOT_DEFINED:-}',
         ),
     )
-    def test_skip_commented_variables(self, value, dummy_config_path, tmp_path_factory) -> None:
+    def test_skip_commented_variables(
+        self, value: str, dummy_config_path: str, tmp_path_factory: TempPathFactory
+    ) -> None:
         append_raw = f"""
   #  some commented line corresponding to ENV_VARIABLE_REGEX with {value}
 """
