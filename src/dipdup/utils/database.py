@@ -259,7 +259,7 @@ def prepare_models(package: Optional[str]) -> None:
     # NOTE: Circular imports
     import dipdup.models
 
-    # NOTE: Required for pytest-xdist
+    # NOTE: Required for pytest-xdist. Models with the same name in different packages cause conflicts otherwise.
     EXECUTOR_CACHE.clear()
 
     db_tables: Set[str] = set()

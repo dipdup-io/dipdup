@@ -63,9 +63,6 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
 
         yield Path(tmp_root_path)
 
-    # FIXME: Models with the same name in different packages cause conflicts
-    # EXECUTOR_CACHE.clear()
-
 
 async def assert_run_tzbtc() -> None:
     import demo_tzbtc.models

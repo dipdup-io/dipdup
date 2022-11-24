@@ -1,5 +1,4 @@
 from pathlib import Path
-from unittest import IsolatedAsyncioTestCase
 
 from dipdup.config import DEFAULT_IPFS_URL
 from dipdup.config import HTTPConfig
@@ -18,4 +17,4 @@ async def test_ipfs_datasource() -> None:
         assert file[:5].decode() == 'Hello'
 
         file = await ipfs.get('QmSgSC7geYH3Ae4SpUHy4KutxqNH9ESKBGXoCN4JQdbtEz/package.json')
-        file['name'] == 'json-buffer'
+        assert file['name'] == 'json-buffer'

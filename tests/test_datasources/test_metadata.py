@@ -1,4 +1,3 @@
-
 import aiohttp
 
 from dipdup.datasources.metadata.enums import MetadataNetwork
