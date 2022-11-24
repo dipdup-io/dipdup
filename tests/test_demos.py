@@ -116,6 +116,16 @@ async def assert_run_tzbtc_transfers(expected_holders: int, expected_balance: st
     assert f'{random_balance:f}' == expected_balance
 
 
+async def assert_run_domains_big_map() -> None:
+    import demo_domains_big_map.models
+
+    tlds = await demo_domains_big_map.models.TLD.filter().count()
+    domains = await demo_domains_big_map.models.Domain.filter().count()
+
+    assert tlds == 1
+    assert domains == 75
+
+
 async def assert_init(package: str) -> None:
     import_submodules(package)
 
@@ -130,6 +140,7 @@ test_params = (
     ('tzbtc_transfers_3.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 9, '0.15579888')),
     ('tzbtc_transfers_4.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 2, '-0.00767376')),
     ('domains_big_map.yml', 'demo_domains_big_map', 'init', partial(assert_init, 'demo_domains_big_map')),
+    ('domains_big_map.yml', 'demo_domains_big_map', 'run', assert_run_domains_big_map),
     ('domains.yml', 'demo_domains', 'init', partial(assert_init, 'demo_domains')),
     ('hic_et_nunc.yml', 'demo_hic_et_nunc', 'init', partial(assert_init, 'demo_hic_et_nunc')),
     ('quipuswap.yml', 'demo_quipuswap', 'init', partial(assert_init, 'demo_quipuswap')),
@@ -177,15 +188,6 @@ async def test_demos(
 #     async with run_dipdup_demo('domains.yml', 'demo_domains'):
 #         tlds = await demo_domains.models.TLD.filter().count()
 #         domains = await demo_domains.models.Domain.filter().count()
-
-#         assert tlds == 1
-#         assert domains == 145
-
-# @pytest.mark.skip(reason='FIXME: Huge replay')
-# async def test_domains_big_map() -> None:
-#     async with run_dipdup_demo('domains_big_map.yml', 'demo_domains_big_map'):
-#         tlds = await demo_domains_big_map.models.TLD.filter().count()
-#         domains = await demo_domains_big_map.models.Domain.filter().count()
 
 #         assert tlds == 1
 #         assert domains == 145
