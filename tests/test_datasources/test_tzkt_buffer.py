@@ -1,9 +1,9 @@
-
 import pytest
 
 from dipdup.datasources.tzkt.datasource import BufferedMessage
 from dipdup.datasources.tzkt.datasource import MessageBuffer
 from dipdup.datasources.tzkt.datasource import MessageType
+
 
 @pytest.fixture
 def buffer() -> MessageBuffer:
@@ -21,6 +21,7 @@ async def test_add(buffer: MessageBuffer) -> None:
 
     buffer.add(MessageType.operation, 2, [{}])
     assert len(buffer) == 2
+
 
 async def test_yield_from(buffer: MessageBuffer) -> None:
     buffer.add(MessageType.head, 1, {})
@@ -40,6 +41,7 @@ async def test_yield_from(buffer: MessageBuffer) -> None:
     assert messages[0].type == MessageType.head
     assert isinstance(messages[1], BufferedMessage)
     assert messages[1].type == MessageType.operation
+
 
 async def test_rollback(buffer: MessageBuffer) -> None:
     buffer.add(MessageType.head, 2, {})

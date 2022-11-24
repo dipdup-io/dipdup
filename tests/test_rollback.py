@@ -17,15 +17,10 @@ from dipdup.models import ModelUpdateAction
 
 async def test_model_updates() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
         async with in_transaction(level=1000, index='test'):
@@ -134,15 +129,10 @@ async def test_model_updates() -> None:
 
 async def test_cleanup_and_filtering() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: Filter less than `rollback_depth` (which is 2 by default)
         sync_level = 1000
@@ -170,15 +160,10 @@ async def test_cleanup_and_filtering() -> None:
 
 async def test_optionals() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_domains')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT and DELETE model with optionals
         async with in_transaction(level=1000, index='test'):
@@ -215,15 +200,10 @@ async def test_optionals() -> None:
 
 async def test_bulk_create_update() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_domains')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         tlds: List[domains_models.TLD] = []
         for i in range(3):
@@ -306,15 +286,10 @@ async def test_bulk_create_update() -> None:
 
 async def test_update_prefetch() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_domains')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
         tlds: List[domains_models.TLD] = []
@@ -361,15 +336,10 @@ async def test_update_prefetch() -> None:
 
 async def test_update_arithmetics() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
         async with in_transaction(level=1000, index='test'):
