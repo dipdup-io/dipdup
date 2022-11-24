@@ -32,12 +32,34 @@ from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import HasuraError
+from dipdup.exceptions import UnsupportedAPIError
 from dipdup.http import HTTPGateway
 from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import iter_models
+
+# NOTE: See https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg
+vulnerable_versions = {
+    'v2.15.1': 'v2.15.2',
+    'v2.15.0': 'v2.15.2',
+    'v2.14.0': 'v2.14.1',
+    'v2.13.1': 'v2.13.2',
+    'v2.13.0': 'v2.13.2',
+    'v2.12.0': 'v2.12.1',
+    'v2.11.2': 'v2.11.3',
+    'v2.11.1': 'v2.11.3',
+    'v2.11.0': 'v2.11.3',
+    'v2.10.1': 'v2.10.2',
+    'v2.10.0': 'v2.10.2',
+    # NOTE: Starting with v2.12.0, Community and Enterprise editions are on the same release
+    'v2.11.2-pro.1': 'v2.11.3',
+    'v2.11.1-pro.1': 'v2.11.3',
+    'v2.11.0-pro.1': 'v2.11.3',
+    'v2.10.1-pro.1': 'v2.10.2',
+    'v2.10.0-pro.1': 'v2.10.2',
+}
 
 RelationalFieldT = Union[
     fields.relational.ForeignKeyFieldInstance,
@@ -224,7 +246,17 @@ class HasuraGateway(HTTPGateway):
         ).json()
         version = version_json['version']
         if version.startswith('v1'):
-            raise HasuraError('v1 is not supported, upgrade to the latest stable version.')
+            raise UnsupportedAPIError(
+                self.url, 'hasura', 'API v1 is not supported; upgrade to the latest stable version.'
+            )
+
+        # NOTE: See https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg
+        if version in vulnerable_versions:
+            raise UnsupportedAPIError(
+                self.url,
+                'hasura',
+                f'A critical vulnerability has been discovered in {version}!\n    Update to {vulnerable_versions[version]} or the latest stable version immediately.',
+            )
 
         self._logger.info('Connected to Hasura %s', version)
 
