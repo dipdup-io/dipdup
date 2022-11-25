@@ -1,11 +1,11 @@
 import asyncio
 from contextlib import AsyncExitStack
 from pathlib import Path
-from typing import Any
 
 import orjson as json
 import pytest
 from aiohttp import web
+from aiohttp.pytest_plugin import AiohttpClient
 from aiohttp.test_utils import TestClient
 from docker.client import DockerClient  # type: ignore[import]
 from tortoise import Tortoise
@@ -106,7 +106,7 @@ async def test_configure_hasura() -> None:
 
 
 @pytest.mark.parametrize('hasura_version', ['v1.0.0', 'v2.15.0'])
-async def test_unsupported_versions(hasura_version: str, aiohttp_client: Any) -> None:
+async def test_unsupported_versions(hasura_version: str, aiohttp_client: AiohttpClient) -> None:
     async def healthcheck_response(request: web.Request) -> web.Response:
         return web.Response(
             content_type='application/json',

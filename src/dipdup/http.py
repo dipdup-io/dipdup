@@ -12,6 +12,8 @@ from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import cast
+from urllib.parse import urlsplit
+from urllib.parse import urlunsplit
 
 import aiohttp
 import aiohttp.test_utils
@@ -38,7 +40,7 @@ class HTTPGateway(AbstractAsyncContextManager[None]):
 
     def __init__(self, url: str, http_config: HTTPConfig) -> None:
         self._http_config = http_config
-        self._http = _HTTPGateway(url.rstrip('/'), self._http_config)
+        self._http = _HTTPGateway(url, self._http_config)
 
     async def __aenter__(self) -> None:
         """Create underlying aiohttp session"""
@@ -75,7 +77,9 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
     def __init__(self, url: str, config: HTTPConfig) -> None:
         self._logger = logging.getLogger('dipdup.http')
-        self._url = url
+        parsed_url = urlsplit(url)
+        self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))
+        self._path = parsed_url.path
         self._config = config
         self._user_agent_args: Tuple[str, ...] = ()
         self._user_agent: Optional[str] = None
@@ -89,6 +93,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
     async def __aenter__(self) -> None:
         """Create underlying aiohttp session"""
         self.__session = aiohttp.ClientSession(
+            base_url=self._url,
             json_serialize=lambda *a, **kw: orjson.dumps(*a, **kw).decode(),
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit or 100),
             timeout=aiohttp.ClientTimeout(connect=self._config.connection_timeout or 60),
@@ -180,9 +185,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        if not url.startswith(self._url):
-            url = self._url + '/' + url.lstrip('/')
-
+        url = f'{self._path}/{url}'
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
 

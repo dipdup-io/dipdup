@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - codegen: Fixed optional arguments in generated callbacks.
 - config: Suggest snake_case for package name.
 - config: Fixed crash with `RuntimeError` when index has no subscriptions.
+- http: Limit aiohttp sessions to specific base URL.
 - index: Do not deserialize originations matched by the `source` filter.
 - index: Wrap storage deserialization exceptions with `InvalidDataError`.
 - projects: Fixed Hasura environment in docker-compose examples.

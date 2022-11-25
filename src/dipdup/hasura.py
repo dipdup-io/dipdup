@@ -1,10 +1,7 @@
-import asyncio
 import hashlib
 import importlib
 import logging
 import re
-from contextlib import suppress
-from http import HTTPStatus
 from json import dumps as dump_json
 from pathlib import Path
 from typing import Any
@@ -15,10 +12,7 @@ from typing import Union
 from typing import cast
 
 import orjson as json
-from aiohttp import ClientConnectorError
-from aiohttp import ClientOSError
 from aiohttp import ClientResponseError
-from aiohttp import ServerDisconnectedError
 from humps import main as humps
 from pydantic.dataclasses import dataclass
 from tortoise import fields
@@ -206,12 +200,12 @@ class HasuraGateway(HTTPGateway):
         else:
             return None
 
-    async def _hasura_request(self, endpoint: str, json: dict[str, Any]) -> dict[str, Any]:
+    async def _hasura_request(self, endpoint: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
         try:
             result = await self.request(
-                method='post',
-                url='/v1/{endpoint}',
+                method='get' if json is None else 'post',
+                url=f'v1/{endpoint}',
                 json=json,
                 headers=self._hasura_config.headers,
             )
@@ -225,22 +219,8 @@ class HasuraGateway(HTTPGateway):
         return cast(dict[str, Any], result)
 
     async def _healthcheck(self) -> None:
-        self._logger.info('Waiting for Hasura instance to be ready')
-        timeout = self._http_config.connection_timeout or 60
-        for _ in range(timeout):
-            with suppress(ClientConnectorError, ClientOSError, ServerDisconnectedError):
-                response = await self._http._session.get('/healthz')
-                if response.status == HTTPStatus.OK:
-                    break
-            await asyncio.sleep(1)
-        else:
-            raise HasuraError(f'Not responding for {timeout} seconds')
-
-        version_json = await (
-            await self._http._session.get(
-                '/v1/version',
-            )
-        ).json()
+        self._logger.info('Connecting to Hasura instance')
+        version_json = await self._hasura_request('version')
         version = version_json['version']
         if version.startswith('v1'):
             raise UnsupportedAPIError(
