@@ -253,7 +253,7 @@ def delete_old_backups():
 
 async def on_index_rollback(
     ctx: HookContext,
-    index: Index,
+    index: Index,  # type: ignore[type-arg]
     from_level: int,
     to_level: int,
 ) -&gt; None:
@@ -315,7 +315,7 @@ async def simulate_reorg(
         await ctx.fire_hook(
             &quot;on_index_rollback&quot;,
             wait=True
-            index=None,  # type: ignore
+            index=None,  # type: ignore[arg-type]
             from_level=level,
             to_level=level - 2,
         )

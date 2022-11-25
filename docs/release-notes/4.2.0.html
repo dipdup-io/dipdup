@@ -243,7 +243,7 @@ async def do_something_heavy(ctx):
         ...
 
 if __name__ == '__main__':
-    cli(prog_name='dipdup', standalone_mode=False)  # type: ignore
+    cli(prog_name='dipdup', standalone_mode=False)
 </code></pre>
 <p>Then use <code>python -m &lt;project&gt;.cli</code> instead of <code>dipdup</code> as an entrypoint. Now you can call <code>do-something-heavy</code> like any other <code>dipdup</code> command. <code>dipdup.cli:cli</code> group handles arguments and config parsing, graceful shutdown, and other boilerplate. The rest is on you; use <code>dipdup.dipdup:DipDup.run</code> as a reference. And keep in mind that Tortoise ORM is not thread-safe. I aim to implement <code>ctx.pool_apply</code> and <code>ctx.pool_map</code> methods to execute code in pools with <em>magic</em> within existing DipDup hooks, but no ETA yet.</p>
 <p>That's all, folks! As always, your feedback is very welcome 🤙</p>
