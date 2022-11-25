@@ -2291,7 +2291,7 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.15.0
+    image: hasura/graphql-engine:v2.15.2
     ports:
       - 127.0.0.1:8080:8080
     depends_on:
@@ -2402,7 +2402,7 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.15.0
+    image: hasura/graphql-engine:v2.15.2
     depends_on:
       - db
     environment:
@@ -4166,6 +4166,10 @@ templates:
 <li>index: Do not deserialize originations matched by the <code>source</code> filter.</li>
 <li>index: Wrap storage deserialization exceptions with <code>InvalidDataError</code>.</li>
 </ul>
+<h3 id="security"><a class="header" href="#security">Security</a></h3>
+<ul>
+<li>hasura: Forbid using Hasura instances running vulnerable versions.</li>
+</ul>
 <h2 id="630---2022-11-15"><a class="header" href="#630---2022-11-15"><a href="https://github.com/dipdup-io/dipdup/compare/6.2.0...6.3.0">6.3.0</a> - 2022-11-15</a></h2>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
 <ul>
@@ -4220,7 +4224,7 @@ templates:
 <ul>
 <li>cli: Up to 5x faster startup for some commands.</li>
 </ul>
-<h3 id="security"><a class="header" href="#security">Security</a></h3>
+<h3 id="security-1"><a class="header" href="#security-1">Security</a></h3>
 <ul>
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
@@ -4985,7 +4989,7 @@ templates:
 <ul>
 <li>cli: Up to 5x faster startup for some commands.</li>
 </ul>
-<h3 id="security-1"><a class="header" href="#security-1">Security</a></h3>
+<h3 id="security-2"><a class="header" href="#security-2">Security</a></h3>
 <ul>
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
@@ -5607,7 +5611,7 @@ hooks:
 <li>All internal links MUST be created with <code>{{ #summary ...</code> shortcodes.</li>
 <li>All values used in project templates MUST be replaced with <code>{{ #cookiecutter ...</code> shortcodes.</li>
 </ul>
-<h2 id="security-2"><a class="header" href="#security-2">Security</a></h2>
+<h2 id="security-3"><a class="header" href="#security-3">Security</a></h2>
 <ul>
 <li>GitHub alerts about dependencies that contain vulnerabilities MUST be investigated and resolved as soon as possible.</li>
 </ul>

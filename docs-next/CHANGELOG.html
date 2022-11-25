@@ -178,6 +178,10 @@
 <li>index: Do not deserialize originations matched by the <code>source</code> filter.</li>
 <li>index: Wrap storage deserialization exceptions with <code>InvalidDataError</code>.</li>
 </ul>
+<h3 id="security"><a class="header" href="#security">Security</a></h3>
+<ul>
+<li>hasura: Forbid using Hasura instances running vulnerable versions.</li>
+</ul>
 <h2 id="630---2022-11-15"><a class="header" href="#630---2022-11-15"><a href="https://github.com/dipdup-io/dipdup/compare/6.2.0...6.3.0">6.3.0</a> - 2022-11-15</a></h2>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
 <ul>
@@ -232,7 +236,7 @@
 <ul>
 <li>cli: Up to 5x faster startup for some commands.</li>
 </ul>
-<h3 id="security"><a class="header" href="#security">Security</a></h3>
+<h3 id="security-1"><a class="header" href="#security-1">Security</a></h3>
 <ul>
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
