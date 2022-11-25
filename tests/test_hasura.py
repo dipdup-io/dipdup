@@ -123,14 +123,14 @@ async def test_unsupported_versions(hasura_version: str, aiohttp_client: Aiohttp
     fake_api.router.add_get('/v1/version', version_response)
     fake_client: TestClient = await aiohttp_client(fake_api)
 
-    hasura_config = HasuraConfig('http://localhost')
+    fake_client_url = f'http://{fake_client.server.host}:{fake_client.server.port}'
+    hasura_config = HasuraConfig(fake_client_url)
     postgres_config = PostgresDatabaseConfig('postgres', 'localhost')
 
     hasura_gateway = HasuraGateway('demo_hic_et_nunc', hasura_config, postgres_config)
-    # NOTE: Some aiohttp pytest plugin trickery I have no time to investigate
-    hasura_gateway._http._HTTPGateway__session = fake_client  # type: ignore[attr-defined]
 
     with pytest.raises(UnsupportedAPIError):
-        async with tortoise_wrapper('sqlite://:memory:', 'demo_hic_et_nunc.models'):
-            await Tortoise.generate_schemas()
-            await hasura_gateway.configure()
+        async with hasura_gateway:
+            async with tortoise_wrapper('sqlite://:memory:', 'demo_hic_et_nunc.models'):
+                await Tortoise.generate_schemas()
+                await hasura_gateway.configure()

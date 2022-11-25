@@ -224,7 +224,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         replay_path.mkdir(parents=True, exist_ok=True)
 
         request_hash = hashlib.sha256(
-            f'{self._url} {method} {url} {kwargs}'.encode(),
+            f'{self._url} {method} {self._path}/{url} {kwargs}'.encode(),
         ).hexdigest()
         replay_path = Path(self._config.replay_path).joinpath(request_hash).expanduser()
 
