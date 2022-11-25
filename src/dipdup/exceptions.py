@@ -425,3 +425,19 @@ class FeatureAvailabilityError(DipDupError):
             See https://docs.dipdup.io/installation
             See https://docs.dipdup.io/advanced/docker
         """
+
+
+@dataclass(repr=False)
+class UnsupportedAPIError(DipDupError):
+    """Datasource instance runs an unsupported software version"""
+
+    datasource: str
+    host: str
+    reason: str
+
+    def _help(self) -> str:
+        return f"""
+            `{self.host}` API version is not supported by `{self.datasource}` datasource.
+
+            {self.reason}
+        """
