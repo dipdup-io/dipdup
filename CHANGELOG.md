@@ -20,14 +20,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - index: Wrap storage deserialization exceptions with `InvalidDataError`.
 - projects: Fixed Hasura environment in docker-compose examples.
 
+### Security
+
+- hasura: Forbid using Hasura instances running vulnerable versions.
+
 ### Other
 
 - ci: `mypy --strict` is now enforced on a codebase.
 - ci: Finished migration to `pytest`.
-
-### Security
-
-* hasura: Forbid using Hasura instances running vulnerable versions.
 
 ## [6.3.0] - 2022-11-15
 
