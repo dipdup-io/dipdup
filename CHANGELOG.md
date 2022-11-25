@@ -24,6 +24,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - ci: `mypy --strict` is now enforced on a codebase.
 - ci: Finished migration to `pytest`.
 
+### Security
+
+* hasura: Forbid using Hasura instances running vulnerable versions.
+
 ## [6.3.0] - 2022-11-15
 
 ### Added

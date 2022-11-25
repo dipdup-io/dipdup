@@ -1,9 +1,14 @@
 import asyncio
 from contextlib import AsyncExitStack
 from pathlib import Path
+from typing import Any
 
+import orjson as json
 import pytest
+from aiohttp import web
+from aiohttp.test_utils import TestClient
 from docker.client import DockerClient  # type: ignore[import]
+from tortoise import Tortoise
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
@@ -11,8 +16,10 @@ from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReason
+from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
 from dipdup.project import BaseProject
+from dipdup.utils.database import tortoise_wrapper
 
 project_defaults = BaseProject().get_defaults()
 
@@ -96,3 +103,34 @@ async def test_configure_hasura() -> None:
 
         config.hasura.camel_case = True
         await hasura_gateway.configure(force=True)
+
+
+@pytest.mark.parametrize('hasura_version', ['v1.0.0', 'v2.15.0'])
+async def test_unsupported_versions(hasura_version: str, aiohttp_client: Any) -> None:
+    async def healthcheck_response(request: web.Request) -> web.Response:
+        return web.Response(
+            content_type='application/json',
+        )
+
+    async def version_response(request: web.Request) -> web.Response:
+        return web.Response(
+            body=json.dumps({'version': hasura_version}),
+            content_type='application/json',
+        )
+
+    fake_api = web.Application()
+    fake_api.router.add_get('/healthz', healthcheck_response)
+    fake_api.router.add_get('/v1/version', version_response)
+    fake_client: TestClient = await aiohttp_client(fake_api)
+
+    hasura_config = HasuraConfig('http://localhost')
+    postgres_config = PostgresDatabaseConfig('postgres', 'localhost')
+
+    hasura_gateway = HasuraGateway('demo_hic_et_nunc', hasura_config, postgres_config)
+    # NOTE: Some aiohttp pytest plugin trickery I have no time to investigate
+    hasura_gateway._http._HTTPGateway__session = fake_client  # type: ignore[attr-defined]
+
+    with pytest.raises(UnsupportedAPIError):
+        async with tortoise_wrapper('sqlite://:memory:', 'demo_hic_et_nunc.models'):
+            await Tortoise.generate_schemas()
+            await hasura_gateway.configure()
