@@ -169,8 +169,8 @@
 <p>A typical <code>models.py</code> file looks like the following (example from <code>demo_domains</code> package):</p>
 <pre><code class="language-python">from typing import Optional
 
-from tortoise import ForeignKeyFieldInstance
 from tortoise import fields
+from tortoise.fields.relational import ForeignKeyFieldInstance
 
 from dipdup.models import Model
 

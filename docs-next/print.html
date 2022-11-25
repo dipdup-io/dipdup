@@ -792,8 +792,8 @@ hooks:
 <p>A typical <code>models.py</code> file looks like the following (example from <code>demo_domains</code> package):</p>
 <pre><code class="language-python">from typing import Optional
 
-from tortoise import ForeignKeyFieldInstance
 from tortoise import fields
+from tortoise.fields.relational import ForeignKeyFieldInstance
 
 from dipdup.models import Model
 
@@ -1642,7 +1642,7 @@ async def do_something_heavy(ctx):
         ...
 
 if __name__ == '__main__':
-    cli(prog_name='dipdup', standalone_mode=False)  # type: ignore
+    cli(prog_name='dipdup', standalone_mode=False)
 </code></pre>
 <p>Then use <code>python -m &lt;project&gt;.cli</code> instead of <code>dipdup</code> as an entrypoint. Now you can call <code>do-something-heavy</code> like any other <code>dipdup</code> command. <code>dipdup.cli:cli</code> group handles arguments and config parsing, graceful shutdown, and other boilerplate. The rest is on you; use <code>dipdup.dipdup:DipDup.run</code> as a reference. And keep in mind that Tortoise ORM is not thread-safe. I aim to implement <code>ctx.pool_apply</code> and <code>ctx.pool_map</code> methods to execute code in pools with <em>magic</em> within existing DipDup hooks, but no ETA yet.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="callback-context-ctx"><a class="header" href="#callback-context-ctx">Callback context (<code>ctx</code>)</a></h1>
@@ -1691,7 +1691,7 @@ if __name__ == '__main__':
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext.execute_sql">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext.execute_sql" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext.execute_sql" title="Permalink to this definition">¶</a></dt>
 <dd><p>Executes SQL script(s) with given name.</p>
 <p>If the <cite>name</cite> path is a directory, all <cite>.sql</cite> scripts within it will be executed in alphabetical order.</p>
 <dl class="field-list simple">
@@ -1712,7 +1712,7 @@ if __name__ == '__main__':
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext.fire_hook">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fire_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext.fire_hook" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fire_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext.fire_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fire hook with given name and arguments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1751,7 +1751,7 @@ if __name__ == '__main__':
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext.reindex">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reindex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ReindexingReason</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext.reindex" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reindex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ReindexingReason</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext.reindex" title="Permalink to this definition">¶</a></dt>
 <dd><p>Drops the entire database and starts the indexing process from scratch.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2298,7 +2298,7 @@ services:
       - db
     restart: always
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=true
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
@@ -2406,7 +2406,7 @@ services:
     depends_on:
       - db
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=false
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log
@@ -2580,7 +2580,7 @@ def delete_old_backups():
 
 async def on_index_rollback(
     ctx: HookContext,
-    index: Index,
+    index: Index,  # type: ignore[type-arg]
     from_level: int,
     to_level: int,
 ) -&gt; None:
@@ -2642,7 +2642,7 @@ async def simulate_reorg(
         await ctx.fire_hook(
             &quot;on_index_rollback&quot;,
             wait=True
-            index=None,  # type: ignore
+            index=None,  # type: ignore[arg-type]
             from_level=level,
             to_level=level - 2,
         )
@@ -3437,6 +3437,10 @@ inheritance.</p>
 </dl>
 </dd></dl>
 <dl class="py class">
+<dt class="sig sig-object py" id="dipdup.config.DatasourceConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">DatasourceConfig</span></span><a class="headerlink" href="config/reference.html#dipdup.config.DatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py class">
 <dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">DipDupConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec_version:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipdup.config.TzktDatasourceConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.CoinbaseDatasourceConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.MetadataDatasourceConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.IpfsDatasourceConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.HttpDatasourceConfig]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database:</span> <span class="pre">dipdup.config.SqliteDatabaseConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.PostgresDatabaseConfig</span> <span class="pre">=</span> <span class="pre">SqliteDatabaseConfig(kind='sqlite'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path=':memory:')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipdup.config.ContractConfig]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipdup.config.OperationIndexConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.BigMapIndexConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.HeadIndexConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.TokenTransferIndexConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.EventIndexConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.IndexTemplateConfig]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipdup.config.OperationIndexConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.BigMapIndexConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.HeadIndexConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.TokenTransferIndexConfig</span> <span class="pre">|</span> <span class="pre">dipdup.config.EventIndexConfig]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipdup.config.JobConfig]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipdup.config.HookConfig]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hasura:</span> <span class="pre">~typing.Optional[~dipdup.config.HasuraConfig]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentry:</span> <span class="pre">~typing.Optional[~dipdup.config.SentryConfig]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prometheus:</span> <span class="pre">~typing.Optional[~dipdup.config.PrometheusConfig]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advanced:</span> <span class="pre">~dipdup.config.AdvancedConfig</span> <span class="pre">=</span> <span class="pre">AdvancedConfig(reindex={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging:</span> <span class="pre">~dipdup.enums.LoggingValues</span> <span class="pre">=</span> <span class="pre">LoggingValues.default</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.DipDupConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Main indexer config</p>
@@ -3486,7 +3490,7 @@ inheritance.</p>
 <dd></dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.config.EventIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">EventIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind:</span> <span class="pre">&quot;Literal['event']&quot;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource:</span> <span class="pre">'str</span> <span class="pre">|</span> <span class="pre">TzktDatasourceConfig'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers:</span> <span class="pre">'tuple[EventHandlerConfigT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...]'</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level:</span> <span class="pre">'int'</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level:</span> <span class="pre">'int'</span> <span class="pre">=</span> <span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.EventIndexConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">EventIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind:</span> <span class="pre">&quot;Literal['event']&quot;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource:</span> <span class="pre">'str</span> <span class="pre">|</span> <span class="pre">TzktDatasourceConfig'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers:</span> <span class="pre">'tuple[EventHandlerConfigU</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...]'</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level:</span> <span class="pre">'int'</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level:</span> <span class="pre">'int'</span> <span class="pre">=</span> <span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.EventIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.config.HTTPConfig">
@@ -4155,16 +4159,25 @@ templates:
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-io/dipdup/compare/6.3.0...HEAD">Unreleased</a></a></h2>
+<h2 id="631---2022-11-25"><a class="header" href="#631---2022-11-25"><a href="https://github.com/dipdup-io/dipdup/compare/6.3.0...6.3.1">6.3.1</a> - 2022-11-25</a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
+<li>cli: Do not apply cli hacks on module import.</li>
 <li>codegen: Include PEP 561 marker in generated packages.</li>
 <li>codegen: Untyped originations are now correctly handled.</li>
 <li>codegen: Fixed <code>alias</code> config field having no effect on originations.</li>
 <li>codegen: Fixed optional arguments in generated callbacks.</li>
 <li>config: Suggest snake_case for package name.</li>
+<li>config: Fixed crash with <code>RuntimeError</code> when index has no subscriptions.</li>
+<li>http: Limit aiohttp sessions to specific base URL.</li>
 <li>index: Do not deserialize originations matched by the <code>source</code> filter.</li>
 <li>index: Wrap storage deserialization exceptions with <code>InvalidDataError</code>.</li>
+<li>projects: Fixed Hasura environment in docker-compose examples.</li>
+</ul>
+<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<ul>
+<li>ci: <code>mypy --strict</code> is now enforced on a codebase.</li>
+<li>ci: Finished migration to <code>pytest</code>.</li>
 </ul>
 <h3 id="security"><a class="header" href="#security">Security</a></h3>
 <ul>
@@ -4229,7 +4242,7 @@ templates:
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
 </ul>
-<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
 <ul>
 <li>ci: A significantly faster execution of GitHub Actions.</li>
 <li>docs: Updated &quot;Contributing Guide&quot; page.</li>
@@ -4245,7 +4258,7 @@ templates:
 <li>sentry: Unwrap <code>CallbackError</code> traceback to fix event grouping.</li>
 <li>sentry: Hide &quot;attempting to send...&quot; message on shutdown.</li>
 </ul>
-<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
+<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
 <ul>
 <li>ci: Do not build default and <code>-pytezos</code> nightly images.</li>
 </ul>
@@ -4393,7 +4406,7 @@ templates:
 <ul>
 <li>cli: Lazy import dependencies to speed up startup.</li>
 </ul>
-<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
+<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
 <ul>
 <li>docs: Migrate docs from GitBook to mdbook.</li>
 </ul>
@@ -4434,7 +4447,7 @@ templates:
 <li>jobs: Fixed jobs with <code>daemon</code> schedule never start.</li>
 <li>jobs: Fixed failed jobs not throwing exceptions into the main loop.</li>
 </ul>
-<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
+<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
 <ul>
 <li>database: Tortoise ORM updated to <code>0.19.1</code>.</li>
 </ul>
@@ -4585,7 +4598,7 @@ templates:
 <li>database: Fixed excess increasing of <code>decimal</code> context precision.</li>
 <li>index: Fixed loading handler callbacks from nested packages (<a href="https://github.com/veqtor">@veqtor</a>).</li>
 </ul>
-<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
+<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
 <ul>
 <li>ci: Added GitHub Action to build and publish Docker images for each PR opened.</li>
 </ul>
@@ -4629,7 +4642,7 @@ templates:
 <ul>
 <li>bcd: Added deprecation notice.</li>
 </ul>
-<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
+<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
 <ul>
 <li>dipdup: Removed unused internal methods.</li>
 </ul>
@@ -4692,7 +4705,7 @@ templates:
 <ul>
 <li>dipdup: Minor overall performance improvements.</li>
 </ul>
-<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
+<h3 id="other-7"><a class="header" href="#other-7">Other</a></h3>
 <ul>
 <li>ci: Cache virtual environment in GitHub Actions.</li>
 <li>ci: Detect CI environment and skip tests that fail in GitHub Actions.</li>
@@ -4994,7 +5007,7 @@ templates:
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
 </ul>
-<h3 id="other-7"><a class="header" href="#other-7">Other</a></h3>
+<h3 id="other-8"><a class="header" href="#other-8">Other</a></h3>
 <ul>
 <li>ci: A significantly faster execution of GitHub Actions.</li>
 <li>docs: Updated &quot;Contributing Guide&quot; page.</li>
@@ -5043,7 +5056,7 @@ from dipdup.index import Index
 
 async def on_index_rollback(
     ctx: HookContext,
-    index: Index,
+    index: Index,  # type: ignore[type-arg]
     from_level: int,
     to_level: int,
 ) -&gt; None:
@@ -5363,7 +5376,7 @@ async def do_something_heavy(ctx):
         ...
 
 if __name__ == '__main__':
-    cli(prog_name='dipdup', standalone_mode=False)  # type: ignore
+    cli(prog_name='dipdup', standalone_mode=False)
 </code></pre>
 <p>Then use <code>python -m &lt;project&gt;.cli</code> instead of <code>dipdup</code> as an entrypoint. Now you can call <code>do-something-heavy</code> like any other <code>dipdup</code> command. <code>dipdup.cli:cli</code> group handles arguments and config parsing, graceful shutdown, and other boilerplate. The rest is on you; use <code>dipdup.dipdup:DipDup.run</code> as a reference. And keep in mind that Tortoise ORM is not thread-safe. I aim to implement <code>ctx.pool_apply</code> and <code>ctx.pool_map</code> methods to execute code in pools with <em>magic</em> within existing DipDup hooks, but no ETA yet.</p>
 <p>That's all, folks! As always, your feedback is very welcome 🤙</p>

@@ -167,16 +167,25 @@
                         <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-io/dipdup/compare/6.3.0...HEAD">Unreleased</a></a></h2>
+<h2 id="631---2022-11-25"><a class="header" href="#631---2022-11-25"><a href="https://github.com/dipdup-io/dipdup/compare/6.3.0...6.3.1">6.3.1</a> - 2022-11-25</a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
+<li>cli: Do not apply cli hacks on module import.</li>
 <li>codegen: Include PEP 561 marker in generated packages.</li>
 <li>codegen: Untyped originations are now correctly handled.</li>
 <li>codegen: Fixed <code>alias</code> config field having no effect on originations.</li>
 <li>codegen: Fixed optional arguments in generated callbacks.</li>
 <li>config: Suggest snake_case for package name.</li>
+<li>config: Fixed crash with <code>RuntimeError</code> when index has no subscriptions.</li>
+<li>http: Limit aiohttp sessions to specific base URL.</li>
 <li>index: Do not deserialize originations matched by the <code>source</code> filter.</li>
 <li>index: Wrap storage deserialization exceptions with <code>InvalidDataError</code>.</li>
+<li>projects: Fixed Hasura environment in docker-compose examples.</li>
+</ul>
+<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<ul>
+<li>ci: <code>mypy --strict</code> is now enforced on a codebase.</li>
+<li>ci: Finished migration to <code>pytest</code>.</li>
 </ul>
 <h3 id="security"><a class="header" href="#security">Security</a></h3>
 <ul>
@@ -241,7 +250,7 @@
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
 </ul>
-<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
 <ul>
 <li>ci: A significantly faster execution of GitHub Actions.</li>
 <li>docs: Updated &quot;Contributing Guide&quot; page.</li>
@@ -257,7 +266,7 @@
 <li>sentry: Unwrap <code>CallbackError</code> traceback to fix event grouping.</li>
 <li>sentry: Hide &quot;attempting to send...&quot; message on shutdown.</li>
 </ul>
-<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
+<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
 <ul>
 <li>ci: Do not build default and <code>-pytezos</code> nightly images.</li>
 </ul>
@@ -405,7 +414,7 @@
 <ul>
 <li>cli: Lazy import dependencies to speed up startup.</li>
 </ul>
-<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
+<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
 <ul>
 <li>docs: Migrate docs from GitBook to mdbook.</li>
 </ul>
@@ -446,7 +455,7 @@
 <li>jobs: Fixed jobs with <code>daemon</code> schedule never start.</li>
 <li>jobs: Fixed failed jobs not throwing exceptions into the main loop.</li>
 </ul>
-<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
+<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
 <ul>
 <li>database: Tortoise ORM updated to <code>0.19.1</code>.</li>
 </ul>
@@ -597,7 +606,7 @@
 <li>database: Fixed excess increasing of <code>decimal</code> context precision.</li>
 <li>index: Fixed loading handler callbacks from nested packages (<a href="https://github.com/veqtor">@veqtor</a>).</li>
 </ul>
-<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
+<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
 <ul>
 <li>ci: Added GitHub Action to build and publish Docker images for each PR opened.</li>
 </ul>
@@ -641,7 +650,7 @@
 <ul>
 <li>bcd: Added deprecation notice.</li>
 </ul>
-<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
+<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
 <ul>
 <li>dipdup: Removed unused internal methods.</li>
 </ul>
@@ -704,7 +713,7 @@
 <ul>
 <li>dipdup: Minor overall performance improvements.</li>
 </ul>
-<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
+<h3 id="other-7"><a class="header" href="#other-7">Other</a></h3>
 <ul>
 <li>ci: Cache virtual environment in GitHub Actions.</li>
 <li>ci: Detect CI environment and skip tests that fail in GitHub Actions.</li>
