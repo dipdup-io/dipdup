@@ -1,13 +1,13 @@
 import tempfile
 from pathlib import Path
 from typing import Callable
-from typing import Type
 
 import pytest
 
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
+from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.tzkt.models import OriginationSubscription
@@ -28,28 +28,35 @@ def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig
 
 async def test_load_initialize() -> None:
     config = create_config()
+    index_config = config.indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
 
     assert isinstance(config, DipDupConfig)
-    destination = config.indexes['hen_mainnet'].handlers[0].pattern[0].destination  # type: ignore
+    destination = index_config.handlers[0].pattern[0].destination  # type: ignore[union-attr]
     assert destination == config.contracts['HEN_minter']
-    assert isinstance(config.indexes['hen_mainnet'].handlers[0].callback_fn, Callable)  # type: ignore
-    assert isinstance(config.indexes['hen_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)  # type: ignore
+    assert isinstance(index_config.handlers[0].callback_fn, Callable)  # type: ignore[arg-type]
+    assert isinstance(index_config.handlers[0].pattern[0].parameter_type_cls, type)  # type: ignore[union-attr]
 
 
 async def test_operation_subscriptions() -> None:
-    config = create_config(False, False)
-    assert config.indexes['hen_mainnet'].subscriptions == {  # type: ignore
-        TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9')
+    index_config = create_config(False, False).indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
+    assert index_config.subscriptions == {TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9')}
+
+    index_config = create_config(True, False).indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
+    assert index_config.subscriptions == {TransactionSubscription()}
+
+    index_config = create_config(False, True).indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
+    assert index_config.subscriptions == {
+        TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
+        OriginationSubscription(),
     }
 
-    config = create_config(True, False)
-    assert config.indexes['hen_mainnet'].subscriptions == {TransactionSubscription()}  # type: ignore
-
-    config = create_config(False, True)
-    assert config.indexes['hen_mainnet'].subscriptions == {TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'), OriginationSubscription()}  # type: ignore
-
-    config = create_config(True, True)
-    assert config.indexes['hen_mainnet'].subscriptions == {TransactionSubscription(), OriginationSubscription()}  # type: ignore
+    index_config = create_config(True, True).indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
+    assert index_config.subscriptions == {TransactionSubscription(), OriginationSubscription()}
 
 
 async def test_validators() -> None:

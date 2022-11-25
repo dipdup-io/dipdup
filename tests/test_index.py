@@ -297,8 +297,8 @@ index_config.name = 'asdf'
 
 
 async def test_match_smak_add_liquidity() -> None:
-    index = OperationIndex(None, index_config, None)  # type: ignore
-    index._prepare_handler_args = AsyncMock()  # type: ignore
+    index = OperationIndex(None, index_config, None)  # type: ignore[arg-type]
+    index._prepare_handler_args = AsyncMock()  # type: ignore[assignment]
 
     operation_subgroups = tuple(
         extract_operation_subgroups(

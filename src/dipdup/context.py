@@ -71,8 +71,7 @@ from dipdup.utils.database import wipe_schema
 from dipdup.utils.sys import is_in_tests
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
-# NOTE: Dependency cycle
-pending_indexes = deque()  # type: ignore
+pending_indexes: deque[Any] = deque()
 pending_hooks: Deque[Awaitable[None]] = deque()
 rolled_back_indexes: Set[str] = set()
 

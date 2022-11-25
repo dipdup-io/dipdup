@@ -611,7 +611,7 @@ class DipDup:
             await gather(*_tasks)
 
         tasks.add(create_task(_event_wrapper()))
-        return event  # noqa: R504
+        return event
 
     async def _set_up_scheduler(self, tasks: Set[Task[None]]) -> Event:
         # NOTE: Prepare SchedulerManager
@@ -624,4 +624,4 @@ class DipDup:
         for job_config in self._config.jobs.values():
             scheduler.add_job(self._ctx, job_config)
 
-        return event  # noqa: R504
+        return event

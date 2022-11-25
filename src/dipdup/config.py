@@ -759,7 +759,7 @@ class CallbackMixin(CodegenMixin):
     callback: str
 
     def __init_subclass__(cls, kind: str) -> None:
-        cls._kind = kind  # type: ignore
+        cls._kind = kind  # type: ignore[attr-defined]
 
     def __post_init_post_parse__(self) -> None:
         self._callback_fn = None
@@ -768,7 +768,7 @@ class CallbackMixin(CodegenMixin):
 
     @cached_property
     def kind(self) -> str:
-        return self._kind  # type: ignore
+        return self._kind  # type: ignore[attr-defined,no-any-return]
 
     @cached_property
     def callback_fn(self) -> Callable[..., Awaitable[None]]:

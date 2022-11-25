@@ -18,8 +18,8 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-import sqlparse  # type: ignore
-from asyncpg import CannotConnectNowError  # type: ignore
+import sqlparse  # type: ignore[import]
+from asyncpg import CannotConnectNowError  # type: ignore[import]
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient

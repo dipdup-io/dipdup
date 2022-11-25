@@ -36,7 +36,7 @@ class Question(BaseModel):
                 show_default=False,
             )
             print('\n')
-            return value  # noqa: R504
+            return value
         except cl.Abort:
             cl.echo('\nAborted')
             quit(0)

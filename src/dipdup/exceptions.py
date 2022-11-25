@@ -358,7 +358,7 @@ class CallbackError(DipDupError):
             `{self.module}` callback execution failed:
 
               {self.exc.__class__.__name__}: {self.exc}
-            
+
             Eliminate the reason of failure and restart DipDup.
         """
 

@@ -70,7 +70,7 @@ _TT = TypeVar('_TT')
 def groupby(seq: Sequence[_T], key: Callable[[Any], _TT]) -> DefaultDict[_TT, List[_T]]:
     """Group by key into defaultdict"""
     return reduce(
-        lambda grp, val: grp[key(val)].append(val) or grp,  # type: ignore
+        lambda grp, val: grp[key(val)].append(val) or grp,  # type: ignore[func-returns-value]
         seq,
         defaultdict(list),
     )
