@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Security
 
-- hasura: Forbid using Hasura instances running vulnerable versions.
+- hasura: Forbid using Hasura instances running vulnerable versions ([GHSA-g7mj-g7f4-hgrg](https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg))
 
 ### Other
 
