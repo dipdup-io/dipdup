@@ -8,13 +8,13 @@ from typing import Dict
 from typing import Optional
 from typing import Set
 
-from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
+from apscheduler.events import EVENT_JOB_ERROR  # type: ignore[import]
 from apscheduler.events import EVENT_JOB_EXECUTED
 from apscheduler.events import JobEvent
-from apscheduler.job import Job  # type: ignore
-from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
-from apscheduler.triggers.cron import CronTrigger  # type: ignore
-from apscheduler.triggers.interval import IntervalTrigger  # type: ignore
+from apscheduler.job import Job  # type: ignore[import]
+from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import]
+from apscheduler.triggers.cron import CronTrigger  # type: ignore[import]
+from apscheduler.triggers.interval import IntervalTrigger  # type: ignore[import]
 
 from dipdup.config import JobConfig
 from dipdup.context import DipDupContext
@@ -82,7 +82,11 @@ class SchedulerManager:
             fmt=job_config.name + ': {}',
         )
 
-        async def _job_wrapper(ctx: DipDupContext, *args, **kwargs) -> None:
+        async def _job_wrapper(
+            ctx: DipDupContext,
+            *args: Any,
+            **kwargs: Any,
+        ) -> None:
             nonlocal job_config, hook_config
             job_ctx = HookContext(
                 config=ctx.config,

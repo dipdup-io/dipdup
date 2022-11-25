@@ -4,17 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [6.3.1] - 2022-11-25
 
 ### Fixed
 
-* codegen: Include PEP 561 marker in generated packages.
-* codegen: Untyped originations are now correctly handled.
-* codegen: Fixed `alias` config field having no effect on originations.
-* codegen: Fixed optional arguments in generated callbacks.
-* config: Suggest snake_case for package name.
-* index: Do not deserialize originations matched by the `source` filter.
-* index: Wrap storage deserialization exceptions with `InvalidDataError`.
+- cli: Do not apply cli hacks on module import.
+- codegen: Include PEP 561 marker in generated packages.
+- codegen: Untyped originations are now correctly handled.
+- codegen: Fixed `alias` config field having no effect on originations.
+- codegen: Fixed optional arguments in generated callbacks.
+- config: Suggest snake_case for package name.
+- config: Fixed crash with `RuntimeError` when index has no subscriptions.
+- http: Limit aiohttp sessions to specific base URL.
+- index: Do not deserialize originations matched by the `source` filter.
+- index: Wrap storage deserialization exceptions with `InvalidDataError`.
+- projects: Fixed Hasura environment in docker-compose examples.
+
+### Other
+
+- ci: `mypy --strict` is now enforced on a codebase.
+- ci: Finished migration to `pytest`.
 
 ### Security
 
@@ -831,7 +840,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.3.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.3.1...HEAD
+[6.3.1]: https://github.com/dipdup-io/dipdup/compare/6.3.0...6.3.1
 [6.3.0]: https://github.com/dipdup-io/dipdup/compare/6.2.0...6.3.0
 [6.2.0]: https://github.com/dipdup-io/dipdup/compare/6.1.3...6.2.0
 [6.1.3]: https://github.com/dipdup-io/dipdup/compare/6.1.2...6.1.3

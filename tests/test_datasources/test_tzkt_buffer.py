@@ -1,56 +1,59 @@
-from unittest import IsolatedAsyncioTestCase
+import pytest
 
 from dipdup.datasources.tzkt.datasource import BufferedMessage
 from dipdup.datasources.tzkt.datasource import MessageBuffer
-from dipdup.datasources.tzkt.datasource import MessageType
+from dipdup.enums import MessageType
 
 
-class MessageBufferTest(IsolatedAsyncioTestCase):
-    async def asyncSetUp(self) -> None:
-        self.buffer = MessageBuffer(2)
+@pytest.fixture
+def buffer() -> MessageBuffer:
+    return MessageBuffer(2)
 
-    async def test_add(self) -> None:
-        self.assertEqual(0, len(self.buffer))
 
-        self.buffer.add(MessageType.head, 1, {})
-        self.assertEqual(1, len(self.buffer))
+async def test_add(buffer: MessageBuffer) -> None:
+    assert len(buffer) == 0
 
-        self.buffer.add(MessageType.operation, 1, [{}])
-        self.assertEqual(1, len(self.buffer))
+    buffer.add(MessageType.head, 1, {})
+    assert len(buffer) == 1
 
-        self.buffer.add(MessageType.operation, 2, [{}])
-        self.assertEqual(2, len(self.buffer))
+    buffer.add(MessageType.operation, 1, [{}])
+    assert len(buffer) == 1
 
-    async def test_yield_from(self) -> None:
-        self.buffer.add(MessageType.head, 1, {})
-        self.buffer.add(MessageType.operation, 1, [{}])
-        self.buffer.add(MessageType.head, 2, {})
-        self.buffer.add(MessageType.operation, 2, [{}])
-        self.buffer.add(MessageType.head, 3, {})
-        self.buffer.add(MessageType.operation, 3, [{}])
+    buffer.add(MessageType.operation, 2, [{}])
+    assert len(buffer) == 2
 
-        self.assertEqual(3, len(self.buffer))
 
-        messages = list(self.buffer.yield_from())
+async def test_yield_from(buffer: MessageBuffer) -> None:
+    buffer.add(MessageType.head, 1, {})
+    buffer.add(MessageType.operation, 1, [{}])
+    buffer.add(MessageType.head, 2, {})
+    buffer.add(MessageType.operation, 2, [{}])
+    buffer.add(MessageType.head, 3, {})
+    buffer.add(MessageType.operation, 3, [{}])
 
-        self.assertEqual(2, len(self.buffer))
+    assert len(buffer) == 3
 
-        self.assertIsInstance(messages[0], BufferedMessage)
-        self.assertEqual(MessageType.head, messages[0].type)
-        self.assertIsInstance(messages[1], BufferedMessage)
-        self.assertEqual(MessageType.operation, messages[1].type)
+    messages = list(buffer.yield_from())
 
-    async def test_rollback(self) -> None:
-        self.buffer.add(MessageType.head, 2, {})
-        self.buffer.add(MessageType.operation, 2, [{}])
-        self.buffer.add(MessageType.head, 3, {})
-        self.buffer.add(MessageType.operation, 3, [{}])
-        self.buffer.add(MessageType.head, 4, {})
-        self.buffer.add(MessageType.operation, 4, [{}])
+    assert len(buffer) == 2
 
-        self.assertEqual(True, self.buffer.rollback(MessageType.head, 4, 3))
-        self.assertEqual(True, self.buffer.rollback(MessageType.operation, 4, 3))
-        self.assertEqual(True, self.buffer.rollback(MessageType.operation, 3, 1))
-        self.assertEqual(True, self.buffer.rollback(MessageType.head, 3, 1))
-        self.assertEqual(False, self.buffer.rollback(MessageType.operation, 1, 0))
-        self.assertEqual(False, self.buffer.rollback(MessageType.head, 1, 0))
+    assert isinstance(messages[0], BufferedMessage)
+    assert messages[0].type == MessageType.head
+    assert isinstance(messages[1], BufferedMessage)
+    assert messages[1].type == MessageType.operation
+
+
+async def test_rollback(buffer: MessageBuffer) -> None:
+    buffer.add(MessageType.head, 2, {})
+    buffer.add(MessageType.operation, 2, [{}])
+    buffer.add(MessageType.head, 3, {})
+    buffer.add(MessageType.operation, 3, [{}])
+    buffer.add(MessageType.head, 4, {})
+    buffer.add(MessageType.operation, 4, [{}])
+
+    assert buffer.rollback(MessageType.head, 4, 3) is True
+    assert buffer.rollback(MessageType.operation, 4, 3) is True
+    assert buffer.rollback(MessageType.operation, 3, 1) is True
+    assert buffer.rollback(MessageType.head, 3, 1) is True
+    assert buffer.rollback(MessageType.operation, 1, 0) is False
+    assert buffer.rollback(MessageType.head, 1, 0) is False

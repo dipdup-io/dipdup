@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import logging
 import platform
+from contextlib import AbstractAsyncContextManager
 from contextlib import suppress
 from http import HTTPStatus
 from json import JSONDecodeError
@@ -11,6 +12,8 @@ from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import cast
+from urllib.parse import urlsplit
+from urllib.parse import urlunsplit
 
 import aiohttp
 import aiohttp.test_utils
@@ -30,22 +33,22 @@ safe_exceptions = (
 )
 
 
-class HTTPGateway:
+class HTTPGateway(AbstractAsyncContextManager[None]):
     """Base class for datasources which connect to remote HTTP endpoints"""
 
     _default_http_config: HTTPConfig
 
     def __init__(self, url: str, http_config: HTTPConfig) -> None:
         self._http_config = http_config
-        self._http = _HTTPGateway(url.rstrip('/'), self._http_config)
+        self._http = _HTTPGateway(url, self._http_config)
 
     async def __aenter__(self) -> None:
         """Create underlying aiohttp session"""
         await self._http.__aenter__()
 
-    async def __aexit__(self, exc_type, exc, tb) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
         """Close underlying aiohttp session"""
-        await self._http.__aexit__(exc_type, exc, tb)
+        await self._http.__aexit__(exc_type, exc_val, exc_tb)
 
     @property
     def url(self) -> str:
@@ -57,7 +60,7 @@ class HTTPGateway:
         method: str,
         url: str,
         weight: int = 1,
-        **kwargs,
+        **kwargs: Any,
     ) -> Any:
         """Send arbitrary HTTP request"""
         return await self._http.request(method, url, weight, **kwargs)
@@ -67,14 +70,16 @@ class HTTPGateway:
         self._http.set_user_agent(*args)
 
 
-class _HTTPGateway:
+class _HTTPGateway(AbstractAsyncContextManager[None]):
     """Wrapper for aiohttp HTTP requests.
 
     Covers caching, retrying failed requests and ratelimiting"""
 
     def __init__(self, url: str, config: HTTPConfig) -> None:
         self._logger = logging.getLogger('dipdup.http')
-        self._url = url
+        parsed_url = urlsplit(url)
+        self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))
+        self._path = parsed_url.path
         self._config = config
         self._user_agent_args: Tuple[str, ...] = ()
         self._user_agent: Optional[str] = None
@@ -88,14 +93,17 @@ class _HTTPGateway:
     async def __aenter__(self) -> None:
         """Create underlying aiohttp session"""
         self.__session = aiohttp.ClientSession(
+            base_url=self._url,
             json_serialize=lambda *a, **kw: orjson.dumps(*a, **kw).decode(),
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit or 100),
             timeout=aiohttp.ClientTimeout(connect=self._config.connection_timeout or 60),
         )
 
-    async def __aexit__(self, exc_type, exc, tb):
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
         """Close underlying aiohttp session"""
         self._logger.debug('Closing gateway session (%s)', self._url)
+        if not self.__session:
+            raise RuntimeError('Session is not initialized')
         await self.__session.close()
 
     @property
@@ -125,8 +133,8 @@ class _HTTPGateway:
         method: str,
         url: str,
         weight: int = 1,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> Any:
         """Retry a request in case of failure sleeping according to config"""
         attempt = 1
         retry_sleep = self._config.retry_sleep or 0
@@ -156,7 +164,7 @@ class _HTTPGateway:
                         ratelimit_sleep = 5
                         # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):
-                            e.headers = cast(Mapping, e.headers)
+                            e.headers = cast(Mapping[str, Any], e.headers)
                             ratelimit_sleep = int(e.headers['Retry-After'])
                 else:
                     if Metrics.enabled:
@@ -174,12 +182,10 @@ class _HTTPGateway:
         method: str,
         url: str,
         weight: int = 1,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        if not url.startswith(self._url):
-            url = self._url + '/' + url.lstrip('/')
-
+        url = f'{self._path}/{url}'
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
 
@@ -209,8 +215,8 @@ class _HTTPGateway:
         method: str,
         url: str,
         weight: int = 1,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> Any:
         if not self._config.replay_path:
             raise RuntimeError('Replay path is not set')
 
@@ -218,7 +224,7 @@ class _HTTPGateway:
         replay_path.mkdir(parents=True, exist_ok=True)
 
         request_hash = hashlib.sha256(
-            f'{self._url} {method} {url} {kwargs}'.encode(),
+            f'{self._url} {method} {self._path}/{url} {kwargs}'.encode(),
         ).hexdigest()
         replay_path = Path(self._config.replay_path).joinpath(request_hash).expanduser()
 
@@ -245,7 +251,7 @@ class _HTTPGateway:
         method: str,
         url: str,
         weight: int = 1,
-        **kwargs,
+        **kwargs: Any,
     ) -> Any:
         """Performs an HTTP request."""
         if self._config.replay_path:

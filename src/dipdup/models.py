@@ -24,12 +24,12 @@ from typing import cast
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
-from tortoise import BaseDBAsyncClient
-from tortoise import Model as TortoiseModel
 from tortoise import fields
+from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.expressions import Q
 from tortoise.fields import relational
 from tortoise.models import MODEL
+from tortoise.models import Model as TortoiseModel
 from tortoise.queryset import BulkCreateQuery as TortoiseBulkCreateQuery
 from tortoise.queryset import BulkUpdateQuery as TortoiseBulkUpdateQuery
 from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
@@ -405,7 +405,7 @@ class UpdateQuery(TortoiseUpdateQuery):
         custom_filters: Dict[str, Dict[str, Any]],
         limit: Optional[int],
         orderings: List[Tuple[str, str]],
-        filter_queryset: TortoiseQuerySet,
+        filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(
             model,
@@ -444,7 +444,7 @@ class DeleteQuery(TortoiseDeleteQuery):
         custom_filters: Dict[str, Dict[str, Any]],
         limit: Optional[int],
         orderings: List[Tuple[str, str]],
-        filter_queryset: TortoiseQuerySet,
+        filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(model, db, q_objects, annotations, custom_filters, limit, orderings)
         self.filter_queryset = filter_queryset
@@ -485,7 +485,7 @@ class BulkCreateQuery(TortoiseBulkCreateQuery):
         return await super()._execute()
 
 
-class QuerySet(TortoiseQuerySet):
+class QuerySet(TortoiseQuerySet):  # type: ignore[type-arg]
     def update(self, **kwargs: Any) -> UpdateQuery:
         return UpdateQuery(
             db=self._db,
@@ -591,7 +591,7 @@ class Model(TortoiseModel):
             get_pending_updates().append(update)
 
     @classmethod
-    def filter(cls, *args: Any, **kwargs: Any) -> TortoiseQuerySet:
+    def filter(cls, *args: Any, **kwargs: Any) -> TortoiseQuerySet:  # type: ignore[type-arg]
         return QuerySet(cls).filter(*args, **kwargs)
 
     @classmethod
@@ -646,7 +646,7 @@ class Model(TortoiseModel):
             raise ValueError('All bulk_update() objects must have a primary key set.')
 
         self = QuerySet(cls)
-        return BulkUpdateQuery(  # type:ignore
+        return BulkUpdateQuery(
             db=self._db,
             model=self.model,
             q_objects=self._q_objects,

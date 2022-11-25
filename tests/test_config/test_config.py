@@ -1,12 +1,13 @@
 import tempfile
 from pathlib import Path
 from typing import Callable
-from typing import Type
-from unittest import IsolatedAsyncioTestCase
+
+import pytest
 
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
+from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.tzkt.models import OriginationSubscription
@@ -15,81 +16,80 @@ from dipdup.enums import OperationType
 from dipdup.exceptions import ConfigurationError
 
 
-class ConfigTest(IsolatedAsyncioTestCase):
-    async def asyncSetUp(self) -> None:
-        self.path = Path(__file__).parent.parent / 'configs' / 'dipdup.yml'
+def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig:
+    path = Path(__file__).parent.parent / 'configs' / 'dipdup.yml'
+    config = DipDupConfig.load([path])
+    config.advanced.merge_subscriptions = merge_subs
+    if origs:
+        config.indexes['hen_mainnet'].types += (OperationType.origination,)  # type: ignore[union-attr]
+    config.initialize()
+    return config
 
-    async def test_load_initialize(self) -> None:
-        config = DipDupConfig.load([self.path])
 
-        config.initialize()
+async def test_load_initialize() -> None:
+    config = create_config()
+    index_config = config.indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
 
-        self.assertIsInstance(config, DipDupConfig)
-        self.assertEqual(
-            config.contracts['HEN_minter'],
-            config.indexes['hen_mainnet'].handlers[0].pattern[0].destination,  # type: ignore
-        )
-        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].callback_fn, Callable)  # type: ignore
-        self.assertIsInstance(config.indexes['hen_mainnet'].handlers[0].pattern[0].parameter_type_cls, Type)  # type: ignore
+    assert isinstance(config, DipDupConfig)
+    destination = index_config.handlers[0].pattern[0].destination  # type: ignore[union-attr]
+    assert destination == config.contracts['HEN_minter']
+    assert isinstance(index_config.handlers[0].callback_fn, Callable)  # type: ignore[arg-type]
+    assert isinstance(index_config.handlers[0].pattern[0].parameter_type_cls, type)  # type: ignore[union-attr]
 
-    async def test_subscriptions(self) -> None:
-        config = DipDupConfig.load([self.path])
-        config.advanced.merge_subscriptions = False
-        config.initialize()
 
-        self.assertEqual(
-            {TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9')},
-            config.indexes['hen_mainnet'].subscriptions,  # type: ignore
-        )
+async def test_operation_subscriptions() -> None:
+    index_config = create_config(False, False).indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
+    assert index_config.subscriptions == {TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9')}
 
-        config = DipDupConfig.load([self.path])
-        config.advanced.merge_subscriptions = True
-        config.initialize()
+    index_config = create_config(True, False).indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
+    assert index_config.subscriptions == {TransactionSubscription()}
 
-        self.assertEqual(
-            {TransactionSubscription()},
-            config.indexes['hen_mainnet'].subscriptions,  # type: ignore
-        )
+    index_config = create_config(False, True).indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
+    assert index_config.subscriptions == {
+        TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
+        OriginationSubscription(),
+    }
 
-        config = DipDupConfig.load([self.path])
-        config.indexes['hen_mainnet'].types = config.indexes['hen_mainnet'].types + (OperationType.origination,)  # type: ignore
-        config.initialize()
+    index_config = create_config(True, True).indexes['hen_mainnet']
+    assert isinstance(index_config, OperationIndexConfig)
+    assert index_config.subscriptions == {TransactionSubscription(), OriginationSubscription()}
 
-        self.assertEqual(
-            {TransactionSubscription(), OriginationSubscription()},
-            config.indexes['hen_mainnet'].subscriptions,  # type: ignore
-        )
 
-    async def test_validators(self) -> None:
-        with self.assertRaises(ConfigurationError):
-            ContractConfig(address='KT1lalala')
-        with self.assertRaises(ConfigurationError):
-            ContractConfig(address='lalalalalalalalalalalalalalalalalala')
-        with self.assertRaises(ConfigurationError):
-            TzktDatasourceConfig(kind='tzkt', url='not_an_url')
+async def test_validators() -> None:
+    with pytest.raises(ConfigurationError):
+        ContractConfig(address='KT1lalala')
+    with pytest.raises(ConfigurationError):
+        ContractConfig(address='lalalalalalalalalalalalalalalalalala')
+    with pytest.raises(ConfigurationError):
+        TzktDatasourceConfig(kind='tzkt', url='not_an_url')
 
-    async def test_dump(self) -> None:
-        config = DipDupConfig.load([self.path])
-        config.initialize()
 
-        tmp = tempfile.mkstemp()[1]
-        with open(tmp, 'w') as f:
-            f.write(config.dump())
+async def test_dump() -> None:
+    config = create_config()
 
-        config = DipDupConfig.load([Path(tmp)], environment=False)
-        config.initialize()
+    tmp = tempfile.mkstemp()[1]
+    with open(tmp, 'w') as f:
+        f.write(config.dump())
 
-    async def test_secrets(self) -> None:
-        db_config = PostgresDatabaseConfig(
-            kind='postgres',
-            host='localhost',
-            password='SeCrEt=)',
-        )
-        hasura_config = HasuraConfig(
-            url='https://localhost',
-            admin_secret='SeCrEt=)',
-        )
-        self.assertIn('localhost', str(db_config))
-        self.assertNotIn('SeCrEt=)', str(db_config))
-        self.assertIn('localhost', str(db_config))
-        self.assertNotIn('SeCrEt=)', str(hasura_config))
+    config = DipDupConfig.load([Path(tmp)], environment=False)
+    config.initialize()
+
+
+async def test_secrets() -> None:
+    db_config = PostgresDatabaseConfig(
+        kind='postgres',
+        host='localhost',
+        password='SeCrEt=)',
+    )
+    hasura_config = HasuraConfig(
+        url='https://localhost',
+        admin_secret='SeCrEt=)',
+    )
+    assert 'localhost' in str(db_config)
+    assert 'SeCrEt=)' not in str(db_config)
+    assert 'localhost' in str(hasura_config)
+    assert 'SeCrEt=)' not in str(hasura_config)

@@ -15,7 +15,7 @@ datasources:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
-      replay_path: ${REPLAY_PATH:-~/.cache/dipdup/replays}
+      replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
 
 templates:
   domains_big_map:
@@ -28,11 +28,12 @@ templates:
       - callback: on_update_expiry_map
         contract: <name_registry>
         path: store.expiry_map
-    last_level: 1450852
 
 indexes:
   domains_big_map:
     template: domains_big_map
+    first_level: 1415852
+    last_level: 1418800
     values:
       datasource: tzkt
       name_registry: name_registry

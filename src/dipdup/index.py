@@ -29,18 +29,16 @@ from dipdup.config import BigMapHandlerConfig
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import EventHandlerConfig
-from dipdup.config import EventHandlerConfigT
+from dipdup.config import EventHandlerConfigU
 from dipdup.config import EventIndexConfig
 from dipdup.config import HeadHandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import OperationHandlerConfig
 from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationHandlerPatternConfigT
+from dipdup.config import OperationHandlerPatternConfigU
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
-from dipdup.config import OperationType
-from dipdup.config import ResolvedIndexConfigT
-from dipdup.config import SkipHistory
+from dipdup.config import ResolvedIndexConfigU
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import UnknownEventHandlerConfig
@@ -53,7 +51,10 @@ from dipdup.datasources.tzkt.fetcher import EventFetcher
 from dipdup.datasources.tzkt.fetcher import OperationFetcher
 from dipdup.datasources.tzkt.fetcher import TokenTransferFetcher
 from dipdup.datasources.tzkt.models import deserialize_storage
+from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
+from dipdup.enums import OperationType
+from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import InvalidDataError
@@ -63,7 +64,6 @@ from dipdup.models import BigMapDiff
 from dipdup.models import Event
 from dipdup.models import EventData
 from dipdup.models import HeadBlockData
-from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Origination
 from dipdup.models import TokenTransferData
@@ -75,7 +75,7 @@ from dipdup.utils.codegen import parse_object
 
 _logger = logging.getLogger(__name__)
 
-ConfigT = TypeVar('ConfigT', bound=ResolvedIndexConfigT)
+ConfigT = TypeVar('ConfigT', bound=ResolvedIndexConfigU)
 
 
 @dataclass(frozen=True)
@@ -86,9 +86,6 @@ class OperationSubgroup:
     counter: int
     operations: Tuple[OperationData, ...]
     entrypoints: Set[Optional[str]]
-
-    def __hash__(self) -> int:
-        return hash(f'{self.hash}:{self.counter}')
 
 
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
@@ -155,7 +152,7 @@ class Index(Generic[ConfigT]):
     """
 
     message_type: MessageType
-    _queue: Deque
+    _queue: Deque[Any]
 
     def __init__(self, ctx: DipDupContext, config: ConfigT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
@@ -191,9 +188,9 @@ class Index(Generic[ConfigT]):
         """Get level index needs to be synchronized to depending on its subscription status"""
         sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
         if not sync_levels:
-            raise RuntimeError('Index has no subscriptions')
+            raise RuntimeError('Initialize config before starting `IndexDispatcher`')
         if None in sync_levels:
-            raise RuntimeError('Call `set_sync_level` before starting IndexDispatcher')
+            raise RuntimeError('Call `set_sync_level` before starting `IndexDispatcher`')
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
         return max(cast(Set[int], sync_levels))
@@ -265,7 +262,7 @@ class Index(Generic[ConfigT]):
         ...
 
     @abstractmethod
-    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher:
+    async def _create_fetcher(self, first_level: int, last_level: int) -> DataFetcher[Any]:
         ...
 
     async def _enter_sync_state(self, head_level: int) -> Optional[int]:
@@ -424,7 +421,7 @@ class OperationIndex(Index[OperationIndexConfig]):
                 await self._call_matched_handler(handler_config, operation_subgroup, args)
             await self.state.update_status(level=batch_level)
 
-    async def _match_operation(self, pattern_config: OperationHandlerPatternConfigT, operation: OperationData) -> bool:
+    async def _match_operation(self, pattern_config: OperationHandlerPatternConfigU, operation: OperationData) -> bool:
         """Match single operation with pattern"""
         # NOTE: Reversed conditions are intentional
         if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
@@ -616,7 +613,7 @@ class OperationIndex(Index[OperationIndexConfig]):
         return self._contract_hashes[address]
 
 
-class BigMapIndex(Index):
+class BigMapIndex(Index[BigMapIndexConfig]):
     message_type = MessageType.big_map
 
     def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
@@ -769,7 +766,7 @@ class BigMapIndex(Index):
         self,
         handler_config: BigMapHandlerConfig,
         matched_big_map: BigMapData,
-    ) -> BigMapDiff:
+    ) -> BigMapDiff[Any, Any]:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
 
@@ -805,7 +802,9 @@ class BigMapIndex(Index):
 
         return matched_handlers
 
-    async def _call_matched_handler(self, handler_config: BigMapHandlerConfig, big_map_diff: BigMapDiff) -> None:
+    async def _call_matched_handler(
+        self, handler_config: BigMapHandlerConfig, big_map_diff: BigMapDiff[Any, Any]
+    ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -845,7 +844,7 @@ class BigMapIndex(Index):
         return pairs
 
 
-class HeadIndex(Index):
+class HeadIndex(Index[HeadIndexConfig]):
     message_type: MessageType = MessageType.head
 
     def __init__(self, ctx: DipDupContext, config: HeadIndexConfig, datasource: TzktDatasource) -> None:
@@ -896,7 +895,7 @@ class HeadIndex(Index):
         self._queue.append(head)
 
 
-class TokenTransferIndex(Index):
+class TokenTransferIndex(Index[TokenTransferIndexConfig]):
     message_type = MessageType.token_transfer
 
     def __init__(self, ctx: DipDupContext, config: TokenTransferIndexConfig, datasource: TzktDatasource) -> None:
@@ -1048,7 +1047,7 @@ class TokenTransferIndex(Index):
                 await self._process_level_token_transfers(token_transfers, message_level)
 
 
-class EventIndex(Index):
+class EventIndex(Index[EventIndexConfig]):
     message_type = MessageType.event
 
     def __init__(self, ctx: DipDupContext, config: EventIndexConfig, datasource: TzktDatasource) -> None:
@@ -1136,7 +1135,7 @@ class EventIndex(Index):
                 await self._call_matched_handler(handler_config, event)
             await self.state.update_status(level=batch_level)
 
-    async def _match_event(self, handler_config: EventHandlerConfigT, event: EventData) -> bool:
+    async def _match_event(self, handler_config: EventHandlerConfigU, event: EventData) -> bool:
         """Match single contract event with pattern"""
         if isinstance(handler_config, EventHandlerConfig) and handler_config.tag != event.tag:
             return False
@@ -1146,9 +1145,9 @@ class EventIndex(Index):
 
     async def _prepare_handler_args(
         self,
-        handler_config: EventHandlerConfigT,
+        handler_config: EventHandlerConfigU,
         matched_event: EventData,
-    ) -> Event | UnknownEvent | None:
+    ) -> Event[Any] | UnknownEvent | None:
         """Prepare handler arguments, parse key and value. Schedule callback in executor."""
         self._logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
@@ -1198,7 +1197,9 @@ class EventIndex(Index):
 
         return matched_handlers
 
-    async def _call_matched_handler(self, handler_config: EventHandlerConfigT, event: Event | UnknownEvent):
+    async def _call_matched_handler(
+        self, handler_config: EventHandlerConfigU, event: Event[Any] | UnknownEvent
+    ) -> None:
         if isinstance(handler_config, EventHandlerConfig) != isinstance(event, Event):
             raise RuntimeError(f'Invalid handler config and event types: {handler_config}, {event}')
 

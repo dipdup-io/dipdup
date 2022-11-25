@@ -1,5 +1,4 @@
 from contextlib import suppress
-from unittest import IsolatedAsyncioTestCase
 
 from tortoise import Tortoise
 
@@ -15,51 +14,51 @@ class SomeException(Exception):
     ...
 
 
-class UtilsTest(IsolatedAsyncioTestCase):
-    async def test_in_global_transaction(self) -> None:
-        transactions = TransactionManager()
-        async with tortoise_wrapper('sqlite://:memory:'):
-            await Tortoise.generate_schemas()
+async def test_in_global_transaction() -> None:
+    transactions = TransactionManager()
+    async with tortoise_wrapper('sqlite://:memory:'):
+        await Tortoise.generate_schemas()
 
-            # 1. Success query without transaction
-            await Index(name='1', type=IndexType.operation, config_hash='').save()
-            count = await Index.filter().count()
-            self.assertEqual(1, count)
+        # 1. Success query without transaction
+        await Index(name='1', type=IndexType.operation, config_hash='').save()
+        count = await Index.filter().count()
+        assert count == 1
 
-            # 2. Success query within transaction
+        # 2. Success query within transaction
+        async with transactions.in_transaction():
+            await Index(name='2', type=IndexType.operation, config_hash='').save()
+        count = await Index.filter().count()
+        assert count == 2
+
+        # 3. Not rolled back query without transaction
+        with suppress(SomeException):
+            await Index(name='3', type=IndexType.operation, config_hash='').save()
+            raise SomeException
+        count = await Index.filter().count()
+        assert count == 3
+
+        # 4. Rolled back query within transaction
+        with suppress(SomeException):
             async with transactions.in_transaction():
-                await Index(name='2', type=IndexType.operation, config_hash='').save()
-            count = await Index.filter().count()
-            self.assertEqual(2, count)
-
-            # 3. Not rolled back query without transaction
-            with suppress(SomeException):
-                await Index(name='3', type=IndexType.operation, config_hash='').save()
+                await Index(name='4', type=IndexType.operation, config_hash='').save()
                 raise SomeException
-            count = await Index.filter().count()
-            self.assertEqual(3, count)
+        count = await Index.filter().count()
+        assert count == 3
 
-            # 4. Rolled back query within transaction
-            with suppress(SomeException):
-                async with transactions.in_transaction():
-                    await Index(name='4', type=IndexType.operation, config_hash='').save()
-                    raise SomeException
-            count = await Index.filter().count()
-            self.assertEqual(3, count)
 
-    async def test_humps_helpers(self) -> None:
-        self.assertEqual('foo_bar', pascal_to_snake('foo_bar', True))
-        self.assertEqual('foo_bar', pascal_to_snake('FooBar', True))
-        self.assertEqual('foo_bar', pascal_to_snake('Foo.Bar', True))
-        self.assertEqual('foobar', pascal_to_snake('FOOBAR', True))
+async def test_humps_helpers() -> None:
+    assert pascal_to_snake('foo_bar', True) == 'foo_bar'
+    assert pascal_to_snake('FooBar', True) == 'foo_bar'
+    assert pascal_to_snake('Foo.Bar', True) == 'foo_bar'
+    assert pascal_to_snake('FOOBAR', True) == 'foobar'
 
-        self.assertEqual('foo_bar', pascal_to_snake('foo_bar', False))
-        self.assertEqual('foo_bar', pascal_to_snake('FooBar', False))
-        self.assertEqual('foo._bar', pascal_to_snake('Foo.Bar', False))
-        self.assertEqual('foobar', pascal_to_snake('FOOBAR', False))
+    assert pascal_to_snake('foo_bar', False) == 'foo_bar'
+    assert pascal_to_snake('FooBar', False) == 'foo_bar'
+    assert pascal_to_snake('Foo.Bar', False) == 'foo._bar'
+    assert pascal_to_snake('FOOBAR', False) == 'foobar'
 
-        self.assertEqual('FooBar', snake_to_pascal('fooBar'))
-        self.assertEqual('FooBar', snake_to_pascal('FooBar'))
-        self.assertEqual('Foobar', snake_to_pascal('foobar'))
-        self.assertEqual('FooBar', snake_to_pascal('foo__bar'))
-        self.assertEqual('Foobar', snake_to_pascal('FOOBAR'))
+    assert snake_to_pascal('fooBar') == 'FooBar'
+    assert snake_to_pascal('FooBar') == 'FooBar'
+    assert snake_to_pascal('foobar') == 'Foobar'
+    assert snake_to_pascal('foo__bar') == 'FooBar'
+    assert snake_to_pascal('FOOBAR') == 'Foobar'

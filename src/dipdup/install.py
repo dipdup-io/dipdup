@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 from shutil import which
+from typing import Any
 from typing import Dict
 from typing import NoReturn
 from typing import Optional
@@ -122,7 +123,7 @@ class DipDupEnvironment:
         if self._commands.get('pyenv'):
             echo('WARNING: pyenv is installed, this may cause issues', Colors.YELLOW)
 
-    def run_cmd(self, cmd: str, *args, **kwargs):
+    def run_cmd(self, cmd: str, *args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
         """Run command safely (relatively lol)"""
         if (found_cmd := self._commands.get(cmd)) is None:
             fail(f'Command not found: {cmd}')

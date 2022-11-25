@@ -25,13 +25,13 @@ import orjson as json
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
-from dipdup.config import DatasourceConfigT
+from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import EventIndexConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationHandlerPatternConfigT
+from dipdup.config import OperationHandlerPatternConfigU
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PatternConfig
@@ -99,7 +99,7 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
             'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
     elif schema.get('$comment') == 'big_map':
-        return schema['oneOf'][1]
+        return cast(dict[str, Any], schema['oneOf'][1])
     else:
         return schema
 
@@ -136,7 +136,7 @@ class ProjectPaths:
 class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, Datasource]) -> None:
+    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigU, Datasource]) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
@@ -160,7 +160,7 @@ class CodeGenerator:
 
     async def _fetch_operation_pattern_schema(
         self,
-        operation_pattern_config: OperationHandlerPatternConfigT,
+        operation_pattern_config: OperationHandlerPatternConfigU,
         datasource_config: TzktDatasourceConfig,
     ) -> None:
         if _is_typed_transaction(operation_pattern_config):
@@ -404,39 +404,48 @@ class CodeGenerator:
             f'{callback}.py',
         )
 
-        if not callback_path.exists():
-            self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
-            callback_template = load_template('templates', CALLBACK_TEMPLATE)
+        if callback_path.exists():
+            return
 
-            arguments = callback_config.format_arguments()
-            imports = set(callback_config.format_imports(self._config.package))
+        self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
+        callback_template = load_template('templates', CALLBACK_TEMPLATE)
 
-            code: List[str] = []
-            if sql:
-                code.append(f"await ctx.execute_sql('{original_callback}')")
-                if callback == 'on_index_rollback':
-                    code.append('await ctx.rollback(')
-                    code.append('    index=index.name,')
-                    code.append('    from_level=from_level,')
-                    code.append('    to_level=to_level,')
-                    code.append(')')
-            else:
-                code.append('...')
+        arguments = callback_config.format_arguments()
+        imports = set(callback_config.format_imports(self._config.package))
 
-            callback_code = callback_template.render(
-                callback=callback,
-                arguments=tuple(dict.fromkeys(arguments)),
-                imports=sorted(dict.fromkeys(imports)),
-                code=code,
-            )
-            write(callback_path, callback_code)
-
+        code: List[str] = []
         if sql:
-            # NOTE: Preserve the same structure as in `handlers`
-            sql_path = Path(
-                self._pkg.sql,
-                *subpackages,
-                callback,
-                KEEP_MARKER,
-            )
-            touch(sql_path)
+            code.append(f"await ctx.execute_sql('{original_callback}')")
+            if callback == 'on_index_rollback':
+                code.append('await ctx.rollback(')
+                code.append('    index=index.name,')
+                code.append('    from_level=from_level,')
+                code.append('    to_level=to_level,')
+                code.append(')')
+        else:
+            code.append('...')
+
+        # NOTE: Fix missing generic type annotation for `Index[IndexConfig]` to comply with `mypy --strict`
+        processed_arguments = tuple(
+            f'{a},  # type: ignore[type-arg]' if a.startswith('index: Index') else a for a in arguments
+        )
+
+        callback_code = callback_template.render(
+            callback=callback,
+            arguments=tuple(processed_arguments),
+            imports=sorted(dict.fromkeys(imports)),
+            code=code,
+        )
+        write(callback_path, callback_code)
+
+        if not sql:
+            return
+
+        # NOTE: Preserve the same structure as in `handlers`
+        sql_path = Path(
+            self._pkg.sql,
+            *subpackages,
+            callback,
+            KEEP_MARKER,
+        )
+        touch(sql_path)

@@ -8,6 +8,7 @@ from asyncio import gather
 from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import suppress
+from typing import Any
 from typing import Awaitable
 from typing import Deque
 from typing import Dict
@@ -19,11 +20,12 @@ from tortoise.exceptions import OperationalError
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import ContractConfig
-from dipdup.config import DatasourceConfigT
+from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import event_hooks
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
@@ -33,6 +35,7 @@ from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
@@ -51,7 +54,6 @@ from dipdup.models import EventData
 from dipdup.models import Head
 from dipdup.models import HeadBlockData
 from dipdup.models import Index as IndexState
-from dipdup.models import IndexStatus
 from dipdup.models import OperationData
 from dipdup.models import Schema
 from dipdup.models import TokenTransferData
@@ -69,7 +71,7 @@ class IndexDispatcher:
         self._ctx = ctx
 
         self._logger = logging.getLogger('dipdup')
-        self._indexes: Dict[str, Index] = {}
+        self._indexes: Dict[str, Index[Any]] = {}
 
         self._entrypoint_filter: Set[Optional[str]] = set()
         self._address_filter: Set[str] = set()
@@ -100,7 +102,7 @@ class IndexDispatcher:
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
-            tasks: Deque[Awaitable] = deque(index.process() for index in self._indexes.values())
+            tasks: Deque[Awaitable[bool]] = deque(index.process() for index in self._indexes.values())
             indexes_processed = await gather(*tasks)
 
             indexes_spawned = False
@@ -331,7 +333,7 @@ class DipDup:
         self._logger = logging.getLogger('dipdup')
         self._config = config
         self._datasources: Dict[str, Datasource] = {}
-        self._datasources_by_config: Dict[DatasourceConfigT, Datasource] = {}
+        self._datasources_by_config: Dict[DatasourceConfigU, Datasource] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
             depth=self._config.advanced.rollback_depth,
@@ -352,6 +354,39 @@ class DipDup:
             raise DipDupException('Schema is not initialized')
         return self._schema
 
+    @classmethod
+    async def create_dummy(
+        cls,
+        config: DipDupConfig,
+        stack: AsyncExitStack,
+        in_memory: bool = False,
+    ) -> 'DipDup':
+        """Create a dummy DipDup instance for testing purposes.
+
+        Only basic initialization is performed:
+
+          - Create datasources without spawning them
+          - Register event hooks
+          - Initialize Tortoise ORM and create schema
+
+        You need to enter `AsyncExitStack` context manager prior to calling this method.
+        """
+        if in_memory:
+            config.database = SqliteDatabaseConfig(
+                kind='sqlite',
+                path=':memory:',
+            )
+        config.initialize(skip_imports=True)
+
+        dipdup = DipDup(config)
+        await dipdup._create_datasources()
+        await dipdup._set_up_database(stack)
+        await dipdup._set_up_hooks(set())
+        await dipdup._initialize_schema()
+        await dipdup._set_up_transactions(stack)
+
+        return dipdup
+
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         """Create new or update existing dipdup project"""
         await self._create_datasources()
@@ -365,7 +400,7 @@ class DipDup:
     async def run(self) -> None:
         """Run indexing process"""
         advanced_config = self._config.advanced
-        tasks: Set[Task] = set()
+        tasks: Set[Task[None]] = set()
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
@@ -376,7 +411,10 @@ class DipDup:
 
             await self._initialize_schema()
             await self._initialize_datasources()
-            await self._set_up_hasura(stack)
+
+            hasura_gateway = await self._set_up_hasura(stack)
+            if hasura_gateway:
+                await hasura_gateway.configure()
 
             if advanced_config.metadata_interface:
                 await MetadataCursor.initialize()
@@ -466,7 +504,7 @@ class DipDup:
         await self._ctx.fire_hook('on_restart')
 
     async def _set_up_transactions(self, stack: AsyncExitStack) -> None:
-        stack.enter_context(self._transactions.register())
+        await stack.enter_async_context(self._transactions.register())
 
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
         await stack.enter_async_context(
@@ -477,7 +515,7 @@ class DipDup:
             )
         )
 
-    async def _set_up_hooks(self, tasks: Set[Task], run: bool = False) -> None:
+    async def _set_up_hooks(self, tasks: Set[Task[None]], run: bool = False) -> None:
         for event_hook_config in event_hooks.values():
             self._callbacks.register_hook(event_hook_config)
 
@@ -489,20 +527,25 @@ class DipDup:
 
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus:
-            from prometheus_client import start_http_server  # type: ignore
+            from prometheus_client import start_http_server
 
             Metrics.enabled = True
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
-    async def _set_up_hasura(self, stack: AsyncExitStack) -> None:
+    async def _set_up_hasura(self, stack: AsyncExitStack) -> HasuraGateway | None:
         if not self._config.hasura:
-            return
+            return None
 
         if not isinstance(self._config.database, PostgresDatabaseConfig):
             raise RuntimeError
-        hasura_gateway = HasuraGateway(self._config.package, self._config.hasura, self._config.database)
+
+        hasura_gateway = HasuraGateway(
+            self._config.package,
+            self._config.hasura,
+            self._config.database,
+        )
         await stack.enter_async_context(hasura_gateway)
-        await hasura_gateway.configure()
+        return hasura_gateway
 
     async def _set_up_datasources(self, stack: AsyncExitStack) -> None:
         await self._create_datasources()
@@ -538,7 +581,7 @@ class DipDup:
 
     async def _set_up_index_dispatcher(
         self,
-        tasks: Set[Task],
+        tasks: Set[Task[None]],
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
@@ -556,10 +599,10 @@ class DipDup:
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
 
-    async def _spawn_datasources(self, tasks: Set[Task]) -> Event:
+    async def _spawn_datasources(self, tasks: Set[Task[None]]) -> Event:
         event = Event()
 
-        async def _event_wrapper():
+        async def _event_wrapper() -> None:
             self._logger.info('Waiting for indexes to synchronize before spawning datasources')
             await event.wait()
 
@@ -568,9 +611,9 @@ class DipDup:
             await gather(*_tasks)
 
         tasks.add(create_task(_event_wrapper()))
-        return event  # noqa: R504
+        return event
 
-    async def _set_up_scheduler(self, tasks: Set[Task]) -> Event:
+    async def _set_up_scheduler(self, tasks: Set[Task[None]]) -> Event:
         # NOTE: Prepare SchedulerManager
         event = Event()
         scheduler = SchedulerManager(self._config.advanced.scheduler)
@@ -581,4 +624,4 @@ class DipDup:
         for job_config in self._config.jobs.values():
             scheduler.add_job(self._ctx, job_config)
 
-        return event  # noqa: R504
+        return event

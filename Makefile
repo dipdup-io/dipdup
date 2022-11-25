@@ -30,9 +30,6 @@ lint:           ## Lint with all tools
 test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
 
-test-ci:        ## Run test suite without xdist, coverage and some tests (avoid macOS issues)
-	CI=true poetry run pytest -s -v tests
-
 docs:           ## Build docs
 	scripts/update_cookiecutter.py
 	cd docs
@@ -50,7 +47,7 @@ flake:          ## Lint with flake8
 	poetry run flakeheaven lint src tests scripts
 
 mypy:           ## Lint with mypy
-	poetry run mypy src tests scripts
+	poetry run mypy --strict src tests scripts
 
 cover:          ## Print coverage for the current branch
 	poetry run diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml
@@ -121,6 +118,7 @@ update:         ## Update dependencies, export requirements.txt
 scripts:
 	python scripts/update_cookiecutter.py
 	python scripts/update_demos.py
-	make lint
+	rm -r tests/replays/*
+	make lint test
 
 ##

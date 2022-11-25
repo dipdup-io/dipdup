@@ -36,7 +36,7 @@ class Question(BaseModel):
                 show_default=False,
             )
             print('\n')
-            return value  # noqa: R504
+            return value
         except cl.Abort:
             cl.echo('\nAborted')
             quit(0)
@@ -59,7 +59,7 @@ class InputQuestion(Question):
 
     def prompt(self) -> bool:
         cl.secho(f'=> {self.description}', fg='blue')
-        return super().prompt()
+        return bool(super().prompt())
 
 
 class BooleanQuestion(Question):
@@ -72,7 +72,7 @@ class BooleanQuestion(Question):
 
     def prompt(self) -> bool:
         cl.secho(f'=> {self.description}', fg='blue')
-        return super().prompt()
+        return bool(super().prompt())
 
 
 class ChoiceQuestion(Question):
@@ -97,11 +97,11 @@ class ChoiceQuestion(Question):
         )
         cl.secho(f'=> {self.description}', fg='blue')
         cl.echo(table)
-        return self.choices[super().prompt()]
+        return str(self.choices[super().prompt()])
 
 
 class JinjaAnswers(dict[str, Any]):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: str, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self['dipdup_version'] = major_version
 
