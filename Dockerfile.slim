@@ -1,5 +1,9 @@
 FROM python:3.11-alpine3.16 AS compile-image
-RUN apk add --update --no-cache build-base gcc musl-dev python3-dev libffi-dev openssl-dev cargo && \
+# FIXME: https://github.com/ijl/orjson/issues/155
+RUN apk add --update --no-cache build-base gcc musl-dev python3-dev libffi-dev openssl-dev rustup && \
+    rustup-init -y --default-toolchain nightly
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup update && \
     python -m venv --without-pip --system-site-packages /opt/dipdup && \
     mkdir -p /opt/dipdup/src/dipdup/ && \
     touch /opt/dipdup/src/dipdup/__init__.py
@@ -15,12 +19,14 @@ FROM python:3.11-alpine3.16 AS build-image
 RUN adduser -D dipdup
 USER dipdup
 ENV PATH="/opt/dipdup/bin:$PATH"
-ENV PYTHONPATH="/home/dipdup:/home/dipdup/src:/opt/dipdup/src:/opt/dipdup/lib/python3.10/site-packages:$PYTHONPATH"
+ENV PYTHONPATH="/home/dipdup:/home/dipdup/src:/opt/dipdup/src:/opt/dipdup/lib/python3.11/site-packages:$PYTHONPATH"
 WORKDIR /home/dipdup/
 ENTRYPOINT ["dipdup"]
 CMD ["run"]
 
 COPY --chown=dipdup --chmod=0755 scripts/install_dependencies.sh /opt/dipdup/bin/install_dependencies
 COPY --chown=dipdup --chmod=0755 scripts/install_dependencies.sh /opt/dipdup/bin/inject_pyproject
+
+COPY --chown=dipdup --from=compile-image /usr/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1
 COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
 COPY --chown=dipdup . /opt/dipdup
