@@ -42,7 +42,9 @@ jobs:
           - name: slim
             suffix: ''
             dockerfile: Dockerfile.slim
-            platforms: linux/amd64,linux/arm64
+            # FIXME: orjson build
+            # platforms: linux/amd64,linux/arm64
+            platforms: linux/amd64
             build_args: ''
 
     steps:
