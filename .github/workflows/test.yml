@@ -26,6 +26,10 @@ jobs:
           #   arch: amd64
           - os: macos-latest
             arch: arm64
+          - os: windows-latest
+            arch: amd64
+          # - os: windows-latest
+          #   arch: arm64
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
