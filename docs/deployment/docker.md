@@ -6,7 +6,7 @@ DipDup provides multiple prebuilt images for different environments hosted on [D
 
 | | default | pytezos | slim |
 | - | :-: | :-: | :-: |
-| base image | `python:3.10-slim` | `python:3.10-slim` | `python:3.10-alpine` |
+| base image | `python:3.11-slim` | `python:3.11-slim` | `python:3.11-alpine` |
 | platforms | `amd64`, `arm64` | `amd64`, `arm64` | `amd64`, `arm64` |
 | latest tag | `{{ cookiecutter.dipdup_version }}` | `{{ cookiecutter.dipdup_version }}-pytezos` | `{{ cookiecutter.dipdup_version }}-slim` |
 | image size | 352M | 481M | 136M | <!-- TODO: Possibly outdated -->

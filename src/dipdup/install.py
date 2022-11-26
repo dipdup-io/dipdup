@@ -106,8 +106,8 @@ class DipDupEnvironment:
         self._quiet or print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
     def check(self) -> None:
-        if not sys.version.startswith('3.10'):
-            fail('DipDup requires Python 3.10')
+        if not sys.version.startswith(('3.10', '3.11')):
+            fail('DipDup requires Python 3.10+')
 
         # NOTE: Show warning if user is root
         if os.geteuid() == 0:

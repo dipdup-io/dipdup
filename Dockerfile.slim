@@ -1,4 +1,4 @@
-FROM python:3.10-alpine3.16 AS compile-image
+FROM python:3.11-alpine3.16 AS compile-image
 RUN apk add --update --no-cache build-base gcc musl-dev python3-dev libffi-dev openssl-dev cargo && \
     python -m venv --without-pip --system-site-packages /opt/dipdup && \
     mkdir -p /opt/dipdup/src/dipdup/ && \
@@ -11,7 +11,7 @@ COPY pyproject.toml requirements.slim.txt README.md /opt/dipdup/
 
 RUN /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check --no-deps -r /opt/dipdup/requirements.slim.txt -e .
 
-FROM python:3.10-alpine3.16 AS build-image
+FROM python:3.11-alpine3.16 AS build-image
 RUN adduser -D dipdup
 USER dipdup
 ENV PATH="/opt/dipdup/bin:$PATH"
