@@ -92,7 +92,7 @@ def import_parameter_type(self, package: str, typename: str, entrypoint: str) ->
     return import_from(module_name, cls_name)
 
 
-def initialize_event_type(self, package: str, module_name: str, tag: str) -> None:
+def import_event_type(self, package: str, module_name: str, tag: str) -> None:
     """Resolve imports and initialize key and value type classes"""
     # _logger.debug('Registering event types for tag `%s`', tag)
     tag = pascal_to_snake(tag.replace('.', '_'))
@@ -101,6 +101,19 @@ def initialize_event_type(self, package: str, module_name: str, tag: str) -> Non
     cls_name = snake_to_pascal(f'{tag}_payload')
     return import_from(module_name, cls_name)
 
+
+
+def import_big_map_key_type(self, path: str, module_name: str, package: str) -> type[BaseModel]:
+    path = pascal_to_snake(path.replace('.', '_'))
+    module_name = f'{package}.types.{module_name}.big_map.{path}_key'
+    cls_name = snake_to_pascal(path + '_key')
+    return import_from(module_name, cls_name)
+
+def import_big_map_value_type(self, path: str, module_name: str, package: str) -> type[BaseModel]:
+    path = pascal_to_snake(path.replace('.', '_'))
+    module_name = f'{package}.types.{module_name}.big_map.{path}_value'
+    cls_name = snake_to_pascal(path + '_value')
+    return import_from(module_name, cls_name)
 
 def import_callback_fn(self, package: str, kind: str, callback: str) -> Callable[..., Awaitable[None]]:
     # _logger.debug('Registering %s callback `%s`', kind, callback)
