@@ -13,63 +13,18 @@ Tasks performed at the first stage:
 
 from __future__ import annotations
 
-import hashlib
-import importlib
 import json
 import logging.config
 import re
-from abc import ABC
-from abc import abstractmethod
-from collections import Counter
-from collections import defaultdict
-from contextlib import suppress
-from copy import copy
-from dataclasses import field
-from functools import cached_property
 from io import StringIO
 from os import environ as env
 from pathlib import Path
-from pydoc import locate
-from typing import Any
-from typing import Awaitable
-from typing import Callable
-from typing import Generic
-from typing import Iterator
-from typing import Sequence
-from typing import TypeVar
-from typing import cast
-from urllib.parse import quote_plus
-from urllib.parse import urlparse
 
-from pydantic import Field
-from pydantic import validator
-from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
-from typing_extensions import Literal
 
-from dipdup import baking_bad
-from dipdup.datasources.metadata.enums import MetadataNetwork
-from dipdup.datasources.subscription import Subscription
-from dipdup.datasources.tzkt.models import BigMapSubscription
-from dipdup.datasources.tzkt.models import EventSubscription
-from dipdup.datasources.tzkt.models import HeadSubscription
-from dipdup.datasources.tzkt.models import OriginationSubscription
-from dipdup.datasources.tzkt.models import TokenTransferSubscription
-from dipdup.datasources.tzkt.models import TransactionSubscription
-from dipdup.enums import LoggingValues
-from dipdup.enums import OperationType
-from dipdup.enums import ReindexingAction
-from dipdup.enums import ReindexingReason
-from dipdup.enums import SkipHistory
-from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.utils import exclude_none
-from dipdup.utils import import_from
-from dipdup.utils import pascal_to_snake
-from dipdup.utils import snake_to_pascal
-from dipdup.utils.sys import is_in_tests
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -78,33 +33,7 @@ ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
 _logger = logging.getLogger('dipdup.yaml')
 
 
-@dataclass
-class DipDupYAMLConfig:
-    spec_version: str
-    package: str
-    datasources: dict[str, dict[str, Any]] = field(default_factory=dict)
-    database: dict[str, Any] = field(default_factory=dict)
-    contracts: dict[str, dict[str, Any]] = field(default_factory=dict)
-    indexes: dict[str, dict[str, Any]] = field(default_factory=dict)
-    templates: dict[str, dict[str, Any]] = field(default_factory=dict)
-    hooks: dict[str, dict[str, Any]] = field(default_factory=dict)
-    jobs: dict[str, Any] = field(default_factory=dict)
-    hasura: dict[str, Any] | None = None
-    sentry: dict[str, Any] | None = None
-    prometheus: dict[str, Any] | None = None
-    advanced: dict[str, Any] = field(default_factory=dict)
-    custom: dict[str, Any] = field(default_factory=dict)
-    logging: str | None = None
-
-    def __post_init_post_parse__(self) -> None:
-        if self.package != pascal_to_snake(self.package):
-            # TODO: Remove in 7.0
-            # raise ConfigurationError('Python package name must be in snake_case.')
-            _logger.warning('Python package name must be in snake_case.')
-
-        self.paths: list[Path] = []
-        self.environment: dict[str, str] = {}
-
+class DipDupYAMLConfig(dict):
     @classmethod
     def load(
         cls,
@@ -113,7 +42,7 @@ class DipDupYAMLConfig:
     ) -> DipDupYAMLConfig:
         yaml = YAML(typ='base')
 
-        json_config: dict[str, Any] = {}
+        json_config = cls()
         config_environment: dict[str, str] = {}
         for path in paths:
             raw_config = cls._load_raw_config(path)
@@ -124,16 +53,7 @@ class DipDupYAMLConfig:
 
             json_config.update(yaml.load(raw_config))
 
-        try:
-            config = cls(**json_config)
-        except ConfigurationError:
-            raise
-        except Exception as e:
-            raise ConfigurationError(str(e)) from e
-
-        config.environment = config_environment
-        config.paths = paths
-        return config
+        return json_config
 
     def dump(self) -> str:
         yaml = YAML(typ='unsafe', pure=True)

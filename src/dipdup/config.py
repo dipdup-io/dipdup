@@ -25,13 +25,13 @@ from collections import Counter
 from collections import defaultdict
 from contextlib import suppress
 from copy import copy
-from dataclasses import field
+from pydantic import Field
 from functools import cached_property
 from io import StringIO
 from os import environ as env
 from pathlib import Path
 from pydoc import locate
-from typing import Any
+from typing import Any, NoReturn
 from typing import Awaitable
 from typing import Callable
 from typing import Generic
@@ -50,7 +50,7 @@ from pydantic.json import pydantic_encoder
 from pydantic.main import BaseModel
 from pydantic.main import ModelMetaclass
 from ruamel.yaml import YAML
-from typing_extensions import Literal
+from typing import Literal
 
 from dipdup import baking_bad
 from dipdup.datasources.metadata.enums import MetadataNetwork
@@ -88,12 +88,15 @@ DEFAULT_SQLITE_PATH = ':memory:'
 ADDRESS_PREFIXES = (
     'KT1',
     # NOTE: Wallet addresses are allowed during config validation for debugging purposes.
-    # NOTE: It's a undocumented hack to filter by `source` field. Wallet indexing is not supported.
+    # NOTE: It's a undocumented hack to filter by `source` Field. Wallet indexing is not supported.
     # NOTE: See https://github.com/dipdup-io/dipdup/issues/291
     'tz1',
     'tz2',
     'tz3',
 )
+
+def throw(e: Exception | type[Exception]) -> NoReturn:
+    raise e
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -147,9 +150,10 @@ class PostgresDatabaseConfig(BaseModel):
     database: str = DEFAULT_POSTGRES_DATABASE
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
-    password: str = field(default='', repr=False)
-    immune_tables: set[str] = field(default_factory=set)
+    password: str = Field(default='', repr=False)
+    immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
+
 
     @cached_property
     def connection_string(self) -> str:
@@ -179,6 +183,9 @@ class PostgresDatabaseConfig(BaseModel):
                 raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
         return v
 
+
+class DatabaseConfigU(BaseModel):
+    __root__: SqliteDatabaseConfig | PostgresDatabaseConfig
 
 class HTTPConfig(BaseModel):
     """Advanced configuration of HTTP client
@@ -214,7 +221,44 @@ class HTTPConfig(BaseModel):
         return config
 
 
-class ContractConfig(BaseModel):
+class NameF:
+    _name: str | None = PrivateAttr(default=None)
+
+    @property
+    def name(self) -> str:
+        return self._name or throw(ConfigInitializationException)
+
+class StorageTypeF:
+    _storage_type: type[BaseModel] | None = PrivateAttr(default=None)
+
+    @property
+    def storage_type(self) -> type[BaseModel]:
+        return self._storage_type or throw(ConfigInitializationException)
+
+
+class ParameterTypeF:
+    _parameter_type: type[BaseModel] | None = PrivateAttr(default=None)
+
+    @property
+    def parameter_type(self) -> type[BaseModel]:
+        return self._parameter_type or throw(ConfigInitializationException)
+
+
+class BigMapKeyTypeF:
+    _big_map_key_type: type[BaseModel] | None = PrivateAttr(default=None)
+
+    @property
+    def big_map_key_type(self) -> type[BaseModel]:
+        return self._big_map_key_type or throw(ConfigInitializationException)
+
+class BigMapValueTypeF:
+    _big_map_value_type: type[BaseModel] | None = PrivateAttr(default=None)
+
+    @property
+    def big_map_value_type(self) -> type[BaseModel]:
+        return self._big_map_value_type or throw(ConfigInitializationException)
+
+class ContractConfig(BaseModel, NameF):
     """Contract config
 
     :param address: Contract address
@@ -224,14 +268,12 @@ class ContractConfig(BaseModel):
     address: str
     typename: str | None = None
 
-    _name: str = PrivateAttr()
-
     def __hash__(self) -> int:
         return hash(f'{self.address}{self.typename or ""}')
 
     @cached_property
     def module_name(self) -> str:
-        return self.typename or self._name
+        return self.typename or self.name
 
     @validator('address', allow_reuse=True)
     def _valid_address(cls, v: str) -> str:
@@ -244,10 +286,9 @@ class ContractConfig(BaseModel):
         return v
 
 
-class DatasourceConfig(ABC, BaseModel):
+class DatasourceConfig(ABC, BaseModel, NameF):
     kind: str
     http: HTTPConfig | None
-    _name: str
 
     @abstractmethod
     def __hash__(self) -> int:
@@ -267,8 +308,8 @@ class TzktDatasourceConfig(DatasourceConfig):
     url: str = DEFAULT_TZKT_URL
     buffer_size: int = 0
 
-    def __init__(self, _name: str, **data) -> None:
-        super().__init__(_name=_name, **data)
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
 
         if self.http and self.http.batch_size and self.http.batch_size > 10000:
             raise ConfigurationError('`batch_size` must be less than 10000')
@@ -350,7 +391,8 @@ class HttpDatasourceConfig(DatasourceConfig):
 
 
 # NOTE: We need unions for Pydantic deserialization
-DatasourceConfigU = (
+class DatasourceConfigU(BaseModel):
+    __root__: (
     TzktDatasourceConfig
     | CoinbaseDatasourceConfig
     | MetadataDatasourceConfig
@@ -493,17 +535,13 @@ class OperationHandlerTransactionPatternConfig(BaseModel, PatternConfig):
     optional: bool = False
     alias: str | None = None
 
-    _storage_type: Type[BaseModel] = PrivateAttr()
-    _parameter_type: Type[BaseModel] = PrivateAttr()
-    _subgroup_index: int = PrivateAttr()
-
     def __init__(self, **data: dict[str, Any]) -> None:
         super().__init__(**data)
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        if self.entrypoint:
+        if self.entrypoint and self.destination:
             module_name = self.destination.module_name
             yield 'dipdup.models', 'Transaction'
             yield self.format_parameter_import(package, module_name, self.entrypoint, self.alias)
@@ -512,7 +550,7 @@ class OperationHandlerTransactionPatternConfig(BaseModel, PatternConfig):
             yield self.format_untyped_operation_import()
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        if self.entrypoint:
+        if self.entrypoint and self.destination:
             module_name = self.destination.module_name
             yield self.format_operation_argument(
                 module_name,
@@ -528,25 +566,13 @@ class OperationHandlerTransactionPatternConfig(BaseModel, PatternConfig):
                 self.alias,
             )
 
-    @cached_property
-    def source_contract_config(self) -> ContractConfig:
-        if not isinstance(self.source, ContractConfig):
-            raise ConfigInitializationException
-        return self.source
-
-    @cached_property
-    def destination(self) -> ContractConfig:
-        if not isinstance(self.destination, ContractConfig):
-            raise ConfigInitializationException
-        return self.destination
-
 
 class OperationHandlerOriginationPatternConfig(PatternConfig):
     """Origination handler pattern config
 
     :param type: always 'origination'
     :param source: Match operations by source contract alias
-    :param similar_to: Match operations which have the same code/signature (depending on `strict` field)
+    :param similar_to: Match operations which have the same code/signature (depending on `strict` Field)
     :param originated_contract: Match origination of exact contract
     :param optional: Whether can operation be missing in operation group
     :param strict: Match operations by storage only or by the whole code
@@ -592,7 +618,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig):
             return
         else:
             raise ConfigurationError(
-                'Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields'
+                'Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` Fields'
             )
 
         yield 'dipdup.models', 'Origination'
@@ -641,7 +667,7 @@ class CallbackConfig(BaseModel, CodegenMixin):
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
         if self.callback != pascal_to_snake(self.callback, strip_dots=False):
-            raise ConfigurationError('`callback` field must be a valid Python module name')
+            raise ConfigurationError('`callback` Field must be a valid Python module name')
 
 
 class HandlerConfig(CallbackConfig):
@@ -674,13 +700,13 @@ class OperationHandlerConfig(HandlerConfig):
             arg, arg_type = next(pattern.iter_arguments())
             if arg in arg_names:
                 raise ConfigurationError(
-                    f'Pattern item is not unique. Set `alias` field to avoid duplicates.\n\n              handler: `{self.callback}`\n              entrypoint: `{arg}`',
+                    f'Pattern item is not unique. Set `alias` Field to avoid duplicates.\n\n              handler: `{self.callback}`\n              entrypoint: `{arg}`',
                 )
             arg_names.add(arg)
             yield arg, arg_type
 
 
-class IndexTemplateConfig(BaseModel):
+class IndexTemplateConfig(BaseModel, NameF):
     """Index template config
 
     :param kind: always `template`
@@ -749,7 +775,7 @@ class OperationIndexConfig(IndexConfig):
     kind: Literal['operation']
     handlers: tuple[OperationHandlerConfig, ...]
     types: tuple[OperationType, ...] = (OperationType.transaction,)
-    contracts: list[ContractConfig] = field(default_factory=list)
+    contracts: list[ContractConfig] = Field(default_factory=list)
 
     first_level: int = 0
     last_level: int = 0
@@ -773,7 +799,7 @@ class OperationIndexConfig(IndexConfig):
 
     @cached_property
     def address_filter(self) -> set[str]:
-        """Set of addresses (any field) to filter operations with before an actual matching"""
+        """Set of addresses (any Field) to filter operations with before an actual matching"""
         addresses = set()
         for handler_config in self.handlers:
             for pattern_config in handler_config.pattern:
@@ -938,7 +964,7 @@ class TokenTransferIndexConfig(IndexConfig):
 
     kind: Literal['token_transfer']
     datasource: TzktDatasourceConfig
-    handlers: tuple[TokenTransferHandlerConfig, ...] = field(default_factory=tuple)
+    handlers: tuple[TokenTransferHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0
@@ -948,7 +974,7 @@ class EventHandlerConfig(HandlerConfig):
     contract: ContractConfig
     tag: str
 
-    _event_type_cls: Type[BaseModel] = PrivateAttr()
+    _event_type_cls: Type[BaseModel] | None = PrivateAttr()
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -985,16 +1011,22 @@ EventHandlerConfigU = EventHandlerConfig | UnknownEventHandlerConfig
 class EventIndexConfig(IndexConfig):
     kind: Literal['event']
     datasource: TzktDatasourceConfig
-    handlers: tuple[EventHandlerConfigU, ...] = field(default_factory=tuple)
+    handlers: tuple[EventHandlerConfigU, ...] = Field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0
 
-ResolvedIndexConfigU = (
+class ResolvedIndexConfigU(BaseModel):
+    __root__: (
     OperationIndexConfig | BigMapIndexConfig | HeadIndexConfig | TokenTransferIndexConfig | EventIndexConfig
 )
-IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
-HandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
+
+class IndexConfigU(BaseModel):
+    __root__: ResolvedIndexConfigU | IndexTemplateConfig
+
+
+class HandlerPatternConfigU(BaseModel):
+    __root__: OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
 
 
 class HasuraConfig(BaseModel):
@@ -1006,13 +1038,13 @@ class HasuraConfig(BaseModel):
     :param source: Hasura source for DipDup to configure, others will be left untouched.
     :param select_limit: Row limit for unauthenticated queries.
     :param allow_aggregations: Whether to allow aggregations in unauthenticated queries.
-    :param camel_case: Whether to use camelCase instead of default pascal_case for the field names (incompatible with `metadata_interface` flag)
+    :param camel_case: Whether to use camelCase instead of default pascal_case for the Field names (incompatible with `metadata_interface` flag)
     :param rest: Enable REST API both for autogenerated and custom queries.
     :param http: HTTP connection tunables
     """
 
     url: str
-    admin_secret: str | None = field(default=None, repr=False)
+    admin_secret: str | None = Field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
     select_limit: int = 100
@@ -1103,7 +1135,7 @@ class HookConfig(CallbackConfig):
     :param atomic: Wrap hook in a single database transaction
     """
 
-    args: dict[str, str] = field(default_factory=dict)
+    args: dict[str, str] = Field(default_factory=dict)
     atomic: bool = False
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -1166,7 +1198,7 @@ class AdvancedConfig:
     :param crash_reporting: Enable crash reporting
     """
 
-    reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
+    reindex: dict[ReindexingReason, ReindexingAction] = Field(default_factory=dict)
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
@@ -1198,18 +1230,18 @@ class DipDupConfig(BaseModel):
 
     spec_version: str
     package: str
-    datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
+    datasources: dict[str, DatasourceConfigU] = Field(default_factory=dict)
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = SqliteDatabaseConfig(kind='sqlite')
-    contracts: dict[str, ContractConfig] = field(default_factory=dict)
-    indexes: dict[str, IndexConfigU] = field(default_factory=dict)
-    templates: dict[str, ResolvedIndexConfigU] = field(default_factory=dict)
-    jobs: dict[str, JobConfig] = field(default_factory=dict)
-    hooks: dict[str, HookConfig] = field(default_factory=dict)
+    contracts: dict[str, ContractConfig] = Field(default_factory=dict)
+    indexes: dict[str, IndexConfigU] = Field(default_factory=dict)
+    templates: dict[str, ResolvedIndexConfigU] = Field(default_factory=dict)
+    jobs: dict[str, JobConfig] = Field(default_factory=dict)
+    hooks: dict[str, HookConfig] = Field(default_factory=dict)
     hasura: HasuraConfig | None = None
     sentry: SentryConfig | None = None
     prometheus: PrometheusConfig | None = None
     advanced: AdvancedConfig = AdvancedConfig()
-    custom: dict[str, Any] = field(default_factory=dict)
+    custom: dict[str, Any] = Field(default_factory=dict)
     logging: LoggingValues = LoggingValues.default
 
     @classmethod
@@ -1220,9 +1252,20 @@ class DipDupConfig(BaseModel):
     ) -> DipDupConfig:
         raw_config = DipDupYAMLConfig.load(paths, environment)
 
+        # Contracts
         contracts: dict[str, ContractConfig] = {}
         for _name, contract_dict in raw_config.contracts.items():
             contracts[_name] = ContractConfig(_name=_name, **contract_dict)
+
+        # Datasources
+        datasources: dict[str, DatasourceConfigU] = {}
+        for _name, datasource_dict in raw_config.datasources.items():
+            datasources[_name] = DatasourceConfigU(_name=_name, **datasource_dict)
+
+        # Templates
+        templates: dict[str, ResolvedIndexConfigU] = {}
+        for _name, template_dict in raw_config.templates.items():
+            templates[_name] = ResolvedIndexConfigU(_name=_name, **template_dict)
 
     @cached_property
     def schema_name(self) -> str:
@@ -1252,9 +1295,9 @@ class DipDupConfig(BaseModel):
 
     @property
     def oneshot(self) -> bool:
-        """Whether all indexes have `last_level` field set"""
+        """Whether all indexes have `last_level` Field set"""
         syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, HeadIndexConfig))
-        oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
+        oneshot_indexes = tuple(c for c in syncable_indexes if c.__root__.last_level)
         if len(oneshot_indexes) == len(syncable_indexes) > 0:
             return True
         return False
@@ -1292,7 +1335,7 @@ class DipDupConfig(BaseModel):
     def get_tzkt_datasource(self, name: str) -> TzktDatasourceConfig:
         datasource = self.get_datasource(name)
         if not isinstance(datasource, TzktDatasourceConfig):
-            raise ConfigurationError('`datasource` field must refer to TzKT datasource')
+            raise ConfigurationError('`datasource` Field must refer to TzKT datasource')
         return datasource
 
     def set_up_logging(self) -> None:
@@ -1327,15 +1370,21 @@ class DipDupConfig(BaseModel):
             template=template,
             values=values,
         )
-        template_config.name = name
+        template_config._name = name
         self._resolve_template(template_config)
         index_config = cast(ResolvedIndexConfigU, self.indexes[name])
         self._resolve_index_links(index_config)
         self._resolve_index_subscriptions(index_config)
-        index_config.name = name
+        index_config._name = name
         index_config.import_objects(self.package)
 
     def _validate(self) -> None:
+        # def __post_init_post_parse__(self) -> None:
+        #     if self.package != pascal_to_snake(self.package):
+        #         # TODO: Remove in 7.0
+        #         # raise ConfigurationError('Python package name must be in snake_case.')
+        #         _logger.warning('Python package name must be in snake_case.')
+
         # NOTE: Hasura and metadata interface
         if self.hasura:
             if isinstance(self.database, SqliteDatabaseConfig):
@@ -1377,7 +1426,7 @@ class DipDupConfig(BaseModel):
             )
 
         json_template = json.loads(raw_template)
-        new_index_config = template.__class__(**json_template)
+        new_index_config = template.__root__.__class__(**json_template)
         new_index_config._template_values = template_config.values
         new_index_config._parent = template
         new_index_config._name = template_config.name
