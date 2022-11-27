@@ -136,14 +136,6 @@ def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
             yield file
 
 
-def import_from(module: str, obj: str) -> Any:
-    """Import object from module, raise ProjectImportError on failure"""
-    try:
-        return getattr(importlib.import_module(module), obj)
-    except (ImportError, AttributeError) as e:
-        raise ProjectImportError(module, obj) from e
-
-
 def exclude_none(config_json: Any) -> Any:
     if isinstance(config_json, (list, tuple)):
         return [exclude_none(i) for i in config_json if i is not None]

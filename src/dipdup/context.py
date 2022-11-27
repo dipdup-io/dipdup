@@ -533,13 +533,13 @@ class CallbackManager:
         key = (handler_config.callback, handler_config.parent.name)
         if key not in self._handlers:
             self._handlers[key] = handler_config
-            handler_config.initialize_callback_fn(self._package)
+            handler_config.import_callback_fn(self._package)
 
     def register_hook(self, hook_config: HookConfig) -> None:
         key = hook_config.callback
         if key not in self._hooks:
             self._hooks[key] = hook_config
-            hook_config.initialize_callback_fn(self._package)
+            hook_config.import_callback_fn(self._package)
 
     async def _fire_handler(
         self,

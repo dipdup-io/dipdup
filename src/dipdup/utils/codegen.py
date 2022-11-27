@@ -1,7 +1,8 @@
+import importlib
 import logging
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Awaitable, Callable
 from typing import Any
 from typing import Type
 from typing import TypeVar
@@ -11,6 +12,9 @@ from pydantic import BaseModel
 from pydantic import ValidationError
 
 from dipdup.exceptions import InvalidDataError
+from dipdup.exceptions import ProjectImportError
+from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
 
 if TYPE_CHECKING:
     from jinja2 import Template
@@ -63,3 +67,43 @@ def parse_object(type_: Type[ObjectT], data: Any) -> ObjectT:
     except ValidationError as e:
         msg = f'Failed to parse: {e.errors()}'
         raise InvalidDataError(msg, type_, data) from e
+
+
+def import_from(module: str, obj: str) -> Any:
+    """Import object from module, raise ProjectImportError on failure"""
+    try:
+        return getattr(importlib.import_module(module), obj)
+    except (ImportError, AttributeError) as e:
+        raise ProjectImportError(module, obj) from e
+
+
+def import_storage_type(self, package: str, module_name: str) -> type[BaseModel]:
+    # _logger.debug('Registering `%s` storage type', module_name)
+    cls_name = snake_to_pascal(module_name) + 'Storage'
+    module_name = f'{package}.types.{module_name}.storage'
+    return import_from(module_name, cls_name)
+
+
+def import_parameter_type(self, package: str, typename: str, entrypoint: str) -> type[BaseModel]:
+    # _logger.debug('Registering parameter type for entrypoint `%s`', entrypoint)
+    entrypoint = entrypoint.lstrip('_')
+    module_name = f'{package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
+    cls_name = snake_to_pascal(entrypoint) + 'Parameter'
+    return import_from(module_name, cls_name)
+
+
+def initialize_event_type(self, package: str, module_name: str, tag: str) -> None:
+    """Resolve imports and initialize key and value type classes"""
+    # _logger.debug('Registering event types for tag `%s`', tag)
+    tag = pascal_to_snake(tag.replace('.', '_'))
+
+    module_name = f'{package}.types.{module_name}.event.{tag}'
+    cls_name = snake_to_pascal(f'{tag}_payload')
+    return import_from(module_name, cls_name)
+
+
+def import_callback_fn(self, package: str, kind: str, callback: str) -> Callable[..., Awaitable[None]]:
+    # _logger.debug('Registering %s callback `%s`', kind, callback)
+    module_name = f'{package}.{kind}s.{callback}'
+    fn_name = callback.rsplit('.', 1)[-1]
+    return import_from(module_name, fn_name)
