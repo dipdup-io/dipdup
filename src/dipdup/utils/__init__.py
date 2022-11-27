@@ -23,8 +23,6 @@ from typing import Union
 import orjson
 from humps import main as humps
 
-from dipdup.exceptions import ProjectImportError
-
 
 def import_submodules(package: str) -> Dict[str, types.ModuleType]:
     """Recursively import all submodules of a package"""

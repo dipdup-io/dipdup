@@ -22,21 +22,16 @@ import re
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
-from collections import defaultdict
 from contextlib import suppress
 from copy import copy
-from pydantic import Field
 from functools import cached_property
-from io import StringIO
-from os import environ as env
 from pathlib import Path
 from pydoc import locate
-from typing import Any, NoReturn
-from typing import Awaitable
+from typing import Any
 from typing import Callable
-from typing import Generic
 from typing import Iterator
-from typing import Sequence
+from typing import Literal
+from typing import NoReturn
 from typing import Type
 from typing import TypeVar
 from typing import cast
@@ -48,9 +43,6 @@ from pydantic import PrivateAttr
 from pydantic import validator
 from pydantic.json import pydantic_encoder
 from pydantic.main import BaseModel
-from pydantic.main import ModelMetaclass
-from ruamel.yaml import YAML
-from typing import Literal
 
 from dipdup import baking_bad
 from dipdup.datasources.metadata.enums import MetadataNetwork
@@ -69,8 +61,6 @@ from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import IndexAlreadyExistsError
-from dipdup.utils import exclude_none
-from dipdup.utils.codegen import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 from dipdup.utils.sys import is_in_tests
@@ -95,8 +85,10 @@ ADDRESS_PREFIXES = (
     'tz3',
 )
 
+
 def throw(e: Exception | type[Exception]) -> NoReturn:
     raise e
+
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -154,7 +146,6 @@ class PostgresDatabaseConfig(BaseModel):
     immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
 
-
     @cached_property
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
@@ -186,6 +177,7 @@ class PostgresDatabaseConfig(BaseModel):
 
 class DatabaseConfigU(BaseModel):
     __root__: SqliteDatabaseConfig | PostgresDatabaseConfig
+
 
 class HTTPConfig(BaseModel):
     """Advanced configuration of HTTP client
@@ -228,6 +220,7 @@ class NameF:
     def name(self) -> str:
         return self._name or throw(ConfigInitializationException)
 
+
 class StorageTypeF:
     _storage_type: type[BaseModel] | None = PrivateAttr(default=None)
 
@@ -251,12 +244,30 @@ class BigMapKeyTypeF:
     def big_map_key_type(self) -> type[BaseModel]:
         return self._big_map_key_type or throw(ConfigInitializationException)
 
+
 class BigMapValueTypeF:
     _big_map_value_type: type[BaseModel] | None = PrivateAttr(default=None)
 
     @property
     def big_map_value_type(self) -> type[BaseModel]:
         return self._big_map_value_type or throw(ConfigInitializationException)
+
+
+class SubgroupIndexF:
+    _big_map_value_type: type[BaseModel] | None = PrivateAttr(default=None)
+
+    @property
+    def big_map_value_type(self) -> type[BaseModel]:
+        return self._big_map_value_type or throw(ConfigInitializationException)
+
+
+class SubscriptionsF:
+    _subscriptions: set[Subscription] | None = PrivateAttr(default_factory=set)
+
+    @property
+    def subscriptions(self) -> set[Subscription]:
+        return self._subscriptions or throw(ConfigInitializationException)
+
 
 class ContractConfig(BaseModel, NameF):
     """Contract config
@@ -393,12 +404,12 @@ class HttpDatasourceConfig(DatasourceConfig):
 # NOTE: We need unions for Pydantic deserialization
 class DatasourceConfigU(BaseModel):
     __root__: (
-    TzktDatasourceConfig
-    | CoinbaseDatasourceConfig
-    | MetadataDatasourceConfig
-    | IpfsDatasourceConfig
-    | HttpDatasourceConfig
-)
+        TzktDatasourceConfig
+        | CoinbaseDatasourceConfig
+        | MetadataDatasourceConfig
+        | IpfsDatasourceConfig
+        | HttpDatasourceConfig
+    )
 
 
 class CodegenMixin(ABC):
@@ -517,7 +528,7 @@ class PatternConfig(CodegenMixin):
 ParentT = TypeVar('ParentT')
 
 
-class OperationHandlerTransactionPatternConfig(BaseModel, PatternConfig):
+class OperationHandlerTransactionPatternConfig(BaseModel, PatternConfig, SubgroupIndexF):
     """Operation handler pattern config
 
     :param type: always 'transaction'
@@ -725,7 +736,7 @@ class IndexTemplateConfig(BaseModel, NameF):
     _kind: str = PrivateAttr(default='template')
 
 
-class IndexConfig(ABC, BaseModel):
+class IndexConfig(ABC, BaseModel, NameF):
     """Index config
 
     :param datasource: Alias of index datasource in `datasources` section
@@ -1016,10 +1027,10 @@ class EventIndexConfig(IndexConfig):
     first_level: int = 0
     last_level: int = 0
 
+
 class ResolvedIndexConfigU(BaseModel):
-    __root__: (
-    OperationIndexConfig | BigMapIndexConfig | HeadIndexConfig | TokenTransferIndexConfig | EventIndexConfig
-)
+    __root__: (OperationIndexConfig | BigMapIndexConfig | HeadIndexConfig | TokenTransferIndexConfig | EventIndexConfig)
+
 
 class IndexConfigU(BaseModel):
     __root__: ResolvedIndexConfigU | IndexTemplateConfig
