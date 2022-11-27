@@ -293,7 +293,7 @@ index_config = OperationIndexConfig(
     first_level=0,
     last_level=0,
 )
-index_config.name = 'asdf'
+index_config._name = 'asdf'
 
 
 async def test_match_smak_add_liquidity() -> None:

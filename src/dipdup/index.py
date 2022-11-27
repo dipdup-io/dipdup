@@ -432,16 +432,16 @@ class OperationIndex(Index[OperationIndexConfig]):
                 if pattern_config.destination_contract_config.address != operation.target_address:
                     return False
             if pattern_config.source:
-                if pattern_config.source_contract_config.address != operation.sender_address:
+                if pattern_config.source.address != operation.sender_address:
                     return False
             return True
 
         elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
             if pattern_config.source:
-                if pattern_config.source_contract_config.address != operation.sender_address:
+                if pattern_config.source.address != operation.sender_address:
                     return False
             if pattern_config.originated_contract:
-                if pattern_config.originated_contract_config.address != operation.originated_contract_address:
+                if pattern_config.originated_contract.address != operation.originated_contract_address:
                     return False
             if pattern_config.similar_to:
                 code_hash, type_hash = await self._get_contract_hashes(
@@ -592,10 +592,10 @@ class OperationIndex(Index[OperationIndexConfig]):
                     continue
 
                 if pattern_config.originated_contract:
-                    addresses.add(pattern_config.originated_contract_config.address)
+                    addresses.add(pattern_config.originated_contract.address)
 
                 if pattern_config.source:
-                    source_address = pattern_config.source_contract_config.address
+                    source_address = pattern_config.source.address
                     async for batch in self._datasource.iter_originated_contracts(source_address):
                         addresses.update(batch)
 
@@ -1139,7 +1139,7 @@ class EventIndex(Index[EventIndexConfig]):
         """Match single contract event with pattern"""
         if isinstance(handler_config, EventHandlerConfig) and handler_config.tag != event.tag:
             return False
-        if handler_config.contract_config.address != event.contract_address:
+        if handler_config.contract.address != event.contract_address:
             return False
         return True
 
@@ -1218,7 +1218,7 @@ class EventIndex(Index[EventIndexConfig]):
         """Get addresses to fetch events during initial synchronization"""
         addresses = set()
         for handler_config in self._config.handlers:
-            addresses.add(cast(ContractConfig, handler_config.contract).address)
+            addresses.add(handler_config.contract).address
         return addresses
 
     def _get_event_tags(self) -> Set[str]:

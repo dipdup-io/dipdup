@@ -34,6 +34,7 @@ from typing import Literal
 from typing import NoReturn
 from typing import Type
 from typing import TypeVar
+from typing import Union
 from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
@@ -259,14 +260,6 @@ class SubgroupIndexF:
     @property
     def big_map_value_type(self) -> type[BaseModel]:
         return self._big_map_value_type or throw(ConfigInitializationException)
-
-
-class SubscriptionsF:
-    _subscriptions: set[Subscription] | None = PrivateAttr(default_factory=set)
-
-    @property
-    def subscriptions(self) -> set[Subscription]:
-        return self._subscriptions or throw(ConfigInitializationException)
 
 
 class ContractConfig(BaseModel, NameF):
@@ -685,6 +678,10 @@ class HandlerConfig(CallbackConfig):
     _kind = PrivateAttr(default='handler')
     _parent: IndexConfigU | None = PrivateAttr(default=None)
 
+    @property
+    def parent(self) -> IndexConfigU:
+        return self._parent or throw(ConfigInitializationException)
+
 
 OperationHandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
 
@@ -745,10 +742,21 @@ class IndexConfig(ABC, BaseModel, NameF):
     kind: str
     datasource: TzktDatasourceConfig
 
-    _name: str = PrivateAttr()
-    _parent: ResolvedIndexConfigU = PrivateAttr()
+    _parent: ResolvedIndexConfigU | None = PrivateAttr(default=None)
     _template_values: dict[str, str] = PrivateAttr(default_factory=dict)
     _subscriptions: set[Subscription] = PrivateAttr(default_factory=set)
+
+    @property
+    def subscriptions(self) -> set[Subscription]:
+        return self._subscriptions
+
+    @property
+    def template_values(self) -> dict[str, str]:
+        return self._template_values
+
+    @property
+    def parent(self) -> ResolvedIndexConfigU | None:
+        return self._parent
 
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
@@ -1016,7 +1024,8 @@ class UnknownEventHandlerConfig(HandlerConfig):
         yield 'event', 'UnknownEvent'
 
 
-EventHandlerConfigU = EventHandlerConfig | UnknownEventHandlerConfig
+class EventHandlerConfigU(BaseModel):
+    __root__: EventHandlerConfig | UnknownEventHandlerConfig
 
 
 class EventIndexConfig(IndexConfig):
@@ -1029,15 +1038,31 @@ class EventIndexConfig(IndexConfig):
 
 
 class ResolvedIndexConfigU(BaseModel):
-    __root__: (OperationIndexConfig | BigMapIndexConfig | HeadIndexConfig | TokenTransferIndexConfig | EventIndexConfig)
+    __root__: Union[
+        OperationIndexConfig,
+        BigMapIndexConfig,
+        HeadIndexConfig,
+        TokenTransferIndexConfig,
+        EventIndexConfig,
+    ]
 
 
 class IndexConfigU(BaseModel):
-    __root__: ResolvedIndexConfigU | IndexTemplateConfig
+    __root__: Union[
+        OperationIndexConfig,
+        BigMapIndexConfig,
+        HeadIndexConfig,
+        TokenTransferIndexConfig,
+        EventIndexConfig,
+        IndexTemplateConfig,
+    ]
 
 
 class HandlerPatternConfigU(BaseModel):
-    __root__: OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
+    __root__: Union[
+        OperationHandlerOriginationPatternConfig,
+        OperationHandlerTransactionPatternConfig,
+    ]
 
 
 class HasuraConfig(BaseModel):
@@ -1079,7 +1104,7 @@ class HasuraConfig(BaseModel):
         return {}
 
 
-class JobConfig(BaseModel):
+class JobConfig(BaseModel, NameF):
     """Job schedule config
 
     :param hook: Name of hook to run
@@ -1095,9 +1120,7 @@ class JobConfig(BaseModel):
     daemon: bool = False
     args: dict[str, Any] = Field(default_factory=dict)
 
-    _name: str = PrivateAttr()
-
-    def __init__(self, **data: Any) -> None:
+    def __init__(self, **data: Any) -> None:  # type: ignore[no-redef]
         super().__init__(**data)
 
         schedules_enabled = sum(int(bool(x)) for x in (self.crontab, self.interval, self.daemon))
@@ -1255,6 +1278,8 @@ class DipDupConfig(BaseModel):
     custom: dict[str, Any] = Field(default_factory=dict)
     logging: LoggingValues = LoggingValues.default
 
+    _yaml: dict[str, Any] = PrivateAttr(default_factory=dict)
+
     @classmethod
     def load(
         cls,
@@ -1262,21 +1287,7 @@ class DipDupConfig(BaseModel):
         environment: bool = True,
     ) -> DipDupConfig:
         raw_config = DipDupYAMLConfig.load(paths, environment)
-
-        # Contracts
-        contracts: dict[str, ContractConfig] = {}
-        for _name, contract_dict in raw_config.contracts.items():
-            contracts[_name] = ContractConfig(_name=_name, **contract_dict)
-
-        # Datasources
-        datasources: dict[str, DatasourceConfigU] = {}
-        for _name, datasource_dict in raw_config.datasources.items():
-            datasources[_name] = DatasourceConfigU(_name=_name, **datasource_dict)
-
-        # Templates
-        templates: dict[str, ResolvedIndexConfigU] = {}
-        for _name, template_dict in raw_config.templates.items():
-            templates[_name] = ResolvedIndexConfigU(_name=_name, **template_dict)
+        return cls.parse_obj({**raw_config, '_yaml': raw_config})
 
     @cached_property
     def schema_name(self) -> str:
@@ -1390,11 +1401,10 @@ class DipDupConfig(BaseModel):
         index_config.import_objects(self.package)
 
     def _validate(self) -> None:
-        # def __post_init_post_parse__(self) -> None:
-        #     if self.package != pascal_to_snake(self.package):
-        #         # TODO: Remove in 7.0
-        #         # raise ConfigurationError('Python package name must be in snake_case.')
-        #         _logger.warning('Python package name must be in snake_case.')
+        if self.package != pascal_to_snake(self.package):
+            # TODO: Remove in 7.0
+            # raise ConfigurationError('Python package name must be in snake_case.')
+            _logger.warning('Python package name must be in snake_case.')
 
         # NOTE: Hasura and metadata interface
         if self.hasura:
@@ -1470,7 +1480,7 @@ class DipDupConfig(BaseModel):
     def _resolve_index_subscriptions(self, index_config: IndexConfigU) -> None:
         if isinstance(index_config, IndexTemplateConfig):
             return
-        if index_config.subscriptions:
+        if index_config.__root__.subscriptions:
             return
 
         if isinstance(index_config, OperationIndexConfig):
@@ -1531,6 +1541,7 @@ class DipDupConfig(BaseModel):
 
     def _resolve_index_links(self, index_config: ResolvedIndexConfigU) -> None:
         """Resolve contract and datasource configs by aliases"""
+        index_config = index_config.__root__
         # NOTE: Each index must have a corresponding (currently) TzKT datasource
         if isinstance(index_config.datasource, str):
             index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
@@ -1542,8 +1553,7 @@ class DipDupConfig(BaseModel):
                         index_config.contracts[i] = self.get_contract(contract)
 
             for handler_config in index_config.handlers:
-                handler_config.parent = index_config
-                self._callback_patterns[handler_config.callback].append(handler_config.pattern)
+                handler_config._parent = index_config
                 for idx, pattern_config in enumerate(handler_config.pattern):
                     # NOTE: Untyped operations are named as `transaction_N` or `origination_N` based on their index
                     pattern_config._subgroup_index = idx
@@ -1564,19 +1574,17 @@ class DipDupConfig(BaseModel):
 
         elif isinstance(index_config, BigMapIndexConfig):
             for handler in index_config.handlers:
-                handler.parent = index_config
-                # TODO: Verify callback uniqueness
-                # self._callback_patterns[handler.callback].append(handler.pattern)
+                handler._parent = index_config
                 if isinstance(handler.contract, str):
                     handler.contract = self.get_contract(handler.contract)
 
         elif isinstance(index_config, HeadIndexConfig):
             for head_handler_config in index_config.handlers:
-                head_handler_config.parent = index_config
+                head_handler_config._parent = index_config
 
         elif isinstance(index_config, TokenTransferIndexConfig):
             for token_transfer_handler_config in index_config.handlers:
-                token_transfer_handler_config.parent = index_config
+                token_transfer_handler_config._parent = index_config
 
                 if isinstance(token_transfer_handler_config.contract, str):
                     token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
@@ -1590,3 +1598,21 @@ class DipDupConfig(BaseModel):
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+    def _set_names(self) -> None:
+        # TODO: Forbid reusing names between sections?
+        named_config_sections = cast(
+            tuple[dict[str, NameF], ...],
+            (
+                self.contracts,
+                self.datasources,
+                self.hooks,
+                self.jobs,
+                self.templates,
+                self.indexes,
+            ),
+        )
+
+        for named_configs in named_config_sections:
+            for name, config in named_configs.items():
+                config._name = name

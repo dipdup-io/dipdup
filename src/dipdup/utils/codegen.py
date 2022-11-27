@@ -79,47 +79,47 @@ def import_from(module: str, obj: str) -> Any:
         raise ProjectImportError(module, obj) from e
 
 
-def import_storage_type(self, package: str, module_name: str) -> type[BaseModel]:
-    # _logger.debug('Registering `%s` storage type', module_name)
-    cls_name = snake_to_pascal(module_name) + 'Storage'
-    module_name = f'{package}.types.{module_name}.storage'
+@cache
+def import_storage_type(package: str, typename: str) -> type[BaseModel]:
+    cls_name = snake_to_pascal(typename) + 'Storage'
+    module_name = f'{package}.types.{typename}.storage'
     return import_from(module_name, cls_name)
 
 
-def import_parameter_type(self, package: str, typename: str, entrypoint: str) -> type[BaseModel]:
-    # _logger.debug('Registering parameter type for entrypoint `%s`', entrypoint)
+@cache
+def import_parameter_type(package: str, typename: str, entrypoint: str) -> type[BaseModel]:
     entrypoint = entrypoint.lstrip('_')
     module_name = f'{package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
     cls_name = snake_to_pascal(entrypoint) + 'Parameter'
     return import_from(module_name, cls_name)
 
 
-def import_event_type(self, package: str, module_name: str, tag: str) -> None:
-    """Resolve imports and initialize key and value type classes"""
-    # _logger.debug('Registering event types for tag `%s`', tag)
+@cache
+def import_event_type(package: str, typename: str, tag: str) -> type[BaseModel]:
     tag = pascal_to_snake(tag.replace('.', '_'))
-
-    module_name = f'{package}.types.{module_name}.event.{tag}'
+    module_name = f'{package}.types.{typename}.event.{tag}'
     cls_name = snake_to_pascal(f'{tag}_payload')
     return import_from(module_name, cls_name)
 
 
-def import_big_map_key_type(self, path: str, module_name: str, package: str) -> type[BaseModel]:
+@cache
+def import_big_map_key_type(package: str, typename: str, path: str) -> type[BaseModel]:
     path = pascal_to_snake(path.replace('.', '_'))
-    module_name = f'{package}.types.{module_name}.big_map.{path}_key'
+    module_name = f'{package}.types.{typename}.big_map.{path}_key'
     cls_name = snake_to_pascal(path + '_key')
     return import_from(module_name, cls_name)
 
 
-def import_big_map_value_type(self, path: str, module_name: str, package: str) -> type[BaseModel]:
+@cache
+def import_big_map_value_type(package: str, typename: str, path: str) -> type[BaseModel]:
     path = pascal_to_snake(path.replace('.', '_'))
-    module_name = f'{package}.types.{module_name}.big_map.{path}_value'
+    module_name = f'{package}.types.{typename}.big_map.{path}_value'
     cls_name = snake_to_pascal(path + '_value')
     return import_from(module_name, cls_name)
 
 
-def import_callback_fn(self, package: str, kind: str, callback: str) -> Callable[..., Awaitable[None]]:
-    # _logger.debug('Registering %s callback `%s`', kind, callback)
+@cache
+def import_callback_fn(package: str, kind: str, callback: str) -> Callable[..., Awaitable[None]]:
     module_name = f'{package}.{kind}s.{callback}'
     fn_name = callback.rsplit('.', 1)[-1]
     return import_from(module_name, fn_name)
