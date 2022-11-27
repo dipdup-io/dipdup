@@ -9,6 +9,7 @@ from typing import Callable
 from typing import Type
 from typing import TypeVar
 from typing import Union
+from typing import cast
 
 from pydantic import BaseModel
 from pydantic import ValidationError
@@ -17,6 +18,12 @@ from dipdup.exceptions import InvalidDataError
 from dipdup.exceptions import ProjectImportError
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+KEEP_MARKER = '.keep'
+PYTHON_MARKER = '__init__.py'
+PEP_561_MARKER = 'py.typed'
+MODELS_MODULE = 'models.py'
+CALLBACK_TEMPLATE = 'callback.py.j2'
 
 if TYPE_CHECKING:
     from jinja2 import Template
@@ -79,47 +86,90 @@ def import_from(module: str, obj: str) -> Any:
         raise ProjectImportError(module, obj) from e
 
 
-@cache
-def import_storage_type(package: str, typename: str) -> type[BaseModel]:
-    cls_name = snake_to_pascal(typename) + 'Storage'
-    module_name = f'{package}.types.{typename}.storage'
-    return import_from(module_name, cls_name)
+class DipDupPackage:
+    def __init__(self, root: Path, name: str) -> None:
+        self.root = root
+        self.package = root.name
+        self.models = root / MODELS_MODULE
+        self.schemas = root / 'schemas'
+        self.types = root / 'types'
+        self.handlers = root / 'handlers'
+        self.hooks = root / 'hooks'
+        self.sql = root / 'sql'
+        self.graphql = root / 'graphql'
 
+    @classmethod
+    def load(cls, root: Path) -> 'DipDupPackage':
+        """Load package from root directory"""
+        if not root.is_dir():
+            raise ProjectImportError(str(root))
+        return cls(root, root.name)
 
-@cache
-def import_parameter_type(package: str, typename: str, entrypoint: str) -> type[BaseModel]:
-    entrypoint = entrypoint.lstrip('_')
-    module_name = f'{package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
-    cls_name = snake_to_pascal(entrypoint) + 'Parameter'
-    return import_from(module_name, cls_name)
+    def create(self) -> None:
+        """Create Python package skeleton if not exists"""
+        touch(self.root / PYTHON_MARKER)
+        touch(self.root / PEP_561_MARKER)
 
+        touch(self.types / PYTHON_MARKER)
+        touch(self.handlers / PYTHON_MARKER)
+        touch(self.hooks / PYTHON_MARKER)
 
-@cache
-def import_event_type(package: str, typename: str, tag: str) -> type[BaseModel]:
-    tag = pascal_to_snake(tag.replace('.', '_'))
-    module_name = f'{package}.types.{typename}.event.{tag}'
-    cls_name = snake_to_pascal(f'{tag}_payload')
-    return import_from(module_name, cls_name)
+        touch(self.sql / KEEP_MARKER)
+        touch(self.graphql / KEEP_MARKER)
 
+        if not self.models.is_file():
+            template = load_template('templates', f'{MODELS_MODULE}.j2')
+            models_code = template.render()
+            write(self.models, models_code)
 
-@cache
-def import_big_map_key_type(package: str, typename: str, path: str) -> type[BaseModel]:
-    path = pascal_to_snake(path.replace('.', '_'))
-    module_name = f'{package}.types.{typename}.big_map.{path}_key'
-    cls_name = snake_to_pascal(path + '_key')
-    return import_from(module_name, cls_name)
+    def get_storage_type(self, typename: str) -> type[BaseModel]:
+        cls_name = snake_to_pascal(typename) + 'Storage'
+        module_name = f'{self.package}.types.{typename}.storage'
+        return cast(
+            type[BaseModel],
+            import_from(module_name, cls_name),
+        )
 
+    def get_parameter_type(self, typename: str, entrypoint: str) -> type[BaseModel]:
+        entrypoint = entrypoint.lstrip('_')
+        module_name = f'{self.package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
+        cls_name = snake_to_pascal(entrypoint) + 'Parameter'
+        return cast(
+            type[BaseModel],
+            import_from(module_name, cls_name),
+        )
 
-@cache
-def import_big_map_value_type(package: str, typename: str, path: str) -> type[BaseModel]:
-    path = pascal_to_snake(path.replace('.', '_'))
-    module_name = f'{package}.types.{typename}.big_map.{path}_value'
-    cls_name = snake_to_pascal(path + '_value')
-    return import_from(module_name, cls_name)
+    def get_event_type(self, typename: str, tag: str) -> type[BaseModel]:
+        tag = pascal_to_snake(tag.replace('.', '_'))
+        module_name = f'{self.package}.types.{typename}.event.{tag}'
+        cls_name = snake_to_pascal(f'{tag}_payload')
+        return cast(
+            type[BaseModel],
+            import_from(module_name, cls_name),
+        )
 
+    def get_big_map_key_type(self, typename: str, path: str) -> type[BaseModel]:
+        path = pascal_to_snake(path.replace('.', '_'))
+        module_name = f'{self.package}.types.{typename}.big_map.{path}_key'
+        cls_name = snake_to_pascal(path + '_key')
+        return cast(
+            type[BaseModel],
+            import_from(module_name, cls_name),
+        )
 
-@cache
-def import_callback_fn(package: str, kind: str, callback: str) -> Callable[..., Awaitable[None]]:
-    module_name = f'{package}.{kind}s.{callback}'
-    fn_name = callback.rsplit('.', 1)[-1]
-    return import_from(module_name, fn_name)
+    def get_big_map_value_type(self, typename: str, path: str) -> type[BaseModel]:
+        path = pascal_to_snake(path.replace('.', '_'))
+        module_name = f'{self.package}.types.{typename}.big_map.{path}_value'
+        cls_name = snake_to_pascal(path + '_value')
+        return cast(
+            type[BaseModel],
+            import_from(module_name, cls_name),
+        )
+
+    def get_callback_fn(self, kind: str, callback: str) -> Callable[..., Awaitable[None]]:
+        module_name = f'{self.package}.{kind}s.{callback}'
+        fn_name = callback.rsplit('.', 1)[-1]
+        return cast(
+            Callable[..., Awaitable[None]],
+            import_from(module_name, fn_name),
+        )

@@ -75,7 +75,7 @@ class SchedulerManager:
         if job_config.daemon:
             self._daemons.add(job_config.name)
 
-        hook_config = job_config.hook_config
+        hook_config = job_config.hook
 
         logger = FormattedLogger(
             name=f'dipdup.hooks.{hook_config.callback}',
@@ -88,14 +88,7 @@ class SchedulerManager:
             **kwargs: Any,
         ) -> None:
             nonlocal job_config, hook_config
-            job_ctx = HookContext(
-                config=ctx.config,
-                datasources=ctx.datasources,
-                callbacks=ctx._callbacks,
-                transactions=ctx._transactions,
-                logger=logger,
-                hook_config=hook_config,
-            )
+            job_ctx = HookContext._wrap(ctx, logger, hook_config)
             with suppress(asyncio.CancelledError):
                 await job_ctx.fire_hook(
                     hook_config.callback,

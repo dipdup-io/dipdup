@@ -19,6 +19,7 @@ import re
 from io import StringIO
 from os import environ as env
 from pathlib import Path
+from typing import Any
 
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
@@ -33,13 +34,13 @@ ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
 _logger = logging.getLogger('dipdup.yaml')
 
 
-class DipDupYAMLConfig(dict):
+class DipDupYAMLConfig(dict[str, Any]):
     @classmethod
     def load(
         cls,
         paths: list[Path],
         environment: bool = True,
-    ) -> DipDupYAMLConfig:
+    ) -> tuple[DipDupYAMLConfig, dict[str, Any]]:
         yaml = YAML(typ='base')
 
         json_config = cls()
@@ -53,7 +54,7 @@ class DipDupYAMLConfig(dict):
 
             json_config.update(yaml.load(raw_config))
 
-        return json_config
+        return json_config, config_environment
 
     def dump(self) -> str:
         yaml = YAML(typ='unsafe', pure=True)

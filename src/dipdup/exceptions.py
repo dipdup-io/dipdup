@@ -270,12 +270,13 @@ class ProjectImportError(DipDupError):
         return f"""
             Failed to import {what}module `{self.module}`.
 
-            Reasons in order of possibility:
+            Have you forgot to call `init` after modifying the config?
 
-              1. `init` command has not been called after modifying the config
-              2. Type or callback has been renamed or removed manually
-              3. `package` name is occupied by existing non-DipDup package
-              4. Package exists, but not discoverable - check `$PYTHONPATH`
+            Other reasons in order of possibility:
+
+              - Type or callback has been renamed or removed manually.
+              - `{self.module}` name is occupied by existing non-DipDup package.
+              - Package exists, but not discoverable; check `$PYTHONPATH`.
         """
 
 

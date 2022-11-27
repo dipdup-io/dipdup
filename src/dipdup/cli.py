@@ -310,7 +310,7 @@ async def cli(ctx: click.Context, config: List[str], env_file: List[str]) -> Non
     _config.set_up_logging()
 
     # NOTE: Imports will be loaded later if needed
-    _config.initialize(skip_imports=True)
+    _config.initialize()
     _init_sentry(_config)
 
     # NOTE: Fire and forget, do not block instant commands
@@ -440,7 +440,7 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
         environment=unsafe,
     )
     if full:
-        config.initialize(skip_imports=True)
+        config.initialize()
     echo(config.dump())
 
 
@@ -459,7 +459,7 @@ async def config_env(ctx: click.Context, file: Optional[str]) -> None:
         paths=ctx.obj.config.paths,
         environment=True,
     )
-    content = '\n'.join(f'{k}={v}' for k, v in config.environment.items())
+    content = '\n'.join(f'{k}={v}' for k, v in config._environment.items())
     if file:
         with open(file, 'w') as f:
             f.write(content)

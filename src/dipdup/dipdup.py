@@ -60,6 +60,7 @@ from dipdup.models import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
+from dipdup.utils.codegen import DipDupPackage
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import get_schema_hash
@@ -167,7 +168,7 @@ class IndexDispatcher:
             if contract.name not in self._ctx.config.contracts:
                 contract_config = ContractConfig(address=contract.address, typename=contract.typename)
                 self._ctx.config.contracts[contract.name] = contract_config
-        self._ctx.config.initialize(skip_imports=True)
+        self._ctx.config.initialize()
 
     async def _load_index_states(self) -> None:
         if self._indexes:
@@ -334,13 +335,15 @@ class DipDup:
         self._config = config
         self._datasources: Dict[str, Datasource] = {}
         self._datasources_by_config: Dict[DatasourceConfigU, Datasource] = {}
-        self._callbacks: CallbackManager = CallbackManager(self._config.package)
+        self._package = DipDupPackage(config.package_path, config.package)
+        self._callbacks: CallbackManager = CallbackManager(self._package)
         self._transactions: TransactionManager = TransactionManager(
             depth=self._config.advanced.rollback_depth,
             immune_tables=self._config.database.immune_tables,
         )
         self._ctx = DipDupContext(
             config=self._config,
+            package=self._package,
             datasources=self._datasources,
             callbacks=self._callbacks,
             transactions=self._transactions,
@@ -376,7 +379,7 @@ class DipDup:
                 kind='sqlite',
                 path=':memory:',
             )
-        config.initialize(skip_imports=True)
+        config.initialize()
 
         dipdup = DipDup(config)
         await dipdup._create_datasources()

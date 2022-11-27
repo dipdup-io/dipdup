@@ -23,7 +23,7 @@ from typing import cast
 import orjson as json
 
 from dipdup.config import BigMapIndexConfig
-from dipdup.config import CallbackMixin
+from dipdup.config import CallbackConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
@@ -47,15 +47,13 @@ from dipdup.exceptions import FeatureAvailabilityError
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+from dipdup.utils.codegen import CALLBACK_TEMPLATE
+from dipdup.utils.codegen import KEEP_MARKER
+from dipdup.utils.codegen import PYTHON_MARKER
+from dipdup.utils.codegen import ProjectPaths
 from dipdup.utils.codegen import load_template
 from dipdup.utils.codegen import touch
 from dipdup.utils.codegen import write
-
-KEEP_MARKER = '.keep'
-PYTHON_MARKER = '__init__.py'
-PEP_561_MARKER = 'py.typed'
-MODELS_MODULE = 'models.py'
-CALLBACK_TEMPLATE = 'callback.py.j2'
 
 
 def _is_typed_transaction(config: PatternConfig) -> TypeGuard[OperationHandlerTransactionPatternConfig]:
@@ -104,35 +102,6 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
         return schema
 
 
-class ProjectPaths:
-    def __init__(self, root: Path) -> None:
-        self.root = root
-        self.models = root / MODELS_MODULE
-        self.schemas = root / 'schemas'
-        self.types = root / 'types'
-        self.handlers = root / 'handlers'
-        self.hooks = root / 'hooks'
-        self.sql = root / 'sql'
-        self.graphql = root / 'graphql'
-
-    def create_package(self) -> None:
-        """Create Python package skeleton if not exists"""
-        touch(self.root / PYTHON_MARKER)
-        touch(self.root / PEP_561_MARKER)
-
-        touch(self.types / PYTHON_MARKER)
-        touch(self.handlers / PYTHON_MARKER)
-        touch(self.hooks / PYTHON_MARKER)
-
-        touch(self.sql / KEEP_MARKER)
-        touch(self.graphql / KEEP_MARKER)
-
-        if not self.models.is_file():
-            template = load_template('templates', f'{MODELS_MODULE}.j2')
-            models_code = template.render()
-            write(self.models, models_code)
-
-
 class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
@@ -164,9 +133,9 @@ class CodeGenerator:
         datasource_config: TzktDatasourceConfig,
     ) -> None:
         if _is_typed_transaction(operation_pattern_config):
-            contract_config = operation_pattern_config.destination_contract_config
+            contract_config = operation_pattern_config.destination
         elif _is_typed_origination(operation_pattern_config):
-            contract_config = operation_pattern_config.contract_config
+            contract_config = operation_pattern_config.contract
         else:
             return
 
@@ -209,14 +178,14 @@ class CodeGenerator:
             for operation_pattern_config in handler_config.pattern:
                 await self._fetch_operation_pattern_schema(
                     operation_pattern_config,
-                    index_config.datasource_config,
+                    index_config.datasource,
                 )
 
     async def _fetch_big_map_index_schema(self, index_config: BigMapIndexConfig) -> None:
         for handler_config in index_config.handlers:
-            contract_config = handler_config.contract_config
+            contract_config = handler_config.contract
 
-            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
+            contract_schemas = await self._get_schema(index_config.datasource, contract_config)
 
             contract_schemas_path = self._pkg.schemas / contract_config.module_name
             big_map_schemas_path = contract_schemas_path / 'big_map'
@@ -241,9 +210,9 @@ class CodeGenerator:
             if isinstance(handler_config, UnknownEventHandlerConfig):
                 continue
 
-            contract_config = handler_config.contract_config
+            contract_config = handler_config.contract
             contract_schemas = await self._get_schema(
-                index_config.datasource_config,
+                index_config.datasource,
                 contract_config,
             )
             contract_schemas_path = self._pkg.schemas / contract_config.module_name
@@ -392,7 +361,7 @@ class CodeGenerator:
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
 
-    async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
+    async def _generate_callback(self, callback_config: CallbackConfig, sql: bool = False) -> None:
         original_callback = callback_config.callback
         subpackages = callback_config.callback.split('.')
         subpackages, callback = subpackages[:-1], subpackages[-1]
@@ -407,7 +376,7 @@ class CodeGenerator:
         if callback_path.exists():
             return
 
-        self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
+        self._logger.info('Generating %s callback `%s`', callback_config._kind, callback)
         callback_template = load_template('templates', CALLBACK_TEMPLATE)
 
         arguments = callback_config.format_arguments()

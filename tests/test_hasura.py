@@ -92,7 +92,7 @@ async def test_configure_hasura() -> None:
     config.database = await run_postgres_container()
     config.hasura = await run_hasura_container(config.database.host)
     config.advanced.reindex[ReindexingReason.schema_modified] = ReindexingAction.ignore
-    config.initialize(skip_imports=True)
+    config.initialize()
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack)
@@ -124,8 +124,8 @@ async def test_unsupported_versions(hasura_version: str, aiohttp_client: Aiohttp
     fake_client: TestClient = await aiohttp_client(fake_api)
 
     fake_client_url = f'http://{fake_client.server.host}:{fake_client.server.port}'
-    hasura_config = HasuraConfig(fake_client_url)
-    postgres_config = PostgresDatabaseConfig('postgres', 'localhost')
+    hasura_config = HasuraConfig(url=fake_client_url)
+    postgres_config = PostgresDatabaseConfig(kind='postgres', host='localhost')
 
     hasura_gateway = HasuraGateway('demo_hic_et_nunc', hasura_config, postgres_config)
 

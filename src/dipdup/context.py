@@ -12,6 +12,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any
 from typing import Awaitable
+from typing import Callable
 from typing import Deque
 from typing import Dict
 from typing import Iterator
@@ -64,6 +65,7 @@ from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
+from dipdup.utils.codegen import DipDupPackage
 from dipdup.utils.database import execute_sql
 from dipdup.utils.database import execute_sql_query
 from dipdup.utils.database import get_connection
@@ -116,11 +118,13 @@ class DipDupContext:
         self,
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
+        package: DipDupPackage,
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
     ) -> None:
         self.datasources = datasources
         self.config = config
+        self._package = package
         self._callbacks = callbacks
         self._transactions = transactions
         self.logger = FormattedLogger('dipdup.context')
@@ -395,14 +399,15 @@ class HookContext(DipDupContext):
         self,
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
+        package: DipDupPackage,
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
         logger: FormattedLogger,
         hook_config: HookConfig,
     ) -> None:
-        super().__init__(datasources, config, callbacks, transactions)
+        super().__init__(datasources, config, package, callbacks, transactions)
         self.logger = logger
-        self.hook_config = hook_config
+        self.hook = hook_config
 
     @classmethod
     def _wrap(
@@ -479,13 +484,14 @@ class HandlerContext(DipDupContext):
         self,
         datasources: Dict[str, Datasource],
         config: DipDupConfig,
+        package: DipDupPackage,
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
         datasource: TzktDatasource,
     ) -> None:
-        super().__init__(datasources, config, callbacks, transactions)
+        super().__init__(datasources, config, package, callbacks, transactions)
         self.logger = logger
         self.handler_config = handler_config
         self.datasource = datasource
@@ -503,6 +509,7 @@ class HandlerContext(DipDupContext):
         return cls(
             datasources=ctx.datasources,
             config=ctx.config,
+            package=ctx._package,
             callbacks=ctx._callbacks,
             transactions=ctx._transactions,
             logger=logger,
@@ -512,11 +519,12 @@ class HandlerContext(DipDupContext):
 
 
 class CallbackManager:
-    def __init__(self, package: str) -> None:
+    def __init__(self, package: DipDupPackage) -> None:
         self._logger = logging.getLogger('dipdup.callback')
         self._package = package
         self._handlers: Dict[Tuple[str, str], HandlerConfig] = {}
         self._hooks: Dict[str, HookConfig] = {}
+        self._callbacks: Dict[Tuple[str, str], Callable[..., Awaitable[None]]] = {}
 
     async def run(self) -> None:
         self._logger.debug('Starting CallbackManager loop')
@@ -644,7 +652,7 @@ class CallbackManager:
     # FIXME: kwargs are ignored, no false alarms though
     @classmethod
     def _verify_arguments(cls, ctx: HookContext, *args: Any, **kwargs: Any) -> None:
-        kwargs_annotations = ctx.hook_config.locate_arguments()
+        kwargs_annotations = ctx.hook.locate_arguments()
         args_names = tuple(kwargs_annotations.keys())
         args_annotations = tuple(kwargs_annotations.values())
 
@@ -652,7 +660,7 @@ class CallbackManager:
             expected_type = args_annotations[i]
             if expected_type and not isinstance(arg, expected_type):
                 raise CallbackTypeError(
-                    name=ctx.hook_config.callback,
+                    name=ctx.hook.callback,
                     kind='hook',
                     arg=args_names[i],
                     type_=type(arg),
@@ -663,14 +671,13 @@ class CallbackManager:
         try:
             return self._handlers[(name, index)]
         except KeyError as e:
-            raise ConfigurationError(f'Attempt to fire unregistered handler `{name}` of index `{index}`') from e
+            raise RuntimeError(f'Attempt to fire unregistered handler `{name}` of index `{index}`') from e
 
     def _get_hook(self, name: str) -> HookConfig:
-
         try:
             return self._hooks[name]
         except KeyError as e:
-            raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
+            raise RuntimeError(f'Attempt to fire unregistered hook `{name}`') from e
 
     def _get_sql_path(self, ctx: 'DipDupContext', name: str) -> Path:
         subpackages = name.split('.')

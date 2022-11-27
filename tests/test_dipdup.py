@@ -39,7 +39,7 @@ class IndexStateTest:
         name = 'hic_et_nunc.yml'
         config_path = Path(__file__).parent / 'configs' / name
         self.config = DipDupConfig.load([config_path])
-        self.config.initialize(skip_imports=True)
+        self.config.initialize()
 
         self.new_hash = '98858ec743f2c84ef9505ccefa2235fc6bb9e9b209b14b2028dd4650eaf96756'
 
