@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- metadata: Add `limanet` to supported networks.
+
 ## [6.3.1] - 2022-11-25
 
 ### Fixed
