@@ -22,7 +22,7 @@ from dipdup.datasources.subscription import Subscription
 from dipdup.exceptions import InvalidDataError
 from dipdup.models import OperationData
 from dipdup.models import StorageType
-from dipdup.utils.codegen import parse_object
+from dipdup.package import parse_object
 
 IntrospectionError = (KeyError, IndexError, AttributeError)
 

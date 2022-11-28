@@ -19,7 +19,6 @@ from typing import Iterator
 from typing import NoReturn
 from typing import Optional
 from typing import Set
-from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -33,14 +32,13 @@ from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import EventHookConfig
 from dipdup.config import EventIndexConfig
-from dipdup.config import HandlerConfig
+from dipdup.config import HandlerConfigMixin
 from dipdup.config import HeadIndexConfig
 from dipdup.config import HookConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config import TokenTransferIndexConfig
-from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import HttpDatasource
@@ -62,10 +60,10 @@ from dipdup.models import Index
 from dipdup.models import ModelUpdate
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
+from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
-from dipdup.utils.codegen import DipDupPackage
 from dipdup.utils.database import execute_sql
 from dipdup.utils.database import execute_sql_query
 from dipdup.utils.database import get_connection
@@ -251,7 +249,7 @@ class DipDupContext:
             address=address,
             typename=typename,
         )
-        contract_config.name = name
+        contract_config._name = name
         self.config.contracts[name] = contract_config
 
         with suppress(OperationalError):
@@ -283,7 +281,7 @@ class DipDupContext:
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
         index: OperationIndex | BigMapIndex | HeadIndex | TokenTransferIndex | EventIndex
 
-        datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
+        datasource_name = index_config.datasource.name
         datasource = self.get_tzkt_datasource(datasource_name)
 
         if isinstance(index_config, OperationIndexConfig):
@@ -419,6 +417,7 @@ class HookContext(DipDupContext):
         return cls(
             datasources=ctx.datasources,
             config=ctx.config,
+            package=ctx._package,
             callbacks=ctx._callbacks,
             transactions=ctx._transactions,
             logger=logger,
@@ -488,7 +487,7 @@ class HandlerContext(DipDupContext):
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
         logger: FormattedLogger,
-        handler_config: HandlerConfig,
+        handler_config: HandlerConfigMixin,
         datasource: TzktDatasource,
     ) -> None:
         super().__init__(datasources, config, package, callbacks, transactions)
@@ -503,7 +502,7 @@ class HandlerContext(DipDupContext):
         cls,
         ctx: DipDupContext,
         logger: FormattedLogger,
-        handler_config: HandlerConfig,
+        handler_config: HandlerConfigMixin,
         datasource: TzktDatasource,
     ) -> 'HandlerContext':
         return cls(
@@ -520,11 +519,11 @@ class HandlerContext(DipDupContext):
 
 class CallbackManager:
     def __init__(self, package: DipDupPackage) -> None:
-        self._logger = logging.getLogger('dipdup.callback')
+        self._logger = logging.getLogger('dipdup.callbacks')
         self._package = package
-        self._handlers: Dict[Tuple[str, str], HandlerConfig] = {}
+        self._handlers: Dict[str, HandlerConfigMixin] = {}
         self._hooks: Dict[str, HookConfig] = {}
-        self._callbacks: Dict[Tuple[str, str], Callable[..., Awaitable[None]]] = {}
+        self._callbacks: Dict[str, Callable[..., Awaitable[None]]] = {}
 
     async def run(self) -> None:
         self._logger.debug('Starting CallbackManager loop')
@@ -533,21 +532,27 @@ class CallbackManager:
                 await pending_hooks.popleft()
             await asyncio.sleep(1)
 
-    def register_handler(self, handler_config: HandlerConfig) -> None:
-        if not handler_config.parent:
-            raise RuntimeError('Handler must have a parent index')
+    def register_handler(self, config: HandlerConfigU, index: str) -> None:
+        key = f'{config._kind}_{index}_{config.callback}'
+        if key in self._handlers or key in self._callbacks:
+            raise RuntimeError(f'Handler `{config.callback}` is already registered')
 
-        # NOTE: Same handlers can be linked to different indexes, we need to use exact config
-        key = (handler_config.callback, handler_config.parent.name)
-        if key not in self._handlers:
-            self._handlers[key] = handler_config
-            handler_config.import_callback_fn(self._package)
+        self._handlers[key] = config
+        self._callbacks[key] = self._package.get_callback_fn(
+            config._kind,
+            config.callback,
+        )
 
-    def register_hook(self, hook_config: HookConfig) -> None:
-        key = hook_config.callback
-        if key not in self._hooks:
-            self._hooks[key] = hook_config
-            hook_config.import_callback_fn(self._package)
+    def register_hook(self, config: HookConfig) -> None:
+        key = f'{config._kind}_{config.callback}'
+        if key in self._hooks or key in self._callbacks:
+            raise RuntimeError(f'Type `{config.callback}` is already registered')
+
+        self._hooks[key] = config
+        self._callbacks[key] = self._package.get_callback_fn(
+            config._kind,
+            config.callback,
+        )
 
     async def _fire_handler(
         self,
@@ -569,7 +574,7 @@ class CallbackManager:
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper(module):
-            await handler_config.callback_fn(new_ctx, *args, **kwargs)
+            await self._callbackshandler_config.callback_fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
         self,
@@ -667,7 +672,7 @@ class CallbackManager:
                     expected_type=expected_type,
                 )
 
-    def _get_handler(self, name: str, index: str) -> HandlerConfig:
+    def _get_handler(self, name: str, index: str) -> HandlerConfigMixin:
         try:
             return self._handlers[(name, index)]
         except KeyError as e:

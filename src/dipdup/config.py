@@ -27,7 +27,6 @@ from copy import copy
 from pathlib import Path
 from pydoc import locate
 from typing import Any
-from typing import Awaitable
 from typing import Callable
 from typing import Iterator
 from typing import Literal
@@ -43,6 +42,7 @@ import pydantic
 from pydantic import Field
 from pydantic import PrivateAttr
 from pydantic import validator
+from pydantic.fields import FieldInfo
 from pydantic.fields import ModelPrivateAttr
 from pydantic.json import pydantic_encoder
 from pydantic.main import BaseModel
@@ -97,29 +97,37 @@ _logger = logging.getLogger('dipdup.config')
 
 
 BaseModelT = TypeVar('BaseModelT')
+MixinsT = TypeVar('MixinsT')
 
 
-def create_model(base: BaseModelT, *mixins: BaseModelT) -> BaseModelT:
+def merge_mixins(base: BaseModelT, *mixins: MixinsT) -> BaseModelT:
     """Create a `BaseModel` with mixins.
 
     A very dark magic to avoid copypaste in config classes.
     """
-    fields: dict[str, tuple[str, Any]] = {}
-    properties: dict[str, property] = {}
+    annotations: dict[str, Any] = base.__annotations__
+    fields: dict[str, FieldInfo] = {}
+    properties: dict[str, property | Callable] = {}
     private_attrs: dict[str, ModelPrivateAttr] = {}
 
     # NOTE: Collect fields, properties and attributes from all mixins
-    for mixin in (base, *mixins):
-        fields.update({k: (v.type_, v.default) for k, v in mixin.__fields__.items()})  # type: ignore[attr-defined]
-        private_attrs.update(mixin.__private_attributes__)  # type: ignore[attr-defined]
+    for mixin in mixins:
+        # fields.update({k: (v.type_, v.default) for k, v in mixin.__fields__.items()})  # type: ignore[attr-defined]
+        # private_attrs.update(mixin.__private_attributes__)  # type: ignore[attr-defined]
+        annotations.update(mixin.__annotations__)
 
-        for name, value in mixin.__dict__.items():
-            if isinstance(value, property):
-                properties[name] = value
+        for k, v in mixin.__dict__.items():
+            if isinstance(v, ModelPrivateAttr):
+                private_attrs[k] = v
+            if isinstance(v, property | Callable | ModelPrivateAttr):
+                properties[k] = v
+            elif isinstance(v, FieldInfo):
+                fields[k] = v
 
     # NOTE: Create a new model from fields
     model_cls = pydantic.create_model(
         base.__class__.__name__,
+        __base__=base,
         field_definitions=fields,
     )
 
@@ -128,7 +136,8 @@ def create_model(base: BaseModelT, *mixins: BaseModelT) -> BaseModelT:
     for name, value in properties.items():
         setattr(model_cls, name, value)
 
-    return cast(BaseModelT, model_cls)
+    model_cls.update_forward_refs()
+    return model_cls
 
 
 class SqliteDatabaseConfig(BaseModel):
@@ -253,7 +262,7 @@ class HTTPConfig(BaseModel):
         return config
 
 
-class NameF(BaseModel):
+class NameMixin:
     _name: str | None = PrivateAttr(default=None)
 
     @property
@@ -271,7 +280,7 @@ class SubgroupIndexF(BaseModel):
         return self._subgroup_index
 
 
-class ContractConfig(NameF):
+class ContractConfig(NameMixin, BaseModel):
     """Contract config
 
     :param address: Contract address
@@ -299,22 +308,13 @@ class ContractConfig(NameF):
         return v
 
 
-ContractConfig = create_model(  # type: ignore[assignment,misc]
+ContractConfig = merge_mixins(  # type: ignore[assignment,misc]
     ContractConfig,
-    NameF,
+    NameMixin,
 )
 
 
-class DatasourceConfig(BaseModel, ABC):
-    kind: str
-    http: HTTPConfig | None
-
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
-
-
-class TzktDatasourceConfig(DatasourceConfig):
+class TzktDatasourceConfig(NameMixin, BaseModel):
     """TzKT datasource config
 
     :param kind: always 'tzkt'
@@ -323,7 +323,8 @@ class TzktDatasourceConfig(DatasourceConfig):
     :param buffer_size: Number of levels to keep in FIFO buffer before processing
     """
 
-    kind: Literal['tzkt']
+    kind: Literal['tzkt'] = Field(alias='kind')
+    http: HTTPConfig | None = Field()
     url: str = DEFAULT_TZKT_URL
     buffer_size: int = 0
 
@@ -343,7 +344,7 @@ class TzktDatasourceConfig(DatasourceConfig):
         return hash(self.kind + self.url)
 
 
-class CoinbaseDatasourceConfig(DatasourceConfig):
+class CoinbaseDatasourceConfig(BaseModel):
     """Coinbase datasource config
 
     :param kind: always 'coinbase'
@@ -353,7 +354,8 @@ class CoinbaseDatasourceConfig(DatasourceConfig):
     :param http: HTTP client configuration
     """
 
-    kind: Literal['coinbase']
+    kind: Literal['coinbase'] = Field(alias='kind')
+    http: HTTPConfig | None = Field()
     api_key: str | None = None
     secret_key: str | None = None
     passphrase: str | None = None
@@ -362,7 +364,7 @@ class CoinbaseDatasourceConfig(DatasourceConfig):
         return hash(self.kind)
 
 
-class MetadataDatasourceConfig(DatasourceConfig):
+class MetadataDatasourceConfig(BaseModel):
     """DipDup Metadata datasource config
 
     :param kind: always 'metadata'
@@ -371,7 +373,8 @@ class MetadataDatasourceConfig(DatasourceConfig):
     :param http: HTTP client configuration
     """
 
-    kind: Literal['metadata']
+    kind: Literal['metadata'] = Field(alias='kind')
+    http: HTTPConfig | None = Field()
     network: MetadataNetwork
     url: str = DEFAULT_METADATA_URL
 
@@ -379,7 +382,7 @@ class MetadataDatasourceConfig(DatasourceConfig):
         return hash(self.kind + self.url + self.network.value)
 
 
-class IpfsDatasourceConfig(DatasourceConfig):
+class IpfsDatasourceConfig(BaseModel):
     """IPFS datasource config
 
     :param kind: always 'ipfs'
@@ -388,13 +391,14 @@ class IpfsDatasourceConfig(DatasourceConfig):
     """
 
     kind: Literal['ipfs']
+    http: HTTPConfig | None = Field()
     url: str = DEFAULT_IPFS_URL
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url)
 
 
-class HttpDatasourceConfig(DatasourceConfig):
+class HttpDatasourceConfig(BaseModel):
     """Generic HTTP datasource config
 
     kind: always 'http'
@@ -403,6 +407,7 @@ class HttpDatasourceConfig(DatasourceConfig):
     """
 
     kind: Literal['http']
+    http: HTTPConfig | None = Field()
     url: str
 
     def __hash__(self) -> int:
@@ -418,7 +423,7 @@ DatasourceConfigU = Union[
 ]
 
 
-class CodegenMixin(ABC):
+class CodegenMixin(ABC, BaseModel):
     """Base for pattern config classes containing methods required for codegen"""
 
     @abstractmethod
@@ -453,11 +458,13 @@ class CodegenMixin(ABC):
         return kwargs
 
 
-class PatternConfig(BaseModel, CodegenMixin):
+class PatternMixin(CodegenMixin, BaseModel):
     """Base class for pattern config items.
 
     Contains methods for import and method signature generation during handler callbacks codegen.
     """
+
+    _subgroup_index: int = PrivateAttr()
 
     @classmethod
     def format_storage_import(
@@ -534,7 +541,36 @@ class PatternConfig(BaseModel, CodegenMixin):
 ParentT = TypeVar('ParentT')
 
 
-class OperationHandlerTransactionPatternConfig(PatternConfig):
+class CallbackMixin:
+    """Mixin for callback configs
+
+    :param callback: Callback name
+    """
+
+    callback: str = Field()
+    _kind: str = PrivateAttr()
+
+    @validator('callback', allow_reuse=True)
+    def check_callback(cls, v: str) -> str:
+        if v != pascal_to_snake(v, strip_dots=False):
+            raise ConfigurationError('`callback` Field must be a valid Python module name')
+        return v
+
+
+class HandlerMixin:
+    _kind = PrivateAttr(default='handler')
+    _parent: IndexConfigU | None = PrivateAttr(default=None)
+
+    @property
+    def parent(self) -> IndexConfigU:
+        return self._parent or throw(ConfigInitializationException)
+
+
+class HandlerConfigMixin(HandlerMixin, CallbackMixin, CodegenMixin):
+    ...
+
+
+class OperationHandlerTransactionPatternConfig(PatternMixin, CallbackMixin, CodegenMixin, BaseModel):
     """Operation handler pattern config
 
     :param type: always 'transaction'
@@ -584,13 +620,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig):
             )
 
 
-OperationHandlerTransactionPatternConfig = create_model(  # type: ignore
-    OperationHandlerTransactionPatternConfig,
-    SubgroupIndexF,
-)
-
-
-class OperationHandlerOriginationPatternConfig(PatternConfig):
+class OperationHandlerOriginationPatternConfig(PatternMixin, CallbackMixin, CodegenMixin, BaseModel):
     """Origination handler pattern config
 
     :param type: always 'origination'
@@ -677,48 +707,20 @@ class OperationHandlerOriginationPatternConfig(PatternConfig):
         raise RuntimeError
 
 
-OperationHandlerOriginationPatternConfig = create_model(  # type: ignore
+OperationHandlerPatternConfigU = Union[
     OperationHandlerOriginationPatternConfig,
-    SubgroupIndexF,
-)
+    OperationHandlerTransactionPatternConfig,
+]
 
 
-class CallbackConfig(BaseModel, CodegenMixin):
-    """Mixin for callback configs
-
-    :param callback: Callback name
-    """
-
-    callback: str
-    _callback_fn: Callable[..., Awaitable[None]] = PrivateAttr()
-    _kind: str = PrivateAttr()
-
-    def __init__(self, **data: Any) -> None:  # type: ignore[no-redef]
-        super().__init__(**data)
-        if self.callback != pascal_to_snake(self.callback, strip_dots=False):
-            raise ConfigurationError('`callback` Field must be a valid Python module name')
-
-
-class HandlerConfig(CallbackConfig):
-    _kind = PrivateAttr(default='handler')
-    _parent: IndexConfigU | None = PrivateAttr(default=None)
-
-    @property
-    def parent(self) -> IndexConfigU:
-        return self._parent or throw(ConfigInitializationException)
-
-
-OperationHandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
-
-
-class OperationHandlerConfig(HandlerConfig):
+class OperationHandlerConfig(HandlerMixin, CallbackMixin, CodegenMixin, BaseModel):
     """Operation handler config
 
     :param callback: Name of method in `handlers` package
     :param pattern: Filters to match operation groups
     """
 
-    pattern: tuple[OperationHandlerPatternConfigU, ...]
+    pattern: tuple[OperationHandlerPatternConfigU, ...] = Field()
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -739,7 +741,15 @@ class OperationHandlerConfig(HandlerConfig):
             yield arg, arg_type
 
 
-class IndexTemplateConfig(NameF, BaseModel):
+OperationHandlerConfig = merge_mixins(  # type: ignore[misc]
+    OperationHandlerConfig,
+    HandlerMixin,
+    CallbackMixin,
+    CodegenMixin,
+)
+
+
+class IndexTemplateConfig(NameMixin, BaseModel):
     """Index template config
 
     :param kind: always `template`
@@ -756,7 +766,7 @@ class IndexTemplateConfig(NameF, BaseModel):
     last_level: int = 0
 
 
-class IndexConfig(NameF):
+class IndexMixin:
     """Index config
 
     :param datasource: Alias of index datasource in `datasources` section
@@ -799,7 +809,7 @@ class IndexConfig(NameF):
         config_dict['datasource'].pop('buffer_size', None)
 
 
-class OperationIndexConfig(IndexConfig, BaseModel):
+class OperationIndexConfig(IndexMixin, NameMixin, BaseModel):
     """Operation index config
 
     :param kind: always `operation`
@@ -855,7 +865,15 @@ class OperationIndexConfig(IndexConfig, BaseModel):
         return addresses
 
 
-class BigMapHandlerConfig(HandlerConfig):
+OperationIndexConfig = merge_mixins(  # type: ignore[misc]
+    OperationIndexConfig,
+    IndexMixin,
+    NameMixin,
+)
+OperationHandlerConfig.update_forward_refs()
+
+
+class BigMapHandlerConfig(HandlerMixin, CallbackMixin, CodegenMixin, BaseModel):
     """Big map handler config
 
     :param contract: Contract to fetch big map from
@@ -899,7 +917,7 @@ class BigMapHandlerConfig(HandlerConfig):
         yield self.format_big_map_diff_argument(self.path)
 
 
-class BigMapIndexConfig(IndexConfig, BaseModel):
+class BigMapIndexConfig(IndexMixin, NameMixin, BaseModel):
     """Big map index config
 
     :param kind: always `big_map`
@@ -929,7 +947,7 @@ class BigMapIndexConfig(IndexConfig, BaseModel):
         config_dict.pop('skip_history', None)
 
 
-class HeadHandlerConfig(HandlerConfig):
+class HeadHandlerConfig(HandlerMixin, CallbackMixin, CodegenMixin, BaseModel):
     """Head block handler config"""
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -942,7 +960,7 @@ class HeadHandlerConfig(HandlerConfig):
         yield 'head', 'HeadBlockData'
 
 
-class HeadIndexConfig(IndexConfig, BaseModel):
+class HeadIndexConfig(IndexMixin, NameMixin, BaseModel):
     """Head block index config"""
 
     kind: Literal['head']
@@ -958,7 +976,7 @@ class HeadIndexConfig(IndexConfig, BaseModel):
         return 0
 
 
-class TokenTransferHandlerConfig(HandlerConfig):
+class TokenTransferHandlerConfig(HandlerMixin, CallbackMixin, CodegenMixin, BaseModel):
     contract: ContractConfig | None = None
     token_id: int | None = None
     from_: ContractConfig | None = Field(default=None, alias='from')
@@ -974,7 +992,7 @@ class TokenTransferHandlerConfig(HandlerConfig):
         yield 'token_transfer', 'TokenTransferData'
 
 
-class TokenTransferIndexConfig(IndexConfig, BaseModel):
+class TokenTransferIndexConfig(IndexMixin, NameMixin, BaseModel):
     """Token index config"""
 
     kind: Literal['token_transfer']
@@ -985,11 +1003,9 @@ class TokenTransferIndexConfig(IndexConfig, BaseModel):
     last_level: int = 0
 
 
-class EventHandlerConfig(HandlerConfig):
-    contract: ContractConfig
-    tag: str
-
-    _event_type_cls: Type[BaseModel] | None = PrivateAttr()
+class EventHandlerConfig(HandlerMixin, CallbackMixin, CodegenMixin, BaseModel):
+    contract: ContractConfig = Field()
+    tag: str = Field()
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -1007,8 +1023,8 @@ class EventHandlerConfig(HandlerConfig):
         yield 'event', f'Event[{event_cls}]'
 
 
-class UnknownEventHandlerConfig(HandlerConfig):
-    contract: ContractConfig
+class UnknownEventHandlerConfig(HandlerMixin, CallbackMixin, CodegenMixin, BaseModel):
+    contract: ContractConfig = Field()
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -1023,7 +1039,7 @@ class UnknownEventHandlerConfig(HandlerConfig):
 EventHandlerConfigU = EventHandlerConfig | UnknownEventHandlerConfig
 
 
-class EventIndexConfig(IndexConfig, BaseModel):
+class EventIndexConfig(IndexMixin, NameMixin, BaseModel):
     kind: Literal['event']
     datasource: TzktDatasourceConfig
     handlers: tuple[EventHandlerConfigU, ...] = Field(default_factory=tuple)
@@ -1096,7 +1112,7 @@ class HasuraConfig(BaseModel):
         return {}
 
 
-class JobConfig(NameF, BaseModel):
+class JobConfig(NameMixin, BaseModel):
     """Job schedule config
 
     :param hook: Name of hook to run
@@ -1154,7 +1170,7 @@ class PrometheusConfig(BaseModel):
     update_interval: float = 1.0
 
 
-class HookConfig(CallbackConfig):
+class HookConfig(CallbackMixin, CodegenMixin, NameMixin, BaseModel):
     """Hook config
 
     :param args: Mapping of argument names and annotations (checked lazily when possible)
@@ -1177,37 +1193,14 @@ class HookConfig(CallbackConfig):
                 yield package, obj
 
 
-class EventHookConfig(HookConfig):
+class EventHookConfig(BaseModel):
     pass
 
 
-event_hooks = {
-    # NOTE: Fires on every run after datasources and schema are initialized.
-    # NOTE: Default: nothing.
-    'on_restart': EventHookConfig(
-        callback='on_restart',
-    ),
-    # NOTE: Fires on rollback which affects specific index and can't be processed unattended.
-    # NOTE: Default: database rollback.
-    'on_index_rollback': EventHookConfig(
-        callback='on_index_rollback',
-        args={
-            'index': 'dipdup.index.Index',
-            'from_level': 'int',
-            'to_level': 'int',
-        },
-    ),
-    # NOTE: Fires when DipDup runs with empty schema, right after schema is initialized.
-    # NOTE: Default: nothing.
-    'on_reindex': EventHookConfig(
-        callback='on_reindex',
-    ),
-    # NOTE: Fires when all indexes reach REALTIME state.
-    # NOTE: Default: nothing.
-    'on_synchronized': EventHookConfig(
-        callback='on_synchronized',
-    ),
-}
+EventHookConfig = merge_mixins(  # type: ignore[misc]
+    EventHookConfig,
+    HookConfig,
+)
 
 
 class AdvancedConfig(BaseModel):
@@ -1272,6 +1265,7 @@ class DipDupConfig(BaseModel):
 
     _yaml: DipDupYAMLConfig = PrivateAttr(default_factory=dict)
     _environment: dict[str, str] = PrivateAttr(default_factory=dict)
+    _contract_addresses: set[str] = PrivateAttr(default_factory=set)
 
     @classmethod
     def load(
@@ -1595,7 +1589,7 @@ class DipDupConfig(BaseModel):
     def _set_names(self) -> None:
         # TODO: Forbid reusing names between sections?
         named_config_sections = cast(
-            tuple[dict[str, NameF], ...],
+            tuple[dict[str, NameMixin], ...],
             (
                 self.contracts,
                 self.datasources,
@@ -1609,3 +1603,93 @@ class DipDupConfig(BaseModel):
         for named_configs in named_config_sections:
             for name, config in named_configs.items():
                 config._name = name
+
+
+# Pydantic patches ahead
+
+
+BigMapHandlerConfig = merge_mixins(  # type: ignore[misc]
+    BigMapHandlerConfig,
+    HandlerMixin,
+    CallbackMixin,
+    CodegenMixin,
+)
+BigMapHandlerConfig.update_forward_refs()
+
+BigMapIndexConfig = merge_mixins(  # type: ignore[misc]
+    BigMapIndexConfig,
+    IndexMixin,
+    NameMixin,
+)
+
+EventIndexConfig = merge_mixins(  # type: ignore[misc]
+    EventIndexConfig,
+    IndexMixin,
+    NameMixin,
+)
+
+
+EventHandlerConfig = merge_mixins(  # type: ignore[misc]
+    EventHandlerConfig,
+    HandlerMixin,
+    CallbackMixin,
+    CodegenMixin,
+)
+EventHandlerConfig.update_forward_refs()
+
+OperationHandlerTransactionPatternConfig = merge_mixins(  # type: ignore[misc]
+    OperationHandlerTransactionPatternConfig,
+    PatternMixin,
+    CallbackMixin,
+    CodegenMixin,
+    SubgroupIndexF,
+)
+OperationHandlerTransactionPatternConfig.update_forward_refs()
+
+UnknownEventHandlerConfig = merge_mixins(  # type: ignore[misc]
+    UnknownEventHandlerConfig,
+    HandlerMixin,
+    CallbackMixin,
+    CodegenMixin,
+)
+UnknownEventHandlerConfig.update_forward_refs()
+
+TzktDatasourceConfig = merge_mixins(  # type: ignore[misc]
+    TzktDatasourceConfig,
+    NameMixin,
+)
+TzktDatasourceConfig.update_forward_refs()
+
+OperationHandlerOriginationPatternConfig = merge_mixins(  # type: ignore
+    OperationHandlerOriginationPatternConfig,
+    SubgroupIndexF,
+)
+OperationHandlerOriginationPatternConfig.update_forward_refs()
+
+event_hooks = {
+    # NOTE: Fires on every run after datasources and schema are initialized.
+    # NOTE: Default: nothing.
+    'on_restart': EventHookConfig(
+        callback='on_restart',
+    ),
+    # NOTE: Fires on rollback which affects specific index and can't be processed unattended.
+    # NOTE: Default: database rollback.
+    'on_index_rollback': EventHookConfig(
+        callback='on_index_rollback',
+        args={
+            'index': 'dipdup.index.Index',
+            'from_level': 'int',
+            'to_level': 'int',
+        },
+    ),
+    # NOTE: Fires when DipDup runs with empty schema, right after schema is initialized.
+    # NOTE: Default: nothing.
+    'on_reindex': EventHookConfig(
+        callback='on_reindex',
+    ),
+    # NOTE: Fires when all indexes reach REALTIME state.
+    # NOTE: Default: nothing.
+    'on_synchronized': EventHookConfig(
+        callback='on_synchronized',
+    ),
+}

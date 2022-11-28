@@ -16,7 +16,6 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import TypeVar
 from typing import cast
 
@@ -27,6 +26,7 @@ from dipdup import __version__
 from dipdup import baking_bad
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
+from dipdup.package import DipDupPackage
 from dipdup.utils.sys import IGNORE_CONFIG_CMDS
 from dipdup.utils.sys import is_in_ci
 from dipdup.utils.sys import is_in_docker
@@ -300,7 +300,6 @@ async def cli(ctx: click.Context, config: List[str], env_file: List[str]) -> Non
 
     from dataclasses import dataclass
 
-    from dipdup.codegen import CodeGenerator
     from dipdup.config import DipDupConfig
     from dipdup.exceptions import ConfigurationError
     from dipdup.exceptions import InitializationRequiredError
@@ -317,9 +316,11 @@ async def cli(ctx: click.Context, config: List[str], env_file: List[str]) -> Non
     if not any((_config.advanced.skip_version_check, is_in_tests(), is_in_ci())):
         asyncio.ensure_future(_check_version())
 
-    # NOTE: Avoid import errors if project package is incomplete
+    package = DipDupPackage.load(_config.package_path)
     try:
-        CodeGenerator(_config, {}).create_package()
+        # NOTE: Avoid early import errors if project package is incomplete.
+        # NOTE: `ConfigurationError` will be raised with more details.
+        package.create()
     except Exception as e:
         raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
 
@@ -402,7 +403,7 @@ async def status(ctx: click.Context) -> None:
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    table: List[Tuple[str, str, str | int]] = [('name', 'status', 'level')]
+    table: list[tuple[str, str, str | int]] = [('name', 'status', 'level')]
     async with tortoise_wrapper(url, models):
         async for index in Index.filter().order_by('name'):
             row = (index.name, index.status.value, index.level)

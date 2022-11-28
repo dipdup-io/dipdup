@@ -23,7 +23,7 @@ from typing import cast
 import orjson as json
 
 from dipdup.config import BigMapIndexConfig
-from dipdup.config import CallbackConfig
+from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
@@ -34,7 +34,7 @@ from dipdup.config import OperationHandlerOriginationPatternConfig
 from dipdup.config import OperationHandlerPatternConfigU
 from dipdup.config import OperationHandlerTransactionPatternConfig
 from dipdup.config import OperationIndexConfig
-from dipdup.config import PatternConfig
+from dipdup.config import PatternMixin
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.config import UnknownEventHandlerConfig
@@ -44,25 +44,25 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError
+from dipdup.package import CALLBACK_TEMPLATE
+from dipdup.package import KEEP_MARKER
+from dipdup.package import PYTHON_MARKER
+from dipdup.package import DipDupPackage
+from dipdup.package import load_template
+from dipdup.package import touch
+from dipdup.package import write
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils.codegen import CALLBACK_TEMPLATE
-from dipdup.utils.codegen import KEEP_MARKER
-from dipdup.utils.codegen import PYTHON_MARKER
-from dipdup.utils.codegen import ProjectPaths
-from dipdup.utils.codegen import load_template
-from dipdup.utils.codegen import touch
-from dipdup.utils.codegen import write
 
 
-def _is_typed_transaction(config: PatternConfig) -> TypeGuard[OperationHandlerTransactionPatternConfig]:
+def _is_typed_transaction(config: PatternMixin) -> TypeGuard[OperationHandlerTransactionPatternConfig]:
     if isinstance(config, OperationHandlerTransactionPatternConfig):
         return config.destination is not None and config.entrypoint is not None
     return False
 
 
-def _is_typed_origination(config: PatternConfig) -> TypeGuard[OperationHandlerOriginationPatternConfig]:
+def _is_typed_origination(config: PatternMixin) -> TypeGuard[OperationHandlerOriginationPatternConfig]:
     if isinstance(config, OperationHandlerOriginationPatternConfig):
         return config.originated_contract is not None or config.similar_to is not None
     return False
@@ -105,19 +105,24 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
 class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigU, Datasource]) -> None:
+    def __init__(
+        self,
+        package: DipDupPackage,
+        config: DipDupConfig,
+        datasources: Dict[DatasourceConfigU, Datasource],
+    ) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
+        self._package = package
         self._config = config
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
-        self._pkg = ProjectPaths(Path(config.package_path))
 
     def create_package(self) -> None:
-        self._pkg.create_package()
+        self._package.create()
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         self._logger.info('Initializing project')
-        self._pkg.create_package()
+        self._package.create()
 
         await self.fetch_schemas()
         await self.generate_types(overwrite_types)
@@ -142,7 +147,7 @@ class CodeGenerator:
         self._logger.debug(contract_config)
         contract_schemas = await self._get_schema(datasource_config, contract_config)
 
-        contract_schemas_path = self._pkg.schemas / contract_config.module_name
+        contract_schemas_path = self._package.schemas / contract_config.module_name
 
         storage_schema_path = contract_schemas_path / 'storage.json'
         storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
@@ -187,7 +192,7 @@ class CodeGenerator:
 
             contract_schemas = await self._get_schema(index_config.datasource, contract_config)
 
-            contract_schemas_path = self._pkg.schemas / contract_config.module_name
+            contract_schemas_path = self._package.schemas / contract_config.module_name
             big_map_schemas_path = contract_schemas_path / 'big_map'
 
             try:
@@ -215,7 +220,7 @@ class CodeGenerator:
                 index_config.datasource,
                 contract_config,
             )
-            contract_schemas_path = self._pkg.schemas / contract_config.module_name
+            contract_schemas_path = self._package.schemas / contract_config.module_name
             event_schemas_path = contract_schemas_path / 'event'
 
             try:
@@ -251,8 +256,8 @@ class CodeGenerator:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
-        rel_path = schema_path.relative_to(self._pkg.schemas)
-        type_pkg_path = self._pkg.types / rel_path
+        rel_path = schema_path.relative_to(self._package.schemas)
+        type_pkg_path = self._package.types / rel_path
 
         if schema_path.is_dir():
             touch(type_pkg_path / PYTHON_MARKER)
@@ -315,9 +320,9 @@ class CodeGenerator:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
 
         self._logger.info('Creating `types` package')
-        touch(self._pkg.types / PYTHON_MARKER)
+        touch(self._package.types / PYTHON_MARKER)
 
-        for path in self._pkg.schemas.glob('**/*'):
+        for path in self._package.schemas.glob('**/*'):
             await self._generate_type(path, overwrite_types)
 
     async def generate_handlers(self) -> None:
@@ -336,7 +341,7 @@ class CodeGenerator:
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""
         self._logger.info('Cleaning up')
-        rmtree(self._pkg.schemas, ignore_errors=True)
+        rmtree(self._package.schemas, ignore_errors=True)
 
     async def verify_package(self) -> None:
         import_submodules(self._config.package)
@@ -361,13 +366,13 @@ class CodeGenerator:
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
 
-    async def _generate_callback(self, callback_config: CallbackConfig, sql: bool = False) -> None:
+    async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
         original_callback = callback_config.callback
         subpackages = callback_config.callback.split('.')
         subpackages, callback = subpackages[:-1], subpackages[-1]
 
         callback_path = Path(
-            self._pkg.root,
+            self._package.root,
             f'{callback_config.kind}s',
             *subpackages,
             f'{callback}.py',
@@ -412,7 +417,7 @@ class CodeGenerator:
 
         # NOTE: Preserve the same structure as in `handlers`
         sql_path = Path(
-            self._pkg.sql,
+            self._package.sql,
             *subpackages,
             callback,
             KEEP_MARKER,

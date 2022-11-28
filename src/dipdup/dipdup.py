@@ -57,10 +57,10 @@ from dipdup.models import Index as IndexState
 from dipdup.models import OperationData
 from dipdup.models import Schema
 from dipdup.models import TokenTransferData
+from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
-from dipdup.utils.codegen import DipDupPackage
 from dipdup.utils.database import generate_schema
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import get_schema_hash
@@ -335,6 +335,7 @@ class DipDup:
         self._config = config
         self._datasources: Dict[str, Datasource] = {}
         self._datasources_by_config: Dict[DatasourceConfigU, Datasource] = {}
+        # FIXME: DI here and below
         self._package = DipDupPackage(config.package_path, config.package)
         self._callbacks: CallbackManager = CallbackManager(self._package)
         self._transactions: TransactionManager = TransactionManager(
@@ -348,7 +349,11 @@ class DipDup:
             callbacks=self._callbacks,
             transactions=self._transactions,
         )
-        self._codegen = CodeGenerator(self._config, self._datasources_by_config)
+        self._codegen = CodeGenerator(
+            self._package,
+            self._config,
+            self._datasources_by_config,
+        )
         self._schema: Optional[Schema] = None
 
     @property

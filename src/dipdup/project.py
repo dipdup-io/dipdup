@@ -11,8 +11,8 @@ from tabulate import tabulate
 
 from dipdup import major_version
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils.codegen import load_template
-from dipdup.utils.codegen import write
+from dipdup.package import load_template
+from dipdup.package import write
 
 _logger = logging.getLogger('dipdup.project')
 

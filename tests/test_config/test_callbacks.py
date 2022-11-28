@@ -8,7 +8,7 @@ from dipdup.config import OperationHandlerTransactionPatternConfig
 @pytest.fixture
 def contract() -> ContractConfig:
     contract = ContractConfig(address='KT1Hkg5qeCgJPwE6SDh8KKPDiun7j5G8r4ee')
-    contract.name = 'dex_contract'
+    contract._name = 'dex_contract'
     return contract
 
 
@@ -40,7 +40,7 @@ def test_transaction_callbacks(contract: ContractConfig) -> None:
     pattern = OperationHandlerTransactionPatternConfig(
         destination=contract,
     )
-    pattern.subgroup_index = 1
+    pattern._subgroup_index = 1
     assert tuple(pattern.iter_arguments()) == (('transaction_1', 'OperationData'),)
     assert tuple(pattern.iter_imports('test')) == (('dipdup.models', 'OperationData'),)
 
@@ -78,7 +78,7 @@ def test_origination_callbacks(contract: ContractConfig) -> None:
     pattern = OperationHandlerOriginationPatternConfig(
         source=contract,
     )
-    pattern.subgroup_index = 1
+    pattern._subgroup_index = 1
     assert tuple(pattern.iter_arguments()) == (('origination_1', 'OperationData'),)
     assert tuple(pattern.iter_imports('test')) == (('dipdup.models', 'OperationData'),)
 

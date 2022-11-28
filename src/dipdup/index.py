@@ -69,9 +69,9 @@ from dipdup.models import Origination
 from dipdup.models import TokenTransferData
 from dipdup.models import Transaction
 from dipdup.models import UnknownEvent
+from dipdup.package import parse_object
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
-from dipdup.utils.codegen import parse_object
 
 _logger = logging.getLogger(__name__)
 
@@ -523,7 +523,10 @@ class OperationIndex(Index[OperationIndexConfig]):
                     args.append(operation_data)
                     continue
 
-                type_ = pattern_config.parameter_type_cls
+                type_ = self._ctx._package.get_parameter_type(
+                    pattern_config.contract.typename,
+                    pattern_config.entrypoint,
+                )
                 parameter = parse_object(type_, operation_data.parameter_json) if type_ else None
 
                 storage_type = pattern_config.storage_type_cls
@@ -598,7 +601,7 @@ class OperationIndex(Index[OperationIndexConfig]):
                         addresses.update(batch)
 
                 if pattern_config.similar_to:
-                    similar_address = pattern_config.similar_to_contract_config.address
+                    similar_address = pattern_config.similar_to.address
                     async for batch in self._datasource.iter_similar_contracts(similar_address, pattern_config.strict):
                         addresses.update(batch)
 
