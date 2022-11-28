@@ -285,9 +285,12 @@ class TzktDatasourceConfig(DatasourceConfig):
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
-        if self.http and self.http.batch_size and self.http.batch_size > 10000:
-            raise ConfigurationError('`batch_size` must be less than 10000')
         self.url = self.url.rstrip('/')
+
+        # NOTE: Is is possible to increase limits in TzKT? Anyway, I don't think anyone will ever need it.
+        limit = baking_bad.MAX_TZKT_BATCH_SIZE
+        if self.http and self.http.batch_size and self.http.batch_size > limit:
+            raise ConfigurationError(f'`batch_size` must be less than {limit}')
         parsed_url = urlparse(self.url)
         # NOTE: Environment substitution disabled
         if '$' in self.url:
@@ -1891,8 +1894,8 @@ orinal_annotations = {v: k for k, v in yaml_annotations.items()}
 def patch_annotations(replace_table: dict[str, str]) -> None:
     """Patch dataclass annotations in runtime to allow using aliases in config files.
 
-    DipDup YAML config uses string aliases for contracts and datasources. During `DipDupConfig.load` these 
-    aliases are resolved to actual configs from corresponding sections and never become strings again. 
+    DipDup YAML config uses string aliases for contracts and datasources. During `DipDupConfig.load` these
+    aliases are resolved to actual configs from corresponding sections and never become strings again.
     This hack allows to add `str` in Unions before loading config so we don't need to write `isinstance(...)`
     checks everywhere.
 
