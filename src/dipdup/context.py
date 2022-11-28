@@ -39,7 +39,6 @@ from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config import TokenTransferIndexConfig
-from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import HttpDatasource
@@ -279,7 +278,7 @@ class DipDupContext:
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
         index: OperationIndex | BigMapIndex | HeadIndex | TokenTransferIndex | EventIndex
 
-        datasource_name = cast(TzktDatasourceConfig, index_config.datasource).name
+        datasource_name = index_config.datasource.name
         datasource = self.get_tzkt_datasource(datasource_name)
 
         if isinstance(index_config, OperationIndexConfig):

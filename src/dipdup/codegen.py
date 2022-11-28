@@ -163,8 +163,8 @@ class CodeGenerator:
         operation_pattern_config: OperationHandlerPatternConfigU,
         datasource_config: TzktDatasourceConfig,
     ) -> None:
-        if _is_typed_transaction(operation_pattern_config):
-            contract_config = operation_pattern_config.destination_contract_config
+        if _is_typed_transaction(operation_pattern_config) and operation_pattern_config.destination:
+            contract_config = operation_pattern_config.destination
         elif _is_typed_origination(operation_pattern_config):
             contract_config = operation_pattern_config.contract_config
         else:

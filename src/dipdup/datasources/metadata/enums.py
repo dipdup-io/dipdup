@@ -7,3 +7,4 @@ class MetadataNetwork(Enum):
     jakartanet = 'jakartanet'
     kathmandunet = 'kathmandunet'
     mainnet = 'mainnet'
+    limanet = 'limanet'

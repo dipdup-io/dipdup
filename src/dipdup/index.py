@@ -429,24 +429,22 @@ class OperationIndex(Index[OperationIndexConfig]):
                 if pattern_config.entrypoint != operation.entrypoint:
                     return False
             if pattern_config.destination:
-                if pattern_config.destination_contract_config.address != operation.target_address:
+                if pattern_config.destination.address != operation.target_address:
                     return False
             if pattern_config.source:
-                if pattern_config.source_contract_config.address != operation.sender_address:
+                if pattern_config.source.address != operation.sender_address:
                     return False
             return True
 
         elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
             if pattern_config.source:
-                if pattern_config.source_contract_config.address != operation.sender_address:
+                if pattern_config.source.address != operation.sender_address:
                     return False
             if pattern_config.originated_contract:
-                if pattern_config.originated_contract_config.address != operation.originated_contract_address:
+                if pattern_config.originated_contract.address != operation.originated_contract_address:
                     return False
             if pattern_config.similar_to:
-                code_hash, type_hash = await self._get_contract_hashes(
-                    pattern_config.similar_to_contract_config.address
-                )
+                code_hash, type_hash = await self._get_contract_hashes(pattern_config.similar_to.address)
                 if pattern_config.strict:
                     if code_hash != operation.originated_contract_code_hash:
                         return False
@@ -592,15 +590,15 @@ class OperationIndex(Index[OperationIndexConfig]):
                     continue
 
                 if pattern_config.originated_contract:
-                    addresses.add(pattern_config.originated_contract_config.address)
+                    addresses.add(pattern_config.originated_contract.address)
 
                 if pattern_config.source:
-                    source_address = pattern_config.source_contract_config.address
+                    source_address = pattern_config.source.address
                     async for batch in self._datasource.iter_originated_contracts(source_address):
                         addresses.update(batch)
 
                 if pattern_config.similar_to:
-                    similar_address = pattern_config.similar_to_contract_config.address
+                    similar_address = pattern_config.similar_to.address
                     async for batch in self._datasource.iter_similar_contracts(similar_address, pattern_config.strict):
                         addresses.update(batch)
 
@@ -821,7 +819,7 @@ class BigMapIndex(Index[BigMapIndexConfig]):
         """Get addresses to fetch big map diffs from during initial synchronization"""
         addresses = set()
         for handler_config in self._config.handlers:
-            addresses.add(cast(ContractConfig, handler_config.contract).address)
+            addresses.add(handler_config.contract.address)
         return addresses
 
     def _get_big_map_paths(self) -> Set[str]:
@@ -837,7 +835,7 @@ class BigMapIndex(Index[BigMapIndexConfig]):
         for handler_config in self._config.handlers:
             pairs.add(
                 (
-                    cast(ContractConfig, handler_config.contract).address,
+                    handler_config.contract.address,
                     handler_config.path,
                 )
             )
@@ -915,13 +913,13 @@ class TokenTransferIndex(Index[TokenTransferIndexConfig]):
         to_addresses: set[str] = set()
         for handler_config in self._config.handlers:
             if handler_config.contract:
-                token_addresses.add(cast(ContractConfig, handler_config.contract).address)
+                token_addresses.add(handler_config.contract.address)
             if handler_config.token_id is not None:
                 token_ids.add(handler_config.token_id)
             if handler_config.from_:
-                from_addresses.add(cast(ContractConfig, handler_config.from_).address)
+                from_addresses.add(handler_config.from_.address)
             if handler_config.to:
-                to_addresses.add(cast(ContractConfig, handler_config.to).address)
+                to_addresses.add(handler_config.to.address)
 
         return TokenTransferFetcher(
             datasource=self._datasource,
@@ -1218,7 +1216,7 @@ class EventIndex(Index[EventIndexConfig]):
         """Get addresses to fetch events during initial synchronization"""
         addresses = set()
         for handler_config in self._config.handlers:
-            addresses.add(cast(ContractConfig, handler_config.contract).address)
+            addresses.add(handler_config.contract.address)
         return addresses
 
     def _get_event_tags(self) -> Set[str]:
