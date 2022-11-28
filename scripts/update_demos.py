@@ -8,10 +8,18 @@ from dipdup.project import BaseProject
 demos_path = Path(__file__).parent.parent / 'demos'
 
 for demo in list(demos_path.iterdir()):
+    # FIXME:
+    if 'hash' not in demo.name:
+        continue
+
     if demo.is_dir():
         rmtree(demo)
 
 for demo in list(demos_path.iterdir()):
+    # FIXME:
+    if 'hash' not in demo.name:
+        continue
+
     if not demo.name.endswith('.json'):
         continue
 
@@ -25,6 +33,10 @@ for demo in list(demos_path.iterdir()):
     subprocess.run(['mv', project_name, 'demos'], check=True)
 
 for demo in list(demos_path.iterdir()):
+    # FIXME:
+    if 'hash' not in demo.name:
+        continue
+
     if not demo.is_dir():
         continue
 

@@ -378,12 +378,28 @@ class CodeGenerator:
         contract_config: ContractConfig,
     ) -> Dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
-        datasource = self._datasources.get(datasource_config)
-        address = contract_config.address
-        if datasource is None:
-            raise RuntimeError('Call `create_datasources` first')
+        datasource = self._datasources[datasource_config]
         if not isinstance(datasource, TzktDatasource):
+            raise RuntimeError('`tzkt` datasource expected')
+
+        if isinstance(contract_config.address, str):
+            address = contract_config.address
+        elif isinstance(contract_config.code_hash, str):
+            address = contract_config.code_hash
+        elif isinstance(contract_config.code_hash, int):
+            contracts = await datasource.request(
+                'get',
+                'v1/contracts',
+                params={
+                    'select': 'address',
+                    'codeHash': contract_config.code_hash,
+                    'limit': 1,
+                },
+            )
+            address = cast(str, contracts[0]['address'])
+        else:
             raise RuntimeError
+
         if datasource_config not in self._schemas:
             self._schemas[datasource_config] = {}
         if address not in self._schemas[datasource_config]:

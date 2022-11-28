@@ -444,7 +444,9 @@ class OperationIndex(Index[OperationIndexConfig]):
                 if pattern_config.originated_contract.address != operation.originated_contract_address:
                     return False
             if pattern_config.similar_to:
-                code_hash, type_hash = await self._get_contract_hashes(pattern_config.similar_to.address)
+                address = pattern_config.similar_to.address
+                assert address
+                code_hash, type_hash = await self._get_contract_hashes(address)
                 if pattern_config.strict:
                     if code_hash != operation.originated_contract_code_hash:
                         return False
@@ -574,9 +576,13 @@ class OperationIndex(Index[OperationIndexConfig]):
 
     async def _get_transaction_addresses(self) -> Set[str]:
         """Get addresses to fetch transactions from during initial synchronization"""
-        if OperationType.transaction not in self._config.types:
-            return set()
-        return {contract.address for contract in self._config.contracts if isinstance(contract, ContractConfig)}
+        addresses: set[str] = set()
+        if OperationType.transaction in self._config.types:
+            for contract in self._config.contracts:
+                assert contract.address
+                addresses.add(contract.address)
+
+        return addresses
 
     async def _get_origination_addresses(self) -> Set[str]:
         """Get addresses to fetch origination from during initial synchronization"""
@@ -590,15 +596,19 @@ class OperationIndex(Index[OperationIndexConfig]):
                     continue
 
                 if pattern_config.originated_contract:
-                    addresses.add(pattern_config.originated_contract.address)
+                    address = pattern_config.originated_contract.address
+                    assert address
+                    addresses.add(address)
 
                 if pattern_config.source:
                     source_address = pattern_config.source.address
+                    assert source_address
                     async for batch in self._datasource.iter_originated_contracts(source_address):
                         addresses.update(batch)
 
                 if pattern_config.similar_to:
                     similar_address = pattern_config.similar_to.address
+                    assert similar_address
                     async for batch in self._datasource.iter_similar_contracts(similar_address, pattern_config.strict):
                         addresses.update(batch)
 
@@ -819,6 +829,7 @@ class BigMapIndex(Index[BigMapIndexConfig]):
         """Get addresses to fetch big map diffs from during initial synchronization"""
         addresses = set()
         for handler_config in self._config.handlers:
+            assert handler_config.contract.address
             addresses.add(handler_config.contract.address)
         return addresses
 
@@ -833,6 +844,7 @@ class BigMapIndex(Index[BigMapIndexConfig]):
         """Get address-path pairs for fetch big map diffs during sync with `skip_history`"""
         pairs = set()
         for handler_config in self._config.handlers:
+            assert handler_config.contract.address
             pairs.add(
                 (
                     handler_config.contract.address,
@@ -913,12 +925,15 @@ class TokenTransferIndex(Index[TokenTransferIndexConfig]):
         to_addresses: set[str] = set()
         for handler_config in self._config.handlers:
             if handler_config.contract:
+                assert handler_config.contract.address
                 token_addresses.add(handler_config.contract.address)
             if handler_config.token_id is not None:
                 token_ids.add(handler_config.token_id)
             if handler_config.from_:
+                assert handler_config.from_.address
                 from_addresses.add(handler_config.from_.address)
             if handler_config.to:
+                assert handler_config.to.address
                 to_addresses.add(handler_config.to.address)
 
         return TokenTransferFetcher(
@@ -1216,6 +1231,7 @@ class EventIndex(Index[EventIndexConfig]):
         """Get addresses to fetch events during initial synchronization"""
         addresses = set()
         for handler_config in self._config.handlers:
+            assert handler_config.contract.address
             addresses.add(handler_config.contract.address)
         return addresses
 

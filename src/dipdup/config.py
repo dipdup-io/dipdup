@@ -232,23 +232,22 @@ class ContractConfig(NameMixin):
     """Contract config
 
     :param address: Contract address
+    :param code_hash: Contract code hash or address to fetch it from
     :param typename: User-defined alias for the contract script
     """
 
-    address: str
+    address: str | None = None
+    code_hash: str | int | None = None
     typename: str | None = None
-
-    def __hash__(self) -> int:
-        return hash(f'{self.address}{self.typename or ""}')
 
     @cached_property
     def module_name(self) -> str:
         return self.typename or self.name
 
     @validator('address', allow_reuse=True)
-    def _valid_address(cls, v: str) -> str:
+    def _valid_address(cls, v: str | None) -> str | None:
         # NOTE: Environment substitution was disabled during export, skip validation
-        if '$' in v:
+        if not v or '$' in v:
             return v
 
         if not v.startswith(ADDRESS_PREFIXES) or len(v) != 36:
@@ -287,6 +286,7 @@ class TzktDatasourceConfig(DatasourceConfig):
         super().__post_init_post_parse__()
         if self.http and self.http.batch_size and self.http.batch_size > 10000:
             raise ConfigurationError('`batch_size` must be less than 10000')
+        self.url = self.url.rstrip('/')
         parsed_url = urlparse(self.url)
         # NOTE: Environment substitution disabled
         if '$' in self.url:
@@ -662,17 +662,6 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
         self._matched_originations.append(address)
         return False
 
-    def __hash__(self) -> int:
-        return hash(
-            ''.join(
-                [
-                    self.source.address if self.source else '',
-                    self.similar_to.address if self.similar_to else '',
-                    self.originated_contract.address if self.originated_contract else '',
-                ]
-            )
-        )
-
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.originated_contract:
             module_name = self.originated_contract.module_name
@@ -920,15 +909,13 @@ class OperationIndexConfig(IndexConfig):
         for handler_config in self.handlers:
             for pattern_config in handler_config.pattern:
                 if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    if isinstance(pattern_config.source, ContractConfig):
+                    if pattern_config.source:
+                        assert pattern_config.source.address
                         addresses.add(pattern_config.source.address)
-                    elif isinstance(pattern_config.source, str):
-                        raise ConfigInitializationException
 
-                    if isinstance(pattern_config.destination, ContractConfig):
+                    if pattern_config.destination:
+                        assert pattern_config.destination.address
                         addresses.add(pattern_config.destination.address)
-                    elif isinstance(pattern_config.destination, str):
-                        raise ConfigInitializationException
 
         return addresses
 
