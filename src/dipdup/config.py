@@ -26,7 +26,6 @@ from collections import defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
-from functools import cached_property
 from io import StringIO
 from os import environ as env
 from pathlib import Path
@@ -151,7 +150,7 @@ class PostgresDatabaseConfig:
     immune_tables: set[str] = field(default_factory=set)
     connection_timeout: int = 60
 
-    @cached_property
+    @property
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
@@ -162,7 +161,7 @@ class PostgresDatabaseConfig:
             connection_string += f'&schema={self.schema_name}'
         return connection_string
 
-    @cached_property
+    @property
     def hasura_connection_parameters(self) -> dict[str, Any]:
         return {
             'username': self.user,
@@ -220,7 +219,7 @@ class NameMixin:
     def __post_init_post_parse__(self) -> None:
         self._name: str | None = None
 
-    @cached_property
+    @property
     def name(self) -> str:
         if self._name is None:
             raise ConfigInitializationException(f'{self.__class__.__name__} name is not set')
@@ -240,7 +239,7 @@ class ContractConfig(NameMixin):
     code_hash: str | int | None = None
     typename: str | None = None
 
-    @cached_property
+    @property
     def module_name(self) -> str:
         return self.typename or self.name
 
@@ -504,7 +503,7 @@ class StorageTypeMixin:
     def __post_init_post_parse__(self) -> None:
         self._storage_type_cls: type[Any] | None = None
 
-    @cached_property
+    @property
     def storage_type_cls(self) -> type[Any]:
         if self._storage_type_cls is None:
             raise ConfigInitializationException
@@ -514,7 +513,7 @@ class StorageTypeMixin:
         _logger.debug('Registering `%s` storage type', module_name)
         cls_name = snake_to_pascal(module_name) + 'Storage'
         module_name = f'{package}.types.{module_name}.storage'
-        self.storage_type_cls = import_from(module_name, cls_name)
+        self._storage_type_cls = import_from(module_name, cls_name)
 
 
 ParentT = TypeVar('ParentT')
@@ -697,11 +696,11 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
                 self.alias,
             )
 
-    @cached_property
+    @property
     def module_name(self) -> str:
         return self.contract_config.module_name
 
-    @cached_property
+    @property
     def contract_config(self) -> ContractConfig:
         if self.originated_contract:
             return self.originated_contract
@@ -729,11 +728,11 @@ class CallbackMixin(CodegenMixin):
         if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
             raise ConfigurationError('`callback` field must be a valid Python module name')
 
-    @cached_property
+    @property
     def kind(self) -> str:
         return self._kind  # type: ignore[attr-defined,no-any-return]
 
-    @cached_property
+    @property
     def callback_fn(self) -> Callable[..., Awaitable[None]]:
         if self._callback_fn is None:
             raise ConfigInitializationException
@@ -745,7 +744,7 @@ class CallbackMixin(CodegenMixin):
         _logger.debug('Registering %s callback `%s`', self.kind, self.callback)
         module_name = f'{package}.{self.kind}s.{self.callback}'
         fn_name = self.callback.rsplit('.', 1)[-1]
-        self.callback_fn = import_from(module_name, fn_name)
+        self._callback_fn = import_from(module_name, fn_name)
 
 
 @dataclass
@@ -794,7 +793,7 @@ class TemplateValuesMixin:
     def __post_init_post_parse__(self) -> None:
         self._template_values: dict[str, str] = {}
 
-    @cached_property
+    @property
     def template_values(self) -> dict[str, str]:
         return self._template_values
 
@@ -841,7 +840,7 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
         SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
 
-    @cached_property
+    @property
     def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise ConfigInitializationException
@@ -896,7 +895,7 @@ class OperationIndexConfig(IndexConfig):
             for item in handler['pattern']:
                 item.pop('alias', None)
 
-    @cached_property
+    @property
     def entrypoint_filter(self) -> set[str | None]:
         """Set of entrypoints to filter operations with before an actual matching"""
         entrypoints = set()
@@ -906,7 +905,7 @@ class OperationIndexConfig(IndexConfig):
                     entrypoints.add(pattern_config.entrypoint)
         return set(entrypoints)
 
-    @cached_property
+    @property
     def address_filter(self) -> set[str]:
         """Set of addresses (any field) to filter operations with before an actual matching"""
         addresses = set()
@@ -924,7 +923,7 @@ class OperationIndexConfig(IndexConfig):
 
         return addresses
 
-    @cached_property
+    @property
     def code_hash_filter(self) -> set[str | int]:
         """Set of code hashes to filter operations with before an actual matching"""
         code_hashes = set()
@@ -1012,19 +1011,19 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         yield 'ctx', 'HandlerContext'
         yield self.format_big_map_diff_argument(self.path)
 
-    @cached_property
+    @property
     def contract_config(self) -> ContractConfig:
         if not isinstance(self.contract, ContractConfig):
             raise ConfigInitializationException
         return self.contract
 
-    @cached_property
+    @property
     def key_type_cls(self) -> type:
         if self._key_type_cls is None:
             raise ConfigInitializationException
         return self._key_type_cls
 
-    @cached_property
+    @property
     def value_type_cls(self) -> type:
         if self._value_type_cls is None:
             raise ConfigInitializationException
@@ -1037,11 +1036,11 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
         module_name = f'{package}.types.{self.contract_config.module_name}.big_map.{path}_key'
         cls_name = snake_to_pascal(path + '_key')
-        self.key_type_cls = import_from(module_name, cls_name)
+        self._key_type_cls = import_from(module_name, cls_name)
 
         module_name = f'{package}.types.{self.contract_config.module_name}.big_map.{path}_value'
         cls_name = snake_to_pascal(path + '_value')
-        self.value_type_cls = import_from(module_name, cls_name)
+        self._value_type_cls = import_from(module_name, cls_name)
 
 
 @dataclass
@@ -1065,7 +1064,7 @@ class BigMapIndexConfig(IndexConfig):
     first_level: int = 0
     last_level: int = 0
 
-    @cached_property
+    @property
     def contracts(self) -> set[ContractConfig]:
         return {handler_config.contract_config for handler_config in self.handlers}
 
@@ -1157,13 +1156,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
         super().__post_init_post_parse__()
         self._event_type_cls: type[Any] | None = None
 
-    @cached_property
-    def contract_config(self) -> ContractConfig:
-        if not isinstance(self.contract, ContractConfig):
-            raise ConfigInitializationException
-        return self.contract
-
-    @cached_property
+    @property
     def event_type_cls(self) -> type:
         if self._event_type_cls is None:
             raise ConfigInitializationException
@@ -1174,7 +1167,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
         _logger.debug('Registering event types for tag `%s`', self.tag)
         tag = pascal_to_snake(self.tag.replace('.', '_'))
 
-        module_name = f'{package}.types.{self.contract_config.module_name}.event.{tag}'
+        module_name = f'{package}.types.{self.contract.module_name}.event.{tag}'
         cls_name = snake_to_pascal(f'{tag}_payload')
         self._event_type_cls = import_from(module_name, cls_name)
 
@@ -1185,7 +1178,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
         event_cls = snake_to_pascal(self.tag + '_payload')
         event_module = pascal_to_snake(self.tag)
-        module_name = self.contract_config.module_name
+        module_name = self.contract.module_name
         yield f'{package}.types.{module_name}.event.{event_module}', event_cls
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -1197,12 +1190,6 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 @dataclass
 class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
     contract: ContractConfig
-
-    @cached_property
-    def contract_config(self) -> ContractConfig:
-        if not isinstance(self.contract, ContractConfig):
-            raise ConfigInitializationException
-        return self.contract
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -1273,7 +1260,7 @@ class HasuraConfig:
             raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
         return v.rstrip('/')
 
-    @cached_property
+    @property
     def headers(self) -> dict[str, str]:
         """Headers to include with every request"""
         if self.admin_secret:
@@ -1306,12 +1293,6 @@ class JobConfig(NameMixin):
             raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
 
         NameMixin.__post_init_post_parse__(self)
-
-    @cached_property
-    def hook_config(self) -> HookConfig:
-        if not isinstance(self.hook, HookConfig):
-            raise ConfigInitializationException
-        return self.hook
 
 
 @dataclass
@@ -1479,14 +1460,14 @@ class DipDupConfig:
         self._callback_patterns: dict[str, list[Sequence[HandlerPatternConfigU]]] = defaultdict(list)
         self._contract_addresses = {contract.address for contract in self.contracts.values()}
 
-    @cached_property
+    @property
     def schema_name(self) -> str:
         if isinstance(self.database, PostgresDatabaseConfig):
             return self.database.schema_name
         # NOTE: Not exactly correct; historical reason
         return DEFAULT_POSTGRES_SCHEMA
 
-    @cached_property
+    @property
     def package_path(self) -> Path:
         """Absolute path to the indexer package, existing or default"""
         # NOTE: Integration tests run in isolated environment
@@ -1627,12 +1608,12 @@ class DipDupConfig:
             template=template,
             values=values,
         )
-        template_config.name = name
+        template_config._name = name
         self._resolve_template(template_config)
         index_config = cast(ResolvedIndexConfigU, self.indexes[name])
         self._resolve_index_links(index_config)
         self._resolve_index_subscriptions(index_config)
-        index_config.name = name
+        index_config._name = name
         index_config.import_objects(self.package)
 
     @classmethod
@@ -1707,9 +1688,9 @@ class DipDupConfig:
 
         json_template = json.loads(raw_template)
         new_index_config = template.__class__(**json_template)
-        new_index_config.template_values = template_config.values
+        new_index_config._template_values = template_config.values
         new_index_config.parent = template
-        new_index_config.name = template_config.name
+        new_index_config._name = template_config.name
         if not isinstance(new_index_config, HeadIndexConfig):
             new_index_config.first_level |= template_config.first_level
             new_index_config.last_level |= template_config.last_level
@@ -1787,7 +1768,7 @@ class DipDupConfig:
                 index_config.subscriptions.add(EventSubscription())
             else:
                 for event_handler_config in index_config.handlers:
-                    address = event_handler_config.contract_config.address
+                    address = event_handler_config.contract.address
                     index_config.subscriptions.add(EventSubscription(address=address))
 
         else:
@@ -1879,7 +1860,7 @@ class DipDupConfig:
 
         for named_configs in named_config_sections:
             for name, config in named_configs.items():
-                config.name = name
+                config._name = name
 
 
 yaml_annotations = {

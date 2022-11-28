@@ -75,7 +75,7 @@ class SchedulerManager:
         if job_config.daemon:
             self._daemons.add(job_config.name)
 
-        hook_config = job_config.hook_config
+        hook_config = job_config.hook
 
         logger = FormattedLogger(
             name=f'dipdup.hooks.{hook_config.callback}',

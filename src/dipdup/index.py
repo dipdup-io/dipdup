@@ -1167,7 +1167,7 @@ class EventIndex(Index[EventIndexConfig]):
         """Match single contract event with pattern"""
         if isinstance(handler_config, EventHandlerConfig) and handler_config.tag != event.tag:
             return False
-        if handler_config.contract_config.address != event.contract_address:
+        if handler_config.contract.address != event.contract_address:
             return False
         return True
 

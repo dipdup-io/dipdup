@@ -241,7 +241,7 @@ class CodeGenerator:
             if isinstance(handler_config, UnknownEventHandlerConfig):
                 continue
 
-            contract_config = handler_config.contract_config
+            contract_config = handler_config.contract
             contract_schemas = await self._get_schema(
                 index_config.datasource_config,
                 contract_config,

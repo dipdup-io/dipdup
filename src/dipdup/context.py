@@ -247,7 +247,7 @@ class DipDupContext:
             address=address,
             typename=typename,
         )
-        contract_config.name = name
+        contract_config._name = name
         self.config.contracts[name] = contract_config
 
         with suppress(OperationalError):
