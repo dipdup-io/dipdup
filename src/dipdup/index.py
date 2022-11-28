@@ -576,10 +576,12 @@ class OperationIndex(Index[OperationIndexConfig]):
 
     async def _get_transaction_addresses(self) -> Set[str]:
         """Get addresses to fetch transactions from during initial synchronization"""
+        if OperationType.transaction not in self._config.types:
+            return set()
+
         addresses: set[str] = set()
-        if OperationType.transaction in self._config.types:
-            for contract in self._config.contracts:
-                assert contract.address
+        for contract in self._config.contracts:
+            if contract.address:
                 addresses.add(contract.address)
 
         return addresses
@@ -596,24 +598,27 @@ class OperationIndex(Index[OperationIndexConfig]):
                     continue
 
                 if pattern_config.originated_contract:
-                    address = pattern_config.originated_contract.address
-                    assert address
-                    addresses.add(address)
+                    if address := pattern_config.originated_contract.address:
+                        addresses.add(address)
 
                 if pattern_config.source:
-                    source_address = pattern_config.source.address
-                    assert source_address
-                    async for batch in self._datasource.iter_originated_contracts(source_address):
-                        addresses.update(batch)
+                    if source_address := pattern_config.source.address:
+                        async for batch in self._datasource.iter_originated_contracts(
+                            source_address,
+                        ):
+                            addresses.update(batch)
 
                 if pattern_config.similar_to:
-                    similar_address = pattern_config.similar_to.address
-                    assert similar_address
-                    async for batch in self._datasource.iter_similar_contracts(similar_address, pattern_config.strict):
-                        addresses.update(batch)
+                    if similar_address := pattern_config.similar_to.address:
+                        async for batch in self._datasource.iter_similar_contracts(
+                            similar_address,
+                            pattern_config.strict,
+                        ):
+                            addresses.update(batch)
 
         return addresses
 
+    # FIXME: to datasource
     async def _get_contract_hashes(self, address: str) -> Tuple[int, int]:
         if address not in self._contract_hashes:
             summary = await self._datasource.get_contract_summary(address)

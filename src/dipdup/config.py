@@ -908,16 +908,35 @@ class OperationIndexConfig(IndexConfig):
         addresses = set()
         for handler_config in self.handlers:
             for pattern_config in handler_config.pattern:
-                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    if pattern_config.source:
-                        assert pattern_config.source.address
-                        addresses.add(pattern_config.source.address)
+                if not isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    continue
 
-                    if pattern_config.destination:
-                        assert pattern_config.destination.address
-                        addresses.add(pattern_config.destination.address)
+                if pattern_config.source:
+                    if address := pattern_config.source.address:
+                        addresses.add(address)
+                if pattern_config.destination:
+                    if address := pattern_config.destination.address:
+                        addresses.add(address)
 
         return addresses
+
+    @cached_property
+    def code_hash_filter(self) -> set[str | int]:
+        """Set of code hashes to filter operations with before an actual matching"""
+        code_hashes = set()
+        for handler_config in self.handlers:
+            for pattern_config in handler_config.pattern:
+                if not isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    continue
+
+                if pattern_config.source:
+                    if code_hash := pattern_config.source.code_hash:
+                        code_hashes.add(code_hash)
+                if pattern_config.destination:
+                    if code_hash := pattern_config.destination.code_hash:
+                        code_hashes.add(code_hash)
+
+        return code_hashes
 
     def import_objects(self, package: str) -> None:
         for handler_config in self.handlers:
