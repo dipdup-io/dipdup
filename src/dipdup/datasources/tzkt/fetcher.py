@@ -20,12 +20,30 @@ if TYPE_CHECKING:
     from dipdup.datasources.tzkt.datasource import TzktDatasource
 
 
-class OperationFetcherRequest(Enum):
+class FetcherEndpoint(Enum):
     """Represents multiple TzKT calls to be merged into a single batch of operations"""
 
     sender_transactions = 'sender_transactions'
     target_transactions = 'target_transactions'
     originations = 'originations'
+
+
+class FetcherFilter(Enum):
+    address = 'address'
+    hash = 'hash'
+
+
+FetcherChannel = tuple[FetcherEndpoint, FetcherFilter]
+
+
+operation_fetcher_channels = (
+    (FetcherEndpoint.sender_transactions, FetcherFilter.address),
+    (FetcherEndpoint.target_transactions, FetcherFilter.address),
+    (FetcherEndpoint.originations, FetcherFilter.address),
+    (FetcherEndpoint.sender_transactions, FetcherFilter.hash),
+    (FetcherEndpoint.target_transactions, FetcherFilter.hash),
+    (FetcherEndpoint.originations, FetcherFilter.hash),
+)
 
 
 class HasLevel(Protocol):
@@ -78,20 +96,24 @@ class OperationFetcher(DataFetcher[OperationData]):
         first_level: int,
         last_level: int,
         transaction_addresses: set[str],
+        transaction_hashes: set[int],
         origination_addresses: set[str],
+        origination_hashes: set[int],
         migration_originations: tuple[OperationData, ...] = (),
     ) -> None:
         self._datasource = datasource
         self._first_level = first_level
         self._last_level = last_level
         self._transaction_addresses = transaction_addresses
+        self._transaction_hashes = transaction_hashes
         self._origination_addresses = origination_addresses
+        self._origination_hashes = origination_hashes
 
         self._logger = logging.getLogger('dipdup.tzkt')
         self._head: int = 0
-        self._heads: dict[OperationFetcherRequest, int] = {}
-        self._offsets: dict[OperationFetcherRequest, int] = {}
-        self._fetched: dict[OperationFetcherRequest, bool] = {}
+        self._heads: dict[FetcherChannel, int] = {}
+        self._offsets: dict[FetcherChannel, int] = {}
+        self._fetched: dict[FetcherChannel, bool] = {}
 
         self._operations: defaultdict[int, deque[OperationData]] = defaultdict(deque)
         for origination in migration_originations:
@@ -106,7 +128,7 @@ class OperationFetcher(DataFetcher[OperationData]):
 
     async def _fetch_originations(self) -> None:
         """Fetch a single batch of originations, bump channel offset"""
-        key = OperationFetcherRequest.originations
+        key = FetcherEndpoint.originations, FetcherFilter.address
         if not self._origination_addresses:
             self._fetched[key] = True
             self._heads[key] = self._last_level
@@ -132,7 +154,7 @@ class OperationFetcher(DataFetcher[OperationData]):
 
     async def _fetch_transactions(self, field: str) -> None:
         """Fetch a single batch of transactions, bump channel offset"""
-        key = getattr(OperationFetcherRequest, field + '_transactions')
+        key = getattr(FetcherEndpoint, field + '_transactions')
         if not self._transaction_addresses:
             self._fetched[key] = True
             self._heads[key] = self._last_level
@@ -177,25 +199,22 @@ class OperationFetcher(DataFetcher[OperationData]):
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
         """
-        for type_ in (
-            OperationFetcherRequest.sender_transactions,
-            OperationFetcherRequest.target_transactions,
-            OperationFetcherRequest.originations,
-        ):
-            self._heads[type_] = 0
-            self._offsets[type_] = 0
-            self._fetched[type_] = False
+        for channel in operation_fetcher_channels:
+            self._heads[channel] = 0
+            self._offsets[channel] = 0
+            self._fetched[channel] = False
 
         while True:
             min_head = sorted(self._heads.items(), key=lambda x: x[1])[0][0]
-            if min_head == OperationFetcherRequest.originations:
+
+            if min_head == (FetcherEndpoint.originations, FetcherFilter.address):
                 await self._fetch_originations()
-            elif min_head == OperationFetcherRequest.target_transactions:
+            elif min_head == (FetcherEndpoint.target_transactions, FetcherFilter.address):
                 await self._fetch_transactions('target')
-            elif min_head == OperationFetcherRequest.sender_transactions:
+            elif min_head == (FetcherEndpoint.sender_transactions, FetcherFilter.address):
                 await self._fetch_transactions('sender')
             else:
-                raise RuntimeError
+                raise NotImplementedError
 
             head = min(self._heads.values())
             while self._head <= head:
