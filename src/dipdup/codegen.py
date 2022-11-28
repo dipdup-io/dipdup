@@ -102,6 +102,7 @@ def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
         return schema
 
 
+# TODO: Pick refactoring from `ref/config-module`
 class ProjectPaths:
     def __init__(self, root: Path) -> None:
         self.root = root

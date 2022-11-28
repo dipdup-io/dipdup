@@ -259,6 +259,7 @@ class DatasourceConfig(ABC, NameMixin):
     kind: str
     http: HTTPConfig | None
 
+    # TODO: Pick refactoring from `ref/config-module`
     @abstractmethod
     def __hash__(self) -> int:
         ...
@@ -1510,6 +1511,7 @@ class DipDupConfig:
             return True
         return False
 
+    # TODO: Pick refactoring from `ref/config-module`
     @classmethod
     def load(
         cls,
