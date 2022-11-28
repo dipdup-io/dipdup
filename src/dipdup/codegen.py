@@ -15,8 +15,6 @@ from pathlib import Path
 from shutil import rmtree
 from shutil import which
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import TypeGuard
 from typing import cast
 
@@ -70,7 +68,7 @@ def _is_typed_origination(config: PatternConfig) -> TypeGuard[OperationHandlerOr
     return False
 
 
-def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
+def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
     """Preprocess `big_map` sections in JSONSchema.
 
     TzKT returns them as unions since before merging big map diffs there are just `int` pointers.
@@ -136,11 +134,12 @@ class ProjectPaths:
 class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigU, Datasource]) -> None:
+    def __init__(self, config: DipDupConfig, datasources: dict[DatasourceConfigU, Datasource]) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
-        self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
+        self._schemas: dict[TzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
+        self._code_hashes: dict[int, str] = {}
         self._pkg = ProjectPaths(Path(config.package_path))
 
     def create_package(self) -> None:
@@ -148,7 +147,7 @@ class CodeGenerator:
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         self._logger.info('Initializing project')
-        self._pkg.create_package()
+        self.create_package()
 
         await self.fetch_schemas()
         await self.generate_types(overwrite_types)
@@ -376,7 +375,7 @@ class CodeGenerator:
         self,
         datasource_config: TzktDatasourceConfig,
         contract_config: ContractConfig,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
         datasource = self._datasources[datasource_config]
         if not isinstance(datasource, TzktDatasource):
@@ -387,16 +386,17 @@ class CodeGenerator:
         elif isinstance(contract_config.code_hash, str):
             address = contract_config.code_hash
         elif isinstance(contract_config.code_hash, int):
-            contracts = await datasource.request(
-                'get',
-                'v1/contracts',
-                params={
-                    'select': 'address',
-                    'codeHash': contract_config.code_hash,
-                    'limit': 1,
-                },
-            )
-            address = cast(str, contracts[0]['address'])
+            if contract_config.code_hash not in self._code_hashes:
+                contracts = await datasource.request(
+                    'get',
+                    'v1/contracts',
+                    params={
+                        'select': 'address',
+                        'codeHash': contract_config.code_hash,
+                        'limit': 1,
+                    },
+                )
+                self._code_hashes[contract_config.code_hash] = cast(str, contracts[0]['address'])
         else:
             raise RuntimeError
 
@@ -429,7 +429,7 @@ class CodeGenerator:
         arguments = callback_config.format_arguments()
         imports = set(callback_config.format_imports(self._config.package))
 
-        code: List[str] = []
+        code: list[str] = []
         if sql:
             code.append(f"await ctx.execute_sql('{original_callback}')")
             if callback == 'on_index_rollback':
