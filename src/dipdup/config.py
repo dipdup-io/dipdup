@@ -111,12 +111,14 @@ def merge_mixins(base: BaseModelT, *mixins: MixinsT) -> BaseModelT:
     private_attrs: dict[str, ModelPrivateAttr] = {}
 
     # NOTE: Collect fields, properties and attributes from all mixins
-    for mixin in mixins:
+    for mixin in mixins[::-1]:
         # fields.update({k: (v.type_, v.default) for k, v in mixin.__fields__.items()})  # type: ignore[attr-defined]
         # private_attrs.update(mixin.__private_attributes__)  # type: ignore[attr-defined]
         annotations.update(mixin.__annotations__)
 
         for k, v in mixin.__dict__.items():
+            if k in base.__dict__:
+                continue
             if isinstance(v, ModelPrivateAttr):
                 private_attrs[k] = v
             if isinstance(v, property | Callable | ModelPrivateAttr):
@@ -270,7 +272,7 @@ class NameMixin:
         return self._name or throw(ConfigInitializationException)
 
 
-class SubgroupIndexF(BaseModel):
+class SubgroupIndexM:
     _subgroup_index: int | None = PrivateAttr(default=None)
 
     @property
@@ -306,12 +308,6 @@ class ContractConfig(NameMixin, BaseModel):
         if not v.startswith(ADDRESS_PREFIXES) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
-
-
-ContractConfig = merge_mixins(  # type: ignore[assignment,misc]
-    ContractConfig,
-    NameMixin,
-)
 
 
 class TzktDatasourceConfig(NameMixin, BaseModel):
@@ -390,7 +386,7 @@ class IpfsDatasourceConfig(BaseModel):
     :param http: HTTP client configuration
     """
 
-    kind: Literal['ipfs']
+    kind: Literal['ipfs'] = Field(default='ipfs')
     http: HTTPConfig | None = Field()
     url: str = DEFAULT_IPFS_URL
 
@@ -550,11 +546,11 @@ class CallbackMixin:
     callback: str = Field()
     _kind: str = PrivateAttr()
 
-    @validator('callback', allow_reuse=True)
-    def check_callback(cls, v: str) -> str:
-        if v != pascal_to_snake(v, strip_dots=False):
-            raise ConfigurationError('`callback` Field must be a valid Python module name')
-        return v
+    # @validator('callback', allow_reuse=True)
+    # def check_callback(cls, v: str) -> str:
+    #     if v != pascal_to_snake(v, strip_dots=False):
+    #         raise ConfigurationError('`callback` Field must be a valid Python module name')
+    #     return v
 
 
 class HandlerMixin:
@@ -570,7 +566,7 @@ class HandlerConfigMixin(HandlerMixin, CallbackMixin, CodegenMixin):
     ...
 
 
-class OperationHandlerTransactionPatternConfig(PatternMixin, CallbackMixin, CodegenMixin, BaseModel):
+class OperationHandlerTransactionPatternConfig(PatternMixin, CallbackMixin, CodegenMixin, SubgroupIndexM, BaseModel):
     """Operation handler pattern config
 
     :param type: always 'transaction'
@@ -581,17 +577,17 @@ class OperationHandlerTransactionPatternConfig(PatternMixin, CallbackMixin, Code
     :param alias: Alias for transaction (helps to avoid duplicates)
     """
 
-    type_: str = Field(alias='type')
-    source: ContractConfig | None = None
-    destination: ContractConfig | None = None
-    entrypoint: str | None = None
-    optional: bool = False
-    alias: str | None = None
+    type_: Literal['transaction'] = Field(alias='type', default='transaction')
+    source: ContractConfig | None = Field(default=None)
+    destination: ContractConfig | None = Field(default=None)
+    entrypoint: str | None = Field(default=None)
+    optional: bool = Field(default=False)
+    alias: str | None = Field(default=None)
 
-    def __init__(self, **data: dict[str, Any]) -> None:  # type: ignore[no-redef]
-        super().__init__(**data)
-        if self.entrypoint and not self.destination:
-            raise ConfigurationError('Transactions with entrypoint must also have destination')
+    # def __init__(self, **data: dict[str, Any]) -> None:  # type: ignore[no-redef]
+    #     super().__init__(**data)
+    #     if self.entrypoint and not self.destination:
+    #         raise ConfigurationError('Transactions with entrypoint must also have destination')
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.entrypoint and self.destination:
@@ -620,7 +616,7 @@ class OperationHandlerTransactionPatternConfig(PatternMixin, CallbackMixin, Code
             )
 
 
-class OperationHandlerOriginationPatternConfig(PatternMixin, CallbackMixin, CodegenMixin, BaseModel):
+class OperationHandlerOriginationPatternConfig(PatternMixin, CallbackMixin, CodegenMixin, SubgroupIndexM, BaseModel):
     """Origination handler pattern config
 
     :param type: always 'origination'
@@ -632,7 +628,7 @@ class OperationHandlerOriginationPatternConfig(PatternMixin, CallbackMixin, Code
     :param alias: Alias for transaction (helps to avoid duplicates)
     """
 
-    type_: Literal['origination'] = Field(alias='type')
+    type_: Literal['origination'] = Field(alias='type', default='origination')
     source: ContractConfig | None = None
     similar_to: ContractConfig | None = None
     originated_contract: ContractConfig | None = None
@@ -641,7 +637,6 @@ class OperationHandlerOriginationPatternConfig(PatternMixin, CallbackMixin, Code
     alias: str | None = None
 
     _storage_type: Type[BaseModel] = PrivateAttr()
-    _subgroup_index: int = PrivateAttr()
     _matched_originations: list[str] = PrivateAttr(default_factory=list)
 
     def origination_processed(self, address: str) -> bool:
@@ -694,7 +689,7 @@ class OperationHandlerOriginationPatternConfig(PatternMixin, CallbackMixin, Code
 
     @property
     def module_name(self) -> str:
-        return self.contract.module_name
+        return self.contract_config.module_name
 
     @property
     def contract_config(self) -> ContractConfig:
@@ -772,8 +767,8 @@ class IndexMixin:
     :param datasource: Alias of index datasource in `datasources` section
     """
 
-    kind: str
-    datasource: TzktDatasourceConfig
+    first_level: int = Field(default=0)
+    last_level: int = Field(default=0)
 
     _parent: ResolvedIndexConfigU | None = PrivateAttr(default=None)
     _template_values: dict[str, str] = PrivateAttr(default_factory=dict)
@@ -820,13 +815,12 @@ class OperationIndexConfig(IndexMixin, NameMixin, BaseModel):
     :param last_level: Level to stop indexing at (DipDup will terminate at this level)
     """
 
-    kind: Literal['operation']
-    handlers: tuple[OperationHandlerConfig, ...]
-    types: tuple[OperationType, ...] = (OperationType.transaction,)
+    kind: Literal['operation'] = Field(default='operation')
+    handlers: tuple[OperationHandlerConfig, ...] = Field()
+    types: tuple[OperationType, ...] = Field(
+        default=OperationType.transaction,
+    )
     contracts: list[ContractConfig] = Field(default_factory=list)
-
-    first_level: int = 0
-    last_level: int = 0
 
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:
@@ -934,9 +928,6 @@ class BigMapIndexConfig(IndexMixin, NameMixin, BaseModel):
 
     skip_history: SkipHistory = SkipHistory.never
 
-    first_level: int = 0
-    last_level: int = 0
-
     @property
     def contracts(self) -> set[ContractConfig]:
         return {handler_config.contract for handler_config in self.handlers}
@@ -967,14 +958,6 @@ class HeadIndexConfig(IndexMixin, NameMixin, BaseModel):
     datasource: TzktDatasourceConfig
     handlers: tuple[HeadHandlerConfig, ...]
 
-    @property
-    def first_level(self) -> int:
-        return 0
-
-    @property
-    def last_level(self) -> int:
-        return 0
-
 
 class TokenTransferHandlerConfig(HandlerMixin, CallbackMixin, CodegenMixin, BaseModel):
     contract: ContractConfig | None = None
@@ -998,9 +981,6 @@ class TokenTransferIndexConfig(IndexMixin, NameMixin, BaseModel):
     kind: Literal['token_transfer']
     datasource: TzktDatasourceConfig
     handlers: tuple[TokenTransferHandlerConfig, ...] = Field(default_factory=tuple)
-
-    first_level: int = 0
-    last_level: int = 0
 
 
 class EventHandlerConfig(HandlerMixin, CallbackMixin, CodegenMixin, BaseModel):
@@ -1043,9 +1023,6 @@ class EventIndexConfig(IndexMixin, NameMixin, BaseModel):
     kind: Literal['event']
     datasource: TzktDatasourceConfig
     handlers: tuple[EventHandlerConfigU, ...] = Field(default_factory=tuple)
-
-    first_level: int = 0
-    last_level: int = 0
 
 
 ResolvedIndexConfigU = Union[
@@ -1275,13 +1252,39 @@ class DipDupConfig(BaseModel):
     ) -> DipDupConfig:
         _yaml, _environment = DipDupYAMLConfig.load(paths, environment)
 
-        return cls.parse_obj(
+        # NOTE: DipDip config contains links to other parts, but we can't do it during parsing.
+        # NOTE: Let's temporarily modify annotations to allow unresolved links.
+        ContractConfig.__annotations__['address'] = str | None
+
+        OperationHandlerOriginationPatternConfig.__annotations__['originated_contract'] = str | None
+        OperationHandlerOriginationPatternConfig.__annotations__['source'] = str | None
+        OperationHandlerOriginationPatternConfig.__annotations__['similar_to'] = str | None
+        OperationHandlerOriginationPatternConfig.update_forward_refs()
+
+        OperationHandlerTransactionPatternConfig.__annotations__['source'] = str | None
+        OperationHandlerTransactionPatternConfig.__annotations__['similar_to'] = str | None
+        OperationHandlerTransactionPatternConfig.__annotations__['destination'] = str | None
+
+        OperationHandlerTransactionPatternConfig.__fields__['destination'].type_ = str | None
+
+        OperationHandlerTransactionPatternConfig.update_forward_refs()
+
+        OperationHandlerConfig.__annotations__['contract'] = str | None
+        OperationHandlerConfig.__annotations__['datasource'] = str | None
+        OperationHandlerConfig.update_forward_refs()
+
+        OperationIndexConfig.__annotations__['datasource'] = str | None
+        OperationIndexConfig.update_forward_refs()
+
+        config = cls.parse_obj(
             {
                 **_yaml,
                 '_yaml': _yaml,
                 '_environment': _environment,
             }
         )
+
+        return config
 
     @property
     def schema_name(self) -> str:
@@ -1607,6 +1610,11 @@ class DipDupConfig(BaseModel):
 
 # Pydantic patches ahead
 
+ContractConfig = merge_mixins(  # type: ignore[misc]
+    ContractConfig,
+    NameMixin,
+)
+ContractConfig.update_forward_refs()
 
 BigMapHandlerConfig = merge_mixins(  # type: ignore[misc]
     BigMapHandlerConfig,
@@ -1642,7 +1650,7 @@ OperationHandlerTransactionPatternConfig = merge_mixins(  # type: ignore[misc]
     PatternMixin,
     CallbackMixin,
     CodegenMixin,
-    SubgroupIndexF,
+    SubgroupIndexM,
 )
 OperationHandlerTransactionPatternConfig.update_forward_refs()
 
@@ -1662,7 +1670,9 @@ TzktDatasourceConfig.update_forward_refs()
 
 OperationHandlerOriginationPatternConfig = merge_mixins(  # type: ignore
     OperationHandlerOriginationPatternConfig,
-    SubgroupIndexF,
+    PatternMixin,
+    CallbackMixin,
+    SubgroupIndexM,
 )
 OperationHandlerOriginationPatternConfig.update_forward_refs()
 
