@@ -615,3 +615,12 @@ http: HTTP client configuration</p>
 <dt class="sig sig-object py" id="dipdup.config.UnknownEventHandlerConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">UnknownEventHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'ContractConfig'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.config.UnknownEventHandlerConfig" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dipdup.config.patch_annotations">
+<span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">patch_annotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">replace_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.config.patch_annotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Patch dataclass annotations in runtime to allow using aliases in config files.</p>
+<p>DipDup config allows to use string aliases for contracts and datasources. During <cite>DipDupConfig.load</cite>
+these aliases are resolved to actual configs and never become strings again. This hack allows to add
+<cite>str</cite> in Unions before loading config so we don’t need to write isinstance checks everywhere.</p>
+</dd></dl>

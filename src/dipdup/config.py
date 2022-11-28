@@ -1788,7 +1788,10 @@ class DipDupConfig:
             )
 
     def _resolve_index_links(self, index_config: ResolvedIndexConfigU) -> None:
-        """Resolve contract and datasource configs by aliases"""
+        """Resolve contract and datasource configs by aliases.
+
+        WARNING: str type checks are intentional! See `dipdup.config.patch_annotations`.
+        """
         # NOTE: Each index must have a corresponding (currently) TzKT datasource
         if isinstance(index_config.datasource, str):
             index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
@@ -1868,25 +1871,39 @@ class DipDupConfig:
                 config.name = name
 
 
-# NOTE: Patch annotations in runtime to allow unresolved links in YAML
-_replace_table = {
+yaml_annotations = {
     'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
     'list[ContractConfig]': 'list[str | ContractConfig]',
 }
+orinal_annotations = {v: k for k, v in yaml_annotations.items()}
 
-self = importlib.import_module(__name__)
-for attr in dir(self):
-    value = getattr(self, attr)
-    if not isinstance(value, type) or not hasattr(value, '__annotations__'):
-        continue
 
-    reload = False
-    for name, annotation in value.__annotations__.items():
-        if new_annotation := _replace_table.get(annotation):
-            value.__annotations__[name] = new_annotation
-            reload = True
+def patch_annotations(replace_table: dict[str, str]) -> None:
+    """Patch dataclass annotations in runtime to allow using aliases in config files.
 
-    if reload:
-        setattr(self, attr, dataclass(value))
+    DipDup config allows to use string aliases for contracts and datasources. During `DipDupConfig.load`
+    these aliases are resolved to actual configs and never become strings again. This hack allows to add
+    `str` in Unions before loading config so we don't need to write isinstance checks everywhere.
+    """
+    self = importlib.import_module(__name__)
+
+    for attr in dir(self):
+        value = getattr(self, attr)
+        if not isinstance(value, type) or not hasattr(value, '__annotations__'):
+            continue
+
+        # NOTE: All annotations are strings now
+        reload = False
+        for name, annotation in value.__annotations__.items():
+            if new_annotation := replace_table.get(annotation):
+                value.__annotations__[name] = new_annotation
+                reload = True
+
+        # NOTE: Wrap dataclass again to recreate magic methods
+        if reload:
+            setattr(self, attr, dataclass(value))
+
+
+patch_annotations(yaml_annotations)
