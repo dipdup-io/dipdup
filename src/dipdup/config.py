@@ -1597,7 +1597,7 @@ class DipDupConfig:
             LoggingValues.verbose: logging.DEBUG,
         }[self.logging]
         logging.getLogger('dipdup').setLevel(level)
-        # NOTE: Hack for some mocked tests
+        # FIXME: Hack for some mocked tests; possibly outdated
         if isinstance(self.package, str):
             logging.getLogger(self.package).setLevel(level)
 
@@ -1889,9 +1889,12 @@ orinal_annotations = {v: k for k, v in yaml_annotations.items()}
 def patch_annotations(replace_table: dict[str, str]) -> None:
     """Patch dataclass annotations in runtime to allow using aliases in config files.
 
-    DipDup config allows to use string aliases for contracts and datasources. During `DipDupConfig.load`
-    these aliases are resolved to actual configs and never become strings again. This hack allows to add
-    `str` in Unions before loading config so we don't need to write isinstance checks everywhere.
+    DipDup YAML config uses string aliases for contracts and datasources. During `DipDupConfig.load` these 
+    aliases are resolved to actual configs from corresponding sections and never become strings again. 
+    This hack allows to add `str` in Unions before loading config so we don't need to write `isinstance(...)`
+    checks everywhere.
+
+    You can revert these changes by calling `patch_annotations(orinal_annotations)`, but tests will fail.
     """
     self = importlib.import_module(__name__)
 
