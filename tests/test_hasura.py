@@ -1,4 +1,5 @@
 import asyncio
+import atexit
 from contextlib import AsyncExitStack
 from pathlib import Path
 
@@ -49,6 +50,7 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
         detach=True,
         remove=True,
     )
+    atexit.register(postgres_container.stop)
     postgres_container.reload()
     postgres_ip = postgres_container.attrs['NetworkSettings']['IPAddress']
 
@@ -75,6 +77,7 @@ async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
         detach=True,
         remove=True,
     )
+    atexit.register(hasura_container.stop)
     hasura_container.reload()
     hasura_ip = hasura_container.attrs['NetworkSettings']['IPAddress']
 
