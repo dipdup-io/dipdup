@@ -618,11 +618,9 @@ class OperationIndex(Index[OperationIndexConfig]):
 
         return addresses
 
-    # FIXME: to datasource
-    async def _get_contract_hashes(self, address: str) -> Tuple[int, int]:
+    async def _get_contract_hashes(self, address: str) -> tuple[int, int]:
         if address not in self._contract_hashes:
-            summary = await self._datasource.get_contract_summary(address)
-            self._contract_hashes[address] = (summary['codeHash'], summary['typeHash'])
+            self._contract_hashes[address] = await self._datasource.get_contract_hashes(address)
         return self._contract_hashes[address]
 
 

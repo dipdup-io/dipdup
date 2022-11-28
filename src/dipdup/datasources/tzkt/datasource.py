@@ -273,6 +273,11 @@ class TzktDatasource(IndexDatasource):
             ),
         )
 
+    async def get_contract_hashes(self, address: str) -> tuple[int, int]:
+        """Get contract code and type hashes"""
+        summary = await self.get_contract_summary(address)
+        return summary['codeHash'], summary['typeHash']
+
     async def get_contract_storage(self, address: str) -> dict[str, Any]:
         """Get contract storage"""
         self._logger.info('Fetching contract storage for address `%s`', address)

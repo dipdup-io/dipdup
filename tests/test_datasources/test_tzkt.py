@@ -103,6 +103,15 @@ async def test_get_contract_summary() -> None:
         assert contract['address'] == 'KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD'
 
 
+async def test_get_contract_hashes() -> None:
+    async with with_tzkt(1) as tzkt:
+        code_hash, type_hash = await tzkt.get_contract_hashes(
+            address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
+        )
+        assert code_hash == -517093702
+        assert type_hash == 1479913559
+
+
 async def test_get_contract_storage() -> None:
     async with with_tzkt(1) as tzkt:
         storage = await tzkt.get_contract_storage(
