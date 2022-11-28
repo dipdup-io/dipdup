@@ -1868,39 +1868,25 @@ class DipDupConfig:
                 config.name = name
 
 
-# NOTE: Patch annotations in runtime to allow unresolved links (str)
+# NOTE: Patch annotations in runtime to allow unresolved links in YAML
+_replace_table = {
+    'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
+    'ContractConfig': 'str | ContractConfig',
+    'ContractConfig | None': 'str | ContractConfig | None',
+    'list[ContractConfig]': 'list[str | ContractConfig]',
+}
+
 self = importlib.import_module(__name__)
+for attr in dir(self):
+    value = getattr(self, attr)
+    if not isinstance(value, type) or not hasattr(value, '__annotations__'):
+        continue
 
-self.OperationIndexConfig.__annotations__['datasource'] = str | TzktDatasourceConfig
-self.OperationIndexConfig.__annotations__['contracts'] = list[str | ContractConfig]
-self.OperationIndexConfig = dataclass(self.OperationIndexConfig)  # type: ignore
+    reload = False
+    for name, annotation in value.__annotations__.items():
+        if new_annotation := _replace_table.get(annotation):
+            value.__annotations__[name] = new_annotation
+            reload = True
 
-self.OperationHandlerTransactionPatternConfig.__annotations__['destination'] = str | ContractConfig | None
-self.OperationHandlerTransactionPatternConfig.__annotations__['source'] = str | ContractConfig | None
-self.OperationHandlerTransactionPatternConfig = dataclass(OperationHandlerTransactionPatternConfig)  # type: ignore
-
-self.OperationHandlerOriginationPatternConfig.__annotations__['source'] = str | ContractConfig | None
-self.OperationHandlerOriginationPatternConfig.__annotations__['originated_contract'] = str | ContractConfig | None
-self.OperationHandlerOriginationPatternConfig.__annotations__['similar_to'] = str | ContractConfig | None
-self.OperationHandlerOriginationPatternConfig = dataclass(OperationHandlerOriginationPatternConfig)  # type: ignore
-
-self.BigMapIndexConfig.__annotations__['datasource'] = str | TzktDatasourceConfig
-self.BigMapIndexConfig = dataclass(self.BigMapIndexConfig)  # type: ignore
-
-self.BigMapHandlerConfig.__annotations__['contract'] = str | ContractConfig
-self.BigMapHandlerConfig = dataclass(self.BigMapHandlerConfig)  # type: ignore
-
-self.HeadIndexConfig.__annotations__['datasource'] = str | TzktDatasourceConfig
-self.HeadIndexConfig = dataclass(self.HeadIndexConfig)  # type: ignore
-
-self.TokenTransferIndexConfig.__annotations__['datasource'] = str | TzktDatasourceConfig
-self.TokenTransferIndexConfig = dataclass(self.TokenTransferIndexConfig)  # type: ignore
-
-self.TokenTransferHandlerConfig.__annotations__['contract'] = str | ContractConfig
-self.TokenTransferHandlerConfig = dataclass(self.TokenTransferHandlerConfig)  # type: ignore
-
-self.EventIndexConfig.__annotations__['datasource'] = str | TzktDatasourceConfig
-self.EventIndexConfig = dataclass(self.EventIndexConfig)  # type: ignore
-
-self.EventHandlerConfig.__annotations__['contract'] = str | ContractConfig
-self.EventHandlerConfig = dataclass(self.EventHandlerConfig)  # type: ignore
+    if reload:
+        setattr(self, attr, dataclass(value))
