@@ -134,7 +134,7 @@ class ConfigurationError(DipDupError):
         return f"""
             {self.msg}
 
-            DipDup config reference: https://docs.dipdup.io/config
+            See https://docs.dipdup.io/config
         """
 
 

@@ -1623,7 +1623,7 @@ class DipDupConfig:
             with open(path) as file:
                 return ''.join(filter(cls._filter_commented_lines, file.readlines()))
         except OSError as e:
-            raise ConfigurationError(str(e)) from e
+            raise ConfigurationError(f'Config file `{path}` is missing or not readable.') from e
 
     @classmethod
     def _filter_commented_lines(cls, line: str) -> bool:
