@@ -412,29 +412,52 @@ class TzktDatasource(IndexDatasource):
         ):
             yield batch
 
-    # FIXME: No pagination because of URL length limit workaround
     async def get_originations(
         self,
-        addresses: set[str],
         first_level: int,
         last_level: int,
+        addresses: set[str] | None = None,
+        code_hashes: set[int] | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
     ) -> tuple[OperationData, ...]:
-        raw_originations = []
+        offset, limit = offset or 0, limit or self.request_limit
+        raw_originations: list[dict[str, Any]] = []
+        params = {
+            'level.ge': first_level,
+            'level.le': last_level,
+            'select': ','.join(ORIGINATION_OPERATION_FIELDS),
+            'status': 'applied',
+            'offset': offset,
+            'limit': limit,
+        }
+
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
-        # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
+        # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~4000 characters.
         # NOTE: Other operation requests won't hit that limit.
-        for addresses_chunk in split_by_chunks(list(addresses), ORIGINATION_REQUEST_LIMIT):
+        if addresses and not code_hashes:
+            # FIXME: No pagination because of URL length limit workaround
+            for addresses_chunk in split_by_chunks(list(addresses), ORIGINATION_REQUEST_LIMIT):
+                raw_originations += await self.request(
+                    'get',
+                    url='v1/operations/originations',
+                    params={
+                        **params,
+                        'originatedContract.in': ','.join(addresses_chunk),
+                    },
+                )
+        elif code_hashes and not addresses:
             raw_originations += await self.request(
                 'get',
                 url='v1/operations/originations',
                 params={
-                    'originatedContract.in': ','.join(addresses_chunk),
-                    'level.ge': first_level,
-                    'level.le': last_level,
-                    'select': ','.join(ORIGINATION_OPERATION_FIELDS),
-                    'status': 'applied',
+                    **params,
+                    # FIXME: Need a helper for this join
+                    'codeHash.in': ','.join(str(h) for h in code_hashes),
                 },
             )
+        else:
+            raise RuntimeError('Either `addresses` or `code_hashes` should be specified')
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
         return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)

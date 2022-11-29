@@ -182,7 +182,11 @@ async def test_iter_migration_originations() -> None:
 
 async def test_get_originations() -> None:
     async with with_tzkt(1) as tzkt:
-        originations = await tzkt.get_originations({'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'}, 889027, 889027)
+        originations = await tzkt.get_originations(
+            addresses={'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'},
+            first_level=889027,
+            last_level=889027,
+        )
         assert originations[0].id == 24969533718528
         assert originations[0].originated_contract_tzips == ('fa12',)
 
