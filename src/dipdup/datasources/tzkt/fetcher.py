@@ -66,6 +66,7 @@ def dedup_operations(operations: tuple[OperationData, ...]) -> tuple[OperationDa
     )
 
 
+# TODO: Move back to op.fetcher
 def get_operations_head(operations: tuple[OperationData, ...]) -> int:
     """Get latest block level (head) of sorted operations batch"""
     for i in range(len(operations) - 1)[::-1]:
@@ -124,9 +125,22 @@ class OriginationAddressFetcherChannel(FetcherChannel[OperationData, str]):
 
 
 class OriginationHashFetcherChannel(FetcherChannel[OperationData, int]):
-    # FIXME: Not implemented
     async def fetch(self) -> None:
-        self._head = self._last_level
+        originations = await self._datasource.get_originations(
+            code_hashes=self._filter,
+            offset=self._offset,
+            first_level=self._first_level,
+            last_level=self._last_level,
+        )
+
+        for op in originations:
+            self._buffer[op.level].append(op)
+
+        if len(originations) < self._datasource.request_limit:
+            self._head = self._last_level
+        else:
+            self._offset = originations[-1].id
+            self._head = get_operations_head(originations)
 
 
 class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
@@ -146,6 +160,7 @@ class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
         transactions = await self._datasource.get_transactions(
             field=self._field,
             addresses=self._filter,
+            code_hashes=None,
             offset=self._offset,
             first_level=self._first_level,
             last_level=self._last_level,
@@ -175,9 +190,24 @@ class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
         super().__init__(buffer, filter, first_level, last_level, datasource)
         self._field = field
 
-    # FIXME: Not implemented
     async def fetch(self) -> None:
-        self._head = self._last_level
+        transactions = await self._datasource.get_transactions(
+            field=self._field,
+            addresses=None,
+            code_hashes=self._filter,
+            offset=self._offset,
+            first_level=self._first_level,
+            last_level=self._last_level,
+        )
+
+        for op in transactions:
+            self._buffer[op.level].append(op)
+
+        if len(transactions) < self._datasource.request_limit:
+            self._head = self._last_level
+        else:
+            self._offset = transactions[-1].id
+            self._head = get_operations_head(transactions)
 
 
 class DataFetcher(ABC, Generic[FetcherBufferT]):

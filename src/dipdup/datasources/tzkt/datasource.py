@@ -414,23 +414,23 @@ class TzktDatasource(IndexDatasource):
 
     async def get_originations(
         self,
-        first_level: int,
-        last_level: int,
         addresses: set[str] | None = None,
         code_hashes: set[int] | None = None,
+        first_level: int | None = None,
+        last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[OperationData, ...]:
         offset, limit = offset or 0, limit or self.request_limit
         raw_originations: list[dict[str, Any]] = []
-        params = {
-            'level.ge': first_level,
-            'level.le': last_level,
-            'select': ','.join(ORIGINATION_OPERATION_FIELDS),
-            'status': 'applied',
-            'offset': offset,
-            'limit': limit,
-        }
+        params = self._get_request_params(
+            first_level=first_level,
+            last_level=last_level,
+            offset=offset,
+            limit=limit,
+            select=ORIGINATION_OPERATION_FIELDS,
+            status='applied',
+        )
 
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
         # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~4000 characters.
@@ -462,28 +462,64 @@ class TzktDatasource(IndexDatasource):
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
         return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
 
+    def _get_request_params(
+        self,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        select: Sequence[str | int] | None = None,
+        cursor: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            'limit': limit or self.request_limit,
+        }
+        if first_level is not None:
+            params['level.ge'] = first_level
+        if last_level is not None:
+            params['level.le'] = last_level
+        if offset is not None:
+            if cursor:
+                params['offset.cr'] = offset
+            else:
+                params['offset'] = offset
+        if select:
+            params['select'] = ','.join(str(a) for a in select)
+        return {
+            **params,
+            **kwargs,
+        }
+
     async def get_transactions(
         self,
         field: str,
-        addresses: set[str],
-        first_level: int,
-        last_level: int,
+        addresses: set[str] | None,
+        code_hashes: set[int] | None,
+        first_level: int | None = None,
+        last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[OperationData, ...]:
-        offset, limit = offset or 0, limit or self.request_limit
+        params = self._get_request_params(
+            first_level,
+            last_level,
+            offset,
+            limit,
+            TRANSACTION_OPERATION_FIELDS,
+            cursor=True,
+            status='applied',
+        )
+        if addresses and not code_hashes:
+            params[f'{field}.in'] = ','.join(addresses)
+        elif code_hashes and not addresses:
+            # params['codeHash.in'] = ','.join(str(h) for h in code_hashes)
+            raise NotImplementedError
+
         raw_transactions = await self.request(
             'get',
             url='v1/operations/transactions',
-            params={
-                f'{field}.in': ','.join(addresses),
-                'offset.cr': offset,
-                'limit': limit,
-                'level.ge': first_level,
-                'level.le': last_level,
-                'select': ','.join(TRANSACTION_OPERATION_FIELDS),
-                'status': 'applied',
-            },
+            params=params,
         )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
