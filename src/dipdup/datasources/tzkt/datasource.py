@@ -139,6 +139,28 @@ class MessageBuffer:
             yield from self._messages.pop(level)
 
 
+class ContractHashes:
+    def __init__(self) -> None:
+        self._address_to_hashes: dict[str, tuple[int, int]] = {}
+        self._hashes_to_address: dict[tuple[int, int], str] = {}
+
+    def add(self, address: str, code_hash: int, type_hash: int) -> None:
+        if address not in self._address_to_hashes:
+            self._address_to_hashes[address] = (code_hash, type_hash)
+        if (code_hash, type_hash) not in self._hashes_to_address:
+            self._hashes_to_address[(code_hash, type_hash)] = address
+
+    def reset(self) -> None:
+        self._address_to_hashes.clear()
+        self._hashes_to_address.clear()
+
+    def get_code_hashes(self, address: str) -> tuple[int, int]:
+        return self._address_to_hashes[address]
+
+    def get_address(self, code_hash: int, type_hash: int) -> str:
+        return self._hashes_to_address[(code_hash, type_hash)]
+
+
 class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
         retry_sleep=1,
@@ -164,6 +186,7 @@ class TzktDatasource(IndexDatasource):
         )
         self._logger = logging.getLogger('dipdup.tzkt')
         self._buffer = MessageBuffer(buffer_size)
+        self._contract_hashes = ContractHashes()
 
         self._ws_client: SignalRClient | None = None
         self._level: defaultdict[MessageType, int | None] = defaultdict(lambda: None)
@@ -275,8 +298,32 @@ class TzktDatasource(IndexDatasource):
 
     async def get_contract_hashes(self, address: str) -> tuple[int, int]:
         """Get contract code and type hashes"""
-        summary = await self.get_contract_summary(address)
-        return summary['codeHash'], summary['typeHash']
+        try:
+            return self._contract_hashes.get_code_hashes(address)
+        except KeyError:
+            summary = await self.get_contract_summary(address)
+            code_hash, type_hash = summary['codeHash'], summary['typeHash']
+            self._contract_hashes.add(address, code_hash, type_hash)
+            return (code_hash, type_hash)
+
+    async def get_contract_address(self, code_hash: int, type_hash: int) -> str:
+        """Get contract address by code or type hash"""
+        try:
+            return self._contract_hashes.get_address(code_hash, type_hash)
+        except KeyError:
+            response = await self.request(
+                'get',
+                url='v1/contracts',
+                params={
+                    'select': 'id,address',
+                    'codeHash': code_hash,
+                },
+            )
+            if not response:
+                raise ValueError(f'Contract with code hash `{code_hash}` not found')
+            address = cast(str, response[0]['address'])
+            self._contract_hashes.add(address, code_hash, type_hash)
+            return address
 
     async def get_contract_storage(self, address: str) -> dict[str, Any]:
         """Get contract storage"""
@@ -823,12 +870,14 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
-        # NOTE: Subscribing here will block WebSocket loop
+        # NOTE: Subscribing here will block WebSocket loop, don't do it.
         await self.emit_connected()
 
     async def _on_disconnected(self) -> None:
         self._logger.info('Realtime connection lost, resetting subscriptions')
         self._subscriptions.reset()
+        # NOTE: Just in case
+        self._contract_hashes.reset()
         await self.emit_disconnected()
 
     async def _on_error(self, message: CompletionMessage) -> NoReturn:

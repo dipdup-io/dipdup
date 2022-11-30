@@ -98,6 +98,71 @@ MatchedEventsT = Union[
 MatchedTokenTransfersT = Tuple[TokenTransferHandlerConfig, TokenTransferData]
 
 
+async def get_transaction_filters(
+    config: OperationIndexConfig,
+    datasource: TzktDatasource,
+) -> tuple[set[str], set[int]]:
+    """Get addresses to fetch transactions from during initial synchronization"""
+    if OperationType.transaction not in config.types:
+        return set(), set()
+
+    addresses: set[str] = set()
+    hashes: set[int] = set()
+    for contract in config.contracts:
+        if contract.address:
+            addresses.add(contract.address)
+        if isinstance(contract.code_hash, str):
+            code_hash, _ = await datasource.get_contract_hashes(contract.code_hash)
+            hashes.add(code_hash)
+        elif isinstance(contract.code_hash, int):
+            hashes.add(contract.code_hash)
+
+    return addresses, hashes
+
+
+async def get_origination_filters(
+    config: OperationIndexConfig,
+    datasource: TzktDatasource,
+) -> tuple[set[str], set[int]]:
+    """Get addresses to fetch origination from during initial synchronization"""
+    if OperationType.origination not in config.types:
+        return set(), set()
+
+    addresses: set[str] = set()
+    hashes: set[int] = set()
+
+    for handler_config in config.handlers:
+        for pattern_config in handler_config.pattern:
+            if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                continue
+
+            if pattern_config.originated_contract:
+                if address := pattern_config.originated_contract.address:
+                    addresses.add(address)
+                if code_hash := pattern_config.originated_contract.code_hash:
+                    if isinstance(code_hash, str):
+                        code_hash, _ = await datasource.get_contract_hashes(code_hash)
+                    hashes.add(code_hash)
+
+            if pattern_config.source:
+                # NOTE: Notify about `code_hash`
+                if address := pattern_config.source.address:
+                    async for batch in datasource.iter_originated_contracts(address):
+                        addresses.update(batch)
+                if code_hash := pattern_config.source.code_hash:
+                    raise NotImplementedError
+
+            if pattern_config.similar_to:
+                # NOTE: Notify about `code_hash`
+                if address := pattern_config.similar_to.address:
+                    async for batch in datasource.iter_similar_contracts(address, pattern_config.strict):
+                        addresses.update(batch)
+                if code_hash := pattern_config.similar_to.code_hash:
+                    raise NotImplementedError
+
+    return addresses, hashes
+
+
 def extract_operation_subgroups(
     operations: Iterable[OperationData],
     addresses: Set[str],
@@ -344,12 +409,16 @@ class OperationIndex(Index[OperationIndexConfig]):
         if OperationType.migration in self._config.types:
             async for batch in self._datasource.iter_migration_originations(first_level):
                 for op in batch:
-                    code_hash, type_hash = await self._get_contract_hashes(cast(str, op.originated_contract_address))
-                    op.originated_contract_code_hash, op.originated_contract_type_hash = code_hash, type_hash
+                    # FIXME: No `type_hash` breaks backward compatibility, just testin'
+                    code_hash, type_hash = await self._datasource.get_contract_hashes(
+                        cast(str, op.originated_contract_address)
+                    )
+                    op.originated_contract_code_hash = code_hash
+                    op.originated_contract_type_hash = type_hash
                     migration_originations += (op,)
 
-        transaction_addresses, transaction_hashes = await self._get_transaction_filters()
-        origination_addresses, origination_hashes = await self._get_origination_filters()
+        transaction_addresses, transaction_hashes = await get_transaction_filters(self._config, self._datasource)
+        origination_addresses, origination_hashes = await get_origination_filters(self._config, self._datasource)
 
         return OperationFetcher(
             datasource=self._datasource,
@@ -448,7 +517,7 @@ class OperationIndex(Index[OperationIndexConfig]):
             if pattern_config.similar_to:
                 address = pattern_config.similar_to.address
                 assert address
-                code_hash, type_hash = await self._get_contract_hashes(address)
+                code_hash, type_hash = await self._datasource.get_contract_hashes(address)
                 if pattern_config.strict:
                     if code_hash != operation.originated_contract_code_hash:
                         return False
@@ -575,68 +644,6 @@ class OperationIndex(Index[OperationIndexConfig]):
             operation_subgroup.hash + ': {}',
             *args,
         )
-
-    async def _get_transaction_filters(self) -> tuple[set[str], set[int]]:
-        """Get addresses to fetch transactions from during initial synchronization"""
-        if OperationType.transaction not in self._config.types:
-            return set(), set()
-
-        addresses: set[str] = set()
-        hashes: set[int] = set()
-        for contract in self._config.contracts:
-            if contract.address:
-                addresses.add(contract.address)
-            if isinstance(contract.code_hash, str):
-                code_hash, _ = await self._get_contract_hashes(contract.code_hash)
-                hashes.add(code_hash)
-            elif isinstance(contract.code_hash, int):
-                hashes.add(contract.code_hash)
-
-        return addresses, hashes
-
-    async def _get_origination_filters(self) -> tuple[set[str], set[int]]:
-        """Get addresses to fetch origination from during initial synchronization"""
-        if OperationType.origination not in self._config.types:
-            return set(), set()
-
-        addresses: set[str] = set()
-        hashes: set[int] = set()
-
-        for handler_config in self._config.handlers:
-            for pattern_config in handler_config.pattern:
-                if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                    continue
-
-                if pattern_config.originated_contract:
-                    if address := pattern_config.originated_contract.address:
-                        addresses.add(address)
-                    if code_hash := pattern_config.originated_contract.code_hash:
-                        if isinstance(code_hash, str):
-                            code_hash, _ = await self._get_contract_hashes(code_hash)
-                        hashes.add(code_hash)
-
-                if pattern_config.source:
-                    # NOTE: Notify about `code_hash`
-                    if address := pattern_config.source.address:
-                        async for batch in self._datasource.iter_originated_contracts(address):
-                            addresses.update(batch)
-                    if code_hash := pattern_config.source.code_hash:
-                        raise NotImplementedError
-
-                if pattern_config.similar_to:
-                    # NOTE: Notify about `code_hash`
-                    if address := pattern_config.similar_to.address:
-                        async for batch in self._datasource.iter_similar_contracts(address, pattern_config.strict):
-                            addresses.update(batch)
-                    if code_hash := pattern_config.similar_to.code_hash:
-                        raise NotImplementedError
-
-        return addresses, hashes
-
-    async def _get_contract_hashes(self, address: str) -> tuple[int, int]:
-        if address not in self._contract_hashes:
-            self._contract_hashes[address] = await self._datasource.get_contract_hashes(address)
-        return self._contract_hashes[address]
 
 
 class BigMapIndex(Index[BigMapIndexConfig]):
