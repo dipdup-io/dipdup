@@ -40,6 +40,7 @@ from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
+from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import BigMapIndex
 from dipdup.index import EventIndex
@@ -171,7 +172,7 @@ class IndexDispatcher:
 
     async def _load_index_states(self) -> None:
         if self._indexes:
-            raise RuntimeError('Index states are already loaded')
+            raise FrameworkException('Index states are already loaded')
 
         await self._fetch_contracts()
         self._logger.info('%s indexes found in database', await IndexState.all().count())
@@ -285,7 +286,7 @@ class IndexDispatcher:
     ) -> None:
         """Call `on_index_rollback` hook for each index that is affected by rollback"""
         if from_level <= to_level:
-            raise RuntimeError(f'Attempt to rollback forward: {from_level} -> {to_level}')
+            raise FrameworkException(f'Attempt to rollback forward: {from_level} -> {to_level}')
 
         channel = f'{datasource.name}:{type_.value}'
         self._logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
@@ -537,7 +538,7 @@ class DipDup:
             return None
 
         if not isinstance(self._config.database, PostgresDatabaseConfig):
-            raise RuntimeError
+            raise FrameworkException('PostgresDatabaseConfig expected; check earlier')
 
         hasura_gateway = HasuraGateway(
             self._config.package,

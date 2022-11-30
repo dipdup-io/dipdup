@@ -57,6 +57,7 @@ from dipdup.enums import OperationType
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
@@ -188,7 +189,7 @@ def extract_operation_subgroups(
         levels.add(operation.level)
 
     if len(levels) > 1:
-        raise RuntimeError('Operations in batch are not in the same level')
+        raise FrameworkException('Operations in batch are not in the same level')
 
     _logger.debug(
         'Extracted %d subgroups (%d operations, %d filtered by %s entrypoints and %s addresses)',
@@ -217,7 +218,7 @@ def extract_level(
     # TODO: Skip conditionally
     batch_levels = {(i.level, i.__class__) for i in message}
     if len(batch_levels) != 1:
-        raise RuntimeError(f'Items in data batch have different levels: {batch_levels}')
+        raise FrameworkException(f'Items in data batch have different levels: {batch_levels}')
     return batch_levels.pop()[0]
 
 
@@ -249,7 +250,7 @@ class Index(Generic[ConfigT]):
     @property
     def state(self) -> models.Index:
         if self._state is None:
-            raise RuntimeError('Index state is not initialized')
+            raise FrameworkException('Index state is not initialized')
         return self._state
 
     @property
@@ -264,16 +265,16 @@ class Index(Generic[ConfigT]):
         """Get level index needs to be synchronized to depending on its subscription status"""
         sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
         if not sync_levels:
-            raise RuntimeError('Initialize config before starting `IndexDispatcher`')
+            raise FrameworkException('Initialize config before starting `IndexDispatcher`')
         if None in sync_levels:
-            raise RuntimeError('Call `set_sync_level` before starting `IndexDispatcher`')
+            raise FrameworkException('Call `set_sync_level` before starting `IndexDispatcher`')
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
         return max(cast(Set[int], sync_levels))
 
     async def initialize_state(self, state: Optional[models.Index] = None) -> None:
         if self._state:
-            raise RuntimeError('Index state is already initialized')
+            raise FrameworkException('Index state is already initialized')
 
         if state:
             self._state = state
@@ -351,7 +352,7 @@ class Index(Generic[ConfigT]):
         if index_level == head_level:
             return None
         if index_level > head_level:
-            raise RuntimeError(f'Attempt to synchronize index from level {index_level} to level {head_level}')
+            raise FrameworkException(f'Attempt to synchronize index from level {index_level} to level {head_level}')
 
         self._logger.info('Synchronizing index to level %s', head_level)
         await self.state.update_status(status=IndexStatus.SYNCING, level=index_level)
@@ -386,7 +387,7 @@ class OperationIndex(Index[OperationIndexConfig]):
             messages_left = len(self._queue)
 
             if not message:
-                raise RuntimeError('Got empty message from realtime queue')
+                raise FrameworkException('Got empty message from realtime queue')
 
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
@@ -474,7 +475,7 @@ class OperationIndex(Index[OperationIndexConfig]):
         batch_level = operation_subgroups[0].operations[0].level
         index_level = self.state.level
         if batch_level <= index_level:
-            raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
+            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: Deque[MatchedOperationsT] = deque()
@@ -768,7 +769,7 @@ class BigMapIndex(Index[BigMapIndexConfig]):
         batch_level = extract_level(big_maps)
         index_level = self.state.level
         if batch_level <= index_level:
-            raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
+            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing big map diffs of level %s', batch_level)
         matched_handlers = await self._match_big_maps(big_maps)
@@ -905,7 +906,7 @@ class HeadIndex(Index[HeadIndexConfig]):
             batch_level = head.level
             index_level = self.state.level
             if batch_level <= index_level:
-                raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
+                raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
             async with self._ctx._transactions.in_transaction(batch_level, message_level, self.name):
                 self._logger.debug('Processing head info of level %s', batch_level)
@@ -1000,7 +1001,7 @@ class TokenTransferIndex(Index[TokenTransferIndexConfig]):
         batch_level = extract_level(token_transfers)
         index_level = self.state.level
         if batch_level <= index_level:
-            raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
+            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing token transfers of level %s', batch_level)
         matched_handlers = await self._match_token_transfers(token_transfers)
@@ -1154,7 +1155,7 @@ class EventIndex(Index[EventIndexConfig]):
         batch_level = extract_level(events)
         index_level = self.state.level
         if batch_level <= index_level:
-            raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
+            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing contract events of level %s', batch_level)
         matched_handlers = await self._match_events(events)
@@ -1223,7 +1224,7 @@ class EventIndex(Index[EventIndexConfig]):
                 elif arg is None:
                     continue
                 else:
-                    raise RuntimeError
+                    raise FrameworkException(f'Unexpected handler config type: {type(handler_config)}')
 
                 events.remove(event)
 
@@ -1238,7 +1239,7 @@ class EventIndex(Index[EventIndexConfig]):
         self, handler_config: EventHandlerConfigU, event: Event[Any] | UnknownEvent
     ) -> None:
         if isinstance(handler_config, EventHandlerConfig) != isinstance(event, Event):
-            raise RuntimeError(f'Invalid handler config and event types: {handler_config}, {event}')
+            raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {event}')
 
         if not handler_config.parent:
             raise ConfigInitializationException

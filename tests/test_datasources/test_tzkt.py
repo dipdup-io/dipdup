@@ -12,6 +12,7 @@ from dipdup.config import HTTPConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.models import OperationData
 
@@ -38,7 +39,7 @@ async def take_two(iterable: AsyncIterator[Tuple[T, ...]]) -> Tuple[T, ...]:
         left -= 1
         if not left:
             return result
-    raise RuntimeError
+    raise FrameworkException('Not enough items in iterable')
 
 
 async def test_get_similar_contracts() -> None:

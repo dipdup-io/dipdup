@@ -22,6 +22,7 @@ from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
 from dipdup.config import HTTPConfig
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
 
@@ -103,7 +104,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Close underlying aiohttp session"""
         self._logger.debug('Closing gateway session (%s)', self._url)
         if not self.__session:
-            raise RuntimeError('Session is not initialized')
+            raise FrameworkException('Session is not initialized')
         await self.__session.close()
 
     @property
@@ -122,9 +123,9 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         if isinstance(self.__session, aiohttp.test_utils.TestClient):
             return self.__session
         if self.__session is None:
-            raise RuntimeError('aiohttp session is not initialized. Wrap with `async with httpgateway_instance`')
+            raise FrameworkException('aiohttp session is not initialized. Wrap with `async with httpgateway_instance`')
         if self.__session.closed:
-            raise RuntimeError('aiohttp session is closed')
+            raise FrameworkException('aiohttp session is closed')
         return self.__session
 
     # TODO: Move to separate method to cover SignalR negotiations too
@@ -218,7 +219,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         if not self._config.replay_path:
-            raise RuntimeError('Replay path is not set')
+            raise FrameworkException('Replay path is not set')
 
         replay_path = Path(self._config.replay_path).expanduser()
         replay_path.mkdir(parents=True, exist_ok=True)

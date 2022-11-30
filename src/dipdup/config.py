@@ -64,6 +64,7 @@ from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.utils import exclude_none
 from dipdup.utils import import_from
@@ -708,7 +709,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
             return self.similar_to
         if self.source:
             return self.source
-        raise RuntimeError
+        raise FrameworkException('Invalid origination pattern; check earlier')
 
 
 @dataclass
@@ -1477,7 +1478,7 @@ class DipDupConfig:
         with suppress(ImportError):
             package = importlib.import_module(self.package)
             if package.__file__ is None:
-                raise RuntimeError(f'`{package.__name__}` package has no `__file__` attribute')
+                raise FrameworkException(f'`{package.__name__}` package has no `__file__` attribute')
             return Path(package.__file__).parent
 
         # NOTE: Detect src/<package> layout

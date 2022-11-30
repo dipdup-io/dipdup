@@ -33,6 +33,7 @@ from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.enums import TokenStandard
 from dipdup.exceptions import DatasourceError
+from dipdup.exceptions import FrameworkException
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BlockData
@@ -224,7 +225,7 @@ class TzktDatasource(IndexDatasource):
             # NOTE: There's only one sync level for all channels, otherwise `Index.process` would fail
             channel_level = self.get_sync_level(HeadSubscription())
             if channel_level is None:
-                raise RuntimeError('Neither current nor sync level is known')
+                raise FrameworkException('Neither current nor sync level is known')
 
         return channel_level
 
@@ -504,7 +505,7 @@ class TzktDatasource(IndexDatasource):
                 },
             )
         else:
-            raise RuntimeError('Either `addresses` or `code_hashes` should be specified')
+            raise FrameworkException('Either `addresses` or `code_hashes` should be specified')
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
         return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)

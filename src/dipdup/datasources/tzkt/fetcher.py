@@ -13,6 +13,7 @@ from typing import Generic
 from typing import Protocol
 from typing import TypeVar
 
+from dipdup.exceptions import FrameworkException
 from dipdup.models import BigMapData
 from dipdup.models import EventData
 from dipdup.models import OperationData
@@ -317,7 +318,7 @@ class OperationFetcher(DataFetcher[OperationData]):
                 break
 
         if self._buffer:
-            raise RuntimeError('Operations left in queue')
+            raise FrameworkException('Operations left in queue')
 
 
 class BigMapFetcher(DataFetcher[BigMapData]):

@@ -51,7 +51,7 @@ from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import ContractAlreadyExistsError
-from dipdup.exceptions import FrameworkError
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
@@ -429,7 +429,7 @@ class HookContext(DipDupContext):
         """
         self.logger.info('Rolling back `%s`: %s -> %s', index, from_level, to_level)
         if from_level <= to_level:
-            raise RuntimeError(f'Attempt to rollback in future: {from_level} <= {to_level}')
+            raise FrameworkException(f'Attempt to rollback in future: {from_level} <= {to_level}')
         if from_level - to_level > self.config.advanced.rollback_depth:
             # TODO: More context
             await self.reindex(ReindexingReason.rollback)
@@ -527,7 +527,7 @@ class CallbackManager:
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
-            raise RuntimeError('Handler must have a parent index')
+            raise FrameworkException('Handler must have a parent index')
 
         # NOTE: Same handlers can be linked to different indexes, we need to use exact config
         key = (handler_config.callback, handler_config.parent.name)
@@ -577,7 +577,7 @@ class CallbackManager:
 
         if isinstance(hook_config, EventHookConfig):
             if isinstance(ctx, (HandlerContext, HookContext)):
-                raise RuntimeError('Event hooks cannot be fired manually')
+                raise FrameworkException('Event hooks cannot be fired manually')
 
         new_ctx = HookContext._wrap(
             ctx,
@@ -636,7 +636,7 @@ class CallbackManager:
                     stack.enter_context(Metrics.measure_callback_duration(module))
                 yield
             # NOTE: Do not wrap known errors like ProjectImportError
-            except FrameworkError:
+            except FrameworkException:
                 raise
             except Exception as e:
                 raise CallbackError(module, e) from e

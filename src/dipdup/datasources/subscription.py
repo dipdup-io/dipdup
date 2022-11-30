@@ -5,6 +5,8 @@ from typing import Dict
 from typing import Optional
 from typing import Set
 
+from dipdup.exceptions import FrameworkException
+
 _logger = logging.getLogger('dipdup.datasource')
 
 
@@ -41,7 +43,7 @@ class SubscriptionManager:
 
     def set_sync_level(self, subscription: Optional[Subscription], level: int) -> None:
         if subscription not in self._subscriptions:
-            raise RuntimeError(f'Subscription does not exist: {subscription}')
+            raise FrameworkException(f'Subscription does not exist: {subscription}')
 
         if self._subscriptions[subscription]:
             # NOTE: Updating sync level with merge_subscriptions=True will cause resync
@@ -53,5 +55,5 @@ class SubscriptionManager:
 
     def get_sync_level(self, subscription: Subscription) -> Optional[int]:
         if subscription not in self._subscriptions:
-            raise RuntimeError(f'Subscription does not exist: {subscription}')
+            raise FrameworkException(f'Subscription does not exist: {subscription}')
         return self._subscriptions[subscription] or self._subscriptions[None]

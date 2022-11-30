@@ -13,6 +13,7 @@ from typing import Callable
 
 import pytest
 
+from dipdup.exceptions import FrameworkException
 from dipdup.utils import import_submodules
 from dipdup.utils.database import tortoise_wrapper
 
@@ -32,7 +33,7 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
         os.mkdir(tmp_bin_path)
         for executable in ('dipdup', 'datamodel-codegen'):
             if (executable_path := which(executable)) is None:
-                raise RuntimeError(f'Executable `{executable}` not found')
+                raise FrameworkException(f'Executable `{executable}` not found')
             os.symlink(executable_path, tmp_bin_path / executable)
 
         tmp_dipdup_pkg_path = Path(tmp_root_path) / 'dipdup'

@@ -42,6 +42,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError
+from dipdup.exceptions import FrameworkException
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -380,7 +381,7 @@ class CodeGenerator:
         """Get contract JSONSchema from TzKT or from cache"""
         datasource = self._datasources[datasource_config]
         if not isinstance(datasource, TzktDatasource):
-            raise RuntimeError('`tzkt` datasource expected')
+            raise FrameworkException('`tzkt` datasource expected')
 
         if isinstance(contract_config.address, str):
             address = contract_config.address
@@ -399,7 +400,7 @@ class CodeGenerator:
                 )
                 self._code_hashes[contract_config.code_hash] = cast(str, contracts[0]['address'])
         else:
-            raise RuntimeError
+            raise FrameworkException('No address or code hash provided, check earlier')
 
         if datasource_config not in self._schemas:
             self._schemas[datasource_config] = {}

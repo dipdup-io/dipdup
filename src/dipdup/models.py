@@ -40,6 +40,7 @@ from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.enums import ReindexingReason
 from dipdup.enums import TokenStandard
+from dipdup.exceptions import FrameworkException
 from dipdup.utils import json_dumps_decimals
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
@@ -280,13 +281,13 @@ class VersionedTransaction:
 # NOTE: Overwritten by TransactionManager.register()
 def get_transaction() -> Optional[VersionedTransaction]:
     """Get metadata of currently opened versioned transaction if any"""
-    raise RuntimeError('TransactionManager is not registered')
+    raise FrameworkException('TransactionManager is not registered')
 
 
 # NOTE: Overwritten by TransactionManager.register()
 def get_pending_updates() -> Deque['ModelUpdate']:
     """Get pending model updates queue"""
-    raise RuntimeError('TransactionManager is not registered')
+    raise FrameworkException('TransactionManager is not registered')
 
 
 class ModelUpdateAction(Enum):
