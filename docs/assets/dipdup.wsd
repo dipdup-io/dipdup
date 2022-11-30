@@ -1,0 +1,36 @@
+@startuml
+scale 750 width
+skinparam linetype ortho
+skinparam componentStyle rectangle
+skinparam actorStyle Hollow
+cloud {
+    [TzKT API]
+}
+package "DipDupSDK" {
+    [User-defined configuration] #STRATEGY
+    [DipDup dispatcher]
+    [Indexer state]
+    [Auto-generated type]
+    [User-defined models] #STRATEGY
+    [User-defined handlers] #STRATEGY
+
+
+
+    [DipDup dispatcher] -> [Indexer state]
+    [DipDup dispatcher] --> [User-defined handlers]
+    [User-defined configuration] -> [DipDup dispatcher]
+    [User-defined configuration] --> [Auto-generated type]
+    [Auto-generated type] -> [User-defined handlers]
+    [User-defined handlers] -> [User-defined models]
+}
+
+database PostgreSQL {
+}
+actor "Users"
+
+[TzKT API] --> [DipDup dispatcher]: REST
+[TzKT API] --> [DipDup dispatcher]: SignalIR
+PostgreSQL --> [Hasura engin]
+[Hasura engin] --> Users: GraphQL
+DipDupSDK -down-> PostgreSQL
+@enduml
