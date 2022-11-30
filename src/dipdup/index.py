@@ -210,6 +210,17 @@ def extract_operation_subgroups(
         )
 
 
+def extract_level(
+    message: tuple[OperationData | BigMapData | TokenTransferData | EventData, ...],
+) -> int:
+    """Safely extract level from raw messages batch"""
+    # TODO: Skip conditionally
+    batch_levels = {(i.level, i.__class__) for i in message}
+    if len(batch_levels) != 1:
+        raise RuntimeError(f'Items in data batch have different levels: {batch_levels}')
+    return batch_levels.pop()[0]
+
+
 class Index(Generic[ConfigT]):
     """Base class for index implementations
 
@@ -351,15 +362,6 @@ class Index(Generic[ConfigT]):
         if Metrics.enabled:
             Metrics.set_levels_to_sync(self._config.name, 0)
         await self.state.update_status(status=IndexStatus.REALTIME, level=head_level)
-
-    def _extract_level(
-        self,
-        message: tuple[OperationData | BigMapData | TokenTransferData | EventData, ...],
-    ) -> int:
-        batch_levels = {item.level for item in message}
-        if len(batch_levels) != 1:
-            raise RuntimeError(f'Items in data batch have different levels: {batch_levels}')
-        return batch_levels.pop()
 
 
 class OperationIndex(Index[OperationIndexConfig]):
@@ -763,7 +765,7 @@ class BigMapIndex(Index[BigMapIndexConfig]):
         if not big_maps:
             return
 
-        batch_level = self._extract_level(big_maps)
+        batch_level = extract_level(big_maps)
         index_level = self.state.level
         if batch_level <= index_level:
             raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
@@ -995,7 +997,7 @@ class TokenTransferIndex(Index[TokenTransferIndexConfig]):
         if not token_transfers:
             return
 
-        batch_level = self._extract_level(token_transfers)
+        batch_level = extract_level(token_transfers)
         index_level = self.state.level
         if batch_level <= index_level:
             raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
@@ -1149,7 +1151,7 @@ class EventIndex(Index[EventIndexConfig]):
         if not events:
             return
 
-        batch_level = self._extract_level(events)
+        batch_level = extract_level(events)
         index_level = self.state.level
         if batch_level <= index_level:
             raise RuntimeError(f'Batch level is lower than index level: {batch_level} <= {index_level}')
