@@ -50,15 +50,14 @@ def echo(message: str) -> None:
         click.echo(message)
 
 
-def _print_help(error: Exception, crashdump_path: str) -> None:
-    """Prints helpful error message after traceback"""
+def _print_help(error: Exception) -> None:
+    """Prints a helpful error message after the traceback"""
     import atexit
 
-    from dipdup.exceptions import DipDupError
-    from dipdup.exceptions import tab
+    from dipdup.exceptions import Error
+    from dipdup.exceptions import FrameworkError
 
-    help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
-    help_message += tab + f'Crashdump saved to `{crashdump_path}`'
+    help_message = error.format() if isinstance(error, Error) else FrameworkError().format()
     atexit.register(partial(click.echo, help_message, err=True))
 
 
@@ -77,9 +76,9 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except Exception as e:
             from dipdup.exceptions import save_crashdump
 
-            _logger.exception('Unhandled exception caught')
             crashdump_path = save_crashdump(e)
-            _print_help(e, crashdump_path)
+            _logger.exception(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
+            _print_help(e)
             raise
 
     return cast(WrappedCommandT, wrapper)

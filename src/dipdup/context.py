@@ -51,7 +51,7 @@ from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import ContractAlreadyExistsError
-from dipdup.exceptions import DipDupError
+from dipdup.exceptions import FrameworkError
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
@@ -630,16 +630,16 @@ class CallbackManager:
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:
-        try:
-            with ExitStack() as stack:
+        with ExitStack() as stack:
+            try:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_callback_duration(module))
                 yield
-        except Exception as e:
             # NOTE: Do not wrap known errors like ProjectImportError
-            if isinstance(e, DipDupError):
+            except FrameworkError:
                 raise
-            raise CallbackError(module, e) from e
+            except Exception as e:
+                raise CallbackError(module, e) from e
 
     # FIXME: kwargs are ignored, no false alarms though
     @classmethod
