@@ -63,6 +63,8 @@ OPERATION_FIELDS = (
     'hasInternals',
     'diffs',
     'delegate',
+    'senderCodeHash',
+    'targetCodeHash',
 )
 ORIGINATION_MIGRATION_FIELDS = (
     'id',
@@ -318,6 +320,7 @@ class TzktDatasource(IndexDatasource):
                 params={
                     'select': 'id,address',
                     'codeHash': code_hash,
+                    'limit': 1,
                 },
             )
             if not response:
@@ -561,7 +564,7 @@ class TzktDatasource(IndexDatasource):
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
         elif code_hashes and not addresses:
-            params['codeHash.in'] = ','.join(str(h) for h in code_hashes)
+            params[f'{field}CodeHash.in'] = ','.join(str(h) for h in code_hashes)
 
         raw_transactions = await self.request(
             'get',
@@ -1025,7 +1028,9 @@ class TzktDatasource(IndexDatasource):
             hash=operation_json['hash'],
             counter=operation_json['counter'],
             sender_address=sender_json.get('address'),
+            sender_code_hash=operation_json.get('senderCodeHash'),
             target_address=target_json.get('address'),
+            target_code_hash=operation_json.get('targetCodeHash'),
             initiator_address=initiator_json.get('address'),
             amount=amount,
             status=operation_json['status'],
@@ -1069,7 +1074,9 @@ class TzktDatasource(IndexDatasource):
             hash='[none]',
             counter=0,
             sender_address='[none]',
+            sender_code_hash=None,
             target_address=None,
+            target_code_hash=None,
             initiator_address=None,
         )
 

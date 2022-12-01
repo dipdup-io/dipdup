@@ -13,7 +13,6 @@ from typing import Awaitable
 from typing import Deque
 from typing import Dict
 from typing import Optional
-from typing import Set
 from typing import Tuple
 
 from tortoise.exceptions import OperationalError
@@ -74,8 +73,9 @@ class IndexDispatcher:
         self._logger = logging.getLogger('dipdup')
         self._indexes: Dict[str, Index[Any]] = {}
 
-        self._entrypoint_filter: Set[Optional[str]] = set()
-        self._address_filter: Set[str] = set()
+        self._entrypoint_filter: set[str | None] = set()
+        self._address_filter: set[str] = set()
+        self._code_hash_filter: set[int] = set()
 
     async def run(
         self,
@@ -85,7 +85,7 @@ class IndexDispatcher:
     ) -> None:
         self._logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
-        await self._load_index_states()
+        await self._load_index_state()
 
         on_synchronized_fired = False
 
@@ -151,6 +151,7 @@ class IndexDispatcher:
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)
         self._entrypoint_filter.update(index_config.entrypoint_filter)
+        self._code_hash_filter.update(index_config.code_hash_filter)
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         if not self._indexes:
@@ -170,7 +171,7 @@ class IndexDispatcher:
                 self._ctx.config.contracts[contract.name] = contract_config
         self._ctx.config.initialize(skip_imports=True)
 
-    async def _load_index_states(self) -> None:
+    async def _load_index_state(self) -> None:
         if self._indexes:
             raise FrameworkException('Index states are already loaded')
 
@@ -246,8 +247,11 @@ class IndexDispatcher:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
-                entrypoints=self._entrypoint_filter,
-                addresses=self._address_filter,
+                    entrypoint=self._entrypoint_filter,
+                    sender_address=self._address_filter,
+                    sender_code_hash=self._address_filter,
+                    target_address=self._code_hash_filter,
+                    target_code_hash=self._code_hash_filter,
             )
         )
 
@@ -294,7 +298,7 @@ class IndexDispatcher:
             Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Choose action for each index
-        affected_indexes: Set[str] = set()
+        affected_indexes: set[str] = set()
 
         for index_name, index in self._indexes.items():
             index_level = index.state.level
@@ -401,7 +405,7 @@ class DipDup:
     async def run(self) -> None:
         """Run indexing process"""
         advanced_config = self._config.advanced
-        tasks: Set[Task[None]] = set()
+        tasks: set[Task[None]] = set()
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
@@ -516,7 +520,7 @@ class DipDup:
             )
         )
 
-    async def _set_up_hooks(self, tasks: Set[Task[None]], run: bool = False) -> None:
+    async def _set_up_hooks(self, tasks: set[Task[None]], run: bool = False) -> None:
         for event_hook_config in event_hooks.values():
             self._callbacks.register_hook(event_hook_config)
 
@@ -582,7 +586,7 @@ class DipDup:
 
     async def _set_up_index_dispatcher(
         self,
-        tasks: Set[Task[None]],
+        tasks: set[Task[None]],
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
@@ -600,7 +604,7 @@ class DipDup:
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
 
-    async def _spawn_datasources(self, tasks: Set[Task[None]]) -> Event:
+    async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
 
         async def _event_wrapper() -> None:
@@ -614,7 +618,7 @@ class DipDup:
         tasks.add(create_task(_event_wrapper()))
         return event
 
-    async def _set_up_scheduler(self, tasks: Set[Task[None]]) -> Event:
+    async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
         # NOTE: Prepare SchedulerManager
         event = Event()
         scheduler = SchedulerManager(self._config.advanced.scheduler)

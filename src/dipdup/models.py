@@ -87,6 +87,8 @@ class OperationData:
     originated_contract_tzips: Optional[Tuple[str, ...]] = None
     delegate_address: Optional[str] = None
     delegate_alias: Optional[str] = None
+    target_code_hash: Optional[str] = None
+    sender_code_hash: Optional[str] = None
 
 
 @dataclass

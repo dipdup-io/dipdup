@@ -141,7 +141,6 @@ class CodeGenerator:
         self._config = config
         self._datasources = datasources
         self._schemas: dict[TzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
-        self._code_hashes: dict[int, str] = {}
         self._pkg = ProjectPaths(Path(config.package_path))
 
     def create_package(self) -> None:
@@ -388,17 +387,7 @@ class CodeGenerator:
         elif isinstance(contract_config.code_hash, str):
             address = contract_config.code_hash
         elif isinstance(contract_config.code_hash, int):
-            if contract_config.code_hash not in self._code_hashes:
-                contracts = await datasource.request(
-                    'get',
-                    'v1/contracts',
-                    params={
-                        'select': 'address',
-                        'codeHash': contract_config.code_hash,
-                        'limit': 1,
-                    },
-                )
-                self._code_hashes[contract_config.code_hash] = cast(str, contracts[0]['address'])
+            address = await datasource.get_contract_address(contract_config.code_hash, 0)
         else:
             raise FrameworkException('No address or code hash provided, check earlier')
 

@@ -64,7 +64,7 @@ class IndexStateTest:
             await _create_index(self.new_hash)
 
             # Act
-            await dispatcher._load_index_states()
+            await dispatcher._load_index_state()
 
             # Assert
             index = await Index.filter().get()
@@ -79,4 +79,4 @@ class IndexStateTest:
 
             # Act, Assert
             with pytest.raises(ReindexingRequiredError):
-                await dispatcher._load_index_states()
+                await dispatcher._load_index_state()
