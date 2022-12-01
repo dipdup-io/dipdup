@@ -16,13 +16,15 @@ import pytest
 from dipdup.exceptions import FrameworkException
 from dipdup.utils import import_submodules
 from dipdup.utils.database import tortoise_wrapper
+from tests import CONFIGS_PATH
+from tests import SRC_PATH
 
 
 @asynccontextmanager
 async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncIterator[Path]:
-    config_path = Path(__file__).parent / 'configs' / config
-    dipdup_pkg_path = Path(__file__).parent.parent / 'src' / 'dipdup'
-    demo_pkg_path = Path(__file__).parent.parent / 'src' / package
+    config_path = CONFIGS_PATH / config
+    dipdup_pkg_path = SRC_PATH / 'dipdup'
+    demo_pkg_path = SRC_PATH / package
 
     with tempfile.TemporaryDirectory() as tmp_root_path:
         # NOTE: Symlink configs, packages and executables

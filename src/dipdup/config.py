@@ -237,7 +237,7 @@ class ContractConfig(NameMixin):
     """
 
     address: str | None = None
-    code_hash: str | int | None = None
+    code_hash: int | str | None = None
     typename: str | None = None
 
     @property
@@ -925,7 +925,7 @@ class OperationIndexConfig(IndexConfig):
         return addresses
 
     @property
-    def code_hash_filter(self) -> set[str | int]:
+    def code_hash_filter(self) -> set[int | str]:
         """Set of code hashes to filter operations with before an actual matching"""
         code_hashes = set()
         for handler_config in self.handlers:

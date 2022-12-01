@@ -561,8 +561,7 @@ class TzktDatasource(IndexDatasource):
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
         elif code_hashes and not addresses:
-            # params['codeHash.in'] = ','.join(str(h) for h in code_hashes)
-            raise NotImplementedError
+            params['codeHash.in'] = ','.join(str(h) for h in code_hashes)
 
         raw_transactions = await self.request(
             'get',

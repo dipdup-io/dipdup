@@ -111,6 +111,11 @@ class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
 
 class OriginationAddressFetcherChannel(FetcherChannel[OperationData, str]):
     async def fetch(self) -> None:
+        if not self._filter:
+            self._head = self._last_level
+            self._offset = self._last_level
+            return
+
         # FIXME: No pagination because of URL length limit workaround
         originations = await self._datasource.get_originations(
             addresses=self._filter,
@@ -127,6 +132,11 @@ class OriginationAddressFetcherChannel(FetcherChannel[OperationData, str]):
 
 class OriginationHashFetcherChannel(FetcherChannel[OperationData, int]):
     async def fetch(self) -> None:
+        if not self._filter:
+            self._head = self._last_level
+            self._offset = self._last_level
+            return
+
         originations = await self._datasource.get_originations(
             code_hashes=self._filter,
             offset=self._offset,
@@ -158,6 +168,11 @@ class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
         self._field = field
 
     async def fetch(self) -> None:
+        if not self._filter:
+            self._head = self._last_level
+            self._offset = self._last_level
+            return
+
         transactions = await self._datasource.get_transactions(
             field=self._field,
             addresses=self._filter,
@@ -192,6 +207,11 @@ class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
         self._field = field
 
     async def fetch(self) -> None:
+        if not self._filter:
+            self._head = self._last_level
+            self._offset = self._last_level
+            return
+
         transactions = await self._datasource.get_transactions(
             field=self._field,
             addresses=None,

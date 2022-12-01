@@ -61,14 +61,11 @@ def save_crashdump(error: Exception) -> str:
 
 
 class FrameworkException(AssertionError, RuntimeError):
-    message: str
-
-    def __init__(self, *args: Any) -> None:
-        super().__init__(self.message, *args)
+    pass
 
 
 class ConfigInitializationException(FrameworkException):
-    message = 'Some config preparation stage was skipped. See `DipDupConfig.initialize`.'
+    """Some config preparation stage was skipped. See `DipDupConfig.initialize`."""
 
 
 class Error(ABC, FrameworkException):

@@ -1,0 +1,31 @@
+spec_version: 1.2
+package: demo_hic_et_nunc
+
+contracts:
+  by_address: 
+    address: KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton
+  by_code_hash:
+    code_hash: -1585533315
+  by_code_hash_address:
+    code_hash: KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
+
+datasources:
+  tzkt_replay:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
+
+indexes:
+  test:
+    kind: operation
+    datasource: tzkt_replay
+    types:
+      - origination
+      - transaction
+      - migration
+    contracts:
+      - by_address
+      - by_code_hash
+      - by_code_hash_address
+    handlers: []

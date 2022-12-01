@@ -112,11 +112,11 @@ async def get_transaction_filters(
     for contract in config.contracts:
         if contract.address:
             addresses.add(contract.address)
-        if isinstance(contract.code_hash, str):
+        if isinstance(contract.code_hash, int):
+            hashes.add(contract.code_hash)
+        elif isinstance(contract.code_hash, str):
             code_hash, _ = await datasource.get_contract_hashes(contract.code_hash)
             hashes.add(code_hash)
-        elif isinstance(contract.code_hash, int):
-            hashes.add(contract.code_hash)
 
     return addresses, hashes
 
@@ -146,7 +146,10 @@ async def get_origination_filters(
                     hashes.add(code_hash)
 
             if pattern_config.source:
-                # NOTE: Notify about `code_hash`
+                _logger.warning(
+                    '`source -> address` filter significantly hurts indexing performance; '
+                    'consider using `originated_contract -> code_hash` instead'
+                )
                 if address := pattern_config.source.address:
                     async for batch in datasource.iter_originated_contracts(address):
                         addresses.update(batch)
@@ -154,12 +157,25 @@ async def get_origination_filters(
                     raise NotImplementedError
 
             if pattern_config.similar_to:
-                # NOTE: Notify about `code_hash`
-                if address := pattern_config.similar_to.address:
-                    async for batch in datasource.iter_similar_contracts(address, pattern_config.strict):
-                        addresses.update(batch)
-                if code_hash := pattern_config.similar_to.code_hash:
-                    raise NotImplementedError
+                address = pattern_config.similar_to.address
+                code_hash = pattern_config.similar_to.code_hash or address
+
+                if address:
+                    if pattern_config.strict:
+                        code_hash = address
+                    # TODO: Legacy, TzKT doesn't support filtering by type hash
+                    else:
+                        _logger.warning(
+                            '`similar_to -> address` filter significantly hurts indexing performance; '
+                            'consider using `originated_contract -> code_hash` instead'
+                        )
+                        async for batch in datasource.iter_similar_contracts(address, pattern_config.strict):
+                            addresses.update(batch)
+
+                elif code_hash := pattern_config.similar_to.code_hash:
+                    if isinstance(code_hash, str):
+                        code_hash, _ = await datasource.get_contract_hashes(code_hash)
+                    hashes.add(code_hash)
 
     return addresses, hashes
 
