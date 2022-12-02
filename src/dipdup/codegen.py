@@ -15,7 +15,6 @@ from pathlib import Path
 from shutil import rmtree
 from shutil import which
 from typing import Any
-from typing import TypeGuard
 from typing import cast
 
 import orjson as json
@@ -28,11 +27,9 @@ from dipdup.config import DipDupConfig
 from dipdup.config import EventIndexConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationHandlerPatternConfigU
-from dipdup.config import OperationHandlerTransactionPatternConfig
+from dipdup.config import OperationHandlerPatternConfigU as PatternConfigU
+from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
-from dipdup.config import PatternConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.config import UnknownEventHandlerConfig
@@ -55,18 +52,6 @@ PYTHON_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 CALLBACK_TEMPLATE = 'callback.py.j2'
-
-
-def _is_typed_transaction(config: PatternConfig) -> TypeGuard[OperationHandlerTransactionPatternConfig]:
-    if isinstance(config, OperationHandlerTransactionPatternConfig):
-        return config.destination is not None and config.entrypoint is not None
-    return False
-
-
-def _is_typed_origination(config: PatternConfig) -> TypeGuard[OperationHandlerOriginationPatternConfig]:
-    if isinstance(config, OperationHandlerOriginationPatternConfig):
-        return config.originated_contract is not None or config.similar_to is not None
-    return False
 
 
 def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
@@ -160,17 +145,13 @@ class CodeGenerator:
 
     async def _fetch_operation_pattern_schema(
         self,
-        operation_pattern_config: OperationHandlerPatternConfigU,
+        operation_pattern_config: PatternConfigU,
         datasource_config: TzktDatasourceConfig,
     ) -> None:
-        if _is_typed_transaction(operation_pattern_config) and operation_pattern_config.destination:
-            contract_config = operation_pattern_config.destination
-        elif _is_typed_origination(operation_pattern_config):
-            contract_config = operation_pattern_config.contract_config
-        else:
+        contract_config = operation_pattern_config.typed_contract
+        if contract_config is None:
             return
 
-        self._logger.debug(contract_config)
         contract_schemas = await self._get_schema(datasource_config, contract_config)
 
         contract_schemas_path = self._pkg.schemas / contract_config.module_name
@@ -180,7 +161,7 @@ class CodeGenerator:
 
         write(storage_schema_path, json.dumps(storage_schema, option=json.OPT_INDENT_2))
 
-        if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
+        if not isinstance(operation_pattern_config, TransactionPatternConfig):
             return
 
         parameter_schemas_path = contract_schemas_path / 'parameter'
@@ -214,7 +195,7 @@ class CodeGenerator:
 
     async def _fetch_big_map_index_schema(self, index_config: BigMapIndexConfig) -> None:
         for handler_config in index_config.handlers:
-            contract_config = handler_config.contract_config
+            contract_config = handler_config.contract
 
             contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
 

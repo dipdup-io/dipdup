@@ -47,7 +47,7 @@ def match_big_map(
     """Match single big map diff with pattern"""
     if handler_config.path != big_map.path:
         return False
-    if handler_config.contract_config.address != big_map.contract_address:
+    if handler_config.contract.address != big_map.contract_address:
         return False
     return True
 

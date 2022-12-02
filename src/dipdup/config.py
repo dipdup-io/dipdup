@@ -609,20 +609,25 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        if self.entrypoint and self.destination:
-            module_name = self.destination.module_name
+        if self.typed_contract:
+            module_name = self.typed_contract.module_name
             yield 'dipdup.models', 'Transaction'
-            yield self.format_parameter_import(package, module_name, self.entrypoint, self.alias)
+            yield self.format_parameter_import(
+                package,
+                module_name,
+                cast(str, self.entrypoint),
+                self.alias,
+            )
             yield self.format_storage_import(package, module_name)
         else:
             yield self.format_untyped_operation_import()
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        if self.entrypoint and self.destination:
-            module_name = self.destination.module_name
+        if self.typed_contract:
+            module_name = self.typed_contract.module_name
             yield self.format_operation_argument(
                 module_name,
-                self.entrypoint,
+                cast(str, self.entrypoint),
                 self.optional,
                 self.alias,
             )
@@ -633,6 +638,12 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
                 self.optional,
                 self.alias,
             )
+
+    @property
+    def typed_contract(self) -> ContractConfig | None:
+        if self.entrypoint and self.destination:
+            return self.destination
+        return None
 
 
 @dataclass
@@ -667,25 +678,17 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
         return False
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        if self.originated_contract:
-            module_name = self.originated_contract.module_name
-        elif self.similar_to:
-            module_name = self.similar_to.module_name
-        elif self.source:
-            yield 'dipdup.models', 'OperationData'
-            return
+        if self.typed_contract:
+            module_name = self.typed_contract.module_name
+            yield 'dipdup.models', 'Origination'
+            yield self.format_storage_import(package, module_name)
         else:
-            raise ConfigurationError(
-                'Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields'
-            )
-
-        yield 'dipdup.models', 'Origination'
-        yield self.format_storage_import(package, module_name)
+            yield 'dipdup.models', 'OperationData'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        if self.originated_contract or self.similar_to:
+        if self.typed_contract:
             yield self.format_origination_argument(
-                self.module_name,
+                self.typed_contract.module_name,
                 self.optional,
                 self.alias,
             )
@@ -698,18 +701,15 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
             )
 
     @property
-    def module_name(self) -> str:
-        return self.contract_config.module_name
-
-    @property
-    def contract_config(self) -> ContractConfig:
+    def typed_contract(self) -> ContractConfig | None:
+        # FIXME: Code hashes
         if self.originated_contract:
             return self.originated_contract
         if self.similar_to:
             return self.similar_to
-        if self.source:
-            return self.source
-        raise FrameworkException('Invalid origination pattern; check earlier')
+        # if self.source:
+        #     return self.source
+        return None
 
 
 @dataclass
@@ -947,23 +947,19 @@ class OperationIndexConfig(IndexConfig):
             handler_config.initialize_callback_fn(package)
 
             for pattern_config in handler_config.pattern:
+                typed_contract = pattern_config.typed_contract
+                if not typed_contract:
+                    continue
+
+                module_name = typed_contract.module_name
+                pattern_config.initialize_storage_cls(package, module_name)
+
                 if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    if not (pattern_config.entrypoint and pattern_config.destination):
-                        continue
-
-                    module_name = pattern_config.destination.module_name
-                    pattern_config.initialize_parameter_cls(package, module_name, pattern_config.entrypoint)
-                    pattern_config.initialize_storage_cls(package, module_name)
-
-                elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                    if not (pattern_config.originated_contract or pattern_config.similar_to):
-                        continue
-
-                    module_name = pattern_config.module_name
-                    pattern_config.initialize_storage_cls(package, module_name)
-
-                else:
-                    raise NotImplementedError
+                    pattern_config.initialize_parameter_cls(
+                        package,
+                        module_name,
+                        cast(str, pattern_config.entrypoint),
+                    )
 
 
 @dataclass
@@ -1005,18 +1001,12 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         yield 'dipdup.models', 'BigMapDiff'
         yield package, 'models as models'
 
-        yield self.format_key_import(package, self.contract_config.module_name, self.path)
-        yield self.format_value_import(package, self.contract_config.module_name, self.path)
+        yield self.format_key_import(package, self.contract.module_name, self.path)
+        yield self.format_value_import(package, self.contract.module_name, self.path)
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
         yield self.format_big_map_diff_argument(self.path)
-
-    @property
-    def contract_config(self) -> ContractConfig:
-        if not isinstance(self.contract, ContractConfig):
-            raise ConfigInitializationException
-        return self.contract
 
     @property
     def key_type_cls(self) -> type:
@@ -1035,11 +1025,11 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         _logger.debug('Registering big map types for path `%s`', self.path)
         path = pascal_to_snake(self.path.replace('.', '_'))
 
-        module_name = f'{package}.types.{self.contract_config.module_name}.big_map.{path}_key'
+        module_name = f'{package}.types.{self.contract.module_name}.big_map.{path}_key'
         cls_name = snake_to_pascal(path + '_key')
         self._key_type_cls = import_from(module_name, cls_name)
 
-        module_name = f'{package}.types.{self.contract_config.module_name}.big_map.{path}_value'
+        module_name = f'{package}.types.{self.contract.module_name}.big_map.{path}_value'
         cls_name = snake_to_pascal(path + '_value')
         self._value_type_cls = import_from(module_name, cls_name)
 
@@ -1067,7 +1057,7 @@ class BigMapIndexConfig(IndexConfig):
 
     @property
     def contracts(self) -> set[ContractConfig]:
-        return {handler_config.contract_config for handler_config in self.handlers}
+        return {handler_config.contract for handler_config in self.handlers}
 
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:
@@ -1742,7 +1732,7 @@ class DipDupConfig:
                 index_config.subscriptions.add(BigMapSubscription())
             else:
                 for big_map_handler_config in index_config.handlers:
-                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                    address, path = big_map_handler_config.contract.address, big_map_handler_config.path
                     index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
 
         elif isinstance(index_config, HeadIndexConfig):
