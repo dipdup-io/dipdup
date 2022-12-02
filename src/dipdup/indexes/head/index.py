@@ -1,10 +1,5 @@
-from collections import deque
-from typing import NoReturn
-
 from dipdup.config import HeadHandlerConfig
 from dipdup.config import HeadIndexConfig
-from dipdup.context import DipDupContext
-from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
@@ -12,16 +7,14 @@ from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.models import HeadBlockData
 
+HeadQueueItem = HeadBlockData
 
-class HeadIndex(Index[HeadIndexConfig]):
+
+class HeadIndex(Index[HeadIndexConfig, HeadQueueItem]):
     message_type: MessageType = MessageType.head
 
-    def __init__(self, ctx: DipDupContext, config: HeadIndexConfig, datasource: TzktDatasource) -> None:
-        super().__init__(ctx, config, datasource)
-        self._queue: deque[HeadBlockData] = deque()
-
-    async def _create_fetcher(self, first_level: int, last_level: int) -> NoReturn:
-        raise NotImplementedError('HeadIndex has no fetcher')
+    def push_head(self, events: HeadQueueItem) -> None:
+        self.push_realtime_message(events)
 
     async def _synchronize(self, sync_level: int) -> None:
         self._logger.info('Setting index level to %s and moving on', sync_level)
@@ -59,6 +52,3 @@ class HeadIndex(Index[HeadIndexConfig]):
             head.hash,
             head,
         )
-
-    def push_head(self, head: HeadBlockData) -> None:
-        self._queue.append(head)

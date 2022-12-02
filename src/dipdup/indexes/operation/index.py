@@ -24,6 +24,8 @@ from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger('dipdup_matcher')
 
+OperationQueueItem = tuple[OperationSubgroup, ...]
+
 
 def extract_operation_subgroups(
     operations: Iterable[OperationData],
@@ -35,22 +37,14 @@ def extract_operation_subgroups(
     levels: set[int] = set()
     operation_subgroups: defaultdict[tuple[str, int], deque[OperationData]] = defaultdict(deque)
 
-    for operation in operations:
+    _operation_index = -1
+    for _operation_index, operation in enumerate(operations):
         # NOTE: Filtering out operations that are not part of any index
         if operation.type == 'transaction':
-            if (
-                (entrypoints and operation.entrypoint not in entrypoints)
-                or (
-                    addresses
-                    and operation.sender_address not in addresses
-                    and operation.target_address not in addresses
-                )
-                or (
-                    code_hashes
-                    and operation.sender_code_hash not in code_hashes
-                    or operation.target_code_hash not in code_hashes
-                )
-            ):
+            if entrypoints and operation.entrypoint not in entrypoints:
+                filtered += 1
+                continue
+            if addresses and operation.sender_address not in addresses and operation.target_address not in addresses:
                 filtered += 1
                 continue
 
@@ -59,7 +53,16 @@ def extract_operation_subgroups(
         levels.add(operation.level)
 
     if len(levels) > 1:
-        raise FrameworkException('Operations in batch are not in the same level')
+        raise RuntimeError('Operations in batch are not in the same level')
+
+    _logger.debug(
+        'Extracted %d subgroups (%d operations, %d filtered by %s entrypoints and %s addresses)',
+        len(operation_subgroups),
+        _operation_index + 1,
+        filtered,
+        len(entrypoints),
+        len(addresses),
+    )
 
     for key, operations in operation_subgroups.items():
         hash_, counter = key
@@ -72,18 +75,15 @@ def extract_operation_subgroups(
         )
 
 
-class OperationIndex(Index[OperationIndexConfig]):
+class OperationIndex(Index[OperationIndexConfig, OperationQueueItem]):
     message_type = MessageType.operation
 
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: deque[tuple[OperationSubgroup, ...]] = deque()
         self._contract_hashes: dict[str, tuple[int, int]] = {}
 
-    def push_operations(self, operation_subgroups: tuple[OperationSubgroup, ...]) -> None:
-        self._queue.append(operation_subgroups)
-        if Metrics.enabled:
-            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+    def push_operations(self, operation_subgroups: OperationQueueItem) -> None:
+        self.push_realtime_message(operation_subgroups)
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""

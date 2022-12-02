@@ -10,6 +10,8 @@ class LoggingValues(Enum):
 
 
 class MessageType(Enum):
+    """Enum for realtime message types"""
+
     operation = 'operation'
     big_map = 'big_map'
     head = 'head'
@@ -18,6 +20,8 @@ class MessageType(Enum):
 
 
 class IndexType(Enum):
+    """Enum for `dipdup.models.Index`"""
+
     operation = 'operation'
     big_map = 'big_map'
     head = 'head'

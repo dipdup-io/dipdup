@@ -1,10 +1,7 @@
-from collections import deque
 from contextlib import ExitStack
 
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
-from dipdup.context import DipDupContext
-from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -15,21 +12,16 @@ from dipdup.indexes.token_transfer.matcher import match_token_transfers
 from dipdup.models import TokenTransferData
 from dipdup.prometheus import Metrics
 
+TokenTransferQueueItem = tuple[TokenTransferData, ...]
 
-class TokenTransferIndex(Index[TokenTransferIndexConfig]):
+
+class TokenTransferIndex(Index[TokenTransferIndexConfig, TokenTransferQueueItem]):
     message_type = MessageType.token_transfer
 
-    def __init__(self, ctx: DipDupContext, config: TokenTransferIndexConfig, datasource: TzktDatasource) -> None:
-        super().__init__(ctx, config, datasource)
-        self._queue: deque[tuple[TokenTransferData, ...]] = deque()
+    def push_token_transfers(self, token_transfers: TokenTransferQueueItem) -> None:
+        self.push_realtime_message(token_transfers)
 
-    def push_token_transfers(self, token_transfers: tuple[TokenTransferData, ...]) -> None:
-        self._queue.append(token_transfers)
-
-        if Metrics.enabled:
-            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
-
-    async def _create_fetcher(self, first_level: int, last_level: int) -> TokenTransferFetcher:
+    def _create_fetcher(self, first_level: int, last_level: int) -> TokenTransferFetcher:
         token_addresses: set[str] = set()
         token_ids: set[int] = set()
         from_addresses: set[str] = set()
@@ -65,7 +57,7 @@ class TokenTransferIndex(Index[TokenTransferIndexConfig]):
 
         first_level = index_level + 1
         self._logger.info('Fetching token transfers from level %s to %s', first_level, sync_level)
-        fetcher = await self._create_fetcher(first_level, sync_level)
+        fetcher = self._create_fetcher(first_level, sync_level)
 
         async for level, token_transfers in fetcher.fetch_by_level():
             with ExitStack() as stack:

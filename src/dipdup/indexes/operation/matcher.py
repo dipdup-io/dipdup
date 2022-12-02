@@ -8,8 +8,8 @@ from typing import cast
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import OperationHandlerConfig
-from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationHandlerTransactionPatternConfig
+from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.exceptions import FrameworkException
@@ -48,7 +48,7 @@ def prepare_operation_handler_args(
         if operation_data is None:
             args.append(None)
 
-        elif isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+        elif isinstance(pattern_config, TransactionPatternConfig):
             if not pattern_config.entrypoint:
                 args.append(operation_data)
                 continue
@@ -66,7 +66,7 @@ def prepare_operation_handler_args(
             )
             args.append(typed_transaction)
 
-        elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+        elif isinstance(pattern_config, OriginationPatternConfig):
             if not (pattern_config.originated_contract or pattern_config.similar_to):
                 args.append(operation_data)
                 continue
@@ -87,10 +87,11 @@ def prepare_operation_handler_args(
 
 
 def match_transaction(
-    pattern_config: OperationHandlerTransactionPatternConfig,
+    pattern_config: TransactionPatternConfig,
     operation: OperationData,
 ) -> bool:
     """Match a single transaction with pattern"""
+    logging.info('match_transaction', pattern_config, operation)
     if pattern_config.entrypoint:
         if pattern_config.entrypoint != operation.entrypoint:
             return False
@@ -100,24 +101,28 @@ def match_transaction(
     if pattern_config.source:
         if pattern_config.source.address != operation.sender_address:
             return False
+    # TODO: code hash
     return True
 
 
 def match_origination(
-    pattern_config: OperationHandlerOriginationPatternConfig,
+    pattern_config: OriginationPatternConfig,
     operation: OperationData,
 ) -> bool:
-    if pattern_config.source:
-        if pattern_config.source.address != operation.sender_address:
+    if source := pattern_config.source:
+        if source.address not in (operation.sender_address, None):
             return False
-    if pattern_config.originated_contract:
-        if pattern_config.originated_contract.address != operation.originated_contract_address:
+    if contract := pattern_config.originated_contract:
+        if contract.address not in (operation.originated_contract_address, None):
             return False
-    if pattern_config.similar_to:
-        address = pattern_config.similar_to.address
-        assert address
-        # FIXME
-        raise NotImplementedError('FIXME: missing hashes')
+    if similar_to := pattern_config.similar_to:
+        if similar_to.address not in (operation.originated_contract_address, None):
+            return False
+
+        # address = pattern_config.similar_to.address
+        # assert address
+        # # FIXME
+        # raise NotImplementedError('FIXME: missing hashes')
         # code_hash, type_hash = self._datasource.get_contract_hashes(address)
         # if pattern_config.strict:
         #     if code_hash != operation.originated_contract_code_hash:
@@ -147,15 +152,16 @@ def match_operation_subgroup(
             operation = operations[subgroup_index]
             pattern_config = handler_config.pattern[pattern_index]
 
-            if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+            if isinstance(pattern_config, TransactionPatternConfig):
                 matched = match_transaction(pattern_config, operation)
-            elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                if pattern_config.origination_processed(cast(str, operation.originated_contract_address)):
+            elif isinstance(pattern_config, OriginationPatternConfig):
+                matched = match_origination(pattern_config, operation)
+
+                # TODO: Explain what's going on here
+                if matched and pattern_config.origination_processed(cast(str, operation.originated_contract_code_hash)):
                     matched = False
-                else:
-                    matched = match_origination(pattern_config, operation)
             else:
-                raise FrameworkException(f'Unknown operation pattern: {pattern_config}')
+                raise FrameworkException('Unsupported pattern type')
 
             if matched:
                 matched_operations.append(operation)

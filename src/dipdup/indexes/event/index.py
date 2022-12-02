@@ -1,13 +1,10 @@
 import logging
-from collections import deque
 from contextlib import ExitStack
 from typing import Any
 
 from dipdup.config import EventHandlerConfig
 from dipdup.config import EventHandlerConfigU
 from dipdup.config import EventIndexConfig
-from dipdup.context import DipDupContext
-from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -22,19 +19,14 @@ from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger(__name__)
 
+EventQueueItem = tuple[EventData, ...]
 
-class EventIndex(Index[EventIndexConfig]):
+
+class EventIndex(Index[EventIndexConfig, EventQueueItem]):
     message_type = MessageType.event
 
-    def __init__(self, ctx: DipDupContext, config: EventIndexConfig, datasource: TzktDatasource) -> None:
-        super().__init__(ctx, config, datasource)
-        self._queue: deque[tuple[EventData, ...]] = deque()
-
-    def push_events(self, events: tuple[EventData, ...]) -> None:
-        self._queue.append(events)
-
-        if Metrics.enabled:
-            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+    def push_events(self, events: EventQueueItem) -> None:
+        self.push_realtime_message(events)
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
@@ -52,7 +44,7 @@ class EventIndex(Index[EventIndexConfig]):
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_events(events, message_level)
 
-    async def _create_fetcher(self, first_level: int, last_level: int) -> EventFetcher:
+    def _create_fetcher(self, first_level: int, last_level: int) -> EventFetcher:
         event_addresses = self._get_event_addresses()
         event_tags = self._get_event_tags()
         return EventFetcher(
@@ -71,7 +63,7 @@ class EventIndex(Index[EventIndexConfig]):
 
         first_level = index_level + 1
         self._logger.info('Fetching contract events from level %s to %s', first_level, sync_level)
-        fetcher = await self._create_fetcher(first_level, sync_level)
+        fetcher = self._create_fetcher(first_level, sync_level)
 
         async for level, events in fetcher.fetch_by_level():
             with ExitStack() as stack:

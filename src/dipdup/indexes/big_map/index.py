@@ -1,12 +1,9 @@
-from collections import deque
 from contextlib import ExitStack
 from datetime import datetime
 from typing import Any
 
 from dipdup.config import BigMapHandlerConfig
 from dipdup.config import BigMapIndexConfig
-from dipdup.context import DipDupContext
-from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
@@ -22,19 +19,15 @@ from dipdup.models import BigMapData
 from dipdup.models import BigMapDiff
 from dipdup.prometheus import Metrics
 
+BigMapQueueItem = tuple[BigMapData, ...]
 
-class BigMapIndex(Index[BigMapIndexConfig]):
+
+class BigMapIndex(Index[BigMapIndexConfig, BigMapQueueItem]):
     message_type = MessageType.big_map
 
-    def __init__(self, ctx: DipDupContext, config: BigMapIndexConfig, datasource: TzktDatasource) -> None:
-        super().__init__(ctx, config, datasource)
-        self._queue: deque[tuple[BigMapData, ...]] = deque()
-
-    def push_big_maps(self, big_maps: tuple[BigMapData, ...]) -> None:
-        self._queue.append(big_maps)
-
-        if Metrics.enabled:
-            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+    def push_big_maps(self, big_maps: BigMapQueueItem) -> None:
+        """Push big map diffs to queue"""
+        self.push_realtime_message(big_maps)
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""

@@ -1,4 +1,5 @@
 import logging
+from abc import ABC
 from abc import abstractmethod
 from collections import deque
 from contextlib import ExitStack
@@ -30,7 +31,8 @@ from dipdup.utils import FormattedLogger
 
 _logger = logging.getLogger(__name__)
 
-ConfigT = TypeVar('ConfigT', bound=ResolvedIndexConfigU)
+IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
+QueueItemT = TypeVar('QueueItemT', bound=Any)
 
 
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
@@ -47,22 +49,39 @@ def extract_level(
     return batch_levels.pop()[0]
 
 
-class Index(Generic[ConfigT]):
+class Index(ABC, Generic[IndexConfigT, QueueItemT]):
     """Base class for index implementations
 
     Provides common interface for managing index state and switching between sync and realtime modes.
     """
 
     message_type: MessageType
-    _queue: deque[Any]
 
-    def __init__(self, ctx: DipDupContext, config: ConfigT, datasource: TzktDatasource) -> None:
+    def __init__(self, ctx: DipDupContext, config: IndexConfigT, datasource: TzktDatasource) -> None:
         self._ctx = ctx
         self._config = config
         self._datasource = datasource
+        self._queue: deque[QueueItemT] = deque()
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
         self._state: Optional[models.Index] = None
+
+    def push_realtime_message(self, message: QueueItemT) -> None:
+        """Push message to the queue"""
+        self._queue.append(message)
+
+        if Metrics.enabled:
+            Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+
+    @abstractmethod
+    async def _synchronize(self, sync_level: int) -> None:
+        """Process historical data before switching to realtime mode"""
+        ...
+
+    @abstractmethod
+    async def _process_queue(self) -> None:
+        """Process realtime queue"""
+        ...
 
     @property
     def name(self) -> str:
@@ -138,7 +157,7 @@ class Index(Generic[ConfigT]):
         sync_level = self.get_sync_level()
 
         if index_level < sync_level:
-            self._logger.info('Index is behind datasource level, syncing: %s -> %s', index_level, sync_level)
+            self._logger.info('Index is behind the datasource level, syncing: %s -> %s', index_level, sync_level)
             self._queue.clear()
 
             with ExitStack() as stack:
@@ -154,14 +173,6 @@ class Index(Generic[ConfigT]):
         else:
             return False
         return True
-
-    @abstractmethod
-    async def _synchronize(self, sync_level: int) -> None:
-        ...
-
-    @abstractmethod
-    async def _process_queue(self) -> None:
-        ...
 
     async def _enter_sync_state(self, head_level: int) -> Optional[int]:
         # NOTE: Final state for indexes with `last_level`
