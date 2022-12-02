@@ -31,7 +31,7 @@ def extract_operation_subgroups(
     operations: Iterable[OperationData],
     addresses: set[str],
     entrypoints: set[str | None],
-    code_hashes: set[int | str],
+    code_hashes: set[int],
 ) -> Iterator[OperationSubgroup]:
     filtered: int = 0
     levels: set[int] = set()
