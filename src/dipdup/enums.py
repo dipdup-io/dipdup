@@ -45,7 +45,7 @@ class IndexStatus(Enum):
     NEW = 'NEW'
     SYNCING = 'SYNCING'
     REALTIME = 'REALTIME'
-    # TODO: Not used, remove later
+    # TODO: Remove in 7.0
     ROLLBACK = 'ROLLBACK'
     # TODO: Rename to DISABLED or something one day
     ONESHOT = 'ONESHOT'

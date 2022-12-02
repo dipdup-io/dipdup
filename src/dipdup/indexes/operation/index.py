@@ -75,9 +75,10 @@ def extract_operation_subgroups(
         )
 
 
-class OperationIndex(Index[OperationIndexConfig, OperationQueueItem]):
-    message_type = MessageType.operation
-
+class OperationIndex(
+    Index[OperationIndexConfig, OperationQueueItem, TzktDatasource],
+    message_type=MessageType.operation,
+):
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
         self._contract_hashes: dict[str, tuple[int, int]] = {}

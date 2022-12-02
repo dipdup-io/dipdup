@@ -16,7 +16,7 @@ from dipdup.config import HeadIndexConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.datasource import IndexDatasource
 from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
 from dipdup.exceptions import FrameworkException
@@ -32,8 +32,8 @@ from dipdup.utils import FormattedLogger
 _logger = logging.getLogger(__name__)
 
 IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
-QueueItemT = TypeVar('QueueItemT', bound=Any)
-
+IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
+IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource)
 
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
 
@@ -49,7 +49,7 @@ def extract_level(
     return batch_levels.pop()[0]
 
 
-class Index(ABC, Generic[IndexConfigT, QueueItemT]):
+class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
     """Base class for index implementations
 
     Provides common interface for managing index state and switching between sync and realtime modes.
@@ -57,16 +57,25 @@ class Index(ABC, Generic[IndexConfigT, QueueItemT]):
 
     message_type: MessageType
 
-    def __init__(self, ctx: DipDupContext, config: IndexConfigT, datasource: TzktDatasource) -> None:
+    def __init_subclass__(cls, message_type: MessageType) -> None:
+        cls.message_type = message_type
+        return super().__init_subclass__()
+
+    def __init__(
+        self,
+        ctx: DipDupContext,
+        config: IndexConfigT,
+        datasource: IndexDatasourceT,
+    ) -> None:
         self._ctx = ctx
         self._config = config
         self._datasource = datasource
-        self._queue: deque[QueueItemT] = deque()
+        self._queue: deque[IndexQueueItemT] = deque()
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
         self._state: Optional[models.Index] = None
 
-    def push_realtime_message(self, message: QueueItemT) -> None:
+    def push_realtime_message(self, message: IndexQueueItemT) -> None:
         """Push message to the queue"""
         self._queue.append(message)
 
@@ -88,7 +97,7 @@ class Index(ABC, Generic[IndexConfigT, QueueItemT]):
         return self._config.name
 
     @property
-    def datasource(self) -> TzktDatasource:
+    def datasource(self) -> IndexDatasourceT:
         return self._datasource
 
     @property

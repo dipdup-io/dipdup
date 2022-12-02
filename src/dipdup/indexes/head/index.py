@@ -1,5 +1,6 @@
 from dipdup.config import HeadHandlerConfig
 from dipdup.config import HeadIndexConfig
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
@@ -10,9 +11,10 @@ from dipdup.models import HeadBlockData
 HeadQueueItem = HeadBlockData
 
 
-class HeadIndex(Index[HeadIndexConfig, HeadQueueItem]):
-    message_type: MessageType = MessageType.head
-
+class HeadIndex(
+    Index[HeadIndexConfig, HeadQueueItem, TzktDatasource],
+    message_type=MessageType.head,
+):
     def push_head(self, events: HeadQueueItem) -> None:
         self.push_realtime_message(events)
 

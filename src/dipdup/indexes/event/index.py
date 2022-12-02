@@ -5,6 +5,7 @@ from typing import Any
 from dipdup.config import EventHandlerConfig
 from dipdup.config import EventHandlerConfigU
 from dipdup.config import EventIndexConfig
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -22,9 +23,10 @@ _logger = logging.getLogger(__name__)
 EventQueueItem = tuple[EventData, ...]
 
 
-class EventIndex(Index[EventIndexConfig, EventQueueItem]):
-    message_type = MessageType.event
-
+class EventIndex(
+    Index[EventIndexConfig, EventQueueItem, TzktDatasource],
+    message_type=MessageType.event,
+):
     def push_events(self, events: EventQueueItem) -> None:
         self.push_realtime_message(events)
 

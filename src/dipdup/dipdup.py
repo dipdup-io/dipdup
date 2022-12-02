@@ -69,7 +69,7 @@ class IndexDispatcher:
         self._ctx = ctx
 
         self._logger = logging.getLogger('dipdup')
-        self._indexes: Dict[str, Index[Any, Any]] = {}
+        self._indexes: Dict[str, Index[Any, Any, Any]] = {}
 
         self._entrypoint_filter: set[str | None] = set()
         self._address_filter: set[str] = set()

@@ -4,6 +4,7 @@ from typing import Any
 
 from dipdup.config import BigMapHandlerConfig
 from dipdup.config import BigMapIndexConfig
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
@@ -22,9 +23,10 @@ from dipdup.prometheus import Metrics
 BigMapQueueItem = tuple[BigMapData, ...]
 
 
-class BigMapIndex(Index[BigMapIndexConfig, BigMapQueueItem]):
-    message_type = MessageType.big_map
-
+class BigMapIndex(
+    Index[BigMapIndexConfig, BigMapQueueItem, TzktDatasource],
+    message_type=MessageType.big_map,
+):
     def push_big_maps(self, big_maps: BigMapQueueItem) -> None:
         """Push big map diffs to queue"""
         self.push_realtime_message(big_maps)

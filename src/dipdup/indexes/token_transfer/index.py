@@ -2,6 +2,7 @@ from contextlib import ExitStack
 
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -15,9 +16,10 @@ from dipdup.prometheus import Metrics
 TokenTransferQueueItem = tuple[TokenTransferData, ...]
 
 
-class TokenTransferIndex(Index[TokenTransferIndexConfig, TokenTransferQueueItem]):
-    message_type = MessageType.token_transfer
-
+class TokenTransferIndex(
+    Index[TokenTransferIndexConfig, TokenTransferQueueItem, TzktDatasource],
+    message_type=MessageType.token_transfer,
+):
     def push_token_transfers(self, token_transfers: TokenTransferQueueItem) -> None:
         self.push_realtime_message(token_transfers)
 
