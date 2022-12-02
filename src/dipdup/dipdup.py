@@ -248,39 +248,34 @@ class IndexDispatcher:
                 operations,
                 addresses=self._address_filter,
                 entrypoints=self._entrypoint_filter,
-                code_hashes=self._code_hash_filter,
+                # FIXME:
+                code_hashes=self._code_hash_filter,  # type: ignore
             )
         )
 
         if not operation_subgroups:
             return
 
-        operation_indexes = (
-            i for i in self._indexes.values() if isinstance(i, OperationIndex) and i.datasource == datasource
-        )
-        for index in operation_indexes:
-            index.push_operations(operation_subgroups)
+        for index in self._indexes.values():
+            if isinstance(index, OperationIndex) and index.datasource == datasource:
+                index.push_operations(operation_subgroups)
 
     async def _on_token_transfers(
         self, datasource: IndexDatasource, token_transfers: tuple[TokenTransferData, ...]
     ) -> None:
-        token_transfer_indexes = (
-            i for i in self._indexes.values() if isinstance(i, TokenTransferIndex) and i.datasource == datasource
-        )
-        for index in token_transfer_indexes:
-            index.push_token_transfers(token_transfers)
+        for index in self._indexes.values():
+            if isinstance(index, TokenTransferIndex) and index.datasource == datasource:
+                index.push_token_transfers(token_transfers)
 
     async def _on_big_maps(self, datasource: IndexDatasource, big_maps: tuple[BigMapData, ...]) -> None:
-        big_map_indexes = (
-            i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource
-        )
-        for index in big_map_indexes:
-            index.push_big_maps(big_maps)
+        for index in self._indexes.values():
+            if isinstance(index, BigMapIndex) and index.datasource == datasource:
+                index.push_big_maps(big_maps)
 
     async def _on_events(self, datasource: IndexDatasource, events: tuple[EventData, ...]) -> None:
-        event_indexes = (i for i in self._indexes.values() if isinstance(i, EventIndex) and i.datasource == datasource)
-        for index in event_indexes:
-            index.push_events(events)
+        for index in self._indexes.values():
+            if isinstance(index, EventIndex) and index.datasource == datasource:
+                index.push_events(events)
 
     async def _on_rollback(
         self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int
