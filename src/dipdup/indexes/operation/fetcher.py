@@ -92,6 +92,7 @@ async def get_origination_filters(
                     async for batch in datasource.iter_originated_contracts(address):
                         addresses.update(batch)
                 if code_hash := pattern_config.source.code_hash:
+                    # TODO: Match by code hash
                     raise NotImplementedError
 
             if pattern_config.similar_to:
@@ -101,10 +102,10 @@ async def get_origination_filters(
                 if address:
                     if pattern_config.strict:
                         code_hash = address
-                    # TODO: Legacy, TzKT doesn't support filtering by type hash
+                    # TODO: Legacy, TzKT doesn't support filtering by originated contract type hash
                     else:
                         _logger.warning(
-                            '`similar_to -> address` filter significantly hurts indexing performance; '
+                            '`similar_to -> address` filter can significantly hurt indexing performance; '
                             'consider using `originated_contract -> code_hash` instead'
                         )
                         async for batch in datasource.iter_similar_contracts(address, pattern_config.strict):

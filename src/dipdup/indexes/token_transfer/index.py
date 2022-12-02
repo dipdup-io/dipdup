@@ -107,7 +107,7 @@ class TokenTransferIndex(Index[TokenTransferIndexConfig, TokenTransferQueueItem]
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,
-            # FIXME: missing `operation_id` field in API to identify operation
+            # NOTE: missing `operation_id` field in API to identify operation
             None,
             token_transfer,
         )

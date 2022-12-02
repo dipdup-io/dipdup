@@ -526,11 +526,11 @@ class TzktDatasource(IndexDatasource):
         params: dict[str, Any] = {
             'limit': limit or self.request_limit,
         }
-        if first_level is not None:
+        if first_level:
             params['level.ge'] = first_level
-        if last_level is not None:
+        if last_level:
             params['level.le'] = last_level
-        if offset is not None:
+        if offset:
             if cursor:
                 params['offset.cr'] = offset
             else:

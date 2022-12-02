@@ -74,7 +74,7 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
 
                 conn = get_connection()
                 await conn.execute_query('SELECT 1')
-            # FIXME: Logging
+            # FIXME: Poor logging
             except (OSError, CannotConnectNowError):
                 _logger.warning("Can't establish database connection, attempt %s/%s", attempt, timeout)
                 if attempt == timeout - 1:

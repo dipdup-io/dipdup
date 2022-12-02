@@ -34,5 +34,3 @@ indexes:
           - type: transaction
             destination: registry
             entrypoint: propose
-
-logging: verbose

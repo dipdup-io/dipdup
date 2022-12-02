@@ -67,7 +67,11 @@ def prepare_operation_handler_args(
             args.append(typed_transaction)
 
         elif isinstance(pattern_config, OriginationPatternConfig):
-            if not (pattern_config.originated_contract or pattern_config.similar_to):
+            if pattern_config.originated_contract:
+                pass
+            elif pattern_config.similar_to and pattern_config.similar_to.address:
+                pass
+            else:
                 args.append(operation_data)
                 continue
 
@@ -101,7 +105,9 @@ def match_transaction(
     if pattern_config.source:
         if pattern_config.source.address != operation.sender_address:
             return False
-    # TODO: code hash
+
+    # TODO: Match by code hash
+
     return True
 
 
@@ -119,17 +125,8 @@ def match_origination(
         if similar_to.address not in (operation.originated_contract_address, None):
             return False
 
-        # address = pattern_config.similar_to.address
-        # assert address
-        # # FIXME
-        # raise NotImplementedError('FIXME: missing hashes')
-        # code_hash, type_hash = self._datasource.get_contract_hashes(address)
-        # if pattern_config.strict:
-        #     if code_hash != operation.originated_contract_code_hash:
-        #         return False
-        # else:
-        #     if type_hash != operation.originated_contract_type_hash:
-        #         return False
+    # TODO: Match by code hash
+
     return True
 
 

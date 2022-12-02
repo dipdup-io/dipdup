@@ -231,7 +231,7 @@ async def test_bulk_create_update() -> None:
             )
             domains.append(domain)
 
-        # FIXME: Yes, the same level, why not
+        # NOTE: Yes, the same level, why not
         async with in_transaction(level=1000, index='test'):
             await domains_models.Domain.bulk_create(domains)
 
