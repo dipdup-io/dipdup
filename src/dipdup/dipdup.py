@@ -20,7 +20,6 @@ from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import event_hooks
@@ -89,7 +88,7 @@ class IndexDispatcher:
 
         for index in self._indexes.values():
             if isinstance(index, OperationIndex):
-                self._apply_filters(index._config)
+                await self._apply_filters(index)
 
         while True:
             if not spawn_datasources_event.is_set():
@@ -111,7 +110,7 @@ class IndexDispatcher:
                 indexes_spawned = True
 
                 if isinstance(index, OperationIndex):
-                    self._apply_filters(index._config)
+                    await self._apply_filters(index)
 
             if not indexes_spawned and self._every_index_is(IndexStatus.ONESHOT):
                 break
@@ -146,10 +145,11 @@ class IndexDispatcher:
 
             Metrics.set_indexes_count(active, synced, realtime)
 
-    def _apply_filters(self, index_config: OperationIndexConfig) -> None:
-        self._address_filter.update(index_config.address_filter)
-        self._entrypoint_filter.update(index_config.entrypoint_filter)
-        self._code_hash_filter.update(index_config.code_hash_filter)
+    async def _apply_filters(self, index: OperationIndex) -> None:
+        entrypoints, addresses, code_hashes = await index.get_filters()
+        self._entrypoint_filter.update(entrypoints)
+        self._address_filter.update(addresses)
+        self._code_hash_filter.update(code_hashes)
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         if not self._indexes:

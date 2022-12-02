@@ -7,6 +7,7 @@ from typing import Iterator
 from typing import Sequence
 
 from dipdup.config import OperationHandlerConfig
+from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -25,6 +26,54 @@ from dipdup.prometheus import Metrics
 _logger = logging.getLogger('dipdup_matcher')
 
 OperationQueueItem = tuple[OperationSubgroup, ...]
+
+
+def entrypoint_filter(handlers: tuple[OperationHandlerConfig, ...]) -> set[str | None]:
+    """Set of entrypoints to filter operations with before an actual matching"""
+    entrypoints = set()
+    for handler_config in handlers:
+        for pattern_config in handler_config.pattern:
+            if not isinstance(pattern_config, TransactionPatternConfig):
+                continue
+            entrypoints.add(pattern_config.entrypoint)
+
+    return entrypoints
+
+
+def address_filter(handlers: tuple[OperationHandlerConfig, ...]) -> set[str]:
+    """Set of addresses (any field) to filter operations with before an actual matching"""
+    addresses = set()
+    for handler_config in handlers:
+        for pattern_config in handler_config.pattern:
+            if not isinstance(pattern_config, TransactionPatternConfig):
+                continue
+
+            if pattern_config.source:
+                if address := pattern_config.source.address:
+                    addresses.add(address)
+            if pattern_config.destination:
+                if address := pattern_config.destination.address:
+                    addresses.add(address)
+
+    return addresses
+
+
+def code_hash_filter(handlers: tuple[OperationHandlerConfig, ...]) -> set[int | str]:
+    """Set of code hashes to filter operations with before an actual matching"""
+    code_hashes = set()
+    for handler_config in handlers:
+        for pattern_config in handler_config.pattern:
+            if not isinstance(pattern_config, TransactionPatternConfig):
+                continue
+
+            if pattern_config.source:
+                if code_hash := pattern_config.source.code_hash:
+                    code_hashes.add(code_hash)
+            if pattern_config.destination:
+                if code_hash := pattern_config.destination.code_hash:
+                    code_hashes.add(code_hash)
+
+    return code_hashes
 
 
 def extract_operation_subgroups(
@@ -88,10 +137,26 @@ class OperationIndex(
 ):
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._contract_hashes: dict[str, tuple[int, int]] = {}
+        self._entrypoint_filter: set[str | None] = set()
+        self._address_filter: set[str] = set()
+        self._code_hash_filter: set[int] = set()
 
     def push_operations(self, operation_subgroups: OperationQueueItem) -> None:
         self.push_realtime_message(operation_subgroups)
+
+    async def get_filters(self) -> tuple[set[str | None], set[str], set[int]]:
+        if self._entrypoint_filter or self._address_filter or self._code_hash_filter:
+            return self._entrypoint_filter, self._address_filter, self._code_hash_filter
+
+        for code_hash in code_hash_filter(self._config.handlers):
+            if not isinstance(code_hash, int):
+                code_hash, _ = await self._datasource.get_contract_hashes(code_hash)
+            self._code_hash_filter.add(code_hash)
+
+        self._entrypoint_filter = entrypoint_filter(self._config.handlers)
+        self._address_filter = address_filter(self._config.handlers)
+
+        return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
@@ -144,9 +209,9 @@ class OperationIndex(
             operation_subgroups = tuple(
                 extract_operation_subgroups(
                     operations,
-                    entrypoints=self._config.entrypoint_filter,
-                    addresses=self._config.address_filter,
-                    code_hashes=self._config.code_hash_filter,
+                    entrypoints=self._entrypoint_filter,
+                    addresses=self._address_filter,
+                    code_hashes=self._code_hash_filter,
                 )
             )
             if operation_subgroups:

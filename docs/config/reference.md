@@ -449,24 +449,6 @@ http: HTTP client configuration</p>
 </ul>
 </dd>
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="dipdup.config.OperationIndexConfig.address_filter">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">address_filter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#dipdup.config.OperationIndexConfig.address_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set of addresses (any field) to filter operations with before an actual matching</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="dipdup.config.OperationIndexConfig.code_hash_filter">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">code_hash_filter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#dipdup.config.OperationIndexConfig.code_hash_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set of code hashes to filter operations with before an actual matching</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="dipdup.config.OperationIndexConfig.entrypoint_filter">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">entrypoint_filter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#dipdup.config.OperationIndexConfig.entrypoint_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set of entrypoints to filter operations with before an actual matching</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.config.OperationIndexConfig.strip">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">strip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.config.OperationIndexConfig.strip" title="Permalink to this definition">¶</a></dt>

@@ -896,52 +896,6 @@ class OperationIndexConfig(IndexConfig):
             for item in handler['pattern']:
                 item.pop('alias', None)
 
-    @property
-    def entrypoint_filter(self) -> set[str | None]:
-        """Set of entrypoints to filter operations with before an actual matching"""
-        entrypoints = set()
-        for handler_config in self.handlers:
-            for pattern_config in handler_config.pattern:
-                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    entrypoints.add(pattern_config.entrypoint)
-        return set(entrypoints)
-
-    @property
-    def address_filter(self) -> set[str]:
-        """Set of addresses (any field) to filter operations with before an actual matching"""
-        addresses = set()
-        for handler_config in self.handlers:
-            for pattern_config in handler_config.pattern:
-                if not isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    continue
-
-                if pattern_config.source:
-                    if address := pattern_config.source.address:
-                        addresses.add(address)
-                if pattern_config.destination:
-                    if address := pattern_config.destination.address:
-                        addresses.add(address)
-
-        return addresses
-
-    @property
-    def code_hash_filter(self) -> set[int | str]:
-        """Set of code hashes to filter operations with before an actual matching"""
-        code_hashes = set()
-        for handler_config in self.handlers:
-            for pattern_config in handler_config.pattern:
-                if not isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    continue
-
-                if pattern_config.source:
-                    if code_hash := pattern_config.source.code_hash:
-                        code_hashes.add(code_hash)
-                if pattern_config.destination:
-                    if code_hash := pattern_config.destination.code_hash:
-                        code_hashes.add(code_hash)
-
-        return code_hashes
-
     def import_objects(self, package: str) -> None:
         for handler_config in self.handlers:
             handler_config.initialize_callback_fn(package)
