@@ -47,6 +47,13 @@ def extract_operation_subgroups(
             if addresses and operation.sender_address not in addresses and operation.target_address not in addresses:
                 filtered += 1
                 continue
+            if (
+                code_hashes
+                and operation.target_code_hash not in code_hashes
+                and operation.sender_code_hash not in code_hashes
+            ):
+                filtered += 1
+                continue
 
         key = (operation.hash, int(operation.counter))
         operation_subgroups[key].append(operation)

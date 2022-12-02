@@ -376,7 +376,7 @@ class ModelUpdate(TortoiseModel):
                 elif isinstance(field_, fields.TimeField):
                     data[key] = time.fromisoformat(value)
 
-                # TODO: There may be more non-JSON-deserializable fields
+                # NOTE: There are possibly more non-JSON-deserializable fields.
 
         _logger.debug(
             'Reverting %s(%s) %s: %s',

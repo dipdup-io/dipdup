@@ -429,7 +429,7 @@ class HookContext(DipDupContext):
         if from_level <= to_level:
             raise FrameworkException(f'Attempt to rollback in future: {from_level} <= {to_level}')
         if from_level - to_level > self.config.advanced.rollback_depth:
-            # TODO: More context
+            # TODO: Need more context
             await self.reindex(ReindexingReason.rollback)
 
         models = importlib.import_module(f'{self.config.package}.models')

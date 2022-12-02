@@ -230,6 +230,7 @@ class BaseProject(Project):
                 '[operation]      TzColors NFT marketplace',
                 '[n/a]            Empty config for a fresh start',
                 # TODO: Hooks and jobs demo
+                # TODO: registrydao_hash demo
             ),
         ),
         InputQuestion(

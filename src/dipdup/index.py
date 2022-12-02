@@ -38,6 +38,7 @@ IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource)
 OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
 
 
+# TODO: Not used in some indexes
 def extract_level(
     message: tuple[OperationData | BigMapData | TokenTransferData | EventData, ...],
 ) -> int:

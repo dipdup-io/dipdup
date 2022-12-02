@@ -1,9 +1,9 @@
 spec_version: 1.2
 package: demo_tzbtc
 
-# database:
-#   kind: sqlite
-#   path: demo-tzbtc.sqlite3
+database:
+  kind: sqlite
+  path: demo-tzbtc.sqlite3
 
 contracts:
   tzbtc_mainnet:
@@ -37,5 +37,3 @@ templates:
         pattern:
           - destination: <contract>
             entrypoint: mint
-
-# logging: verbose

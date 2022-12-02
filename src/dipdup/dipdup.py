@@ -149,8 +149,7 @@ class IndexDispatcher:
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)
         self._entrypoint_filter.update(index_config.entrypoint_filter)
-        # FIXME
-        self._code_hash_filter.update(index_config.code_hash_filter)  # type: ignore
+        self._code_hash_filter.update(index_config.code_hash_filter)
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         if not self._indexes:
@@ -248,8 +247,7 @@ class IndexDispatcher:
                 operations,
                 addresses=self._address_filter,
                 entrypoints=self._entrypoint_filter,
-                # FIXME:
-                code_hashes=self._code_hash_filter,  # type: ignore
+                code_hashes=self._code_hash_filter,
             )
         )
 

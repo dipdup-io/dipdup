@@ -161,6 +161,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
                     if e.status == HTTPStatus.TOO_MANY_REQUESTS:
                         # NOTE: Sleep at least 5 seconds on ratelimit
+                        # FIXME: Constant
                         ratelimit_sleep = 5
                         # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):

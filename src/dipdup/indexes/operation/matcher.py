@@ -144,7 +144,6 @@ def match_operation_subgroup(
         matched_operations: deque[OperationData | None] = deque()
 
         # TODO: Ensure complex cases work, e.g. when optional argument is followed by required one
-        # TODO: Add None to matched_operations where applicable (pattern is optional and operation not found)
         while subgroup_index < len(operations):
             operation = operations[subgroup_index]
             pattern_config = handler_config.pattern[pattern_index]

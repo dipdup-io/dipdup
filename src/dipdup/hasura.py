@@ -471,7 +471,7 @@ class HasuraGateway(HTTPGateway):
         table_names = {t['table']['name'] for t in source['tables']}
         tables = await self._get_fields()
 
-        # TODO: Use new API
+        # TODO: Use new Hasura API
         self._logger.info('Applying table customizations (could take some time)')
         for table in tables:
             if table.root not in table_names:

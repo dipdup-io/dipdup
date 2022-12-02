@@ -1091,7 +1091,7 @@ class TzktDatasource(IndexDatasource):
         return BigMapData(
             id=big_map_json['id'],
             level=big_map_json['level'],
-            # FIXME: missing `operation_id` field in API to identify operation
+            # NOTE: missing `operation_id` field in API to identify operation
             operation_id=big_map_json['level'],
             timestamp=cls._parse_timestamp(big_map_json['timestamp']),
             bigmap=big_map_json['bigmap'],
