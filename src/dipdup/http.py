@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 from typing import Mapping
 from typing import Optional
-from typing import Tuple
 from typing import cast
 from urllib.parse import urlsplit
 from urllib.parse import urlunsplit
@@ -82,7 +81,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))
         self._path = parsed_url.path
         self._config = config
-        self._user_agent_args: Tuple[str, ...] = ()
+        self._user_agent_args: tuple[str, ...] = ()
         self._user_agent: Optional[str] = None
         self._ratelimiter = (
             AsyncLimiter(max_rate=config.ratelimit_rate, time_period=config.ratelimit_period)

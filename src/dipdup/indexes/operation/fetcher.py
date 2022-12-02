@@ -1,60 +1,22 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC
-from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
-from typing import TYPE_CHECKING
 from typing import Any
-from typing import AsyncGenerator
 from typing import AsyncIterator
-from typing import Generic
-from typing import Protocol
-from typing import TypeVar
+from typing import cast
 
+from dipdup.config import OperationHandlerOriginationPatternConfig
+from dipdup.config import OperationIndexConfig
+from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
-from dipdup.models import BigMapData
-from dipdup.models import EventData
+from dipdup.fetcher import DataFetcher
+from dipdup.fetcher import FetcherChannel
 from dipdup.models import OperationData
-from dipdup.models import TokenTransferData
 
-if TYPE_CHECKING:
-    from dipdup.datasources.tzkt.datasource import TzktDatasource
-
-
-class HasLevel(Protocol):
-    level: int
-
-
-Level = int
-FetcherBufferT = TypeVar('FetcherBufferT', bound=HasLevel)
-FetcherFilterT = TypeVar('FetcherFilterT')
-
-
-async def yield_by_level(
-    iterable: AsyncIterator[tuple[FetcherBufferT, ...]]
-) -> AsyncGenerator[tuple[Level, tuple[FetcherBufferT, ...]], None]:
-    items: tuple[FetcherBufferT, ...] = ()
-
-    async for item_batch in iterable:
-        items = items + item_batch
-
-        # NOTE: Yield slices by level except the last one
-        while True:
-            for i in range(len(items) - 1):
-                curr_level, next_level = items[i].level, items[i + 1].level
-
-                # NOTE: Level boundaries found. Exit for loop, stay in while.
-                if curr_level != next_level:
-                    yield curr_level, items[: i + 1]
-                    items = items[i + 1 :]
-                    break
-            else:
-                break
-
-    if items:
-        yield items[0].level, items
+_logger = logging.getLogger('dipdup.fetcher')
 
 
 def dedup_operations(operations: tuple[OperationData, ...]) -> tuple[OperationData, ...]:
@@ -67,7 +29,6 @@ def dedup_operations(operations: tuple[OperationData, ...]) -> tuple[OperationDa
     )
 
 
-# TODO: Move back to op.fetcher
 def get_operations_head(operations: tuple[OperationData, ...]) -> int:
     """Get latest block level (head) of sorted operations batch"""
     for i in range(len(operations) - 1)[::-1]:
@@ -76,37 +37,85 @@ def get_operations_head(operations: tuple[OperationData, ...]) -> int:
     return operations[0].level
 
 
-class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
-    def __init__(
-        self,
-        buffer: defaultdict[Level, deque[FetcherBufferT]],
-        filter: set[FetcherFilterT],
-        first_level: int,
-        last_level: int,
-        datasource: 'TzktDatasource',
-    ) -> None:
-        super().__init__()
-        self._buffer = buffer
-        self._filter = filter
-        self._first_level = first_level
-        self._last_level = last_level
-        self._datasource = datasource
+async def get_transaction_filters(
+    config: OperationIndexConfig,
+    datasource: TzktDatasource,
+) -> tuple[set[str], set[int]]:
+    """Get addresses to fetch transactions from during initial synchronization"""
+    if OperationType.transaction not in config.types:
+        return set(), set()
 
-        self._head: int = 0
-        self._offset: int = 0
+    addresses: set[str] = set()
+    hashes: set[int] = set()
+    for contract in config.contracts:
+        if contract.address:
+            addresses.add(contract.address)
+        if isinstance(contract.code_hash, int):
+            hashes.add(contract.code_hash)
+        elif isinstance(contract.code_hash, str):
+            code_hash, _ = await datasource.get_contract_hashes(contract.code_hash)
+            hashes.add(code_hash)
 
-    @property
-    def head(self) -> int:
-        return self._head
+    return addresses, hashes
 
-    @property
-    def fetched(self) -> bool:
-        return self._head >= self._last_level
 
-    @abstractmethod
-    async def fetch(self) -> None:
-        """Fetch a single `requets_limit` batch of items, bump channel offset"""
-        ...
+async def get_origination_filters(
+    config: OperationIndexConfig,
+    datasource: TzktDatasource,
+) -> tuple[set[str], set[int]]:
+    """Get addresses to fetch origination from during initial synchronization"""
+    if OperationType.origination not in config.types:
+        return set(), set()
+
+    addresses: set[str] = set()
+    hashes: set[int] = set()
+
+    for handler_config in config.handlers:
+        for pattern_config in handler_config.pattern:
+            if not isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                continue
+
+            if pattern_config.originated_contract:
+                if address := pattern_config.originated_contract.address:
+                    addresses.add(address)
+                if code_hash := pattern_config.originated_contract.code_hash:
+                    if isinstance(code_hash, str):
+                        code_hash, _ = await datasource.get_contract_hashes(code_hash)
+                    hashes.add(code_hash)
+
+            if pattern_config.source:
+                _logger.warning(
+                    '`source -> address` filter significantly hurts indexing performance; '
+                    'consider using `originated_contract -> code_hash` instead'
+                )
+                if address := pattern_config.source.address:
+                    async for batch in datasource.iter_originated_contracts(address):
+                        addresses.update(batch)
+                if code_hash := pattern_config.source.code_hash:
+                    raise NotImplementedError
+
+            if pattern_config.similar_to:
+                address = pattern_config.similar_to.address
+                code_hash = pattern_config.similar_to.code_hash or address
+
+                if address:
+                    if pattern_config.strict:
+                        code_hash = address
+                    # TODO: Legacy, TzKT doesn't support filtering by type hash
+                    else:
+                        _logger.warning(
+                            '`similar_to -> address` filter significantly hurts indexing performance; '
+                            'consider using `originated_contract -> code_hash` instead'
+                        )
+                        async for batch in datasource.iter_similar_contracts(address, pattern_config.strict):
+                            addresses.update(batch)
+
+                elif code_hash := pattern_config.similar_to.code_hash:
+                    if isinstance(code_hash, str):
+                        code_hash, _ = await datasource.get_contract_hashes(code_hash)
+                    hashes.add(code_hash)
+
+    return addresses, hashes
 
 
 class OriginationAddressFetcherChannel(FetcherChannel[OperationData, str]):
@@ -157,7 +166,7 @@ class OriginationHashFetcherChannel(FetcherChannel[OperationData, int]):
 class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
     def __init__(
         self,
-        buffer: defaultdict[Level, deque[OperationData]],
+        buffer: defaultdict[int, deque[OperationData]],
         filter: set[str],
         first_level: int,
         last_level: int,
@@ -196,7 +205,7 @@ class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
 class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
     def __init__(
         self,
-        buffer: defaultdict[Level, deque[OperationData]],
+        buffer: defaultdict[int, deque[OperationData]],
         filter: set[int],
         first_level: int,
         last_level: int,
@@ -231,24 +240,6 @@ class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
             self._head = get_operations_head(transactions)
 
 
-class DataFetcher(ABC, Generic[FetcherBufferT]):
-    def __init__(
-        self,
-        datasource: 'TzktDatasource',
-        first_level: int,
-        last_level: int,
-    ) -> None:
-        self._datasource = datasource
-        self._first_level = first_level
-        self._last_level = last_level
-        self._buffer: defaultdict[Level, deque[FetcherBufferT]] = defaultdict(deque)
-        self._head = 0
-
-    @abstractmethod
-    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
-        ...
-
-
 class OperationFetcher(DataFetcher[OperationData]):
     """Fetches operations from multiple REST API endpoints, merges them and yields by level.
 
@@ -272,11 +263,42 @@ class OperationFetcher(DataFetcher[OperationData]):
         self._origination_addresses = origination_addresses
         self._origination_hashes = origination_hashes
 
-        self._logger = logging.getLogger('dipdup.tzkt')
-
         # FIXME: Why migrations are prefetched?
         for origination in migration_originations:
             self._buffer[origination.level].append(origination)
+
+    @classmethod
+    async def create(
+        cls,
+        config: OperationIndexConfig,
+        datasource: TzktDatasource,
+        first_level: int,
+        last_level: int,
+    ) -> OperationFetcher:
+        migration_originations: tuple[OperationData, ...] = ()
+        if OperationType.migration in config.types:
+            async for batch in datasource.iter_migration_originations(first_level):
+                for op in batch:
+                    code_hash, type_hash = await datasource.get_contract_hashes(
+                        cast(str, op.originated_contract_address)
+                    )
+                    op.originated_contract_code_hash = code_hash
+                    op.originated_contract_type_hash = type_hash
+                    migration_originations += (op,)
+
+        transaction_addresses, transaction_hashes = await get_transaction_filters(config, datasource)
+        origination_addresses, origination_hashes = await get_origination_filters(config, datasource)
+
+        return OperationFetcher(
+            datasource=datasource,
+            first_level=first_level,
+            last_level=last_level,
+            transaction_addresses=transaction_addresses,
+            transaction_hashes=transaction_hashes,
+            origination_addresses=origination_addresses,
+            origination_hashes=origination_hashes,
+            migration_originations=migration_originations,
+        )
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[OperationData, ...]]]:
         """Iterate over operations fetched with multiple REST requests with different filters.
@@ -339,98 +361,3 @@ class OperationFetcher(DataFetcher[OperationData]):
 
         if self._buffer:
             raise FrameworkException('Operations left in queue')
-
-
-class BigMapFetcher(DataFetcher[BigMapData]):
-    """Fetches bigmap diffs from REST API, merges them and yields by level."""
-
-    def __init__(
-        self,
-        datasource: 'TzktDatasource',
-        first_level: int,
-        last_level: int,
-        big_map_addresses: set[str],
-        big_map_paths: set[str],
-    ) -> None:
-        super().__init__(datasource, first_level, last_level)
-        self._logger = logging.getLogger('dipdup.tzkt')
-        self._big_map_addresses = big_map_addresses
-        self._big_map_paths = big_map_paths
-
-    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[BigMapData, ...]], None]:
-        """Iterate over big map diffs fetched fetched from REST.
-
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by BigMapIndex.
-        """
-        big_map_iter = self._datasource.iter_big_maps(
-            self._big_map_addresses,
-            self._big_map_paths,
-            self._first_level,
-            self._last_level,
-        )
-        async for level, batch in yield_by_level(big_map_iter):
-            yield level, batch
-
-
-class TokenTransferFetcher(DataFetcher[TokenTransferData]):
-    def __init__(
-        self,
-        datasource: 'TzktDatasource',
-        token_addresses: set[str],
-        token_ids: set[int],
-        from_addresses: set[str],
-        to_addresses: set[str],
-        first_level: int,
-        last_level: int,
-    ) -> None:
-        super().__init__(datasource, first_level, last_level)
-        self._logger = logging.getLogger('dipdup.tzkt')
-        self._token_addresses = token_addresses
-        self._token_ids = token_ids
-        self._from_addresses = from_addresses
-        self._to_addresses = to_addresses
-
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TokenTransferData, ...]]]:
-        token_transfer_iter = self._datasource.iter_token_transfers(
-            self._token_addresses,
-            self._token_ids,
-            self._from_addresses,
-            self._to_addresses,
-            self._first_level,
-            self._last_level,
-        )
-        async for level, batch in yield_by_level(token_transfer_iter):
-            yield level, batch
-
-
-class EventFetcher(DataFetcher[EventData]):
-    """Fetches contract events from REST API, merges them and yields by level."""
-
-    def __init__(
-        self,
-        datasource: 'TzktDatasource',
-        first_level: int,
-        last_level: int,
-        event_addresses: set[str],
-        event_tags: set[str],
-    ) -> None:
-        self._logger = logging.getLogger('dipdup.tzkt')
-        self._datasource = datasource
-        self._first_level = first_level
-        self._last_level = last_level
-        self._event_addresses = event_addresses
-        self._event_tags = event_tags
-
-    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[EventData, ...]], None]:
-        """Iterate over events fetched fetched from REST.
-
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by EventIndex.
-        """
-        event_iter = self._datasource.iter_events(
-            self._event_addresses,
-            self._event_tags,
-            self._first_level,
-            self._last_level,
-        )
-        async for level, batch in yield_by_level(event_iter):
-            yield level, batch

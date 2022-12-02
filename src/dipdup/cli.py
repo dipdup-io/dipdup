@@ -16,7 +16,6 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import TypeVar
 from typing import cast
 
@@ -401,7 +400,7 @@ async def status(ctx: click.Context) -> None:
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    table: List[Tuple[str, str, str | int]] = [('name', 'status', 'level')]
+    table: List[tuple[str, str, str | int]] = [('name', 'status', 'level')]
     async with tortoise_wrapper(url, models):
         async for index in Index.filter().order_by('name'):
             row = (index.name, index.status.value, index.level)

@@ -10,10 +10,8 @@ from contextlib import AsyncExitStack
 from contextlib import suppress
 from typing import Any
 from typing import Awaitable
-from typing import Deque
 from typing import Dict
 from typing import Optional
-from typing import Tuple
 
 from tortoise.exceptions import OperationalError
 
@@ -41,13 +39,13 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
-from dipdup.index import BigMapIndex
-from dipdup.index import EventIndex
-from dipdup.index import HeadIndex
 from dipdup.index import Index
-from dipdup.index import OperationIndex
-from dipdup.index import TokenTransferIndex
-from dipdup.index import extract_operation_subgroups
+from dipdup.indexes.big_map.index import BigMapIndex
+from dipdup.indexes.event.index import EventIndex
+from dipdup.indexes.head.index import HeadIndex
+from dipdup.indexes.operation.index import OperationIndex
+from dipdup.indexes.operation.index import extract_operation_subgroups
+from dipdup.indexes.token_transfer.index import TokenTransferIndex
 from dipdup.models import BigMapData
 from dipdup.models import Contract
 from dipdup.models import EventData
@@ -103,7 +101,7 @@ class IndexDispatcher:
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
-            tasks: Deque[Awaitable[bool]] = deque(index.process() for index in self._indexes.values())
+            tasks: deque[Awaitable[bool]] = deque(index.process() for index in self._indexes.values())
             indexes_processed = await gather(*tasks)
 
             indexes_spawned = False
@@ -151,7 +149,8 @@ class IndexDispatcher:
     def _apply_filters(self, index_config: OperationIndexConfig) -> None:
         self._address_filter.update(index_config.address_filter)
         self._entrypoint_filter.update(index_config.entrypoint_filter)
-        self._code_hash_filter.update(index_config.code_hash_filter)
+        # FIXME
+        self._code_hash_filter.update(index_config.code_hash_filter)  # type: ignore
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         if not self._indexes:
@@ -243,15 +242,13 @@ class IndexDispatcher:
             if isinstance(index, HeadIndex) and index.datasource == datasource:
                 index.push_head(head)
 
-    async def _on_operations(self, datasource: IndexDatasource, operations: Tuple[OperationData, ...]) -> None:
+    async def _on_operations(self, datasource: IndexDatasource, operations: tuple[OperationData, ...]) -> None:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
-                    entrypoint=self._entrypoint_filter,
-                    sender_address=self._address_filter,
-                    sender_code_hash=self._address_filter,
-                    target_address=self._code_hash_filter,
-                    target_code_hash=self._code_hash_filter,
+                addresses=self._address_filter,
+                entrypoints=self._entrypoint_filter,
+                code_hashes=self._code_hash_filter,
             )
         )
 
@@ -265,7 +262,7 @@ class IndexDispatcher:
             index.push_operations(operation_subgroups)
 
     async def _on_token_transfers(
-        self, datasource: IndexDatasource, token_transfers: Tuple[TokenTransferData, ...]
+        self, datasource: IndexDatasource, token_transfers: tuple[TokenTransferData, ...]
     ) -> None:
         token_transfer_indexes = (
             i for i in self._indexes.values() if isinstance(i, TokenTransferIndex) and i.datasource == datasource
@@ -273,14 +270,14 @@ class IndexDispatcher:
         for index in token_transfer_indexes:
             index.push_token_transfers(token_transfers)
 
-    async def _on_big_maps(self, datasource: IndexDatasource, big_maps: Tuple[BigMapData, ...]) -> None:
+    async def _on_big_maps(self, datasource: IndexDatasource, big_maps: tuple[BigMapData, ...]) -> None:
         big_map_indexes = (
             i for i in self._indexes.values() if isinstance(i, BigMapIndex) and i.datasource == datasource
         )
         for index in big_map_indexes:
             index.push_big_maps(big_maps)
 
-    async def _on_events(self, datasource: IndexDatasource, events: Tuple[EventData, ...]) -> None:
+    async def _on_events(self, datasource: IndexDatasource, events: tuple[EventData, ...]) -> None:
         event_indexes = (i for i in self._indexes.values() if isinstance(i, EventIndex) and i.datasource == datasource)
         for index in event_indexes:
             index.push_events(events)

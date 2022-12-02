@@ -12,13 +12,11 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any
 from typing import Awaitable
-from typing import Deque
 from typing import Dict
 from typing import Iterator
 from typing import NoReturn
 from typing import Optional
 from typing import Set
-from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -71,7 +69,7 @@ from dipdup.utils.sys import is_in_tests
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 pending_indexes: deque[Any] = deque()
-pending_hooks: Deque[Awaitable[None]] = deque()
+pending_hooks: deque[Awaitable[None]] = deque()
 rolled_back_indexes: Set[str] = set()
 
 
@@ -270,11 +268,11 @@ class DipDupContext:
 
     async def _spawn_index(self, name: str, state: Optional[Index] = None) -> None:
         # NOTE: Avoiding circular import
-        from dipdup.index import BigMapIndex
-        from dipdup.index import EventIndex
-        from dipdup.index import HeadIndex
-        from dipdup.index import OperationIndex
-        from dipdup.index import TokenTransferIndex
+        from dipdup.indexes.big_map.index import BigMapIndex
+        from dipdup.indexes.event.index import EventIndex
+        from dipdup.indexes.head.index import HeadIndex
+        from dipdup.indexes.operation.index import OperationIndex
+        from dipdup.indexes.token_transfer.index import TokenTransferIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
         index: OperationIndex | BigMapIndex | HeadIndex | TokenTransferIndex | EventIndex
@@ -515,7 +513,7 @@ class CallbackManager:
     def __init__(self, package: str) -> None:
         self._logger = logging.getLogger('dipdup.callback')
         self._package = package
-        self._handlers: Dict[Tuple[str, str], HandlerConfig] = {}
+        self._handlers: Dict[tuple[str, str], HandlerConfig] = {}
         self._hooks: Dict[str, HookConfig] = {}
 
     async def run(self) -> None:

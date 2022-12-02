@@ -1,7 +1,6 @@
 from collections import deque
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
-from typing import Deque
 from typing import Optional
 from typing import Set
 
@@ -23,7 +22,7 @@ class TransactionManager:
         self._depth = depth
         self._immune_tables = immune_tables or set()
         self._transaction: Optional[dipdup.models.VersionedTransaction] = None
-        self._pending_updates: Deque[dipdup.models.ModelUpdate] = deque()
+        self._pending_updates: deque[dipdup.models.ModelUpdate] = deque()
 
     @asynccontextmanager
     async def register(self) -> AsyncIterator[None]:

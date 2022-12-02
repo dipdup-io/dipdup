@@ -8,8 +8,8 @@ from dipdup.config import OperationHandlerConfig
 from dipdup.config import OperationHandlerOriginationPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.index import get_origination_filters
-from dipdup.index import get_transaction_filters
+from dipdup.indexes.operation.fetcher import get_origination_filters
+from dipdup.indexes.operation.fetcher import get_transaction_filters
 from tests import CONFIGS_PATH
 from tests import tzkt_replay
 
