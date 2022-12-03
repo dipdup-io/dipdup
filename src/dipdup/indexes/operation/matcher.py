@@ -12,6 +12,7 @@ from dipdup.config import OperationHandlerOriginationPatternConfig as Originatio
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources.tzkt.models import deserialize_storage
+from dipdup.exceptions import FrameworkError
 from dipdup.exceptions import FrameworkException
 from dipdup.models import OperationData
 from dipdup.models import Origination
@@ -96,17 +97,19 @@ def match_transaction(
 ) -> bool:
     """Match a single transaction with pattern"""
     logging.info('match_transaction', pattern_config, operation)
-    if pattern_config.entrypoint:
-        if pattern_config.entrypoint != operation.entrypoint:
+    if entrypoint := pattern_config.entrypoint:
+        if entrypoint != operation.entrypoint:
             return False
-    if pattern_config.destination:
-        if pattern_config.destination.address != operation.target_address:
+    if destination := pattern_config.destination:
+        if destination.address not in (operation.target_address, None):
             return False
-    if pattern_config.source:
-        if pattern_config.source.address != operation.sender_address:
+        if destination.code_hash not in (operation.target_code_hash, None):
             return False
-
-    # TODO: Match by code hash
+    if source := pattern_config.source:
+        if source.address not in (operation.sender_address, None):
+            return False
+        if source.code_hash not in (operation.sender_code_hash, None):
+            return False
 
     return True
 
@@ -118,14 +121,20 @@ def match_origination(
     if source := pattern_config.source:
         if source.address not in (operation.sender_address, None):
             return False
-    if contract := pattern_config.originated_contract:
-        if contract.address not in (operation.originated_contract_address, None):
+        if source.code_hash:
+            raise FrameworkError('Invalid origination filter `source.code_hash`')
+
+    if originated_contract := pattern_config.originated_contract:
+        if originated_contract.address not in (operation.originated_contract_address, None):
             return False
+        if originated_contract.code_hash not in (operation.originated_contract_code_hash, None):
+            return False
+
     if similar_to := pattern_config.similar_to:
         if similar_to.address not in (operation.originated_contract_address, None):
             return False
-
-    # TODO: Match by code hash
+        if similar_to.code_hash:
+            raise FrameworkError('Invalid origination filter `similar_to.code_hash`')
 
     return True
 
