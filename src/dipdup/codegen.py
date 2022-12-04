@@ -8,11 +8,9 @@ For `dipdup new` templates processing see `dipdup.project` module.
 
 Please, keep imports lazy to speed up startup.
 """
-import copy
 import logging
 import re
 import subprocess
-from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
 from shutil import which
@@ -156,19 +154,26 @@ class CodeGenerator:
             return
 
         # NOTE: A very special case; unresolved `operation` template to spawn from factory indexes.
-        elif isinstance(contract_config, str):
-            for possible_contract_config in self._config.contracts.values():
-                possible_pattern_config = copy.copy(operation_pattern_config)
-                if isinstance(possible_pattern_config, TransactionPatternConfig):
-                    possible_pattern_config.destination = possible_contract_config
-                elif isinstance(possible_pattern_config, OriginationPatternConfig):
-                    possible_pattern_config.originated_contract = possible_contract_config
+        elif isinstance(contract_config, str) and contract_config in self._config.contracts:
+            contract_config = self._config.contracts[contract_config]
 
-                with suppress(FrameworkException):
+        elif isinstance(contract_config, str):
+            self._logger.warning('Unresolved `contract` field, trying to guess it')
+            for possible_contract_config in self._config.contracts.values():
+                if isinstance(operation_pattern_config, TransactionPatternConfig):
+                    operation_pattern_config.destination = possible_contract_config
+                elif isinstance(operation_pattern_config, OriginationPatternConfig):
+                    operation_pattern_config.originated_contract = possible_contract_config
+                try:
                     await self._fetch_operation_pattern_schema(
-                        possible_pattern_config,
+                        operation_pattern_config,
                         datasource_config=datasource_config,
                     )
+                    break
+                except FrameworkException:
+                    self._logger.info("It's not `%s`", possible_contract_config.address)
+                    continue
+
             return
 
         contract_schemas = await self._get_schema(datasource_config, contract_config)
@@ -288,12 +293,26 @@ class CodeGenerator:
         # NOTE: Euristics for complex cases like templated `similar_to` factories.
         # NOTE: Try different contracts and datasources until one succeeds.
         for template_config in unused_operation_templates:
-            for datasource_config in self._config.datasources.values():
-                if not isinstance(datasource_config, TzktDatasourceConfig):
-                    continue
+            self._logger.warning(
+                'Unused operation template `%s`. Ignore this warning if it is used in a factory.', template_config.name
+            )
+            datasource_name = template_config.datasource
+            if isinstance(datasource_name, str) and datasource_name in self._config.datasources:
+                datasource_config = self._config.get_tzkt_datasource(datasource_name)
                 template_config.datasource = datasource_config
-                template_config.contracts = list(self._config.contracts.values())
                 await self._fetch_operation_index_schema(template_config)
+            else:
+                self._logger.warning('Unresolved `datasource` field, trying to guess it')
+                for possible_datasource_config in self._config.datasources.values():
+                    if not isinstance(possible_datasource_config, TzktDatasourceConfig):
+                        continue
+                    # NOTE: Do not modify config without necessity
+                    template_config.datasource = possible_datasource_config
+                    template_config.contracts = list(self._config.contracts.values())
+                    try:
+                        await self._fetch_operation_index_schema(template_config)
+                    except FrameworkException:
+                        continue
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         rel_path = schema_path.relative_to(self._pkg.schemas)

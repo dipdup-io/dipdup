@@ -10,7 +10,7 @@ from pydantic import Field
 
 class ProposeParameter(BaseModel):
     class Config:
-        extra = Extra.allow
+        extra = Extra.forbid
 
     from_: str = Field(..., alias='from')
     frozen_token: str
