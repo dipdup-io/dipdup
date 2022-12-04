@@ -43,5 +43,7 @@ indexes:
     template: registry_dao
     values:
       contract: registry
+    # first_level: 1407528
+    last_level: 1444133
 
 logging: quiet

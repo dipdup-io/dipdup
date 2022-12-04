@@ -667,16 +667,6 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
     strict: bool = False
     alias: str | None = None
 
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
-        self._matched_originations: list[str] = []
-
-    def origination_processed(self, address: str) -> bool:
-        if address in self._matched_originations:
-            return True
-        self._matched_originations.append(address)
-        return False
-
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
@@ -702,13 +692,10 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
 
     @property
     def typed_contract(self) -> ContractConfig | None:
-        # FIXME: Code hashes
         if self.originated_contract:
             return self.originated_contract
         if self.similar_to:
             return self.similar_to
-        # if self.source:
-        #     return self.source
         return None
 
 

@@ -133,24 +133,61 @@ async def assert_init(package: str) -> None:
     import_submodules(package)
 
 
+async def assert_run_quipuswap() -> None:
+    from tortoise.transactions import in_transaction
+
+    import demo_quipuswap.models
+
+    trades = await demo_quipuswap.models.Trade.filter().count()
+    positions = await demo_quipuswap.models.Position.filter().count()
+    async with in_transaction() as conn:
+        symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
+    assert symbols == 2
+    assert trades == 835
+    assert positions == 214
+
+
+async def assert_run_domains() -> None:
+    import demo_domains.models
+
+    tlds = await demo_domains.models.TLD.filter().count()
+    domains = await demo_domains.models.Domain.filter().count()
+
+    assert tlds == 1
+    assert domains == 145
+
+
+async def assert_run_registrydao() -> None:
+    import demo_registrydao.models
+
+    proposals = await demo_registrydao.models.DAO.filter().count()
+    votes = await demo_registrydao.models.Proposal.filter().count()
+
+    assert proposals == 2
+    assert votes == 2
+
+
 test_args = ('config', 'package', 'cmd', 'assert_fn')
 test_params = (
     ('tzbtc.yml', 'demo_tzbtc', 'run', assert_run_tzbtc),
+    ('tzbtc.yml', 'demo_tzbtc', 'init', partial(assert_init, 'demo_tzbtc')),
     ('hic_et_nunc.yml', 'demo_hic_et_nunc', 'run', assert_run_hic_et_nunc),
+    ('hic_et_nunc.yml', 'demo_hic_et_nunc', 'init', partial(assert_init, 'demo_hic_et_nunc')),
     ('tzcolors.yml', 'demo_tzcolors', 'run', assert_run_tzcolors),
+    ('tzcolors.yml', 'demo_tzcolors', 'init', partial(assert_init, 'demo_tzcolors')),
     ('tzbtc_transfers.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 4, '-0.01912431')),
+    ('tzbtc_transfers.yml', 'demo_tzbtc_transfers', 'init', partial(assert_init, 'demo_tzbtc_transfers')),
     ('tzbtc_transfers_2.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 12, '0.26554711')),
     ('tzbtc_transfers_3.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 9, '0.15579888')),
     ('tzbtc_transfers_4.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 2, '-0.00767376')),
-    ('domains_big_map.yml', 'demo_domains_big_map', 'init', partial(assert_init, 'demo_domains_big_map')),
     ('domains_big_map.yml', 'demo_domains_big_map', 'run', assert_run_domains_big_map),
+    ('domains_big_map.yml', 'demo_domains_big_map', 'init', partial(assert_init, 'demo_domains_big_map')),
+    ('domains.yml', 'demo_domains', 'run', assert_run_domains),
     ('domains.yml', 'demo_domains', 'init', partial(assert_init, 'demo_domains')),
-    ('hic_et_nunc.yml', 'demo_hic_et_nunc', 'init', partial(assert_init, 'demo_hic_et_nunc')),
+    ('quipuswap.yml', 'demo_quipuswap', 'run', assert_run_quipuswap),
     ('quipuswap.yml', 'demo_quipuswap', 'init', partial(assert_init, 'demo_quipuswap')),
+    ('registrydao.yml', 'demo_registrydao', 'run', assert_run_registrydao),
     ('registrydao.yml', 'demo_registrydao', 'init', partial(assert_init, 'demo_registrydao')),
-    ('tzbtc_transfers.yml', 'demo_tzbtc_transfers', 'init', partial(assert_init, 'demo_tzbtc_transfers')),
-    ('tzbtc.yml', 'demo_tzbtc', 'init', partial(assert_init, 'demo_tzbtc')),
-    ('tzcolors.yml', 'demo_tzcolors', 'init', partial(assert_init, 'demo_tzcolors')),
 )
 
 
@@ -173,24 +210,3 @@ async def test_demos(
         )
 
         await assert_fn()
-
-
-# @pytest.mark.skip(reason='FIXME: Huge replay')
-# async def test_quipuswap() -> None:
-#     async with run_dipdup_demo('quipuswap.yml', 'demo_quipuswap'):
-#         trades = await demo_quipuswap.models.Trade.filter().count()
-#         positions = await demo_quipuswap.models.Position.filter().count()
-#         async with in_transaction() as conn:
-#             symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
-#         assert symbols == 2
-#         assert trades == 835
-#         assert positions == 214
-
-# @pytest.mark.skip(reason='FIXME: Huge replay')
-# async def test_domains() -> None:
-#     async with run_dipdup_demo('domains.yml', 'demo_domains'):
-#         tlds = await demo_domains.models.TLD.filter().count()
-#         domains = await demo_domains.models.Domain.filter().count()
-
-#         assert tlds == 1
-#         assert domains == 145

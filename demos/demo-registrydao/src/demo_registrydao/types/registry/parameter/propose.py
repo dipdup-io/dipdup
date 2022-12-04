@@ -3,11 +3,15 @@
 
 from __future__ import annotations
 
-from typing import Dict
-
 from pydantic import BaseModel
+from pydantic import Extra
+from pydantic import Field
 
 
 class ProposeParameter(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    from_: str = Field(..., alias='from')
     frozen_token: str
-    proposal_metadata: Dict[str, str]
+    proposal_metadata: str

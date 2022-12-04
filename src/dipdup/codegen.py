@@ -8,9 +8,11 @@ For `dipdup new` templates processing see `dipdup.project` module.
 
 Please, keep imports lazy to speed up startup.
 """
+import copy
 import logging
 import re
 import subprocess
+from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
 from shutil import which
@@ -27,6 +29,7 @@ from dipdup.config import DipDupConfig
 from dipdup.config import EventIndexConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
+from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationHandlerPatternConfigU as PatternConfigU
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
@@ -152,8 +155,23 @@ class CodeGenerator:
         if contract_config is None:
             return
 
-        contract_schemas = await self._get_schema(datasource_config, contract_config)
+        # NOTE: A very special case; unresolved `operation` template to spawn from factory indexes.
+        elif isinstance(contract_config, str):
+            for possible_contract_config in self._config.contracts.values():
+                possible_pattern_config = copy.copy(operation_pattern_config)
+                if isinstance(possible_pattern_config, TransactionPatternConfig):
+                    possible_pattern_config.destination = possible_contract_config
+                elif isinstance(possible_pattern_config, OriginationPatternConfig):
+                    possible_pattern_config.originated_contract = possible_contract_config
 
+                with suppress(FrameworkException):
+                    await self._fetch_operation_pattern_schema(
+                        possible_pattern_config,
+                        datasource_config=datasource_config,
+                    )
+            return
+
+        contract_schemas = await self._get_schema(datasource_config, contract_config)
         contract_schemas_path = self._pkg.schemas / contract_config.module_name
 
         storage_schema_path = contract_schemas_path / 'storage.json'
@@ -246,9 +264,14 @@ class CodeGenerator:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
 
+        unused_operation_templates = [t for t in self._config.templates.values() if isinstance(t, OperationIndexConfig)]
+
         for index_config in self._config.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
                 await self._fetch_operation_index_schema(index_config)
+                template = cast(OperationIndexConfig, index_config.parent)
+                if template in unused_operation_templates:
+                    unused_operation_templates.remove(template)
             elif isinstance(index_config, BigMapIndexConfig):
                 await self._fetch_big_map_index_schema(index_config)
             elif isinstance(index_config, EventIndexConfig):
@@ -261,6 +284,16 @@ class CodeGenerator:
                 raise ConfigInitializationException
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+        # NOTE: Euristics for complex cases like templated `similar_to` factories.
+        # NOTE: Try different contracts and datasources until one succeeds.
+        for template_config in unused_operation_templates:
+            for datasource_config in self._config.datasources.values():
+                if not isinstance(datasource_config, TzktDatasourceConfig):
+                    continue
+                template_config.datasource = datasource_config
+                template_config.contracts = list(self._config.contracts.values())
+                await self._fetch_operation_index_schema(template_config)
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         rel_path = schema_path.relative_to(self._pkg.schemas)

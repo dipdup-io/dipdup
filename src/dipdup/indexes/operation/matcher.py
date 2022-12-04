@@ -3,7 +3,6 @@ from collections import deque
 from typing import Any
 from typing import Iterable
 from typing import TypeVar
-from typing import cast
 
 from pydantic.dataclasses import dataclass
 
@@ -68,10 +67,9 @@ def prepare_operation_handler_args(
             args.append(typed_transaction)
 
         elif isinstance(pattern_config, OriginationPatternConfig):
-            if pattern_config.originated_contract:
+            if pattern_config.originated_contract or pattern_config.similar_to:
                 pass
-            elif pattern_config.similar_to and pattern_config.similar_to.address:
-                pass
+            # NOTE: `source` is always untyped
             else:
                 args.append(operation_data)
                 continue
@@ -131,10 +129,10 @@ def match_origination(
             return False
 
     if similar_to := pattern_config.similar_to:
-        if similar_to.address not in (operation.originated_contract_address, None):
+        if similar_to.address:
+            raise FrameworkException('Invalid origination filter `similar_to.address`')
+        if similar_to.code_hash not in (operation.originated_contract_code_hash, None):
             return False
-        if similar_to.code_hash:
-            raise FrameworkError('Invalid origination filter `similar_to.code_hash`')
 
     return True
 
@@ -161,10 +159,6 @@ def match_operation_subgroup(
                 matched = match_transaction(pattern_config, operation)
             elif isinstance(pattern_config, OriginationPatternConfig):
                 matched = match_origination(pattern_config, operation)
-
-                # TODO: Explain what's going on here
-                if matched and pattern_config.origination_processed(cast(str, operation.originated_contract_code_hash)):
-                    matched = False
             else:
                 raise FrameworkException('Unsupported pattern type')
 

@@ -13,7 +13,7 @@ from pydantic import Extra
 
 class Key(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     owner: str
     delegate: str
@@ -21,7 +21,7 @@ class Key(BaseModel):
 
 class Delegate(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     key: Key
     value: Dict[str, Any]
@@ -29,7 +29,7 @@ class Delegate(BaseModel):
 
 class FreezeHistory(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     current_stage_num: str
     current_unstaked: str
@@ -39,7 +39,7 @@ class FreezeHistory(BaseModel):
 
 class GovernanceToken(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     address: str
     token_id: str
@@ -47,7 +47,7 @@ class GovernanceToken(BaseModel):
 
 class ProposalKeyListSortByLevelItem(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     nat: str
     bytes: str
@@ -55,7 +55,7 @@ class ProposalKeyListSortByLevelItem(BaseModel):
 
 class Key1(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     address: str
     bool: bool
@@ -63,7 +63,7 @@ class Key1(BaseModel):
 
 class Voter(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     key: Key1
     value: str
@@ -71,7 +71,7 @@ class Voter(BaseModel):
 
 class Proposals(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     downvotes: str
     metadata: str
@@ -86,7 +86,7 @@ class Proposals(BaseModel):
 
 class QuorumThresholdAtCycle(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     last_updated_cycle: str
     quorum_threshold: str
@@ -95,7 +95,7 @@ class QuorumThresholdAtCycle(BaseModel):
 
 class RegistryStorage(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = Extra.allow
 
     admin: str
     delegates: List[Delegate]
