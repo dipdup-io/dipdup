@@ -1743,7 +1743,7 @@ class DipDupConfig:
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_contract(pattern_config.source)
                         if isinstance(pattern_config.similar_to, str):
-                            pattern_config.similar_to = self.get_contract(pattern_config.similar_to)
+                            contract = self.get_contract(pattern_config.similar_to)
                         if isinstance(pattern_config.originated_contract, str):
                             pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 

@@ -7,7 +7,7 @@ from typing import Iterator
 from typing import Sequence
 
 from dipdup.config import OperationHandlerConfig
-from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig, OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -45,15 +45,21 @@ def address_filter(handlers: tuple[OperationHandlerConfig, ...]) -> set[str]:
     addresses = set()
     for handler_config in handlers:
         for pattern_config in handler_config.pattern:
-            if not isinstance(pattern_config, TransactionPatternConfig):
-                continue
+            if isinstance(pattern_config, TransactionPatternConfig):
+                if pattern_config.source:
+                    if address := pattern_config.source.address:
+                        addresses.add(address)
+                if pattern_config.destination:
+                    if address := pattern_config.destination.address:
+                        addresses.add(address)
+            elif isinstance(pattern_config, OriginationPatternConfig):
+                if pattern_config.similar_to:
+                    pattern_config.originated_contract = pattern_config.similar_to
+                    pattern_config.similar_to = None
 
-            if pattern_config.source:
-                if address := pattern_config.source.address:
-                    addresses.add(address)
-            if pattern_config.destination:
-                if address := pattern_config.destination.address:
-                    addresses.add(address)
+                if pattern_config.originated_contract:
+                    if address := pattern_config.originated_contract.address:
+                        addresses.add(address)
 
     return addresses
 
@@ -63,15 +69,21 @@ def code_hash_filter(handlers: tuple[OperationHandlerConfig, ...]) -> set[int | 
     code_hashes = set()
     for handler_config in handlers:
         for pattern_config in handler_config.pattern:
-            if not isinstance(pattern_config, TransactionPatternConfig):
-                continue
+            if isinstance(pattern_config, TransactionPatternConfig):
+                if pattern_config.source:
+                    if code_hash := pattern_config.source.code_hash:
+                        code_hashes.add(code_hash)
+                if pattern_config.destination:
+                    if code_hash := pattern_config.destination.code_hash:
+                        code_hashes.add(code_hash)
+            elif isinstance(pattern_config, OriginationPatternConfig):
+                if pattern_config.similar_to:
+                    pattern_config.originated_contract = pattern_config.similar_to
+                    pattern_config.similar_to = None
 
-            if pattern_config.source:
-                if code_hash := pattern_config.source.code_hash:
-                    code_hashes.add(code_hash)
-            if pattern_config.destination:
-                if code_hash := pattern_config.destination.code_hash:
-                    code_hashes.add(code_hash)
+                if pattern_config.originated_contract:
+                    if code_hash := pattern_config.originated_contract.code_hash:
+                        code_hashes.add(code_hash)
 
     return code_hashes
 

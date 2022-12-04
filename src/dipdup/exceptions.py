@@ -31,6 +31,11 @@ def indent(text: str, indent: int = 2) -> str:
     return textwrap.indent(text, ' ' * indent)
 
 
+def format_help(help: str) -> str:
+    """Format help text"""
+    return tab + unindent(help) + '\n'
+
+
 def save_crashdump(error: Exception) -> str:
     """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
     # NOTE: Lazy import to speed up startup
@@ -81,27 +86,21 @@ class Error(ABC, FrameworkException):
 
     def help(self) -> str:
         """Return a string containing a help message for this error."""
-        return unindent(self._help())
+        return format_help(self._help())
 
-    def format(self) -> str:
-        """Format a post-mortem message with line separators for `atexit`"""
-        return tab + self.help() + '\n'
+    @classmethod
+    def default_help(cls) -> str:
+        return format_help(
+            """
+                An unexpected error has occurred! Most likely it's a framework bug.
+
+                Please, tell us about it: https://github.com/dipdup-io/dipdup/issues
+        """
+        )
 
     @abstractmethod
     def _help(self) -> str:
         ...
-
-
-@dataclass(repr=False)
-class FrameworkError(Error):
-    """Unknown DipDup framework error"""
-
-    def _help(self) -> str:
-        return """
-            An unexpected error has occurred! Most likely it's a framework bug.
-
-            Please, tell us about it: https://github.com/dipdup-io/dipdup/issues
-        """
 
 
 @dataclass(repr=False)
@@ -459,4 +458,4 @@ class UnsupportedAPIError(Error):
 
 # TODO: Remove in 7.0
 DipDupException = FrameworkException
-DipDupError = FrameworkError
+DipDupError = Error

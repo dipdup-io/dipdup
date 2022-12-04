@@ -11,7 +11,6 @@ from dipdup.config import OperationHandlerOriginationPatternConfig as Originatio
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources.tzkt.models import deserialize_storage
-from dipdup.exceptions import FrameworkError
 from dipdup.exceptions import FrameworkException
 from dipdup.models import OperationData
 from dipdup.models import Origination
@@ -120,7 +119,7 @@ def match_origination(
         if source.address not in (operation.sender_address, None):
             return False
         if source.code_hash:
-            raise FrameworkError('Invalid origination filter `source.code_hash`')
+            raise FrameworkException('Invalid origination filter `source.code_hash`')
 
     if originated_contract := pattern_config.originated_contract:
         if originated_contract.address not in (operation.originated_contract_address, None):

@@ -1,5 +1,6 @@
 # NOTE: All imports except the basic ones are very lazy in this module. Let's keep it that way.
 import asyncio
+import atexit
 import logging
 import platform
 import sys
@@ -51,13 +52,15 @@ def echo(message: str) -> None:
 
 def _print_help(error: Exception) -> None:
     """Prints a helpful error message after the traceback"""
-    import atexit
-
     from dipdup.exceptions import Error
-    from dipdup.exceptions import FrameworkError
 
-    help_message = error.format() if isinstance(error, Error) else FrameworkError().format()
-    atexit.register(partial(click.echo, help_message, err=True))
+    def _print() -> None:
+        if isinstance(error, Error):
+            click.echo(error.help(), err=True)
+        else:
+            click.echo(Error.default_help())
+
+    atexit.register(_print)
 
 
 WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
@@ -76,7 +79,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             from dipdup.exceptions import save_crashdump
 
             crashdump_path = save_crashdump(e)
-            _logger.exception(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
+            _logger.error(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
             _print_help(e)
             raise
 
