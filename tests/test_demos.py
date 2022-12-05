@@ -164,7 +164,17 @@ async def assert_run_registrydao() -> None:
     votes = await demo_registrydao.models.Proposal.filter().count()
 
     assert proposals == 19
-    assert votes == 0
+    assert votes == 86
+
+
+async def assert_run_registrydao_hash() -> None:
+    import demo_registrydao_hash.models
+
+    proposals = await demo_registrydao_hash.models.DAO.filter().count()
+    votes = await demo_registrydao_hash.models.Proposal.filter().count()
+
+    assert proposals == 19
+    assert votes == 86
 
 
 test_args = ('config', 'package', 'cmd', 'assert_fn')
@@ -188,6 +198,8 @@ test_params = (
     ('quipuswap.yml', 'demo_quipuswap', 'init', partial(assert_init, 'demo_quipuswap')),
     ('registrydao.yml', 'demo_registrydao', 'run', assert_run_registrydao),
     ('registrydao.yml', 'demo_registrydao', 'init', partial(assert_init, 'demo_registrydao')),
+    ('registrydao_hash.yml', 'demo_registrydao_hash', 'run', assert_run_registrydao_hash),
+    ('registrydao_hash.yml', 'demo_registrydao_hash', 'init', partial(assert_init, 'demo_registrydao')),
 )
 
 

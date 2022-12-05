@@ -59,6 +59,7 @@ async def get_transaction_filters(
                 hashes.add(contract.code_hash)
             elif isinstance(contract.code_hash, str):
                 code_hash, _ = await datasource.get_contract_hashes(contract.code_hash)
+                hashes.add(code_hash)
 
         return addresses, hashes
 

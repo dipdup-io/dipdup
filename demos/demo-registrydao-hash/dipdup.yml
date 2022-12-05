@@ -22,8 +22,6 @@ indexes:
     types:
       - transaction
       - origination
-    contracts:
-      - registry
     handlers:
       - callback: on_origination
         pattern:
