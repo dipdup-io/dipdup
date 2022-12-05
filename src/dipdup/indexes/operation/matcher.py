@@ -127,12 +127,6 @@ def match_origination(
         if originated_contract.code_hash not in (operation.originated_contract_code_hash, None):
             return False
 
-    if similar_to := pattern_config.similar_to:
-        if similar_to.address:
-            raise FrameworkException('Invalid origination filter `similar_to.address`')
-        if similar_to.code_hash not in (operation.originated_contract_code_hash, None):
-            return False
-
     return True
 
 
@@ -154,10 +148,13 @@ def match_operation_subgroup(
             operation = operations[subgroup_index]
             pattern_config = handler_config.pattern[pattern_index]
 
+            matched = False
             if isinstance(pattern_config, TransactionPatternConfig):
-                matched = match_transaction(pattern_config, operation)
+                if operation.type == 'transaction':
+                    matched = match_transaction(pattern_config, operation)
             elif isinstance(pattern_config, OriginationPatternConfig):
-                matched = match_origination(pattern_config, operation)
+                if operation.type == 'origination':
+                    matched = match_origination(pattern_config, operation)
             else:
                 raise FrameworkException('Unsupported pattern type')
 

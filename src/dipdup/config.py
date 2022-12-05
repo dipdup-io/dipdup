@@ -22,7 +22,6 @@ import re
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
-from collections import defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
@@ -35,7 +34,6 @@ from typing import Awaitable
 from typing import Callable
 from typing import Generic
 from typing import Iterator
-from typing import Sequence
 from typing import TypeVar
 from typing import cast
 from urllib.parse import quote_plus
@@ -667,6 +665,18 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
     strict: bool = False
     alias: str | None = None
 
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        if not self.similar_to:
+            return
+
+        _logger.warning('`similar_to` field is deprecated, use `originated_contract` instead')
+        self.originated_contract = self.similar_to
+        if self.originated_contract.address:
+            self.originated_contract.code_hash = self.originated_contract.address
+            self.originated_contract.address = None
+        self.similar_to = None
+
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
@@ -694,8 +704,9 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
     def typed_contract(self) -> ContractConfig | None:
         if self.originated_contract:
             return self.originated_contract
+        # TODO: Remove in 7.0
         if self.similar_to:
-            return self.similar_to
+            raise FrameworkException
         return None
 
 
@@ -1389,7 +1400,6 @@ class DipDupConfig:
 
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
-        self._callback_patterns: dict[str, list[Sequence[HandlerPatternConfigU]]] = defaultdict(list)
         self._contract_addresses = {contract.address for contract in self.contracts.values()}
 
     @property
@@ -1728,7 +1738,6 @@ class DipDupConfig:
 
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
-                self._callback_patterns[handler_config.callback].append(handler_config.pattern)
                 for idx, pattern_config in enumerate(handler_config.pattern):
                     # NOTE: Untyped operations are named as `transaction_N` or `origination_N` based on their index
                     pattern_config._subgroup_index = idx
@@ -1740,18 +1749,19 @@ class DipDupConfig:
                             pattern_config.source = self.get_contract(pattern_config.source)
 
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                        # TODO: Remove in 7.0
+                        if pattern_config.similar_to:
+                            raise FrameworkException('originated_contract` alias, should be replaced in __init__')
+
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_contract(pattern_config.source)
-                        if isinstance(pattern_config.similar_to, str):
-                            contract = self.get_contract(pattern_config.similar_to)
+
                         if isinstance(pattern_config.originated_contract, str):
                             pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 
         elif isinstance(index_config, BigMapIndexConfig):
             for handler in index_config.handlers:
                 handler.parent = index_config
-                # TODO: Verify callback uniqueness
-                # self._callback_patterns[handler.callback].append(handler.pattern)
                 if isinstance(handler.contract, str):
                     handler.contract = self.get_contract(handler.contract)
 

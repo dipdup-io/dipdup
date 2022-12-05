@@ -163,8 +163,8 @@ async def assert_run_registrydao() -> None:
     proposals = await demo_registrydao.models.DAO.filter().count()
     votes = await demo_registrydao.models.Proposal.filter().count()
 
-    assert proposals == 2
-    assert votes == 2
+    assert proposals == 19
+    assert votes == 0
 
 
 test_args = ('config', 'package', 'cmd', 'assert_fn')

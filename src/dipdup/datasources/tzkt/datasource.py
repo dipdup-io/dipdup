@@ -481,6 +481,7 @@ class TzktDatasource(IndexDatasource):
             limit=limit,
             select=ORIGINATION_OPERATION_FIELDS,
             status='applied',
+            cursor=bool(code_hashes),
         )
 
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.

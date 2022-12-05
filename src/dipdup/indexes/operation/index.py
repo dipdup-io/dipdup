@@ -7,7 +7,8 @@ from typing import Iterator
 from typing import Sequence
 
 from dipdup.config import OperationHandlerConfig
-from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig, OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -53,9 +54,9 @@ def address_filter(handlers: tuple[OperationHandlerConfig, ...]) -> set[str]:
                     if address := pattern_config.destination.address:
                         addresses.add(address)
             elif isinstance(pattern_config, OriginationPatternConfig):
+                # TODO: Remove in 7.0
                 if pattern_config.similar_to:
-                    pattern_config.originated_contract = pattern_config.similar_to
-                    pattern_config.similar_to = None
+                    raise FrameworkException('originated_contract` alias, should be replaced in __init__')
 
                 if pattern_config.originated_contract:
                     if address := pattern_config.originated_contract.address:
@@ -77,9 +78,13 @@ def code_hash_filter(handlers: tuple[OperationHandlerConfig, ...]) -> set[int | 
                     if code_hash := pattern_config.destination.code_hash:
                         code_hashes.add(code_hash)
             elif isinstance(pattern_config, OriginationPatternConfig):
+                # TODO: Remove in 7.0
                 if pattern_config.similar_to:
-                    pattern_config.originated_contract = pattern_config.similar_to
-                    pattern_config.similar_to = None
+                    raise FrameworkException('originated_contract` alias, should be replaced in __init__')
+
+                if pattern_config.source:
+                    if code_hash := pattern_config.source.code_hash:
+                        raise FrameworkException('`source.code_hash` is not supported for origination patterns')
 
                 if pattern_config.originated_contract:
                     if code_hash := pattern_config.originated_contract.code_hash:
