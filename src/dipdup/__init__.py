@@ -2,8 +2,10 @@
 
 Contains software versions and other metadata.
 """
-# NOTE: Do not edit __version__; managed by bumpversion
-__version__ = '6.3.1'
+import importlib.metadata
+
+# NOTE: Load version from package
+__version__ = importlib.metadata.version('dipdup')
 __spec_version__ = '1.2'
 
 version = tuple(__version__.split('.'))

@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- http: Fixed a crash when datasource URL contains trailing slash.
 - metadata: Add `limanet` to supported networks.
+- projects: Do not scaffold an outdated `poetry.lock`.
 
 ## [6.3.1] - 2022-11-25
 
