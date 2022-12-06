@@ -291,7 +291,7 @@ class CodeGenerator:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
         # NOTE: Euristics for complex cases like templated `similar_to` factories.
-        # NOTE: Try different contracts and datasources until one succeeds.
+        # NOTE: Try different contracts and datasources from config until one succeeds.
         for template_config in unused_operation_templates:
             self._logger.warning(
                 'Unused operation template `%s`. Ignore this warning if it is used in a factory.', template_config.name

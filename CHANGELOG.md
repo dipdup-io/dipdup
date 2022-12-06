@@ -6,9 +6,27 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+## Added
+
+- config: Added optional `code_hash` field to contract config.
+- tzkt: Added datasource methods `get_contract_address` and `get_contract_hashes`.
+- tzkt: Originations and operations now can be fetched by contract code hashes.
+- tzkt: Added `sender_code_hash` and `target_Code_hash` fields to `OperationData` model.
+
 ### Fixed
 
+- codegen: Unresolved index templates are now correctly processed during types generation.
+- demos: Fixed outdated `demo_registrydao` project.
 - metadata: Add `limanet` to supported networks.
+
+### Changed
+
+- exceptions: `FrameworkException` is raised instead of plain `RuntimeError` when a framework error occurs.
+- exceptions: Known exceptions inherit from `FrameworkError`; `DipDupError` alias kept for compatibility.
+
+### Deprecated
+
+- config: `similar_to.address` is an alias for `originated_contract.code_hash` and will be removed in the next major release.
 
 ## [6.3.1] - 2022-11-25
 
