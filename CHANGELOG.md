@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ## Added
 
 - config: Added optional `code_hash` field to contract config.
+- index: Filtering by `code_hash` is available for `operation` index.
 - tzkt: Added datasource methods `get_contract_address` and `get_contract_hashes`.
 - tzkt: Originations and operations now can be fetched by contract code hashes.
 - tzkt: Added `sender_code_hash` and `target_Code_hash` fields to `OperationData` model.
