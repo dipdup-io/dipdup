@@ -7,7 +7,8 @@ from dipdup.project import BaseProject
 
 demos_path = Path(__file__).parent.parent / 'demos'
 
-def _get_demos():
+
+def _get_demos() -> list[Path]:
     # FIXME
     # return list(demos_path.iterdir())
     return [
@@ -16,6 +17,7 @@ def _get_demos():
         Path('demos/demo-factories.json'),
         Path('demos/demo-factories'),
     ]
+
 
 for demo in _get_demos():
     if demo.is_dir():
