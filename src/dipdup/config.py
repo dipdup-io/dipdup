@@ -677,9 +677,6 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
 
         _logger.warning('`similar_to` field is deprecated, use `originated_contract` instead')
         self.originated_contract = self.similar_to
-        if self.originated_contract.address:
-            self.originated_contract.code_hash = self.originated_contract.address
-            self.originated_contract.address = None
         self.similar_to = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:

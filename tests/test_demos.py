@@ -158,20 +158,20 @@ async def assert_run_domains() -> None:
 
 
 async def assert_run_registrydao() -> None:
-    import demo_registrydao.models
+    import demo_factories.models
 
-    proposals = await demo_registrydao.models.DAO.filter().count()
-    votes = await demo_registrydao.models.Proposal.filter().count()
+    proposals = await demo_factories.models.DAO.filter().count()
+    votes = await demo_factories.models.Proposal.filter().count()
 
     assert proposals == 19
     assert votes == 86
 
 
 async def assert_run_registrydao_hash() -> None:
-    import demo_registrydao_hash.models
+    import demo_registrydao.models
 
-    proposals = await demo_registrydao_hash.models.DAO.filter().count()
-    votes = await demo_registrydao_hash.models.Proposal.filter().count()
+    proposals = await demo_registrydao.models.DAO.filter().count()
+    votes = await demo_registrydao.models.Proposal.filter().count()
 
     assert proposals == 19
     assert votes == 86
@@ -196,10 +196,10 @@ test_params = (
     ('domains.yml', 'demo_domains', 'init', partial(assert_init, 'demo_domains')),
     ('quipuswap.yml', 'demo_quipuswap', 'run', assert_run_quipuswap),
     ('quipuswap.yml', 'demo_quipuswap', 'init', partial(assert_init, 'demo_quipuswap')),
-    ('registrydao.yml', 'demo_registrydao', 'run', assert_run_registrydao),
-    ('registrydao.yml', 'demo_registrydao', 'init', partial(assert_init, 'demo_registrydao')),
-    ('registrydao_hash.yml', 'demo_registrydao_hash', 'run', assert_run_registrydao_hash),
-    ('registrydao_hash.yml', 'demo_registrydao_hash', 'init', partial(assert_init, 'demo_registrydao')),
+    ('registrydao.yml', 'demo_factories', 'run', assert_run_registrydao),
+    ('registrydao.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
+    ('registrydao_hash.yml', 'demo_registrydao', 'run', assert_run_registrydao_hash),
+    ('registrydao_hash.yml', 'demo_registrydao', 'init', partial(assert_init, 'demo_factories')),
 )
 
 

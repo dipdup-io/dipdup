@@ -1,5 +1,5 @@
 spec_version: 1.2
-package: demo_registrydao
+package: demo_factories
 
 database:
   kind: sqlite

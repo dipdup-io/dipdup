@@ -7,11 +7,21 @@ from dipdup.project import BaseProject
 
 demos_path = Path(__file__).parent.parent / 'demos'
 
-for demo in list(demos_path.iterdir()):
+def _get_demos():
+    # FIXME
+    # return list(demos_path.iterdir())
+    return [
+        Path('demos/demo-registrydao.json'),
+        Path('demos/demo-registrydao'),
+        Path('demos/demo-factories.json'),
+        Path('demos/demo-factories'),
+    ]
+
+for demo in _get_demos():
     if demo.is_dir():
         rmtree(demo)
 
-for demo in list(demos_path.iterdir()):
+for demo in _get_demos():
     if not demo.name.endswith('.json'):
         continue
 
@@ -24,7 +34,7 @@ for demo in list(demos_path.iterdir()):
     package = project.answers['package']
     subprocess.run(['mv', project_name, 'demos'], check=True)
 
-for demo in list(demos_path.iterdir()):
+for demo in _get_demos():
     if not demo.is_dir():
         continue
 

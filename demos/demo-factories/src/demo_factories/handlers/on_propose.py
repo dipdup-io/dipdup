@@ -1,6 +1,6 @@
-import demo_registrydao_hash.models as models
-from demo_registrydao_hash.types.registry.parameter.propose import ProposeParameter
-from demo_registrydao_hash.types.registry.storage import RegistryStorage
+import demo_factories.models as models
+from demo_factories.types.registry.parameter.propose import ProposeParameter
+from demo_factories.types.registry.storage import RegistryStorage
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
 

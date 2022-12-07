@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "demo-registrydao-hash"
+name = "demo-factories"
 version = "0.0.1"
 description = "My shiny new indexer based on DipDup"
 license = "MIT"
@@ -8,7 +8,7 @@ authors = [
 ]
 readme = "README.md"
 packages = [
-    { include = "demo_registrydao_hash", from = "src" },
+    { include = "demo_factories", from = "src" },
 ]
 
 [tool.poetry.dependencies]

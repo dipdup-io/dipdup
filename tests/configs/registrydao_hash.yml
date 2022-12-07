@@ -1,5 +1,5 @@
 spec_version: 1.2
-package: demo_registrydao_hash
+package: demo_registrydao
 
 database:
   kind: sqlite

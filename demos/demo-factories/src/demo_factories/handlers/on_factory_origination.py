@@ -1,6 +1,6 @@
 from typing import cast
 
-from demo_registrydao.types.registry.storage import RegistryStorage
+from demo_factories.types.registry.storage import RegistryStorage
 from dipdup.context import HandlerContext
 from dipdup.models import Origination
 

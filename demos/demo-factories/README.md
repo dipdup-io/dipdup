@@ -1,11 +1,11 @@
-# demo-registrydao-hash
+# demo-factories
 
 My shiny new indexer based on DipDup
 
 ## First steps
 
 * Install Poetry and GNU Make
-* Enter the project's directory with `cd demo-registrydao-hash`
+* Enter the project's directory with `cd demo-factories`
 * Install required dependencies with `make install`
 * Generate types and handlers with `dipdup init`
 * Ensure generated project is valid with `make lint`

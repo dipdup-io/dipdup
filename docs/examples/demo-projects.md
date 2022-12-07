@@ -26,7 +26,7 @@ Covers all available operations of Quipuswap DEX contracts: trades, transfers, m
 
 ## Homebase RegistryDAO
 
-source: [demo_registrydao](https://github.com/dipdup-io/dipdup/tree/master/src/demo_registrydao)
+source: [demo_factories](https://github.com/dipdup-io/dipdup/tree/master/src/demo_factories)
 
 Homebase enables users to create DAO contracts. In this example indexes are spawned in runtime ({{ #summary advanced/index-factories.md }}) for all contracts having the same script.
 

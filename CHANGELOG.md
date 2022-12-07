@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - codegen: Unresolved index templates are now correctly processed during types generation.
-- demos: Fixed outdated `demo_registrydao` project.
+- demos: Fixed outdated `demo_factories` project.
 - http: Fixed a crash when datasource URL contains trailing slash.
 - metadata: Add `limanet` to supported networks.
 - projects: Do not scaffold an outdated `poetry.lock`.

@@ -211,7 +211,7 @@ class BaseProject(Project):
                 'demo_head',
                 'demo_hic_et_nunc',
                 'demo_quipuswap',
-                'demo_registrydao',
+                'demo_factories',
                 'demo_tzbtc',
                 'demo_tzbtc_transfers',
                 'demo_tzcolors',

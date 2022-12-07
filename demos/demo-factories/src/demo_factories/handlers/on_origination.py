@@ -1,5 +1,5 @@
-import demo_registrydao.models as models
-from demo_registrydao.types.registry.storage import RegistryStorage
+import demo_factories.models as models
+from demo_factories.types.registry.storage import RegistryStorage
 from dipdup.context import HandlerContext
 from dipdup.models import Origination
 
