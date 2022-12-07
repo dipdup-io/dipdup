@@ -322,7 +322,7 @@ class BaseProject(Project):
             ),
             comments=(
                 'Classic set: black, isort, flake8, mypy, pytest',
-                'Same, plus bump2version, coverage and more flake8 plugins',
+                'Same, plus coverage and more flake8 plugins',
                 'None',
             ),
         ),

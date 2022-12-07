@@ -54,7 +54,6 @@ pytezos = {version = "3.7.1", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 blue = "*"
-bump2version = "*"
 diff-cover = "*"
 docker = "*"
 flake8-comprehensions = "*"
