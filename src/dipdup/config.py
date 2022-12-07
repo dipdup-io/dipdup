@@ -252,6 +252,11 @@ class ContractConfig(NameMixin):
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
 
+    def get_address(self) -> str:
+        if self.address is None:
+            raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
+        return self.address
+
 
 class DatasourceConfig(ABC, NameMixin):
     kind: str

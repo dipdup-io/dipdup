@@ -16,8 +16,7 @@ def get_big_map_addresses(handlers: Iterable[BigMapHandlerConfig]) -> set[str]:
     """Get addresses to fetch big map diffs from during initial synchronization"""
     addresses = set()
     for handler_config in handlers:
-        assert handler_config.contract.address
-        addresses.add(handler_config.contract.address)
+        addresses.add(handler_config.contract.get_address())
     return addresses
 
 
@@ -33,10 +32,9 @@ def get_big_map_pairs(handlers: Iterable[BigMapHandlerConfig]) -> set[tuple[str,
     """Get address-path pairs for fetch big map diffs during sync with `skip_history`"""
     pairs = set()
     for handler_config in handlers:
-        assert handler_config.contract.address
         pairs.add(
             (
-                handler_config.contract.address,
+                handler_config.contract.get_address(),
                 handler_config.path,
             )
         )

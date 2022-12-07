@@ -30,16 +30,13 @@ class TokenTransferIndex(
         to_addresses: set[str] = set()
         for handler_config in self._config.handlers:
             if handler_config.contract:
-                assert handler_config.contract.address
-                token_addresses.add(handler_config.contract.address)
+                token_addresses.add(handler_config.contract.get_address())
             if handler_config.token_id is not None:
                 token_ids.add(handler_config.token_id)
             if handler_config.from_:
-                assert handler_config.from_.address
-                from_addresses.add(handler_config.from_.address)
+                from_addresses.add(handler_config.from_.get_address())
             if handler_config.to:
-                assert handler_config.to.address
-                to_addresses.add(handler_config.to.address)
+                to_addresses.add(handler_config.to.get_address())
 
         return TokenTransferFetcher(
             datasource=self._datasource,

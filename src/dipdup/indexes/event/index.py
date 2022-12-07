@@ -1,4 +1,3 @@
-import logging
 from contextlib import ExitStack
 from typing import Any
 
@@ -17,8 +16,6 @@ from dipdup.models import Event
 from dipdup.models import EventData
 from dipdup.models import UnknownEvent
 from dipdup.prometheus import Metrics
-
-_logger = logging.getLogger(__name__)
 
 EventQueueItem = tuple[EventData, ...]
 
@@ -126,8 +123,7 @@ class EventIndex(
         """Get addresses to fetch events during initial synchronization"""
         addresses = set()
         for handler_config in self._config.handlers:
-            assert handler_config.contract.address
-            addresses.add(handler_config.contract.address)
+            addresses.add(handler_config.contract.get_address())
         return addresses
 
     def _get_event_tags(self) -> set[str]:
