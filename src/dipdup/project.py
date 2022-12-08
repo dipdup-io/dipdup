@@ -20,7 +20,7 @@ _logger = logging.getLogger('dipdup.project')
 # FIXME
 DEMO_PROJECTS = (
     ('demo_domains', 'Tezos Domains name service'),
-    ('demo_big_maps', 'Tezos Domains name service'),
+    ('demo_big_maps', 'Indexing a single big map'),
     ('demo_events', 'Processing contract events'),
     ('demo_head', 'Processing head block metadata'),
     ('demo_nft_marketplace', 'hic at nunc NFT marketplace'),
