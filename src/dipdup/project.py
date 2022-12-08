@@ -25,7 +25,7 @@ DEMO_PROJECTS = (
     ('demo_head', 'Processing head block metadata'),
     ('demo_nft_marketplace', 'hic at nunc NFT marketplace'),
     ('demo_dex', 'Quipuswap DEX balances and liquidity'),
-    ('demo_factories', 'Example of spawning indexes in runtime)'),
+    ('demo_factories', 'Example of spawning indexes in runtime'),
     ('demo_dao', 'Homebase DAO registry'),
     ('demo_token', 'TzBTC FA1.2 token operations'),
     ('demo_token_transfers', 'TzBTC FA1.2 token transfers'),
