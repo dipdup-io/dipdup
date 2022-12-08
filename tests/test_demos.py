@@ -119,11 +119,11 @@ async def assert_run_tzbtc_transfers(expected_holders: int, expected_balance: st
     assert f'{random_balance:f}' == expected_balance
 
 
-async def assert_run_domains_big_map() -> None:
-    import demo_domains_big_map.models
+async def assert_run_big_maps() -> None:
+    import demo_big_maps.models
 
-    tlds = await demo_domains_big_map.models.TLD.filter().count()
-    domains = await demo_domains_big_map.models.Domain.filter().count()
+    tlds = await demo_big_maps.models.TLD.filter().count()
+    domains = await demo_big_maps.models.Domain.filter().count()
 
     assert tlds == 1
     assert domains == 75
@@ -190,8 +190,8 @@ test_params = (
     ('tzbtc_transfers_2.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 12, '0.26554711')),
     ('tzbtc_transfers_3.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 9, '0.15579888')),
     ('tzbtc_transfers_4.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 2, '-0.00767376')),
-    ('domains_big_map.yml', 'demo_domains_big_map', 'run', assert_run_domains_big_map),
-    ('domains_big_map.yml', 'demo_domains_big_map', 'init', partial(assert_init, 'demo_domains_big_map')),
+    ('big_maps.yml', 'demo_big_maps', 'run', assert_run_big_maps),
+    ('big_maps.yml', 'demo_big_maps', 'init', partial(assert_init, 'demo_big_maps')),
     ('domains.yml', 'demo_domains', 'run', assert_run_domains),
     ('domains.yml', 'demo_domains', 'init', partial(assert_init, 'demo_domains')),
     ('quipuswap.yml', 'demo_quipuswap', 'run', assert_run_quipuswap),

@@ -1,8 +1,8 @@
 from unittest import IsolatedAsyncioTestCase
 
-import demo_domains_big_map
+import demo_big_maps
 
 
 class ExampleTest(IsolatedAsyncioTestCase):
     async def test_example(self):
-        assert demo_domains_big_map
+        assert demo_big_maps

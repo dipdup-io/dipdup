@@ -1,5 +1,5 @@
 spec_version: 1.2
-package: demo_domains_big_map
+package: demo_big_maps
 
 database:
   kind: sqlite
@@ -18,7 +18,7 @@ datasources:
       replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
 
 templates:
-  domains_big_map:
+  big_maps:
     kind: big_map
     datasource: <datasource>
     handlers:
@@ -30,8 +30,8 @@ templates:
         path: store.expiry_map
 
 indexes:
-  domains_big_map:
-    template: domains_big_map
+  big_maps:
+    template: big_maps
     first_level: 1415852
     last_level: 1418800
     values:

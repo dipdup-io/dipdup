@@ -1,9 +1,9 @@
 spec_version: 1.2
-package: demo_domains_big_map
+package: {{ cookiecutter.package }}
 
 database:
   kind: sqlite
-  path: demo-domains-big-map.sqlite3
+  path: {{ cookiecutter.project_name }}.sqlite3
 
 contracts:
   mainnet_name_registry:
@@ -16,7 +16,7 @@ datasources:
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
-  domains_big_map:
+  big_maps:
     kind: big_map
     datasource: <datasource>
     skip_history: once
@@ -29,8 +29,8 @@ templates:
         path: store.expiry_map
 
 indexes:
-  domains_big_map_mainnet:
-    template: domains_big_map
+  big_maps_mainnet:
+    template: big_maps
     values:
       datasource: tzkt_mainnet
       name_registry: mainnet_name_registry

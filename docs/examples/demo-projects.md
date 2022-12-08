@@ -38,7 +38,7 @@ Tezos Domains is a distributed naming system. You probably have seen those fancy
 
 ## Tezos Domains (`big_map`)
 
-source: [demo_domains_big_map](https://github.com/dipdup-io/dipdup/tree/master/src/demo_domains_big_map)
+source: [demo_big_maps](https://github.com/dipdup-io/dipdup/tree/master/src/demo_big_maps)
 
 The same as above, but uses `big_map` index instead of `operation` one. The storage structure of this contract is pretty straightforward; we only need to track a single big map. This example contains `skip_history: once` directive to index only the current state of the contract before switching to realtime processing. It allows to speed up indexing even more.
 

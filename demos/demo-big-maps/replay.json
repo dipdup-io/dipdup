@@ -10,9 +10,9 @@
   "license": "MIT",
   "line_length": "120",
   "linters": "default",
-  "package": "demo_domains_big_map",
+  "package": "demo_big_maps",
   "postgresql_image": "postgres:14",
-  "project_name": "demo-domains-big-map",
-  "template": "demo_domains_big_map",
+  "project_name": "demo-big-maps",
+  "template": "demo_big_maps",
   "version": "0.0.1"
 }

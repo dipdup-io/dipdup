@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "demo-domains-big-map"
+name = "demo-big-maps"
 version = "0.0.1"
 description = "My shiny new indexer based on DipDup"
 license = "MIT"
@@ -8,7 +8,7 @@ authors = [
 ]
 readme = "README.md"
 packages = [
-    { include = "demo_domains_big_map", from = "src" },
+    { include = "demo_big_maps", from = "src" },
 ]
 
 [tool.poetry.dependencies]

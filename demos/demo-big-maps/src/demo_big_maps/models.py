@@ -1,5 +1,5 @@
-from tortoise import fields
 from tortoise.fields.relational import ForeignKeyFieldInstance
+from tortoise import fields
 
 from dipdup.models import Model
 
