@@ -1,0 +1,30 @@
+spec_version: 1.2
+package: demo_token_transfers
+
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+contracts:
+  tzbtc_mainnet:
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: tzbtc
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: https://api.tzkt.io
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
+
+indexes:
+  tzbtc_holders_mainnet:
+    kind: token_transfer
+    datasource: tzkt
+    handlers:
+      - callback: on_token_transfer
+        contract: tzbtc_mainnet
+    first_level: 2315000
+    last_level: 2315100
+
+logging: quiet

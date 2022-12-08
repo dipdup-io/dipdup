@@ -1,0 +1,38 @@
+spec_version: 1.2
+package: demo_dao
+
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+contracts:
+  registry:
+    code_hash: KT19CF3KKrvdW77ttFomCuin2k4uAVkryYqh
+    typename: registry
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
+
+indexes:
+  registry_dao:
+    kind: operation
+    datasource: tzkt
+    types:
+      - transaction
+      - origination
+    handlers:
+      - callback: on_origination
+        pattern:
+          - type: origination
+            originated_contract: registry
+      - callback: on_propose
+        pattern:
+          - type: transaction
+            destination: registry
+            entrypoint: propose
+    first_level: 1881619
+    last_level: 2933505

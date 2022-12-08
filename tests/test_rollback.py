@@ -5,7 +5,7 @@ from typing import List
 from tortoise.expressions import F
 
 import demo_domains.models as domains_models
-import demo_hic_et_nunc.models as hen_models
+import demo_nft_marketplace.models as hen_models
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.dipdup import DipDup
@@ -16,7 +16,7 @@ from dipdup.models import ModelUpdateAction
 
 
 async def test_model_updates() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
+    config = DipDupConfig(spec_version='1.2', package='demo_nft_marketplace')
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
@@ -128,7 +128,7 @@ async def test_model_updates() -> None:
 
 
 async def test_cleanup_and_filtering() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
+    config = DipDupConfig(spec_version='1.2', package='demo_nft_marketplace')
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
@@ -335,7 +335,7 @@ async def test_update_prefetch() -> None:
 
 
 async def test_update_arithmetics() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
+    config = DipDupConfig(spec_version='1.2', package='demo_nft_marketplace')
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)

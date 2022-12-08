@@ -100,7 +100,7 @@ scripts:
 	python scripts/update_demos.py
 	make lint
 
-	# rm -r tests/replays/*
-	# make test
+	rm -r tests/replays/*
+	make test
 
 ##

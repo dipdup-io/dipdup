@@ -36,7 +36,7 @@ async def spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
 
 class IndexStateTest:
     def __init__(self) -> None:
-        name = 'hic_et_nunc.yml'
+        name = 'demo_nft_marketplace.yml'
         config_path = Path(__file__).parent / 'configs' / name
         self.config = DipDupConfig.load([config_path])
         self.config.initialize(skip_imports=True)

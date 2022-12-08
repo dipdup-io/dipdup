@@ -8,19 +8,19 @@ Some projects that started as a demo now evolved into full-fledged applications 
 
 ## TzBTC token
 
-source: [demo_tzbtc](https://github.com/dipdup-io/dipdup/tree/master/src/demo_tzbtc)
+source: [demo_token](https://github.com/dipdup-io/dipdup/tree/master/src/demo_token)
 
 The most basic indexer used in Quickstart. A single `operation` index to track balances of TzBTC token holders, nothing else.
 
 ## hic et nunc
 
-source: [demo_hic_et_nunc](https://github.com/dipdup-io/dipdup/tree/master/src/demo_hic_et_nunc)
+source: [demo_nft_marketplace](https://github.com/dipdup-io/dipdup/tree/master/src/demo_nft_marketplace)
 
 Indexes trades and swaps of "hic et nunc", one of the most popular NFT marketplaces on Tezos.
 
 ## Quipuswap
 
-source: [demo_quipuswap](https://github.com/dipdup-io/dipdup/tree/master/src/demo_quipuswap)
+source: [demo_dex](https://github.com/dipdup-io/dipdup/tree/master/src/demo_dex)
 
 Covers all available operations of Quipuswap DEX contracts: trades, transfers, moving liquidity. A more complex example with index templates.
 

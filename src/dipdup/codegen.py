@@ -158,7 +158,7 @@ class CodeGenerator:
             contract_config = self._config.contracts[contract_config]
 
         elif isinstance(contract_config, str):
-            self._logger.warning('Unresolved `contract` field, trying to guess it')
+            self._logger.info('Unresolved `contract` field, trying to guess it.')
             for possible_contract_config in self._config.contracts.values():
                 if isinstance(operation_pattern_config, TransactionPatternConfig):
                     operation_pattern_config.destination = possible_contract_config
@@ -302,7 +302,7 @@ class CodeGenerator:
                 template_config.datasource = datasource_config
                 await self._fetch_operation_index_schema(template_config)
             else:
-                self._logger.warning('Unresolved `datasource` field, trying to guess it')
+                self._logger.info('Unresolved `datasource` field, trying to guess it.')
                 for possible_datasource_config in self._config.datasources.values():
                     if not isinstance(possible_datasource_config, TzktDatasourceConfig):
                         continue

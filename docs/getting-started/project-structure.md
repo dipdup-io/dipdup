@@ -3,7 +3,7 @@
 The structure of the DipDup project package is the following:
 
 ```text
-demo_tzbtc
+demo_token
 ├── graphql
 ├── handlers
 │   ├── __init__.py

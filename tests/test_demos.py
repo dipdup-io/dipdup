@@ -67,11 +67,11 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
         yield Path(tmp_root_path)
 
 
-async def assert_run_tzbtc() -> None:
-    import demo_tzbtc.models
+async def assert_run_token() -> None:
+    import demo_token.models
 
-    holders = await demo_tzbtc.models.Holder.filter().count()
-    holder = await demo_tzbtc.models.Holder.first()
+    holders = await demo_token.models.Holder.filter().count()
+    holder = await demo_token.models.Holder.first()
     assert holder
     random_balance = holder.balance
 
@@ -79,13 +79,13 @@ async def assert_run_tzbtc() -> None:
     assert random_balance == Decimal('-0.01912431')
 
 
-async def assert_run_hic_et_nunc() -> None:
-    import demo_hic_et_nunc.models
+async def assert_run_nft_marketplace() -> None:
+    import demo_nft_marketplace.models
 
-    holders = await demo_hic_et_nunc.models.Holder.filter().count()
-    tokens = await demo_hic_et_nunc.models.Token.filter().count()
-    swaps = await demo_hic_et_nunc.models.Swap.filter().count()
-    trades = await demo_hic_et_nunc.models.Trade.filter().count()
+    holders = await demo_nft_marketplace.models.Holder.filter().count()
+    tokens = await demo_nft_marketplace.models.Token.filter().count()
+    swaps = await demo_nft_marketplace.models.Swap.filter().count()
+    trades = await demo_nft_marketplace.models.Trade.filter().count()
 
     assert holders == 22
     assert tokens == 29
@@ -93,7 +93,7 @@ async def assert_run_hic_et_nunc() -> None:
     assert trades == 24
 
 
-async def assert_run_tzcolors() -> None:
+async def assert_run_auction() -> None:
     import demo_auction.models
 
     users = await demo_auction.models.User.filter().count()
@@ -107,11 +107,11 @@ async def assert_run_tzcolors() -> None:
     assert bids == 44
 
 
-async def assert_run_tzbtc_transfers(expected_holders: int, expected_balance: str) -> None:
-    import demo_tzbtc_transfers.models
+async def assert_run_token_transfers(expected_holders: int, expected_balance: str) -> None:
+    import demo_token_transfers.models
 
-    holders = await demo_tzbtc_transfers.models.Holder.filter().count()
-    holder = await demo_tzbtc_transfers.models.Holder.first()
+    holders = await demo_token_transfers.models.Holder.filter().count()
+    holder = await demo_token_transfers.models.Holder.first()
     assert holder
     random_balance = holder.balance
 
@@ -133,13 +133,13 @@ async def assert_init(package: str) -> None:
     import_submodules(package)
 
 
-async def assert_run_quipuswap() -> None:
+async def assert_run_dex() -> None:
     from tortoise.transactions import in_transaction
 
-    import demo_quipuswap.models
+    import demo_dex.models
 
-    trades = await demo_quipuswap.models.Trade.filter().count()
-    positions = await demo_quipuswap.models.Position.filter().count()
+    trades = await demo_dex.models.Trade.filter().count()
+    positions = await demo_dex.models.Position.filter().count()
     async with in_transaction() as conn:
         symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
     assert symbols == 2
@@ -167,11 +167,11 @@ async def assert_run_factories() -> None:
     assert votes == 86
 
 
-async def assert_run_registrydao() -> None:
-    import demo_registrydao.models
+async def assert_run_dao() -> None:
+    import demo_dao.models
 
-    proposals = await demo_registrydao.models.DAO.filter().count()
-    votes = await demo_registrydao.models.Proposal.filter().count()
+    proposals = await demo_dao.models.DAO.filter().count()
+    votes = await demo_dao.models.Proposal.filter().count()
 
     assert proposals == 19
     assert votes == 86
@@ -179,27 +179,37 @@ async def assert_run_registrydao() -> None:
 
 test_args = ('config', 'package', 'cmd', 'assert_fn')
 test_params = (
-    ('tzbtc.yml', 'demo_tzbtc', 'run', assert_run_tzbtc),
-    ('tzbtc.yml', 'demo_tzbtc', 'init', partial(assert_init, 'demo_tzbtc')),
-    ('hic_et_nunc.yml', 'demo_hic_et_nunc', 'run', assert_run_hic_et_nunc),
-    ('hic_et_nunc.yml', 'demo_hic_et_nunc', 'init', partial(assert_init, 'demo_hic_et_nunc')),
-    ('auction.yml', 'demo_auction', 'run', assert_run_tzcolors),
-    ('auction.yml', 'demo_auction', 'init', partial(assert_init, 'demo_auction')),
-    ('tzbtc_transfers.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 4, '-0.01912431')),
-    ('tzbtc_transfers.yml', 'demo_tzbtc_transfers', 'init', partial(assert_init, 'demo_tzbtc_transfers')),
-    ('tzbtc_transfers_2.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 12, '0.26554711')),
-    ('tzbtc_transfers_3.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 9, '0.15579888')),
-    ('tzbtc_transfers_4.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 2, '-0.00767376')),
-    ('big_maps.yml', 'demo_big_maps', 'run', assert_run_big_maps),
-    ('big_maps.yml', 'demo_big_maps', 'init', partial(assert_init, 'demo_big_maps')),
-    ('domains.yml', 'demo_domains', 'run', assert_run_domains),
-    ('domains.yml', 'demo_domains', 'init', partial(assert_init, 'demo_domains')),
-    ('quipuswap.yml', 'demo_quipuswap', 'run', assert_run_quipuswap),
-    ('quipuswap.yml', 'demo_quipuswap', 'init', partial(assert_init, 'demo_quipuswap')),
-    ('registrydao.yml', 'demo_registrydao', 'run', assert_run_registrydao),
-    ('registrydao.yml', 'demo_registrydao', 'init', partial(assert_init, 'demo_registrydao')),
-    ('factories.yml', 'demo_factories', 'run', assert_run_factories),
-    ('factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
+    ('demo_token.yml', 'demo_token', 'run', assert_run_token),
+    ('demo_token.yml', 'demo_token', 'init', partial(assert_init, 'demo_token')),
+    ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'run', assert_run_nft_marketplace),
+    ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'init', partial(assert_init, 'demo_nft_marketplace')),
+    ('demo_auction.yml', 'demo_auction', 'run', assert_run_auction),
+    ('demo_auction.yml', 'demo_auction', 'init', partial(assert_init, 'demo_auction')),
+    ('demo_token_transfers.yml', 'demo_token_transfers', 'run', partial(assert_run_token_transfers, 4, '-0.01912431')),
+    ('demo_token_transfers.yml', 'demo_token_transfers', 'init', partial(assert_init, 'demo_token_transfers')),
+    (
+        'demo_token_transfers_2.yml',
+        'demo_token_transfers',
+        'run',
+        partial(assert_run_token_transfers, 12, '0.26554711'),
+    ),
+    ('demo_token_transfers_3.yml', 'demo_token_transfers', 'run', partial(assert_run_token_transfers, 9, '0.15579888')),
+    (
+        'demo_token_transfers_4.yml',
+        'demo_token_transfers',
+        'run',
+        partial(assert_run_token_transfers, 2, '-0.00767376'),
+    ),
+    ('demo_big_maps.yml', 'demo_big_maps', 'run', assert_run_big_maps),
+    ('demo_big_maps.yml', 'demo_big_maps', 'init', partial(assert_init, 'demo_big_maps')),
+    ('demo_domains.yml', 'demo_domains', 'run', assert_run_domains),
+    ('demo_domains.yml', 'demo_domains', 'init', partial(assert_init, 'demo_domains')),
+    ('demo_dex.yml', 'demo_dex', 'run', assert_run_dex),
+    ('demo_dex.yml', 'demo_dex', 'init', partial(assert_init, 'demo_dex')),
+    ('demo_dao.yml', 'demo_dao', 'run', assert_run_dao),
+    ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
+    ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
+    ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
 )
 
 

@@ -19,13 +19,15 @@ def _get_projects() -> list[Path]:
 
 for demo_path in _get_demos():
     if demo_path.is_dir():
-        rmtree(demo_path)
+        print(f'=> Removing `{demo_path.name}`')
+        rmtree(demo_path, ignore_errors=True)
+        rmtree(demo_path.parent / 'src' / demo_path.name, ignore_errors=True)
 
 for project_path in _get_projects():
     if not project_path.name.endswith('.json'):
         continue
 
-    print(f'Updating {project_path.name}')
+    print(f'=> Updating {project_path.name}')
     project = BaseProject()
     project.run(quiet=True, replay=str(project_path))
     project.render(force=True)
@@ -38,9 +40,16 @@ for demo in _get_demos():
     if not demo.is_dir():
         continue
 
-    print(f'Initializing {demo.name}')
+    print(f'=> Initializing `{demo.name}`')
     subprocess.run(
         ['dipdup', 'init', '--overwrite-types'],
         cwd=demo,
+        check=True,
+    )
+
+    demo_pkg = demo.name.replace('-', '_')
+    subprocess.run(
+        ['ln', '-sf', f'../demos/{demo.name}/src/{demo_pkg}', demo_pkg],
+        cwd=Path.cwd() / 'src',
         check=True,
     )
