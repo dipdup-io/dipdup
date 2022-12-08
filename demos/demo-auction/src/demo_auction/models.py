@@ -1,7 +1,7 @@
 from enum import IntEnum
 
-from tortoise.fields.relational import ForeignKeyFieldInstance
 from tortoise import fields
+from tortoise.fields.relational import ForeignKeyFieldInstance
 
 from dipdup.models import Model
 

@@ -19,19 +19,23 @@ async def on_update_records(
     ctx.logger.info('Processing `%s`', record_name)
 
     if len(record_path) != int(store_records.value.level):
-        ctx.logger.error('Invalid record `%s`: expected %s chunks, got %s', record_name, store_records.value.level, len(record_path))
+        ctx.logger.error(
+            'Invalid record `%s`: expected %s chunks, got %s', record_name, store_records.value.level, len(record_path)
+        )
         return
 
-    if store_records.value.level == "1":
+    if store_records.value.level == '1':
         await models.TLD.update_or_create(id=record_name, defaults={'owner': store_records.value.owner})
     else:
-        if store_records.value.level == "2":
+        if store_records.value.level == '2':
             await models.Domain.update_or_create(
                 id=record_name,
                 defaults={
                     'tld_id': record_path[-1],
                     'owner': store_records.value.owner,
-                    'token_id': int(store_records.value.tzip12_token_id) if store_records.value.tzip12_token_id else None,
+                    'token_id': int(store_records.value.tzip12_token_id)
+                    if store_records.value.tzip12_token_id
+                    else None,
                 },
             )
 
