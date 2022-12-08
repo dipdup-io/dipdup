@@ -19,20 +19,21 @@ _logger = logging.getLogger('dipdup.project')
 
 # FIXME
 DEMO_PROJECTS = (
-    ('demo_domains', '[operation]      Tezos Domains name service'),
-    ('demo_big_maps', '[big_map]        Tezos Domains name service'),
-    ('demo_events', '[event]          Processing contract events (new in Kathmandu)'),
-    ('demo_head', '[head]           Processing head block metadata'),
-    ('demo_nft_marketplace', '[operation]      hic at nunc NFT marketplace'),
-    ('demo_dex', '[operation]      Quipuswap DEX balances and liquidity'),
-    ('demo_factories', '[operation]      Homebase DAO registry (index factory)'),
-    ('demo_dao', '[operation]      Homebase DAO registry'),
-    ('demo_token', '[operation]      TzBTC FA1.2 token transfers'),
-    ('demo_token_transfers', '[token_transfer] TzBTC FA1.2 token transfers'),
-    ('demo_auction', '[operation]      TzColors NFT marketplace'),
-    ('blank', '[n/a]            Empty config for a fresh start'),
-    # TODO: demo_hooks
+    ('demo_domains', 'Tezos Domains name service'),
+    ('demo_big_maps', 'Tezos Domains name service'),
+    ('demo_events', 'Processing contract events'),
+    ('demo_head', 'Processing head block metadata'),
+    ('demo_nft_marketplace', 'hic at nunc NFT marketplace'),
+    ('demo_dex', 'Quipuswap DEX balances and liquidity'),
+    ('demo_factories', 'Example of spawning indexes in runtime)'),
+    ('demo_dao', 'Homebase DAO registry'),
+    ('demo_token', 'TzBTC FA1.2 token operations'),
+    ('demo_token_transfers', 'TzBTC FA1.2 token transfers'),
+    ('demo_auction', 'TzColors NFT marketplace'),
+    ('blank', 'Empty config for a fresh start'),
+    # TODO: demo_jobs
     # TODO: demo_backup
+    # TODO: demo_sql
 )
 
 
