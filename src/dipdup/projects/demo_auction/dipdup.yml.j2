@@ -19,7 +19,7 @@ datasources:
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
-  tzcolors_auction:
+  auction:
     kind: operation
     datasource: <datasource>
     contracts:
@@ -42,8 +42,8 @@ templates:
             entrypoint: withdraw
 
 indexes:
-  tzcolors_auction:
-    template: tzcolors_auction
+  tzcolors:
+    template: auction
     values:
       datasource: tzkt
       minter: tzcolors_minter

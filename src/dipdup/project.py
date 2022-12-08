@@ -29,7 +29,7 @@ DEMO_PROJECTS = (
     ('demo_registrydao', '[operation]      Homebase DAO registry'),
     ('demo_tzbtc', '[operation]      TzBTC FA1.2 token transfers'),
     ('demo_tzbtc_transfers', '[token_transfer] TzBTC FA1.2 token transfers'),
-    ('demo_tzcolors', '[operation]      TzColors NFT marketplace'),
+    ('demo_auction', '[operation]      TzColors NFT marketplace'),
     ('blank', '[n/a]            Empty config for a fresh start'),
     # TODO: demo_hooks
     # TODO: demo_backup

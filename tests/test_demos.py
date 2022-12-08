@@ -94,12 +94,12 @@ async def assert_run_hic_et_nunc() -> None:
 
 
 async def assert_run_tzcolors() -> None:
-    import demo_tzcolors.models
+    import demo_auction.models
 
-    users = await demo_tzcolors.models.User.filter().count()
-    tokens = await demo_tzcolors.models.Token.filter().count()
-    auctions = await demo_tzcolors.models.Auction.filter().count()
-    bids = await demo_tzcolors.models.Bid.filter().count()
+    users = await demo_auction.models.User.filter().count()
+    tokens = await demo_auction.models.Token.filter().count()
+    auctions = await demo_auction.models.Auction.filter().count()
+    bids = await demo_auction.models.Bid.filter().count()
 
     assert users == 9
     assert tokens == 14
@@ -183,8 +183,8 @@ test_params = (
     ('tzbtc.yml', 'demo_tzbtc', 'init', partial(assert_init, 'demo_tzbtc')),
     ('hic_et_nunc.yml', 'demo_hic_et_nunc', 'run', assert_run_hic_et_nunc),
     ('hic_et_nunc.yml', 'demo_hic_et_nunc', 'init', partial(assert_init, 'demo_hic_et_nunc')),
-    ('tzcolors.yml', 'demo_tzcolors', 'run', assert_run_tzcolors),
-    ('tzcolors.yml', 'demo_tzcolors', 'init', partial(assert_init, 'demo_tzcolors')),
+    ('tzcolors.yml', 'demo_auction', 'run', assert_run_tzcolors),
+    ('tzcolors.yml', 'demo_auction', 'init', partial(assert_init, 'demo_auction')),
     ('tzbtc_transfers.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 4, '-0.01912431')),
     ('tzbtc_transfers.yml', 'demo_tzbtc_transfers', 'init', partial(assert_init, 'demo_tzbtc_transfers')),
     ('tzbtc_transfers_2.yml', 'demo_tzbtc_transfers', 'run', partial(assert_run_tzbtc_transfers, 12, '0.26554711')),

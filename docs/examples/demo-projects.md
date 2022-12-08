@@ -44,6 +44,6 @@ The same as above, but uses `big_map` index instead of `operation` one. The stor
 
 ## TzColors
 
-source: [demo_tzcolors](https://github.com/dipdup-io/dipdup/tree/master/src/demo_tzcolors)
+source: [demo_auction](https://github.com/dipdup-io/dipdup/tree/master/src/demo_auction)
 
 A very basic indexer of TzColors NFT token and marketplace. Unlike `hic et nunc` this marketplace provides auction functionality. Other than that, it is pretty much the same.

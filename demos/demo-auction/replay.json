@@ -10,9 +10,9 @@
   "license": "MIT",
   "line_length": "120",
   "linters": "default",
-  "package": "demo_tzcolors",
+  "package": "demo_auction",
   "postgresql_image": "postgres:14",
-  "project_name": "demo-tzcolors",
-  "template": "demo_tzcolors",
+  "project_name": "demo-auction",
+  "template": "demo_auction",
   "version": "0.0.1"
 }
