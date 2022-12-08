@@ -96,9 +96,11 @@ update:         ## Update dependencies, export requirements.txt
 	make install
 
 scripts:
-	# python scripts/update_cookiecutter.py
+	python scripts/update_cookiecutter.py
 	python scripts/update_demos.py
+	make lint
+
 	# rm -r tests/replays/*
-	# make lint test
+	# make test
 
 ##

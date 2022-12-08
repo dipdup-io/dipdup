@@ -5,31 +5,29 @@ from shutil import rmtree
 
 from dipdup.project import BaseProject
 
+projects_path = Path(__file__).parent.parent / 'projects'
 demos_path = Path(__file__).parent.parent / 'demos'
 
 
 def _get_demos() -> list[Path]:
-    # FIXME
-    # return list(demos_path.iterdir())
-    return [
-        Path('demos/demo-registrydao.json'),
-        Path('demos/demo-registrydao'),
-        Path('demos/demo-factories.json'),
-        Path('demos/demo-factories'),
-    ]
+    return list(demos_path.iterdir())
 
 
-for demo in _get_demos():
-    if demo.is_dir():
-        rmtree(demo)
+def _get_projects() -> list[Path]:
+    return list(projects_path.iterdir())
 
-for demo in _get_demos():
-    if not demo.name.endswith('.json'):
+
+for demo_path in _get_demos():
+    if demo_path.is_dir():
+        rmtree(demo_path)
+
+for project_path in _get_projects():
+    if not project_path.name.endswith('.json'):
         continue
 
-    print(f'Updating {demo.name}')
+    print(f'Updating {project_path.name}')
     project = BaseProject()
-    project.run(quiet=True, replay=str(demo))
+    project.run(quiet=True, replay=str(project_path))
     project.render(force=True)
 
     project_name = project.answers['project_name']
