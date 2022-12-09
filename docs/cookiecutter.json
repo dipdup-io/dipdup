@@ -1,6 +1,6 @@
 {
   "dipdup_version": "6",
-  "template": "demo_tzbtc",
+  "template": "demo_dao",
   "project_name": "dipdup-indexer",
   "package": "dipdup_indexer",
   "version": "0.0.1",

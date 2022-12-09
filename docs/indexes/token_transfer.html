@@ -167,11 +167,11 @@
                         <h1 id="token_transfer-index"><a class="header" href="#token_transfer-index"><code>token_transfer</code> index</a></h1>
 <p>This index allows indexing token transfers of contracts compatible with <a href="https://gitlab.com/tzip/tzip/-/blob/master/proposals/tzip-7/README.md">FA1.2</a> or <a href="https://gitlab.com/tzip/tzip/-/blob/master/proposals/tzip-12/tzip-12.md">FA2</a> standards.</p>
 <pre><code class="language-yaml">spec_version: 1.2
-package: demo_tzbtc_transfers
+package: demo_token_transfers
 
 database:
   kind: sqlite
-  path: demo-tzbtc-transfers.sqlite3
+  path: demo-token-transfers.sqlite3
 
 contracts:
   tzbtc_mainnet:
@@ -201,7 +201,7 @@ indexes:
 <pre><code class="language-python">from decimal import Decimal
 from decimal import InvalidOperation
 
-from demo_tzbtc_transfers.handlers.on_balance_update import on_balance_update
+from demo_token_transfers.handlers.on_balance_update import on_balance_update
 from dipdup.context import HandlerContext
 from dipdup.models import TokenTransferData
 
