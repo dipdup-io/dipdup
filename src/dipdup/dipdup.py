@@ -203,12 +203,18 @@ class IndexDispatcher:
                         index_name=index_state.name,
                         template=template,
                     )
-                await self._ctx.add_index(name, template, template_values, index_state)
+                await self._ctx.add_index(
+                    name,
+                    template,
+                    template_values,
+                    state=index_state,
+                )
 
             # NOTE: Index config is missing, possibly just commented-out
             else:
-                self._logger.warning('Index `%s` was removed from config, ignoring', name)
+                self._logger.warning('Index `%s` not found in config, ignoring', name)
 
+        # FIXME: Outdated optimization
         tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
         await gather(*tasks)
 

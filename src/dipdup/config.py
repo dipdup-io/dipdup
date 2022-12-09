@@ -1545,12 +1545,21 @@ class DipDupConfig:
                 raise ConfigInitializationException
             index_config.import_objects(self.package)
 
-    def add_index(self, name: str, template: str, values: dict[str, str]) -> None:
+    def add_index(
+        self,
+        name: str,
+        template: str,
+        values: dict[str, str],
+        first_level: int = 0,
+        last_level: int = 0,
+    ) -> None:
         if name in self.indexes:
             raise IndexAlreadyExistsError(self, name)
         template_config = IndexTemplateConfig(
             template=template,
             values=values,
+            first_level=first_level,
+            last_level=last_level,
         )
         template_config._name = name
         self._resolve_template(template_config)

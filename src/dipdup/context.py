@@ -255,15 +255,22 @@ class DipDupContext:
                 typename=contract_config.typename,
             ).save()
 
-    # TODO: Option to override first_level/last_level?
-    async def add_index(self, name: str, template: str, values: Dict[str, Any], state: Optional[Index] = None) -> None:
+    async def add_index(
+        self,
+        name: str,
+        template: str,
+        values: Dict[str, Any],
+        first_level: int = 0,
+        last_level: int = 0,
+        state: Optional[Index] = None,
+    ) -> None:
         """Adds a new contract to the inventory.
 
         :param name: Index name
         :param template: Index template to use
         :param values: Mapping of values to fill template with
         """
-        self.config.add_index(name, template, values)
+        self.config.add_index(name, template, values, first_level, last_level)
         await self._spawn_index(name, state)
 
     async def _spawn_index(self, name: str, state: Optional[Index] = None) -> None:
