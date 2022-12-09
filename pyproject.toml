@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "6.3.1"
+version = "6.4.0rc1"
 license = "MIT"
 authors = [
     "Lev Gorodetskiy <dipdup@drsr.io>",
