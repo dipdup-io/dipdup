@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ## Added
 
 - config: Added optional `code_hash` field to contract config.
+- context: Added `first_level` and `last_level` arguments to `ctx.add_index` methods.
 - index: Filtering by `code_hash` is available for `operation` index.
 - tzkt: Added datasource methods `get_contract_address` and `get_contract_hashes`.
 - tzkt: Originations and operations now can be fetched by contract code hashes.
@@ -17,13 +18,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - codegen: Unresolved index templates are now correctly processed during types generation.
-- demos: Fixed outdated `demo_factories` project.
+- demos: Fixed outdated `demo_dao` project.
 - http: Fixed a crash when datasource URL contains trailing slash.
 - metadata: Add `limanet` to supported networks.
 - projects: Do not scaffold an outdated `poetry.lock`.
 
 ### Changed
 
+- demos: Demos were renamed to better indicate their purpose.
 - exceptions: `FrameworkException` is raised instead of plain `RuntimeError` when a framework error occurs.
 - exceptions: Known exceptions are inherited from `FrameworkError`.
 - tzkt: Some datasource methods have changed their signatures.
