@@ -12,13 +12,11 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any
 from typing import Awaitable
-from typing import Deque
 from typing import Dict
 from typing import Iterator
 from typing import NoReturn
 from typing import Optional
 from typing import Set
-from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -51,7 +49,7 @@ from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import ContractAlreadyExistsError
-from dipdup.exceptions import DipDupError
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
@@ -71,7 +69,7 @@ from dipdup.utils.sys import is_in_tests
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 pending_indexes: deque[Any] = deque()
-pending_hooks: Deque[Awaitable[None]] = deque()
+pending_hooks: deque[Awaitable[None]] = deque()
 rolled_back_indexes: Set[str] = set()
 
 
@@ -236,6 +234,7 @@ class DipDupContext:
         """
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
         if contract := self.config.contracts.get(name):
+            assert contract.address
             raise ContractAlreadyExistsError(self, name, contract.address)
         if address in self.config._contract_addresses:
             raise ContractAlreadyExistsError(self, name, address)
@@ -246,7 +245,7 @@ class DipDupContext:
             address=address,
             typename=typename,
         )
-        contract_config.name = name
+        contract_config._name = name
         self.config.contracts[name] = contract_config
 
         with suppress(OperationalError):
@@ -256,24 +255,31 @@ class DipDupContext:
                 typename=contract_config.typename,
             ).save()
 
-    # TODO: Option to override first_level/last_level?
-    async def add_index(self, name: str, template: str, values: Dict[str, Any], state: Optional[Index] = None) -> None:
+    async def add_index(
+        self,
+        name: str,
+        template: str,
+        values: Dict[str, Any],
+        first_level: int = 0,
+        last_level: int = 0,
+        state: Optional[Index] = None,
+    ) -> None:
         """Adds a new contract to the inventory.
 
         :param name: Index name
         :param template: Index template to use
         :param values: Mapping of values to fill template with
         """
-        self.config.add_index(name, template, values)
+        self.config.add_index(name, template, values, first_level, last_level)
         await self._spawn_index(name, state)
 
     async def _spawn_index(self, name: str, state: Optional[Index] = None) -> None:
         # NOTE: Avoiding circular import
-        from dipdup.index import BigMapIndex
-        from dipdup.index import EventIndex
-        from dipdup.index import HeadIndex
-        from dipdup.index import OperationIndex
-        from dipdup.index import TokenTransferIndex
+        from dipdup.indexes.big_map.index import BigMapIndex
+        from dipdup.indexes.event.index import EventIndex
+        from dipdup.indexes.head.index import HeadIndex
+        from dipdup.indexes.operation.index import OperationIndex
+        from dipdup.indexes.token_transfer.index import TokenTransferIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
         index: OperationIndex | BigMapIndex | HeadIndex | TokenTransferIndex | EventIndex
@@ -428,9 +434,9 @@ class HookContext(DipDupContext):
         """
         self.logger.info('Rolling back `%s`: %s -> %s', index, from_level, to_level)
         if from_level <= to_level:
-            raise RuntimeError(f'Attempt to rollback in future: {from_level} <= {to_level}')
+            raise FrameworkException(f'Attempt to rollback in future: {from_level} <= {to_level}')
         if from_level - to_level > self.config.advanced.rollback_depth:
-            # TODO: More context
+            # TODO: Need more context
             await self.reindex(ReindexingReason.rollback)
 
         models = importlib.import_module(f'{self.config.package}.models')
@@ -514,7 +520,7 @@ class CallbackManager:
     def __init__(self, package: str) -> None:
         self._logger = logging.getLogger('dipdup.callback')
         self._package = package
-        self._handlers: Dict[Tuple[str, str], HandlerConfig] = {}
+        self._handlers: Dict[tuple[str, str], HandlerConfig] = {}
         self._hooks: Dict[str, HookConfig] = {}
 
     async def run(self) -> None:
@@ -526,7 +532,7 @@ class CallbackManager:
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
-            raise RuntimeError('Handler must have a parent index')
+            raise FrameworkException('Handler must have a parent index')
 
         # NOTE: Same handlers can be linked to different indexes, we need to use exact config
         key = (handler_config.callback, handler_config.parent.name)
@@ -576,7 +582,7 @@ class CallbackManager:
 
         if isinstance(hook_config, EventHookConfig):
             if isinstance(ctx, (HandlerContext, HookContext)):
-                raise RuntimeError('Event hooks cannot be fired manually')
+                raise FrameworkException('Event hooks cannot be fired manually')
 
         new_ctx = HookContext._wrap(
             ctx,
@@ -629,16 +635,16 @@ class CallbackManager:
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:
-        try:
-            with ExitStack() as stack:
+        with ExitStack() as stack:
+            try:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_callback_duration(module))
                 yield
-        except Exception as e:
             # NOTE: Do not wrap known errors like ProjectImportError
-            if isinstance(e, DipDupError):
+            except FrameworkException:
                 raise
-            raise CallbackError(module, e) from e
+            except Exception as e:
+                raise CallbackError(module, e) from e
 
     # FIXME: kwargs are ignored, no false alarms though
     @classmethod

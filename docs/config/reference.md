@@ -118,12 +118,13 @@ inheritance.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.config.ContractConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">ContractConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.config.ContractConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">ContractConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_hash</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.config.ContractConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Contract config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>address</strong> – Contract address</p></li>
+<li><p><strong>code_hash</strong> – Contract code hash or address to fetch it from</p></li>
 <li><p><strong>typename</strong> – User-defined alias for the contract script</p></li>
 </ul>
 </dd>
@@ -448,18 +449,6 @@ http: HTTP client configuration</p>
 </ul>
 </dd>
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="dipdup.config.OperationIndexConfig.address_filter">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">address_filter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#dipdup.config.OperationIndexConfig.address_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set of addresses (any field) to filter operations with before an actual matching</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="dipdup.config.OperationIndexConfig.entrypoint_filter">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">entrypoint_filter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#dipdup.config.OperationIndexConfig.entrypoint_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set of entrypoints to filter operations with before an actual matching</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.config.OperationIndexConfig.strip">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">strip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.config.OperationIndexConfig.strip" title="Permalink to this definition">¶</a></dt>
@@ -620,7 +609,9 @@ http: HTTP client configuration</p>
 <dt class="sig sig-object py" id="dipdup.config.patch_annotations">
 <span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">patch_annotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">replace_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#dipdup.config.patch_annotations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Patch dataclass annotations in runtime to allow using aliases in config files.</p>
-<p>DipDup config allows to use string aliases for contracts and datasources. During <cite>DipDupConfig.load</cite>
-these aliases are resolved to actual configs and never become strings again. This hack allows to add
-<cite>str</cite> in Unions before loading config so we don’t need to write isinstance checks everywhere.</p>
+<p>DipDup YAML config uses string aliases for contracts and datasources. During <cite>DipDupConfig.load</cite> these
+aliases are resolved to actual configs from corresponding sections and never become strings again.
+This hack allows to add <cite>str</cite> in Unions before loading config so we don’t need to write <cite>isinstance(…)</cite>
+checks everywhere.</p>
+<p>You can revert these changes by calling <cite>patch_annotations(orinal_annotations)</cite>, but tests will fail.</p>
 </dd></dl>

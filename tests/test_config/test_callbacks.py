@@ -8,7 +8,7 @@ from dipdup.config import OperationHandlerTransactionPatternConfig
 @pytest.fixture
 def contract() -> ContractConfig:
     contract = ContractConfig(address='KT1Hkg5qeCgJPwE6SDh8KKPDiun7j5G8r4ee')
-    contract.name = 'dex_contract'
+    contract._name = 'dex_contract'
     return contract
 
 

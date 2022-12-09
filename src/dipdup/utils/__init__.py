@@ -23,6 +23,7 @@ from typing import Union
 import orjson
 from humps import main as humps
 
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import ProjectImportError
 
 
@@ -123,7 +124,7 @@ def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
     elif path.is_dir():
         paths = sorted(path.glob('**/*'))
     else:
-        raise RuntimeError(f'Path `{path}` exists but is neither a file nor a directory')
+        raise FrameworkException(f'Path `{path}` exists but is neither a file nor a directory')
 
     for path in paths:
         if ext and path.suffix != ext:

@@ -33,6 +33,7 @@ from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.enums import TokenStandard
 from dipdup.exceptions import DatasourceError
+from dipdup.exceptions import FrameworkException
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BlockData
@@ -62,6 +63,8 @@ OPERATION_FIELDS = (
     'hasInternals',
     'diffs',
     'delegate',
+    'senderCodeHash',
+    'targetCodeHash',
 )
 ORIGINATION_MIGRATION_FIELDS = (
     'id',
@@ -139,6 +142,28 @@ class MessageBuffer:
             yield from self._messages.pop(level)
 
 
+class ContractHashes:
+    def __init__(self) -> None:
+        self._address_to_hashes: dict[str, tuple[int, int]] = {}
+        self._hashes_to_address: dict[tuple[int, int], str] = {}
+
+    def add(self, address: str, code_hash: int, type_hash: int) -> None:
+        if address not in self._address_to_hashes:
+            self._address_to_hashes[address] = (code_hash, type_hash)
+        if (code_hash, type_hash) not in self._hashes_to_address:
+            self._hashes_to_address[(code_hash, type_hash)] = address
+
+    def reset(self) -> None:
+        self._address_to_hashes.clear()
+        self._hashes_to_address.clear()
+
+    def get_code_hashes(self, address: str) -> tuple[int, int]:
+        return self._address_to_hashes[address]
+
+    def get_address(self, code_hash: int, type_hash: int) -> str:
+        return self._hashes_to_address[(code_hash, type_hash)]
+
+
 class TzktDatasource(IndexDatasource):
     _default_http_config = HTTPConfig(
         retry_sleep=1,
@@ -164,6 +189,7 @@ class TzktDatasource(IndexDatasource):
         )
         self._logger = logging.getLogger('dipdup.tzkt')
         self._buffer = MessageBuffer(buffer_size)
+        self._contract_hashes = ContractHashes()
 
         self._ws_client: SignalRClient | None = None
         self._level: defaultdict[MessageType, int | None] = defaultdict(lambda: None)
@@ -201,7 +227,7 @@ class TzktDatasource(IndexDatasource):
             # NOTE: There's only one sync level for all channels, otherwise `Index.process` would fail
             channel_level = self.get_sync_level(HeadSubscription())
             if channel_level is None:
-                raise RuntimeError('Neither current nor sync level is known')
+                raise FrameworkException('Neither current nor sync level is known')
 
         return channel_level
 
@@ -272,6 +298,36 @@ class TzktDatasource(IndexDatasource):
                 url=f'v1/contracts/{address}',
             ),
         )
+
+    async def get_contract_hashes(self, address: str) -> tuple[int, int]:
+        """Get contract code and type hashes"""
+        try:
+            return self._contract_hashes.get_code_hashes(address)
+        except KeyError:
+            summary = await self.get_contract_summary(address)
+            code_hash, type_hash = summary['codeHash'], summary['typeHash']
+            self._contract_hashes.add(address, code_hash, type_hash)
+            return (code_hash, type_hash)
+
+    async def get_contract_address(self, code_hash: int, type_hash: int) -> str:
+        """Get contract address by code or type hash"""
+        try:
+            return self._contract_hashes.get_address(code_hash, type_hash)
+        except KeyError:
+            response = await self.request(
+                'get',
+                url='v1/contracts',
+                params={
+                    'select': 'id,address',
+                    'codeHash': code_hash,
+                    'limit': 1,
+                },
+            )
+            if not response:
+                raise ValueError(f'Contract with code hash `{code_hash}` not found')
+            address = cast(str, response[0]['address'])
+            self._contract_hashes.add(address, code_hash, type_hash)
+            return address
 
     async def get_contract_storage(self, address: str) -> dict[str, Any]:
         """Get contract storage"""
@@ -407,55 +463,114 @@ class TzktDatasource(IndexDatasource):
         ):
             yield batch
 
-    # FIXME: No pagination because of URL length limit workaround
     async def get_originations(
         self,
-        addresses: set[str],
-        first_level: int,
-        last_level: int,
-    ) -> tuple[OperationData, ...]:
-        raw_originations = []
-        # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
-        # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~3971 characters.
-        # NOTE: Other operation requests won't hit that limit.
-        for addresses_chunk in split_by_chunks(list(addresses), ORIGINATION_REQUEST_LIMIT):
-            raw_originations += await self.request(
-                'get',
-                url='v1/operations/originations',
-                params={
-                    'originatedContract.in': ','.join(addresses_chunk),
-                    'level.ge': first_level,
-                    'level.le': last_level,
-                    'select': ','.join(ORIGINATION_OPERATION_FIELDS),
-                    'status': 'applied',
-                },
-            )
-
-        # NOTE: `type` field needs to be set manually when requesting operations by specific type
-        return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
-
-    async def get_transactions(
-        self,
-        field: str,
-        addresses: set[str],
-        first_level: int,
-        last_level: int,
+        addresses: set[str] | None = None,
+        code_hashes: set[int] | None = None,
+        first_level: int | None = None,
+        last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[OperationData, ...]:
         offset, limit = offset or 0, limit or self.request_limit
+        raw_originations: list[dict[str, Any]] = []
+        params = self._get_request_params(
+            first_level=first_level,
+            last_level=last_level,
+            offset=offset,
+            limit=limit,
+            select=ORIGINATION_OPERATION_FIELDS,
+            status='applied',
+            cursor=bool(code_hashes),
+        )
+
+        # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
+        # NOTE: Chunk of 100 addresses seems like a reasonable choice - URL of ~4000 characters.
+        # NOTE: Other operation requests won't hit that limit.
+        if addresses and not code_hashes:
+            # FIXME: No pagination because of URL length limit workaround
+            for addresses_chunk in split_by_chunks(list(addresses), ORIGINATION_REQUEST_LIMIT):
+                raw_originations += await self.request(
+                    'get',
+                    url='v1/operations/originations',
+                    params={
+                        **params,
+                        'originatedContract.in': ','.join(addresses_chunk),
+                    },
+                )
+        elif code_hashes and not addresses:
+            raw_originations += await self.request(
+                'get',
+                url='v1/operations/originations',
+                params={
+                    **params,
+                    # FIXME: Need a helper for this join
+                    'codeHash.in': ','.join(str(h) for h in code_hashes),
+                },
+            )
+        else:
+            raise FrameworkException('Either `addresses` or `code_hashes` should be specified')
+
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
+
+    def _get_request_params(
+        self,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        select: Sequence[str | int] | None = None,
+        cursor: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            'limit': limit or self.request_limit,
+        }
+        if first_level:
+            params['level.ge'] = first_level
+        if last_level:
+            params['level.le'] = last_level
+        if offset:
+            if cursor:
+                params['offset.cr'] = offset
+            else:
+                params['offset'] = offset
+        if select:
+            params['select'] = ','.join(str(a) for a in select)
+        return {
+            **params,
+            **kwargs,
+        }
+
+    async def get_transactions(
+        self,
+        field: str,
+        addresses: set[str] | None,
+        code_hashes: set[int] | None,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[OperationData, ...]:
+        params = self._get_request_params(
+            first_level,
+            last_level,
+            offset,
+            limit,
+            TRANSACTION_OPERATION_FIELDS,
+            cursor=True,
+            status='applied',
+        )
+        if addresses and not code_hashes:
+            params[f'{field}.in'] = ','.join(addresses)
+        elif code_hashes and not addresses:
+            params[f'{field}CodeHash.in'] = ','.join(str(h) for h in code_hashes)
+
         raw_transactions = await self.request(
             'get',
             url='v1/operations/transactions',
-            params={
-                f'{field}.in': ','.join(addresses),
-                'offset.cr': offset,
-                'limit': limit,
-                'level.ge': first_level,
-                'level.le': last_level,
-                'select': ','.join(TRANSACTION_OPERATION_FIELDS),
-                'status': 'applied',
-            },
+            params=params,
         )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
@@ -759,12 +874,14 @@ class TzktDatasource(IndexDatasource):
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
-        # NOTE: Subscribing here will block WebSocket loop
+        # NOTE: Subscribing here will block WebSocket loop, don't do it.
         await self.emit_connected()
 
     async def _on_disconnected(self) -> None:
         self._logger.info('Realtime connection lost, resetting subscriptions')
         self._subscriptions.reset()
+        # NOTE: Just in case
+        self._contract_hashes.reset()
         await self.emit_disconnected()
 
     async def _on_error(self, message: CompletionMessage) -> NoReturn:
@@ -912,7 +1029,9 @@ class TzktDatasource(IndexDatasource):
             hash=operation_json['hash'],
             counter=operation_json['counter'],
             sender_address=sender_json.get('address'),
+            sender_code_hash=operation_json.get('senderCodeHash'),
             target_address=target_json.get('address'),
+            target_code_hash=operation_json.get('targetCodeHash'),
             initiator_address=initiator_json.get('address'),
             amount=amount,
             status=operation_json['status'],
@@ -956,7 +1075,9 @@ class TzktDatasource(IndexDatasource):
             hash='[none]',
             counter=0,
             sender_address='[none]',
+            sender_code_hash=None,
             target_address=None,
+            target_code_hash=None,
             initiator_address=None,
         )
 
@@ -971,7 +1092,7 @@ class TzktDatasource(IndexDatasource):
         return BigMapData(
             id=big_map_json['id'],
             level=big_map_json['level'],
-            # FIXME: missing `operation_id` field in API to identify operation
+            # NOTE: missing `operation_id` field in API to identify operation
             operation_id=big_map_json['level'],
             timestamp=cls._parse_timestamp(big_map_json['timestamp']),
             bigmap=big_map_json['bigmap'],

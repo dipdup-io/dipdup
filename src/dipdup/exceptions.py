@@ -1,5 +1,7 @@
 import tempfile
 import textwrap
+from abc import ABC
+from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
@@ -27,6 +29,11 @@ def unindent(text: str) -> str:
 def indent(text: str, indent: int = 2) -> str:
     """Add indentation to text"""
     return textwrap.indent(text, ' ' * indent)
+
+
+def format_help(help: str) -> str:
+    """Format help text"""
+    return tab + unindent(help) + '\n'
 
 
 def save_crashdump(error: Exception) -> str:
@@ -58,42 +65,46 @@ def save_crashdump(error: Exception) -> str:
     return crashdump_file.name
 
 
-class DipDupException(Exception):
-    message: str
-
-    def __init__(self, *args: Any) -> None:
-        super().__init__(self.message, *args)
+class FrameworkException(AssertionError, RuntimeError):
+    pass
 
 
-class ConfigInitializationException(DipDupException):
-    message = 'Config is not initialized. Some stage was skipped. Call `pre_initialize` or `initialize`.'
+class ConfigInitializationException(FrameworkException):
+    """Some config preparation stage was skipped. See `DipDupConfig.initialize`."""
 
 
-@dataclass(repr=False)
-class DipDupError(Exception):
-    """Unknown DipDup error"""
+class Error(ABC, FrameworkException):
+    """Base class for _known_ exceptions in this module.
+
+    Instances of this class should have a nice help message explaining the error and how to fix it.
+    """
 
     def __str__(self) -> str:
         if not self.__doc__:
             raise NotImplementedError(f'{self.__class__.__name__} has no docstring')
         return self.__doc__
 
-    def _help(self) -> str:
-        return """
-            An unexpected error has occurred!
-
-            Please file a bug report at https://github.com/dipdup-io/dipdup/issues
-        """
-
     def help(self) -> str:
-        return unindent(self._help())
+        """Return a string containing a help message for this error."""
+        return format_help(self._help())
 
-    def format(self) -> str:
-        return tab + self.help() + '\n'
+    @classmethod
+    def default_help(cls) -> str:
+        return format_help(
+            """
+                An unexpected error has occurred! Most likely it's a framework bug.
+
+                Please, tell us about it: https://github.com/dipdup-io/dipdup/issues
+        """
+        )
+
+    @abstractmethod
+    def _help(self) -> str:
+        ...
 
 
 @dataclass(repr=False)
-class DatasourceError(DipDupError):
+class DatasourceError(Error):
     """One of datasources returned an error"""
 
     msg: str
@@ -101,14 +112,16 @@ class DatasourceError(DipDupError):
 
     def _help(self) -> str:
         return f"""
-            `{self.datasource}` datasource returned an error: {self.msg}
+            `{self.datasource}` datasource returned an error.
+            
+            {self.msg}
 
-            Please file a bug report at https://github.com/dipdup-io/dipdup/issues
+            See https://docs.dipdup.io/advanced/datasources
         """
 
 
 @dataclass(repr=False)
-class InvalidRequestError(DipDupError):
+class InvalidRequestError(Error):
     """API returned an unexpected response"""
 
     msg: str
@@ -125,7 +138,7 @@ class InvalidRequestError(DipDupError):
 
 
 @dataclass(repr=False)
-class ConfigurationError(DipDupError):
+class ConfigurationError(Error):
     """DipDup YAML config is invalid"""
 
     msg: str
@@ -134,12 +147,12 @@ class ConfigurationError(DipDupError):
         return f"""
             {self.msg}
 
-            DipDup config reference: https://docs.dipdup.io/config
+            See https://docs.dipdup.io/config
         """
 
 
 @dataclass(repr=False)
-class InvalidModelsError(DipDupError):
+class InvalidModelsError(Error):
     """Can't initialize database, `models.py` module is invalid"""
 
     msg: str
@@ -161,7 +174,7 @@ class InvalidModelsError(DipDupError):
 
 
 @dataclass(repr=False)
-class DatabaseEngineError(DipDupError):
+class DatabaseEngineError(Error):
     """Some of the features are not supported with the current database engine"""
 
     msg: str
@@ -182,7 +195,7 @@ class DatabaseEngineError(DipDupError):
 
 
 @dataclass(repr=False)
-class MigrationRequiredError(DipDupError):
+class MigrationRequiredError(Error):
     """Project and DipDup spec versions don't match"""
 
     from_: str
@@ -213,7 +226,7 @@ class MigrationRequiredError(DipDupError):
 
 
 @dataclass(repr=False)
-class ReindexingRequiredError(DipDupError):
+class ReindexingRequiredError(Error):
     """Unable to continue indexing with existing database"""
 
     reason: ReindexingReason
@@ -242,7 +255,7 @@ class ReindexingRequiredError(DipDupError):
 
 
 @dataclass(repr=False)
-class InitializationRequiredError(DipDupError):
+class InitializationRequiredError(Error):
     """Project initialization required"""
 
     message: str
@@ -259,7 +272,7 @@ class InitializationRequiredError(DipDupError):
 
 
 @dataclass(repr=False)
-class ProjectImportError(DipDupError):
+class ProjectImportError(Error):
     """Can't import type or callback from the project package"""
 
     module: str
@@ -280,7 +293,7 @@ class ProjectImportError(DipDupError):
 
 
 @dataclass(repr=False)
-class ContractAlreadyExistsError(DipDupError):
+class ContractAlreadyExistsError(Error):
     """Attempt to add a contract with alias or address already in use"""
 
     ctx: Any
@@ -304,7 +317,7 @@ class ContractAlreadyExistsError(DipDupError):
 
 
 @dataclass(repr=False)
-class IndexAlreadyExistsError(DipDupError):
+class IndexAlreadyExistsError(Error):
     """Attempt to add an index with an alias already in use"""
 
     ctx: Any
@@ -327,7 +340,7 @@ class IndexAlreadyExistsError(DipDupError):
 
 
 @dataclass(repr=False)
-class InvalidDataError(DipDupError):
+class InvalidDataError(Error):
     """Failed to validate datasource message against generated type class"""
 
     msg: str
@@ -347,7 +360,7 @@ class InvalidDataError(DipDupError):
 
 
 @dataclass(repr=False)
-class CallbackError(DipDupError):
+class CallbackError(Error):
     """An error occured during callback execution"""
 
     module: str
@@ -364,7 +377,7 @@ class CallbackError(DipDupError):
 
 
 @dataclass(repr=False)
-class CallbackTypeError(DipDupError):
+class CallbackTypeError(Error):
     """Agrument of invalid type was passed to a callback"""
 
     kind: str
@@ -390,7 +403,7 @@ class CallbackTypeError(DipDupError):
 
 
 @dataclass(repr=False)
-class HasuraError(DipDupError):
+class HasuraError(Error):
     """Failed to configure Hasura instance"""
 
     msg: str
@@ -410,7 +423,7 @@ class HasuraError(DipDupError):
 
 
 @dataclass(repr=False)
-class FeatureAvailabilityError(DipDupError):
+class FeatureAvailabilityError(Error):
     """Requested feature is not supported in the current environment"""
 
     feature: str
@@ -428,7 +441,7 @@ class FeatureAvailabilityError(DipDupError):
 
 
 @dataclass(repr=False)
-class UnsupportedAPIError(DipDupError):
+class UnsupportedAPIError(Error):
     """Datasource instance runs an unsupported software version"""
 
     datasource: str
@@ -441,3 +454,8 @@ class UnsupportedAPIError(DipDupError):
 
             {self.reason}
         """
+
+
+# TODO: Remove in 7.0
+DipDupException = FrameworkException
+DipDupError = Error

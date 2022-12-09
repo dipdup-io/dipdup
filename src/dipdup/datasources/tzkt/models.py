@@ -19,6 +19,7 @@ from typing_extensions import get_args
 from typing_extensions import get_origin
 
 from dipdup.datasources.subscription import Subscription
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
 from dipdup.models import OperationData
 from dipdup.models import StorageType
@@ -74,7 +75,7 @@ class BigMapSubscription(Subscription):
         elif not self.address and not self.path:
             return [{}]
         else:
-            raise RuntimeError
+            raise FrameworkException('Either both `address` and `path` should be set or none of them')
 
 
 @dataclass(frozen=True)

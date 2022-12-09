@@ -17,6 +17,26 @@ from dipdup.utils.codegen import write
 _logger = logging.getLogger('dipdup.project')
 
 
+# FIXME
+DEMO_PROJECTS = (
+    ('demo_domains', 'Tezos Domains name service'),
+    ('demo_big_maps', 'Indexing a single big map'),
+    ('demo_events', 'Processing contract events'),
+    ('demo_head', 'Processing head block metadata'),
+    ('demo_nft_marketplace', 'hic at nunc NFT marketplace'),
+    ('demo_dex', 'Quipuswap DEX balances and liquidity'),
+    ('demo_factories', 'Example of spawning indexes in runtime'),
+    ('demo_dao', 'Homebase DAO registry'),
+    ('demo_token', 'TzBTC FA1.2 token operations'),
+    ('demo_token_transfers', 'TzBTC FA1.2 token transfers'),
+    ('demo_auction', 'TzColors NFT marketplace'),
+    ('blank', 'Empty config for a fresh start'),
+    # TODO: demo_jobs
+    # TODO: demo_backup
+    # TODO: demo_sql
+)
+
+
 class Question(BaseModel):
     type: type = str
     name: str
@@ -204,33 +224,8 @@ class BaseProject(Project):
             name='template',
             description=('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n'),
             default=7,
-            choices=(
-                'demo_domains',
-                'demo_domains_big_map',
-                'demo_events',
-                'demo_head',
-                'demo_hic_et_nunc',
-                'demo_quipuswap',
-                'demo_registrydao',
-                'demo_tzbtc',
-                'demo_tzbtc_transfers',
-                'demo_tzcolors',
-                'blank',
-            ),
-            comments=(
-                '[operation]      Tezos Domains name service',
-                '[big_map]        Tezos Domains name service',
-                '[event]          Processing contract events (new in Kathmandu)',
-                '[head]           Processing head block metadata',
-                '[operation]      hic at nunc NFT marketplace',
-                '[operation]      Quipuswap DEX balances and liquidity',
-                '[operation]      Homebase DAO registry (index factory)',
-                '[operation]      TzBTC FA1.2 token transfers',
-                '[token_transfer] TzBTC FA1.2 token transfers',
-                '[operation]      TzColors NFT marketplace',
-                '[n/a]            Empty config for a fresh start',
-                # TODO: Hooks and jobs demo
-            ),
+            choices=tuple(p[0] for p in DEMO_PROJECTS),
+            comments=tuple(p[1] for p in DEMO_PROJECTS),
         ),
         InputQuestion(
             name='project_name',

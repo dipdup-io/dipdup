@@ -1,0 +1,41 @@
+spec_version: 1.2
+package: demo_big_maps
+
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+contracts:
+  name_registry:
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
+    typename: name_registry
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
+
+templates:
+  big_maps:
+    kind: big_map
+    datasource: <datasource>
+    handlers:
+      - callback: on_update_records
+        contract: <name_registry>
+        path: store.records
+      - callback: on_update_expiry_map
+        contract: <name_registry>
+        path: store.expiry_map
+
+indexes:
+  big_maps:
+    template: big_maps
+    first_level: 1415852
+    last_level: 1418800
+    values:
+      datasource: tzkt
+      name_registry: name_registry
+
+logging: quiet

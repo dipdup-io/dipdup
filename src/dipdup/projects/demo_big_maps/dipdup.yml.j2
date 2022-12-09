@@ -1,0 +1,36 @@
+spec_version: 1.2
+package: {{ cookiecutter.package }}
+
+database:
+  kind: sqlite
+  path: {{ cookiecutter.project_name }}.sqlite3
+
+contracts:
+  mainnet_name_registry:
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
+    typename: name_registry
+
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+templates:
+  big_maps:
+    kind: big_map
+    datasource: <datasource>
+    skip_history: once
+    handlers:
+      - callback: on_update_records
+        contract: <name_registry>
+        path: store.records
+      - callback: on_update_expiry_map
+        contract: <name_registry>
+        path: store.expiry_map
+
+indexes:
+  big_maps_mainnet:
+    template: big_maps
+    values:
+      datasource: tzkt_mainnet
+      name_registry: mainnet_name_registry
