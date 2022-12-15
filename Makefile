@@ -72,26 +72,6 @@ image-slim:     ## Build slim Docker image
 
 ##
 
-release-patch:  ## Release patch version
-	make update all build image
-	bumpversion patch
-	git push --tags
-	git push
-
-release-minor:  ## Release minor version
-	make update all build image
-	bumpversion minor
-	git push --tags
-	git push
-
-release-major:  ## Release major version
-	make update all build image
-	bumpversion major
-	git push --tags
-	git push
-
-##
-
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 	rm -r ~/.cache/flakeheaven
@@ -118,7 +98,9 @@ update:         ## Update dependencies, export requirements.txt
 scripts:
 	python scripts/update_cookiecutter.py
 	python scripts/update_demos.py
+	make lint
+
 	rm -r tests/replays/*
-	make lint test
+	make test
 
 ##

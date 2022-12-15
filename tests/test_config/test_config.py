@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable
 
 import pytest
+from pydantic import ValidationError
 
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
@@ -60,9 +61,10 @@ async def test_operation_subscriptions() -> None:
 
 
 async def test_validators() -> None:
-    with pytest.raises(ConfigurationError):
+    # NOTE: @validator wrapped with `ConfigurationError` in `DipDupConfig.load`
+    with pytest.raises(ValidationError):
         ContractConfig(address='KT1lalala')
-    with pytest.raises(ConfigurationError):
+    with pytest.raises(ValidationError):
         ContractConfig(address='lalalalalalalalalalalalalalalalalala')
     with pytest.raises(ConfigurationError):
         TzktDatasourceConfig(kind='tzkt', url='not_an_url')

@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 from typing import Mapping
 from typing import Optional
-from typing import Tuple
 from typing import cast
 from urllib.parse import urlsplit
 from urllib.parse import urlunsplit
@@ -22,6 +21,7 @@ from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
 from dipdup.config import HTTPConfig
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
 
@@ -81,7 +81,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))
         self._path = parsed_url.path
         self._config = config
-        self._user_agent_args: Tuple[str, ...] = ()
+        self._user_agent_args: tuple[str, ...] = ()
         self._user_agent: Optional[str] = None
         self._ratelimiter = (
             AsyncLimiter(max_rate=config.ratelimit_rate, time_period=config.ratelimit_period)
@@ -103,7 +103,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Close underlying aiohttp session"""
         self._logger.debug('Closing gateway session (%s)', self._url)
         if not self.__session:
-            raise RuntimeError('Session is not initialized')
+            raise FrameworkException('Session is not initialized')
         await self.__session.close()
 
     @property
@@ -122,9 +122,9 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         if isinstance(self.__session, aiohttp.test_utils.TestClient):
             return self.__session
         if self.__session is None:
-            raise RuntimeError('aiohttp session is not initialized. Wrap with `async with httpgateway_instance`')
+            raise FrameworkException('aiohttp session is not initialized. Wrap with `async with httpgateway_instance`')
         if self.__session.closed:
-            raise RuntimeError('aiohttp session is closed')
+            raise FrameworkException('aiohttp session is closed')
         return self.__session
 
     # TODO: Move to separate method to cover SignalR negotiations too
@@ -161,6 +161,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
                     if e.status == HTTPStatus.TOO_MANY_REQUESTS:
                         # NOTE: Sleep at least 5 seconds on ratelimit
+                        # FIXME: Constant
                         ratelimit_sleep = 5
                         # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):
@@ -185,13 +186,13 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        url = f'{self._path}/{url}'
+        url = f"{self._path.rstrip('/')}/{url}"
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
 
         params = kwargs.get('params', {})
         params_string = '&'.join(f'{k}={v}' for k, v in params.items())
-        request_string = f'{url}?{params_string}'.rstrip('?')
+        request_string = f'{self._url}{url}?{params_string}'.rstrip('?')
         self._logger.debug('Calling `%s`', request_string)
 
         if self._ratelimiter:
@@ -218,7 +219,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         if not self._config.replay_path:
-            raise RuntimeError('Replay path is not set')
+            raise FrameworkException('Replay path is not set')
 
         replay_path = Path(self._config.replay_path).expanduser()
         replay_path.mkdir(parents=True, exist_ok=True)

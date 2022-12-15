@@ -15,9 +15,6 @@ from pathlib import Path
 from shutil import rmtree
 from shutil import which
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import TypeGuard
 from typing import cast
 
 import orjson as json
@@ -30,11 +27,10 @@ from dipdup.config import DipDupConfig
 from dipdup.config import EventIndexConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationHandlerPatternConfigU
-from dipdup.config import OperationHandlerTransactionPatternConfig
+from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config import OperationHandlerPatternConfigU as PatternConfigU
+from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
-from dipdup.config import PatternConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.config import UnknownEventHandlerConfig
@@ -44,6 +40,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError
+from dipdup.exceptions import FrameworkException
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -58,19 +55,7 @@ MODELS_MODULE = 'models.py'
 CALLBACK_TEMPLATE = 'callback.py.j2'
 
 
-def _is_typed_transaction(config: PatternConfig) -> TypeGuard[OperationHandlerTransactionPatternConfig]:
-    if isinstance(config, OperationHandlerTransactionPatternConfig):
-        return config.destination is not None and config.entrypoint is not None
-    return False
-
-
-def _is_typed_origination(config: PatternConfig) -> TypeGuard[OperationHandlerOriginationPatternConfig]:
-    if isinstance(config, OperationHandlerOriginationPatternConfig):
-        return config.originated_contract is not None or config.similar_to is not None
-    return False
-
-
-def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
+def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
     """Preprocess `big_map` sections in JSONSchema.
 
     TzKT returns them as unions since before merging big map diffs there are just `int` pointers.
@@ -104,6 +89,7 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
         return schema
 
 
+# TODO: Pick refactoring from `ref/config-module`
 class ProjectPaths:
     def __init__(self, root: Path) -> None:
         self.root = root
@@ -136,11 +122,11 @@ class ProjectPaths:
 class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigU, Datasource]) -> None:
+    def __init__(self, config: DipDupConfig, datasources: dict[DatasourceConfigU, Datasource]) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
-        self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
+        self._schemas: dict[TzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
         self._pkg = ProjectPaths(Path(config.package_path))
 
     def create_package(self) -> None:
@@ -148,7 +134,7 @@ class CodeGenerator:
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         self._logger.info('Initializing project')
-        self._pkg.create_package()
+        self.create_package()
 
         await self.fetch_schemas()
         await self.generate_types(overwrite_types)
@@ -160,19 +146,37 @@ class CodeGenerator:
 
     async def _fetch_operation_pattern_schema(
         self,
-        operation_pattern_config: OperationHandlerPatternConfigU,
+        operation_pattern_config: PatternConfigU,
         datasource_config: TzktDatasourceConfig,
     ) -> None:
-        if _is_typed_transaction(operation_pattern_config):
-            contract_config = operation_pattern_config.destination_contract_config
-        elif _is_typed_origination(operation_pattern_config):
-            contract_config = operation_pattern_config.contract_config
-        else:
+        contract_config = operation_pattern_config.typed_contract
+        if contract_config is None:
             return
 
-        self._logger.debug(contract_config)
-        contract_schemas = await self._get_schema(datasource_config, contract_config)
+        # NOTE: A very special case; unresolved `operation` template to spawn from factory indexes.
+        elif isinstance(contract_config, str) and contract_config in self._config.contracts:
+            contract_config = self._config.contracts[contract_config]
 
+        elif isinstance(contract_config, str):
+            self._logger.info('Unresolved `contract` field, trying to guess it.')
+            for possible_contract_config in self._config.contracts.values():
+                if isinstance(operation_pattern_config, TransactionPatternConfig):
+                    operation_pattern_config.destination = possible_contract_config
+                elif isinstance(operation_pattern_config, OriginationPatternConfig):
+                    operation_pattern_config.originated_contract = possible_contract_config
+                try:
+                    await self._fetch_operation_pattern_schema(
+                        operation_pattern_config,
+                        datasource_config=datasource_config,
+                    )
+                    break
+                except FrameworkException:
+                    self._logger.info("It's not `%s`", possible_contract_config.address)
+                    continue
+
+            return
+
+        contract_schemas = await self._get_schema(datasource_config, contract_config)
         contract_schemas_path = self._pkg.schemas / contract_config.module_name
 
         storage_schema_path = contract_schemas_path / 'storage.json'
@@ -180,7 +184,7 @@ class CodeGenerator:
 
         write(storage_schema_path, json.dumps(storage_schema, option=json.OPT_INDENT_2))
 
-        if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
+        if not isinstance(operation_pattern_config, TransactionPatternConfig):
             return
 
         parameter_schemas_path = contract_schemas_path / 'parameter'
@@ -214,7 +218,7 @@ class CodeGenerator:
 
     async def _fetch_big_map_index_schema(self, index_config: BigMapIndexConfig) -> None:
         for handler_config in index_config.handlers:
-            contract_config = handler_config.contract_config
+            contract_config = handler_config.contract
 
             contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
 
@@ -241,7 +245,7 @@ class CodeGenerator:
             if isinstance(handler_config, UnknownEventHandlerConfig):
                 continue
 
-            contract_config = handler_config.contract_config
+            contract_config = handler_config.contract
             contract_schemas = await self._get_schema(
                 index_config.datasource_config,
                 contract_config,
@@ -265,9 +269,14 @@ class CodeGenerator:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
 
+        unused_operation_templates = [t for t in self._config.templates.values() if isinstance(t, OperationIndexConfig)]
+
         for index_config in self._config.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
                 await self._fetch_operation_index_schema(index_config)
+                template = cast(OperationIndexConfig, index_config.parent)
+                if template in unused_operation_templates:
+                    unused_operation_templates.remove(template)
             elif isinstance(index_config, BigMapIndexConfig):
                 await self._fetch_big_map_index_schema(index_config)
             elif isinstance(index_config, EventIndexConfig):
@@ -280,6 +289,30 @@ class CodeGenerator:
                 raise ConfigInitializationException
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+        # NOTE: Euristics for complex cases like templated `similar_to` factories.
+        # NOTE: Try different contracts and datasources from config until one succeeds.
+        for template_config in unused_operation_templates:
+            self._logger.warning(
+                'Unused operation template `%s`. Ignore this warning if it is used in a factory.', template_config.name
+            )
+            datasource_name = template_config.datasource
+            if isinstance(datasource_name, str) and datasource_name in self._config.datasources:
+                datasource_config = self._config.get_tzkt_datasource(datasource_name)
+                template_config.datasource = datasource_config
+                await self._fetch_operation_index_schema(template_config)
+            else:
+                self._logger.info('Unresolved `datasource` field, trying to guess it.')
+                for possible_datasource_config in self._config.datasources.values():
+                    if not isinstance(possible_datasource_config, TzktDatasourceConfig):
+                        continue
+                    # NOTE: Do not modify config without necessity
+                    template_config.datasource = possible_datasource_config
+                    template_config.contracts = list(self._config.contracts.values())
+                    try:
+                        await self._fetch_operation_index_schema(template_config)
+                    except FrameworkException:
+                        continue
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         rel_path = schema_path.relative_to(self._pkg.schemas)
@@ -376,14 +409,21 @@ class CodeGenerator:
         self,
         datasource_config: TzktDatasourceConfig,
         contract_config: ContractConfig,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
-        datasource = self._datasources.get(datasource_config)
-        address = contract_config.address
-        if datasource is None:
-            raise RuntimeError('Call `create_datasources` first')
+        datasource = self._datasources[datasource_config]
         if not isinstance(datasource, TzktDatasource):
-            raise RuntimeError
+            raise FrameworkException('`tzkt` datasource expected')
+
+        if isinstance(contract_config.address, str):
+            address = contract_config.address
+        elif isinstance(contract_config.code_hash, str):
+            address = contract_config.code_hash
+        elif isinstance(contract_config.code_hash, int):
+            address = await datasource.get_contract_address(contract_config.code_hash, 0)
+        else:
+            raise FrameworkException('No address or code hash provided, check earlier')
+
         if datasource_config not in self._schemas:
             self._schemas[datasource_config] = {}
         if address not in self._schemas[datasource_config]:
@@ -413,7 +453,7 @@ class CodeGenerator:
         arguments = callback_config.format_arguments()
         imports = set(callback_config.format_imports(self._config.package))
 
-        code: List[str] = []
+        code: list[str] = []
         if sql:
             code.append(f"await ctx.execute_sql('{original_callback}')")
             if callback == 'on_index_rollback':

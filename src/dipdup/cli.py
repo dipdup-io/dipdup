@@ -1,5 +1,6 @@
 # NOTE: All imports except the basic ones are very lazy in this module. Let's keep it that way.
 import asyncio
+import atexit
 import logging
 import platform
 import sys
@@ -16,7 +17,6 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import TypeVar
 from typing import cast
 
@@ -50,16 +50,17 @@ def echo(message: str) -> None:
         click.echo(message)
 
 
-def _print_help(error: Exception, crashdump_path: str) -> None:
-    """Prints helpful error message after traceback"""
-    import atexit
+def _print_help(error: Exception) -> None:
+    """Prints a helpful error message after the traceback"""
+    from dipdup.exceptions import Error
 
-    from dipdup.exceptions import DipDupError
-    from dipdup.exceptions import tab
+    def _print() -> None:
+        if isinstance(error, Error):
+            click.echo(error.help(), err=True)
+        else:
+            click.echo(Error.default_help())
 
-    help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
-    help_message += tab + f'Crashdump saved to `{crashdump_path}`'
-    atexit.register(partial(click.echo, help_message, err=True))
+    atexit.register(_print)
 
 
 WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
@@ -77,9 +78,9 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except Exception as e:
             from dipdup.exceptions import save_crashdump
 
-            _logger.exception('Unhandled exception caught')
             crashdump_path = save_crashdump(e)
-            _print_help(e, crashdump_path)
+            _logger.error(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
+            _print_help(e)
             raise
 
     return cast(WrappedCommandT, wrapper)
@@ -402,7 +403,7 @@ async def status(ctx: click.Context) -> None:
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    table: List[Tuple[str, str, str | int]] = [('name', 'status', 'level')]
+    table: List[tuple[str, str, str | int]] = [('name', 'status', 'level')]
     async with tortoise_wrapper(url, models):
         async for index in Index.filter().order_by('name'):
             row = (index.name, index.status.value, index.level)
@@ -533,7 +534,7 @@ async def schema_approve(ctx: click.Context) -> None:
     _logger.info('Approving schema `%s`', url)
 
     async with tortoise_wrapper(url, models):
-        # FIXME: Non-nullable fields
+        # TODO: Non-nullable fields, remove in 7.0
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
             hash='',

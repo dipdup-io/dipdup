@@ -1,4 +1,5 @@
 import asyncio
+import atexit
 from contextlib import AsyncExitStack
 from pathlib import Path
 
@@ -49,6 +50,7 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
         detach=True,
         remove=True,
     )
+    atexit.register(postgres_container.stop)
     postgres_container.reload()
     postgres_ip = postgres_container.attrs['NetworkSettings']['IPAddress']
 
@@ -75,6 +77,7 @@ async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
         detach=True,
         remove=True,
     )
+    atexit.register(hasura_container.stop)
     hasura_container.reload()
     hasura_ip = hasura_container.attrs['NetworkSettings']['IPAddress']
 
@@ -86,7 +89,7 @@ async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
 
 
 async def test_configure_hasura() -> None:
-    config_path = Path(__file__).parent / 'configs' / 'hic_et_nunc.yml'
+    config_path = Path(__file__).parent / 'configs' / 'demo_nft_marketplace.yml'
 
     config = DipDupConfig.load([config_path])
     config.database = await run_postgres_container()
@@ -127,10 +130,10 @@ async def test_unsupported_versions(hasura_version: str, aiohttp_client: Aiohttp
     hasura_config = HasuraConfig(fake_client_url)
     postgres_config = PostgresDatabaseConfig('postgres', 'localhost')
 
-    hasura_gateway = HasuraGateway('demo_hic_et_nunc', hasura_config, postgres_config)
+    hasura_gateway = HasuraGateway('demo_nft_marketplace', hasura_config, postgres_config)
 
     with pytest.raises(UnsupportedAPIError):
         async with hasura_gateway:
-            async with tortoise_wrapper('sqlite://:memory:', 'demo_hic_et_nunc.models'):
+            async with tortoise_wrapper('sqlite://:memory:', 'demo_nft_marketplace.models'):
                 await Tortoise.generate_schemas()
                 await hasura_gateway.configure()

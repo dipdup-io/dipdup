@@ -22,6 +22,7 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import HasuraError
 from dipdup.exceptions import UnsupportedAPIError
 from dipdup.http import HTTPGateway
@@ -384,7 +385,7 @@ class HasuraGateway(HTTPGateway):
                     filter = field_name
                     break
             else:
-                raise RuntimeError(f'Table `{table_name}` has no primary key. How is that possible?')
+                raise FrameworkException(f'Table `{table_name}` has no primary key. How is that possible?')
 
             fields = await self._get_fields(table_name)
             queries.append(
@@ -470,7 +471,7 @@ class HasuraGateway(HTTPGateway):
         table_names = {t['table']['name'] for t in source['tables']}
         tables = await self._get_fields()
 
-        # TODO: Use new API
+        # TODO: Use new Hasura API
         self._logger.info('Applying table customizations (could take some time)')
         for table in tables:
             if table.root not in table_names:

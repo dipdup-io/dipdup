@@ -20,6 +20,7 @@ from dipdup.config import JobConfig
 from dipdup.context import DipDupContext
 from dipdup.context import HookContext
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FrameworkException
 from dipdup.utils import FormattedLogger
 
 DEFAULT_CONFIG = {
@@ -64,7 +65,7 @@ class SchedulerManager:
             self._scheduler.start()
             await self._exception_event.wait()
             if self._exception is None:
-                raise RuntimeError('Job has failed but exception is not set')
+                raise FrameworkException('Job has failed but exception is not set')
             raise self._exception
         except asyncio.CancelledError:
             pass
@@ -75,7 +76,7 @@ class SchedulerManager:
         if job_config.daemon:
             self._daemons.add(job_config.name)
 
-        hook_config = job_config.hook_config
+        hook_config = job_config.hook
 
         logger = FormattedLogger(
             name=f'dipdup.hooks.{hook_config.callback}',
@@ -110,7 +111,7 @@ class SchedulerManager:
         elif job_config.daemon:
             trigger = None
         else:
-            raise RuntimeError
+            raise FrameworkException('Job config must have a trigger; check earlier')
 
         return self._scheduler.add_job(
             func=partial(_job_wrapper, ctx=ctx),

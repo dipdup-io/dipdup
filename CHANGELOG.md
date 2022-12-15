@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [6.4.0rc1] - 2022-12-09
+
+## Added
+
+- config: Added optional `code_hash` field to contract config.
+- context: Added `first_level` and `last_level` arguments to `ctx.add_index` methods.
+- index: Filtering by `code_hash` is available for `operation` index.
+- tzkt: Added datasource methods `get_contract_address` and `get_contract_hashes`.
+- tzkt: Originations and operations now can be fetched by contract code hashes.
+- tzkt: Added `sender_code_hash` and `target_code_hash` fields to `OperationData` model.
+
+### Fixed
+
+- codegen: Unresolved index templates are now correctly processed during types generation.
+- demos: Fixed outdated `demo_dao` project.
+- http: Fixed a crash when datasource URL contains trailing slash.
+- metadata: Add `limanet` to supported networks.
+- projects: Do not scaffold an outdated `poetry.lock`.
+
+### Changed
+
+- demos: Demos were renamed to better indicate their purpose.
+- exceptions: `FrameworkException` is raised instead of plain `RuntimeError` when a framework error occurs.
+- exceptions: Known exceptions are inherited from `FrameworkError`.
+- tzkt: Some datasource methods have changed their signatures.
+
+### Deprecated
+
+- config: `similar_to.address` filter is an alias for `originated_contract.code_hash` and will be removed in the next major release.
+- config: `DipDupError` is an alias for `FrameworkError` and will be removed in the next major release.
+
 ## [6.3.1] - 2022-11-25
 
 ### Fixed
@@ -840,7 +871,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.3.1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.4.0rc1...HEAD
+[6.4.0rc1]: https://github.com/dipdup-io/dipdup/compare/6.3.1...6.4.0rc1
 [6.3.1]: https://github.com/dipdup-io/dipdup/compare/6.3.0...6.3.1
 [6.3.0]: https://github.com/dipdup-io/dipdup/compare/6.2.0...6.3.0
 [6.2.0]: https://github.com/dipdup-io/dipdup/compare/6.1.3...6.2.0

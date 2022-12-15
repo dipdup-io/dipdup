@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
 from typing import Tuple
@@ -8,24 +7,12 @@ from unittest.mock import AsyncMock
 import orjson as json
 import pytest
 
-from dipdup.config import HTTPConfig
-from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.models import OperationData
-
-
-@asynccontextmanager
-async def with_tzkt(batch_size: int, url: str | None = None) -> AsyncIterator[TzktDatasource]:
-    config = HTTPConfig(
-        batch_size=batch_size,
-        replay_path=str(Path(__file__).parent.parent / 'replays'),
-    )
-    datasource = TzktDatasource(url or 'https://api.tzkt.io', config)
-    async with datasource:
-        yield datasource
-
+from tests import tzkt_replay
 
 T = TypeVar('T')
 
@@ -38,11 +25,11 @@ async def take_two(iterable: AsyncIterator[Tuple[T, ...]]) -> Tuple[T, ...]:
         left -= 1
         if not left:
             return result
-    raise RuntimeError
+    raise FrameworkException('Not enough items in iterable')
 
 
 async def test_get_similar_contracts() -> None:
-    async with with_tzkt(2) as tzkt:
+    async with tzkt_replay(batch_size=2) as tzkt:
         contracts = await tzkt.get_similar_contracts(
             address='KT1WBLrLE2vG8SedBqiSJFm4VVAZZBytJYHc',
             strict=False,
@@ -57,7 +44,7 @@ async def test_get_similar_contracts() -> None:
 
 
 async def test_iter_similar_contracts() -> None:
-    async with with_tzkt(1) as tzkt:
+    async with tzkt_replay(batch_size=1) as tzkt:
         contracts = await take_two(
             tzkt.iter_similar_contracts(
                 address='KT1WBLrLE2vG8SedBqiSJFm4VVAZZBytJYHc',
@@ -76,7 +63,7 @@ async def test_iter_similar_contracts() -> None:
 
 
 async def test_get_originated_contracts() -> None:
-    async with with_tzkt(2) as tzkt:
+    async with tzkt_replay(batch_size=2) as tzkt:
         contracts = await tzkt.get_originated_contracts(
             address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
         )
@@ -85,7 +72,7 @@ async def test_get_originated_contracts() -> None:
 
 
 async def iter_originated_contracts() -> None:
-    async with with_tzkt(1) as tzkt:
+    async with tzkt_replay(batch_size=1) as tzkt:
         contracts = await take_two(
             tzkt.iter_originated_contracts(
                 address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
@@ -96,15 +83,24 @@ async def iter_originated_contracts() -> None:
 
 
 async def test_get_contract_summary() -> None:
-    async with with_tzkt(1) as tzkt:
+    async with tzkt_replay(batch_size=1) as tzkt:
         contract = await tzkt.get_contract_summary(
             address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
         )
         assert contract['address'] == 'KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD'
 
 
+async def test_get_contract_hashes() -> None:
+    async with tzkt_replay(batch_size=1) as tzkt:
+        code_hash, type_hash = await tzkt.get_contract_hashes(
+            address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
+        )
+        assert code_hash == -517093702
+        assert type_hash == 1479913559
+
+
 async def test_get_contract_storage() -> None:
-    async with with_tzkt(1) as tzkt:
+    async with tzkt_replay(batch_size=1) as tzkt:
         storage = await tzkt.get_contract_storage(
             address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
         )
@@ -112,7 +108,7 @@ async def test_get_contract_storage() -> None:
 
 
 async def test_get_jsonschemas() -> None:
-    async with with_tzkt(1) as tzkt:
+    async with tzkt_replay(batch_size=1) as tzkt:
         jsonschemas = await tzkt.get_jsonschemas(
             address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
         )
@@ -120,7 +116,7 @@ async def test_get_jsonschemas() -> None:
 
 
 async def test_get_big_map() -> None:
-    async with with_tzkt(2) as tzkt:
+    async with tzkt_replay(batch_size=2) as tzkt:
         big_map_keys = await tzkt.get_big_map(
             big_map_id=55031,
             level=550310,
@@ -129,7 +125,7 @@ async def test_get_big_map() -> None:
 
 
 async def test_iter_big_map() -> None:
-    async with with_tzkt(1) as tzkt:
+    async with tzkt_replay(batch_size=1) as tzkt:
         big_map_keys = await take_two(
             tzkt.iter_big_map(
                 big_map_id=55031,
@@ -140,7 +136,7 @@ async def test_iter_big_map() -> None:
 
 
 async def test_get_contract_big_maps() -> None:
-    async with with_tzkt(2) as tzkt:
+    async with tzkt_replay(batch_size=2) as tzkt:
         big_maps = await tzkt.get_contract_big_maps(
             address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
         )
@@ -148,7 +144,7 @@ async def test_get_contract_big_maps() -> None:
 
 
 async def test_iter_contract_big_maps() -> None:
-    async with with_tzkt(1) as tzkt:
+    async with tzkt_replay(batch_size=1) as tzkt:
         big_maps = await take_two(
             tzkt.iter_contract_big_maps(
                 address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
@@ -158,22 +154,26 @@ async def test_iter_contract_big_maps() -> None:
 
 
 async def test_get_migration_originations() -> None:
-    async with with_tzkt(2) as tzkt:
+    async with tzkt_replay(batch_size=2) as tzkt:
         originations = await tzkt.get_migration_originations()
         assert originations[0].id == 66864948445184
         assert originations[1].id == 66864949493760
 
 
 async def test_iter_migration_originations() -> None:
-    async with with_tzkt(1) as tzkt:
+    async with tzkt_replay(batch_size=1) as tzkt:
         originations = await take_two(tzkt.iter_migration_originations())
         assert originations[0].id == 66864948445184
         assert originations[1].id == 66864949493760
 
 
 async def test_get_originations() -> None:
-    async with with_tzkt(1) as tzkt:
-        originations = await tzkt.get_originations({'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'}, 889027, 889027)
+    async with tzkt_replay(batch_size=1) as tzkt:
+        originations = await tzkt.get_originations(
+            addresses={'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'},
+            first_level=889027,
+            last_level=889027,
+        )
         assert originations[0].id == 24969533718528
         assert originations[0].originated_contract_tzips == ('fa12',)
 
@@ -183,7 +183,7 @@ async def test_on_operation_message_data() -> None:
     operations_json = json.loads(json_path.read_text())
 
     message = {'type': 1, 'state': 2, 'data': operations_json}
-    async with with_tzkt(1) as tzkt:
+    async with tzkt_replay(batch_size=1) as tzkt:
         emit_mock = AsyncMock()
         tzkt.call_on_operations(emit_mock)
         tzkt.set_sync_level(HeadSubscription(), 1)
@@ -199,6 +199,6 @@ async def test_on_operation_message_data() -> None:
 
 
 async def test_no_content() -> None:
-    async with with_tzkt(1, 'https://api.jakartanet.tzkt.io') as tzkt:
+    async with tzkt_replay('https://api.jakartanet.tzkt.io', batch_size=1) as tzkt:
         with pytest.raises(InvalidRequestError):
             await tzkt.get_jsonschemas('KT1EHdK9asB6BtPLvt1ipKRuxsrKoQhDoKgs')

@@ -14,7 +14,6 @@ from typing import Iterable
 from typing import Iterator
 from typing import Optional
 from typing import Set
-from typing import Tuple
 from typing import Type
 from typing import Union
 
@@ -75,7 +74,7 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
 
                 conn = get_connection()
                 await conn.execute_query('SELECT 1')
-            # FIXME: Logging
+            # FIXME: Poor logging
             except (OSError, CannotConnectNowError):
                 _logger.warning("Can't establish database connection, attempt %s/%s", attempt, timeout)
                 if attempt == timeout - 1:
@@ -95,7 +94,7 @@ def is_model_class(obj: Any) -> bool:
     return isinstance(obj, type) and issubclass(obj, TortoiseModel) and obj not in (TortoiseModel, Model)
 
 
-def iter_models(package: Optional[str]) -> Iterator[Tuple[str, Type[TortoiseModel]]]:
+def iter_models(package: Optional[str]) -> Iterator[tuple[str, Type[TortoiseModel]]]:
     """Iterate over built-in and project's models"""
     modules = [
         ('int_models', importlib.import_module('dipdup.models')),

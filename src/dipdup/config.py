@@ -22,11 +22,9 @@ import re
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
-from collections import defaultdict
 from contextlib import suppress
 from copy import copy
 from dataclasses import field
-from functools import cached_property
 from functools import partial
 from io import StringIO
 from os import environ as env
@@ -37,7 +35,6 @@ from typing import Awaitable
 from typing import Callable
 from typing import Generic
 from typing import Iterator
-from typing import Sequence
 from typing import TypeVar
 from typing import cast
 from urllib.parse import quote_plus
@@ -66,6 +63,7 @@ from dipdup.enums import ReindexingReason
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.utils import exclude_none
 from dipdup.utils import import_from
@@ -152,7 +150,7 @@ class PostgresDatabaseConfig:
     immune_tables: set[str] = field(default_factory=set)
     connection_timeout: int = 60
 
-    @cached_property
+    @property
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
         # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
@@ -163,7 +161,7 @@ class PostgresDatabaseConfig:
             connection_string += f'&schema={self.schema_name}'
         return connection_string
 
-    @cached_property
+    @property
     def hasura_connection_parameters(self) -> dict[str, Any]:
         return {
             'username': self.user,
@@ -221,7 +219,7 @@ class NameMixin:
     def __post_init_post_parse__(self) -> None:
         self._name: str | None = None
 
-    @cached_property
+    @property
     def name(self) -> str:
         if self._name is None:
             raise ConfigInitializationException(f'{self.__class__.__name__} name is not set')
@@ -233,34 +231,39 @@ class ContractConfig(NameMixin):
     """Contract config
 
     :param address: Contract address
+    :param code_hash: Contract code hash or address to fetch it from
     :param typename: User-defined alias for the contract script
     """
 
-    address: str
+    address: str | None = None
+    code_hash: int | str | None = None
     typename: str | None = None
 
-    def __hash__(self) -> int:
-        return hash(f'{self.address}{self.typename or ""}')
-
-    @cached_property
+    @property
     def module_name(self) -> str:
         return self.typename or self.name
 
     @validator('address', allow_reuse=True)
-    def _valid_address(cls, v: str) -> str:
+    def _valid_address(cls, v: str | None) -> str | None:
         # NOTE: Environment substitution was disabled during export, skip validation
-        if '$' in v:
+        if not v or '$' in v:
             return v
 
         if not v.startswith(ADDRESS_PREFIXES) or len(v) != 36:
             raise ConfigurationError(f'`{v}` is not a valid contract address')
         return v
 
+    def get_address(self) -> str:
+        if self.address is None:
+            raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
+        return self.address
+
 
 class DatasourceConfig(ABC, NameMixin):
     kind: str
     http: HTTPConfig | None
 
+    # TODO: Pick refactoring from `ref/config-module`
     @abstractmethod
     def __hash__(self) -> int:
         ...
@@ -286,8 +289,12 @@ class TzktDatasourceConfig(DatasourceConfig):
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
-        if self.http and self.http.batch_size and self.http.batch_size > 10000:
-            raise ConfigurationError('`batch_size` must be less than 10000')
+        self.url = self.url.rstrip('/')
+
+        # NOTE: Is is possible to increase limits in TzKT? Anyway, I don't think anyone will ever need it.
+        limit = baking_bad.MAX_TZKT_BATCH_SIZE
+        if self.http and self.http.batch_size and self.http.batch_size > limit:
+            raise ConfigurationError(f'`batch_size` must be less than {limit}')
         parsed_url = urlparse(self.url)
         # NOTE: Environment substitution disabled
         if '$' in self.url:
@@ -501,7 +508,7 @@ class StorageTypeMixin:
     def __post_init_post_parse__(self) -> None:
         self._storage_type_cls: type[Any] | None = None
 
-    @cached_property
+    @property
     def storage_type_cls(self) -> type[Any]:
         if self._storage_type_cls is None:
             raise ConfigInitializationException
@@ -511,7 +518,7 @@ class StorageTypeMixin:
         _logger.debug('Registering `%s` storage type', module_name)
         cls_name = snake_to_pascal(module_name) + 'Storage'
         module_name = f'{package}.types.{module_name}.storage'
-        self.storage_type_cls = import_from(module_name, cls_name)
+        self._storage_type_cls = import_from(module_name, cls_name)
 
 
 ParentT = TypeVar('ParentT')
@@ -592,8 +599,8 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
     """
 
     type: Literal['transaction'] = 'transaction'
-    source: str | ContractConfig | None = None
-    destination: str | ContractConfig | None = None
+    source: ContractConfig | None = None
+    destination: ContractConfig | None = None
     entrypoint: str | None = None
     optional: bool = False
     alias: str | None = None
@@ -606,20 +613,25 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
             raise ConfigurationError('Transactions with entrypoint must also have destination')
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        if self.entrypoint:
-            module_name = self.destination_contract_config.module_name
+        if self.typed_contract:
+            module_name = self.typed_contract.module_name
             yield 'dipdup.models', 'Transaction'
-            yield self.format_parameter_import(package, module_name, self.entrypoint, self.alias)
+            yield self.format_parameter_import(
+                package,
+                module_name,
+                cast(str, self.entrypoint),
+                self.alias,
+            )
             yield self.format_storage_import(package, module_name)
         else:
             yield self.format_untyped_operation_import()
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        if self.entrypoint:
-            module_name = self.destination_contract_config.module_name
+        if self.typed_contract:
+            module_name = self.typed_contract.module_name
             yield self.format_operation_argument(
                 module_name,
-                self.entrypoint,
+                cast(str, self.entrypoint),
                 self.optional,
                 self.alias,
             )
@@ -631,17 +643,11 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
                 self.alias,
             )
 
-    @cached_property
-    def source_contract_config(self) -> ContractConfig:
-        if not isinstance(self.source, ContractConfig):
-            raise ConfigInitializationException
-        return self.source
-
-    @cached_property
-    def destination_contract_config(self) -> ContractConfig:
-        if not isinstance(self.destination, ContractConfig):
-            raise ConfigInitializationException
-        return self.destination
+    @property
+    def typed_contract(self) -> ContractConfig | None:
+        if self.entrypoint and self.destination:
+            return self.destination
+        return None
 
 
 @dataclass
@@ -658,54 +664,34 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
     """
 
     type: Literal['origination'] = 'origination'
-    source: str | ContractConfig | None = None
-    similar_to: str | ContractConfig | None = None
-    originated_contract: str | ContractConfig | None = None
+    source: ContractConfig | None = None
+    similar_to: ContractConfig | None = None
+    originated_contract: ContractConfig | None = None
     optional: bool = False
     strict: bool = False
     alias: str | None = None
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
-        self._matched_originations: list[str] = []
+        if not self.similar_to:
+            return
 
-    def origination_processed(self, address: str) -> bool:
-        if address in self._matched_originations:
-            return True
-        self._matched_originations.append(address)
-        return False
-
-    def __hash__(self) -> int:
-        return hash(
-            ''.join(
-                [
-                    self.source_contract_config.address if self.source else '',
-                    self.similar_to_contract_config.address if self.similar_to else '',
-                    self.originated_contract_config.address if self.originated_contract else '',
-                ]
-            )
-        )
+        _logger.warning('`similar_to` field is deprecated, use `originated_contract` instead')
+        self.originated_contract = self.similar_to
+        self.similar_to = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        if self.originated_contract:
-            module_name = self.originated_contract_config.module_name
-        elif self.similar_to:
-            module_name = self.similar_to_contract_config.module_name
-        elif self.source:
-            yield 'dipdup.models', 'OperationData'
-            return
+        if self.typed_contract:
+            module_name = self.typed_contract.module_name
+            yield 'dipdup.models', 'Origination'
+            yield self.format_storage_import(package, module_name)
         else:
-            raise ConfigurationError(
-                'Origination pattern must have at least one of `source`, `similar_to`, `originated_contract` fields'
-            )
-
-        yield 'dipdup.models', 'Origination'
-        yield self.format_storage_import(package, module_name)
+            yield 'dipdup.models', 'OperationData'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        if self.originated_contract or self.similar_to:
+        if self.typed_contract:
             yield self.format_origination_argument(
-                self.module_name,
+                self.typed_contract.module_name,
                 self.optional,
                 self.alias,
             )
@@ -717,37 +703,14 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
                 self.alias,
             )
 
-    @cached_property
-    def module_name(self) -> str:
-        return self.contract_config.module_name
-
-    @cached_property
-    def contract_config(self) -> ContractConfig:
+    @property
+    def typed_contract(self) -> ContractConfig | None:
         if self.originated_contract:
-            return self.originated_contract_config
+            return self.originated_contract
+        # TODO: Remove in 7.0
         if self.similar_to:
-            return self.similar_to_contract_config
-        if self.source:
-            return self.source_contract_config
-        raise RuntimeError
-
-    @cached_property
-    def source_contract_config(self) -> ContractConfig:
-        if not isinstance(self.source, ContractConfig):
-            raise ConfigInitializationException
-        return self.source
-
-    @cached_property
-    def similar_to_contract_config(self) -> ContractConfig:
-        if not isinstance(self.similar_to, ContractConfig):
-            raise ConfigInitializationException
-        return self.similar_to
-
-    @cached_property
-    def originated_contract_config(self) -> ContractConfig:
-        if not isinstance(self.originated_contract, ContractConfig):
-            raise ConfigInitializationException
-        return self.originated_contract
+            raise FrameworkException
+        return None
 
 
 @dataclass
@@ -767,11 +730,11 @@ class CallbackMixin(CodegenMixin):
         if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
             raise ConfigurationError('`callback` field must be a valid Python module name')
 
-    @cached_property
+    @property
     def kind(self) -> str:
         return self._kind  # type: ignore[attr-defined,no-any-return]
 
-    @cached_property
+    @property
     def callback_fn(self) -> Callable[..., Awaitable[None]]:
         if self._callback_fn is None:
             raise ConfigInitializationException
@@ -783,7 +746,7 @@ class CallbackMixin(CodegenMixin):
         _logger.debug('Registering %s callback `%s`', self.kind, self.callback)
         module_name = f'{package}.{self.kind}s.{self.callback}'
         fn_name = self.callback.rsplit('.', 1)[-1]
-        self.callback_fn = import_from(module_name, fn_name)
+        self._callback_fn = import_from(module_name, fn_name)
 
 
 @dataclass
@@ -833,7 +796,7 @@ class TemplateValuesMixin:
     def __post_init_post_parse__(self) -> None:
         self._template_values: dict[str, str] = {}
 
-    @cached_property
+    @property
     def template_values(self) -> dict[str, str]:
         return self._template_values
 
@@ -872,7 +835,7 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
     """
 
     kind: str
-    datasource: str | TzktDatasourceConfig
+    datasource: TzktDatasourceConfig
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
@@ -880,7 +843,7 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
         SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
 
-    @cached_property
+    @property
     def datasource_config(self) -> TzktDatasourceConfig:
         if not isinstance(self.datasource, TzktDatasourceConfig):
             raise ConfigInitializationException
@@ -922,8 +885,8 @@ class OperationIndexConfig(IndexConfig):
 
     kind: Literal['operation']
     handlers: tuple[OperationHandlerConfig, ...]
+    contracts: list[ContractConfig] = field(default_factory=list)
     types: tuple[OperationType, ...] = (OperationType.transaction,)
-    contracts: list[str | ContractConfig] = field(default_factory=list)
 
     first_level: int = 0
     last_level: int = 0
@@ -935,57 +898,24 @@ class OperationIndexConfig(IndexConfig):
             for item in handler['pattern']:
                 item.pop('alias', None)
 
-    @cached_property
-    def entrypoint_filter(self) -> set[str | None]:
-        """Set of entrypoints to filter operations with before an actual matching"""
-        entrypoints = set()
-        for handler_config in self.handlers:
-            for pattern_config in handler_config.pattern:
-                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    entrypoints.add(pattern_config.entrypoint)
-        return set(entrypoints)
-
-    @cached_property
-    def address_filter(self) -> set[str]:
-        """Set of addresses (any field) to filter operations with before an actual matching"""
-        addresses = set()
-        for handler_config in self.handlers:
-            for pattern_config in handler_config.pattern:
-                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    if isinstance(pattern_config.source, ContractConfig):
-                        addresses.add(pattern_config.source.address)
-                    elif isinstance(pattern_config.source, str):
-                        raise ConfigInitializationException
-
-                    if isinstance(pattern_config.destination, ContractConfig):
-                        addresses.add(pattern_config.destination.address)
-                    elif isinstance(pattern_config.destination, str):
-                        raise ConfigInitializationException
-
-        return addresses
-
     def import_objects(self, package: str) -> None:
         for handler_config in self.handlers:
             handler_config.initialize_callback_fn(package)
 
             for pattern_config in handler_config.pattern:
+                typed_contract = pattern_config.typed_contract
+                if not typed_contract:
+                    continue
+
+                module_name = typed_contract.module_name
+                pattern_config.initialize_storage_cls(package, module_name)
+
                 if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    if not pattern_config.entrypoint:
-                        continue
-
-                    module_name = pattern_config.destination_contract_config.module_name
-                    pattern_config.initialize_parameter_cls(package, module_name, pattern_config.entrypoint)
-                    pattern_config.initialize_storage_cls(package, module_name)
-
-                elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-                    if not (pattern_config.originated_contract or pattern_config.similar_to):
-                        continue
-
-                    module_name = pattern_config.module_name
-                    pattern_config.initialize_storage_cls(package, module_name)
-
-                else:
-                    raise NotImplementedError
+                    pattern_config.initialize_parameter_cls(
+                        package,
+                        module_name,
+                        cast(str, pattern_config.entrypoint),
+                    )
 
 
 @dataclass
@@ -996,7 +926,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     :param path: Path to big map (alphanumeric string with dots)
     """
 
-    contract: str | ContractConfig
+    contract: ContractConfig
     path: str
 
     def __post_init_post_parse__(self) -> None:
@@ -1027,26 +957,20 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         yield 'dipdup.models', 'BigMapDiff'
         yield package, 'models as models'
 
-        yield self.format_key_import(package, self.contract_config.module_name, self.path)
-        yield self.format_value_import(package, self.contract_config.module_name, self.path)
+        yield self.format_key_import(package, self.contract.module_name, self.path)
+        yield self.format_value_import(package, self.contract.module_name, self.path)
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
         yield self.format_big_map_diff_argument(self.path)
 
-    @cached_property
-    def contract_config(self) -> ContractConfig:
-        if not isinstance(self.contract, ContractConfig):
-            raise ConfigInitializationException
-        return self.contract
-
-    @cached_property
+    @property
     def key_type_cls(self) -> type:
         if self._key_type_cls is None:
             raise ConfigInitializationException
         return self._key_type_cls
 
-    @cached_property
+    @property
     def value_type_cls(self) -> type:
         if self._value_type_cls is None:
             raise ConfigInitializationException
@@ -1057,13 +981,13 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
         _logger.debug('Registering big map types for path `%s`', self.path)
         path = pascal_to_snake(self.path.replace('.', '_'))
 
-        module_name = f'{package}.types.{self.contract_config.module_name}.big_map.{path}_key'
+        module_name = f'{package}.types.{self.contract.module_name}.big_map.{path}_key'
         cls_name = snake_to_pascal(path + '_key')
-        self.key_type_cls = import_from(module_name, cls_name)
+        self._key_type_cls = import_from(module_name, cls_name)
 
-        module_name = f'{package}.types.{self.contract_config.module_name}.big_map.{path}_value'
+        module_name = f'{package}.types.{self.contract.module_name}.big_map.{path}_value'
         cls_name = snake_to_pascal(path + '_value')
-        self.value_type_cls = import_from(module_name, cls_name)
+        self._value_type_cls = import_from(module_name, cls_name)
 
 
 @dataclass
@@ -1079,7 +1003,7 @@ class BigMapIndexConfig(IndexConfig):
     """
 
     kind: Literal['big_map']
-    datasource: str | TzktDatasourceConfig
+    datasource: TzktDatasourceConfig
     handlers: tuple[BigMapHandlerConfig, ...]
 
     skip_history: SkipHistory = SkipHistory.never
@@ -1087,9 +1011,9 @@ class BigMapIndexConfig(IndexConfig):
     first_level: int = 0
     last_level: int = 0
 
-    @cached_property
+    @property
     def contracts(self) -> set[ContractConfig]:
-        return {handler_config.contract_config for handler_config in self.handlers}
+        return {handler_config.contract for handler_config in self.handlers}
 
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:
@@ -1121,7 +1045,7 @@ class HeadIndexConfig(IndexConfig):
     """Head block index config"""
 
     kind: Literal['head']
-    datasource: str | TzktDatasourceConfig
+    datasource: TzktDatasourceConfig
     handlers: tuple[HeadHandlerConfig, ...]
 
     @property
@@ -1139,10 +1063,10 @@ class HeadIndexConfig(IndexConfig):
 
 @dataclass
 class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
-    contract: str | ContractConfig | None = None
+    contract: ContractConfig | None = None
     token_id: int | None = None
-    from_: str | ContractConfig | None = Field(default=None, alias='from')
-    to: str | ContractConfig | None = None
+    from_: ContractConfig | None = Field(default=None, alias='from')
+    to: ContractConfig | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -1159,7 +1083,7 @@ class TokenTransferIndexConfig(IndexConfig):
     """Token index config"""
 
     kind: Literal['token_transfer']
-    datasource: str | TzktDatasourceConfig
+    datasource: TzktDatasourceConfig
     handlers: tuple[TokenTransferHandlerConfig, ...] = field(default_factory=tuple)
 
     first_level: int = 0
@@ -1172,20 +1096,14 @@ class TokenTransferIndexConfig(IndexConfig):
 
 @dataclass
 class EventHandlerConfig(HandlerConfig, kind='handler'):
-    contract: str | ContractConfig
+    contract: ContractConfig
     tag: str
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
         self._event_type_cls: type[Any] | None = None
 
-    @cached_property
-    def contract_config(self) -> ContractConfig:
-        if not isinstance(self.contract, ContractConfig):
-            raise ConfigInitializationException
-        return self.contract
-
-    @cached_property
+    @property
     def event_type_cls(self) -> type:
         if self._event_type_cls is None:
             raise ConfigInitializationException
@@ -1196,7 +1114,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
         _logger.debug('Registering event types for tag `%s`', self.tag)
         tag = pascal_to_snake(self.tag.replace('.', '_'))
 
-        module_name = f'{package}.types.{self.contract_config.module_name}.event.{tag}'
+        module_name = f'{package}.types.{self.contract.module_name}.event.{tag}'
         cls_name = snake_to_pascal(f'{tag}_payload')
         self._event_type_cls = import_from(module_name, cls_name)
 
@@ -1207,7 +1125,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
         event_cls = snake_to_pascal(self.tag + '_payload')
         event_module = pascal_to_snake(self.tag)
-        module_name = self.contract_config.module_name
+        module_name = self.contract.module_name
         yield f'{package}.types.{module_name}.event.{event_module}', event_cls
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -1218,13 +1136,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
 @dataclass
 class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
-    contract: str | ContractConfig
-
-    @cached_property
-    def contract_config(self) -> ContractConfig:
-        if not isinstance(self.contract, ContractConfig):
-            raise ConfigInitializationException
-        return self.contract
+    contract: ContractConfig
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -1242,7 +1154,7 @@ EventHandlerConfigU = EventHandlerConfig | UnknownEventHandlerConfig
 @dataclass
 class EventIndexConfig(IndexConfig):
     kind: Literal['event']
-    datasource: str | TzktDatasourceConfig
+    datasource: TzktDatasourceConfig
     handlers: tuple[EventHandlerConfigU, ...] = field(default_factory=tuple)
 
     first_level: int = 0
@@ -1295,7 +1207,7 @@ class HasuraConfig:
             raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
         return v.rstrip('/')
 
-    @cached_property
+    @property
     def headers(self) -> dict[str, str]:
         """Headers to include with every request"""
         if self.admin_secret:
@@ -1314,7 +1226,7 @@ class JobConfig(NameMixin):
     :param args: Arguments to pass to the hook
     """
 
-    hook: str | HookConfig
+    hook: HookConfig
     crontab: str | None = None
     interval: int | None = None
     daemon: bool = False
@@ -1328,12 +1240,6 @@ class JobConfig(NameMixin):
             raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
 
         NameMixin.__post_init_post_parse__(self)
-
-    @cached_property
-    def hook_config(self) -> HookConfig:
-        if not isinstance(self.hook, HookConfig):
-            raise ConfigInitializationException
-        return self.hook
 
 
 @dataclass
@@ -1500,17 +1406,16 @@ class DipDupConfig:
 
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
-        self._callback_patterns: dict[str, list[Sequence[HandlerPatternConfigU]]] = defaultdict(list)
         self._contract_addresses = {contract.address for contract in self.contracts.values()}
 
-    @cached_property
+    @property
     def schema_name(self) -> str:
         if isinstance(self.database, PostgresDatabaseConfig):
             return self.database.schema_name
         # NOTE: Not exactly correct; historical reason
         return DEFAULT_POSTGRES_SCHEMA
 
-    @cached_property
+    @property
     def package_path(self) -> Path:
         """Absolute path to the indexer package, existing or default"""
         # NOTE: Integration tests run in isolated environment
@@ -1520,7 +1425,7 @@ class DipDupConfig:
         with suppress(ImportError):
             package = importlib.import_module(self.package)
             if package.__file__ is None:
-                raise RuntimeError(f'`{package.__name__}` package has no `__file__` attribute')
+                raise FrameworkException(f'`{package.__name__}` package has no `__file__` attribute')
             return Path(package.__file__).parent
 
         # NOTE: Detect src/<package> layout
@@ -1538,6 +1443,7 @@ class DipDupConfig:
             return True
         return False
 
+    # TODO: Pick refactoring from `ref/config-module`
     @classmethod
     def load(
         cls,
@@ -1625,7 +1531,7 @@ class DipDupConfig:
             LoggingValues.verbose: logging.DEBUG,
         }[self.logging]
         logging.getLogger('dipdup').setLevel(level)
-        # NOTE: Hack for some mocked tests
+        # FIXME: Hack for some mocked tests; possibly outdated
         if isinstance(self.package, str):
             logging.getLogger(self.package).setLevel(level)
 
@@ -1643,19 +1549,28 @@ class DipDupConfig:
                 raise ConfigInitializationException
             index_config.import_objects(self.package)
 
-    def add_index(self, name: str, template: str, values: dict[str, str]) -> None:
+    def add_index(
+        self,
+        name: str,
+        template: str,
+        values: dict[str, str],
+        first_level: int = 0,
+        last_level: int = 0,
+    ) -> None:
         if name in self.indexes:
             raise IndexAlreadyExistsError(self, name)
         template_config = IndexTemplateConfig(
             template=template,
             values=values,
+            first_level=first_level,
+            last_level=last_level,
         )
-        template_config.name = name
+        template_config._name = name
         self._resolve_template(template_config)
         index_config = cast(ResolvedIndexConfigU, self.indexes[name])
         self._resolve_index_links(index_config)
         self._resolve_index_subscriptions(index_config)
-        index_config.name = name
+        index_config._name = name
         index_config.import_objects(self.package)
 
     @classmethod
@@ -1665,7 +1580,7 @@ class DipDupConfig:
             with open(path) as file:
                 return ''.join(filter(cls._filter_commented_lines, file.readlines()))
         except OSError as e:
-            raise ConfigurationError(str(e)) from e
+            raise ConfigurationError(f'Config file `{path}` is missing or not readable.') from e
 
     @classmethod
     def _filter_commented_lines(cls, line: str) -> bool:
@@ -1730,9 +1645,9 @@ class DipDupConfig:
 
         json_template = json.loads(raw_template)
         new_index_config = template.__class__(**json_template)
-        new_index_config.template_values = template_config.values
+        new_index_config._template_values = template_config.values
         new_index_config.parent = template
-        new_index_config.name = template_config.name
+        new_index_config._name = template_config.name
         if not isinstance(new_index_config, HeadIndexConfig):
             new_index_config.first_level |= template_config.first_level
             new_index_config.last_level |= template_config.last_level
@@ -1783,7 +1698,7 @@ class DipDupConfig:
                 index_config.subscriptions.add(BigMapSubscription())
             else:
                 for big_map_handler_config in index_config.handlers:
-                    address, path = big_map_handler_config.contract_config.address, big_map_handler_config.path
+                    address, path = big_map_handler_config.contract.address, big_map_handler_config.path
                     index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
 
         elif isinstance(index_config, HeadIndexConfig):
@@ -1810,7 +1725,7 @@ class DipDupConfig:
                 index_config.subscriptions.add(EventSubscription())
             else:
                 for event_handler_config in index_config.handlers:
-                    address = event_handler_config.contract_config.address
+                    address = event_handler_config.contract.address
                     index_config.subscriptions.add(EventSubscription(address=address))
 
         else:
@@ -1822,7 +1737,10 @@ class DipDupConfig:
             )
 
     def _resolve_index_links(self, index_config: ResolvedIndexConfigU) -> None:
-        """Resolve contract and datasource configs by aliases"""
+        """Resolve contract and datasource configs by aliases.
+
+        WARNING: str type checks are intentional! See `dipdup.config.patch_annotations`.
+        """
         # NOTE: Each index must have a corresponding (currently) TzKT datasource
         if isinstance(index_config.datasource, str):
             index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
@@ -1835,7 +1753,6 @@ class DipDupConfig:
 
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
-                self._callback_patterns[handler_config.callback].append(handler_config.pattern)
                 for idx, pattern_config in enumerate(handler_config.pattern):
                     # NOTE: Untyped operations are named as `transaction_N` or `origination_N` based on their index
                     pattern_config._subgroup_index = idx
@@ -1847,18 +1764,19 @@ class DipDupConfig:
                             pattern_config.source = self.get_contract(pattern_config.source)
 
                     elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                        # TODO: Remove in 7.0
+                        if pattern_config.similar_to:
+                            raise FrameworkException('originated_contract` alias, should be replaced in __init__')
+
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_contract(pattern_config.source)
-                        if isinstance(pattern_config.similar_to, str):
-                            pattern_config.similar_to = self.get_contract(pattern_config.similar_to)
+
                         if isinstance(pattern_config.originated_contract, str):
                             pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 
         elif isinstance(index_config, BigMapIndexConfig):
             for handler in index_config.handlers:
                 handler.parent = index_config
-                # TODO: Verify callback uniqueness
-                # self._callback_patterns[handler.callback].append(handler.pattern)
                 if isinstance(handler.contract, str):
                     handler.contract = self.get_contract(handler.contract)
 
@@ -1899,4 +1817,45 @@ class DipDupConfig:
 
         for named_configs in named_config_sections:
             for name, config in named_configs.items():
-                config.name = name
+                config._name = name
+
+
+yaml_annotations = {
+    'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
+    'ContractConfig': 'str | ContractConfig',
+    'ContractConfig | None': 'str | ContractConfig | None',
+    'list[ContractConfig]': 'list[str | ContractConfig]',
+}
+orinal_annotations = {v: k for k, v in yaml_annotations.items()}
+
+
+def patch_annotations(replace_table: dict[str, str]) -> None:
+    """Patch dataclass annotations in runtime to allow using aliases in config files.
+
+    DipDup YAML config uses string aliases for contracts and datasources. During `DipDupConfig.load` these
+    aliases are resolved to actual configs from corresponding sections and never become strings again.
+    This hack allows to add `str` in Unions before loading config so we don't need to write `isinstance(...)`
+    checks everywhere.
+
+    You can revert these changes by calling `patch_annotations(orinal_annotations)`, but tests will fail.
+    """
+    self = importlib.import_module(__name__)
+
+    for attr in dir(self):
+        value = getattr(self, attr)
+        if not isinstance(value, type) or not hasattr(value, '__annotations__'):
+            continue
+
+        # NOTE: All annotations are strings now
+        reload = False
+        for name, annotation in value.__annotations__.items():
+            if new_annotation := replace_table.get(annotation):
+                value.__annotations__[name] = new_annotation
+                reload = True
+
+        # NOTE: Wrap dataclass again to recreate magic methods
+        if reload:
+            setattr(self, attr, dataclass(value))
+
+
+patch_annotations(yaml_annotations)
