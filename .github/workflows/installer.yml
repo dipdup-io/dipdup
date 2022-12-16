@@ -12,7 +12,18 @@ on:
 jobs:
   installer:
     name: Installer
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+          - os: ubuntu-latest
+            arch: arm64
+          # - os: macos-latest
+          #   arch: amd64
+          - os: macos-latest
+            arch: arm64
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
