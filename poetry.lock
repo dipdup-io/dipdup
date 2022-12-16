@@ -4681,4 +4681,4 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "e850f1befd08916fdc2eba1a257fd811a959672e425b31e119997ebc188d0669"
+content-hash = "3bbef93146bde717874992d59a9cacd7fb26d89fa4d75b6ca21e04dbccb39347"
