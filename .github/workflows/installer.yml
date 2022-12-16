@@ -7,6 +7,8 @@ on:
     paths:
       - 'src/**'
       - 'scripts/install.py'
+      - 'pyproject.toml'
+      - 'poetry.lock'
       - '.github/workflows/installer.yml'
 
 jobs:
