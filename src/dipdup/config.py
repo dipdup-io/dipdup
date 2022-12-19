@@ -1821,6 +1821,7 @@ yaml_annotations = {
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
     'list[ContractConfig]': 'list[str | ContractConfig]',
+    'HookConfig': 'str | HookConfig',
 }
 orinal_annotations = {v: k for k, v in yaml_annotations.items()}
 
