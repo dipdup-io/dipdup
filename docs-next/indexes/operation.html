@@ -170,36 +170,10 @@
 </div>
 <h1 id="operation-index"><a class="header" href="#operation-index"><code>operation</code> index</a></h1>
 <p>Operation index allows you to query only operations related to your dapp and match them with handlers by content. A single contract call consists of implicit operation and, optionally, internal operations. For each of them, you can specify a handler that will be called when the operation group matches. As a result, you get something like an event log for your dapp.</p>
-<h2 id="filters"><a class="header" href="#filters">Filters</a></h2>
-<p>DipDup supports filtering operations by <code>source</code>, <code>destination</code> (if applicable), and <code>originated_contract</code> (if applicable).</p>
-<p>DipDup fetches only <em>applied</em> operations.</p>
-<h3 id="contracts"><a class="header" href="#contracts">contracts</a></h3>
-<pre><code class="language-yaml">indexes:
-  my_index:
-    kind: operation
-    datasource: tzkt
-    contracts:
-      - foo
-      - bar
-</code></pre>
-<p>In this example, DipDup will fetch all the operations where any of the source and destination is equal to either <em>foo</em> or <em>bar</em> address. <code>contracts</code> field is obligatory; there has to be at least one contract alias.</p>
-<h3 id="types"><a class="header" href="#types">types</a></h3>
-<p>By default, DipDup works only with transactions, but you can explicitly list operation types you want to subscribe to (currently, <code>transaction</code>, <code>origination</code>, and <code>migration</code> types are supported):</p>
-<pre><code class="language-yaml">indexes:
-  my_index:
-    kind: operation
-    datasource: tzkt
-    contracts:
-      - some_contract
-    types:
-      - transaction
-      - origination
-</code></pre>
-<p>Note that in the case of originations, DipDup will query operations where either source or originated contract address is equal to <em>some_contract</em>.</p>
 <h2 id="handlers"><a class="header" href="#handlers">Handlers</a></h2>
 <p>Each operation handler contains two required fields:</p>
 <ul>
-<li><code>callback</code> —  a name of async function with a particular signature; DipDup will search for it in <code>&lt;package&gt;.handlers.&lt;callback&gt;</code> module.</li>
+<li><code>callback</code> — a name of async function with a particular signature; DipDup will search for it in <code>&lt;package&gt;.handlers.&lt;callback&gt;</code> module.</li>
 <li><code>pattern</code> — a non-empty list of items that need to be matched.</li>
 </ul>
 <pre><code class="language-yaml">indexes:
@@ -215,19 +189,28 @@
             entrypoint: transfer
 </code></pre>
 <p>You can think of the operation pattern as a regular expression on a sequence of operations (both external and internal) with a global flag enabled (there can be multiple matches). Multiple operation parameters can be used for matching (source, destination, etc.).</p>
-<h3 id="pattern"><a class="header" href="#pattern">Pattern</a></h3>
-<p>Here are the supported filters for matching operations (all optional):</p>
-<ul>
-<li><code>type</code> — <em>transaction</em> or <em>origination</em>; usually inferred from the existence of other fields</li>
-<li><code>destination</code> — invoked contract alias</li>
-<li><code>entrypoint</code> — invoked entrypoint name</li>
-<li><code>source</code> — operation sender alias</li>
-<li><code>originated_contract</code> — originated contract alias</li>
-<li><code>similar_to</code> — originated contract has the same parameter and storage types as the reference one</li>
-<li><code>strict</code> — stronger the <code>similar_to</code> filter by comparing the entire code rather than just parameter+storage</li>
-<li><code>optional</code> — continue matching even if this item is not found (with limitations, see below)</li>
-</ul>
-<p>It's unnecessary to match the entire operation content; you can skip external/internal calls that are not relevant. However, there is a limitation: optional items cannot be followed by operations ignored by the pattern.</p>
+<p>You will get slightly different callback argument types depending on whether pattern item is typed or not. If so, DipDup will generate the dataclass for a particular entrypoint/storage, otherwise you will have to handle untyped parameters/storage updates stored in <code>OperationData</code> model.</p>
+<h2 id="matching-originations"><a class="header" href="#matching-originations">Matching originations</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>name</th><th>description</th><th style="text-align: center">supported</th><th style="text-align: center">typed</th></tr></thead><tbody>
+<tr><td><code>originated_contract.address</code></td><td>Origination of exact contract.</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
+<tr><td><code>originated_contract.code_hash</code></td><td>Originations of all contracts having the same code.</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
+<tr><td><code>source.address</code></td><td>Special cases only. This filter is very slow and doesn't support strict typing. Usually, <code>originated_contract.code_hash</code> suits better.</td><td style="text-align: center">⚠</td><td style="text-align: center">❌</td></tr>
+<tr><td><code>source.code_hash</code></td><td>Currently not supported.</td><td style="text-align: center">❌</td><td style="text-align: center">❌</td></tr>
+<tr><td><code>similar_to.address</code></td><td>Compatibility alias to <code>originated_contract.code_hash</code>. Can be removed some day.</td><td style="text-align: center">➡️</td><td style="text-align: center">➡️</td></tr>
+<tr><td><code>similar_to.code_hash</code></td><td>Compatibility alias to <code>originated_contract.code_hash</code>. Can be removed some day.</td><td style="text-align: center">➡️</td><td style="text-align: center">➡️</td></tr>
+</tbody></table>
+</div>
+<h2 id="matching-transactions"><a class="header" href="#matching-transactions">Matching transactions</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>name</th><th>description</th><th style="text-align: center">supported</th><th style="text-align: center">typed</th></tr></thead><tbody>
+<tr><td><code>source.address</code></td><td>Sent by exact address.</td><td style="text-align: center">✅</td><td style="text-align: center">N/A</td></tr>
+<tr><td><code>source.code_hash</code></td><td>Sent by any contract having this code hash</td><td style="text-align: center">✅</td><td style="text-align: center">N/A</td></tr>
+<tr><td><code>destination.address</code></td><td>Invoked contract address</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
+<tr><td><code>destination.code_hash</code></td><td>Invoked contract code hash</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
+<tr><td><code>destination.entrypoint</code></td><td>Entrypoint called</td><td style="text-align: center">✅</td><td style="text-align: center">✅</td></tr>
+</tbody></table>
+</div>
+<h2 id="optional-items"><a class="header" href="#optional-items">Optional items</a></h2>
+<p>Pattern items have <code>optional</code> field to continue matching even if this item is not found. It's usually unnecessary to match the entire operation content; you can skip external/internal calls that are not relevant. However, there is a limitation: optional items cannot be followed by operations ignored by the pattern.</p>
 <pre><code class="language-yaml">pattern:
   # Implicit transaction
   - destination: some_contract
@@ -240,7 +223,27 @@
   - source: some_contract
     type: transaction
 </code></pre>
-<p>You will get slightly different callback argument types depending on whether you specify <em>destination+entrypoint</em> for transactions and <em>originated_contract</em> for originations. Namely, in the first case, DipDup will generate the dataclass for a particular entrypoint/storage, and in the second case not (meaning you will have to handle untyped parameters/storage updates).</p>
+<h2 id="specifying-contracts-to-index"><a class="header" href="#specifying-contracts-to-index">Specifying contracts to index</a></h2>
+<p>DipDup will try to guess the list of used contracts by handlers' signatures. If you want to specify it explicitly, use <code>contracts</code> field:</p>
+<pre><code class="language-yaml">indexes:
+  my_index:
+    kind: operation
+    datasource: tzkt
+    contracts:
+      - foo
+      - bar
+</code></pre>
+<h2 id="specifying-operation-types"><a class="header" href="#specifying-operation-types">Specifying operation types</a></h2>
+<p>By default, DipDup processes only transactions, but you can enable other operation types you want to process (currently, <code>transaction</code>, <code>origination</code>, and <code>migration</code> are supported).</p>
+<pre><code class="language-yaml">indexes:
+  my_index:
+    kind: operation
+    datasource: tzkt
+    types:
+      - transaction
+      - origination
+      - migration
+</code></pre>
 
                     </main>
 

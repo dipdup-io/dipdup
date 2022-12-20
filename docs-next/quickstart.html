@@ -171,7 +171,7 @@
 <h2 id="create-a-new-project"><a class="header" href="#create-a-new-project">Create a new project</a></h2>
 <h3 id="interactively-recommended"><a class="header" href="#interactively-recommended">Interactively (recommended)</a></h3>
 <p>You can initialize a hello-world project interactively by choosing configuration options in the terminal. The following command will install DipDup for the current user:</p>
-<pre><code class="language-shell">python -c &quot;$(curl -sSL https://dipdup.io/install.py)&quot;
+<pre><code class="language-shell">curl -Lsf https://dipdup.io/install.py | python
 </code></pre>
 <p>Now, let's create a new project:</p>
 <pre><code class="language-shell">dipdup new
@@ -202,11 +202,11 @@ poetry shell
 <h2 id="write-a-configuration-file"><a class="header" href="#write-a-configuration-file">Write a configuration file</a></h2>
 <p>DipDup configuration is stored in YAML files of a specific format. Create a new file named <code>dipdup.yml</code> in your current working directory with the following content:</p>
 <pre><code class="language-yaml">spec_version: 1.2
-package: demo_tzbtc
+package: demo_token
 
 database:
   kind: sqlite
-  path: demo-tzbtc.sqlite3
+  path: demo-token.sqlite3
 
 contracts:
   tzbtc_mainnet:
@@ -252,8 +252,8 @@ templates:
 <p>Now it's time to generate typeclasses and callback stubs. Run the following command:</p>
 <pre><code class="language-shell">dipdup init
 </code></pre>
-<p>DipDup will create a Python package <code>demo_tzbtc</code> having the following structure:</p>
-<pre><code class="language-text">demo_tzbtc
+<p>DipDup will create a Python package <code>demo_token</code> having the following structure:</p>
+<pre><code class="language-text">demo_token
 ├── graphql
 ├── handlers
 │   ├── __init__.py
@@ -326,7 +326,7 @@ class Holder(Model):
 <pre><code class="language-python">from datetime import datetime
 from decimal import Decimal
 
-import demo_tzbtc.models as models
+import demo_token.models as models
 
 
 async def on_balance_update(
@@ -345,9 +345,9 @@ async def on_balance_update(
 <p><code>on_transfer.py</code></p>
 <pre><code class="language-python">from decimal import Decimal
 
-from demo_tzbtc.handlers.on_balance_update import on_balance_update
-from demo_tzbtc.types.tzbtc.parameter.transfer import TransferParameter
-from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
+from demo_token.handlers.on_balance_update import on_balance_update
+from demo_token.types.tzbtc.parameter.transfer import TransferParameter
+from demo_token.types.tzbtc.storage import TzbtcStorage
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
 
@@ -375,9 +375,9 @@ async def on_transfer(
 <p><code>on_mint.py</code></p>
 <pre><code class="language-python">from decimal import Decimal
 
-from demo_tzbtc.handlers.on_balance_update import on_balance_update
-from demo_tzbtc.types.tzbtc.parameter.mint import MintParameter
-from demo_tzbtc.types.tzbtc.storage import TzbtcStorage
+from demo_token.handlers.on_balance_update import on_balance_update
+from demo_token.types.tzbtc.parameter.mint import MintParameter
+from demo_token.types.tzbtc.storage import TzbtcStorage
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
 
