@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - cli: `update` and `uninstall` commands no longer require a valid config.
-- cli: Fixed a regression in `new` command leading to crash with `TypeError`. 
+- cli: Fixed a regression in `new` command leading to crash with `TypeError`.
 - config: Fixed `jobs` section deserialization.
 
 ## [6.4.0rc1] - 2022-12-09

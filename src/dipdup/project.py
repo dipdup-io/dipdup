@@ -79,7 +79,7 @@ class InputQuestion(Question):
 
     def prompt(self) -> str:
         cl.secho(f'=> {self.description}', fg='blue')
-        return super().prompt()
+        return str(super().prompt())
 
 
 class BooleanQuestion(Question):
