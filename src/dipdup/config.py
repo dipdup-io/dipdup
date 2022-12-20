@@ -1224,11 +1224,11 @@ class JobConfig(NameMixin):
     :param args: Arguments to pass to the hook
     """
 
-    hook: HookConfig
+    hook: HookConfig = field()
+    args: dict[str, Any] = field(default_factory=dict)
     crontab: str | None = None
     interval: int | None = None
     daemon: bool = False
-    args: dict[str, Any] = field(default_factory=dict)
 
     def __post_init_post_parse__(self) -> None:
         schedules_enabled = sum(int(bool(x)) for x in (self.crontab, self.interval, self.daemon))
@@ -1821,6 +1821,7 @@ yaml_annotations = {
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
     'list[ContractConfig]': 'list[str | ContractConfig]',
+    'HookConfig': 'str | HookConfig',
 }
 orinal_annotations = {v: k for k, v in yaml_annotations.items()}
 
