@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: `update` and `uninstall` commands no longer require a valid config.
 - cli: Fixed a regression in `new` command leading to crash with `TypeError`.
 - config: Fixed `jobs` section deserialization.
+- database: Ignore abstract models during module validation.
 
 ## [6.4.0rc1] - 2022-12-09
 

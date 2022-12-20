@@ -114,6 +114,8 @@ def iter_models(package: Optional[str]) -> Iterator[tuple[str, Type[TortoiseMode
 
             attr_value = getattr(module, attr)
             if is_model_class(attr_value):
+                if getattr(getattr(attr_value, 'Meta', None), 'abstract', False):
+                    continue
                 yield app, attr_value
 
 
