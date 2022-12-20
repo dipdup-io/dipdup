@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: "FIXME: https://github.com/dipdup-io/dipdup/issues/564"
+      - name: macOS runner workaround
         run: pip install --upgrade pip pipx
 
       - name: Install DipDup
