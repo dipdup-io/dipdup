@@ -35,6 +35,9 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: "FIXME: https://github.com/dipdup-io/dipdup/issues/564"
+        run: pip install --upgrade pip pipx
+
       - name: Install DipDup
         run: python src/dipdup/install.py --quiet --path .
 
