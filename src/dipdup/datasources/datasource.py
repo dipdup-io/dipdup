@@ -10,6 +10,7 @@ from typing import Tuple
 from aiohttp.hdrs import METH_GET
 
 from dipdup.config import HTTPConfig
+from dipdup.config import ResolvedHTTPConfig
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import SubscriptionManager
 from dipdup.datasources.tzkt.models import HeadSubscription
@@ -35,8 +36,9 @@ RollbackCallbackT = Callable[['IndexDatasource', MessageType, int, int], Awaitab
 
 
 class Datasource(HTTPGateway):
-    def __init__(self, url: str, http_config: HTTPConfig) -> None:
-        super().__init__(url, http_config)
+    def __init__(self, url: str, http_config: HTTPConfig | None = None) -> None:
+        config = ResolvedHTTPConfig.create(self._default_http_config, http_config)
+        super().__init__(url, config)
         self._logger = _logger
 
     @abstractmethod
@@ -48,13 +50,8 @@ class Datasource(HTTPGateway):
 
 
 class HttpDatasource(Datasource):
-    _default_http_config = HTTPConfig(
-        retry_sleep=1,
-        retry_multiplier=1.1,
-    )
-
     def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
-        super().__init__(url, self._default_http_config.merge(http_config))
+        super().__init__(url, http_config)
         self._logger = _logger
 
     async def get(self, url: str, weight: int = 1, **kwargs: Any) -> Any:
@@ -70,7 +67,7 @@ class GraphQLDatasource(Datasource):
 
 
 class IndexDatasource(Datasource):
-    def __init__(self, url: str, http_config: HTTPConfig, merge_subscriptions: bool = False) -> None:
+    def __init__(self, url: str, http_config: HTTPConfig | None = None, merge_subscriptions: bool = False) -> None:
         super().__init__(url, http_config)
         self._on_connected_callbacks: Set[EmptyCallbackT] = set()
         self._on_disconnected_callbacks: Set[EmptyCallbackT] = set()

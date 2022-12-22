@@ -2,7 +2,6 @@ import asyncio
 import logging
 import sys
 from asyncio import Event
-from asyncio import create_task
 from collections import defaultdict
 from collections import deque
 from datetime import datetime
@@ -182,11 +181,7 @@ class TzktDatasource(IndexDatasource):
         merge_subscriptions: bool = False,
         buffer_size: int = 0,
     ) -> None:
-        super().__init__(
-            url=url,
-            http_config=self._default_http_config.merge(http_config),
-            merge_subscriptions=merge_subscriptions,
-        )
+        super().__init__(url, http_config, merge_subscriptions)
         self._logger = logging.getLogger('dipdup.tzkt')
         self._buffer = MessageBuffer(buffer_size)
         self._contract_hashes = ContractHashes()
@@ -213,7 +208,7 @@ class TzktDatasource(IndexDatasource):
 
     @property
     def request_limit(self) -> int:
-        return cast(int, self._http_config.batch_size)
+        return self._http_config.batch_size
 
     def set_logger(self, name: str) -> None:
         super().set_logger(name)
@@ -855,22 +850,25 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Establishing realtime connection')
         ws = self._get_ws_client()
 
-        async def _wrapper() -> None:
-            # FIXME: These defaults should be somewhere else
-            retry_sleep = self._http_config.retry_sleep or 0
-            retry_multiplier = self._http_config.retry_multiplier or 1
-            retry_count = self._http_config.retry_count or sys.maxsize
+        # FIXME: These defaults should be somewhere else
+        connection_timeout = self._http_config.connection_timeout or 60
+        retry_sleep = self._http_config.retry_sleep or 0
+        retry_multiplier = self._http_config.retry_multiplier or 1
+        retry_count = self._http_config.retry_count or sys.maxsize
 
-            for _ in range(retry_count):
-                try:
-                    await ws.run()
-                except WebsocketConnectionError as e:
-                    self._logger.error('Websocket connection error: %s', e)
-                    await self.emit_disconnected()
-                    await asyncio.sleep(retry_sleep)
-                    retry_sleep *= retry_multiplier
+        for _ in range(1, retry_count + 1):
+            try:
+                await asyncio.wait_for(
+                    ws.run(),
+                    connection_timeout,
+                )
+            except WebsocketConnectionError as e:
+                self._logger.error('Websocket connection error: %s', e)
+                await self.emit_disconnected()
+                await asyncio.sleep(retry_sleep)
+                retry_sleep *= retry_multiplier
 
-        await create_task(_wrapper())
+        raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')

@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import logging
 import platform
+import sys
 from contextlib import AbstractAsyncContextManager
 from contextlib import suppress
 from http import HTTPStatus
@@ -21,6 +22,7 @@ from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
 from dipdup.config import HTTPConfig
+from dipdup.config import ResolvedHTTPConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
@@ -38,7 +40,7 @@ class HTTPGateway(AbstractAsyncContextManager[None]):
 
     _default_http_config: HTTPConfig
 
-    def __init__(self, url: str, http_config: HTTPConfig) -> None:
+    def __init__(self, url: str, http_config: ResolvedHTTPConfig) -> None:
         self._http_config = http_config
         self._http = _HTTPGateway(url, self._http_config)
 
@@ -75,7 +77,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
     Covers caching, retrying failed requests and ratelimiting"""
 
-    def __init__(self, url: str, config: HTTPConfig) -> None:
+    def __init__(self, url: str, config: ResolvedHTTPConfig) -> None:
         self._logger = logging.getLogger('dipdup.http')
         parsed_url = urlsplit(url)
         self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))
@@ -95,8 +97,8 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         self.__session = aiohttp.ClientSession(
             base_url=self._url,
             json_serialize=lambda *a, **kw: orjson.dumps(*a, **kw).decode(),
-            connector=aiohttp.TCPConnector(limit=self._config.connection_limit or 100),
-            timeout=aiohttp.ClientTimeout(connect=self._config.connection_timeout or 60),
+            connector=aiohttp.TCPConnector(limit=self._config.connection_limit),
+            timeout=aiohttp.ClientTimeout(connect=self._config.connection_timeout),
         )
 
     async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
@@ -137,9 +139,9 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
     ) -> Any:
         """Retry a request in case of failure sleeping according to config"""
         attempt = 1
-        retry_sleep = self._config.retry_sleep or 0
+        retry_sleep = self._config.retry_sleep
         retry_count = self._config.retry_count
-        retry_count_str = str(retry_count or 'inf')
+        retry_count_str = 'inf' if retry_count is sys.maxsize else str(retry_count)
 
         while True:
             self._logger.debug('HTTP request attempt %s/%s', attempt, retry_count_str)
@@ -154,19 +156,17 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                 if self._config.retry_count and attempt - 1 == self._config.retry_count:
                     raise e
 
-                ratelimit_sleep: Optional[float] = None
+                ratelimit_sleep: float | None = None
                 if isinstance(e, aiohttp.ClientResponseError):
                     if Metrics.enabled:
                         Metrics.set_http_error(self._url, e.status)
 
                     if e.status == HTTPStatus.TOO_MANY_REQUESTS:
-                        # NOTE: Sleep at least 5 seconds on ratelimit
-                        # FIXME: Constant
-                        ratelimit_sleep = 5
+                        ratelimit_sleep = self._config.ratelimit_sleep
                         # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):
                             e.headers = cast(Mapping[str, Any], e.headers)
-                            ratelimit_sleep = int(e.headers['Retry-After'])
+                            ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))
                 else:
                     if Metrics.enabled:
                         Metrics.set_http_error(self._url, 0)
@@ -175,8 +175,8 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                 self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
                 await asyncio.sleep(ratelimit_sleep or retry_sleep)
                 attempt += 1
-                multiplier = 1 if ratelimit_sleep else self._config.retry_multiplier or 1
-                retry_sleep *= multiplier
+                if not ratelimit_sleep:
+                    retry_sleep *= self._config.retry_multiplier
 
     async def _request(
         self,
