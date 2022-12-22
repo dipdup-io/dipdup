@@ -5,7 +5,7 @@ from typing import Callable
 import pytest
 from pydantic import ValidationError
 
-from dipdup.config import ContractConfig
+from dipdup.config import ContractConfig, HTTPConfig, ResolvedHTTPConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import OperationIndexConfig
@@ -95,3 +95,28 @@ async def test_secrets() -> None:
     assert 'SeCrEt=)' not in str(db_config)
     assert 'localhost' in str(hasura_config)
     assert 'SeCrEt=)' not in str(hasura_config)
+
+
+async def test_http_config() -> None:
+    config = ResolvedHTTPConfig.create(
+        HTTPConfig(
+            retry_count=10,
+            retry_sleep=10,
+        ),
+        HTTPConfig(
+            retry_count=20,
+            replay_path='replays',
+        ),
+    )
+    assert config == ResolvedHTTPConfig(
+        retry_count=20,
+        retry_sleep=10,
+        retry_multiplier=1.0,
+        ratelimit_rate=0,
+        ratelimit_period=0,
+        ratelimit_sleep=5.0,
+        connection_limit=100,
+        connection_timeout=60,
+        batch_size=1000,
+        replay_path='replays',
+    )
