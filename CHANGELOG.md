@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- models: Fixed package model detection.
+
 ## [6.4.0] - 2022-12-20
 
 ### Fixed
@@ -15,7 +21,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [6.4.0rc1] - 2022-12-09
 
-## Added
+### Added
 
 - config: Added optional `code_hash` field to contract config.
 - context: Added `first_level` and `last_level` arguments to `ctx.add_index` methods.

@@ -7,6 +7,7 @@ from dipdup.models import Index
 from dipdup.transactions import TransactionManager
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+from dipdup.utils.database import iter_models
 from dipdup.utils.database import tortoise_wrapper
 
 
@@ -62,3 +63,11 @@ async def test_humps_helpers() -> None:
     assert snake_to_pascal('foobar') == 'Foobar'
     assert snake_to_pascal('foo__bar') == 'FooBar'
     assert snake_to_pascal('FOOBAR') == 'Foobar'
+
+
+async def test_iter_models() -> None:
+    models = list(iter_models('demo_token'))
+    assert len(models) == 8
+    assert models[0][0] == 'int_models'
+    assert models[-1][0] == 'models'
+
