@@ -240,15 +240,18 @@ class TzktDatasource(IndexDatasource):
         offset, limit = offset or 0, limit or self.request_limit
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching `%s` contracts for address `%s`', entrypoint, address)
+
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+            select=('id', 'address'),
+        )
         response = await self.request(
             'get',
             url=f'v1/contracts/{address}/{entrypoint}',
-            params={
-                'select': 'id,address',
-                'offset': offset,
-                'limit': limit,
-            },
+            params=params,
         )
+        # FIXME: No cursor iteration
         return tuple(item['address'] for item in response)
 
     async def iter_similar_contracts(
@@ -357,6 +360,7 @@ class TzktDatasource(IndexDatasource):
         self._logger.info('Fetching keys of bigmap `%s`', big_map_id)
         offset, limit = offset or 0, limit or self.request_limit
         kwargs = {'active': str(active).lower()} if active else {}
+        # FIXME
         big_maps = await self.request(
             'get',
             url=f'v1/bigmaps/{big_map_id}/keys',
@@ -515,7 +519,7 @@ class TzktDatasource(IndexDatasource):
         last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
-        select: Sequence[str | int] | None = None,
+        select: tuple[str, ...] | None = None,
         cursor: bool = False,
         **kwargs: Any,
     ) -> dict[str, Any]:
@@ -532,7 +536,7 @@ class TzktDatasource(IndexDatasource):
             else:
                 params['offset'] = offset
         if select:
-            params['select'] = ','.join(str(a) for a in select)
+            params['select'] = ','.join(select)
         return {
             **params,
             **kwargs,
