@@ -237,7 +237,6 @@ class TzktDatasource(IndexDatasource):
         limit: int | None = None,
     ) -> tuple[str, ...]:
         """Get addresses of contracts that share the same code hash or type hash"""
-        offset, limit = offset or 0, limit or self.request_limit
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching `%s` contracts for address `%s`', entrypoint, address)
 
@@ -251,7 +250,7 @@ class TzktDatasource(IndexDatasource):
             url=f'v1/contracts/{address}/{entrypoint}',
             params=params,
         )
-        # FIXME: No cursor iteration
+        # FIXME: No cursor iteration, need 'id' in select
         return tuple(item['address'] for item in response)
 
     async def iter_similar_contracts(
@@ -270,16 +269,17 @@ class TzktDatasource(IndexDatasource):
     ) -> tuple[str, ...]:
         """Get addresses of contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s`', address)
-        offset, limit = offset or 0, limit or self.request_limit
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+            select=('id', 'address'),
+        )
         response = await self.request(
             'get',
             url=f'v1/accounts/{address}/contracts',
-            params={
-                'select': 'id,address',
-                'offset': offset,
-                'limit': limit,
-            },
+            params=params,
         )
+        # FIXME: No cursor iteration, need 'id' in select
         return tuple(item['address'] for item in response)
 
     async def iter_originated_contracts(self, address: str) -> AsyncIterator[tuple[str, ...]]:
@@ -358,18 +358,18 @@ class TzktDatasource(IndexDatasource):
         limit: int | None = None,
     ) -> tuple[dict[str, Any], ...]:
         self._logger.info('Fetching keys of bigmap `%s`', big_map_id)
-        offset, limit = offset or 0, limit or self.request_limit
-        kwargs = {'active': str(active).lower()} if active else {}
-        # FIXME
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+            level=level,
+        )
+        if active:
+            params['active'] = 'true'
+
         big_maps = await self.request(
             'get',
             url=f'v1/bigmaps/{big_map_id}/keys',
-            params={
-                **kwargs,
-                'level': level,
-                'offset': offset,
-                'limit': limit,
-            },
+            params=params,
         )
         return tuple(big_maps)
 
@@ -394,14 +394,14 @@ class TzktDatasource(IndexDatasource):
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[dict[str, Any], ...]:
-        offset, limit = offset or 0, limit or self.request_limit
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+        )
         big_maps = await self.request(
             'get',
             url=f'v1/contracts/{address}/bigmaps',
-            params={
-                'offset': offset,
-                'limit': limit,
-            },
+            params=params,
         )
         return tuple(big_maps)
 
@@ -437,18 +437,18 @@ class TzktDatasource(IndexDatasource):
         limit: int | None = None,
     ) -> tuple[OperationData, ...]:
         """Get contracts originated from migrations"""
-        offset, limit = offset or 0, limit or self.request_limit
         self._logger.info('Fetching contracts originated with migrations')
+        params = self._get_request_params(
+            first_level=first_level,
+            offset=offset,
+            limit=limit,
+            select=ORIGINATION_MIGRATION_FIELDS,
+            cursor=True,
+        )
         raw_migrations = await self.request(
             'get',
             url='v1/operations/migrations',
-            params={
-                'kind': 'origination',
-                'level.ge': first_level,
-                'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
-                'offset.cr': offset,
-                'limit': limit,
-            },
+            params=params,
         )
         return tuple(self.convert_migration_origination(m) for m in raw_migrations)
 
