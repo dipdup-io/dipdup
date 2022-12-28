@@ -258,7 +258,12 @@ class TzktDatasource(IndexDatasource):
         address: str,
         strict: bool = False,
     ) -> AsyncIterator[tuple[str, ...]]:
-        async for batch in self._iter_batches(self.get_similar_contracts, address, strict, cursor=False):
+        async for batch in self._iter_batches(
+            self.get_similar_contracts,
+            address,
+            strict,
+            cursor=False,
+        ):
             yield batch
 
     async def get_originated_contracts(
@@ -283,7 +288,11 @@ class TzktDatasource(IndexDatasource):
         return tuple(item['address'] for item in response)
 
     async def iter_originated_contracts(self, address: str) -> AsyncIterator[tuple[str, ...]]:
-        async for batch in self._iter_batches(self.get_originated_contracts, address, cursor=False):
+        async for batch in self._iter_batches(
+            self.get_originated_contracts,
+            address,
+            cursor=False,
+        ):
             yield batch
 
     async def get_contract_summary(self, address: str) -> dict[str, Any]:
@@ -409,7 +418,11 @@ class TzktDatasource(IndexDatasource):
         self,
         address: str,
     ) -> AsyncIterator[tuple[dict[str, Any], ...]]:
-        async for batch in self._iter_batches(self.get_contract_big_maps, address, cursor=False):
+        async for batch in self._iter_batches(
+            self.get_contract_big_maps,
+            address,
+            cursor=False,
+        ):
             yield batch
 
     async def get_head_block(self) -> HeadBlockData:
@@ -512,35 +525,6 @@ class TzktDatasource(IndexDatasource):
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
         return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
-
-    def _get_request_params(
-        self,
-        first_level: int | None = None,
-        last_level: int | None = None,
-        offset: int | None = None,
-        limit: int | None = None,
-        select: tuple[str, ...] | None = None,
-        cursor: bool = False,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
-        params: dict[str, Any] = {
-            'limit': limit or self.request_limit,
-        }
-        if first_level:
-            params['level.ge'] = first_level
-        if last_level:
-            params['level.le'] = last_level
-        if offset:
-            if cursor:
-                params['offset.cr'] = offset
-            else:
-                params['offset'] = offset
-        if select:
-            params['select'] = ','.join(select)
-        return {
-            **params,
-            **kwargs,
-        }
 
     async def get_transactions(
         self,
@@ -803,8 +787,41 @@ class TzktDatasource(IndexDatasource):
         await self._send(method, request, _on_subscribe)
         await event.wait()
 
+    def _get_request_params(
+        self,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        select: tuple[str, ...] | None = None,
+        cursor: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            'limit': limit or self.request_limit,
+        }
+        if first_level:
+            params['level.ge'] = first_level
+        if last_level:
+            params['level.le'] = last_level
+        if offset:
+            if cursor:
+                params['offset.cr'] = offset
+            else:
+                params['offset'] = offset
+        if select:
+            params['select'] = ','.join(select)
+        return {
+            **params,
+            **kwargs,
+        }
+
     async def _iter_batches(
-        self, fn: Callable[..., Awaitable[Sequence[Any]]], *args: Any, cursor: bool = True, **kwargs: Any
+        self,
+        fn: Callable[..., Awaitable[Sequence[Any]]],
+        *args: Any,
+        cursor: bool = True,
+        **kwargs: Any,
     ) -> AsyncIterator[Any]:
         if set(kwargs).intersection(('offset', 'offset.cr', 'limit')):
             raise ValueError('`offset` and `limit` arguments are not allowed')
