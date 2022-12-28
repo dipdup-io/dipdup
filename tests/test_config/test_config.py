@@ -5,11 +5,13 @@ from typing import Callable
 import pytest
 from pydantic import ValidationError
 
-from dipdup.config import ContractConfig, HTTPConfig, ResolvedHTTPConfig
+from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
+from dipdup.config import HTTPConfig
 from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import ResolvedHTTPConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.datasources.tzkt.models import OriginationSubscription
 from dipdup.datasources.tzkt.models import TransactionSubscription
