@@ -296,23 +296,11 @@ class ProjectImportError(Error):
 class ContractAlreadyExistsError(Error):
     """Attempt to add a contract with alias or address already in use"""
 
-    ctx: Any
     name: str
-    address: str
 
     def _help(self) -> str:
-        contracts_table = indent(
-            tabulate(
-                [(c.name, c.address) for c in self.ctx.config.contracts.values()],
-                tablefmt='plain',
-            )
-        )
         return f"""
-            Contract `{self.name}` (`{self.address}`) already exists.
-
-            Active contracts:
-
-            {contracts_table}
+            Contract `{self.name}` already exists in config.
         """
 
 
@@ -320,22 +308,11 @@ class ContractAlreadyExistsError(Error):
 class IndexAlreadyExistsError(Error):
     """Attempt to add an index with an alias already in use"""
 
-    ctx: Any
     name: str
 
     def _help(self) -> str:
-        indexes_table = indent(
-            tabulate(
-                [(c.name, c.kind) for c in self.ctx.config.indexes.values()],
-                tablefmt='plain',
-            )
-        )
         return f"""
-            Index with name `{self.name}` already exists.
-
-            Active indexes:
-
-            {indexes_table}
+            Index with name `{self.name}` already exists in config.
         """
 
 

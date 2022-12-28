@@ -6,10 +6,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- context: Allow adding contracts by code hash in runtime.
+
 ### Fixed
 
 - http: Fixed merging user-defined HTTP settings and datasource defaults.
 - tzkt: Fixed iterating over big map keys.
+
+### Performance
+
+- tzkt: Use cursor iteration when possible.
 
 ## [6.4.1] - 2022-12-22
 

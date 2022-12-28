@@ -1428,6 +1428,7 @@ class DipDupConfig:
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
         self._contract_addresses = {contract.address for contract in self.contracts.values()}
+        self._contract_code_hashes = {contract.code_hash for contract in self.contracts.values()}
 
     @property
     def schema_name(self) -> str:
@@ -1579,7 +1580,7 @@ class DipDupConfig:
         last_level: int = 0,
     ) -> None:
         if name in self.indexes:
-            raise IndexAlreadyExistsError(self, name)
+            raise IndexAlreadyExistsError(name)
         template_config = IndexTemplateConfig(
             template=template,
             values=values,

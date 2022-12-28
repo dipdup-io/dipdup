@@ -225,7 +225,13 @@ class DipDupContext:
         else:
             raise NotImplementedError
 
-    async def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
+    async def add_contract(
+        self,
+        name: str,
+        address: str | None = None,
+        code_hash: str | int | None = None,
+        typename: Optional[str] = None,
+    ) -> None:
         """Adds contract to the inventory.
 
         :param name: Contract name
@@ -233,16 +239,22 @@ class DipDupContext:
         :param typename: Alias for the contract script
         """
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
-        if contract := self.config.contracts.get(name):
-            assert contract.address
-            raise ContractAlreadyExistsError(self, name, contract.address)
-        if address in self.config._contract_addresses:
-            raise ContractAlreadyExistsError(self, name, address)
+        if name in self.config.contracts:
+            raise ContractAlreadyExistsError(name)
+
+        if address and address in self.config._contract_addresses:
+            raise ContractAlreadyExistsError(address)
         else:
             self.config._contract_addresses.add(address)
 
+        if code_hash and code_hash in self.config._contract_code_hashes:
+            raise ContractAlreadyExistsError(str(code_hash))
+        else:
+            self.config._contract_code_hashes.add(code_hash)
+
         contract_config = ContractConfig(
             address=address,
+            code_hash=code_hash,
             typename=typename,
         )
         contract_config._name = name
