@@ -471,6 +471,7 @@ class TzktDatasource(IndexDatasource):
             limit=limit,
             select=ORIGINATION_MIGRATION_FIELDS,
             cursor=True,
+            kind='origination',
         )
         raw_migrations = await self.request(
             'get',

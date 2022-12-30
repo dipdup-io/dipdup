@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - context: Allow adding contracts by code hash in runtime.
+- config: Added `http.ratelimit_sleep` option to set fixed sleep time on 429 responses.
 
 ### Fixed
 

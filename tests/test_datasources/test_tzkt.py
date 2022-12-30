@@ -156,15 +156,15 @@ async def test_iter_contract_big_maps() -> None:
 async def test_get_migration_originations() -> None:
     async with tzkt_replay(batch_size=2) as tzkt:
         originations = await tzkt.get_migration_originations()
-        assert originations[0].id == 3145728
-        assert originations[1].id == 4194304
+        assert originations[0].id == 66864948445184
+        assert originations[1].id == 66864949493760
 
 
 async def test_iter_migration_originations() -> None:
     async with tzkt_replay(batch_size=1) as tzkt:
         originations = await take_two(tzkt.iter_migration_originations())
-        assert originations[0].id == 3145728
-        assert originations[1].id == 4194304
+        assert originations[0].id == 66864948445184
+        assert originations[1].id == 66864949493760
 
 
 async def test_get_originations() -> None:
