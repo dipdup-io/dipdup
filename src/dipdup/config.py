@@ -1427,8 +1427,8 @@ class DipDupConfig:
 
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
-        self._contract_addresses = {contract.address for contract in self.contracts.values()}
-        self._contract_code_hashes = {contract.code_hash for contract in self.contracts.values()}
+        self._contract_addresses = {v.address: k for k, v in self.contracts.items() if v.address is not None}
+        self._contract_code_hashes = {v.code_hash: k for k, v in self.contracts.items() if v.code_hash is not None}
 
     @property
     def schema_name(self) -> str:

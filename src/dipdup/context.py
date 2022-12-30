@@ -239,18 +239,20 @@ class DipDupContext:
         :param typename: Alias for the contract script
         """
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
+        addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
+
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(name)
 
-        if address and address in self.config._contract_addresses:
-            raise ContractAlreadyExistsError(address)
-        else:
-            self.config._contract_addresses.add(address)
+        if address:
+            if address in addresses:
+                raise ContractAlreadyExistsError(addresses[address])
+            addresses[address] = name
 
-        if code_hash and code_hash in self.config._contract_code_hashes:
-            raise ContractAlreadyExistsError(str(code_hash))
-        else:
-            self.config._contract_code_hashes.add(code_hash)
+        if code_hash:
+            if code_hash in self.config._contract_code_hashes:
+                raise ContractAlreadyExistsError(code_hashes[code_hash])
+            code_hashes[code_hash] = name
 
         contract_config = ContractConfig(
             address=address,
