@@ -726,6 +726,7 @@ class Index(TortoiseModel):
 class Contract(TortoiseModel):
     name = fields.CharField(256, pk=True)
     address = fields.CharField(256)
+    # TODO: Add `code_hash` field
     typename = fields.CharField(256, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)

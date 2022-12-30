@@ -164,9 +164,20 @@ class IndexDispatcher:
         self._logger.info('%s contracts fetched from database', len(contracts))
 
         for contract in contracts:
+            # FIXME: No `code_hash` field in the database
+            if ':' in contract.address:
+                address, code_hash = contract.address.split(':')
+            else:
+                address, code_hash = contract.address, None
+
             if contract.name not in self._ctx.config.contracts:
-                contract_config = ContractConfig(address=contract.address, typename=contract.typename)
+                contract_config = ContractConfig(
+                    address=address or None,
+                    code_hash=code_hash or None,
+                    typename=contract.typename,
+                )
                 self._ctx.config.contracts[contract.name] = contract_config
+
         self._ctx.config.initialize(skip_imports=True)
 
     async def _load_index_state(self) -> None:
