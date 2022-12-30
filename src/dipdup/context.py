@@ -12,14 +12,9 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any
 from typing import Awaitable
-from typing import Dict
 from typing import Iterator
 from typing import NoReturn
-from typing import Optional
-from typing import Set
-from typing import Type
 from typing import TypeVar
-from typing import Union
 from typing import cast
 
 from tortoise import Tortoise
@@ -68,9 +63,12 @@ from dipdup.utils.database import wipe_schema
 from dipdup.utils.sys import is_in_tests
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
+
+
+# FIXME: Singletons shared by all contexts
 pending_indexes: deque[Any] = deque()
 pending_hooks: deque[Awaitable[None]] = deque()
-rolled_back_indexes: Set[str] = set()
+rolled_back_indexes: set[str] = set()
 
 
 class MetadataCursor:
@@ -111,7 +109,7 @@ class DipDupContext:
 
     def __init__(
         self,
-        datasources: Dict[str, Datasource],
+        datasources: dict[str, Datasource],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
@@ -128,7 +126,7 @@ class DipDupContext:
     async def fire_hook(
         self,
         name: str,
-        fmt: Optional[str] = None,
+        fmt: str | None = None,
         wait: bool = True,
         *args: Any,
         **kwargs: Any,
@@ -146,7 +144,7 @@ class DipDupContext:
         name: str,
         index: str,
         datasource: TzktDatasource,
-        fmt: Optional[str] = None,
+        fmt: str | None = None,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -179,7 +177,11 @@ class DipDupContext:
         """Restart process and continue indexing."""
         os.execl(sys.executable, sys.executable, *sys.argv)
 
-    async def reindex(self, reason: Optional[Union[str, ReindexingReason]] = None, **context: Any) -> None:
+    async def reindex(
+        self,
+        reason: str | ReindexingReason | None = None,
+        **context: Any,
+    ) -> None:
         """Drops the entire database and starts the indexing process from scratch.
 
         :param reason: Reason for reindexing in free-form string
@@ -230,7 +232,7 @@ class DipDupContext:
         name: str,
         address: str | None = None,
         code_hash: str | int | None = None,
-        typename: Optional[str] = None,
+        typename: str | None = None,
     ) -> None:
         """Adds contract to the inventory.
 
@@ -279,10 +281,10 @@ class DipDupContext:
         self,
         name: str,
         template: str,
-        values: Dict[str, Any],
+        values: dict[str, Any],
         first_level: int = 0,
         last_level: int = 0,
-        state: Optional[Index] = None,
+        state: Index | None = None,
     ) -> None:
         """Adds a new contract to the inventory.
 
@@ -293,7 +295,7 @@ class DipDupContext:
         self.config.add_index(name, template, values, first_level, last_level)
         await self._spawn_index(name, state)
 
-    async def _spawn_index(self, name: str, state: Optional[Index] = None) -> None:
+    async def _spawn_index(self, name: str, state: Index | None = None) -> None:
         # NOTE: Avoiding circular import
         from dipdup.indexes.big_map.index import BigMapIndex
         from dipdup.indexes.event.index import EventIndex
@@ -332,7 +334,7 @@ class DipDupContext:
         self,
         network: str,
         address: str,
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
     ) -> None:
         """
         Inserts or updates corresponding rows in the internal `dipdup_contract_metadata` table
@@ -356,7 +358,7 @@ class DipDupContext:
         network: str,
         address: str,
         token_id: str,
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
     ) -> None:
         """
         Inserts or updates corresponding rows in the internal `dipdup_token_metadata` table
@@ -381,7 +383,7 @@ class DipDupContext:
             defaults={'metadata': metadata, 'update_id': update_id},
         )
 
-    def _get_datasource(self, name: str, type_: Type[DatasourceT]) -> DatasourceT:
+    def _get_datasource(self, name: str, type_: type[DatasourceT]) -> DatasourceT:
         datasource = self.datasources.get(name)
         if not datasource:
             raise ConfigurationError(f'Datasource `{name}` is missing')
@@ -418,7 +420,7 @@ class HookContext(DipDupContext):
 
     def __init__(
         self,
-        datasources: Dict[str, Datasource],
+        datasources: dict[str, Datasource],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
@@ -477,8 +479,8 @@ class HookContext(DipDupContext):
         rolled_back_indexes.add(index)
 
 
-class TemplateValuesDict(dict[str, Any]):
-    """Dictionary with template values."""
+class TemplateValuesdict(dict[str, Any]):
+    """dictionary with template values."""
 
     def __init__(self, ctx: Any, **kwargs: Any) -> None:
         self.ctx = ctx
@@ -502,7 +504,7 @@ class HandlerContext(DipDupContext):
 
     def __init__(
         self,
-        datasources: Dict[str, Datasource],
+        datasources: dict[str, Datasource],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
@@ -515,7 +517,7 @@ class HandlerContext(DipDupContext):
         self.handler_config = handler_config
         self.datasource = datasource
         template_values = handler_config.parent.template_values if handler_config.parent else {}
-        self.template_values = TemplateValuesDict(self, **template_values)
+        self.template_values = TemplateValuesdict(self, **template_values)
 
     @classmethod
     def _wrap(
@@ -540,8 +542,8 @@ class CallbackManager:
     def __init__(self, package: str) -> None:
         self._logger = logging.getLogger('dipdup.callback')
         self._package = package
-        self._handlers: Dict[tuple[str, str], HandlerConfig] = {}
-        self._hooks: Dict[str, HookConfig] = {}
+        self._handlers: dict[tuple[str, str], HandlerConfig] = {}
+        self._hooks: dict[str, HookConfig] = {}
 
     async def run(self) -> None:
         self._logger.debug('Starting CallbackManager loop')
@@ -572,7 +574,7 @@ class CallbackManager:
         name: str,
         index: str,
         datasource: TzktDatasource,
-        fmt: Optional[str] = None,
+        fmt: str | None = None,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -592,7 +594,7 @@ class CallbackManager:
         self,
         ctx: 'DipDupContext',
         name: str,
-        fmt: Optional[str] = None,
+        fmt: str | None = None,
         wait: bool = True,
         *args: Any,
         **kwargs: Any,
@@ -691,7 +693,6 @@ class CallbackManager:
             raise ConfigurationError(f'Attempt to fire unregistered handler `{name}` of index `{index}`') from e
 
     def _get_hook(self, name: str) -> HookConfig:
-
         try:
             return self._hooks[name]
         except KeyError as e:
