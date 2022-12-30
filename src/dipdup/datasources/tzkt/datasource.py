@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 from asyncio import Event
 from collections import defaultdict
 from collections import deque
@@ -142,6 +141,8 @@ class MessageBuffer:
 
 
 class ContractHashes:
+    """Contract hashes cache"""
+
     def __init__(self) -> None:
         self._address_to_hashes: dict[str, tuple[int, int]] = {}
         self._hashes_to_address: dict[tuple[int, int], str] = {}
@@ -186,8 +187,8 @@ class TzktDatasource(IndexDatasource):
         self._buffer = MessageBuffer(buffer_size)
         self._contract_hashes = ContractHashes()
 
-        self._ws_client: SignalRClient | None = None
-        self._level: defaultdict[MessageType, int | None] = defaultdict(lambda: None)
+        self._signalr_client: SignalRClient | None = None
+        self._channel_levels: defaultdict[MessageType, int | None] = defaultdict(lambda: None)
 
     async def __aenter__(self) -> None:
         try:
@@ -210,13 +211,29 @@ class TzktDatasource(IndexDatasource):
     def request_limit(self) -> int:
         return self._http_config.batch_size
 
+    async def run(self) -> None:
+        self._logger.info('Establishing realtime connection')
+        signalr_client = self._get_signalr_client()
+        retry_sleep = self._http_config.retry_sleep
+
+        for _ in range(1, self._http_config.retry_count + 1):
+            try:
+                signalr_client.run(),
+            except WebsocketConnectionError as e:
+                self._logger.error('Websocket connection error: %s', e)
+                await self.emit_disconnected()
+                await asyncio.sleep(retry_sleep)
+                retry_sleep *= self._http_config.retry_multiplier
+
+        raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
+
     def set_logger(self, name: str) -> None:
         super().set_logger(name)
         self._buffer._logger = FormattedLogger(self._buffer._logger.name, name + ': {}')
 
     def get_channel_level(self, message_type: MessageType) -> int:
         """Get current level of the channel, or sync level if no messages were received yet."""
-        channel_level = self._level[message_type]
+        channel_level = self._channel_levels[message_type]
         if channel_level is None:
             # NOTE: If no data messages were received since run, use sync level instead
             # NOTE: There's only one sync level for all channels, otherwise `Index.process` would fail
@@ -225,9 +242,6 @@ class TzktDatasource(IndexDatasource):
                 raise FrameworkException('Neither current nor sync level is known')
 
         return channel_level
-
-    def _set_channel_level(self, message_type: MessageType, level: int) -> None:
-        self._level[message_type] = level
 
     async def get_similar_contracts(
         self,
@@ -844,52 +858,37 @@ class TzktDatasource(IndexDatasource):
             else:
                 offset += self.request_limit
 
-    def _get_ws_client(self) -> SignalRClient:
+    def _get_signalr_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
-        if self._ws_client:
-            return self._ws_client
+        if self._signalr_client:
+            return self._signalr_client
 
-        self._logger.info('Creating websocket client')
-        self._ws_client = SignalRClient(
+        self._logger.info('Creating SignalR client')
+        self._signalr_client = SignalRClient(
             url=f'{self._http._url}/v1/events',
             max_size=None,
         )
 
-        self._ws_client.on_open(self._on_connected)
-        self._ws_client.on_close(self._on_disconnected)
-        self._ws_client.on_error(self._on_error)
+        self._signalr_client.on_open(self._on_connected)
+        self._signalr_client.on_close(self._on_disconnected)
+        self._signalr_client.on_error(self._on_error)
 
-        self._ws_client.on('operations', partial(self._on_message, MessageType.operation))
-        self._ws_client.on('transfers', partial(self._on_message, MessageType.token_transfer))
-        self._ws_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
-        self._ws_client.on('head', partial(self._on_message, MessageType.head))
-        self._ws_client.on('events', partial(self._on_message, MessageType.event))
+        self._signalr_client.on('operations', partial(self._on_message, MessageType.operation))
+        self._signalr_client.on('transfers', partial(self._on_message, MessageType.token_transfer))
+        self._signalr_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
+        self._signalr_client.on('head', partial(self._on_message, MessageType.head))
+        self._signalr_client.on('events', partial(self._on_message, MessageType.event))
 
-        return self._ws_client
+        return self._signalr_client
 
-    async def run(self) -> None:
-        self._logger.info('Establishing realtime connection')
-        ws = self._get_ws_client()
-
-        # FIXME: These defaults should be somewhere else
-        connection_timeout = self._http_config.connection_timeout or 60
-        retry_sleep = self._http_config.retry_sleep or 0
-        retry_multiplier = self._http_config.retry_multiplier or 1
-        retry_count = self._http_config.retry_count or sys.maxsize
-
-        for _ in range(1, retry_count + 1):
-            try:
-                await asyncio.wait_for(
-                    ws.run(),
-                    connection_timeout,
-                )
-            except WebsocketConnectionError as e:
-                self._logger.error('Websocket connection error: %s', e)
-                await self.emit_disconnected()
-                await asyncio.sleep(retry_sleep)
-                retry_sleep *= retry_multiplier
-
-        raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
+    async def _send(
+        self,
+        method: str,
+        arguments: list[dict[str, Any]],
+        on_invocation: Callable[[CompletionMessage], Awaitable[None]] | None = None,
+    ) -> None:
+        client = self._get_signalr_client()
+        await client.send(method, arguments, on_invocation)
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
@@ -918,7 +917,7 @@ class TzktDatasource(IndexDatasource):
 
             message_level = item['state']
             channel_level = self.get_channel_level(type_)
-            self._set_channel_level(type_, message_level)
+            self._channel_levels[type_] = message_level
 
             self._logger.info(
                 'Realtime message received: %s, %s, %s -> %s',
@@ -1234,15 +1233,6 @@ class TzktDatasource(IndexDatasource):
             contract_code_hash=event_json['codeHash'],
             transaction_id=event_json.get('transactionId'),
         )
-
-    async def _send(
-        self,
-        method: str,
-        arguments: list[dict[str, Any]],
-        on_invocation: Callable[[CompletionMessage], Awaitable[None]] | None = None,
-    ) -> None:
-        client = self._get_ws_client()
-        await client.send(method, arguments, on_invocation)
 
     @classmethod
     def _parse_timestamp(cls, timestamp: str) -> datetime:
