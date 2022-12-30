@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from abc import ABC
+from abc import abstractmethod
 from asyncio import Event
 from collections import defaultdict
 from collections import deque
@@ -18,8 +20,8 @@ from typing import NoReturn
 from typing import Sequence
 from typing import cast
 
+import pysignalr.exceptions
 from pysignalr.client import SignalRClient
-from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage
 
 from dipdup import baking_bad
@@ -164,7 +166,29 @@ class ContractHashes:
         return self._hashes_to_address[(code_hash, type_hash)]
 
 
-class TzktDatasource(IndexDatasource):
+class SignalRDatasource(IndexDatasource, ABC):
+    async def run(self) -> None:
+        self._logger.info('Establishing realtime connection')
+        signalr_client = self._get_signalr_client()
+        retry_sleep = self._http_config.retry_sleep
+
+        for _ in range(1, self._http_config.retry_count + 1):
+            try:
+                signalr_client.run(),
+            except pysignalr.exceptions.ConnectionError as e:
+                self._logger.error('Websocket connection error: %s', e)
+                await self.emit_disconnected()
+                await asyncio.sleep(retry_sleep)
+                retry_sleep *= self._http_config.retry_multiplier
+
+        raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
+
+    @abstractmethod
+    def _get_signalr_client(self) -> SignalRClient:
+        ...
+
+
+class TzktDatasource(SignalRDatasource):
     _default_http_config = HTTPConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
@@ -210,22 +234,6 @@ class TzktDatasource(IndexDatasource):
     @property
     def request_limit(self) -> int:
         return self._http_config.batch_size
-
-    async def run(self) -> None:
-        self._logger.info('Establishing realtime connection')
-        signalr_client = self._get_signalr_client()
-        retry_sleep = self._http_config.retry_sleep
-
-        for _ in range(1, self._http_config.retry_count + 1):
-            try:
-                signalr_client.run(),
-            except WebsocketConnectionError as e:
-                self._logger.error('Websocket connection error: %s', e)
-                await self.emit_disconnected()
-                await asyncio.sleep(retry_sleep)
-                retry_sleep *= self._http_config.retry_multiplier
-
-        raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
 
     def set_logger(self, name: str) -> None:
         super().set_logger(name)
@@ -1043,7 +1051,7 @@ class TzktDatasource(IndexDatasource):
             type=type_ or operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
-            timestamp=cls._parse_timestamp(operation_json['timestamp']),
+            timestamp=_parse_timestamp(operation_json['timestamp']),
             block=operation_json.get('block'),
             hash=operation_json['hash'],
             counter=operation_json['counter'],
@@ -1082,7 +1090,7 @@ class TzktDatasource(IndexDatasource):
             type='origination',
             id=migration_origination_json['id'],
             level=migration_origination_json['level'],
-            timestamp=cls._parse_timestamp(migration_origination_json['timestamp']),
+            timestamp=_parse_timestamp(migration_origination_json['timestamp']),
             block=migration_origination_json.get('block'),
             originated_contract_address=migration_origination_json['account']['address'],
             originated_contract_alias=migration_origination_json['account'].get('alias'),
@@ -1113,7 +1121,7 @@ class TzktDatasource(IndexDatasource):
             level=big_map_json['level'],
             # NOTE: missing `operation_id` field in API to identify operation
             operation_id=big_map_json['level'],
-            timestamp=cls._parse_timestamp(big_map_json['timestamp']),
+            timestamp=_parse_timestamp(big_map_json['timestamp']),
             bigmap=big_map_json['bigmap'],
             contract_address=big_map_json['contract']['address'],
             path=big_map_json['path'],
@@ -1132,7 +1140,7 @@ class TzktDatasource(IndexDatasource):
         return BlockData(
             level=block_json['level'],
             hash=block_json['hash'],
-            timestamp=cls._parse_timestamp(block_json['timestamp']),
+            timestamp=_parse_timestamp(block_json['timestamp']),
             proto=block_json['proto'],
             priority=block_json.get('priority'),
             validations=block_json['validations'],
@@ -1158,7 +1166,7 @@ class TzktDatasource(IndexDatasource):
             hash=head_block_json['hash'],
             protocol=head_block_json['protocol'],
             next_protocol=head_block_json['nextProtocol'],
-            timestamp=cls._parse_timestamp(head_block_json['timestamp']),
+            timestamp=_parse_timestamp(head_block_json['timestamp']),
             voting_epoch=head_block_json['votingEpoch'],
             voting_period=head_block_json['votingPeriod'],
             known_level=head_block_json['knownLevel'],
@@ -1180,7 +1188,7 @@ class TzktDatasource(IndexDatasource):
         """Convert raw quote message from REST into dataclass"""
         return QuoteData(
             level=quote_json['level'],
-            timestamp=cls._parse_timestamp(quote_json['timestamp']),
+            timestamp=_parse_timestamp(quote_json['timestamp']),
             btc=Decimal(quote_json['btc']),
             eur=Decimal(quote_json['eur']),
             usd=Decimal(quote_json['usd']),
@@ -1203,7 +1211,7 @@ class TzktDatasource(IndexDatasource):
         return TokenTransferData(
             id=token_transfer_json['id'],
             level=token_transfer_json['level'],
-            timestamp=cls._parse_timestamp(token_transfer_json['timestamp']),
+            timestamp=_parse_timestamp(token_transfer_json['timestamp']),
             tzkt_token_id=token_json['id'],
             contract_address=contract_json.get('address'),
             contract_alias=contract_json.get('alias'),
@@ -1226,7 +1234,7 @@ class TzktDatasource(IndexDatasource):
         return EventData(
             id=event_json['id'],
             level=event_json['level'],
-            timestamp=cls._parse_timestamp(event_json['timestamp']),
+            timestamp=_parse_timestamp(event_json['timestamp']),
             tag=event_json['tag'],
             payload=event_json.get('payload'),
             contract_address=event_json['contract']['address'],
@@ -1235,6 +1243,6 @@ class TzktDatasource(IndexDatasource):
             transaction_id=event_json.get('transactionId'),
         )
 
-    @classmethod
-    def _parse_timestamp(cls, timestamp: str) -> datetime:
-        return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
+
+def _parse_timestamp(timestamp: str) -> datetime:
+    return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)

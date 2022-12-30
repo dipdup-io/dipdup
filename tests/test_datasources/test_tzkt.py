@@ -202,3 +202,11 @@ async def test_no_content() -> None:
     async with tzkt_replay('https://api.jakartanet.tzkt.io', batch_size=1) as tzkt:
         with pytest.raises(InvalidRequestError):
             await tzkt.get_jsonschemas('KT1EHdK9asB6BtPLvt1ipKRuxsrKoQhDoKgs')
+
+
+# async def test_signalr_client() -> None:
+
+#     fail_mock = AsyncMock(side_effect=WebsocketConnectionError)
+
+#     async with tzkt_replay(batch_size=1) as tzkt:
+#         signalr_client = tzkt._get_signalr_client()
