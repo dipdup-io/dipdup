@@ -19,11 +19,11 @@ import importlib
 import json
 import logging.config
 import re
+import sys
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
-from copy import copy
 from dataclasses import field
 from io import StringIO
 from os import environ as env
@@ -187,27 +187,52 @@ class HTTPConfig:
     :param retry_multiplier: Multiplier for sleep time between retries
     :param ratelimit_rate: Number of requests per period ("drops" in leaky bucket)
     :param ratelimit_period: Time period for rate limiting in seconds
+    :param ratelimit_sleep: Sleep time between requests when rate limit is reached
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
     :param batch_size: Number of items fetched in a single paginated request (for some APIs)
-    :param replay_path: Development-only option to replay HTTP requests from a file
+    :param replay_path: Development-only option to use cached HTTP responses instead of making real requests
     """
 
-    retry_count: int | None = None         # default: inf
-    retry_sleep: float | None = None       # default: 0
-    retry_multiplier: float | None = None  # default: 0
+    retry_count: int | None = None
+    retry_sleep: float | None = None
+    retry_multiplier: float | None = None
     ratelimit_rate: int | None = None
     ratelimit_period: int | None = None
-    connection_limit: int | None = None    # default: 100
-    connection_timeout: int | None = None  # default: 60
+    ratelimit_sleep: float | None = None
+    connection_limit: int | None = None
+    connection_timeout: int | None = None
     batch_size: int | None = None
     replay_path: str | None = None
 
-    def merge(self, other: HTTPConfig | None) -> 'HTTPConfig':
-        """Set missing values from other config"""
-        config = copy(self)
-        if other:
-            for k, v in other.__dict__.items():
+
+@dataclass
+class ResolvedHTTPConfig:
+    """HTTP client configuration with defaults"""
+
+    retry_count: int = sys.maxsize
+    retry_sleep: float = 0.0
+    retry_multiplier: float = 1.0
+    ratelimit_rate: int = 0
+    ratelimit_period: int = 0
+    ratelimit_sleep: float = 5.0
+    connection_limit: int = 100
+    connection_timeout: int = 60
+    batch_size: int = 1000
+    replay_path: str | None = None
+
+    @classmethod
+    def create(
+        cls,
+        default: HTTPConfig,
+        user: HTTPConfig | None,
+    ) -> 'ResolvedHTTPConfig':
+        config = cls()
+        # NOTE: Apply datasource defaults first
+        for merge_config in (default, user):
+            if merge_config is None:
+                continue
+            for k, v in merge_config.__dict__.items():
                 if v is not None:
                     setattr(config, k, v)
         return config
@@ -1402,7 +1427,8 @@ class DipDupConfig:
 
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
-        self._contract_addresses = {contract.address for contract in self.contracts.values()}
+        self._contract_addresses = {v.address: k for k, v in self.contracts.items() if v.address is not None}
+        self._contract_code_hashes = {v.code_hash: k for k, v in self.contracts.items() if v.code_hash is not None}
 
     @property
     def schema_name(self) -> str:
@@ -1554,7 +1580,7 @@ class DipDupConfig:
         last_level: int = 0,
     ) -> None:
         if name in self.indexes:
-            raise IndexAlreadyExistsError(self, name)
+            raise IndexAlreadyExistsError(name)
         template_config = IndexTemplateConfig(
             template=template,
             values=values,

@@ -70,4 +70,3 @@ async def test_iter_models() -> None:
     assert len(models) == 8
     assert models[0][0] == 'int_models'
     assert models[-1][0] == 'models'
-

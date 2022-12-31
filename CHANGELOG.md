@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- context: Allow adding contracts by code hash in runtime.
+- config: Added `http.ratelimit_sleep` option to set fixed sleep time on 429 responses.
+
+### Fixed
+
+- http: Fixed merging user-defined HTTP settings and datasource defaults.
+- tzkt: Fixed iterating over big map keys.
+
 ## [6.4.1] - 2022-12-22
 
 ### Fixed

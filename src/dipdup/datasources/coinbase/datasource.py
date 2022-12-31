@@ -23,7 +23,7 @@ class CoinbaseDatasource(Datasource):
     )
 
     def __init__(self, url: str = API_URL, http_config: HTTPConfig | None = None) -> None:
-        super().__init__(url, self._default_http_config.merge(http_config))
+        super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.coinbase')
 
     async def run(self) -> None:

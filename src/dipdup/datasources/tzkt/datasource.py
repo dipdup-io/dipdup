@@ -1,8 +1,8 @@
 import asyncio
 import logging
-import sys
+from abc import ABC
+from abc import abstractmethod
 from asyncio import Event
-from asyncio import create_task
 from collections import defaultdict
 from collections import deque
 from datetime import datetime
@@ -20,8 +20,8 @@ from typing import NoReturn
 from typing import Sequence
 from typing import cast
 
+import pysignalr.exceptions
 from pysignalr.client import SignalRClient
-from pysignalr.exceptions import ConnectionError as WebsocketConnectionError
 from pysignalr.messages import CompletionMessage
 
 from dipdup import baking_bad
@@ -143,6 +143,8 @@ class MessageBuffer:
 
 
 class ContractHashes:
+    """Contract hashes cache"""
+
     def __init__(self) -> None:
         self._address_to_hashes: dict[str, tuple[int, int]] = {}
         self._hashes_to_address: dict[tuple[int, int], str] = {}
@@ -164,7 +166,29 @@ class ContractHashes:
         return self._hashes_to_address[(code_hash, type_hash)]
 
 
-class TzktDatasource(IndexDatasource):
+class SignalRDatasource(IndexDatasource, ABC):
+    async def run(self) -> None:
+        self._logger.info('Establishing realtime connection')
+        signalr_client = self._get_signalr_client()
+        retry_sleep = self._http_config.retry_sleep
+
+        for _ in range(1, self._http_config.retry_count + 1):
+            try:
+                await signalr_client.run()
+            except pysignalr.exceptions.ConnectionError as e:
+                self._logger.error('Websocket connection error: %s', e)
+                await self.emit_disconnected()
+                await asyncio.sleep(retry_sleep)
+                retry_sleep *= self._http_config.retry_multiplier
+
+        raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
+
+    @abstractmethod
+    def _get_signalr_client(self) -> SignalRClient:
+        ...
+
+
+class TzktDatasource(SignalRDatasource):
     _default_http_config = HTTPConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
@@ -182,17 +206,13 @@ class TzktDatasource(IndexDatasource):
         merge_subscriptions: bool = False,
         buffer_size: int = 0,
     ) -> None:
-        super().__init__(
-            url=url,
-            http_config=self._default_http_config.merge(http_config),
-            merge_subscriptions=merge_subscriptions,
-        )
+        super().__init__(url, http_config, merge_subscriptions)
         self._logger = logging.getLogger('dipdup.tzkt')
         self._buffer = MessageBuffer(buffer_size)
         self._contract_hashes = ContractHashes()
 
-        self._ws_client: SignalRClient | None = None
-        self._level: defaultdict[MessageType, int | None] = defaultdict(lambda: None)
+        self._signalr_client: SignalRClient | None = None
+        self._channel_levels: defaultdict[MessageType, int | None] = defaultdict(lambda: None)
 
     async def __aenter__(self) -> None:
         try:
@@ -213,7 +233,7 @@ class TzktDatasource(IndexDatasource):
 
     @property
     def request_limit(self) -> int:
-        return cast(int, self._http_config.batch_size)
+        return self._http_config.batch_size
 
     def set_logger(self, name: str) -> None:
         super().set_logger(name)
@@ -221,7 +241,7 @@ class TzktDatasource(IndexDatasource):
 
     def get_channel_level(self, message_type: MessageType) -> int:
         """Get current level of the channel, or sync level if no messages were received yet."""
-        channel_level = self._level[message_type]
+        channel_level = self._channel_levels[message_type]
         if channel_level is None:
             # NOTE: If no data messages were received since run, use sync level instead
             # NOTE: There's only one sync level for all channels, otherwise `Index.process` would fail
@@ -231,9 +251,6 @@ class TzktDatasource(IndexDatasource):
 
         return channel_level
 
-    def _set_channel_level(self, message_type: MessageType, level: int) -> None:
-        self._level[message_type] = level
-
     async def get_similar_contracts(
         self,
         address: str,
@@ -242,18 +259,20 @@ class TzktDatasource(IndexDatasource):
         limit: int | None = None,
     ) -> tuple[str, ...]:
         """Get addresses of contracts that share the same code hash or type hash"""
-        offset, limit = offset or 0, limit or self.request_limit
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching `%s` contracts for address `%s`', entrypoint, address)
+
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+            select=('id', 'address'),
+        )
         response = await self.request(
             'get',
             url=f'v1/contracts/{address}/{entrypoint}',
-            params={
-                'select': 'id,address',
-                'offset': offset,
-                'limit': limit,
-            },
+            params=params,
         )
+        # FIXME: No cursor iteration, need 'id' in select
         return tuple(item['address'] for item in response)
 
     async def iter_similar_contracts(
@@ -261,7 +280,12 @@ class TzktDatasource(IndexDatasource):
         address: str,
         strict: bool = False,
     ) -> AsyncIterator[tuple[str, ...]]:
-        async for batch in self._iter_batches(self.get_similar_contracts, address, strict, cursor=False):
+        async for batch in self._iter_batches(
+            self.get_similar_contracts,
+            address,
+            strict,
+            cursor=False,
+        ):
             yield batch
 
     async def get_originated_contracts(
@@ -272,20 +296,25 @@ class TzktDatasource(IndexDatasource):
     ) -> tuple[str, ...]:
         """Get addresses of contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s`', address)
-        offset, limit = offset or 0, limit or self.request_limit
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+            select=('id', 'address'),
+        )
         response = await self.request(
             'get',
             url=f'v1/accounts/{address}/contracts',
-            params={
-                'select': 'id,address',
-                'offset': offset,
-                'limit': limit,
-            },
+            params=params,
         )
+        # FIXME: No cursor iteration, need 'id' in select
         return tuple(item['address'] for item in response)
 
     async def iter_originated_contracts(self, address: str) -> AsyncIterator[tuple[str, ...]]:
-        async for batch in self._iter_batches(self.get_originated_contracts, address, cursor=False):
+        async for batch in self._iter_batches(
+            self.get_originated_contracts,
+            address,
+            cursor=False,
+        ):
             yield batch
 
     async def get_contract_summary(self, address: str) -> dict[str, Any]:
@@ -360,17 +389,19 @@ class TzktDatasource(IndexDatasource):
         limit: int | None = None,
     ) -> tuple[dict[str, Any], ...]:
         self._logger.info('Fetching keys of bigmap `%s`', big_map_id)
-        offset, limit = offset or 0, limit or self.request_limit
-        kwargs = {'active': str(active).lower()} if active else {}
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+        )
+        if level:
+            params['level'] = level
+        if active:
+            params['active'] = 'true'
+
         big_maps = await self.request(
             'get',
             url=f'v1/bigmaps/{big_map_id}/keys',
-            params={
-                **kwargs,
-                'level': level,
-                'offset': offset,
-                'limit': limit,
-            },
+            params=params,
         )
         return tuple(big_maps)
 
@@ -395,14 +426,14 @@ class TzktDatasource(IndexDatasource):
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[dict[str, Any], ...]:
-        offset, limit = offset or 0, limit or self.request_limit
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+        )
         big_maps = await self.request(
             'get',
             url=f'v1/contracts/{address}/bigmaps',
-            params={
-                'offset': offset,
-                'limit': limit,
-            },
+            params=params,
         )
         return tuple(big_maps)
 
@@ -410,7 +441,11 @@ class TzktDatasource(IndexDatasource):
         self,
         address: str,
     ) -> AsyncIterator[tuple[dict[str, Any], ...]]:
-        async for batch in self._iter_batches(self.get_contract_big_maps, address, cursor=False):
+        async for batch in self._iter_batches(
+            self.get_contract_big_maps,
+            address,
+            cursor=False,
+        ):
             yield batch
 
     async def get_head_block(self) -> HeadBlockData:
@@ -438,18 +473,19 @@ class TzktDatasource(IndexDatasource):
         limit: int | None = None,
     ) -> tuple[OperationData, ...]:
         """Get contracts originated from migrations"""
-        offset, limit = offset or 0, limit or self.request_limit
         self._logger.info('Fetching contracts originated with migrations')
+        params = self._get_request_params(
+            first_level=first_level,
+            offset=offset,
+            limit=limit,
+            select=ORIGINATION_MIGRATION_FIELDS,
+            cursor=True,
+            kind='origination',
+        )
         raw_migrations = await self.request(
             'get',
             url='v1/operations/migrations',
-            params={
-                'kind': 'origination',
-                'level.ge': first_level,
-                'select': ','.join(ORIGINATION_MIGRATION_FIELDS),
-                'offset.cr': offset,
-                'limit': limit,
-            },
+            params=params,
         )
         return tuple(self.convert_migration_origination(m) for m in raw_migrations)
 
@@ -514,35 +550,6 @@ class TzktDatasource(IndexDatasource):
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
         return tuple(self.convert_operation(op, type_='origination') for op in raw_originations)
 
-    def _get_request_params(
-        self,
-        first_level: int | None = None,
-        last_level: int | None = None,
-        offset: int | None = None,
-        limit: int | None = None,
-        select: Sequence[str | int] | None = None,
-        cursor: bool = False,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
-        params: dict[str, Any] = {
-            'limit': limit or self.request_limit,
-        }
-        if first_level:
-            params['level.ge'] = first_level
-        if last_level:
-            params['level.le'] = last_level
-        if offset:
-            if cursor:
-                params['offset.cr'] = offset
-            else:
-                params['offset'] = offset
-        if select:
-            params['select'] = ','.join(str(a) for a in select)
-        return {
-            **params,
-            **kwargs,
-        }
-
     async def get_transactions(
         self,
         field: str,
@@ -601,17 +608,19 @@ class TzktDatasource(IndexDatasource):
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[BigMapData, ...]:
-        offset, limit = offset or 0, limit or self.request_limit
+        params = self._get_request_params(
+            first_level=first_level,
+            last_level=last_level,
+            offset=offset,
+            limit=limit,
+        )
         raw_big_maps = await self.request(
             'get',
             url='v1/bigmaps/updates',
             params={
+                **params,
                 'contract.in': ','.join(addresses),
                 'path.in': ','.join(paths),
-                'level.ge': first_level,
-                'level.le': last_level,
-                'offset': offset,
-                'limit': limit,
             },
         )
         return tuple(self.convert_big_map(bm) for bm in raw_big_maps)
@@ -804,8 +813,41 @@ class TzktDatasource(IndexDatasource):
         await self._send(method, request, _on_subscribe)
         await event.wait()
 
+    def _get_request_params(
+        self,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        select: tuple[str, ...] | None = None,
+        cursor: bool = False,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            'limit': limit or self.request_limit,
+        }
+        if first_level:
+            params['level.ge'] = first_level
+        if last_level:
+            params['level.le'] = last_level
+        if offset:
+            if cursor:
+                params['offset.cr'] = offset
+            else:
+                params['offset'] = offset
+        if select:
+            params['select'] = ','.join(select)
+        return {
+            **params,
+            **kwargs,
+        }
+
     async def _iter_batches(
-        self, fn: Callable[..., Awaitable[Sequence[Any]]], *args: Any, cursor: bool = True, **kwargs: Any
+        self,
+        fn: Callable[..., Awaitable[Sequence[Any]]],
+        *args: Any,
+        cursor: bool = True,
+        **kwargs: Any,
     ) -> AsyncIterator[Any]:
         if set(kwargs).intersection(('offset', 'offset.cr', 'limit')):
             raise ValueError('`offset` and `limit` arguments are not allowed')
@@ -828,49 +870,37 @@ class TzktDatasource(IndexDatasource):
             else:
                 offset += self.request_limit
 
-    def _get_ws_client(self) -> SignalRClient:
+    def _get_signalr_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
-        if self._ws_client:
-            return self._ws_client
+        if self._signalr_client:
+            return self._signalr_client
 
-        self._logger.info('Creating websocket client')
-        self._ws_client = SignalRClient(
+        self._logger.info('Creating SignalR client')
+        self._signalr_client = SignalRClient(
             url=f'{self._http._url}/v1/events',
             max_size=None,
         )
 
-        self._ws_client.on_open(self._on_connected)
-        self._ws_client.on_close(self._on_disconnected)
-        self._ws_client.on_error(self._on_error)
+        self._signalr_client.on_open(self._on_connected)
+        self._signalr_client.on_close(self._on_disconnected)
+        self._signalr_client.on_error(self._on_error)
 
-        self._ws_client.on('operations', partial(self._on_message, MessageType.operation))
-        self._ws_client.on('transfers', partial(self._on_message, MessageType.token_transfer))
-        self._ws_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
-        self._ws_client.on('head', partial(self._on_message, MessageType.head))
-        self._ws_client.on('events', partial(self._on_message, MessageType.event))
+        self._signalr_client.on('operations', partial(self._on_message, MessageType.operation))
+        self._signalr_client.on('transfers', partial(self._on_message, MessageType.token_transfer))
+        self._signalr_client.on('bigmaps', partial(self._on_message, MessageType.big_map))
+        self._signalr_client.on('head', partial(self._on_message, MessageType.head))
+        self._signalr_client.on('events', partial(self._on_message, MessageType.event))
 
-        return self._ws_client
+        return self._signalr_client
 
-    async def run(self) -> None:
-        self._logger.info('Establishing realtime connection')
-        ws = self._get_ws_client()
-
-        async def _wrapper() -> None:
-            # FIXME: These defaults should be somewhere else
-            retry_sleep = self._http_config.retry_sleep or 0
-            retry_multiplier = self._http_config.retry_multiplier or 1
-            retry_count = self._http_config.retry_count or sys.maxsize
-
-            for _ in range(retry_count):
-                try:
-                    await ws.run()
-                except WebsocketConnectionError as e:
-                    self._logger.error('Websocket connection error: %s', e)
-                    await self.emit_disconnected()
-                    await asyncio.sleep(retry_sleep)
-                    retry_sleep *= retry_multiplier
-
-        await create_task(_wrapper())
+    async def _send(
+        self,
+        method: str,
+        arguments: list[dict[str, Any]],
+        on_invocation: Callable[[CompletionMessage], Awaitable[None]] | None = None,
+    ) -> None:
+        client = self._get_signalr_client()
+        await client.send(method, arguments, on_invocation)
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
@@ -899,7 +929,7 @@ class TzktDatasource(IndexDatasource):
 
             message_level = item['state']
             channel_level = self.get_channel_level(type_)
-            self._set_channel_level(type_, message_level)
+            self._channel_levels[type_] = message_level
 
             self._logger.info(
                 'Realtime message received: %s, %s, %s -> %s',
@@ -1024,7 +1054,7 @@ class TzktDatasource(IndexDatasource):
             type=type_ or operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
-            timestamp=cls._parse_timestamp(operation_json['timestamp']),
+            timestamp=_parse_timestamp(operation_json['timestamp']),
             block=operation_json.get('block'),
             hash=operation_json['hash'],
             counter=operation_json['counter'],
@@ -1063,7 +1093,7 @@ class TzktDatasource(IndexDatasource):
             type='origination',
             id=migration_origination_json['id'],
             level=migration_origination_json['level'],
-            timestamp=cls._parse_timestamp(migration_origination_json['timestamp']),
+            timestamp=_parse_timestamp(migration_origination_json['timestamp']),
             block=migration_origination_json.get('block'),
             originated_contract_address=migration_origination_json['account']['address'],
             originated_contract_alias=migration_origination_json['account'].get('alias'),
@@ -1094,7 +1124,7 @@ class TzktDatasource(IndexDatasource):
             level=big_map_json['level'],
             # NOTE: missing `operation_id` field in API to identify operation
             operation_id=big_map_json['level'],
-            timestamp=cls._parse_timestamp(big_map_json['timestamp']),
+            timestamp=_parse_timestamp(big_map_json['timestamp']),
             bigmap=big_map_json['bigmap'],
             contract_address=big_map_json['contract']['address'],
             path=big_map_json['path'],
@@ -1113,7 +1143,7 @@ class TzktDatasource(IndexDatasource):
         return BlockData(
             level=block_json['level'],
             hash=block_json['hash'],
-            timestamp=cls._parse_timestamp(block_json['timestamp']),
+            timestamp=_parse_timestamp(block_json['timestamp']),
             proto=block_json['proto'],
             priority=block_json.get('priority'),
             validations=block_json['validations'],
@@ -1139,7 +1169,7 @@ class TzktDatasource(IndexDatasource):
             hash=head_block_json['hash'],
             protocol=head_block_json['protocol'],
             next_protocol=head_block_json['nextProtocol'],
-            timestamp=cls._parse_timestamp(head_block_json['timestamp']),
+            timestamp=_parse_timestamp(head_block_json['timestamp']),
             voting_epoch=head_block_json['votingEpoch'],
             voting_period=head_block_json['votingPeriod'],
             known_level=head_block_json['knownLevel'],
@@ -1161,7 +1191,7 @@ class TzktDatasource(IndexDatasource):
         """Convert raw quote message from REST into dataclass"""
         return QuoteData(
             level=quote_json['level'],
-            timestamp=cls._parse_timestamp(quote_json['timestamp']),
+            timestamp=_parse_timestamp(quote_json['timestamp']),
             btc=Decimal(quote_json['btc']),
             eur=Decimal(quote_json['eur']),
             usd=Decimal(quote_json['usd']),
@@ -1184,7 +1214,7 @@ class TzktDatasource(IndexDatasource):
         return TokenTransferData(
             id=token_transfer_json['id'],
             level=token_transfer_json['level'],
-            timestamp=cls._parse_timestamp(token_transfer_json['timestamp']),
+            timestamp=_parse_timestamp(token_transfer_json['timestamp']),
             tzkt_token_id=token_json['id'],
             contract_address=contract_json.get('address'),
             contract_alias=contract_json.get('alias'),
@@ -1207,7 +1237,7 @@ class TzktDatasource(IndexDatasource):
         return EventData(
             id=event_json['id'],
             level=event_json['level'],
-            timestamp=cls._parse_timestamp(event_json['timestamp']),
+            timestamp=_parse_timestamp(event_json['timestamp']),
             tag=event_json['tag'],
             payload=event_json.get('payload'),
             contract_address=event_json['contract']['address'],
@@ -1216,15 +1246,6 @@ class TzktDatasource(IndexDatasource):
             transaction_id=event_json.get('transactionId'),
         )
 
-    async def _send(
-        self,
-        method: str,
-        arguments: list[dict[str, Any]],
-        on_invocation: Callable[[CompletionMessage], Awaitable[None]] | None = None,
-    ) -> None:
-        client = self._get_ws_client()
-        await client.send(method, arguments, on_invocation)
 
-    @classmethod
-    def _parse_timestamp(cls, timestamp: str) -> datetime:
-        return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
+def _parse_timestamp(timestamp: str) -> datetime:
+    return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
