@@ -174,7 +174,7 @@ class SignalRDatasource(IndexDatasource, ABC):
 
         for _ in range(1, self._http_config.retry_count + 1):
             try:
-                signalr_client.run(),
+                await signalr_client.run()
             except pysignalr.exceptions.ConnectionError as e:
                 self._logger.error('Websocket connection error: %s', e)
                 await self.emit_disconnected()

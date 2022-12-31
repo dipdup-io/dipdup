@@ -3,7 +3,6 @@ from typing import AsyncIterator
 from typing import Tuple
 from typing import TypeVar
 from unittest.mock import AsyncMock
-from unittest.mock import Mock
 
 import orjson as json
 import pysignalr.exceptions
@@ -208,7 +207,7 @@ async def test_no_content() -> None:
 
 
 async def test_signalr_client() -> None:
-    fail_mock = Mock(side_effect=pysignalr.exceptions.ConnectionError(418))
+    fail_mock = AsyncMock(side_effect=pysignalr.exceptions.ConnectionError(418))
 
     async with tzkt_replay(batch_size=1) as tzkt:
         tzkt._http_config.retry_sleep = 0
