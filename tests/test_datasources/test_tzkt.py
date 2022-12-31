@@ -3,12 +3,15 @@ from typing import AsyncIterator
 from typing import Tuple
 from typing import TypeVar
 from unittest.mock import AsyncMock
+from unittest.mock import Mock
 
 import orjson as json
+import pysignalr.exceptions
 import pytest
 
 from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
+from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.models import OperationData
@@ -204,9 +207,14 @@ async def test_no_content() -> None:
             await tzkt.get_jsonschemas('KT1EHdK9asB6BtPLvt1ipKRuxsrKoQhDoKgs')
 
 
-# async def test_signalr_client() -> None:
+async def test_signalr_client() -> None:
+    fail_mock = Mock(side_effect=pysignalr.exceptions.ConnectionError(418))
 
-#     fail_mock = AsyncMock(side_effect=WebsocketConnectionError)
+    async with tzkt_replay(batch_size=1) as tzkt:
+        tzkt._http_config.retry_sleep = 0
+        signalr_client = tzkt._get_signalr_client()
+        signalr_client.run = fail_mock  # type: ignore[assignment]
 
-#     async with tzkt_replay(batch_size=1) as tzkt:
-#         signalr_client = tzkt._get_signalr_client()
+        with pytest.raises(DatasourceError):
+            await tzkt.run()
+        assert fail_mock.call_count == tzkt._http_config.retry_count
