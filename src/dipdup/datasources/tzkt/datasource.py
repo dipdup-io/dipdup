@@ -392,8 +392,9 @@ class TzktDatasource(SignalRDatasource):
         params = self._get_request_params(
             offset=offset,
             limit=limit,
-            level=level,
         )
+        if level:
+            params['level'] = level
         if active:
             params['active'] = 'true'
 
@@ -607,17 +608,19 @@ class TzktDatasource(SignalRDatasource):
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[BigMapData, ...]:
-        offset, limit = offset or 0, limit or self.request_limit
+        params = self._get_request_params(
+            first_level=first_level,
+            last_level=last_level,
+            offset=offset,
+            limit=limit,
+        )
         raw_big_maps = await self.request(
             'get',
             url='v1/bigmaps/updates',
             params={
+                **params,
                 'contract.in': ','.join(addresses),
                 'path.in': ','.join(paths),
-                'level.ge': first_level,
-                'level.le': last_level,
-                'offset': offset,
-                'limit': limit,
             },
         )
         return tuple(self.convert_big_map(bm) for bm in raw_big_maps)
