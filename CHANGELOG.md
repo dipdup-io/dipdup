@@ -16,10 +16,6 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - http: Fixed merging user-defined HTTP settings and datasource defaults.
 - tzkt: Fixed iterating over big map keys.
 
-### Performance
-
-- tzkt: Use cursor iteration when possible.
-
 ## [6.4.1] - 2022-12-22
 
 ### Fixed
