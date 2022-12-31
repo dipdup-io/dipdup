@@ -4,12 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [6.4.2] - 2022-12-31
 
 ### Added
 
-- context: Allow adding contracts by code hash in runtime.
 - config: Added `http.ratelimit_sleep` option to set fixed sleep time on 429 responses.
+- context: Allow adding contracts by code hash in runtime.
 
 ### Fixed
 
@@ -898,7 +898,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.4.1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.4.2...HEAD
+[6.4.2]: https://github.com/dipdup-io/dipdup/compare/6.4.1...6.4.2
 [6.4.1]: https://github.com/dipdup-io/dipdup/compare/6.4.0...6.4.1
 [6.4.0]: https://github.com/dipdup-io/dipdup/compare/6.4.0rc1...6.4.0
 [6.4.0rc1]: https://github.com/dipdup-io/dipdup/compare/6.3.1...6.4.0rc1
