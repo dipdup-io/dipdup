@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- sentry: Fix sending crash reports without DSN set implicitly.
+- sentry: Fix sending crash reports when DSN is not set implicitly.
+- sentry: Increase event length limit.
 
 ## [6.4.2] - 2022-12-31
 

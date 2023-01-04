@@ -136,7 +136,7 @@ def init_sentry(config: 'DipDupConfig') -> None:
     if not server_name:
         if crash_reporting:
             # NOTE: Prevent Sentry from leaking hostnames
-            server_name = hashlib.sha256(platform.node().encode()).hexdigest()[:8]
+            server_name = 'unknown'
         else:
             server_name = platform.node()
 
@@ -149,6 +149,8 @@ def init_sentry(config: 'DipDupConfig') -> None:
         environment=environment,
         server_name=server_name,
     )
+    # NOTE: Increase __repr__ length limit
+    sentry_sdk.utils.MAX_STRING_LENGTH *= 10
 
     # NOTE: Setting session tags
     tags = {
@@ -168,7 +170,10 @@ def init_sentry(config: 'DipDupConfig') -> None:
     # NOTE: User ID allows to track release adoption. It's sent on every session,
     # NOTE: but obfuscated below, so it's not a privacy issue. However, randomly
     # NOTE: generated Docker hostnames may spoil this metric.
-    user_id = config.sentry.user_id or hashlib.sha256((package + environment).encode()).hexdigest()
+    user_id = config.sentry.user_id
+    if user_id is None:
+        user_id = package + environment + server_name
+        user_id = hashlib.sha256(user_id.encode()).hexdigest()[:8]
     _logger.debug('Sentry user_id: %s', user_id)
 
     sentry_sdk.set_user({'id': user_id})
