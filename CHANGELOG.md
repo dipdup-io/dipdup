@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- sentry: Fix sending crash reports without DSN set implicitly.
+
 ## [6.4.2] - 2022-12-31
 
 ### Added

@@ -141,7 +141,7 @@ def init_sentry(config: 'DipDupConfig') -> None:
             server_name = platform.node()
 
     sentry_sdk.init(
-        dsn=config.sentry.dsn,
+        dsn=dsn,
         integrations=integrations,
         attach_stacktrace=attach_stacktrace,
         before_send=before_send_fn,
