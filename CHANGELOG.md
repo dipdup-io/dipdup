@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- context: Fixed order of `add_contract` method arguments.
 - sentry: Fix sending crash reports when DSN is not set implicitly.
 - sentry: Increase event length limit.
 

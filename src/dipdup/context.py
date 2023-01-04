@@ -231,8 +231,8 @@ class DipDupContext:
         self,
         name: str,
         address: str | None = None,
-        code_hash: str | int | None = None,
         typename: str | None = None,
+        code_hash: str | int | None = None,
     ) -> None:
         """Adds contract to the inventory.
 
