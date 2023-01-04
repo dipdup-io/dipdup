@@ -2,21 +2,15 @@
 import asyncio
 import atexit
 import logging
-import platform
 import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
-from functools import partial
 from functools import wraps
 from os import environ as env
 from pathlib import Path
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import Awaitable
 from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
 from typing import TypeVar
 from typing import cast
 
@@ -24,14 +18,11 @@ import asyncclick as click
 
 from dipdup import __spec_version__
 from dipdup import __version__
-from dipdup import baking_bad
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
 from dipdup.utils.sys import IGNORE_CONFIG_CMDS
 from dipdup.utils.sys import is_in_ci
-from dipdup.utils.sys import is_in_docker
 from dipdup.utils.sys import is_in_tests
-from dipdup.utils.sys import is_shutting_down
 from dipdup.utils.sys import set_up_logging
 from dipdup.utils.sys import set_up_process
 
@@ -39,10 +30,6 @@ DEFAULT_CONFIG_NAME = 'dipdup.yml'
 
 
 _logger = logging.getLogger('dipdup.cli')
-
-
-if TYPE_CHECKING:
-    from dipdup.config import DipDupConfig
 
 
 def echo(message: str) -> None:
@@ -76,7 +63,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            from dipdup.exceptions import save_crashdump
+            from dipdup.sentry import save_crashdump
 
             crashdump_path = save_crashdump(e)
             _logger.error(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
@@ -84,138 +71,6 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             raise
 
     return cast(WrappedCommandT, wrapper)
-
-
-def _sentry_before_send(
-    event: Dict[str, Any],
-    hint: Dict[str, Any],
-    crash_reporting: bool,
-) -> Optional[Dict[str, Any]]:
-    # NOTE: Terminated connections, cancelled tasks, etc.
-    if is_shutting_down():
-        return None
-
-    # NOTE: Skip some reports if Sentry DSN is not set implicitly
-    if crash_reporting:
-        if is_in_tests() or is_in_ci():
-            return None
-
-        # NOTE: User-generated events (e.g. from `ctx.logger`)
-        if not event['logger'].startswith('dipdup'):
-            return None
-
-    # NOTE: Dark magic ahead. Merge `CallbackError` and its cause when possible.
-    with suppress(KeyError, IndexError):
-        exceptions = event['exception']['values']
-        if exceptions[-1]['type'] == 'CallbackError':
-            wrapper_frames = exceptions[-1]['stacktrace']['frames']
-            crash_frames = exceptions[-2]['stacktrace']['frames']
-            exceptions[-2]['stacktrace']['frames'] = wrapper_frames + crash_frames
-            event['message'] = exceptions[-2]['value']
-            del exceptions[-1]
-
-    return event
-
-
-def _init_sentry(config: 'DipDupConfig') -> None:
-    from dipdup.config import DipDupConfig
-    from dipdup.config import SentryConfig
-
-    assert isinstance(config, DipDupConfig)
-    if not config.sentry:
-        config.sentry = SentryConfig()
-
-    crash_reporting = config.advanced.crash_reporting
-    dsn = config.sentry.dsn
-
-    if dsn:
-        pass
-    elif crash_reporting:
-        dsn = baking_bad.SENTRY_DSN
-    else:
-        return
-
-    _logger.info('Crash reporting is enabled: %s', dsn)
-    if config.sentry.debug:
-        level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
-    else:
-        level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
-
-    import hashlib
-
-    import sentry_sdk
-    from sentry_sdk.integrations.aiohttp import AioHttpIntegration
-    from sentry_sdk.integrations.atexit import AtexitIntegration
-    from sentry_sdk.integrations.logging import LoggingIntegration
-
-    integrations = [
-        AioHttpIntegration(),
-        LoggingIntegration(
-            level=level,
-            event_level=event_level,
-        ),
-        # NOTE: Suppresses `atexit` notification
-        AtexitIntegration(lambda _, __: None),
-    ]
-    package = config.package or 'dipdup'
-    release = config.sentry.release or __version__
-    environment = config.sentry.environment
-    server_name = config.sentry.server_name
-    before_send = partial(
-        _sentry_before_send,
-        crash_reporting=crash_reporting,
-    )
-
-    if not environment:
-        if is_in_docker():
-            environment = 'docker'
-        elif is_in_tests():
-            environment = 'tests'
-        elif is_in_ci():
-            environment = 'gha'
-        else:
-            environment = 'local'
-
-    if not server_name:
-        if crash_reporting:
-            # NOTE: Prevent Sentry from leaking hostnames
-            server_name = hashlib.sha256(platform.node().encode()).hexdigest()[:8]
-        else:
-            server_name = platform.node()
-
-    sentry_sdk.init(
-        dsn=config.sentry.dsn,
-        integrations=integrations,
-        attach_stacktrace=attach_stacktrace,
-        before_send=before_send,
-        release=release,
-        environment=environment,
-        server_name=server_name,
-    )
-
-    # NOTE: Setting session tags
-    tags = {
-        'python': platform.python_version(),
-        'os': f'{platform.system().lower()}-{platform.machine()}',
-        'version': __version__,
-        'package': package,
-        'release': release,
-        'environment': environment,
-        'server_name': server_name,
-        'crash_reporting': crash_reporting,
-    }
-    _logger.debug('Sentry tags: %s', ', '.join(f'{k}={v}' for k, v in tags.items()))
-    for tag, value in tags.items():
-        sentry_sdk.set_tag(f'dipdup.{tag}', value)
-
-    # NOTE: User ID allows to track release adoption. It's sent on every session,
-    # NOTE: but obfuscated below, so it's not a privacy issue. However, randomly
-    # NOTE: generated Docker hostnames may spoil this metric.
-    user_id = config.sentry.user_id or hashlib.sha256((package + environment).encode()).hexdigest()
-    _logger.debug('Sentry user_id: %s', user_id)
-
-    sentry_sdk.set_user({'id': user_id})
-    sentry_sdk.Hub.current.start_session()
 
 
 async def _check_version() -> None:
@@ -262,7 +117,7 @@ async def _check_version() -> None:
 )
 @click.pass_context
 @_cli_wrapper
-async def cli(ctx: click.Context, config: List[str], env_file: List[str]) -> None:
+async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
     """Manage and run DipDup indexers.
 
     Documentation: https://docs.dipdup.io
@@ -306,13 +161,14 @@ async def cli(ctx: click.Context, config: List[str], env_file: List[str]) -> Non
     from dipdup.exceptions import ConfigurationError
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.exceptions import MigrationRequiredError
+    from dipdup.sentry import init_sentry
 
     _config = DipDupConfig.load(config_paths)
     _config.set_up_logging()
 
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
-    _init_sentry(_config)
+    init_sentry(_config)
 
     # NOTE: Fire and forget, do not block instant commands
     if not any((_config.advanced.skip_version_check, is_in_tests(), is_in_ci())):
@@ -333,7 +189,7 @@ async def cli(ctx: click.Context, config: List[str], env_file: List[str]) -> Non
 
     @dataclass
     class CLIContext:
-        config_paths: List[str]
+        config_paths: list[str]
         config: DipDupConfig
 
     ctx.obj = CLIContext(
@@ -403,7 +259,7 @@ async def status(ctx: click.Context) -> None:
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    table: List[tuple[str, str, str | int]] = [('name', 'status', 'level')]
+    table: list[tuple[str, str, str | int]] = [('name', 'status', 'level')]
     async with tortoise_wrapper(url, models):
         async for index in Index.filter().order_by('name'):
             row = (index.name, index.status.value, index.level)
@@ -449,7 +305,7 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
 @click.option('--file', '-f', type=str, default=None, help='Output to file instead of stdout.')
 @click.pass_context
 @_cli_wrapper
-async def config_env(ctx: click.Context, file: Optional[str]) -> None:
+async def config_env(ctx: click.Context, file: str | None) -> None:
     """Dump environment variables used in DipDup config.
 
     If variable is not set, default value will be used.
