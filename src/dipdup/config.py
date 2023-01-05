@@ -1417,8 +1417,8 @@ class DipDupConfig:
     jobs: dict[str, JobConfig] = field(default_factory=dict)
     hooks: dict[str, HookConfig] = field(default_factory=dict)
     hasura: HasuraConfig | None = None
-    sentry: SentryConfig = SentryConfig()
     prometheus: PrometheusConfig | None = None
+    sentry: SentryConfig = field(default_factory=SentryConfig)
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
     logging: LoggingValues = LoggingValues.default
