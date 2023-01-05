@@ -5,7 +5,6 @@
 ##
 ## DEV=1                Install dev dependencies
 DEV=1
-# TODO: Remove in 7.0
 ## PYTEZOS=0            Install PyTezos
 PYTEZOS=0
 ## TAG=latest           Tag for the `image` command
@@ -63,7 +62,6 @@ image:          ## Build all Docker images
 image-default:  ## Build default Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}
 
-# TODO: Remove in 7.0
 image-pytezos:  ## Build pytezos Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
 
