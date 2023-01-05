@@ -21,6 +21,7 @@ from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import ResolvedHTTPConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import HasuraError
@@ -115,7 +116,10 @@ class HasuraGateway(HTTPGateway):
         database_config: PostgresDatabaseConfig,
         http_config: Optional[HTTPConfig] = None,
     ) -> None:
-        super().__init__(hasura_config.url, self._default_http_config.merge(http_config))
+        super().__init__(
+            hasura_config.url,
+            ResolvedHTTPConfig.create(self._default_http_config, http_config),
+        )
         self._logger = logging.getLogger('dipdup.hasura')
         self._package = package
         self._hasura_config = hasura_config

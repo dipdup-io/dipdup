@@ -8,7 +8,7 @@ from os import environ as env
 from pathlib import Path
 
 # NOTE: Do not try to load config for these commands as they don't need it
-IGNORE_CONFIG_CMDS = {'new', 'install', 'uninstall' 'update'}
+IGNORE_CONFIG_CMDS = {'new', 'install', 'uninstall', 'update'}
 # NOTE: Our signal handler conflicts with Click's one in prompt mode
 IGNORE_SIGINT_CMDS = {*IGNORE_CONFIG_CMDS, None, 'schema', 'wipe'}
 

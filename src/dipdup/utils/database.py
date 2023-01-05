@@ -91,7 +91,15 @@ def is_model_class(obj: Any) -> bool:
     """Is subclass of tortoise.Model, but not the base class"""
     from dipdup.models import Model
 
-    return isinstance(obj, type) and issubclass(obj, TortoiseModel) and obj not in (TortoiseModel, Model)
+    if not isinstance(obj, type):
+        return False
+    if not issubclass(obj, TortoiseModel):
+        return False
+    if obj in (TortoiseModel, Model):
+        return False
+    if obj._meta.abstract:
+        return False
+    return True
 
 
 def iter_models(package: Optional[str]) -> Iterator[tuple[str, Type[TortoiseModel]]]:

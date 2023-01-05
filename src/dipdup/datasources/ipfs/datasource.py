@@ -14,7 +14,7 @@ class IpfsDatasource(Datasource):
     )
 
     def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
-        super().__init__(url, self._default_http_config.merge(http_config))
+        super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.ipfs')
 
     async def run(self) -> None:

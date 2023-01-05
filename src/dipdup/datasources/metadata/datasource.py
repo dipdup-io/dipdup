@@ -17,7 +17,7 @@ class MetadataDatasource(GraphQLDatasource):
     )
 
     def __init__(self, url: str, network: MetadataNetwork, http_config: HTTPConfig | None = None) -> None:
-        super().__init__(url, self._default_http_config.merge(http_config))
+        super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.metadata')
         self._network = network
 

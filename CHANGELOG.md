@@ -4,9 +4,43 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- sentry: Fix sending crash reports when DSN is not set implicitly.
+- sentry: Increase event length limit.
+
+## [6.4.2] - 2022-12-31
+
+### Added
+
+- config: Added `http.ratelimit_sleep` option to set fixed sleep time on 429 responses.
+- context: Allow adding contracts by code hash in runtime.
+
+### Fixed
+
+- http: Fixed merging user-defined HTTP settings and datasource defaults.
+- tzkt: Fixed iterating over big map keys.
+
+## [6.4.1] - 2022-12-22
+
+### Fixed
+
+- models: Fixed package model detection.
+
+## [6.4.0] - 2022-12-20
+
+### Fixed
+
+- cli: `update` and `uninstall` commands no longer require a valid config.
+- cli: Fixed a regression in `new` command leading to crash with `TypeError`.
+- config: Fixed `jobs` section deserialization.
+- database: Ignore abstract models during module validation.
+
 ## [6.4.0rc1] - 2022-12-09
 
-## Added
+### Added
 
 - config: Added optional `code_hash` field to contract config.
 - context: Added `first_level` and `last_level` arguments to `ctx.add_index` methods.
@@ -871,7 +905,10 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.4.0rc1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.4.2...HEAD
+[6.4.2]: https://github.com/dipdup-io/dipdup/compare/6.4.1...6.4.2
+[6.4.1]: https://github.com/dipdup-io/dipdup/compare/6.4.0...6.4.1
+[6.4.0]: https://github.com/dipdup-io/dipdup/compare/6.4.0rc1...6.4.0
 [6.4.0rc1]: https://github.com/dipdup-io/dipdup/compare/6.3.1...6.4.0rc1
 [6.3.1]: https://github.com/dipdup-io/dipdup/compare/6.3.0...6.3.1
 [6.3.0]: https://github.com/dipdup-io/dipdup/compare/6.2.0...6.3.0

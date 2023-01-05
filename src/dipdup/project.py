@@ -77,9 +77,9 @@ class InputQuestion(Question):
     type = str
     default: str
 
-    def prompt(self) -> bool:
+    def prompt(self) -> str:
         cl.secho(f'=> {self.description}', fg='blue')
-        return bool(super().prompt())
+        return str(super().prompt())
 
 
 class BooleanQuestion(Question):

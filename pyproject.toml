@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "6.4.0rc1"
+version = "6.4.2"
 license = "MIT"
 authors = [
     "Lev Gorodetskiy <dipdup@drsr.io>",
@@ -31,13 +31,13 @@ packages = [
 python = ">=3.10,<3.12"
 
 asyncpg = "0.27.0"
-datamodel-code-generator = "0.14.0"
-pydantic = "1.10.2"
+datamodel-code-generator = "0.15.0"
+pydantic = "1.10.4"
 pysignalr = "0.1.2"
 tortoise-orm = "0.19.2"
 
 aiohttp = "^3.8.1"
-aiolimiter = "^1.0.0-beta.1"
+aiolimiter = "^1.0.0"
 anyio = "^3.3.2"
 APScheduler = "^3.8.0"
 asyncclick = "^8.0.1"

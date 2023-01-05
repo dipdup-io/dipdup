@@ -1,17 +1,13 @@
-import tempfile
 import textwrap
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
-from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Type
 
-import orjson as json
 from tabulate import tabulate
 from tortoise.models import Model
 
@@ -34,35 +30,6 @@ def indent(text: str, indent: int = 2) -> str:
 def format_help(help: str) -> str:
     """Format help text"""
     return tab + unindent(help) + '\n'
-
-
-def save_crashdump(error: Exception) -> str:
-    """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
-    # NOTE: Lazy import to speed up startup
-    import sentry_sdk.serializer
-    import sentry_sdk.utils
-
-    exc_info = sentry_sdk.utils.exc_info_from_error(error)
-    event, _ = sentry_sdk.utils.event_from_exception(exc_info)
-    event = sentry_sdk.serializer.serialize(event)
-
-    tmp_dir = Path(tempfile.gettempdir()) / 'dipdup' / 'crashdumps'
-    tmp_dir.mkdir(parents=True, exist_ok=True)
-
-    crashdump_file = NamedTemporaryFile(
-        mode='ab',
-        suffix='.json',
-        dir=tmp_dir,
-        delete=False,
-    )
-    with crashdump_file as f:
-        f.write(
-            json.dumps(
-                event,
-                option=json.OPT_INDENT_2,
-            ),
-        )
-    return crashdump_file.name
 
 
 class FrameworkException(AssertionError, RuntimeError):
@@ -296,23 +263,11 @@ class ProjectImportError(Error):
 class ContractAlreadyExistsError(Error):
     """Attempt to add a contract with alias or address already in use"""
 
-    ctx: Any
     name: str
-    address: str
 
     def _help(self) -> str:
-        contracts_table = indent(
-            tabulate(
-                [(c.name, c.address) for c in self.ctx.config.contracts.values()],
-                tablefmt='plain',
-            )
-        )
         return f"""
-            Contract `{self.name}` (`{self.address}`) already exists.
-
-            Active contracts:
-
-            {contracts_table}
+            Contract `{self.name}` already exists in config.
         """
 
 
@@ -320,22 +275,11 @@ class ContractAlreadyExistsError(Error):
 class IndexAlreadyExistsError(Error):
     """Attempt to add an index with an alias already in use"""
 
-    ctx: Any
     name: str
 
     def _help(self) -> str:
-        indexes_table = indent(
-            tabulate(
-                [(c.name, c.kind) for c in self.ctx.config.indexes.values()],
-                tablefmt='plain',
-            )
-        )
         return f"""
-            Index with name `{self.name}` already exists.
-
-            Active indexes:
-
-            {indexes_table}
+            Index with name `{self.name}` already exists in config.
         """
 
 

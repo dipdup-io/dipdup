@@ -22,9 +22,9 @@ help:
 docs:
 	poetry run make html
 	# NOTE: A hack to include generated references in mdbook pages
-	tail -n '+35' _build/html/cli-reference.html | head -n '-63' > cli-reference.md
-	tail -n '+35' _build/html/config-reference.html | head -n '-63' > config/reference.md
-	tail -n '+35' _build/html/context-reference.html | head -n '-63' > include/context-reference.md
+	tail -n '+32' _build/html/cli-reference.html | head -n '-63' > cli-reference.md
+	tail -n '+32' _build/html/config-reference.html | head -n '-63' > config/reference.md
+	tail -n '+32' _build/html/context-reference.html | head -n '-63' > include/context-reference.md
 	mdbook build  --dest-dir=dist/docs
 
 homepage:
