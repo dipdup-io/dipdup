@@ -15,6 +15,7 @@ from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import SubscriptionManager
 from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
+from dipdup.exceptions import FrameworkException
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData
 from dipdup.models import EventData
@@ -88,7 +89,7 @@ class IndexDatasource(Datasource):
     @property
     def network(self) -> str:
         if not self._network:
-            raise RuntimeError('Network is not set')
+            raise FrameworkException('Network is not set')
         return self._network
 
     @abstractmethod
@@ -153,7 +154,7 @@ class IndexDatasource(Datasource):
 
     def set_network(self, network: str) -> None:
         if self._network:
-            raise RuntimeError('Network is already set')
+            raise FrameworkException('Network is already set')
         self._network = network
 
     def set_sync_level(self, subscription: Optional[Subscription], level: int) -> None:

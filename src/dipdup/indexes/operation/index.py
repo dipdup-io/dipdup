@@ -104,29 +104,25 @@ def extract_operation_subgroups(
     operation_subgroups: defaultdict[tuple[str, int], deque[OperationData]] = defaultdict(deque)
 
     _operation_index = -1
-    for _operation_index, operation in enumerate(operations):
+    for _operation_index, op in enumerate(operations):
         # NOTE: Filtering out operations that are not part of any index
-        if operation.type == 'transaction':
-            if entrypoints and operation.entrypoint not in entrypoints:
-                filtered += 1
-                continue
-            if addresses and operation.sender_address not in addresses and operation.target_address not in addresses:
-                filtered += 1
-                continue
-            if (
-                code_hashes
-                and operation.target_code_hash not in code_hashes
-                and operation.sender_code_hash not in code_hashes
-            ):
+        if op.type == 'transaction':
+            if entrypoints and op.entrypoint not in entrypoints:
                 filtered += 1
                 continue
 
-        key = (operation.hash, int(operation.counter))
-        operation_subgroups[key].append(operation)
-        levels.add(operation.level)
+            wrong_address = addresses and not {op.sender_address, op.target_address} & addresses
+            wrong_code_hash = code_hashes and not {op.sender_code_hash, op.target_code_hash} & code_hashes
+            if wrong_address and wrong_code_hash:
+                filtered += 1
+                continue
+
+        key = (op.hash, int(op.counter))
+        operation_subgroups[key].append(op)
+        levels.add(op.level)
 
     if len(levels) > 1:
-        raise RuntimeError('Operations in batch are not in the same level')
+        raise FrameworkException('Operations in batch are not in the same level')
 
     _logger.debug(
         'Extracted %d subgroups (%d operations, %d filtered by %s entrypoints and %s addresses)',

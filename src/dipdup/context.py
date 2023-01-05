@@ -239,6 +239,7 @@ class DipDupContext:
         :param name: Contract name
         :param address: Contract address
         :param typename: Alias for the contract script
+        :param code_hash: Contract code hash
         """
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
         addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
