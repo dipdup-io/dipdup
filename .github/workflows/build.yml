@@ -33,17 +33,17 @@ jobs:
           #   dockerfile: Dockerfile
           #   build_args: 'PYTEZOS=0'
 
-          # - name: pytezos
-          #   suffix: -pytezos
-          #   platforms: linux/amd64,linux/arm64
-          #   dockerfile: Dockerfile
-          #   build_args: 'PYTEZOS=1'
-
-          - name: slim
-            suffix: ''
-            dockerfile: Dockerfile.slim
+          - name: pytezos
+            suffix: -pytezos
             platforms: linux/amd64,linux/arm64
-            build_args: ''
+            dockerfile: Dockerfile
+            build_args: 'PYTEZOS=1'
+
+          # - name: slim
+          #   suffix: ''
+          #   dockerfile: Dockerfile.slim
+          #   platforms: linux/amd64,linux/arm64
+          #   build_args: ''
 
     steps:
       - name: Check out the repo

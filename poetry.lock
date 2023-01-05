@@ -3177,14 +3177,14 @@ testing = ["filelock"]
 
 [[package]]
 name = "pytezos"
-version = "3.7.2"
+version = "3.7.3"
 description = "Python toolkit for Tezos"
 category = "main"
 optional = true
 python-versions = ">=3.8,<3.11"
 files = [
-    {file = "pytezos-3.7.2-py3-none-any.whl", hash = "sha256:abd7c163bdc4c9be11b52fbd3b6445ff92893502171a82b9d6779dc2df1e4f83"},
-    {file = "pytezos-3.7.2.tar.gz", hash = "sha256:91b65d66d2a863602ca804883c74cabaa89f35be89d0fc179d0183c67f033ddc"},
+    {file = "pytezos-3.7.3-py3-none-any.whl", hash = "sha256:d648a8253f4cd156c43b0146e15bebb36d940eae24a79b5d0e709406432a50fb"},
+    {file = "pytezos-3.7.3.tar.gz", hash = "sha256:d9c0219ac16f4082d9783be2f1e8f78a6890b3dc868051900f0b6968020a8446"},
 ]
 
 [package.dependencies]
@@ -3841,14 +3841,14 @@ files = [
 
 [[package]]
 name = "sphinx"
-version = "6.0.0"
+version = "6.1.0"
 description = "Python documentation generator"
 category = "dev"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Sphinx-6.0.0.tar.gz", hash = "sha256:58c140ecd9aa0abbc8ff6da48a266648eac9e5bfc8e49576efd2979bf46f5961"},
-    {file = "sphinx-6.0.0-py3-none-any.whl", hash = "sha256:c2aeebfcb0e7474f5a820eac6177c7492b1d3c9c535aa21d5ae77cab2f3600e4"},
+    {file = "Sphinx-6.1.0.tar.gz", hash = "sha256:b0fd0a1993733492572bbd429b5ec081e17c082b5b5168ffae50524c3a90fd3c"},
+    {file = "sphinx-6.1.0-py3-none-any.whl", hash = "sha256:7569d01418166c079560751038ab1c0ddca3b15c74787cc60b16d7f11a4bf35a"},
 ]
 
 [package.dependencies]
@@ -3859,7 +3859,7 @@ docutils = ">=0.18,<0.20"
 imagesize = ">=1.3"
 Jinja2 = ">=3.0"
 packaging = ">=21.0"
-Pygments = ">=2.12"
+Pygments = ">=2.13"
 requests = ">=2.25.0"
 snowballstemmer = ">=2.0"
 sphinxcontrib-applehelp = "*"
@@ -3871,7 +3871,7 @@ sphinxcontrib-serializinghtml = ">=1.1.5"
 
 [package.extras]
 docs = ["sphinxcontrib-websupport"]
-lint = ["docutils-stubs", "flake8 (>=3.5.0)", "flake8-bugbear", "flake8-comprehensions", "flake8-simplify", "isort", "mypy (>=0.990)", "sphinx-lint", "types-requests"]
+lint = ["docutils-stubs", "flake8 (>=3.5.0)", "flake8-simplify", "isort", "mypy (>=0.990)", "ruff", "sphinx-lint", "types-requests"]
 test = ["cython", "html5lib", "pytest (>=4.6)"]
 
 [[package]]
@@ -4707,4 +4707,4 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "3bbef93146bde717874992d59a9cacd7fb26d89fa4d75b6ca21e04dbccb39347"
+content-hash = "c7b5c19521380338891c1bb0f37127637ed24533b53501d65e725b8f7cfafb00"
