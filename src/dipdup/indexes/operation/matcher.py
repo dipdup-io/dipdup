@@ -93,7 +93,6 @@ def match_transaction(
     operation: OperationData,
 ) -> bool:
     """Match a single transaction with pattern"""
-    logging.info('match_transaction', pattern_config, operation)
     if entrypoint := pattern_config.entrypoint:
         if entrypoint != operation.entrypoint:
             return False

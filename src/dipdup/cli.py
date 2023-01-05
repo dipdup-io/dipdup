@@ -124,9 +124,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     Issues: https://github.com/dipdup-io/dipdup/issues
     """
-    # TODO: Remove in 7.0
     if env.get('DIPDUP_PYTEZOS'):
-        _logger.warning('PyTezos extra and corresponding Docker image is deprecated!')
+        _logger.warning('PyTezos image is not actively maintained and may be removed in future releases')
 
     # NOTE: Workaround for help pages. First argument check is for the test runner.
     args = sys.argv[1:] if sys.argv else ['--help']
