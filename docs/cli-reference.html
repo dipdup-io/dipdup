@@ -169,7 +169,7 @@
 <p>Manage and run DipDup indexers.</p>
 <p>Documentation: <a class="reference external" href="https://docs.dipdup.io">https://docs.dipdup.io</a></p>
 <p>Issues: <a class="reference external" href="https://github.com/dipdup-io/dipdup/issues">https://github.com/dipdup-io/dipdup/issues</a></p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
 <p class="rubric">Options</p>
@@ -191,14 +191,14 @@
 <section id="dipdup-config">
 <h2 id="config"><a class="header" href="#config">config<a class="headerlink" href="#dipdup-config" title="Permalink to this heading">¶</a></a></h2>
 <p>Commands to manage DipDup configuration.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
 <section id="dipdup-config-env">
 <h3 id="env"><a class="header" href="#env">env<a class="headerlink" href="#dipdup-config-env" title="Permalink to this heading">¶</a></a></h3>
 <p>Dump environment variables used in DipDup config.</p>
 <p>If variable is not set, default value will be used.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config env <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>config<span class="w"> </span>env<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
@@ -212,7 +212,7 @@
 <h3 id="export"><a class="header" href="#export">export<a class="headerlink" href="#dipdup-config-export" title="Permalink to this heading">¶</a></a></h3>
 <p>Print config after resolving all links and, optionally, templates.</p>
 <p>WARNING: Avoid sharing output with 3rd-parties when <cite>–unsafe</cite> flag set - it may contain secrets!</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup config <span class="nb">export</span> <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>config<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
@@ -231,13 +231,13 @@
 <section id="dipdup-hasura">
 <h2 id="hasura"><a class="header" href="#hasura">hasura<a class="headerlink" href="#dipdup-hasura" title="Permalink to this heading">¶</a></a></h2>
 <p>Commands related to Hasura integration.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup hasura <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>hasura<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
 <section id="dipdup-hasura-configure">
 <h3 id="configure"><a class="header" href="#configure">configure<a class="headerlink" href="#dipdup-hasura-configure" title="Permalink to this heading">¶</a></a></h3>
 <p>Configure Hasura GraphQL Engine to use with DipDup.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup hasura configure <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>hasura<span class="w"> </span>configure<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
@@ -252,7 +252,7 @@
 <h2 id="init"><a class="header" href="#init">init<a class="headerlink" href="#dipdup-init" title="Permalink to this heading">¶</a></a></h2>
 <p>Generate project tree, callbacks and types.</p>
 <p>This command is idempotent, meaning it won’t overwrite previously generated files unless asked explicitly.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup init <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>init<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
@@ -270,7 +270,7 @@
 <section id="dipdup-install">
 <h2 id="install"><a class="header" href="#install">install<a class="headerlink" href="#dipdup-install" title="Permalink to this heading">¶</a></a></h2>
 <p>Install DipDup for the current user.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup install <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>install<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
@@ -299,14 +299,14 @@
 <h2 id="migrate"><a class="header" href="#migrate">migrate<a class="headerlink" href="#dipdup-migrate" title="Permalink to this heading">¶</a></a></h2>
 <p>Migrate project to the new spec version.</p>
 <p>If you’re getting <cite>MigrationRequiredError</cite> after updating DipDup, this command will fix imports and type annotations to match the current <cite>spec_version</cite>. Review and commit changes after running it.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup migrate <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>migrate<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
 <section id="dipdup-new">
 <h2 id="new"><a class="header" href="#new">new<a class="headerlink" href="#dipdup-new" title="Permalink to this heading">¶</a></a></h2>
 <p>Create a new project interactively.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup new <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>new<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
@@ -330,20 +330,20 @@
 <h2 id="run"><a class="header" href="#run">run<a class="headerlink" href="#dipdup-run" title="Permalink to this heading">¶</a></a></h2>
 <p>Run indexer.</p>
 <p>Execution can be gracefully interrupted with <cite>Ctrl+C</cite> or <cite>SIGTERM</cite> signal.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup run <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>run<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
 <section id="dipdup-schema">
 <h2 id="schema"><a class="header" href="#schema">schema<a class="headerlink" href="#dipdup-schema" title="Permalink to this heading">¶</a></a></h2>
 <p>Commands to manage database schema.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>schema<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
 <section id="dipdup-schema-approve">
 <h3 id="approve"><a class="header" href="#approve">approve<a class="headerlink" href="#dipdup-schema-approve" title="Permalink to this heading">¶</a></a></h3>
 <p>Continue to use existing schema after reindexing was triggered.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema approve <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>schema<span class="w"> </span>approve<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
@@ -351,7 +351,7 @@
 <h3 id="export-1"><a class="header" href="#export-1">export<a class="headerlink" href="#dipdup-schema-export" title="Permalink to this heading">¶</a></a></h3>
 <p>Print SQL schema including scripts from <cite>sql/on_reindex</cite>.</p>
 <p>This command may help you debug inconsistency between project models and expected SQL schema.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema <span class="nb">export</span> <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>schema<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
@@ -359,7 +359,7 @@
 <h3 id="init-1"><a class="header" href="#init-1">init<a class="headerlink" href="#dipdup-schema-init" title="Permalink to this heading">¶</a></a></h3>
 <p>Prepare a database for running DipDip.</p>
 <p>This command creates tables based on your models, then executes <cite>sql/on_reindex</cite> to finish preparation - the same things DipDup does when run on a clean database.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema init <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>schema<span class="w"> </span>init<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
@@ -367,7 +367,7 @@
 <h3 id="wipe"><a class="header" href="#wipe">wipe<a class="headerlink" href="#dipdup-schema-wipe" title="Permalink to this heading">¶</a></a></h3>
 <p>Drop all database tables, functions and views.</p>
 <p>WARNING: This action is irreversible! All indexed data will be lost!</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup schema wipe <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>schema<span class="w"> </span>wipe<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
@@ -386,14 +386,14 @@
 <section id="dipdup-status">
 <h2 id="status"><a class="header" href="#status">status<a class="headerlink" href="#dipdup-status" title="Permalink to this heading">¶</a></a></h2>
 <p>Show the current status of indexes in the database.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup status <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
 <section id="dipdup-uninstall">
 <h2 id="uninstall"><a class="header" href="#uninstall">uninstall<a class="headerlink" href="#dipdup-uninstall" title="Permalink to this heading">¶</a></a></h2>
 <p>Uninstall DipDup for the current user.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup uninstall <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>uninstall<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
@@ -406,7 +406,7 @@
 <section id="dipdup-update">
 <h2 id="update"><a class="header" href="#update">update<a class="headerlink" href="#dipdup-update" title="Permalink to this heading">¶</a></a></h2>
 <p>Update DipDup for the current user.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup update <span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>update<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 <p class="rubric">Options</p>
