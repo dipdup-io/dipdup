@@ -5,7 +5,6 @@
 ##
 ## DEV=1                Install dev dependencies
 DEV=1
-# TODO: Remove in 7.0
 ## PYTEZOS=0            Install PyTezos
 PYTEZOS=0
 ## TAG=latest           Tag for the `image` command
@@ -30,9 +29,6 @@ lint:           ## Lint with all tools
 test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
 
-test-ci:        ## Run test suite without xdist, coverage and some tests (avoid macOS issues)
-	CI=true poetry run pytest -s -v tests
-
 docs:           ## Build docs
 	scripts/update_cookiecutter.py
 	cd docs
@@ -50,7 +46,7 @@ flake:          ## Lint with flake8
 	poetry run flakeheaven lint src tests scripts
 
 mypy:           ## Lint with mypy
-	poetry run mypy src tests scripts
+	poetry run mypy --strict src tests scripts
 
 cover:          ## Print coverage for the current branch
 	poetry run diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml
@@ -66,32 +62,11 @@ image:          ## Build all Docker images
 image-default:  ## Build default Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}
 
-# TODO: Remove in 7.0
 image-pytezos:  ## Build pytezos Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
 
 image-slim:     ## Build slim Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}-slim -f Dockerfile.slim
-
-##
-
-release-patch:  ## Release patch version
-	make update all build image
-	bumpversion patch
-	git push --tags
-	git push
-
-release-minor:  ## Release minor version
-	make update all build image
-	bumpversion minor
-	git push --tags
-	git push
-
-release-major:  ## Release major version
-	make update all build image
-	bumpversion major
-	git push --tags
-	git push
 
 ##
 
@@ -101,6 +76,8 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 	rm -r ~/.cache/dipdup
 
 update:         ## Update dependencies, export requirements.txt
+	git checkout master requirements.* poetry.lock
+
 	make install
 	poetry update
 
@@ -122,5 +99,8 @@ scripts:
 	python scripts/update_cookiecutter.py
 	python scripts/update_demos.py
 	make lint
+
+	rm -r tests/replays/*
+	make test
 
 ##

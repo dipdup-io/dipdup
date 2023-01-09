@@ -17,6 +17,26 @@ from dipdup.utils.codegen import write
 _logger = logging.getLogger('dipdup.project')
 
 
+# FIXME
+DEMO_PROJECTS = (
+    ('demo_domains', 'Tezos Domains name service'),
+    ('demo_big_maps', 'Indexing a single big map'),
+    ('demo_events', 'Processing contract events'),
+    ('demo_head', 'Processing head block metadata'),
+    ('demo_nft_marketplace', 'hic at nunc NFT marketplace'),
+    ('demo_dex', 'Quipuswap DEX balances and liquidity'),
+    ('demo_factories', 'Example of spawning indexes in runtime'),
+    ('demo_dao', 'Homebase DAO registry'),
+    ('demo_token', 'TzBTC FA1.2 token operations'),
+    ('demo_token_transfers', 'TzBTC FA1.2 token transfers'),
+    ('demo_auction', 'TzColors NFT marketplace'),
+    ('blank', 'Empty config for a fresh start'),
+    # TODO: demo_jobs
+    # TODO: demo_backup
+    # TODO: demo_sql
+)
+
+
 class Question(BaseModel):
     type: type = str
     name: str
@@ -36,7 +56,7 @@ class Question(BaseModel):
                 show_default=False,
             )
             print('\n')
-            return value  # noqa: R504
+            return value
         except cl.Abort:
             cl.echo('\nAborted')
             quit(0)
@@ -57,9 +77,9 @@ class InputQuestion(Question):
     type = str
     default: str
 
-    def prompt(self) -> bool:
+    def prompt(self) -> str:
         cl.secho(f'=> {self.description}', fg='blue')
-        return super().prompt()
+        return str(super().prompt())
 
 
 class BooleanQuestion(Question):
@@ -72,7 +92,7 @@ class BooleanQuestion(Question):
 
     def prompt(self) -> bool:
         cl.secho(f'=> {self.description}', fg='blue')
-        return super().prompt()
+        return bool(super().prompt())
 
 
 class ChoiceQuestion(Question):
@@ -97,11 +117,11 @@ class ChoiceQuestion(Question):
         )
         cl.secho(f'=> {self.description}', fg='blue')
         cl.echo(table)
-        return self.choices[super().prompt()]
+        return str(self.choices[super().prompt()])
 
 
 class JinjaAnswers(dict[str, Any]):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: str, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self['dipdup_version'] = major_version
 
@@ -204,33 +224,8 @@ class BaseProject(Project):
             name='template',
             description=('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n'),
             default=7,
-            choices=(
-                'demo_domains',
-                'demo_domains_big_map',
-                'demo_events',
-                'demo_head',
-                'demo_hic_et_nunc',
-                'demo_quipuswap',
-                'demo_registrydao',
-                'demo_tzbtc',
-                'demo_tzbtc_transfers',
-                'demo_tzcolors',
-                'blank',
-            ),
-            comments=(
-                '[operation]      Tezos Domains name service',
-                '[big_map]        Tezos Domains name service',
-                '[event]          Processing contract events (new in Kathmandu)',
-                '[head]           Processing head block metadata',
-                '[operation]      hic at nunc NFT marketplace',
-                '[operation]      Quipuswap DEX balances and liquidity',
-                '[operation]      Homebase DAO registry (index factory)',
-                '[operation]      TzBTC FA1.2 token transfers',
-                '[token_transfer] TzBTC FA1.2 token transfers',
-                '[operation]      TzColors NFT marketplace',
-                '[n/a]            Empty config for a fresh start',
-                # TODO: Hooks and jobs demo
-            ),
+            choices=tuple(p[0] for p in DEMO_PROJECTS),
+            comments=tuple(p[1] for p in DEMO_PROJECTS),
         ),
         InputQuestion(
             name='project_name',
@@ -290,8 +285,8 @@ class BaseProject(Project):
             ),
             default=0,
             choices=(
-                'hasura/graphql-engine:v2.15.0',
-                'hasura/graphql-engine:v2.15.0',
+                'hasura/graphql-engine:v2.15.2',
+                'hasura/graphql-engine:v2.15.2',
             ),
             comments=(
                 f'tested with DipDup {major_version}',
@@ -321,7 +316,7 @@ class BaseProject(Project):
             ),
             comments=(
                 'Classic set: black, isort, flake8, mypy, pytest',
-                'Same, plus bump2version, coverage and more flake8 plugins',
+                'Same, plus coverage and more flake8 plugins',
                 'None',
             ),
         ),

@@ -6,6 +6,7 @@ import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 from typing import AsyncIterator
 from typing import Dict
@@ -13,21 +14,20 @@ from typing import Iterable
 from typing import Iterator
 from typing import Optional
 from typing import Set
-from typing import Tuple
 from typing import Type
 from typing import Union
 
-import sqlparse  # type: ignore
-from asyncpg import CannotConnectNowError  # type: ignore
-from tortoise import ForeignKeyFieldInstance
-from tortoise import Model as TortoiseModel
-from tortoise import ModuleType
+import sqlparse  # type: ignore[import]
+from asyncpg import CannotConnectNowError  # type: ignore[import]
 from tortoise import Tortoise
-from tortoise import connections
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
+from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
+from tortoise.connection import connections
 from tortoise.fields import DecimalField
+from tortoise.fields.relational import ForeignKeyFieldInstance
+from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
 
 from dipdup.exceptions import DatabaseEngineError
@@ -51,7 +51,7 @@ def set_connection(conn: BaseDBAsyncClient) -> None:
 
 
 @asynccontextmanager
-async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int = 60) -> AsyncIterator:
+async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int = 60) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
     model_modules: Dict[str, Iterable[Union[str, ModuleType]]] = {
         'int_models': ['dipdup.models'],
@@ -74,7 +74,7 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
 
                 conn = get_connection()
                 await conn.execute_query('SELECT 1')
-            # FIXME: Logging
+            # FIXME: Poor logging
             except (OSError, CannotConnectNowError):
                 _logger.warning("Can't establish database connection, attempt %s/%s", attempt, timeout)
                 if attempt == timeout - 1:
@@ -91,10 +91,18 @@ def is_model_class(obj: Any) -> bool:
     """Is subclass of tortoise.Model, but not the base class"""
     from dipdup.models import Model
 
-    return isinstance(obj, type) and issubclass(obj, TortoiseModel) and obj not in (TortoiseModel, Model)
+    if not isinstance(obj, type):
+        return False
+    if not issubclass(obj, TortoiseModel):
+        return False
+    if obj in (TortoiseModel, Model):
+        return False
+    if obj._meta.abstract:
+        return False
+    return True
 
 
-def iter_models(package: Optional[str]) -> Iterator[Tuple[str, Type[TortoiseModel]]]:
+def iter_models(package: Optional[str]) -> Iterator[tuple[str, Type[TortoiseModel]]]:
     """Iterate over built-in and project's models"""
     modules = [
         ('int_models', importlib.import_module('dipdup.models')),
@@ -257,6 +265,9 @@ def prepare_models(package: Optional[str]) -> None:
     """
     # NOTE: Circular imports
     import dipdup.models
+
+    # NOTE: Required for pytest-xdist. Models with the same name in different packages cause conflicts otherwise.
+    EXECUTOR_CACHE.clear()
 
     db_tables: Set[str] = set()
     decimal_context = decimal.getcontext()

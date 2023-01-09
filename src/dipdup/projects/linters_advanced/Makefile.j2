@@ -49,21 +49,6 @@ build:          ## Build Python wheel package
 image:          ## Build Docker image
 	docker buildx build . -t {{ cookiecutter.project_name }}:${TAG}
 
-release-patch:  ## Release patch version
-	bumpversion patch
-	git push --tags
-	git push
-
-release-minor:  ## Release minor version
-	bumpversion minor
-	git push --tags
-	git push
-
-release-major:  ## Release major version
-	bumpversion major
-	git push --tags
-	git push
-
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 

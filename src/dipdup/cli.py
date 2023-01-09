@@ -1,47 +1,35 @@
 # NOTE: All imports except the basic ones are very lazy in this module. Let's keep it that way.
 import asyncio
+import atexit
 import logging
-import os
-import platform
-import signal
 import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
-from functools import partial
 from functools import wraps
 from os import environ as env
 from pathlib import Path
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Awaitable
+from typing import Callable
+from typing import TypeVar
 from typing import cast
 
 import asyncclick as click
 
 from dipdup import __spec_version__
 from dipdup import __version__
-from dipdup import baking_bad
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
+from dipdup.utils.sys import IGNORE_CONFIG_CMDS
+from dipdup.utils.sys import is_in_ci
+from dipdup.utils.sys import is_in_tests
+from dipdup.utils.sys import set_up_logging
+from dipdup.utils.sys import set_up_process
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
-IGNORE_SIGINT = (None, 'new', 'schema', 'wipe', 'install', 'update', 'uninstall')
+
 
 _logger = logging.getLogger('dipdup.cli')
-_is_shutting_down = False
-
-
-def set_up_logging() -> None:
-    root = logging.getLogger()
-    handler = logging.StreamHandler(stream=sys.stdout)
-    formatter = logging.Formatter('%(levelname)-8s %(name)-20s %(message)s')
-    handler.setFormatter(formatter)
-    root.addHandler(handler)
-
-    # NOTE: Nothing useful there
-    logging.getLogger('tortoise').setLevel(logging.WARNING)
 
 
 def echo(message: str) -> None:
@@ -49,191 +37,40 @@ def echo(message: str) -> None:
         click.echo(message)
 
 
-async def _shutdown() -> None:
-    global _is_shutting_down
-    if _is_shutting_down:
-        return
-    _is_shutting_down = True
+def _print_help(error: Exception) -> None:
+    """Prints a helpful error message after the traceback"""
+    from dipdup.exceptions import Error
 
-    _logger.info('Shutting down')
-    tasks = filter(lambda t: t != asyncio.current_task(), asyncio.all_tasks())
-    list(map(asyncio.Task.cancel, tasks))
-    await asyncio.gather(*tasks, return_exceptions=True)
+    def _print() -> None:
+        if isinstance(error, Error):
+            click.echo(error.help(), err=True)
+        else:
+            click.echo(Error.default_help())
 
-
-def _print_help(error: Exception, crashdump_path: str) -> None:
-    """Prints helpful error message after traceback"""
-    import atexit
-
-    from dipdup.exceptions import DipDupError
-    from dipdup.exceptions import tab
-
-    help_message = error.format() if isinstance(error, DipDupError) else DipDupError().format()
-    help_message += tab + f'Crashdump saved to `{crashdump_path}`'
-    atexit.register(partial(click.echo, help_message, err=True))
+    atexit.register(_print)
 
 
-def cli_wrapper(fn):
+WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
+
+
+def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
-    async def wrapper(*args, **kwargs) -> None:
-        # NOTE: Avoid catching Click prompts
-        ctx = args[0]
-        if ctx.invoked_subcommand not in IGNORE_SIGINT:
-            loop = asyncio.get_running_loop()
-            loop.add_signal_handler(
-                signal.SIGINT,
-                lambda: asyncio.ensure_future(_shutdown()),
-            )
+    async def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
+        set_up_process(ctx.invoked_subcommand)
 
         try:
-            await fn(*args, **kwargs)
+            await fn(ctx, *args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            from dipdup.exceptions import save_crashdump
+            from dipdup.sentry import save_crashdump
 
-            _logger.exception('Unhandled exception caught')
             crashdump_path = save_crashdump(e)
-            _print_help(e, crashdump_path)
+            _logger.error(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
+            _print_help(e)
             raise
 
-    return wrapper
-
-
-def _sentry_before_send(
-    event: Dict[str, Any],
-    hint: Dict[str, Any],
-    crash_reporting: bool,
-) -> Optional[Dict[str, Any]]:
-    # NOTE: Terminated connections, cancelled tasks, etc.
-    if _is_shutting_down:
-        return None
-
-    # NOTE: Tests and CI
-    if 'pytest' in sys.modules or 'CI' in os.environ:
-        return None
-
-    # NOTE: User-generated events (e.g. from `ctx.logger`)
-    if logger_name := event['logger']:
-        if crash_reporting and not logger_name.startswith('dipdup'):
-            return None
-
-    # NOTE: Dark magic ahead. Merge CallbackError and its cause when possible.
-    with suppress(KeyError, IndexError):
-        exceptions = event['exception']['values']
-        if exceptions[-1]['type'] == 'CallbackError':
-            wrapper_frames = exceptions[-1]['stacktrace']['frames']
-            crash_frames = exceptions[-2]['stacktrace']['frames']
-            exceptions[-2]['stacktrace']['frames'] = wrapper_frames + crash_frames
-            event['message'] = exceptions[-2]['value']
-            del exceptions[-1]
-
-    return event
-
-
-def _init_sentry(config) -> None:
-    from dipdup.config import DipDupConfig
-    from dipdup.config import SentryConfig
-
-    assert isinstance(config, DipDupConfig)
-    if not config.sentry:
-        config.sentry = SentryConfig()
-
-    crash_reporting = config.advanced.crash_reporting
-    dsn = config.sentry.dsn
-
-    if dsn:
-        pass
-    elif crash_reporting:
-        dsn = baking_bad.SENTRY_DSN
-    else:
-        return
-
-    _logger.info('Crash reporting is enabled: %s', dsn)
-    if config.sentry.debug:
-        level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
-    else:
-        level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
-
-    import hashlib
-
-    import sentry_sdk
-    from sentry_sdk.integrations.aiohttp import AioHttpIntegration
-    from sentry_sdk.integrations.atexit import AtexitIntegration
-    from sentry_sdk.integrations.logging import LoggingIntegration
-
-    integrations = [
-        AioHttpIntegration(),
-        LoggingIntegration(
-            level=level,
-            event_level=event_level,
-        ),
-        # NOTE: Suppresses `atexit` notification
-        AtexitIntegration(lambda _, __: None),
-    ]
-    package = config.package or 'dipdup'
-    release = config.sentry.release or __version__
-    environment = config.sentry.environment
-    server_name = config.sentry.server_name
-    before_send = partial(
-        _sentry_before_send,
-        crash_reporting=crash_reporting,
-    )
-
-    in_docker = platform.system() == 'Linux' and Path('/.dockerenv').exists()
-    in_tests = 'pytest' in sys.modules
-    in_gha = 'CI' in os.environ
-
-    if not environment:
-        if in_docker:
-            environment = 'docker'
-        elif in_tests:
-            environment = 'tests'
-        elif in_gha:
-            environment = 'gha'
-        else:
-            environment = 'local'
-
-    if not server_name:
-        if crash_reporting:
-            # NOTE: Prevent Sentry from leaking hostnames
-            server_name = hashlib.sha256(platform.node().encode()).hexdigest()[:8]
-        else:
-            server_name = platform.node()
-
-    sentry_sdk.init(
-        dsn=config.sentry.dsn,
-        integrations=integrations,
-        attach_stacktrace=attach_stacktrace,
-        before_send=before_send,
-        release=release,
-        environment=environment,
-        server_name=server_name,
-    )
-
-    # NOTE: Setting session tags
-    tags = {
-        'python': platform.python_version(),
-        'os': f'{platform.system().lower()}-{platform.machine()}',
-        'version': __version__,
-        'package': package,
-        'release': release,
-        'environment': environment,
-        'server_name': server_name,
-        'crash_reporting': crash_reporting,
-    }
-    _logger.debug('Sentry tags: %s', ', '.join(f'{k}={v}' for k, v in tags.items()))
-    for tag, value in tags.items():
-        sentry_sdk.set_tag(f'dipdup.{tag}', value)
-
-    # NOTE: User ID allows to track release adoption. It's sent on every session,
-    # NOTE: but obfuscated below, so it's not a privacy issue. However, randomly
-    # NOTE: generated Docker hostnames may spoil this metric.
-    user_id = config.sentry.user_id or hashlib.sha256((package + environment).encode()).hexdigest()
-    _logger.debug('Sentry user_id: %s', user_id)
-
-    sentry_sdk.set_user({'id': user_id})
-    sentry_sdk.Hub.current.start_session()
+    return cast(WrappedCommandT, wrapper)
 
 
 async def _check_version() -> None:
@@ -279,21 +116,20 @@ async def _check_version() -> None:
     metavar='PATH',
 )
 @click.pass_context
-@cli_wrapper
-async def cli(ctx, config: List[str], env_file: List[str]):
+@_cli_wrapper
+async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
     """Manage and run DipDup indexers.
 
     Documentation: https://docs.dipdup.io
 
     Issues: https://github.com/dipdup-io/dipdup/issues
     """
-    # TODO: Remove in 7.0
     if env.get('DIPDUP_PYTEZOS'):
-        _logger.warning('PyTezos extra and corresponding Docker image is deprecated!')
+        _logger.warning('PyTezos image is not actively maintained and may be removed in future releases')
 
-    # NOTE: Workaround for help pages
-    args = sys.argv[1:]
-    if '--help' in args or args in ([], ['config'], ['hasura'], ['schema']):
+    # NOTE: Workaround for help pages. First argument check is for the test runner.
+    args = sys.argv[1:] if sys.argv else ['--help']
+    if '--help' in args or args in (['config'], ['hasura'], ['schema']):
         return
 
     from dotenv import load_dotenv
@@ -313,7 +149,7 @@ async def cli(ctx, config: List[str], env_file: List[str]):
         load_dotenv(env_path, override=True)
 
     # NOTE: These commands need no other preparations
-    if ctx.invoked_subcommand in ('new', 'update', 'install', 'update', 'uninstall'):
+    if ctx.invoked_subcommand in IGNORE_CONFIG_CMDS:
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
@@ -324,23 +160,24 @@ async def cli(ctx, config: List[str], env_file: List[str]):
     from dipdup.exceptions import ConfigurationError
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.exceptions import MigrationRequiredError
+    from dipdup.sentry import init_sentry
 
     _config = DipDupConfig.load(config_paths)
     _config.set_up_logging()
 
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
-    _init_sentry(_config)
+    init_sentry(_config)
 
     # NOTE: Fire and forget, do not block instant commands
-    if not _config.advanced.skip_version_check:
+    if not any((_config.advanced.skip_version_check, is_in_tests(), is_in_ci())):
         asyncio.ensure_future(_check_version())
 
     # NOTE: Avoid import errors if project package is incomplete
     try:
-        await CodeGenerator(_config, {}).create_package()
+        CodeGenerator(_config, {}).create_package()
     except Exception as e:
-        raise InitializationRequiredError('Failed to create a project package.') from e
+        raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
 
     # NOTE: Ensure that `spec_version` is valid and supported
     if _config.spec_version not in spec_version_mapping:
@@ -351,7 +188,7 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 
     @dataclass
     class CLIContext:
-        config_paths: List[str]
+        config_paths: list[str]
         config: DipDupConfig
 
     ctx.obj = CLIContext(
@@ -362,8 +199,8 @@ async def cli(ctx, config: List[str], env_file: List[str]):
 
 @cli.command()
 @click.pass_context
-@cli_wrapper
-async def run(ctx) -> None:
+@_cli_wrapper
+async def run(ctx: click.Context) -> None:
     """Run indexer.
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
@@ -382,8 +219,8 @@ async def run(ctx) -> None:
 @click.option('--overwrite-types', is_flag=True, help='Regenerate existing types.')
 @click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types.')
 @click.pass_context
-@cli_wrapper
-async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
+@_cli_wrapper
+async def init(ctx: click.Context, overwrite_types: bool, keep_schemas: bool) -> None:
     """Generate project tree, callbacks and types.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
@@ -398,8 +235,8 @@ async def init(ctx, overwrite_types: bool, keep_schemas: bool) -> None:
 
 @cli.command()
 @click.pass_context
-@cli_wrapper
-async def migrate(ctx) -> None:
+@_cli_wrapper
+async def migrate(ctx: click.Context) -> None:
     """
     Migrate project to the new spec version.
 
@@ -410,8 +247,8 @@ async def migrate(ctx) -> None:
 
 @cli.command()
 @click.pass_context
-@cli_wrapper
-async def status(ctx) -> None:
+@_cli_wrapper
+async def status(ctx: click.Context) -> None:
     """Show the current status of indexes in the database."""
     from dipdup.config import DipDupConfig
     from dipdup.models import Index
@@ -421,7 +258,7 @@ async def status(ctx) -> None:
     url = config.database.connection_string
     models = f'{config.package}.models'
 
-    table: List[Tuple[str, str, str | int]] = [('name', 'status', 'level')]
+    table: list[tuple[str, str, str | int]] = [('name', 'status', 'level')]
     async with tortoise_wrapper(url, models):
         async for index in Index.filter().order_by('name'):
             row = (index.name, index.status.value, index.level)
@@ -435,8 +272,8 @@ async def status(ctx) -> None:
 
 @cli.group()
 @click.pass_context
-@cli_wrapper
-async def config(ctx) -> None:
+@_cli_wrapper
+async def config(ctx: click.Context) -> None:
     """Commands to manage DipDup configuration."""
     ...
 
@@ -445,8 +282,8 @@ async def config(ctx) -> None:
 @click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from config.')
 @click.option('--full', is_flag=True, help='Resolve index templates.')
 @click.pass_context
-@cli_wrapper
-async def config_export(ctx, unsafe: bool, full: bool) -> None:
+@_cli_wrapper
+async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
     """
     Print config after resolving all links and, optionally, templates.
 
@@ -466,8 +303,8 @@ async def config_export(ctx, unsafe: bool, full: bool) -> None:
 @config.command(name='env')
 @click.option('--file', '-f', type=str, default=None, help='Output to file instead of stdout.')
 @click.pass_context
-@cli_wrapper
-async def config_env(ctx, file: Optional[str]) -> None:
+@_cli_wrapper
+async def config_env(ctx: click.Context, file: str | None) -> None:
     """Dump environment variables used in DipDup config.
 
     If variable is not set, default value will be used.
@@ -488,16 +325,16 @@ async def config_env(ctx, file: Optional[str]) -> None:
 
 @cli.group(help='Commands related to Hasura integration.')
 @click.pass_context
-@cli_wrapper
-async def hasura(ctx) -> None:
+@_cli_wrapper
+async def hasura(ctx: click.Context) -> None:
     ...
 
 
 @hasura.command(name='configure')
 @click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
-@cli_wrapper
-async def hasura_configure(ctx, force: bool) -> None:
+@_cli_wrapper
+async def hasura_configure(ctx: click.Context, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
     from dipdup.config import DipDupConfig
     from dipdup.config import PostgresDatabaseConfig
@@ -529,16 +366,16 @@ async def hasura_configure(ctx, force: bool) -> None:
 
 @cli.group()
 @click.pass_context
-@cli_wrapper
-async def schema(ctx) -> None:
+@_cli_wrapper
+async def schema(ctx: click.Context) -> None:
     """Commands to manage database schema."""
     ...
 
 
 @schema.command(name='approve')
 @click.pass_context
-@cli_wrapper
-async def schema_approve(ctx) -> None:
+@_cli_wrapper
+async def schema_approve(ctx: click.Context) -> None:
     """Continue to use existing schema after reindexing was triggered."""
     from dipdup.config import DipDupConfig
     from dipdup.models import Index
@@ -552,7 +389,7 @@ async def schema_approve(ctx) -> None:
     _logger.info('Approving schema `%s`', url)
 
     async with tortoise_wrapper(url, models):
-        # FIXME: Non-nullable fields
+        # TODO: Non-nullable fields, remove in 7.0
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
             hash='',
@@ -568,8 +405,8 @@ async def schema_approve(ctx) -> None:
 @click.option('--immune', is_flag=True, help='Drop immune tables too.')
 @click.option('--force', is_flag=True, help='Skip confirmation prompt.')
 @click.pass_context
-@cli_wrapper
-async def schema_wipe(ctx, immune: bool, force: bool) -> None:
+@_cli_wrapper
+async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     """
     Drop all database tables, functions and views.
 
@@ -619,8 +456,8 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
 
 @schema.command(name='init')
 @click.pass_context
-@cli_wrapper
-async def schema_init(ctx) -> None:
+@_cli_wrapper
+async def schema_init(ctx: click.Context) -> None:
     """
     Prepare a database for running DipDip.
 
@@ -655,8 +492,8 @@ async def schema_init(ctx) -> None:
 
 @schema.command(name='export')
 @click.pass_context
-@cli_wrapper
-async def schema_export(ctx) -> None:
+@_cli_wrapper
+async def schema_export(ctx: click.Context) -> None:
     """Print SQL schema including scripts from `sql/on_reindex`.
 
     This command may help you debug inconsistency between project models and expected SQL schema.
@@ -690,9 +527,9 @@ async def schema_export(ctx) -> None:
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing files.')
 @click.option('--replay', '-r', type=click.Path(exists=True), default=None, help='Replay a previously saved state.')
-@cli_wrapper
+@_cli_wrapper
 async def new(
-    ctx,
+    ctx: click.Context,
     quiet: bool,
     force: bool,
     replay: str | None,
@@ -711,9 +548,9 @@ async def new(
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
 @click.option('--ref', '-r', default=None, help='Install DipDup from a specific git ref.')
 @click.option('--path', '-p', default=None, help='Install DipDup from a local path.')
-@cli_wrapper
+@_cli_wrapper
 async def install(
-    ctx,
+    ctx: click.Context,
     quiet: bool,
     force: bool,
     ref: str | None,
@@ -728,9 +565,9 @@ async def install(
 @cli.command()
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
-@cli_wrapper
+@_cli_wrapper
 async def uninstall(
-    ctx,
+    ctx: click.Context,
     quiet: bool,
 ) -> None:
     """Uninstall DipDup for the current user."""
@@ -743,9 +580,9 @@ async def uninstall(
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
-@cli_wrapper
+@_cli_wrapper
 async def update(
-    ctx,
+    ctx: click.Context,
     quiet: bool,
     force: bool,
 ) -> None:

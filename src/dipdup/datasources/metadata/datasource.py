@@ -1,7 +1,6 @@
 import logging
 from typing import Any
-from typing import Dict
-from typing import Optional
+from typing import cast
 
 from dipdup.config import HTTPConfig
 from dipdup.datasources.datasource import GraphQLDatasource
@@ -17,12 +16,12 @@ class MetadataDatasource(GraphQLDatasource):
         ratelimit_period=1,
     )
 
-    def __init__(self, url: str, network: MetadataNetwork, http_config: Optional[HTTPConfig] = None) -> None:
-        super().__init__(url, self._default_http_config.merge(http_config))
+    def __init__(self, url: str, network: MetadataNetwork, http_config: HTTPConfig | None = None) -> None:
+        super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.metadata')
         self._network = network
 
-    async def get_contract_metadata(self, address: str) -> Optional[Dict[str, Any]]:
+    async def get_contract_metadata(self, address: str) -> dict[str, Any] | None:
         response = await self.request(
             'get',
             url='api/rest/contract_metadata',
@@ -33,10 +32,10 @@ class MetadataDatasource(GraphQLDatasource):
         )
         response = response['contract_metadata']
         if response:
-            return response[0]['metadata']
+            return cast(dict[str, Any], response[0]['metadata'])
         return None
 
-    async def get_token_metadata(self, address: str, token_id: int) -> Optional[Dict[str, Any]]:
+    async def get_token_metadata(self, address: str, token_id: int) -> dict[str, Any] | None:
         response = await self.request(
             'get',
             url='api/rest/token_metadata',
@@ -48,7 +47,10 @@ class MetadataDatasource(GraphQLDatasource):
         )
         response = response['token_metadata']
         if response:
-            return response[0]['metadata']
+            return cast(
+                dict[str, Any],
+                response[0]['metadata'],
+            )
         return None
 
     async def run(self) -> None:

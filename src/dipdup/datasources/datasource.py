@@ -1,5 +1,6 @@
 import logging
 from abc import abstractmethod
+from typing import Any
 from typing import Awaitable
 from typing import Callable
 from typing import Optional
@@ -9,10 +10,12 @@ from typing import Tuple
 from aiohttp.hdrs import METH_GET
 
 from dipdup.config import HTTPConfig
+from dipdup.config import ResolvedHTTPConfig
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.subscription import SubscriptionManager
 from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
+from dipdup.exceptions import FrameworkException
 from dipdup.http import HTTPGateway
 from dipdup.models import BigMapData
 from dipdup.models import EventData
@@ -34,8 +37,9 @@ RollbackCallbackT = Callable[['IndexDatasource', MessageType, int, int], Awaitab
 
 
 class Datasource(HTTPGateway):
-    def __init__(self, url: str, http_config: HTTPConfig) -> None:
-        super().__init__(url, http_config)
+    def __init__(self, url: str, http_config: HTTPConfig | None = None) -> None:
+        config = ResolvedHTTPConfig.create(self._default_http_config, http_config)
+        super().__init__(url, config)
         self._logger = _logger
 
     @abstractmethod
@@ -47,16 +51,11 @@ class Datasource(HTTPGateway):
 
 
 class HttpDatasource(Datasource):
-    _default_http_config = HTTPConfig(
-        retry_sleep=1,
-        retry_multiplier=1.1,
-    )
-
     def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
-        super().__init__(url, self._default_http_config.merge(http_config))
+        super().__init__(url, http_config)
         self._logger = _logger
 
-    async def get(self, url: str, weight: int = 1, **kwargs):
+    async def get(self, url: str, weight: int = 1, **kwargs: Any) -> Any:
         return await self.request(METH_GET, url, weight, **kwargs)
 
     async def run(self) -> None:
@@ -69,7 +68,7 @@ class GraphQLDatasource(Datasource):
 
 
 class IndexDatasource(Datasource):
-    def __init__(self, url: str, http_config: HTTPConfig, merge_subscriptions: bool = False) -> None:
+    def __init__(self, url: str, http_config: HTTPConfig | None = None, merge_subscriptions: bool = False) -> None:
         super().__init__(url, http_config)
         self._on_connected_callbacks: Set[EmptyCallbackT] = set()
         self._on_disconnected_callbacks: Set[EmptyCallbackT] = set()
@@ -90,7 +89,7 @@ class IndexDatasource(Datasource):
     @property
     def network(self) -> str:
         if not self._network:
-            raise RuntimeError('Network is not set')
+            raise FrameworkException('Network is not set')
         return self._network
 
     @abstractmethod
@@ -155,7 +154,7 @@ class IndexDatasource(Datasource):
 
     def set_network(self, network: str) -> None:
         if self._network:
-            raise RuntimeError('Network is already set')
+            raise FrameworkException('Network is already set')
         self._network = network
 
     def set_sync_level(self, subscription: Optional[Subscription], level: int) -> None:

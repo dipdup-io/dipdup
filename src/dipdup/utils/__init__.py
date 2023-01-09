@@ -13,15 +13,17 @@ from typing import DefaultDict
 from typing import Dict
 from typing import Iterator
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
-from typing import cast
+from typing import Union
 
 import orjson
 from humps import main as humps
 
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import ProjectImportError
 
 
@@ -42,7 +44,7 @@ def snake_to_pascal(value: str) -> str:
     # NOTE: Special case, humps returns uppercase otherwise
     if value.isupper():
         value = value.lower()
-    return cast(str, humps.pascalize(value))
+    return humps.pascalize(value)
 
 
 def pascal_to_snake(value: str, strip_dots: bool = True) -> str:
@@ -69,7 +71,7 @@ _TT = TypeVar('_TT')
 def groupby(seq: Sequence[_T], key: Callable[[Any], _TT]) -> DefaultDict[_TT, List[_T]]:
     """Group by key into defaultdict"""
     return reduce(
-        lambda grp, val: grp[key(val)].append(val) or grp,  # type: ignore
+        lambda grp, val: grp[key(val)].append(val) or grp,  # type: ignore[func-returns-value]
         seq,
         defaultdict(list),
     )
@@ -87,7 +89,25 @@ class FormattedLogger(Logger):
             return self._log
         return getattr(self.logger, name)
 
-    def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, stacklevel=1) -> None:
+    def _log(
+        self,
+        level: int,
+        msg: object,
+        args: Any,
+        exc_info: Optional[
+            Union[
+                None,
+                bool,
+                Union[
+                    tuple[type[BaseException], BaseException, Optional[types.TracebackType]], tuple[None, None, None]
+                ],
+                BaseException,
+            ]
+        ] = None,
+        extra: Mapping[str, Any] | None = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+    ) -> None:
         if self.fmt:
             msg = self.fmt.format(msg)
         self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
@@ -104,7 +124,7 @@ def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
     elif path.is_dir():
         paths = sorted(path.glob('**/*'))
     else:
-        raise RuntimeError(f'Path `{path}` exists but is neither a file nor a directory')
+        raise FrameworkException(f'Path `{path}` exists but is neither a file nor a directory')
 
     for path in paths:
         if ext and path.suffix != ext:
@@ -133,8 +153,8 @@ def exclude_none(config_json: Any) -> Any:
     return config_json
 
 
-def json_dumps_decimals(obj):
-    def _default(obj):
+def json_dumps_decimals(obj: Any) -> str:
+    def _default(obj: Any) -> Any:
         if isinstance(obj, Decimal):
             return str(obj)
         raise TypeError

@@ -1,27 +1,18 @@
-import asyncio
 import hashlib
 import importlib
 import logging
 import re
-from contextlib import suppress
-from http import HTTPStatus
 from json import dumps as dump_json
 from pathlib import Path
 from typing import Any
-from typing import Dict
 from typing import Iterable
 from typing import Iterator
-from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import Union
 from typing import cast
 
 import orjson as json
-from aiohttp import ClientConnectorError
-from aiohttp import ClientOSError
 from aiohttp import ClientResponseError
-from aiohttp import ServerDisconnectedError
 from humps import main as humps
 from pydantic.dataclasses import dataclass
 from tortoise import fields
@@ -30,14 +21,38 @@ from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import ResolvedHTTPConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import HasuraError
+from dipdup.exceptions import UnsupportedAPIError
 from dipdup.http import HTTPGateway
 from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import iter_models
+
+# NOTE: See https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg
+vulnerable_versions = {
+    'v2.15.1': 'v2.15.2',
+    'v2.15.0': 'v2.15.2',
+    'v2.14.0': 'v2.14.1',
+    'v2.13.1': 'v2.13.2',
+    'v2.13.0': 'v2.13.2',
+    'v2.12.0': 'v2.12.1',
+    'v2.11.2': 'v2.11.3',
+    'v2.11.1': 'v2.11.3',
+    'v2.11.0': 'v2.11.3',
+    'v2.10.1': 'v2.10.2',
+    'v2.10.0': 'v2.10.2',
+    # NOTE: Starting with v2.12.0, Community and Enterprise editions are on the same release
+    'v2.11.2-pro.1': 'v2.11.3',
+    'v2.11.1-pro.1': 'v2.11.3',
+    'v2.11.0-pro.1': 'v2.11.3',
+    'v2.10.1-pro.1': 'v2.10.2',
+    'v2.10.0-pro.1': 'v2.10.2',
+}
 
 RelationalFieldT = Union[
     fields.relational.ForeignKeyFieldInstance,
@@ -101,7 +116,10 @@ class HasuraGateway(HTTPGateway):
         database_config: PostgresDatabaseConfig,
         http_config: Optional[HTTPConfig] = None,
     ) -> None:
-        super().__init__(hasura_config.url, self._default_http_config.merge(http_config))
+        super().__init__(
+            hasura_config.url,
+            ResolvedHTTPConfig.create(self._default_http_config, http_config),
+        )
         self._logger = logging.getLogger('dipdup.hasura')
         self._package = package
         self._hasura_config = hasura_config
@@ -180,19 +198,19 @@ class HasuraGateway(HTTPGateway):
 
         self._logger.info('Hasura instance has been configured')
 
-    def _get_source(self, metadata: Dict[str, Any], name: str) -> Optional[Dict[str, Any]]:
+    def _get_source(self, metadata: dict[str, Any], name: str) -> dict[str, Any] | None:
         for source in metadata['sources']:
             if source['name'] == name:
-                return source
+                return cast(dict[str, Any], source)
         else:
             return None
 
-    async def _hasura_request(self, endpoint: str, json: Dict[str, Any]) -> Dict[str, Any]:
+    async def _hasura_request(self, endpoint: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
         try:
             result = await self.request(
-                method='post',
-                url=f'{self._hasura_config.url}/v1/{endpoint}',
+                method='get' if json is None else 'post',
+                url=f'v1/{endpoint}',
                 json=json,
                 headers=self._hasura_config.headers,
             )
@@ -203,32 +221,28 @@ class HasuraGateway(HTTPGateway):
         if errors := result.get('error') or result.get('errors'):
             raise HasuraError(errors)
 
-        return result
+        return cast(dict[str, Any], result)
 
     async def _healthcheck(self) -> None:
-        self._logger.info('Waiting for Hasura instance to be ready')
-        timeout = self._http_config.connection_timeout or 60
-        for _ in range(timeout):
-            with suppress(ClientConnectorError, ClientOSError, ServerDisconnectedError):
-                response = await self._http._session.get(f'{self._hasura_config.url}/healthz')
-                if response.status == HTTPStatus.OK:
-                    break
-            await asyncio.sleep(1)
-        else:
-            raise HasuraError(f'Not responding for {timeout} seconds')
-
-        version_json = await (
-            await self._http._session.get(
-                f'{self._hasura_config.url}/v1/version',
-            )
-        ).json()
+        self._logger.info('Connecting to Hasura instance')
+        version_json = await self._hasura_request('version')
         version = version_json['version']
         if version.startswith('v1'):
-            raise HasuraError('v1 is not supported, upgrade to the latest stable version.')
+            raise UnsupportedAPIError(
+                self.url, 'hasura', 'API v1 is not supported; upgrade to the latest stable version.'
+            )
+
+        # NOTE: See https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg
+        if version in vulnerable_versions:
+            raise UnsupportedAPIError(
+                self.url,
+                'hasura',
+                f'A critical vulnerability has been discovered in {version}!\n    Update to {vulnerable_versions[version]} or the latest stable version immediately.',
+            )
 
         self._logger.info('Connected to Hasura %s', version)
 
-    async def _create_source(self) -> Dict[str, Any]:
+    async def _create_source(self) -> dict[str, Any]:
         self._logger.info(f'Adding source `{self._hasura_config.source}`')
         return await self._hasura_request(
             endpoint='metadata',
@@ -249,7 +263,7 @@ class HasuraGateway(HTTPGateway):
             },
         )
 
-    async def _fetch_metadata(self) -> Dict[str, Any]:
+    async def _fetch_metadata(self) -> dict[str, Any]:
         self._logger.info('Fetching existing metadata')
         return await self._hasura_request(
             endpoint='metadata',
@@ -259,10 +273,10 @@ class HasuraGateway(HTTPGateway):
             },
         )
 
-    def _hash_metadata(self, metadata: Dict[str, Any]) -> str:
+    def _hash_metadata(self, metadata: dict[str, Any]) -> str:
         return hashlib.sha256(json.dumps(metadata)).hexdigest()
 
-    async def _replace_metadata(self, metadata: Dict[str, Any]) -> None:
+    async def _replace_metadata(self, metadata: dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')
         endpoint, json = 'query', {
             'type': 'replace_metadata',
@@ -272,7 +286,7 @@ class HasuraGateway(HTTPGateway):
         }
         await self._hasura_request(endpoint, json)
 
-    async def _get_views(self) -> List[str]:
+    async def _get_views(self) -> list[str]:
         conn = get_connection()
         views = [
             row[0]
@@ -286,13 +300,13 @@ class HasuraGateway(HTTPGateway):
         self._logger.info('Found %s regular and materialized views', len(views))
         return views
 
-    def _iterate_graphql_queries(self) -> Iterator[Tuple[str, str]]:
+    def _iterate_graphql_queries(self) -> Iterator[tuple[str, str]]:
         package = importlib.import_module(self._package)
         graphql_path = Path(cast(str, package.__file__)) / 'graphql'
         for file in iter_files(graphql_path, '.graphql'):
             yield file.name.split('/')[-1][:-8], file.read()
 
-    async def _generate_source_tables_metadata(self) -> List[Dict[str, Any]]:
+    async def _generate_source_tables_metadata(self) -> list[dict[str, Any]]:
         """Generate source tables metadata based on project models and views.
 
         Includes tables and their relations.
@@ -365,7 +379,7 @@ class HasuraGateway(HTTPGateway):
 
         return list(metadata_tables.values())
 
-    async def _generate_query_collections_metadata(self) -> List[Dict[str, Any]]:
+    async def _generate_query_collections_metadata(self) -> list[dict[str, Any]]:
         queries = []
         for _, model in iter_models(self._package):
             table_name = model._meta.db_table or pascal_to_snake(model.__name__)
@@ -375,7 +389,7 @@ class HasuraGateway(HTTPGateway):
                     filter = field_name
                     break
             else:
-                raise RuntimeError(f'Table `{table_name}` has no primary key. How is that possible?')
+                raise FrameworkException(f'Table `{table_name}` has no primary key. How is that possible?')
 
             fields = await self._get_fields(table_name)
             queries.append(
@@ -395,13 +409,13 @@ class HasuraGateway(HTTPGateway):
 
         return queries
 
-    async def _generate_rest_endpoints_metadata(self, query_names: List[str]) -> List[Dict[str, Any]]:
+    async def _generate_rest_endpoints_metadata(self, query_names: list[str]) -> list[dict[str, Any]]:
         rest_endpoints = []
         for query_name in query_names:
             rest_endpoints.append(self._format_rest_endpoint(query_name))
         return rest_endpoints
 
-    async def _get_fields_json(self, name: str) -> List[Dict[str, Any]]:
+    async def _get_fields_json(self, name: str) -> list[dict[str, Any]]:
         result = await self._hasura_request(
             endpoint='graphql',
             json={
@@ -410,11 +424,11 @@ class HasuraGateway(HTTPGateway):
             },
         )
         try:
-            return result['data']['__type']['fields']
+            return cast(list[dict[str, Any]], result['data']['__type']['fields'])
         except TypeError as e:
             raise HasuraError(f'Unknown table `{name}`') from e
 
-    async def _get_fields(self, name: str = 'query_root') -> List[Field]:
+    async def _get_fields(self, name: str = 'query_root') -> list[Field]:
         name = humps.decamelize(name)
 
         try:
@@ -451,7 +465,7 @@ class HasuraGateway(HTTPGateway):
 
         return fields
 
-    async def _apply_table_customization(self, source: Dict[str, Any]) -> None:
+    async def _apply_table_customization(self, source: dict[str, Any]) -> None:
         """Convert table and column names to camelCase.
 
         Based on https://github.com/m-rgba/hasura-snake-to-camel
@@ -461,7 +475,7 @@ class HasuraGateway(HTTPGateway):
         table_names = {t['table']['name'] for t in source['tables']}
         tables = await self._get_fields()
 
-        # TODO: Use new API
+        # TODO: Use new Hasura API
         self._logger.info('Applying table customizations (could take some time)')
         for table in tables:
             if table.root not in table_names:
@@ -470,7 +484,7 @@ class HasuraGateway(HTTPGateway):
             custom_root_fields = self._format_custom_root_fields(table.root)
             columns = await self._get_fields(table.root)
             custom_column_names = self._format_custom_column_names(columns)
-            args: Dict[str, Any] = {
+            args: dict[str, Any] = {
                 'table': self._format_table_table(table.root),
                 'source': self._hasura_config.source,
                 'configuration': {
@@ -488,7 +502,7 @@ class HasuraGateway(HTTPGateway):
                 },
             )
 
-    def _format_rest_query(self, name: str, table: str, filter: str, fields: Iterable[Field]) -> Dict[str, Any]:
+    def _format_rest_query(self, name: str, table: str, filter: str, fields: Iterable[Field]) -> dict[str, Any]:
         if not table.endswith('_by_pk'):
             table += '_by_pk'
 
@@ -521,7 +535,7 @@ class HasuraGateway(HTTPGateway):
             + '}}',
         }
 
-    def _format_rest_head_status_query(self) -> Dict[str, Any]:
+    def _format_rest_head_status_query(self) -> dict[str, Any]:
         name = 'dipdup_head_status'
         if self._hasura_config.camel_case:
             name = humps.camelize(name)
@@ -531,7 +545,7 @@ class HasuraGateway(HTTPGateway):
             'query': 'query ' + name + ' ($name: String!) {' + name + '(where: {name: {_eq: $name}}) {status}}',
         }
 
-    def _format_rest_endpoint(self, query_name: str) -> Dict[str, Any]:
+    def _format_rest_endpoint(self, query_name: str) -> dict[str, Any]:
         return {
             'definition': {
                 'query': {
@@ -545,7 +559,7 @@ class HasuraGateway(HTTPGateway):
             'comment': None,
         }
 
-    def _format_custom_root_fields(self, table_name: str) -> Dict[str, Any]:
+    def _format_custom_root_fields(self, table_name: str) -> dict[str, Any]:
         def _fmt(fmt: str) -> str:
             if self._hasura_config.camel_case:
                 return humps.camelize(fmt.format(table_name))
@@ -564,13 +578,13 @@ class HasuraGateway(HTTPGateway):
             'delete_by_pk': _fmt('delete_{}_by_pk'),
         }
 
-    def _format_custom_column_names(self, fields: List[Field]) -> Dict[str, Any]:
+    def _format_custom_column_names(self, fields: list[Field]) -> dict[str, Any]:
         if self._hasura_config.camel_case:
             return {humps.decamelize(f.name): humps.camelize(f.name) for f in fields}
         else:
             return {humps.decamelize(f.name): humps.decamelize(f.name) for f in fields}
 
-    def _format_table(self, name: str) -> Dict[str, Any]:
+    def _format_table(self, name: str) -> dict[str, Any]:
         return {
             'table': self._format_table_table(name),
             'object_relationships': [],
@@ -580,7 +594,7 @@ class HasuraGateway(HTTPGateway):
             ],
         }
 
-    def _format_table_table(self, name: str) -> Dict[str, Any]:
+    def _format_table_table(self, name: str) -> dict[str, Any]:
         return {
             'schema': self._database_config.schema_name,
             'name': name,
@@ -591,7 +605,7 @@ class HasuraGateway(HTTPGateway):
         related_name: str,
         table: str,
         column: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             'name': related_name if not self._hasura_config.camel_case else humps.camelize(related_name),
             'using': {
@@ -605,7 +619,7 @@ class HasuraGateway(HTTPGateway):
             },
         }
 
-    def _format_object_relationship(self, name: str, column: str) -> Dict[str, Any]:
+    def _format_object_relationship(self, name: str, column: str) -> dict[str, Any]:
         return {
             'name': name if not self._hasura_config.camel_case else humps.camelize(name),
             'using': {
@@ -613,7 +627,7 @@ class HasuraGateway(HTTPGateway):
             },
         }
 
-    def _format_select_permissions(self) -> Dict[str, Any]:
+    def _format_select_permissions(self) -> dict[str, Any]:
         return {
             'role': 'user',
             'permission': {

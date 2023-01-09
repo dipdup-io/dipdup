@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from collections import deque
 from copy import copy
 from dataclasses import field
 from datetime import date
@@ -10,26 +11,24 @@ from enum import Enum
 from functools import cache
 from typing import Any
 from typing import DefaultDict
-from typing import Deque
 from typing import Dict
 from typing import Generic
 from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Set
-from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import cast
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
-from tortoise import BaseDBAsyncClient
-from tortoise import Model as TortoiseModel
 from tortoise import fields
+from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.expressions import Q
 from tortoise.fields import relational
 from tortoise.models import MODEL
+from tortoise.models import Model as TortoiseModel
 from tortoise.queryset import BulkCreateQuery as TortoiseBulkCreateQuery
 from tortoise.queryset import BulkUpdateQuery as TortoiseBulkUpdateQuery
 from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
@@ -40,6 +39,7 @@ from dipdup.enums import IndexStatus
 from dipdup.enums import IndexType
 from dipdup.enums import ReindexingReason
 from dipdup.enums import TokenStandard
+from dipdup.exceptions import FrameworkException
 from dipdup.utils import json_dumps_decimals
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
@@ -71,7 +71,7 @@ class OperationData:
     status: str
     has_internals: Optional[bool]
     storage: Any
-    diffs: Tuple[Dict[str, Any], ...] = field(default_factory=tuple)
+    diffs: tuple[Dict[str, Any], ...] = field(default_factory=tuple)
     block: Optional[str] = None
     sender_alias: Optional[str] = None
     nonce: Optional[int] = None
@@ -83,9 +83,11 @@ class OperationData:
     originated_contract_alias: Optional[str] = None
     originated_contract_type_hash: Optional[int] = None
     originated_contract_code_hash: Optional[int] = None
-    originated_contract_tzips: Optional[Tuple[str, ...]] = None
+    originated_contract_tzips: Optional[tuple[str, ...]] = None
     delegate_address: Optional[str] = None
     delegate_alias: Optional[str] = None
+    target_code_hash: Optional[int] = None
+    sender_code_hash: Optional[int] = None
 
 
 @dataclass
@@ -280,13 +282,13 @@ class VersionedTransaction:
 # NOTE: Overwritten by TransactionManager.register()
 def get_transaction() -> Optional[VersionedTransaction]:
     """Get metadata of currently opened versioned transaction if any"""
-    raise RuntimeError('TransactionManager is not registered')
+    raise FrameworkException('TransactionManager is not registered')
 
 
 # NOTE: Overwritten by TransactionManager.register()
-def get_pending_updates() -> Deque['ModelUpdate']:
+def get_pending_updates() -> deque['ModelUpdate']:
     """Get pending model updates queue"""
-    raise RuntimeError('TransactionManager is not registered')
+    raise FrameworkException('TransactionManager is not registered')
 
 
 class ModelUpdateAction(Enum):
@@ -374,7 +376,7 @@ class ModelUpdate(TortoiseModel):
                 elif isinstance(field_, fields.TimeField):
                     data[key] = time.fromisoformat(value)
 
-                # TODO: There may be more non-JSON-deserializable fields
+                # NOTE: There are possibly more non-JSON-deserializable fields.
 
         _logger.debug(
             'Reverting %s(%s) %s: %s',
@@ -404,8 +406,8 @@ class UpdateQuery(TortoiseUpdateQuery):
         annotations: Dict[str, Any],
         custom_filters: Dict[str, Dict[str, Any]],
         limit: Optional[int],
-        orderings: List[Tuple[str, str]],
-        filter_queryset: TortoiseQuerySet,
+        orderings: List[tuple[str, str]],
+        filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(
             model,
@@ -443,8 +445,8 @@ class DeleteQuery(TortoiseDeleteQuery):
         annotations: Dict[str, Any],
         custom_filters: Dict[str, Dict[str, Any]],
         limit: Optional[int],
-        orderings: List[Tuple[str, str]],
-        filter_queryset: TortoiseQuerySet,
+        orderings: List[tuple[str, str]],
+        filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(model, db, q_objects, annotations, custom_filters, limit, orderings)
         self.filter_queryset = filter_queryset
@@ -485,7 +487,7 @@ class BulkCreateQuery(TortoiseBulkCreateQuery):
         return await super()._execute()
 
 
-class QuerySet(TortoiseQuerySet):
+class QuerySet(TortoiseQuerySet):  # type: ignore[type-arg]
     def update(self, **kwargs: Any) -> UpdateQuery:
         return UpdateQuery(
             db=self._db,
@@ -591,7 +593,7 @@ class Model(TortoiseModel):
             get_pending_updates().append(update)
 
     @classmethod
-    def filter(cls, *args: Any, **kwargs: Any) -> TortoiseQuerySet:
+    def filter(cls, *args: Any, **kwargs: Any) -> TortoiseQuerySet:  # type: ignore[type-arg]
         return QuerySet(cls).filter(*args, **kwargs)
 
     @classmethod
@@ -646,7 +648,7 @@ class Model(TortoiseModel):
             raise ValueError('All bulk_update() objects must have a primary key set.')
 
         self = QuerySet(cls)
-        return BulkUpdateQuery(  # type:ignore
+        return BulkUpdateQuery(
             db=self._db,
             model=self.model,
             q_objects=self._q_objects,
@@ -724,6 +726,7 @@ class Index(TortoiseModel):
 class Contract(TortoiseModel):
     name = fields.CharField(256, pk=True)
     address = fields.CharField(256)
+    # TODO: Add `code_hash` field
     typename = fields.CharField(256, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)

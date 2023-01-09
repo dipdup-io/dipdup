@@ -1,0 +1,50 @@
+spec_version: 1.2
+package: {{ cookiecutter.package }}
+
+database:
+  kind: sqlite
+  path: {{ cookiecutter.project_name }}.sqlite3
+
+contracts:
+  tzcolors_minter:
+    address: KT1FyaDqiMQWg7Exo7VUiXAgZbd2kCzo3d4s
+    typename: tzcolors_minter
+  tzcolors_auction:
+    address: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
+    typename: tzcolors_auction
+
+datasources:
+  tzkt:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+templates:
+  auction:
+    kind: operation
+    datasource: <datasource>
+    contracts:
+      - <auction>
+    handlers:
+      - callback: on_create_auction
+        pattern:
+          - type: transaction
+            destination: <auction>
+            entrypoint: create_auction
+      - callback: on_bid
+        pattern:
+          - type: transaction
+            destination: <auction>
+            entrypoint: bid
+      - callback: on_withdraw
+        pattern:
+          - type: transaction
+            destination: <auction>
+            entrypoint: withdraw
+
+indexes:
+  tzcolors:
+    template: auction
+    values:
+      datasource: tzkt
+      minter: tzcolors_minter
+      auction: tzcolors_auction

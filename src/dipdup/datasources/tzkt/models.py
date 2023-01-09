@@ -19,6 +19,8 @@ from typing_extensions import get_args
 from typing_extensions import get_origin
 
 from dipdup.datasources.subscription import Subscription
+from dipdup.exceptions import FrameworkException
+from dipdup.exceptions import InvalidDataError
 from dipdup.models import OperationData
 from dipdup.models import StorageType
 from dipdup.utils.codegen import parse_object
@@ -73,7 +75,7 @@ class BigMapSubscription(Subscription):
         elif not self.address and not self.path:
             return [{}]
         else:
-            raise RuntimeError
+            raise FrameworkException('Either both `address` and `path` should be set or none of them')
 
 
 @dataclass(frozen=True)
@@ -118,12 +120,12 @@ def extract_root_outer_type(storage_type: Type[BaseModel]) -> T:
         # NOTE: Optional is a magic _SpecialForm
         return cast(Type[BaseModel], Optional[root_field.type_])
 
-    return root_field.outer_type_
+    return root_field.outer_type_  # type: ignore[no-any-return]
 
 
 # FIXME: Unsafe cache size here and below
 @lru_cache(None)
-def is_array_type(storage_type: Type) -> bool:
+def is_array_type(storage_type: type[Any]) -> bool:
     """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
     # NOTE: list[...]
     if get_origin(storage_type) == list:
@@ -143,7 +145,7 @@ def get_list_elt_type(list_type: Type[Any]) -> Type[Any]:
     """Extract list item type from list type"""
     # NOTE: regular list
     if get_origin(list_type) == list:
-        return get_args(list_type)[0]
+        return get_args(list_type)[0]  # type: ignore[no-any-return]
 
     # NOTE: Pydantic model with __root__ field subclassing List
     root_type = extract_root_outer_type(list_type)
@@ -155,7 +157,7 @@ def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[An
     """Extract dict value types from field type"""
     # NOTE: Regular dict
     if get_origin(dict_type) == dict:
-        return get_args(dict_type)[1]
+        return get_args(dict_type)[1]  # type: ignore[no-any-return]
 
     # NOTE: Pydantic model with __root__ field subclassing Dict
     with suppress(*IntrospectionError):
@@ -173,14 +175,14 @@ def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[An
             if field.allow_none:
                 return cast(Type[Any], Optional[field.type_])
             else:
-                return field.outer_type_
+                return field.outer_type_  # type: ignore[no-any-return]
 
     # NOTE: Either we try the wrong Union path or model was modifier by user
     raise KeyError(f'Field `{key}` not found in {dict_type}')
 
 
 @lru_cache(None)
-def unwrap_union_type(union_type: Type) -> tuple[bool, tuple[Type, ...]]:
+def unwrap_union_type(union_type: type[Any]) -> tuple[bool, tuple[type[Any], ...]]:
     """Check if the type is either optional or union and return arg types if so"""
     if get_origin(union_type) == Union:
         return True, get_args(union_type)
@@ -198,7 +200,7 @@ def _preprocess_bigmap_diffs(diffs: Iterable[dict[str, Any]]) -> dict[int, Itera
         k: tuple(v)
         for k, v in groupby(
             filter(lambda d: d['action'] in ('add_key', 'update_key'), diffs),
-            lambda d: d['bigmap'],
+            lambda d: cast(int, d['bigmap']),
         )
     }
 
@@ -269,9 +271,12 @@ def deserialize_storage(operation_data: OperationData, storage_type: Type[Storag
     """Merge big map diffs and deserialize raw storage into typeclass"""
     bigmap_diffs = _preprocess_bigmap_diffs(operation_data.diffs)
 
-    operation_data.storage = _process_storage(
-        storage=operation_data.storage,
-        storage_type=storage_type,
-        bigmap_diffs=bigmap_diffs,
-    )
-    return parse_object(storage_type, operation_data.storage)
+    try:
+        operation_data.storage = _process_storage(
+            storage=operation_data.storage,
+            storage_type=storage_type,
+            bigmap_diffs=bigmap_diffs,
+        )
+        return parse_object(storage_type, operation_data.storage)
+    except IntrospectionError as e:
+        raise InvalidDataError(e.args[0], storage_type, operation_data.storage) from e

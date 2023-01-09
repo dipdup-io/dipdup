@@ -1,29 +1,28 @@
-import os
-from contextlib import AsyncExitStack
+from contextlib import asynccontextmanager
 from pathlib import Path
-from unittest.mock import MagicMock
+from typing import AsyncIterator
 
-from dipdup.config import DipDupConfig
-from dipdup.config import SqliteDatabaseConfig
-from dipdup.dipdup import DipDup
+from dipdup.config import HTTPConfig
+from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.utils.sys import set_in_tests
 
-os.environ['REPLAY_PATH'] = str(Path(__file__).parent / 'replays')
-
-if os.environ.get('DEBUG'):
-    from dipdup.cli import set_up_logging
-    from dipdup.config import LoggingValues
-
-    set_up_logging()
-    DipDupConfig.set_up_logging(MagicMock(logging=LoggingValues.verbose))
+set_in_tests()
 
 
-async def create_test_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:
-    config.database = SqliteDatabaseConfig(kind='sqlite', path=':memory:')
-    config.initialize(skip_imports=True)
+CONFIGS_PATH = Path(__file__).parent / 'configs'
+REPLAYS_PATH = Path(__file__).parent / 'replays'
+SRC_PATH = Path(__file__).parent.parent / 'src'
 
-    dipdup = DipDup(config)
-    await dipdup._create_datasources()
-    await dipdup._set_up_database(stack)
-    await dipdup._set_up_hooks(set())
-    await dipdup._initialize_schema()
-    return dipdup
+
+@asynccontextmanager
+async def tzkt_replay(
+    url: str = 'https://api.tzkt.io',
+    batch_size: int | None = None,
+) -> AsyncIterator[TzktDatasource]:
+    config = HTTPConfig(
+        batch_size=batch_size,
+        replay_path=str(Path(__file__).parent / 'replays'),
+    )
+    datasource = TzktDatasource(url, config)
+    async with datasource:
+        yield datasource

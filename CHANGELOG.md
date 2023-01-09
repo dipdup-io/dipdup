@@ -8,9 +8,106 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- index: New index kind `operation_unfiltered`.
+
+## [6.4.3] - 2023-01-05
+
+### Fixed
+
+- context: Fixed order of `add_contract` method arguments.
+- index: Fixed matching operations when both `address` and `code_hash` filters are specified.
+- sentry: Fixed sending crash reports when DSN is not set implicitly.
+- sentry: Increase event length limit.
+
+## [6.4.2] - 2022-12-31
+
+### Added
+
+- config: Added `http.ratelimit_sleep` option to set fixed sleep time on 429 responses.
+- context: Allow adding contracts by code hash in runtime.
+
+### Fixed
+
+- http: Fixed merging user-defined HTTP settings and datasource defaults.
+- tzkt: Fixed iterating over big map keys.
+
+## [6.4.1] - 2022-12-22
+
+### Fixed
+
+- models: Fixed package model detection.
+
+## [6.4.0] - 2022-12-20
+
+### Fixed
+
+- cli: `update` and `uninstall` commands no longer require a valid config.
+- cli: Fixed a regression in `new` command leading to crash with `TypeError`.
+- config: Fixed `jobs` section deserialization.
+- database: Ignore abstract models during module validation.
+
+## [6.4.0rc1] - 2022-12-09
+
+### Added
+
+- config: Added optional `code_hash` field to contract config.
+- context: Added `first_level` and `last_level` arguments to `ctx.add_index` methods.
+- index: Filtering by `code_hash` is available for `operation` index.
+- tzkt: Added datasource methods `get_contract_address` and `get_contract_hashes`.
+- tzkt: Originations and operations now can be fetched by contract code hashes.
+- tzkt: Added `sender_code_hash` and `target_code_hash` fields to `OperationData` model.
+
+### Fixed
+
+- codegen: Unresolved index templates are now correctly processed during types generation.
+- demos: Fixed outdated `demo_dao` project.
+- http: Fixed a crash when datasource URL contains trailing slash.
+- metadata: Add `limanet` to supported networks.
+- projects: Do not scaffold an outdated `poetry.lock`.
+
+### Changed
+
+- demos: Demos were renamed to better indicate their purpose.
+- exceptions: `FrameworkException` is raised instead of plain `RuntimeError` when a framework error occurs.
+- exceptions: Known exceptions are inherited from `FrameworkError`.
+- tzkt: Some datasource methods have changed their signatures.
+
+### Deprecated
+
+- config: `similar_to.address` filter is an alias for `originated_contract.code_hash` and will be removed in the next major release.
+- config: `DipDupError` is an alias for `FrameworkError` and will be removed in the next major release.
+
+## [6.3.1] - 2022-11-25
+
+### Fixed
+
+- cli: Do not apply cli hacks on module import.
+- codegen: Include PEP 561 marker in generated packages.
+- codegen: Untyped originations are now correctly handled.
+- codegen: Fixed `alias` config field having no effect on originations.
+- codegen: Fixed optional arguments in generated callbacks.
+- config: Suggest snake_case for package name.
+- config: Fixed crash with `RuntimeError` when index has no subscriptions.
+- http: Limit aiohttp sessions to specific base URL.
+- index: Do not deserialize originations matched by the `source` filter.
+- index: Wrap storage deserialization exceptions with `InvalidDataError`.
+- projects: Fixed Hasura environment in docker-compose examples.
+
+### Security
+
+- hasura: Forbid using Hasura instances running vulnerable versions ([GHSA-g7mj-g7f4-hgrg](https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg))
+
+### Other
+
+- ci: `mypy --strict` is now enforced on a codebase.
+- ci: Finished migration to `pytest`.
+
+## [6.3.0] - 2022-11-15
+
+### Added
+
 - context: Added `execute_sql_query` method to run queries from `sql` project directory.
 - context: `execute_sql` method now accepts arbitrary arguments to format SQL script (unsafe, use with caution).
-- index: New index kind `operation_unfiltered`.
 - index: New filters for `token_transfer` index.
 
 ### Fixed
@@ -816,7 +913,13 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.3.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.4.3...HEAD
+[6.4.3]: https://github.com/dipdup-io/dipdup/compare/6.4.2...6.4.3
+[6.4.2]: https://github.com/dipdup-io/dipdup/compare/6.4.1...6.4.2
+[6.4.1]: https://github.com/dipdup-io/dipdup/compare/6.4.0...6.4.1
+[6.4.0]: https://github.com/dipdup-io/dipdup/compare/6.4.0rc1...6.4.0
+[6.4.0rc1]: https://github.com/dipdup-io/dipdup/compare/6.3.1...6.4.0rc1
+[6.3.1]: https://github.com/dipdup-io/dipdup/compare/6.3.0...6.3.1
 [6.3.0]: https://github.com/dipdup-io/dipdup/compare/6.2.0...6.3.0
 [6.2.0]: https://github.com/dipdup-io/dipdup/compare/6.1.3...6.2.0
 [6.1.3]: https://github.com/dipdup-io/dipdup/compare/6.1.2...6.1.3

@@ -1,14 +1,11 @@
 """Root DipDup package.
 
-Contains software versions and other metadata. Also applies some CLI environment hacks on import.
+Contains software versions and other metadata.
 """
-import logging
-import sys
-import warnings
-from pathlib import Path
+import importlib.metadata
 
-# NOTE: Updated by bumpversion
-__version__ = '6.3.0'
+# NOTE: Load version from package
+__version__ = importlib.metadata.version('dipdup')
 __spec_version__ = '1.2'
 
 version = tuple(__version__.split('.'))
@@ -27,12 +24,3 @@ spec_reindex_mapping = {
     '1.1': True,
     '1.2': True,
 }
-
-# NOTE: Some ugly hacks acceptable for a CLI app
-# NOTE: Better discoverability of DipDup packages and configs
-sys.path.append(str(Path.cwd()))
-sys.path.append(str(Path.cwd() / 'src'))
-# NOTE: Format warnings as normal log messages
-logging.captureWarnings(True)
-warnings.simplefilter('always', DeprecationWarning)
-warnings.formatwarning = lambda msg, *a, **kw: str(msg)

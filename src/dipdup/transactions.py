@@ -1,9 +1,6 @@
 from collections import deque
 from contextlib import asynccontextmanager
-from contextlib import contextmanager
 from typing import AsyncIterator
-from typing import Deque
-from typing import Generator
 from typing import Optional
 from typing import Set
 
@@ -25,20 +22,13 @@ class TransactionManager:
         self._depth = depth
         self._immune_tables = immune_tables or set()
         self._transaction: Optional[dipdup.models.VersionedTransaction] = None
-        self._pending_updates: Deque[dipdup.models.ModelUpdate] = deque()
+        self._pending_updates: deque[dipdup.models.ModelUpdate] = deque()
 
-    @contextmanager
-    def register(self) -> Generator[None, None, None]:
-        """Register this manager to use in current process"""
+    @asynccontextmanager
+    async def register(self) -> AsyncIterator[None]:
+        """Register this manager to use in the current scope"""
         original_get_transaction = dipdup.models.get_transaction
         original_get_pending_updates = dipdup.models.get_pending_updates
-        try:
-            original_get_transaction()
-            original_get_pending_updates()
-        except RuntimeError:
-            pass
-        else:
-            raise RuntimeError('TransactionManager is already registered')
 
         dipdup.models.get_transaction = lambda: self._transaction
         dipdup.models.get_pending_updates = lambda: self._pending_updates

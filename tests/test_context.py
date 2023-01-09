@@ -1,57 +1,64 @@
 from contextlib import AsyncExitStack
 from pathlib import Path
-from unittest import IsolatedAsyncioTestCase
+from typing import AsyncIterator
+
+import pytest
 
 from dipdup.config import DipDupConfig
-from dipdup.config import SqliteDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.enums import ReindexingReason
+from dipdup.exceptions import ContractAlreadyExistsError
 from dipdup.exceptions import ReindexingRequiredError
+from dipdup.models import Contract
 from dipdup.models import Schema
 
 
-async def _create_dipdup(config: DipDupConfig, stack: AsyncExitStack) -> DipDup:
-    config.database = SqliteDatabaseConfig(kind='sqlite', path=':memory:')
-    config.initialize(skip_imports=True)
-
-    dipdup = DipDup(config)
-    await dipdup._create_datasources()
-    await dipdup._set_up_database(stack)
-    await dipdup._set_up_hooks(set())
-    await dipdup._initialize_schema()
-    return dipdup
+@pytest.fixture
+async def dummy_dipdup() -> AsyncIterator[DipDup]:
+    path = Path(__file__).parent / 'configs' / 'dipdup.yml'
+    config = DipDupConfig.load([path])
+    async with AsyncExitStack() as stack:
+        yield await DipDup.create_dummy(config, stack, in_memory=True)
 
 
-class ReindexingTest(IsolatedAsyncioTestCase):
-    async def asyncSetUp(self) -> None:
-        self.path = Path(__file__).parent / 'configs' / 'dipdup.yml'
+async def test_reindex_manual(dummy_dipdup: DipDup) -> None:
+    # Act
+    with pytest.raises(ReindexingRequiredError):
+        await dummy_dipdup._ctx.reindex()
 
-    async def test_reindex_manual(self) -> None:
-        async with AsyncExitStack() as stack:
-            # Arrange
-            config = DipDupConfig.load([self.path])
-            dipdup = await _create_dipdup(config, stack)
+    # Assert
+    schema = await Schema.filter().get()
+    assert schema.reindex == ReindexingReason.manual
 
-            # Act
-            with self.assertRaises(ReindexingRequiredError):
-                await dipdup._ctx.reindex()
 
-            # Assert
-            schema = await Schema.filter().get()
-            self.assertEqual(ReindexingReason.manual, schema.reindex)
+async def test_reindex_field(dummy_dipdup: DipDup) -> None:
+    await Schema.filter().update(reindex=ReindexingReason.manual)
 
-    async def test_reindex_field(self) -> None:
-        async with AsyncExitStack() as stack:
-            # Arrange
-            config = DipDupConfig.load([self.path])
-            dipdup = await _create_dipdup(config, stack)
+    # Act
+    with pytest.raises(ReindexingRequiredError):
+        await dummy_dipdup._initialize_schema()
 
-            await Schema.filter().update(reindex=ReindexingReason.manual)
+    # Assert
+    schema = await Schema.filter().get()
+    assert schema.reindex == ReindexingReason.manual
 
-            # Act
-            with self.assertRaises(ReindexingRequiredError):
-                await dipdup._initialize_schema()
 
-            # Assert
-            schema = await Schema.filter().get()
-            self.assertEqual(ReindexingReason.manual, schema.reindex)
+async def test_add_contract(dummy_dipdup: DipDup) -> None:
+    ctx = dummy_dipdup._ctx
+    await ctx.add_contract('address', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+    await ctx.add_contract('code_hash', None, None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+
+    with pytest.raises(ContractAlreadyExistsError):
+        await ctx.add_contract('address_dup', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+    with pytest.raises(ContractAlreadyExistsError):
+        await ctx.add_contract('address', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNK0000')
+    with pytest.raises(ContractAlreadyExistsError):
+        await ctx.add_contract('code_hash_dup', None, None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+    with pytest.raises(ContractAlreadyExistsError):
+        await ctx.add_contract('code_hash', None, None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNK0000')
+
+    assert ctx.config.get_contract('address').address == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
+    assert ctx.config.get_contract('code_hash').code_hash == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
+
+    assert (await Contract.get(name='address')).address == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
+    assert (await Contract.get(name='code_hash')).address == ':KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'

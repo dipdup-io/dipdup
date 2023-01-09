@@ -5,7 +5,7 @@ from typing import List
 from tortoise.expressions import F
 
 import demo_domains.models as domains_models
-import demo_hic_et_nunc.models as hen_models
+import demo_nft_marketplace.models as hen_models
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.dipdup import DipDup
@@ -16,16 +16,11 @@ from dipdup.models import ModelUpdateAction
 
 
 async def test_model_updates() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
+    config = DipDupConfig(spec_version='1.2', package='demo_nft_marketplace')
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
         async with in_transaction(level=1000, index='test'):
@@ -96,7 +91,7 @@ async def test_model_updates() -> None:
 
         # NOTE: Rollback DELETE
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore
+            self=dipdup._ctx,  # type: ignore[arg-type]
             index='test',
             from_level=1002,
             to_level=1001,
@@ -107,7 +102,7 @@ async def test_model_updates() -> None:
 
         # NOTE: Rollback UPDATE
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore
+            self=dipdup._ctx,  # type: ignore[arg-type]
             index='test',
             from_level=1001,
             to_level=1000,
@@ -118,7 +113,7 @@ async def test_model_updates() -> None:
 
         # NOTE: Rollback INSERT
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore
+            self=dipdup._ctx,  # type: ignore[arg-type]
             index='test',
             from_level=1000,
             to_level=999,
@@ -133,16 +128,11 @@ async def test_model_updates() -> None:
 
 
 async def test_cleanup_and_filtering() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
+    config = DipDupConfig(spec_version='1.2', package='demo_nft_marketplace')
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: Filter less than `rollback_depth` (which is 2 by default)
         sync_level = 1000
@@ -170,15 +160,10 @@ async def test_cleanup_and_filtering() -> None:
 
 async def test_optionals() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_domains')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT and DELETE model with optionals
         async with in_transaction(level=1000, index='test'):
@@ -199,7 +184,7 @@ async def test_optionals() -> None:
 
         # NOTE: Rollback DELETE
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore
+            self=dipdup._ctx,  # type: ignore[arg-type]
             index='test',
             from_level=1001,
             to_level=1000,
@@ -215,15 +200,10 @@ async def test_optionals() -> None:
 
 async def test_bulk_create_update() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_domains')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         tlds: List[domains_models.TLD] = []
         for i in range(3):
@@ -251,7 +231,7 @@ async def test_bulk_create_update() -> None:
             )
             domains.append(domain)
 
-        # FIXME: Yes, the same level, why not
+        # NOTE: Yes, the same level, why not
         async with in_transaction(level=1000, index='test'):
             await domains_models.Domain.bulk_create(domains)
 
@@ -273,7 +253,7 @@ async def test_bulk_create_update() -> None:
 
         # NOTE: Rollback bulk_update
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore
+            self=dipdup._ctx,  # type: ignore[arg-type]
             index='test',
             from_level=1001,
             to_level=1000,
@@ -289,7 +269,7 @@ async def test_bulk_create_update() -> None:
 
         # NOTE: Rollback bulk_insert
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore
+            self=dipdup._ctx,  # type: ignore[arg-type]
             index='test',
             from_level=1000,
             to_level=999,
@@ -306,15 +286,10 @@ async def test_bulk_create_update() -> None:
 
 async def test_update_prefetch() -> None:
     config = DipDupConfig(spec_version='1.2', package='demo_domains')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
         tlds: List[domains_models.TLD] = []
@@ -346,7 +321,7 @@ async def test_update_prefetch() -> None:
 
         # NOTE: Rollback UPDATE with prefetch
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore
+            self=dipdup._ctx,  # type: ignore[arg-type]
             index='test',
             from_level=1001,
             to_level=1000,
@@ -360,16 +335,11 @@ async def test_update_prefetch() -> None:
 
 
 async def test_update_arithmetics() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_hic_et_nunc')
-    config.initialize()
-    dipdup = DipDup(config)
-    in_transaction = dipdup._transactions.in_transaction
+    config = DipDupConfig(spec_version='1.2', package='demo_nft_marketplace')
 
     async with AsyncExitStack() as stack:
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_transactions(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
+        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
         async with in_transaction(level=1000, index='test'):
@@ -402,7 +372,7 @@ async def test_update_arithmetics() -> None:
 
         # NOTE: Rollback UPDATE with arithmetics
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore
+            self=dipdup._ctx,  # type: ignore[arg-type]
             index='test',
             from_level=1001,
             to_level=1000,

@@ -15,8 +15,6 @@ from pathlib import Path
 from shutil import rmtree
 from shutil import which
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import cast
 
 import orjson as json
@@ -24,15 +22,16 @@ import orjson as json
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
-from dipdup.config import DatasourceConfigT
+from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import EventIndexConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationHandlerPatternConfigT
-from dipdup.config import OperationHandlerTransactionPatternConfig
+from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config import OperationHandlerPatternConfigU as PatternConfigU
+from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
+from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.config import UnknownEventHandlerConfig
@@ -42,6 +41,7 @@ from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError
+from dipdup.exceptions import FrameworkException
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -51,11 +51,12 @@ from dipdup.utils.codegen import write
 
 KEEP_MARKER = '.keep'
 PYTHON_MARKER = '__init__.py'
+PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 CALLBACK_TEMPLATE = 'callback.py.j2'
 
 
-def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
+def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
     """Preprocess `big_map` sections in JSONSchema.
 
     TzKT returns them as unions since before merging big map diffs there are just `int` pointers.
@@ -84,32 +85,58 @@ def preprocess_storage_jsonschema(schema: Dict[str, Any]) -> Dict[str, Any]:
             'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
     elif schema.get('$comment') == 'big_map':
-        return schema['oneOf'][1]
+        return cast(dict[str, Any], schema['oneOf'][1])
     else:
         return schema
+
+
+# TODO: Pick refactoring from `ref/config-module`
+class ProjectPaths:
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self.models = root / MODELS_MODULE
+        self.schemas = root / 'schemas'
+        self.types = root / 'types'
+        self.handlers = root / 'handlers'
+        self.hooks = root / 'hooks'
+        self.sql = root / 'sql'
+        self.graphql = root / 'graphql'
+
+    def create_package(self) -> None:
+        """Create Python package skeleton if not exists"""
+        touch(self.root / PYTHON_MARKER)
+        touch(self.root / PEP_561_MARKER)
+
+        touch(self.types / PYTHON_MARKER)
+        touch(self.handlers / PYTHON_MARKER)
+        touch(self.hooks / PYTHON_MARKER)
+
+        touch(self.sql / KEEP_MARKER)
+        touch(self.graphql / KEEP_MARKER)
+
+        if not self.models.is_file():
+            template = load_template('templates', f'{MODELS_MODULE}.j2')
+            models_code = template.render()
+            write(self.models, models_code)
 
 
 class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, Datasource]) -> None:
+    def __init__(self, config: DipDupConfig, datasources: dict[DatasourceConfigU, Datasource]) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
-        self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
+        self._schemas: dict[TzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
+        self._pkg = ProjectPaths(Path(config.package_path))
 
-        self._path = Path(config.package_path)
-        self._models_path = self._path / MODELS_MODULE
-        self._schemas_path = self._path / 'schemas'
-        self._types_path = self._path / 'types'
-        self._handlers_path = self._path / 'handlers'
-        self._hooks_path = self._path / 'hooks'
-        self._sql_path = self._path / 'sql'
-        self._graphql_path = self._path / 'graphql'
+    def create_package(self) -> None:
+        self._pkg.create_package()
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         self._logger.info('Initializing project')
-        await self.create_package()
+        self.create_package()
+
         await self.fetch_schemas()
         await self.generate_types(overwrite_types)
         await self.generate_hooks()
@@ -118,49 +145,47 @@ class CodeGenerator:
             await self.cleanup()
         await self.verify_package()
 
-    async def create_package(self) -> None:
-        """Create Python package skeleton if not exists"""
-        touch(self._path / PYTHON_MARKER)
-        touch(self._types_path / PYTHON_MARKER)
-        touch(self._handlers_path / PYTHON_MARKER)
-        touch(self._hooks_path / PYTHON_MARKER)
-        touch(self._sql_path / KEEP_MARKER)
-        touch(self._graphql_path / KEEP_MARKER)
-
-        if not self._models_path.is_file():
-            template = load_template('templates', f'{MODELS_MODULE}.j2')
-            models_code = template.render()
-            write(self._models_path, models_code)
-
     async def _fetch_operation_pattern_schema(
         self,
-        operation_pattern_config: OperationHandlerPatternConfigT,
+        operation_pattern_config: PatternConfigU,
         datasource_config: TzktDatasourceConfig,
     ) -> None:
-        if (
-            isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig)
-            and operation_pattern_config.entrypoint
-        ):
-            contract_config = operation_pattern_config.destination_contract_config
-            originated = False
-        elif isinstance(operation_pattern_config, OperationHandlerOriginationPatternConfig):
-            contract_config = operation_pattern_config.contract_config
-            originated = bool(operation_pattern_config.source)
-        else:
-            # NOTE: Operations without destination+entrypoint are untyped
+        contract_config = operation_pattern_config.typed_contract
+        if contract_config is None:
             return
 
-        self._logger.debug(contract_config)
-        contract_schemas = await self._get_schema(datasource_config, contract_config, originated)
+        # NOTE: A very special case; unresolved `operation` template to spawn from factory indexes.
+        elif isinstance(contract_config, str) and contract_config in self._config.contracts:
+            contract_config = self._config.contracts[contract_config]
 
-        contract_schemas_path = self._schemas_path / contract_config.module_name
+        elif isinstance(contract_config, str):
+            self._logger.info('Unresolved `contract` field, trying to guess it.')
+            for possible_contract_config in self._config.contracts.values():
+                if isinstance(operation_pattern_config, TransactionPatternConfig):
+                    operation_pattern_config.destination = possible_contract_config
+                elif isinstance(operation_pattern_config, OriginationPatternConfig):
+                    operation_pattern_config.originated_contract = possible_contract_config
+                try:
+                    await self._fetch_operation_pattern_schema(
+                        operation_pattern_config,
+                        datasource_config=datasource_config,
+                    )
+                    break
+                except FrameworkException:
+                    self._logger.info("It's not `%s`", possible_contract_config.address)
+                    continue
+
+            return
+
+        contract_schemas = await self._get_schema(datasource_config, contract_config)
+        contract_schemas_path = self._pkg.schemas / contract_config.module_name
 
         storage_schema_path = contract_schemas_path / 'storage.json'
         storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
 
         write(storage_schema_path, json.dumps(storage_schema, option=json.OPT_INDENT_2))
 
-        if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
+        if not isinstance(operation_pattern_config, TransactionPatternConfig):
             return
 
         parameter_schemas_path = contract_schemas_path / 'parameter'
@@ -194,11 +219,11 @@ class CodeGenerator:
 
     async def _fetch_big_map_index_schema(self, index_config: BigMapIndexConfig) -> None:
         for handler_config in index_config.handlers:
-            contract_config = handler_config.contract_config
+            contract_config = handler_config.contract
 
-            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
+            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
 
-            contract_schemas_path = self._schemas_path / contract_config.module_name
+            contract_schemas_path = self._pkg.schemas / contract_config.module_name
             big_map_schemas_path = contract_schemas_path / 'big_map'
 
             try:
@@ -221,13 +246,12 @@ class CodeGenerator:
             if isinstance(handler_config, UnknownEventHandlerConfig):
                 continue
 
-            contract_config = handler_config.contract_config
+            contract_config = handler_config.contract
             contract_schemas = await self._get_schema(
                 index_config.datasource_config,
                 contract_config,
-                False,
             )
-            contract_schemas_path = self._schemas_path / contract_config.module_name
+            contract_schemas_path = self._pkg.schemas / contract_config.module_name
             event_schemas_path = contract_schemas_path / 'event'
 
             try:
@@ -246,9 +270,14 @@ class CodeGenerator:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
 
+        unused_operation_templates = [t for t in self._config.templates.values() if isinstance(t, OperationIndexConfig)]
+
         for index_config in self._config.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
                 await self._fetch_operation_index_schema(index_config)
+                template = cast(OperationIndexConfig, index_config.parent)
+                if template in unused_operation_templates:
+                    unused_operation_templates.remove(template)
             elif isinstance(index_config, BigMapIndexConfig):
                 await self._fetch_big_map_index_schema(index_config)
             elif isinstance(index_config, EventIndexConfig):
@@ -262,9 +291,33 @@ class CodeGenerator:
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
+        # NOTE: Euristics for complex cases like templated `similar_to` factories.
+        # NOTE: Try different contracts and datasources from config until one succeeds.
+        for template_config in unused_operation_templates:
+            self._logger.warning(
+                'Unused operation template `%s`. Ignore this warning if it is used in a factory.', template_config.name
+            )
+            datasource_name = template_config.datasource
+            if isinstance(datasource_name, str) and datasource_name in self._config.datasources:
+                datasource_config = self._config.get_tzkt_datasource(datasource_name)
+                template_config.datasource = datasource_config
+                await self._fetch_operation_index_schema(template_config)
+            else:
+                self._logger.info('Unresolved `datasource` field, trying to guess it.')
+                for possible_datasource_config in self._config.datasources.values():
+                    if not isinstance(possible_datasource_config, TzktDatasourceConfig):
+                        continue
+                    # NOTE: Do not modify config without necessity
+                    template_config.datasource = possible_datasource_config
+                    template_config.contracts = list(self._config.contracts.values())
+                    try:
+                        await self._fetch_operation_index_schema(template_config)
+                    except FrameworkException:
+                        continue
+
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
-        rel_path = schema_path.relative_to(self._schemas_path)
-        type_pkg_path = self._types_path / rel_path
+        rel_path = schema_path.relative_to(self._pkg.schemas)
+        type_pkg_path = self._pkg.types / rel_path
 
         if schema_path.is_dir():
             touch(type_pkg_path / PYTHON_MARKER)
@@ -281,6 +334,7 @@ class CodeGenerator:
             return
 
         # NOTE: Skip if the first line starts with "# dipdup: ignore"
+        # TODO: Replace with `immune_types` in config
         if output_path.exists():
             with open(output_path) as type_file:
                 first_line = type_file.readline()
@@ -326,9 +380,9 @@ class CodeGenerator:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
 
         self._logger.info('Creating `types` package')
-        touch(self._types_path / PYTHON_MARKER)
+        touch(self._pkg.types / PYTHON_MARKER)
 
-        for path in self._schemas_path.glob('**/*'):
+        for path in self._pkg.schemas.glob('**/*'):
             await self._generate_type(path, overwrite_types)
 
     async def generate_handlers(self) -> None:
@@ -336,6 +390,10 @@ class CodeGenerator:
         for index_config in self._config.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
                 continue
+            if isinstance(index_config, OperationUnfilteredIndexConfig):
+                await self._generate_callback(index_config.handler_config)
+                continue
+
             for handler_config in index_config.handlers:
                 await self._generate_callback(handler_config)
 
@@ -347,7 +405,7 @@ class CodeGenerator:
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""
         self._logger.info('Cleaning up')
-        rmtree(self._schemas_path, ignore_errors=True)
+        rmtree(self._pkg.schemas, ignore_errors=True)
 
     async def verify_package(self) -> None:
         import_submodules(self._config.package)
@@ -356,29 +414,25 @@ class CodeGenerator:
         self,
         datasource_config: TzktDatasourceConfig,
         contract_config: ContractConfig,
-        originated: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
-        datasource = self._datasources.get(datasource_config)
-        address = contract_config.address
-        if datasource is None:
-            raise RuntimeError('Call `create_datasources` first')
+        datasource = self._datasources[datasource_config]
         if not isinstance(datasource, TzktDatasource):
-            raise RuntimeError
+            raise FrameworkException('`tzkt` datasource expected')
+
+        if isinstance(contract_config.address, str):
+            address = contract_config.address
+        elif isinstance(contract_config.code_hash, str):
+            address = contract_config.code_hash
+        elif isinstance(contract_config.code_hash, int):
+            address = await datasource.get_contract_address(contract_config.code_hash, 0)
+        else:
+            raise FrameworkException('No address or code hash provided, check earlier')
+
         if datasource_config not in self._schemas:
             self._schemas[datasource_config] = {}
         if address not in self._schemas[datasource_config]:
-            if originated:
-                try:
-                    address = (await datasource.get_originated_contracts(address))[0]
-                except IndexError as e:
-                    raise ConfigurationError(f'No contracts were originated from `{address}`') from e
-                self._logger.info(
-                    'Fetching schemas for contract `%s` (originated from `%s`)', address, contract_config.address
-                )
-            else:
-                self._logger.info('Fetching schemas for contract `%s`', address)
-
+            self._logger.info('Fetching schemas for contract `%s`', address)
             address_schemas_json = await datasource.get_jsonschemas(address)
             self._schemas[datasource_config][address] = address_schemas_json
         return self._schemas[datasource_config][address]
@@ -389,45 +443,54 @@ class CodeGenerator:
         subpackages, callback = subpackages[:-1], subpackages[-1]
 
         callback_path = Path(
-            self._path,
+            self._pkg.root,
             f'{callback_config.kind}s',
             *subpackages,
             f'{callback}.py',
         )
 
-        if not callback_path.exists():
-            self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
-            callback_template = load_template('templates', CALLBACK_TEMPLATE)
+        if callback_path.exists():
+            return
 
-            arguments = callback_config.format_arguments()
-            imports = set(callback_config.format_imports(self._config.package))
+        self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
+        callback_template = load_template('templates', CALLBACK_TEMPLATE)
 
-            code: List[str] = []
-            if sql:
-                code.append(f"await ctx.execute_sql('{original_callback}')")
-                if callback == 'on_index_rollback':
-                    code.append('await ctx.rollback(')
-                    code.append('    index=index.name,')
-                    code.append('    from_level=from_level,')
-                    code.append('    to_level=to_level,')
-                    code.append(')')
-            else:
-                code.append('...')
+        arguments = callback_config.format_arguments()
+        imports = set(callback_config.format_imports(self._config.package))
 
-            callback_code = callback_template.render(
-                callback=callback,
-                arguments=tuple(dict.fromkeys(arguments)),
-                imports=sorted(dict.fromkeys(imports)),
-                code=code,
-            )
-            write(callback_path, callback_code)
-
+        code: list[str] = []
         if sql:
-            # NOTE: Preserve the same structure as in `handlers`
-            sql_path = Path(
-                self._sql_path,
-                *subpackages,
-                callback,
-                KEEP_MARKER,
-            )
-            touch(sql_path)
+            code.append(f"await ctx.execute_sql('{original_callback}')")
+            if callback == 'on_index_rollback':
+                code.append('await ctx.rollback(')
+                code.append('    index=index.name,')
+                code.append('    from_level=from_level,')
+                code.append('    to_level=to_level,')
+                code.append(')')
+        else:
+            code.append('...')
+
+        # NOTE: Fix missing generic type annotation for `Index[IndexConfig]` to comply with `mypy --strict`
+        processed_arguments = tuple(
+            f'{a},  # type: ignore[type-arg]' if a.startswith('index: Index') else a for a in arguments
+        )
+
+        callback_code = callback_template.render(
+            callback=callback,
+            arguments=tuple(processed_arguments),
+            imports=sorted(dict.fromkeys(imports)),
+            code=code,
+        )
+        write(callback_path, callback_code)
+
+        if not sql:
+            return
+
+        # NOTE: Preserve the same structure as in `handlers`
+        sql_path = Path(
+            self._pkg.sql,
+            *subpackages,
+            callback,
+            KEEP_MARKER,
+        )
+        touch(sql_path)

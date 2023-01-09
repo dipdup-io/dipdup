@@ -3,10 +3,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import cast
 
 from dipdup.config import HTTPConfig
 from dipdup.datasources.coinbase.models import CandleData
@@ -25,22 +22,25 @@ class CoinbaseDatasource(Datasource):
         ratelimit_period=1,
     )
 
-    def __init__(self, url: str = API_URL, http_config: Optional[HTTPConfig] = None) -> None:
-        super().__init__(url, self._default_http_config.merge(http_config))
+    def __init__(self, url: str = API_URL, http_config: HTTPConfig | None = None) -> None:
+        super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.coinbase')
 
     async def run(self) -> None:
         pass
 
-    async def get_oracle_prices(self) -> Dict[str, Any]:
-        return await self.request(
-            'get',
-            url='oracle',
+    async def get_oracle_prices(self) -> dict[str, Any]:
+        return cast(
+            dict[str, Any],
+            await self.request(
+                'get',
+                url='oracle',
+            ),
         )
 
     async def get_candles(
         self, since: datetime, until: datetime, interval: CandleInterval, ticker: str = 'XTZ-USD'
-    ) -> List[CandleData]:
+    ) -> list[CandleData]:
         candles = []
         for _since, _until in self._split_candle_requests(since, until, interval):
             candles_json = await self.request(
@@ -57,7 +57,7 @@ class CoinbaseDatasource(Datasource):
 
     def _split_candle_requests(
         self, since: datetime, until: datetime, interval: CandleInterval
-    ) -> List[Tuple[datetime, datetime]]:
+    ) -> list[tuple[datetime, datetime]]:
         request_interval_limit = timedelta(seconds=interval.seconds * CANDLES_REQUEST_LIMIT)
         request_intervals = []
         while since + request_interval_limit < until:
