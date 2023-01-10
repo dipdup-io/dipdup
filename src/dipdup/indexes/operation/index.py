@@ -10,6 +10,7 @@ from dipdup.config import OperationHandlerConfig
 from dipdup.config import OperationHandlerConfigU
 from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config import OperationIndexConfig
 from dipdup.config import OperationIndexConfigU
 from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.context import DipDupContext
@@ -19,6 +20,7 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.indexes.operation.fetcher import OperationFetcher
+from dipdup.indexes.operation.fetcher import OperationUnfilteredFetcher
 from dipdup.indexes.operation.matcher import MatchedOperationsT
 from dipdup.indexes.operation.matcher import OperationHandlerArgumentU
 from dipdup.indexes.operation.matcher import OperationSubgroup
@@ -219,12 +221,22 @@ class OperationIndex(
 
         first_level = index_level + 1
         self._logger.info('Fetching operations from level %s to %s', first_level, sync_level)
-        fetcher = await OperationFetcher.create(
-            self._config,
-            self._datasource,
-            first_level,
-            sync_level,
-        )
+
+        fetcher: OperationFetcher | OperationUnfilteredFetcher
+        if isinstance(self._config, OperationIndexConfig):
+            fetcher = await OperationFetcher.create(
+                self._config,
+                self._datasource,
+                first_level,
+                sync_level,
+            )
+        elif isinstance(self._config, OperationUnfilteredIndexConfig):
+            fetcher = await OperationUnfilteredFetcher.create(
+                self._config,
+                self._datasource,
+                first_level,
+                sync_level,
+            )
 
         async for level, operations in fetcher.fetch_by_level():
             if Metrics.enabled:

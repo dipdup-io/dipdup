@@ -10,7 +10,7 @@ from typing import cast
 from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
-from dipdup.config import OperationIndexConfigU
+from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
@@ -37,6 +37,21 @@ def get_operations_head(operations: tuple[OperationData, ...]) -> int:
         if operations[i].level != operations[i + 1].level:
             return operations[i].level
     return operations[0].level
+
+
+async def get_migration_originations(
+    datasource: TzktDatasource,
+    first_level: int,
+) -> tuple[OperationData, ...]:
+    migration_originations: tuple[OperationData, ...] = ()
+    async for batch in datasource.iter_migration_originations(first_level):
+        for op in batch:
+            code_hash, type_hash = await datasource.get_contract_hashes(cast(str, op.originated_contract_address))
+            op.originated_contract_code_hash = code_hash
+            op.originated_contract_type_hash = type_hash
+            migration_originations += (op,)
+
+    return migration_originations
 
 
 async def get_transaction_filters(
@@ -257,6 +272,49 @@ class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
             self._head = get_operations_head(transactions)
 
 
+class OperationUnfilteredFetcherChannel(FetcherChannel[OperationData, None]):
+    def __init__(
+        self,
+        buffer: defaultdict[int, deque[OperationData]],
+        first_level: int,
+        last_level: int,
+        datasource: TzktDatasource,
+        type: OperationType,
+    ) -> None:
+        super().__init__(buffer, set(), first_level, last_level, datasource)
+        self._type = type
+
+    async def fetch(self) -> None:
+        if self._type == OperationType.origination:
+            operations = await self._datasource.get_originations(
+                addresses=None,
+                code_hashes=None,
+                first_level=self._first_level,
+                last_level=self._last_level,
+                offset=self._offset,
+            )
+        elif self._type == OperationType.transaction:
+            operations = await self._datasource.get_transactions(
+                field='',
+                addresses=None,
+                code_hashes=None,
+                first_level=self._first_level,
+                last_level=self._last_level,
+                offset=self._offset,
+            )
+        else:
+            raise FrameworkException('Unsupported operation type')
+
+        for op in operations:
+            self._buffer[op.level].append(op)
+
+        if len(operations) < self._datasource.request_limit:
+            self._head = self._last_level
+        else:
+            self._offset = operations[-1].id
+            self._head = get_operations_head(operations)
+
+
 class OperationFetcher(DataFetcher[OperationData]):
     """Fetches operations from multiple REST API endpoints, merges them and yields by level.
 
@@ -287,28 +345,17 @@ class OperationFetcher(DataFetcher[OperationData]):
     @classmethod
     async def create(
         cls,
-        config: OperationIndexConfigU,
+        config: OperationIndexConfig,
         datasource: TzktDatasource,
         first_level: int,
         last_level: int,
     ) -> OperationFetcher:
         migration_originations: tuple[OperationData, ...] = ()
         if OperationType.migration in config.types:
-            async for batch in datasource.iter_migration_originations(first_level):
-                for op in batch:
-                    code_hash, type_hash = await datasource.get_contract_hashes(
-                        cast(str, op.originated_contract_address)
-                    )
-                    op.originated_contract_code_hash = code_hash
-                    op.originated_contract_type_hash = type_hash
-                    migration_originations += (op,)
+            migration_originations = await get_migration_originations(datasource, first_level)
 
-        if isinstance(config, OperationIndexConfig):
-            transaction_addresses, transaction_hashes = await get_transaction_filters(config, datasource)
-            origination_addresses, origination_hashes = await get_origination_filters(config, datasource)
-        else:
-            transaction_addresses, transaction_hashes = set(), set()
-            origination_addresses, origination_hashes = set(), set()
+        transaction_addresses, transaction_hashes = await get_transaction_filters(config, datasource)
+        origination_addresses, origination_hashes = await get_origination_filters(config, datasource)
 
         return OperationFetcher(
             datasource=datasource,
@@ -362,6 +409,93 @@ class OperationFetcher(DataFetcher[OperationData]):
                 **channel_kwargs,  # type: ignore[arg-type]
             ),
         )
+
+        while True:
+            min_channel = sorted(channels, key=lambda x: x.head)[0]
+            await min_channel.fetch()
+
+            # NOTE: It's a different channel now, but with greater head level
+            min_channel = sorted(channels, key=lambda x: x.head)[0]
+            min_head = min_channel.head
+
+            while self._head <= min_head:
+                if self._head in self._buffer:
+                    operations = self._buffer.pop(self._head)
+                    yield self._head, dedup_operations(tuple(operations))
+                self._head += 1
+
+            if all(c.fetched for c in channels):
+                break
+
+        if self._buffer:
+            raise FrameworkException('Operations left in queue')
+
+
+class OperationUnfilteredFetcher(DataFetcher[OperationData]):
+    def __init__(
+        self,
+        datasource: TzktDatasource,
+        first_level: int,
+        last_level: int,
+        transactions: bool,
+        originations: bool,
+        migration_originations: tuple[OperationData, ...] = (),
+    ) -> None:
+        super().__init__(datasource, first_level, last_level)
+        self._transactions = transactions
+        self._originations = originations
+
+        # FIXME: Why migrations are prefetched?
+        for origination in migration_originations:
+            self._buffer[origination.level].append(origination)
+
+    @classmethod
+    async def create(
+        cls,
+        config: OperationUnfilteredIndexConfig,
+        datasource: TzktDatasource,
+        first_level: int,
+        last_level: int,
+    ) -> OperationUnfilteredFetcher:
+        migration_originations: tuple[OperationData, ...] = ()
+        if OperationType.migration in config.types:
+            migration_originations = await get_migration_originations(datasource, first_level)
+
+        return OperationUnfilteredFetcher(
+            datasource=datasource,
+            first_level=first_level,
+            last_level=last_level,
+            transactions=OperationType.transaction in config.types,
+            originations=OperationType.origination in config.types,
+            migration_originations=migration_originations,
+        )
+
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[OperationData, ...]]]:
+        """Iterate over operations fetched with multiple REST requests with different filters.
+
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
+        """
+        channel_kwargs = {
+            'buffer': self._buffer,
+            'datasource': self._datasource,
+            'first_level': self._first_level,
+            'last_level': self._last_level,
+        }
+        channels: tuple[OperationUnfilteredFetcherChannel, ...] = ()
+        if self._transactions:
+            channels += (
+                OperationUnfilteredFetcherChannel(
+                    type=OperationType.transaction,
+                    **channel_kwargs,  # type: ignore[arg-type]
+                ),
+            )
+        if self._originations:
+            channels += (
+                OperationUnfilteredFetcherChannel(
+                    type=OperationType.origination,
+                    **channel_kwargs,  # type: ignore[arg-type]
+                ),
+            )
 
         while True:
             min_channel = sorted(channels, key=lambda x: x.head)[0]
