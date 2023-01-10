@@ -7,9 +7,10 @@ from typing import Iterator
 from typing import Sequence
 
 from dipdup.config import OperationHandlerConfig
+from dipdup.config import OperationHandlerConfigU
 from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config import OperationIndexConfig
+from dipdup.config import OperationIndexConfigU
 from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
@@ -19,8 +20,7 @@ from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.indexes.operation.fetcher import OperationFetcher
 from dipdup.indexes.operation.matcher import MatchedOperationsT
-from dipdup.indexes.operation.matcher import OperationHandlerArgumentT
-from dipdup.indexes.operation.matcher import OperationHandlerConfigU
+from dipdup.indexes.operation.matcher import OperationHandlerArgumentU
 from dipdup.indexes.operation.matcher import OperationSubgroup
 from dipdup.indexes.operation.matcher import match_operation_subgroup
 from dipdup.indexes.operation.matcher import match_operation_unfiltered_subgroup
@@ -30,7 +30,6 @@ from dipdup.prometheus import Metrics
 _logger = logging.getLogger('dipdup_matcher')
 
 OperationQueueItem = tuple[OperationSubgroup, ...]
-OperationIndexConfigU = OperationIndexConfig | OperationUnfilteredIndexConfig
 
 
 def entrypoint_filter(handlers: tuple[OperationHandlerConfig, ...]) -> set[str | None]:
@@ -300,7 +299,7 @@ class OperationIndex(
         self,
         handler_config: OperationHandlerConfigU,
         operation_subgroup: OperationSubgroup,
-        args: Sequence[OperationHandlerArgumentT],
+        args: Sequence[OperationHandlerArgumentU],
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

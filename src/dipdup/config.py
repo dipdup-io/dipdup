@@ -25,7 +25,6 @@ from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
 from dataclasses import field
-from functools import cached_property
 from io import StringIO
 from os import environ as env
 from pathlib import Path
@@ -973,9 +972,16 @@ class OperationUnfilteredIndexConfig(IndexConfig):
     first_level: int = 0
     last_level: int = 0
 
-    @cached_property
-    def handler_config(self) -> OperationUnfilteredHandlerConfig:
-        return OperationUnfilteredHandlerConfig(callback=self.callback)
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        self.handler_config = OperationUnfilteredHandlerConfig(callback=self.callback)
+
+    def import_objects(self, package: str) -> None:
+        self.handler_config.initialize_callback_fn(package)
+
+
+OperationHandlerConfigU = OperationHandlerConfig | OperationUnfilteredHandlerConfig
+OperationIndexConfigU = OperationIndexConfig | OperationUnfilteredIndexConfig
 
 
 @dataclass

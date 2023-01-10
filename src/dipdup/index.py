@@ -32,7 +32,7 @@ IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
 IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
 IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource)
 
-OperationHandlerArgumentT = Transaction | Origination | OperationData | None
+OperationHandlerArgumentU = Transaction | Origination | OperationData | None
 
 
 # TODO: Not used in some indexes

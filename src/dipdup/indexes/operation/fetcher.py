@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from collections import deque
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import AsyncIterator
 from typing import cast
@@ -11,6 +10,7 @@ from typing import cast
 from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
+from dipdup.config import OperationIndexConfigU
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
@@ -19,10 +19,6 @@ from dipdup.fetcher import FetcherChannel
 from dipdup.models import OperationData
 
 _logger = logging.getLogger('dipdup.fetcher')
-
-
-if TYPE_CHECKING:
-    from dipdup.indexes.operation.index import OperationIndexConfigU
 
 
 def dedup_operations(operations: tuple[OperationData, ...]) -> tuple[OperationData, ...]:

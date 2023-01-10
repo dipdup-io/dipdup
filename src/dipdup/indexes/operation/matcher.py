@@ -2,16 +2,14 @@ import logging
 from collections import deque
 from typing import Any
 from typing import Iterable
-from typing import TypeVar
 
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import OperationHandlerConfig
+from dipdup.config import OperationHandlerConfigU
 from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config import OperationUnfilteredHandlerConfig
 from dipdup.config import OperationUnfilteredIndexConfig
-from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources.tzkt.models import deserialize_storage
 from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
@@ -33,18 +31,16 @@ class OperationSubgroup:
     entrypoints: set[str | None]
 
 
-ConfigT = TypeVar('ConfigT', bound=ResolvedIndexConfigU)
-OperationHandlerArgumentT = Transaction | Origination | OperationData | None
-OperationHandlerConfigU = OperationHandlerConfig | OperationUnfilteredHandlerConfig
-MatchedOperationsT = tuple[OperationSubgroup, OperationHandlerConfigU, deque[OperationHandlerArgumentT]]
+OperationHandlerArgumentU = Transaction | Origination | OperationData | None
+MatchedOperationsT = tuple[OperationSubgroup, OperationHandlerConfigU, deque[OperationHandlerArgumentU]]
 
 
 def prepare_operation_handler_args(
     handler_config: OperationHandlerConfig,
     matched_operations: deque[OperationData | None],
-) -> deque[OperationHandlerArgumentT]:
+) -> deque[OperationHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
-    args: deque[OperationHandlerArgumentT] = deque()
+    args: deque[OperationHandlerArgumentU] = deque()
     for pattern_config, operation_data in zip(handler_config.pattern, matched_operations):
         if operation_data is None:
             args.append(None)
