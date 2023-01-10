@@ -1,6 +1,4 @@
 
-          <div class="body" role="main">
-
   <span class="target" id="module-dipdup.config"></span><p>Config files parsing and processing</p>
 <p>As you can see from the amount of code below, lots of things are going on here:</p>
 <ul class="simple">
