@@ -544,7 +544,13 @@ class TzktDatasource(SignalRDatasource):
                     'codeHash.in': ','.join(str(h) for h in code_hashes),
                 },
             )
-        else:
+        elif not addresses and not code_hashes:
+            raw_originations += await self.request(
+                'get',
+                url='v1/operations/originations',
+                params=params,
+            )
+        elif addresses and code_hashes:
             raise FrameworkException('Either `addresses` or `code_hashes` should be specified')
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type

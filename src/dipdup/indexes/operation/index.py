@@ -29,7 +29,7 @@ from dipdup.indexes.operation.matcher import match_operation_unfiltered_subgroup
 from dipdup.models import OperationData
 from dipdup.prometheus import Metrics
 
-_logger = logging.getLogger('dipdup_matcher')
+_logger = logging.getLogger('dipdup.matcher')
 
 OperationQueueItem = tuple[OperationSubgroup, ...]
 
