@@ -1788,6 +1788,8 @@ class DipDupConfig:
                     )
 
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
+            if not self.advanced.merge_subscriptions:
+                _logger.warning('Ignoring `merge_subscriptions` flag for `operation_unfiltered` index')
             index_config.subscriptions.add(TransactionSubscription())
 
         elif isinstance(index_config, EventIndexConfig):
@@ -1862,7 +1864,7 @@ class DipDupConfig:
                     token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
 
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
-            index_config.parent = index_config
+            index_config.handler_config.parent = index_config
 
         elif isinstance(index_config, EventIndexConfig):
             for event_handler_config in index_config.handlers:
