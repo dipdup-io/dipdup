@@ -966,6 +966,7 @@ class OperationUnfilteredIndexConfig(IndexConfig):
     """
 
     kind: Literal['operation_unfiltered']
+    datasource: TzktDatasourceConfig
     callback: str
     types: tuple[OperationType, ...] = (OperationType.transaction,)
 

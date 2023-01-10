@@ -286,6 +286,8 @@ class CodeGenerator:
                 pass
             elif isinstance(index_config, TokenTransferIndexConfig):
                 pass
+            elif isinstance(index_config, OperationUnfilteredIndexConfig):
+                pass
             elif isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException
             else:

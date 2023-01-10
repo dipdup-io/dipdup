@@ -23,6 +23,7 @@ class IndexType(Enum):
     """Enum for `dipdup.models.Index`"""
 
     operation = 'operation'
+    operation_unfiltered = 'operation_unfiltered'
     big_map = 'big_map'
     head = 'head'
     token_transfer = 'token_transfer'

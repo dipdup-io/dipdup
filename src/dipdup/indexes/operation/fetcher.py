@@ -287,7 +287,7 @@ class OperationFetcher(DataFetcher[OperationData]):
     @classmethod
     async def create(
         cls,
-        config: 'OperationIndexConfigU',
+        config: OperationIndexConfigU,
         datasource: TzktDatasource,
         first_level: int,
         last_level: int,
