@@ -5,10 +5,7 @@ from collections import deque
 from contextlib import ExitStack
 from typing import Any
 from typing import Generic
-from typing import Optional
-from typing import Set
 from typing import TypeVar
-from typing import Union
 from typing import cast
 
 import dipdup.models as models
@@ -35,7 +32,7 @@ IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
 IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
 IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource)
 
-OperationHandlerArgumentT = Optional[Union[Transaction, Origination, OperationData]]
+OperationHandlerArgumentT = Transaction | Origination | OperationData | None
 
 
 # TODO: Not used in some indexes
@@ -74,7 +71,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._queue: deque[IndexQueueItemT] = deque()
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
-        self._state: Optional[models.Index] = None
+        self._state: models.Index | None = None
 
     def push_realtime_message(self, message: IndexQueueItemT) -> None:
         """Push message to the queue"""
@@ -124,9 +121,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             raise FrameworkException('Call `set_sync_level` before starting `IndexDispatcher`')
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
-        return max(cast(Set[int], sync_levels))
+        return max(cast(set[int], sync_levels))
 
-    async def initialize_state(self, state: Optional[models.Index] = None) -> None:
+    async def initialize_state(self, state: models.Index | None = None) -> None:
         if self._state:
             raise FrameworkException('Index state is already initialized')
 
@@ -184,7 +181,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             return False
         return True
 
-    async def _enter_sync_state(self, head_level: int) -> Optional[int]:
+    async def _enter_sync_state(self, head_level: int) -> int | None:
         # NOTE: Final state for indexes with `last_level`
         if self.state.status == IndexStatus.ONESHOT:
             return None
@@ -205,12 +202,3 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         if Metrics.enabled:
             Metrics.set_levels_to_sync(self._config.name, 0)
         await self.state.update_status(status=IndexStatus.REALTIME, level=head_level)
-
-    def _extract_level(
-        self,
-        message: tuple[OperationData | BigMapData | TokenTransferData | EventData, ...],
-    ) -> int:
-        batch_levels = {item.level for item in message}
-        if len(batch_levels) != 1:
-            raise RuntimeError(f'Items in data batch have different levels: {batch_levels}')
-        return batch_levels.pop()
