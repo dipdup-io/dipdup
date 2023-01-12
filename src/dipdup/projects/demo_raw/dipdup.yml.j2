@@ -1,0 +1,25 @@
+spec_version: 1.2
+package: {{ cookiecutter.package }}
+
+database:
+  kind: sqlite
+  path: {{ cookiecutter.project_name }}.sqlite3
+
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      batch_size: 10000
+
+indexes:
+  mainnet_operations:
+    kind: operation_unfiltered
+    datasource: tzkt_mainnet
+    types:
+      - origination
+      - transaction
+      - migration
+    callback: on_operation
+    first_level: 1589000
+    last_level: 1590000
