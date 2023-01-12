@@ -76,7 +76,7 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 	rm -r ~/.cache/dipdup
 
 update:         ## Update dependencies, export requirements.txt
-	git checkout master requirements.* poetry.lock
+	git checkout HEAD requirements.* poetry.lock
 
 	make install
 	poetry update
