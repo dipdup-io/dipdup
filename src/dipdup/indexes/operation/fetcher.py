@@ -181,10 +181,8 @@ class OriginationHashFetcherChannel(FetcherChannel[OperationData, int]):
 
 class MigrationOriginationFetcherChannel(FetcherChannel[OperationData, None]):
     async def fetch(self) -> None:
-        if not self._filter:
-            self._head = self._last_level
-            self._offset = self._last_level
-            return
+        if self._filter:
+            raise FrameworkException("Migration origination fetcher channel doesn't support filters")
 
         originations = await self._datasource.get_migration_originations(
             first_level=self._first_level,

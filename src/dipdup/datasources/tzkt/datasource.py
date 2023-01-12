@@ -986,7 +986,10 @@ class TzktDatasource(SignalRDatasource):
         for operation_json in data:
             if operation_json['status'] != 'applied':
                 continue
-            operation = self.convert_operation(operation_json)
+            if 'hash' in operation_json:
+                operation = self.convert_operation(operation_json)
+            else:
+                operation = self.convert_migration_origination(operation_json)
             level_operations[operation.level].append(operation)
 
         for _level, operations in level_operations.items():
@@ -1100,7 +1103,7 @@ class TzktDatasource(SignalRDatasource):
     ) -> OperationData:
         """Convert raw migration message from REST into dataclass"""
         return OperationData(
-            type='origination',
+            type='migration',
             id=migration_origination_json['id'],
             level=migration_origination_json['level'],
             timestamp=_parse_timestamp(migration_origination_json['timestamp']),

@@ -134,9 +134,7 @@ def match_operation_unfiltered_subgroup(
     matched_handlers: deque[MatchedOperationsT] = deque()
 
     for operation in operation_subgroup.operations:
-        if operation.type == 'transaction' and OperationType.transaction in index.types:
-            matched_handlers.append((operation_subgroup, index.handler_config, deque([operation])))
-        elif operation.type == 'origination' and OperationType.origination in index.types:
+        if OperationType[operation.type] in index.types:
             matched_handlers.append((operation_subgroup, index.handler_config, deque([operation])))
 
     return matched_handlers

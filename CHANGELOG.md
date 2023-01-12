@@ -12,7 +12,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- tzkt: Fixed `OperationData.type` field value for migration originations.
 - index: Fixed unnecessary prefetching of migration originations in `operation` index.
+
+### Other
+
+- ci: Enforce markdown linting.
 
 ## [6.4.3] - 2023-01-05
 
