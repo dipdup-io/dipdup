@@ -26,9 +26,9 @@ docs:
 	echo '<!-- markdownlint-disable first-line-h1 -->' > cli-reference.md
 	echo '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->' > config/reference.md
 	echo '<!-- markdownlint-disable first-line-h1 -->' > include/context-reference.md
-	tail -n '+35' _build/html/cli-reference.html | head -n '-63' >> cli-reference.md
-	tail -n '+35' _build/html/config-reference.html | head -n '-63' >> config/reference.md
-	tail -n '+35' _build/html/context-reference.html | head -n '-63' >> include/context-reference.md
+	tail -n '+32' _build/html/cli-reference.html | head -n '-63' >> cli-reference.md
+	tail -n '+32' _build/html/config-reference.html | head -n '-63' >> config/reference.md
+	tail -n '+32' _build/html/context-reference.html | head -n '-63' >> include/context-reference.md
 
 	mdbook build  --dest-dir=dist/docs
 
