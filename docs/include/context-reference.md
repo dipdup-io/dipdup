@@ -1,3 +1,4 @@
+<!-- markdownlint-disable first-line-h1 -->
 
   <span class="target" id="module-dipdup.context"></span><dl class="py class">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext">

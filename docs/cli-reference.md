@@ -1,3 +1,4 @@
+<!-- markdownlint-disable first-line-h1 -->
 
   <section id="dipdup">
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this heading">¶</a></h1>

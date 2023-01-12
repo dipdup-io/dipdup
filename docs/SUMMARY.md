@@ -1,3 +1,4 @@
+<!-- markdownlint-disable single-h1 -->
 # Table of contents
 
 [Introduction](README.md)

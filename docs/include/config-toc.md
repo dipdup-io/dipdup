@@ -1,3 +1,4 @@
+<!-- markdownlint-disable first-line-h1 -->
 |                   |                 |                                        |
 | ----------------- | --------------- | -------------------------------------- |
 | Header            | `spec_version`* | {{ #summary config/spec_version.md}}   |

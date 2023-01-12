@@ -21,10 +21,15 @@ help:
 
 docs:
 	poetry run make html
-	# NOTE: A hack to include generated references in mdbook pages
-	tail -n '+35' _build/html/cli-reference.html | head -n '-63' > cli-reference.md
-	tail -n '+35' _build/html/config-reference.html | head -n '-63' > config/reference.md
-	tail -n '+35' _build/html/context-reference.html | head -n '-63' > include/context-reference.md
+
+	# FIXME: Using generated Sphinx HTML as a source for mdbook; looks terrible 
+	echo '<!-- markdownlint-disable first-line-h1 -->' > cli-reference.md
+	echo '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->' > config/reference.md
+	echo '<!-- markdownlint-disable first-line-h1 -->' > include/context-reference.md
+	tail -n '+35' _build/html/cli-reference.html | head -n '-63' >> cli-reference.md
+	tail -n '+35' _build/html/config-reference.html | head -n '-63' >> config/reference.md
+	tail -n '+35' _build/html/context-reference.html | head -n '-63' >> include/context-reference.md
+
 	mdbook build  --dest-dir=dist/docs
 
 homepage:
@@ -38,7 +43,7 @@ wc:
 	find . -name \*.md -type f -exec wc {} \;
 
 markdownlint:
-	markdownlint -f . --disable=MD013 --disable=MD033  || true
+	markdownlint -f . --disable line-length --disable no-inline-html
 
 clean:
 	git clean -Xdf
