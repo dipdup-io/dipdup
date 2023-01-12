@@ -13,6 +13,7 @@ from typing import Callable
 
 import pytest
 
+from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
 from dipdup.utils import import_submodules
 from dipdup.utils.database import tortoise_wrapper
@@ -167,6 +168,18 @@ async def assert_run_factories() -> None:
     assert votes == 86
 
 
+async def assert_run_raw() -> None:
+    import demo_raw.models
+
+    transactions = await demo_raw.models.Operation.filter(type=OperationType.transaction).count()
+    originations = await demo_raw.models.Operation.filter(type=OperationType.origination).count()
+    migrations = await demo_raw.models.Operation.filter(type=OperationType.migration).count()
+
+    assert transactions == 167
+    assert originations == 1
+    assert migrations == 2
+
+
 async def assert_run_dao() -> None:
     import demo_dao.models
 
@@ -186,6 +199,7 @@ test_params = (
     ('demo_auction.yml', 'demo_auction', 'run', assert_run_auction),
     ('demo_auction.yml', 'demo_auction', 'init', partial(assert_init, 'demo_auction')),
     ('demo_token_transfers.yml', 'demo_token_transfers', 'run', partial(assert_run_token_transfers, 4, '-0.01912431')),
+    # FIXME: Why so many token transfer tests?
     ('demo_token_transfers.yml', 'demo_token_transfers', 'init', partial(assert_init, 'demo_token_transfers')),
     (
         'demo_token_transfers_2.yml',
@@ -210,6 +224,8 @@ test_params = (
     ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
     ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
     ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
+    ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
+    ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
 )
 
 
