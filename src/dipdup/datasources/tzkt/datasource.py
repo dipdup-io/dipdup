@@ -468,7 +468,8 @@ class TzktDatasource(SignalRDatasource):
 
     async def get_migration_originations(
         self,
-        first_level: int = 0,
+        first_level: int | None = None,
+        last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[OperationData, ...]:
@@ -476,6 +477,7 @@ class TzktDatasource(SignalRDatasource):
         self._logger.info('Fetching contracts originated with migrations')
         params = self._get_request_params(
             first_level=first_level,
+            last_level=last_level,
             offset=offset,
             limit=limit,
             select=ORIGINATION_MIGRATION_FIELDS,
@@ -491,11 +493,13 @@ class TzktDatasource(SignalRDatasource):
 
     async def iter_migration_originations(
         self,
-        first_level: int = 0,
+        first_level: int | None = None,
+        last_level: int | None = None,
     ) -> AsyncIterator[tuple[OperationData, ...]]:
         async for batch in self._iter_batches(
             self.get_migration_originations,
             first_level,
+            last_level,
         ):
             yield batch
 
@@ -517,7 +521,7 @@ class TzktDatasource(SignalRDatasource):
             limit=limit,
             select=ORIGINATION_OPERATION_FIELDS,
             status='applied',
-            cursor=bool(code_hashes),
+            cursor=bool(code_hashes) or bool(not code_hashes and not addresses),
         )
 
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.

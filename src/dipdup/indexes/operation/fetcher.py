@@ -5,7 +5,6 @@ from collections import defaultdict
 from collections import deque
 from typing import Any
 from typing import AsyncIterator
-from typing import cast
 
 from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
@@ -37,21 +36,6 @@ def get_operations_head(operations: tuple[OperationData, ...]) -> int:
         if operations[i].level != operations[i + 1].level:
             return operations[i].level
     return operations[0].level
-
-
-async def get_migration_originations(
-    datasource: TzktDatasource,
-    first_level: int,
-) -> tuple[OperationData, ...]:
-    migration_originations: tuple[OperationData, ...] = ()
-    async for batch in datasource.iter_migration_originations(first_level):
-        for op in batch:
-            code_hash, type_hash = await datasource.get_contract_hashes(cast(str, op.originated_contract_address))
-            op.originated_contract_code_hash = code_hash
-            op.originated_contract_type_hash = type_hash
-            migration_originations += (op,)
-
-    return migration_originations
 
 
 async def get_transaction_filters(
@@ -186,6 +170,34 @@ class OriginationHashFetcherChannel(FetcherChannel[OperationData, int]):
         )
 
         for op in originations:
+            self._buffer[op.level].append(op)
+
+        if len(originations) < self._datasource.request_limit:
+            self._head = self._last_level
+        else:
+            self._offset = originations[-1].id
+            self._head = get_operations_head(originations)
+
+
+class MigrationOriginationFetcherChannel(FetcherChannel[OperationData, None]):
+    async def fetch(self) -> None:
+        if not self._filter:
+            self._head = self._last_level
+            self._offset = self._last_level
+            return
+
+        originations = await self._datasource.get_migration_originations(
+            first_level=self._first_level,
+            last_level=self._last_level,
+            offset=self._offset,
+        )
+
+        for op in originations:
+            if op.originated_contract_address:
+                code_hash, type_hash = await self._datasource.get_contract_hashes(op.originated_contract_address)
+                op.originated_contract_code_hash = code_hash
+                op.originated_contract_type_hash = type_hash
+
             self._buffer[op.level].append(op)
 
         if len(originations) < self._datasource.request_limit:
@@ -330,17 +342,14 @@ class OperationFetcher(DataFetcher[OperationData]):
         transaction_hashes: set[int],
         origination_addresses: set[str],
         origination_hashes: set[int],
-        migration_originations: tuple[OperationData, ...] = (),
+        migration_originations: bool = False,
     ) -> None:
         super().__init__(datasource, first_level, last_level)
         self._transaction_addresses = transaction_addresses
         self._transaction_hashes = transaction_hashes
         self._origination_addresses = origination_addresses
         self._origination_hashes = origination_hashes
-
-        # FIXME: Why migrations are prefetched?
-        for origination in migration_originations:
-            self._buffer[origination.level].append(origination)
+        self._migration_originations = migration_originations
 
     @classmethod
     async def create(
@@ -350,10 +359,6 @@ class OperationFetcher(DataFetcher[OperationData]):
         first_level: int,
         last_level: int,
     ) -> OperationFetcher:
-        migration_originations: tuple[OperationData, ...] = ()
-        if OperationType.migration in config.types:
-            migration_originations = await get_migration_originations(datasource, first_level)
-
         transaction_addresses, transaction_hashes = await get_transaction_filters(config, datasource)
         origination_addresses, origination_hashes = await get_origination_filters(config, datasource)
 
@@ -365,7 +370,7 @@ class OperationFetcher(DataFetcher[OperationData]):
             transaction_hashes=transaction_hashes,
             origination_addresses=origination_addresses,
             origination_hashes=origination_hashes,
-            migration_originations=migration_originations,
+            migration_originations=OperationType.migration in config.types,
         )
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[OperationData, ...]]]:
@@ -439,15 +444,12 @@ class OperationUnfilteredFetcher(DataFetcher[OperationData]):
         last_level: int,
         transactions: bool,
         originations: bool,
-        migration_originations: tuple[OperationData, ...] = (),
+        migration_originations: bool,
     ) -> None:
         super().__init__(datasource, first_level, last_level)
         self._transactions = transactions
         self._originations = originations
-
-        # FIXME: Why migrations are prefetched?
-        for origination in migration_originations:
-            self._buffer[origination.level].append(origination)
+        self._migration_originations = migration_originations
 
     @classmethod
     async def create(
@@ -457,17 +459,13 @@ class OperationUnfilteredFetcher(DataFetcher[OperationData]):
         first_level: int,
         last_level: int,
     ) -> OperationUnfilteredFetcher:
-        migration_originations: tuple[OperationData, ...] = ()
-        if OperationType.migration in config.types:
-            migration_originations = await get_migration_originations(datasource, first_level)
-
         return OperationUnfilteredFetcher(
             datasource=datasource,
             first_level=first_level,
             last_level=last_level,
             transactions=OperationType.transaction in config.types,
             originations=OperationType.origination in config.types,
-            migration_originations=migration_originations,
+            migration_originations=OperationType.migration in config.types,
         )
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[OperationData, ...]]]:
@@ -481,7 +479,7 @@ class OperationUnfilteredFetcher(DataFetcher[OperationData]):
             'first_level': self._first_level,
             'last_level': self._last_level,
         }
-        channels: tuple[OperationUnfilteredFetcherChannel, ...] = ()
+        channels: tuple[FetcherChannel[OperationData, Any], ...] = ()
         if self._transactions:
             channels += (
                 OperationUnfilteredFetcherChannel(
@@ -493,6 +491,13 @@ class OperationUnfilteredFetcher(DataFetcher[OperationData]):
             channels += (
                 OperationUnfilteredFetcherChannel(
                     type=OperationType.origination,
+                    **channel_kwargs,  # type: ignore[arg-type]
+                ),
+            )
+        if self._migration_originations:
+            channels += (
+                MigrationOriginationFetcherChannel(
+                    filter=set(),
                     **channel_kwargs,  # type: ignore[arg-type]
                 ),
             )

@@ -1789,8 +1789,6 @@ class DipDupConfig:
                     )
 
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
-            if not self.advanced.merge_subscriptions:
-                _logger.warning('Ignoring `merge_subscriptions` flag for `operation_unfiltered` index')
             index_config.subscriptions.add(TransactionSubscription())
 
         elif isinstance(index_config, EventIndexConfig):

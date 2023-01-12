@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - index: New index kind `operation_unfiltered`.
 
+### Fixed
+
+- index: Fixed unnecessary prefetching of migration originations in `operation` index.
+
 ## [6.4.3] - 2023-01-05
 
 ### Fixed

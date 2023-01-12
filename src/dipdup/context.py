@@ -557,6 +557,7 @@ class CallbackManager:
         while True:
             while pending_hooks:
                 await pending_hooks.popleft()
+            # TODO: Replace with asyncio.Event
             await asyncio.sleep(1)
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
