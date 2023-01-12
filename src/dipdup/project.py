@@ -17,10 +17,9 @@ from dipdup.utils.codegen import write
 _logger = logging.getLogger('dipdup.project')
 
 
-# FIXME
 DEMO_PROJECTS = (
     ('demo_domains', 'Tezos Domains name service'),
-    ('demo_big_maps', 'Indexing a single big map'),
+    ('demo_big_maps', 'Indexing specific big maps'),
     ('demo_events', 'Processing contract events'),
     ('demo_head', 'Processing head block metadata'),
     ('demo_nft_marketplace', 'hic at nunc NFT marketplace'),
@@ -30,6 +29,7 @@ DEMO_PROJECTS = (
     ('demo_token', 'TzBTC FA1.2 token operations'),
     ('demo_token_transfers', 'TzBTC FA1.2 token transfers'),
     ('demo_auction', 'TzColors NFT marketplace'),
+    ('demo_raw', 'Process raw operations without filtering and strict typing'),
     ('blank', 'Empty config for a fresh start'),
     # TODO: demo_jobs
     # TODO: demo_backup
