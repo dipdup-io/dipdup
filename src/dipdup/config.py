@@ -26,7 +26,6 @@ from collections import Counter
 from contextlib import suppress
 from dataclasses import field
 from io import StringIO
-from os import environ as env
 from pathlib import Path
 from pydoc import locate
 from typing import Any
@@ -47,6 +46,7 @@ from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup import baking_bad
+from dipdup import env
 from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.tzkt.models import BigMapSubscription
@@ -68,7 +68,6 @@ from dipdup.utils import exclude_none
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils.sys import is_in_tests
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -1487,7 +1486,7 @@ class DipDupConfig:
     def package_path(self) -> Path:
         """Absolute path to the indexer package, existing or default"""
         # NOTE: Integration tests run in isolated environment
-        if is_in_tests():
+        if env.TEST:
             return Path.cwd() / self.package
 
         with suppress(ImportError):

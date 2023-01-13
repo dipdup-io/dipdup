@@ -2,11 +2,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
 
+from dipdup import env
 from dipdup.config import HTTPConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.utils.sys import set_in_tests
 
-set_in_tests()
+env.in_tests()
 
 
 CONFIGS_PATH = Path(__file__).parent / 'configs'

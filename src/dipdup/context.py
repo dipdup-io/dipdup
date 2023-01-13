@@ -20,6 +20,7 @@ from typing import cast
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 
+from dipdup import env
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
@@ -61,7 +62,6 @@ from dipdup.utils.database import execute_sql
 from dipdup.utils.database import execute_sql_query
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import wipe_schema
-from dipdup.utils.sys import is_in_tests
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 
@@ -645,7 +645,7 @@ class CallbackManager:
     ) -> None:
         """Execute SQL script included with the project"""
         # NOTE: Modified `package_path` breaks SQL discovery.
-        if is_in_tests():
+        if env.TEST:
             return
 
         sql_path = self._get_sql_path(ctx, name)

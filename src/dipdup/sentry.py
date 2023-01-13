@@ -20,9 +20,7 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 
 from dipdup import __version__
 from dipdup import baking_bad
-from dipdup.utils.sys import is_in_ci
-from dipdup.utils.sys import is_in_docker
-from dipdup.utils.sys import is_in_tests
+from dipdup import env
 from dipdup.utils.sys import is_shutting_down
 
 if TYPE_CHECKING:
@@ -68,7 +66,7 @@ def before_send(
 
     # NOTE: Skip some reports if Sentry DSN is not set implicitly
     if crash_reporting:
-        if is_in_tests() or is_in_ci():
+        if env.TEST or env.CI:
             return None
 
         # NOTE: User-generated events (e.g. from `ctx.logger`)
@@ -124,11 +122,11 @@ def init_sentry(config: 'DipDupConfig') -> None:
     )
 
     if not environment:
-        if is_in_docker():
+        if env.DOCKER:
             environment = 'docker'
-        elif is_in_tests():
+        elif env.TEST:
             environment = 'tests'
-        elif is_in_ci():
+        elif env.CI:
             environment = 'gha'
         else:
             environment = 'local'
