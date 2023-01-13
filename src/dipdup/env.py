@@ -30,5 +30,6 @@ if platform.system() == 'Linux' and Path('/.dockerenv').exists():
 TEST = get_bool('DIPDUP_TEST')
 CI = get_bool('DIPDUP_CI')
 DOCKER = get_bool('DIPDUP_DOCKER')
+NEXT = get_bool('DIPDUP_NEXT')
 DOCKER_IMAGE = get('DIPDUP_DOCKER_IMAGE')
 REPLAY_PATH = get('DIPDUP_REPLAY_PATH')

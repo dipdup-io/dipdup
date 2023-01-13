@@ -55,6 +55,10 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
             'DIPDUP_TEST': '1',
         }
 
+        # TODO: Remove in 7.0
+        if package == 'demo_raw':
+            env['DIPDUP_NEXT'] = '1'
+
         subprocess.run(
             f'dipdup -c {tmp_config_path} {cmd}',
             cwd=tmp_root_path,

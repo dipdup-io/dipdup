@@ -1,5 +1,7 @@
 from enum import Enum
 
+from dipdup import env
+
 
 class LoggingValues(Enum):
     """Enum for `logging` field values."""
@@ -19,15 +21,29 @@ class MessageType(Enum):
     event = 'event'
 
 
-class IndexType(Enum):
-    """Enum for `dipdup.models.Index`"""
+# TODO: Remove in 7.0
+if env.NEXT:
 
-    operation = 'operation'
-    operation_unfiltered = 'operation_unfiltered'
-    big_map = 'big_map'
-    head = 'head'
-    token_transfer = 'token_transfer'
-    event = 'event'
+    class IndexType(Enum):
+        """Enum for `dipdup.models.Index`"""
+
+        operation = 'operation'
+        operation_unfiltered = 'operation_unfiltered'
+        big_map = 'big_map'
+        head = 'head'
+        token_transfer = 'token_transfer'
+        event = 'event'
+
+else:
+
+    class IndexType(Enum):  # type: ignore[no-redef]
+        """Enum for `dipdup.models.Index`"""
+
+        operation = 'operation'
+        big_map = 'big_map'
+        head = 'head'
+        token_transfer = 'token_transfer'
+        event = 'event'
 
 
 class OperationType(Enum):

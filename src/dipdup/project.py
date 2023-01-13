@@ -29,7 +29,7 @@ DEMO_PROJECTS = (
     ('demo_token', 'TzBTC FA1.2 token operations'),
     ('demo_token_transfers', 'TzBTC FA1.2 token transfers'),
     ('demo_auction', 'TzColors NFT marketplace'),
-    ('demo_raw', 'Process raw operations without filtering and strict typing'),
+    ('demo_raw', 'Process raw operations without filtering and strict typing (experimental)'),
     ('blank', 'Empty config for a fresh start'),
     # TODO: demo_jobs
     # TODO: demo_backup
