@@ -468,7 +468,8 @@ class TzktDatasource(SignalRDatasource):
 
     async def get_migration_originations(
         self,
-        first_level: int = 0,
+        first_level: int | None = None,
+        last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[OperationData, ...]:
@@ -476,6 +477,7 @@ class TzktDatasource(SignalRDatasource):
         self._logger.info('Fetching contracts originated with migrations')
         params = self._get_request_params(
             first_level=first_level,
+            last_level=last_level,
             offset=offset,
             limit=limit,
             select=ORIGINATION_MIGRATION_FIELDS,
@@ -491,11 +493,13 @@ class TzktDatasource(SignalRDatasource):
 
     async def iter_migration_originations(
         self,
-        first_level: int = 0,
+        first_level: int | None = None,
+        last_level: int | None = None,
     ) -> AsyncIterator[tuple[OperationData, ...]]:
         async for batch in self._iter_batches(
             self.get_migration_originations,
             first_level,
+            last_level,
         ):
             yield batch
 
@@ -517,7 +521,7 @@ class TzktDatasource(SignalRDatasource):
             limit=limit,
             select=ORIGINATION_OPERATION_FIELDS,
             status='applied',
-            cursor=bool(code_hashes),
+            cursor=bool(code_hashes) or bool(not code_hashes and not addresses),
         )
 
         # NOTE: TzKT may hit URL length limit with hundreds of originations in a single request.
@@ -544,7 +548,13 @@ class TzktDatasource(SignalRDatasource):
                     'codeHash.in': ','.join(str(h) for h in code_hashes),
                 },
             )
-        else:
+        elif not addresses and not code_hashes:
+            raw_originations += await self.request(
+                'get',
+                url='v1/operations/originations',
+                params=params,
+            )
+        elif addresses and code_hashes:
             raise FrameworkException('Either `addresses` or `code_hashes` should be specified')
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
@@ -976,7 +986,10 @@ class TzktDatasource(SignalRDatasource):
         for operation_json in data:
             if operation_json['status'] != 'applied':
                 continue
-            operation = self.convert_operation(operation_json)
+            if 'hash' in operation_json:
+                operation = self.convert_operation(operation_json)
+            else:
+                operation = self.convert_migration_origination(operation_json)
             level_operations[operation.level].append(operation)
 
         for _level, operations in level_operations.items():
@@ -1090,7 +1103,7 @@ class TzktDatasource(SignalRDatasource):
     ) -> OperationData:
         """Convert raw migration message from REST into dataclass"""
         return OperationData(
-            type='origination',
+            type='migration',
             id=migration_origination_json['id'],
             level=migration_origination_json['level'],
             timestamp=_parse_timestamp(migration_origination_json['timestamp']),

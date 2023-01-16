@@ -48,8 +48,10 @@ for demo in _get_demos():
     )
 
     demo_pkg = demo.name.replace('-', '_')
+    args = ['ln', '-sf', f'../demos/{demo.name}/src/{demo_pkg}', demo_pkg]
+    print(f'=> Linking `{demo.name}`: {" ".join(args)}')
     subprocess.run(
-        ['ln', '-sf', f'../demos/{demo.name}/src/{demo_pkg}', demo_pkg],
-        cwd=Path.cwd() / 'src',
+        args,
+        cwd=Path(__file__).parent.parent / 'src',
         check=True,
     )

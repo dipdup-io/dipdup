@@ -5,6 +5,13 @@ database:
   kind: sqlite
   path: db.sqlite3
 
+datasources:
+  tzkt:
+    kind: tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
+
 contracts:
   tzcolors_minter:
     address: KT1FyaDqiMQWg7Exo7VUiXAgZbd2kCzo3d4s
@@ -13,15 +20,8 @@ contracts:
     address: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
     typename: tzcolors_auction
 
-datasources:
-  tzkt:
-    kind: tzkt
-    url: ${TZKT_URL:-https://api.tzkt.io}
-    http:
-      replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
 
 templates:
-
   tzcolors_auction:
     kind: operation
     datasource: <datasource>
@@ -47,7 +47,6 @@ templates:
     last_level: 1340654
 
 indexes:
-
   tzcolors_auction:
     template: tzcolors_auction
     values:

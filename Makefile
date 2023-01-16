@@ -76,6 +76,8 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 	rm -r ~/.cache/dipdup
 
 update:         ## Update dependencies, export requirements.txt
+	git checkout HEAD requirements.* poetry.lock
+
 	make install
 	poetry update
 
@@ -93,11 +95,12 @@ update:         ## Update dependencies, export requirements.txt
 
 	make install
 
-scripts:
+demos:          ## Recreate demos from templates
 	python scripts/update_cookiecutter.py
 	python scripts/update_demos.py
 	make lint
 
+replays:        ## Recreate replays for tests
 	rm -r tests/replays/*
 	make test
 

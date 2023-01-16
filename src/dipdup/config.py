@@ -26,7 +26,6 @@ from collections import Counter
 from contextlib import suppress
 from dataclasses import field
 from io import StringIO
-from os import environ as env
 from pathlib import Path
 from pydoc import locate
 from typing import Any
@@ -47,6 +46,7 @@ from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup import baking_bad
+from dipdup import env
 from dipdup.datasources.metadata.enums import MetadataNetwork
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.tzkt.models import BigMapSubscription
@@ -68,7 +68,6 @@ from dipdup.utils import exclude_none
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils.sys import is_in_tests
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -787,7 +786,7 @@ OperationHandlerPatternConfigU = OperationHandlerOriginationPatternConfig | Oper
 class OperationHandlerConfig(HandlerConfig, kind='handler'):
     """Operation handler config
 
-    :param callback: Name of method in `handlers` package
+    :param callback: Callback name
     :param pattern: Filters to match operation groups
     """
 
@@ -840,7 +839,7 @@ class IndexTemplateConfig(NameMixin):
     :param name: Name of index template
     :param template_values: Values to be substituted in template (`<key>` -> `value`)
     :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at (DipDup will terminate at this level)
+    :param last_level: Level to stop indexing at
     """
 
     kind = 'template'
@@ -903,7 +902,7 @@ class OperationIndexConfig(IndexConfig):
     :param types: Types of transaction to fetch
     :param contracts: Aliases of contracts being indexed in `contracts` section
     :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at (DipDup will terminate at this level)
+    :param last_level: Level to stop indexing at
     """
 
     kind: Literal['operation']
@@ -939,6 +938,50 @@ class OperationIndexConfig(IndexConfig):
                         module_name,
                         cast(str, pattern_config.entrypoint),
                     )
+
+
+@dataclass
+class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models', 'OperationData'
+        yield package, 'models as models'
+
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'operation', 'OperationData'
+
+
+@dataclass
+class OperationUnfilteredIndexConfig(IndexConfig):
+    """Operation index config
+
+    :param kind: always `operation_unfiltered`
+    :param types: Types of transaction to fetch
+
+    :param callback: Callback name
+    :param first_level: Level to start indexing from
+    :param last_level: Level to stop indexing at
+    """
+
+    kind: Literal['operation_unfiltered']
+    datasource: TzktDatasourceConfig
+    callback: str
+    types: tuple[OperationType, ...] = (OperationType.transaction,)
+
+    first_level: int = 0
+    last_level: int = 0
+
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        self.handler_config = OperationUnfilteredHandlerConfig(callback=self.callback)
+
+    def import_objects(self, package: str) -> None:
+        self.handler_config.initialize_callback_fn(package)
+
+
+OperationHandlerConfigU = OperationHandlerConfig | OperationUnfilteredHandlerConfig
+OperationIndexConfigU = OperationIndexConfig | OperationUnfilteredIndexConfig
 
 
 @dataclass
@@ -1187,12 +1230,14 @@ class EventIndexConfig(IndexConfig):
         for handler_config in self.handlers:
             handler_config.initialize_callback_fn(package)
 
-            if isinstance(handler_config, EventHandlerConfig):
-                handler_config.initialize_event_type(package)
-
 
 ResolvedIndexConfigU = (
-    OperationIndexConfig | BigMapIndexConfig | HeadIndexConfig | TokenTransferIndexConfig | EventIndexConfig
+    OperationIndexConfig
+    | BigMapIndexConfig
+    | HeadIndexConfig
+    | TokenTransferIndexConfig
+    | EventIndexConfig
+    | OperationUnfilteredIndexConfig
 )
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 HandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
@@ -1441,7 +1486,7 @@ class DipDupConfig:
     def package_path(self) -> Path:
         """Absolute path to the indexer package, existing or default"""
         # NOTE: Integration tests run in isolated environment
-        if is_in_tests():
+        if env.TEST:
             return Path.cwd() / self.package
 
         with suppress(ImportError):
@@ -1742,6 +1787,9 @@ class DipDupConfig:
                         )
                     )
 
+        elif isinstance(index_config, OperationUnfilteredIndexConfig):
+            index_config.subscriptions.add(TransactionSubscription())
+
         elif isinstance(index_config, EventIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(EventSubscription())
@@ -1812,6 +1860,9 @@ class DipDupConfig:
 
                 if isinstance(token_transfer_handler_config.contract, str):
                     token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
+
+        elif isinstance(index_config, OperationUnfilteredIndexConfig):
+            index_config.handler_config.parent = index_config
 
         elif isinstance(index_config, EventIndexConfig):
             for event_handler_config in index_config.handlers:

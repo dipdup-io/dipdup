@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+<!-- NOTE: Undocumented until 7.0; breaks schema compatibility -->
+<!--
+### Added
+
+- index: New index kind `operation_unfiltered`.
+-->
+
+## [Unreleased]
+
+### Fixed
+
+- tzkt: Fixed `OperationData.type` field value for migration originations.
+- tzkt: Added missing `last_level` argument to migration origination fetching methods.
+- index: Fixed unnecessary prefetching of migration originations in `operation` index.
+
+### Other
+
+- ci: Enforce markdown linting for docs.
+
 ## [6.4.3] - 2023-01-05
 
 ### Fixed

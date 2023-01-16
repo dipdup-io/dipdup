@@ -20,5 +20,5 @@ async def on_token_transfer(
     if not amount:
         return
 
-    await on_balance_update(from_, -amount, token_transfer.timestamp)
-    await on_balance_update(to, amount, token_transfer.timestamp)
+    await on_balance_update(address=from_, balance_update=-amount, timestamp=token_transfer.timestamp)
+    await on_balance_update(address=to, balance_update=amount, timestamp=token_transfer.timestamp)

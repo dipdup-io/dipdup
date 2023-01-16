@@ -6,7 +6,6 @@ import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from functools import wraps
-from os import environ as env
 from pathlib import Path
 from typing import Any
 from typing import Awaitable
@@ -18,11 +17,10 @@ import asyncclick as click
 
 from dipdup import __spec_version__
 from dipdup import __version__
+from dipdup import env
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
 from dipdup.utils.sys import IGNORE_CONFIG_CMDS
-from dipdup.utils.sys import is_in_ci
-from dipdup.utils.sys import is_in_tests
 from dipdup.utils.sys import set_up_logging
 from dipdup.utils.sys import set_up_process
 
@@ -170,7 +168,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     init_sentry(_config)
 
     # NOTE: Fire and forget, do not block instant commands
-    if not any((_config.advanced.skip_version_check, is_in_tests(), is_in_ci())):
+    if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
         asyncio.ensure_future(_check_version())
 
     # NOTE: Avoid import errors if project package is incomplete
