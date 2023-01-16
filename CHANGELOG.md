@@ -4,14 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
-
 <!-- NOTE: Undocumented until 7.0; breaks schema compatibility -->
 <!--
 ### Added
 
 - index: New index kind `operation_unfiltered`.
 -->
+
+## [Unreleased]
 
 ### Fixed
 
@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Other
 
-- ci: Enforce markdown linting.
+- ci: Enforce markdown linting for docs.
 
 ## [6.4.3] - 2023-01-05
 

@@ -91,7 +91,7 @@ target-version = ["py310"]
 max_line_length = 120
 
 [tool.flakeheaven.plugins]
-"*" = ["+*"]
+"*" = ["+*", "-B028"]
 pycodestyle = ["-*"]
 
 [tool.mypy]
