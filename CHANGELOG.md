@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- databases: Fixed crash when schema generation should fail with `schema_modified`.
 - tzkt: Fixed `OperationData.type` field value for migration originations.
 - tzkt: Added missing `last_level` argument to migration origination fetching methods.
 - index: Fixed unnecessary prefetching of migration originations in `operation` index.
