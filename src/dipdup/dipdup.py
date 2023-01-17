@@ -129,6 +129,7 @@ class IndexDispatcher:
             if not any(indexes_processed):
                 await self._ctx._transactions.cleanup()
 
+            # TODO: Replace with asyncio.Event
             await asyncio.sleep(1)
 
     async def _update_metrics(self, update_interval: float) -> None:

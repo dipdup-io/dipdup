@@ -7,9 +7,12 @@ from typing import Iterator
 from typing import Sequence
 
 from dipdup.config import OperationHandlerConfig
+from dipdup.config import OperationHandlerConfigU
 from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
+from dipdup.config import OperationIndexConfigU
+from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import MessageType
@@ -17,14 +20,16 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.indexes.operation.fetcher import OperationFetcher
+from dipdup.indexes.operation.fetcher import OperationUnfilteredFetcher
 from dipdup.indexes.operation.matcher import MatchedOperationsT
-from dipdup.indexes.operation.matcher import OperationHandlerArgumentT
+from dipdup.indexes.operation.matcher import OperationHandlerArgumentU
 from dipdup.indexes.operation.matcher import OperationSubgroup
 from dipdup.indexes.operation.matcher import match_operation_subgroup
+from dipdup.indexes.operation.matcher import match_operation_unfiltered_subgroup
 from dipdup.models import OperationData
 from dipdup.prometheus import Metrics
 
-_logger = logging.getLogger('dipdup_matcher')
+_logger = logging.getLogger('dipdup.matcher')
 
 OperationQueueItem = tuple[OperationSubgroup, ...]
 
@@ -104,29 +109,25 @@ def extract_operation_subgroups(
     operation_subgroups: defaultdict[tuple[str, int], deque[OperationData]] = defaultdict(deque)
 
     _operation_index = -1
-    for _operation_index, operation in enumerate(operations):
+    for _operation_index, op in enumerate(operations):
         # NOTE: Filtering out operations that are not part of any index
-        if operation.type == 'transaction':
-            if entrypoints and operation.entrypoint not in entrypoints:
-                filtered += 1
-                continue
-            if addresses and operation.sender_address not in addresses and operation.target_address not in addresses:
-                filtered += 1
-                continue
-            if (
-                code_hashes
-                and operation.target_code_hash not in code_hashes
-                and operation.sender_code_hash not in code_hashes
-            ):
+        if op.type == 'transaction':
+            if entrypoints and op.entrypoint not in entrypoints:
                 filtered += 1
                 continue
 
-        key = (operation.hash, int(operation.counter))
-        operation_subgroups[key].append(operation)
-        levels.add(operation.level)
+            wrong_address = addresses and not {op.sender_address, op.target_address} & addresses
+            wrong_code_hash = code_hashes and not {op.sender_code_hash, op.target_code_hash} & code_hashes
+            if wrong_address and wrong_code_hash:
+                filtered += 1
+                continue
+
+        key = (op.hash, int(op.counter))
+        operation_subgroups[key].append(op)
+        levels.add(op.level)
 
     if len(levels) > 1:
-        raise RuntimeError('Operations in batch are not in the same level')
+        raise FrameworkException('Operations in batch are not in the same level')
 
     _logger.debug(
         'Extracted %d subgroups (%d operations, %d filtered by %s entrypoints and %s addresses)',
@@ -149,10 +150,15 @@ def extract_operation_subgroups(
 
 
 class OperationIndex(
-    Index[OperationIndexConfig, OperationQueueItem, TzktDatasource],
+    Index[OperationIndexConfigU, OperationQueueItem, TzktDatasource],
     message_type=MessageType.operation,
 ):
-    def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
+    def __init__(
+        self,
+        ctx: DipDupContext,
+        config: OperationIndexConfigU,
+        datasource: TzktDatasource,
+    ) -> None:
         super().__init__(ctx, config, datasource)
         self._entrypoint_filter: set[str | None] = set()
         self._address_filter: set[str] = set()
@@ -162,6 +168,9 @@ class OperationIndex(
         self.push_realtime_message(operation_subgroups)
 
     async def get_filters(self) -> tuple[set[str | None], set[str], set[int]]:
+        if isinstance(self._config, OperationUnfilteredIndexConfig):
+            return set(), set(), set()
+
         if self._entrypoint_filter or self._address_filter or self._code_hash_filter:
             return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
@@ -212,12 +221,22 @@ class OperationIndex(
 
         first_level = index_level + 1
         self._logger.info('Fetching operations from level %s to %s', first_level, sync_level)
-        fetcher = await OperationFetcher.create(
-            self._config,
-            self._datasource,
-            first_level,
-            sync_level,
-        )
+
+        fetcher: OperationFetcher | OperationUnfilteredFetcher
+        if isinstance(self._config, OperationIndexConfig):
+            fetcher = await OperationFetcher.create(
+                self._config,
+                self._datasource,
+                first_level,
+                sync_level,
+            )
+        elif isinstance(self._config, OperationUnfilteredIndexConfig):
+            fetcher = await OperationUnfilteredFetcher.create(
+                self._config,
+                self._datasource,
+                first_level,
+                sync_level,
+            )
 
         async for level, operations in fetcher.fetch_by_level():
             if Metrics.enabled:
@@ -256,10 +275,17 @@ class OperationIndex(
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
-            subgroup_handlers = match_operation_subgroup(
-                self._config.handlers,
-                operation_subgroup,
-            )
+            if isinstance(self._config, OperationUnfilteredIndexConfig):
+                subgroup_handlers = match_operation_unfiltered_subgroup(
+                    self._config,
+                    operation_subgroup,
+                )
+            else:
+                subgroup_handlers = match_operation_subgroup(
+                    self._config.handlers,
+                    operation_subgroup,
+                )
+
             if subgroup_handlers:
                 self._logger.info(
                     '%s: `%s` handler matched!',
@@ -283,9 +309,9 @@ class OperationIndex(
 
     async def _call_matched_handler(
         self,
-        handler_config: OperationHandlerConfig,
+        handler_config: OperationHandlerConfigU,
         operation_subgroup: OperationSubgroup,
-        args: Sequence[OperationHandlerArgumentT],
+        args: Sequence[OperationHandlerArgumentU],
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

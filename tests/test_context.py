@@ -46,16 +46,16 @@ async def test_reindex_field(dummy_dipdup: DipDup) -> None:
 async def test_add_contract(dummy_dipdup: DipDup) -> None:
     ctx = dummy_dipdup._ctx
     await ctx.add_contract('address', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
-    await ctx.add_contract('code_hash', None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+    await ctx.add_contract('code_hash', None, None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
 
     with pytest.raises(ContractAlreadyExistsError):
         await ctx.add_contract('address_dup', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
     with pytest.raises(ContractAlreadyExistsError):
         await ctx.add_contract('address', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNK0000')
     with pytest.raises(ContractAlreadyExistsError):
-        await ctx.add_contract('code_hash_dup', None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+        await ctx.add_contract('code_hash_dup', None, None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
     with pytest.raises(ContractAlreadyExistsError):
-        await ctx.add_contract('code_hash', None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNK0000')
+        await ctx.add_contract('code_hash', None, None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNK0000')
 
     assert ctx.config.get_contract('address').address == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
     assert ctx.config.get_contract('code_hash').code_hash == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'

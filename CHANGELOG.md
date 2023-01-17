@@ -4,11 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+<!-- NOTE: Undocumented until 7.0; breaks schema compatibility -->
+<!--
+### Added
+
+- index: New index kind `operation_unfiltered`.
+-->
+
 ## [Unreleased]
 
 ### Fixed
 
-- sentry: Fix sending crash reports when DSN is not set implicitly.
+- tzkt: Fixed `OperationData.type` field value for migration originations.
+- tzkt: Added missing `last_level` argument to migration origination fetching methods.
+- index: Fixed unnecessary prefetching of migration originations in `operation` index.
+
+### Other
+
+- ci: Enforce markdown linting for docs.
+
+## [6.4.3] - 2023-01-05
+
+### Fixed
+
+- context: Fixed order of `add_contract` method arguments.
+- index: Fixed matching operations when both `address` and `code_hash` filters are specified.
+- sentry: Fixed sending crash reports when DSN is not set implicitly.
 - sentry: Increase event length limit.
 
 ## [6.4.2] - 2022-12-31
@@ -905,7 +926,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.4.2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.4.3...HEAD
+[6.4.3]: https://github.com/dipdup-io/dipdup/compare/6.4.2...6.4.3
 [6.4.2]: https://github.com/dipdup-io/dipdup/compare/6.4.1...6.4.2
 [6.4.1]: https://github.com/dipdup-io/dipdup/compare/6.4.0...6.4.1
 [6.4.0]: https://github.com/dipdup-io/dipdup/compare/6.4.0rc1...6.4.0

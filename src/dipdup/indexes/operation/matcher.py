@@ -2,15 +2,16 @@ import logging
 from collections import deque
 from typing import Any
 from typing import Iterable
-from typing import TypeVar
 
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import OperationHandlerConfig
+from dipdup.config import OperationHandlerConfigU
 from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config import ResolvedIndexConfigU
+from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.datasources.tzkt.models import deserialize_storage
+from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
 from dipdup.models import OperationData
 from dipdup.models import Origination
@@ -18,8 +19,6 @@ from dipdup.models import Transaction
 from dipdup.utils.codegen import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
-
-ConfigT = TypeVar('ConfigT', bound=ResolvedIndexConfigU)
 
 
 @dataclass(frozen=True)
@@ -32,17 +31,16 @@ class OperationSubgroup:
     entrypoints: set[str | None]
 
 
-OperationHandlerArgumentT = Transaction | Origination | OperationData | None
-
-MatchedOperationsT = tuple[OperationSubgroup, OperationHandlerConfig, deque[OperationHandlerArgumentT]]
+OperationHandlerArgumentU = Transaction | Origination | OperationData | None
+MatchedOperationsT = tuple[OperationSubgroup, OperationHandlerConfigU, deque[OperationHandlerArgumentU]]
 
 
 def prepare_operation_handler_args(
     handler_config: OperationHandlerConfig,
     matched_operations: deque[OperationData | None],
-) -> deque[OperationHandlerArgumentT]:
+) -> deque[OperationHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
-    args: deque[OperationHandlerArgumentT] = deque()
+    args: deque[OperationHandlerArgumentU] = deque()
     for pattern_config, operation_data in zip(handler_config.pattern, matched_operations):
         if operation_data is None:
             args.append(None)
@@ -93,7 +91,6 @@ def match_transaction(
     operation: OperationData,
 ) -> bool:
     """Match a single transaction with pattern"""
-    logging.info('match_transaction', pattern_config, operation)
     if entrypoint := pattern_config.entrypoint:
         if entrypoint != operation.entrypoint:
             return False
@@ -128,6 +125,19 @@ def match_origination(
             return False
 
     return True
+
+
+def match_operation_unfiltered_subgroup(
+    index: OperationUnfilteredIndexConfig,
+    operation_subgroup: OperationSubgroup,
+) -> deque[MatchedOperationsT]:
+    matched_handlers: deque[MatchedOperationsT] = deque()
+
+    for operation in operation_subgroup.operations:
+        if OperationType[operation.type] in index.types:
+            matched_handlers.append((operation_subgroup, index.handler_config, deque([operation])))
+
+    return matched_handlers
 
 
 def match_operation_subgroup(

@@ -20,6 +20,7 @@ from typing import cast
 from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 
+from dipdup import env
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
@@ -29,6 +30,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HeadIndexConfig
 from dipdup.config import HookConfig
 from dipdup.config import OperationIndexConfig
+from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config import TokenTransferIndexConfig
@@ -60,7 +62,6 @@ from dipdup.utils.database import execute_sql
 from dipdup.utils.database import execute_sql_query
 from dipdup.utils.database import get_connection
 from dipdup.utils.database import wipe_schema
-from dipdup.utils.sys import is_in_tests
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 
@@ -231,14 +232,15 @@ class DipDupContext:
         self,
         name: str,
         address: str | None = None,
-        code_hash: str | int | None = None,
         typename: str | None = None,
+        code_hash: str | int | None = None,
     ) -> None:
         """Adds contract to the inventory.
 
         :param name: Contract name
         :param address: Contract address
         :param typename: Alias for the contract script
+        :param code_hash: Contract code hash
         """
         self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
         addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
@@ -309,7 +311,7 @@ class DipDupContext:
         datasource_name = index_config.datasource.name
         datasource = self.get_tzkt_datasource(datasource_name)
 
-        if isinstance(index_config, OperationIndexConfig):
+        if isinstance(index_config, (OperationIndexConfig, OperationUnfilteredIndexConfig)):
             index = OperationIndex(self, index_config, datasource)
         elif isinstance(index_config, BigMapIndexConfig):
             index = BigMapIndex(self, index_config, datasource)
@@ -323,7 +325,12 @@ class DipDupContext:
             raise NotImplementedError
 
         await datasource.add_index(index_config)
-        for handler_config in index_config.handlers:
+        handlers = (
+            (index_config.handler_config,)
+            if isinstance(index_config, OperationUnfilteredIndexConfig)
+            else index_config.handlers
+        )
+        for handler_config in handlers:
             self._callbacks.register_handler(handler_config)
         await index.initialize_state(state)
 
@@ -550,6 +557,7 @@ class CallbackManager:
         while True:
             while pending_hooks:
                 await pending_hooks.popleft()
+            # TODO: Replace with asyncio.Event
             await asyncio.sleep(1)
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
@@ -637,7 +645,7 @@ class CallbackManager:
     ) -> None:
         """Execute SQL script included with the project"""
         # NOTE: Modified `package_path` breaks SQL discovery.
-        if is_in_tests():
+        if env.TEST:
             return
 
         sql_path = self._get_sql_path(ctx, name)

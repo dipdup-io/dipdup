@@ -31,6 +31,7 @@ from dipdup.config import OperationHandlerOriginationPatternConfig as Originatio
 from dipdup.config import OperationHandlerPatternConfigU as PatternConfigU
 from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config import OperationIndexConfig
+from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.config import TzktDatasourceConfig
 from dipdup.config import UnknownEventHandlerConfig
@@ -285,6 +286,8 @@ class CodeGenerator:
                 pass
             elif isinstance(index_config, TokenTransferIndexConfig):
                 pass
+            elif isinstance(index_config, OperationUnfilteredIndexConfig):
+                pass
             elif isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException
             else:
@@ -389,6 +392,10 @@ class CodeGenerator:
         for index_config in self._config.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
                 continue
+            if isinstance(index_config, OperationUnfilteredIndexConfig):
+                await self._generate_callback(index_config.handler_config)
+                continue
+
             for handler_config in index_config.handlers:
                 await self._generate_callback(handler_config)
 

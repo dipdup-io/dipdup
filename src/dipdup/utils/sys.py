@@ -1,11 +1,11 @@
 import asyncio
 import logging
-import platform
 import signal
 import sys
 import warnings
-from os import environ as env
 from pathlib import Path
+
+from dipdup import env
 
 # NOTE: Do not try to load config for these commands as they don't need it
 IGNORE_CONFIG_CMDS = {'new', 'install', 'uninstall', 'update'}
@@ -13,7 +13,7 @@ IGNORE_CONFIG_CMDS = {'new', 'install', 'uninstall', 'update'}
 IGNORE_SIGINT_CMDS = {*IGNORE_CONFIG_CMDS, None, 'schema', 'wipe'}
 
 _is_shutting_down = False
-_logger = logging.getLogger('dipdup.cli')
+_logger = logging.getLogger(__name__)
 
 
 async def _shutdown() -> None:  # pragma: no cover
@@ -32,23 +32,6 @@ def is_shutting_down() -> bool:
     return _is_shutting_down
 
 
-def is_in_tests() -> bool:
-    return env.get('DIPDUP_TEST', '0') == '1'
-
-
-def is_in_ci() -> bool:
-    return env.get('CI') == 'true'
-
-
-def is_in_docker() -> bool:
-    return platform.system() == 'Linux' and Path('/.dockerenv').exists()
-
-
-def set_in_tests() -> None:
-    env['DIPDUP_TEST'] = '1'
-    env['DIPDUP_REPLAY_PATH'] = str(Path(__file__).parent.parent.parent.parent / 'tests' / 'replays')
-
-
 def set_up_logging() -> None:
     root = logging.getLogger()
     handler = logging.StreamHandler(stream=sys.stdout)
@@ -63,7 +46,7 @@ def set_up_logging() -> None:
 def set_up_process(cmd: str | None) -> None:
     """Set up interpreter process-wide state"""
     # NOTE: Skip for integration tests
-    if is_in_tests():
+    if env.TEST:
         return
 
     # NOTE: Register shutdown handler for non-interactive commands (avoiding conflicts with Click prompts)
