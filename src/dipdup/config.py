@@ -67,8 +67,6 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 from dipdup.yaml import DipDupYAMLConfig
 
-# NOTE: ${VARIABLE:-default} | ${VARIABLE}
-ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
 DEFAULT_METADATA_URL = baking_bad.METADATA_API_URL
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 DEFAULT_TZKT_URL = next(iter(baking_bad.TZKT_API_URLS.keys()))
