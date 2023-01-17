@@ -163,9 +163,10 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     _config = DipDupConfig.load(config_paths)
     _config.set_up_logging()
 
+    init_sentry(_config)
+
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
-    init_sentry(_config)
 
     # NOTE: Fire and forget, do not block instant commands
     if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
