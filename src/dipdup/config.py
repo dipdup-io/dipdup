@@ -25,7 +25,6 @@ from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
 from dataclasses import field
-from io import StringIO
 from pathlib import Path
 from pydoc import locate
 from typing import Any
@@ -42,7 +41,6 @@ from pydantic import Field
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
-from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup import baking_bad
@@ -64,10 +62,10 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
-from dipdup.utils import exclude_none
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+from dipdup.yaml import DipDupYAMLConfig
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -1472,6 +1470,7 @@ class DipDupConfig:
 
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
+        self.json = DipDupYAMLConfig()
         self._contract_addresses = {v.address: k for k, v in self.contracts.items() if v.address is not None}
         self._contract_code_hashes = {v.code_hash: k for k, v in self.contracts.items() if v.code_hash is not None}
 
@@ -1510,7 +1509,6 @@ class DipDupConfig:
             return True
         return False
 
-    # TODO: Pick refactoring from `ref/config-module`
     @classmethod
     def load(
         cls,
@@ -1520,40 +1518,19 @@ class DipDupConfig:
         # NOTE: __future__.annotations
         JobConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]
 
-        yaml = YAML(typ='base')
-
-        json_config: dict[str, Any] = {}
-        config_environment: dict[str, str] = {}
-        for path in paths:
-            raw_config = cls._load_raw_config(path)
-
-            if environment:
-                raw_config, raw_config_environment = cls._substitute_env_variables(raw_config)
-                config_environment.update(raw_config_environment)
-
-            json_config.update(yaml.load(raw_config))
+        config_json, config_environment = DipDupYAMLConfig.load(paths, environment)
 
         try:
-            config = cls(**json_config)
+            config = cls(**config_json)
         except ConfigurationError:
             raise
         except Exception as e:
             raise ConfigurationError(str(e)) from e
 
-        config.environment = config_environment
         config.paths = paths
+        config.json = config_json
+        config.environment = config_environment
         return config
-
-    def dump(self) -> str:
-        yaml = YAML(typ='unsafe', pure=True)
-        yaml.default_flow_style = False
-        yaml.indent = 2
-
-        config_json = json.dumps(self, default=pydantic_encoder)
-        config_yaml = exclude_none(yaml.load(config_json))
-        buffer = StringIO()
-        yaml.dump(config_yaml, buffer)
-        return buffer.getvalue()
 
     def get_contract(self, name: str) -> ContractConfig:
         try:
@@ -1616,6 +1593,9 @@ class DipDupConfig:
                 raise ConfigInitializationException
             index_config.import_objects(self.package)
 
+    def dump(self) -> str:
+        return DipDupYAMLConfig.dump(self.json)
+
     def add_index(
         self,
         name: str,
@@ -1639,35 +1619,6 @@ class DipDupConfig:
         self._resolve_index_subscriptions(index_config)
         index_config._name = name
         index_config.import_objects(self.package)
-
-    @classmethod
-    def _load_raw_config(cls, path: Path) -> str:
-        _logger.debug('Loading config from %s', path)
-        try:
-            with open(path) as file:
-                return ''.join(filter(cls._filter_commented_lines, file.readlines()))
-        except OSError as e:
-            raise ConfigurationError(f'Config file `{path}` is missing or not readable.') from e
-
-    @classmethod
-    def _filter_commented_lines(cls, line: str) -> bool:
-        return '#' not in line or line.lstrip()[0] != '#'
-
-    @classmethod
-    def _substitute_env_variables(cls, raw_config: str) -> tuple[str, dict[str, str]]:
-        _logger.debug('Substituting environment variables')
-        environment: dict[str, str] = {}
-
-        for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-            variable, default_value = match.group('var_name'), match.group('default_value')
-            value = env.get(variable, default_value)
-            if not value:
-                raise ConfigurationError(f'Environment variable `{variable}` is not set')
-            environment[variable] = value
-            placeholder = match.group(0)
-            raw_config = raw_config.replace(placeholder, value or default_value)
-
-        return raw_config, environment
 
     def _validate(self) -> None:
         # NOTE: Hasura and metadata interface
