@@ -145,14 +145,6 @@ def import_from(module: str, obj: str) -> Any:
         raise ProjectImportError(module, obj) from e
 
 
-def exclude_none(config_json: Any) -> Any:
-    if isinstance(config_json, (list, tuple)):
-        return [exclude_none(i) for i in config_json if i is not None]
-    if isinstance(config_json, dict):
-        return {k: exclude_none(v) for k, v in config_json.items() if v is not None}
-    return config_json
-
-
 def json_dumps_decimals(obj: Any) -> str:
     def _default(obj: Any) -> Any:
         if isinstance(obj, Decimal):
