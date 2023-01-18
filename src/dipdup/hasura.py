@@ -8,6 +8,7 @@ from typing import Any
 from typing import Iterable
 from typing import Iterator
 from typing import Optional
+from typing import TextIO
 from typing import Union
 from typing import cast
 
@@ -188,6 +189,8 @@ class HasuraGateway(HTTPGateway):
             metadata['rest_endpoints'] = rest_endpoints_metadata
 
         await self._replace_metadata(metadata)
+
+        await self._apply_custom_metadata_requests()
 
         # TODO: Find out why it is necessary
         # NOTE: Fetch metadata once again and save its hash for future comparisons
@@ -642,3 +645,21 @@ class HasuraGateway(HTTPGateway):
         if source_field := field.source_field:
             return field.model._meta.fields_db_projection[source_field]
         return field.model_field_name + '_id'
+
+    def _iterate_hasura_metadata_requests(self) -> Iterator[TextIO]:
+        package = importlib.import_module(self._package)
+        hasura_path = Path(package.__path__[0]) / 'hasura'
+        for file in iter_files(hasura_path, '.json'):
+            yield file
+
+    async def _apply_custom_metadata_requests(self) -> None:
+        for file in self._iterate_hasura_metadata_requests():
+            try:
+                self._logger.info('Executing custom metadata request `%s`', file.name)
+                payload = json.loads(file.read())
+                await self._hasura_request(
+                    endpoint='metadata',
+                    json=payload,
+                )
+            except json.JSONDecodeError:
+                self._logger.error('Invalid JSON in `%s`, skipped', file.name)

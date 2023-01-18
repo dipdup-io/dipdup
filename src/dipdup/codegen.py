@@ -101,6 +101,7 @@ class ProjectPaths:
         self.hooks = root / 'hooks'
         self.sql = root / 'sql'
         self.graphql = root / 'graphql'
+        self.hasura = root / 'hasura'
 
     def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -113,6 +114,7 @@ class ProjectPaths:
 
         touch(self.sql / KEEP_MARKER)
         touch(self.graphql / KEEP_MARKER)
+        touch(self.hasura / KEEP_MARKER)
 
         if not self.models.is_file():
             template = load_template('templates', f'{MODELS_MODULE}.j2')
