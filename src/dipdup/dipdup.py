@@ -470,26 +470,19 @@ class DipDup:
         schema_name = self._config.schema_name
         conn = get_connection()
 
-        # NOTE: Try to fetch existing schema
-        try:
+        # NOTE: Try to fetch existing schema, but don't fail yet
+        with suppress(OperationalError):
             self._schema = await Schema.get_or_none(name=schema_name)
 
-        # NOTE: No such table yet
+        # NOTE: Call with existing Schema too to create new tables if missing
+        try:
+            await generate_schema(
+                conn,
+                schema_name,
+            )
         except OperationalError:
-            self._schema = None
+            await self._ctx.reindex(ReindexingReason.schema_modified)
 
-        # TODO: Fix Tortoise ORM to raise more specific exception
-        except KeyError:
-            try:
-                self._schema = await Schema.get_or_none(name=schema_name)
-            except KeyError:
-                await self._ctx.reindex(ReindexingReason.schema_modified)
-
-        # NOTE: Call even if Schema is present to create new tables
-        await generate_schema(
-            conn,
-            schema_name,
-        )
         schema_hash = get_schema_hash(conn)
 
         if self._schema is None:
