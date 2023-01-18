@@ -37,6 +37,8 @@ RollbackCallbackT = Callable[['IndexDatasource', MessageType, int, int], Awaitab
 
 
 class Datasource(HTTPGateway):
+    _default_http_config = HTTPConfig()
+
     def __init__(self, url: str, http_config: HTTPConfig | None = None) -> None:
         config = ResolvedHTTPConfig.create(self._default_http_config, http_config)
         super().__init__(url, config)

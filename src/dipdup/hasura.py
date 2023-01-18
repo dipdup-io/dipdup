@@ -19,6 +19,7 @@ from pydantic.dataclasses import dataclass
 from tortoise import fields
 
 from dipdup.config import DEFAULT_POSTGRES_SCHEMA
+from dipdup.config import AdvancedConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -116,6 +117,7 @@ class HasuraGateway(HTTPGateway):
         hasura_config: HasuraConfig,
         database_config: PostgresDatabaseConfig,
         http_config: Optional[HTTPConfig] = None,
+        advanced_config: Optional[AdvancedConfig] = None,
     ) -> None:
         super().__init__(
             hasura_config.url,
@@ -125,6 +127,7 @@ class HasuraGateway(HTTPGateway):
         self._package = package
         self._hasura_config = hasura_config
         self._database_config = database_config
+        self._advanced_config = advanced_config
 
     async def configure(self, force: bool = False) -> None:
         """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
@@ -663,3 +666,9 @@ class HasuraGateway(HTTPGateway):
                 )
             except json.JSONDecodeError:
                 self._logger.error('Invalid JSON in `%s`, skipped', file.name)
+            except HasuraError as exception:
+                if self._advanced_config and self._advanced_config.ignore_hasura_custom_metadata_errors:
+                    self._logger.info('Skip request error in `%s`', file.name)
+                    continue
+                else:
+                    raise exception

@@ -1411,6 +1411,7 @@ class AdvancedConfig:
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
     :param crash_reporting: Enable crash reporting
+    :param ignore_hasura_custom_metadata_errors: Enable ignoring errors from custom requests to change Hasura metadata
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -1422,6 +1423,7 @@ class AdvancedConfig:
     skip_version_check: bool = False
     rollback_depth: int = 2
     crash_reporting: bool = False
+    ignore_hasura_custom_metadata_errors: bool = False
 
 
 @dataclass

@@ -546,9 +546,10 @@ class DipDup:
             raise FrameworkException('PostgresDatabaseConfig expected; check earlier')
 
         hasura_gateway = HasuraGateway(
-            self._config.package,
-            self._config.hasura,
-            self._config.database,
+            package=self._config.package,
+            hasura_config=self._config.hasura,
+            database_config=self._config.database,
+            advanced_config=self._config.advanced,
         )
         await stack.enter_async_context(hasura_gateway)
         return hasura_gateway

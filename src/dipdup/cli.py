@@ -348,6 +348,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
         package=config.package,
         hasura_config=config.hasura,
         database_config=cast(PostgresDatabaseConfig, config.database),
+        advanced_config=config.advanced,
     )
 
     async with AsyncExitStack() as stack:
