@@ -285,8 +285,8 @@ class BaseProject(Project):
             ),
             default=0,
             choices=(
-                'hasura/graphql-engine:v2.15.2',
-                'hasura/graphql-engine:v2.15.2',
+                'hasura/graphql-engine:v2.17.0',
+                'hasura/graphql-engine:v2.17.0',
             ),
             comments=(
                 f'tested with DipDup {major_version}',
