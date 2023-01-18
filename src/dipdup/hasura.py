@@ -8,6 +8,7 @@ from typing import Any
 from typing import Iterable
 from typing import Iterator
 from typing import Optional
+from typing import TextIO
 from typing import Union
 from typing import cast
 
@@ -645,13 +646,13 @@ class HasuraGateway(HTTPGateway):
             return field.model._meta.fields_db_projection[source_field]
         return field.model_field_name + '_id'
 
-    def _iterate_hasura_metadata_requests(self) -> Iterator:
+    def _iterate_hasura_metadata_requests(self) -> Iterator[TextIO]:
         package = importlib.import_module(self._package)
         hasura_path = Path(package.__path__[0]) / 'hasura'
         for file in iter_files(hasura_path, '.json'):
             yield file
 
-    async def _apply_custom_metadata_requests(self):
+    async def _apply_custom_metadata_requests(self) -> None:
         for file in self._iterate_hasura_metadata_requests():
             try:
                 self._logger.info('Executing custom metadata request `%s`', file.name)
