@@ -2,7 +2,6 @@ import hashlib
 import importlib
 import logging
 import re
-from json import dumps as dump_json
 from pathlib import Path
 from typing import Any
 from typing import Iterable
@@ -12,7 +11,7 @@ from typing import TextIO
 from typing import Union
 from typing import cast
 
-import orjson as json
+import orjson
 from aiohttp import ClientResponseError
 from humps import main as humps
 from pydantic.dataclasses import dataclass
@@ -190,7 +189,7 @@ class HasuraGateway(HTTPGateway):
 
         await self._replace_metadata(metadata)
 
-        await self._apply_custom_metadata_requests()
+        await self._apply_custom_metadata()
 
         # TODO: Find out why it is necessary
         # NOTE: Fetch metadata once again and save its hash for future comparisons
@@ -209,7 +208,7 @@ class HasuraGateway(HTTPGateway):
             return None
 
     async def _hasura_request(self, endpoint: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
-        self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
+        self._logger.debug('Sending `%s` request: %s', endpoint, orjson.dumps(json))
         try:
             result = await self.request(
                 method='get' if json is None else 'post',
@@ -277,7 +276,7 @@ class HasuraGateway(HTTPGateway):
         )
 
     def _hash_metadata(self, metadata: dict[str, Any]) -> str:
-        return hashlib.sha256(json.dumps(metadata)).hexdigest()
+        return hashlib.sha256(orjson.dumps(metadata)).hexdigest()
 
     async def _replace_metadata(self, metadata: dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')
@@ -646,20 +645,25 @@ class HasuraGateway(HTTPGateway):
             return field.model._meta.fields_db_projection[source_field]
         return field.model_field_name + '_id'
 
-    def _iterate_hasura_metadata_requests(self) -> Iterator[TextIO]:
+    def _iterate_metadata_requests(self) -> Iterator[TextIO]:
         package = importlib.import_module(self._package)
         hasura_path = Path(package.__path__[0]) / 'hasura'
         for file in iter_files(hasura_path, '.json'):
             yield file
 
-    async def _apply_custom_metadata_requests(self) -> None:
-        for file in self._iterate_hasura_metadata_requests():
+    async def _apply_custom_metadata(self) -> None:
+        for file in self._iterate_metadata_requests():
             try:
                 self._logger.info('Executing custom metadata request `%s`', file.name)
-                payload = json.loads(file.read())
+                payload = orjson.loads(file.read())
                 await self._hasura_request(
                     endpoint='metadata',
                     json=payload,
                 )
-            except json.JSONDecodeError:
+            except orjson.JSONDecodeError:
                 self._logger.error('Invalid JSON in `%s`, skipped', file.name)
+            except HasuraError:
+                if not self._hasura_config.ignore_metadata_errors:
+                    raise
+
+                self._logger.error('Failed to apply `%s`, skipped', file.name)
