@@ -19,6 +19,7 @@ from typing import cast
 
 import orjson as json
 
+from dipdup import env
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
@@ -130,7 +131,7 @@ class CodeGenerator:
         self._config = config
         self._datasources = datasources
         self._schemas: dict[TzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
-        self._pkg = ProjectPaths(Path(config.package_path))
+        self._pkg = ProjectPaths(env.get_package_path(config.package))
 
     def create_package(self) -> None:
         self._pkg.create_package()

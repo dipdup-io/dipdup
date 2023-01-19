@@ -708,7 +708,7 @@ class CallbackManager:
 
     def _get_sql_path(self, ctx: 'DipDupContext', name: str) -> Path:
         subpackages = name.split('.')
-        sql_path = Path(ctx.config.package_path, 'sql', *subpackages)
+        sql_path = Path(env.get_package_path(ctx.config.package), 'sql', *subpackages)
         if not sql_path.exists():
             raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 

@@ -507,12 +507,13 @@ async def schema_export(ctx: click.Context) -> None:
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
+    package_path = env.get_package_path(config.package)
 
     async with tortoise_wrapper(url, models):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
         dipdup_sql_path = Path(__file__).parent / 'sql' / 'on_reindex'
-        project_sql_path = Path(config.package_path) / 'sql' / 'on_reindex'
+        project_sql_path = package_path / 'sql' / 'on_reindex'
 
         for sql_path in (dipdup_sql_path, project_sql_path):
             for file in iter_files(sql_path):

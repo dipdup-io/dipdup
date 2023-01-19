@@ -16,14 +16,16 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - hasura: Apply arbitrary metadata from `hasura` project directory.
+- config: Added `allow_inconsistent_metadata` option to `hasura` section.
 
 ### Fixed
 
 - database: Fixed crash when schema generation should fail with `schema_modified`.
-- tzkt: Fixed `OperationData.type` field value for migration originations.
-- tzkt: Added missing `last_level` argument to migration origination fetching methods.
+- hasura: Stop using deprecated schema/metadata API.
 - index: Fixed unnecessary prefetching of migration originations in `operation` index.
 - sentry: Flush and reopen session daily.
+- tzkt: Fixed `OperationData.type` field value for migration originations.
+- tzkt: Added missing `last_level` argument to migration origination fetching methods.
 
 ### Other
 
