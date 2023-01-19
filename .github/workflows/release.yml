@@ -73,7 +73,7 @@ jobs:
       - name: Set up Poetry
         uses: snok/install-poetry@v1
         with:
-          version: '1.2.2'
+          version: '1.3.2'
 
       - name: Install project
         run: make install
@@ -91,7 +91,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-default.outputs.tags }}
           labels: ${{ steps.meta-default.outputs.labels }}
-          build-args: PYTEZOS=0
+          build-args: DIPDUP_DOCKER_IMAGE=default
+
 
       - name: Publish stable image (pytezos)
         uses: docker/build-push-action@v3
@@ -102,7 +103,7 @@ jobs:
           push: true
           tags: ${{ steps.meta-pytezos.outputs.tags }}
           labels: ${{ steps.meta-pytezos.outputs.labels }}
-          build-args: PYTEZOS=1
+          build-args: DIPDUP_DOCKER_IMAGE=pytezos
 
       - name: Publish stable image (slim)
         uses: docker/build-push-action@v3

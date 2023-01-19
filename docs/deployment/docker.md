@@ -4,15 +4,15 @@
 
 DipDup provides multiple prebuilt images for different environments hosted on [Docker Hub](https://hub.docker.com/r/dipdup/dipdup). Choose the one according to your needs from the table below.
 
-| | default | pytezos | slim |
-| - | :-: | :-: | :-: |
-| base image | `python:3.10-slim` | `python:3.10-slim` | `python:3.10-alpine` |
-| platforms | `amd64`, `arm64` | `amd64`, `arm64` | `amd64`, `arm64` |
-| latest tag | `{{ cookiecutter.dipdup_version }}` | `{{ cookiecutter.dipdup_version }}-pytezos` | `{{ cookiecutter.dipdup_version }}-slim` |
-| image size | 356M | 476M | 139M |
-| `dipdup init` command | ✅ | ✅ | ❌ |
-| `git` and `poetry` included | ✅ | ✅ | ❌ |
-| PyTezos included | ❌ | ✅ | ❌
+|                             |               default               |                   pytezos                   |                   slim                   |
+| --------------------------- |:-----------------------------------:|:-------------------------------------------:|:----------------------------------------:|
+| base image                  |          `python:3.10-slim`         |              `python:3.10-slim`             |           `python:3.10-alpine`           |
+| platforms                   |           `amd64`, `arm64`          |               `amd64`, `arm64`              |             `amd64`, `arm64`             |
+| latest tag                  | `{{ cookiecutter.dipdup_version }}` | `{{ cookiecutter.dipdup_version }}-pytezos` | `{{ cookiecutter.dipdup_version }}-slim` |
+| image size                  |                 368M                |                     489M                    |                   139M                   |
+| `dipdup init` command       |                  ✅                  |                      ✅                      |                     ❌                    |
+| `git` and `poetry` included |                  ✅                  |                      ✅                      |                     ❌                    |
+| PyTezos included            |                  ❌                  |                      ✅                      |                     ❌                    |
 
 The default DipDup image is suitable for development and testing. It also includes some tools to make package management easier. If unsure, use this image.
 
