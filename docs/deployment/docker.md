@@ -16,21 +16,17 @@ DipDup provides multiple prebuilt images for different environments hosted on [D
 
 The default DipDup image is suitable for development and testing. It also includes some tools to make package management easier. If unsure, use this image.
 
-### `-slim` image
+`-slim` image based on Alpine Linux, thus is much smaller than the default one. Also, it doesn't include codegen functionality (`init` command, unlikely to be useful in production). This image will eventually become the default one.
 
-Based on Alpine Linux, this image is much smaller than the default one. Also, it doesn't include codegen functionality (`init` command, unlikely to be useful in production).
-
-### `-pytezos` image
-
-The only difference with the default image is the pre-installed PyTezos library, the same as `pip install dipdup -E pytezos`. DipDup doesn't provide any further PyPoetry integration. Having some patience, you can build a trading robot or something like that using this image. I don't know if anyone is using it. If you're the one on them, please let us know!
+`-pytezos` image includes pre-installed PyTezos library. DipDup doesn't provide any further PyTezos integration. Having some patience, you can build a trading robot or something like that using this image.
 
 ### Nightly builds (ghcr.io)
 
-In addition to [Docker Hub](https://hub.docker.com/r/dipdup/dipdup) we also publish images on [GitHub Packages](https://github.com/dipdup-io/dipdup/pkgs/container/dipdup). Builds are triggered on push to any branch for developers' convenience. Do not use this registry in production!
+In addition to [Docker Hub](https://hub.docker.com/r/dipdup/dipdup) we also publish images on [GitHub Container Registry](https://github.com/dipdup-io/dipdup/pkgs/container/dipdup). Builds are triggered on push to any branch for developers' convenience, but only Alpine images are published. Do not use nightlies in production!
 
 ```Dockerfile
-# Slim image for `aux/arm64` branch
-FROM ghcr.io/dipdup-io/dipdup:aux-arm64-slim
+# Latest image for `aux/arm64` branch
+FROM ghcr.io/dipdup-io/dipdup:aux-arm64
 ```
 
 ## Writing Dockerfile
