@@ -66,7 +66,7 @@ FROM
 
 You can also create your custom alert endpoints using SQL views and functions and then convert them to Hasura REST endpoints.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/sql.md}}
-> * {{ #summary graphql/rest.md}}
+```admonish info title="See Also"
+* {{ #summary advanced/sql.md}}
+* {{ #summary graphql/rest.md}}
+```

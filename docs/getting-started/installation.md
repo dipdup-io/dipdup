@@ -14,10 +14,10 @@ Windows is not officially supported, but there's a possibility everything will w
 
 We aim to improve cross-platform compatibility in future releases ([issue](https://github.com/dipdup-io/dipdup/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+)).
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/performance.md }}
-> * [What is the Windows Subsystem for Linux?](https://docs.microsoft.com/en-us/windows/wsl/about)
+```admonish info title="See Also"
+* {{ #summary advanced/performance.md }}
+* [What is the Windows Subsystem for Linux?](https://docs.microsoft.com/en-us/windows/wsl/about)
+```
 
 ## Local installation
 

@@ -33,11 +33,11 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config export
 dipdup -c dipdup.yml -c dipdup.prod.yml config env
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary cli-reference.md#dipdup-config-export }}
-> * {{ #summary cli-reference.md#dipdup-config-env }}
-> * {{ #summary config/README.md }}
+```admonish info title="See Also"
+* {{ #summary cli-reference.md#dipdup-config-export }}
+* {{ #summary cli-reference.md#dipdup-config-env }}
+* {{ #summary config/README.md }}
+```
 
 ## Enable debug logging and crash reporting
 

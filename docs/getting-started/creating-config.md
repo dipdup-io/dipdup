@@ -34,9 +34,9 @@ Run `config export` command if unsure about the final config used by DipDup.
 
 ## Full example
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+```admonish warning title=""
+This page or paragraph is yet to be written. Come back later.
+```
 
 Let's put it all together. The config below is an artificial example but contains almost all available options.
 

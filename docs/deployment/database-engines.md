@@ -14,7 +14,7 @@ By default DipDup uses in-memory SQLite database that destroys after the process
 
 While sometimes it's convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines. However, Tortoise ORM mostly hides these differences.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/sql.md}}
-> * {{ #summary config/database.md}}
+```admonish info title="See Also"
+* {{ #summary advanced/sql.md}}
+* {{ #summary config/database.md}}
+```

@@ -10,6 +10,6 @@ Head index callback receives `HeadBlockData` model that contains only basic info
 
 Subscription to the head channel is enabled by default, even if no head indexes are defined. Each time the block is baked, the `dipdup_head` table is updated per datasource. Use it to ensure that both index datasource and underlying blockchain are up and running.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary deployment/monitoring.md}}
+```admonish info title="See Also"
+* {{ #summary deployment/monitoring.md}}
+```

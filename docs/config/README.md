@@ -2,6 +2,6 @@
 
 {{ #include ../include/config-toc.md }}
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary getting-started/creating-config.md }}
+```admonish info title="See Also"
+* {{ #summary getting-started/creating-config.md }}
+```

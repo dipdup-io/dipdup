@@ -50,6 +50,6 @@ datasources:
     url: https://ipfs.io/ipfs
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/datasources.md}}
+```admonish info title="See Also"
+* {{ #summary advanced/datasources.md}}
+```

@@ -13,7 +13,7 @@ hasura:
   source: default
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary graphql/hasura.md}}
-> * {{ #summary cli-reference.md#dipdup-hasura-configure}}
+```admonish info title="See Also"
+* {{ #summary graphql/hasura.md}}
+* {{ #summary cli-reference.md#dipdup-hasura-configure}}
+```

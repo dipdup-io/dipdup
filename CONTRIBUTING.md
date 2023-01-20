@@ -71,9 +71,9 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 - Demos are stored in `demos` root directory. They MUST be generated automatically from project templates using replay files.
 - Maintainers SHOULD run `make demos replays` command regularly to ensure that demo projects are up to date.
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+```admonish warning title=""
+This page or paragraph is yet to be written. Come back later.
+```
 
 ## Tests
 
