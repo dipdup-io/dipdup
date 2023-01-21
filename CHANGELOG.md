@@ -30,7 +30,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Other
 
-- ci: Enforce markdown linting for docs.
+- ci: Enforce markdownlint for docs.
+- deps: Updated asyncpg to 0.27.0
+- deps: Updated hasura to 2.17.0
 
 ## [6.4.3] - 2023-01-05
 
