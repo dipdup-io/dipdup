@@ -6,6 +6,12 @@ on:
   push:
     tags:
       - '*.*.*'
+    branches:
+      - master
+    paths:
+      - 'docs/**'
+      - 'scripts/**'
+      - '.github/workflows/docs.yml'
 
 jobs:
   docs:
@@ -34,12 +40,26 @@ jobs:
     - name: Install project
       run: make install
 
-    - name: Build docs
+    - name: Build docs (docs)
+      if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, 'rc')
       run: MDBOOK_ROOT=https://docs.dipdup.io make docs
 
-    - name: Deploy to GitHub Pages
+    - name: Deploy to GH Pages (docs)
+      if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, 'rc')
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/dist/docs
         destination_dir: docs
+
+    - name: Build docs (docs-next)
+      if: startsWith(github.ref, 'refs/heads') || contains(github.ref, 'rc')
+      run: MDBOOK_ROOT=https://docs-next.dipdup.io make docs
+
+    - name: Deploy to GH Pages (docs-next)
+      if: startsWith(github.ref, 'refs/heads') || contains(github.ref, 'rc')
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/dist/docs
+        destination_dir: docs-next
