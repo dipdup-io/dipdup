@@ -10,7 +10,7 @@ create-missing = false
 
 [output.html]
 default-theme = "coal"
-additional-css = ["book.css", "././mdbook-admonish.css"]
+additional-css = ["book.css", "mdbook-admonish.css"]
 git-repository-url = "https://github.com/dipdup-io/dipdup.git"
 
 [preprocessor.summary]

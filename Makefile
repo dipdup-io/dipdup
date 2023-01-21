@@ -32,7 +32,7 @@ test:           ## Run test suite
 docs:           ## Build docs
 	scripts/update_cookiecutter.py
 	cd docs
-	make -s clean docs markdownlint orphans || true
+	make -s clean build lint
 
 ##
 

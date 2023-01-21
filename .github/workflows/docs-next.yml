@@ -1,11 +1,11 @@
-name: Docs
+name: Docs (next)
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
   push:
-    tags:
-      - '*.*.*'
+    branches:
+      - master
 
 jobs:
   docs:
@@ -34,12 +34,12 @@ jobs:
     - name: Install project
       run: make install
 
-    - name: Build docs (docs)
-      run: MDBOOK_ROOT=https://docs.dipdup.io make docs
+    - name: Build docs
+      run: MDBOOK_ROOT=https://docs-next.dipdup.io make docs
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/dist/docs
-        destination_dir: docs
+        destination_dir: docs-next
