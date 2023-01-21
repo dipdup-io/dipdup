@@ -5,11 +5,11 @@ concurrency:
 on:
   push:
     branches:
-      - master
+      - '**'
     paths:
       - 'docs/**'
       - 'scripts/**'
-      - '.github/workflows/docs.yml'
+      - '.github/workflows/docs-next.yml'
 
 jobs:
   docs:
