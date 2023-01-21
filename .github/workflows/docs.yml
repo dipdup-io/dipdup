@@ -7,7 +7,7 @@ on:
     tags:
       - '*.*.*'
     branches:
-      - master
+      - '**'
     paths:
       - 'docs/**'
       - 'scripts/**'
@@ -53,11 +53,11 @@ jobs:
         destination_dir: docs
 
     - name: Build docs (docs-next)
-      if: startsWith(github.ref, 'refs/heads') || contains(github.ref, 'rc')
+      if: startsWith(github.ref, 'refs/heads')
       run: MDBOOK_ROOT=https://docs-next.dipdup.io make docs
 
     - name: Deploy to GH Pages (docs-next)
-      if: startsWith(github.ref, 'refs/heads') || contains(github.ref, 'rc')
+      if: startsWith(github.ref, 'refs/heads/master')
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
