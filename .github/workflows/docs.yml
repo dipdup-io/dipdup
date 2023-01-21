@@ -38,6 +38,7 @@ jobs:
       run: MDBOOK_ROOT=https://docs.dipdup.io make docs
 
     - name: Deploy to GitHub Pages
+      if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, 'rc')
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}

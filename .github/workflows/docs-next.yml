@@ -6,6 +6,10 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'docs/**'
+      - 'scripts/**'
+      - '.github/workflows/docs.yml'
 
 jobs:
   docs:
@@ -38,6 +42,7 @@ jobs:
       run: MDBOOK_ROOT=https://docs-next.dipdup.io make docs
 
     - name: Deploy to GitHub Pages
+      if: equals(github.ref, 'refs/heads/master')
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
