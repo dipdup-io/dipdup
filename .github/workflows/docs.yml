@@ -21,8 +21,8 @@ jobs:
     - name: Check out the repo
       uses: actions/checkout@v3
 
-    - name: Install poetry and markdownlint
-      run: pipx install poetry && npm install markdownlint --save-dev
+    - name: Install poetry
+      run: pipx install poetry
 
     - name: Set up Python
       uses: actions/setup-python@v4

@@ -28,7 +28,7 @@ wc:
 	find . -name \*.md -type f -exec wc {} \;
 
 markdownlint:
-	markdownlint -f . --disable line-length --disable no-inline-html
+	npx markdownlint-cli -f . --disable line-length --disable no-inline-html
 
 clean:
 	git clean -Xdf
