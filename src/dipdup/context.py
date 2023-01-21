@@ -337,6 +337,8 @@ class DipDupContext:
         # NOTE: IndexDispatcher will handle further initialization when it's time
         pending_indexes.append(index)
 
+    # TODO: disable_index(name: str)
+
     async def update_contract_metadata(
         self,
         network: str,

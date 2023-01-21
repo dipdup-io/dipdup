@@ -8,6 +8,7 @@ from asyncio import gather
 from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import suppress
+from copy import copy
 from typing import Any
 from typing import Awaitable
 from typing import Dict
@@ -100,7 +101,14 @@ class IndexDispatcher:
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
-            tasks: deque[Awaitable[bool]] = deque(index.process() for index in self._indexes.values())
+            tasks: deque[Awaitable[bool]] = deque()
+            for name, index in copy(self._indexes).items():
+                if index.state.status == IndexStatus.ONESHOT:
+                    del self._indexes[name]
+                    continue
+
+                tasks.append(index.process())
+
             indexes_processed = await gather(*tasks)
 
             indexes_spawned = False
@@ -112,7 +120,8 @@ class IndexDispatcher:
                 if isinstance(index, OperationIndex):
                     await self._apply_filters(index)
 
-            if not indexes_spawned and self._every_index_is(IndexStatus.ONESHOT):
+            if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.ONESHOT)):
+                self._logger.info('No indexes left, exiting')
                 break
 
             if self._every_index_is(IndexStatus.REALTIME) and not indexes_spawned:
