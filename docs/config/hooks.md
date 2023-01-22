@@ -12,6 +12,6 @@ hooks:
      depth: int
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/hooks.md}}
+```admonish info title="See Also"
+* {{ #summary advanced/hooks.md}}
+```

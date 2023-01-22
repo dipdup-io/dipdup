@@ -20,7 +20,7 @@ class HeadIndex(
 
     async def _synchronize(self, sync_level: int) -> None:
         self._logger.info('Setting index level to %s and moving on', sync_level)
-        await self.state.update_status(status=IndexStatus.REALTIME, level=sync_level)
+        await self._update_state(status=IndexStatus.REALTIME, level=sync_level)
 
     async def _process_queue(self) -> None:
         while self._queue:
@@ -41,7 +41,7 @@ class HeadIndex(
                 self._logger.debug('Processing head info of level %s', batch_level)
                 for handler_config in self._config.handlers:
                     await self._call_matched_handler(handler_config, head)
-                await self.state.update_status(level=batch_level)
+                await self._update_state(level=batch_level)
 
     async def _call_matched_handler(self, handler_config: HeadHandlerConfig, head: HeadBlockData) -> None:
         if not handler_config.parent:

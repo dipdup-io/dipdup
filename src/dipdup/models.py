@@ -710,15 +710,6 @@ class Index(TortoiseModel):
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
-    async def update_status(
-        self,
-        status: Optional[IndexStatus] = None,
-        level: Optional[int] = None,
-    ) -> None:
-        self.status = status or self.status
-        self.level = level or self.level
-        await self.save()
-
     class Meta:
         table = 'dipdup_index'
 

@@ -30,10 +30,10 @@ DipDup provides convenient helpers to process off-chain data like market quotes 
 * Use generic `http` datasources for external APIs instead of plain `aiohttp` requests. This way you can use the same features DipDup uses for internal requests: retry with backoff, rate limiting, Prometheus integration etc.
 * Database tables that store off-chain data can be marked as immune, preventing them from being removed on reindexing.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/datasources.md#http-generic }}
-> * {{ #summary config/database.md#immune-tables }}
+```admonish info title="See Also"
+* {{ #summary advanced/datasources.md#http-generic }}
+* {{ #summary config/database.md#immune-tables }}
+```
 
 ## One of my indexes depends on another one's indexed data. How to process them in a specific order?
 
@@ -78,7 +78,7 @@ diff old new
 
 Now you can prepare and execute an `ALTER TABLE` query manually or using SQL hooks.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/reindexing.md}}
-> * {{ #summary advanced/sql.md}}
+```admonish info title="See Also"
+* {{ #summary advanced/reindexing.md}}
+* {{ #summary advanced/sql.md}}
+```

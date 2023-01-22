@@ -13,6 +13,6 @@ sentry:
 | `environment` | Environment to report to Sentry (informational only) |
 | `debug` | Catch warning messages and more context |
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary deployment/sentry.md}}
+```admonish info title="See Also"
+* {{ #summary deployment/sentry.md}}
+```

@@ -20,8 +20,8 @@ Fires when TzKT datasource has received a chain reorg message which can't be pro
 
 Since version 6.0 this hook performs a database-level rollback by default. If it doesn't work for you for some reason remove `ctx.rollback` call and implement your own rollback logic.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/reindexing.md}}
-> * {{ #summary advanced/sql.md}}
-> * {{ #summary advanced/context.md}}
+```admonish info title="See Also"
+* {{ #summary advanced/reindexing.md}}
+* {{ #summary advanced/sql.md}}
+* {{ #summary advanced/context.md}}
+```

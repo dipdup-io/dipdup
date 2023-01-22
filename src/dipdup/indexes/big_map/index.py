@@ -118,7 +118,7 @@ class BigMapIndex(
                     for handler_config, big_map_diff in matched_handlers:
                         await self._call_matched_handler(handler_config, big_map_diff)
 
-            await self.state.update_status(level=head_level)
+            await self._update_state(level=head_level)
 
     async def _process_level_big_maps(
         self,
@@ -141,13 +141,13 @@ class BigMapIndex(
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
-            await self.state.update_status(level=batch_level)
+            await self._update_state(level=batch_level)
             return
 
         async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
-            await self.state.update_status(level=batch_level)
+            await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
         self, handler_config: BigMapHandlerConfig, big_map_diff: BigMapDiff[Any, Any]
