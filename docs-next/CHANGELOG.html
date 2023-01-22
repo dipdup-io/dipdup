@@ -4,7 +4,10 @@
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
         <title>Changelog - DipDup Documentation</title>
+
+
         <!-- Custom HTML head -->
+        
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,9 +18,11 @@
         <link rel="stylesheet" href="css/general.css">
         <link rel="stylesheet" href="css/chrome.css">
         <link rel="stylesheet" href="css/print.css" media="print">
+
         <!-- Fonts -->
         <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
         <link rel="stylesheet" href="fonts/fonts.css">
+
         <!-- Highlight.js Stylesheets -->
         <link rel="stylesheet" href="highlight.css">
         <link rel="stylesheet" href="tomorrow-night.css">
@@ -25,6 +30,8 @@
 
         <!-- Custom theme stylesheets -->
         <link rel="stylesheet" href="book.css">
+        <link rel="stylesheet" href="mdbook-admonish.css">
+
     </head>
     <body>
         <!-- Provide site root to javascript -->
@@ -76,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="quickstart.html"><strong aria-hidden="true">1.</strong> Quickstart</a></li><li class="chapter-item expanded "><a href="getting-started/index.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="getting-started/installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="getting-started/core-concepts.html"><strong aria-hidden="true">2.2.</strong> Core concepts</a></li><li class="chapter-item expanded "><a href="getting-started/creating-config.html"><strong aria-hidden="true">2.3.</strong> Creating config</a></li><li class="chapter-item expanded "><a href="getting-started/project-structure.html"><strong aria-hidden="true">2.4.</strong> Project structure</a></li><li class="chapter-item expanded "><a href="getting-started/defining-models.html"><strong aria-hidden="true">2.5.</strong> Defining models</a></li><li class="chapter-item expanded "><a href="getting-started/implementing-handlers.html"><strong aria-hidden="true">2.6.</strong> Implementing handlers</a></li><li class="chapter-item expanded "><a href="getting-started/templates-and-variables.html"><strong aria-hidden="true">2.7.</strong> Templates and variables</a></li></ol></li><li class="chapter-item expanded "><a href="indexes/index.html"><strong aria-hidden="true">3.</strong> Indexes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="indexes/token_transfer.html"><strong aria-hidden="true">3.1.</strong> Token transfers</a></li></ol></li><li class="chapter-item expanded "><a href="advanced/index.html"><strong aria-hidden="true">4.</strong> Advanced usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="advanced/datasources.html"><strong aria-hidden="true">4.1.</strong> Datasources</a></li><li class="chapter-item expanded "><a href="advanced/hooks.html"><strong aria-hidden="true">4.2.</strong> Hooks</a></li><li class="chapter-item expanded "><a href="advanced/event-hooks.html"><strong aria-hidden="true">4.3.</strong> Event hooks</a></li><li class="chapter-item expanded "><a href="advanced/jobs.html"><strong aria-hidden="true">4.4.</strong> Job scheduler</a></li><li class="chapter-item expanded "><a href="advanced/reindexing.html"><strong aria-hidden="true">4.5.</strong> Reindexing</a></li><li class="chapter-item expanded "><a href="advanced/feature-flags.html"><strong aria-hidden="true">4.6.</strong> Feature flags</a></li><li class="chapter-item expanded "><a href="advanced/sql.html"><strong aria-hidden="true">4.7.</strong> SQL scripts</a></li><li class="chapter-item expanded "><a href="advanced/performance.html"><strong aria-hidden="true">4.8.</strong> Improving performance</a></li><li class="chapter-item expanded "><a href="advanced/context.html"><strong aria-hidden="true">4.9.</strong> Callback context (ctx)</a></li><li class="chapter-item expanded "><a href="advanced/internal-models.html"><strong aria-hidden="true">4.10.</strong> Internal models</a></li><li class="chapter-item expanded "><a href="advanced/index-factories.html"><strong aria-hidden="true">4.11.</strong> Index factories</a></li><li class="chapter-item expanded "><a href="advanced/metadata-interface.html"><strong aria-hidden="true">4.12.</strong> Metadata interface</a></li></ol></li><li class="chapter-item expanded "><a href="graphql/index.html"><strong aria-hidden="true">5.</strong> GraphQL API</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="graphql/hasura.html"><strong aria-hidden="true">5.1.</strong> Hasura integration</a></li><li class="chapter-item expanded "><a href="graphql/rest.html"><strong aria-hidden="true">5.2.</strong> REST endpoints</a></li><li class="chapter-item expanded "><a href="graphql/genql.html"><strong aria-hidden="true">5.3.</strong> GenQL</a></li></ol></li><li class="chapter-item expanded "><a href="deployment/index.html"><strong aria-hidden="true">6.</strong> Deployment and operations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="deployment/database-engines.html"><strong aria-hidden="true">6.1.</strong> Database engines</a></li><li class="chapter-item expanded "><a href="deployment/docker.html"><strong aria-hidden="true">6.2.</strong> Running in Docker</a></li><li class="chapter-item expanded "><a href="deployment/sentry.html"><strong aria-hidden="true">6.3.</strong> Sentry integration</a></li><li class="chapter-item expanded "><a href="deployment/prometheus.html"><strong aria-hidden="true">6.4.</strong> Prometheus integration</a></li><li class="chapter-item expanded "><a href="deployment/logging.html"><strong aria-hidden="true">6.5.</strong> Logging</a></li><li class="chapter-item expanded "><a href="deployment/backups.html"><strong aria-hidden="true">6.6.</strong> Backup and restore</a></li><li class="chapter-item expanded "><a href="deployment/monitoring.html"><strong aria-hidden="true">6.7.</strong> Monitoring</a></li></ol></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">7.</strong> F.A.Q.</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">8.</strong> Troubleshooting</a></li><li class="chapter-item expanded affix "><li class="part-title">Examples</li><li class="chapter-item expanded "><a href="examples/demo-projects.html"><strong aria-hidden="true">9.</strong> Demo projects</a></li><li class="chapter-item expanded "><a href="examples/built-with-dipdup.html"><strong aria-hidden="true">10.</strong> Built with DipDup</a></li><li class="chapter-item expanded affix "><li class="part-title">Standalone Services</li><li class="chapter-item expanded "><a href="services/mempool.html"><strong aria-hidden="true">11.</strong> mempool</a></li><li class="chapter-item expanded "><a href="services/metadata.html"><strong aria-hidden="true">12.</strong> metadata</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="cli-reference.html"><strong aria-hidden="true">13.</strong> Command-line reference</a></li><li class="chapter-item expanded "><a href="config/index.html"><strong aria-hidden="true">14.</strong> Config file reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config/reference.html"><strong aria-hidden="true">14.1.</strong> Full reference</a></li><li class="chapter-item expanded "><a href="config/advanced.html"><strong aria-hidden="true">14.2.</strong> advanced</a></li><li class="chapter-item expanded "><a href="config/contracts.html"><strong aria-hidden="true">14.3.</strong> contracts</a></li><li class="chapter-item expanded "><a href="config/custom.html"><strong aria-hidden="true">14.4.</strong> custom</a></li><li class="chapter-item expanded "><a href="config/database.html"><strong aria-hidden="true">14.5.</strong> database</a></li><li class="chapter-item expanded "><a href="config/datasources.html"><strong aria-hidden="true">14.6.</strong> datasources</a></li><li class="chapter-item expanded "><a href="config/hasura.html"><strong aria-hidden="true">14.7.</strong> hasura</a></li><li class="chapter-item expanded "><a href="config/hooks.html"><strong aria-hidden="true">14.8.</strong> hooks</a></li><li class="chapter-item expanded "><a href="config/indexes.html"><strong aria-hidden="true">14.9.</strong> indexes</a></li><li class="chapter-item expanded "><a href="config/jobs.html"><strong aria-hidden="true">14.10.</strong> jobs</a></li><li class="chapter-item expanded "><a href="config/logging.html"><strong aria-hidden="true">14.11.</strong> logging</a></li><li class="chapter-item expanded "><a href="config/package.html"><strong aria-hidden="true">14.12.</strong> package</a></li><li class="chapter-item expanded "><a href="config/prometheus.html"><strong aria-hidden="true">14.13.</strong> prometheus</a></li><li class="chapter-item expanded "><a href="config/sentry.html"><strong aria-hidden="true">14.14.</strong> sentry</a></li><li class="chapter-item expanded "><a href="config/spec_version.html"><strong aria-hidden="true">14.15.</strong> spec_version</a></li><li class="chapter-item expanded "><a href="config/templates.html"><strong aria-hidden="true">14.16.</strong> templates</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">What's New</li><li class="chapter-item expanded "><a href="CHANGELOG.html" class="active"><strong aria-hidden="true">15.</strong> Changelog</a></li><li class="chapter-item expanded "><a href="release-notes/index.html"><strong aria-hidden="true">16.</strong> Release notes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="release-notes/6.2.0.html"><strong aria-hidden="true">16.1.</strong> 6.2.0</a></li><li class="chapter-item expanded "><a href="release-notes/6.0.0.html"><strong aria-hidden="true">16.2.</strong> 6.0.0</a></li><li class="chapter-item expanded "><a href="release-notes/5.1.0.html"><strong aria-hidden="true">16.3.</strong> 5.1.0</a></li><li class="chapter-item expanded "><a href="release-notes/5.0.0.html"><strong aria-hidden="true">16.4.</strong> 5.0.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.2.0.html"><strong aria-hidden="true">16.5.</strong> 4.2.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.1.0.html"><strong aria-hidden="true">16.6.</strong> 4.1.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.0.0.html"><strong aria-hidden="true">16.7.</strong> 4.0.0</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Community</li><li class="chapter-item expanded "><a href="CONTRIBUTING.html"><strong aria-hidden="true">17.</strong> Contribution guide</a></li><li class="chapter-item expanded "><a href="LICENSE.html"><strong aria-hidden="true">18.</strong> MIT License</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="quickstart.html"><strong aria-hidden="true">1.</strong> Quickstart</a></li><li class="chapter-item expanded "><a href="getting-started/index.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="getting-started/installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="getting-started/core-concepts.html"><strong aria-hidden="true">2.2.</strong> Core concepts</a></li><li class="chapter-item expanded "><a href="getting-started/creating-config.html"><strong aria-hidden="true">2.3.</strong> Creating config</a></li><li class="chapter-item expanded "><a href="getting-started/project-structure.html"><strong aria-hidden="true">2.4.</strong> Project structure</a></li><li class="chapter-item expanded "><a href="getting-started/defining-models.html"><strong aria-hidden="true">2.5.</strong> Defining models</a></li><li class="chapter-item expanded "><a href="getting-started/implementing-handlers.html"><strong aria-hidden="true">2.6.</strong> Implementing handlers</a></li><li class="chapter-item expanded "><a href="getting-started/templates-and-variables.html"><strong aria-hidden="true">2.7.</strong> Templates and variables</a></li></ol></li><li class="chapter-item expanded "><a href="indexes/index.html"><strong aria-hidden="true">3.</strong> Indexes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="indexes/big_map.html"><strong aria-hidden="true">3.1.</strong> Big map keys</a></li><li class="chapter-item expanded "><a href="indexes/event.html"><strong aria-hidden="true">3.2.</strong> Contract events</a></li><li class="chapter-item expanded "><a href="indexes/head.html"><strong aria-hidden="true">3.3.</strong> Head blocks</a></li><li class="chapter-item expanded "><a href="indexes/operation.html"><strong aria-hidden="true">3.4.</strong> Operations</a></li><li class="chapter-item expanded "><a href="indexes/token_transfer.html"><strong aria-hidden="true">3.5.</strong> Token transfers</a></li></ol></li><li class="chapter-item expanded "><a href="graphql/index.html"><strong aria-hidden="true">4.</strong> GraphQL API</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="graphql/hasura.html"><strong aria-hidden="true">4.1.</strong> Hasura integration</a></li><li class="chapter-item expanded "><a href="graphql/rest.html"><strong aria-hidden="true">4.2.</strong> REST endpoints</a></li><li class="chapter-item expanded "><a href="graphql/genql.html"><strong aria-hidden="true">4.3.</strong> GenQL</a></li></ol></li><li class="chapter-item expanded "><a href="advanced/index.html"><strong aria-hidden="true">5.</strong> Advanced usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="advanced/datasources.html"><strong aria-hidden="true">5.1.</strong> Datasources</a></li><li class="chapter-item expanded "><a href="advanced/hooks.html"><strong aria-hidden="true">5.2.</strong> Hooks</a></li><li class="chapter-item expanded "><a href="advanced/event-hooks.html"><strong aria-hidden="true">5.3.</strong> Event hooks</a></li><li class="chapter-item expanded "><a href="advanced/jobs.html"><strong aria-hidden="true">5.4.</strong> Job scheduler</a></li><li class="chapter-item expanded "><a href="advanced/reindexing.html"><strong aria-hidden="true">5.5.</strong> Reindexing</a></li><li class="chapter-item expanded "><a href="advanced/feature-flags.html"><strong aria-hidden="true">5.6.</strong> Feature flags</a></li><li class="chapter-item expanded "><a href="advanced/sql.html"><strong aria-hidden="true">5.7.</strong> SQL scripts</a></li><li class="chapter-item expanded "><a href="advanced/performance.html"><strong aria-hidden="true">5.8.</strong> Improving performance</a></li><li class="chapter-item expanded "><a href="advanced/context.html"><strong aria-hidden="true">5.9.</strong> Callback context (ctx)</a></li><li class="chapter-item expanded "><a href="advanced/internal-models.html"><strong aria-hidden="true">5.10.</strong> Internal models</a></li><li class="chapter-item expanded "><a href="advanced/index-factories.html"><strong aria-hidden="true">5.11.</strong> Index factories</a></li><li class="chapter-item expanded "><a href="advanced/metadata-interface.html"><strong aria-hidden="true">5.12.</strong> Metadata interface</a></li></ol></li><li class="chapter-item expanded "><a href="deployment/index.html"><strong aria-hidden="true">6.</strong> Deployment and operations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="deployment/database-engines.html"><strong aria-hidden="true">6.1.</strong> Database engines</a></li><li class="chapter-item expanded "><a href="deployment/docker.html"><strong aria-hidden="true">6.2.</strong> Running in Docker</a></li><li class="chapter-item expanded "><a href="deployment/sentry.html"><strong aria-hidden="true">6.3.</strong> Sentry integration</a></li><li class="chapter-item expanded "><a href="deployment/prometheus.html"><strong aria-hidden="true">6.4.</strong> Prometheus integration</a></li><li class="chapter-item expanded "><a href="deployment/logging.html"><strong aria-hidden="true">6.5.</strong> Logging</a></li><li class="chapter-item expanded "><a href="deployment/backups.html"><strong aria-hidden="true">6.6.</strong> Backup and restore</a></li><li class="chapter-item expanded "><a href="deployment/monitoring.html"><strong aria-hidden="true">6.7.</strong> Monitoring</a></li></ol></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">7.</strong> F.A.Q.</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">8.</strong> Troubleshooting</a></li><li class="chapter-item expanded affix "><li class="part-title">Examples</li><li class="chapter-item expanded "><a href="examples/demo-projects.html"><strong aria-hidden="true">9.</strong> Demo projects</a></li><li class="chapter-item expanded "><a href="examples/built-with-dipdup.html"><strong aria-hidden="true">10.</strong> Built with DipDup</a></li><li class="chapter-item expanded affix "><li class="part-title">Standalone Services</li><li class="chapter-item expanded "><a href="services/mempool.html"><strong aria-hidden="true">11.</strong> mempool</a></li><li class="chapter-item expanded "><a href="services/metadata.html"><strong aria-hidden="true">12.</strong> metadata</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="cli-reference.html"><strong aria-hidden="true">13.</strong> Command-line reference</a></li><li class="chapter-item expanded "><a href="config/index.html"><strong aria-hidden="true">14.</strong> Config file reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config/reference.html"><strong aria-hidden="true">14.1.</strong> Full reference</a></li><li class="chapter-item expanded "><a href="config/advanced.html"><strong aria-hidden="true">14.2.</strong> advanced</a></li><li class="chapter-item expanded "><a href="config/contracts.html"><strong aria-hidden="true">14.3.</strong> contracts</a></li><li class="chapter-item expanded "><a href="config/custom.html"><strong aria-hidden="true">14.4.</strong> custom</a></li><li class="chapter-item expanded "><a href="config/database.html"><strong aria-hidden="true">14.5.</strong> database</a></li><li class="chapter-item expanded "><a href="config/datasources.html"><strong aria-hidden="true">14.6.</strong> datasources</a></li><li class="chapter-item expanded "><a href="config/hasura.html"><strong aria-hidden="true">14.7.</strong> hasura</a></li><li class="chapter-item expanded "><a href="config/hooks.html"><strong aria-hidden="true">14.8.</strong> hooks</a></li><li class="chapter-item expanded "><a href="config/indexes.html"><strong aria-hidden="true">14.9.</strong> indexes</a></li><li class="chapter-item expanded "><a href="config/jobs.html"><strong aria-hidden="true">14.10.</strong> jobs</a></li><li class="chapter-item expanded "><a href="config/logging.html"><strong aria-hidden="true">14.11.</strong> logging</a></li><li class="chapter-item expanded "><a href="config/package.html"><strong aria-hidden="true">14.12.</strong> package</a></li><li class="chapter-item expanded "><a href="config/prometheus.html"><strong aria-hidden="true">14.13.</strong> prometheus</a></li><li class="chapter-item expanded "><a href="config/sentry.html"><strong aria-hidden="true">14.14.</strong> sentry</a></li><li class="chapter-item expanded "><a href="config/spec_version.html"><strong aria-hidden="true">14.15.</strong> spec_version</a></li><li class="chapter-item expanded "><a href="config/templates.html"><strong aria-hidden="true">14.16.</strong> templates</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">What's New</li><li class="chapter-item expanded "><a href="CHANGELOG.html" class="active"><strong aria-hidden="true">15.</strong> Changelog</a></li><li class="chapter-item expanded "><a href="release-notes/index.html"><strong aria-hidden="true">16.</strong> Release notes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="release-notes/6.2.0.html"><strong aria-hidden="true">16.1.</strong> 6.2.0</a></li><li class="chapter-item expanded "><a href="release-notes/6.0.0.html"><strong aria-hidden="true">16.2.</strong> 6.0.0</a></li><li class="chapter-item expanded "><a href="release-notes/5.1.0.html"><strong aria-hidden="true">16.3.</strong> 5.1.0</a></li><li class="chapter-item expanded "><a href="release-notes/5.0.0.html"><strong aria-hidden="true">16.4.</strong> 5.0.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.2.0.html"><strong aria-hidden="true">16.5.</strong> 4.2.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.1.0.html"><strong aria-hidden="true">16.6.</strong> 4.1.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.0.0.html"><strong aria-hidden="true">16.7.</strong> 4.0.0</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Community</li><li class="chapter-item expanded "><a href="CONTRIBUTING.html"><strong aria-hidden="true">17.</strong> Contribution guide</a></li><li class="chapter-item expanded "><a href="LICENSE.html"><strong aria-hidden="true">18.</strong> MIT License</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -85,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky bordered">
+                                <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
@@ -153,6 +160,7 @@
                         </ul>
                     </div>
                 </div>
+
                 <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
                 <script type="text/javascript">
                     document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
@@ -175,15 +183,26 @@
 - index: New index kind `operation_unfiltered`.
 -->
 <h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-io/dipdup/compare/6.4.3...HEAD">Unreleased</a></a></h2>
+<h3 id="added"><a class="header" href="#added">Added</a></h3>
+<ul>
+<li>hasura: Apply arbitrary metadata from <code>hasura</code> project directory.</li>
+<li>config: Added <code>allow_inconsistent_metadata</code> option to <code>hasura</code> section.</li>
+</ul>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
+<li>database: Fixed crash when schema generation should fail with <code>schema_modified</code>.</li>
+<li>hasura: Stop using deprecated schema/metadata API.</li>
+<li>index: Fixed unnecessary prefetching of migration originations in <code>operation</code> index.</li>
+<li>index: Remove disabled index from the dispatcher queue.</li>
+<li>sentry: Flush and reopen session daily.</li>
 <li>tzkt: Fixed <code>OperationData.type</code> field value for migration originations.</li>
 <li>tzkt: Added missing <code>last_level</code> argument to migration origination fetching methods.</li>
-<li>index: Fixed unnecessary prefetching of migration originations in <code>operation</code> index.</li>
 </ul>
 <h3 id="other"><a class="header" href="#other">Other</a></h3>
 <ul>
-<li>ci: Enforce markdown linting for docs.</li>
+<li>ci: Enforce markdownlint for docs.</li>
+<li>deps: Updated asyncpg to 0.27.0</li>
+<li>deps: Updated hasura to 2.17.0</li>
 </ul>
 <h2 id="643---2023-01-05"><a class="header" href="#643---2023-01-05"><a href="https://github.com/dipdup-io/dipdup/compare/6.4.2...6.4.3">6.4.3</a> - 2023-01-05</a></h2>
 <h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
@@ -194,7 +213,7 @@
 <li>sentry: Increase event length limit.</li>
 </ul>
 <h2 id="642---2022-12-31"><a class="header" href="#642---2022-12-31"><a href="https://github.com/dipdup-io/dipdup/compare/6.4.1...6.4.2">6.4.2</a> - 2022-12-31</a></h2>
-<h3 id="added"><a class="header" href="#added">Added</a></h3>
+<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
 <ul>
 <li>config: Added <code>http.ratelimit_sleep</code> option to set fixed sleep time on 429 responses.</li>
 <li>context: Allow adding contracts by code hash in runtime.</li>
@@ -218,7 +237,7 @@
 <li>database: Ignore abstract models during module validation.</li>
 </ul>
 <h2 id="640rc1---2022-12-09"><a class="header" href="#640rc1---2022-12-09"><a href="https://github.com/dipdup-io/dipdup/compare/6.3.1...6.4.0rc1">6.4.0rc1</a> - 2022-12-09</a></h2>
-<h3 id="added-1"><a class="header" href="#added-1">Added</a></h3>
+<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
 <ul>
 <li>config: Added optional <code>code_hash</code> field to contract config.</li>
 <li>context: Added <code>first_level</code> and <code>last_level</code> arguments to <code>ctx.add_index</code> methods.</li>
@@ -272,7 +291,7 @@
 <li>ci: Finished migration to <code>pytest</code>.</li>
 </ul>
 <h2 id="630---2022-11-15"><a class="header" href="#630---2022-11-15"><a href="https://github.com/dipdup-io/dipdup/compare/6.2.0...6.3.0">6.3.0</a> - 2022-11-15</a></h2>
-<h3 id="added-2"><a class="header" href="#added-2">Added</a></h3>
+<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
 <ul>
 <li>context: Added <code>execute_sql_query</code> method to run queries from <code>sql</code> project directory.</li>
 <li>context: <code>execute_sql</code> method now accepts arbitrary arguments to format SQL script (unsafe, use with caution).</li>
@@ -297,7 +316,7 @@
 <li>ci: <code>pytezos</code> extra and corresponding Docker image are deprecated. </li>
 </ul>
 <h2 id="620---2022-10-12"><a class="header" href="#620---2022-10-12"><a href="https://github.com/dipdup-io/dipdup/compare/6.1.3...6.2.0">6.2.0</a> - 2022-10-12</a></h2>
-<h3 id="added-3"><a class="header" href="#added-3">Added</a></h3>
+<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
 <ul>
 <li>cli: <code>new</code> command to create a new project interactively.</li>
 <li>cli: <code>install/update/uninstall</code> commands to manage local DipDup installation.</li>
@@ -336,7 +355,7 @@
 <li>docs: Updated &quot;Contributing Guide&quot; page.</li>
 </ul>
 <h2 id="613---2022-09-21"><a class="header" href="#613---2022-09-21"><a href="https://github.com/dipdup-io/dipdup/compare/6.1.2...6.1.3">6.1.3</a> - 2022-09-21</a></h2>
-<h3 id="added-4"><a class="header" href="#added-4">Added</a></h3>
+<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
 <ul>
 <li>sentry: Enable crash-free session reporting.</li>
 </ul>
@@ -351,7 +370,7 @@
 <li>ci: Do not build default and <code>-pytezos</code> nightly images.</li>
 </ul>
 <h2 id="612---2022-09-16"><a class="header" href="#612---2022-09-16"><a href="https://github.com/dipdup-io/dipdup/compare/6.1.1...6.1.2">6.1.2</a> - 2022-09-16</a></h2>
-<h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
+<h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
 <ul>
 <li>config: Added <code>alias</code> field to operation pattern items.</li>
 <li>tzkt: Added quote field <code>gbp</code>.</li>
@@ -369,7 +388,7 @@
 <li>ci: Lock Pydantic to 1.9.2 to avoid breaking changes in dataclasses.</li>
 </ul>
 <h2 id="610---2022-08-30"><a class="header" href="#610---2022-08-30"><a href="https://github.com/dipdup-io/dipdup/compare/6.0.1...6.1.0">6.1.0</a> - 2022-08-30</a></h2>
-<h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
+<h3 id="added-7"><a class="header" href="#added-7">Added</a></h3>
 <ul>
 <li>ci: Build <code>arm64</code> images for M1/M2 silicon.</li>
 <li>ci: Build <code>-slim</code> images based on Alpine Linux.</li>
@@ -390,7 +409,7 @@
 <h2 id="600---2022-08-08"><a class="header" href="#600---2022-08-08"><a href="https://github.com/dipdup-io/dipdup/compare/6.0.0rc2...6.0.0">6.0.0</a> - 2022-08-08</a></h2>
 <p>This release contains no changes except for the version number.</p>
 <h2 id="600rc2---2022-08-06"><a class="header" href="#600rc2---2022-08-06"><a href="https://github.com/dipdup-io/dipdup/compare/6.0.0-rc1...6.0.0rc2">6.0.0rc2</a> - 2022-08-06</a></h2>
-<h3 id="added-7"><a class="header" href="#added-7">Added</a></h3>
+<h3 id="added-8"><a class="header" href="#added-8">Added</a></h3>
 <ul>
 <li>config: Added <code>advanced.crash_reporting</code> flag to enable reporting crashes to Baking Bad.</li>
 <li>dipdup: Save Sentry crashdump in <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> on a crash.</li>
@@ -407,7 +426,7 @@
 <li>config: <code>http.cache</code> flag is removed.</li>
 </ul>
 <h2 id="600-rc1---2022-07-26"><a class="header" href="#600-rc1---2022-07-26"><a href="https://github.com/dipdup-io/dipdup/compare/5.2.5...6.0.0-rc1">6.0.0-rc1</a> - 2022-07-26</a></h2>
-<h3 id="added-8"><a class="header" href="#added-8">Added</a></h3>
+<h3 id="added-9"><a class="header" href="#added-9">Added</a></h3>
 <ul>
 <li>cli: Added <code>config export --full</code> flag to resolve templates before printing config.</li>
 <li>config: Added <code>advanced.rollback_depth</code> field, a number of levels to keep in a database for rollback.</li>
@@ -441,7 +460,7 @@
 <li>config: Fixed job scheduler not starting when config contains no indexes.</li>
 </ul>
 <h2 id="523---2022-07-07"><a class="header" href="#523---2022-07-07"><a href="https://github.com/dipdup-io/dipdup/compare/5.2.2...5.2.3">5.2.3</a> - 2022-07-07</a></h2>
-<h3 id="added-9"><a class="header" href="#added-9">Added</a></h3>
+<h3 id="added-10"><a class="header" href="#added-10">Added</a></h3>
 <ul>
 <li>sentry: Allow customizing <code>server_name</code> and <code>release</code> tags with corresponding fields in Sentry config.</li>
 </ul>
@@ -463,7 +482,7 @@
 <li>hasura: Fixed configuring existing instances after changing <code>camel_case</code> field in config.</li>
 </ul>
 <h2 id="520---2022-06-28"><a class="header" href="#520---2022-06-28"><a href="https://github.com/dipdup-io/dipdup/compare/5.1.7...5.2.0">5.2.0</a> - 2022-06-28</a></h2>
-<h3 id="added-10"><a class="header" href="#added-10">Added</a></h3>
+<h3 id="added-11"><a class="header" href="#added-11">Added</a></h3>
 <ul>
 <li>config: Added <code>logging</code> config field.</li>
 <li>config: Added <code>hasura.create_source</code> flag to create PostgreSQL source if missing.</li>
@@ -526,7 +545,7 @@
 <li>context: Do not reinitialize config when adding a single index.</li>
 </ul>
 <h2 id="512---2022-05-24"><a class="header" href="#512---2022-05-24"><a href="https://github.com/dipdup-io/dipdup/compare/5.1.1...5.1.2">5.1.2</a> - 2022-05-24</a></h2>
-<h3 id="added-11"><a class="header" href="#added-11">Added</a></h3>
+<h3 id="added-12"><a class="header" href="#added-12">Added</a></h3>
 <ul>
 <li>tzkt: Added <code>originated_contract_tzips</code> field to <code>OperationData</code>.</li>
 </ul>
@@ -546,7 +565,7 @@
 <li>metadata: Add <code>ithacanet</code> to available networks.</li>
 </ul>
 <h2 id="510---2022-05-12"><a class="header" href="#510---2022-05-12"><a href="https://github.com/dipdup-io/dipdup/compare/5.0.4...5.1.0">5.1.0</a> - 2022-05-12</a></h2>
-<h3 id="added-12"><a class="header" href="#added-12">Added</a></h3>
+<h3 id="added-13"><a class="header" href="#added-13">Added</a></h3>
 <ul>
 <li>ci: Push <code>X</code> and <code>X.Y</code> tags to the Docker Hub on release.</li>
 <li>cli: Added <code>config env</code> command to export env-file with default values.</li>
@@ -601,7 +620,7 @@
 <h2 id="500---2022-04-08"><a class="header" href="#500---2022-04-08"><a href="https://github.com/dipdup-io/dipdup/compare/5.0.0-rc4...5.0.0">5.0.0</a> - 2022-04-08</a></h2>
 <p>This release contains no changes except for the version number.</p>
 <h2 id="500-rc4---2022-04-04"><a class="header" href="#500-rc4---2022-04-04"><a href="https://github.com/dipdup-io/dipdup/compare/5.0.0-rc3...5.0.0-rc4">5.0.0-rc4</a> - 2022-04-04</a></h2>
-<h3 id="added-13"><a class="header" href="#added-13">Added</a></h3>
+<h3 id="added-14"><a class="header" href="#added-14">Added</a></h3>
 <ul>
 <li>tzkt: Added ability to process realtime messages with lag.</li>
 </ul>
@@ -613,7 +632,7 @@
 <li>tzkt: Fixed <code>get_originated_contracts</code> and <code>get_similar_contracts</code> methods response.</li>
 </ul>
 <h2 id="500-rc3---2022-03-28"><a class="header" href="#500-rc3---2022-03-28"><a href="https://github.com/dipdup-io/dipdup/compare/5.0.0-rc2...5.0.0-rc3">5.0.0-rc3</a> - 2022-03-28</a></h2>
-<h3 id="added-14"><a class="header" href="#added-14">Added</a></h3>
+<h3 id="added-15"><a class="header" href="#added-15">Added</a></h3>
 <ul>
 <li>config: Added <code>custom</code> section to store arbitrary user data.</li>
 </ul>
@@ -636,7 +655,7 @@
 <li>prometheus: Fixed invalid metric labels. </li>
 </ul>
 <h2 id="500-rc1---2022-03-02"><a class="header" href="#500-rc1---2022-03-02"><a href="https://github.com/dipdup-io/dipdup/compare/4.2.6...5.0.0-rc1">5.0.0-rc1</a> - 2022-03-02</a></h2>
-<h3 id="added-15"><a class="header" href="#added-15">Added</a></h3>
+<h3 id="added-16"><a class="header" href="#added-16">Added</a></h3>
 <ul>
 <li>metadata: Added <code>metadata_interface</code> feature flag to expose metadata in TzKT format.</li>
 <li>prometheus: Added ability to expose Prometheus metrics.</li>
@@ -674,7 +693,7 @@
 <li>hasura: Wait for Hasura to be configured before starting indexing.</li>
 </ul>
 <h2 id="424---2022-02-14"><a class="header" href="#424---2022-02-14"><a href="https://github.com/dipdup-io/dipdup/compare/4.2.3...4.2.4">4.2.4</a> - 2022-02-14</a></h2>
-<h3 id="added-16"><a class="header" href="#added-16">Added</a></h3>
+<h3 id="added-17"><a class="header" href="#added-17">Added</a></h3>
 <ul>
 <li>config: Added <code>http</code> datasource to making arbitrary http requests.</li>
 </ul>
@@ -713,7 +732,7 @@
 <li>ci: Added <code>black 21.12b0</code> dependency to avoid possible conflict with <code>datamodel-codegen-generator</code>.</li>
 </ul>
 <h2 id="420---2022-01-31"><a class="header" href="#420---2022-01-31"><a href="https://github.com/dipdup-io/dipdup/compare/4.1.2...4.2.0">4.2.0</a> - 2022-01-31</a></h2>
-<h3 id="added-17"><a class="header" href="#added-17">Added</a></h3>
+<h3 id="added-18"><a class="header" href="#added-18">Added</a></h3>
 <ul>
 <li>context: Added <code>wait</code> argument to <code>fire_hook</code> method to escape current transaction context.</li>
 <li>context: Added <code>ctx.get_&lt;kind&gt;_datasource</code> helpers to avoid type casting.</li>
@@ -735,7 +754,7 @@
 <li>dipdup: Removed unused internal methods.</li>
 </ul>
 <h2 id="412---2022-01-27"><a class="header" href="#412---2022-01-27"><a href="https://github.com/dipdup-io/dipdup/compare/4.1.1...4.1.2">4.1.2</a> - 2022-01-27</a></h2>
-<h3 id="added-18"><a class="header" href="#added-18">Added</a></h3>
+<h3 id="added-19"><a class="header" href="#added-19">Added</a></h3>
 <ul>
 <li>cli: Added <code>schema wipe --force</code> argument to skip confirmation prompt.</li>
 </ul>
@@ -763,7 +782,7 @@
 <li>hasura: Removed some useless requests.</li>
 </ul>
 <h2 id="410---2022-01-24"><a class="header" href="#410---2022-01-24"><a href="https://github.com/dipdup-io/dipdup/compare/4.0.5...4.1.0">4.1.0</a> - 2022-01-24</a></h2>
-<h3 id="added-19"><a class="header" href="#added-19">Added</a></h3>
+<h3 id="added-20"><a class="header" href="#added-20">Added</a></h3>
 <ul>
 <li>cli: Added <code>schema init</code> command to initialize database schema.</li>
 <li>cli: Added <code>--force</code> flag to <code>hasura configure</code> command.</li>
@@ -779,7 +798,7 @@
 <li>index: Fixed deserializing manually modified typeclasses.</li>
 </ul>
 <h2 id="404---2022-01-17"><a class="header" href="#404---2022-01-17"><a href="https://github.com/dipdup-io/dipdup/compare/4.0.3...4.0.4">4.0.4</a> - 2022-01-17</a></h2>
-<h3 id="added-20"><a class="header" href="#added-20">Added</a></h3>
+<h3 id="added-21"><a class="header" href="#added-21">Added</a></h3>
 <ul>
 <li>cli: Added <code>--keep-schemas</code> flag to <code>init</code> command to preserve JSONSchemas along with generated types.</li>
 </ul>
@@ -806,7 +825,7 @@
 <li>tzkt: Fixed parsing parameter with an optional value.</li>
 </ul>
 <h2 id="402---2022-01-06"><a class="header" href="#402---2022-01-06"><a href="https://github.com/dipdup-io/dipdup/compare/4.0.1...4.0.2">4.0.2</a> - 2022-01-06</a></h2>
-<h3 id="added-21"><a class="header" href="#added-21">Added</a></h3>
+<h3 id="added-22"><a class="header" href="#added-22">Added</a></h3>
 <ul>
 <li>tzkt: Added optional <code>delegate_address</code> and <code>delegate_alias</code> fields to <code>OperationData</code>.</li>
 </ul>
@@ -849,7 +868,7 @@
 <ul>
 <li>Run <code>dipdup init</code> command to generate <code>on_synchronized</code> hook stubs.</li>
 </ul>
-<h3 id="added-22"><a class="header" href="#added-22">Added</a></h3>
+<h3 id="added-23"><a class="header" href="#added-23">Added</a></h3>
 <ul>
 <li>hooks: Added <code>on_synchronized</code> hook, which fires each time all indexes reach realtime state.</li>
 </ul>
@@ -870,7 +889,7 @@
 <ul>
 <li>Run <code>dipdup schema approve</code> command on every database you want to use with 4.0.0-rc1. Running <code>dipdup migrate</code> is not necessary since <code>spec_version</code> hasn't changed in this release.</li>
 </ul>
-<h3 id="added-23"><a class="header" href="#added-23">Added</a></h3>
+<h3 id="added-24"><a class="header" href="#added-24">Added</a></h3>
 <ul>
 <li>cli: Added <code>run --early-realtime</code> flag to establish a realtime connection before all indexes are synchronized.</li>
 <li>cli: Added <code>run --merge-subscriptions</code> flag to subscribe to all operations/big map diffs during realtime indexing.</li>
@@ -932,7 +951,7 @@
 <li>Fixed possible crash occurred while Hasura is not ready.</li>
 </ul>
 <h2 id="310---2021-10-12"><a class="header" href="#310---2021-10-12"><a href="https://github.com/dipdup-io/dipdup/compare/3.0.4...3.1.0">3.1.0</a> - 2021-10-12</a></h2>
-<h3 id="added-24"><a class="header" href="#added-24">Added</a></h3>
+<h3 id="added-25"><a class="header" href="#added-25">Added</a></h3>
 <ul>
 <li>New index class <code>HeadIndex</code> (configuration: <a href="https://github.com/dipdup-io/dipdup/blob/master/src/dipdup/config.py#L778"><code>dipdup.config.HeadIndexConfig</code></a>). Use this index type to handle head (limited block header content) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.</li>
 <li>Added three new commands: <code>schema approve</code>, <code>schema wipe</code>, and <code>schema export</code>. Run <code>dipdup schema --help</code> command for details.</li>
@@ -978,7 +997,7 @@
 <li>Fixed processing of single-level rollbacks emitted before rolled back head.</li>
 </ul>
 <h2 id="302---2021-09-30"><a class="header" href="#302---2021-09-30"><a href="https://github.com/dipdup-io/dipdup/compare/3.0.1...3.0.2">3.0.2</a> - 2021-09-30</a></h2>
-<h3 id="added-25"><a class="header" href="#added-25">Added</a></h3>
+<h3 id="added-26"><a class="header" href="#added-26">Added</a></h3>
 <ul>
 <li>Human-readable <code>CHANGELOG.md</code> 🕺</li>
 <li>Two new options added to <code>dipdup run</code> command:
@@ -1006,7 +1025,7 @@
 <li>Fixed processing of reorg messages.</li>
 </ul>
 <h2 id="301---2021-09-24"><a class="header" href="#301---2021-09-24"><a href="https://github.com/dipdup-io/dipdup/compare/3.0.0...3.0.1">3.0.1</a> - 2021-09-24</a></h2>
-<h3 id="added-26"><a class="header" href="#added-26">Added</a></h3>
+<h3 id="added-27"><a class="header" href="#added-27">Added</a></h3>
 <ul>
 <li>Added <code>get_quote</code> and <code>get_quotes</code> methods to <code>TzKTDatasource</code>.</li>
 </ul>
@@ -1026,9 +1045,11 @@
                             <a rel="prev" href="config/templates.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
+
                             <a rel="next" href="release-notes/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
+
                         <div style="clear: both"></div>
                     </nav>
                 </div>
@@ -1038,6 +1059,7 @@
                     <a rel="prev" href="config/templates.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
+
                     <a rel="next" href="release-notes/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
@@ -1045,16 +1067,24 @@
 
         </div>
 
+
+
+
         <script type="text/javascript">
             window.playground_copyable = true;
         </script>
+
+
         <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
         <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
         <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+
         <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
         <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
         <script src="book.js" type="text/javascript" charset="utf-8"></script>
 
         <!-- Custom JS scripts -->
+
+
     </body>
 </html>
