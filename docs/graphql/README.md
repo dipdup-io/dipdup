@@ -29,13 +29,11 @@ Hasura GraphQL engine subscriptions are **live queries**, i.e., a subscription w
 
 This feature is essential to avoid complex state management (merging query results and subscription feed). In most scenarios, live queries are what you need to sync the latest changes from the backend.
 
-> ⚠ **WARNING**
->
-> If the live query has a significant response size that does not fit into the limits, you need one of the following:
->
-> 1. Paginate with offset (which is not convenient)
-> 2. Use cursor-based pagination (e.g., by an increasing unique id).
-> 3. Narrow down request scope with filtering (e.g., by timestamp or level).
+If the live query has a significant response size that does not fit into the limits, you need one of the following:
+
+1. Paginate with offset (which is not convenient)
+2. Use cursor-based pagination (e.g., by an increasing unique id).
+3. Narrow down request scope with filtering (e.g., by timestamp or level).
 
 Ultimately you can get "subscriptions" on top of live quires by requesting all the items having ID greater than the maximum existing or all the items with a timestamp greater than now.
 
