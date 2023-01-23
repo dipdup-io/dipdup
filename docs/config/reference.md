@@ -1,5 +1,5 @@
 <!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->
-
+            
   <span class="target" id="module-dipdup.config"></span><p>Config files parsing and processing</p>
 <p>As you can see from the amount of code below, lots of things are going on here:</p>
 <ul class="simple">
@@ -634,3 +634,6 @@ This hack allows to add <cite>str</cite> in Unions before loading config so we d
 checks everywhere.</p>
 <p>You can revert these changes by calling <cite>patch_annotations(orinal_annotations)</cite>, but tests will fail.</p>
 </dd></dl>
+
+
+

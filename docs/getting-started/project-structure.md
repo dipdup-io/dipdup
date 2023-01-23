@@ -96,3 +96,4 @@ The same rules apply to handler callbacks. Note that the `callback` field must b
 * {{ #summary advanced/hooks.md }}
 * {{ #summary advanced/sql.md }}
 * {{ #summary graphql/hasura.md }}
+```
