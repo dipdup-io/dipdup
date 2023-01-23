@@ -11,7 +11,6 @@ Feature flags set in `advanced` config section allow users to modify parameters 
 | `postpone_jobs`       | Do not start the job scheduler until all indexes are synchronized    |
 | `skip_version_check`  | Disable warning about running unstable or out-of-date DipDup version |
 
-
 ## Crash reporting
 
 Enables sending crash reports to the Baking Bad team. This is **disabled by default**. You can inspect crash dumps saved as `/tmp/dipdup/crashdumps/XXXXXXX.json` before enabling this option.
@@ -19,7 +18,6 @@ Enables sending crash reports to the Baking Bad team. This is **disabled by defa
 ```admonish info title="See Also"
 * {{ #summary troubleshooting.md}}
 ```
-
 
 ## Early realtime
 
