@@ -191,15 +191,12 @@ Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postg
 <p>From <a href="https://hasura.io/docs/latest/graphql/core/databases/postgres/subscriptions/index.html">Hasura documentation</a>:</p>
 <p>Hasura GraphQL engine subscriptions are <strong>live queries</strong>, i.e., a subscription will return the latest result of the query and not necessarily all the individual events leading up to it.</p>
 <p>This feature is essential to avoid complex state management (merging query results and subscription feed). In most scenarios, live queries are what you need to sync the latest changes from the backend.</p>
-<blockquote>
-<p>⚠ <strong>WARNING</strong></p>
 <p>If the live query has a significant response size that does not fit into the limits, you need one of the following:</p>
 <ol>
 <li>Paginate with offset (which is not convenient)</li>
 <li>Use cursor-based pagination (e.g., by an increasing unique id).</li>
 <li>Narrow down request scope with filtering (e.g., by timestamp or level).</li>
 </ol>
-</blockquote>
 <p>Ultimately you can get &quot;subscriptions&quot; on top of live quires by requesting all the items having ID greater than the maximum existing or all the items with a timestamp greater than now.</p>
 <h3 id="websocket-transport"><a class="header" href="#websocket-transport">Websocket transport</a></h3>
 <p>Hasura is compatible with <a href="https://github.com/apollographql/subscriptions-transport-ws">subscriptions-transport-ws</a> library, which is currently deprecated but still used by most clients.</p>

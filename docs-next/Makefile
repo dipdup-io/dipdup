@@ -22,6 +22,7 @@ build:
 lint: markdownlint orphans
 
 serve:
+	make clean build
 	mdbook serve -o
 
 wc:

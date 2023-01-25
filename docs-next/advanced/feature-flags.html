@@ -173,18 +173,31 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="feature-flags"><a class="header" href="#feature-flags">Feature flags</a></h1>
-<p>Feature flags allow users to modify some system-wide tunables that affect the behavior of the whole framework. These options are either experimental or unsuitable for generic configurations.</p>
-<p>A good practice is to use set feature flags in environment-specific config files.</p>
-<pre><code class="language-yaml">advanced:
-  early_realtime: False
-  merge_subscriptions: False
-  postpone_jobs: False
-  metadata_interface: False
-  skip_version_check: False
-  crash_reporting: False
-</code></pre>
+<p>Feature flags set in <code>advanced</code> config section allow users to modify parameters that affect the behavior of the whole framework. Choosing the right combination of flags for an indexer project can improve performance, reduce RAM consumption, or enable useful features.</p>
+<div class="table-wrapper"><table><thead><tr><th>flag</th><th>description</th></tr></thead><tbody>
+<tr><td><code>crash_reporting</code></td><td>Enable sending crash reports to the Baking Bad team</td></tr>
+<tr><td><code>early_realtime</code></td><td>Start collecting realtime messages while sync is in progress</td></tr>
+<tr><td><code>merge_subscriptions</code></td><td>Subscribe to all operations/big map diffs during realtime indexing</td></tr>
+<tr><td><code>metadata_interface</code></td><td>Enable contract and token metadata interfaces</td></tr>
+<tr><td><code>postpone_jobs</code></td><td>Do not start the job scheduler until all indexes are synchronized</td></tr>
+<tr><td><code>skip_version_check</code></td><td>Disable warning about running unstable or out-of-date DipDup version</td></tr>
+</tbody></table>
+</div>
+<h2 id="crash-reporting"><a class="header" href="#crash-reporting">Crash reporting</a></h2>
+<p>Enables sending crash reports to the Baking Bad team. This is <strong>disabled by default</strong>. You can inspect crash dumps saved as <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> before enabling this option.</p>
+<div id="admonition-see-also" class="admonition info">
+<div class="admonition-title">
+<p>See Also</p>
+<p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>
+</div>
+<div>
+<ul>
+<li><a href="https://docs-next.dipdup.io/troubleshooting.html">8. Troubleshooting</a></li>
+</ul>
+</div>
+</div>
 <h2 id="early-realtime"><a class="header" href="#early-realtime">Early realtime</a></h2>
-<p>By default, DipDup enters a sync state twice: before and after establishing a realtime connection. This flag allows starting collecting realtime messages while sync is in progress, right after indexes load.</p>
+<p>By default, DipDup enters a sync state twice: before and after establishing a realtime connection. This flag allows collecting realtime messages while the sync is in progress, right after indexes load.</p>
 <p>Let's consider two scenarios:</p>
 <ol>
 <li>
@@ -196,15 +209,27 @@
 </ol>
 <p>If you do not have strict RAM constraints, it's recommended to enable this flag. You'll get faster indexing times and decreased load on TzKT API.</p>
 <h2 id="merge-subscriptions"><a class="header" href="#merge-subscriptions">Merge subscriptions</a></h2>
-<p>Subscribe to all operations/big map diffs during realtime indexing instead of separate channels. This flag helps to avoid the 10.000 subscription limit of TzKT and speed up processing. The downside is an increased RAM consumption during sync, especially if <code>early_realtimm</code> flag is enabled too.</p>
-<h2 id="postpone-jobs"><a class="header" href="#postpone-jobs">Postpone jobs</a></h2>
-<p>Do not start the job scheduler until all indexes are synchronized. If your jobs perform some calculations that make sense only after indexing is fully finished, this toggle can save you some IOPS.</p>
+<p>Subscribe to all operations/big map diffs during realtime indexing instead of separate channels. This flag helps to avoid the 10.000 subscription limit of TzKT and speed up processing. The downside is an increased RAM consumption during sync, especially if <code>early_realtime</code> flag is enabled too.</p>
 <h2 id="metadata-interface"><a class="header" href="#metadata-interface">Metadata interface</a></h2>
-<p>Without this flag calling <code>ctx.update_contract_metadata</code> and <code>ctx.update_token_metadata</code> will make no effect. Corresponding internal tables are created on reindexing in any way.</p>
+<p>Without this flag calling <code>ctx.update_contract_metadata</code> and <code>ctx.update_token_metadata</code> methods will have no effect. Corresponding internal tables are created on reindexing in any way.</p>
+<h2 id="postpone-jobs"><a class="header" href="#postpone-jobs">Postpone jobs</a></h2>
+<p>Do not start the job scheduler until all indexes are synchronized. If your jobs perform some calculations that make sense only after the indexer has reached realtime, this toggle can save you some IOPS.</p>
 <h2 id="skip-version-check"><a class="header" href="#skip-version-check">Skip version check</a></h2>
 <p>Disables warning about running unstable or out-of-date DipDup version.</p>
-<h2 id="crash-reporting"><a class="header" href="#crash-reporting">Crash reporting</a></h2>
-<p>Enables sending crash reports to the Baking Bad team. This is <strong>disabled by default</strong>. You can inspect crash dumps saved as <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> before enabling this option.</p>
+<h2 id="internal-environment-variables"><a class="header" href="#internal-environment-variables">Internal environment variables</a></h2>
+<p>DipDup uses multiple environment variables internally. They read once on process start and usually do not change during runtime. Some variables modify the framework's behavior, while others are informational.</p>
+<p>Please note that they are not currently a part of the public API and can be changed without notice.</p>
+<div class="table-wrapper"><table><thead><tr><th>env variable</th><th>module path</th><th>description</th></tr></thead><tbody>
+<tr><td><code>DIPDUP_CI</code></td><td><code>dipdup.env.CI</code></td><td>Running in GitHub Actions</td></tr>
+<tr><td><code>DIPDUP_DOCKER</code></td><td><code>dipdup.env.DOCKER</code></td><td>Running in Docker</td></tr>
+<tr><td><code>DIPDUP_DOCKER_IMAGE</code></td><td><code>dipdup.env.DOCKER_IMAGE</code></td><td>Base image used when building Docker image (default, slim or pytezos)</td></tr>
+<tr><td><code>DIPDUP_NEXT</code></td><td><code>dipdup.env.NEXT</code></td><td>Enable features thar require schema changes</td></tr>
+<tr><td><code>DIPDUP_PACKAGE_PATH</code></td><td><code>dipdup.env.PACKAGE_PATH</code></td><td>Path to the currently used package</td></tr>
+<tr><td><code>DIPDUP_REPLAY_PATH</code></td><td><code>dipdup.env.REPLAY_PATH</code></td><td>Path to datasource replay files; used in tests</td></tr>
+<tr><td><code>DIPDUP_TEST</code></td><td><code>dipdup.env.TEST</code></td><td>Running in pytest</td></tr>
+</tbody></table>
+</div>
+<p><code>DIPDUP_NEXT</code> flag will give you the picture of what's coming in the next major release, but enabling it on existing schema will trigger a reindexing.</p>
 
                     </main>
 
