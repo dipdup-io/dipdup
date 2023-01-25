@@ -424,7 +424,7 @@ class DipDupContext:
 class HookContext(DipDupContext):
     """Execution context of hook callbacks.
 
-    :param hook_config: Configuration of current hook
+    :param hook_config: Configuration of the current hook
     """
 
     def __init__(
@@ -507,7 +507,7 @@ class TemplateValuesdict(dict[str, Any]):
 class HandlerContext(DipDupContext):
     """Execution context of handler callbacks.
 
-    :param handler_config: Configuration of current handler
+    :param handler_config: Configuration of the current handler
     :param datasource: Index datasource instance
     """
 
