@@ -226,6 +226,10 @@
 </ul>
 </div>
 </div>
+<h2 id="custom-hasura-metadata"><a class="header" href="#custom-hasura-metadata">Custom Hasura Metadata</a></h2>
+<p>There are some cases where you have to make a custom modifications to the Hasura metadata. For example, assume that your database schema has a view that contains data from the main table, in which case you cannot set a foreign key between them. Then you can place files with a <code>.json</code> extension in the <code>hasura</code> directory of your project with the content in Hasura query format, and DipDup will execute them in alphabetical order of file names when the indexing is complete.</p>
+<p>The format of the queries can be found in the <a href="https://hasura.io/docs/latest/api-reference/schema-metadata-api/index/">Schema Metadata API</a> documentation.</p>
+<p>Feature flag <code>allow_inconsistent_metadata</code> set in <code>hasura</code> configuration section allow users to modify the behavior of the requests error handling. By default this value is False.</p>
 
                     </main>
 
