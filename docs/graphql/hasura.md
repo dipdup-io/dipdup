@@ -71,3 +71,11 @@ Remember that "camelcasing" is a separate stage performed after all tables are r
 * {{ #summary config/hasura.md }}
 * {{ #summary cli-reference.md#hasura-configure }}
 ```
+
+## Custom Hasura Metadata
+
+There are some cases where you have to make a custom modifications to the Hasura metadata. For example, assume that your database schema has a view that contains data from the main table, in which case you cannot set a foreign key between them. Then you can place files with a `.json` extension in the `hasura` directory of your project with the content in Hasura query format, and DipDup will execute them in alphabetical order of file names when the indexing is complete.
+
+The format of the queries can be found in the [Schema Metadata API](https://hasura.io/docs/latest/api-reference/schema-metadata-api/index/) documentation.
+
+Feature flag `allow_inconsistent_metadata` set in `hasura` configuration section allow users to modify the behavior of the requests error handling. By default this value is False.
