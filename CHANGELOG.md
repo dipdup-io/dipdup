@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- config: Remove coinbase datasource credentials from repr.
+- config: Do not include coinbase datasource credentials in config repr.
 - database: Fixed crash when schema generation should fail with `schema_modified`.
 - hasura: Stop using deprecated schema/metadata API.
 - index: Fixed unnecessary prefetching of migration originations in `operation` index.
