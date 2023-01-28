@@ -175,26 +175,23 @@
                         <h1 id="event-index"><a class="header" href="#event-index"><code>event</code> index</a></h1>
 <p>Kathmandu Tezos protocol upgrade has introduced <a href="https://tezos.gitlab.io/alpha/event.html">contract events</a>, a new way to interact with smart contracts. This index allows indexing events using strictly typed payloads. From the developer's perspective, it's similar to the <code>big_map</code> index with a few differences.</p>
 <p>An example below is artificial since no known contracts in mainnet are currently using events.</p>
-<pre><code class="language-yaml">indexes:
-  events:
-    kind: event
-    datasource: tzkt
-    handlers:
-      - callback: on_events_xrate
-        contract: events
-        tag: xrate
-      - callback: on_events_unknown
-        contract: events
+<pre><code class="language-yaml">        contract: events_contract
+        tag: move
+      - callback: on_roll_event
+        contract: events_contract
+        tag: roll
+      - callback: on_other_event
+        contract: events_contract
 </code></pre>
 <p>Unlike big maps, contracts may introduce new event tags and payloads at any time, so the index must be updated accordingly.</p>
-<pre><code class="language-python">async def on_events_xrate(
+<pre><code class="language-python">async def on_move_event(
     ctx: HandlerContext,
-    event: Event[XratePayload],
+    event: Event[MovePayload],
 ) -&gt; None:
     ...
 </code></pre>
 <p>Each contract can have a fallback handler called for all unknown events so you can process untyped data.</p>
-<pre><code class="language-python">async def on_events_unknown(
+<pre><code class="language-python">async def on_other_event(
     ctx: HandlerContext,
     event: UnknownEvent,
 ) -&gt; None:

@@ -1125,26 +1125,23 @@ indexes:
 <div style="break-before: page; page-break-before: always;"></div><h1 id="event-index"><a class="header" href="#event-index"><code>event</code> index</a></h1>
 <p>Kathmandu Tezos protocol upgrade has introduced <a href="https://tezos.gitlab.io/alpha/event.html">contract events</a>, a new way to interact with smart contracts. This index allows indexing events using strictly typed payloads. From the developer's perspective, it's similar to the <code>big_map</code> index with a few differences.</p>
 <p>An example below is artificial since no known contracts in mainnet are currently using events.</p>
-<pre><code class="language-yaml">indexes:
-  events:
-    kind: event
-    datasource: tzkt
-    handlers:
-      - callback: on_events_xrate
-        contract: events
-        tag: xrate
-      - callback: on_events_unknown
-        contract: events
+<pre><code class="language-yaml">        contract: events_contract
+        tag: move
+      - callback: on_roll_event
+        contract: events_contract
+        tag: roll
+      - callback: on_other_event
+        contract: events_contract
 </code></pre>
 <p>Unlike big maps, contracts may introduce new event tags and payloads at any time, so the index must be updated accordingly.</p>
-<pre><code class="language-python">async def on_events_xrate(
+<pre><code class="language-python">async def on_move_event(
     ctx: HandlerContext,
-    event: Event[XratePayload],
+    event: Event[MovePayload],
 ) -&gt; None:
     ...
 </code></pre>
 <p>Each contract can have a fallback handler called for all unknown events so you can process untyped data.</p>
-<pre><code class="language-python">async def on_events_unknown(
+<pre><code class="language-python">async def on_other_event(
     ctx: HandlerContext,
     event: UnknownEvent,
 ) -&gt; None:
@@ -1356,11 +1353,14 @@ Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postg
   url: http://hasura:8080
   admin_secret: ${HASURA_ADMIN_SECRET:-changeme}
 </code></pre>
-<p>Under the hood, DipDup generates Hasura metadata from your DB schema and applies it using <a href="https://hasura.io/docs/latest/graphql/core/api-reference/metadata-api/index.html">Metadata API</a>.</p>
+<p>If you have enabled this integration, DipDup will generate Hasura metadata based on your DB schema and apply it using <a href="https://hasura.io/docs/latest/graphql/core/api-reference/metadata-api/index.html">Metadata API</a>.</p>
 <p>Hasura metadata is all about data representation in GraphQL API. The structure of the database itself is managed solely by Tortoise ORM.</p>
-<p>Metadata configuration is idempotent: each time you call <code>run</code> or <code>hasura configure</code> command, DipDup queries the existing schema and does the merge if required. DipDup configures Hasura after reindexing, saves the hash of resulting metadata in the <code>dipdup_schema</code> table, and doesn't touch Hasura until needed.</p>
+<p>Metadata configuration is idempotent: each time you call <code>run</code> or <code>hasura configure</code> command, DipDup queries the existing schema and updates metadata if required. DipDup configures Hasura after reindexing, saves the hash of resulting metadata in the <code>dipdup_schema</code> table, and doesn't touch Hasura until needed.</p>
+<!-- Configuration is performed in the following order:
+
+1. db models -> graphql files -> hasura json -> camelcase -> store hash -->
 <h2 id="database-limitations"><a class="header" href="#database-limitations">Database limitations</a></h2>
-<p>The current version of Hasura GraphQL Engine treats <code>public</code> and other schemas differently. Table <code>schema.customer</code> becomes <code>schema_customer</code> root field (or <code>schemaCustomer</code> if <code>camel_case</code> option is enabled in DipDup config). Table <code>public.customer</code> becomes <code>customer</code> field, without schema prefix. There's no way to remove this prefix for now. You can track related <a href="https://github.com/hasura/graphql-engine/issues/5394">issue</a> on Hasura's GitHub to know when the situation will change. Starting with 3.0.0-rc1, DipDup enforces <code>public</code> schema name to avoid ambiguity and issues with the GenQL library. You can still use any schema name if Hasura integration is not enabled.</p>
+<p>The current version of Hasura GraphQL Engine treats <code>public</code> and other schemas differently. Table <code>schema.customer</code> becomes <code>schema_customer</code> root field (or <code>schemaCustomer</code> if <code>camel_case</code> option is enabled in DipDup config). Table <code>public.customer</code> becomes <code>customer</code> field, without schema prefix. There's no way to remove this prefix for now. You can track related <a href="https://github.com/hasura/graphql-engine/issues/3606">issue</a> on Hasura's GitHub to know when the situation will change. Starting with 3.0.0-rc1, DipDup enforces <code>public</code> schema name to avoid ambiguity and issues with the GenQL library. You can still use any schema name if Hasura integration is not enabled.</p>
 <h2 id="unauthorized-access"><a class="header" href="#unauthorized-access">Unauthorized access</a></h2>
 <p>DipDup creates <code>user</code> role that allows querying <code>/graphql</code> endpoint without authorization. All tables are set to read-only for this role.</p>
 <p>You can limit the maximum number of rows such queries return and also disable aggregation queries automatically generated by Hasura:</p>
@@ -1405,9 +1405,9 @@ Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postg
 </div>
 </div>
 <h2 id="custom-hasura-metadata"><a class="header" href="#custom-hasura-metadata">Custom Hasura Metadata</a></h2>
-<p>There are some cases where you have to make a custom modifications to the Hasura metadata. For example, assume that your database schema has a view that contains data from the main table, in which case you cannot set a foreign key between them. Then you can place files with a <code>.json</code> extension in the <code>hasura</code> directory of your project with the content in Hasura query format, and DipDup will execute them in alphabetical order of file names when the indexing is complete.</p>
-<p>The format of the queries can be found in the <a href="https://hasura.io/docs/latest/api-reference/schema-metadata-api/index/">Schema Metadata API</a> documentation.</p>
-<p>Feature flag <code>allow_inconsistent_metadata</code> set in <code>hasura</code> configuration section allow users to modify the behavior of the requests error handling. By default this value is False.</p>
+<p>There are some cases where you want to apply custom modifications to the Hasura metadata. For example, assume that your database schema has a view that contains data from the main table, in which case you cannot set a foreign key between them. Then you can place files with a <code>.json</code> extension in the <code>hasura</code> directory of your project with the content in Hasura query format, and DipDup will execute them in alphabetical order of file names when the indexing is complete.</p>
+<p>The format of the queries can be found in the <a href="https://hasura.io/docs/latest/api-reference/metadata-api/index/">Metadata API</a> documentation.</p>
+<p>Feature flag <code>allow_inconsistent_metadata</code> set in <code>hasura</code> configuration section allows users to modify the behavior of the requests error handling. By default, this value is False.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="rest-endpoints"><a class="header" href="#rest-endpoints">REST endpoints</a></h1>
 <p>Hasura 2.0 introduced the ability to expose arbitrary GraphQL queries as REST endpoints. By default, DipDup will generate GET and POST endpoints to fetch rows by primary key for all tables:</p>
 <pre><code class="language-shell">curl http://127.0.0.1:8080/api/rest/hicEtNuncHolder?address=tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw
@@ -1839,7 +1839,7 @@ async def calculate_stats(
 <p>This page contains tips that may help to increase indexing speed.</p>
 <h2 id="optimize-database-schema"><a class="header" href="#optimize-database-schema">Optimize database schema</a></h2>
 <p><a href="https://www.postgresql.org/docs/9.5/indexes-types.html">Postgres indexes</a> are tables that Postgres can use to speed up data lookup. A database index acts like a pointer to data in a table, just like an index in a printed book. If you look in the index first, you will find the data much quicker than searching the whole book (or — in this case — database).</p>
-<p>You should add indexes on columns often appearing in `WHERE`` clauses in your GraphQL queries and subscriptions.</p>
+<p>You should add indexes on columns often appearing in <code>WHERE</code> clauses in your GraphQL queries and subscriptions.</p>
 <p>Tortoise ORM uses BTree indexes by default. To set index on a field, add <code>index=True</code> to the field definition:</p>
 <pre><code class="language-python">from dipdup.models import Model
 from tortoise import fields
@@ -3580,39 +3580,39 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 </div>
 <div style="break-before: page; page-break-before: always;"></div><!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">DipDupConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database=SqliteDatabaseConfig(kind='sqlite'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path=':memory:')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hasura=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentry=SentryConfig(dsn=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">release=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prometheus=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advanced=AdvancedConfig(reindex={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging=LoggingValues.default</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.DipDupConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="DipDupConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">DipDupConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database=SqliteDatabaseConfig(kind='sqlite'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path=':memory:')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hasura=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentry=SentryConfig(dsn=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">release=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prometheus=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advanced=AdvancedConfig(reindex={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging=LoggingValues.default</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#DipDupConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Main indexer config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spec_version</strong> (<em>str</em>) – Version of specification</p></li>
+<li><p><strong>spec_version</strong> (<em>str</em>) – Version of config specification, currently always <cite>1.2</cite></p></li>
 <li><p><strong>package</strong> (<em>str</em>) – Name of indexer’s Python package, existing or not</p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#dipdup.config.TzktDatasourceConfig" title="dipdup.config.TzktDatasourceConfig"><em>dipdup.config.TzktDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.CoinbaseDatasourceConfig" title="dipdup.config.CoinbaseDatasourceConfig"><em>dipdup.config.CoinbaseDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.MetadataDatasourceConfig" title="dipdup.config.MetadataDatasourceConfig"><em>dipdup.config.MetadataDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.IpfsDatasourceConfig" title="dipdup.config.IpfsDatasourceConfig"><em>dipdup.config.IpfsDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.HttpDatasourceConfig" title="dipdup.config.HttpDatasourceConfig"><em>dipdup.config.HttpDatasourceConfig</em></a><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
-<li><p><strong>database</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.SqliteDatabaseConfig" title="dipdup.config.SqliteDatabaseConfig"><em>SqliteDatabaseConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.PostgresDatabaseConfig" title="dipdup.config.PostgresDatabaseConfig"><em>PostgresDatabaseConfig</em></a>) – Database config</p></li>
-<li><p><strong>contracts</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>dipdup.config.ContractConfig</em></a><em>]</em>) – Mapping of contract aliases and contract configs</p></li>
-<li><p><strong>indexes</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#dipdup.config.OperationIndexConfig" title="dipdup.config.OperationIndexConfig"><em>dipdup.config.OperationIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.BigMapIndexConfig" title="dipdup.config.BigMapIndexConfig"><em>dipdup.config.BigMapIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.HeadIndexConfig" title="dipdup.config.HeadIndexConfig"><em>dipdup.config.HeadIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.TokenTransferIndexConfig" title="dipdup.config.TokenTransferIndexConfig"><em>dipdup.config.TokenTransferIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.EventIndexConfig" title="dipdup.config.EventIndexConfig"><em>dipdup.config.EventIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.OperationUnfilteredIndexConfig" title="dipdup.config.OperationUnfilteredIndexConfig"><em>dipdup.config.OperationUnfilteredIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.IndexTemplateConfig" title="dipdup.config.IndexTemplateConfig"><em>dipdup.config.IndexTemplateConfig</em></a><em>]</em>) – Mapping of index aliases and index configs</p></li>
-<li><p><strong>templates</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#dipdup.config.OperationIndexConfig" title="dipdup.config.OperationIndexConfig"><em>dipdup.config.OperationIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.BigMapIndexConfig" title="dipdup.config.BigMapIndexConfig"><em>dipdup.config.BigMapIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.HeadIndexConfig" title="dipdup.config.HeadIndexConfig"><em>dipdup.config.HeadIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.TokenTransferIndexConfig" title="dipdup.config.TokenTransferIndexConfig"><em>dipdup.config.TokenTransferIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.EventIndexConfig" title="dipdup.config.EventIndexConfig"><em>dipdup.config.EventIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.OperationUnfilteredIndexConfig" title="dipdup.config.OperationUnfilteredIndexConfig"><em>dipdup.config.OperationUnfilteredIndexConfig</em></a><em>]</em>) – Mapping of template aliases and index templates</p></li>
-<li><p><strong>jobs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#dipdup.config.JobConfig" title="dipdup.config.JobConfig"><em>dipdup.config.JobConfig</em></a><em>]</em>) – Mapping of job aliases and job configs</p></li>
-<li><p><strong>hooks</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#dipdup.config.HookConfig" title="dipdup.config.HookConfig"><em>dipdup.config.HookConfig</em></a><em>]</em>) – Mapping of hook aliases and hook configs</p></li>
-<li><p><strong>hasura</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.HasuraConfig" title="dipdup.config.HasuraConfig"><em>HasuraConfig</em></a><em> | </em><em>None</em>) – Hasura integration config</p></li>
-<li><p><strong>sentry</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.SentryConfig" title="dipdup.config.SentryConfig"><em>SentryConfig</em></a>) – Sentry integration config</p></li>
-<li><p><strong>prometheus</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.PrometheusConfig" title="dipdup.config.PrometheusConfig"><em>PrometheusConfig</em></a><em> | </em><em>None</em>) – Prometheus integration config</p></li>
-<li><p><strong>advanced</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.AdvancedConfig" title="dipdup.config.AdvancedConfig"><em>AdvancedConfig</em></a>) – Advanced config</p></li>
-<li><p><strong>custom</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – User-defined Custom config</p></li>
-<li><p><strong>logging</strong> (<a class="reference internal" href="config/reference.html#dipdup.enums.LoggingValues" title="dipdup.enums.LoggingValues"><em>LoggingValues</em></a>) – </p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#TzktDatasourceConfig" title="TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#CoinbaseDatasourceConfig" title="CoinbaseDatasourceConfig"><em>CoinbaseDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#MetadataDatasourceConfig" title="MetadataDatasourceConfig"><em>MetadataDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#IpfsDatasourceConfig" title="IpfsDatasourceConfig"><em>IpfsDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#HttpDatasourceConfig" title="HttpDatasourceConfig"><em>HttpDatasourceConfig</em></a><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
+<li><p><strong>database</strong> (<a class="reference internal" href="config/reference.html#SqliteDatabaseConfig" title="SqliteDatabaseConfig"><em>SqliteDatabaseConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#PostgresDatabaseConfig" title="PostgresDatabaseConfig"><em>PostgresDatabaseConfig</em></a>) – Database config</p></li>
+<li><p><strong>contracts</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Mapping of contract aliases and contract configs</p></li>
+<li><p><strong>indexes</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#OperationIndexConfig" title="OperationIndexConfig"><em>OperationIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#BigMapIndexConfig" title="BigMapIndexConfig"><em>BigMapIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#HeadIndexConfig" title="HeadIndexConfig"><em>HeadIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#TokenTransferIndexConfig" title="TokenTransferIndexConfig"><em>TokenTransferIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#EventIndexConfig" title="EventIndexConfig"><em>EventIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#OperationUnfilteredIndexConfig" title="OperationUnfilteredIndexConfig"><em>OperationUnfilteredIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#IndexTemplateConfig" title="IndexTemplateConfig"><em>IndexTemplateConfig</em></a><em>]</em>) – Mapping of index aliases and index configs</p></li>
+<li><p><strong>templates</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#OperationIndexConfig" title="OperationIndexConfig"><em>OperationIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#BigMapIndexConfig" title="BigMapIndexConfig"><em>BigMapIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#HeadIndexConfig" title="HeadIndexConfig"><em>HeadIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#TokenTransferIndexConfig" title="TokenTransferIndexConfig"><em>TokenTransferIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#EventIndexConfig" title="EventIndexConfig"><em>EventIndexConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#OperationUnfilteredIndexConfig" title="OperationUnfilteredIndexConfig"><em>OperationUnfilteredIndexConfig</em></a><em>]</em>) – Mapping of template aliases and index templates</p></li>
+<li><p><strong>jobs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#JobConfig" title="JobConfig"><em>JobConfig</em></a><em>]</em>) – Mapping of job aliases and job configs</p></li>
+<li><p><strong>hooks</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#HookConfig" title="HookConfig"><em>HookConfig</em></a><em>]</em>) – Mapping of hook aliases and hook configs</p></li>
+<li><p><strong>hasura</strong> (<a class="reference internal" href="config/reference.html#HasuraConfig" title="HasuraConfig"><em>HasuraConfig</em></a><em> | </em><em>None</em>) – Hasura integration config</p></li>
+<li><p><strong>sentry</strong> (<a class="reference internal" href="config/reference.html#SentryConfig" title="SentryConfig"><em>SentryConfig</em></a>) – Sentry integration config</p></li>
+<li><p><strong>prometheus</strong> (<a class="reference internal" href="config/reference.html#PrometheusConfig" title="PrometheusConfig"><em>PrometheusConfig</em></a><em> | </em><em>None</em>) – Prometheus integration config</p></li>
+<li><p><strong>advanced</strong> (<a class="reference internal" href="config/reference.html#AdvancedConfig" title="AdvancedConfig"><em>AdvancedConfig</em></a>) – Advanced config</p></li>
+<li><p><strong>custom</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – User-defined configuration to use in callbacks</p></li>
+<li><p><strong>logging</strong> (<a class="reference internal" href="config/reference.html#LoggingValues" title="LoggingValues"><em>LoggingValues</em></a>) – Modify logging verbosity</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.AdvancedConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.AdvancedConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="AdvancedConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Feature flags and other advanced config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>reindex</strong> (<em>dict</em><em>[</em><a class="reference internal" href="config/reference.html#dipdup.enums.ReindexingReason" title="dipdup.enums.ReindexingReason"><em>dipdup.enums.ReindexingReason</em></a><em>, </em><a class="reference internal" href="config/reference.html#dipdup.enums.ReindexingAction" title="dipdup.enums.ReindexingAction"><em>dipdup.enums.ReindexingAction</em></a><em>]</em>) – Mapping of reindexing reasons and actions DipDup performs</p></li>
+<li><p><strong>reindex</strong> (<em>dict</em><em>[</em><a class="reference internal" href="config/reference.html#ReindexingReason" title="ReindexingReason"><em>ReindexingReason</em></a><em>, </em><a class="reference internal" href="config/reference.html#ReindexingAction" title="ReindexingAction"><em>ReindexingAction</em></a><em>]</em>) – Mapping of reindexing reasons and actions DipDup performs</p></li>
 <li><p><strong>scheduler</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – <cite>apscheduler</cite> scheduler config</p></li>
 <li><p><strong>postpone_jobs</strong> (<em>bool</em>) – Do not start job scheduler until all indexes are in realtime state</p></li>
 <li><p><strong>early_realtime</strong> (<em>bool</em>) – Establish realtime connection immediately after startup</p></li>
@@ -3626,39 +3626,39 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.BigMapHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">BigMapHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.BigMapHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="BigMapHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">BigMapHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#BigMapHandlerConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Big map handler config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a>) – Contract to fetch big map from</p></li>
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract to fetch big map from</p></li>
 <li><p><strong>path</strong> (<em>str</em>) – Path to big map (alphanumeric string with dots)</p></li>
-<li><p><strong>callback</strong> (<em>str</em>) – </p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.BigMapIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">BigMapIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SkipHistory.never</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.BigMapIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="BigMapIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">BigMapIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SkipHistory.never</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#BigMapIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Big map index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'big_map'</em><em>]</em>) – always <cite>big_map</cite></p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.TzktDatasourceConfig" title="dipdup.config.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to fetch big maps with</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#dipdup.config.BigMapHandlerConfig" title="dipdup.config.BigMapHandlerConfig"><em>dipdup.config.BigMapHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Description of big map diff handlers</p></li>
-<li><p><strong>skip_history</strong> (<a class="reference internal" href="config/reference.html#dipdup.enums.SkipHistory" title="dipdup.enums.SkipHistory"><em>SkipHistory</em></a>) – Fetch only current big map keys ignoring historical changes</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#TzktDatasourceConfig" title="TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to fetch big maps with</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#BigMapHandlerConfig" title="BigMapHandlerConfig"><em>BigMapHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of big map diff handlers</p></li>
+<li><p><strong>skip_history</strong> (<a class="reference internal" href="config/reference.html#SkipHistory" title="SkipHistory"><em>SkipHistory</em></a>) – Fetch only current big map keys ignoring historical changes</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
-<li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at (Dipdup will terminate at this level)</p></li>
+<li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.CoinbaseDatasourceConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">CoinbaseDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secret_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passphrase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.CoinbaseDatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="CoinbaseDatasourceConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">CoinbaseDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secret_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passphrase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#CoinbaseDatasourceConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Coinbase datasource config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3667,14 +3667,14 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <li><p><strong>api_key</strong> (<em>str</em><em> | </em><em>None</em>) – API key</p></li>
 <li><p><strong>secret_key</strong> (<em>str</em><em> | </em><em>None</em>) – API secret key</p></li>
 <li><p><strong>passphrase</strong> (<em>str</em><em> | </em><em>None</em>) – API passphrase</p></li>
-<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.HTTPConfig" title="dipdup.config.HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
+<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#HTTPConfig" title="HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.ContractConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">ContractConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_hash</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.ContractConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ContractConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">ContractConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_hash</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#ContractConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Contract config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3687,36 +3687,38 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.EventHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">EventHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'ContractConfig'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.EventHandlerConfig" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dt class="sig sig-object py" id="EventHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">EventHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#EventHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler config</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>callback</strong> (<em>str</em>) – </p></li>
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a>) – </p></li>
-<li><p><strong>tag</strong> (<em>str</em>) – </p></li>
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract which emits event</p></li>
+<li><p><strong>tag</strong> (<em>str</em>) – Event tag</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.EventIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">EventIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind:</span> <span class="pre">&quot;Literal['event']&quot;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource:</span> <span class="pre">'TzktDatasourceConfig'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers:</span> <span class="pre">'tuple[EventHandlerConfigU</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...]'</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level:</span> <span class="pre">'int'</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level:</span> <span class="pre">'int'</span> <span class="pre">=</span> <span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.EventIndexConfig" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dt class="sig sig-object py" id="EventIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">EventIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#EventIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event index config</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'event'</em><em>]</em>) – </p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.TzktDatasourceConfig" title="dipdup.config.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – </p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#dipdup.config.EventHandlerConfig" title="dipdup.config.EventHandlerConfig"><em>dipdup.config.EventHandlerConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.UnknownEventHandlerConfig" title="dipdup.config.UnknownEventHandlerConfig"><em>dipdup.config.UnknownEventHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – </p></li>
-<li><p><strong>first_level</strong> (<em>int</em>) – </p></li>
-<li><p><strong>last_level</strong> (<em>int</em>) – </p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'event'</em><em>]</em>) – Index kind</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#TzktDatasourceConfig" title="TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Datasource config</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#EventHandlerConfig" title="EventHandlerConfig"><em>EventHandlerConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#UnknownEventHandlerConfig" title="UnknownEventHandlerConfig"><em>UnknownEventHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Event handlers</p></li>
+<li><p><strong>first_level</strong> (<em>int</em>) – First block level to index</p></li>
+<li><p><strong>last_level</strong> (<em>int</em>) – Last block level to index</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.HasuraConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">HasuraConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_secret</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_aggregations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_inconsistent_metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camel_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.HasuraConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="HasuraConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HasuraConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_secret</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_aggregations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_inconsistent_metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camel_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#HasuraConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Config for the Hasura integration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3727,55 +3729,55 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <li><p><strong>source</strong> (<em>str</em>) – Hasura source for DipDup to configure, others will be left untouched.</p></li>
 <li><p><strong>select_limit</strong> (<em>int</em>) – Row limit for unauthenticated queries.</p></li>
 <li><p><strong>allow_aggregations</strong> (<em>bool</em>) – Whether to allow aggregations in unauthenticated queries.</p></li>
-<li><p><strong>allow_inconsistent_metadata</strong> (<em>bool</em>) – Whether to ignore errors when applying custom Hasura metadata.</p></li>
+<li><p><strong>allow_inconsistent_metadata</strong> (<em>bool</em>) – Whether to ignore errors when applying Hasura metadata.</p></li>
 <li><p><strong>camel_case</strong> (<em>bool</em>) – Whether to use camelCase instead of default pascal_case for the field names (incompatible with <cite>metadata_interface</cite> flag)</p></li>
 <li><p><strong>rest</strong> (<em>bool</em>) – Enable REST API both for autogenerated and custom queries.</p></li>
-<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.HTTPConfig" title="dipdup.config.HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP connection tunables</p></li>
+<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#HTTPConfig" title="HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP connection tunables</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.HeadHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">HeadHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.HeadHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="HeadHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HeadHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#HeadHandlerConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Head block handler config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>callback</strong> (<em>str</em>) – </p>
+<dd class="field-odd"><p><strong>callback</strong> (<em>str</em>) – Callback name</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.HeadIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">HeadIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.HeadIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="HeadIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HeadIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#HeadIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Head block index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'head'</em><em>]</em>) – </p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.TzktDatasourceConfig" title="dipdup.config.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – </p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#dipdup.config.HeadHandlerConfig" title="dipdup.config.HeadHandlerConfig"><em>dipdup.config.HeadHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – </p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'head'</em><em>]</em>) – always <cite>head</cite></p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#TzktDatasourceConfig" title="TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to receive head blocks</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#HeadHandlerConfig" title="HeadHandlerConfig"><em>HeadHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of head block handlers</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.HookConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">HookConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atomic=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.HookConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="HookConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HookConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atomic=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#HookConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hook config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>args</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Mapping of argument names and annotations (checked lazily when possible)</p></li>
 <li><p><strong>atomic</strong> (<em>bool</em>) – Wrap hook in a single database transaction</p></li>
-<li><p><strong>callback</strong> (<em>str</em>) – </p></li>
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.HTTPConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">HTTPConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">retry_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_sleep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_sleep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.HTTPConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="HTTPConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HTTPConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">retry_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_sleep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_sleep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#HTTPConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Advanced configuration of HTTP client</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3795,62 +3797,57 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.HttpDatasourceConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">HttpDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.HttpDatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="HttpDatasourceConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HttpDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#HttpDatasourceConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generic HTTP datasource config</p>
-<p>kind: always ‘http’
-url: URL to fetch data from
-http: HTTP client configuration</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'http'</em><em>]</em>) – </p></li>
-<li><p><strong>url</strong> (<em>str</em>) – </p></li>
-<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.HTTPConfig" title="dipdup.config.HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'http'</em><em>]</em>) – always ‘http’</p></li>
+<li><p><strong>url</strong> (<em>str</em>) – URL to fetch data from</p></li>
+<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#HTTPConfig" title="HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.IndexTemplateConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">IndexTemplateConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.IndexTemplateConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="IndexTemplateConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">IndexTemplateConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#IndexTemplateConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Index template config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> – always <cite>template</cite></p></li>
-<li><p><strong>name</strong> – Name of index template</p></li>
-<li><p><strong>template_values</strong> – Values to be substituted in template (<cite>&lt;key&gt;</cite> -&gt; <cite>value</cite>)</p></li>
+<li><p><strong>values</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Values to be substituted in template (<cite>&lt;key&gt;</cite> -&gt; <cite>value</cite>)</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
-<li><p><strong>template</strong> (<em>str</em>) – </p></li>
-<li><p><strong>values</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – </p></li>
+<li><p><strong>template</strong> (<em>str</em>) – Template alias in <cite>templates</cite> section</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.IpfsDatasourceConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">IpfsDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://ipfs.io/ipfs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.IpfsDatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="IpfsDatasourceConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">IpfsDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://ipfs.io/ipfs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#IpfsDatasourceConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>IPFS datasource config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'ipfs'</em><em>]</em>) – always ‘ipfs’</p></li>
 <li><p><strong>url</strong> (<em>str</em>) – IPFS node URL, e.g. <a class="reference external" href="https://ipfs.io/ipfs/">https://ipfs.io/ipfs/</a></p></li>
-<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.HTTPConfig" title="dipdup.config.HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
+<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#HTTPConfig" title="HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.JobConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">JobConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hook</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crontab=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daemon=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.JobConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="JobConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">JobConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hook</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crontab=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daemon=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#JobConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Job schedule config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>hook</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.HookConfig" title="dipdup.config.HookConfig"><em>HookConfig</em></a>) – Name of hook to run</p></li>
+<li><p><strong>hook</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#HookConfig" title="HookConfig"><em>HookConfig</em></a>) – Name of hook to run</p></li>
 <li><p><strong>crontab</strong> (<em>str</em><em> | </em><em>None</em>) – Schedule with crontab syntax (<cite>* * * * *</cite>)</p></li>
 <li><p><strong>interval</strong> (<em>int</em><em> | </em><em>None</em>) – Schedule with interval in seconds</p></li>
 <li><p><strong>daemon</strong> (<em>bool</em>) – Run hook as a daemon (never stops)</p></li>
@@ -3860,25 +3857,25 @@ http: HTTP client configuration</p>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.enums.LoggingValues">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.enums.</span></span><span class="sig-name descname"><span class="pre">LoggingValues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.enums.LoggingValues" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="LoggingValues">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">LoggingValues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#LoggingValues" title="Permalink to this definition">¶</a></dt>
 <dd><p>Enum for <cite>logging</cite> field values.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.LoggingValues.default">
-<span class="sig-name descname"><span class="pre">default</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'default'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.LoggingValues.default" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="LoggingValues.default">
+<span class="sig-name descname"><span class="pre">default</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'default'</span></em><a class="headerlink" href="config/reference.html#LoggingValues.default" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.LoggingValues.quiet">
-<span class="sig-name descname"><span class="pre">quiet</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'quiet'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.LoggingValues.quiet" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="LoggingValues.quiet">
+<span class="sig-name descname"><span class="pre">quiet</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'quiet'</span></em><a class="headerlink" href="config/reference.html#LoggingValues.quiet" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.LoggingValues.verbose">
-<span class="sig-name descname"><span class="pre">verbose</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'verbose'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.LoggingValues.verbose" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="LoggingValues.verbose">
+<span class="sig-name descname"><span class="pre">verbose</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'verbose'</span></em><a class="headerlink" href="config/reference.html#LoggingValues.verbose" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.MetadataDatasourceConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">MetadataDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://metadata.dipdup.net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.MetadataDatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="MetadataDatasourceConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">MetadataDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://metadata.dipdup.net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#MetadataDatasourceConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>DipDup Metadata datasource config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3886,35 +3883,35 @@ http: HTTP client configuration</p>
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'metadata'</em><em>]</em>) – always ‘metadata’</p></li>
 <li><p><strong>network</strong> (<em>MetadataNetwork</em>) – Network name, e.g. mainnet, ghostnet, etc.</p></li>
 <li><p><strong>url</strong> (<em>str</em>) – GraphQL API URL, e.g. <a class="reference external" href="https://metadata.dipdup.net">https://metadata.dipdup.net</a></p></li>
-<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.HTTPConfig" title="dipdup.config.HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
+<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#HTTPConfig" title="HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.OperationHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">OperationHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.OperationHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="OperationHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#OperationHandlerConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Operation handler config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>pattern</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#dipdup.config.OperationHandlerOriginationPatternConfig" title="dipdup.config.OperationHandlerOriginationPatternConfig"><em>dipdup.config.OperationHandlerOriginationPatternConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.OperationHandlerTransactionPatternConfig" title="dipdup.config.OperationHandlerTransactionPatternConfig"><em>dipdup.config.OperationHandlerTransactionPatternConfig</em></a><em>, </em><em>...</em><em>]</em>) – Filters to match operation groups</p></li>
+<li><p><strong>pattern</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#OperationHandlerOriginationPatternConfig" title="OperationHandlerOriginationPatternConfig"><em>OperationHandlerOriginationPatternConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#OperationHandlerTransactionPatternConfig" title="OperationHandlerTransactionPatternConfig"><em>OperationHandlerTransactionPatternConfig</em></a><em>, </em><em>...</em><em>]</em>) – Filters to match operation groups</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.OperationHandlerOriginationPatternConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">OperationHandlerOriginationPatternConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'origination'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">originated_contract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.OperationHandlerOriginationPatternConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="OperationHandlerOriginationPatternConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationHandlerOriginationPatternConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'origination'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">originated_contract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#OperationHandlerOriginationPatternConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Origination handler pattern config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>type</strong> (<em>Literal</em><em>[</em><em>'origination'</em><em>]</em>) – always ‘origination’</p></li>
-<li><p><strong>source</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations by source contract alias</p></li>
-<li><p><strong>similar_to</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations which have the same code/signature (depending on <cite>strict</cite> field)</p></li>
-<li><p><strong>originated_contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match origination of exact contract</p></li>
+<li><p><strong>source</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations by source contract alias</p></li>
+<li><p><strong>similar_to</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations which have the same code/signature (depending on <cite>strict</cite> field)</p></li>
+<li><p><strong>originated_contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match origination of exact contract</p></li>
 <li><p><strong>optional</strong> (<em>bool</em>) – Whether can operation be missing in operation group</p></li>
 <li><p><strong>strict</strong> (<em>bool</em>) – Match operations by storage only or by the whole code</p></li>
 <li><p><strong>alias</strong> (<em>str</em><em> | </em><em>None</em>) – Alias for transaction (helps to avoid duplicates)</p></li>
@@ -3923,15 +3920,15 @@ http: HTTP client configuration</p>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.OperationHandlerTransactionPatternConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">OperationHandlerTransactionPatternConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'transaction'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entrypoint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.OperationHandlerTransactionPatternConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="OperationHandlerTransactionPatternConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationHandlerTransactionPatternConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'transaction'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entrypoint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#OperationHandlerTransactionPatternConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Operation handler pattern config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>type</strong> (<em>Literal</em><em>[</em><em>'transaction'</em><em>]</em>) – always ‘transaction’</p></li>
-<li><p><strong>source</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations by source contract alias</p></li>
-<li><p><strong>destination</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations by destination contract alias</p></li>
+<li><p><strong>source</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations by source contract alias</p></li>
+<li><p><strong>destination</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations by destination contract alias</p></li>
 <li><p><strong>entrypoint</strong> (<em>str</em><em> | </em><em>None</em>) – Match operations by contract entrypoint</p></li>
 <li><p><strong>optional</strong> (<em>bool</em>) – Whether can operation be missing in operation group</p></li>
 <li><p><strong>alias</strong> (<em>str</em><em> | </em><em>None</em>) – Alias for transaction (helps to avoid duplicates)</p></li>
@@ -3940,69 +3937,60 @@ http: HTTP client configuration</p>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.OperationIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">OperationIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types=(&lt;OperationType.transaction:</span> <span class="pre">'transaction'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.OperationIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="OperationIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types=(&lt;OperationType.transaction:</span> <span class="pre">'transaction'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#OperationIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Operation index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'operation'</em><em>]</em>) – always <cite>operation</cite></p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#dipdup.config.OperationHandlerConfig" title="dipdup.config.OperationHandlerConfig"><em>dipdup.config.OperationHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
-<li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#dipdup.enums.OperationType" title="dipdup.enums.OperationType"><em>dipdup.enums.OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
-<li><p><strong>contracts</strong> (<em>list</em><em>[</em><em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>dipdup.config.ContractConfig</em></a><em>]</em>) – Aliases of contracts being indexed in <cite>contracts</cite> section</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#TzktDatasourceConfig" title="TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#OperationHandlerConfig" title="OperationHandlerConfig"><em>OperationHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
+<li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#OperationType" title="OperationType"><em>OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
+<li><p><strong>contracts</strong> (<em>list</em><em>[</em><em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Aliases of contracts being indexed in <cite>contracts</cite> section</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.TzktDatasourceConfig" title="dipdup.config.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – </p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.enums.OperationType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.enums.</span></span><span class="sig-name descname"><span class="pre">OperationType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.enums.OperationType" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enumeration.</p>
+<dt class="sig sig-object py" id="OperationType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#OperationType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of blockchain operation</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.OperationType.migration">
-<span class="sig-name descname"><span class="pre">migration</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'migration'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.OperationType.migration" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="OperationType.migration">
+<span class="sig-name descname"><span class="pre">migration</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'migration'</span></em><a class="headerlink" href="config/reference.html#OperationType.migration" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.OperationType.origination">
-<span class="sig-name descname"><span class="pre">origination</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'origination'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.OperationType.origination" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="OperationType.origination">
+<span class="sig-name descname"><span class="pre">origination</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'origination'</span></em><a class="headerlink" href="config/reference.html#OperationType.origination" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.OperationType.transaction">
-<span class="sig-name descname"><span class="pre">transaction</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'transaction'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.OperationType.transaction" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="OperationType.transaction">
+<span class="sig-name descname"><span class="pre">transaction</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'transaction'</span></em><a class="headerlink" href="config/reference.html#OperationType.transaction" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.OperationUnfilteredHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">OperationUnfilteredHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.OperationUnfilteredHandlerConfig" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>callback</strong> (<em>str</em>) – </p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.OperationUnfilteredIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">OperationUnfilteredIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types=(&lt;OperationType.transaction:</span> <span class="pre">'transaction'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.OperationUnfilteredIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="OperationUnfilteredIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationUnfilteredIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types=(&lt;OperationType.transaction:</span> <span class="pre">'transaction'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#OperationUnfilteredIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Operation index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'operation_unfiltered'</em><em>]</em>) – always <cite>operation_unfiltered</cite></p></li>
-<li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#dipdup.enums.OperationType" title="dipdup.enums.OperationType"><em>dipdup.enums.OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#TzktDatasourceConfig" title="TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#OperationType" title="OperationType"><em>OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.TzktDatasourceConfig" title="dipdup.config.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – </p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.PostgresDatabaseConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">PostgresDatabaseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user='postgres'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database='postgres'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port=5432</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema_name='public'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">immune_tables=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_timeout=60</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.PostgresDatabaseConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="PostgresDatabaseConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">PostgresDatabaseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user='postgres'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database='postgres'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port=5432</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema_name='public'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">immune_tables=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_timeout=60</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#PostgresDatabaseConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Postgres database connection config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -4021,8 +4009,8 @@ http: HTTP client configuration</p>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.PrometheusConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">PrometheusConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.PrometheusConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="PrometheusConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">PrometheusConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#PrometheusConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Config for Prometheus integration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -4035,50 +4023,50 @@ http: HTTP client configuration</p>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingAction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.enums.</span></span><span class="sig-name descname"><span class="pre">ReindexingAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingAction" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enumeration.</p>
+<dt class="sig sig-object py" id="ReindexingAction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">ReindexingAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#ReindexingAction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Action that should be performed on reindexing</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingAction.exception">
-<span class="sig-name descname"><span class="pre">exception</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'exception'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingAction.exception" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ReindexingAction.exception">
+<span class="sig-name descname"><span class="pre">exception</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'exception'</span></em><a class="headerlink" href="config/reference.html#ReindexingAction.exception" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingAction.ignore">
-<span class="sig-name descname"><span class="pre">ignore</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ignore'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingAction.ignore" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ReindexingAction.ignore">
+<span class="sig-name descname"><span class="pre">ignore</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ignore'</span></em><a class="headerlink" href="config/reference.html#ReindexingAction.ignore" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingAction.wipe">
-<span class="sig-name descname"><span class="pre">wipe</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'wipe'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingAction.wipe" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingReason">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.enums.</span></span><span class="sig-name descname"><span class="pre">ReindexingReason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingReason" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enumeration.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingReason.config_modified">
-<span class="sig-name descname"><span class="pre">config_modified</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'config_modified'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingReason.config_modified" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingReason.manual">
-<span class="sig-name descname"><span class="pre">manual</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'manual'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingReason.manual" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingReason.migration">
-<span class="sig-name descname"><span class="pre">migration</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'migration'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingReason.migration" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingReason.rollback">
-<span class="sig-name descname"><span class="pre">rollback</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'rollback'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingReason.rollback" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.ReindexingReason.schema_modified">
-<span class="sig-name descname"><span class="pre">schema_modified</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'schema_modified'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.ReindexingReason.schema_modified" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ReindexingAction.wipe">
+<span class="sig-name descname"><span class="pre">wipe</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'wipe'</span></em><a class="headerlink" href="config/reference.html#ReindexingAction.wipe" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.SentryConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">SentryConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dsn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">release</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.SentryConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ReindexingReason">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">ReindexingReason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#ReindexingReason" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reason that caused reindexing</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ReindexingReason.config_modified">
+<span class="sig-name descname"><span class="pre">config_modified</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'config_modified'</span></em><a class="headerlink" href="config/reference.html#ReindexingReason.config_modified" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ReindexingReason.manual">
+<span class="sig-name descname"><span class="pre">manual</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'manual'</span></em><a class="headerlink" href="config/reference.html#ReindexingReason.manual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ReindexingReason.migration">
+<span class="sig-name descname"><span class="pre">migration</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'migration'</span></em><a class="headerlink" href="config/reference.html#ReindexingReason.migration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ReindexingReason.rollback">
+<span class="sig-name descname"><span class="pre">rollback</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'rollback'</span></em><a class="headerlink" href="config/reference.html#ReindexingReason.rollback" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ReindexingReason.schema_modified">
+<span class="sig-name descname"><span class="pre">schema_modified</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'schema_modified'</span></em><a class="headerlink" href="config/reference.html#ReindexingReason.schema_modified" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="SentryConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">SentryConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dsn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">release</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#SentryConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Config for Sentry integration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -4094,25 +4082,25 @@ http: HTTP client configuration</p>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.enums.SkipHistory">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.enums.</span></span><span class="sig-name descname"><span class="pre">SkipHistory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.enums.SkipHistory" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enumeration.</p>
+<dt class="sig sig-object py" id="SkipHistory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">SkipHistory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#SkipHistory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to skip indexing operation history and use only current state</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.SkipHistory.always">
-<span class="sig-name descname"><span class="pre">always</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'always'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.SkipHistory.always" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="SkipHistory.always">
+<span class="sig-name descname"><span class="pre">always</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'always'</span></em><a class="headerlink" href="config/reference.html#SkipHistory.always" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.SkipHistory.never">
-<span class="sig-name descname"><span class="pre">never</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'never'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.SkipHistory.never" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="SkipHistory.never">
+<span class="sig-name descname"><span class="pre">never</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'never'</span></em><a class="headerlink" href="config/reference.html#SkipHistory.never" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="dipdup.enums.SkipHistory.once">
-<span class="sig-name descname"><span class="pre">once</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'once'</span></em><a class="headerlink" href="config/reference.html#dipdup.enums.SkipHistory.once" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="SkipHistory.once">
+<span class="sig-name descname"><span class="pre">once</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'once'</span></em><a class="headerlink" href="config/reference.html#SkipHistory.once" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.SqliteDatabaseConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">SqliteDatabaseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">':memory:'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.SqliteDatabaseConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="SqliteDatabaseConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">SqliteDatabaseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">':memory:'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#SqliteDatabaseConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>SQLite connection config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -4124,59 +4112,62 @@ http: HTTP client configuration</p>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.TokenTransferHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">TokenTransferHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'ContractConfig</span> <span class="pre">|</span> <span class="pre">None'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int</span> <span class="pre">|</span> <span class="pre">None'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'ContractConfig</span> <span class="pre">|</span> <span class="pre">None'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">FieldInfo(alias='from',</span> <span class="pre">alias_priority=2,</span> <span class="pre">extra={})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'ContractConfig</span> <span class="pre">|</span> <span class="pre">None'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.TokenTransferHandlerConfig" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>callback</strong> (<em>str</em>) – </p></li>
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>token_id</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>from_</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>to</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.TokenTransferIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">TokenTransferIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.TokenTransferIndexConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Token index config</p>
+<dt class="sig sig-object py" id="TokenTransferHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TokenTransferHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">FieldInfo(alias='from',</span> <span class="pre">alias_priority=2,</span> <span class="pre">extra={})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#TokenTransferHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Token transfer handler config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'token_transfer'</em><em>]</em>) – </p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.TzktDatasourceConfig" title="dipdup.config.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – </p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#dipdup.config.TokenTransferHandlerConfig" title="dipdup.config.TokenTransferHandlerConfig"><em>dipdup.config.TokenTransferHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – </p></li>
-<li><p><strong>first_level</strong> (<em>int</em>) – </p></li>
-<li><p><strong>last_level</strong> (<em>int</em>) – </p></li>
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Filter by contract</p></li>
+<li><p><strong>token_id</strong> (<em>int</em><em> | </em><em>None</em>) – Filter by token ID</p></li>
+<li><p><strong>from</strong> – Filter by sender</p></li>
+<li><p><strong>to</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Filter by recipient</p></li>
+<li><p><strong>from_</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.TzktDatasourceConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">TzktDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://api.tzkt.io'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.TzktDatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="TokenTransferIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TokenTransferIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#TokenTransferIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Token transfer index config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'token_transfer'</em><em>]</em>) – always <cite>token_transfer</cite></p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#TzktDatasourceConfig" title="TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to use</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="config/reference.html#TokenTransferHandlerConfig" title="TokenTransferHandlerConfig"><em>TokenTransferHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of token transfer handlers</p></li>
+<li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
+<li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="TzktDatasourceConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TzktDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://api.tzkt.io'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#TzktDatasourceConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>TzKT datasource config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tzkt'</em><em>]</em>) – always ‘tzkt’</p></li>
 <li><p><strong>url</strong> (<em>str</em>) – Base API URL, e.g. <a class="reference external" href="https://api.tzkt.io/">https://api.tzkt.io/</a></p></li>
-<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#dipdup.config.HTTPConfig" title="dipdup.config.HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
+<li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#HTTPConfig" title="HTTPConfig"><em>HTTPConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
 <li><p><strong>buffer_size</strong> (<em>int</em>) – Number of levels to keep in FIFO buffer before processing</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="dipdup.config.UnknownEventHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.config.</span></span><span class="sig-name descname"><span class="pre">UnknownEventHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'ContractConfig'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#dipdup.config.UnknownEventHandlerConfig" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dt class="sig sig-object py" id="UnknownEventHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">UnknownEventHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#UnknownEventHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unknown event handler config</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>callback</strong> (<em>str</em>) – </p></li>
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#dipdup.config.ContractConfig" title="dipdup.config.ContractConfig"><em>ContractConfig</em></a>) – </p></li>
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="config/reference.html#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract which emits event</p></li>
 </ul>
 </dd>
 </dl>
@@ -4327,7 +4318,7 @@ custom:
   metadata:
     kind: metadata
     url: https://metadata.dipdup.net
-    network: mainnet|ghostnet|jakartanet|kathmandunet
+    network: mainnet|ghostnet|limanet
 </code></pre>
 <h2 id="ipfs-1"><a class="header" href="#ipfs-1">ipfs</a></h2>
 <pre><code class="language-yaml">datasources:
@@ -4503,17 +4494,18 @@ templates:
 </ul>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
+<li>config: Do not include coinbase datasource credentials in config repr.</li>
 <li>database: Fixed crash when schema generation should fail with <code>schema_modified</code>.</li>
 <li>hasura: Stop using deprecated schema/metadata API.</li>
 <li>index: Fixed unnecessary prefetching of migration originations in <code>operation</code> index.</li>
-<li>index: Remove disabled index from the dispatcher queue.</li>
+<li>index: Remove disabled indexes from the dispatcher queue.</li>
 <li>sentry: Flush and reopen session daily.</li>
 <li>tzkt: Fixed <code>OperationData.type</code> field value for migration originations.</li>
 <li>tzkt: Added missing <code>last_level</code> argument to migration origination fetching methods.</li>
 </ul>
 <h3 id="other"><a class="header" href="#other">Other</a></h3>
 <ul>
-<li>ci: Enforce markdownlint for docs.</li>
+<li>tzkt: Updated current testnet protocol (<code>limanet</code>).</li>
 <li>deps: Updated asyncpg to 0.27.0</li>
 <li>deps: Updated hasura to 2.17.0</li>
 </ul>
@@ -5368,26 +5360,23 @@ templates:
 <h3 id="kathmandu-contract-events"><a class="header" href="#kathmandu-contract-events">Kathmandu contract events</a></h3>
 <p>Kathmandu Tezos protocol upgrade has introduced <a href="https://tezos.gitlab.io/alpha/event.html">contract events</a>, a new way to interact with smart contracts. This index allows indexing events using strictly typed payloads. From the developer's perspective, it's similar to the <code>big_map</code> index with a few differences.</p>
 <p>An example below is artificial since no known contracts in mainnet are currently using events.</p>
-<pre><code class="language-yaml">indexes:
-  events:
-    kind: event
-    datasource: tzkt
-    handlers:
-      - callback: on_events_xrate
-        contract: events
-        tag: xrate
-      - callback: on_events_unknown
-        contract: events
+<pre><code class="language-yaml">        contract: events_contract
+        tag: move
+      - callback: on_roll_event
+        contract: events_contract
+        tag: roll
+      - callback: on_other_event
+        contract: events_contract
 </code></pre>
 <p>Unlike big maps, contracts may introduce new event tags and payloads at any time, so the index must be updated accordingly.</p>
-<pre><code class="language-python">async def on_events_xrate(
+<pre><code class="language-python">async def on_move_event(
     ctx: HandlerContext,
-    event: Event[XratePayload],
+    event: Event[MovePayload],
 ) -&gt; None:
     ...
 </code></pre>
 <p>Each contract can have a fallback handler called for all unknown events so you can process untyped data.</p>
-<pre><code class="language-python">async def on_events_unknown(
+<pre><code class="language-python">async def on_other_event(
     ctx: HandlerContext,
     event: UnknownEvent,
 ) -&gt; None:
@@ -5828,7 +5817,7 @@ if __name__ == '__main__':
   metadata:
     kind: metadata
     url: https://metadata.dipdup.net
-    network: mainnet|ghostnet|jakartanet|kathmandunet
+    network: mainnet|ghostnet|limanet
 </code></pre>
 <p>Now you can use it anywhere in your callbacks:</p>
 <pre><code class="language-python">datasource = ctx.datasources['metadata']

@@ -26,7 +26,6 @@
 .. autoclass:: dipdup.enums.OperationType
    :members:
    :undoc-members:
-.. autoclass:: dipdup.config.OperationUnfilteredHandlerConfig
 .. autoclass:: dipdup.config.OperationUnfilteredIndexConfig
 .. autoclass:: dipdup.config.PostgresDatabaseConfig
 .. autoclass:: dipdup.config.PrometheusConfig

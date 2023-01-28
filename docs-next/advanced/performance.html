@@ -176,7 +176,7 @@
 <p>This page contains tips that may help to increase indexing speed.</p>
 <h2 id="optimize-database-schema"><a class="header" href="#optimize-database-schema">Optimize database schema</a></h2>
 <p><a href="https://www.postgresql.org/docs/9.5/indexes-types.html">Postgres indexes</a> are tables that Postgres can use to speed up data lookup. A database index acts like a pointer to data in a table, just like an index in a printed book. If you look in the index first, you will find the data much quicker than searching the whole book (or — in this case — database).</p>
-<p>You should add indexes on columns often appearing in `WHERE`` clauses in your GraphQL queries and subscriptions.</p>
+<p>You should add indexes on columns often appearing in <code>WHERE</code> clauses in your GraphQL queries and subscriptions.</p>
 <p>Tortoise ORM uses BTree indexes by default. To set index on a field, add <code>index=True</code> to the field definition:</p>
 <pre><code class="language-python">from dipdup.models import Model
 from tortoise import fields
