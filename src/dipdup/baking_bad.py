@@ -8,6 +8,6 @@ MAX_TZKT_BATCH_SIZE = 10000
 TZKT_API_URLS: dict[str, str] = {
     'https://api.tzkt.io': 'mainnet',
     'https://api.ghostnet.tzkt.io': 'ghostnet',
-    'https://api.jakartanet.tzkt.io': 'jakartanet',
+    'https://api.limanet.tzkt.io': 'limanet',
     'https://staging.api.tzkt.io': 'staging',
 }

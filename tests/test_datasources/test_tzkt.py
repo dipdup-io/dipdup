@@ -201,7 +201,7 @@ async def test_on_operation_message_data() -> None:
 
 
 async def test_no_content() -> None:
-    async with tzkt_replay('https://api.jakartanet.tzkt.io', batch_size=1) as tzkt:
+    async with tzkt_replay('https://api.ghostnet.tzkt.io', batch_size=1) as tzkt:
         with pytest.raises(InvalidRequestError):
             await tzkt.get_jsonschemas('KT1EHdK9asB6BtPLvt1ipKRuxsrKoQhDoKgs')
 

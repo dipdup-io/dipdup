@@ -47,12 +47,16 @@ else:
 
 
 class OperationType(Enum):
+    """Type of blockchain operation"""
+
     transaction = 'transaction'
     origination = 'origination'
     migration = 'migration'
 
 
 class SkipHistory(Enum):
+    """Whether to skip indexing operation history and use only current state"""
+
     never = 'never'
     once = 'once'
     always = 'always'
@@ -70,6 +74,8 @@ class IndexStatus(Enum):
 
 # NOTE: Used as a key in config, must inherit from str
 class ReindexingReason(str, Enum):
+    """Reason that caused reindexing"""
+
     manual = 'manual'
     migration = 'migration'
     rollback = 'rollback'
@@ -78,6 +84,8 @@ class ReindexingReason(str, Enum):
 
 
 class ReindexingAction(Enum):
+    """Action that should be performed on reindexing"""
+
     exception = 'exception'
     wipe = 'wipe'
     ignore = 'ignore'

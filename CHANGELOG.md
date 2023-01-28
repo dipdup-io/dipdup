@@ -20,17 +20,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- config: Remove coinbase datasource credentials from repr.
 - database: Fixed crash when schema generation should fail with `schema_modified`.
 - hasura: Stop using deprecated schema/metadata API.
 - index: Fixed unnecessary prefetching of migration originations in `operation` index.
-- index: Remove disabled index from the dispatcher queue.
+- index: Remove disabled indexes from the dispatcher queue.
 - sentry: Flush and reopen session daily.
 - tzkt: Fixed `OperationData.type` field value for migration originations.
 - tzkt: Added missing `last_level` argument to migration origination fetching methods.
 
 ### Other
 
-- ci: Enforce markdownlint for docs.
+- tzkt: Updated current testnet protocol (`limanet`).
 - deps: Updated asyncpg to 0.27.0
 - deps: Updated hasura to 2.17.0
 

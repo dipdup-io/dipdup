@@ -2,14 +2,14 @@
 
 As you can see from the amount of code below, lots of things are going on here:
 
-* YAML (de)serialization
 * Templating indexes and env variables (`<...>` and `${...}` syntax)
 * Config initialization and validation
 * Methods to generate paths for codegen
 * And even importing contract types on demand
 
-Dataclasses are used in this module instead of BaseModel for historical reasons (can't remember why;
-something about ruamel.yaml compatibility), thus "...Mixin" classes to workaround the lack of proper
+* YAML (de)serialization moved to `dipdup.yaml` module.
+
+Dataclasses are used in this module instead of BaseModel for historical reasons, thus "...Mixin" classes to workaround the lack of proper
 inheritance.
 """
 from __future__ import annotations
@@ -335,8 +335,9 @@ class CoinbaseDatasourceConfig(DatasourceConfig):
 
     kind: Literal['coinbase']
     api_key: str | None = None
-    secret_key: str | None = None
-    passphrase: str | None = None
+    secret_key: str | None = field(default=None, repr=False)
+    passphrase: str | None = field(default=None, repr=False)
+
     http: HTTPConfig | None = None
 
     def __hash__(self) -> int:
@@ -383,9 +384,9 @@ class IpfsDatasourceConfig(DatasourceConfig):
 class HttpDatasourceConfig(DatasourceConfig):
     """Generic HTTP datasource config
 
-    kind: always 'http'
-    url: URL to fetch data from
-    http: HTTP client configuration
+    :param kind: always 'http'
+    :param url: URL to fetch data from
+    :param http: HTTP client configuration
     """
 
     kind: Literal['http']
@@ -832,10 +833,11 @@ class IndexTemplateConfig(NameMixin):
     """Index template config
 
     :param kind: always `template`
-    :param name: Name of index template
-    :param template_values: Values to be substituted in template (`<key>` -> `value`)
+    :param values: Values to be substituted in template (`<key>` -> `value`)
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
+    :param template: Template alias in `templates` section
+
     """
 
     kind = 'template'
@@ -894,6 +896,7 @@ class OperationIndexConfig(IndexConfig):
     """Operation index config
 
     :param kind: always `operation`
+    :param datasource: Alias of index datasource in `datasources` section
     :param handlers: List of indexer handlers
     :param types: Types of transaction to fetch
     :param contracts: Aliases of contracts being indexed in `contracts` section
@@ -938,6 +941,11 @@ class OperationIndexConfig(IndexConfig):
 
 @dataclass
 class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
+    """Handler of unfiltered operation index
+
+    :param callback: Callback name
+    """
+
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'OperationData'
@@ -953,9 +961,10 @@ class OperationUnfilteredIndexConfig(IndexConfig):
     """Operation index config
 
     :param kind: always `operation_unfiltered`
+    :param datasource: Alias of index datasource in `datasources` section
+    :param callback: Callback name
     :param types: Types of transaction to fetch
 
-    :param callback: Callback name
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
     """
@@ -984,6 +993,7 @@ OperationIndexConfigU = OperationIndexConfig | OperationUnfilteredIndexConfig
 class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     """Big map handler config
 
+    :param callback: Callback name
     :param contract: Contract to fetch big map from
     :param path: Path to big map (alphanumeric string with dots)
     """
@@ -1058,10 +1068,10 @@ class BigMapIndexConfig(IndexConfig):
 
     :param kind: always `big_map`
     :param datasource: Index datasource to fetch big maps with
-    :param handlers: Description of big map diff handlers
+    :param handlers: Mapping of big map diff handlers
     :param skip_history: Fetch only current big map keys ignoring historical changes
     :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at (Dipdup will terminate at this level)
+    :param last_level: Level to stop indexing at
     """
 
     kind: Literal['big_map']
@@ -1090,7 +1100,10 @@ class BigMapIndexConfig(IndexConfig):
 
 @dataclass
 class HeadHandlerConfig(HandlerConfig, kind='handler'):
-    """Head block handler config"""
+    """Head block handler config
+
+    :param callback: Callback name
+    """
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -1104,7 +1117,12 @@ class HeadHandlerConfig(HandlerConfig, kind='handler'):
 
 @dataclass
 class HeadIndexConfig(IndexConfig):
-    """Head block index config"""
+    """Head block index config
+
+    :param kind: always `head`
+    :param datasource: Index datasource to receive head blocks
+    :param handlers: Mapping of head block handlers
+    """
 
     kind: Literal['head']
     datasource: TzktDatasourceConfig
@@ -1125,6 +1143,15 @@ class HeadIndexConfig(IndexConfig):
 
 @dataclass
 class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
+    """Token transfer handler config
+
+    :param callback: Callback name
+    :param contract: Filter by contract
+    :param token_id: Filter by token ID
+    :param from_: Filter by sender
+    :param to: Filter by recipient
+    """
+
     contract: ContractConfig | None = None
     token_id: int | None = None
     from_: ContractConfig | None = Field(default=None, alias='from')
@@ -1142,7 +1169,15 @@ class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
 
 @dataclass
 class TokenTransferIndexConfig(IndexConfig):
-    """Token index config"""
+    """Token transfer index config
+
+    :param kind: always `token_transfer`
+    :param datasource: Index datasource to use
+    :param handlers: Mapping of token transfer handlers
+
+    :param first_level: Level to start indexing from
+    :param last_level: Level to stop indexing at
+    """
 
     kind: Literal['token_transfer']
     datasource: TzktDatasourceConfig
@@ -1158,6 +1193,13 @@ class TokenTransferIndexConfig(IndexConfig):
 
 @dataclass
 class EventHandlerConfig(HandlerConfig, kind='handler'):
+    """Event handler config
+
+    :param callback: Callback name
+    :param contract: Contract which emits event
+    :param tag: Event tag
+    """
+
     contract: ContractConfig
     tag: str
 
@@ -1198,6 +1240,12 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
 @dataclass
 class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
+    """Unknown event handler config
+
+    :param callback: Callback name
+    :param contract: Contract which emits event
+    """
+
     contract: ContractConfig
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -1215,6 +1263,15 @@ EventHandlerConfigU = EventHandlerConfig | UnknownEventHandlerConfig
 
 @dataclass
 class EventIndexConfig(IndexConfig):
+    """Event index config
+
+    :param kind: Index kind
+    :param datasource: Datasource config
+    :param handlers: Event handlers
+    :param first_level: First block level to index
+    :param last_level: Last block level to index
+    """
+
     kind: Literal['event']
     datasource: TzktDatasourceConfig
     handlers: tuple[EventHandlerConfigU, ...] = field(default_factory=tuple)
@@ -1249,7 +1306,7 @@ class HasuraConfig:
     :param source: Hasura source for DipDup to configure, others will be left untouched.
     :param select_limit: Row limit for unauthenticated queries.
     :param allow_aggregations: Whether to allow aggregations in unauthenticated queries.
-    :param allow_inconsistent_metadata: Whether to ignore errors when applying custom Hasura metadata.
+    :param allow_inconsistent_metadata: Whether to ignore errors when applying Hasura metadata.
     :param camel_case: Whether to use camelCase instead of default pascal_case for the field names (incompatible with `metadata_interface` flag)
     :param rest: Enable REST API both for autogenerated and custom queries.
     :param http: HTTP connection tunables
@@ -1348,6 +1405,7 @@ class HookConfig(CallbackMixin, kind='hook'):
 
     :param args: Mapping of argument names and annotations (checked lazily when possible)
     :param atomic: Wrap hook in a single database transaction
+    :param callback: Callback name
     """
 
     args: dict[str, str] = field(default_factory=dict)
@@ -1430,7 +1488,7 @@ class AdvancedConfig:
 class DipDupConfig:
     """Main indexer config
 
-    :param spec_version: Version of specification
+    :param spec_version: Version of config specification, currently always `1.2`
     :param package: Name of indexer's Python package, existing or not
     :param datasources: Mapping of datasource aliases and datasource configs
     :param database: Database config
@@ -1443,7 +1501,8 @@ class DipDupConfig:
     :param sentry: Sentry integration config
     :param prometheus: Prometheus integration config
     :param advanced: Advanced config
-    :param custom: User-defined Custom config
+    :param custom: User-defined configuration to use in callbacks
+    :param logging: Modify logging verbosity
     """
 
     spec_version: str

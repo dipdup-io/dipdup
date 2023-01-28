@@ -6,7 +6,7 @@ This page contains tips that may help to increase indexing speed.
 
 [Postgres indexes](https://www.postgresql.org/docs/9.5/indexes-types.html) are tables that Postgres can use to speed up data lookup. A database index acts like a pointer to data in a table, just like an index in a printed book. If you look in the index first, you will find the data much quicker than searching the whole book (or — in this case — database).
 
-You should add indexes on columns often appearing in `WHERE`` clauses in your GraphQL queries and subscriptions.
+You should add indexes on columns often appearing in `WHERE` clauses in your GraphQL queries and subscriptions.
 
 Tortoise ORM uses BTree indexes by default. To set index on a field, add `index=True` to the field definition:
 
