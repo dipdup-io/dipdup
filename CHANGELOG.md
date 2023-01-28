@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - index: New index kind `operation_unfiltered`.
 -->
 
-## [Unreleased]
+## [6.5.0] - 2023-01-28
 
 ### Added
 
