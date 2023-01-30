@@ -280,23 +280,6 @@ class DatasourceConfig(ABC, NameMixin):
 
 
 @dataclass
-class HttpDatasourceConfig(DatasourceConfig):
-    """Generic HTTP datasource config
-
-    :param kind: always 'http'
-    :param url: URL to fetch data from
-    :param http: HTTP client configuration
-    """
-
-    kind: Literal['http']
-    url: str
-    http: HTTPConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url)
-
-
-@dataclass
 class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 
@@ -1217,6 +1200,7 @@ class DipDupConfig:
 
 
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.metadata import MetadataDatasourceConfig
 from dipdup.config.tezos_big_map import BigMapIndexConfig

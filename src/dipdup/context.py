@@ -35,8 +35,8 @@ from dipdup.config.tezos_operation import OperationIndexConfig
 from dipdup.config.tezos_operation import OperationUnfilteredIndexConfig
 from dipdup.config.tezos_token_transfer import TokenTransferIndexConfig
 from dipdup.datasources import Datasource
-from dipdup.datasources import HttpDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
 from dipdup.datasources.metadata import MetadataDatasource
 from dipdup.datasources.tzkt import TzktDatasource
