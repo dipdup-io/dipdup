@@ -34,7 +34,7 @@ from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config import TokenTransferIndexConfig
-from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
+from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import HttpDatasource
 from dipdup.datasources.ipfs.datasource import IpfsDatasource

@@ -6,9 +6,9 @@ from typing import Any
 from typing import cast
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.coinbase.models import CandleData
-from dipdup.datasources.coinbase.models import CandleInterval
 from dipdup.datasources.datasource import Datasource
+from dipdup.models.coinbase import CandleData
+from dipdup.models.coinbase import CandleInterval
 
 CANDLES_REQUEST_LIMIT = 300
 API_URL = 'https://api.pro.coinbase.com'

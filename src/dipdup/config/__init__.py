@@ -323,28 +323,6 @@ class TzktDatasourceConfig(DatasourceConfig):
 
 
 @dataclass
-class CoinbaseDatasourceConfig(DatasourceConfig):
-    """Coinbase datasource config
-
-    :param kind: always 'coinbase'
-    :param api_key: API key
-    :param secret_key: API secret key
-    :param passphrase: API passphrase
-    :param http: HTTP client configuration
-    """
-
-    kind: Literal['coinbase']
-    api_key: str | None = None
-    secret_key: str | None = field(default=None, repr=False)
-    passphrase: str | None = field(default=None, repr=False)
-
-    http: HTTPConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind)
-
-
-@dataclass
 class MetadataDatasourceConfig(NameMixin):
     """DipDup Metadata datasource config
 
@@ -395,16 +373,6 @@ class HttpDatasourceConfig(DatasourceConfig):
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url)
-
-
-# NOTE: We need unions for Pydantic deserialization
-DatasourceConfigU = (
-    TzktDatasourceConfig
-    | CoinbaseDatasourceConfig
-    | MetadataDatasourceConfig
-    | IpfsDatasourceConfig
-    | HttpDatasourceConfig
-)
 
 
 @dataclass
@@ -1558,9 +1526,6 @@ class DipDupConfig:
         paths: list[Path],
         environment: bool = True,
     ) -> DipDupConfig:
-        # NOTE: __future__.annotations
-        JobConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]
-
         config_json, config_environment = DipDupYAMLConfig.load(paths, environment)
 
         try:
@@ -1927,3 +1892,18 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
 
 
 patch_annotations(yaml_annotations)
+
+from dipdup.config.coinbase import CoinbaseDatasourceConfig
+
+# NOTE: We need unions for Pydantic deserialization
+DatasourceConfigU = (
+    TzktDatasourceConfig
+    | CoinbaseDatasourceConfig
+    | MetadataDatasourceConfig
+    | IpfsDatasourceConfig
+    | HttpDatasourceConfig
+)
+
+# NOTE: __future__.annotations
+JobConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]
+DipDupConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]
