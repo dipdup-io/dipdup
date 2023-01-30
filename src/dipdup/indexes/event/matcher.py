@@ -6,14 +6,14 @@ from typing import Any
 from typing import Iterable
 from typing import Union
 
-from dipdup.config import EventHandlerConfig
-from dipdup.config import EventHandlerConfigU
-from dipdup.config import UnknownEventHandlerConfig
+from dipdup.config.tezos_event import EventHandlerConfig
+from dipdup.config.tezos_event import EventHandlerConfigU
+from dipdup.config.tezos_event import UnknownEventHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
-from dipdup.models import Event
-from dipdup.models import EventData
-from dipdup.models import UnknownEvent
+from dipdup.models.tzkt import Event
+from dipdup.models.tzkt import EventData
+from dipdup.models.tzkt import UnknownEvent
 from dipdup.utils.codegen import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')

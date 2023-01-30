@@ -8,12 +8,12 @@ import orjson as json
 import pysignalr.exceptions
 import pytest
 
-from dipdup.datasources.tzkt.models import HeadSubscription
 from dipdup.enums import MessageType
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
-from dipdup.models import OperationData
+from dipdup.models.tzkt import HeadSubscription
+from dipdup.models.tzkt import OperationData
 from tests import tzkt_replay
 
 T = TypeVar('T')

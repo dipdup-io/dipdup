@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib
+import inspect
 import json
 import logging.config
 import re
@@ -32,44 +33,34 @@ from typing import Awaitable
 from typing import Callable
 from typing import Generic
 from typing import Iterator
+from typing import Literal
 from typing import TypeVar
 from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
-from pydantic import Field
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
-from typing_extensions import Literal
 
 from dipdup import baking_bad
 from dipdup import env
-from dipdup.datasources.metadata.enums import MetadataNetwork
-from dipdup.datasources.subscription import Subscription
-from dipdup.datasources.tzkt.models import BigMapSubscription
-from dipdup.datasources.tzkt.models import EventSubscription
-from dipdup.datasources.tzkt.models import HeadSubscription
-from dipdup.datasources.tzkt.models import OriginationSubscription
-from dipdup.datasources.tzkt.models import TokenTransferSubscription
-from dipdup.datasources.tzkt.models import TransactionSubscription
 from dipdup.enums import LoggingValues
 from dipdup.enums import OperationType
 from dipdup.enums import ReindexingAction
 from dipdup.enums import ReindexingReason
-from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
+from dipdup.subscriptions import Subscription
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 from dipdup.yaml import DipDupYAMLConfig
 
-DEFAULT_METADATA_URL = baking_bad.METADATA_API_URL
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
-DEFAULT_TZKT_URL = next(iter(baking_bad.TZKT_API_URLS.keys()))
+DEFAULT_TZKT_URL = str(next(iter(baking_bad.TZKT_API_URLS.keys())))
 DEFAULT_POSTGRES_SCHEMA = 'public'
 DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_USER = 'postgres'
@@ -289,76 +280,6 @@ class DatasourceConfig(ABC, NameMixin):
 
 
 @dataclass
-class TzktDatasourceConfig(DatasourceConfig):
-    """TzKT datasource config
-
-    :param kind: always 'tzkt'
-    :param url: Base API URL, e.g. https://api.tzkt.io/
-    :param http: HTTP client configuration
-    :param buffer_size: Number of levels to keep in FIFO buffer before processing
-    """
-
-    kind: Literal['tzkt']
-    url: str = DEFAULT_TZKT_URL
-    http: HTTPConfig | None = None
-    buffer_size: int = 0
-
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url)
-
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
-        self.url = self.url.rstrip('/')
-
-        # NOTE: Is is possible to increase limits in TzKT? Anyway, I don't think anyone will ever need it.
-        limit = baking_bad.MAX_TZKT_BATCH_SIZE
-        if self.http and self.http.batch_size and self.http.batch_size > limit:
-            raise ConfigurationError(f'`batch_size` must be less than {limit}')
-        parsed_url = urlparse(self.url)
-        # NOTE: Environment substitution disabled
-        if '$' in self.url:
-            return
-        if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{self.url}` is not a valid datasource URL')
-
-
-@dataclass
-class MetadataDatasourceConfig(NameMixin):
-    """DipDup Metadata datasource config
-
-    :param kind: always 'metadata'
-    :param network: Network name, e.g. mainnet, ghostnet, etc.
-    :param url: GraphQL API URL, e.g. https://metadata.dipdup.net
-    :param http: HTTP client configuration
-    """
-
-    kind: Literal['metadata']
-    network: MetadataNetwork
-    url: str = DEFAULT_METADATA_URL
-    http: HTTPConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url + self.network.value)
-
-
-@dataclass
-class IpfsDatasourceConfig(DatasourceConfig):
-    """IPFS datasource config
-
-    :param kind: always 'ipfs'
-    :param url: IPFS node URL, e.g. https://ipfs.io/ipfs/
-    :param http: HTTP client configuration
-    """
-
-    kind: Literal['ipfs']
-    url: str = DEFAULT_IPFS_URL
-    http: HTTPConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url)
-
-
-@dataclass
 class HttpDatasourceConfig(DatasourceConfig):
     """Generic HTTP datasource config
 
@@ -575,133 +496,6 @@ class SubgroupIndexMixin:
 
 
 @dataclass
-class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, ParameterTypeMixin, SubgroupIndexMixin):
-    """Operation handler pattern config
-
-    :param type: always 'transaction'
-    :param source: Match operations by source contract alias
-    :param destination: Match operations by destination contract alias
-    :param entrypoint: Match operations by contract entrypoint
-    :param optional: Whether can operation be missing in operation group
-    :param alias: Alias for transaction (helps to avoid duplicates)
-    """
-
-    type: Literal['transaction'] = 'transaction'
-    source: ContractConfig | None = None
-    destination: ContractConfig | None = None
-    entrypoint: str | None = None
-    optional: bool = False
-    alias: str | None = None
-
-    def __post_init_post_parse__(self) -> None:
-        StorageTypeMixin.__post_init_post_parse__(self)
-        ParameterTypeMixin.__post_init_post_parse__(self)
-        SubgroupIndexMixin.__post_init_post_parse__(self)
-        if self.entrypoint and not self.destination:
-            raise ConfigurationError('Transactions with entrypoint must also have destination')
-
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        if self.typed_contract:
-            module_name = self.typed_contract.module_name
-            yield 'dipdup.models', 'Transaction'
-            yield self.format_parameter_import(
-                package,
-                module_name,
-                cast(str, self.entrypoint),
-                self.alias,
-            )
-            yield self.format_storage_import(package, module_name)
-        else:
-            yield self.format_untyped_operation_import()
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        if self.typed_contract:
-            module_name = self.typed_contract.module_name
-            yield self.format_operation_argument(
-                module_name,
-                cast(str, self.entrypoint),
-                self.optional,
-                self.alias,
-            )
-        else:
-            yield self.format_untyped_operation_argument(
-                'transaction',
-                self.subgroup_index,
-                self.optional,
-                self.alias,
-            )
-
-    @property
-    def typed_contract(self) -> ContractConfig | None:
-        if self.entrypoint and self.destination:
-            return self.destination
-        return None
-
-
-@dataclass
-class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, SubgroupIndexMixin):
-    """Origination handler pattern config
-
-    :param type: always 'origination'
-    :param source: Match operations by source contract alias
-    :param similar_to: Match operations which have the same code/signature (depending on `strict` field)
-    :param originated_contract: Match origination of exact contract
-    :param optional: Whether can operation be missing in operation group
-    :param strict: Match operations by storage only or by the whole code
-    :param alias: Alias for transaction (helps to avoid duplicates)
-    """
-
-    type: Literal['origination'] = 'origination'
-    source: ContractConfig | None = None
-    similar_to: ContractConfig | None = None
-    originated_contract: ContractConfig | None = None
-    optional: bool = False
-    strict: bool = False
-    alias: str | None = None
-
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
-        if not self.similar_to:
-            return
-
-        _logger.warning('`similar_to` field is deprecated, use `originated_contract` instead')
-        self.originated_contract = self.similar_to
-        self.similar_to = None
-
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        if self.typed_contract:
-            module_name = self.typed_contract.module_name
-            yield 'dipdup.models', 'Origination'
-            yield self.format_storage_import(package, module_name)
-        else:
-            yield 'dipdup.models', 'OperationData'
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        if self.typed_contract:
-            yield self.format_origination_argument(
-                self.typed_contract.module_name,
-                self.optional,
-                self.alias,
-            )
-        else:
-            yield self.format_untyped_operation_argument(
-                'origination',
-                self.subgroup_index,
-                self.optional,
-                self.alias,
-            )
-
-    @property
-    def typed_contract(self) -> ContractConfig | None:
-        if self.originated_contract:
-            return self.originated_contract
-        # TODO: Remove in 7.0
-        if self.similar_to:
-            raise FrameworkException
-        return None
-
-
-@dataclass
 class CallbackMixin(CodegenMixin):
     """Mixin for callback configs
 
@@ -742,38 +536,6 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig'], kind='handler'):
     def __post_init_post_parse__(self) -> None:
         CallbackMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
-
-
-OperationHandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
-
-
-@dataclass
-class OperationHandlerConfig(HandlerConfig, kind='handler'):
-    """Operation handler config
-
-    :param callback: Callback name
-    :param pattern: Filters to match operation groups
-    """
-
-    pattern: tuple[OperationHandlerPatternConfigU, ...]
-
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        for pattern in self.pattern:
-            yield from pattern.iter_imports(package)
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield 'ctx', 'HandlerContext'
-
-        arg_names: set[str] = set()
-        for pattern in self.pattern:
-            arg, arg_type = next(pattern.iter_arguments())
-            if arg in arg_names:
-                raise ConfigurationError(
-                    f'Pattern item is not unique. Set `alias` field to avoid duplicates.\n\n              handler: `{self.callback}`\n              entrypoint: `{arg}`',
-                )
-            arg_names.add(arg)
-            yield arg, arg_type
 
 
 @dataclass
@@ -857,411 +619,6 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
     @abstractmethod
     def import_objects(self, package: str) -> None:
         ...
-
-
-@dataclass
-class OperationIndexConfig(IndexConfig):
-    """Operation index config
-
-    :param kind: always `operation`
-    :param datasource: Alias of index datasource in `datasources` section
-    :param handlers: List of indexer handlers
-    :param types: Types of transaction to fetch
-    :param contracts: Aliases of contracts being indexed in `contracts` section
-    :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at
-    """
-
-    kind: Literal['operation']
-    handlers: tuple[OperationHandlerConfig, ...]
-    contracts: list[ContractConfig] = field(default_factory=list)
-    types: tuple[OperationType, ...] = (OperationType.transaction,)
-
-    first_level: int = 0
-    last_level: int = 0
-
-    @classmethod
-    def strip(cls, config_dict: dict[str, Any]) -> None:
-        super().strip(config_dict)
-        for handler in config_dict['handlers']:
-            for item in handler['pattern']:
-                item.pop('alias', None)
-
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)
-
-            for pattern_config in handler_config.pattern:
-                typed_contract = pattern_config.typed_contract
-                if not typed_contract:
-                    continue
-
-                module_name = typed_contract.module_name
-                pattern_config.initialize_storage_cls(package, module_name)
-
-                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
-                    pattern_config.initialize_parameter_cls(
-                        package,
-                        module_name,
-                        cast(str, pattern_config.entrypoint),
-                    )
-
-
-@dataclass
-class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
-    """Handler of unfiltered operation index
-
-    :param callback: Callback name
-    """
-
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'OperationData'
-        yield package, 'models as models'
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield 'ctx', 'HandlerContext'
-        yield 'operation', 'OperationData'
-
-
-@dataclass
-class OperationUnfilteredIndexConfig(IndexConfig):
-    """Operation index config
-
-    :param kind: always `operation_unfiltered`
-    :param datasource: Alias of index datasource in `datasources` section
-    :param callback: Callback name
-    :param types: Types of transaction to fetch
-
-    :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at
-    """
-
-    kind: Literal['operation_unfiltered']
-    datasource: TzktDatasourceConfig
-    callback: str
-    types: tuple[OperationType, ...] = (OperationType.transaction,)
-
-    first_level: int = 0
-    last_level: int = 0
-
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
-        self.handler_config = OperationUnfilteredHandlerConfig(callback=self.callback)
-
-    def import_objects(self, package: str) -> None:
-        self.handler_config.initialize_callback_fn(package)
-
-
-OperationHandlerConfigU = OperationHandlerConfig | OperationUnfilteredHandlerConfig
-OperationIndexConfigU = OperationIndexConfig | OperationUnfilteredIndexConfig
-
-
-@dataclass
-class BigMapHandlerConfig(HandlerConfig, kind='handler'):
-    """Big map handler config
-
-    :param callback: Callback name
-    :param contract: Contract to fetch big map from
-    :param path: Path to big map (alphanumeric string with dots)
-    """
-
-    contract: ContractConfig
-    path: str
-
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
-        self._key_type_cls: type[Any] | None = None
-        self._value_type_cls: type[Any] | None = None
-
-    @classmethod
-    def format_key_import(cls, package: str, module_name: str, path: str) -> tuple[str, str]:
-        key_cls = f'{snake_to_pascal(path)}Key'
-        key_module = f'{pascal_to_snake(path)}_key'
-        return f'{package}.types.{module_name}.big_map.{key_module}', key_cls
-
-    @classmethod
-    def format_value_import(cls, package: str, module_name: str, path: str) -> tuple[str, str]:
-        value_cls = f'{snake_to_pascal(path)}Value'
-        value_module = f'{pascal_to_snake(path)}_value'
-        return f'{package}.types.{module_name}.big_map.{value_module}', value_cls
-
-    @classmethod
-    def format_big_map_diff_argument(cls, path: str) -> tuple[str, str]:
-        key_cls = f'{snake_to_pascal(path)}Key'
-        value_cls = f'{snake_to_pascal(path)}Value'
-        return pascal_to_snake(path), f'BigMapDiff[{key_cls}, {value_cls}]'
-
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'BigMapDiff'
-        yield package, 'models as models'
-
-        yield self.format_key_import(package, self.contract.module_name, self.path)
-        yield self.format_value_import(package, self.contract.module_name, self.path)
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield 'ctx', 'HandlerContext'
-        yield self.format_big_map_diff_argument(self.path)
-
-    @property
-    def key_type_cls(self) -> type:
-        if self._key_type_cls is None:
-            raise ConfigInitializationException
-        return self._key_type_cls
-
-    @property
-    def value_type_cls(self) -> type:
-        if self._value_type_cls is None:
-            raise ConfigInitializationException
-        return self._value_type_cls
-
-    def initialize_big_map_type(self, package: str) -> None:
-        """Resolve imports and initialize key and value type classes"""
-        _logger.debug('Registering big map types for path `%s`', self.path)
-        path = pascal_to_snake(self.path.replace('.', '_'))
-
-        module_name = f'{package}.types.{self.contract.module_name}.big_map.{path}_key'
-        cls_name = snake_to_pascal(path + '_key')
-        self._key_type_cls = import_from(module_name, cls_name)
-
-        module_name = f'{package}.types.{self.contract.module_name}.big_map.{path}_value'
-        cls_name = snake_to_pascal(path + '_value')
-        self._value_type_cls = import_from(module_name, cls_name)
-
-
-@dataclass
-class BigMapIndexConfig(IndexConfig):
-    """Big map index config
-
-    :param kind: always `big_map`
-    :param datasource: Index datasource to fetch big maps with
-    :param handlers: Mapping of big map diff handlers
-    :param skip_history: Fetch only current big map keys ignoring historical changes
-    :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at
-    """
-
-    kind: Literal['big_map']
-    datasource: TzktDatasourceConfig
-    handlers: tuple[BigMapHandlerConfig, ...]
-
-    skip_history: SkipHistory = SkipHistory.never
-
-    first_level: int = 0
-    last_level: int = 0
-
-    @property
-    def contracts(self) -> set[ContractConfig]:
-        return {handler_config.contract for handler_config in self.handlers}
-
-    @classmethod
-    def strip(cls, config_dict: dict[str, Any]) -> None:
-        super().strip(config_dict)
-        config_dict.pop('skip_history', None)
-
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)
-            handler_config.initialize_big_map_type(package)
-
-
-@dataclass
-class HeadHandlerConfig(HandlerConfig, kind='handler'):
-    """Head block handler config
-
-    :param callback: Callback name
-    """
-
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'HeadBlockData'
-        yield package, 'models as models'
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield 'ctx', 'HandlerContext'
-        yield 'head', 'HeadBlockData'
-
-
-@dataclass
-class HeadIndexConfig(IndexConfig):
-    """Head block index config
-
-    :param kind: always `head`
-    :param datasource: Index datasource to receive head blocks
-    :param handlers: Mapping of head block handlers
-    """
-
-    kind: Literal['head']
-    datasource: TzktDatasourceConfig
-    handlers: tuple[HeadHandlerConfig, ...]
-
-    @property
-    def first_level(self) -> int:
-        return 0
-
-    @property
-    def last_level(self) -> int:
-        return 0
-
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)
-
-
-@dataclass
-class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
-    """Token transfer handler config
-
-    :param callback: Callback name
-    :param contract: Filter by contract
-    :param token_id: Filter by token ID
-    :param from_: Filter by sender
-    :param to: Filter by recipient
-    """
-
-    contract: ContractConfig | None = None
-    token_id: int | None = None
-    from_: ContractConfig | None = Field(default=None, alias='from')
-    to: ContractConfig | None = None
-
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'TokenTransferData'
-        yield package, 'models as models'
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield 'ctx', 'HandlerContext'
-        yield 'token_transfer', 'TokenTransferData'
-
-
-@dataclass
-class TokenTransferIndexConfig(IndexConfig):
-    """Token transfer index config
-
-    :param kind: always `token_transfer`
-    :param datasource: Index datasource to use
-    :param handlers: Mapping of token transfer handlers
-
-    :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at
-    """
-
-    kind: Literal['token_transfer']
-    datasource: TzktDatasourceConfig
-    handlers: tuple[TokenTransferHandlerConfig, ...] = field(default_factory=tuple)
-
-    first_level: int = 0
-    last_level: int = 0
-
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)
-
-
-@dataclass
-class EventHandlerConfig(HandlerConfig, kind='handler'):
-    """Event handler config
-
-    :param callback: Callback name
-    :param contract: Contract which emits event
-    :param tag: Event tag
-    """
-
-    contract: ContractConfig
-    tag: str
-
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
-        self._event_type_cls: type[Any] | None = None
-
-    @property
-    def event_type_cls(self) -> type:
-        if self._event_type_cls is None:
-            raise ConfigInitializationException
-        return self._event_type_cls
-
-    def initialize_event_type(self, package: str) -> None:
-        """Resolve imports and initialize key and value type classes"""
-        _logger.debug('Registering event types for tag `%s`', self.tag)
-        tag = pascal_to_snake(self.tag.replace('.', '_'))
-
-        module_name = f'{package}.types.{self.contract.module_name}.event.{tag}'
-        cls_name = snake_to_pascal(f'{tag}_payload')
-        self._event_type_cls = import_from(module_name, cls_name)
-
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'Event'
-        yield package, 'models as models'
-
-        event_cls = snake_to_pascal(self.tag + '_payload')
-        event_module = pascal_to_snake(self.tag)
-        module_name = self.contract.module_name
-        yield f'{package}.types.{module_name}.event.{event_module}', event_cls
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        event_cls = snake_to_pascal(self.tag + '_payload')
-        yield 'ctx', 'HandlerContext'
-        yield 'event', f'Event[{event_cls}]'
-
-
-@dataclass
-class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
-    """Unknown event handler config
-
-    :param callback: Callback name
-    :param contract: Contract which emits event
-    """
-
-    contract: ContractConfig
-
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'UnknownEvent'
-        yield package, 'models as models'
-
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield 'ctx', 'HandlerContext'
-        yield 'event', 'UnknownEvent'
-
-
-EventHandlerConfigU = EventHandlerConfig | UnknownEventHandlerConfig
-
-
-@dataclass
-class EventIndexConfig(IndexConfig):
-    """Event index config
-
-    :param kind: Index kind
-    :param datasource: Datasource config
-    :param handlers: Event handlers
-    :param first_level: First block level to index
-    :param last_level: Last block level to index
-    """
-
-    kind: Literal['event']
-    datasource: TzktDatasourceConfig
-    handlers: tuple[EventHandlerConfigU, ...] = field(default_factory=tuple)
-
-    first_level: int = 0
-    last_level: int = 0
-
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)
-
-
-ResolvedIndexConfigU = (
-    OperationIndexConfig
-    | BigMapIndexConfig
-    | HeadIndexConfig
-    | TokenTransferIndexConfig
-    | EventIndexConfig
-    | OperationUnfilteredIndexConfig
-)
-IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
-HandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
 
 
 @dataclass
@@ -1706,6 +1063,13 @@ class DipDupConfig:
         if index_config.subscriptions:
             return
 
+        from dipdup.models.tzkt import BigMapSubscription
+        from dipdup.models.tzkt import EventSubscription
+        from dipdup.models.tzkt import HeadSubscription
+        from dipdup.models.tzkt import OriginationSubscription
+        from dipdup.models.tzkt import TokenTransferSubscription
+        from dipdup.models.tzkt import TransactionSubscription
+
         if isinstance(index_config, OperationIndexConfig):
             if OperationType.transaction in index_config.types:
                 if self.advanced.merge_subscriptions:
@@ -1852,6 +1216,43 @@ class DipDupConfig:
                 config._name = name
 
 
+from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.ipfs import IpfsDatasourceConfig
+from dipdup.config.metadata import MetadataDatasourceConfig
+from dipdup.config.tezos_big_map import BigMapHandlerConfig  # noqa: F401
+from dipdup.config.tezos_big_map import BigMapIndexConfig
+from dipdup.config.tezos_event import EventHandlerConfig  # noqa: F401
+from dipdup.config.tezos_event import EventIndexConfig
+from dipdup.config.tezos_head import HeadHandlerConfig  # noqa: F401
+from dipdup.config.tezos_head import HeadIndexConfig
+from dipdup.config.tezos_operation import OperationHandlerConfig  # noqa: F401
+from dipdup.config.tezos_operation import OperationHandlerOriginationPatternConfig
+from dipdup.config.tezos_operation import OperationHandlerTransactionPatternConfig
+from dipdup.config.tezos_operation import OperationIndexConfig
+from dipdup.config.tezos_operation import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_token_transfer import TokenTransferHandlerConfig  # noqa: F401
+from dipdup.config.tezos_token_transfer import TokenTransferIndexConfig
+from dipdup.config.tzkt import TzktDatasourceConfig
+
+# NOTE: We need unions for Pydantic deserialization
+DatasourceConfigU = (
+    TzktDatasourceConfig
+    | CoinbaseDatasourceConfig
+    | MetadataDatasourceConfig
+    | IpfsDatasourceConfig
+    | HttpDatasourceConfig
+)
+ResolvedIndexConfigU = (
+    OperationIndexConfig
+    | BigMapIndexConfig
+    | HeadIndexConfig
+    | TokenTransferIndexConfig
+    | EventIndexConfig
+    | OperationUnfilteredIndexConfig
+)
+IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
+
+
 yaml_annotations = {
     'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
@@ -1873,37 +1274,26 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
     You can revert these changes by calling `patch_annotations(orinal_annotations)`, but tests will fail.
     """
     self = importlib.import_module(__name__)
+    submodules = tuple(inspect.getmembers(self, inspect.ismodule))
+    submodules += ((__name__, self),)
 
-    for attr in dir(self):
-        value = getattr(self, attr)
-        if not isinstance(value, type) or not hasattr(value, '__annotations__'):
-            continue
+    for name, submodule in submodules:
+        for attr in dir(submodule):
+            value = getattr(submodule, attr)
+            if hasattr(value, '__annotations__'):
+                # NOTE: All annotations are strings now
+                reload = False
+                for name, annotation in value.__annotations__.items():
+                    if new_annotation := replace_table.get(annotation):
+                        value.__annotations__[name] = new_annotation
+                        reload = True
 
-        # NOTE: All annotations are strings now
-        reload = False
-        for name, annotation in value.__annotations__.items():
-            if new_annotation := replace_table.get(annotation):
-                value.__annotations__[name] = new_annotation
-                reload = True
+                # NOTE: Wrap dataclass again to recreate magic methods
+                if reload:
+                    setattr(submodule, attr, dataclass(value))
 
-        # NOTE: Wrap dataclass again to recreate magic methods
-        if reload:
-            setattr(self, attr, dataclass(value))
+            with suppress(AttributeError):
+                value.__pydantic_model__.update_forward_refs()
 
 
 patch_annotations(yaml_annotations)
-
-from dipdup.config.coinbase import CoinbaseDatasourceConfig
-
-# NOTE: We need unions for Pydantic deserialization
-DatasourceConfigU = (
-    TzktDatasourceConfig
-    | CoinbaseDatasourceConfig
-    | MetadataDatasourceConfig
-    | IpfsDatasourceConfig
-    | HttpDatasourceConfig
-)
-
-# NOTE: __future__.annotations
-JobConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]
-DipDupConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]

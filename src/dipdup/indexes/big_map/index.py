@@ -2,9 +2,9 @@ from contextlib import ExitStack
 from datetime import datetime
 from typing import Any
 
-from dipdup.config import BigMapHandlerConfig
-from dipdup.config import BigMapIndexConfig
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.config.tezos_big_map import BigMapHandlerConfig
+from dipdup.config.tezos_big_map import BigMapIndexConfig
+from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
@@ -15,9 +15,9 @@ from dipdup.index import extract_level
 from dipdup.indexes.big_map.fetcher import BigMapFetcher
 from dipdup.indexes.big_map.fetcher import get_big_map_pairs
 from dipdup.indexes.big_map.matcher import match_big_maps
-from dipdup.models import BigMapAction
-from dipdup.models import BigMapData
-from dipdup.models import BigMapDiff
+from dipdup.models.tzkt import BigMapAction
+from dipdup.models.tzkt import BigMapData
+from dipdup.models.tzkt import BigMapDiff
 from dipdup.prometheus import Metrics
 
 BigMapQueueItem = tuple[BigMapData, ...]

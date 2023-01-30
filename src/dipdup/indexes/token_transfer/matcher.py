@@ -2,8 +2,8 @@ import logging
 from collections import deque
 from typing import Iterable
 
-from dipdup.config import TokenTransferHandlerConfig
-from dipdup.models import TokenTransferData
+from dipdup.config.tezos_token_transfer import TokenTransferHandlerConfig
+from dipdup.models.tzkt import TokenTransferData
 
 _logger = logging.getLogger('dipdup.matcher')
 

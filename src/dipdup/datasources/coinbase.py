@@ -6,7 +6,7 @@ from typing import Any
 from typing import cast
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.datasource import Datasource
+from dipdup.datasources import Datasource
 from dipdup.models.coinbase import CandleData
 from dipdup.models.coinbase import CandleInterval
 

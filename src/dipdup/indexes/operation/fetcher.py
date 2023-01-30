@@ -6,16 +6,16 @@ from collections import deque
 from typing import Any
 from typing import AsyncIterator
 
-from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config import OperationIndexConfig
-from dipdup.config import OperationUnfilteredIndexConfig
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.config.tezos_operation import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_operation import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_operation import OperationIndexConfig
+from dipdup.config.tezos_operation import OperationUnfilteredIndexConfig
+from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import FetcherChannel
-from dipdup.models import OperationData
+from dipdup.models.tzkt import OperationData
 
 _logger = logging.getLogger('dipdup.fetcher')
 

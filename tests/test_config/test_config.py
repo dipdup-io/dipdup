@@ -9,14 +9,14 @@ from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
-from dipdup.config import OperationIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHTTPConfig
-from dipdup.config import TzktDatasourceConfig
-from dipdup.datasources.tzkt.models import OriginationSubscription
-from dipdup.datasources.tzkt.models import TransactionSubscription
+from dipdup.config.tezos_operation import OperationIndexConfig
+from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.enums import OperationType
 from dipdup.exceptions import ConfigurationError
+from dipdup.models.tzkt import OriginationSubscription
+from dipdup.models.tzkt import TransactionSubscription
 
 
 def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig:

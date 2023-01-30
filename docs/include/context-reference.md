@@ -7,7 +7,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.datasource.Datasource</em><em>]</em>) – Mapping of available datasources</p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>]</em>) – Mapping of available datasources</p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><em>DipDupConfig</em></a>) – DipDup configuration</p></li>
 <li><p><strong>logger</strong> – Context-aware logger instance</p></li>
 <li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
@@ -26,7 +26,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>handler_config</strong> (<em>HandlerConfig</em>) – Configuration of the current handler</p></li>
 <li><p><strong>datasource</strong> (<em>TzktDatasource</em>) – Index datasource instance</p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.datasource.Datasource</em><em>]</em>) – </p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>]</em>) – </p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><em>DipDupConfig</em></a>) – </p></li>
 <li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
 <li><p><strong>transactions</strong> (<em>TransactionManager</em>) – </p></li>
@@ -44,7 +44,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>hook_config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.HookConfig" title="dipdup.config.HookConfig"><em>HookConfig</em></a>) – Configuration of the current hook</p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.datasource.Datasource</em><em>]</em>) – </p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>]</em>) – </p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><em>DipDupConfig</em></a>) – </p></li>
 <li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
 <li><p><strong>transactions</strong> (<em>TransactionManager</em>) – </p></li>

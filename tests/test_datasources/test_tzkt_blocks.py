@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import BlockData
+from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.models.tzkt import BlockData
 
 
 @pytest.mark.parametrize(

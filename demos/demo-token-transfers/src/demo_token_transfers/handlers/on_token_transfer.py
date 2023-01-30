@@ -3,7 +3,7 @@ from decimal import InvalidOperation
 
 from demo_token_transfers.handlers.on_balance_update import on_balance_update
 from dipdup.context import HandlerContext
-from dipdup.models import TokenTransferData
+from dipdup.models.tzkt import TokenTransferData
 
 
 async def on_token_transfer(

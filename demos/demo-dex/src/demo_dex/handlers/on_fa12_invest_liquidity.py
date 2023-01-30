@@ -6,7 +6,7 @@ from demo_dex.types.fa12_token.storage import Fa12TokenStorage
 from demo_dex.types.quipu_fa12.parameter.invest_liquidity import InvestLiquidityParameter
 from demo_dex.types.quipu_fa12.storage import QuipuFa12Storage
 from dipdup.context import HandlerContext
-from dipdup.models import Transaction
+from dipdup.models.tzkt import Transaction
 
 
 async def on_fa12_invest_liquidity(

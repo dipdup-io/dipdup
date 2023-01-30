@@ -1,9 +1,8 @@
 import logging
 from typing import Any
-from typing import Optional
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.datasource import Datasource
+from dipdup.datasources import Datasource
 
 
 class IpfsDatasource(Datasource):
@@ -13,7 +12,7 @@ class IpfsDatasource(Datasource):
         retry_count=10,
     )
 
-    def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
+    def __init__(self, url: str, http_config: HTTPConfig | None = None) -> None:
         super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.ipfs')
 

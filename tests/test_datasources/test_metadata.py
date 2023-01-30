@@ -1,6 +1,6 @@
 import aiohttp
 
-from dipdup.datasources.metadata.enums import MetadataNetwork
+from dipdup.models.metadata import MetadataNetwork
 
 
 async def test_metadata_networks() -> None:

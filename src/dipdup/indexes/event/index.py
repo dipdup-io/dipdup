@@ -1,10 +1,10 @@
 from contextlib import ExitStack
 from typing import Any
 
-from dipdup.config import EventHandlerConfig
-from dipdup.config import EventHandlerConfigU
-from dipdup.config import EventIndexConfig
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.config.tezos_event import EventHandlerConfig
+from dipdup.config.tezos_event import EventHandlerConfigU
+from dipdup.config.tezos_event import EventIndexConfig
+from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -12,9 +12,9 @@ from dipdup.index import Index
 from dipdup.index import extract_level
 from dipdup.indexes.event.fetcher import EventFetcher
 from dipdup.indexes.event.matcher import match_events
-from dipdup.models import Event
-from dipdup.models import EventData
-from dipdup.models import UnknownEvent
+from dipdup.models.tzkt import Event
+from dipdup.models.tzkt import EventData
+from dipdup.models.tzkt import UnknownEvent
 from dipdup.prometheus import Metrics
 
 EventQueueItem = tuple[EventData, ...]

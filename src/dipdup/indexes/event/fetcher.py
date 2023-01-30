@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 from typing import AsyncGenerator
 
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import yield_by_level
-from dipdup.models import EventData
+from dipdup.models.tzkt import EventData
 
 
 class EventFetcher(DataFetcher[EventData]):

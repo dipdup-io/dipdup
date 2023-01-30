@@ -4,10 +4,10 @@ from typing import cast
 import pytest
 
 from dipdup.config import DipDupConfig
-from dipdup.config import OperationHandlerConfig
-from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationIndexConfig
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.config.tezos_operation import OperationHandlerConfig
+from dipdup.config.tezos_operation import OperationHandlerOriginationPatternConfig
+from dipdup.config.tezos_operation import OperationIndexConfig
+from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.indexes.operation.fetcher import get_origination_filters
 from dipdup.indexes.operation.fetcher import get_transaction_filters
 from tests import CONFIGS_PATH

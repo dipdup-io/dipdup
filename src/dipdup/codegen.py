@@ -20,25 +20,25 @@ from typing import cast
 import orjson as json
 
 from dipdup import env
-from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
-from dipdup.config import EventIndexConfig
-from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config import OperationHandlerPatternConfigU as PatternConfigU
-from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config import OperationIndexConfig
-from dipdup.config import OperationUnfilteredIndexConfig
-from dipdup.config import TokenTransferIndexConfig
-from dipdup.config import TzktDatasourceConfig
-from dipdup.config import UnknownEventHandlerConfig
 from dipdup.config import event_hooks
-from dipdup.datasources.datasource import Datasource
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.config.tezos_big_map import BigMapIndexConfig
+from dipdup.config.tezos_event import EventIndexConfig
+from dipdup.config.tezos_event import UnknownEventHandlerConfig
+from dipdup.config.tezos_head import HeadIndexConfig
+from dipdup.config.tezos_operation import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_operation import OperationHandlerPatternConfigU as PatternConfigU
+from dipdup.config.tezos_operation import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_operation import OperationIndexConfig
+from dipdup.config.tezos_operation import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_token_transfer import TokenTransferIndexConfig
+from dipdup.config.tzkt import TzktDatasourceConfig
+from dipdup.datasources import Datasource
+from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError

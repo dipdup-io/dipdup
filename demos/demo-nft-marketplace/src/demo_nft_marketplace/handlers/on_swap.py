@@ -2,7 +2,7 @@ import demo_nft_marketplace.models as models
 from demo_nft_marketplace.types.hen_minter.parameter.swap import SwapParameter
 from demo_nft_marketplace.types.hen_minter.storage import HenMinterStorage
 from dipdup.context import HandlerContext
-from dipdup.models import Transaction
+from dipdup.models.tzkt import Transaction
 
 
 async def on_swap(

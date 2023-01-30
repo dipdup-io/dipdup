@@ -4,7 +4,7 @@ from demo_nft_marketplace.types.hen_minter.storage import HenMinterStorage
 from demo_nft_marketplace.types.hen_objkts.parameter.mint import MintParameter
 from demo_nft_marketplace.types.hen_objkts.storage import HenObjktsStorage
 from dipdup.context import HandlerContext
-from dipdup.models import Transaction
+from dipdup.models.tzkt import Transaction
 
 
 async def on_mint(

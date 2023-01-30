@@ -9,20 +9,20 @@ from typing import TypeVar
 from typing import cast
 
 import dipdup.models as models
-from dipdup.config import HeadIndexConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.config.tezos_head import HeadIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
-from dipdup.datasources.datasource import IndexDatasource
+from dipdup.datasources import IndexDatasource
 from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
 from dipdup.exceptions import FrameworkException
-from dipdup.models import BigMapData
-from dipdup.models import EventData
-from dipdup.models import OperationData
-from dipdup.models import Origination
-from dipdup.models import TokenTransferData
-from dipdup.models import Transaction
+from dipdup.models.tzkt import BigMapData
+from dipdup.models.tzkt import EventData
+from dipdup.models.tzkt import OperationData
+from dipdup.models.tzkt import Origination
+from dipdup.models.tzkt import TokenTransferData
+from dipdup.models.tzkt import Transaction
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 

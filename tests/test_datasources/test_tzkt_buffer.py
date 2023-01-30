@@ -1,7 +1,7 @@
 import pytest
 
-from dipdup.datasources.tzkt.datasource import BufferedMessage
-from dipdup.datasources.tzkt.datasource import MessageBuffer
+from dipdup.datasources.tzkt import BufferedMessage
+from dipdup.datasources.tzkt import MessageBuffer
 from dipdup.enums import MessageType
 
 

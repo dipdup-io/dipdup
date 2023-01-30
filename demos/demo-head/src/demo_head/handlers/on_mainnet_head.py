@@ -1,6 +1,6 @@
 from demo_head import models as models
 from dipdup.context import HandlerContext
-from dipdup.models import HeadBlockData
+from dipdup.models.tzkt import HeadBlockData
 
 
 async def on_mainnet_head(

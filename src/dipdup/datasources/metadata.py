@@ -3,8 +3,8 @@ from typing import Any
 from typing import cast
 
 from dipdup.config import HTTPConfig
-from dipdup.datasources.datasource import GraphQLDatasource
-from dipdup.datasources.metadata.enums import MetadataNetwork
+from dipdup.datasources import GraphQLDatasource
+from dipdup.models.metadata import MetadataNetwork
 
 
 class MetadataDatasource(GraphQLDatasource):

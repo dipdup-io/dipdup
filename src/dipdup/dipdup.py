@@ -28,10 +28,10 @@ from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
 from dipdup.context import pending_indexes
-from dipdup.datasources.datasource import Datasource
-from dipdup.datasources.datasource import IndexDatasource
+from dipdup.datasources import Datasource
+from dipdup.datasources import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
@@ -46,15 +46,15 @@ from dipdup.indexes.head.index import HeadIndex
 from dipdup.indexes.operation.index import OperationIndex
 from dipdup.indexes.operation.index import extract_operation_subgroups
 from dipdup.indexes.token_transfer.index import TokenTransferIndex
-from dipdup.models import BigMapData
 from dipdup.models import Contract
-from dipdup.models import EventData
 from dipdup.models import Head
-from dipdup.models import HeadBlockData
 from dipdup.models import Index as IndexState
-from dipdup.models import OperationData
 from dipdup.models import Schema
-from dipdup.models import TokenTransferData
+from dipdup.models.tzkt import BigMapData
+from dipdup.models.tzkt import EventData
+from dipdup.models.tzkt import HeadBlockData
+from dipdup.models.tzkt import OperationData
+from dipdup.models.tzkt import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager

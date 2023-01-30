@@ -5,17 +5,17 @@ from typing import Iterable
 
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import OperationHandlerConfig
-from dipdup.config import OperationHandlerConfigU
-from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config import OperationUnfilteredIndexConfig
-from dipdup.datasources.tzkt.models import deserialize_storage
+from dipdup.config.tezos_operation import OperationHandlerConfig
+from dipdup.config.tezos_operation import OperationHandlerConfigU
+from dipdup.config.tezos_operation import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_operation import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_operation import OperationUnfilteredIndexConfig
 from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
-from dipdup.models import OperationData
-from dipdup.models import Origination
-from dipdup.models import Transaction
+from dipdup.models.tzkt import OperationData
+from dipdup.models.tzkt import Origination
+from dipdup.models.tzkt import Transaction
+from dipdup.models.tzkt import deserialize_storage
 from dipdup.utils.codegen import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')

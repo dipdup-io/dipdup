@@ -6,15 +6,15 @@ from typing import Iterable
 from typing import Iterator
 from typing import Sequence
 
-from dipdup.config import OperationHandlerConfig
-from dipdup.config import OperationHandlerConfigU
-from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config import OperationIndexConfig
-from dipdup.config import OperationIndexConfigU
-from dipdup.config import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_operation import OperationHandlerConfig
+from dipdup.config.tezos_operation import OperationHandlerConfigU
+from dipdup.config.tezos_operation import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_operation import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_operation import OperationIndexConfig
+from dipdup.config.tezos_operation import OperationIndexConfigU
+from dipdup.config.tezos_operation import OperationUnfilteredIndexConfig
 from dipdup.context import DipDupContext
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -26,7 +26,7 @@ from dipdup.indexes.operation.matcher import OperationHandlerArgumentU
 from dipdup.indexes.operation.matcher import OperationSubgroup
 from dipdup.indexes.operation.matcher import match_operation_subgroup
 from dipdup.indexes.operation.matcher import match_operation_unfiltered_subgroup
-from dipdup.models import OperationData
+from dipdup.models.tzkt import OperationData
 from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger('dipdup.matcher')

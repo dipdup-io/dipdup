@@ -9,9 +9,9 @@ from typing import Tuple
 import orjson as json
 
 from demo_domains.types.name_registry.storage import NameRegistryStorage
-from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.datasources.tzkt.models import deserialize_storage
-from dipdup.models import OperationData
+from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.models.tzkt import OperationData
+from dipdup.models.tzkt import deserialize_storage
 from tests.types.asdf.storage import AsdfStorage
 from tests.types.bazaar.storage import BazaarMarketPlaceStorage
 from tests.types.ftzfun.storage import FtzFunStorage

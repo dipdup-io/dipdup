@@ -4,7 +4,7 @@ from typing import AsyncIterator
 
 from dipdup import env
 from dipdup.config import HTTPConfig
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt import TzktDatasource
 
 env.set_test()
 

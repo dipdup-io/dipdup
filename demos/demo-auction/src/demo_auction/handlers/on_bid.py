@@ -2,7 +2,7 @@ import demo_auction.models as models
 from demo_auction.types.tzcolors_auction.parameter.bid import BidParameter
 from demo_auction.types.tzcolors_auction.storage import TzcolorsAuctionStorage
 from dipdup.context import HandlerContext
-from dipdup.models import Transaction
+from dipdup.models.tzkt import Transaction
 
 
 async def on_bid(

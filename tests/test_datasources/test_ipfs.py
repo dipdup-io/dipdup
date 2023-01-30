@@ -2,7 +2,7 @@ from pathlib import Path
 
 from dipdup.config import DEFAULT_IPFS_URL
 from dipdup.config import HTTPConfig
-from dipdup.datasources.ipfs.datasource import IpfsDatasource
+from dipdup.datasources.ipfs import IpfsDatasource
 
 
 async def test_ipfs_datasource() -> None:

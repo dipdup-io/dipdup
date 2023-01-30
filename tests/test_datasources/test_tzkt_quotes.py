@@ -3,8 +3,8 @@ from decimal import Decimal
 
 import pytest
 
-from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.models import QuoteData
+from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.models.tzkt import QuoteData
 
 
 @pytest.mark.parametrize(

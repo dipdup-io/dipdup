@@ -4,12 +4,12 @@ import logging
 from typing import AsyncGenerator
 from typing import Iterable
 
-from dipdup.config import BigMapHandlerConfig
-from dipdup.config import BigMapIndexConfig
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.config.tezos_big_map import BigMapHandlerConfig
+from dipdup.config.tezos_big_map import BigMapIndexConfig
+from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import yield_by_level
-from dipdup.models import BigMapData
+from dipdup.models.tzkt import BigMapData
 
 
 def get_big_map_addresses(handlers: Iterable[BigMapHandlerConfig]) -> set[str]:

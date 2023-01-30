@@ -1,15 +1,15 @@
 from dipdup.config import DipDupConfig
 from dipdup.config import HttpDatasourceConfig
-from dipdup.config import IpfsDatasourceConfig
-from dipdup.config import MetadataDatasourceConfig
-from dipdup.config import TzktDatasourceConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.ipfs import IpfsDatasourceConfig
+from dipdup.config.metadata import MetadataDatasourceConfig
+from dipdup.config.tzkt import TzktDatasourceConfig
+from dipdup.datasources import Datasource
+from dipdup.datasources import HttpDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
-from dipdup.datasources.datasource import Datasource
-from dipdup.datasources.datasource import HttpDatasource
-from dipdup.datasources.ipfs.datasource import IpfsDatasource
-from dipdup.datasources.metadata.datasource import MetadataDatasource
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.ipfs import IpfsDatasource
+from dipdup.datasources.metadata import MetadataDatasource
+from dipdup.datasources.tzkt import TzktDatasource
 
 
 class DatasourceFactory:

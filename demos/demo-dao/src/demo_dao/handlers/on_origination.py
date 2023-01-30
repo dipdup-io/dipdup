@@ -1,7 +1,7 @@
 import demo_dao.models as models
 from demo_dao.types.registry.storage import RegistryStorage
 from dipdup.context import HandlerContext
-from dipdup.models import Origination
+from dipdup.models.tzkt import Origination
 
 
 async def on_origination(

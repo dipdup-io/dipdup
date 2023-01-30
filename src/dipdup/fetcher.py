@@ -10,7 +10,7 @@ from typing import Generic
 from typing import Protocol
 from typing import TypeVar
 
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt import TzktDatasource
 
 
 class HasLevel(Protocol):

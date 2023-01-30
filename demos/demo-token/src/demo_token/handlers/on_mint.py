@@ -4,7 +4,7 @@ from demo_token.handlers.on_balance_update import on_balance_update
 from demo_token.types.tzbtc.parameter.mint import MintParameter
 from demo_token.types.tzbtc.storage import TzbtcStorage
 from dipdup.context import HandlerContext
-from dipdup.models import Transaction
+from dipdup.models.tzkt import Transaction
 
 
 async def on_mint(
