@@ -1219,18 +1219,13 @@ class DipDupConfig:
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.metadata import MetadataDatasourceConfig
-from dipdup.config.tezos_big_map import BigMapHandlerConfig  # noqa: F401
 from dipdup.config.tezos_big_map import BigMapIndexConfig
-from dipdup.config.tezos_event import EventHandlerConfig  # noqa: F401
 from dipdup.config.tezos_event import EventIndexConfig
-from dipdup.config.tezos_head import HeadHandlerConfig  # noqa: F401
 from dipdup.config.tezos_head import HeadIndexConfig
-from dipdup.config.tezos_operation import OperationHandlerConfig  # noqa: F401
 from dipdup.config.tezos_operation import OperationHandlerOriginationPatternConfig
 from dipdup.config.tezos_operation import OperationHandlerTransactionPatternConfig
 from dipdup.config.tezos_operation import OperationIndexConfig
 from dipdup.config.tezos_operation import OperationUnfilteredIndexConfig
-from dipdup.config.tezos_token_transfer import TokenTransferHandlerConfig  # noqa: F401
 from dipdup.config.tezos_token_transfer import TokenTransferIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
 
@@ -1292,7 +1287,7 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
                 if reload:
                     setattr(submodule, attr, dataclass(value))
 
-            with suppress(AttributeError):
+            if hasattr(value, '__pydantic_model__'):
                 value.__pydantic_model__.update_forward_refs()
 
 
