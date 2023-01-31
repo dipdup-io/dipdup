@@ -315,84 +315,6 @@ class CodegenMixin(ABC):
         return kwargs
 
 
-class PatternConfig(CodegenMixin):
-    """Base class for pattern config items.
-
-    Contains methods for import and method signature generation during handler callbacks codegen.
-    """
-
-    @classmethod
-    def format_storage_import(
-        cls,
-        package: str,
-        module_name: str,
-    ) -> tuple[str, str]:
-        storage_cls = f'{snake_to_pascal(module_name)}Storage'
-        return f'{package}.types.{module_name}.storage', storage_cls
-
-    @classmethod
-    def format_parameter_import(
-        cls,
-        package: str,
-        module_name: str,
-        entrypoint: str,
-        alias: str | None,
-    ) -> tuple[str, str]:
-        entrypoint = entrypoint.lstrip('_')
-        parameter_module = pascal_to_snake(entrypoint)
-        parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
-        if alias:
-            parameter_cls += f' as {snake_to_pascal(alias)}Parameter'
-
-        return f'{package}.types.{module_name}.parameter.{parameter_module}', parameter_cls
-
-    @classmethod
-    def format_untyped_operation_import(cls) -> tuple[str, str]:
-        return 'dipdup.models', 'OperationData'
-
-    @classmethod
-    def format_origination_argument(
-        cls,
-        module_name: str,
-        optional: bool,
-        alias: str | None,
-    ) -> tuple[str, str]:
-        arg_name = pascal_to_snake(alias or f'{module_name}_origination')
-        storage_cls = f'{snake_to_pascal(module_name)}Storage'
-        if optional:
-            return arg_name, f'Origination[{storage_cls}] | None'
-        return arg_name, f'Origination[{storage_cls}]'
-
-    @classmethod
-    def format_operation_argument(
-        cls,
-        module_name: str,
-        entrypoint: str,
-        optional: bool,
-        alias: str | None,
-    ) -> tuple[str, str]:
-        arg_name = pascal_to_snake(alias or entrypoint)
-        entrypoint = entrypoint.lstrip('_')
-        parameter_cls = f'{snake_to_pascal(arg_name)}Parameter'
-        storage_cls = f'{snake_to_pascal(module_name)}Storage'
-        if optional:
-            return arg_name, f'Transaction[{parameter_cls}, {storage_cls}] | None'
-        return arg_name, f'Transaction[{parameter_cls}, {storage_cls}]'
-
-    @classmethod
-    def format_untyped_operation_argument(
-        cls,
-        type_: str,
-        subgroup_index: int,
-        optional: bool,
-        alias: str | None,
-    ) -> tuple[str, str]:
-        arg_name = pascal_to_snake(alias or f'{type_}_{subgroup_index}')
-        if optional:
-            return arg_name, 'OperationData | None'
-        return arg_name, 'OperationData'
-
-
 @dataclass
 class StorageTypeMixin:
     """`storage_type_cls` field"""
@@ -1232,16 +1154,6 @@ ResolvedIndexConfigU = (
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 
-yaml_annotations = {
-    'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
-    'ContractConfig': 'str | ContractConfig',
-    'ContractConfig | None': 'str | ContractConfig | None',
-    'list[ContractConfig]': 'list[str | ContractConfig]',
-    'HookConfig': 'str | HookConfig',
-}
-orinal_annotations = {v: k for k, v in yaml_annotations.items()}
-
-
 def patch_annotations(replace_table: dict[str, str]) -> None:
     """Patch dataclass annotations in runtime to allow using aliases in config files.
 
@@ -1275,4 +1187,12 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
                 value.__pydantic_model__.update_forward_refs()
 
 
+yaml_annotations = {
+    'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
+    'ContractConfig': 'str | ContractConfig',
+    'ContractConfig | None': 'str | ContractConfig | None',
+    'list[ContractConfig]': 'list[str | ContractConfig]',
+    'HookConfig': 'str | HookConfig',
+}
+orinal_annotations = {v: k for k, v in yaml_annotations.items()}
 patch_annotations(yaml_annotations)

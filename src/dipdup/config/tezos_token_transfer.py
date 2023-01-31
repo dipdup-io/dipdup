@@ -30,7 +30,7 @@ class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'TokenTransferData'
+        yield 'dipdup.models.tzkt', 'TokenTransferData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:

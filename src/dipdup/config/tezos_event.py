@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import field
 from typing import Any
 from typing import Iterator
@@ -47,7 +49,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'Event'
+        yield 'dipdup.models.tzkt', 'Event'
         yield package, 'models as models'
 
         event_cls = snake_to_pascal(self.tag + '_payload')
@@ -73,7 +75,7 @@ class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'UnknownEvent'
+        yield 'dipdup.models.tzkt', 'UnknownEvent'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:

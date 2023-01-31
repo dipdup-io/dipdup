@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 from typing import Iterator
 from typing import Literal
@@ -24,7 +26,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     :param path: Path to big map (alphanumeric string with dots)
     """
 
-    contract: 'ContractConfig'
+    contract: ContractConfig
     path: str
 
     def __post_init_post_parse__(self) -> None:
@@ -52,7 +54,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'BigMapDiff'
+        yield 'dipdup.models.tzkt', 'BigMapDiff'
         yield package, 'models as models'
 
         yield self.format_key_import(package, self.contract.module_name, self.path)
@@ -100,7 +102,7 @@ class BigMapIndexConfig(IndexConfig):
     """
 
     kind: Literal['big_map']
-    datasource: 'TzktDatasourceConfig'
+    datasource: TzktDatasourceConfig
     handlers: tuple[BigMapHandlerConfig, ...]
 
     skip_history: SkipHistory = SkipHistory.never

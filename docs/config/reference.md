@@ -9,7 +9,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>spec_version</strong> (<em>str</em>) – Version of config specification, currently always <cite>1.2</cite></p></li>
 <li><p><strong>package</strong> (<em>str</em>) – Name of indexer’s Python package, existing or not</p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>tzkt.TzktDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#CoinbaseDatasourceConfig" title="coinbase.CoinbaseDatasourceConfig"><em>coinbase.CoinbaseDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#MetadataDatasourceConfig" title="metadata.MetadataDatasourceConfig"><em>metadata.MetadataDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#IpfsDatasourceConfig" title="ipfs.IpfsDatasourceConfig"><em>ipfs.IpfsDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#HttpDatasourceConfig" title="HttpDatasourceConfig"><em>HttpDatasourceConfig</em></a><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>tzkt.TzktDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#CoinbaseDatasourceConfig" title="coinbase.CoinbaseDatasourceConfig"><em>coinbase.CoinbaseDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#MetadataDatasourceConfig" title="metadata.MetadataDatasourceConfig"><em>metadata.MetadataDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#IpfsDatasourceConfig" title="ipfs.IpfsDatasourceConfig"><em>ipfs.IpfsDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#HttpDatasourceConfig" title="http.HttpDatasourceConfig"><em>http.HttpDatasourceConfig</em></a><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
 <li><p><strong>database</strong> (<a class="reference internal" href="#SqliteDatabaseConfig" title="SqliteDatabaseConfig"><em>SqliteDatabaseConfig</em></a><em> | </em><a class="reference internal" href="#PostgresDatabaseConfig" title="PostgresDatabaseConfig"><em>PostgresDatabaseConfig</em></a>) – Database config</p></li>
 <li><p><strong>contracts</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Mapping of contract aliases and contract configs</p></li>
 <li><p><strong>indexes</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#OperationIndexConfig" title="tezos_operation.OperationIndexConfig"><em>tezos_operation.OperationIndexConfig</em></a><em> | </em><a class="reference internal" href="#BigMapIndexConfig" title="tezos_big_map.BigMapIndexConfig"><em>tezos_big_map.BigMapIndexConfig</em></a><em> | </em><a class="reference internal" href="#HeadIndexConfig" title="tezos_head.HeadIndexConfig"><em>tezos_head.HeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#TokenTransferIndexConfig" title="tezos_token_transfer.TokenTransferIndexConfig"><em>tezos_token_transfer.TokenTransferIndexConfig</em></a><em> | </em><a class="reference internal" href="#EventIndexConfig" title="tezos_event.EventIndexConfig"><em>tezos_event.EventIndexConfig</em></a><em> | </em><a class="reference internal" href="#OperationUnfilteredIndexConfig" title="tezos_operation.OperationUnfilteredIndexConfig"><em>tezos_operation.OperationUnfilteredIndexConfig</em></a><em> | </em><a class="reference internal" href="#IndexTemplateConfig" title="IndexTemplateConfig"><em>IndexTemplateConfig</em></a><em>]</em>) – Mapping of index aliases and index configs</p></li>
@@ -49,21 +49,6 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="BigMapHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">BigMapHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BigMapHandlerConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Big map handler config</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract to fetch big map from</p></li>
-<li><p><strong>path</strong> (<em>str</em>) – Path to big map (alphanumeric string with dots)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="BigMapIndexConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">BigMapIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SkipHistory.never</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BigMapIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Big map index config</p>
@@ -72,7 +57,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'big_map'</em><em>]</em>) – always <cite>big_map</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to fetch big maps with</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#BigMapHandlerConfig" title="tezos_big_map.BigMapHandlerConfig"><em>tezos_big_map.BigMapHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of big map diff handlers</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_big_map.BigMapHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – Mapping of big map diff handlers</p></li>
 <li><p><strong>skip_history</strong> (<a class="reference internal" href="#SkipHistory" title="SkipHistory"><em>SkipHistory</em></a>) – Fetch only current big map keys ignoring historical changes</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
@@ -114,21 +99,6 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="EventHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">EventHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EventHandlerConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Event handler config</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>contract</strong> (<a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract which emits event</p></li>
-<li><p><strong>tag</strong> (<em>str</em>) – Event tag</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="EventIndexConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">EventIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EventIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Event index config</p>
@@ -136,8 +106,8 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'event'</em><em>]</em>) – Index kind</p></li>
-<li><p><strong>datasource</strong> (<a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Datasource config</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#EventHandlerConfig" title="tezos_event.EventHandlerConfig"><em>tezos_event.EventHandlerConfig</em></a><em> | </em><em>tezos_event.UnknownEventHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – Event handlers</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Datasource config</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_event.EventHandlerConfig</em><em> | </em><em>tezos_event.UnknownEventHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – Event handlers</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – First block level to index</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Last block level to index</p></li>
 </ul>
@@ -168,17 +138,6 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="HeadHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HeadHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#HeadHandlerConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Head block handler config</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>callback</strong> (<em>str</em>) – Callback name</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="HeadIndexConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HeadIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#HeadIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Head block index config</p>
@@ -186,8 +145,8 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'head'</em><em>]</em>) – always <cite>head</cite></p></li>
-<li><p><strong>datasource</strong> (<a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to receive head blocks</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#HeadHandlerConfig" title="tezos_head.HeadHandlerConfig"><em>tezos_head.HeadHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of head block handlers</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to receive head blocks</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_head.HeadHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – Mapping of head block handlers</p></li>
 </ul>
 </dd>
 </dl>
@@ -332,20 +291,6 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="OperationHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#OperationHandlerConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Operation handler config</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>pattern</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#OperationHandlerOriginationPatternConfig" title="tezos_operation.OperationHandlerOriginationPatternConfig"><em>tezos_operation.OperationHandlerOriginationPatternConfig</em></a><em> | </em><a class="reference internal" href="#OperationHandlerTransactionPatternConfig" title="tezos_operation.OperationHandlerTransactionPatternConfig"><em>tezos_operation.OperationHandlerTransactionPatternConfig</em></a><em>, </em><em>...</em><em>]</em>) – Filters to match operation groups</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="OperationHandlerOriginationPatternConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationHandlerOriginationPatternConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'origination'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">originated_contract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#OperationHandlerOriginationPatternConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Origination handler pattern config</p>
@@ -391,7 +336,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'operation'</em><em>]</em>) – always <cite>operation</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#OperationHandlerConfig" title="tezos_operation.OperationHandlerConfig"><em>tezos_operation.OperationHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_operation.OperationHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
 <li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#OperationType" title="OperationType"><em>OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
 <li><p><strong>contracts</strong> (<em>list</em><em>[</em><em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Aliases of contracts being indexed in <cite>contracts</cite> section</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
@@ -582,24 +527,6 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="TokenTransferHandlerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TokenTransferHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">FieldInfo(alias='from',</span> <span class="pre">alias_priority=2,</span> <span class="pre">extra={})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#TokenTransferHandlerConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Token transfer handler config</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Filter by contract</p></li>
-<li><p><strong>token_id</strong> (<em>int</em><em> | </em><em>None</em>) – Filter by token ID</p></li>
-<li><p><strong>from</strong> – Filter by sender</p></li>
-<li><p><strong>to</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Filter by recipient</p></li>
-<li><p><strong>from_</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="TokenTransferIndexConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TokenTransferIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers=FieldInfo(default=PydanticUndefined</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_factory=&lt;class</span> <span class="pre">'tuple'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra={})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#TokenTransferIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Token transfer index config</p>
@@ -608,7 +535,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'token_transfer'</em><em>]</em>) – always <cite>token_transfer</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to use</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#TokenTransferHandlerConfig" title="tezos_token_transfer.TokenTransferHandlerConfig"><em>tezos_token_transfer.TokenTransferHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of token transfer handlers</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_token_transfer.TokenTransferHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – Mapping of token transfer handlers</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
 </ul>

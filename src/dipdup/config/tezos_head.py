@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Iterator
 from typing import Literal
 
@@ -17,7 +19,7 @@ class HeadHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'HeadBlockData'
+        yield 'dipdup.models.tzkt', 'HeadBlockData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:

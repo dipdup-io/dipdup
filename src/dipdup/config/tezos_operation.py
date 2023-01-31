@@ -8,17 +8,97 @@ from typing import cast
 
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import CodegenMixin
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import IndexConfig
 from dipdup.config import ParameterTypeMixin
-from dipdup.config import PatternConfig
 from dipdup.config import StorageTypeMixin
 from dipdup.config import SubgroupIndexMixin
 from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.enums import OperationType
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
+from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
+
+
+class PatternConfig(CodegenMixin):
+    """Base class for pattern config items.
+
+    Contains methods for import and method signature generation during handler callbacks codegen.
+    """
+
+    @classmethod
+    def format_storage_import(
+        cls,
+        package: str,
+        module_name: str,
+    ) -> tuple[str, str]:
+        storage_cls = f'{snake_to_pascal(module_name)}Storage'
+        return f'{package}.types.{module_name}.storage', storage_cls
+
+    @classmethod
+    def format_parameter_import(
+        cls,
+        package: str,
+        module_name: str,
+        entrypoint: str,
+        alias: str | None,
+    ) -> tuple[str, str]:
+        entrypoint = entrypoint.lstrip('_')
+        parameter_module = pascal_to_snake(entrypoint)
+        parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
+        if alias:
+            parameter_cls += f' as {snake_to_pascal(alias)}Parameter'
+
+        return f'{package}.types.{module_name}.parameter.{parameter_module}', parameter_cls
+
+    @classmethod
+    def format_untyped_operation_import(cls) -> tuple[str, str]:
+        return 'dipdup.models.tzkt', 'OperationData'
+
+    @classmethod
+    def format_origination_argument(
+        cls,
+        module_name: str,
+        optional: bool,
+        alias: str | None,
+    ) -> tuple[str, str]:
+        arg_name = pascal_to_snake(alias or f'{module_name}_origination')
+        storage_cls = f'{snake_to_pascal(module_name)}Storage'
+        if optional:
+            return arg_name, f'Origination[{storage_cls}] | None'
+        return arg_name, f'Origination[{storage_cls}]'
+
+    @classmethod
+    def format_operation_argument(
+        cls,
+        module_name: str,
+        entrypoint: str,
+        optional: bool,
+        alias: str | None,
+    ) -> tuple[str, str]:
+        arg_name = pascal_to_snake(alias or entrypoint)
+        entrypoint = entrypoint.lstrip('_')
+        parameter_cls = f'{snake_to_pascal(arg_name)}Parameter'
+        storage_cls = f'{snake_to_pascal(module_name)}Storage'
+        if optional:
+            return arg_name, f'Transaction[{parameter_cls}, {storage_cls}] | None'
+        return arg_name, f'Transaction[{parameter_cls}, {storage_cls}]'
+
+    @classmethod
+    def format_untyped_operation_argument(
+        cls,
+        type_: str,
+        subgroup_index: int,
+        optional: bool,
+        alias: str | None,
+    ) -> tuple[str, str]:
+        arg_name = pascal_to_snake(alias or f'{type_}_{subgroup_index}')
+        if optional:
+            return arg_name, 'OperationData | None'
+        return arg_name, 'OperationData'
 
 
 @dataclass
@@ -50,7 +130,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models', 'Transaction'
+            yield 'dipdup.models.tzkt', 'Transaction'
             yield self.format_parameter_import(
                 package,
                 module_name,
@@ -117,10 +197,10 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models', 'Origination'
+            yield 'dipdup.models.tzkt', 'Origination'
             yield self.format_storage_import(package, module_name)
         else:
-            yield 'dipdup.models', 'OperationData'
+            yield 'dipdup.models.tzkt', 'OperationData'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
@@ -236,7 +316,7 @@ class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models', 'OperationData'
+        yield 'dipdup.models.tzkt', 'OperationData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
