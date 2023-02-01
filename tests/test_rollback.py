@@ -9,8 +9,8 @@ import demo_nft_marketplace.models as hen_models
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.dipdup import DipDup
-from dipdup.enums import IndexType
 from dipdup.models import Index
+from dipdup.models import IndexType
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
 

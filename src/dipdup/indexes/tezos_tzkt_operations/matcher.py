@@ -10,12 +10,12 @@ from dipdup.config.tezos_tzkt_operations import OperationHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
-from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
+from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
 from dipdup.models.tzkt import OperationData
+from dipdup.models.tzkt import OperationType
 from dipdup.models.tzkt import Origination
 from dipdup.models.tzkt import Transaction
-from dipdup.models.tzkt import deserialize_storage
 from dipdup.utils.codegen import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')

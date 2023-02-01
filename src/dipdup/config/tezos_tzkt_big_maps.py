@@ -10,8 +10,8 @@ from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import IndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
-from dipdup.enums import SkipHistory
 from dipdup.exceptions import ConfigInitializationException
+from dipdup.models import SkipHistory
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal

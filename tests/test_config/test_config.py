@@ -13,8 +13,8 @@ from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHTTPConfig
 from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
-from dipdup.enums import OperationType
 from dipdup.exceptions import ConfigurationError
+from dipdup.models.tzkt import OperationType
 from dipdup.models.tzkt import OriginationSubscription
 from dipdup.models.tzkt import TransactionSubscription
 

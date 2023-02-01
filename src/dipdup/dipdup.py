@@ -32,9 +32,6 @@ from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
 from dipdup.datasources.tzkt import TzktDatasource
-from dipdup.enums import IndexStatus
-from dipdup.enums import MessageType
-from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
 from dipdup.exceptions import FrameworkException
@@ -49,6 +46,9 @@ from dipdup.indexes.tezos_tzkt_token_transfers.index import TokenTransferIndex
 from dipdup.models import Contract
 from dipdup.models import Head
 from dipdup.models import Index as IndexState
+from dipdup.models import IndexStatus
+from dipdup.models import MessageType
+from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import EventData

@@ -3,13 +3,13 @@ from contextlib import ExitStack
 from dipdup.config.tezos_tzkt_token_transfers import TokenTransferHandlerConfig
 from dipdup.config.tezos_tzkt_token_transfers import TokenTransferIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
-from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.index import extract_level
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
+from dipdup.models import MessageType
 from dipdup.models.tzkt import TokenTransferData
 from dipdup.prometheus import Metrics
 

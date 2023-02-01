@@ -10,8 +10,8 @@ import orjson as json
 
 from demo_domains.types.name_registry.storage import NameRegistryStorage
 from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
 from dipdup.models.tzkt import OperationData
-from dipdup.models.tzkt import deserialize_storage
 from tests.types.asdf.storage import AsdfStorage
 from tests.types.bazaar.storage import BazaarMarketPlaceStorage
 from tests.types.ftzfun.storage import FtzFunStorage

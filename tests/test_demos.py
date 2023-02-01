@@ -13,8 +13,8 @@ from typing import Callable
 
 import pytest
 
-from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
+from dipdup.models.tzkt import OperationType
 from dipdup.utils import import_submodules
 from dipdup.utils.database import tortoise_wrapper
 from tests import CONFIGS_PATH

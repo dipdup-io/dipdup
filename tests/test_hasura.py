@@ -15,10 +15,10 @@ from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
-from dipdup.enums import ReindexingAction
-from dipdup.enums import ReindexingReason
 from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
+from dipdup.models import ReindexingAction
+from dipdup.models import ReindexingReason
 from dipdup.project import BaseProject
 from dipdup.utils.database import tortoise_wrapper
 

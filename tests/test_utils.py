@@ -2,8 +2,8 @@ from contextlib import suppress
 
 from tortoise import Tortoise
 
-from dipdup.enums import IndexType
 from dipdup.models import Index
+from dipdup.models import IndexType
 from dipdup.transactions import TransactionManager
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal

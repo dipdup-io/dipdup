@@ -40,8 +40,6 @@ from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
 from dipdup.datasources.metadata import MetadataDatasource
 from dipdup.datasources.tzkt import TzktDatasource
-from dipdup.enums import ReindexingAction
-from dipdup.enums import ReindexingReason
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
@@ -53,6 +51,8 @@ from dipdup.models import Contract
 from dipdup.models import ContractMetadata
 from dipdup.models import Index
 from dipdup.models import ModelUpdate
+from dipdup.models import ReindexingAction
+from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics

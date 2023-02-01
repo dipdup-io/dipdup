@@ -1,11 +1,11 @@
 from dipdup.config.tezos_tzkt_head import HeadHandlerConfig
 from dipdup.config.tezos_tzkt_head import HeadIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
-from dipdup.enums import IndexStatus
-from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
+from dipdup.models import IndexStatus
+from dipdup.models import MessageType
 from dipdup.models.tzkt import HeadBlockData
 
 HeadQueueItem = HeadBlockData

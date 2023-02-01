@@ -8,9 +8,9 @@ from typing import Tuple
 
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedHTTPConfig
-from dipdup.enums import MessageType
 from dipdup.exceptions import FrameworkException
 from dipdup.http import HTTPGateway
+from dipdup.models import MessageType
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import EventData
 from dipdup.models.tzkt import HeadBlockData

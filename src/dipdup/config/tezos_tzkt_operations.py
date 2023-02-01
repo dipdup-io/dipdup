@@ -16,9 +16,9 @@ from dipdup.config import ParameterTypeMixin
 from dipdup.config import StorageTypeMixin
 from dipdup.config import SubgroupIndexMixin
 from dipdup.config.tzkt import TzktDatasourceConfig
-from dipdup.enums import OperationType
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
+from dipdup.models.tzkt import OperationType
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 

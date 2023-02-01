@@ -3,7 +3,6 @@ import logging
 import pkgutil
 import types
 from collections import defaultdict
-from decimal import Decimal
 from functools import reduce
 from logging import Logger
 from pathlib import Path
@@ -20,7 +19,6 @@ from typing import TextIO
 from typing import TypeVar
 from typing import Union
 
-import orjson
 from humps import main as humps
 
 from dipdup.exceptions import FrameworkException
@@ -146,12 +144,3 @@ def import_from(module: str, obj: str) -> Any:
         return getattr(importlib.import_module(module), obj)
     except (ImportError, AttributeError) as e:
         raise ProjectImportError(module, obj) from e
-
-
-def json_dumps_decimals(obj: Any) -> str:
-    def _default(obj: Any) -> Any:
-        if isinstance(obj, Decimal):
-            return str(obj)
-        raise TypeError
-
-    return orjson.dumps(obj, default=_default).decode()

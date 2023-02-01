@@ -6,10 +6,10 @@ import pytest
 
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
-from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ContractAlreadyExistsError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
+from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 
 

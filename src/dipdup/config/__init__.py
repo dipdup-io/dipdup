@@ -45,14 +45,14 @@ from pydantic.json import pydantic_encoder
 
 from dipdup import baking_bad
 from dipdup import env
-from dipdup.enums import LoggingValues
-from dipdup.enums import OperationType
-from dipdup.enums import ReindexingAction
-from dipdup.enums import ReindexingReason
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
+from dipdup.models import LoggingValues
+from dipdup.models import ReindexingAction
+from dipdup.models import ReindexingReason
+from dipdup.models.tzkt import OperationType
 from dipdup.subscriptions import Subscription
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake

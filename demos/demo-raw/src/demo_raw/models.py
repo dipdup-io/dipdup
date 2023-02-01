@@ -1,7 +1,7 @@
 from tortoise import fields
 
-from dipdup.enums import OperationType
 from dipdup.models import Model
+from dipdup.models.tzkt import OperationType
 
 
 class Operation(Model):

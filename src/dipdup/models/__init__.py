@@ -19,6 +19,7 @@ from typing import Type
 from typing import TypeVar
 from typing import cast
 
+import orjson
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.backends.base.client import BaseDBAsyncClient
@@ -32,16 +33,89 @@ from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
 from tortoise.queryset import QuerySet as TortoiseQuerySet
 from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
-from dipdup.enums import IndexStatus
-from dipdup.enums import IndexType
-from dipdup.enums import ReindexingReason
 from dipdup.exceptions import FrameworkException
-from dipdup.utils import json_dumps_decimals
 
 _logger = logging.getLogger(__name__)
 
 
 versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
+
+
+def json_dumps_decimals(obj: Any) -> str:
+    def _default(obj: Any) -> Any:
+        if isinstance(obj, Decimal):
+            return str(obj)
+        raise TypeError
+
+    return orjson.dumps(obj, default=_default).decode()
+
+
+class IndexType(Enum):
+    """Enum for `dipdup.models.Index`"""
+
+    tezos_tzkt_operations = 'tezos.tzkt.operations'
+    tezos_tzkt_operations_unfiltered = 'tezos.tzkt.operations_unfiltered'
+    tezos_tzkt_big_maps = 'tezos.tzkt.big_maps'
+    tezos_tzkt_head = 'tezos.tzkt.head'
+    tezos_tzkt_token_transfers = 'tezos.tzkt.token_transfers'
+    tezos_tzkt_events = 'tezos.tzkt.events'
+    evm_subsquid_operations = 'evm.subsquid.operations'
+    evm_subsquid_events = 'evm.subsquid.events'
+
+
+class IndexStatus(Enum):
+    NEW = 'NEW'
+    SYNCING = 'SYNCING'
+    REALTIME = 'REALTIME'
+    # TODO: Remove in 7.0
+    ROLLBACK = 'ROLLBACK'
+    # TODO: Rename to DISABLED or something one day
+    ONESHOT = 'ONESHOT'
+
+
+# NOTE: Used as a key in config, must inherit from str
+class ReindexingReason(str, Enum):
+    """Reason that caused reindexing"""
+
+    manual = 'manual'
+    migration = 'migration'
+    rollback = 'rollback'
+    config_modified = 'config_modified'
+    schema_modified = 'schema_modified'
+
+
+class ReindexingAction(Enum):
+    """Action that should be performed on reindexing"""
+
+    exception = 'exception'
+    wipe = 'wipe'
+    ignore = 'ignore'
+
+
+class MessageType(Enum):
+    """Enum for realtime message types"""
+
+    operation = 'operation'
+    big_map = 'big_map'
+    head = 'head'
+    token_transfer = 'token_transfer'
+    event = 'event'
+
+
+class SkipHistory(Enum):
+    """Whether to skip indexing operation history and use only current state"""
+
+    never = 'never'
+    once = 'once'
+    always = 'always'
+
+
+class LoggingValues(Enum):
+    """Enum for `logging` field values."""
+
+    default = 'default'
+    quiet = 'quiet'
+    verbose = 'verbose'
 
 
 @dataclass

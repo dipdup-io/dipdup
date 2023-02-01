@@ -5,13 +5,13 @@ from dipdup.config.tezos_tzkt_events import EventHandlerConfig
 from dipdup.config.tezos_tzkt_events import EventHandlerConfigU
 from dipdup.config.tezos_tzkt_events import EventIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
-from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.index import extract_level
 from dipdup.indexes.tezos_tzkt_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_tzkt_events.matcher import match_events
+from dipdup.models import MessageType
 from dipdup.models.tzkt import Event
 from dipdup.models.tzkt import EventData
 from dipdup.models.tzkt import UnknownEvent

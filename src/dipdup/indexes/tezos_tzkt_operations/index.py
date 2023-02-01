@@ -15,7 +15,6 @@ from dipdup.config.tezos_tzkt_operations import OperationIndexConfigU
 from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt import TzktDatasource
-from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
@@ -26,6 +25,7 @@ from dipdup.indexes.tezos_tzkt_operations.matcher import OperationHandlerArgumen
 from dipdup.indexes.tezos_tzkt_operations.matcher import OperationSubgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_subgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_unfiltered_subgroup
+from dipdup.models import MessageType
 from dipdup.models.tzkt import OperationData
 from dipdup.prometheus import Metrics
 

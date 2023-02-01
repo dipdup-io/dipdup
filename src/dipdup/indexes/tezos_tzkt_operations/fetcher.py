@@ -11,11 +11,11 @@ from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatte
 from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
 from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
-from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import FetcherChannel
 from dipdup.models.tzkt import OperationData
+from dipdup.models.tzkt import OperationType
 
 _logger = logging.getLogger('dipdup.fetcher')
 

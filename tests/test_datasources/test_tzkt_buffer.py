@@ -2,7 +2,7 @@ import pytest
 
 from dipdup.datasources.tzkt import BufferedMessage
 from dipdup.datasources.tzkt import MessageBuffer
-from dipdup.enums import MessageType
+from dipdup.models import MessageType
 
 
 @pytest.fixture
