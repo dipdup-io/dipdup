@@ -6,7 +6,6 @@ from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
-from dipdup.index import extract_level
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
 from dipdup.models.tzkt import MessageType
@@ -75,7 +74,7 @@ class TokenTransferIndex(
         if not token_transfers:
             return
 
-        batch_level = extract_level(token_transfers)
+        batch_level = token_transfers[0].level
         index_level = self.state.level
         if batch_level <= index_level:
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')

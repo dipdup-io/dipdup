@@ -1,4 +1,3 @@
-import logging
 from abc import ABC
 from abc import abstractmethod
 from collections import deque
@@ -10,41 +9,17 @@ from typing import cast
 
 import dipdup.models as models
 from dipdup.config import ResolvedIndexConfigU
-from dipdup.config.tezos_tzkt_head import HeadIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.models import IndexStatus
-from dipdup.models.tzkt import BigMapData
-from dipdup.models.tzkt import EventData
-from dipdup.models.tzkt import MessageType
-from dipdup.models.tzkt import OperationData
-from dipdup.models.tzkt import Origination
-from dipdup.models.tzkt import TokenTransferData
-from dipdup.models.tzkt import Transaction
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
-
-_logger = logging.getLogger(__name__)
 
 IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
 IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
 IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource)
-
-OperationHandlerArgumentU = Transaction | Origination | OperationData | None
-
-
-# TODO: Not used in some indexes
-def extract_level(
-    message: tuple[OperationData | BigMapData | TokenTransferData | EventData, ...],
-) -> int:
-    """Safely extract level from raw messages batch"""
-    # TODO: Skip conditionally
-    batch_levels = {(i.level, i.__class__) for i in message}
-    if len(batch_levels) != 1:
-        raise FrameworkException(f'Items in data batch have different levels: {batch_levels}')
-    return batch_levels.pop()[0]
 
 
 class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
@@ -53,9 +28,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
     Provides common interface for managing index state and switching between sync and realtime modes.
     """
 
-    message_type: MessageType
+    message_type: Any
 
-    def __init_subclass__(cls, message_type: MessageType) -> None:
+    def __init_subclass__(cls, message_type: Any) -> None:
         cls.message_type = message_type
         return super().__init_subclass__()
 
@@ -132,7 +107,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             return
 
         index_level = 0
-        if not isinstance(self._config, HeadIndexConfig) and self._config.first_level:
+        if self._config.first_level:
             # NOTE: Be careful there: index has not reached the first level yet
             index_level = self._config.first_level - 1
 
@@ -156,7 +131,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             rolled_back_indexes.remove(self.name)
 
         last_level = self._config.last_level
-        if last_level and not isinstance(self._config, HeadIndexConfig):
+        if last_level:
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_total_sync_duration())

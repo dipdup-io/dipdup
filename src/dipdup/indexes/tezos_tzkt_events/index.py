@@ -8,7 +8,6 @@ from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
-from dipdup.index import extract_level
 from dipdup.indexes.tezos_tzkt_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_tzkt_events.matcher import match_events
 from dipdup.models.tzkt import Event
@@ -81,7 +80,7 @@ class EventIndex(
         if not events:
             return
 
-        batch_level = extract_level(events)
+        batch_level = events[0].level
         index_level = self.state.level
         if batch_level <= index_level:
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
