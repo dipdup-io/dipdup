@@ -15,7 +15,7 @@ datasources:
 
 indexes:
   rewq:
-    kind: tezos.tzkt.operation
+    kind: tezos.tzkt.operations
     datasource: tzkt
     contracts:
       - rewq

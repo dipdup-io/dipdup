@@ -22,14 +22,14 @@ class MessageType(Enum):
 class IndexType(Enum):
     """Enum for `dipdup.models.Index`"""
 
-    tezos_tzkt_operation = 'tezos.tzkt.operation'
-    tezos_tzkt_operation_unfiltered = 'tezos.tzkt.operation_unfiltered'
-    tezos_tzkt_big_map = 'tezos.tzkt.big_map'
+    tezos_tzkt_operations = 'tezos.tzkt.operations'
+    tezos_tzkt_operations_unfiltered = 'tezos.tzkt.operations_unfiltered'
+    tezos_tzkt_big_maps = 'tezos.tzkt.big_maps'
     tezos_tzkt_head = 'tezos.tzkt.head'
-    tezos_tzkt_token_transfer = 'tezos.tzkt.token_transfer'
-    tezos_tzkt_event = 'tezos.tzkt.event'
-    evm_subsquid_operation = 'evm.subsquid.operation'
-    evm_subsquid_event = 'evm.subsquid.event'
+    tezos_tzkt_token_transfers = 'tezos.tzkt.token_transfers'
+    tezos_tzkt_events = 'tezos.tzkt.events'
+    evm_subsquid_operations = 'evm.subsquid.operations'
+    evm_subsquid_events = 'evm.subsquid.events'
 
 
 class OperationType(Enum):

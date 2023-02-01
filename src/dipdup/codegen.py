@@ -26,16 +26,16 @@ from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import event_hooks
-from dipdup.config.tezos_tzkt_big_map import BigMapIndexConfig
-from dipdup.config.tezos_tzkt_event import EventIndexConfig
-from dipdup.config.tezos_tzkt_event import UnknownEventHandlerConfig
+from dipdup.config.tezos_tzkt_big_maps import BigMapIndexConfig
+from dipdup.config.tezos_tzkt_events import EventIndexConfig
+from dipdup.config.tezos_tzkt_events import UnknownEventHandlerConfig
 from dipdup.config.tezos_tzkt_head import HeadIndexConfig
-from dipdup.config.tezos_tzkt_operation import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config.tezos_tzkt_operation import OperationHandlerPatternConfigU as PatternConfigU
-from dipdup.config.tezos_tzkt_operation import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operation import OperationIndexConfig
-from dipdup.config.tezos_tzkt_operation import OperationUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_transfer import TokenTransferIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationHandlerPatternConfigU as PatternConfigU
+from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TokenTransferIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.tzkt import TzktDatasource

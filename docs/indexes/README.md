@@ -7,7 +7,7 @@ Each index has a linked TzKT datasource and a set of handlers. Indexes can join 
 ```yaml
 indexes:
   contract_operations:
-    kind: tezos.tzkt.operation
+    kind: tezos.tzkt.operations
     datasource: tzkt_mainnet
     handlers:
       - callback: on_operation
@@ -31,7 +31,7 @@ Index definitions can be templated to reduce the amount of boilerplate code. To 
 ```yaml
 templates:
   operation_index_template:
-    kind: tezos.tzkt.operation
+    kind: tezos.tzkt.operations
     datasource: <datasource>
     ...
 

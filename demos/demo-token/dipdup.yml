@@ -24,7 +24,7 @@ indexes:
 
 templates:
   tzbtc_holders:
-    kind: tezos.tzkt.operation
+    kind: tezos.tzkt.operations
     datasource: <datasource>
     contracts:
       - <contract>

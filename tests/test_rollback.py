@@ -147,7 +147,7 @@ async def test_cleanup_and_filtering() -> None:
         # NOTE: Cleanup
         index = Index(
             name='test',
-            type=IndexType.tezos_tzkt_operation,
+            type=IndexType.tezos_tzkt_operations,
             config_hash='',
             level=1005,
         )

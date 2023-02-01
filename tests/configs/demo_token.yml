@@ -19,7 +19,7 @@ datasources:
 
 indexes:
   tzbtc_holders_mainnet:
-    kind: tezos.tzkt.operation
+    kind: tezos.tzkt.operations
     datasource: tzkt
     contracts:
       - tzbtc_mainnet

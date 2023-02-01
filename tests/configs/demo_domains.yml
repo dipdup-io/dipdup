@@ -19,7 +19,7 @@ datasources:
 
 templates:
   domains:
-    kind: tezos.tzkt.operation
+    kind: tezos.tzkt.operations
     datasource: <datasource>
     contracts:
       - <name_registry>

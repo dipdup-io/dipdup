@@ -15,7 +15,7 @@ datasources:
 
 indexes:
   yupana:
-    kind: tezos.tzkt.operation
+    kind: tezos.tzkt.operations
     datasource: tzkt_testnet
     contracts:
       - yupana

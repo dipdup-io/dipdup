@@ -6,26 +6,26 @@ from typing import Iterable
 from typing import Iterator
 from typing import Sequence
 
-from dipdup.config.tezos_tzkt_operation import OperationHandlerConfig
-from dipdup.config.tezos_tzkt_operation import OperationHandlerConfigU
-from dipdup.config.tezos_tzkt_operation import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config.tezos_tzkt_operation import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operation import OperationIndexConfig
-from dipdup.config.tezos_tzkt_operation import OperationIndexConfigU
-from dipdup.config.tezos_tzkt_operation import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationHandlerConfig
+from dipdup.config.tezos_tzkt_operations import OperationHandlerConfigU
+from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationIndexConfigU
+from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
-from dipdup.indexes.tezos_tzkt_operation.fetcher import OperationFetcher
-from dipdup.indexes.tezos_tzkt_operation.fetcher import OperationUnfilteredFetcher
-from dipdup.indexes.tezos_tzkt_operation.matcher import MatchedOperationsT
-from dipdup.indexes.tezos_tzkt_operation.matcher import OperationHandlerArgumentU
-from dipdup.indexes.tezos_tzkt_operation.matcher import OperationSubgroup
-from dipdup.indexes.tezos_tzkt_operation.matcher import match_operation_subgroup
-from dipdup.indexes.tezos_tzkt_operation.matcher import match_operation_unfiltered_subgroup
+from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationFetcher
+from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationUnfilteredFetcher
+from dipdup.indexes.tezos_tzkt_operations.matcher import MatchedOperationsT
+from dipdup.indexes.tezos_tzkt_operations.matcher import OperationHandlerArgumentU
+from dipdup.indexes.tezos_tzkt_operations.matcher import OperationSubgroup
+from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_subgroup
+from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_unfiltered_subgroup
 from dipdup.models.tzkt import OperationData
 from dipdup.prometheus import Metrics
 

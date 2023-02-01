@@ -1125,14 +1125,14 @@ from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.metadata import MetadataDatasourceConfig
-from dipdup.config.tezos_tzkt_big_map import BigMapIndexConfig
-from dipdup.config.tezos_tzkt_event import EventIndexConfig
+from dipdup.config.tezos_tzkt_big_maps import BigMapIndexConfig
+from dipdup.config.tezos_tzkt_events import EventIndexConfig
 from dipdup.config.tezos_tzkt_head import HeadIndexConfig
-from dipdup.config.tezos_tzkt_operation import OperationHandlerOriginationPatternConfig
-from dipdup.config.tezos_tzkt_operation import OperationHandlerTransactionPatternConfig
-from dipdup.config.tezos_tzkt_operation import OperationIndexConfig
-from dipdup.config.tezos_tzkt_operation import OperationUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_transfer import TokenTransferIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TokenTransferIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
 
 # NOTE: We need unions for Pydantic deserialization

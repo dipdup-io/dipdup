@@ -6,10 +6,10 @@ from collections import deque
 from typing import Any
 from typing import AsyncIterator
 
-from dipdup.config.tezos_tzkt_operation import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config.tezos_tzkt_operation import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operation import OperationIndexConfig
-from dipdup.config.tezos_tzkt_operation import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException

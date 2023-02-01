@@ -83,7 +83,7 @@ Here `typename` is defined in the contract inventory, `entrypoint` is specified 
 Indexing operations of multiple contracts with the same entrypoints can lead to name collisions during code generation. In this case DipDup raises a `ConfigurationError` and suggests to set alias for each conflicting handler. That applies to `operation` indexes only. Consider the following index definition, some kind of "chain minting" contract:
 
 ```yaml
-kind: tezos.tzkt.operation
+kind: tezos.tzkt.operations
 handlers:
   - callback: on_mint
     pattern:
